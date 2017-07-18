@@ -25,6 +25,7 @@ import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 import ro.cs.tao.eodata.EOData;
 import ro.cs.tao.eodata.EOProduct;
+import ro.cs.tao.eodata.Format;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -76,6 +77,7 @@ public abstract class XmlResponseHandler extends DefaultHandler {
         buffer.setLength(0);
         if (this.recordElement.equals(qName)) {
             this.current = new EOProduct();
+            this.current.setType(Format.RASTER);
         }
         handleStartElement(qName, attributes);
     }
