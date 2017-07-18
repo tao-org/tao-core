@@ -60,7 +60,6 @@ public class DataProduct {
 	 * Coordinate reference system
 	 */
 	@Column(name = "coordinate_reference_system")
-	@NotNull
 	private String coordinateReferenceSystem;
 	
 	/**
@@ -81,7 +80,6 @@ public class DataProduct {
 	 * Acquisition date
 	 */
 	@Column(name = "acquisition_date")
-	@NotNull
 	private LocalDateTime acquisitionDate;
 	
 	/**

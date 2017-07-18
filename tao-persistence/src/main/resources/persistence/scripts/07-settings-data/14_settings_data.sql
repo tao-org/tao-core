@@ -75,7 +75,7 @@ INSERT INTO tao.sensor_type (type) VALUES ('ATMOSPHERIC');
 
 
 -- Data Query parameters
-
+-- common parameters
 INSERT INTO tao.query_parameter (data_type_id, name)
 VALUES (1, 'platformName');
 
@@ -90,3 +90,20 @@ VALUES (6, 'footprint');
 
 INSERT INTO tao.query_parameter (data_type_id, name)
 VALUES (1, 'productType');
+
+-- Sentinel-1 parameters
+INSERT INTO tao.query_parameter (data_type_id, name)
+VALUES (1, 'polarisationMode');
+
+INSERT INTO tao.query_parameter (data_type_id, name)
+VALUES (1, 'sensorOperationalMode');
+
+INSERT INTO tao.query_parameter (data_type_id, name)
+VALUES (1, 'relativeOrbitNumber');
+
+-- Sentinel-2 parameters
+INSERT INTO tao.query_parameter (data_type_id, name)
+VALUES (3, 'cloudcoverpercentage');
+
+INSERT INTO tao.query_parameter (data_type_id, name)
+VALUES (4, 'relativeOrbitNumber');
