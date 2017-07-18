@@ -36,13 +36,12 @@
  *
  */
 
-package ro.cs.tao.eodata;
+package ro.cs.tao.component;
 
 /**
  * @author Cosmin Cara
  */
-public enum Format {
-    RASTER,
-    VECTOR,
-    OTHER
+public enum ParameterType {
+    SIMPLE,
+    TEMPLATE
 }

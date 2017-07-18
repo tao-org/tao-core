@@ -17,25 +17,38 @@
  *
  */
 
-package ro.cs.tao.eodata.serialization;
+package ro.cs.tao.component;
 
-import org.geotools.referencing.CRS;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import ro.cs.tao.component.constraints.Constraint;
+import ro.cs.tao.eodata.EOData;
 
-import javax.xml.bind.annotation.adapters.XmlAdapter;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Cosmin Cara
  */
-public class CRSAdapter extends XmlAdapter<CoordinateReferenceSystem, String> {
+public class TargetDescriptor {
+    private EOData source;
+    private List<Constraint> constraints;
 
-    public CRSAdapter() { }
-
-    public String unmarshal(CoordinateReferenceSystem v) throws Exception {
-        return v.getName().getCode();
+    public TargetDescriptor() {
+        this.constraints = new ArrayList<>();
     }
 
-    public CoordinateReferenceSystem marshal(String v) throws Exception {
-        return CRS.decode(v);
+    public EOData getSource() {
+        return source;
+    }
+
+    public void setSource(EOData source) {
+        this.source = source;
+    }
+
+    public List<Constraint> getConstraints() {
+        return constraints;
+    }
+
+    public void addConstraint(Constraint constraint) {
+        this.constraints.add(constraint);
     }
 }
