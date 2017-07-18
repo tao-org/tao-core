@@ -43,5 +43,6 @@ package ro.cs.tao.eodata;
  */
 public enum Format {
     RASTER,
-    VECTOR
+    VECTOR,
+    OTHER
 }
