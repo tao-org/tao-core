@@ -36,13 +36,46 @@
  *
  */
 
-package ro.cs.tao.eodata;
+package ro.cs.tao.component.template.engine;
+
+import ro.cs.tao.component.template.Template;
+import ro.cs.tao.component.template.TemplateException;
+import ro.cs.tao.component.template.TemplateType;
+
+import java.util.Map;
 
 /**
  * @author Cosmin Cara
  */
-public enum Format {
-    RASTER,
-    VECTOR,
-    OTHER
+public interface TemplateEngine {
+
+    /**
+     * Returns the type of templates supported by this template engine
+     */
+    TemplateType getType();
+
+    /**
+     * Parses the given template object.
+     *
+     * @param template  The template to parse.
+     * @throws TemplateException    If the template doesn't follow the type syntax.
+     */
+    void parse(Template template) throws TemplateException;
+    /**
+     * Parses the given text according to this engine rules.
+     *
+     * @param text The text to parse.
+     * @throws TemplateException    If the text doesn't follow the type syntax.
+     */
+    void parse(String text) throws TemplateException;
+
+    /**
+     * Transforms the given template into a string by injecting the provided parameters.
+     *
+     * @param template  The template to transform
+     * @return  A string result of the transformation
+     * @throws TemplateException    If the template has syntax errors.
+     */
+    String transform(Template template, Map<String, Object> parameters) throws TemplateException;
+
 }

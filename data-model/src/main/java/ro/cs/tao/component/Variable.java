@@ -36,13 +36,51 @@
  *
  */
 
-package ro.cs.tao.eodata;
+package ro.cs.tao.component;
 
 /**
  * @author Cosmin Cara
  */
-public enum Format {
-    RASTER,
-    VECTOR,
-    OTHER
+public class Variable extends Identifiable {
+
+    private String value;
+    private boolean isSystem;
+
+    public Variable() {
+        super();
+    }
+
+    public Variable(String key, String value) {
+        this.name = key;
+        this.value = value;
+    }
+
+    public Variable(String key, String value, boolean isSystem) {
+        this(key, value);
+        this.isSystem = isSystem;
+    }
+
+    /**
+     * Gets the value of the system variable
+     */
+    public String getValue() { return this.value; }
+
+    /**
+     * Sets the value of the system variable
+     */
+    public void setValue(String value) { this.value = value; }
+
+    public boolean isSystem() { return this.isSystem; }
+
+    public void setSystem(boolean value) { this.isSystem = value; }
+
+    @Override
+    public String defaultName() {
+        return "NewVariable";
+    }
+
+    @Override
+    public Variable copy() {
+        return new Variable(this.name, this.value, this.isSystem);
+    }
 }

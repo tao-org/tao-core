@@ -36,13 +36,25 @@
  *
  */
 
-package ro.cs.tao.eodata;
+package ro.cs.tao.component.template.engine;
+
+import ro.cs.tao.component.template.TemplateType;
 
 /**
  * @author Cosmin Cara
  */
-public enum Format {
-    RASTER,
-    VECTOR,
-    OTHER
+public class EngineFactory {
+
+    public static TemplateEngine createInstance(TemplateType templateType) {
+        switch (templateType) {
+            case JAVASCRIPT:
+                return new JavascriptTemplateEngine();
+            case XSLT:
+                return new XsltTemplateEngine();
+            case VELOCITY:
+            default:
+                return new VelocityTemplateEngine();
+        }
+    }
+
 }

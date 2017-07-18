@@ -36,13 +36,30 @@
  *
  */
 
-package ro.cs.tao.eodata;
+package ro.cs.tao.component;
 
 /**
  * @author Cosmin Cara
  */
-public enum Format {
-    RASTER,
-    VECTOR,
-    OTHER
+public abstract class Identifiable {
+
+    protected String name;
+
+    public Identifiable() { this.name = defaultName(); }
+
+    public Identifiable(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public abstract String defaultName();
+
+    public abstract Identifiable copy();
 }
