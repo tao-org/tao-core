@@ -15,6 +15,9 @@
         <module>scihub-data-source</module>
         <module>tao-persistence</module>
 		<module>tao-integration</module>
+        <module>service-registry</module>
+        <module>tao-utils</module>
+        <module>topology-management</module>
     </modules>
 
     <properties>
