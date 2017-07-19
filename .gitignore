@@ -1,0 +1,12 @@
+/.settings/
+.classpath
+.project
+.idea
+.sonar
+.gitignore
+.settings
+*.iml
+build
+generated
+output
+target
