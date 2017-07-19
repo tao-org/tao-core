@@ -40,9 +40,8 @@ public class PersistenceManager {
     public Long saveDataProduct(EOProduct dataProduct, User user)
     {
         // check method parameters
-        if(dataProduct.getName() == null || dataProduct.getGeometry() == null || dataProduct.getCrs() == null ||
-          dataProduct.getLocation() == null || dataProduct.getSensorType() == null || dataProduct.getAcquisitionDate() == null ||
-          dataProduct.getPixelType() == null || dataProduct.getWidth() <=0 || dataProduct.getHeight() <=0)
+        if(dataProduct.getName() == null || dataProduct.getGeometry() == null || dataProduct.getType() == null ||
+          dataProduct.getLocation() == null || dataProduct.getSensorType() == null || dataProduct.getPixelType() == null)
         {
             // TODO throw exception and remove code above
             System.out.println("Invalid arguments for saving a data product!");
@@ -54,13 +53,20 @@ public class PersistenceManager {
         dataProductEnt.setName(dataProduct.getName());
         dataProductEnt.setDataFormat(Integer.parseInt(DataFormat.valueOf(dataProduct.getType().toString()).toString()));
         dataProductEnt.setGeometry(dataProduct.getGeometry());
-        dataProductEnt.setCoordinateReferenceSystem(dataProduct.getCrs().toString());
+        if(dataProduct.getCrs() != null)
+        {
+            dataProductEnt.setCoordinateReferenceSystem(dataProduct.getCrs().toString());
+        }
         dataProductEnt.setLocation(dataProduct.getLocation().toString());
         dataProductEnt.setSensorType(Integer.parseInt(SensorType.valueOf(dataProduct.getSensorType().toString()).toString()));
-        dataProductEnt.setAcquisitionDate(LocalDateTime.ofInstant(Instant.ofEpochMilli(dataProduct.getAcquisitionDate().getTime()), ZoneId.systemDefault()));
+        if(dataProduct.getAcquisitionDate() != null)
+        {
+            dataProductEnt.setAcquisitionDate(LocalDateTime.ofInstant(Instant.ofEpochMilli(dataProduct.getAcquisitionDate().getTime()), ZoneId.systemDefault()));
+        }
         dataProductEnt.setPixelType(Integer.parseInt(PixelType.valueOf(dataProduct.getPixelType().toString()).toString()));
-        dataProductEnt.setWidth(dataProduct.getWidth());
-        dataProductEnt.setHeight(dataProduct.getHeight());
+        // TODO: update width and height after corrections
+        dataProductEnt.setWidth(dataProduct.getWidth() > 0 ? dataProduct.getWidth() : 0);
+        dataProductEnt.setHeight(dataProduct.getHeight() > 0 ? dataProduct.getHeight() : 0);
 
         if(user != null)
         {

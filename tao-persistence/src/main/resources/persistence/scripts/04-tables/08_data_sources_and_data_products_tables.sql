@@ -131,7 +131,7 @@ CREATE TABLE tao.data_product
 	id bigint NOT NULL,
 	name varchar(250) NOT NULL,
 	type_id integer NOT NULL,
-	geometry geography(MULTIPOLYGON, 4326) NOT NULL,
+	geometry geography(POLYGON, 4326) NOT NULL,
 	coordinate_reference_system text NULL,
 	location varchar(512) NOT NULL,
 	sensor_type_id integer NOT NULL,
