@@ -34,29 +34,29 @@ import java.util.stream.Collectors;
 /**
  * @author Cosmin Cara
  */
-public class TemplateParameter extends Parameter {
-    private List<Parameter> parameters;
+public class TemplateParameterDescriptor extends ParameterDescriptor {
+    private List<ParameterDescriptor> parameters;
     private Template template;
     private TemplateEngine templateEngine;
 
-    public TemplateParameter() {
+    public TemplateParameterDescriptor() {
         super();
     }
 
-    public TemplateParameter(String name, List<Parameter> parameters, Template template, TemplateEngine templateEngine) {
+    public TemplateParameterDescriptor(String name, List<ParameterDescriptor> parameters, Template template, TemplateEngine templateEngine) {
         super(name);
         this.parameters = parameters;
         this.template = template;
         this.templateEngine = templateEngine;
     }
 
-    public Parameter[] getParameters() {
+    public ParameterDescriptor[] getParameters() {
         return parameters != null ?
-                parameters.toArray(new Parameter[parameters.size()]) :
+                parameters.toArray(new ParameterDescriptor[parameters.size()]) :
                 null;
     }
 
-    public void setParameters(Parameter[] parameters) {
+    public void setParameters(ParameterDescriptor[] parameters) {
         if (parameters != null) {
             if (this.parameters == null) {
                 this.parameters = new ArrayList<>();
@@ -67,7 +67,7 @@ public class TemplateParameter extends Parameter {
         }
     }
 
-    public void addParameter(Parameter parameter) {
+    public void addParameter(ParameterDescriptor parameter) {
         if (this.parameters == null) {
             this.parameters = new ArrayList<>();
         }
@@ -111,7 +111,7 @@ public class TemplateParameter extends Parameter {
         if (params == null) {
             params = new HashMap<>();
         }
-        for (Parameter parameter : this.parameters) {
+        for (ParameterDescriptor parameter : this.parameters) {
             if (!params.containsKey(parameter.getName())) {
                 params.put(parameter.getName(), parameter.getDefaultValue());
             }
@@ -125,11 +125,11 @@ public class TemplateParameter extends Parameter {
     }
 
     @Override
-    public Parameter copy() {
-        TemplateParameter newParameter = new TemplateParameter();
+    public ParameterDescriptor copy() {
+        TemplateParameterDescriptor newParameter = new TemplateParameterDescriptor();
         if (this.parameters != null) {
             newParameter.parameters = this.parameters.stream().map(p -> {
-                Parameter copy = p.copy();
+                ParameterDescriptor copy = p.copy();
                 copy.setName(p.getName());
                 return copy;
             }).collect(Collectors.toList());
