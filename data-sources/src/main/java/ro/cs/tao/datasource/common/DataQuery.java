@@ -21,6 +21,8 @@ import ro.cs.tao.eodata.EOData;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Abstraction for a datasource query.
@@ -35,20 +37,51 @@ public abstract class DataQuery<R extends EOData> {
     protected int pageNumber;
     protected int limit;
     protected long timeout;
+    protected final Map<String, ParameterDescriptor> supportedParams;
+    protected final Set<String> mandatoryParams;
 
-    public DataQuery(DataSource source) {
+    public DataQuery(DataSource source, ParameterProvider parameterProvider) {
         this.source = source;
         this.parameters = new LinkedHashMap<>();
         this.timeout = 10000;
         this.pageSize = -1;
         this.pageNumber = -1;
         this.limit = -1;
+        if (parameterProvider == null) {
+            throw new IllegalArgumentException("ParameterProvider should be set");
+        }
+        this.supportedParams = parameterProvider.getSupportedParameters();
+        this.mandatoryParams = this.supportedParams.values().stream()
+                .filter(ParameterDescriptor::isRequired)
+                .map(ParameterDescriptor::getName)
+                .collect(Collectors.toSet());
     }
 
     public QueryParameter addParameter(QueryParameter parameter) {
-        if (parameter != null) {
-            this.parameters.put(parameter.getName(), parameter);
+        if (parameter == null) {
+            throw new IllegalArgumentException("Cannot accept null parameter");
         }
+        checkSupported(parameter.getName(), parameter.getClass());
+        this.parameters.put(parameter.getName(), parameter);
+        return parameter;
+    }
+
+    public <V> QueryParameter addParameter(String name, Class<V> type) {
+        QueryParameter parameter = createParameter(name, type);
+        this.parameters.put(name, parameter);
+        return parameter;
+    }
+
+    public <V> QueryParameter addParameter(String name, Class<V> type, V value) {
+        QueryParameter parameter = createParameter(name, type, value);
+        this.parameters.put(name, parameter);
+        return parameter;
+    }
+
+    public QueryParameter addParameter(String name, Object value) {
+        Class clazz = value != null ? value.getClass() : String.class;
+        QueryParameter parameter = createParameter(name, clazz, value);
+        this.parameters.put(name, parameter);
         return parameter;
     }
 
@@ -66,26 +99,54 @@ public abstract class DataQuery<R extends EOData> {
 
     public void setMaxResults(int value) { this.limit = value; }
 
-    public abstract List<R> execute() throws QueryException;
+    public List<R> execute() throws QueryException {
+        for (String name : this.mandatoryParams) {
+            if (!this.parameters.containsKey(name)) {
+                throw new QueryException(String.format("Mandatory parameter [%s] was not supplied", name));
+            }
+        }
+        return executeImpl();
+    }
+
+    public Map<String, ParameterDescriptor> getSupportedParameters() { return this.supportedParams; }
 
     public QueryParameter createParameter(String name, Class<?> type) {
+        checkSupported(name, type);
         return new QueryParameter(type, name);
     }
 
     public <V> QueryParameter createParameter(String name, Class<V> type, V value) {
+        checkSupported(name, type);
         return new QueryParameter(type, name, value);
     }
 
     public <V> QueryParameter createParameter(String name, Class<V> type, V value, boolean optional) {
+        checkSupported(name, type);
         return new QueryParameter(type, name, value, optional);
     }
 
     public <V> QueryParameter createParameter(String name, Class<V> type, V minValue, V maxValue) {
+        checkSupported(name, type);
         return new QueryParameter(type, name, minValue, maxValue);
     }
 
     public <V> QueryParameter createParameter(String name, Class<V> type, V minValue, V maxValue, boolean optional) {
+        checkSupported(name, type);
         return new QueryParameter(type, name, minValue, maxValue, optional);
     }
 
+    protected void checkSupported(String name, Class type) {
+        ParameterDescriptor descriptor = this.supportedParams.get(name);
+        if (descriptor == null) {
+            throw new IllegalArgumentException(
+                    String.format("Parameter [%s] not supported on this data source", name));
+        }
+        if (!descriptor.getType().isAssignableFrom(type)) {
+            throw new IllegalArgumentException(
+                    String.format("Wrong type for parameter [%s]: expected %s, found %s",
+                                  name, descriptor.getType().getSimpleName(), type.getSimpleName()));
+        }
+    }
+
+    protected abstract List<R> executeImpl() throws QueryException;
 }

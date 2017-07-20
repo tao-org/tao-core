@@ -42,7 +42,7 @@ public class LocalDataSource extends DataSource<EOData, LocalDataQuery> {
         } catch (ClassNotFoundException e) {
             this.logger.severe("PostgreSQL driver not registered");
         }
-
+        addParameterProvider(null, new DatabaseParameterProvider());
     }
 
     @Override
@@ -71,8 +71,8 @@ public class LocalDataSource extends DataSource<EOData, LocalDataQuery> {
     }
 
     @Override
-    public LocalDataQuery createQuery() {
-        return new LocalDataQuery(this);
+    protected LocalDataQuery createQueryImpl(String code) {
+        return new LocalDataQuery(this, getParameterProvider(null));
     }
 
     Connection getConnection() {
