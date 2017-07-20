@@ -64,6 +64,7 @@ public class SciHubDataSource extends URLDataSource<EOData, SciHubDataQuery> {
 
     public SciHubDataSource() throws URISyntaxException {
         super(URL);
+        addParameterProvider(null, new ro.cs.tao.datasource.remote.scihub.parameters.ParameterProvider());
     }
 
     @Override
@@ -74,7 +75,7 @@ public class SciHubDataSource extends URLDataSource<EOData, SciHubDataQuery> {
     }
 
     @Override
-    public SciHubDataQuery createQuery() {
-        return new SciHubDataQuery(this);
+    protected SciHubDataQuery createQueryImpl(String code) {
+        return new SciHubDataQuery(this, getParameterProvider(null));
     }
 }

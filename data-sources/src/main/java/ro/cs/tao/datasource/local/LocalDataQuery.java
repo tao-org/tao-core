@@ -22,6 +22,7 @@ package ro.cs.tao.datasource.local;
 import org.geotools.referencing.CRS;
 import org.opengis.referencing.FactoryException;
 import ro.cs.tao.datasource.common.DataQuery;
+import ro.cs.tao.datasource.common.ParameterProvider;
 import ro.cs.tao.datasource.common.QueryException;
 import ro.cs.tao.datasource.common.QueryParameter;
 import ro.cs.tao.datasource.common.converters.ConverterFactory;
@@ -59,12 +60,12 @@ public class LocalDataQuery extends DataQuery<EOData> {
         converterFactory.register(PolygonConverter.class, Polygon2D.class);
         converterFactory.register(DateConverter.class, Date.class);
     }
-    LocalDataQuery(LocalDataSource source) {
-        super(source);
+    LocalDataQuery(LocalDataSource source, ParameterProvider parameterProvider) {
+        super(source, parameterProvider);
     }
 
     @Override
-    public List<EOData> execute() throws QueryException {
+    protected List<EOData> executeImpl() throws QueryException {
         List<EOData> results = new ArrayList<>();
         Connection sqlConnection = ((LocalDataSource) this.source).getConnection();
         if (sqlConnection != null) {

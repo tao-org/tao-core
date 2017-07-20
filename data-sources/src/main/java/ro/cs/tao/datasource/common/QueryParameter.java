@@ -18,6 +18,9 @@ package ro.cs.tao.datasource.common;
 
 import ro.cs.tao.datasource.common.converters.ParameterConverter;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 /**
  * Abstraction for a query parameter.
  *
@@ -102,6 +105,32 @@ public class QueryParameter {
 
     public boolean isInterval() {
         return this.minValue != null || this.maxValue != null;
+    }
+
+    public String getValueAsString() {
+        return this.value != null ?
+                String.valueOf(this.value) :
+                null;
+    }
+
+    public Integer getValueAsInt() {
+        return this.value != null ?
+                Integer.parseInt(String.valueOf(this.value)) :
+                null;
+    }
+
+    public Double getValueAsDouble() {
+        return this.value != null ?
+                Double.parseDouble(String.valueOf(this.value)) :
+                null;
+    }
+
+    public String getValueAsFormattedDate(String format) {
+        try {
+            return new SimpleDateFormat(format).format((Date) this.value);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private void checkValid() {

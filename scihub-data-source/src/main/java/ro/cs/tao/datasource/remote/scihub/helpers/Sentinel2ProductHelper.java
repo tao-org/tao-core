@@ -59,10 +59,6 @@ package ro.cs.tao.datasource.remote.scihub.helpers;
 
 import ro.cs.tao.datasource.remote.ProductHelper;
 
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 /**
  * @author Cosmin Cara
  */
@@ -112,23 +108,4 @@ public abstract class Sentinel2ProductHelper extends ProductHelper {
     public abstract String getBandFileName(String granuleIdentifier, String band);
 
     public abstract String getEcmWftFileName(String granuleIdentifier);
-
-    String[] getTokens(Pattern pattern, String input, Map<Integer, String> replacements) {
-        String[] tokens = null;
-        Matcher matcher = pattern.matcher(input);
-        if (matcher.matches()) {
-            int count = matcher.groupCount();
-            tokens = new String[count];
-            for (int i = 0; i < tokens.length; i++) {
-                if (replacements != null && replacements.containsKey(i)) {
-                    tokens[i] = replacements.get(i);
-                } else {
-                    tokens[i] = matcher.group(i + 1);
-                }
-            }
-        } else {
-            throw new RuntimeException("Name doesn't match the specifications");
-        }
-        return tokens;
-    }
 }

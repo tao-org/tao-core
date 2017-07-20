@@ -25,6 +25,7 @@ import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import ro.cs.tao.datasource.common.DataQuery;
+import ro.cs.tao.datasource.common.ParameterProvider;
 import ro.cs.tao.datasource.common.QueryException;
 import ro.cs.tao.datasource.common.QueryParameter;
 import ro.cs.tao.datasource.common.converters.ConversionException;
@@ -57,12 +58,12 @@ public class SciHubDataQuery extends DataQuery<EOData> {
         converterFactory.register(DateConverter.class, Date.class);
     }
 
-    SciHubDataQuery(SciHubDataSource source) {
-        super(source);
+    SciHubDataQuery(SciHubDataSource source, ParameterProvider parameterProvider) {
+        super(source, parameterProvider);
     }
 
     @Override
-    public List<EOData> execute() throws QueryException {
+    protected List<EOData> executeImpl() throws QueryException {
         List<EOData> results = new ArrayList<>();
         String query = "";
         int idx = 0;
