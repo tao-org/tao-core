@@ -2,7 +2,7 @@ package ro.cs.tao.datasource.remote.aws.helpers;
 
 import ro.cs.tao.datasource.remote.AbstractDownloader;
 import ro.cs.tao.datasource.remote.ProductHelper;
-import ro.cs.tao.datasource.remote.aws.LandsatCollection;
+import ro.cs.tao.datasource.remote.aws.LandsatProduct;
 
 import java.time.LocalDate;
 import java.time.Year;
@@ -24,7 +24,7 @@ public class LandsatProductHelper extends ProductHelper {
     private String[] nameTokens;
     private String row;
     private String path;
-    private LandsatCollection productType;
+    private LandsatProduct productType;
 
     public LandsatProductHelper(String name) {
         super(name);
@@ -41,9 +41,9 @@ public class LandsatProductHelper extends ProductHelper {
         return this.version;
     }
 
-    public LandsatCollection getProductType() {
+    public LandsatProduct getProductType() {
         if (this.productType == null) {
-            this.productType = Enum.valueOf(LandsatCollection.class, nameTokens[5]);
+            this.productType = Enum.valueOf(LandsatProduct.class, nameTokens[5]);
         }
         return this.productType;
     }
