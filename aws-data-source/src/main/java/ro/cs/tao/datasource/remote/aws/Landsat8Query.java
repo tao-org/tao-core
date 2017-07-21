@@ -31,6 +31,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,42 +46,56 @@ class Landsat8Query extends DataQuery<EOData> {
     private static final DateTimeFormatter fileDateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
-    public Landsat8Query(DataSource source, ParameterProvider parameterProvider) {
+    Landsat8Query(DataSource source, ParameterProvider parameterProvider) {
         super(source, parameterProvider);
     }
 
     @Override
     protected List<EOData> executeImpl() throws QueryException {
-        String sensingStart, sensingEnd;
-        LandsatCollection productType;
-        double cloudFilter = 100.;
+        QueryParameter currentParameter = this.parameters.get("platformName");
+        if (currentParameter == null || !"L8".equals(currentParameter.getValueAsString())) {
+            throw new QueryException("Wrong [platformName] parameter");
+        }
+        String baseUrl = this.source.getConnectionString();
+        currentParameter = this.parameters.get("collection");
+        boolean preCollection = false;
+        if (currentParameter != null) {
+            if (LandsatCollection.PRE_COLLECTION.equals(
+                    Enum.valueOf(LandsatCollection.class, currentParameter.getValueAsString()))) {
+                baseUrl = baseUrl.replace("c1/", "");
+                preCollection = true;
+            }
+        }
         Map<String, EOProduct> results = new LinkedHashMap<>();
-
-        LocalDate todayDate = LocalDate.now();
-
-        //http://sentinel-s2-l1c.s3.amazonaws.com/?delimiter=/&prefix=c1/L8/
-        Calendar startDate = Calendar.getInstance();
-        QueryParameter currentParameter = this.parameters.get("sensingStart");
-        if (currentParameter != null) {
-            sensingStart = currentParameter.getValueAsFormattedDate(dateFormat.toPattern());
-        } else {
-            sensingStart = todayDate.minusDays(30).format(fileDateFormat);
-        }
-        currentParameter = this.parameters.get("sensingEnd");
-        if (currentParameter != null) {
-            sensingEnd = currentParameter.getValueAsFormattedDate(dateFormat.toPattern());
-        } else {
-            sensingEnd = todayDate.format(fileDateFormat);
-        }
         try {
+            String sensingStart, sensingEnd;
+            LandsatProduct productType;
+            double cloudFilter = 100.;
+
+            LocalDate todayDate = LocalDate.now();
+
+            //http://sentinel-s2-l1c.s3.amazonaws.com/?delimiter=/&prefix=c1/L8/
+            Calendar startDate = Calendar.getInstance();
+            currentParameter = this.parameters.get("sensingStart");
+            if (currentParameter != null) {
+                sensingStart = currentParameter.getValueAsFormattedDate(dateFormat.toPattern());
+            } else {
+                sensingStart = todayDate.minusDays(30).format(fileDateFormat);
+            }
+            currentParameter = this.parameters.get("sensingEnd");
+            if (currentParameter != null) {
+                sensingEnd = currentParameter.getValueAsFormattedDate(dateFormat.toPattern());
+            } else {
+                sensingEnd = todayDate.format(fileDateFormat);
+            }
             startDate.setTime(dateFormat.parse(sensingStart));
             Calendar endDate = Calendar.getInstance();
             endDate.setTime(dateFormat.parse(sensingEnd));
             currentParameter = this.parameters.get("productType");
             if (currentParameter != null) {
-                productType = Enum.valueOf(LandsatCollection.class, currentParameter.getValueAsString());
+                productType = Enum.valueOf(LandsatProduct.class, currentParameter.getValueAsString());
             } else {
-                productType = LandsatCollection.T1;
+                productType = LandsatProduct.T1;
             }
 
             currentParameter = this.parameters.get("cloudcoverpercentage");
@@ -88,39 +103,61 @@ class Landsat8Query extends DataQuery<EOData> {
                 cloudFilter = currentParameter.getValueAsDouble();
             }
 
+            Set<String> tiles = new HashSet<>();
+            currentParameter = this.parameters.get("path");
+            if (currentParameter != null) {
+                String path = currentParameter.getValueAsString();
+                currentParameter = this.parameters.get("row");
+                if (currentParameter == null) {
+                    throw new QueryException("Parameter [row] expected when [path] is set");
+                }
+                String row = currentParameter.getValueAsString();
+                tiles.add(path + row);
+            } else {
+                currentParameter = this.parameters.get("row");
+                if (currentParameter != null) {
+                    throw new QueryException("Parameter [path] expected when [row] is set");
+                }
+                currentParameter = this.parameters.get("footprint");
+                if (currentParameter == null) {
+                    throw new QueryException("Either [footprint] or ([path] and [row]) should be provided");
+                }
+                Polygon2D aoi = Polygon2D.fromWKT(currentParameter.getValueAsString());
+                tiles.addAll(Landsat8TileExtent.getInstance().intersectingTiles(aoi.getBounds2D()));
+            }
 
-            final String baseUrl = this.source.getConnectionString();
-
-            String path = this.parameters.get("path").getValueAsString();
-            String row = this.parameters.get("row").getValueAsString();
-            String tileUrl = baseUrl + path + AbstractDownloader.URL_SEPARATOR + row + AbstractDownloader.URL_SEPARATOR;
-            Result productResult = ResultParser.parse(NetUtils.getResponseAsString(tileUrl));
-            if (productResult.getCommonPrefixes() != null) {
-                Set<String> names = productResult.getCommonPrefixes().stream()
-                        .map(p -> p.replace(productResult.getPrefix(), "").replace(productResult.getDelimiter(), ""))
-                        .collect(Collectors.toSet());
-                for (String name : names) {
-                    try {
-                        if (name.endsWith(productType.toString())) {
-                            LandsatProductHelper temporaryDescriptor = new LandsatProductHelper(name);
-                            Calendar productDate = temporaryDescriptor.getAcquisitionDate();
-                            if (startDate.before(productDate) && endDate.after(productDate)) {
-                                String jsonTile = tileUrl + name + AbstractDownloader.URL_SEPARATOR + name + "_MTL.json";
-                                jsonTile = jsonTile.replace(L8_SEARCH_URL_SUFFIX, "");
-                                double clouds = getTileCloudPercentage(jsonTile);
-                                if (clouds > cloudFilter) {
-                                    productDate.add(Calendar.MONTH, -1);
-                                    Logger.getRootLogger().warn(
-                                            String.format("Tile %s from %s has %.2f %% clouds",
-                                                          path + row, dateFormat.format(productDate.getTime()), clouds));
-                                } else {
-                                    EOProduct product = parseProductJson(jsonTile);
-                                    results.put(product.getName(), product);
+            for (String tile : tiles) {
+                String path = tile.substring(0, 3);
+                String row = tile.substring(3, 6);
+                String tileUrl = baseUrl + path + AbstractDownloader.URL_SEPARATOR + row + AbstractDownloader.URL_SEPARATOR;
+                Result productResult = ResultParser.parse(NetUtils.getResponseAsString(tileUrl));
+                if (productResult.getCommonPrefixes() != null) {
+                    Set<String> names = productResult.getCommonPrefixes().stream()
+                            .map(p -> p.replace(productResult.getPrefix(), "").replace(productResult.getDelimiter(), ""))
+                            .collect(Collectors.toSet());
+                    for (String name : names) {
+                        try {
+                            if (preCollection || name.endsWith(productType.toString())) {
+                                LandsatProductHelper temporaryDescriptor = new LandsatProductHelper(name);
+                                Calendar productDate = temporaryDescriptor.getAcquisitionDate();
+                                if (startDate.before(productDate) && endDate.after(productDate)) {
+                                    String jsonTile = tileUrl + name + AbstractDownloader.URL_SEPARATOR + name + "_MTL.json";
+                                    jsonTile = jsonTile.replace(L8_SEARCH_URL_SUFFIX, "");
+                                    double clouds = getTileCloudPercentage(jsonTile);
+                                    if (clouds > cloudFilter) {
+                                        productDate.add(Calendar.MONTH, -1);
+                                        Logger.getRootLogger().warn(
+                                                String.format("Tile %s from %s has %.2f %% clouds",
+                                                              tile, dateFormat.format(productDate.getTime()), clouds));
+                                    } else {
+                                        EOProduct product = parseProductJson(jsonTile);
+                                        results.put(product.getName(), product);
+                                    }
                                 }
                             }
+                        } catch (Exception ex) {
+                            Logger.getRootLogger().warn("Could not parse product %s: %s", name, ex.getMessage());
                         }
-                    } catch (Exception ex) {
-                        Logger.getRootLogger().warn("Could not parse product %s: %s", name, ex.getMessage());
                     }
                 }
             }
@@ -133,7 +170,7 @@ class Landsat8Query extends DataQuery<EOData> {
 
     private EOProduct parseProductJson(String jsonUrl) throws Exception {
         JsonReader reader = null;
-        EOProduct product = null;
+        EOProduct product;
         try (InputStream inputStream = new URI(jsonUrl).toURL().openStream()) {
             reader = Json.createReader(inputStream);
             JsonObject obj = reader.readObject()

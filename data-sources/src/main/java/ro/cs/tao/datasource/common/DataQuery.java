@@ -61,7 +61,7 @@ public abstract class DataQuery<R extends EOData> {
         if (parameter == null) {
             throw new IllegalArgumentException("Cannot accept null parameter");
         }
-        checkSupported(parameter.getName(), parameter.getClass());
+        checkSupported(parameter.getName(), parameter.getType());
         this.parameters.put(parameter.getName(), parameter);
         return parameter;
     }
@@ -87,6 +87,8 @@ public abstract class DataQuery<R extends EOData> {
 
     public QueryParameter getParameter(String name) { return this.parameters.get(name); }
 
+    public Set<String> getMandatoryParams() { return this.mandatoryParams; }
+
     public int getParameterCount() { return this.parameters.size(); }
 
     public String getText() { return this.queryText; }
@@ -100,8 +102,10 @@ public abstract class DataQuery<R extends EOData> {
     public void setMaxResults(int value) { this.limit = value; }
 
     public List<R> execute() throws QueryException {
-        for (String name : this.mandatoryParams) {
-            if (!this.parameters.containsKey(name)) {
+        final Set<String> mandatoryParams = getMandatoryParams();
+        final Map<String, QueryParameter> parameters = getParameters();
+        for (String name : mandatoryParams) {
+            if (!parameters.containsKey(name)) {
                 throw new QueryException(String.format("Mandatory parameter [%s] was not supplied", name));
             }
         }
@@ -109,6 +113,8 @@ public abstract class DataQuery<R extends EOData> {
     }
 
     public Map<String, ParameterDescriptor> getSupportedParameters() { return this.supportedParams; }
+
+    public Map<String, QueryParameter> getParameters() { return this.parameters; }
 
     public QueryParameter createParameter(String name, Class<?> type) {
         checkSupported(name, type);

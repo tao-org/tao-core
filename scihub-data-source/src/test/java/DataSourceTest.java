@@ -92,7 +92,7 @@ public class DataSourceTest {
             aoi.append(-8.9037319257, 24.413397299);
             aoi.append(-9.9866909768, 24.413397299);
             aoi.append(-9.9866909768, 23.4186029838);
-            query.addParameter("footprint", aoi);
+            query.addParameter("footprint", aoi.toWKT());
 
             query.addParameter("cloudcoverpercentage", 100.);
             query.setPageSize(50);
