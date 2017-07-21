@@ -3,7 +3,7 @@ package ro.cs.tao.topology;
 /**
  * Created by cosmin on 7/17/2017.
  */
-public class TorqueInstaller implements ITopologyComponentInstaller {
+public class TorqueInstaller implements ITopologyToolInstaller {
     @Override
     public void doInstall(NodeDescription info) {
         // TODO:
