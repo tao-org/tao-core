@@ -15,12 +15,11 @@ import ro.cs.tao.datasource.common.QueryException;
 import ro.cs.tao.datasource.common.QueryParameter;
 import ro.cs.tao.datasource.remote.scihub.SciHubDataQuery;
 import ro.cs.tao.datasource.remote.scihub.SciHubDataSource;
-import ro.cs.tao.datasource.remote.scihub.parameters.CommonParams;
-import ro.cs.tao.datasource.remote.scihub.parameters.Sentinel2Params;
 import ro.cs.tao.datasource.util.Polygon2D;
 import ro.cs.tao.eodata.EOData;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.persistence.config.DatabaseConfiguration;
+import ro.cs.tao.persistence.data.enums.DataSourceType;
 
 import java.net.URISyntaxException;
 import java.sql.SQLException;
@@ -71,6 +70,26 @@ public class PersistenceManagerTest {
     }
 
     @Test
+    public void save_new_data_source()
+    {
+        try {
+            Logger logger = LogManager.getLogManager().getLogger("");
+            for (Handler handler : logger.getHandlers()) {
+                handler.setLevel(Level.INFO);
+            }
+            DataSource<EOData, SciHubDataQuery> dataSource = new SciHubDataSource();
+            dataSource.setCredentials("kraftek", "cei7pitici.");
+
+            persistenceManager.saveDataSource(dataSource, DataSourceType.SCIHUB_SENTINEL_1_DATA_SOURCE,
+              "SciHub Sentinel-1 Data Source", "No description");
+
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    @Test
     public void save_new_data_product()
     {
         try {
@@ -82,8 +101,8 @@ public class PersistenceManagerTest {
             dataSource.setCredentials("kraftek", "cei7pitici.");
 
             DataQuery<EOData> query = dataSource.createQuery();
-            query.addParameter(CommonParams.PLATFORM_NAME).setValue("Sentinel-2");
-            QueryParameter begin = query.addParameter(CommonParams.BEGIN_POSITION);
+            query.addParameter("platformName", "Sentinel-2");
+            QueryParameter begin = query.createParameter("beginPosition", Date.class);
             begin.setMinValue(Date.from(LocalDateTime.of(2016, 2, 1, 0, 0, 0, 0)
               .atZone(ZoneId.systemDefault())
               .toInstant()));
@@ -96,9 +115,9 @@ public class PersistenceManagerTest {
             aoi.append(-8.9037319257, 24.413397299);
             aoi.append(-9.9866909768, 24.413397299);
             aoi.append(-9.9866909768, 23.4186029838);
-            query.addParameter(CommonParams.FOOTPRINT).setValue(aoi);
+            query.addParameter("footprint", aoi);
 
-            query.addParameter(Sentinel2Params.CLOUDS).setValue(100.);
+            query.addParameter("cloudcoverpercentage",100.);
             query.setPageSize(50);
             query.setMaxResults(83);
             List<EOData> results = query.execute();

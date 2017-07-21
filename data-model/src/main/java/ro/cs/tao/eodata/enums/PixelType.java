@@ -23,12 +23,50 @@ package ro.cs.tao.eodata.enums;
  * @author Cosmin Cara
  */
 public enum PixelType {
-    UINT8,
-    INT8,
-    UINT16,
-    INT16,
-    UINT32,
-    INT32,
-    FLOAT32,
-    FLOAT64
+    UINT8(1),
+    INT8(2),
+    UINT16(3),
+    INT16(4),
+    UINT32(5),
+    INT32(6),
+    FLOAT32(7),
+    FLOAT64(8);
+
+    /**
+     * Numerical value for enum constants
+     */
+    private final int value;
+
+    /**
+     * Constructor
+     * @param s - the integer value identifier
+     */
+    PixelType(final int s)
+    {
+        value = s;
+    }
+
+    @Override
+    public String toString()
+    {
+        return String.valueOf(this.value);
+    }
+
+    /**
+     * Retrieve string enum token corresponding to the integer identifier
+     * @param value the integer value identifier
+     * @return the string token corresponding to the integer identifier
+     */
+    public static String getEnumConstantNameByValue(final int value)
+    {
+        for (PixelType type : values())
+        {
+            if ((String.valueOf(value)).equals(type.toString()))
+            {
+                // return the name of the enum constant having the given value
+                return type.name();
+            }
+        }
+        return null;
+    }
 }
