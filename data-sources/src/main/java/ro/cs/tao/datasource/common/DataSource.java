@@ -19,6 +19,10 @@ package ro.cs.tao.datasource.common;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import ro.cs.tao.eodata.EOData;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 /**
  * Abstraction for a product datasource source.
  *
@@ -28,6 +32,7 @@ public abstract class DataSource<R extends EOData, Q extends DataQuery<R>> {
     protected String connectionString;
     protected long timeout;
     protected UsernamePasswordCredentials credentials;
+    private Map<String, ParameterProvider> parameterProviders;
 
     public DataSource() { this.timeout = 10000; }
 
@@ -65,8 +70,34 @@ public abstract class DataSource<R extends EOData, Q extends DataQuery<R>> {
      */
     public abstract void close();
 
+    public Map<String, Map<String, ParameterDescriptor>> getSupportedParameters() {
+        Map<String, Map<String, ParameterDescriptor>> descriptors = null;
+        if (this.parameterProviders != null) {
+            descriptors = this.parameterProviders.entrySet().stream()
+                    .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getSupportedParameters()));
+        }
+        return descriptors;
+    }
+
     /**
      * Creates a query object that will be executed against the datasource source to retrieve results.
      */
-    public abstract Q createQuery();
+    public Q createQuery() { return createQueryImpl(null); }
+
+    public Q createQuery(String type) { return createQueryImpl(type); }
+
+    protected abstract Q createQueryImpl(String code);
+
+    protected void addParameterProvider(String code, ParameterProvider provider) {
+        if (this.parameterProviders == null) {
+            this.parameterProviders = new HashMap<>();
+        }
+        code = code == null ? "" : code;
+        this.parameterProviders.put(code, provider);
+    }
+
+    protected ParameterProvider getParameterProvider(String code) {
+        code = code == null ? "" : code;
+        return this.parameterProviders.get(code);
+    }
 }

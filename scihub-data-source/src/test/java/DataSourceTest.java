@@ -43,9 +43,6 @@ import ro.cs.tao.datasource.common.QueryParameter;
 import ro.cs.tao.datasource.remote.scihub.SciHubDataQuery;
 import ro.cs.tao.datasource.remote.scihub.SciHubDataSource;
 import ro.cs.tao.datasource.remote.scihub.SentinelDownloader;
-import ro.cs.tao.datasource.remote.scihub.parameters.CommonParams;
-import ro.cs.tao.datasource.remote.scihub.parameters.Sentinel1Params;
-import ro.cs.tao.datasource.remote.scihub.parameters.Sentinel2Params;
 import ro.cs.tao.datasource.util.Polygon2D;
 import ro.cs.tao.eodata.EOData;
 
@@ -80,23 +77,24 @@ public class DataSourceTest {
             dataSource.setCredentials("kraftek", "cei7pitici.");
 
             DataQuery<EOData> query = dataSource.createQuery();
-            query.addParameter(CommonParams.PLATFORM_NAME).setValue("Sentinel-2");
-            QueryParameter begin = query.addParameter(CommonParams.BEGIN_POSITION);
+            query.addParameter("platformName", "Sentinel-2");
+            QueryParameter begin = query.createParameter("beginPosition", Date.class);
             begin.setMinValue(Date.from(LocalDateTime.of(2016, 2, 1, 0, 0, 0, 0)
                                                 .atZone(ZoneId.systemDefault())
                                                 .toInstant()));
             begin.setMaxValue(Date.from(LocalDateTime.of(2017, 2, 1, 0, 0, 0, 0)
                                                 .atZone(ZoneId.systemDefault())
                                                 .toInstant()));
+            query.addParameter(begin);
             Polygon2D aoi = new Polygon2D();
             aoi.append(-9.9866909768, 23.4186029838);
             aoi.append(-8.9037319257, 23.4186029838);
             aoi.append(-8.9037319257, 24.413397299);
             aoi.append(-9.9866909768, 24.413397299);
             aoi.append(-9.9866909768, 23.4186029838);
-            query.addParameter(CommonParams.FOOTPRINT).setValue(aoi);
+            query.addParameter("footprint", aoi);
 
-            query.addParameter(Sentinel2Params.CLOUDS).setValue(100.);
+            query.addParameter("cloudcoverpercentage", 100.);
             query.setPageSize(50);
             query.setMaxResults(83);
             List<EOData> results = query.execute();
@@ -125,18 +123,18 @@ public class DataSourceTest {
             dataSource.setCredentials("kraftek", "cei7pitici.");
 
             DataQuery<EOData> query = dataSource.createQuery();
-            query.addParameter(CommonParams.PLATFORM_NAME).setValue("Sentinel-1");
-            QueryParameter begin = query.addParameter(CommonParams.BEGIN_POSITION);
+            query.addParameter("platformName", "Sentinel-2");
+            QueryParameter begin = query.createParameter("beginPosition", Date.class);
             begin.setMinValue(Date.from(LocalDateTime.of(2017, 5, 30, 0, 0, 0, 0)
                                                 .atZone(ZoneId.systemDefault())
                                                 .toInstant()));
             begin.setMaxValue(Date.from(LocalDateTime.of(2017, 6, 1, 0, 0, 0, 0)
                                                 .atZone(ZoneId.systemDefault())
                                                 .toInstant()));
-
-            query.addParameter(Sentinel1Params.POLARISATION).setValue("VV");
-            query.addParameter(Sentinel1Params.SENSOR_MODE).setValue("IW");
-            query.addParameter(CommonParams.PRODUCT_TYPE).setValue("SLC");
+            query.addParameter(begin);
+            query.addParameter("polarisationMode", "VV");
+            query.addParameter("sensorOperationalMode", "IW");
+            query.addParameter("productType", "SLC");
             query.setPageSize(50);
             query.setMaxResults(83);
             SentinelDownloader downloader = new SentinelDownloader("E:\\NewFormat");

@@ -1,12 +1,21 @@
-package ro.cs.tao.persistence.data.enums;
+package ro.cs.tao.eodata.enums;
 
 /**
- * Created by oana on 7/14/2017.
+ * Created by oana on 7/13/2017.
  */
-public enum OrbitDirection {
-
-    ASCENDING(1),
-    DESCENDING(2);
+public enum DataFormat {
+    /**
+     * RASTER image data format
+     */
+    RASTER(1),
+    /**
+     * VECTOR image data format
+     */
+    VECTOR(2),
+    /**
+     * Other image data format
+     */
+    OTHER(3);
 
     /**
      * Numerical value for enum constants
@@ -17,7 +26,7 @@ public enum OrbitDirection {
      * Constructor
      * @param s - the integer value identifier
      */
-    OrbitDirection(final int s)
+    DataFormat(final int s)
     {
         value = s;
     }
@@ -35,7 +44,7 @@ public enum OrbitDirection {
      */
     public static String getEnumConstantNameByValue(final int value)
     {
-        for (OrbitDirection type : values())
+        for (DataFormat type : values())
         {
             if ((String.valueOf(value)).equals(type.toString()))
             {

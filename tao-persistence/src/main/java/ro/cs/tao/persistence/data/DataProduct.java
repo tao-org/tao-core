@@ -20,6 +20,11 @@ import com.vividsolutions.jts.geom.Geometry;
 public class DataProduct {
 
 	/**
+	 * Data product alphanumerical identifier column maximum length
+	 */
+	private static final int DATA_PRODUCT_IDENTIFIER_COLUMN_MAX_LENGTH = 250;
+
+	/**
 	 * Data product name column maximum length
 	 */
 	private static final int DATA_PRODUCT_NAME_COLUMN_MAX_LENGTH = 250;
@@ -33,6 +38,14 @@ public class DataProduct {
 	@Column(name = "id")
 	@NotNull
 	private Long id;
+
+	/**
+	 * Data product name
+	 */
+	@Column(name = "identifier", unique = true)
+	@NotNull
+	@Size(min = 1, max = DATA_PRODUCT_IDENTIFIER_COLUMN_MAX_LENGTH)
+	private String identifier;
 
 	/**
 	 * Data product name
@@ -136,6 +149,14 @@ public class DataProduct {
 
 	public void setId(Long id) {
 		this.id = id;
+	}
+
+	public String getIdentifier() {
+		return identifier;
+	}
+
+	public void setIdentifier(String identifier) {
+		this.identifier = identifier;
 	}
 
 	public String getName() {

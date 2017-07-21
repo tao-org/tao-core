@@ -40,6 +40,7 @@ package ro.cs.tao.eodata;
 
 import com.vividsolutions.jts.geom.Geometry;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.eodata.serialization.CRSAdapter;
 import ro.cs.tao.eodata.serialization.GeometryAdapter;
 
@@ -58,7 +59,7 @@ public abstract class EOData {
 
     private String id;
     private String name;
-    private Format type;
+    private DataFormat type;
     private Geometry geometry;
     private Map<String, Attribute> attributes;
     private CoordinateReferenceSystem crs;
@@ -83,9 +84,9 @@ public abstract class EOData {
     }
 
     @XmlElement(name = "type")
-    public Format getType() { return type; }
+    public DataFormat getType() { return type; }
 
-    public void setType(Format type) { this.type = type; }
+    public void setType(DataFormat type) { this.type = type; }
 
     @XmlElement(name = "geometry")
     @XmlJavaTypeAdapter(GeometryAdapter.class)

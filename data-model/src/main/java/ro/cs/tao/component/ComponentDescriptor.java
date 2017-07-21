@@ -43,16 +43,19 @@ import ro.cs.tao.component.template.TemplateException;
 import ro.cs.tao.component.template.TemplateType;
 import ro.cs.tao.component.template.engine.EngineFactory;
 import ro.cs.tao.component.template.engine.TemplateEngine;
+import ro.cs.tao.component.validation.ValidationException;
 import ro.cs.tao.eodata.EOData;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
  * @author Cosmin Cara
  */
-public class Component extends Identifiable {
+public class ComponentDescriptor extends Identifiable {
 
     private String label;
     private String version;
@@ -65,11 +68,11 @@ public class Component extends Identifiable {
     private TemplateEngine templateEngine;
     private Template template;
     private List<Variable> variables;
-    private List<Parameter> parameters;
+    private List<ParameterDescriptor> parameters;
     private SourceDescriptor[] sources;
     private TargetDescriptor[] targets;
 
-    public Component() {
+    public ComponentDescriptor() {
         super();
     }
 
@@ -151,11 +154,14 @@ public class Component extends Identifiable {
         this.variables = variables;
     }
 
-    public List<Parameter> getParameters() {
-        return parameters;
+    public List<ParameterDescriptor> getParameterDescriptors() {
+        if (this.parameters == null) {
+            this.parameters = new ArrayList<>();
+        }
+        return this.parameters;
     }
 
-    public void setParameters(List<Parameter> parameters) {
+    public void setParameters(List<ParameterDescriptor> parameters) {
         this.parameters = parameters;
     }
 
@@ -241,41 +247,53 @@ public class Component extends Identifiable {
         return this.templateEngine;
     }
 
+    public void validate(Map<String, Object> parameterValues) throws ValidationException {
+        if (parameterValues != null) {
+            final List<ParameterDescriptor> parameterDescriptors =
+                    getParameterDescriptors().stream()
+                            .filter(d -> parameterValues.containsKey(d.getName()))
+                            .collect(Collectors.toList());
+            for (ParameterDescriptor descriptor : parameterDescriptors) {
+                descriptor.validate(parameterValues.get(descriptor.getName()));
+            }
+        }
+    }
+
     @Override
     public String defaultName() {
         return "NewComponent";
     }
 
     @Override
-    public Component copy() {
-        Component newComponent = new Component();
-        newComponent.label = this.label;
-        newComponent.version = this.version;
-        newComponent.description = this.description;
-        newComponent.authors = this.authors;
-        newComponent.copyright = this.copyright;
-        newComponent.fileLocation = this.fileLocation;
-        newComponent.workingDirectory = this.workingDirectory;
-        newComponent.templateType = this.templateType;
+    public ComponentDescriptor copy() {
+        ComponentDescriptor newDescriptor = new ComponentDescriptor();
+        newDescriptor.label = this.label;
+        newDescriptor.version = this.version;
+        newDescriptor.description = this.description;
+        newDescriptor.authors = this.authors;
+        newDescriptor.copyright = this.copyright;
+        newDescriptor.fileLocation = this.fileLocation;
+        newDescriptor.workingDirectory = this.workingDirectory;
+        newDescriptor.templateType = this.templateType;
         if (this.template != null) {
-            newComponent.template = this.template.copy();
+            newDescriptor.template = this.template.copy();
         }
         if (this.variables != null) {
-            newComponent.variables = this.variables.stream().map(Variable::copy).collect(Collectors.toList());
+            newDescriptor.variables = this.variables.stream().map(Variable::copy).collect(Collectors.toList());
         }
         if (this.parameters != null) {
-            newComponent.parameters = this.parameters.stream().map(p -> {
-                Parameter parameter = p.copy();
+            newDescriptor.parameters = this.parameters.stream().map(p -> {
+                ParameterDescriptor parameter = p.copy();
                 parameter.setName(p.getName());
                 return p;
             }).collect(Collectors.toList());
         }
         if (this.sources != null) {
-            newComponent.sources = Arrays.copyOf(this.sources, this.sources.length);
+            newDescriptor.sources = Arrays.copyOf(this.sources, this.sources.length);
         }
         if (this.targets != null) {
-            newComponent.targets = Arrays.copyOf(this.targets, this.targets.length);
+            newDescriptor.targets = Arrays.copyOf(this.targets, this.targets.length);
         }
-        return newComponent;
+        return newDescriptor;
     }
 }
