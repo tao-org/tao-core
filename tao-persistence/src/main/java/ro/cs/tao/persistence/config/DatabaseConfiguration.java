@@ -9,10 +9,13 @@ import java.util.Properties;
 import javax.annotation.Resource;
 import javax.sql.DataSource;
 
+import com.mchange.v2.c3p0.DataSources;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.core.env.Environment;
 import org.springframework.orm.jpa.JpaDialect;
 import org.springframework.orm.jpa.JpaTransactionManager;
@@ -26,7 +29,7 @@ import com.mchange.v2.c3p0.ComboPooledDataSource;
 @Configuration
 @EnableTransactionManagement
 @PropertySource("classpath:persistence/persistence.properties")
-public class DatabaseConfiguration {
+public class DatabaseConfiguration implements ApplicationListener<ContextClosedEvent> {
 
 	/**
 	 * Constant for the database driver class property name (within .properties
@@ -84,6 +87,12 @@ public class DatabaseConfiguration {
 	 * file)
 	 */
 	private static final String PROPERTY_NAME_HIBERNATE_DIALECT = "hibernate.dialect";
+
+	/**
+	 * Constant for the spring JPA hibernate dialect property name (within .properties
+	 * file)
+	 */
+	private static final String PROPERTY_NAME_SPRING_JPA_HIBERNATE_DIALECT = "spring.jpa.properties.hibernate.dialect";
 
 	/**
 	 * Constant for the hibernate format sql flag property name (within
@@ -205,6 +214,8 @@ public class DatabaseConfiguration {
 		final Properties jpaProperties = new Properties();
 		jpaProperties.put(PROPERTY_NAME_HIBERNATE_DIALECT,
 				environment.getRequiredProperty(PROPERTY_NAME_HIBERNATE_DIALECT));
+		jpaProperties.put(PROPERTY_NAME_SPRING_JPA_HIBERNATE_DIALECT,
+		  environment.getRequiredProperty(PROPERTY_NAME_SPRING_JPA_HIBERNATE_DIALECT));
 		jpaProperties.put(PROPERTY_NAME_HIBERNATE_FORMAT_SQL,
 				environment.getRequiredProperty(PROPERTY_NAME_HIBERNATE_FORMAT_SQL));
 		jpaProperties.put(PROPERTY_NAME_HIBERNATE_NAMING_STRATEGY,
@@ -220,6 +231,26 @@ public class DatabaseConfiguration {
 
 		entityManagerFactoryBean.setJpaProperties(jpaProperties);
 		return entityManagerFactoryBean;
+	}
+
+	@Override
+	public void onApplicationEvent(final ContextClosedEvent event)
+	{
+		for (ComboPooledDataSource dataSource: createdBeans)
+		{
+			System.out.println("Closing database connexions ...");
+			dataSource.close();
+			try
+			{
+				DataSources.destroy(dataSource);
+			}
+			catch (SQLException e)
+			{
+				System.err.println(e.getMessage());
+				System.err.println(ExceptionUtils.getStackTrace(e));
+			}
+		}
+		createdBeans.clear();
 	}
 
 }

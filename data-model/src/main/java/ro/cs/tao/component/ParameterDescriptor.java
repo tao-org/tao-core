@@ -38,12 +38,23 @@
 
 package ro.cs.tao.component;
 
+import ro.cs.tao.component.validation.CompositeValidator;
+import ro.cs.tao.component.validation.NotEmptyValidator;
+import ro.cs.tao.component.validation.NotNullValidator;
+import ro.cs.tao.component.validation.TypeValidator;
+import ro.cs.tao.component.validation.ValidationException;
+import ro.cs.tao.component.validation.Validator;
+import ro.cs.tao.component.validation.ValidatorRegistry;
+import ro.cs.tao.component.validation.ValueSetValidator;
+
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Cosmin Cara
  */
-public class Parameter extends Identifiable {
+public class ParameterDescriptor extends Identifiable {
     private ParameterType type;
     private Class<?> dataType;
     private String defaultValue;
@@ -54,13 +65,14 @@ public class Parameter extends Identifiable {
     private String format;
     private Boolean notNull;
     private Boolean notEmpty;
+    private Validator customValidator;
+    private Validator validator;
 
+    public ParameterDescriptor() { super(); }
 
-    public Parameter() { super(); }
-
-    private Parameter(String name, ParameterType type, Class<?> dataType, String defaultValue,
-                      String description, String label, String unit, String[] valueSet,
-                      String format, Boolean notNull, Boolean notEmpty) {
+    private ParameterDescriptor(String name, ParameterType type, Class<?> dataType, String defaultValue,
+                                String description, String label, String unit, String[] valueSet,
+                                String format, Boolean notNull, Boolean notEmpty) {
         super(name);
         this.type = type;
         this.dataType = dataType;
@@ -74,7 +86,7 @@ public class Parameter extends Identifiable {
         this.notEmpty = notEmpty;
     }
 
-    public Parameter(String name) {
+    public ParameterDescriptor(String name) {
         super(name);
     }
 
@@ -142,7 +154,7 @@ public class Parameter extends Identifiable {
         this.format = format;
     }
 
-    public Boolean getNotNull() {
+    public Boolean isNotNull() {
         return notNull;
     }
 
@@ -150,12 +162,18 @@ public class Parameter extends Identifiable {
         this.notNull = notNull;
     }
 
-    public Boolean getNotEmpty() {
+    public Boolean isNotEmpty() {
         return notEmpty;
     }
 
     public void setNotEmpty(Boolean notEmpty) {
         this.notEmpty = notEmpty;
+    }
+
+    public void setValidator(Validator customValidator) { this.customValidator = customValidator; }
+
+    public void validate(Object value) throws ValidationException {
+        createValidator().validate(this, value);
     }
 
     @Override
@@ -164,10 +182,37 @@ public class Parameter extends Identifiable {
     }
 
     @Override
-    public Parameter copy() {
-        return new Parameter(defaultName(), this.type, this.dataType, this.defaultValue,
-                             this.description, this.label, this.unit,
-                             Arrays.copyOf(this.valueSet, this.valueSet.length),
-                             this.format, this.notNull, this.notEmpty);
+    public ParameterDescriptor copy() {
+        return new ParameterDescriptor(defaultName(), this.type, this.dataType, this.defaultValue,
+                                       this.description, this.label, this.unit,
+                                       Arrays.copyOf(this.valueSet, this.valueSet.length),
+                                       this.format, this.notNull, this.notEmpty);
+    }
+
+    protected Validator createValidator() {
+        if (this.validator == null) {
+            List<Validator> validators = new ArrayList<>(3);
+
+            if (this.notNull) {
+                validators.add(ValidatorRegistry.INSTANCE.getValidator(NotNullValidator.class));
+            }
+            validators.add(ValidatorRegistry.INSTANCE.getValidator(TypeValidator.class));
+            if (this.notEmpty) {
+                validators.add(ValidatorRegistry.INSTANCE.getValidator(NotEmptyValidator.class));
+            }
+            if (this.notNull) {
+                validators.add(ValidatorRegistry.INSTANCE.getValidator(NotNullValidator.class));
+            }
+            if (this.valueSet != null) {
+                validators.add(ValidatorRegistry.INSTANCE.getValidator(ValueSetValidator.class));
+            }
+            if (this.customValidator != null) {
+                validators.add(this.customValidator);
+            }
+            this.validator = validators.size() > 1 ?
+                    new CompositeValidator(validators) :
+                    validators.get(0);
+        }
+        return this.validator;
     }
 }

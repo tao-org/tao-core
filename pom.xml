@@ -18,6 +18,7 @@
         <module>service-registry</module>
         <module>tao-utils</module>
         <module>topology-management</module>
+        <module>aws-data-source</module>
     </modules>
 
     <properties>

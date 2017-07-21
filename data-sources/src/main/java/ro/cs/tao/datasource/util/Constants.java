@@ -122,4 +122,6 @@ public class Constants {
     public static final String FOLDER_DATASTRIP = "DATASTRIP";
     public static final String FOLDER_IMG_DATA = "IMG_DATA";
     public static final String FOLDER_QI_DATA = "QI_DATA";
+
+    public static final String URL_SEPARATOR = "/";
 }
