@@ -89,7 +89,7 @@ public class PersistenceManagerTest {
 
     }
 
-    @Test
+    /*@Test
     public void save_new_data_product()
     {
         try {
@@ -133,5 +133,5 @@ public class PersistenceManagerTest {
             e.printStackTrace();
         }
 
-    }
+    }*/
 }
