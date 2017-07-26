@@ -96,7 +96,7 @@ CREATE TABLE tao.processing_operation
 	name varchar(250) NULL,
 	progress_pattern varchar(500) NULL,
 	error_pattern varchar(500) NULL,
-	source_id integer NULL,
+	source_id integer NOT NULL,
 	is_handling_output_name boolean NULL
 );
 

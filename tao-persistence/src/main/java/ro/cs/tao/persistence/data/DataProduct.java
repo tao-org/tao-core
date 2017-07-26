@@ -1,6 +1,7 @@
 package ro.cs.tao.persistence.data;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -117,7 +118,7 @@ public class DataProduct {
 	private Integer height;
 	
 	/**
-	 * The the user to which this product belongs to
+	 * The user to which this product belongs to
 	 */
 	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "user_id", nullable = true)
@@ -142,6 +143,12 @@ public class DataProduct {
 	 */
 	@Column(name = "modified")
 	private LocalDateTime modifiedDate;
+
+	/**
+	 * Data Product metadata
+	 */
+	@OneToMany (fetch = FetchType.EAGER, mappedBy = "dataProduct")
+	private Set<DataProductMetadata> metadataSet;
 
 	public Long getId() {
 		return id;
@@ -269,5 +276,13 @@ public class DataProduct {
 
 	public void setModifiedDate(LocalDateTime modifiedDate) {
 		this.modifiedDate = modifiedDate;
+	}
+
+	public Set<DataProductMetadata> getMetadataSet() {
+		return metadataSet;
+	}
+
+	public void setMetadataSet(Set<DataProductMetadata> metadataSet) {
+		this.metadataSet = metadataSet;
 	}
 }

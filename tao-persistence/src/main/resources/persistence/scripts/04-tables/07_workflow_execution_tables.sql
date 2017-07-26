@@ -19,7 +19,7 @@ CREATE TABLE tao.workflow_graph
 (
 	id bigint NOT NULL,
 	name varchar(250) NOT NULL,
-	creation_date timestamp without time zone NULL,
+	created timestamp without time zone NOT NULL,
 	user_id integer NOT NULL,
 	definition_path varchar(512) NOT NULL,
 	visibility_id integer NOT NULL,

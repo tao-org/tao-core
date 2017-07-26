@@ -3,6 +3,7 @@ package ro.cs.tao.persistence.data;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.util.Set;
 
 /**
  * Created by oana on 7/18/2017.
@@ -72,6 +73,12 @@ public class DataQuery {
     @Column(name = "timeout")
     private Integer timeout;
 
+    /**
+     * Data Query parameters
+     */
+    @OneToMany (fetch = FetchType.EAGER, mappedBy = "dataQuery")
+    private Set<DataQueryParameter> dataQueryParameters;
+
     public Integer getId() {
         return id;
     }
@@ -134,5 +141,13 @@ public class DataQuery {
 
     public void setTimeout(Integer timeout) {
         this.timeout = timeout;
+    }
+
+    public Set<DataQueryParameter> getDataQueryParameters() {
+        return dataQueryParameters;
+    }
+
+    public void setDataQueryParameters(Set<DataQueryParameter> dataQueryParameters) {
+        this.dataQueryParameters = dataQueryParameters;
     }
 }
