@@ -1,4 +1,14 @@
-﻿-- Data formats
+﻿-- Processing components visibility
+
+INSERT INTO tao.component_visibility (visibility) VALUES ('SYSTEM');
+
+INSERT INTO tao.component_visibility (visibility) VALUES ('USER');
+
+INSERT INTO tao.component_visibility (visibility) VALUES ('CONTRIBUTOR');
+
+
+
+-- Data formats
 
 INSERT INTO tao.data_format (type) VALUES ('RASTER');
 
@@ -33,6 +43,14 @@ INSERT INTO tao.data_type (type) VALUES ('Short');
 INSERT INTO tao.data_type (type) VALUES ('Date');
 
 INSERT INTO tao.data_type (type) VALUES ('Polygon2D');
+
+
+
+-- Operation source
+
+INSERT INTO tao.operation_source (source) VALUES ('USER');
+
+INSERT INTO tao.operation_source (source) VALUES ('SYSTEM');
 
 
 
@@ -107,3 +125,12 @@ VALUES (3, 'cloudcoverpercentage');
 
 INSERT INTO tao.query_parameter (data_type_id, name)
 VALUES (4, 'relativeOrbitNumber');
+
+
+
+-- Workflow graph visibility
+
+INSERT INTO tao.workflow_graph_visibility (visibility) VALUES ('PRIVATE');
+
+INSERT INTO tao.workflow_graph_visibility (visibility) VALUES ('PUBLIC');
+

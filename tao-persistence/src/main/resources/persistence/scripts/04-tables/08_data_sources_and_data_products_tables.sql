@@ -170,7 +170,7 @@ CREATE TABLE tao.data_product_metadata
 (
 	data_product_id integer NOT NULL,
 	attribute_name varchar(250) NOT NULL,
-	parameter_value varchar(500) NOT NULL
+	attribute_value varchar(500) NOT NULL
 );
 
 ALTER TABLE tao.data_product_metadata ADD CONSTRAINT PK_data_product_metadata
@@ -242,7 +242,7 @@ CREATE TABLE tao.data_query_parameters
 (
 	data_query_id integer NOT NULL,
 	query_parameter_id integer NOT NULL,
-	optional boolean,
+	optional boolean NOT NULL,
     min_value varchar(250),
     max_value varchar(250),
     value varchar(250)
