@@ -15,6 +15,7 @@ import ro.cs.tao.datasource.common.QueryException;
 import ro.cs.tao.datasource.common.QueryParameter;
 import ro.cs.tao.datasource.remote.scihub.SciHubDataQuery;
 import ro.cs.tao.datasource.remote.scihub.SciHubDataSource;
+import ro.cs.tao.datasource.remote.scihub.SentinelDownloader;
 import ro.cs.tao.datasource.util.Polygon2D;
 import ro.cs.tao.eodata.EOData;
 import ro.cs.tao.eodata.EOProduct;
@@ -84,12 +85,13 @@ public class PersistenceManagerTest {
               "SciHub Sentinel-1 Data Source", "No description");
 
         } catch (URISyntaxException e) {
-            e.printStackTrace();
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
         }
 
     }
 
-    /*@Test
+    @Test
     public void save_new_data_product()
     {
         try {
@@ -103,23 +105,19 @@ public class PersistenceManagerTest {
             DataQuery<EOData> query = dataSource.createQuery();
             query.addParameter("platformName", "Sentinel-2");
             QueryParameter begin = query.createParameter("beginPosition", Date.class);
-            begin.setMinValue(Date.from(LocalDateTime.of(2016, 2, 1, 0, 0, 0, 0)
+            begin.setMinValue(Date.from(LocalDateTime.of(2017, 5, 30, 0, 0, 0, 0)
               .atZone(ZoneId.systemDefault())
               .toInstant()));
-            begin.setMaxValue(Date.from(LocalDateTime.of(2017, 2, 1, 0, 0, 0, 0)
+            begin.setMaxValue(Date.from(LocalDateTime.of(2017, 6, 1, 0, 0, 0, 0)
               .atZone(ZoneId.systemDefault())
               .toInstant()));
-            Polygon2D aoi = new Polygon2D();
-            aoi.append(-9.9866909768, 23.4186029838);
-            aoi.append(-8.9037319257, 23.4186029838);
-            aoi.append(-8.9037319257, 24.413397299);
-            aoi.append(-9.9866909768, 24.413397299);
-            aoi.append(-9.9866909768, 23.4186029838);
-            query.addParameter("footprint", aoi);
-
-            query.addParameter("cloudcoverpercentage",100.);
+            query.addParameter(begin);
+            query.addParameter("polarisationMode", "VV");
+            query.addParameter("sensorOperationalMode", "IW");
+            query.addParameter("productType", "SLC");
             query.setPageSize(50);
             query.setMaxResults(83);
+            SentinelDownloader downloader = new SentinelDownloader("E:\\NewFormat");
             List<EOData> results = query.execute();
             if(results.size() > 0)
             {
@@ -130,8 +128,9 @@ public class PersistenceManagerTest {
             }
 
         } catch (URISyntaxException | QueryException e) {
-            e.printStackTrace();
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
         }
 
-    }*/
+    }
 }
