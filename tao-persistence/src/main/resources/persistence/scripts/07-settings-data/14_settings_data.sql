@@ -46,6 +46,18 @@ INSERT INTO tao.data_type (type) VALUES ('Polygon2D');
 
 
 
+-- Job status
+
+INSERT INTO tao.job_status (status) VALUES ('RUNNING');
+INSERT INTO tao.job_status (status) VALUES ('PAUSED');
+INSERT INTO tao.job_status (status) VALUES ('COMPLETED');
+INSERT INTO tao.job_status (status) VALUES ('CANCELLED');
+INSERT INTO tao.job_status (status) VALUES ('ERROR');
+INSERT INTO tao.job_status (status) VALUES ('PLANNED');
+INSERT INTO tao.job_status (status) VALUES ('SUSPENDED');
+
+
+
 -- Operation source
 
 INSERT INTO tao.operation_source (source) VALUES ('USER');
@@ -125,6 +137,15 @@ VALUES (3, 'cloudcoverpercentage');
 
 INSERT INTO tao.query_parameter (data_type_id, name)
 VALUES (4, 'relativeOrbitNumber');
+
+
+
+-- Task status
+
+INSERT INTO tao.task_status (status) VALUES ('PENDING');
+INSERT INTO tao.task_status (status) VALUES ('RUNNING');
+INSERT INTO tao.task_status (status) VALUES ('COMPLETED');
+INSERT INTO tao.task_status (status) VALUES ('ERROR');
 
 
 

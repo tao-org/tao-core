@@ -70,7 +70,7 @@ public class PersistenceManagerTest {
         }
     }
 
-    @Test
+    /*@Test
     public void save_new_data_source()
     {
         try {
@@ -132,5 +132,5 @@ public class PersistenceManagerTest {
             Assert.fail(e.getMessage());
         }
 
-    }
+    }*/
 }

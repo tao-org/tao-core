@@ -13,8 +13,14 @@ public class DataProductMetadataKey implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null|| getClass() != o.getClass()) return false;
+        if (this == o)
+        {
+            return true;
+        }
+        if (o == null|| getClass() != o.getClass())
+        {
+            return false;
+        }
 
         DataProductMetadataKey that = (DataProductMetadataKey) o;
 
@@ -32,7 +38,7 @@ public class DataProductMetadataKey implements Serializable {
     public int hashCode() {
         int result;
         result = (dataProduct != null ? dataProduct.hashCode() : 0);
-        result =31* result + (attributeName != null ? attributeName.hashCode() : 0);
+        result = 31 * result + (attributeName != null ? attributeName.hashCode() : 0);
         return result;
     }
 }

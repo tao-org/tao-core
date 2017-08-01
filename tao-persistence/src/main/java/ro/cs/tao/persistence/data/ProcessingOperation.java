@@ -3,6 +3,7 @@ package ro.cs.tao.persistence.data;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.util.Set;
 
 /**
  * Created by oana on 7/25/2017.
@@ -71,6 +72,15 @@ public class ProcessingOperation {
     @Column(name = "is_handling_output_name")
     private Boolean isHandlingOutputName;
 
+    /**
+     * The operations parameters
+     */
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinTable(name = "tao.operation_parameters",
+      joinColumns = {@JoinColumn(name = "operation_id", referencedColumnName = "id") },
+      inverseJoinColumns = {@JoinColumn(name = "parameter_id", referencedColumnName = "id")})
+    private Set<OperationParameter> parameters;
+
     public Integer getId() {
         return id;
     }
@@ -117,5 +127,13 @@ public class ProcessingOperation {
 
     public void setIsHandlingOutputName(Boolean isHandlingOutputName) {
         this.isHandlingOutputName = isHandlingOutputName;
+    }
+
+    public Set<OperationParameter> getParameters() {
+        return parameters;
+    }
+
+    public void setParameters(Set<OperationParameter> parameters) {
+        this.parameters = parameters;
     }
 }

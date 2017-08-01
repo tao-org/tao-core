@@ -145,7 +145,11 @@ CREATE TABLE tao.task
 	start_time timestamp without time zone NULL,
 	end_time timestamp without time zone NULL,
 	job_id bigint NOT NULL,
-	task_status_id integer NOT NULL
+	execution_node_id integer NOT NULL,
+	task_status_id integer NOT NULL,
+	used_CPU integer NULL,
+    used_RAM integer NULL,
+    used_HDD integer NULL
 );
 
 ALTER TABLE tao.task ADD CONSTRAINT PK_task PRIMARY KEY (id);
@@ -155,6 +159,9 @@ ALTER TABLE tao.task ADD CONSTRAINT FK_task_graph_node
 
 ALTER TABLE tao.task ADD CONSTRAINT FK_task_job
 	FOREIGN KEY (job_id) REFERENCES tao.job (id) ON DELETE No Action ON UPDATE No Action;
+
+ALTER TABLE tao.task ADD CONSTRAINT FK_task_execution_node
+	FOREIGN KEY (execution_node_id) REFERENCES tao.execution_node (id) ON DELETE No Action ON UPDATE No Action;
 
 ALTER TABLE tao.task ADD CONSTRAINT FK_task_task_status
 	FOREIGN KEY (task_status_id) REFERENCES tao.task_status (id) ON DELETE No Action ON UPDATE No Action;
@@ -193,23 +200,5 @@ ALTER TABLE tao.task_output ADD CONSTRAINT FK_task_output_task
 	FOREIGN KEY (task_id) REFERENCES tao.task (id) ON DELETE No Action ON UPDATE No Action;
 
 -------------------------------------------------------------------------------
--- table: task_resources
-DROP TABLE IF EXISTS tao.task_resources CASCADE;
 
-CREATE TABLE tao.task_resources
-(
-	task_id bigint NOT NULL,
-	execution_node_id integer NOT NULL,
-	used_CPU integer NULL,
-	used_RAM integer NULL,
-	used_HDD integer NULL
-);
-
-ALTER TABLE tao.task_resources ADD CONSTRAINT PK_task_resources PRIMARY KEY (task_id,execution_node_id);
-
-ALTER TABLE tao.task_resources ADD CONSTRAINT FK_task_resources_execution_node
-	FOREIGN KEY (execution_node_id) REFERENCES tao.execution_node (id) ON DELETE No Action ON UPDATE No Action;
-
-ALTER TABLE tao.task_resources ADD CONSTRAINT FK_task_resources_task
-	FOREIGN KEY (task_id) REFERENCES tao.task (id) ON DELETE No Action ON UPDATE No Action;
 

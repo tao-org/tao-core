@@ -14,8 +14,14 @@ public class DataQueryParameterKey implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null|| getClass() != o.getClass()) return false;
+        if (this == o)
+        {
+            return true;
+        }
+        if (o == null|| getClass() != o.getClass())
+        {
+            return false;
+        }
 
         DataQueryParameterKey that = (DataQueryParameterKey) o;
 
@@ -33,7 +39,7 @@ public class DataQueryParameterKey implements Serializable {
     public int hashCode() {
         int result;
         result = (dataQuery != null ? dataQuery.hashCode() : 0);
-        result =31* result + (queryParameter != null ? queryParameter.hashCode() : 0);
+        result = 31 * result + (queryParameter != null ? queryParameter.hashCode() : 0);
         return result;
     }
 }
