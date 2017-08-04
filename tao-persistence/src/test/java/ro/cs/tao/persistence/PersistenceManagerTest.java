@@ -137,4 +137,21 @@ public class PersistenceManagerTest {
         }
 
     }
+
+    @Test
+    public void save_new_execution_node()
+    {
+        try
+        {
+            // add a new execution node for test
+            final Integer executionNodeId = persistenceManager.saveExecutionNode("No name", "No description", "No IP", null, "username", "password", 10, 10, 10);
+            // check persisted ID
+            Assert.assertTrue(executionNodeId != null && executionNodeId > 0);
+        }
+        catch (Exception e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
 }

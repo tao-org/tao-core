@@ -15,10 +15,12 @@ import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.eodata.enums.PixelType;
 import ro.cs.tao.eodata.enums.SensorType;
 import ro.cs.tao.persistence.data.DataProduct;
+import ro.cs.tao.persistence.data.ExecutionNode;
 import ro.cs.tao.persistence.data.User;
 import ro.cs.tao.persistence.data.enums.DataSourceType;
 import ro.cs.tao.persistence.repository.DataProductRepository;
 import ro.cs.tao.persistence.repository.DataSourceRepository;
+import ro.cs.tao.persistence.repository.ExecutionNodeRepository;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -43,6 +45,10 @@ public class PersistenceManager {
     /** CRUD Repository for DataProduct entities */
     @Autowired
     private DataProductRepository dataProductRepository;
+
+    /** CRUD Repository for ExecutionNode entities */
+    @Autowired
+    private ExecutionNodeRepository executionNodeRepository;
 
     @Transactional
     public <R extends EOData, Q extends DataQuery<R>, S extends DataSource<R, Q>> Integer saveDataSource(S dataSource, DataSourceType dataSourceType, String name, String description)
@@ -131,5 +137,50 @@ public class PersistenceManager {
         }
 
         return dataProductEnt.getId();
+    }
+
+    @Transactional
+    public Integer saveExecutionNode(String name, String description, String ipAddress, String sshKey,
+                                     String username, String password,
+                                     Integer totalCPU, Integer totalRAM, Integer totalHDD)
+    {
+        // check method parameters
+        if(name == null || ipAddress == null || username == null || password == null ||
+          totalCPU == null || totalHDD == null || totalRAM == null)
+        {
+            // TODO throw exception and remove code above
+            System.out.println("Invalid arguments for saving an execution node!");
+            return 0;
+        }
+
+        ExecutionNode executionNodeEnt = new ExecutionNode();
+        // set all info
+        executionNodeEnt.setName(name);
+        if(description != null)
+        {
+            executionNodeEnt.setDescription(description);
+        }
+        executionNodeEnt.setIpAddress(ipAddress);
+        if(sshKey != null)
+        {
+            executionNodeEnt.setSshKey(sshKey);
+        }
+        executionNodeEnt.setUsername(username);
+        executionNodeEnt.setPassword(password);
+        executionNodeEnt.setTotalCPU(totalCPU);
+        executionNodeEnt.setTotalRAM(totalRAM);
+        executionNodeEnt.setTotalHDD(totalHDD);
+        executionNodeEnt.setActive(true);
+
+        // save the ExecutionNode entity
+        executionNodeEnt = executionNodeRepository.save(executionNodeEnt);
+
+        if(executionNodeEnt.getId() == null)
+        {
+            // TODO throw exception
+            System.out.println("Error saving execution node " + executionNodeEnt.getName());
+        }
+
+        return executionNodeEnt.getId();
     }
 }
