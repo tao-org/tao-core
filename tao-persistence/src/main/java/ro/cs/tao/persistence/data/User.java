@@ -4,6 +4,7 @@ import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
+import java.util.Set;
 
 /**
  * Created by oana on 7/13/2017.
@@ -141,6 +142,12 @@ public class User {
     @NotNull
     private Boolean active;
 
+    /**
+     * User preferences
+     */
+    @OneToMany (fetch = FetchType.EAGER, mappedBy = "user")
+    private Set<UserPreference> preferences;
+
     public Integer getId() {
         return id;
     }
@@ -251,5 +258,13 @@ public class User {
 
     public void setActive(Boolean active) {
         this.active = active;
+    }
+
+    public Set<UserPreference> getPreferences() {
+        return preferences;
+    }
+
+    public void setPreferences(Set<UserPreference> preferences) {
+        this.preferences = preferences;
     }
 }

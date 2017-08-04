@@ -45,13 +45,12 @@ DROP TABLE IF EXISTS tao.user_prefs CASCADE;
 
 CREATE TABLE tao.user_prefs
 (
-	id integer NOT NULL,
 	user_id integer NOT NULL,
 	pref_key varchar(50) NOT NULL,
 	pref_value varchar(250) NOT NULL
 );
 
-ALTER TABLE tao.user_prefs ADD CONSTRAINT PK_user_prefs PRIMARY KEY (id);
+ALTER TABLE tao.user_prefs ADD CONSTRAINT PK_user_prefs PRIMARY KEY (user_id, pref_key);
 
 ALTER TABLE tao.user_prefs ADD CONSTRAINT FK_user_prefs_user
 	FOREIGN KEY (user_id) REFERENCES tao."user" (id) ON DELETE No Action ON UPDATE No Action;

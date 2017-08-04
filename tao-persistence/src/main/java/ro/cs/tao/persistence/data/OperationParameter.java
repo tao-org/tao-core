@@ -3,6 +3,7 @@ package ro.cs.tao.persistence.data;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.util.Set;
 
 /**
  * Created by oana on 7/28/2017.
@@ -91,6 +92,21 @@ public class OperationParameter {
     @Column(name = "type_id")
     private Integer type;
 
+    /**
+     * Depending on its type, a template parameter can have other regular parameters
+     */
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinTable(name = "tao.parameter_parameter",
+      joinColumns = {@JoinColumn(name = "template_parameter_id", referencedColumnName = "id") },
+      inverseJoinColumns = {@JoinColumn(name = "regular_parameter_id", referencedColumnName = "id")})
+    private Set<OperationParameter> parameters;
+
+    /**
+     * Parameter values set
+     */
+    @OneToMany (fetch = FetchType.EAGER, mappedBy = "operationParameter")
+    private Set<OperationParameterValue> valueSet;
+
     public Long getId() {
         return id;
     }
@@ -153,5 +169,21 @@ public class OperationParameter {
 
     public void setType(Integer type) {
         this.type = type;
+    }
+
+    public Set<OperationParameter> getParameters() {
+        return parameters;
+    }
+
+    public void setParameters(Set<OperationParameter> parameters) {
+        this.parameters = parameters;
+    }
+
+    public Set<OperationParameterValue> getValueSet() {
+        return valueSet;
+    }
+
+    public void setValueSet(Set<OperationParameterValue> valueSet) {
+        this.valueSet = valueSet;
     }
 }
