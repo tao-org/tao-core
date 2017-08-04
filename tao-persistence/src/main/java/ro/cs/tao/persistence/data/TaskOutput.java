@@ -7,7 +7,10 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 /**
- * Created by oana on 7/27/2017.
+ * TaskOutput persistent entity
+ *
+ * @author oana
+ *
  */
 @Entity
 @Table(name = "tao.task_output")

@@ -7,7 +7,10 @@ import java.time.LocalDateTime;
 import java.util.Set;
 
 /**
- * Created by oana on 7/25/2017.
+ * WorkflowGraph persistent entity
+ *
+ * @author oana
+ *
  */
 @Entity
 @Table(name = "tao.workflow_graph")

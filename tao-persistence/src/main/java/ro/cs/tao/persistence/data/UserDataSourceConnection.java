@@ -8,7 +8,10 @@ import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
 
 /**
- * Created by oana on 8/4/2017.
+ * UserDataSourceConnection persistent entity
+ *
+ * @author oana
+ *
  */
 @Entity
 @Table(name = "tao.user_data_source_connection")

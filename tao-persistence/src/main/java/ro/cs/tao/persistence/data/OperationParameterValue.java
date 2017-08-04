@@ -7,7 +7,10 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 /**
- * Created by oana on 8/2/2017.
+ * OperationParameterValue persistent entity
+ *
+ * @author oana
+ *
  */
 @Entity
 @Table(name = "tao.parameter_values_set")

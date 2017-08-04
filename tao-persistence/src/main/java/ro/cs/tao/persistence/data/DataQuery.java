@@ -6,7 +6,10 @@ import javax.validation.constraints.Size;
 import java.util.Set;
 
 /**
- * Created by oana on 7/18/2017.
+ * DataQuery persistent entity
+ *
+ * @author oana
+ *
  */
 @Entity
 @Table(name = "tao.data_query")

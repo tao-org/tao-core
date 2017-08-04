@@ -6,7 +6,10 @@ import javax.validation.constraints.Size;
 import java.util.Set;
 
 /**
- * Created by oana on 7/25/2017.
+ * ProcessingOperation persistent entity
+ *
+ * @author oana
+ *
  */
 @Entity
 @Table(name = "tao.processing_operation")
