@@ -74,6 +74,14 @@ INSERT INTO tao.orbit_direction (direction) VALUES ('DESCENDING');
 
 
 
+-- Parameter type
+
+INSERT INTO tao.parameter_type (type) VALUES ('RegularParameter');
+
+INSERT INTO tao.parameter_type (type) VALUES ('TemplateParameter');
+
+
+
 -- Pixel types
 
 INSERT INTO tao.pixel_type (type) VALUES ('UINT8');

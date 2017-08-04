@@ -81,6 +81,12 @@ public class ProcessingOperation {
       inverseJoinColumns = {@JoinColumn(name = "parameter_id", referencedColumnName = "id")})
     private Set<OperationParameter> parameters;
 
+    /**
+     * The operations variables
+     */
+    @OneToMany (fetch = FetchType.EAGER, mappedBy = "processingOperation")
+    private Set<OperationVariable> variables;
+
     public Integer getId() {
         return id;
     }
@@ -135,5 +141,13 @@ public class ProcessingOperation {
 
     public void setParameters(Set<OperationParameter> parameters) {
         this.parameters = parameters;
+    }
+
+    public Set<OperationVariable> getVariables() {
+        return variables;
+    }
+
+    public void setVariables(Set<OperationVariable> variables) {
+        this.variables = variables;
     }
 }
