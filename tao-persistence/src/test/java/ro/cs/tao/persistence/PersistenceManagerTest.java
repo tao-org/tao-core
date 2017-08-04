@@ -70,7 +70,7 @@ public class PersistenceManagerTest {
         }
     }
 
-    /*@Test
+    @Test
     public void save_new_data_source()
     {
         try {
@@ -126,11 +126,15 @@ public class PersistenceManagerTest {
 
                 persistenceManager.saveDataProduct(dataProduct, null);
             }
+            else
+            {
+                logger.warning("save_new_data_product() - No result found!");
+            }
 
         } catch (URISyntaxException | QueryException e) {
             logger.error(ExceptionUtils.getStackTrace(e));
             Assert.fail(e.getMessage());
         }
 
-    }*/
+    }
 }

@@ -26,7 +26,7 @@ public class UserPreference{
     private static final int USER_PREF_VALUE_COLUMN_MAX_LENGTH = 250;
 
     /**
-     * The user to which this product belongs to
+     * The user to which this preference belongs to
      */
     @Id
     @ManyToOne(fetch = FetchType.EAGER)

@@ -148,6 +148,18 @@ public class User {
     @OneToMany (fetch = FetchType.EAGER, mappedBy = "user")
     private Set<UserPreference> preferences;
 
+    /**
+     * User data queries
+     */
+    @OneToMany (fetch = FetchType.EAGER, mappedBy = "user")
+    private Set<UserDataQuery> userDataQueries;
+
+    /**
+     * User data sources connections
+     */
+    @OneToMany (fetch = FetchType.EAGER, mappedBy = "user")
+    private Set<UserDataSourceConnection> userDataSourceConnections;
+
     public Integer getId() {
         return id;
     }
@@ -266,5 +278,21 @@ public class User {
 
     public void setPreferences(Set<UserPreference> preferences) {
         this.preferences = preferences;
+    }
+
+    public Set<UserDataQuery> getUserDataQueries() {
+        return userDataQueries;
+    }
+
+    public void setUserDataQueries(Set<UserDataQuery> userDataQueries) {
+        this.userDataQueries = userDataQueries;
+    }
+
+    public Set<UserDataSourceConnection> getUserDataSourceConnections() {
+        return userDataSourceConnections;
+    }
+
+    public void setUserDataSourceConnections(Set<UserDataSourceConnection> userDataSourceConnections) {
+        this.userDataSourceConnections = userDataSourceConnections;
     }
 }
