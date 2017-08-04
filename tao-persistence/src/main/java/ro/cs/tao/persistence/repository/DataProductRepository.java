@@ -19,11 +19,18 @@ import ro.cs.tao.persistence.data.DataProduct;
 public interface DataProductRepository extends PagingAndSortingRepository<DataProduct, Long>{
 
 	/**
-	 * Find DataProduct entity by its identifier
-	 * @param id - the given data product identifier
+	 * Find DataProduct entity by its numeric auto-generated identifier
+	 * @param id - the DB related data product identifier
 	 * @return the corresponding DataProduct entity
 	 */
 	DataProduct findById(Long id);
+
+	/**
+	 * Find DataProduct entity by its alphanumeric given identifier
+	 * @param identifier - the given data product identifier
+	 * @return the corresponding DataProduct entity
+	 */
+	DataProduct findByIdentifier(String identifier);
 	
 	/**
 	 * Find DataProduct entity by its name

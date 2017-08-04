@@ -7,8 +7,10 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 /**
+ * UserPreference persistent entity
  *
- * Created by oana on 8/4/2017.
+ * @author oana
+ *
  */
 @Entity
 @Table(name = "tao.user_prefs")

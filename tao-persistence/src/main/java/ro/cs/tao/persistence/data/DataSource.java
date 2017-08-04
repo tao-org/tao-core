@@ -6,7 +6,10 @@ import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
 
 /**
- * Created by oana on 7/13/2017.
+ * DataSource persistent entity
+ *
+ * @author oana
+ *
  */
 @Entity
 @Table(name = "tao.data_source")

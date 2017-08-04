@@ -5,7 +5,10 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 /**
- * Created by oana on 7/18/2017.
+ * QueryParameter persistent entity
+ *
+ * @author oana
+ *
  */
 @Entity
 @Table(name = "tao.query_parameter")

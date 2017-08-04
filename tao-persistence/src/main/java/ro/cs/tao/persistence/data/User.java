@@ -7,7 +7,10 @@ import java.time.LocalDateTime;
 import java.util.Set;
 
 /**
- * Created by oana on 7/13/2017.
+ * User persistent entity
+ *
+ * @author oana
+ *
  */
 @Entity
 @Table(name = "tao.\"user\"")

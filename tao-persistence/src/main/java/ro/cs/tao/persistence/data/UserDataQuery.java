@@ -7,7 +7,10 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 /**
- * Created by oana on 8/4/2017.
+ * UserDataQuery persistent entity
+ *
+ * @author oana
+ *
  */
 @Entity
 @Table(name = "tao.user_data_query")

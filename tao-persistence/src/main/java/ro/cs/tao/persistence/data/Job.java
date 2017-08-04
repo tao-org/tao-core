@@ -6,7 +6,10 @@ import java.time.LocalDateTime;
 import java.util.Set;
 
 /**
- * Created by oana on 7/27/2017.
+ * Job persistent entity
+ *
+ * @author oana
+ *
  */
 @Entity
 @Table(name = "tao.job")

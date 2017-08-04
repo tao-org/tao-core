@@ -6,7 +6,10 @@ import javax.validation.constraints.Size;
 import java.util.Set;
 
 /**
- * Created by oana on 7/28/2017.
+ * OperationParameter persistent entity
+ *
+ * @author oana
+ *
  */
 @Entity
 @Table(name = "tao.parameter")

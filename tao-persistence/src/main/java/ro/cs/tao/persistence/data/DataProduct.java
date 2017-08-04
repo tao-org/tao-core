@@ -15,7 +15,6 @@ import com.vividsolutions.jts.geom.Geometry;
  * @author oana
  *
  */
-
 @Entity
 @Table(name = "tao.data_product")
 public class DataProduct {

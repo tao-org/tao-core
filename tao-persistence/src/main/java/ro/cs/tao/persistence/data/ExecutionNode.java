@@ -5,7 +5,10 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 /**
- * Created by oana on 7/24/2017.
+ * ExecutionNode persistent entity
+ *
+ * @author oana
+ *
  */
 @Entity
 @Table(name = "tao.execution_node")

@@ -10,7 +10,10 @@ import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 
 /**
- * Created by oana on 7/13/2017.
+ * Group persistent entity
+ *
+ * @author oana
+ *
  */
 @Entity
 @Table(name = "tao.\"group\"")
