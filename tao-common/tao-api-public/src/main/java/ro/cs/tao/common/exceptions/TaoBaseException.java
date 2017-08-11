@@ -1,4 +1,4 @@
-package ro.cs.tao.exceptions;
+package src.main.java.ro.cs.tao.common.exceptions;
 
 /**
  * @author Alexandru Ilioiu - 19/07/2017
