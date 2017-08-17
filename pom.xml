@@ -22,28 +22,22 @@
     </modules>
 
     <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
         <!-- maven -->
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
 
         <!-- nexus urls -->
+        <nexusUrl>http://cayman.c-s.ro:8081/nexus/</nexusUrl>
         <mavenPublicUrl>http://cayman.c-s.ro:8081/nexus/repository/maven-public/</mavenPublicUrl>
         <taoSnapshotsUrl>http://cayman.c-s.ro:8081/nexus/repository/tao-snapshots/</taoSnapshotsUrl>
         <taoReleasesUrl>http://cayman.c-s.ro:8081/nexus/repository/tao-releases/</taoReleasesUrl>
         <osgeoUrl>http://cayman.c-s.ro:8081/nexus/repository/osgeo/</osgeoUrl>
+        <hibernatespatialUrl>http://cayman:8081/nexus/repository/hibernatespatial/</hibernatespatialUrl>
     </properties>
 
     <repositories>
-        <repository>
-            <id>tao-snapshots</id>
-            <name>TAO snapshots</name>
-            <url>${taoSnapshotsUrl}</url>
-        </repository>
-        <repository>
-            <id>tao-releases</id>
-            <name>TAO releases</name>
-            <url>${taoReleasesUrl}</url>
-        </repository>
         <repository>
             <id>maven-public</id>
             <name>Maven public</name>
@@ -55,5 +49,54 @@
             <url>${osgeoUrl}</url>
         </repository>
     </repositories>
+
+    <distributionManagement>
+        <repository>
+            <id>tao-releases</id>
+            <name>TAO releases</name>
+            <url>${taoReleasesUrl}</url>
+        </repository>
+        <snapshotRepository>
+            <id>tao-snapshots</id>
+            <name>TAO snapshots</name>
+            <url>${taoSnapshotsUrl}</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>2.8.2</version>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.sonatype.plugins</groupId>
+                <artifactId>nexus-staging-maven-plugin</artifactId>
+                <version>1.6.8</version>
+                <executions>
+                    <execution>
+                        <id>default-deploy</id>
+                        <phase>deploy</phase>
+                        <goals>
+                            <goal>deploy</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <serverId>cayman-nexus</serverId>
+                    <nexusUrl>${nexusUrl}</nexusUrl>
+                    <skipStaging>true</skipStaging>
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
+
+
 
 </project>
