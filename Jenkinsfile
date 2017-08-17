@@ -15,12 +15,11 @@ node{
         env.BUILD_DIRECTORY = env.BRANCH_NAME + "_" + env.BUILD_ID
 
         stage 'Prepare environment'
+        sh '''mkdir -p /tmp/maven/$BUILD_DIRECTORY/conf'''
+        sh '''mkdir -p /tmp/maven/$BUILD_DIRECTORY/conf
+        echo "<settings><localRepository>/tmp/maven/$BUILD_DIRECTORY/repo</localRepository></settings>" >> /tmp/maven/$BUILD_DIRECTORY/conf/settings.xml
+        mkdir -p /tmp/maven/$BUILD_DIRECTORY/repo'''
         runMavenTasks("clean")
-        sh '''mkdir -p ~/maven/$BUILD_DIRECTORY/conf'''
-        sh '''mkdir -p ~/maven/$BUILD_DIRECTORY/conf
-        echo "<settings><localRepository>${HOME}/maven/$BUILD_DIRECTORY/repo</localRepository></settings>" >> ${HOME}/maven/$BUILD_DIRECTORY/conf/settings.xml
-        mkdir -p ${HOME}/maven/$BUILD_DIRECTORY/repo'''
-
         /*
         try {
             stage 'Build & UT'
@@ -81,7 +80,7 @@ def version() {
 
 def runMavenTasks(tasks) {
     echo 'mvn ' + tasks
-    sh '''export M2_HOME=${HOME}/maven/$BUILD_DIRECTORY
+    sh '''export M2_HOME=/tmp/maven/$BUILD_DIRECTORY
           echo "M2_HOME : $M2_HOME"
           mvn ''' + tasks
 }
@@ -89,8 +88,15 @@ def runMavenTasks(tasks) {
 def cleanEnv() {
     try {
         sh '''echo "clean temp directory"
-        rm -rf ${HOME}/${BUILD_DIRECTORY}*
-        rm -rf ${HOME}/maven/${BUILD_DIRECTORY}*'''
+       if [ -z != /tmp/$BUILD_DIRECTORY ]
+       then
+           rm -rf /tmp/$BUILD_DIRECTORY
+       fi
+       if [ -z != /tmp/maven/$BUILD_DIRECTORY ]
+       then
+           rm -rf /tmp/maven/$BUILD_DIRECTORY
+       fi
+       '''
     } catch (err) {
     }
 }
