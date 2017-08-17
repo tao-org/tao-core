@@ -5,6 +5,9 @@ node{
     try {
         currentBuild.result = 'SUCCESS'
 
+        echo 'version = ' + version()
+        echo 'version1 = ' + version1()
+
         stage 'Checkout'
         checkout scm
 
@@ -78,6 +81,11 @@ def version() {
     return pom.version
 }
 
+def version1() {
+    def matcher = readFile('pom.xml') =~ '<version>(.+)</version>'
+    matcher ? matcher[0][1] : null
+}
+
 def runMavenTasks(tasks) {
     echo 'mvn ' + tasks
     sh '''export M2_HOME=/tmp/maven/$BUILD_DIRECTORY
@@ -88,10 +96,6 @@ def runMavenTasks(tasks) {
 def cleanEnv() {
     try {
         sh '''echo "clean temp directory"
-       if [ -z != /tmp/$BUILD_DIRECTORY ]
-       then
-           rm -rf /tmp/$BUILD_DIRECTORY
-       fi
        if [ -z != /tmp/maven/$BUILD_DIRECTORY ]
        then
            rm -rf /tmp/maven/$BUILD_DIRECTORY
