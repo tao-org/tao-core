@@ -1,7 +1,7 @@
 #!groovy
 node{
 
-    // env.PATH = "${tool 'Gradle 3.0'}/bin:${env.PATH}"
+    //  env.PATH = "${tool 'Gradle 3.0'}/bin:${env.PATH}"
     currentBuild.result = 'SUCCESS'
 
     try {
