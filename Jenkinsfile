@@ -5,10 +5,10 @@ node{
     try {
         currentBuild.result = 'SUCCESS'
 
-        echo 'version = ' + version()
-
         stage 'Checkout'
         checkout scm
+
+        echo 'version = ' + version()
 
         def currentName = "tao-core"
         def currentVersion = version()
