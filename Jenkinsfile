@@ -6,7 +6,6 @@ node{
         currentBuild.result = 'SUCCESS'
 
         echo 'version = ' + version()
-        echo 'version1 = ' + version1()
 
         stage 'Checkout'
         checkout scm
@@ -76,14 +75,16 @@ node{
     }
 }
 
+/*
 def version() {
     pom = readMavenPom file: 'pom.xml'
     return pom.version
 }
+*/
 
-def version1() {
+def version() {
     def matcher = readFile('pom.xml') =~ '<version>(.+)</version>'
-    matcher ? matcher[0][1] : null
+    return matcher ? matcher[0][1] : null
 }
 
 def runMavenTasks(tasks) {
