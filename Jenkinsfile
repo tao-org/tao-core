@@ -8,13 +8,11 @@ node{
         stage 'Checkout'
         checkout scm
 
-        echo 'version = ' + version()
-
         def currentName = "tao-core"
         def currentVersion = version()
 
         currentBuild.description = "${currentName} - ${currentVersion}"
-        env.BUILD_DIRECTORY = env.BRANCH_NAME + "_" + env.BUILD_ID
+        env.BUILD_DIRECTORY = "tao-build_" + env.BUILD_ID
 
         stage 'Prepare environment'
         sh '''mkdir -p /tmp/maven/$BUILD_DIRECTORY/conf'''
