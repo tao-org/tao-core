@@ -25,5 +25,18 @@ import ro.cs.tao.BaseException;
  * @author Cosmin Cara
  */
 public class TemplateException extends BaseException {
+    public TemplateException() {
+    }
 
+    public TemplateException(String message) {
+        super(message);
+    }
+
+    public TemplateException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public TemplateException(Throwable cause) {
+        super(cause);
+    }
 }

@@ -6,7 +6,7 @@ import java.util.Map;
 /**
  * @author Cosmin Cara
  */
-public class BaseException extends Throwable {
+public class BaseException extends RuntimeException {
     private Map<String, Object> additionalInfo;
 
     public BaseException() {
