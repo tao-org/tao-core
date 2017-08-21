@@ -74,7 +74,7 @@ node{
         stage('Notify'){
         // temporary workaround
             def currentVal = RecipientProviderUtilities.SEND_TO_UNKNOWN_USERS
-            echo 'currentVal: ' + ${currentVal}
+            echo 'currentVal: ' + "${currentVal}"
             RecipientProviderUtilities.SEND_TO_UNKNOWN_USERS  = true
         emailext(
                 subject: "[TAO-JENKINS] Jenkins job '${env.JOB_NAME}[#${env.BUILD_NUMBER}]' status is [${currentBuild.result}]",
@@ -83,7 +83,7 @@ node{
                 )
         }
         // back to original value
-        RecipientProviderUtilities.SEND_TO_UNKNOWN_USERS = ${currentVal}
+        RecipientProviderUtilities.SEND_TO_UNKNOWN_USERS = "${currentVal}"
 
         /*
         stage ('Clean environment') {
