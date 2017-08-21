@@ -60,13 +60,13 @@ node{
             */
         } catch (err) {
             currentBuild.result = 'UNSTABLE'
-            echo 'An error has occurred. Build status is ' + ${currentBuild.result}
+            echo 'An error has occurred. Build status is ' + "${currentBuild.result}"
             println err
         }
 
     } catch (err) {
         currentBuild.result = 'FAILURE'
-        echo 'An error has occurred. Build status is ' + ${currentBuild.result}
+        echo 'An error has occurred. Build status is ' + "${currentBuild.result}"
         println err
     } finally {
         stage('Notify'){
@@ -74,7 +74,7 @@ node{
             RecipientProviderUtilities.SEND_TO_UNKNOWN_USERS  = true
 
             emailext(
-                subject: "[TAO-JENKINS] Jenkins job '${env.JOB_NAME}[#${env.BUILD_NUMBER}]' status is [${currentBuild.result}]",
+                subject: "[TAO-JENKINS] Jenkins build '${env.JOB_NAME}[#${env.BUILD_NUMBER}]' status is [${currentBuild.result}]",
                 body: "See: ${env.BUILD_URL}",
                 recipientProviders: [[$class: 'DevelopersRecipientProvider']]
             )
