@@ -80,7 +80,7 @@ node{
                 )
         }
         // back to original value
-        RecipientProviderUtilities.SEND_TO_UNKNOWN_USERS = ${currentVal}
+        RecipientProviderUtilities.SEND_TO_UNKNOWN_USERS = currentVal
 
         /*
         stage ('Clean environment') {
