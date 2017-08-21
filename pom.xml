@@ -48,6 +48,11 @@
             <name>Open Source Geospatial Foundation Repository</name>
             <url>${osgeoUrl}</url>
         </repository>
+        <repository>
+            <id>hibernatespatial</id>
+            <name>Hibernate Spatial</name>
+            <url>${hibernatespatialUrl}</url>
+        </repository>
     </repositories>
 
     <distributionManagement>
