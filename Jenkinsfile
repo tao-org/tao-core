@@ -1,4 +1,5 @@
 #!groovy
+import hudson.plugins.emailext.plugins.recipients.*;
 
 node{
 
@@ -32,8 +33,8 @@ node{
         }
         */
 
-        stage ('Install') {
-            runMavenTasks("install")
+        stage ('Install, skip tests') {
+            runMavenTasks("install -DskipTests")
         }
 
         try {
@@ -59,20 +60,26 @@ node{
             */
         } catch (err) {
             currentBuild.result = 'UNSTABLE'
+            echo 'An error has occurred. Build status is ' + "${currentBuild.result}"
             println err
         }
 
     } catch (err) {
         currentBuild.result = 'FAILURE'
+        echo 'An error has occurred. Build status is ' + "${currentBuild.result}"
         println err
     } finally {
         stage('Notify'){
-        emailext(
-                subject: "[TAO-JENKINS] Jenkins job '${env.JOB_NAME}[${env.BUILD_NUMBER}] status is [${currentBuild.result}]",
-                body: "See <${env.BUILD_URL}>",
+            // temporary workaround
+            RecipientProviderUtilities.SEND_TO_UNKNOWN_USERS  = true
+
+            emailext(
+                subject: "[TAO-JENKINS] Jenkins build '${env.JOB_NAME}[#${env.BUILD_NUMBER}]' status is [${currentBuild.result}]",
+                body: "See: ${env.BUILD_URL}",
                 recipientProviders: [[$class: 'DevelopersRecipientProvider']]
-                )
+            )
         }
+
         /*
         stage ('Clean environment') {
             cleanEnv()
@@ -96,9 +103,7 @@ def version() {
 
 def runMavenTasks(tasks) {
     echo 'run task --> mvn ' + tasks
-    sh '''export M3_HOME=/tmp/maven/${BUILD_DIRECTORY}
-          echo "M3_HOME : $M3_HOME"
-          mvn ''' + tasks
+    sh '''mvn ''' + tasks
 }
 
 def cleanEnv() {
