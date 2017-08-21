@@ -40,6 +40,34 @@ public abstract class Executor implements Runnable {
     private volatile int retCode = Integer.MAX_VALUE;
     private CountDownLatch counter;
 
+    public static int execute(OutputConsumer outputConsumer, long timeout, ExecutionUnit job) {
+        int retCode;
+        if (job != null) {
+            CountDownLatch sharedCounter = new CountDownLatch(1);
+            Executor executor = create(job.getType(),
+                                       job.getHost(),
+                                       job.getArguments(),
+                                       job.asSuperUser(),
+                                       sharedCounter,
+                                       job.getSshMode());
+            executor.setUser(job.getUser());
+            executor.setPassword(job.getPassword());
+            executor.setOutputConsumer(outputConsumer);
+            executorService.submit(executor);
+            try {
+                sharedCounter.await(timeout, TimeUnit.MINUTES);
+            } catch (InterruptedException e) {
+                mainLogger.severe("Operation timed out");
+            }
+            if (!executor.hasCompleted()) {
+                mainLogger.info("[[" + executor.getHost() + "]] Node still running. Its output will not be complete.");
+            }
+            retCode = executor.getReturnCode();
+        } else {
+            retCode = Integer.MIN_VALUE;
+        }
+        return retCode;
+    }
 
     /**
      * Executes the given commands setting a fixed timeout.
@@ -49,7 +77,8 @@ public abstract class Executor implements Runnable {
      * @param timeout   The timeout in seconds
      * @param jobs      One or more command descriptors
      */
-    public static void execute(OutputConsumer outputConsumer, long timeout, ExecutionUnit... jobs) {
+    public static int[] execute(OutputConsumer outputConsumer, long timeout, ExecutionUnit... jobs) {
+        int[] retCodes;
         if (jobs != null && jobs.length > 0) {
             Set<Executor> processes = new HashSet<>();
             CountDownLatch sharedCounter = new CountDownLatch(jobs.length);
@@ -74,8 +103,12 @@ public abstract class Executor implements Runnable {
             processes.stream()
                     .filter(executor -> !executor.hasCompleted())
                     .forEach(executor -> mainLogger.info("[[" + executor.getHost() + "]] Node still running. Its output will not be complete."));
+            retCodes = processes.stream().mapToInt(Executor::getReturnCode).toArray();
             processes.clear();
+        } else {
+            retCodes = new int[0];
         }
+        return retCodes;
     }
 
     private static Executor create(ExecutorType type, String host, List<String> arguments, CountDownLatch synchronisationCounter) {

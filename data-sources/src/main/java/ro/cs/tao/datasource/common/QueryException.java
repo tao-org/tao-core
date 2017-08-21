@@ -19,12 +19,17 @@
 
 package ro.cs.tao.datasource.common;
 
+import ro.cs.tao.BaseException;
+
 /**
  * Typed query exception.
  *
  * @author Cosmin Cara
  */
-public class QueryException extends Exception {
+public class QueryException extends BaseException {
+    public QueryException() {
+    }
+
     public QueryException(String message) {
         super(message);
     }

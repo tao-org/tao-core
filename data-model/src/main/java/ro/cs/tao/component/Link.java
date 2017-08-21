@@ -19,6 +19,8 @@
 
 package ro.cs.tao.component;
 
+import ro.cs.tao.component.constraints.ConstraintException;
+
 /**
  * @author Cosmin Cara
  */
@@ -31,7 +33,10 @@ public class Link {
                 output.isCompatibleWith(input);
     }
 
-    public Link(SourceDescriptor sourceDescriptor, TargetDescriptor targetDescriptor) {
+    public Link(SourceDescriptor sourceDescriptor, TargetDescriptor targetDescriptor) throws ConstraintException {
+        if (!canConnect(targetDescriptor, sourceDescriptor)) {
+            throw new ConstraintException("Source and target are not compatible");
+        }
         this.sourceDescriptor = sourceDescriptor;
         this.targetDescriptor = targetDescriptor;
     }
