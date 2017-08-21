@@ -1,16 +1,25 @@
 package ro.cs.tao.persistence.data;
 
+import com.vividsolutions.jts.geom.Geometry;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.Set;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
-
-import com.vividsolutions.jts.geom.Geometry;
-
 /**
- * Data Product persistent entity
+ * Data Result persistent entity
  * 
  * @author oana
  *
@@ -144,7 +153,7 @@ public class DataProduct {
 	private LocalDateTime modifiedDate;
 
 	/**
-	 * Data Product metadata
+	 * Data Result metadata
 	 */
 	@OneToMany (fetch = FetchType.EAGER, mappedBy = "dataProduct")
 	private Set<DataProductMetadata> metadataSet;

@@ -31,10 +31,11 @@ import ro.cs.tao.datasource.common.QueryParameter;
 import ro.cs.tao.datasource.common.converters.ConversionException;
 import ro.cs.tao.datasource.common.converters.ConverterFactory;
 import ro.cs.tao.datasource.common.converters.DateConverter;
-import ro.cs.tao.datasource.common.xml.XmlResponseParser;
+import ro.cs.tao.datasource.common.json.JsonResponseParser;
 import ro.cs.tao.datasource.util.NetUtils;
 import ro.cs.tao.datasource.util.Polygon2D;
 import ro.cs.tao.eodata.EOData;
+import ro.cs.tao.eodata.EOProduct;
 
 import java.io.IOException;
 import java.lang.reflect.Array;
@@ -102,6 +103,14 @@ public class SciHubDataQuery extends DataQuery<EOData> {
                     throw new QueryException(e.getMessage());
                 }
                 query += "]";
+            /*} else if (Polygon2D.class.equals(parameter.getType())) {
+                query += entry.getKey() + ":Intersects(";
+                try {
+                    query += converterFactory.create(parameter).stringValue();
+                } catch (ConversionException e) {
+                    throw new QueryException(e.getMessage());
+                }
+                query += ")";*/
             } else {
                 query += entry.getKey() + ":";
                 try {
@@ -121,27 +130,27 @@ public class SciHubDataQuery extends DataQuery<EOData> {
         int page = Math.max(this.pageNumber, 0);
         int retrieved = 0;
         do {
-            List<EOData> tmpResults;
+            List<EOProduct> tmpResults;
             List<NameValuePair> params = new ArrayList<>();
-            params.add(new BasicNameValuePair("q", query));
-            params.add(new BasicNameValuePair("rows", String.valueOf(this.pageSize)));
-            if (page > 0) {
-                params.add(new BasicNameValuePair("start", String.valueOf(page - 1)));
-            }
+            params.add(new BasicNameValuePair("filter", query));
+            params.add(new BasicNameValuePair("limit", String.valueOf(this.pageSize)));
+            params.add(new BasicNameValuePair("offset", page > 0 ? String.valueOf((page - 1) * this.pageSize) : "0"));
+
             String queryUrl = this.source.getConnectionString() + "?"
                     + URLEncodedUtils.format(params, "UTF-8").replace("+", "%20");
             try (CloseableHttpResponse response = NetUtils.openConnection(queryUrl, this.source.getCredentials())) {
                 switch (response.getStatusLine().getStatusCode()) {
                     case 200:
-                        tmpResults = XmlResponseParser.parse(EntityUtils.toString(response.getEntity()),
-                                                          new SciHubResponseHandler("entry"));
+                        JsonResponseParser<EOProduct> parser = new JsonResponseParser<>();
+                        tmpResults = parser.parse(EntityUtils.toString(response.getEntity()),
+                                                              new SciHubJsonResponseHandler());
                         if (tmpResults != null) {
                             retrieved = tmpResults.size();
                             if ("Sentinel-2".equals(this.parameters.get("platformName").getValue()) &&
                                     this.parameters.containsKey("cloudcoverpercentage")) {
                                 final Double clouds = (Double) this.parameters.get("cloudcoverpercentage").getValue();
                                 tmpResults = tmpResults.stream()
-                                        .filter(r -> Double.parseDouble(r.getAttributeValue("cloudcoverpercentage")) <= clouds)
+                                        .filter(r -> Double.parseDouble(r.getAttributeValue("Cloud cover percentage")) <= clouds)
                                         .collect(Collectors.toList());
                             }
                             results.addAll(tmpResults);

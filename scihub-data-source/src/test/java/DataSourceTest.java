@@ -86,13 +86,13 @@ public class DataSourceTest {
                                                 .atZone(ZoneId.systemDefault())
                                                 .toInstant()));
             query.addParameter(begin);
-            Polygon2D aoi = new Polygon2D();
-            aoi.append(-9.9866909768, 23.4186029838);
-            aoi.append(-8.9037319257, 23.4186029838);
-            aoi.append(-8.9037319257, 24.413397299);
-            aoi.append(-9.9866909768, 24.413397299);
-            aoi.append(-9.9866909768, 23.4186029838);
-            query.addParameter("footprint", aoi.toWKT());
+            Polygon2D aoi = Polygon2D.fromWKT("POLYGON((22.8042573604346 43.8379609098684," +
+                                                      "24.83885442747927 43.8379609098684," +
+                                                      "24.83885442747927 44.795645304033826," +
+                                                      "22.8042573604346 44.795645304033826," +
+                                                      "22.8042573604346 43.8379609098684))");
+
+            query.addParameter("footprint", aoi);
 
             query.addParameter("cloudcoverpercentage", 100.);
             query.setPageSize(50);
