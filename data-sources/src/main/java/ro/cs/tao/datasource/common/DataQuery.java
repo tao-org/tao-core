@@ -101,13 +101,15 @@ public abstract class DataQuery<R extends EOData> {
 
     public void setMaxResults(int value) { this.limit = value; }
 
-    public List<R> execute() throws QueryException {
+    public List<R> execute() {
         final Set<String> mandatoryParams = getMandatoryParams();
         final Map<String, QueryParameter> parameters = getParameters();
-        for (String name : mandatoryParams) {
-            if (!parameters.containsKey(name)) {
-                throw new QueryException(String.format("Mandatory parameter [%s] was not supplied", name));
-            }
+        List<String> missing = mandatoryParams.stream()
+                .filter(p -> !parameters.containsKey(p)).collect(Collectors.toList());
+        if (missing.size() > 0) {
+            throw new QueryException("Mandatory parameter(s) not supplied") {{
+               addAdditionalInfo("Missing", String.join(",", missing));
+            }};
         }
         return executeImpl();
     }
@@ -144,15 +146,14 @@ public abstract class DataQuery<R extends EOData> {
     protected void checkSupported(String name, Class type) {
         ParameterDescriptor descriptor = this.supportedParams.get(name);
         if (descriptor == null) {
-            throw new IllegalArgumentException(
-                    String.format("Parameter [%s] not supported on this data source", name));
+            throw new QueryException(String.format("Parameter [%s] not supported on this data source", name));
         }
         if (!descriptor.getType().isAssignableFrom(type)) {
-            throw new IllegalArgumentException(
+            throw new QueryException(
                     String.format("Wrong type for parameter [%s]: expected %s, found %s",
                                   name, descriptor.getType().getSimpleName(), type.getSimpleName()));
         }
     }
 
-    protected abstract List<R> executeImpl() throws QueryException;
+    protected abstract List<R> executeImpl();
 }

@@ -16,8 +16,28 @@ public class SSHTest {
 
     public static void main(String[] args) {
         //executeSingleTest();
-        execDockerInfoAsUser();
-        execDockerInfoAsSudo();
+        //execDockerInfoAsUser();
+        //execDockerInfoAsSudo();
+        execDockerVersionAsUser();
+        System.exit(0);
+    }
+
+    private static void execDockerVersionAsUser() {
+        List<String> args = new ArrayList<String>() {{
+            add("docker");
+            add("-v");
+            //add("echo $?");
+            //add("sudo yum install docker");
+
+        }};
+        ExecutionUnit job = new ExecutionUnit(ExecutorType.SSH2,
+                                              //        "192.168.61.20", "u1tao", "pass4u1",
+                                              "192.168.61.30", "u1", "pass4u1",
+                                              args, ExecutionMode.USER.value(),
+                                              SSHMode.EXEC);
+        OutputConsumer consumer = new DebugOutputConsumer();
+        System.out.println("Return code: " + Executor.execute(consumer, 10, job));
+        //return String.valueOf(consumer);
     }
 
     private static void executeSingleTest() {
