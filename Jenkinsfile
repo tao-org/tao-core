@@ -33,11 +33,9 @@ node{
         }
         */
 
-        stage ('Install') {
-            runMavenTasks("install")
+        stage ('Install, skip tests') {
+            runMavenTasks("install -DskipTests")
         }
-
-        echo 'Stage install finished'
 
         try {
 
@@ -72,18 +70,15 @@ node{
         println err
     } finally {
         stage('Notify'){
-        // temporary workaround
-            def currentVal = RecipientProviderUtilities.SEND_TO_UNKNOWN_USERS
-            echo 'currentVal: ' + "${currentVal}"
+            // temporary workaround
             RecipientProviderUtilities.SEND_TO_UNKNOWN_USERS  = true
-        emailext(
+
+            emailext(
                 subject: "[TAO-JENKINS] Jenkins job '${env.JOB_NAME}[#${env.BUILD_NUMBER}]' status is [${currentBuild.result}]",
                 body: "See: ${env.BUILD_URL}",
                 recipientProviders: [[$class: 'DevelopersRecipientProvider']]
-                )
+            )
         }
-        // back to original value
-        RecipientProviderUtilities.SEND_TO_UNKNOWN_USERS = "${currentVal}"
 
         /*
         stage ('Clean environment') {
