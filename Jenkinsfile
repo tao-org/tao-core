@@ -1,4 +1,5 @@
 #!groovy
+import hudson.plugins.emailext.plugins.recipients.*;
 
 node{
 
@@ -59,6 +60,7 @@ node{
             */
         } catch (err) {
             currentBuild.result = 'UNSTABLE'
+            echo 'An error has occurred. Build status is ' + ${currentBuild.result}
             println err
         }
 
