@@ -5,21 +5,23 @@ node{
     try {
         currentBuild.result = 'SUCCESS'
 
-        stage 'Checkout'
-        checkout scm
+        stage('Checkout') {
+            checkout scm
 
-        def currentName = "tao-core"
-        def currentVersion = version()
+            def currentName = "tao-core"
+            def currentVersion = version()
 
-        currentBuild.description = "${currentName} - ${currentVersion}"
-        env.BUILD_DIRECTORY = "tao-build_" + env.BUILD_ID
+            currentBuild.description = "${currentName} - ${currentVersion}"
+            env.BUILD_DIRECTORY = "tao-build_" + env.BUILD_ID
+        }
 
-        stage 'Prepare environment'
-        sh '''mkdir -p /tmp/maven/$BUILD_DIRECTORY/conf'''
-        sh '''mkdir -p /tmp/maven/$BUILD_DIRECTORY/conf
-        echo "<settings><localRepository>/tmp/maven/$BUILD_DIRECTORY/repo</localRepository></settings>" >> /tmp/maven/$BUILD_DIRECTORY/conf/settings.xml
-        mkdir -p /tmp/maven/$BUILD_DIRECTORY/repo'''
-        runMavenTasks("clean")
+        stage ('Prepare environment') {
+            sh '''mkdir -p /tmp/maven/$BUILD_DIRECTORY/conf
+                mkdir -p /tmp/maven/$BUILD_DIRECTORY/conf
+                echo "<settings><localRepository>/tmp/maven/$BUILD_DIRECTORY/repo</localRepository></settings>" >> /tmp/maven/$BUILD_DIRECTORY/conf/settings.xml
+                mkdir -p /tmp/maven/$BUILD_DIRECTORY/repo'''
+            runMavenTasks("clean")
+        }
         /*
         try {
             stage 'Build & UT'
@@ -30,16 +32,18 @@ node{
         }
         */
 
-        stage 'Install'
-        runMavenTasks("install")
+        stage ('Install') {
+            runMavenTasks("install")
+        }
 
         try {
 
             //stage 'Sonar Analysis'
             //runMavenTasks("sonarqube -Dspring.profiles.active=jenkins -i")
 
-            stage 'Deploy'
-            runMavenTasks("deploy")
+            stage('Deploy') {
+                runMavenTasks("deploy")
+            }
 
             /*
             stage 'Javadoc reporting'
@@ -62,14 +66,19 @@ node{
         currentBuild.result = 'FAILURE'
         println err
     } finally {
-        stage 'Notify'
+        stage('Notify'){
         emailext(
                 subject: "[TAO-JENKINS] Jenkins job '${env.JOB_NAME}[${env.BUILD_NUMBER}] status is [${currentBuild.result}]",
                 body: "See <${env.BUILD_URL}>",
                 recipientProviders: [[$class: 'DevelopersRecipientProvider']]
-        )
-        stage 'Clean environment'
-        cleanEnv()
+                )
+        }
+        /*
+        stage ('Clean environment') {
+            cleanEnv()
+        }
+        */
+
     }
 }
 
@@ -86,8 +95,8 @@ def version() {
 }
 
 def runMavenTasks(tasks) {
-    echo 'mvn ' + tasks
-    sh '''export M2_HOME=/tmp/maven/$BUILD_DIRECTORY
+    echo 'run task --> mvn ' + tasks
+    sh '''export M2_HOME=/tmp/maven/${BUILD_DIRECTORY}
           echo "M2_HOME : $M2_HOME"
           mvn ''' + tasks
 }
