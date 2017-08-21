@@ -107,9 +107,9 @@ public abstract class DataQuery<R extends EOData> {
         List<String> missing = mandatoryParams.stream()
                 .filter(p -> !parameters.containsKey(p)).collect(Collectors.toList());
         if (missing.size() > 0) {
-            throw new QueryException("Mandatory parameter(s) not supplied") {{
-               addAdditionalInfo("Missing", String.join(",", missing));
-            }};
+            QueryException ex = new QueryException("Mandatory parameter(s) not supplied");
+            ex.addAdditionalInfo("Missing", String.join(",", missing));
+            throw ex;
         }
         return executeImpl();
     }
