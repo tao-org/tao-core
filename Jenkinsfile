@@ -96,9 +96,7 @@ def version() {
 
 def runMavenTasks(tasks) {
     echo 'run task --> mvn ' + tasks
-    sh '''export M3_HOME=/tmp/maven/${BUILD_DIRECTORY}
-          echo "M3_HOME : $M3_HOME"
-          mvn ''' + tasks
+    sh '''mvn ''' + tasks
 }
 
 def cleanEnv() {
