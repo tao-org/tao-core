@@ -56,6 +56,7 @@ public class EOProduct extends EOData {
     private SensorType sensorType;
     private Date acquisitionDate;
     private PixelType pixelType;
+    private String productType;
     private int width;
     private int height;
 
@@ -105,5 +106,8 @@ public class EOProduct extends EOData {
         this.height = height;
     }
 
+    @XmlElement(name = "productType")
+    public String getProductType() { return productType; }
 
+    public void setProductType(String value) { this.productType = value; }
 }

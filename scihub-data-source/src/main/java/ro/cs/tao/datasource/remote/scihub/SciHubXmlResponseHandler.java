@@ -50,11 +50,11 @@ import java.net.URISyntaxException;
 /**
  * @author Cosmin Cara
  */
-public class SciHubResponseHandler extends XmlResponseHandler {
+public class SciHubXmlResponseHandler extends XmlResponseHandler {
 
     private String identifiedElement;
 
-    SciHubResponseHandler(String recordElementName) {
+    SciHubXmlResponseHandler(String recordElementName) {
         super(recordElementName);
     }
 
