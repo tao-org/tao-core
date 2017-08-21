@@ -37,6 +37,8 @@ node{
             runMavenTasks("install")
         }
 
+        echo 'Stage install finished'
+
         try {
 
             //stage 'Sonar Analysis'
@@ -72,15 +74,16 @@ node{
         stage('Notify'){
         // temporary workaround
             def currentVal = RecipientProviderUtilities.SEND_TO_UNKNOWN_USERS
+            echo 'currentVal: ' + ${currentVal}
             RecipientProviderUtilities.SEND_TO_UNKNOWN_USERS  = true
         emailext(
-                subject: "[TAO-JENKINS] Jenkins job '${env.JOB_NAME}[${env.BUILD_NUMBER}] status is [${currentBuild.result}]",
-                body: "See <${env.BUILD_URL}>",
+                subject: "[TAO-JENKINS] Jenkins job '${env.JOB_NAME}[#${env.BUILD_NUMBER}]' status is [${currentBuild.result}]",
+                body: "See: ${env.BUILD_URL}",
                 recipientProviders: [[$class: 'DevelopersRecipientProvider']]
                 )
         }
         // back to original value
-        RecipientProviderUtilities.SEND_TO_UNKNOWN_USERS = currentVal
+        RecipientProviderUtilities.SEND_TO_UNKNOWN_USERS = ${currentVal}
 
         /*
         stage ('Clean environment') {
