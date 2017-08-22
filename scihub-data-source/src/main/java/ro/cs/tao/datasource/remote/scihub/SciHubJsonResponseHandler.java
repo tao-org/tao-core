@@ -5,6 +5,7 @@ import ro.cs.tao.datasource.common.json.JSonResponseHandler;
 import ro.cs.tao.datasource.remote.scihub.json.Result;
 import ro.cs.tao.datasource.util.Polygon2D;
 import ro.cs.tao.eodata.EOProduct;
+import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.eodata.enums.PixelType;
 import ro.cs.tao.eodata.enums.SensorType;
 import ro.cs.tao.eodata.serialization.DateAdapter;
@@ -29,6 +30,7 @@ public class SciHubJsonResponseHandler implements JSonResponseHandler<EOProduct>
                 EOProduct product = new EOProduct();
                 product.setName(r.getIdentifier());
                 product.setId(r.getUuid());
+                product.setType(DataFormat.RASTER);
                 product.setSensorType(SensorType.OPTICAL);
                 product.setPixelType(PixelType.UINT16);
                 product.setWidth(-1);
