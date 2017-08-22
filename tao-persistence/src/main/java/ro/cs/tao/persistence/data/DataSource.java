@@ -34,8 +34,8 @@ public class DataSource {
      * Unique identifier
      */
     @Id
-    @SequenceGenerator(name = "data_product_identifier", sequenceName = "tao.data_product_id_seq", allocationSize = 1)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "data_product_identifier")
+    @SequenceGenerator(name = "data_source_identifier", sequenceName = "tao.data_source_id_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "data_source_identifier")
     @Column(name = "id")
     @NotNull
     private Integer id;

@@ -18,6 +18,7 @@ import ro.cs.tao.persistence.data.DataProduct;
 import ro.cs.tao.persistence.data.ExecutionNode;
 import ro.cs.tao.persistence.data.User;
 import ro.cs.tao.persistence.data.enums.DataSourceType;
+import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.persistence.repository.DataProductRepository;
 import ro.cs.tao.persistence.repository.DataSourceRepository;
 import ro.cs.tao.persistence.repository.ExecutionNodeRepository;
@@ -51,13 +52,11 @@ public class PersistenceManager {
     private ExecutionNodeRepository executionNodeRepository;
 
     @Transactional
-    public <R extends EOData, Q extends DataQuery<R>, S extends DataSource<R, Q>> Integer saveDataSource(S dataSource, DataSourceType dataSourceType, String name, String description)
+    public <R extends EOData, Q extends DataQuery<R>, S extends DataSource<R, Q>> Integer saveDataSource(S dataSource, DataSourceType dataSourceType, String name, String description) throws PersistenceException
     {
         if(dataSource.getCredentials() == null || dataSource.getConnectionString() == null || name == null)
         {
-            // TODO throw exception and remove code above
-            System.out.println("Invalid arguments for saving a data source!");
-            return 0;
+            throw new PersistenceException("Invalid parameters were provided for adding new data source!");
         }
 
         ro.cs.tao.persistence.data.DataSource dataSourceEnt = new ro.cs.tao.persistence.data.DataSource();
@@ -77,8 +76,7 @@ public class PersistenceManager {
 
         if(dataSourceEnt.getId() == null)
         {
-            // TODO throw exception
-            System.out.println("Error saving data source " + dataSourceEnt.getName());
+            throw new PersistenceException("Error saving data source with name: " + dataSourceEnt.getName());
         }
 
         return dataSourceEnt.getId();
@@ -86,15 +84,13 @@ public class PersistenceManager {
     }
 
     @Transactional
-    public Long saveDataProduct(EOProduct dataProduct, User user)
+    public Long saveDataProduct(EOProduct dataProduct, User user) throws PersistenceException
     {
         // check method parameters
         if(dataProduct.getName() == null || dataProduct.getGeometry() == null || dataProduct.getType() == null ||
           dataProduct.getLocation() == null || dataProduct.getSensorType() == null || dataProduct.getPixelType() == null)
         {
-            // TODO throw exception and remove code above
-            System.out.println("Invalid arguments for saving a data product!");
-            return 0L;
+            throw new PersistenceException("Invalid parameters were provided for adding new data product!");
         }
 
         DataProduct dataProductEnt = new DataProduct();
@@ -132,8 +128,7 @@ public class PersistenceManager {
 
         if(dataProductEnt.getId() == null)
         {
-            // TODO throw exception
-            System.out.println("Error saving data product " + dataProductEnt.getName());
+            throw new PersistenceException("Error saving data product with name: " + dataProductEnt.getName());
         }
 
         return dataProductEnt.getId();
@@ -142,15 +137,13 @@ public class PersistenceManager {
     @Transactional
     public Integer saveExecutionNode(String name, String description, String ipAddress, String sshKey,
                                      String username, String password,
-                                     Integer totalCPU, Integer totalRAM, Integer totalHDD)
+                                     Integer totalCPU, Integer totalRAM, Integer totalHDD) throws PersistenceException
     {
         // check method parameters
         if(name == null || ipAddress == null || username == null || password == null ||
           totalCPU == null || totalHDD == null || totalRAM == null)
         {
-            // TODO throw exception and remove code above
-            System.out.println("Invalid arguments for saving an execution node!");
-            return 0;
+            throw new PersistenceException("Invalid parameters were provided for adding new execution node!");
         }
 
         ExecutionNode executionNodeEnt = new ExecutionNode();
@@ -170,6 +163,7 @@ public class PersistenceManager {
         executionNodeEnt.setTotalCPU(totalCPU);
         executionNodeEnt.setTotalRAM(totalRAM);
         executionNodeEnt.setTotalHDD(totalHDD);
+        executionNodeEnt.setCreatedDate(LocalDateTime.now());
         executionNodeEnt.setActive(true);
 
         // save the ExecutionNode entity
@@ -177,8 +171,7 @@ public class PersistenceManager {
 
         if(executionNodeEnt.getId() == null)
         {
-            // TODO throw exception
-            System.out.println("Error saving execution node " + executionNodeEnt.getName());
+            throw new PersistenceException("Error saving execution node with name: " + executionNodeEnt.getName());
         }
 
         return executionNodeEnt.getId();
