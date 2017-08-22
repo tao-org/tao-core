@@ -20,6 +20,7 @@
         <module>topology-management</module>
         <module>aws-data-source</module>
         <module>peps-data-source</module>
+        <module>tao-core-kit</module>
     </modules>
 
     <properties>
@@ -70,6 +71,20 @@
     </distributionManagement>
 
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>2.5</version>
+                    <configuration>
+                        <useDefaultManifestFile>true</useDefaultManifestFile>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
+
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -99,10 +114,55 @@
                     <skipStaging>true</skipStaging>
                 </configuration>
             </plugin>
-
         </plugins>
     </build>
 
-
+    <developers>
+        <developer>
+            <id>kraftek</id>
+            <name>Cosmin Cara</name>
+            <email>kraftek@c-s.ro</email>
+            <organization>CS ROMANIA</organization>
+            <roles>
+                <role>Java Developer</role>
+            </roles>
+        </developer>
+        <developer>
+            <id>cosmin</id>
+            <name>Cosmin Udroiu</name>
+            <email>cosmin.udroiu@c-s.ro</email>
+            <organization>CS ROMANIA</organization>
+            <roles>
+                <role>Java Developer</role>
+            </roles>
+        </developer>
+        <developer>
+            <id>oana</id>
+            <name>Oana Hogoiu</name>
+            <email>oana.hogoiu@c-s.ro</email>
+            <organization>CS ROMANIA</organization>
+            <roles>
+                <role>Java Developer</role>
+            </roles>
+        </developer>
+        <developer>
+            <id>ailioiu</id>
+            <name>Alexandru Ilioiu</name>
+            <email>alexandru.ilioiu@c-s.ro</email>
+            <organization>CS ROMANIA</organization>
+            <roles>
+                <role>Java Developer</role>
+            </roles>
+        </developer>
+        <developer>
+            <id>tyty</id>
+            <name>Florin Tutunaru</name>
+            <email>florin.tutunaru@c-s.ro</email>
+            <organization>CS ROMANIA</organization>
+            <roles>
+                <role>Java Developer</role>
+            </roles>
+        </developer>
+    </developers>
 
 </project>
