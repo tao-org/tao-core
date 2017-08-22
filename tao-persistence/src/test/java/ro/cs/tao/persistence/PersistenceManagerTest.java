@@ -9,6 +9,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
+import ro.cs.tao.datasource.common.AbstractDataSource;
 import ro.cs.tao.datasource.common.DataQuery;
 import ro.cs.tao.datasource.common.DataSource;
 import ro.cs.tao.datasource.common.QueryException;
@@ -16,6 +17,7 @@ import ro.cs.tao.datasource.common.parameter.QueryParameter;
 import ro.cs.tao.datasource.remote.scihub.SciHubDataQuery;
 import ro.cs.tao.datasource.remote.scihub.SciHubDataSource;
 import ro.cs.tao.datasource.remote.scihub.SentinelDownloader;
+import ro.cs.tao.datasource.util.Polygon2D;
 import ro.cs.tao.eodata.EOData;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.persistence.config.DatabaseConfiguration;
@@ -78,7 +80,7 @@ public class PersistenceManagerTest {
             for (Handler handler : logger.getHandlers()) {
                 handler.setLevel(Level.INFO);
             }
-            DataSource<EOData, SciHubDataQuery> dataSource = new SciHubDataSource();
+            AbstractDataSource<EOData, SciHubDataQuery> dataSource = new SciHubDataSource();
             dataSource.setCredentials("kraftek", "cei7pitici.");
 
             persistenceManager.saveDataSource(dataSource, DataSourceType.SCIHUB_SENTINEL_1_DATA_SOURCE,

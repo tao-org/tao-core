@@ -129,7 +129,7 @@
 
 	</repositories>
     -->
-
+    <!--
 	<build>
 		<plugins>
 			<plugin>
@@ -150,9 +150,9 @@
                                 <property name="outputDir" value="${project.build.outputDirectory}" />
                                 <property name="sourceDir" value="${project.build.sourceDirectory}" />
                                 <property name="postgresql_jar" value="postgresql-${postgresql.version}.jar" />
-								<property name="execDbCleanupDir" value="${basedir}/src/main/resources/build_scripts/" />
+								<property name="execDbCleanupDir" value="${basedir}/src/main/resources/build_scripts/" /> -->
 								<!-- reinstall_db will be commented for production, it's just for development purposes -->
-								<ant antfile="${execDbCleanupDir}/reinstall_db.xml" />
+								<!--<ant antfile="${execDbCleanupDir}/reinstall_db.xml" />
 							</tasks>
 						</configuration>
 					</execution>
@@ -178,5 +178,6 @@
 			</plugin>
 		</plugins>
 	</build>
+    -->
 
 </project>
