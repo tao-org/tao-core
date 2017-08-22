@@ -16,9 +16,7 @@
 
 package ro.cs.tao.spi;
 
-import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Set;
 
 /**
@@ -49,6 +47,14 @@ public interface ServiceRegistry<T> {
      * @return A set of all services.
      */
     Set<T> getServices(Filter filter);
+
+    /**
+     * Gets a registered service instance for the given class.
+     *
+     * @param tClass The class of the service.
+     * @return The service instance or {@code null} if no such exists.
+     */
+    T getService(Class<T> tClass);
 
     /**
      * Gets a registered service instance for the given class name.

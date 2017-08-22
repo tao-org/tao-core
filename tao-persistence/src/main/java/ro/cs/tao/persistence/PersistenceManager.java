@@ -7,13 +7,10 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
+import ro.cs.tao.datasource.common.AbstractDataSource;
 import ro.cs.tao.datasource.common.DataQuery;
-import ro.cs.tao.datasource.common.DataSource;
 import ro.cs.tao.eodata.EOData;
 import ro.cs.tao.eodata.EOProduct;
-import ro.cs.tao.eodata.enums.DataFormat;
-import ro.cs.tao.eodata.enums.PixelType;
-import ro.cs.tao.eodata.enums.SensorType;
 import ro.cs.tao.persistence.data.DataProduct;
 import ro.cs.tao.persistence.data.ExecutionNode;
 import ro.cs.tao.persistence.data.User;
@@ -51,7 +48,7 @@ public class PersistenceManager {
     private ExecutionNodeRepository executionNodeRepository;
 
     @Transactional
-    public <R extends EOData, Q extends DataQuery<R>, S extends DataSource<R, Q>> Integer saveDataSource(S dataSource, DataSourceType dataSourceType, String name, String description)
+    public <R extends EOData, Q extends DataQuery<R>, S extends AbstractDataSource<R, Q>> Integer saveDataSource(S dataSource, DataSourceType dataSourceType, String name, String description)
     {
         if(dataSource.getCredentials() == null || dataSource.getConnectionString() == null || name == null)
         {

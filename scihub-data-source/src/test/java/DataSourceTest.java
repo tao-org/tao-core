@@ -45,6 +45,8 @@ import ro.cs.tao.datasource.remote.scihub.SciHubDataSource;
 import ro.cs.tao.datasource.remote.scihub.SentinelDownloader;
 import ro.cs.tao.datasource.util.Polygon2D;
 import ro.cs.tao.eodata.EOData;
+import ro.cs.tao.spi.ServiceRegistry;
+import ro.cs.tao.spi.ServiceRegistryManager;
 
 import java.net.URISyntaxException;
 import java.time.LocalDateTime;
@@ -63,18 +65,22 @@ import java.util.logging.Logger;
 public class DataSourceTest {
 
     public static void main(String[] args) {
-        SciHub_Sentinel1_Test();
+        //SciHub_Sentinel1_Test();
 
         SciHub_Sentinel2_Test();
     }
 
     public static void SciHub_Sentinel2_Test() {
         try {
+            ServiceRegistry<DataSource> serviceRegistry =
+                    ServiceRegistryManager.getInstance().getServiceRegistry(DataSource.class);
             Logger logger = LogManager.getLogManager().getLogger("");
             for (Handler handler : logger.getHandlers()) {
                 handler.setLevel(Level.INFO);
             }
-            DataSource<EOData, SciHubDataQuery> dataSource = new SciHubDataSource();
+            DataSource<EOData, SciHubDataQuery> dataSource =
+                    serviceRegistry.getService(SciHubDataSource.class.getName());
+                    //new SciHubDataSource();
             dataSource.setCredentials("kraftek", "cei7pitici.");
 
             DataQuery<EOData> query = dataSource.createQuery();
@@ -109,7 +115,7 @@ public class DataSourceTest {
                         .forEach(a -> System.out.println("\tName='" + a.getName() +
                                                                  "', value='" + a.getValue() + "'"));
             });
-        } catch (URISyntaxException | QueryException e) {
+        } catch (QueryException e) {
             e.printStackTrace();
         }
     }

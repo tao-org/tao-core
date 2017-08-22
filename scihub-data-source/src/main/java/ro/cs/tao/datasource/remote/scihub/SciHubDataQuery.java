@@ -123,10 +123,10 @@ public class SciHubDataQuery extends DataQuery<EOData> {
             idx++;
         }
         if (this.limit <= 0) {
-            this.limit = 100;
+            this.limit = DEFAULT_LIMIT;
         }
         if (this.pageSize <= 0) {
-            this.pageSize = Math.min(this.limit, 100);
+            this.pageSize = Math.min(this.limit, DEFAULT_LIMIT);
         }
         int page = Math.max(this.pageNumber, 0);
         int retrieved = 0;
