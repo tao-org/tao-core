@@ -16,6 +16,9 @@
  */
 package ro.cs.tao.datasource.common;
 
+import ro.cs.tao.datasource.common.parameter.ParameterDescriptor;
+import ro.cs.tao.datasource.common.parameter.ParameterProvider;
+import ro.cs.tao.datasource.common.parameter.QueryParameter;
 import ro.cs.tao.eodata.EOData;
 
 import java.util.LinkedHashMap;

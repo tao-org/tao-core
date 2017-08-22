@@ -38,7 +38,7 @@
 
 package ro.cs.tao.datasource.common.converters;
 
-import ro.cs.tao.datasource.common.QueryParameter;
+import ro.cs.tao.datasource.common.parameter.QueryParameter;
 
 /**
  * @author Cosmin Cara

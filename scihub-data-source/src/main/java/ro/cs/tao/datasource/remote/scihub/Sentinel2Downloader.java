@@ -169,7 +169,7 @@ public class Sentinel2Downloader extends SentinelDownloader {
     }
 
     @Override
-    protected String getProductUrl(EOData product) {
+    public String getProductUrl(EOData product) {
         throw new RuntimeException("This should not be called in this class");
     }
 

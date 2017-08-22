@@ -17,7 +17,7 @@
  *
  */
 
-package ro.cs.tao.datasource.common.xml;
+package ro.cs.tao.datasource.remote.result.xml;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;

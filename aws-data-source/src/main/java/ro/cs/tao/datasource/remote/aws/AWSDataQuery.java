@@ -1,10 +1,10 @@
 package ro.cs.tao.datasource.remote.aws;
 
 import ro.cs.tao.datasource.common.DataQuery;
-import ro.cs.tao.datasource.common.ParameterDescriptor;
-import ro.cs.tao.datasource.common.ParameterProvider;
 import ro.cs.tao.datasource.common.QueryException;
-import ro.cs.tao.datasource.common.QueryParameter;
+import ro.cs.tao.datasource.common.parameter.ParameterDescriptor;
+import ro.cs.tao.datasource.common.parameter.ParameterProvider;
+import ro.cs.tao.datasource.common.parameter.QueryParameter;
 import ro.cs.tao.datasource.remote.aws.parameters.LandsatParameterProvider;
 import ro.cs.tao.datasource.remote.aws.parameters.Sentinel2ParameterProvider;
 import ro.cs.tao.eodata.EOData;

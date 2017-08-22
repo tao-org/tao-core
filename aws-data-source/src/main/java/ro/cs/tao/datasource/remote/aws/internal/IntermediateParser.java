@@ -1,4 +1,4 @@
-package ro.cs.tao.datasource.common.json;
+package ro.cs.tao.datasource.remote.aws.internal;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -11,11 +11,14 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
 /**
- * @author Cosmin Cara
+ * Parser for AWS XML responses
+ *
+ * @author  Cosmin Cara
  */
-public class ResultParser {
-    public static Result parse(String text) {
-        Result result = null;
+public class IntermediateParser {
+
+    public static AwsResult parse(String text) {
+        AwsResult result = null;
         try (InputStream inputStream = new ByteArrayInputStream(text.getBytes())) {
             SAXParserFactory factory = SAXParserFactory.newInstance();
             SAXParser parser = factory.newSAXParser();
@@ -29,18 +32,18 @@ public class ResultParser {
     }
 
     private static class Handler extends DefaultHandler {
-        private Result result;
+        private AwsResult result;
         private boolean isCollection;
         private StringBuilder buffer;
 
-        Result getResult() {
+        AwsResult getResult() {
             return result;
         }
 
         @Override
         public void startDocument() throws SAXException {
             try {
-                result = new Result();
+                result = new AwsResult();
                 buffer = new StringBuilder();
             } catch (Exception e) {
                 e.printStackTrace();

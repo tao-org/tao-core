@@ -1,4 +1,4 @@
-package ro.cs.tao.datasource.common.json;
+package ro.cs.tao.datasource.remote.result.json;
 
 import ro.cs.tao.eodata.EOData;
 

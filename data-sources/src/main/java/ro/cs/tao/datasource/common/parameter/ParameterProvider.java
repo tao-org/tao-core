@@ -1,4 +1,4 @@
-package ro.cs.tao.datasource.common;
+package ro.cs.tao.datasource.common.parameter;
 
 import java.util.Map;
 

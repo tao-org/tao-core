@@ -2,13 +2,13 @@ package ro.cs.tao.datasource.remote.aws;
 
 import ro.cs.tao.datasource.common.DataQuery;
 import ro.cs.tao.datasource.common.DataSource;
-import ro.cs.tao.datasource.common.ParameterProvider;
 import ro.cs.tao.datasource.common.QueryException;
-import ro.cs.tao.datasource.common.QueryParameter;
-import ro.cs.tao.datasource.common.json.Result;
-import ro.cs.tao.datasource.common.json.ResultParser;
+import ro.cs.tao.datasource.common.parameter.ParameterProvider;
+import ro.cs.tao.datasource.common.parameter.QueryParameter;
 import ro.cs.tao.datasource.remote.AbstractDownloader;
 import ro.cs.tao.datasource.remote.aws.helpers.LandsatProductHelper;
+import ro.cs.tao.datasource.remote.aws.internal.AwsResult;
+import ro.cs.tao.datasource.remote.aws.internal.IntermediateParser;
 import ro.cs.tao.datasource.util.Logger;
 import ro.cs.tao.datasource.util.NetUtils;
 import ro.cs.tao.datasource.util.Polygon2D;
@@ -130,7 +130,7 @@ class Landsat8Query extends DataQuery<EOData> {
                 String path = tile.substring(0, 3);
                 String row = tile.substring(3, 6);
                 String tileUrl = baseUrl + path + AbstractDownloader.URL_SEPARATOR + row + AbstractDownloader.URL_SEPARATOR;
-                Result productResult = ResultParser.parse(NetUtils.getResponseAsString(tileUrl));
+                AwsResult productResult = IntermediateParser.parse(NetUtils.getResponseAsString(tileUrl));
                 if (productResult.getCommonPrefixes() != null) {
                     Set<String> names = productResult.getCommonPrefixes().stream()
                             .map(p -> p.replace(productResult.getPrefix(), "").replace(productResult.getDelimiter(), ""))
@@ -173,9 +173,8 @@ class Landsat8Query extends DataQuery<EOData> {
         EOProduct product;
         try (InputStream inputStream = new URI(jsonUrl).toURL().openStream()) {
             reader = Json.createReader(inputStream);
-            JsonObject obj = reader.readObject()
-                    .getJsonObject("L1_METADATA_FILE")
-                    .getJsonObject("METADATA_FILE_INFO");
+            JsonObject rootObject = reader.readObject().getJsonObject("L1_METADATA_FILE");
+            JsonObject obj = rootObject.getJsonObject("METADATA_FILE_INFO");
             product = new EOProduct();
             product.setId(obj.getString("LANDSAT_SCENE_ID"));
             if (obj.containsKey("LANDSAT_PRODUCT_ID")) {
@@ -185,7 +184,7 @@ class Landsat8Query extends DataQuery<EOData> {
             }
             product.setType(DataFormat.RASTER);
             product.setSensorType(SensorType.OPTICAL);
-            obj = reader.readObject().getJsonObject("L1_METADATA_FILE").getJsonObject("PRODUCT_METADATA");
+            obj = rootObject.getJsonObject("PRODUCT_METADATA");
             product.setAcquisitionDate(dateFormat.parse(obj.getString("DATE_ACQUIRED")));
             product.setWidth(obj.getInt("REFLECTIVE_SAMPLES"));
             product.setHeight(obj.getInt("REFLECTIVE_LINES"));
@@ -202,9 +201,14 @@ class Landsat8Query extends DataQuery<EOData> {
                              obj.getJsonNumber("CORNER_UL_LON_PRODUCT").doubleValue());
             product.setGeometry(new GeometryAdapter().marshal(footprint.toWKT()));
 
-            obj = reader.readObject().getJsonObject("L1_METADATA_FILE").getJsonObject("MIN_MAX_PIXEL_VALUE");
+            obj = rootObject.getJsonObject("MIN_MAX_PIXEL_VALUE");
             product.setPixelType(Conversions.pixelTypeFromRange(obj.getInt("QUANTIZE_CAL_MIN_BAND_1"),
                                                                 obj.getInt("QUANTIZE_CAL_MAX_BAND_1")));
+            product.setLocation(jsonUrl.substring(0, jsonUrl.lastIndexOf("/")));
+
+            rootObject.keySet()
+                    .forEach(k -> rootObject.getJsonObject(k)
+                        .forEach((key, value) -> product.addAttribute(key, value.toString())));
         } finally {
             if (reader != null) {
                 reader.close();
