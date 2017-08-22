@@ -114,6 +114,8 @@ CREATE TABLE tao.execution_node
 	used_CPU integer NULL,
 	used_RAM integer NULL,
 	used_HDD integer NULL,
+	created timestamp NOT NULL,
+    modified timestamp NULL,
 	active boolean NOT NULL
 );
 

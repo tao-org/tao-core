@@ -3,6 +3,7 @@ package ro.cs.tao.persistence.data;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.time.LocalDateTime;
 
 /**
  * ExecutionNode persistent entity
@@ -122,6 +123,19 @@ public class ExecutionNode {
     private Integer usedHDD;
 
     /**
+     * Created date
+     */
+    @Column(name = "created")
+    @NotNull
+    private LocalDateTime createdDate;
+
+    /**
+     * Modified date
+     */
+    @Column(name = "modified")
+    private LocalDateTime modifiedDate;
+
+    /**
      * Flag that indicates if the execution node is active or not
      */
     @Column(name = "active")
@@ -230,6 +244,22 @@ public class ExecutionNode {
 
     public void setUsedHDD(Integer usedHDD) {
         this.usedHDD = usedHDD;
+    }
+
+    public LocalDateTime getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(LocalDateTime createdDate) {
+        this.createdDate = createdDate;
+    }
+
+    public LocalDateTime getModifiedDate() {
+        return modifiedDate;
+    }
+
+    public void setModifiedDate(LocalDateTime modifiedDate) {
+        this.modifiedDate = modifiedDate;
     }
 
     public Boolean getActive() {

@@ -21,6 +21,7 @@ import ro.cs.tao.eodata.EOData;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.persistence.config.DatabaseConfiguration;
 import ro.cs.tao.persistence.data.enums.DataSourceType;
+import ro.cs.tao.persistence.exception.PersistenceException;
 
 import java.net.URISyntaxException;
 import java.sql.SQLException;
@@ -70,6 +71,7 @@ public class PersistenceManagerTest {
         }
     }
 
+
     @Test
     public void save_new_data_source()
     {
@@ -84,7 +86,7 @@ public class PersistenceManagerTest {
             persistenceManager.saveDataSource(dataSource, DataSourceType.SCIHUB_SENTINEL_1_DATA_SOURCE,
               "SciHub Sentinel-1 Data Source", "No description");
 
-        } catch (URISyntaxException e) {
+        } catch (URISyntaxException | PersistenceException e) {
             logger.error(ExceptionUtils.getStackTrace(e));
             Assert.fail(e.getMessage());
         }
@@ -105,19 +107,24 @@ public class PersistenceManagerTest {
             DataQuery<EOData> query = dataSource.createQuery();
             query.addParameter("platformName", "Sentinel-2");
             QueryParameter begin = query.createParameter("beginPosition", Date.class);
-            begin.setMinValue(Date.from(LocalDateTime.of(2017, 5, 30, 0, 0, 0, 0)
+            begin.setMinValue(Date.from(LocalDateTime.of(2016, 2, 1, 0, 0, 0, 0)
               .atZone(ZoneId.systemDefault())
               .toInstant()));
-            begin.setMaxValue(Date.from(LocalDateTime.of(2017, 6, 1, 0, 0, 0, 0)
+            begin.setMaxValue(Date.from(LocalDateTime.of(2017, 2, 1, 0, 0, 0, 0)
               .atZone(ZoneId.systemDefault())
               .toInstant()));
             query.addParameter(begin);
-            query.addParameter("polarisationMode", "VV");
-            query.addParameter("sensorOperationalMode", "IW");
-            query.addParameter("productType", "SLC");
+            Polygon2D aoi = Polygon2D.fromWKT("POLYGON((22.8042573604346 43.8379609098684," +
+              "24.83885442747927 43.8379609098684," +
+              "24.83885442747927 44.795645304033826," +
+              "22.8042573604346 44.795645304033826," +
+              "22.8042573604346 43.8379609098684))");
+
+            query.addParameter("footprint", aoi);
+
+            query.addParameter("cloudcoverpercentage", 100.);
             query.setPageSize(50);
             query.setMaxResults(83);
-            SentinelDownloader downloader = new SentinelDownloader("E:\\NewFormat");
             List<EOData> results = query.execute();
             if(results.size() > 0)
             {
@@ -128,10 +135,10 @@ public class PersistenceManagerTest {
             }
             else
             {
-                logger.warning("save_new_data_product() - No result found!");
+                logger.info("save_new_data_product() - No result found!");
             }
 
-        } catch (URISyntaxException | QueryException e) {
+        } catch (URISyntaxException | QueryException | PersistenceException e) {
             logger.error(ExceptionUtils.getStackTrace(e));
             Assert.fail(e.getMessage());
         }
@@ -148,7 +155,7 @@ public class PersistenceManagerTest {
             // check persisted ID
             Assert.assertTrue(executionNodeId != null && executionNodeId > 0);
         }
-        catch (Exception e)
+        catch (PersistenceException e)
         {
             logger.error(ExceptionUtils.getStackTrace(e));
             Assert.fail(e.getMessage());
