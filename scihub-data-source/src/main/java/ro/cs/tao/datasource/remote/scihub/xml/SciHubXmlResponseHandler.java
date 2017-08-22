@@ -36,10 +36,10 @@
  *
  */
 
-package ro.cs.tao.datasource.remote.scihub;
+package ro.cs.tao.datasource.remote.scihub.xml;
 
 import org.xml.sax.Attributes;
-import ro.cs.tao.datasource.common.xml.XmlResponseHandler;
+import ro.cs.tao.datasource.remote.result.xml.XmlResponseHandler;
 import ro.cs.tao.eodata.enums.PixelType;
 import ro.cs.tao.eodata.enums.SensorType;
 import ro.cs.tao.eodata.serialization.DateAdapter;

@@ -19,7 +19,7 @@
 
 package ro.cs.tao.datasource.local;
 
-import ro.cs.tao.datasource.common.DataSource;
+import ro.cs.tao.datasource.common.AbstractDataSource;
 import ro.cs.tao.eodata.EOData;
 
 import java.sql.Connection;
@@ -30,7 +30,7 @@ import java.util.logging.Logger;
 /**
  * @author Cosmin Cara
  */
-public class LocalDataSource extends DataSource<EOData, LocalDataQuery> {
+public class LocalDataSource extends AbstractDataSource<EOData, LocalDataQuery> {
 
     protected final Logger logger;
 

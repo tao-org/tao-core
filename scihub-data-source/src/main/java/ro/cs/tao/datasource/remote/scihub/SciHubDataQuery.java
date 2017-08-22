@@ -25,13 +25,14 @@ import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import ro.cs.tao.datasource.common.DataQuery;
-import ro.cs.tao.datasource.common.ParameterProvider;
 import ro.cs.tao.datasource.common.QueryException;
-import ro.cs.tao.datasource.common.QueryParameter;
 import ro.cs.tao.datasource.common.converters.ConversionException;
 import ro.cs.tao.datasource.common.converters.ConverterFactory;
 import ro.cs.tao.datasource.common.converters.DateConverter;
-import ro.cs.tao.datasource.common.json.JsonResponseParser;
+import ro.cs.tao.datasource.common.parameter.ParameterProvider;
+import ro.cs.tao.datasource.common.parameter.QueryParameter;
+import ro.cs.tao.datasource.remote.result.json.JsonResponseParser;
+import ro.cs.tao.datasource.remote.scihub.json.SciHubJsonResponseHandler;
 import ro.cs.tao.datasource.util.NetUtils;
 import ro.cs.tao.datasource.util.Polygon2D;
 import ro.cs.tao.eodata.EOData;
@@ -122,10 +123,10 @@ public class SciHubDataQuery extends DataQuery<EOData> {
             idx++;
         }
         if (this.limit <= 0) {
-            this.limit = 100;
+            this.limit = DEFAULT_LIMIT;
         }
         if (this.pageSize <= 0) {
-            this.pageSize = Math.min(this.limit, 100);
+            this.pageSize = Math.min(this.limit, DEFAULT_LIMIT);
         }
         int page = Math.max(this.pageNumber, 0);
         int retrieved = 0;

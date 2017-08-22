@@ -119,6 +119,8 @@ public abstract class AbstractDownloader {
         return retCode;
     }
 
+    public abstract String getProductUrl(EOData descriptor);
+
     void shouldCompress(boolean shouldCompress) {
         this.shouldCompress = shouldCompress;
     }
@@ -130,8 +132,6 @@ public abstract class AbstractDownloader {
     void setDownloadMode(DownloadMode mode) {
         this.downloadMode = mode;
     }
-
-    protected abstract String getProductUrl(EOData descriptor);
 
     protected abstract String getMetadataUrl(EOData descriptor);
 

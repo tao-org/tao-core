@@ -38,8 +38,8 @@
 
 package ro.cs.tao.datasource.remote;
 
+import ro.cs.tao.datasource.common.AbstractDataSource;
 import ro.cs.tao.datasource.common.DataQuery;
-import ro.cs.tao.datasource.common.DataSource;
 import ro.cs.tao.eodata.EOData;
 
 import java.io.IOException;
@@ -52,7 +52,7 @@ import java.net.URISyntaxException;
  * @author Cosmin Cara
  */
 public abstract class URLDataSource<R extends EOData, Q extends DataQuery<R>>
-        extends DataSource<R, Q> {
+        extends AbstractDataSource<R, Q> {
     protected URI remoteUrl;
 
     public URLDataSource(String connectionString) throws URISyntaxException {

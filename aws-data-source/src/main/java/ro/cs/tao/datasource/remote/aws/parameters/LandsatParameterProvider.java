@@ -1,6 +1,7 @@
 package ro.cs.tao.datasource.remote.aws.parameters;
 
-import ro.cs.tao.datasource.common.ParameterDescriptor;
+import ro.cs.tao.datasource.common.parameter.ParameterDescriptor;
+import ro.cs.tao.datasource.common.parameter.ParameterProvider;
 
 import java.util.Collections;
 import java.util.Date;
@@ -10,7 +11,7 @@ import java.util.Map;
 /**
  * @author Cosmin Cara
  */
-public class LandsatParameterProvider implements ro.cs.tao.datasource.common.ParameterProvider {
+public class LandsatParameterProvider implements ParameterProvider {
 
     @Override
     public Map<String, ParameterDescriptor> getSupportedParameters() {

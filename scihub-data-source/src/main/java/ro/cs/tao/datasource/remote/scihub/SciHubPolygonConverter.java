@@ -19,9 +19,9 @@
 
 package ro.cs.tao.datasource.remote.scihub;
 
-import ro.cs.tao.datasource.common.QueryParameter;
 import ro.cs.tao.datasource.common.converters.ConversionException;
 import ro.cs.tao.datasource.common.converters.PolygonConverter;
+import ro.cs.tao.datasource.common.parameter.QueryParameter;
 
 /**
  * @author Cosmin Cara
