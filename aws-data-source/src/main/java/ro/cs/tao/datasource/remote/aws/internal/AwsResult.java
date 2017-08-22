@@ -1,12 +1,14 @@
-package ro.cs.tao.datasource.common.json;
+package ro.cs.tao.datasource.remote.aws.internal;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author Cosmin Cara
+ * Wrapper of an AWS record
+ *
+ * @author  Cosmin Cara
  */
-public class Result {
+public class AwsResult {
     private String name;
     private String prefix;
     private String marker;

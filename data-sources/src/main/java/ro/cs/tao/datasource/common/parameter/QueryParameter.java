@@ -14,7 +14,7 @@
  * with this program; if not, see http://www.gnu.org/licenses/
  *
  */
-package ro.cs.tao.datasource.common;
+package ro.cs.tao.datasource.common.parameter;
 
 import ro.cs.tao.datasource.common.converters.ParameterConverter;
 

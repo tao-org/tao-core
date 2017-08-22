@@ -1,103 +1,42 @@
-/*
- * Copyright (C) 2017 CS ROMANIA
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the Free
- * Software Foundation; either version 3 of the License, or (at your option)
- * any later version.
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, see http://www.gnu.org/licenses/
- *
- */
 package ro.cs.tao.datasource.common;
 
 import org.apache.http.auth.UsernamePasswordCredentials;
+import ro.cs.tao.datasource.common.parameter.ParameterDescriptor;
 import ro.cs.tao.eodata.EOData;
 
-import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
- * Abstraction for a product datasource source.
- *
  * @author Cosmin Cara
  */
-public abstract class DataSource<R extends EOData, Q extends DataQuery<R>> {
-    protected String connectionString;
-    protected long timeout;
-    protected UsernamePasswordCredentials credentials;
-    private Map<String, ParameterProvider> parameterProviders;
+public interface DataSource<R extends EOData, Q extends DataQuery<R>> {
+    long getTimeout();
 
-    public DataSource() { this.timeout = 10000; }
+    void setTimeout(long value);
 
-    public DataSource(String connectionString) {
-        this();
-        this.connectionString = connectionString;
-    }
+    String getConnectionString();
 
-    public long getTimeout() { return this.timeout; }
+    void setConnectionString(String connectionString);
 
-    public void setTimeout(long value) { this.timeout = value; }
+    void setCredentials(String username, String password);
 
-    public String getConnectionString() { return connectionString; }
-
-    public void setConnectionString(String connectionString) { this.connectionString = connectionString; }
-
-    public void setCredentials(String username, String password) {
-        if (username == null || username.isEmpty()) {
-            throw new IllegalArgumentException("Invalid user");
-        }
-        this.credentials = new UsernamePasswordCredentials(username, password);
-    }
-
-    public UsernamePasswordCredentials getCredentials() { return this.credentials; }
+    UsernamePasswordCredentials getCredentials();
 
     /**
      * Tests that the datasource source is reachable.
      * Must return <code>true</code> if the source is reachable, <code>false</code> otherwise.
      *
      */
-    public abstract boolean ping();
+    boolean ping();
 
     /**
      * Closes the datasource source connection.
      */
-    public abstract void close();
+    void close();
 
-    public Map<String, Map<String, ParameterDescriptor>> getSupportedParameters() {
-        Map<String, Map<String, ParameterDescriptor>> descriptors = null;
-        if (this.parameterProviders != null) {
-            descriptors = this.parameterProviders.entrySet().stream()
-                    .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getSupportedParameters()));
-        }
-        return descriptors;
-    }
+    Map<String, Map<String, ParameterDescriptor>> getSupportedParameters();
 
-    /**
-     * Creates a query object that will be executed against the datasource source to retrieve results.
-     */
-    public Q createQuery() { return createQueryImpl(null); }
+    Q createQuery();
 
-    public Q createQuery(String type) { return createQueryImpl(type); }
-
-    protected abstract Q createQueryImpl(String code);
-
-    protected void addParameterProvider(String code, ParameterProvider provider) {
-        if (this.parameterProviders == null) {
-            this.parameterProviders = new HashMap<>();
-        }
-        code = code == null ? "" : code;
-        this.parameterProviders.put(code, provider);
-    }
-
-    protected ParameterProvider getParameterProvider(String code) {
-        code = code == null ? "" : code;
-        return this.parameterProviders.get(code);
-    }
+    Q createQuery(String type);
 }

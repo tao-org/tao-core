@@ -3,12 +3,12 @@ package ro.cs.tao.datasource.remote.aws;
 import org.geotools.referencing.CRS;
 import ro.cs.tao.datasource.common.DataQuery;
 import ro.cs.tao.datasource.common.DataSource;
-import ro.cs.tao.datasource.common.ParameterProvider;
 import ro.cs.tao.datasource.common.QueryException;
-import ro.cs.tao.datasource.common.QueryParameter;
-import ro.cs.tao.datasource.common.json.Result;
-import ro.cs.tao.datasource.common.json.ResultParser;
+import ro.cs.tao.datasource.common.parameter.ParameterProvider;
+import ro.cs.tao.datasource.common.parameter.QueryParameter;
 import ro.cs.tao.datasource.remote.AbstractDownloader;
+import ro.cs.tao.datasource.remote.aws.internal.AwsResult;
+import ro.cs.tao.datasource.remote.aws.internal.IntermediateParser;
 import ro.cs.tao.datasource.util.Logger;
 import ro.cs.tao.datasource.util.NetUtils;
 import ro.cs.tao.datasource.util.Polygon2D;
@@ -121,7 +121,7 @@ class Sentinel2Query extends DataQuery<EOData> {
                         square + AbstractDownloader.URL_SEPARATOR;
                 for (int year = yearStart; year <= yearEnd; year++) {
                     String yearUrl = tileUrl + String.valueOf(year) + AbstractDownloader.URL_SEPARATOR;
-                    Result yearResult = ResultParser.parse(NetUtils.getResponseAsString(yearUrl));
+                    AwsResult yearResult = IntermediateParser.parse(NetUtils.getResponseAsString(yearUrl));
                     if (yearResult.getCommonPrefixes() != null) {
                         Set<Integer> months = yearResult.getCommonPrefixes().stream()
                                 .map(p -> {
@@ -133,7 +133,7 @@ class Sentinel2Query extends DataQuery<EOData> {
                         for (int month = monthS; month <= monthE; month++) {
                             if (months.contains(month)) {
                                 String monthUrl = yearUrl + String.valueOf(month) + AbstractDownloader.URL_SEPARATOR;
-                                Result monthResult = ResultParser.parse(NetUtils.getResponseAsString(monthUrl));
+                                AwsResult monthResult = IntermediateParser.parse(NetUtils.getResponseAsString(monthUrl));
                                 if (monthResult.getCommonPrefixes() != null) {
                                     Set<Integer> days = monthResult.getCommonPrefixes().stream()
                                             .map(p -> {
@@ -147,7 +147,7 @@ class Sentinel2Query extends DataQuery<EOData> {
                                     for (int day = dayS; day <= dayE; day++) {
                                         if (days.contains(day)) {
                                             String dayUrl = monthUrl + String.valueOf(day) + AbstractDownloader.URL_SEPARATOR;
-                                            Result dayResult = ResultParser.parse(NetUtils.getResponseAsString(dayUrl));
+                                            AwsResult dayResult = IntermediateParser.parse(NetUtils.getResponseAsString(dayUrl));
                                             if (dayResult.getCommonPrefixes() != null) {
                                                 Set<Integer> sequences = dayResult.getCommonPrefixes().stream()
                                                         .map(p -> {

@@ -19,7 +19,7 @@
 
 package ro.cs.tao.datasource.common.converters;
 
-import ro.cs.tao.datasource.common.QueryParameter;
+import ro.cs.tao.datasource.common.parameter.QueryParameter;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
