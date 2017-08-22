@@ -17,6 +17,8 @@
 package ro.cs.tao.datasource.common;
 
 import org.apache.http.auth.UsernamePasswordCredentials;
+import ro.cs.tao.datasource.common.parameter.ParameterDescriptor;
+import ro.cs.tao.datasource.common.parameter.ParameterProvider;
 import ro.cs.tao.eodata.EOData;
 
 import java.util.HashMap;

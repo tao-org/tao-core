@@ -1,8 +1,8 @@
-package ro.cs.tao.datasource.remote.scihub;
+package ro.cs.tao.datasource.remote.scihub.json;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import ro.cs.tao.datasource.common.json.JSonResponseHandler;
-import ro.cs.tao.datasource.remote.scihub.json.Result;
+import ro.cs.tao.datasource.remote.result.json.JSonResponseHandler;
+import ro.cs.tao.datasource.remote.scihub.SentinelDownloader;
 import ro.cs.tao.datasource.util.Polygon2D;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.enums.DataFormat;

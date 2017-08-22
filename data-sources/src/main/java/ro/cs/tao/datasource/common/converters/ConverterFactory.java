@@ -19,7 +19,7 @@
 
 package ro.cs.tao.datasource.common.converters;
 
-import ro.cs.tao.datasource.common.QueryParameter;
+import ro.cs.tao.datasource.common.parameter.QueryParameter;
 import ro.cs.tao.datasource.util.Polygon2D;
 
 import java.lang.reflect.Constructor;

@@ -1,7 +1,7 @@
 package ro.cs.tao.datasource.local;
 
-import ro.cs.tao.datasource.common.ParameterDescriptor;
-import ro.cs.tao.datasource.common.ParameterProvider;
+import ro.cs.tao.datasource.common.parameter.ParameterDescriptor;
+import ro.cs.tao.datasource.common.parameter.ParameterProvider;
 
 import java.util.Collections;
 import java.util.HashMap;

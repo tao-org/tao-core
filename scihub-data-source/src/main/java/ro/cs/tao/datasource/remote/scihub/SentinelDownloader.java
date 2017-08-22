@@ -64,7 +64,7 @@ public class SentinelDownloader extends AbstractDownloader {
     }
 
     @Override
-    protected String getProductUrl(EOData descriptor) {
+    public String getProductUrl(EOData descriptor) {
         return odataArchivePath.replace(ODATA_UUID, descriptor.getId());
     }
 

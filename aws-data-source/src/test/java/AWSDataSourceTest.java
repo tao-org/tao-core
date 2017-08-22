@@ -1,9 +1,10 @@
 import ro.cs.tao.datasource.common.DataQuery;
 import ro.cs.tao.datasource.common.DataSource;
 import ro.cs.tao.datasource.common.QueryException;
-import ro.cs.tao.datasource.common.QueryParameter;
+import ro.cs.tao.datasource.common.parameter.QueryParameter;
 import ro.cs.tao.datasource.remote.aws.AWSDataQuery;
 import ro.cs.tao.datasource.remote.aws.AWSDataSource;
+import ro.cs.tao.datasource.remote.aws.LandsatProduct;
 import ro.cs.tao.datasource.util.Polygon2D;
 import ro.cs.tao.eodata.EOData;
 
@@ -92,8 +93,9 @@ public class AWSDataSourceTest {
             aoi.append(-9.9866909768, 24.413397299);
             aoi.append(-9.9866909768, 23.4186029838);
             query.addParameter("footprint", aoi.toWKT());
-            query.addParameter("collection", "PRE_COLLECTION");
+            query.addParameter("collection", "COLLECTION_1");
             query.addParameter("cloudcoverpercentage", 100.);
+            query.addParameter("productType", LandsatProduct.T1.toString());
             query.setPageSize(50);
             query.setMaxResults(83);
             List<EOData> results = query.execute();
