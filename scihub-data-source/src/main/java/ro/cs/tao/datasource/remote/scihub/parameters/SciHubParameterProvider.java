@@ -1,6 +1,7 @@
 package ro.cs.tao.datasource.remote.scihub.parameters;
 
 import ro.cs.tao.datasource.common.parameter.ParameterDescriptor;
+import ro.cs.tao.datasource.common.parameter.ParameterProvider;
 import ro.cs.tao.datasource.util.Polygon2D;
 
 import java.util.Collections;
@@ -11,7 +12,7 @@ import java.util.Map;
 /**
  * @author Cosmin Cara
  */
-public class ParameterProvider implements ro.cs.tao.datasource.common.parameter.ParameterProvider {
+public class SciHubParameterProvider implements ParameterProvider {
     @Override
     public Map<String, ParameterDescriptor> getSupportedParameters() {
         return Collections.unmodifiableMap(new HashMap<String, ParameterDescriptor>() {{

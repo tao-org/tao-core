@@ -16,6 +16,8 @@
 
 package ro.cs.tao.spi;
 
+import ro.cs.tao.utils.Assert;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,8 +29,6 @@ import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-
-import ro.cs.tao.utils.Assert;
 
 /**
  * {@inheritDoc}
@@ -44,6 +44,7 @@ public class DefaultServiceRegistry<T> implements ServiceRegistry<T> {
         this.serviceType = serviceType;
         this.services = new HashMap<>(10);
         this.listeners = new ArrayList<>(3);
+        ServiceLoader.loadServices(this);
     }
 
     /**
@@ -71,6 +72,14 @@ public class DefaultServiceRegistry<T> implements ServiceRegistry<T> {
     	return StreamSupport.stream(
     			Spliterators.spliteratorUnknownSize(iter, Spliterator.ORDERED), false).
     			collect(Collectors.toSet());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public T getService(Class<T> tClass) {
+        return services.get(tClass.getName());
     }
 
     /**

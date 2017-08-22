@@ -19,6 +19,7 @@
         <module>tao-utils</module>
         <module>topology-management</module>
         <module>aws-data-source</module>
+        <module>peps-data-source</module>
     </modules>
 
     <properties>

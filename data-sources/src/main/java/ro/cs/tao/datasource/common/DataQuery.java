@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
  * @author Cosmin Cara
  */
 public abstract class DataQuery<R extends EOData> {
+    protected static final int DEFAULT_LIMIT = 20;
     protected DataSource source;
     protected String queryText;
     protected Map<String, QueryParameter> parameters;

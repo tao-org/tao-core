@@ -7,6 +7,8 @@ import ro.cs.tao.datasource.remote.aws.AWSDataSource;
 import ro.cs.tao.datasource.remote.aws.LandsatProduct;
 import ro.cs.tao.datasource.util.Polygon2D;
 import ro.cs.tao.eodata.EOData;
+import ro.cs.tao.spi.ServiceRegistry;
+import ro.cs.tao.spi.ServiceRegistryManager;
 
 import java.net.URISyntaxException;
 import java.time.LocalDateTime;
@@ -35,7 +37,9 @@ public class AWSDataSourceTest {
             for (Handler handler : logger.getHandlers()) {
                 handler.setLevel(Level.INFO);
             }
-            DataSource<EOData, AWSDataQuery> dataSource = new AWSDataSource();
+            ServiceRegistry<DataSource> serviceRegistry =
+                    ServiceRegistryManager.getInstance().getServiceRegistry(DataSource.class);
+            DataSource<EOData, AWSDataQuery> dataSource = serviceRegistry.getService(AWSDataSource.class.getName());
 
             DataQuery<EOData> query = dataSource.createQuery("S2");
             query.addParameter("platformName", "S2");
@@ -66,7 +70,7 @@ public class AWSDataSourceTest {
                         .forEach(a -> System.out.println("\tName='" + a.getName() +
                                                                  "', value='" + a.getValue() + "'"));
             });
-        } catch (URISyntaxException | QueryException e) {
+        } catch (QueryException e) {
             e.printStackTrace();
         }
     }
