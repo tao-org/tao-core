@@ -12,6 +12,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <postgresql.version>9.4.1212.jre7</postgresql.version>
 	</properties>
 
 	<dependencies>
@@ -114,7 +115,7 @@
 
 	</dependencies>
 
-	<!--
+    <!--
 	<repositories>
 		<repository>
 			<id>OSGEO GeoTools repo</id>
@@ -127,6 +128,55 @@
 		</repository>
 
 	</repositories>
-	-->
+    -->
+
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>1.8</version>
+				<executions>
+					<execution>
+						<id>ant-build-persistence-jar</id>
+						<phase>process-classes</phase>
+						<goals>
+							<goal>run</goal>
+						</goals>
+						<configuration>
+							<tasks>
+                                <property name="compile_classpath" refid="maven.compile.classpath" />
+                                <property name="runtime_classpath" refid="maven.runtime.classpath" />
+                                <property name="test_classpath" refid="maven.test.classpath" />
+                                <property name="outputDir" value="${project.build.outputDirectory}" />
+                                <property name="sourceDir" value="${project.build.sourceDirectory}" />
+                                <property name="postgresql_jar" value="postgresql-${postgresql.version}.jar" />
+								<property name="execDbCleanupDir" value="${basedir}/src/main/resources/build_scripts/" />
+								<!-- reinstall_db will be commented for production, it's just for development purposes -->
+								<ant antfile="${execDbCleanupDir}/reinstall_db.xml" />
+							</tasks>
+						</configuration>
+					</execution>
+				</executions>
+				<dependencies>
+					<dependency>
+						<groupId>ant-contrib</groupId>
+						<artifactId>ant-contrib</artifactId>
+						<version>1.0b3</version>
+						<exclusions>
+							<exclusion>
+								<groupId>ant</groupId>
+								<artifactId>ant</artifactId>
+							</exclusion>
+						</exclusions>
+					</dependency>
+					<dependency>
+						<groupId>org.apache.ant</groupId>
+						<artifactId>ant-nodeps</artifactId>
+						<version>1.8.1</version>
+					</dependency>
+				</dependencies>
+			</plugin>
+		</plugins>
+	</build>
 
 </project>
