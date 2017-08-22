@@ -2,11 +2,10 @@
 <project name="Drops the database and creates it again" default="reinstall_db.all">
     <taskdef resource="net/sf/antcontrib/antlib.xml" />
 
-    <property name="build.xml.dir" location="${basedir}"/>
-    <property name="root.dir" location="${build.xml.dir}/../../../../"/>
+    <property name="root.dir" location="${basedir}"/>
     <property name="src.dir" value="${root.dir}/src"/>
     <property name="target.dir" value="${root.dir}/target"/>
-    <!--<property name="resources_target_dir" value="computational_modules"/>-->
+    <property name="psqlPortNo" value="5432" />
 
     <target name="reinstall_db.all">
 
@@ -28,32 +27,12 @@
         <echo>Target.dir: ${target.dir}</echo>
         <echo>==============================</echo>
         <echo>==============================</echo>
-        <!--<echo>resources_target_dir: ${resources_target_dir}</echo>-->
-        <echo>==============================</echo>
-
-        <loadproperties srcFile="${target.dir}/classes/config.properties" prefix="fds.config.properties"/>
-        <echo>==============================</echo>
-        <echo>Fds config file: ${fds.config.properties.fds.config.path}</echo>
-        <echo>==============================</echo>
-
-        <loadfile property="fds.config.properties.file" srcfile="${target.dir}/classes/${fds.config.properties.fds.config.path}"/>
-        <for param="line" delimiter="${line.separator}" list="${fds.config.properties.file}">
-            <sequential>
-                <propertyregex property="psqlPortNo" input="@{line}" regexp="\s*&lt;url&gt;&lt;!\[CDATA\[jdbc:postgresql:\/\/localhost:([0-9]+)\/fdsdata\?stringtype=unspecified\]\]&gt;&lt;\/url&gt;$" select="\1" />
-            </sequential>
-        </for>
-        <echo>==============================</echo>
-        <echo>Port no: ${psqlPortNo}</echo>
-        <echo>==============================</echo>
 
         <!-- Drop database -->
         <antcall target="drop-database"/>
 
-        <!-- Drop database -->
+        <!-- Create database -->
         <antcall target="install-database"/>
-
-        <!-- Drop database -->
-        <antcall target="insert-data-into-database"/>
     </target>
 
     <!-- ================================================================ -->
@@ -75,15 +54,6 @@
     </target>
 
     <!-- ================================================================ -->
-    <!-- Target inserting data into the database				  	      -->
-    <!-- ================================================================ -->
-    <target name="insert-data-into-database">
-        <antcall target="execute-script">
-            <param name="execute.script.fileName" value="insert_test_data_to_db" />
-        </antcall>
-    </target>
-
-    <!-- ================================================================ -->
     <!-- Executes an SQL file on the specified DB						  -->
     <!-- ================================================================ -->
     <target name="execute-script">
@@ -97,15 +67,15 @@
         <if>
             <isset property="windowsos" />
             <then>
-                <echo>Executing ${src.dir}/main/additional_resources/scripts/01_persistence/${execute.script.fileName}.bat </echo>
+                <echo>Executing ${src.dir}/main/resources/build_scripts/${execute.script.fileName}.bat </echo>
                 <antcall target="execute-os-script">
-                    <param name="execute.os.script.path" value="${src.dir}/main/additional_resources/scripts/01_persistence/${execute.script.fileName}.bat" />
+                    <param name="execute.os.script.path" value="${src.dir}/main/resources/build_scripts/${execute.script.fileName}.bat" />
                 </antcall>
             </then>
             <else>
-                <echo>Executing ${src.dir}/main/additional_resources/scripts/01_persistence/${execute.script.fileName}.sh </echo>
+                <echo>Executing ${src.dir}/main/resources/build_scripts/${execute.script.fileName}.sh </echo>
                 <antcall target="execute-os-script">
-                    <param name="execute.os.script.path" value="${src.dir}/main/additional_resources/scripts/01_persistence/${execute.script.fileName}.sh" />
+                    <param name="execute.os.script.path" value="${src.dir}/main/resources/build_scripts/${execute.script.fileName}.sh" />
                 </antcall>
             </else>
         </if>
