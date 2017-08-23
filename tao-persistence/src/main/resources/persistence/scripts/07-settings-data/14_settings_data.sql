@@ -28,6 +28,12 @@ INSERT INTO tao.data_source_type (type) VALUES ('AWS_SENTINEL_2_DATA_SOURCE');
 
 INSERT INTO tao.data_source_type (type) VALUES ('AWS_LANDSAT_8_DATA_SOURCE');
 
+INSERT INTO tao.data_source_type (type) VALUES ('PEPS_SENTINEL_1_DATA_SOURCE');
+
+INSERT INTO tao.data_source_type (type) VALUES ('PEPS_SENTINEL_2_DATA_SOURCE');
+
+INSERT INTO tao.data_source_type (type) VALUES ('PEPS_SENTINEL_3_DATA_SOURCE');
+
 
 
 -- Data types
