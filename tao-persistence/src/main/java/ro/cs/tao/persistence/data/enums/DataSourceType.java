@@ -24,7 +24,19 @@ public enum DataSourceType {
     /**
      * AWS Landsat 8 Data Source
      */
-    AWS_LANDSAT_8_DATA_SOURCE(5);
+    AWS_LANDSAT_8_DATA_SOURCE(5),
+    /**
+     * PEPS Sentinel-1 Data Source
+     */
+    PEPS_SENTINEL_1_DATA_SOURCE(6),
+    /**
+     * PEPS Sentinel-2 Data Source
+     */
+    PEPS_SENTINEL_2_DATA_SOURCE(7),
+    /**
+     * PEPS Sentinel-3 Data Source
+     */
+    PEPS_SENTINEL_3_DATA_SOURCE(8);
 
     /**
      * Numerical value for enum constants
