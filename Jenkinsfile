@@ -33,8 +33,8 @@ node{
         }
         */
 
-        stage ('Install, skip tests') {
-            runMavenTasks("install -DskipTests")
+        stage ('Install') {
+            runMavenTasks("install")
         }
 
         try {
