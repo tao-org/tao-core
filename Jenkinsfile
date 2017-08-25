@@ -20,7 +20,7 @@ node{
             def mycfg_file = 'df97f4a9-f259-4138-bead-21720f9c3b46'
             configFileProvider([configFile(fileId: mycfg_file, variable: 'MAVEN_SETTINGS')]) {
             }
-            sh "echo MAVEN_SETTINGS: ${env.MAVEN_SETTINGS}"
+            echo "settings.xml: ${env.MAVEN_SETTINGS}"
             runMavenTasks("clean")
         }
         /*
