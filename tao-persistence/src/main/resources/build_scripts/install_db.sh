@@ -18,7 +18,7 @@ SCRIPTS_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 echo $SCRIPTS_ROOT
 cd $SCRIPTS_ROOT
 
-common_functions.sh
+. common_functions.sh
 exportPGVariables
 
 executeSqlScriptsFromFile "install_db_sql_files.txt" $SCRIPTS_ROOT
