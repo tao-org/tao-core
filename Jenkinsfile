@@ -102,13 +102,13 @@ def version() {
 }
 
 def runMavenTasks(tasks, fileid="") {
-    if(fileid==""){
-        echo 'run task --> mvn ' + tasks
-        sh '''mvn ''' + tasks
-    }
-    else {
+    if(bindings.variables["fileid"]){
         echo 'run task --> mvn -s ' fileid ' ' + tasks
         sh '''mvn -s ''' + fileid + ''' ''' + tasks
+    }
+    else {
+        echo 'run task --> mvn ' + tasks
+        sh '''mvn ''' + tasks
     }
 }
 
