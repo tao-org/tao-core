@@ -19,19 +19,19 @@
 
 		<dependency>
 			<groupId>ro.cs.tao</groupId>
-			<artifactId>data-model</artifactId>
+			<artifactId>tao-data-model</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 
 		<dependency>
 			<groupId>ro.cs.tao</groupId>
-			<artifactId>data-sources</artifactId>
+			<artifactId>tao-data-sources</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 
 		<dependency>
 			<groupId>ro.cs.tao</groupId>
-			<artifactId>scihub-data-source</artifactId>
+			<artifactId>tao-scihub</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 

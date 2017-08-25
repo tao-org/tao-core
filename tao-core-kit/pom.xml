@@ -11,22 +11,42 @@
 
     <artifactId>tao-core-kit</artifactId>
 
-    <name>TAO Core</name>
+    <name>TAO Core Kit Module</name>
 
     <dependencies>
         <dependency>
             <groupId>ro.cs.tao</groupId>
-            <artifactId>data-model</artifactId>
+            <artifactId>tao-data-model</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>ro.cs.tao</groupId>
-            <artifactId>data-sources</artifactId>
+            <artifactId>tao-utils</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>ro.cs.tao</groupId>
-            <artifactId>scihub-data-source</artifactId>
+            <artifactId>tao-service-registry</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ro.cs.tao</groupId>
+            <artifactId>tao-data-sources</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ro.cs.tao</groupId>
+            <artifactId>tao-scihub</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ro.cs.tao</groupId>
+            <artifactId>tao-aws</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ro.cs.tao</groupId>
+            <artifactId>tao-peps</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -41,27 +61,7 @@
         </dependency>
         <dependency>
             <groupId>ro.cs.tao</groupId>
-            <artifactId>service-registry</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ro.cs.tao</groupId>
-            <artifactId>tao-utils</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ro.cs.tao</groupId>
             <artifactId>topology-management</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ro.cs.tao</groupId>
-            <artifactId>aws-data-source</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ro.cs.tao</groupId>
-            <artifactId>peps-data-source</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>
