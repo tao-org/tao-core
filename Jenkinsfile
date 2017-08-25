@@ -19,10 +19,8 @@ node{
         stage ('Prepare environment, clean') {
             def mycfg_file = 'df97f4a9-f259-4138-bead-21720f9c3b46'
             configFileProvider([configFile(fileId: mycfg_file, variable: 'MAVEN_SETTINGS')]) {
-                echo "Reading Maven 'settings.xml' configuration from Jenkins server:"
-                sh "cat ${env.MAVEN_SETTINGS}"
-                echo "---------------------------------------------------------------------"
             }
+            sh "echo MAVEN_SETTINGS: ${env.MAVEN_SETTINGS}"
             runMavenTasks("clean")
         }
         /*
@@ -104,7 +102,7 @@ def version() {
 }
 
 def runMavenTasks(tasks) {
-    echo 'run task --> mvn ' + tasks
+    echo 'run task --> mvn -s $MAVEN_SETTINGS ' + tasks
     sh '''mvn -s $MAVEN_SETTINGS ''' + tasks
 }
 
