@@ -20,7 +20,7 @@ node{
         stage ('Prepare environment, clean') {
             configFileProvider([configFile(fileId: mycfg_file, variable: 'MAVEN_SETTINGS')]) {
             }
-            echo "'settings.xml' Jenkins fileid: ${mycfg_file} | $mycfg_file "
+            echo "'settings.xml' Jenkins fileid: $mycfg_file "
             runMavenTasks("clean")
         }
         /*
@@ -43,7 +43,7 @@ node{
             //runMavenTasks("sonarqube -Dspring.profiles.active=jenkins -i")
 
             stage('Deploy') {
-                runMavenTasks("deploy")
+                runMavenTasks("deploy",$mycfg_file)
             }
 
             /*
@@ -101,9 +101,15 @@ def version() {
     return matcher ? matcher[0][1] : null
 }
 
-def runMavenTasks(tasks) {
-    echo 'run task --> mvn -s $MAVEN_SETTINGS ' + tasks
-    sh '''mvn -s ${mycfg_file} ''' + tasks
+def runMavenTasks(tasks, fileid="") {
+    if(fileid==""){
+        echo 'run task --> mvn ' + tasks
+        sh '''mvn ''' + tasks
+    }
+    else {
+        echo 'run task --> mvn -s ' fileid ' ' + tasks
+        sh '''mvn -s ''' + fileid + ''' ''' + tasks
+    }
 }
 
 def cleanEnv() {
