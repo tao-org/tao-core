@@ -1,4 +1,4 @@
-package ro.cs.tao.datasource.common;
+package ro.cs.tao.datasource.util;
 
 import java.awt.geom.Rectangle2D;
 import java.io.BufferedReader;
