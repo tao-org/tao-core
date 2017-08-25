@@ -11,6 +11,7 @@
 
     <artifactId>tao-integration</artifactId>
     <packaging>pom</packaging>
+
     <modules>
         <module>pc-deployment</module>
     </modules>
