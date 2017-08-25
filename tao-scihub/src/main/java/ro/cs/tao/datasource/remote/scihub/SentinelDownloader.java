@@ -22,7 +22,7 @@ package ro.cs.tao.datasource.remote.scihub;
 import ro.cs.tao.datasource.remote.AbstractDownloader;
 import ro.cs.tao.datasource.util.NetUtils;
 import ro.cs.tao.datasource.util.Utilities;
-import ro.cs.tao.eodata.EOData;
+import ro.cs.tao.eodata.EOProduct;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -38,7 +38,7 @@ public class SentinelDownloader extends AbstractDownloader {
     static final String ODATA_UUID = "${UUID}";
     static final String ODATA_PRODUCT_NAME = "${PRODUCT_NAME}";
 
-    static final Properties properties;
+    private static final Properties properties;
 
     String oDataBasePath;
     String odataArchivePath;
@@ -64,18 +64,17 @@ public class SentinelDownloader extends AbstractDownloader {
     }
 
     @Override
-    public String getProductUrl(EOData descriptor) {
+    public String getProductUrl(EOProduct descriptor) {
         return odataArchivePath.replace(ODATA_UUID, descriptor.getId());
     }
 
     @Override
-    protected String getMetadataUrl(EOData descriptor) {
+    protected String getMetadataUrl(EOProduct descriptor) {
         return null;
     }
 
     @Override
-    protected Path download(EOData product) throws IOException {
-        String url;
+    protected Path download(EOProduct product) throws IOException {
         Utilities.ensureExists(Paths.get(destination));
         String productName = product.getName();
         currentStep = "Archive";
