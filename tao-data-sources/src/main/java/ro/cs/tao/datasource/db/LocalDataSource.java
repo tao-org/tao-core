@@ -17,7 +17,7 @@
  *
  */
 
-package ro.cs.tao.datasource.local;
+package ro.cs.tao.datasource.db;
 
 import ro.cs.tao.datasource.AbstractDataSource;
 import ro.cs.tao.eodata.EOData;

@@ -1,4 +1,4 @@
-package ro.cs.tao.datasource.local;
+package ro.cs.tao.datasource.db;
 
 import ro.cs.tao.datasource.param.ParameterDescriptor;
 import ro.cs.tao.datasource.param.ParameterProvider;

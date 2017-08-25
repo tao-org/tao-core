@@ -19,7 +19,7 @@
         <module>tao-aws</module>
         <module>tao-peps</module>
 		<module>tao-integration</module>
-        <module>topology-management</module>
+        <module>tao-topology</module>
         <module>tao-core-kit</module>
     </modules>
 

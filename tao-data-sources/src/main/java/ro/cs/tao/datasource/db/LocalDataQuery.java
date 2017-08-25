@@ -17,7 +17,7 @@
  *
  */
 
-package ro.cs.tao.datasource.local;
+package ro.cs.tao.datasource.db;
 
 import org.geotools.referencing.CRS;
 import org.opengis.referencing.FactoryException;

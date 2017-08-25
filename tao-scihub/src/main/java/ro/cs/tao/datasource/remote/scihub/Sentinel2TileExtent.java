@@ -1,6 +1,6 @@
 package ro.cs.tao.datasource.remote.scihub;
 
-import ro.cs.tao.datasource.common.TileExtent;
+import ro.cs.tao.datasource.util.TileExtent;
 import ro.cs.tao.eodata.Polygon2D;
 
 import java.io.BufferedReader;
