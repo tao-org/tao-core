@@ -16,11 +16,13 @@ node{
             env.BUILD_DIRECTORY = "tao-build_" + env.BUILD_ID
         }
 
-        stage ('Prepare environment') {
-            sh '''mkdir -p /tmp/maven/$BUILD_DIRECTORY/conf
-                mkdir -p /tmp/maven/$BUILD_DIRECTORY/conf
-                echo "<settings><localRepository>/tmp/maven/$BUILD_DIRECTORY/repo</localRepository></settings>" >> /tmp/maven/$BUILD_DIRECTORY/conf/settings.xml
-                mkdir -p /tmp/maven/$BUILD_DIRECTORY/repo'''
+        stage ('Prepare environment, clean') {
+            def mycfg_file = 'df97f4a9-f259-4138-bead-21720f9c3b46'
+            configFileProvider([configFile(fileId: mycfg_file, variable: 'MAVEN_SETTINGS')]) {
+                echo "Reading Maven 'settings.xml' configuration from Jenkins server:"
+                sh "cat ${env.MAVEN_SETTINGS}"
+                echo "---------------------------------------------------------------------"
+            }
             runMavenTasks("clean")
         }
         /*
@@ -103,7 +105,7 @@ def version() {
 
 def runMavenTasks(tasks) {
     echo 'run task --> mvn ' + tasks
-    sh '''mvn ''' + tasks
+    sh '''mvn -s $MAVEN_SETTINGS ''' + tasks
 }
 
 def cleanEnv() {
