@@ -17,6 +17,7 @@
 package ro.cs.tao.datasource;
 
 import org.apache.http.auth.UsernamePasswordCredentials;
+import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.datasource.param.ParameterDescriptor;
 import ro.cs.tao.datasource.param.ParameterProvider;
 import ro.cs.tao.eodata.EOData;
@@ -31,6 +32,7 @@ import java.util.stream.Collectors;
  * @author Cosmin Cara
  */
 public abstract class AbstractDataSource<R extends EOData, Q extends DataQuery<R>>
+    extends TaoComponent
         implements DataSource<R, Q> {
     protected String connectionString;
     protected long timeout;

@@ -58,6 +58,9 @@ public class AWSDataSource extends URLDataSource<EOData, AWSDataQuery> {
     }
 
     @Override
+    public String defaultName() { return "Amazon Web Services"; }
+
+    @Override
     protected AWSDataQuery createQueryImpl(String code) {
         try {
             switch (code) {
