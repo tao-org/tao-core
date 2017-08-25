@@ -43,7 +43,7 @@ node{
             //runMavenTasks("sonarqube -Dspring.profiles.active=jenkins -i")
 
             stage('Deploy') {
-                runMavenTasks("deploy",$mycfg_file)
+                runMavenTasks("deploy","$mycfg_file")
             }
 
             /*
