@@ -20,7 +20,7 @@ node{
         stage ('Prepare environment, clean') {
             configFileProvider([configFile(fileId: mycfg_file, variable: 'MAVEN_SETTINGS')]) {
             }
-            echo "'settings.xml' Jenkins fileid: $mycfg_file "
+            echo "'settings.xml' path: $MAVEN_SETTINGS "
             runMavenTasks("clean")
         }
         /*
@@ -43,7 +43,7 @@ node{
             //runMavenTasks("sonarqube -Dspring.profiles.active=jenkins -i")
 
             stage('Deploy') {
-                runMavenTasks("deploy","$mycfg_file")
+                runMavenTasks("deploy","$MAVEN_SETTINGS")
             }
 
             /*
