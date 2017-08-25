@@ -50,7 +50,7 @@ import java.util.Map;
 /**
  * @author Cosmin Cara
  */
-public class LocalDataQuery extends DataQuery<EOData> {
+public class DatabaseQuery extends DataQuery<EOData> {
 
     private static final String PRODUCTS_TABLE = "Products";
     private static final String PRODUCT_PARAMS_TABLE = "ProductsParams";
@@ -60,14 +60,14 @@ public class LocalDataQuery extends DataQuery<EOData> {
         converterFactory.register(PolygonConverter.class, Polygon2D.class);
         converterFactory.register(DateConverter.class, Date.class);
     }
-    LocalDataQuery(LocalDataSource source, ParameterProvider parameterProvider) {
+    DatabaseQuery(DatabaseSource source, ParameterProvider parameterProvider) {
         super(source, parameterProvider);
     }
 
     @Override
     protected List<EOData> executeImpl() throws QueryException {
         List<EOData> results = new ArrayList<>();
-        Connection sqlConnection = ((LocalDataSource) this.source).getConnection();
+        Connection sqlConnection = ((DatabaseSource) this.source).getConnection();
         if (sqlConnection != null) {
             try {
                 String query = "SELECT * FROM " + PRODUCTS_TABLE + " P JOIN " + PRODUCT_PARAMS_TABLE + " PP " +

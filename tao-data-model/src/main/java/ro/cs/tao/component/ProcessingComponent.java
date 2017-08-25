@@ -44,7 +44,6 @@ import ro.cs.tao.component.template.TemplateType;
 import ro.cs.tao.component.template.engine.EngineFactory;
 import ro.cs.tao.component.template.engine.TemplateEngine;
 import ro.cs.tao.component.validation.ValidationException;
-import ro.cs.tao.eodata.EOData;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -55,13 +54,8 @@ import java.util.stream.Collectors;
 /**
  * @author Cosmin Cara
  */
-public class ComponentDescriptor extends Identifiable {
+public class ProcessingComponent extends TaoComponent {
 
-    private String label;
-    private String version;
-    private String description;
-    private String authors;
-    private String copyright;
     private String fileLocation;
     private String workingDirectory;
     private TemplateType templateType;
@@ -69,51 +63,9 @@ public class ComponentDescriptor extends Identifiable {
     private Template template;
     private List<Variable> variables;
     private List<ParameterDescriptor> parameters;
-    private SourceDescriptor[] sources;
-    private TargetDescriptor[] targets;
 
-    public ComponentDescriptor() {
+    public ProcessingComponent() {
         super();
-    }
-
-    public String getLabel() {
-        return label;
-    }
-
-    public void setLabel(String label) {
-        this.label = label;
-    }
-
-    public String getVersion() {
-        return version;
-    }
-
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getAuthors() {
-        return authors;
-    }
-
-    public void setAuthors(String authors) {
-        this.authors = authors;
-    }
-
-    public String getCopyright() {
-        return copyright;
-    }
-
-    public void setCopyright(String copyright) {
-        this.copyright = copyright;
     }
 
     public String getFileLocation() {
@@ -165,73 +117,6 @@ public class ComponentDescriptor extends Identifiable {
         this.parameters = parameters;
     }
 
-    public SourceDescriptor[] getSources() {
-        return sources;
-    }
-
-    public void setSourcesCount(int value) {
-        if (this.sources == null) {
-            this.sources = new SourceDescriptor[value];
-        } else {
-            this.sources = Arrays.copyOf(this.sources, value);
-        }
-    }
-
-    public void addSource(SourceDescriptor source) {
-        if (this.sources != null) {
-            this.sources = Arrays.copyOf(this.sources, this.sources.length + 1);
-            this.sources[this.sources.length - 1] = source;
-        } else {
-            this.sources = new SourceDescriptor[] { source };
-        }
-    }
-
-    public void removeSource(TargetDescriptor source) {
-        if (this.sources != null) {
-            this.sources = Arrays.stream(this.sources)
-                    .filter(s -> {
-                        EOData src = s.getSource();
-                        EOData ref = source.getSource();
-                        return (src.getId() != null && !src.getId().equals(ref.getId())) ||
-                                (src.getName() != null && !src.getName().equals(ref.getName()));
-                    }).toArray(SourceDescriptor[]::new);
-        }
-    }
-
-    public TargetDescriptor[] getTargets() {
-        return targets;
-    }
-
-    public void setTargetCount(int value) {
-        if (this.targets == null) {
-            this.targets = new TargetDescriptor[value];
-        } else {
-            this.targets = Arrays.copyOf(this.targets, value);
-        }
-    }
-
-    public void addTarget(TargetDescriptor target) {
-        if (this.targets != null) {
-            this.targets = Arrays.copyOf(this.targets, this.targets.length + 1);
-            this.targets[this.targets.length - 1] = target;
-        } else {
-            this.targets = new TargetDescriptor[] { target };
-        }
-    }
-
-    public void removeTarget(TargetDescriptor target) {
-        if (this.targets != null) {
-            this.targets = Arrays.stream(this.targets)
-                    .filter(t -> {
-                        EOData tar = t.getSource();
-                        EOData ref = target.getSource();
-                        return (tar.getId() != null && !tar.getId().equals(ref.getId())) ||
-                                (tar.getName() != null && !tar.getName().equals(ref.getName()));
-                    })
-                    .toArray(TargetDescriptor[]::new);
-        }
-    }
-
     public TemplateType getTemplateType() {
         return templateType != null ? templateType : TemplateType.VELOCITY;
     }
@@ -265,8 +150,8 @@ public class ComponentDescriptor extends Identifiable {
     }
 
     @Override
-    public ComponentDescriptor copy() {
-        ComponentDescriptor newDescriptor = new ComponentDescriptor();
+    public ProcessingComponent copy() {
+        ProcessingComponent newDescriptor = new ProcessingComponent();
         newDescriptor.label = this.label;
         newDescriptor.version = this.version;
         newDescriptor.description = this.description;

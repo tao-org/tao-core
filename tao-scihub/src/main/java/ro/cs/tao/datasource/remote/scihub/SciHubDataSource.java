@@ -69,6 +69,9 @@ public class SciHubDataSource extends URLDataSource<EOData, SciHubDataQuery> {
     }
 
     @Override
+    public String defaultName() { return "Scientific Data Hub"; }
+
+    @Override
     public void setCredentials(String username, String password) {
         super.setCredentials(username, password);
         String authToken = "Basic " + new String(Base64.getEncoder().encode((username + ":" + password).getBytes()));

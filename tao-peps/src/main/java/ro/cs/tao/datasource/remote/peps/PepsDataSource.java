@@ -31,6 +31,9 @@ public class PepsDataSource extends URLDataSource<EOData, PepsDataQuery> {
     }
 
     @Override
+    public String defaultName() { return "PEPS"; }
+
+    @Override
     public void setCredentials(String username, String password) {
         super.setCredentials(username, password);
         String authToken = "Basic " + new String(Base64.getEncoder().encode((username + ":" + password).getBytes()));

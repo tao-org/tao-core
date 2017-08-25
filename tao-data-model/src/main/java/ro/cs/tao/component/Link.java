@@ -48,4 +48,8 @@ public class Link {
     public TargetDescriptor getTargetDescriptor() {
         return targetDescriptor;
     }
+
+    public void follow() {
+        targetDescriptor.setData(sourceDescriptor.getData());
+    }
 }

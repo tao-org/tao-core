@@ -39,9 +39,25 @@
 package ro.cs.tao.component;
 
 /**
+ * Possible types of parameters
+ *
  * @author Cosmin Cara
  */
 public enum ParameterType {
-    SIMPLE,
+    /**
+     * The parameter is an input to the component
+     */
+    SOURCE,
+    /**
+     * The parameter is a regular parameter
+     */
+    REGULAR,
+    /**
+     * The parameter is an output of the component
+     */
+    TARGET,
+    /**
+     * The parameter is a template parameter (describing the invocation of the component, for example)
+     */
     TEMPLATE
 }

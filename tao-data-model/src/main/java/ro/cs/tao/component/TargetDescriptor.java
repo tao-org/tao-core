@@ -29,19 +29,19 @@ import java.util.List;
  * @author Cosmin Cara
  */
 public class TargetDescriptor {
-    private EOData source;
+    private EOData data;
     private List<Constraint> constraints;
 
     public TargetDescriptor() {
         this.constraints = new ArrayList<>();
     }
 
-    public EOData getSource() {
-        return source;
+    public EOData getData() {
+        return data;
     }
 
-    public void setSource(EOData source) {
-        this.source = source;
+    public void setData(EOData data) {
+        this.data = data;
     }
 
     public List<Constraint> getConstraints() {

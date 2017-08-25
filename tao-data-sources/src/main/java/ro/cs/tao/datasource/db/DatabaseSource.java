@@ -19,6 +19,8 @@
 
 package ro.cs.tao.datasource.db;
 
+import org.apache.commons.lang.NotImplementedException;
+import ro.cs.tao.component.Identifiable;
 import ro.cs.tao.datasource.AbstractDataSource;
 import ro.cs.tao.eodata.EOData;
 
@@ -30,13 +32,13 @@ import java.util.logging.Logger;
 /**
  * @author Cosmin Cara
  */
-public class LocalDataSource extends AbstractDataSource<EOData, LocalDataQuery> {
+public class DatabaseSource extends AbstractDataSource<EOData, DatabaseQuery> {
 
     protected final Logger logger;
 
-    public LocalDataSource(String connectionString) {
+    public DatabaseSource(String connectionString) {
         super(connectionString);
-        this.logger = Logger.getLogger(LocalDataSource.class.getName());
+        this.logger = Logger.getLogger(DatabaseSource.class.getName());
         try {
             Class.forName("org.postgresql.Driver");
         } catch (ClassNotFoundException e) {
@@ -71,8 +73,16 @@ public class LocalDataSource extends AbstractDataSource<EOData, LocalDataQuery> 
     }
 
     @Override
-    protected LocalDataQuery createQueryImpl(String code) {
-        return new LocalDataQuery(this, getParameterProvider(null));
+    public String defaultName() { return "NewDatabaseSource"; }
+
+    @Override
+    public Identifiable copy() {
+        throw new NotImplementedException("This should not be called on this instance");
+    }
+
+    @Override
+    protected DatabaseQuery createQueryImpl(String code) {
+        return new DatabaseQuery(this, getParameterProvider(null));
     }
 
     Connection getConnection() {
