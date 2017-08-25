@@ -5,6 +5,7 @@ node{
 
     try {
         currentBuild.result = 'SUCCESS'
+        def mycfg_file = 'df97f4a9-f259-4138-bead-21720f9c3b46'
 
         stage('Checkout') {
             checkout scm
@@ -17,10 +18,9 @@ node{
         }
 
         stage ('Prepare environment, clean') {
-            def mycfg_file = 'df97f4a9-f259-4138-bead-21720f9c3b46'
             configFileProvider([configFile(fileId: mycfg_file, variable: 'MAVEN_SETTINGS')]) {
             }
-            echo "settings.xml: ${env.MAVEN_SETTINGS}"
+            echo "'settings.xml' Jenkins fileid: ${mycfg_file} | $mycfg_file "
             runMavenTasks("clean")
         }
         /*
@@ -103,7 +103,7 @@ def version() {
 
 def runMavenTasks(tasks) {
     echo 'run task --> mvn -s $MAVEN_SETTINGS ' + tasks
-    sh '''mvn -s $MAVEN_SETTINGS ''' + tasks
+    sh '''mvn -s ${mycfg_file} ''' + tasks
 }
 
 def cleanEnv() {
