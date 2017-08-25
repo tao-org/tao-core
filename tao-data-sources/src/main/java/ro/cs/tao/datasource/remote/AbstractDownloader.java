@@ -39,7 +39,7 @@ package ro.cs.tao.datasource.remote;
 
 import ro.cs.tao.datasource.util.NetUtils;
 import ro.cs.tao.datasource.util.Utilities;
-import ro.cs.tao.eodata.EOData;
+import ro.cs.tao.eodata.EOProduct;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -48,10 +48,15 @@ import java.io.InterruptedIOException;
 import java.net.HttpURLConnection;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.text.SimpleDateFormat;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Properties;
@@ -63,25 +68,26 @@ import java.util.logging.Logger;
  * @author  Cosmin Cara
  */
 public abstract class AbstractDownloader {
-    public static final String startMessage = "(%s,%s) %s [size: %skB]";
-    public static final String completeMessage = "(%s,%s) %s [elapsed: %ss]";
-    public static final String errorMessage ="Cannot download %s: %s";
-    public static final int BUFFER_SIZE = 1024 * 1024;
-    public static final String NAME_SEPARATOR = "_";
+    private static final String startMessage = "(%s,%s) %s [size: %skB]";
+    private static final String completeMessage = "(%s,%s) %s [elapsed: %ss]";
+    private static final String errorMessage ="Cannot download %s: %s";
+    private static final int BUFFER_SIZE = 1024 * 1024;
+    protected static final String NAME_SEPARATOR = "_";
     public static final String URL_SEPARATOR = "/";
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
 
     protected Properties props;
     protected String destination;
-    protected String baseUrl;
+    private String localArchiveRoot;
 
-    protected String currentProduct;
+    private String currentProduct;
     protected String currentStep;
 
-    protected boolean shouldCompress;
-    protected boolean shouldDeleteAfterCompression;
+    private boolean shouldCompress;
+    private boolean shouldDeleteAfterCompression;
     private DownloadMode downloadMode;
 
-    protected DownloadProgressListener fileProgressListener;
+    private DownloadProgressListener fileProgressListener;
 
     protected Logger logger = Logger.getLogger(AbstractDownloader.class.getName());
 
@@ -90,20 +96,57 @@ public abstract class AbstractDownloader {
         this.props = properties;
     }
 
-    public ReturnCode download(List<EOData> products) {
+    public String getLocalArchiveRoot() {
+        return localArchiveRoot;
+    }
+
+    public void setLocalArchiveRoot(String localArchiveRoot) {
+        this.localArchiveRoot = localArchiveRoot;
+    }
+
+    public DownloadProgressListener getFileProgressListener() {
+        return fileProgressListener;
+    }
+
+    public void setFileProgressListener(DownloadProgressListener fileProgressListener) {
+        this.fileProgressListener = fileProgressListener;
+    }
+
+    public ReturnCode download(List<EOProduct> products) {
         ReturnCode retCode = ReturnCode.OK;
         if (products != null) {
             int productCounter = 1, productCount = products.size();
-            for (EOData product : products) {
+            for (EOProduct product : products) {
                 long startTime = System.currentTimeMillis();
                 Path file = null;
                 currentProduct = "Product " + String.valueOf(productCounter++) + "/" + String.valueOf(productCount);
                 try {
-                    Utilities.ensureExists(Paths.get(destination));
-                    file = download(product);
-                    if (file == null) {
-                        retCode = ReturnCode.EMPTY;
-                        logger.warning("Product download aborted");
+                    final Path destPath = Paths.get(destination);
+                    Utilities.ensureExists(destPath);
+                    switch (this.downloadMode) {
+                        case COPY:
+                            file = copy(product, Paths.get(localArchiveRoot), destPath);
+                            if (file == null) {
+                                retCode = ReturnCode.EMPTY;
+                                logger.warning("Product copy failed");
+                            }
+                            break;
+                        case SYMLINK:
+                            file = link(product, Paths.get(localArchiveRoot), destPath);
+                            if (file == null) {
+                                retCode = ReturnCode.EMPTY;
+                                logger.warning("Product link failed");
+                            }
+                            break;
+                        case OVERWRITE:
+                        case RESUME:
+                        default:
+                            file = download(product);
+                            if (file == null) {
+                                retCode = ReturnCode.EMPTY;
+                                logger.warning("Product download aborted");
+                            }
+                            break;
                     }
                 } catch (IOException ignored) {
                     logger.warning("IO Exception: " + ignored.getMessage());
@@ -119,7 +162,7 @@ public abstract class AbstractDownloader {
         return retCode;
     }
 
-    public abstract String getProductUrl(EOData descriptor);
+    public abstract String getProductUrl(EOProduct descriptor);
 
     void shouldCompress(boolean shouldCompress) {
         this.shouldCompress = shouldCompress;
@@ -133,9 +176,9 @@ public abstract class AbstractDownloader {
         this.downloadMode = mode;
     }
 
-    protected abstract String getMetadataUrl(EOData descriptor);
+    protected abstract String getMetadataUrl(EOProduct descriptor);
 
-    protected abstract Path download(EOData product) throws IOException;
+    protected abstract Path download(EOProduct product) throws IOException;
 
     protected Path downloadFile(String remoteUrl, Path file) throws IOException {
         return downloadFile(remoteUrl, file, null);
@@ -143,6 +186,73 @@ public abstract class AbstractDownloader {
 
     protected Path downloadFile(String remoteUrl, Path file, String authToken) throws IOException {
         return downloadFile(remoteUrl, file, this.downloadMode, authToken);
+    }
+
+    protected Path findProductPath(Path root, EOProduct product) {
+        // Products are assumed to be organized by year (yyyy), month (MM) and day (dd)
+        // If it's not the case, this method should be overridden
+        String date = dateFormat.format(product.getAcquisitionDate());
+        Path productPath = root.resolve(date.substring(0, 4));
+        if (Files.exists(productPath)) {
+            productPath = productPath.resolve(date.substring(4, 6));
+            productPath = Files.exists(productPath) ?
+                    productPath.resolve(date.substring(6, 8)).resolve(product.getName()) :
+                    null;
+            if (productPath != null && !Files.exists(productPath)) {
+                productPath = null;
+            }
+        } else {
+            productPath = null;
+        }
+        return productPath;
+    }
+
+    protected Path copy(EOProduct product, Path sourceRoot, Path targetRoot) throws IOException {
+        Path sourcePath = findProductPath(sourceRoot, product);
+        if (sourcePath == null) {
+            logger.warning(String.format("Product %s not found in the local archive", product.getName()));
+            return null;
+        }
+        Path destinationPath = targetRoot.resolve(sourcePath.getFileName());
+        if (Files.isDirectory(sourcePath)) {
+            if (!Files.exists(destinationPath)) {
+                Files.createDirectory(destinationPath);
+            }
+            Files.walkFileTree(sourcePath, new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                    Path target = destinationPath.resolve(sourcePath.relativize(dir));
+                    if (!Files.exists(target)) {
+                        Files.createDirectory(target);
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    Files.copy(file,
+                               destinationPath.resolve(sourcePath.relativize(file)),
+                               StandardCopyOption.REPLACE_EXISTING);
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        } else {
+            Files.copy(sourcePath, destinationPath, StandardCopyOption.REPLACE_EXISTING);
+        }
+        return destinationPath;
+    }
+
+    protected Path link(EOProduct product, Path sourceRoot, Path targetRoot) throws IOException {
+        Path sourcePath = findProductPath(sourceRoot, product);
+        if (sourcePath == null) {
+            logger.warning(String.format("Product %s not found in the local archive", product.getName()));
+        }
+        Path destinationPath = sourcePath != null ? targetRoot.resolve(sourcePath.getFileName()) : null;
+        if (destinationPath != null && !Files.exists(destinationPath)) {
+            return Files.createSymbolicLink(destinationPath, sourcePath);
+        } else {
+            return destinationPath;
+        }
     }
 
     private Path downloadFile(String remoteUrl, Path file, DownloadMode mode, String authToken) throws IOException {
