@@ -56,7 +56,7 @@
         </dependency>
         <dependency>
             <groupId>ro.cs.tao</groupId>
-            <artifactId>pc-deployment</artifactId>
+            <artifactId>tao-pc-deployment</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

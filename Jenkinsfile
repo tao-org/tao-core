@@ -18,8 +18,8 @@ node{
         }
 
         stage ('Prepare environment, clean') {
-            echo 'run task --> mvn clean'
-            sh '''mvn clean'''
+            echo 'run task --> mvn clean -U'
+            sh '''mvn clean -U'''
         }
         /*
         try {
