@@ -5,29 +5,27 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>ro.cs.tao</groupId>
-    <artifactId>tao-core</artifactId>
+    <artifactId>tao-services</artifactId>
     <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
 
     <modules>
-        <module>tao-data-model</module>
-        <module>tao-utils</module>
-        <module>tao-service-registry</module>
-        <module>tao-data-sources</module>
-        <module>tao-persistence</module>
-        <module>tao-scihub</module>
-        <module>tao-aws</module>
-        <module>tao-peps</module>
-		<module>tao-integration</module>
-        <module>tao-topology</module>
-        <module>tao-core-kit</module>
+
     </modules>
+
+    <dependencies>
+        <dependency>
+            <groupId>ro.cs.tao</groupId>
+            <artifactId>tao-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- maven -->
-        <maven.compiler.data>1.8</maven.compiler.data>
+        <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
 
         <!-- nexus urls -->
