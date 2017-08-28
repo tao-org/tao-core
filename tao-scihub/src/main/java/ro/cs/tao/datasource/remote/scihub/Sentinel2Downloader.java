@@ -41,7 +41,7 @@ package ro.cs.tao.datasource.remote.scihub;
 import ro.cs.tao.datasource.remote.scihub.helpers.Sentinel2ProductHelper;
 import ro.cs.tao.datasource.util.NetUtils;
 import ro.cs.tao.datasource.util.Utilities;
-import ro.cs.tao.eodata.EOData;
+import ro.cs.tao.eodata.EOProduct;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -169,12 +169,7 @@ public class Sentinel2Downloader extends SentinelDownloader {
     }
 
     @Override
-    public String getProductUrl(EOData product) {
-        throw new RuntimeException("This should not be called in this class");
-    }
-
-    @Override
-    protected String getMetadataUrl(EOData product) {
+    protected String getMetadataUrl(EOProduct product) {
         final Sentinel2ProductHelper helper = Sentinel2ProductHelper.createHelper(product.getName());
         String metadataFile = helper.getMetadataFileName();
         return odataMetadataPath.replace(ODATA_UUID, product.getId())
@@ -183,7 +178,7 @@ public class Sentinel2Downloader extends SentinelDownloader {
     }
 
     @Override
-    protected Path download(EOData product) throws IOException {
+    protected Path download(EOProduct product) throws IOException {
         Sentinel2ProductHelper helper = Sentinel2ProductHelper.createHelper(product.getName());
         String tileId = helper.getTileIdentifier();
         if (tileId != null && this.filteredTiles != null && !this.filteredTiles.contains(tileId)) {
@@ -194,7 +189,7 @@ public class Sentinel2Downloader extends SentinelDownloader {
         }
     }
 
-    private Path downloadImpl(EOData product) throws IOException {
+    private Path downloadImpl(EOProduct product) throws IOException {
         Path rootPath = null;
         String url;
         Utilities.ensureExists(Paths.get(destination));

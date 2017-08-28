@@ -61,7 +61,7 @@
         </dependency>
         <dependency>
             <groupId>ro.cs.tao</groupId>
-            <artifactId>topology-management</artifactId>
+            <artifactId>tao-topology</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>

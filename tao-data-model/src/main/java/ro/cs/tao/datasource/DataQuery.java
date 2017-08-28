@@ -16,6 +16,7 @@
  */
 package ro.cs.tao.datasource;
 
+import ro.cs.tao.component.Identifiable;
 import ro.cs.tao.datasource.param.ParameterDescriptor;
 import ro.cs.tao.datasource.param.ParameterProvider;
 import ro.cs.tao.datasource.param.QueryParameter;
@@ -32,7 +33,7 @@ import java.util.stream.Collectors;
  *
  * @author Cosmin Cara
  */
-public abstract class DataQuery<R extends EOData> {
+public abstract class DataQuery<R extends EOData> extends Identifiable {
     protected static final int DEFAULT_LIMIT = 20;
     protected DataSource source;
     protected String queryText;

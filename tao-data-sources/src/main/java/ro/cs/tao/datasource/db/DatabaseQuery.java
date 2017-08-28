@@ -21,6 +21,7 @@ package ro.cs.tao.datasource.db;
 
 import org.geotools.referencing.CRS;
 import org.opengis.referencing.FactoryException;
+import ro.cs.tao.component.Identifiable;
 import ro.cs.tao.datasource.DataQuery;
 import ro.cs.tao.datasource.QueryException;
 import ro.cs.tao.datasource.converters.ConverterFactory;
@@ -177,6 +178,16 @@ public class DatabaseQuery extends DataQuery<EOData> {
             }
         }
         return results;
+    }
+
+    @Override
+    public String defaultName() {
+        return "DatabaseQuery";
+    }
+
+    @Override
+    public Identifiable copy() {
+        return null;
     }
 
     private class ParameterIndex {

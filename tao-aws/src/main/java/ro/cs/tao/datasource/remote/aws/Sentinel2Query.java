@@ -1,6 +1,7 @@
 package ro.cs.tao.datasource.remote.aws;
 
 import org.geotools.referencing.CRS;
+import ro.cs.tao.component.Identifiable;
 import ro.cs.tao.datasource.DataQuery;
 import ro.cs.tao.datasource.DataSource;
 import ro.cs.tao.datasource.QueryException;
@@ -251,5 +252,15 @@ class Sentinel2Query extends DataQuery<EOData> {
                 reader.close();
             }
         }
+    }
+
+    @Override
+    public String defaultName() {
+        return "Sentinel2AWSQuery";
+    }
+
+    @Override
+    public Identifiable copy() {
+        return null;
     }
 }

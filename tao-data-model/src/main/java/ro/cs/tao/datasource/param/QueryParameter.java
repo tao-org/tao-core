@@ -16,8 +16,10 @@
  */
 package ro.cs.tao.datasource.param;
 
+import org.opengis.annotation.XmlElement;
 import ro.cs.tao.datasource.converters.ParameterConverter;
 
+import javax.xml.bind.annotation.XmlAttribute;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -26,6 +28,7 @@ import java.util.Date;
  *
  * @author Cosmin Cara
  */
+@XmlElement("QueryParameter")
 public class QueryParameter {
     private Class<?> type;
     private boolean isOptional;
@@ -69,14 +72,17 @@ public class QueryParameter {
         this.maxValue = maxValue;
     }
 
+    @XmlAttribute(name = "class", required = true)
     public Class getType() {
         return type;
     }
 
+    @XmlAttribute(name = "name", required = true)
     public String getName() {
         return name;
     }
 
+    @XmlElement("Value")
     public Object getValue() {
         return value;
     }
@@ -85,6 +91,7 @@ public class QueryParameter {
         this.value = value;
     }
 
+    @XmlAttribute(name = "isOptional", required = true)
     public boolean isOptional() {
         return isOptional;
     }
@@ -93,12 +100,14 @@ public class QueryParameter {
         isOptional = optional;
     }
 
+    @XmlElement("MinValue")
     public Object getMinValue() {
         return minValue;
     }
 
     public void setMinValue(Object minValue) { this.minValue = minValue; }
 
+    @XmlElement("MaxValue")
     public Object getMaxValue() { return maxValue; }
 
     public void setMaxValue(Object maxValue) { this.maxValue = maxValue; }

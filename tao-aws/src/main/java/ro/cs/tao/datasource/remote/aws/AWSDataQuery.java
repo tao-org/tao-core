@@ -1,5 +1,6 @@
 package ro.cs.tao.datasource.remote.aws;
 
+import ro.cs.tao.component.Identifiable;
 import ro.cs.tao.datasource.DataQuery;
 import ro.cs.tao.datasource.QueryException;
 import ro.cs.tao.datasource.param.ParameterDescriptor;
@@ -118,5 +119,15 @@ public class AWSDataQuery extends DataQuery<EOData> {
     @Override
     protected List<EOData> executeImpl() throws QueryException {
         return innerQuery != null ? innerQuery.execute() : new ArrayList<>();
+    }
+
+    @Override
+    public String defaultName() {
+        return "Sentinel2AWSQuery";
+    }
+
+    @Override
+    public Identifiable copy() {
+        return null;
     }
 }
