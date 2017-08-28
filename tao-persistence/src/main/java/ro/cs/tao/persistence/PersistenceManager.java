@@ -1,5 +1,6 @@
 package ro.cs.tao.persistence;
 
+import org.eclipse.persistence.annotations.ReadOnly;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -14,15 +15,17 @@ import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.persistence.data.DataProduct;
 import ro.cs.tao.persistence.data.ExecutionNode;
 import ro.cs.tao.persistence.data.User;
-import ro.cs.tao.persistence.data.enums.DataSourceType;
+import ro.cs.tao.persistence.data.DataSourceType;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.persistence.repository.DataProductRepository;
 import ro.cs.tao.persistence.repository.DataSourceRepository;
+import ro.cs.tao.persistence.repository.DataSourceTypeRepository;
 import ro.cs.tao.persistence.repository.ExecutionNodeRepository;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
 
 /**
  * DAO
@@ -40,6 +43,10 @@ public class PersistenceManager {
     @Autowired
     private DataSourceRepository dataSourceRepository;
 
+    /** CRUD Repository for DataSourceType entities */
+    @Autowired
+    private DataSourceTypeRepository dataSourceTypeRepository;
+
     /** CRUD Repository for DataProduct entities */
     @Autowired
     private DataProductRepository dataProductRepository;
@@ -49,16 +56,78 @@ public class PersistenceManager {
     private ExecutionNodeRepository executionNodeRepository;
 
     @Transactional
+    public Integer saveDataSourceType(String type) throws PersistenceException
+    {
+        // check method parameters
+        if(type == null || type.length() == 0)
+        {
+            throw new PersistenceException("Invalid parameters were provided for adding new data source type (empty type)!");
+        }
+
+        // check if there is already an identical type persisted
+        DataSourceType existingType = dataSourceTypeRepository.findByType(type);
+        if (existingType != null)
+        {
+            throw new PersistenceException("Invalid parameters were provided for adding new data source type (type already exists)!");
+        }
+
+        DataSourceType dataSourceTypeEnt = new DataSourceType();
+        dataSourceTypeEnt.setType(type);
+
+        // save the DataSourceType entity
+        dataSourceTypeEnt = dataSourceTypeRepository.save(dataSourceTypeEnt);
+
+        if(dataSourceTypeEnt.getId() == null)
+        {
+            throw new PersistenceException("Error saving data source type: " + dataSourceTypeEnt.getType());
+        }
+
+        return dataSourceTypeEnt.getId();
+    }
+
+    @Transactional(readOnly = true)
+    public DataSourceType getDataSourceTypeById(final Integer dataSourceTypeId) throws PersistenceException
+    {
+        // check method parameters
+        if (dataSourceTypeId == null || dataSourceTypeId <= 0)
+        {
+            throw new PersistenceException("Invalid parameters were provided for retrieving data source type by its identifier (" + String.valueOf(dataSourceTypeId) + ")");
+        }
+
+        // retrieve the DataSourceType entity based on its id
+        final DataSourceType dataSourceType = dataSourceTypeRepository.findById(dataSourceTypeId);
+        if (dataSourceType == null)
+        {
+            throw new PersistenceException("There is no data source type with the specified identfier (" + dataSourceTypeId.toString() + ")");
+        }
+
+        return dataSourceType;
+    }
+
+
+    /**
+     * Retrieve the list of data source types
+     * @return the list of data source types
+     */
+    @Transactional(readOnly = true)
+    public List<DataSourceType> getDataSourceTypes()
+    {
+        // retrieve all entities DataSourceType
+        return (List<DataSourceType>) dataSourceTypeRepository.findAll();
+    }
+
+    @Transactional
     public <R extends EOData, Q extends DataQuery<R>, S extends AbstractDataSource<R, Q>> Integer saveDataSource(S dataSource, DataSourceType dataSourceType, String name, String description) throws PersistenceException
     {
-        if(dataSource.getCredentials() == null || dataSource.getConnectionString() == null || name == null)
+        if(dataSource.getCredentials() == null || dataSource.getConnectionString() == null || dataSourceType == null || name == null)
         {
             throw new PersistenceException("Invalid parameters were provided for adding new data source!");
         }
 
         ro.cs.tao.persistence.data.DataSource dataSourceEnt = new ro.cs.tao.persistence.data.DataSource();
         dataSourceEnt.setName(name);
-        dataSourceEnt.setDataSourceType(Integer.parseInt(DataSourceType.valueOf(dataSourceType.name()).toString()));
+        //dataSourceEnt.setDataSourceType(Integer.parseInt(DataSourceType.valueOf(dataSourceType.name()).toString()));
+        dataSourceEnt.setDataSourceType(dataSourceType);
         dataSourceEnt.setUsername(dataSource.getCredentials().getUserName());
         dataSourceEnt.setPassword(dataSource.getCredentials().getPassword());
         dataSourceEnt.setConnectionString(dataSource.getConnectionString());
@@ -173,4 +242,5 @@ public class PersistenceManager {
 
         return executionNodeEnt.getId();
     }
+
 }
