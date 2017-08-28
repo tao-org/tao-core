@@ -168,12 +168,12 @@ public class Sentinel2Downloader extends SentinelDownloader {
         }
     }
 
-    @Override
+    //@Override
     public String getProductUrl(EOData product) {
         throw new RuntimeException("This should not be called in this class");
     }
 
-    @Override
+    //@Override
     protected String getMetadataUrl(EOData product) {
         final Sentinel2ProductHelper helper = Sentinel2ProductHelper.createHelper(product.getName());
         String metadataFile = helper.getMetadataFileName();
@@ -182,7 +182,7 @@ public class Sentinel2Downloader extends SentinelDownloader {
                 .replace(ODATA_XML_PLACEHOLDER, metadataFile);
     }
 
-    @Override
+    //@Override
     protected Path download(EOData product) throws IOException {
         Sentinel2ProductHelper helper = Sentinel2ProductHelper.createHelper(product.getName());
         String tileId = helper.getTileIdentifier();
