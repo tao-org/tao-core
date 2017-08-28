@@ -21,7 +21,7 @@ import ro.cs.tao.datasource.util.Polygon2D;
 import ro.cs.tao.eodata.EOData;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.persistence.config.DatabaseConfiguration;
-import ro.cs.tao.persistence.data.enums.DataSourceType;
+import ro.cs.tao.persistence.data.DataSourceType;
 import ro.cs.tao.persistence.exception.PersistenceException;
 
 import java.net.URISyntaxException;
@@ -75,6 +75,7 @@ public class PersistenceManagerTest {
     @Test
     public void save_new_data_source()
     {
+        DataSourceType dataSourceType = null;
         try {
             Logger logger = LogManager.getLogManager().getLogger("");
             for (Handler handler : logger.getHandlers()) {
@@ -83,8 +84,24 @@ public class PersistenceManagerTest {
             AbstractDataSource<EOData, SciHubDataQuery> dataSource = new SciHubDataSource();
             dataSource.setCredentials("kraftek", "cei7pitici.");
 
-            persistenceManager.saveDataSource(dataSource, DataSourceType.SCIHUB_SENTINEL_1_DATA_SOURCE,
-              "SciHub Sentinel-1 Data Source", "No description");
+            List<DataSourceType> savedDataSourceTypes = persistenceManager.getDataSourceTypes();
+
+            for (DataSourceType savedDataSourceType : savedDataSourceTypes)
+            {
+                if (savedDataSourceType.getType().contains("SCIHUB_SENTINEL_1_DATA_SOURCE"))
+                {
+                    dataSourceType = savedDataSourceType;
+                    break;
+                }
+            }
+
+            if (dataSourceType == null)
+            {
+                // save new data source type
+                dataSourceType = persistenceManager.getDataSourceTypeById(persistenceManager.saveDataSourceType("SCIHUB_SENTINEL_1_DATA_SOURCE"));
+            }
+
+            persistenceManager.saveDataSource(dataSource, dataSourceType, "SciHub Sentinel-1 Data Source", "No description");
 
         } catch (URISyntaxException | PersistenceException e) {
             logger.error(ExceptionUtils.getStackTrace(e));

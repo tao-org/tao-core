@@ -51,9 +51,9 @@ public class DataSource {
     /**
      * Data source type
      */
-    @Column(name = "data_source_type_id")
-    @NotNull
-    private Integer dataSourceType;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name="data_source_type_id", nullable = false)
+    private DataSourceType dataSourceType;
 
     /**
      * Username used for login
@@ -124,11 +124,11 @@ public class DataSource {
         this.name = name;
     }
 
-    public Integer getDataSourceType() {
+    public DataSourceType getDataSourceType() {
         return dataSourceType;
     }
 
-    public void setDataSourceType(Integer dataSourceType) {
+    public void setDataSourceType(DataSourceType dataSourceType) {
         this.dataSourceType = dataSourceType;
     }
 
