@@ -2,13 +2,11 @@ package ro.cs.tao.datasource.remote.aws;
 
 import ro.cs.tao.component.Identifiable;
 import ro.cs.tao.datasource.DataQuery;
+import ro.cs.tao.datasource.DataSource;
 import ro.cs.tao.datasource.QueryException;
 import ro.cs.tao.datasource.param.ParameterDescriptor;
-import ro.cs.tao.datasource.param.ParameterProvider;
 import ro.cs.tao.datasource.param.QueryParameter;
-import ro.cs.tao.datasource.remote.aws.parameters.LandsatParameterProvider;
-import ro.cs.tao.datasource.remote.aws.parameters.Sentinel2ParameterProvider;
-import ro.cs.tao.eodata.EOData;
+import ro.cs.tao.eodata.EOProduct;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,17 +15,21 @@ import java.util.Map;
 /**
  * @author Cosmin Cara
  */
-public class AWSDataQuery extends DataQuery<EOData> {
-    private DataQuery<EOData> innerQuery;
+public class AWSDataQuery extends DataQuery {
+    private final DataQuery innerQuery;
 
-    AWSDataQuery(AWSDataSource source, ParameterProvider parameterProvider) {
-        super(source, parameterProvider);
-        if (parameterProvider != null) {
-            if (parameterProvider instanceof Sentinel2ParameterProvider) {
-                innerQuery = new Sentinel2Query(source, parameterProvider);
-            } else if (parameterProvider instanceof LandsatParameterProvider) {
-                innerQuery = new Landsat8Query(source, parameterProvider);
-            }
+    AWSDataQuery(DataSource source, String sensorName) {
+        super(source, sensorName);
+        switch(sensorName) {
+            case "Sentinel-2":
+                this.innerQuery = new Sentinel2Query(source);
+                break;
+            case "Landsat-8":
+                this.innerQuery = new Landsat8Query(source);
+                break;
+            default:
+                this.innerQuery = null;
+                break;
         }
     }
 
@@ -107,7 +109,7 @@ public class AWSDataQuery extends DataQuery<EOData> {
     }
 
     @Override
-    public List<EOData> execute() throws QueryException {
+    public List<EOProduct> execute() throws QueryException {
         return innerQuery.execute();
     }
 
@@ -117,13 +119,13 @@ public class AWSDataQuery extends DataQuery<EOData> {
     }
 
     @Override
-    protected List<EOData> executeImpl() throws QueryException {
+    protected List<EOProduct> executeImpl() throws QueryException {
         return innerQuery != null ? innerQuery.execute() : new ArrayList<>();
     }
 
     @Override
     public String defaultName() {
-        return "Sentinel2AWSQuery";
+        return "AWSQuery";
     }
 
     @Override

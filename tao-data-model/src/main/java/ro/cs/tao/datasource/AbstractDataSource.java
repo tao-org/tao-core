@@ -20,24 +20,21 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.datasource.param.ParameterDescriptor;
 import ro.cs.tao.datasource.param.ParameterProvider;
-import ro.cs.tao.eodata.EOData;
 
-import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Abstraction for a product datasource source.
  *
  * @author Cosmin Cara
  */
-public abstract class AbstractDataSource<R extends EOData, Q extends DataQuery<R>>
+public abstract class AbstractDataSource<Q extends DataQuery>
     extends TaoComponent
-        implements DataSource<R, Q> {
+        implements DataSource<Q> {
     protected String connectionString;
     protected long timeout;
     protected UsernamePasswordCredentials credentials;
-    private Map<String, ParameterProvider> parameterProviders;
+    private ParameterProvider parameterProvider;
 
     public AbstractDataSource() { this.timeout = 10000; }
 
@@ -70,36 +67,33 @@ public abstract class AbstractDataSource<R extends EOData, Q extends DataQuery<R
     public UsernamePasswordCredentials getCredentials() { return this.credentials; }
 
     @Override
+    public String[] getSupportedSensors() {
+        String[] sensors = null;
+        if (this.parameterProvider != null) {
+            sensors = this.parameterProvider.getSupportedSensors();
+        }
+        return sensors;
+    }
+
+    @Override
     public Map<String, Map<String, ParameterDescriptor>> getSupportedParameters() {
         Map<String, Map<String, ParameterDescriptor>> descriptors = null;
-        if (this.parameterProviders != null) {
-            descriptors = this.parameterProviders.entrySet().stream()
-                    .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getSupportedParameters()));
+        if (this.parameterProvider != null) {
+            descriptors = this.parameterProvider.getSupportedParameters();
         }
         return descriptors;
     }
-
-    /**
-     * Creates a query object that will be executed against the datasource source to retrieve results.
-     */
-    @Override
-    public Q createQuery() { return createQueryImpl(null); }
 
     @Override
     public Q createQuery(String type) { return createQueryImpl(type); }
 
     protected abstract Q createQueryImpl(String code);
 
-    protected void addParameterProvider(String code, ParameterProvider provider) {
-        if (this.parameterProviders == null) {
-            this.parameterProviders = new HashMap<>();
-        }
-        code = code == null ? "" : code;
-        this.parameterProviders.put(code, provider);
+    protected void setParameterProvider(ParameterProvider provider) {
+        this.parameterProvider = provider;
     }
 
-    public ParameterProvider getParameterProvider(String code) {
-        code = code == null ? "" : code;
-        return this.parameterProviders.get(code);
+    public ParameterProvider getParameterProvider() {
+        return this.parameterProvider;
     }
 }

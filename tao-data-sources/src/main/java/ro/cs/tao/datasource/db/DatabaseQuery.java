@@ -27,9 +27,7 @@ import ro.cs.tao.datasource.QueryException;
 import ro.cs.tao.datasource.converters.ConverterFactory;
 import ro.cs.tao.datasource.converters.DateConverter;
 import ro.cs.tao.datasource.converters.PolygonConverter;
-import ro.cs.tao.datasource.param.ParameterProvider;
 import ro.cs.tao.datasource.param.QueryParameter;
-import ro.cs.tao.eodata.EOData;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.Polygon2D;
 import ro.cs.tao.eodata.enums.PixelType;
@@ -51,7 +49,7 @@ import java.util.Map;
 /**
  * @author Cosmin Cara
  */
-public class DatabaseQuery extends DataQuery<EOData> {
+public class DatabaseQuery extends DataQuery {
 
     private static final String PRODUCTS_TABLE = "Products";
     private static final String PRODUCT_PARAMS_TABLE = "ProductsParams";
@@ -61,13 +59,13 @@ public class DatabaseQuery extends DataQuery<EOData> {
         converterFactory.register(PolygonConverter.class, Polygon2D.class);
         converterFactory.register(DateConverter.class, Date.class);
     }
-    DatabaseQuery(DatabaseSource source, ParameterProvider parameterProvider) {
-        super(source, parameterProvider);
+    DatabaseQuery(DatabaseSource source, String sensorName) {
+        super(source, sensorName);
     }
 
     @Override
-    protected List<EOData> executeImpl() throws QueryException {
-        List<EOData> results = new ArrayList<>();
+    protected List<EOProduct> executeImpl() throws QueryException {
+        List<EOProduct> results = new ArrayList<>();
         Connection sqlConnection = ((DatabaseSource) this.source).getConnection();
         if (sqlConnection != null) {
             try {

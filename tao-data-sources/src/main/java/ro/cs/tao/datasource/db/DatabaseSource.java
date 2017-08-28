@@ -22,17 +22,20 @@ package ro.cs.tao.datasource.db;
 import org.apache.commons.lang.NotImplementedException;
 import ro.cs.tao.component.Identifiable;
 import ro.cs.tao.datasource.AbstractDataSource;
-import ro.cs.tao.eodata.EOData;
+import ro.cs.tao.datasource.QueryException;
+import ro.cs.tao.datasource.param.ParameterDescriptor;
+import ro.cs.tao.datasource.param.ParameterProvider;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Map;
 import java.util.logging.Logger;
 
 /**
  * @author Cosmin Cara
  */
-public class DatabaseSource extends AbstractDataSource<EOData, DatabaseQuery> {
+public class DatabaseSource extends AbstractDataSource<DatabaseQuery> {
 
     protected final Logger logger;
 
@@ -44,7 +47,7 @@ public class DatabaseSource extends AbstractDataSource<EOData, DatabaseQuery> {
         } catch (ClassNotFoundException e) {
             this.logger.severe("PostgreSQL driver not registered");
         }
-        addParameterProvider(null, new DatabaseParameterProvider());
+        setParameterProvider(new DatabaseParameterProvider());
     }
 
     @Override
@@ -81,8 +84,17 @@ public class DatabaseSource extends AbstractDataSource<EOData, DatabaseQuery> {
     }
 
     @Override
-    protected DatabaseQuery createQueryImpl(String code) {
-        return new DatabaseQuery(this, getParameterProvider(null));
+    protected DatabaseQuery createQueryImpl(String sensorName) {
+        final ParameterProvider parameterProvider = getParameterProvider();
+        if (parameterProvider == null) {
+            throw new QueryException("No parameter provider found for this data source");
+        }
+        final Map<String, Map<String, ParameterDescriptor>> supportedParameters =
+                parameterProvider.getSupportedParameters();
+        if (supportedParameters == null) {
+            throw new QueryException("Parameters not defined for this data source");
+        }
+        return new DatabaseQuery(this, sensorName);
     }
 
     Connection getConnection() {

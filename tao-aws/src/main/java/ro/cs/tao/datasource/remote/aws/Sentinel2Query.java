@@ -5,14 +5,12 @@ import ro.cs.tao.component.Identifiable;
 import ro.cs.tao.datasource.DataQuery;
 import ro.cs.tao.datasource.DataSource;
 import ro.cs.tao.datasource.QueryException;
-import ro.cs.tao.datasource.param.ParameterProvider;
 import ro.cs.tao.datasource.param.QueryParameter;
 import ro.cs.tao.datasource.remote.AbstractDownloader;
 import ro.cs.tao.datasource.remote.aws.internal.AwsResult;
 import ro.cs.tao.datasource.remote.aws.internal.IntermediateParser;
 import ro.cs.tao.datasource.util.Logger;
 import ro.cs.tao.datasource.util.NetUtils;
-import ro.cs.tao.eodata.EOData;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.Polygon2D;
 import ro.cs.tao.eodata.enums.DataFormat;
@@ -44,17 +42,17 @@ import java.util.stream.Collectors;
 /**
  * @author Cosmin Cara
  */
-class Sentinel2Query extends DataQuery<EOData> {
+class Sentinel2Query extends DataQuery {
     private static final String S2_SEARCH_URL_SUFFIX = "?delimiter=/&prefix=";
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
     private static final DateTimeFormatter fileDateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-    Sentinel2Query(DataSource source, ParameterProvider parameterProvider) {
-        super(source, parameterProvider);
+    Sentinel2Query(DataSource source) {
+        super(source, "Sentinel-2");
     }
 
     @Override
-    protected List<EOData> executeImpl() throws QueryException {
+    protected List<EOProduct> executeImpl() throws QueryException {
         QueryParameter currentParameter = this.parameters.get("platformName");
         if (currentParameter == null ||
                 !"S2".equals(currentParameter.getValueAsString())) {
