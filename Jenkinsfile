@@ -5,8 +5,9 @@ node{
 
     try {
         currentBuild.result = 'SUCCESS'
+        def mycfg_file = 'df97f4a9-f259-4138-bead-21720f9c3b46'
 
-        stage('Checkout') {
+        stage('Checkout sources') {
             checkout scm
 
             def currentName = "tao-core"
@@ -16,12 +17,9 @@ node{
             env.BUILD_DIRECTORY = "tao-build_" + env.BUILD_ID
         }
 
-        stage ('Prepare environment') {
-            sh '''mkdir -p /tmp/maven/$BUILD_DIRECTORY/conf
-                mkdir -p /tmp/maven/$BUILD_DIRECTORY/conf
-                echo "<settings><localRepository>/tmp/maven/$BUILD_DIRECTORY/repo</localRepository></settings>" >> /tmp/maven/$BUILD_DIRECTORY/conf/settings.xml
-                mkdir -p /tmp/maven/$BUILD_DIRECTORY/repo'''
-            runMavenTasks("clean")
+        stage ('Prepare environment, clean') {
+            echo 'run task --> mvn clean -U'
+            sh '''mvn clean -U'''
         }
         /*
         try {
@@ -34,7 +32,8 @@ node{
         */
 
         stage ('Install') {
-            runMavenTasks("install")
+            echo 'run task --> mvn install'
+            sh '''mvn install'''
         }
 
         try {
@@ -43,21 +42,13 @@ node{
             //runMavenTasks("sonarqube -Dspring.profiles.active=jenkins -i")
 
             stage('Deploy') {
-                runMavenTasks("deploy")
+                configFileProvider([configFile(fileId: mycfg_file, variable: 'GLOBAL_MAVEN_SETTINGS')]) {
+                    echo "'settings.xml' path: $GLOBAL_MAVEN_SETTINGS"
+                    echo "run task --> mvn -s $GLOBAL_MAVEN_SETTINGS deploy"
+                    sh '''mvn -s $GLOBAL_MAVEN_SETTINGS deploy'''
+                }
             }
 
-            /*
-            stage 'Javadoc reporting'
-            runMavenTasks("generateJavaDoc")
-            publishHTML([
-                    allowMissing         : false,
-                    alwaysLinkToLastBuild: true,
-                    keepAll              : true,
-                    reportDir            : "build/docs/javadoc",
-                    reportFiles          : "overview-summary.html",
-                    reportName           : "${currentName} JavaDoc"
-            ])
-            */
         } catch (err) {
             currentBuild.result = 'UNSTABLE'
             echo 'An error has occurred. Build status is ' + "${currentBuild.result}"
@@ -99,11 +90,6 @@ def version() {
 def version() {
     def matcher = readFile('pom.xml') =~ '<version>(.+)</version>'
     return matcher ? matcher[0][1] : null
-}
-
-def runMavenTasks(tasks) {
-    echo 'run task --> mvn ' + tasks
-    sh '''mvn ''' + tasks
 }
 
 def cleanEnv() {
