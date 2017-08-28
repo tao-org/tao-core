@@ -3,7 +3,6 @@ package ro.cs.tao.datasource.remote.peps;
 import ro.cs.tao.datasource.remote.URLDataSource;
 import ro.cs.tao.datasource.remote.peps.parameters.PepsParameterProvider;
 import ro.cs.tao.datasource.util.NetUtils;
-import ro.cs.tao.eodata.EOData;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -13,7 +12,7 @@ import java.util.Properties;
 /**
  * @author Cosmin Cara
  */
-public class PepsDataSource extends URLDataSource<EOData, PepsDataQuery> {
+public class PepsDataSource extends URLDataSource<PepsDataQuery> {
     private static String URL;
 
     static {
@@ -27,7 +26,7 @@ public class PepsDataSource extends URLDataSource<EOData, PepsDataQuery> {
 
     public PepsDataSource() throws URISyntaxException {
         super(URL);
-        addParameterProvider(null, new PepsParameterProvider());
+        setParameterProvider(new PepsParameterProvider());
     }
 
     @Override
@@ -41,7 +40,7 @@ public class PepsDataSource extends URLDataSource<EOData, PepsDataQuery> {
     }
 
     @Override
-    protected PepsDataQuery createQueryImpl(String code) {
-        return new PepsDataQuery(this, getParameterProvider(null));
+    protected PepsDataQuery createQueryImpl(String sensorName) {
+        return new PepsDataQuery(this, sensorName);
     }
 }

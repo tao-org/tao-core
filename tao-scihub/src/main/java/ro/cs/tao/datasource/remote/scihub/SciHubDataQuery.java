@@ -16,7 +16,6 @@
  *  *
  *
  */
-
 package ro.cs.tao.datasource.remote.scihub;
 
 import org.apache.http.NameValuePair;
@@ -30,13 +29,11 @@ import ro.cs.tao.datasource.QueryException;
 import ro.cs.tao.datasource.converters.ConversionException;
 import ro.cs.tao.datasource.converters.ConverterFactory;
 import ro.cs.tao.datasource.converters.DateConverter;
-import ro.cs.tao.datasource.param.ParameterProvider;
 import ro.cs.tao.datasource.param.QueryParameter;
 import ro.cs.tao.datasource.remote.result.json.JsonResponseParser;
 import ro.cs.tao.datasource.remote.scihub.json.SciHubJsonResponseHandler;
 import ro.cs.tao.datasource.remote.scihub.parameters.SciHubParameterProvider;
 import ro.cs.tao.datasource.util.NetUtils;
-import ro.cs.tao.eodata.EOData;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.Polygon2D;
 
@@ -51,24 +48,27 @@ import java.util.stream.Collectors;
 /**
  * @author Cosmin Cara
  */
-public class SciHubDataQuery extends DataQuery<EOData> {
+public class SciHubDataQuery extends DataQuery {
 
     private static final String PATTERN_DATE = "NOW";
     private static final String PATTERN_OFFSET_DATE = PATTERN_DATE + "-%sDAY";
     private static final ConverterFactory converterFactory = ConverterFactory.getInstance();
+
+    private final String sensorName;
 
     static {
         converterFactory.register(SciHubPolygonConverter.class, Polygon2D.class);
         converterFactory.register(DateConverter.class, Date.class);
     }
 
-    SciHubDataQuery(SciHubDataSource source, ParameterProvider parameterProvider) {
-        super(source, parameterProvider);
+    SciHubDataQuery(SciHubDataSource source, String sensorName) {
+        super(source, sensorName);
+        this.sensorName = sensorName;
     }
 
     @Override
-    protected List<EOData> executeImpl() throws QueryException {
-        List<EOData> results = new ArrayList<>();
+    protected List<EOProduct> executeImpl() throws QueryException {
+        List<EOProduct> results = new ArrayList<>();
         String query = "";
         int idx = 0;
         for (Map.Entry<String, QueryParameter> entry : this.parameters.entrySet()) {
@@ -183,9 +183,8 @@ public class SciHubDataQuery extends DataQuery<EOData> {
     @Override
     public Identifiable copy() {
         SciHubDataSource src = (SciHubDataSource) this.source;
-        SciHubParameterProvider parameterProvider = (SciHubParameterProvider) src.getParameterProvider(null);
-        SciHubDataQuery copy = new SciHubDataQuery(src, parameterProvider);
-
+        SciHubParameterProvider parameterProvider = (SciHubParameterProvider) src.getParameterProvider();
+        SciHubDataQuery copy = new SciHubDataQuery(src, this.sensorName);
         return copy;
     }
 }

@@ -3,8 +3,6 @@ package ro.cs.tao.datasource.db;
 import ro.cs.tao.datasource.param.ParameterDescriptor;
 import ro.cs.tao.datasource.param.ParameterProvider;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -12,9 +10,14 @@ import java.util.Map;
  */
 public class DatabaseParameterProvider implements ParameterProvider {
     @Override
-    public Map<String, ParameterDescriptor> getSupportedParameters() {
-        return Collections.unmodifiableMap(new HashMap<String, ParameterDescriptor>() {{
-            //TODO: add database parameters (i.e. search criteria) here
-        }});
+    public Map<String, Map<String, ParameterDescriptor>> getSupportedParameters() {
+        //TODO: retrieve the parameters supported by the database query
+        return null;
+    }
+
+    @Override
+    public String[] getSupportedSensors() {
+        //TODO: retrieve the sensors supported by the database query
+        return new String[0];
     }
 }

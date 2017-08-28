@@ -1,9 +1,7 @@
 package ro.cs.tao.datasource.remote.aws;
 
 import ro.cs.tao.datasource.remote.URLDataSource;
-import ro.cs.tao.datasource.remote.aws.parameters.LandsatParameterProvider;
-import ro.cs.tao.datasource.remote.aws.parameters.Sentinel2ParameterProvider;
-import ro.cs.tao.eodata.EOData;
+import ro.cs.tao.datasource.remote.aws.parameters.AWSParameterProvider;
 
 import java.io.IOException;
 import java.net.URI;
@@ -15,7 +13,7 @@ import java.util.logging.LogManager;
 /**
  * @author Cosmin Cara
  */
-public class AWSDataSource extends URLDataSource<EOData, AWSDataQuery> {
+public class AWSDataSource extends URLDataSource<AWSDataQuery> {
     private static String S2_URL;
     private static String L8_URL;
 
@@ -53,29 +51,28 @@ public class AWSDataSource extends URLDataSource<EOData, AWSDataQuery> {
 
     public AWSDataSource() throws URISyntaxException {
         super(S2_URL);
-        addParameterProvider("S2", new Sentinel2ParameterProvider());
-        addParameterProvider("L8", new LandsatParameterProvider());
+        setParameterProvider(new AWSParameterProvider());
     }
 
     @Override
     public String defaultName() { return "Amazon Web Services"; }
 
     @Override
-    protected AWSDataQuery createQueryImpl(String code) {
+    protected AWSDataQuery createQueryImpl(String sensorName) {
         try {
-            switch (code) {
-                case "S2":
+            switch (sensorName) {
+                case "Sentinel-2":
                     this.connectionString = S2_URL;
                     this.remoteUrl = new URI(this.connectionString);
                     break;
-                case "L8":
+                case "Landsat-8":
                     this.connectionString = L8_URL;
                     this.remoteUrl = new URI(this.connectionString);
                     break;
                 default:
-                    throw new IllegalArgumentException(String.format("'%s' is not supported", code));
+                    throw new IllegalArgumentException(String.format("'%s' is not supported", sensorName));
             }
-            return new AWSDataQuery(this, getParameterProvider(code));
+            return new AWSDataQuery(this, sensorName);
         } catch (URISyntaxException ex) {
             throw new RuntimeException("Malformed url: " + ex.getMessage());
         }

@@ -18,10 +18,10 @@ package ro.cs.tao.datasource;
 
 import ro.cs.tao.component.Identifiable;
 import ro.cs.tao.datasource.param.ParameterDescriptor;
-import ro.cs.tao.datasource.param.ParameterProvider;
 import ro.cs.tao.datasource.param.QueryParameter;
-import ro.cs.tao.eodata.EOData;
+import ro.cs.tao.eodata.EOProduct;
 
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
  *
  * @author Cosmin Cara
  */
-public abstract class DataQuery<R extends EOData> extends Identifiable {
+public abstract class DataQuery extends Identifiable {
     protected static final int DEFAULT_LIMIT = 20;
     protected DataSource source;
     protected String queryText;
@@ -45,19 +45,24 @@ public abstract class DataQuery<R extends EOData> extends Identifiable {
     protected final Map<String, ParameterDescriptor> supportedParams;
     protected final Set<String> mandatoryParams;
 
-    public DataQuery(DataSource source, ParameterProvider parameterProvider) {
+    public DataQuery(DataSource source, String sensorName) {
+        if (source == null) {
+            throw new QueryException("Empty source");
+        }
+        if (sensorName == null || Arrays.stream(source.getSupportedSensors()).noneMatch(sensorName::equals)) {
+            throw new QueryException("Empty sensor name");
+        }
         this.source = source;
         this.parameters = new LinkedHashMap<>();
         this.timeout = 10000;
+
         this.pageSize = -1;
         this.pageNumber = -1;
         this.limit = -1;
-        if (parameterProvider == null) {
-            throw new IllegalArgumentException("ParameterProvider should be set");
-        }
-        this.supportedParams = parameterProvider.getSupportedParameters();
+        Map<String, Map<String, ParameterDescriptor>> supportedParameters = source.getSupportedParameters();
+        this.supportedParams = supportedParameters.get(sensorName);
         this.mandatoryParams = this.supportedParams.values().stream()
-                .filter(ParameterDescriptor::isRequired)
+                .filter(p -> p.isRequired() && p.getDefaultValue() == null)
                 .map(ParameterDescriptor::getName)
                 .collect(Collectors.toSet());
     }
@@ -106,7 +111,7 @@ public abstract class DataQuery<R extends EOData> extends Identifiable {
 
     public void setMaxResults(int value) { this.limit = value; }
 
-    public List<R> execute() {
+    public List<EOProduct> execute() {
         final Set<String> mandatoryParams = getMandatoryParams();
         final Map<String, QueryParameter> parameters = getParameters();
         List<String> missing = mandatoryParams.stream()
@@ -116,6 +121,10 @@ public abstract class DataQuery<R extends EOData> extends Identifiable {
             ex.addAdditionalInfo("Missing", String.join(",", missing));
             throw ex;
         }
+        this.supportedParams.entrySet().stream()
+                .filter(entry -> entry.getValue().getDefaultValue() != null && !parameters.containsKey(entry.getKey()))
+                .map(Map.Entry::getValue)
+                .forEach(p -> addParameter(p.getName(), p.getType(), p.getDefaultValue()));
         return executeImpl();
     }
 
@@ -160,5 +169,5 @@ public abstract class DataQuery<R extends EOData> extends Identifiable {
         }
     }
 
-    protected abstract List<R> executeImpl();
+    protected abstract List<EOProduct> executeImpl();
 }

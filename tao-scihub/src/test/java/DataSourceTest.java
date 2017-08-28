@@ -40,15 +40,13 @@ import ro.cs.tao.datasource.DataQuery;
 import ro.cs.tao.datasource.DataSource;
 import ro.cs.tao.datasource.QueryException;
 import ro.cs.tao.datasource.param.QueryParameter;
-import ro.cs.tao.datasource.remote.scihub.SciHubDataQuery;
 import ro.cs.tao.datasource.remote.scihub.SciHubDataSource;
 import ro.cs.tao.datasource.remote.scihub.SentinelDownloader;
-import ro.cs.tao.eodata.EOData;
+import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.Polygon2D;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
 
-import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Arrays;
@@ -72,18 +70,15 @@ public class DataSourceTest {
 
     public static void SciHub_Sentinel2_Test() {
         try {
-            ServiceRegistry<DataSource> serviceRegistry =
-                    ServiceRegistryManager.getInstance().getServiceRegistry(DataSource.class);
             Logger logger = LogManager.getLogManager().getLogger("");
             for (Handler handler : logger.getHandlers()) {
                 handler.setLevel(Level.INFO);
             }
-            DataSource<EOData, SciHubDataQuery> dataSource =
-                    serviceRegistry.getService(SciHubDataSource.class.getName());
-                    //new SciHubDataSource();
+            DataSource dataSource = getDatasourceRegistry().getService(SciHubDataSource.class.getName());
             dataSource.setCredentials("kraftek", "cei7pitici.");
+            String[] sensors = dataSource.getSupportedSensors();
 
-            DataQuery<EOData> query = dataSource.createQuery();
+            DataQuery query = dataSource.createQuery(sensors[1]);
             query.addParameter("platformName", "Sentinel-2");
             QueryParameter begin = query.createParameter("beginPosition", Date.class);
             begin.setMinValue(Date.from(LocalDateTime.of(2016, 2, 1, 0, 0, 0, 0)
@@ -104,7 +99,7 @@ public class DataSourceTest {
             query.addParameter("cloudcoverpercentage", 100.);
             query.setPageSize(50);
             query.setMaxResults(83);
-            List<EOData> results = query.execute();
+            List<EOProduct> results = query.execute();
             results.forEach(r -> {
                 System.out.println("ID=" + r.getId());
                 System.out.println("NAME=" + r.getName());
@@ -126,10 +121,12 @@ public class DataSourceTest {
             for (Handler handler : logger.getHandlers()) {
                 handler.setLevel(Level.INFO);
             }
-            DataSource<EOData, SciHubDataQuery> dataSource = new SciHubDataSource();
+            DataSource dataSource = getDatasourceRegistry().getService(SciHubDataSource.class.getName());
+            //new SciHubDataSource();
             dataSource.setCredentials("kraftek", "cei7pitici.");
+            String[] sensors = dataSource.getSupportedSensors();
 
-            DataQuery<EOData> query = dataSource.createQuery();
+            DataQuery query = dataSource.createQuery(sensors[0]);
             query.addParameter("platformName", "Sentinel-1");
             QueryParameter begin = query.createParameter("beginPosition", Date.class);
             begin.setMinValue(Date.from(LocalDateTime.of(2017, 5, 30, 0, 0, 0, 0)
@@ -145,7 +142,7 @@ public class DataSourceTest {
             query.setPageSize(50);
             query.setMaxResults(83);
             SentinelDownloader downloader = new SentinelDownloader("E:\\NewFormat");
-            List<EOData> results = query.execute();
+            List<EOProduct> results = query.execute();
             //downloader.download(results);
             results.forEach(r -> {
                 System.out.println("ID=" + r.getId());
@@ -157,8 +154,12 @@ public class DataSourceTest {
                         .forEach(a -> System.out.println("\tName='" + a.getName() +
                                                                  "', value='" + a.getValue() + "'"));
             });
-        } catch (URISyntaxException | QueryException e) {
+        } catch (QueryException e) {
             e.printStackTrace();
         }
+    }
+
+    private static ServiceRegistry<DataSource> getDatasourceRegistry() {
+        return ServiceRegistryManager.getInstance().getServiceRegistry(DataSource.class);
     }
 }

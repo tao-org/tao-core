@@ -6,15 +6,25 @@ package ro.cs.tao.datasource.param;
 public class ParameterDescriptor {
     private final String name;
     private final Class type;
+    private final Object defaultValue;
     private final boolean required;
 
     public ParameterDescriptor(String name, Class type) {
-        this(name, type, false);
+        this(name, type, null, false);
     }
 
     public ParameterDescriptor(String name, Class type, boolean required) {
+        this(name, type, null, required);
+    }
+
+    public ParameterDescriptor(String name, Class type, Object defaultValue) {
+        this(name, type, defaultValue, false);
+    }
+
+    public ParameterDescriptor(String name, Class type, Object defaultValue, boolean required) {
         this.name = name;
         this.type = type;
+        this.defaultValue = defaultValue;
         this.required = required;
     }
 
@@ -29,4 +39,6 @@ public class ParameterDescriptor {
     public boolean isRequired() {
         return required;
     }
+
+    public Object getDefaultValue() { return defaultValue; }
 }

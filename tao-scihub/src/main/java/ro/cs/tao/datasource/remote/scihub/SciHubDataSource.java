@@ -41,7 +41,6 @@ package ro.cs.tao.datasource.remote.scihub;
 import ro.cs.tao.datasource.remote.URLDataSource;
 import ro.cs.tao.datasource.remote.scihub.parameters.SciHubParameterProvider;
 import ro.cs.tao.datasource.util.NetUtils;
-import ro.cs.tao.eodata.EOData;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -51,7 +50,7 @@ import java.util.Properties;
 /**
  * @author Cosmin Cara
  */
-public class SciHubDataSource extends URLDataSource<EOData, SciHubDataQuery> {
+public class SciHubDataSource extends URLDataSource<SciHubDataQuery> {
     private static String URL;
 
     static {
@@ -65,7 +64,7 @@ public class SciHubDataSource extends URLDataSource<EOData, SciHubDataQuery> {
 
     public SciHubDataSource() throws URISyntaxException {
         super(URL);
-        addParameterProvider(null, new SciHubParameterProvider());
+        setParameterProvider(new SciHubParameterProvider());
     }
 
     @Override
@@ -79,7 +78,7 @@ public class SciHubDataSource extends URLDataSource<EOData, SciHubDataQuery> {
     }
 
     @Override
-    protected SciHubDataQuery createQueryImpl(String code) {
-        return new SciHubDataQuery(this, getParameterProvider(null));
+    protected SciHubDataQuery createQueryImpl(String sensorName) {
+        return new SciHubDataQuery(this, sensorName);
     }
 }

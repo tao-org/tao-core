@@ -12,14 +12,12 @@ import ro.cs.tao.datasource.QueryException;
 import ro.cs.tao.datasource.converters.ConversionException;
 import ro.cs.tao.datasource.converters.ConverterFactory;
 import ro.cs.tao.datasource.converters.RangeConverter;
-import ro.cs.tao.datasource.param.ParameterProvider;
 import ro.cs.tao.datasource.param.QueryParameter;
 import ro.cs.tao.datasource.remote.peps.parameters.BooleanConverter;
 import ro.cs.tao.datasource.remote.peps.parameters.DateConverter;
 import ro.cs.tao.datasource.remote.peps.parameters.PolygonConverter;
 import ro.cs.tao.datasource.remote.result.json.JsonResponseParser;
 import ro.cs.tao.datasource.util.NetUtils;
-import ro.cs.tao.eodata.EOData;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.Polygon2D;
 
@@ -33,7 +31,7 @@ import java.util.stream.Collectors;
 /**
  * @author Cosmin Cara
  */
-public class PepsDataQuery extends DataQuery<EOData> {
+public class PepsDataQuery extends DataQuery {
     private static final ConverterFactory converterFactory = ConverterFactory.getInstance();
 
     static {
@@ -42,13 +40,14 @@ public class PepsDataQuery extends DataQuery<EOData> {
         converterFactory.register(RangeConverter.class, Double.class);
         converterFactory.register(BooleanConverter.class, Boolean.class);
     }
-    PepsDataQuery(DataSource source, ParameterProvider parameterProvider) {
-        super(source, parameterProvider);
+
+    PepsDataQuery(DataSource source, String sensorName) {
+        super(source, sensorName);
     }
 
     @Override
-    protected List<EOData> executeImpl() {
-        List<EOData> results = new ArrayList<>();
+    protected List<EOProduct> executeImpl() {
+        List<EOProduct> results = new ArrayList<>();
         List<NameValuePair> params = new ArrayList<>();
         Collection collection = Collection.S2ST;
         for (Map.Entry<String, QueryParameter> entry : this.parameters.entrySet()) {

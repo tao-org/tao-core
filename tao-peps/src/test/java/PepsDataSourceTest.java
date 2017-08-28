@@ -3,9 +3,8 @@ import ro.cs.tao.datasource.DataSource;
 import ro.cs.tao.datasource.QueryException;
 import ro.cs.tao.datasource.param.QueryParameter;
 import ro.cs.tao.datasource.remote.peps.Collection;
-import ro.cs.tao.datasource.remote.peps.PepsDataQuery;
 import ro.cs.tao.datasource.remote.peps.PepsDataSource;
-import ro.cs.tao.eodata.EOData;
+import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.Polygon2D;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
@@ -37,12 +36,11 @@ public class PepsDataSourceTest {
             for (Handler handler : logger.getHandlers()) {
                 handler.setLevel(Level.INFO);
             }
-            DataSource<EOData, PepsDataQuery> dataSource =
-                    serviceRegistry.getService(PepsDataSource.class.getName());
-
+            DataSource dataSource = serviceRegistry.getService(PepsDataSource.class.getName());
             dataSource.setCredentials("kraftek@c-s.ro", "cei7pitici.");
+            String[] sensors = dataSource.getSupportedSensors();
 
-            DataQuery<EOData> query = dataSource.createQuery();
+            DataQuery query = dataSource.createQuery(sensors[1]);
             query.addParameter("collection", Collection.S2ST.toString());
             query.addParameter("platform", "S2A");
 
@@ -67,7 +65,7 @@ public class PepsDataSourceTest {
             query.addParameter("cloudCover", 100.);
             query.setPageSize(20);
             query.setMaxResults(50);
-            List<EOData> results = query.execute();
+            List<EOProduct> results = query.execute();
             results.forEach(r -> {
                 System.out.println("ID=" + r.getId());
                 System.out.println("NAME=" + r.getName());

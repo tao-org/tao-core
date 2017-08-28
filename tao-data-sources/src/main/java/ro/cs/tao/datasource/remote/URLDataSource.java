@@ -41,7 +41,6 @@ package ro.cs.tao.datasource.remote;
 import org.apache.commons.lang.NotImplementedException;
 import ro.cs.tao.datasource.AbstractDataSource;
 import ro.cs.tao.datasource.DataQuery;
-import ro.cs.tao.eodata.EOData;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -52,8 +51,8 @@ import java.net.URISyntaxException;
 /**
  * @author Cosmin Cara
  */
-public abstract class URLDataSource<R extends EOData, Q extends DataQuery<R>>
-        extends AbstractDataSource<R, Q> {
+public abstract class URLDataSource<Q extends DataQuery>
+        extends AbstractDataSource<Q> {
     protected URI remoteUrl;
 
     public URLDataSource(String connectionString) throws URISyntaxException {
@@ -99,7 +98,7 @@ public abstract class URLDataSource<R extends EOData, Q extends DataQuery<R>>
     public String defaultName() { return "NewURLDataSource"; }
 
     @Override
-    public URLDataSource<R, Q> copy() {
+    public URLDataSource<Q> copy() {
         throw new NotImplementedException("This should not be called on this instance");
     }
 }
