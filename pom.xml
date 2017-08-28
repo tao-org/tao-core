@@ -8,6 +8,7 @@
     <artifactId>tao-core</artifactId>
     <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
+    <name>TAO Core</name>
 
     <modules>
         <module>tao-data-model</module>
@@ -37,6 +38,13 @@
         <taoReleasesUrl>http://cayman.c-s.ro:8081/nexus/repository/tao-releases/</taoReleasesUrl>
         <osgeoUrl>http://cayman.c-s.ro:8081/nexus/repository/osgeo/</osgeoUrl>
         <hibernatespatialUrl>http://cayman:8081/nexus/repository/hibernatespatial/</hibernatespatialUrl>
+
+        <!-- SonarQube -->
+        <sonar.host.url>http://cayman.c-s.ro:9000</sonar.host.url>
+        <sonar.language>java</sonar.language>
+        <sonar.scm.provider>git</sonar.scm.provider>
+        <sonar.exclusions>**/ro/cs/tao/**/*Test</sonar.exclusions>
+
     </properties>
 
     <repositories>
@@ -89,6 +97,11 @@
                     <configuration>
                         <useDefaultManifestFile>true</useDefaultManifestFile>
                     </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.sonarsource.scanner.maven</groupId>
+                    <artifactId>sonar-maven-plugin</artifactId>
+                    <version>3.3.0.603</version>
                 </plugin>
             </plugins>
         </pluginManagement>
