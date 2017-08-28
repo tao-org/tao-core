@@ -98,7 +98,7 @@ public abstract class AbstractDataSource<R extends EOData, Q extends DataQuery<R
         this.parameterProviders.put(code, provider);
     }
 
-    protected ParameterProvider getParameterProvider(String code) {
+    public ParameterProvider getParameterProvider(String code) {
         code = code == null ? "" : code;
         return this.parameterProviders.get(code);
     }

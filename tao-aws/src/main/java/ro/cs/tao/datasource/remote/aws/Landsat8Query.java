@@ -1,5 +1,6 @@
 package ro.cs.tao.datasource.remote.aws;
 
+import ro.cs.tao.component.Identifiable;
 import ro.cs.tao.datasource.DataQuery;
 import ro.cs.tao.datasource.DataSource;
 import ro.cs.tao.datasource.QueryException;
@@ -230,5 +231,15 @@ class Landsat8Query extends DataQuery<EOData> {
                 reader.close();
             }
         }
+    }
+
+    @Override
+    public String defaultName() {
+        return "LandsatAWSQuery";
+    }
+
+    @Override
+    public Identifiable copy() {
+        return null;
     }
 }

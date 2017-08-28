@@ -24,6 +24,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
+import ro.cs.tao.component.Identifiable;
 import ro.cs.tao.datasource.DataQuery;
 import ro.cs.tao.datasource.QueryException;
 import ro.cs.tao.datasource.converters.ConversionException;
@@ -33,6 +34,7 @@ import ro.cs.tao.datasource.param.ParameterProvider;
 import ro.cs.tao.datasource.param.QueryParameter;
 import ro.cs.tao.datasource.remote.result.json.JsonResponseParser;
 import ro.cs.tao.datasource.remote.scihub.json.SciHubJsonResponseHandler;
+import ro.cs.tao.datasource.remote.scihub.parameters.SciHubParameterProvider;
 import ro.cs.tao.datasource.util.NetUtils;
 import ro.cs.tao.eodata.EOData;
 import ro.cs.tao.eodata.EOProduct;
@@ -173,5 +175,17 @@ public class SciHubDataQuery extends DataQuery<EOData> {
         } else {
             return results;
         }
+    }
+
+    @Override
+    public String defaultName() { return "SciHubQuery"; }
+
+    @Override
+    public Identifiable copy() {
+        SciHubDataSource src = (SciHubDataSource) this.source;
+        SciHubParameterProvider parameterProvider = (SciHubParameterProvider) src.getParameterProvider(null);
+        SciHubDataQuery copy = new SciHubDataQuery(src, parameterProvider);
+
+        return copy;
     }
 }
