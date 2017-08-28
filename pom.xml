@@ -44,6 +44,9 @@
         <sonar.language>java</sonar.language>
         <sonar.scm.provider>git</sonar.scm.provider>
         <sonar.exclusions>**/ro/cs/tao/**/*Test</sonar.exclusions>
+        <!-- Jacoco in SonarQube -->
+        <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
+        <sonar.jacoco.itReportPath>${project.basedir}/../target/jacoco</sonar.jacoco.itReportPath>
 
     </properties>
 
@@ -106,7 +109,6 @@
             </plugins>
         </pluginManagement>
 
-
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -135,6 +137,24 @@
                     <nexusUrl>${nexusUrl}</nexusUrl>
                     <skipStaging>true</skipStaging>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.7.9</version>
+                <configuration>
+                    <destFile>${sonar.jacoco.itReportPath}</destFile>
+                    <append>true</append>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
