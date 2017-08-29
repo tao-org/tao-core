@@ -96,16 +96,19 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.1.0</version>
+                <inherited>false</inherited>
                 <configuration>
-                    <descriptor>src/assembly/assembly.xml</descriptor>
-                    <finalName>tao-core</finalName>
+                    <descriptors>
+                        <descriptor>src/assembly/assembly.xml</descriptor>
+                        <finalName>tao-core</finalName>
+                    </descriptors>
                 </configuration>
                 <executions>
                     <execution>
                         <id>directory-bundle</id>
-                        <phase>package</phase>
                         <goals>
-                            <goal>directory</goal>
+                            <goal>single</goal>
                         </goals>
                     </execution>
                 </executions>
