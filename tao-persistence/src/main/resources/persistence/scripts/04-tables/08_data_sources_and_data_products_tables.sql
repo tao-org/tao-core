@@ -140,6 +140,7 @@ CREATE TABLE tao.data_product
 	pixel_type_id integer NOT NULL,
 	width integer NOT NULL,
 	height integer NOT NULL,
+	attributes hstore,
 	user_id integer NULL,
 	data_source_id integer NULL,
 	created timestamp NOT NULL,

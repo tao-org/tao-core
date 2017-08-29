@@ -1,4 +1,4 @@
-package ro.cs.tao.persistence;
+package ro.cs.tao.persistence.test;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
@@ -19,6 +19,7 @@ import ro.cs.tao.datasource.remote.scihub.SciHubDataSource;
 import ro.cs.tao.eodata.EOData;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.Polygon2D;
+import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.config.DatabaseConfiguration;
 import ro.cs.tao.persistence.data.DataSourceType;
 import ro.cs.tao.persistence.exception.PersistenceException;
@@ -144,10 +145,16 @@ public class PersistenceManagerTest {
             List<EOData> results = query.execute();
             if(results.size() > 0)
             {
-                // save first result, for example
-                EOProduct dataProduct = (EOProduct)results.get(0);
+                // save all results
+                for(EOData result : results)
+                {
+                    persistenceManager.saveDataProduct((EOProduct)result, null);
 
-                persistenceManager.saveDataProduct(dataProduct, null);
+                }
+
+                // save only the first result, for example
+                //EOProduct dataProduct = (EOProduct)results.get(0);
+                //persistenceManager.saveDataProduct(dataProduct, null);
             }
             else
             {

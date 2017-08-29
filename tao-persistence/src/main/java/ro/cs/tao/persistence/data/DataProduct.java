@@ -1,6 +1,10 @@
 package ro.cs.tao.persistence.data;
 
 import com.vividsolutions.jts.geom.Geometry;
+import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
+import org.hibernate.annotations.TypeDefs;
+import ro.cs.tao.persistence.data.util.hstore.HstoreUserType;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -16,6 +20,8 @@ import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -26,6 +32,7 @@ import java.util.Set;
  */
 @Entity
 @Table(name = "tao.data_product")
+@TypeDefs({@TypeDef(name = "hstore",  typeClass = HstoreUserType.class)})
 public class DataProduct {
 
 	/**
@@ -124,6 +131,10 @@ public class DataProduct {
 	@Column(name = "height")
 	@NotNull
 	private Integer height;
+
+    @Type(type = "hstore")
+    @Column(name = "attributes" , columnDefinition = "hstore")
+    private Map<String, String> attributes = new HashMap<>();
 	
 	/**
 	 * The user to which this product belongs to
@@ -254,7 +265,15 @@ public class DataProduct {
 		this.height = height;
 	}
 
-	public User getUser() {
+    public Map<String, String> getAttributes() {
+        return attributes;
+    }
+
+    public void setAttributes(Map<String, String> attributes) {
+        this.attributes = attributes;
+    }
+
+    public User getUser() {
 		return user;
 	}
 
