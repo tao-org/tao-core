@@ -46,7 +46,7 @@
         <sonar.exclusions>**/ro/cs/tao/**/*Test</sonar.exclusions>
         <!-- Jacoco in SonarQube -->
         <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
-        <sonar.jacoco.itReportPath>${project.basedir}/../target/jacoco</sonar.jacoco.itReportPath>
+        <sonar.jacoco.reportPaths>${project.basedir}/../target/jacoco.exec</sonar.jacoco.reportPaths>
 
     </properties>
 
@@ -144,7 +144,7 @@
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>0.7.9</version>
                 <configuration>
-                    <destFile>${sonar.jacoco.itReportPath}</destFile>
+                    <destFile>${sonar.jacoco.reportPaths}</destFile>
                     <append>true</append>
                 </configuration>
                 <executions>
