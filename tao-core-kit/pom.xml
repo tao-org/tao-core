@@ -13,6 +13,10 @@
 
     <name>TAO Core Kit Module</name>
 
+    <properties>
+        <project.build.finalName>tao-core</project.build.finalName>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>ro.cs.tao</groupId>
@@ -67,7 +71,6 @@
     </dependencies>
 
     <build>
-
         <pluginManagement>
             <plugins>
                 <plugin>
