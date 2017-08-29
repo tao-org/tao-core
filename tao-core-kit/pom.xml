@@ -67,6 +67,17 @@
     </dependencies>
 
     <build>
+
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <version>3.1.0</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
         <plugins>
             <plugin>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -100,7 +111,7 @@
                 <configuration>
                     <descriptors>
                         <descriptor>src/assembly/assembly.xml</descriptor>
-                        <finalName>tao-core</finalName>
+                        <!-- finalName>tao-core</finalName -->
                     </descriptors>
                 </configuration>
                 <executions>
