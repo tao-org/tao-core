@@ -3,7 +3,7 @@
 
 ../persistence/scripts/02-schema/03-tao.sql;taodata
 
-../persistence/scripts/03-postgis-extensions/04_postgis_extensions.sql;taodata
+../persistence/scripts/03-extensions/04_extensions.sql;taodata
 
 ../persistence/scripts/04-tables/05_user_group_tables.sql;taodata
 ../persistence/scripts/04-tables/06_processing_components_tables.sql;taodata
