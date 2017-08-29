@@ -123,7 +123,7 @@
 				<executions>
 					<execution>
 						<id>ant-build-persistence-jar</id>
-						<phase>test</phase>
+						<phase>process-classes</phase>
 						<goals>
 							<goal>run</goal>
 						</goals>
