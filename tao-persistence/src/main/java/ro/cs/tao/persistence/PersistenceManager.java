@@ -1,6 +1,5 @@
 package ro.cs.tao.persistence;
 
-import org.eclipse.persistence.annotations.ReadOnly;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -10,12 +9,11 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.datasource.AbstractDataSource;
 import ro.cs.tao.datasource.DataQuery;
-import ro.cs.tao.eodata.EOData;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.persistence.data.DataProduct;
+import ro.cs.tao.persistence.data.DataSourceType;
 import ro.cs.tao.persistence.data.ExecutionNode;
 import ro.cs.tao.persistence.data.User;
-import ro.cs.tao.persistence.data.DataSourceType;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.persistence.repository.DataProductRepository;
 import ro.cs.tao.persistence.repository.DataSourceRepository;
@@ -117,7 +115,7 @@ public class PersistenceManager {
     }
 
     @Transactional
-    public <R extends EOData, Q extends DataQuery<R>, S extends AbstractDataSource<R, Q>> Integer saveDataSource(S dataSource, DataSourceType dataSourceType, String name, String description) throws PersistenceException
+    public <Q extends DataQuery, S extends AbstractDataSource<Q>> Integer saveDataSource(S dataSource, DataSourceType dataSourceType, String name, String description) throws PersistenceException
     {
         if(dataSource.getCredentials() == null || dataSource.getConnectionString() == null || dataSourceType == null || name == null)
         {

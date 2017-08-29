@@ -37,6 +37,7 @@
  */
 package ro.cs.tao.datasource.remote;
 
+import ro.cs.tao.datasource.ProductFetchStrategy;
 import ro.cs.tao.datasource.util.NetUtils;
 import ro.cs.tao.datasource.util.Utilities;
 import ro.cs.tao.eodata.EOProduct;
@@ -46,6 +47,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.FileVisitResult;
@@ -67,7 +69,7 @@ import java.util.logging.Logger;
  *
  * @author  Cosmin Cara
  */
-public abstract class AbstractDownloader {
+public abstract class DownloadStrategy implements ProductFetchStrategy {
     private static final String startMessage = "(%s,%s) %s [size: %skB]";
     private static final String completeMessage = "(%s,%s) %s [elapsed: %ss]";
     private static final String errorMessage ="Cannot download %s: %s";
@@ -89,9 +91,9 @@ public abstract class AbstractDownloader {
 
     private DownloadProgressListener fileProgressListener;
 
-    protected Logger logger = Logger.getLogger(AbstractDownloader.class.getName());
+    protected Logger logger = Logger.getLogger(DownloadStrategy.class.getName());
 
-    public AbstractDownloader(String targetFolder, Properties properties) {
+    public DownloadStrategy(String targetFolder, Properties properties) {
         this.destination = targetFolder;
         this.props = properties;
     }
@@ -141,7 +143,7 @@ public abstract class AbstractDownloader {
                         case OVERWRITE:
                         case RESUME:
                         default:
-                            file = download(product);
+                            file = fetch(product);
                             if (file == null) {
                                 retCode = ReturnCode.EMPTY;
                                 logger.warning("Product download aborted");
@@ -162,7 +164,10 @@ public abstract class AbstractDownloader {
         return retCode;
     }
 
-    public abstract String getProductUrl(EOProduct descriptor);
+    public String getProductUrl(EOProduct descriptor) {
+        final URI location = descriptor.getLocation();
+        return location != null ? location.toString() : null;
+    }
 
     void shouldCompress(boolean shouldCompress) {
         this.shouldCompress = shouldCompress;
@@ -177,8 +182,6 @@ public abstract class AbstractDownloader {
     }
 
     protected abstract String getMetadataUrl(EOProduct descriptor);
-
-    protected abstract Path download(EOProduct product) throws IOException;
 
     protected Path downloadFile(String remoteUrl, Path file) throws IOException {
         return downloadFile(remoteUrl, file, null);

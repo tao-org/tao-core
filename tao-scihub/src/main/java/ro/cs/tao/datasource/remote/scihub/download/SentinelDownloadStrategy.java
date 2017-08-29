@@ -17,9 +17,10 @@
  *
  */
 
-package ro.cs.tao.datasource.remote.scihub;
+package ro.cs.tao.datasource.remote.scihub.download;
 
-import ro.cs.tao.datasource.remote.AbstractDownloader;
+import ro.cs.tao.datasource.remote.DownloadStrategy;
+import ro.cs.tao.datasource.remote.scihub.SciHubDataSource;
 import ro.cs.tao.datasource.util.NetUtils;
 import ro.cs.tao.datasource.util.Utilities;
 import ro.cs.tao.eodata.EOProduct;
@@ -32,7 +33,7 @@ import java.util.Properties;
 /**
  * @author Cosmin Cara
  */
-public class SentinelDownloader extends AbstractDownloader {
+public class SentinelDownloadStrategy extends DownloadStrategy {
 
     static final String ODATA_XML_PLACEHOLDER = "${xmlname}";
     static final String ODATA_UUID = "${UUID}";
@@ -51,7 +52,7 @@ public class SentinelDownloader extends AbstractDownloader {
         }
     }
 
-    public SentinelDownloader(String targetFolder) {
+    public SentinelDownloadStrategy(String targetFolder) {
         super(targetFolder, properties);
         ODataPath odp = new ODataPath();
         String scihubUrl = props.getProperty("scihub.product.url", "https://scihub.copernicus.eu/apihub/odata/v1");
@@ -74,7 +75,7 @@ public class SentinelDownloader extends AbstractDownloader {
     }
 
     @Override
-    protected Path download(EOProduct product) throws IOException {
+    public Path fetch(EOProduct product) throws IOException {
         Utilities.ensureExists(Paths.get(destination));
         String productName = product.getName();
         currentStep = "Archive";

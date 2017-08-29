@@ -42,9 +42,14 @@ package ro.cs.tao.datasource.remote;
  * @author Cosmin Cara
  */
 public enum ReturnCode {
-    OK,
-    EMPTY,
-    INTERRUPTED,
-    CONNECTION_ERROR,
-    ERROR
+    OK(0),
+    EMPTY(1),
+    INTERRUPTED(2),
+    CONNECTION_ERROR(3),
+    ERROR(4);
+
+    private int value;
+    private ReturnCode(int value) { this.value = value; }
+
+    public int value() { return value; }
 }

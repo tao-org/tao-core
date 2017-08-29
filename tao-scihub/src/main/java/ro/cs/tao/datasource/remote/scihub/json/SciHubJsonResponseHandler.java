@@ -2,7 +2,7 @@ package ro.cs.tao.datasource.remote.scihub.json;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import ro.cs.tao.datasource.remote.result.json.JSonResponseHandler;
-import ro.cs.tao.datasource.remote.scihub.SentinelDownloader;
+import ro.cs.tao.datasource.remote.scihub.download.SentinelDownloadStrategy;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.Polygon2D;
 import ro.cs.tao.eodata.enums.DataFormat;
@@ -24,7 +24,7 @@ public class SciHubJsonResponseHandler implements JSonResponseHandler<EOProduct>
     public List<EOProduct> readValues(String content) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         Result[] results = mapper.readValue(content, Result[].class);
-        SentinelDownloader downloader = new SentinelDownloader("");
+        SentinelDownloadStrategy downloader = new SentinelDownloadStrategy("");
         return Arrays.stream(results).map(r -> {
             try {
                 EOProduct product = new EOProduct();

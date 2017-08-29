@@ -36,7 +36,7 @@
  *
  */
 
-package ro.cs.tao.datasource.remote.scihub;
+package ro.cs.tao.datasource.remote.scihub.download;
 
 import ro.cs.tao.datasource.remote.scihub.helpers.Sentinel2ProductHelper;
 import ro.cs.tao.datasource.util.NetUtils;
@@ -59,7 +59,7 @@ import java.util.regex.Pattern;
 /**
  * @author Cosmin Cara
  */
-public class Sentinel2Downloader extends SentinelDownloader {
+public class Sentinel2DownloadStrategy extends SentinelDownloadStrategy {
     private static final Set<String> l1cBandFiles = new LinkedHashSet<String>() {{
         add("B01.jp2");
         add("B02.jp2");
@@ -143,7 +143,7 @@ public class Sentinel2Downloader extends SentinelDownloader {
     private boolean shouldFilterTiles;
     private Pattern tileIdPattern;
 
-    public Sentinel2Downloader(String targetFolder) {
+    public Sentinel2DownloadStrategy(String targetFolder) {
         super(targetFolder);
         ODataPath odp = new ODataPath();
         odataProductPath = odp.root(oDataBasePath).node("${PRODUCT_NAME}.SAFE").path();
@@ -178,7 +178,7 @@ public class Sentinel2Downloader extends SentinelDownloader {
     }
 
     @Override
-    protected Path download(EOProduct product) throws IOException {
+    public Path fetch(EOProduct product) throws IOException {
         Sentinel2ProductHelper helper = Sentinel2ProductHelper.createHelper(product.getName());
         String tileId = helper.getTileIdentifier();
         if (tileId != null && this.filteredTiles != null && !this.filteredTiles.contains(tileId)) {

@@ -16,7 +16,6 @@ import ro.cs.tao.datasource.QueryException;
 import ro.cs.tao.datasource.param.QueryParameter;
 import ro.cs.tao.datasource.remote.scihub.SciHubDataQuery;
 import ro.cs.tao.datasource.remote.scihub.SciHubDataSource;
-import ro.cs.tao.eodata.EOData;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.Polygon2D;
 import ro.cs.tao.persistence.config.DatabaseConfiguration;
@@ -80,7 +79,7 @@ public class PersistenceManagerTest {
             for (Handler handler : logger.getHandlers()) {
                 handler.setLevel(Level.INFO);
             }
-            AbstractDataSource<EOData, SciHubDataQuery> dataSource = new SciHubDataSource();
+            AbstractDataSource<SciHubDataQuery> dataSource = new SciHubDataSource();
             dataSource.setCredentials("kraftek", "cei7pitici.");
 
             List<DataSourceType> savedDataSourceTypes = persistenceManager.getDataSourceTypes();
@@ -117,10 +116,10 @@ public class PersistenceManagerTest {
             for (Handler handler : logger.getHandlers()) {
                 handler.setLevel(Level.INFO);
             }
-            DataSource<EOData, SciHubDataQuery> dataSource = new SciHubDataSource();
+            DataSource<SciHubDataQuery> dataSource = new SciHubDataSource();
             dataSource.setCredentials("kraftek", "cei7pitici.");
 
-            DataQuery<EOData> query = dataSource.createQuery();
+            DataQuery query = dataSource.createQuery();
             query.addParameter("platformName", "Sentinel-2");
             QueryParameter begin = query.createParameter("beginPosition", Date.class);
             begin.setMinValue(Date.from(LocalDateTime.of(2016, 2, 1, 0, 0, 0, 0)
@@ -141,11 +140,11 @@ public class PersistenceManagerTest {
             query.addParameter("cloudcoverpercentage", 100.);
             query.setPageSize(50);
             query.setMaxResults(83);
-            List<EOData> results = query.execute();
+            List<EOProduct> results = query.execute();
             if(results.size() > 0)
             {
                 // save first result, for example
-                EOProduct dataProduct = (EOProduct)results.get(0);
+                EOProduct dataProduct = results.get(0);
 
                 persistenceManager.saveDataProduct(dataProduct, null);
             }

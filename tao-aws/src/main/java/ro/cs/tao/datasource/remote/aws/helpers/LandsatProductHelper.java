@@ -1,6 +1,6 @@
 package ro.cs.tao.datasource.remote.aws.helpers;
 
-import ro.cs.tao.datasource.remote.AbstractDownloader;
+import ro.cs.tao.datasource.remote.DownloadStrategy;
 import ro.cs.tao.datasource.remote.ProductHelper;
 import ro.cs.tao.datasource.remote.aws.LandsatProduct;
 
@@ -74,12 +74,12 @@ public class LandsatProductHelper extends ProductHelper {
     public String getProductRelativePath() {
         StringBuilder buffer = new StringBuilder();
         if (!this.oldFormat) {
-            buffer.append("c1").append(AbstractDownloader.URL_SEPARATOR);
+            buffer.append("c1").append(DownloadStrategy.URL_SEPARATOR);
         }
-        buffer.append("L8").append(AbstractDownloader.URL_SEPARATOR);
-        buffer.append(getPath()).append(AbstractDownloader.URL_SEPARATOR);
-        buffer.append(getRow()).append(AbstractDownloader.URL_SEPARATOR);
-        buffer.append(this.name).append(AbstractDownloader.URL_SEPARATOR);
+        buffer.append("L8").append(DownloadStrategy.URL_SEPARATOR);
+        buffer.append(getPath()).append(DownloadStrategy.URL_SEPARATOR);
+        buffer.append(getRow()).append(DownloadStrategy.URL_SEPARATOR);
+        buffer.append(this.name).append(DownloadStrategy.URL_SEPARATOR);
         return buffer.toString();
     }
 

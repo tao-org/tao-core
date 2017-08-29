@@ -96,4 +96,13 @@ public abstract class AbstractDataSource<Q extends DataQuery>
     public ParameterProvider getParameterProvider() {
         return this.parameterProvider;
     }
+
+    @Override
+    public ProductFetchStrategy getProductFetchStrategy(String sensorName) {
+        ProductFetchStrategy productFetchStrategy = null;
+        if (this.parameterProvider != null) {
+            productFetchStrategy = this.parameterProvider.getRegisteredProductFetchStrategies().get(sensorName);
+        }
+        return productFetchStrategy;
+    }
 }

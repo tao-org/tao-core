@@ -1,8 +1,11 @@
 package ro.cs.tao.datasource.remote.peps.parameters;
 
+import ro.cs.tao.config.ConfigurationManager;
+import ro.cs.tao.datasource.ProductFetchStrategy;
 import ro.cs.tao.datasource.param.ParameterDescriptor;
 import ro.cs.tao.datasource.param.ParameterProvider;
 import ro.cs.tao.datasource.remote.peps.Collection;
+import ro.cs.tao.datasource.remote.peps.download.PepsDownloadStrategy;
 import ro.cs.tao.eodata.Polygon2D;
 
 import java.util.Collections;
@@ -17,6 +20,7 @@ public class PepsParameterProvider implements ParameterProvider {
 
     private static final String[] sensors;
     private static final Map<String, Map<String, ParameterDescriptor>> parameters;
+    private static final Map<String, ProductFetchStrategy> productFetchers;
 
     static {
         sensors = new String[] { "Sentinel-1", "Sentinel-2" };
@@ -55,6 +59,12 @@ public class PepsParameterProvider implements ParameterProvider {
                         put("cloudCover",  new ParameterDescriptor("cloudCover", Double.class));
                     }});
                 }});
+        final String targetFolder = ConfigurationManager.getInstance().getValue("product.location");
+        productFetchers = Collections.unmodifiableMap(
+                new HashMap<String, ProductFetchStrategy>() {{
+                    put("Sentinel-1", new PepsDownloadStrategy(targetFolder));
+                    put("Sentinel-2", new PepsDownloadStrategy(targetFolder));
+                }});
     }
 
     @Override
@@ -66,4 +76,8 @@ public class PepsParameterProvider implements ParameterProvider {
     public String[] getSupportedSensors() {
         return sensors;
     }
+
+    @Override
+    public Map<String, ProductFetchStrategy> getRegisteredProductFetchStrategies() { return productFetchers; }
+
 }

@@ -41,7 +41,7 @@ import ro.cs.tao.datasource.DataSource;
 import ro.cs.tao.datasource.QueryException;
 import ro.cs.tao.datasource.param.QueryParameter;
 import ro.cs.tao.datasource.remote.scihub.SciHubDataSource;
-import ro.cs.tao.datasource.remote.scihub.SentinelDownloader;
+import ro.cs.tao.datasource.remote.scihub.download.SentinelDownloadStrategy;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.Polygon2D;
 import ro.cs.tao.spi.ServiceRegistry;
@@ -141,7 +141,7 @@ public class DataSourceTest {
             query.addParameter("productType", "SLC");
             query.setPageSize(50);
             query.setMaxResults(83);
-            SentinelDownloader downloader = new SentinelDownloader("E:\\NewFormat");
+            SentinelDownloadStrategy downloader = new SentinelDownloadStrategy("E:\\NewFormat");
             List<EOProduct> results = query.execute();
             //downloader.download(results);
             results.forEach(r -> {
