@@ -48,26 +48,27 @@ public interface DataSource<Q extends DataQuery> {
      * Closes the data source connection.
      */
     void close();
-
     /**
      * Returns the sensors (product types) supported by this data source
      */
     String[] getSupportedSensors();
-
     /**
      * Returns a the query parameters for each sensor supported by this data source
      */
     Map<String, Map<String, ParameterDescriptor>> getSupportedParameters();
-
     /**
      * Creates a query object that can be used to look for products in this data source.
      * This is intended to be used on single product type data source.
      */
     default Q createQuery() { return createQuery(null); }
-
     /**
      * Creates a query object that can be used to look for products of the given type in this data source.
      * @param sensorName  The sensor name
      */
     Q createQuery(String sensorName);
+    /**
+     * Retrieves the fetch strategy for products of the given sensor name
+     * @param sensorName    The sensor name
+     */
+    ProductFetchStrategy getProductFetchStrategy(String sensorName);
 }

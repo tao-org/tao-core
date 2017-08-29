@@ -1,7 +1,11 @@
 package ro.cs.tao.datasource.remote.scihub.parameters;
 
+import ro.cs.tao.config.ConfigurationManager;
+import ro.cs.tao.datasource.ProductFetchStrategy;
 import ro.cs.tao.datasource.param.ParameterDescriptor;
 import ro.cs.tao.datasource.param.ParameterProvider;
+import ro.cs.tao.datasource.remote.scihub.download.Sentinel2DownloadStrategy;
+import ro.cs.tao.datasource.remote.scihub.download.SentinelDownloadStrategy;
 import ro.cs.tao.eodata.Polygon2D;
 
 import java.util.Collections;
@@ -16,6 +20,7 @@ public final class SciHubParameterProvider implements ParameterProvider {
 
     private static final String[] sensors;
     private static final Map<String, Map<String, ParameterDescriptor>> parameters;
+    private static final Map<String, ProductFetchStrategy> productFetchers;
 
     static {
         sensors = new String[] { "Sentinel-1", "Sentinel-2" };
@@ -41,12 +46,21 @@ public final class SciHubParameterProvider implements ParameterProvider {
                             put("relativeOrbitNumber", new ParameterDescriptor("relativeOrbitNumber", Short.class));
                         }});
                 }});
+        final String targetFolder = ConfigurationManager.getInstance().getValue("product.location");
+        productFetchers = Collections.unmodifiableMap(
+                new HashMap<String, ProductFetchStrategy>() {{
+                    put("Sentinel-1", new SentinelDownloadStrategy(targetFolder));
+                    put("Sentinel-2", new Sentinel2DownloadStrategy(targetFolder));
+        }});
     }
 
     @Override
     public String[] getSupportedSensors() {
         return sensors;
     }
+
+    @Override
+    public Map<String, ProductFetchStrategy> getRegisteredProductFetchStrategies() { return productFetchers; }
 
     @Override
     public Map<String, Map<String, ParameterDescriptor>> getSupportedParameters() {

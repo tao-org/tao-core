@@ -5,7 +5,7 @@ import ro.cs.tao.datasource.DataQuery;
 import ro.cs.tao.datasource.DataSource;
 import ro.cs.tao.datasource.QueryException;
 import ro.cs.tao.datasource.param.QueryParameter;
-import ro.cs.tao.datasource.remote.AbstractDownloader;
+import ro.cs.tao.datasource.remote.DownloadStrategy;
 import ro.cs.tao.datasource.remote.aws.helpers.LandsatProductHelper;
 import ro.cs.tao.datasource.remote.aws.internal.AwsResult;
 import ro.cs.tao.datasource.remote.aws.internal.IntermediateParser;
@@ -128,7 +128,7 @@ class Landsat8Query extends DataQuery {
             for (String tile : tiles) {
                 String path = tile.substring(0, 3);
                 String row = tile.substring(3, 6);
-                String tileUrl = baseUrl + path + AbstractDownloader.URL_SEPARATOR + row + AbstractDownloader.URL_SEPARATOR;
+                String tileUrl = baseUrl + path + DownloadStrategy.URL_SEPARATOR + row + DownloadStrategy.URL_SEPARATOR;
                 AwsResult productResult = IntermediateParser.parse(NetUtils.getResponseAsString(tileUrl));
                 if (productResult.getCommonPrefixes() != null) {
                     Set<String> names = productResult.getCommonPrefixes().stream()
@@ -140,7 +140,7 @@ class Landsat8Query extends DataQuery {
                                 LandsatProductHelper temporaryDescriptor = new LandsatProductHelper(name);
                                 Calendar productDate = temporaryDescriptor.getAcquisitionDate();
                                 if (startDate.before(productDate) && endDate.after(productDate)) {
-                                    String jsonTile = tileUrl + name + AbstractDownloader.URL_SEPARATOR + name + "_MTL.json";
+                                    String jsonTile = tileUrl + name + DownloadStrategy.URL_SEPARATOR + name + "_MTL.json";
                                     jsonTile = jsonTile.replace(L8_SEARCH_URL_SUFFIX, "");
                                     double clouds = getTileCloudPercentage(jsonTile);
                                     if (clouds > cloudFilter) {

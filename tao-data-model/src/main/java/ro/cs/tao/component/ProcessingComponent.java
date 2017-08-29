@@ -46,7 +46,6 @@ import ro.cs.tao.component.template.engine.TemplateEngine;
 import ro.cs.tao.component.validation.ValidationException;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -152,11 +151,7 @@ public class ProcessingComponent extends TaoComponent {
     @Override
     public ProcessingComponent copy() {
         ProcessingComponent newDescriptor = new ProcessingComponent();
-        newDescriptor.label = this.label;
-        newDescriptor.version = this.version;
-        newDescriptor.description = this.description;
-        newDescriptor.authors = this.authors;
-        newDescriptor.copyright = this.copyright;
+        copyTo(newDescriptor);
         newDescriptor.fileLocation = this.fileLocation;
         newDescriptor.workingDirectory = this.workingDirectory;
         newDescriptor.templateType = this.templateType;
@@ -172,12 +167,6 @@ public class ProcessingComponent extends TaoComponent {
                 parameter.setName(p.getName());
                 return p;
             }).collect(Collectors.toList());
-        }
-        if (this.sources != null) {
-            newDescriptor.sources = Arrays.copyOf(this.sources, this.sources.length);
-        }
-        if (this.targets != null) {
-            newDescriptor.targets = Arrays.copyOf(this.targets, this.targets.length);
         }
         return newDescriptor;
     }

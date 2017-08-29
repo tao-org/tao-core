@@ -1,5 +1,7 @@
 package ro.cs.tao.datasource.param;
 
+import ro.cs.tao.datasource.ProductFetchStrategy;
+
 import java.util.Map;
 
 /**
@@ -18,4 +20,9 @@ public interface ParameterProvider {
      * Returns the sensors supported by this data source
      */
     String[] getSupportedSensors();
+
+    /**
+     * Returns the fetchers associated with the supported sensors.
+     */
+    Map<String, ProductFetchStrategy> getRegisteredProductFetchStrategies();
 }

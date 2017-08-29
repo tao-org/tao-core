@@ -61,6 +61,8 @@ public abstract class TaoComponent extends Identifiable {
         return sources;
     }
 
+    public void setSources(SourceDescriptor[] sources) { this.sources = sources; }
+
     public void setSourcesCount(int value) {
         if (this.sources == null) {
             this.sources = new SourceDescriptor[value];
@@ -94,6 +96,8 @@ public abstract class TaoComponent extends Identifiable {
         return targets;
     }
 
+    public void setTargets(TargetDescriptor[] targets) { this.targets = targets; }
+
     public void setTargetCount(int value) {
         if (this.targets == null) {
             this.targets = new TargetDescriptor[value];
@@ -121,6 +125,20 @@ public abstract class TaoComponent extends Identifiable {
                                 (tar.getName() != null && !tar.getName().equals(ref.getName()));
                     })
                     .toArray(TargetDescriptor[]::new);
+        }
+    }
+
+    protected void copyTo(TaoComponent newComponent) {
+        newComponent.label = this.label;
+        newComponent.version = this.version;
+        newComponent.description = this.description;
+        newComponent.authors = this.authors;
+        newComponent.copyright = this.copyright;
+        if (this.sources != null) {
+            newComponent.setSources(Arrays.copyOf(this.sources, this.sources.length));
+        }
+        if (this.targets != null) {
+            newComponent.setTargets(Arrays.copyOf(this.targets, this.targets.length));
         }
     }
 }

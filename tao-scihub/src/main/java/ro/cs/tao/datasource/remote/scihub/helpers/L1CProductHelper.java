@@ -57,7 +57,7 @@
 
 package ro.cs.tao.datasource.remote.scihub.helpers;
 
-import ro.cs.tao.datasource.remote.AbstractDownloader;
+import ro.cs.tao.datasource.remote.DownloadStrategy;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -112,10 +112,10 @@ public class L1CProductHelper extends Sentinel2ProductHelper {
             month = String.valueOf(Integer.parseInt(dateToken.substring(4, 6)));
             day = String.valueOf(Integer.parseInt(dateToken.substring(6, 8)));
         }
-        return year + AbstractDownloader.URL_SEPARATOR
-                + month + AbstractDownloader.URL_SEPARATOR
-                + day + AbstractDownloader.URL_SEPARATOR
-                + this.name + AbstractDownloader.URL_SEPARATOR;
+        return year + DownloadStrategy.URL_SEPARATOR
+                + month + DownloadStrategy.URL_SEPARATOR
+                + day + DownloadStrategy.URL_SEPARATOR
+                + this.name + DownloadStrategy.URL_SEPARATOR;
     }
 
     @Override
