@@ -22,6 +22,8 @@ import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.config.DatabaseConfiguration;
 import ro.cs.tao.persistence.data.DataSourceType;
 import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.spi.ServiceRegistry;
+import ro.cs.tao.spi.ServiceRegistryManager;
 
 import java.net.URISyntaxException;
 import java.sql.SQLException;
@@ -117,10 +119,11 @@ public class PersistenceManagerTest {
             for (Handler handler : logger.getHandlers()) {
                 handler.setLevel(Level.INFO);
             }
-            DataSource<SciHubDataQuery> dataSource = new SciHubDataSource();
+            DataSource dataSource = getDatasourceRegistry().getService(SciHubDataSource.class.getName());
             dataSource.setCredentials("kraftek", "cei7pitici.");
+            String[] sensors = dataSource.getSupportedSensors();
 
-            DataQuery query = dataSource.createQuery();
+            DataQuery query = dataSource.createQuery(sensors[1]);
             query.addParameter("platformName", "Sentinel-2");
             QueryParameter begin = query.createParameter("beginPosition", Date.class);
             begin.setMinValue(Date.from(LocalDateTime.of(2016, 2, 1, 0, 0, 0, 0)
@@ -142,6 +145,7 @@ public class PersistenceManagerTest {
             query.setPageSize(50);
             query.setMaxResults(83);
             List<EOProduct> results = query.execute();
+
             if(results.size() > 0)
             {
                 // save all results
@@ -160,7 +164,7 @@ public class PersistenceManagerTest {
                 logger.info("save_new_data_product() - No result found!");
             }
 
-        } catch (URISyntaxException | QueryException | PersistenceException e) {
+        } catch (QueryException | PersistenceException e) {
             logger.error(ExceptionUtils.getStackTrace(e));
             Assert.fail(e.getMessage());
         }
@@ -182,5 +186,9 @@ public class PersistenceManagerTest {
             logger.error(ExceptionUtils.getStackTrace(e));
             Assert.fail(e.getMessage());
         }
+    }
+
+    private static ServiceRegistry<DataSource> getDatasourceRegistry() {
+        return ServiceRegistryManager.getInstance().getServiceRegistry(DataSource.class);
     }
 }
