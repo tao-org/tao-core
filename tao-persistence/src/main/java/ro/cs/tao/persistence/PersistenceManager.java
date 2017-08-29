@@ -1,5 +1,7 @@
 package ro.cs.tao.persistence;
 
+import org.apache.commons.lang.ArrayUtils;
+import org.eclipse.persistence.annotations.ReadOnly;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -23,7 +25,10 @@ import ro.cs.tao.persistence.repository.ExecutionNodeRepository;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * DAO
@@ -183,7 +188,11 @@ public class PersistenceManager {
             dataProductEnt.setUser(user);
         }
 
-        // TODO data source
+        // attributs
+        if(dataProduct.getAttributes() != null && dataProduct.getAttributes().length > 0)
+        {
+            dataProductEnt.setAttributes(Arrays.stream(dataProduct.getAttributes()).collect(Collectors.toMap(a -> a.getName(), a -> a.getValue())));
+        }
 
         dataProductEnt.setCreatedDate(LocalDateTime.now());
 

@@ -1,4 +1,4 @@
-package ro.cs.tao.persistence;
+package ro.cs.tao.persistence.test;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
