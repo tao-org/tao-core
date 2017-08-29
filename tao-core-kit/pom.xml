@@ -107,6 +107,7 @@
                 <executions>
                     <execution>
                         <id>directory-bundle</id>
+                        <phase>package</phase>
                         <goals>
                             <goal>single</goal>
                         </goals>

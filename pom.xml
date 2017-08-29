@@ -43,7 +43,7 @@
         <sonar.host.url>http://cayman.c-s.ro:9000/sonar</sonar.host.url>
         <sonar.language>java</sonar.language>
         <sonar.scm.provider>git</sonar.scm.provider>
-        <sonar.exclusions>**/ro/cs/tao/**/*Test</sonar.exclusions>
+        <sonar.exclusions>**/ro/cs/tao/**/*Test, **/ro/cs/tao/**/*.xml</sonar.exclusions>
         <!-- Jacoco in SonarQube -->
         <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
         <sonar.jacoco.reportPaths>${project.basedir}/../target/jacoco.exec</sonar.jacoco.reportPaths>
