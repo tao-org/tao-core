@@ -1,2 +1,8 @@
-# Declare files that will always have CRLF line endings on checkout.
+# Declare files that will always have LF line endings on checkout.
+* text=auto
 *.sh text eol=lf
+/tao-topology/src/main/resources/tools_scripts/torque/* text eol=lf
+/tao-topology/src/main/resources/tools_scripts/torque/torque_package/* text eol=lf
+/tao-topology/src/main/resources/tools_scripts/torque/torque_package/contrib/init.d/* text eol=lf
+/tao-topology/src/main/resources/tools_scripts/torque/torque_package/contrib/systemd/* text eol=lf
+
