@@ -150,7 +150,7 @@
                 <pass>sen2agri</pass>
                 <command>
                     <![CDATA[
-                        env "PATH=$PATH" qmgr -c "delete node #node_hostname#" && env "PATH=$PATH" qmgr -c "create node #node_hostname# np=#procs_cnt#"
+                        env "PATH=$PATH" qmgr -c "delete node #node_hostname#" || env "PATH=$PATH" qmgr -c "create node #node_hostname# np=#procs_cnt#"
                     ]]>
                 </command>
                 <!-- chmod a+x /tmp/#step_output#generate_master_unique_dir_name#/torque/add_torque_node.sh && /tmp/#step_output#generate_master_unique_dir_name#/torque/add_torque_node.sh -s #node_hostname# -p #procs_cnt# -->
