@@ -22,6 +22,10 @@ public class DataSourceManager {
         instance = new DataSourceManager();
     }
 
+    public static void main(String[] args) {
+        System.out.println("OK!");
+    }
+
     public static DataSourceManager getInstance() { return instance; }
 
     private DataSourceManager() {
