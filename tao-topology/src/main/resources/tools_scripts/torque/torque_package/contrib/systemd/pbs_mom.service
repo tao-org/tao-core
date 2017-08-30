@@ -1,0 +1,33 @@
+[Unit]
+Description=TORQUE pbs_mom daemon
+Requires=network.target local-fs.target
+Wants=syslog.target
+After=network.target local-fs.target syslog.target
+
+[Service]
+Type=simple
+User=root
+
+LimitNOFILE=32768
+LimitMEMLOCK=infinity
+LimitSTACK=12582912
+
+Environment=PBS_HOME=/var/spool/torque
+Environment=PBS_ARGS=
+EnvironmentFile=-/etc/sysconfig/pbs_mom
+
+ExecStart=/usr/local/sbin/pbs_mom -F -d $PBS_HOME $PBS_ARGS
+
+KillMode=process
+
+# attempt graceful shutdown
+ExecStop=/bin/bash -c " \
+  for i in {1..5}; do \
+    kill -0 $MAINPID &>/dev/null || exit 0; \
+    /usr/local/sbin/momctl -s && exit; \
+    sleep 1; \
+  done \
+"
+
+[Install]
+WantedBy=multi-user.target
