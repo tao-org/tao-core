@@ -1,0 +1,172 @@
+#!/bin/sh
+#
+# pbs_server	This script will start and stop the PBS Server
+#
+# chkconfig: 345 95 05
+# description: PBS is a versatile batch system for SMPs and clusters
+#
+#### BEGIN INIT INFO 
+# Provides: pbs_server
+# Required-Start: $local_fs $network $syslog 
+# Required-Stop: $local_fs $network $syslog 
+# Default-Start: 2 3 4 5 
+# Default-Stop: 0 1 6 
+# Short-Description: Start up the pbs_server daemon 
+# Description: pbs_server is part of a batch scheduler 
+### END INIT INFO 
+#
+# Source the library functions
+test -f /etc/rc.d/init.d/functions && . /etc/rc.d/init.d/functions
+
+# customize these to match your settings
+SBIN_PATH=/usr/local/sbin
+BIN_PATH=/usr/local/bin
+PBS_DAEMON=$SBIN_PATH/pbs_server
+PBS_HOME=/var/spool/torque
+PBS_ARGS=""
+PBS_SERVERDB="$PBS_HOME/server_priv/serverdb"
+
+SUBSYS_LOCK="/var/lock/subsys/pbs_server"
+
+pidof_pbs_server() {
+	local local_server_pid
+
+	# get pid of local pbs_server
+	local_server_pid=`pidof -s $SBIN_PATH/pbs_server`
+	if [ $? -ne 0 ]; then
+		return 1
+	fi
+	echo $local_server_pid
+	return 0
+}
+
+kill_pbs_server() {
+	local pid i
+
+	# This function will try to terminate the pbs_server process if such a
+	# process is running.
+	pid=`pidof_pbs_server`
+
+	if [ $? -ne 0 ]; then
+	  return 0
+	fi
+
+        # Use a qterm that only acts locally
+        $BIN_PATH/qterm -l
+
+        # If our local qterm couldn't do anything, then send the signal as a last resort
+        if [ $? -ne 0 ]; then
+          kill -TERM $pid 
+        fi
+
+	# wait for process to end
+	for i in {1..5}; do
+	  kill -0 $pid &>/dev/null || return 0
+	  sleep 1
+	done
+
+	# waited too long, try again
+        $BIN_PATH/qterm -l
+        if [ $? -ne 0 ]; then
+          killproc pbs_server -TERM
+        fi
+
+	return $?
+}
+
+create() {
+	local SLEEP
+
+	echo -n "Creating initial TORQUE configuration: "
+	if [ -r $PBS_SERVERDB ]; then
+		echo "Configuration already exists.  Please remove $PBS_SERVERDB to create a new one."
+		exit 1
+	fi
+
+	for SLEEP in 2 4 6 8 10 ; do
+		$PBS_DAEMON -d $PBS_HOME -t create -f &
+		sleep $SLEEP
+		$BIN_PATH/qterm
+	done
+	if [ -r $PBS_SERVERDB ]; then
+		success
+		RET=0
+	else
+		failure
+		RET=1
+	fi
+}
+
+start() {
+	status pbs_server >/dev/null 2>&1
+	if [ $? -eq 0 ]; then
+		echo "pbs_server is already running."
+		exit 0
+	fi
+	if [ ! -r $PBS_SERVERDB ]; then
+		create
+	fi
+	echo -n "Starting TORQUE Server: "
+	daemon $PBS_DAEMON -d $PBS_HOME $PBS_ARGS
+	RET=$?
+	[ $RET -eq 0 ] && touch $SUBSYS_LOCK
+	echo
+}
+
+stop() {
+	local pid
+
+	# check if pbs_server is running
+	pid=`pidof_pbs_server`
+	[ $? -ne 0 ] && echo -n "pbs_server already stopped" && success && echo && exit 0
+
+	echo -n "Shutting down TORQUE Server: "
+	kill_pbs_server
+	RET=$?
+	[ $RET -eq 0 ] && success "shutdown" || failure "shutdown"
+	echo
+	rm -f $SUBSYS_LOCK
+}
+
+reload() {
+	echo -n "Reloading pbs_server: "
+	killproc pbs_server -HUP
+	RET=$?
+	echo
+}
+
+if [ -f /etc/sysconfig/pbs_server ]; then
+   . /etc/sysconfig/pbs_server
+fi
+
+# let see how we were called
+case "$1" in
+	start) 
+		start
+		;;
+	stop)
+		stop
+		;;
+	status)
+		status pbs_server
+		RET=$?
+		;;
+	restart)
+		$0 stop
+		$0 start
+		;;
+	condrestart|try-restart)
+		status pbs_server || exit 0
+		$0 restart
+		;;
+	reload)
+		reload
+		;;
+	create)
+		create
+		;;
+	*)
+		echo "Usage: pbs_server {start|stop|restart|status|reload|create}"
+		exit 1
+esac
+exit $RET
