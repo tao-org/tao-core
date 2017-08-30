@@ -1,6 +1,5 @@
 package ro.cs.tao.topology;
 
-import ro.cs.tao.topology.docker.DockerCodes;
 import ro.cs.tao.topology.xml.ToolInstallersConfigHandler;
 import ro.cs.tao.topology.xml.ToolInstallersConfigParser;
 import ro.cs.tao.utils.executors.*;
@@ -118,7 +117,7 @@ public class DefaultToolInstaller implements ITopologyToolInstaller {
             OutputConsumer consumer = new StepExecutionOutputConsumer(curStep);
             return Executor.execute(consumer, 10, job);
         }
-        return DockerCodes.INVALID_INVOCATION_TYPE;
+        return ToolInvocationCodes.INVALID_INVOCATION_TYPE;
     }
 
     /**
