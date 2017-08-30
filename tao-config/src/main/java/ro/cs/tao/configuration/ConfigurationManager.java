@@ -1,4 +1,4 @@
-package ro.cs.tao.config;
+package ro.cs.tao.configuration;
 
 import java.util.Properties;
 

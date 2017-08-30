@@ -1,6 +1,6 @@
 package ro.cs.tao.datasource.remote.aws.parameters;
 
-import ro.cs.tao.config.ConfigurationManager;
+import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.datasource.ProductFetchStrategy;
 import ro.cs.tao.datasource.param.ParameterDescriptor;
 import ro.cs.tao.datasource.param.ParameterProvider;
