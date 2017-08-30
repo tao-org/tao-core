@@ -4,6 +4,13 @@
         <format>dir</format>
     </formats>
 
+    <fileSets>
+        <fileSet>
+            <directory>src/assembly/bin</directory>
+            <outputDirectory>bin</outputDirectory>
+        </fileSet>
+    </fileSets>
+
     <dependencySets>
         <dependencySet>
             <outputDirectory>lib</outputDirectory>
@@ -14,7 +21,7 @@
             </excludes>
         </dependencySet>
         <dependencySet>
-            <outputDirectory>.</outputDirectory>
+            <outputDirectory>modules</outputDirectory>
             <outputFileNameMapping>${artifact.artifactId}-${artifact.version}.${artifact.extension}</outputFileNameMapping>
             <includes>
                 <include>ro.cs.tao:*</include>
