@@ -5,6 +5,7 @@ import ro.cs.tao.persistence.data.util.TaskInputKey;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 
 /**
  * TaskInput persistent entity
@@ -15,7 +16,7 @@ import javax.validation.constraints.Size;
 @Entity
 @Table(name = "tao.task_input")
 @IdClass(TaskInputKey.class)
-public class TaskInput {
+public class TaskInput implements Serializable {
 
     /**
      * Task input name column maximum length

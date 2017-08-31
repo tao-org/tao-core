@@ -5,6 +5,7 @@ import ro.cs.tao.persistence.data.util.DataQueryParameterKey;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 
 /**
  * DataQueryParameter persistent entity
@@ -15,7 +16,7 @@ import javax.validation.constraints.Size;
 @Entity
 @Table(name = "tao.data_query_parameters")
 @IdClass(DataQueryParameterKey.class)
-public class DataQueryParameter {
+public class DataQueryParameter implements Serializable {
 
     /**
      * Data Query Parameter min value column maximum length

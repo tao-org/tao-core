@@ -5,6 +5,9 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 import javax.annotation.Resource;
 import javax.sql.DataSource;
@@ -30,6 +33,8 @@ import com.mchange.v2.c3p0.ComboPooledDataSource;
 @EnableTransactionManagement
 @PropertySource("classpath:persistence/persistence.properties")
 public class DatabaseConfiguration implements ApplicationListener<ContextClosedEvent> {
+
+	private static final Logger logger = LogManager.getLogManager().getLogger("");
 
 	/**
 	 * Constant for the database driver class property name (within .properties
@@ -174,12 +179,12 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
 			dataSource.setLoginTimeout(
 					Integer.parseInt(environment.getRequiredProperty(PROPERTY_NAME_DATABASE_CONNECTION_LOGINTIMEOUT)));
 
-			if (dataSource == null || dataSource.getConnection() == null) {
-				System.err.println("Database connection cannot be established!");
+			if (dataSource.getConnection() == null) {
+				logger.log(Level.SEVERE, "Database connection cannot be established!");
 			}
 		} catch (SQLException | IllegalStateException | PropertyVetoException e) {
-			System.err.println("Error configuring data source: " + e.getMessage());
-			System.err.println(ExceptionUtils.getStackTrace(e));
+            logger.log(Level.SEVERE, "Error configuring data source: " + e.getMessage());
+            logger.log(Level.SEVERE, ExceptionUtils.getStackTrace(e));
 		}
 		// add it to the internal list to be cleaned later
 		createdBeans.add(dataSource);
@@ -238,7 +243,7 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
 	{
 		for (ComboPooledDataSource dataSource: createdBeans)
 		{
-			System.out.println("Closing database connexions ...");
+			logger.info("Closing database connexions ...");
 			dataSource.close();
 			try
 			{
@@ -246,8 +251,8 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
 			}
 			catch (SQLException e)
 			{
-				System.err.println(e.getMessage());
-				System.err.println(ExceptionUtils.getStackTrace(e));
+                logger.log(Level.SEVERE, e.getMessage());
+                logger.log(Level.SEVERE, ExceptionUtils.getStackTrace(e));
 			}
 		}
 		createdBeans.clear();
