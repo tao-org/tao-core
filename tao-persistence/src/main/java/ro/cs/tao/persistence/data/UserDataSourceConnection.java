@@ -5,6 +5,7 @@ import ro.cs.tao.persistence.data.util.UserDataSourceConnectionKey;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
@@ -16,7 +17,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "tao.user_data_source_connection")
 @IdClass(UserDataSourceConnectionKey.class)
-public class UserDataSourceConnection {
+public class UserDataSourceConnection implements Serializable {
 
     /**
      * Data source connection username column maximum length
