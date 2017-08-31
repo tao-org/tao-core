@@ -19,6 +19,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,7 +34,7 @@ import java.util.Set;
 @Entity
 @Table(name = "tao.data_product")
 @TypeDefs({@TypeDef(name = "hstore",  typeClass = HstoreUserType.class)})
-public class DataProduct {
+public class DataProduct implements Serializable {
 
 	/**
 	 * Data product alphanumerical identifier column maximum length

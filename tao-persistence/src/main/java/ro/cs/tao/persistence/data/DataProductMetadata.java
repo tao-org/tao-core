@@ -5,6 +5,7 @@ import ro.cs.tao.persistence.data.util.DataProductMetadataKey;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 
 /**
  * DataProductMetadata persistent entity
@@ -15,7 +16,7 @@ import javax.validation.constraints.Size;
 @Entity
 @Table(name = "tao.data_product_metadata")
 @IdClass(DataProductMetadataKey.class)
-public class DataProductMetadata {
+public class DataProductMetadata implements Serializable {
 
     /**
      * Data product metadata name column maximum length
