@@ -21,6 +21,11 @@
         </dependency>
         <dependency>
             <groupId>ro.cs.tao</groupId>
+            <artifactId>tao-config</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ro.cs.tao</groupId>
             <artifactId>tao-utils</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -67,6 +72,19 @@
     </dependencies>
 
     <build>
+
+        <finalName>tao-core</finalName>
+
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <version>3.1.0</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
         <plugins>
             <plugin>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -96,16 +114,18 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.1.0</version>
                 <configuration>
-                    <descriptor>src/assembly/assembly.xml</descriptor>
-                    <finalName>tao-core</finalName>
+                    <descriptors>
+                        <descriptor>src/assembly/assembly.xml</descriptor>
+                    </descriptors>
                 </configuration>
                 <executions>
                     <execution>
                         <id>directory-bundle</id>
                         <phase>package</phase>
                         <goals>
-                            <goal>directory</goal>
+                            <goal>single</goal>
                         </goals>
                     </execution>
                 </executions>

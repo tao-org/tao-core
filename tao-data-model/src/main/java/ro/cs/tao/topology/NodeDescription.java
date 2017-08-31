@@ -4,12 +4,22 @@ package ro.cs.tao.topology;
  * Created by cosmin on 7/17/2017.
  */
 public class NodeDescription {
+    private String hostName;
     private String ipAddr;
     private String userName;
     private String userPass;
+    private int     nodeProcessorsCnt = 2;
 
     public NodeDescription() {
 
+    }
+
+    public void setHostName(String hostName) {
+        this.hostName = hostName;
+    }
+
+    public String getHostName() {
+        return hostName;
     }
 
     public String getIpAddr() {
@@ -34,5 +44,13 @@ public class NodeDescription {
 
     public void setUserPass(String userPass) {
         this.userPass = userPass;
+    }
+
+    public void setNodeProcessorsCnt(int nodeProcessorsCnt) {
+        this.nodeProcessorsCnt = nodeProcessorsCnt;
+    }
+
+    public int getNodeProcessorsCnt() {
+        return nodeProcessorsCnt;
     }
 }

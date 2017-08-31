@@ -22,6 +22,7 @@
 		<module>tao-integration</module>
         <module>tao-topology</module>
         <module>tao-core-kit</module>
+        <module>tao-config</module>
     </modules>
 
     <properties>
@@ -43,7 +44,7 @@
         <sonar.host.url>http://cayman.c-s.ro:9000/sonar</sonar.host.url>
         <sonar.language>java</sonar.language>
         <sonar.scm.provider>git</sonar.scm.provider>
-        <sonar.exclusions>**/ro/cs/tao/**/*Test</sonar.exclusions>
+        <sonar.exclusions>**/ro/cs/tao/**/*Test, **/ro/cs/tao/**/*.xml</sonar.exclusions>
         <!-- Jacoco in SonarQube -->
         <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
         <sonar.jacoco.reportPaths>${project.basedir}/../target/jacoco.exec</sonar.jacoco.reportPaths>
@@ -98,7 +99,11 @@
                     <artifactId>maven-jar-plugin</artifactId>
                     <version>2.5</version>
                     <configuration>
-                        <useDefaultManifestFile>true</useDefaultManifestFile>
+                        <archive>
+                            <manifest>
+                                <addClasspath>true</addClasspath>
+                            </manifest>
+                        </archive>
                     </configuration>
                 </plugin>
                 <plugin>
