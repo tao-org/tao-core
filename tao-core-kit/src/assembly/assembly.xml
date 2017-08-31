@@ -1,15 +1,31 @@
 <assembly>
-    <id>zip</id>
+    <id>${project.version}</id>
     <formats>
-        <format>directory</format>
+        <format>dir</format>
     </formats>
+
     <fileSets>
         <fileSet>
-            <directory>target</directory>
-            <outputDirectory>lib</outputDirectory>
-            <includes>
-                <include>*.jar</include>
-            </includes>
+            <directory>src/assembly/bin</directory>
+            <outputDirectory>bin</outputDirectory>
         </fileSet>
     </fileSets>
+
+    <dependencySets>
+        <dependencySet>
+            <outputDirectory>lib</outputDirectory>
+            <outputFileNameMapping>${artifact.artifactId}-${artifact.version}.${artifact.extension}
+            </outputFileNameMapping>
+            <excludes>
+                <exclude>ro.cs.tao:*</exclude>
+            </excludes>
+        </dependencySet>
+        <dependencySet>
+            <outputDirectory>modules</outputDirectory>
+            <outputFileNameMapping>${artifact.artifactId}-${artifact.version}.${artifact.extension}</outputFileNameMapping>
+            <includes>
+                <include>ro.cs.tao:*</include>
+            </includes>
+        </dependencySet>
+    </dependencySets>
 </assembly>

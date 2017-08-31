@@ -29,6 +29,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>tao-scihub</artifactId>
+    <packaging>jar</packaging>
 
     <dependencies>
         <dependency>
@@ -44,6 +45,11 @@
         <dependency>
             <groupId>ro.cs.tao</groupId>
             <artifactId>tao-service-registry</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ro.cs.tao</groupId>
+            <artifactId>tao-config</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
