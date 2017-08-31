@@ -38,10 +38,12 @@
 
 package ro.cs.tao.component;
 
+import java.io.Serializable;
+
 /**
  * @author Cosmin Cara
  */
-public abstract class Identifiable {
+public abstract class Identifiable implements Cloneable, Serializable {
 
     protected String name;
 
@@ -61,5 +63,4 @@ public abstract class Identifiable {
 
     public abstract String defaultName();
 
-    public abstract Identifiable copy();
 }

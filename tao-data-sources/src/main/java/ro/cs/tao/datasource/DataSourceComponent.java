@@ -1,6 +1,5 @@
 package ro.cs.tao.datasource;
 
-import ro.cs.tao.component.Identifiable;
 import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.datasource.param.QueryParameter;
 import ro.cs.tao.eodata.EOProduct;
@@ -57,9 +56,8 @@ public class DataSourceComponent extends TaoComponent {
     }
 
     @Override
-    public Identifiable copy() {
-        DataSourceComponent newComponent = new DataSourceComponent();
-        copyTo(newComponent);
+    public DataSourceComponent clone() throws CloneNotSupportedException {
+        DataSourceComponent newComponent = (DataSourceComponent) super.clone();
         newComponent.sensorName = this.sensorName;
         newComponent.sourceClassName = this.sourceClassName;
         return newComponent;

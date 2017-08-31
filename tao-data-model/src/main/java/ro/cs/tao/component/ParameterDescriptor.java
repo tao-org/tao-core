@@ -182,11 +182,11 @@ public class ParameterDescriptor extends Identifiable {
     }
 
     @Override
-    public ParameterDescriptor copy() {
-        return new ParameterDescriptor(defaultName(), this.type, this.dataType, this.defaultValue,
-                                       this.description, this.label, this.unit,
-                                       Arrays.copyOf(this.valueSet, this.valueSet.length),
-                                       this.format, this.notNull, this.notEmpty);
+    public ParameterDescriptor clone() throws CloneNotSupportedException {
+        ParameterDescriptor clone = (ParameterDescriptor) super.clone();
+        clone.name = defaultName();
+        clone.valueSet = Arrays.copyOf(this.valueSet, this.valueSet.length);
+        return clone;
     }
 
     protected Validator createValidator() {

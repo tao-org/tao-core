@@ -149,9 +149,8 @@ public class ProcessingComponent extends TaoComponent {
     }
 
     @Override
-    public ProcessingComponent copy() {
-        ProcessingComponent newDescriptor = new ProcessingComponent();
-        copyTo(newDescriptor);
+    public ProcessingComponent clone() throws CloneNotSupportedException {
+        ProcessingComponent newDescriptor = (ProcessingComponent) super.clone();
         newDescriptor.fileLocation = this.fileLocation;
         newDescriptor.workingDirectory = this.workingDirectory;
         newDescriptor.templateType = this.templateType;
@@ -159,14 +158,16 @@ public class ProcessingComponent extends TaoComponent {
             newDescriptor.template = this.template.copy();
         }
         if (this.variables != null) {
-            newDescriptor.variables = this.variables.stream().map(Variable::copy).collect(Collectors.toList());
+            newDescriptor.variables = new ArrayList<>();
+            for (Variable var : this.variables) {
+                newDescriptor.variables.add(var.clone());
+            }
         }
         if (this.parameters != null) {
-            newDescriptor.parameters = this.parameters.stream().map(p -> {
-                ParameterDescriptor parameter = p.copy();
-                parameter.setName(p.getName());
-                return p;
-            }).collect(Collectors.toList());
+            newDescriptor.parameters = new ArrayList<>();
+            for (ParameterDescriptor p : this.parameters) {
+                newDescriptor.parameters.add(p.clone());
+            }
         }
         return newDescriptor;
     }
