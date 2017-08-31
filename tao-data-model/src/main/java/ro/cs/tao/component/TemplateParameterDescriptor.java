@@ -125,12 +125,15 @@ public class TemplateParameterDescriptor extends ParameterDescriptor {
     }
 
     @Override
-    public ParameterDescriptor copy() {
-        TemplateParameterDescriptor newParameter = new TemplateParameterDescriptor();
+    public ParameterDescriptor clone() throws CloneNotSupportedException {
+        TemplateParameterDescriptor newParameter = (TemplateParameterDescriptor) super.clone();
         if (this.parameters != null) {
             newParameter.parameters = this.parameters.stream().map(p -> {
-                ParameterDescriptor copy = p.copy();
-                copy.setName(p.getName());
+                ParameterDescriptor copy = null;
+                try {
+                    copy = p.clone();
+                    copy.setName(p.getName());
+                } catch (CloneNotSupportedException ignored) {}
                 return copy;
             }).collect(Collectors.toList());
         }

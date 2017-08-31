@@ -128,17 +128,15 @@ public abstract class TaoComponent extends Identifiable {
         }
     }
 
-    protected void copyTo(TaoComponent newComponent) {
-        newComponent.label = this.label;
-        newComponent.version = this.version;
-        newComponent.description = this.description;
-        newComponent.authors = this.authors;
-        newComponent.copyright = this.copyright;
+    @Override
+    public TaoComponent clone() throws CloneNotSupportedException {
+        TaoComponent clone = (TaoComponent) super.clone();
         if (this.sources != null) {
-            newComponent.setSources(Arrays.copyOf(this.sources, this.sources.length));
+            clone.setSources(Arrays.copyOf(this.sources, this.sources.length));
         }
         if (this.targets != null) {
-            newComponent.setTargets(Arrays.copyOf(this.targets, this.targets.length));
+            clone.setTargets(Arrays.copyOf(this.targets, this.targets.length));
         }
+        return clone;
     }
 }

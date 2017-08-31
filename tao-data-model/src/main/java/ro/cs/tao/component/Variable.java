@@ -79,8 +79,10 @@ public class Variable extends Identifiable {
         return "NewVariable";
     }
 
+    @SuppressWarnings("MethodDoesntCallSuperMethod")
     @Override
-    public Variable copy() {
+    protected Variable clone() throws CloneNotSupportedException {
         return new Variable(this.name, this.value, this.isSystem);
     }
+
 }
