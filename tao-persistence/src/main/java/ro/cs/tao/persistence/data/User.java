@@ -3,6 +3,7 @@ package ro.cs.tao.persistence.data;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Set;
 
@@ -14,7 +15,7 @@ import java.util.Set;
  */
 @Entity
 @Table(name = "tao.\"user\"")
-public class User {
+public class User implements Serializable {
 
     /**
      * Username column maximum length

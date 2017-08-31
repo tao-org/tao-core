@@ -5,6 +5,7 @@ import ro.cs.tao.persistence.data.util.TaskOutputKey;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 
 /**
  * TaskOutput persistent entity
@@ -15,7 +16,7 @@ import javax.validation.constraints.Size;
 @Entity
 @Table(name = "tao.task_output")
 @IdClass(TaskOutputKey.class)
-public class TaskOutput {
+public class TaskOutput implements Serializable {
 
     /**
      * Task output name column maximum length

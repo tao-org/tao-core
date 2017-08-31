@@ -3,6 +3,7 @@ package ro.cs.tao.persistence.data;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
@@ -13,7 +14,7 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "tao.execution_node")
-public class ExecutionNode {
+public class ExecutionNode implements Serializable {
 
     /**
      * Execution node IP address column maximum length

@@ -5,6 +5,7 @@ import ro.cs.tao.persistence.data.util.UserPreferenceKey;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 
 /**
  * UserPreference persistent entity
@@ -15,7 +16,7 @@ import javax.validation.constraints.Size;
 @Entity
 @Table(name = "tao.user_prefs")
 @IdClass(UserPreferenceKey.class)
-public class UserPreference{
+public class UserPreference implements Serializable {
 
     /**
      * User preference key column maximum length

@@ -3,6 +3,7 @@ package ro.cs.tao.persistence.data;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 
 /**
  * QueryParameter persistent entity
@@ -12,7 +13,7 @@ import javax.validation.constraints.Size;
  */
 @Entity
 @Table(name = "tao.query_parameter")
-public class QueryParameter {
+public class QueryParameter implements Serializable {
 
     /**
      * Parameter name column maximum length

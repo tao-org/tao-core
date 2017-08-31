@@ -5,8 +5,6 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import ro.cs.tao.persistence.config.DatabaseConfiguration;
 
-import java.util.logging.Handler;
-import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 

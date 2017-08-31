@@ -5,6 +5,7 @@ import ro.cs.tao.persistence.data.util.OperationParameterValueKey;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 
 /**
  * OperationParameterValue persistent entity
@@ -15,7 +16,7 @@ import javax.validation.constraints.Size;
 @Entity
 @Table(name = "tao.parameter_values_set")
 @IdClass(OperationParameterValueKey.class)
-public class OperationParameterValue {
+public class OperationParameterValue implements Serializable {
 
     /**
      * Data product metadata value column maximum length

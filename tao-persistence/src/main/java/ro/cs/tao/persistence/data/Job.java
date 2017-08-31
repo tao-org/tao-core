@@ -2,6 +2,7 @@ package ro.cs.tao.persistence.data;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Set;
 
@@ -13,7 +14,7 @@ import java.util.Set;
  */
 @Entity
 @Table(name = "tao.job")
-public class Job {
+public class Job implements Serializable {
 
     /**
      * Unique identifier

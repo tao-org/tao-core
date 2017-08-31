@@ -5,6 +5,7 @@ import ro.cs.tao.persistence.data.util.UserDataQueryKey;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 
 /**
  * UserDataQuery persistent entity
@@ -15,7 +16,7 @@ import javax.validation.constraints.Size;
 @Entity
 @Table(name = "tao.user_data_query")
 @IdClass(UserDataQueryKey.class)
-public class UserDataQuery {
+public class UserDataQuery implements Serializable {
 
     /**
      * User query parameter value column maximum length
