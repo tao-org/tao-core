@@ -3,6 +3,7 @@ package ro.cs.tao.persistence.data;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.time.LocalDateTime;
 
 /**
  * ProcessingComponent persistent entity
@@ -48,11 +49,6 @@ public class ProcessingComponent {
      * Processing component working directory column maximum length
      */
     private static final int PROCESSING_COMPONENT_WORKING_DIRECTORY_COLUMN_MAX_LENGTH = 512;
-
-    /**
-     * Processing component template type column maximum length
-     */
-    private static final int PROCESSING_COMPONENT_TEMPLATE_TYPE_COLUMN_MAX_LENGTH = 50;
 
     /**
      * Processing component template name column maximum length
@@ -132,10 +128,9 @@ public class ProcessingComponent {
     /**
      * Processing component template type
      */
-    @Column(name = "template_type")
+    @Column(name = "template_type_id")
     @NotNull
-    @Size(min = 1, max = PROCESSING_COMPONENT_TEMPLATE_TYPE_COLUMN_MAX_LENGTH)
-    private String templateType;
+    private Integer templateType;
 
     /**
      * Processing component template name
@@ -172,6 +167,19 @@ public class ProcessingComponent {
     @Column(name = "multi_thread")
     @NotNull
     private Boolean multiThread;
+
+    /**
+     * Created date
+     */
+    @Column(name = "created")
+    @NotNull
+    private LocalDateTime createdDate;
+
+    /**
+     * Modified date
+     */
+    @Column(name = "modified")
+    private LocalDateTime modifiedDate;
 
     /**
      * Flag that indicates if the processing component is active or not
@@ -252,11 +260,11 @@ public class ProcessingComponent {
         this.workingDirectory = workingDirectory;
     }
 
-    public String getTemplateType() {
+    public Integer getTemplateType() {
         return templateType;
     }
 
-    public void setTemplateType(String templateType) {
+    public void setTemplateType(Integer templateType) {
         this.templateType = templateType;
     }
 
@@ -298,6 +306,22 @@ public class ProcessingComponent {
 
     public void setMultiThread(Boolean multiThread) {
         this.multiThread = multiThread;
+    }
+
+    public LocalDateTime getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(LocalDateTime createdDate) {
+        this.createdDate = createdDate;
+    }
+
+    public LocalDateTime getModifiedDate() {
+        return modifiedDate;
+    }
+
+    public void setModifiedDate(LocalDateTime modifiedDate) {
+        this.modifiedDate = modifiedDate;
     }
 
     public Boolean getActive() {

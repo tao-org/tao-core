@@ -1,7 +1,5 @@
 package ro.cs.tao.persistence;
 
-import org.apache.commons.lang.ArrayUtils;
-import org.eclipse.persistence.annotations.ReadOnly;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -9,6 +7,8 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
+import ro.cs.tao.component.ProcessingComponent;
+import ro.cs.tao.component.template.TemplateType;
 import ro.cs.tao.datasource.AbstractDataSource;
 import ro.cs.tao.datasource.DataQuery;
 import ro.cs.tao.eodata.EOProduct;
@@ -17,10 +17,7 @@ import ro.cs.tao.persistence.data.DataSourceType;
 import ro.cs.tao.persistence.data.ExecutionNode;
 import ro.cs.tao.persistence.data.User;
 import ro.cs.tao.persistence.exception.PersistenceException;
-import ro.cs.tao.persistence.repository.DataProductRepository;
-import ro.cs.tao.persistence.repository.DataSourceRepository;
-import ro.cs.tao.persistence.repository.DataSourceTypeRepository;
-import ro.cs.tao.persistence.repository.ExecutionNodeRepository;
+import ro.cs.tao.persistence.repository.*;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -28,7 +25,6 @@ import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * DAO
@@ -57,6 +53,10 @@ public class PersistenceManager {
     /** CRUD Repository for ExecutionNode entities */
     @Autowired
     private ExecutionNodeRepository executionNodeRepository;
+
+    /** CRUD Repository for ProcessingComponent entities */
+    @Autowired
+    private ProcessingComponentRepository processingComponentRepository;
 
     @Transactional
     public Integer saveDataSourceType(String type) throws PersistenceException
@@ -122,14 +122,14 @@ public class PersistenceManager {
     @Transactional
     public <Q extends DataQuery, S extends AbstractDataSource<Q>> Integer saveDataSource(S dataSource, DataSourceType dataSourceType, String name, String description) throws PersistenceException
     {
-        if(dataSource.getCredentials() == null || dataSource.getConnectionString() == null || dataSourceType == null || name == null)
+        if(dataSource == null || dataSource.getCredentials() == null || dataSource.getConnectionString() == null ||
+          dataSourceType == null || name == null)
         {
             throw new PersistenceException("Invalid parameters were provided for adding new data source!");
         }
 
         ro.cs.tao.persistence.data.DataSource dataSourceEnt = new ro.cs.tao.persistence.data.DataSource();
         dataSourceEnt.setName(name);
-        //dataSourceEnt.setDataSourceType(Integer.parseInt(DataSourceType.valueOf(dataSourceType.name()).toString()));
         dataSourceEnt.setDataSourceType(dataSourceType);
         dataSourceEnt.setUsername(dataSource.getCredentials().getUserName());
         dataSourceEnt.setPassword(dataSource.getCredentials().getPassword());
@@ -156,7 +156,8 @@ public class PersistenceManager {
     public Long saveDataProduct(EOProduct dataProduct, User user) throws PersistenceException
     {
         // check method parameters
-        if(dataProduct.getName() == null || dataProduct.getGeometry() == null || dataProduct.getType() == null ||
+        if(dataProduct == null ||
+          dataProduct.getName() == null || dataProduct.getGeometry() == null || dataProduct.getType() == null ||
           dataProduct.getLocation() == null || dataProduct.getSensorType() == null || dataProduct.getPixelType() == null)
         {
             throw new PersistenceException("Invalid parameters were provided for adding new data product!");
@@ -207,6 +208,7 @@ public class PersistenceManager {
         return dataProductEnt.getId();
     }
 
+    // TODO Use a data model entity when ready
     @Transactional
     public Integer saveExecutionNode(String name, String description, String ipAddress, String sshKey,
                                      String username, String password,
@@ -248,6 +250,57 @@ public class PersistenceManager {
         }
 
         return executionNodeEnt.getId();
+    }
+
+
+    @Transactional
+    public Integer saveProcessingComponent(ProcessingComponent processingComponent, User owner) throws PersistenceException
+    {
+        // check method parameters
+        if(processingComponent == null ||
+          processingComponent.getName() == null || processingComponent.getLabel() == null ||
+          processingComponent.getVersion() == null || processingComponent.getDescription() == null ||
+          processingComponent.getCopyright() == null || processingComponent.getFileLocation() == null ||
+          processingComponent.getWorkingDirectory() == null || processingComponent.getTemplateType() == null ||
+          processingComponent.getTemplate() == null || processingComponent.getTemplate().getName() == null)
+        {
+            throw new PersistenceException("Invalid parameters were provided for adding new processing component!");
+        }
+
+        // create new entity
+        ro.cs.tao.persistence.data.ProcessingComponent processingComponentEnt = new ro.cs.tao.persistence.data.ProcessingComponent();
+        // set all info
+        processingComponentEnt.setName(processingComponent.getName());
+
+        processingComponentEnt.setLabel(processingComponent.getLabel());
+        processingComponentEnt.setVersion(processingComponent.getVersion());
+        processingComponentEnt.setDescription(processingComponent.getDescription());
+        processingComponentEnt.setAuthors(processingComponent.getAuthors());
+        processingComponentEnt.setCopyright(processingComponent.getCopyright());
+
+        processingComponentEnt.setMainToolFileLocation(processingComponent.getFileLocation());
+        processingComponentEnt.setWorkingDirectory(processingComponent.getWorkingDirectory());
+        processingComponentEnt.setTemplateType(Integer.parseInt(processingComponent.getTemplateType().toString()));
+        processingComponentEnt.setTemplateName(processingComponent.getTemplate().getName());
+
+        // TODO variables
+        // TODO parameters
+
+        // ?? TODO processing component
+
+
+        processingComponentEnt.setCreatedDate(LocalDateTime.now());
+        processingComponentEnt.setActive(true);
+
+        // save the new entity
+        processingComponentEnt = processingComponentRepository.save(processingComponentEnt);
+
+        if(processingComponentEnt.getId() == null)
+        {
+            throw new PersistenceException("Error saving processing component with name: " + processingComponentEnt.getName());
+        }
+
+        return processingComponentEnt.getId();
     }
 
 }
