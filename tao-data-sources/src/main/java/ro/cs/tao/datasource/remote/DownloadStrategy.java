@@ -65,7 +65,8 @@ import java.util.Properties;
 import java.util.logging.Logger;
 
 /**
- * Base class for downloaders
+ * Base class for download fetching strategies.
+ * It contains an implementation for only fetching given a product descriptor.
  *
  * @author  Cosmin Cara
  */
