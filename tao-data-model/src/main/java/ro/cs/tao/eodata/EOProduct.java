@@ -40,11 +40,8 @@ package ro.cs.tao.eodata;
 
 import ro.cs.tao.eodata.enums.PixelType;
 import ro.cs.tao.eodata.enums.SensorType;
-import ro.cs.tao.serialization.DateAdapter;
 
-import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.util.Date;
 
 /**
@@ -60,7 +57,6 @@ public class EOProduct extends EOData {
     private int width;
     private int height;
 
-    @XmlElement(name = "sensorType")
     public SensorType getSensorType() {
         return sensorType;
     }
@@ -69,8 +65,6 @@ public class EOProduct extends EOData {
         this.sensorType = sensorType;
     }
 
-    @XmlElement(name = "acquisitionDate")
-    @XmlJavaTypeAdapter(DateAdapter.class)
     public Date getAcquisitionDate() {
         return acquisitionDate;
     }
@@ -79,7 +73,6 @@ public class EOProduct extends EOData {
         this.acquisitionDate = acquisitionDate;
     }
 
-    @XmlElement(name = "pixelType")
     public PixelType getPixelType() {
         return pixelType;
     }
@@ -88,7 +81,6 @@ public class EOProduct extends EOData {
         this.pixelType = pixelType;
     }
 
-    @XmlElement(name = "width")
     public int getWidth() {
         return width;
     }
@@ -97,7 +89,6 @@ public class EOProduct extends EOData {
         this.width = width;
     }
 
-    @XmlElement(name = "height")
     public int getHeight() {
         return height;
     }
@@ -106,7 +97,6 @@ public class EOProduct extends EOData {
         this.height = height;
     }
 
-    @XmlElement(name = "productType")
     public String getProductType() { return productType; }
 
     public void setProductType(String value) { this.productType = value; }

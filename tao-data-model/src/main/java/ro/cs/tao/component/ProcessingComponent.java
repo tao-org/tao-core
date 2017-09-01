@@ -45,6 +45,9 @@ import ro.cs.tao.component.template.engine.EngineFactory;
 import ro.cs.tao.component.template.engine.TemplateEngine;
 import ro.cs.tao.component.validation.ValidationException;
 
+import javax.xml.bind.annotation.XmlElementWrapper;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +56,7 @@ import java.util.stream.Collectors;
 /**
  * @author Cosmin Cara
  */
+@XmlRootElement(name = "processingComponent")
 public class ProcessingComponent extends TaoComponent {
 
     private String fileLocation;
@@ -97,6 +101,7 @@ public class ProcessingComponent extends TaoComponent {
         }
     }
 
+    @XmlElementWrapper(name = "variables")
     public List<Variable> getVariables() {
         return variables;
     }
@@ -105,6 +110,7 @@ public class ProcessingComponent extends TaoComponent {
         this.variables = variables;
     }
 
+    @XmlElementWrapper(name = "parameters")
     public List<ParameterDescriptor> getParameterDescriptors() {
         if (this.parameters == null) {
             this.parameters = new ArrayList<>();
@@ -116,6 +122,7 @@ public class ProcessingComponent extends TaoComponent {
         this.parameters = parameters;
     }
 
+    @XmlTransient
     public TemplateType getTemplateType() {
         return templateType != null ? templateType : TemplateType.VELOCITY;
     }

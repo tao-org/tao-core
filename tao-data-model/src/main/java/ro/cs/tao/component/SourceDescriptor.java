@@ -22,12 +22,16 @@ package ro.cs.tao.component;
 import ro.cs.tao.component.constraints.Constraint;
 import ro.cs.tao.eodata.EOData;
 
+import javax.xml.bind.annotation.XmlElementWrapper;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Cosmin Cara
  */
+@XmlRootElement(name = "input")
 public class SourceDescriptor extends Identifiable {
     private static final String DEFAULT_NAME = "Input";
     private EOData data;
@@ -45,14 +49,17 @@ public class SourceDescriptor extends Identifiable {
     @Override
     public String defaultName() { return DEFAULT_NAME; }
 
+    @XmlTransient
     public EOData getData() {
         return data;
     }
 
+    @XmlTransient
     public void setData(EOData data) {
         this.data = data;
     }
 
+    @XmlElementWrapper(name = "constraints")
     public List<Constraint> getConstraints() {
         return constraints;
     }

@@ -20,9 +20,11 @@
 package ro.cs.tao.serialization;
 
 import org.geotools.referencing.CRS;
+import org.opengis.referencing.ReferenceIdentifier;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import javax.xml.bind.annotation.adapters.XmlAdapter;
+import java.util.Optional;
 
 /**
  * @author Cosmin Cara
@@ -32,8 +34,10 @@ public class CRSAdapter extends XmlAdapter<CoordinateReferenceSystem, String> {
     public CRSAdapter() { }
 
     public String unmarshal(CoordinateReferenceSystem v) throws Exception {
-        return v.getName().getCode();
+        Optional<ReferenceIdentifier> identifier = v.getIdentifiers().stream().findFirst();
+        return identifier.map(Object::toString).orElse(null);
     }
+
 
     public CoordinateReferenceSystem marshal(String v) throws Exception {
         return CRS.decode(v);

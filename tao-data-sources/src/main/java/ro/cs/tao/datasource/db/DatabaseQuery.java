@@ -19,8 +19,6 @@
 
 package ro.cs.tao.datasource.db;
 
-import org.geotools.referencing.CRS;
-import org.opengis.referencing.FactoryException;
 import ro.cs.tao.datasource.DataQuery;
 import ro.cs.tao.datasource.QueryException;
 import ro.cs.tao.datasource.converters.ConverterFactory;
@@ -31,7 +29,6 @@ import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.Polygon2D;
 import ro.cs.tao.eodata.enums.PixelType;
 import ro.cs.tao.eodata.enums.SensorType;
-import ro.cs.tao.serialization.GeometryAdapter;
 
 import java.lang.reflect.Array;
 import java.net.URISyntaxException;
@@ -154,7 +151,7 @@ public class DatabaseQuery extends DataQuery {
                     product.setSensorType(Enum.valueOf(SensorType.class, resultSet.getString(4)));
                     product.setPixelType(Enum.valueOf(PixelType.class, resultSet.getString(5)));
                     try {
-                        product.setGeometry(new GeometryAdapter().marshal(resultSet.getString(6)));
+                        product.setGeometry(resultSet.getString(6));
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -163,11 +160,7 @@ public class DatabaseQuery extends DataQuery {
                     } catch (URISyntaxException e) {
                         e.printStackTrace();
                     }
-                    try {
-                        product.setCrs(CRS.decode(resultSet.getString(8)));
-                    } catch (FactoryException e) {
-                        e.printStackTrace();
-                    }
+                    product.setCrs(resultSet.getString(8));
                     results.add(product);
                 }
             } catch (SQLException ex) {

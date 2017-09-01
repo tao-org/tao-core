@@ -2,6 +2,8 @@ package ro.cs.tao.component;
 
 import ro.cs.tao.eodata.EOData;
 
+import javax.xml.bind.annotation.XmlElementWrapper;
+import javax.xml.bind.annotation.XmlTransient;
 import java.util.Arrays;
 
 /**
@@ -63,12 +65,14 @@ public abstract class TaoComponent extends Identifiable {
 
     public void setNodeAffinity(String nodeAffinity) { this.nodeAffinity = nodeAffinity; }
 
+    @XmlElementWrapper(name = "inputs")
     public SourceDescriptor[] getSources() {
         return sources;
     }
 
     public void setSources(SourceDescriptor[] sources) { this.sources = sources; }
 
+    @XmlTransient
     public void setSourcesCount(int value) {
         if (this.sources == null) {
             this.sources = new SourceDescriptor[value];
@@ -98,12 +102,14 @@ public abstract class TaoComponent extends Identifiable {
         }
     }
 
+    @XmlElementWrapper(name = "outputs")
     public TargetDescriptor[] getTargets() {
         return targets;
     }
 
     public void setTargets(TargetDescriptor[] targets) { this.targets = targets; }
 
+    @XmlTransient
     public void setTargetCount(int value) {
         if (this.targets == null) {
             this.targets = new TargetDescriptor[value];

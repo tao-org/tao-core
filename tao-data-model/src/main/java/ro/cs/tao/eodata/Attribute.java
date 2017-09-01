@@ -57,7 +57,6 @@
 
 package ro.cs.tao.eodata;
 
-import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
@@ -68,7 +67,6 @@ public class Attribute {
     private String name;
     private String value;
 
-    @XmlAttribute(name = "name")
     public String getName() {
         return name;
     }
@@ -77,7 +75,6 @@ public class Attribute {
         this.name = name;
     }
 
-    @XmlAttribute(name = "value")
     public String getValue() {
         return value;
     }

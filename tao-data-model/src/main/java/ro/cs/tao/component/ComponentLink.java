@@ -21,9 +21,12 @@ package ro.cs.tao.component;
 
 import ro.cs.tao.component.constraints.ConstraintException;
 
+import javax.xml.bind.annotation.XmlRootElement;
+
 /**
  * @author Cosmin Cara
  */
+@XmlRootElement(name = "link")
 public class ComponentLink {
     private SourceDescriptor output;
     private TargetDescriptor input;

@@ -22,9 +22,12 @@ package ro.cs.tao.component.template;
 
 import ro.cs.tao.component.template.engine.TemplateEngine;
 
+import javax.xml.bind.annotation.XmlRootElement;
+
 /**
  * @author Cosmin Cara
  */
+@XmlRootElement(name = "template")
 public interface Template {
 
     /**

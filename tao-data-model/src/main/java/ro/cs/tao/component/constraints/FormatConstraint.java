@@ -30,6 +30,6 @@ public class FormatConstraint implements Constraint<EOData> {
     @Override
     public boolean check(EOData... args) {
         return args != null && args.length > 0 &&
-                Arrays.stream(args).allMatch(a -> args[0].getType().equals(a.getType()));
+                Arrays.stream(args).allMatch(a -> args[0].getFormatType().equals(a.getFormatType()));
     }
 }

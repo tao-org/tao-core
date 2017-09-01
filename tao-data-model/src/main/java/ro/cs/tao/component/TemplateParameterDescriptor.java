@@ -24,6 +24,9 @@ import ro.cs.tao.component.template.Template;
 import ro.cs.tao.component.template.TemplateException;
 import ro.cs.tao.component.template.engine.TemplateEngine;
 
+import javax.xml.bind.annotation.XmlElementWrapper;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -34,6 +37,7 @@ import java.util.stream.Collectors;
 /**
  * @author Cosmin Cara
  */
+@XmlRootElement(name = "templateParameter")
 public class TemplateParameterDescriptor extends ParameterDescriptor {
     private List<ParameterDescriptor> parameters;
     private Template template;
@@ -50,6 +54,7 @@ public class TemplateParameterDescriptor extends ParameterDescriptor {
         this.templateEngine = templateEngine;
     }
 
+    @XmlElementWrapper(name = "parameters")
     public ParameterDescriptor[] getParameters() {
         return parameters != null ?
                 parameters.toArray(new ParameterDescriptor[parameters.size()]) :
@@ -93,10 +98,12 @@ public class TemplateParameterDescriptor extends ParameterDescriptor {
         this.template.associateWith(this.templateEngine);
     }
 
+    @XmlTransient
     public TemplateEngine getTemplateEngine() {
         return templateEngine;
     }
 
+    @XmlTransient
     public void setTemplateEngine(TemplateEngine templateEngine) throws TemplateException {
         this.templateEngine = templateEngine;
         if (this.template != null) {

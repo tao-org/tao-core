@@ -21,6 +21,7 @@ package ro.cs.tao.component.constraints;
 
 import com.vividsolutions.jts.geom.Geometry;
 import ro.cs.tao.eodata.EOData;
+import ro.cs.tao.serialization.GeometryAdapter;
 
 import java.util.Arrays;
 
@@ -33,9 +34,15 @@ public class GeometryConstraint implements Constraint<EOData> {
         return args != null && args.length > 0 &&
                 Arrays.stream(args)
                         .allMatch(a -> {
-                            Geometry first = args[0].getGeometry();
-                            return (first != null && first.equals(a.getGeometry())) ||
-                                    (first == null && a.getGeometry() == null);
+                            try {
+                                GeometryAdapter geometryAdapter = new GeometryAdapter();
+                                Geometry first = geometryAdapter.marshal(args[0].getGeometry());
+                                Geometry second = geometryAdapter.marshal(a.getGeometry());
+                                return (first != null && first.equals(second)) ||
+                                        (first == null && a.getGeometry() == null);
+                            } catch (Exception ex) {
+                                return false;
+                            }
                         });
     }
 }
