@@ -25,31 +25,30 @@ import ro.cs.tao.component.constraints.ConstraintException;
  * @author Cosmin Cara
  */
 public class ComponentLink {
-    private SourceDescriptor sourceDescriptor;
-    private TargetDescriptor targetDescriptor;
+    private SourceDescriptor output;
+    private TargetDescriptor input;
 
     public static boolean canConnect(TargetDescriptor input, SourceDescriptor output) {
-        return input != null && output != null &&
-                output.isCompatibleWith(input);
+        return input != null && output != null && output.isCompatibleWith(input);
     }
 
-    public ComponentLink(SourceDescriptor sourceDescriptor, TargetDescriptor targetDescriptor) throws ConstraintException {
-        if (!canConnect(targetDescriptor, sourceDescriptor)) {
+    public ComponentLink(TargetDescriptor input, SourceDescriptor output) throws ConstraintException {
+        if (!canConnect(input, output)) {
             throw new ConstraintException("Source and target are not compatible");
         }
-        this.sourceDescriptor = sourceDescriptor;
-        this.targetDescriptor = targetDescriptor;
+        this.input = input;
+        this.output = output;
     }
 
-    public SourceDescriptor getSourceDescriptor() {
-        return sourceDescriptor;
+    public SourceDescriptor getOutput() {
+        return this.output;
     }
 
-    public TargetDescriptor getTargetDescriptor() {
-        return targetDescriptor;
+    public TargetDescriptor getInput() {
+        return this.input;
     }
 
     public void follow() {
-        targetDescriptor.setData(sourceDescriptor.getData());
+        this.input.setData(this.output.getData());
     }
 }

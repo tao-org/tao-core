@@ -14,6 +14,8 @@ public abstract class TaoComponent extends Identifiable {
     protected String authors;
     protected String copyright;
 
+    protected String nodeAffinity;
+
     protected SourceDescriptor[] sources;
     protected TargetDescriptor[] targets;
 
@@ -56,6 +58,10 @@ public abstract class TaoComponent extends Identifiable {
     public void setCopyright(String copyright) {
         this.copyright = copyright;
     }
+
+    public String getNodeAffinity() { return nodeAffinity; }
+
+    public void setNodeAffinity(String nodeAffinity) { this.nodeAffinity = nodeAffinity; }
 
     public SourceDescriptor[] getSources() {
         return sources;
