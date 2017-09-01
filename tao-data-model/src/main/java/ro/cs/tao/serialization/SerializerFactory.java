@@ -1,11 +1,11 @@
-package ro.cs.tao.eodata.serialization;
+package ro.cs.tao.serialization;
 
 /**
  * Created by kraftek on 2/28/2017.
  */
-public class MetadataSerializerFactory {
+public class SerializerFactory {
 
-    public static <T> MetadataSerializer create(Class<T> clazz, MediaType mediaType) throws SerializationException {
+    public static <T> Serializer create(Class<T> clazz, MediaType mediaType) throws SerializationException {
         switch (mediaType) {
             case JSON:
                 return new JsonSerializer<T>(clazz);

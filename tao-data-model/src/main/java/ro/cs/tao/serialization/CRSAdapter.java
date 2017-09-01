@@ -17,7 +17,7 @@
  *
  */
 
-package ro.cs.tao.eodata.serialization;
+package ro.cs.tao.serialization;
 
 import org.geotools.referencing.CRS;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;

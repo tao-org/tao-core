@@ -14,8 +14,8 @@ import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.Polygon2D;
 import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.eodata.enums.SensorType;
-import ro.cs.tao.eodata.serialization.GeometryAdapter;
 import ro.cs.tao.eodata.util.Conversions;
+import ro.cs.tao.serialization.GeometryAdapter;
 
 import javax.json.Json;
 import javax.json.JsonObject;

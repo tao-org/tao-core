@@ -1,20 +1,32 @@
-package ro.cs.tao.eodata.serialization;
+package ro.cs.tao.serialization;
 
+import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.transform.stream.StreamSource;
 import java.io.StringWriter;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author kraftek
  * @date 3/2/2017
  */
-class XmlSerializer<T> extends BaseSerializer<T> {
+class JsonSerializer<T> extends BaseSerializer<T> {
+    private final static Map<String, Object> properties;
 
-    XmlSerializer(Class<T> tClass) throws SerializationException {
-        super(tClass);
+    static {
+        System.setProperty(JAXBContext.class.getName(), "org.eclipse.persistence.jaxb.JAXBContextFactory");
+        properties = new HashMap<String, Object>() {{
+            put("eclipselink.media-type", "application/json");
+            put("eclipselink.json.include-root", true);
+        }};
+    }
+
+    JsonSerializer(Class<T> tClass) throws SerializationException {
+        super(tClass, properties);
     }
 
     public T deserialize(StreamSource source) throws SerializationException {

@@ -42,8 +42,8 @@ import org.xml.sax.Attributes;
 import ro.cs.tao.datasource.remote.result.xml.XmlResponseHandler;
 import ro.cs.tao.eodata.enums.PixelType;
 import ro.cs.tao.eodata.enums.SensorType;
-import ro.cs.tao.eodata.serialization.DateAdapter;
-import ro.cs.tao.eodata.serialization.GeometryAdapter;
+import ro.cs.tao.serialization.DateAdapter;
+import ro.cs.tao.serialization.GeometryAdapter;
 
 import java.net.URISyntaxException;
 

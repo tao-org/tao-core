@@ -28,13 +28,22 @@ import java.util.List;
 /**
  * @author Cosmin Cara
  */
-public class SourceDescriptor {
+public class SourceDescriptor extends Identifiable {
+    private static final String DEFAULT_NAME = "Input";
     private EOData data;
     private List<Constraint> constraints;
 
     public SourceDescriptor() {
+        this(DEFAULT_NAME);
+    }
+
+    public SourceDescriptor(String name) {
+        super(name);
         this.constraints = new ArrayList<>();
     }
+
+    @Override
+    public String defaultName() { return DEFAULT_NAME; }
 
     public EOData getData() {
         return data;

@@ -40,7 +40,7 @@ package ro.cs.tao.eodata;
 
 import ro.cs.tao.eodata.enums.PixelType;
 import ro.cs.tao.eodata.enums.SensorType;
-import ro.cs.tao.eodata.serialization.DateAdapter;
+import ro.cs.tao.serialization.DateAdapter;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;

@@ -1,5 +1,6 @@
 package ro.cs.tao.configuration;
 
+import java.io.IOException;
 import java.util.Properties;
 
 /**
@@ -18,8 +19,10 @@ public class ConfigurationManager {
 
     private ConfigurationManager() {
         this.settings = new Properties();
-        //TODO: load them from somewhere
-        this.settings.put("product.location", "E:\\img");
+        try {
+            this.settings.load(ConfigurationManager.class.getResourceAsStream("/tao.properties"));
+        } catch (IOException ignored) {
+        }
     }
 
     public String getValue(String name) {

@@ -28,13 +28,22 @@ import java.util.List;
 /**
  * @author Cosmin Cara
  */
-public class TargetDescriptor {
+public class TargetDescriptor extends Identifiable {
+    private static final String DEFAULT_NAME = "Output";
     private EOData data;
     private List<Constraint> constraints;
 
     public TargetDescriptor() {
+        this(DEFAULT_NAME);
+    }
+
+    public TargetDescriptor(String name) {
+        super(name);
         this.constraints = new ArrayList<>();
     }
+
+    @Override
+    public String defaultName() { return DEFAULT_NAME; }
 
     public EOData getData() {
         return data;
