@@ -4,6 +4,8 @@ import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.datasource.param.QueryParameter;
 import ro.cs.tao.eodata.EOProduct;
 
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 import java.io.IOException;
 import java.util.List;
 import java.util.logging.Logger;
@@ -11,9 +13,12 @@ import java.util.logging.Logger;
 /**
  * @author Cosmin Cara
  */
+@XmlRootElement(name = "dataSourceComponent")
 public class DataSourceComponent extends TaoComponent {
 
+    @XmlElement
     private String sensorName;
+    @XmlElement
     private String sourceClassName;
 
     public DataSourceComponent(String sensorName, String dataSourceClassName) {

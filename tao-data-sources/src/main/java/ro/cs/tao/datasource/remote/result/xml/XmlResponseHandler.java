@@ -77,7 +77,7 @@ public abstract class XmlResponseHandler extends DefaultHandler {
         buffer.setLength(0);
         if (this.recordElement.equals(qName)) {
             this.current = new EOProduct();
-            this.current.setType(DataFormat.RASTER);
+            this.current.setFormatType(DataFormat.RASTER);
         }
         handleStartElement(qName, attributes);
     }

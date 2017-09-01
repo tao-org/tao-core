@@ -19,13 +19,21 @@
 
 package ro.cs.tao.eodata.enums;
 
+import javax.xml.bind.annotation.XmlEnum;
+import javax.xml.bind.annotation.XmlEnumValue;
+
 /**
  * Created by kraftek on 2/27/2017.
  */
+@XmlEnum(Integer.class)
 public enum SensorType {
+    @XmlEnumValue("1")
     OPTICAL(1),
+    @XmlEnumValue("2")
     RADAR(2),
+    @XmlEnumValue("3")
     ALTIMETRIC(3),
+    @XmlEnumValue("4")
     ATMOSPHERIC(4);
 
     /**

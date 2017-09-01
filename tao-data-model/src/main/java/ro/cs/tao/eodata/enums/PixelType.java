@@ -19,17 +19,29 @@
 
 package ro.cs.tao.eodata.enums;
 
+import javax.xml.bind.annotation.XmlEnum;
+import javax.xml.bind.annotation.XmlEnumValue;
+
 /**
  * @author Cosmin Cara
  */
+@XmlEnum(Integer.class)
 public enum PixelType {
+    @XmlEnumValue("1")
     UINT8(1),
+    @XmlEnumValue("2")
     INT8(2),
+    @XmlEnumValue("3")
     UINT16(3),
+    @XmlEnumValue("4")
     INT16(4),
+    @XmlEnumValue("5")
     UINT32(5),
+    @XmlEnumValue("6")
     INT32(6),
+    @XmlEnumValue("7")
     FLOAT32(7),
+    @XmlEnumValue("8")
     FLOAT64(8);
 
     /**

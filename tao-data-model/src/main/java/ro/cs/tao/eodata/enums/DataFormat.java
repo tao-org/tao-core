@@ -1,20 +1,27 @@
 package ro.cs.tao.eodata.enums;
 
+import javax.xml.bind.annotation.XmlEnum;
+import javax.xml.bind.annotation.XmlEnumValue;
+
 /**
  * Created by oana on 7/13/2017.
  */
+@XmlEnum(Integer.class)
 public enum DataFormat {
     /**
      * RASTER image data format
      */
+    @XmlEnumValue("1")
     RASTER(1),
     /**
      * VECTOR image data format
      */
+    @XmlEnumValue("2")
     VECTOR(2),
     /**
      * Other image data format
      */
+    @XmlEnumValue("3")
     OTHER(3);
 
     /**
