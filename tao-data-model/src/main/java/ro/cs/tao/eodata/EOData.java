@@ -41,12 +41,11 @@ package ro.cs.tao.eodata;
 import com.vividsolutions.jts.geom.Geometry;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import ro.cs.tao.eodata.enums.DataFormat;
-import ro.cs.tao.eodata.serialization.CRSAdapter;
-import ro.cs.tao.eodata.serialization.GeometryAdapter;
+import ro.cs.tao.serialization.CRSAdapter;
+import ro.cs.tao.serialization.GeometryAdapter;
 
-import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import javax.xml.bind.annotation.XmlTransient;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
@@ -59,13 +58,12 @@ public abstract class EOData {
 
     private String id;
     private String name;
-    private DataFormat type;
+    private DataFormat formatType;
     private Geometry geometry;
     private Map<String, Attribute> attributes;
     private CoordinateReferenceSystem crs;
     private URI location;
 
-    @XmlElement(name = "id")
     public String getId() {
         return id;
     }
@@ -74,7 +72,6 @@ public abstract class EOData {
         this.id = id;
     }
 
-    @XmlElement(name = "name")
     public String getName() {
         return name;
     }
@@ -83,19 +80,27 @@ public abstract class EOData {
         this.name = name;
     }
 
-    @XmlElement(name = "type")
-    public DataFormat getType() { return type; }
+    public DataFormat getFormatType() { return formatType; }
 
-    public void setType(DataFormat type) { this.type = type; }
+    public void setFormatType(DataFormat type) { this.formatType = type; }
 
-    @XmlElement(name = "geometry")
-    @XmlJavaTypeAdapter(GeometryAdapter.class)
-    public Geometry getGeometry() {
-        return geometry;
+    public String getGeometry() {
+        try {
+            return new GeometryAdapter().unmarshal(geometry);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
-    public void setGeometry(Geometry geometry) {
-        this.geometry = geometry;
+    @XmlTransient
+    public Geometry getPolygon() {
+        return this.geometry;
+    }
+
+    public void setGeometry(String geometryAsText) {
+        try {
+            this.geometry = new GeometryAdapter().marshal(geometryAsText);
+        } catch (Exception ignored) { }
     }
 
     @XmlElementWrapper(name = "attributes")
@@ -143,17 +148,20 @@ public abstract class EOData {
         return attribute != null ? attribute.getValue() : null;
     }
 
-    @XmlElement(name = "crs")
-    @XmlJavaTypeAdapter(CRSAdapter.class)
-    public CoordinateReferenceSystem getCrs() {
-        return crs;
+    public String getCrs() {
+        try {
+            return new CRSAdapter().unmarshal(this.crs);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
-    public void setCrs(CoordinateReferenceSystem crs) {
-        this.crs = crs;
+    public void setCrs(String crsCode) {
+        try {
+            this.crs = new CRSAdapter().marshal(crsCode);
+        } catch (Exception ignored) { }
     }
 
-    @XmlElement(name = "location")
     public URI getLocation() { return location; }
 
     public void setLocation(String value) throws URISyntaxException { this.location = new URI(value); }

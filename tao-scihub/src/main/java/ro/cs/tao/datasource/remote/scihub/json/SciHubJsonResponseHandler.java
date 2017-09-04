@@ -8,8 +8,7 @@ import ro.cs.tao.eodata.Polygon2D;
 import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.eodata.enums.PixelType;
 import ro.cs.tao.eodata.enums.SensorType;
-import ro.cs.tao.eodata.serialization.DateAdapter;
-import ro.cs.tao.eodata.serialization.GeometryAdapter;
+import ro.cs.tao.serialization.DateAdapter;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -30,7 +29,7 @@ public class SciHubJsonResponseHandler implements JSonResponseHandler<EOProduct>
                 EOProduct product = new EOProduct();
                 product.setName(r.getIdentifier());
                 product.setId(r.getUuid());
-                product.setType(DataFormat.RASTER);
+                product.setFormatType(DataFormat.RASTER);
                 product.setSensorType(SensorType.OPTICAL);
                 product.setPixelType(PixelType.UINT16);
                 product.setWidth(-1);
@@ -39,7 +38,7 @@ public class SciHubJsonResponseHandler implements JSonResponseHandler<EOProduct>
                 for (List<Double> doubleList : r.getFootprint().get(0)) {
                     footprint.append(doubleList.get(0), doubleList.get(1));
                 }
-                product.setGeometry(new GeometryAdapter().marshal(footprint.toWKT()));
+                product.setGeometry(footprint.toWKT());
                 product.setProductType(r.getProductType());
                 product.setLocation(downloader.getProductUrl(product));
                 r.getIndexes().forEach(i -> i.getChildren().forEach(c -> {

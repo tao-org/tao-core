@@ -1,4 +1,4 @@
-package ro.cs.tao.eodata.serialization;
+package ro.cs.tao.serialization;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -11,17 +11,15 @@ import java.io.StringWriter;
  * @author kraftek
  * @date 3/2/2017
  */
-class JsonSerializer<T> extends BaseSerializer<T> {
+class XmlSerializer<T> extends BaseSerializer<T> {
 
-    JsonSerializer(Class<T> tClass) throws SerializationException {
+    XmlSerializer(Class<T> tClass) throws SerializationException {
         super(tClass);
     }
 
     public T deserialize(StreamSource source) throws SerializationException {
         try {
             Unmarshaller unmarshaller = this.context.createUnmarshaller();
-            unmarshaller.setProperty("eclipselink.media-type", "application/json");
-            unmarshaller.setProperty("eclipselink.json.include-root", false);
             JAXBElement<T> result = unmarshaller.unmarshal(source, this.tClass);
             return result.getValue();
         } catch (JAXBException e) {
@@ -32,9 +30,8 @@ class JsonSerializer<T> extends BaseSerializer<T> {
     public String serialize(T object) throws SerializationException {
         try {
             Marshaller marshaller = this.context.createMarshaller();
-            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-            marshaller.setProperty("eclipselink.media-type", "application/json");
-            marshaller.setProperty("eclipselink.json.include-root", false);
+            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
+            marshaller.setProperty(Marshaller.JAXB_FRAGMENT, Boolean.TRUE);
             StringWriter writer = new StringWriter();
             marshaller.marshal(object, writer);
             return writer.toString();

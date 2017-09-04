@@ -1,4 +1,4 @@
-package ro.cs.tao.eodata.serialization;
+package ro.cs.tao.serialization;
 
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.WKTReader;

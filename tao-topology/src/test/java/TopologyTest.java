@@ -27,7 +27,7 @@ public class TopologyTest {
         nodeInfo.setHostName("node01.testtorque.ro");
         nodeInfo.setUserName("sen2agri");
         nodeInfo.setUserPass("sen2agri");
-        nodeInfo.setNodeProcessorsCnt(2);
+        nodeInfo.setProcessorCount(2);
         TopologyManager.getInstance().addNode(nodeInfo);
     }
 }

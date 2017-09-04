@@ -2,10 +2,13 @@ package ro.cs.tao.component.validation;
 
 import ro.cs.tao.component.ParameterDescriptor;
 
+import javax.xml.bind.annotation.XmlRootElement;
+
 /**
  * @author Cosmin Cara
  */
-public class NotNullValidator implements Validator {
+@XmlRootElement
+public class NotNullValidator extends Validator {
 
     NotNullValidator() { }
 
@@ -15,7 +18,7 @@ public class NotNullValidator implements Validator {
             throw new ValidationException("Cannot validate a null reference");
         }
         if (parameter.isNotNull() && value == null) {
-            throw new ValidationException(String.format("Value for [%s] must be not null.", parameter.getName()));
+            throw new ValidationException(String.format("Value for [%s] must be not null.", parameter.getId()));
         }
     }
 }

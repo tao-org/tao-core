@@ -19,10 +19,13 @@
 
 package ro.cs.tao.eodata.enums;
 
+import javax.xml.bind.annotation.XmlEnum;
+
 /**
  * Created by kraftek on 2/27/2017.
  * Modified by oana on 7/14/2017
  */
+@XmlEnum
 public enum OrbitDirection {
     ASCENDING(1),
     DESCENDING(2);

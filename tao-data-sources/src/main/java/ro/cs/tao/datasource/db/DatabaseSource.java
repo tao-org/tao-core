@@ -19,8 +19,6 @@
 
 package ro.cs.tao.datasource.db;
 
-import org.apache.commons.lang.NotImplementedException;
-import ro.cs.tao.component.Identifiable;
 import ro.cs.tao.datasource.AbstractDataSource;
 import ro.cs.tao.datasource.QueryException;
 import ro.cs.tao.datasource.param.ParameterDescriptor;
@@ -79,8 +77,8 @@ public class DatabaseSource extends AbstractDataSource<DatabaseQuery> {
     public String defaultName() { return "NewDatabaseSource"; }
 
     @Override
-    public Identifiable copy() {
-        throw new NotImplementedException("This should not be called on this instance");
+    public DatabaseSource clone() throws CloneNotSupportedException {
+        return (DatabaseSource) super.clone();
     }
 
     @Override

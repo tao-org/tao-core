@@ -45,6 +45,9 @@ import ro.cs.tao.component.template.engine.EngineFactory;
 import ro.cs.tao.component.template.engine.TemplateEngine;
 import ro.cs.tao.component.validation.ValidationException;
 
+import javax.xml.bind.annotation.XmlElementWrapper;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +56,7 @@ import java.util.stream.Collectors;
 /**
  * @author Cosmin Cara
  */
+@XmlRootElement(name = "processingComponent")
 public class ProcessingComponent extends TaoComponent {
 
     private String fileLocation;
@@ -89,7 +93,7 @@ public class ProcessingComponent extends TaoComponent {
 
     public void setTemplate(Template template) throws TemplateException {
         if (template != null) {
-            if (!getTemplateType().equals(template.getType())) {
+            if (!getTemplateType().equals(template.getTemplateType())) {
                 throw new TemplateException("Incompatible template type");
             }
             this.template = template;
@@ -97,6 +101,7 @@ public class ProcessingComponent extends TaoComponent {
         }
     }
 
+    @XmlElementWrapper(name = "variables")
     public List<Variable> getVariables() {
         return variables;
     }
@@ -105,6 +110,7 @@ public class ProcessingComponent extends TaoComponent {
         this.variables = variables;
     }
 
+    @XmlElementWrapper(name = "parameters")
     public List<ParameterDescriptor> getParameterDescriptors() {
         if (this.parameters == null) {
             this.parameters = new ArrayList<>();
@@ -116,6 +122,7 @@ public class ProcessingComponent extends TaoComponent {
         this.parameters = parameters;
     }
 
+    @XmlTransient
     public TemplateType getTemplateType() {
         return templateType != null ? templateType : TemplateType.VELOCITY;
     }
@@ -135,10 +142,10 @@ public class ProcessingComponent extends TaoComponent {
         if (parameterValues != null) {
             final List<ParameterDescriptor> parameterDescriptors =
                     getParameterDescriptors().stream()
-                            .filter(d -> parameterValues.containsKey(d.getName()))
+                            .filter(d -> parameterValues.containsKey(d.getId()))
                             .collect(Collectors.toList());
             for (ParameterDescriptor descriptor : parameterDescriptors) {
-                descriptor.validate(parameterValues.get(descriptor.getName()));
+                descriptor.validate(parameterValues.get(descriptor.getId()));
             }
         }
     }
@@ -149,9 +156,8 @@ public class ProcessingComponent extends TaoComponent {
     }
 
     @Override
-    public ProcessingComponent copy() {
-        ProcessingComponent newDescriptor = new ProcessingComponent();
-        copyTo(newDescriptor);
+    public ProcessingComponent clone() throws CloneNotSupportedException {
+        ProcessingComponent newDescriptor = (ProcessingComponent) super.clone();
         newDescriptor.fileLocation = this.fileLocation;
         newDescriptor.workingDirectory = this.workingDirectory;
         newDescriptor.templateType = this.templateType;
@@ -159,14 +165,16 @@ public class ProcessingComponent extends TaoComponent {
             newDescriptor.template = this.template.copy();
         }
         if (this.variables != null) {
-            newDescriptor.variables = this.variables.stream().map(Variable::copy).collect(Collectors.toList());
+            newDescriptor.variables = new ArrayList<>();
+            for (Variable var : this.variables) {
+                newDescriptor.variables.add(var.clone());
+            }
         }
         if (this.parameters != null) {
-            newDescriptor.parameters = this.parameters.stream().map(p -> {
-                ParameterDescriptor parameter = p.copy();
-                parameter.setName(p.getName());
-                return p;
-            }).collect(Collectors.toList());
+            newDescriptor.parameters = new ArrayList<>();
+            for (ParameterDescriptor p : this.parameters) {
+                newDescriptor.parameters.add(p.clone());
+            }
         }
         return newDescriptor;
     }

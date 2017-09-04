@@ -19,9 +19,12 @@
 
 package ro.cs.tao.component.constraints;
 
+import javax.xml.bind.annotation.XmlTransient;
+
 /**
  * @author Cosmin Cara
  */
-public interface Constraint<T> {
-    boolean check(T... args);
+@XmlTransient
+public abstract class Constraint<T> {
+    public abstract boolean check(T... args);
 }

@@ -38,7 +38,6 @@
 
 package ro.cs.tao.datasource.remote;
 
-import org.apache.commons.lang.NotImplementedException;
 import ro.cs.tao.datasource.AbstractDataSource;
 import ro.cs.tao.datasource.DataQuery;
 
@@ -96,9 +95,4 @@ public abstract class URLDataSource<Q extends DataQuery>
 
     @Override
     public String defaultName() { return "NewURLDataSource"; }
-
-    @Override
-    public URLDataSource<Q> copy() {
-        throw new NotImplementedException("This should not be called on this instance");
-    }
 }

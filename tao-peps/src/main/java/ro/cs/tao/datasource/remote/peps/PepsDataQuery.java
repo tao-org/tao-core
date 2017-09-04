@@ -5,7 +5,6 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
-import ro.cs.tao.component.Identifiable;
 import ro.cs.tao.datasource.DataQuery;
 import ro.cs.tao.datasource.DataSource;
 import ro.cs.tao.datasource.QueryException;
@@ -128,8 +127,4 @@ public class PepsDataQuery extends DataQuery {
         return "PepsQuery";
     }
 
-    @Override
-    public Identifiable copy() {
-        return null;
-    }
 }

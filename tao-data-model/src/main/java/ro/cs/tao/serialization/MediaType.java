@@ -1,4 +1,4 @@
-package ro.cs.tao.eodata.serialization;
+package ro.cs.tao.serialization;
 
 /**
  * Created by kraftek on 2/28/2017.

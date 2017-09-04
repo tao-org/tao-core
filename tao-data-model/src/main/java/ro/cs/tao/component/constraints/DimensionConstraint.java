@@ -21,12 +21,14 @@ package ro.cs.tao.component.constraints;
 
 import ro.cs.tao.eodata.EOProduct;
 
+import javax.xml.bind.annotation.XmlRootElement;
 import java.util.Arrays;
 
 /**
  * @author Cosmin Cara
  */
-public class DimensionConstraint implements Constraint<EOProduct> {
+@XmlRootElement
+public class DimensionConstraint extends Constraint<EOProduct> {
     @Override
     public boolean check(EOProduct... args) {
         return args != null && args.length > 0 &&

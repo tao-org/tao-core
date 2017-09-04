@@ -1,7 +1,5 @@
 package ro.cs.tao.datasource.remote.aws;
 
-import org.geotools.referencing.CRS;
-import ro.cs.tao.component.Identifiable;
 import ro.cs.tao.datasource.DataQuery;
 import ro.cs.tao.datasource.DataSource;
 import ro.cs.tao.datasource.QueryException;
@@ -16,7 +14,6 @@ import ro.cs.tao.eodata.Polygon2D;
 import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.eodata.enums.PixelType;
 import ro.cs.tao.eodata.enums.SensorType;
-import ro.cs.tao.eodata.serialization.GeometryAdapter;
 
 import javax.json.Json;
 import javax.json.JsonArray;
@@ -196,7 +193,7 @@ class Sentinel2Query extends DataQuery {
         try (InputStream inputStream = new URI(jsonUrl).toURL().openStream()) {
             reader = Json.createReader(inputStream);
             JsonObject obj = reader.readObject();
-            product.setType(DataFormat.RASTER);
+            product.setFormatType(DataFormat.RASTER);
             product.setSensorType(SensorType.OPTICAL);
             product.setPixelType(PixelType.UINT16);
             product.setName(obj.getString("name"));
@@ -224,10 +221,10 @@ class Sentinel2Query extends DataQuery {
             double clouds = obj.getJsonNumber("cloudyPixelPercentage").doubleValue();
             product.addAttribute("cloudcoverpercentage", String.valueOf(clouds));
             try {
-                product.setCrs(CRS.decode(obj.getJsonObject("tileGeometry")
+                product.setCrs(obj.getJsonObject("tileGeometry")
                                 .getJsonObject("crs")
                                 .getJsonObject("properties")
-                                .getString("name")));
+                                .getString("name"));
                 JsonArray coords = obj.getJsonObject("tileGeometry").getJsonArray("coordinates").getJsonArray(0);
                 Polygon2D polygon2D = new Polygon2D();
                 polygon2D.append(coords.getJsonArray(0).getInt(1),
@@ -240,7 +237,7 @@ class Sentinel2Query extends DataQuery {
                                  coords.getJsonArray(3).getInt(0));
                 polygon2D.append(coords.getJsonArray(4).getInt(1),
                                  coords.getJsonArray(4).getInt(0));
-                product.setGeometry(new GeometryAdapter().marshal(polygon2D.toWKT()));
+                product.setGeometry(polygon2D.toWKT());
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -257,8 +254,4 @@ class Sentinel2Query extends DataQuery {
         return "Sentinel2AWSQuery";
     }
 
-    @Override
-    public Identifiable copy() {
-        return null;
-    }
 }

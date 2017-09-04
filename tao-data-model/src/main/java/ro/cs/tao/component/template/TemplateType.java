@@ -19,21 +19,28 @@
 
 package ro.cs.tao.component.template;
 
+import javax.xml.bind.annotation.XmlEnum;
+import javax.xml.bind.annotation.XmlEnumValue;
+
 /**
  * @author Cosmin Cara
  */
+@XmlEnum(Integer.class)
 public enum TemplateType {
     /**
      * Apache Velocity template
      */
+    @XmlEnumValue("1")
     VELOCITY(1),
     /**
      * Javascript template
      */
+    @XmlEnumValue("2")
     JAVASCRIPT(2),
     /**
      * XSLT template
      */
+    @XmlEnumValue("3")
     XSLT(3);
 
     /**
@@ -67,7 +74,7 @@ public enum TemplateType {
         {
             if ((String.valueOf(value)).equals(type.toString()))
             {
-                // return the name of the enum constant having the given value
+                // return the id of the enum constant having the given value
                 return type.name();
             }
         }

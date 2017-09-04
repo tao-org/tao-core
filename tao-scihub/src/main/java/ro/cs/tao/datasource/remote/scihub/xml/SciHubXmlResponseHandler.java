@@ -42,8 +42,7 @@ import org.xml.sax.Attributes;
 import ro.cs.tao.datasource.remote.result.xml.XmlResponseHandler;
 import ro.cs.tao.eodata.enums.PixelType;
 import ro.cs.tao.eodata.enums.SensorType;
-import ro.cs.tao.eodata.serialization.DateAdapter;
-import ro.cs.tao.eodata.serialization.GeometryAdapter;
+import ro.cs.tao.serialization.DateAdapter;
 
 import java.net.URISyntaxException;
 
@@ -97,7 +96,7 @@ public class SciHubXmlResponseHandler extends XmlResponseHandler {
                             this.current.setName(elementValue);
                             break;
                         case "footprint":
-                            this.current.setGeometry(new GeometryAdapter().marshal(elementValue));
+                            this.current.setGeometry(elementValue);
                             break;
                         default:
                             this.current.addAttribute(this.identifiedElement, elementValue);
