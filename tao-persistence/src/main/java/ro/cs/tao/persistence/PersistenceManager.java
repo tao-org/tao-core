@@ -10,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.datasource.AbstractDataSource;
 import ro.cs.tao.datasource.DataQuery;
-import ro.cs.tao.eodata.Attribute;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.persistence.data.DataProduct;
 import ro.cs.tao.persistence.data.DataSourceType;
