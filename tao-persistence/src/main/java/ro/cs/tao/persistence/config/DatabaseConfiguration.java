@@ -193,8 +193,8 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
 	}
 
 	/**
-	 * Transaction Manager
-	 * @return
+	 * Transaction Manager retrieval
+	 * @return transaction manager
 	 * @throws ClassNotFoundException
 	 */
 	@Bean
@@ -208,7 +208,7 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
 	}
 
 	@Bean
-	public LocalContainerEntityManagerFactoryBean entityManagerFactory() throws ClassNotFoundException {
+	public LocalContainerEntityManagerFactoryBean entityManagerFactory() {
 
 		final LocalContainerEntityManagerFactoryBean entityManagerFactoryBean = new LocalContainerEntityManagerFactoryBean();
 		entityManagerFactoryBean.setDataSource(dataSource());
