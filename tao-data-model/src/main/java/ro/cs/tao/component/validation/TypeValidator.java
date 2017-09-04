@@ -2,10 +2,13 @@ package ro.cs.tao.component.validation;
 
 import ro.cs.tao.component.ParameterDescriptor;
 
+import javax.xml.bind.annotation.XmlRootElement;
+
 /**
  * @author Cosmin Cara
  */
-public class TypeValidator implements Validator {
+@XmlRootElement
+public class TypeValidator extends Validator {
 
     TypeValidator() { }
 
@@ -17,7 +20,7 @@ public class TypeValidator implements Validator {
         final Class<?> dataType = parameter.getDataType();
         if (!isAssignableFrom(dataType, value)) {
             throw new ValidationException(String.format("Value for [%s] must be of type %s",
-                                                        parameter.getName(),
+                                                        parameter.getId(),
                                                         dataType.getSimpleName()));
         }
     }

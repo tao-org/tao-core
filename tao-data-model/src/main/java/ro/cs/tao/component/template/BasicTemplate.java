@@ -21,10 +21,13 @@ package ro.cs.tao.component.template;
 
 import ro.cs.tao.component.template.engine.TemplateEngine;
 
+import javax.xml.bind.annotation.XmlRootElement;
+
 /**
  * @author Cosmin Cara
  */
-public class BasicTemplate implements Template {
+@XmlRootElement
+public class BasicTemplate extends Template {
     private static final String DEFAULT_NAME = "Command Template";
 
     private String name;
@@ -77,6 +80,10 @@ public class BasicTemplate implements Template {
         return this.contents;
     }
 
+    public void setContents(String text) throws TemplateException {
+        setContents(text, false);
+    }
+
     @Override
     public void setContents(String text, boolean shouldParse) throws TemplateException {
         if (text == null) {
@@ -90,12 +97,12 @@ public class BasicTemplate implements Template {
     }
 
     @Override
-    public TemplateType getType() {
+    public TemplateType getTemplateType() {
         return this.templateType;
     }
 
     @Override
-    public void setType(TemplateType value) {
+    public void setTemplateType(TemplateType value) {
         this.templateType = value;
         this.engine = null;
     }

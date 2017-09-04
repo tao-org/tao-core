@@ -45,12 +45,8 @@ import ro.cs.tao.component.validation.ValidationException;
 import ro.cs.tao.component.validation.Validator;
 import ro.cs.tao.component.validation.ValidatorRegistry;
 import ro.cs.tao.component.validation.ValueSetValidator;
-import ro.cs.tao.serialization.StringArrayAdapter;
 
-import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -69,16 +65,15 @@ public class ParameterDescriptor extends Identifiable {
     private String[] valueSet;
     private String format;
     private Boolean notNull;
-    @XmlElement(name = "customValidator")
     private Validator customValidator;
     private Validator validator;
 
     public ParameterDescriptor() { super(); }
 
-    private ParameterDescriptor(String name, ParameterType type, Class<?> dataType, String defaultValue,
+    private ParameterDescriptor(String id, ParameterType type, Class<?> dataType, String defaultValue,
                                 String description, String label, String unit, String[] valueSet,
                                 String format, Boolean notNull) {
-        super(name);
+        super(id);
         this.type = type;
         this.dataType = dataType;
         this.defaultValue = defaultValue;
@@ -90,8 +85,8 @@ public class ParameterDescriptor extends Identifiable {
         this.notNull = notNull;
     }
 
-    public ParameterDescriptor(String name) {
-        super(name);
+    public ParameterDescriptor(String id) {
+        super(id);
     }
 
     public ParameterType getType() {
@@ -142,7 +137,7 @@ public class ParameterDescriptor extends Identifiable {
         this.unit = unit;
     }
 
-    @XmlJavaTypeAdapter(StringArrayAdapter.class)
+    //@XmlJavaTypeAdapter(StringArrayAdapter.class)
     public String[] getValueSet() {
         return valueSet;
     }
@@ -167,7 +162,8 @@ public class ParameterDescriptor extends Identifiable {
         this.notNull = notNull;
     }
 
-    @XmlTransient
+    public Validator getValidator() { return customValidator; }
+
     public void setValidator(Validator customValidator) { this.customValidator = customValidator; }
 
     public void validate(Object value) throws ValidationException {
@@ -182,7 +178,7 @@ public class ParameterDescriptor extends Identifiable {
     @Override
     public ParameterDescriptor clone() throws CloneNotSupportedException {
         ParameterDescriptor clone = (ParameterDescriptor) super.clone();
-        clone.name = defaultName();
+        clone.id = defaultName();
         clone.valueSet = Arrays.copyOf(this.valueSet, this.valueSet.length);
         return clone;
     }

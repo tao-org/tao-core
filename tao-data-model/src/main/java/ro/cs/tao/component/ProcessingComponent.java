@@ -93,7 +93,7 @@ public class ProcessingComponent extends TaoComponent {
 
     public void setTemplate(Template template) throws TemplateException {
         if (template != null) {
-            if (!getTemplateType().equals(template.getType())) {
+            if (!getTemplateType().equals(template.getTemplateType())) {
                 throw new TemplateException("Incompatible template type");
             }
             this.template = template;
@@ -142,10 +142,10 @@ public class ProcessingComponent extends TaoComponent {
         if (parameterValues != null) {
             final List<ParameterDescriptor> parameterDescriptors =
                     getParameterDescriptors().stream()
-                            .filter(d -> parameterValues.containsKey(d.getName()))
+                            .filter(d -> parameterValues.containsKey(d.getId()))
                             .collect(Collectors.toList());
             for (ParameterDescriptor descriptor : parameterDescriptors) {
-                descriptor.validate(parameterValues.get(descriptor.getName()));
+                descriptor.validate(parameterValues.get(descriptor.getId()));
             }
         }
     }

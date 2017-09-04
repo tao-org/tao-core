@@ -17,7 +17,11 @@ import ro.cs.tao.persistence.data.DataSourceType;
 import ro.cs.tao.persistence.data.ExecutionNode;
 import ro.cs.tao.persistence.data.User;
 import ro.cs.tao.persistence.exception.PersistenceException;
-import ro.cs.tao.persistence.repository.*;
+import ro.cs.tao.persistence.repository.DataProductRepository;
+import ro.cs.tao.persistence.repository.DataSourceRepository;
+import ro.cs.tao.persistence.repository.DataSourceTypeRepository;
+import ro.cs.tao.persistence.repository.ExecutionNodeRepository;
+import ro.cs.tao.persistence.repository.ProcessingComponentRepository;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -157,7 +161,7 @@ public class PersistenceManager {
     {
         // check method parameters
         if(dataProduct == null ||
-          dataProduct.getName() == null || dataProduct.getGeometry() == null || dataProduct.getType() == null ||
+          dataProduct.getName() == null || dataProduct.getGeometry() == null || dataProduct.getProductType() == null ||
           dataProduct.getLocation() == null || dataProduct.getSensorType() == null || dataProduct.getPixelType() == null)
         {
             throw new PersistenceException("Invalid parameters were provided for adding new data product!");
@@ -167,11 +171,11 @@ public class PersistenceManager {
         // set all info
         dataProductEnt.setIdentifier(dataProduct.getId());
         dataProductEnt.setName(dataProduct.getName());
-        dataProductEnt.setDataFormat(Integer.parseInt(dataProduct.getType().toString()));
-        dataProductEnt.setGeometry(dataProduct.getGeometry());
+        dataProductEnt.setDataFormat(Integer.parseInt(dataProduct.getProductType()));
+        dataProductEnt.setGeometry(dataProduct.getPolygon());
         if(dataProduct.getCrs() != null)
         {
-            dataProductEnt.setCoordinateReferenceSystem(dataProduct.getCrs().toString());
+            dataProductEnt.setCoordinateReferenceSystem(dataProduct.getCrs());
         }
         dataProductEnt.setLocation(dataProduct.getLocation().toString());
         dataProductEnt.setSensorType(Integer.parseInt(dataProduct.getSensorType().toString()));
@@ -192,7 +196,7 @@ public class PersistenceManager {
         // attributs
         if(dataProduct.getAttributes() != null && dataProduct.getAttributes().length > 0)
         {
-            dataProductEnt.setAttributes(Arrays.stream(dataProduct.getAttributes()).collect(Collectors.toMap(a -> a.getName(), a -> a.getValue())));
+            dataProductEnt.setAttributes(Arrays.stream(dataProduct.getAttributes()).collect(Collectors.toMap(Attribute::getName, Attribute::getValue)));
         }
 
         dataProductEnt.setCreatedDate(LocalDateTime.now());
@@ -258,7 +262,7 @@ public class PersistenceManager {
     {
         // check method parameters
         if(processingComponent == null ||
-          processingComponent.getName() == null || processingComponent.getLabel() == null ||
+          processingComponent.getId() == null || processingComponent.getLabel() == null ||
           processingComponent.getVersion() == null || processingComponent.getDescription() == null ||
           processingComponent.getCopyright() == null || processingComponent.getFileLocation() == null ||
           processingComponent.getWorkingDirectory() == null || processingComponent.getTemplateType() == null ||
@@ -270,7 +274,7 @@ public class PersistenceManager {
         // create new entity
         ro.cs.tao.persistence.data.ProcessingComponent processingComponentEnt = new ro.cs.tao.persistence.data.ProcessingComponent();
         // set all info
-        processingComponentEnt.setName(processingComponent.getName());
+        processingComponentEnt.setName(processingComponent.getId());
 
         processingComponentEnt.setLabel(processingComponent.getLabel());
         processingComponentEnt.setVersion(processingComponent.getVersion());

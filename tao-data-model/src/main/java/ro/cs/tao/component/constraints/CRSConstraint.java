@@ -24,12 +24,14 @@ import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import ro.cs.tao.eodata.EOData;
 
+import javax.xml.bind.annotation.XmlRootElement;
 import java.util.Arrays;
 
 /**
  * @author Cosmin Cara
  */
-public class CRSConstraint implements Constraint<EOData> {
+@XmlRootElement
+public class CRSConstraint extends Constraint<EOData> {
     @Override
     public boolean check(EOData... args) {
         return args != null && args.length > 0 &&

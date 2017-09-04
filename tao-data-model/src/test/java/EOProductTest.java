@@ -19,7 +19,7 @@ public class EOProductTest extends BaseSerializationTest<EOProduct> {
                 "      \"crs\" : \"EPSG:4326\",\n" +
                 "      \"geometry\" : \"POLYGON ((0 0, 1 1, 2 2, 3 3, 0 0))\",\n" +
                 "      \"id\" : \"1234567890\",\n" +
-                "      \"name\" : \"Product\",\n" +
+                "      \"id\" : \"Product\",\n" +
                 "      \"formatType\" : \"1\",\n" +
                 "      \"acquisitionDate\" : \"2017-09-01T18:33:47+03:00\",\n" +
                 "      \"height\" : 1024,\n" +
@@ -37,7 +37,7 @@ public class EOProductTest extends BaseSerializationTest<EOProduct> {
                 "    <crs>EPSG:4326</crs>\n" +
                 "    <geometry>POLYGON ((0 0, 1 1, 2 2, 3 3, 0 0))</geometry>\n" +
                 "    <id>1234567890</id>\n" +
-                "    <name>Product</name>\n" +
+                "    <id>Product</id>\n" +
                 "    <formatType>1</formatType>\n" +
                 "    <acquisitionDate>2017-09-01T18:33:47+03:00</acquisitionDate>\n" +
                 "    <height>1024</height>\n" +
@@ -45,6 +45,12 @@ public class EOProductTest extends BaseSerializationTest<EOProduct> {
                 "    <productType>Satellite-5</productType>\n" +
                 "    <sensorType>0</sensorType>\n" +
                 "    <width>1024</width>\n" +
+                "    <attributes>\n" +
+                "        <attribute>\n" +
+                "            <id>attributeX</id>\n" +
+                "            <value>valueX</value>\n" +
+                "        </attribute>\n" +
+                "    </attributes>\n" +
                 "</eoData>";
     }
 
@@ -65,6 +71,8 @@ public class EOProductTest extends BaseSerializationTest<EOProduct> {
             setWidth(1024);
             setId("1234567890");
             setSensorType(SensorType.OPTICAL);
+            addAttribute("attribute1", "value1");
+            addAttribute("attribute2", "value2");
         }};
     }
 

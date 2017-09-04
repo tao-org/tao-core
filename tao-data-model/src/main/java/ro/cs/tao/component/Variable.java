@@ -52,7 +52,7 @@ public class Variable extends Identifiable {
     }
 
     public Variable(String key, String value) {
-        this.name = key;
+        this.id = key;
         this.value = value;
     }
 
@@ -74,7 +74,7 @@ public class Variable extends Identifiable {
     @SuppressWarnings("MethodDoesntCallSuperMethod")
     @Override
     protected Variable clone() throws CloneNotSupportedException {
-        return new Variable(this.name, this.value);
+        return new Variable(this.id, this.value);
     }
 
 }

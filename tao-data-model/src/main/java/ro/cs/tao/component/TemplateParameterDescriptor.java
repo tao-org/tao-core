@@ -47,8 +47,8 @@ public class TemplateParameterDescriptor extends ParameterDescriptor {
         super();
     }
 
-    public TemplateParameterDescriptor(String name, List<ParameterDescriptor> parameters, Template template, TemplateEngine templateEngine) {
-        super(name);
+    public TemplateParameterDescriptor(String identifier, List<ParameterDescriptor> parameters, Template template, TemplateEngine templateEngine) {
+        super(identifier);
         this.parameters = parameters;
         this.template = template;
         this.templateEngine = templateEngine;
@@ -119,8 +119,8 @@ public class TemplateParameterDescriptor extends ParameterDescriptor {
             params = new HashMap<>();
         }
         for (ParameterDescriptor parameter : this.parameters) {
-            if (!params.containsKey(parameter.getName())) {
-                params.put(parameter.getName(), parameter.getDefaultValue());
+            if (!params.containsKey(parameter.getId())) {
+                params.put(parameter.getId(), parameter.getDefaultValue());
             }
         }
         return this.templateEngine.transform(this.template, params);
@@ -139,7 +139,7 @@ public class TemplateParameterDescriptor extends ParameterDescriptor {
                 ParameterDescriptor copy = null;
                 try {
                     copy = p.clone();
-                    copy.setName(p.getName());
+                    copy.setId(p.getId());
                 } catch (CloneNotSupportedException ignored) {}
                 return copy;
             }).collect(Collectors.toList());

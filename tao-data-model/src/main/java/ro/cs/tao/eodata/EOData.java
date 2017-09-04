@@ -45,6 +45,7 @@ import ro.cs.tao.serialization.CRSAdapter;
 import ro.cs.tao.serialization.GeometryAdapter;
 
 import javax.xml.bind.annotation.XmlElementWrapper;
+import javax.xml.bind.annotation.XmlTransient;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
@@ -89,6 +90,11 @@ public abstract class EOData {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    @XmlTransient
+    public Geometry getPolygon() {
+        return this.geometry;
     }
 
     public void setGeometry(String geometryAsText) {

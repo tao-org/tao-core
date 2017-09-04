@@ -41,8 +41,8 @@ public class SourceDescriptor extends Identifiable {
         this(DEFAULT_NAME);
     }
 
-    public SourceDescriptor(String name) {
-        super(name);
+    public SourceDescriptor(String identifier) {
+        super(identifier);
         this.constraints = new ArrayList<>();
     }
 
@@ -54,7 +54,6 @@ public class SourceDescriptor extends Identifiable {
         return data;
     }
 
-    @XmlTransient
     public void setData(EOData data) {
         this.data = data;
     }
