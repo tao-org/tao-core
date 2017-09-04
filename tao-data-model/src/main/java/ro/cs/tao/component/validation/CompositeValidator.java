@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * @author Cosmin Cara
  */
-public class CompositeValidator implements Validator {
+public class CompositeValidator extends Validator {
     private List<Validator> internalValidators;
 
     public CompositeValidator(List<Validator> validators) {

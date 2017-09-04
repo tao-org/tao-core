@@ -41,8 +41,8 @@ public class TargetDescriptor extends Identifiable {
         this(DEFAULT_NAME);
     }
 
-    public TargetDescriptor(String name) {
-        super(name);
+    public TargetDescriptor(String identifier) {
+        super(identifier);
         this.constraints = new ArrayList<>();
     }
 
@@ -54,7 +54,6 @@ public class TargetDescriptor extends Identifiable {
         return data;
     }
 
-    @XmlTransient
     public void setData(EOData data) {
         this.data = data;
     }
