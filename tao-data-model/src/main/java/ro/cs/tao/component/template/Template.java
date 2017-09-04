@@ -22,32 +22,35 @@ package ro.cs.tao.component.template;
 
 import ro.cs.tao.component.template.engine.TemplateEngine;
 
+import javax.xml.bind.annotation.XmlTransient;
+
 /**
  * @author Cosmin Cara
  */
-public interface Template {
+@XmlTransient
+public abstract class Template {
 
     /**
-     * Returns the name (identifier) of the template
+     * Returns the id (identifier) of the template
      */
-    String getName();
+    public abstract String getName();
 
     /**
-     * Sets the name (identifier) of the template
+     * Sets the id (identifier) of the template
      */
-    void setName(String value);
+    public abstract void setName(String value);
 
     /**
      * Associates this template with an instance of a template engine
      * @param engine    The template engine to associate with
      * @throws TemplateException    If the engine doesn't support the type of this template
      */
-    void associateWith(TemplateEngine engine) throws TemplateException;
+    public abstract void associateWith(TemplateEngine engine) throws TemplateException;
 
     /**
      * Returns the contents of the template as text
      */
-    String getContents();
+    public abstract String getContents();
 
     /**
      * Sets the contents of this template
@@ -55,25 +58,25 @@ public interface Template {
      * @param shouldParse   If <code>true</code>, the contents will be first parsed before assignment
      * @throws TemplateException    If the contents contain syntax errors.
      */
-    void setContents(String text, boolean shouldParse) throws TemplateException;
+    public abstract void setContents(String text, boolean shouldParse) throws TemplateException;
 
     /**
      * Returns the type of this template.
      */
-    TemplateType getType();
+    public abstract TemplateType getTemplateType();
 
     /**
      * Sets the type of this template.
      */
-    void setType(TemplateType value);
+    public abstract void setTemplateType(TemplateType value);
 
     /**
      * Produces a copy of this template.
      */
-    Template copy();
+    public abstract Template copy();
 
     /**
      * Persists this template.
      */
-    void save();
+    public abstract void save();
 }

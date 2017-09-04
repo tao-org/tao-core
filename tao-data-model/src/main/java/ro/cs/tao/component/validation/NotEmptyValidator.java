@@ -2,10 +2,13 @@ package ro.cs.tao.component.validation;
 
 import ro.cs.tao.component.ParameterDescriptor;
 
+import javax.xml.bind.annotation.XmlRootElement;
+
 /**
  * @author Cosmin Cara
  */
-public class NotEmptyValidator implements Validator {
+@XmlRootElement
+public class NotEmptyValidator extends Validator {
 
     NotEmptyValidator() { }
 
@@ -15,7 +18,7 @@ public class NotEmptyValidator implements Validator {
             throw new ValidationException("Cannot validate a null reference");
         }
         if (value.toString().trim().isEmpty()) {
-            throw new ValidationException(String.format("Value for [%s] must not be empty.", parameter.getName()));
+            throw new ValidationException(String.format("Value for [%s] must not be empty.", parameter.getId()));
         }
     }
 }

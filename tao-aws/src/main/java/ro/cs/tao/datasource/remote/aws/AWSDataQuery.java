@@ -1,6 +1,5 @@
 package ro.cs.tao.datasource.remote.aws;
 
-import ro.cs.tao.component.Identifiable;
 import ro.cs.tao.datasource.DataQuery;
 import ro.cs.tao.datasource.DataSource;
 import ro.cs.tao.datasource.QueryException;
@@ -16,7 +15,7 @@ import java.util.Map;
  * @author Cosmin Cara
  */
 public class AWSDataQuery extends DataQuery {
-    private final DataQuery innerQuery;
+    private DataQuery innerQuery;
 
     AWSDataQuery(DataSource source, String sensorName) {
         super(source, sensorName);
@@ -129,7 +128,9 @@ public class AWSDataQuery extends DataQuery {
     }
 
     @Override
-    public Identifiable copy() {
-        return null;
+    public AWSDataQuery clone() throws CloneNotSupportedException {
+        AWSDataQuery query = (AWSDataQuery) super.clone();
+        query.innerQuery = this.innerQuery.clone();
+        return query;
     }
 }

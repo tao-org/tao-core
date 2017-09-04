@@ -24,6 +24,9 @@ import ro.cs.tao.component.template.Template;
 import ro.cs.tao.component.template.TemplateException;
 import ro.cs.tao.component.template.engine.TemplateEngine;
 
+import javax.xml.bind.annotation.XmlElementWrapper;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -34,6 +37,7 @@ import java.util.stream.Collectors;
 /**
  * @author Cosmin Cara
  */
+@XmlRootElement(name = "templateParameter")
 public class TemplateParameterDescriptor extends ParameterDescriptor {
     private List<ParameterDescriptor> parameters;
     private Template template;
@@ -43,13 +47,14 @@ public class TemplateParameterDescriptor extends ParameterDescriptor {
         super();
     }
 
-    public TemplateParameterDescriptor(String name, List<ParameterDescriptor> parameters, Template template, TemplateEngine templateEngine) {
-        super(name);
+    public TemplateParameterDescriptor(String identifier, List<ParameterDescriptor> parameters, Template template, TemplateEngine templateEngine) {
+        super(identifier);
         this.parameters = parameters;
         this.template = template;
         this.templateEngine = templateEngine;
     }
 
+    @XmlElementWrapper(name = "parameters")
     public ParameterDescriptor[] getParameters() {
         return parameters != null ?
                 parameters.toArray(new ParameterDescriptor[parameters.size()]) :
@@ -93,10 +98,12 @@ public class TemplateParameterDescriptor extends ParameterDescriptor {
         this.template.associateWith(this.templateEngine);
     }
 
+    @XmlTransient
     public TemplateEngine getTemplateEngine() {
         return templateEngine;
     }
 
+    @XmlTransient
     public void setTemplateEngine(TemplateEngine templateEngine) throws TemplateException {
         this.templateEngine = templateEngine;
         if (this.template != null) {
@@ -112,8 +119,8 @@ public class TemplateParameterDescriptor extends ParameterDescriptor {
             params = new HashMap<>();
         }
         for (ParameterDescriptor parameter : this.parameters) {
-            if (!params.containsKey(parameter.getName())) {
-                params.put(parameter.getName(), parameter.getDefaultValue());
+            if (!params.containsKey(parameter.getId())) {
+                params.put(parameter.getId(), parameter.getDefaultValue());
             }
         }
         return this.templateEngine.transform(this.template, params);
@@ -125,12 +132,15 @@ public class TemplateParameterDescriptor extends ParameterDescriptor {
     }
 
     @Override
-    public ParameterDescriptor copy() {
-        TemplateParameterDescriptor newParameter = new TemplateParameterDescriptor();
+    public ParameterDescriptor clone() throws CloneNotSupportedException {
+        TemplateParameterDescriptor newParameter = (TemplateParameterDescriptor) super.clone();
         if (this.parameters != null) {
             newParameter.parameters = this.parameters.stream().map(p -> {
-                ParameterDescriptor copy = p.copy();
-                copy.setName(p.getName());
+                ParameterDescriptor copy = null;
+                try {
+                    copy = p.clone();
+                    copy.setId(p.getId());
+                } catch (CloneNotSupportedException ignored) {}
                 return copy;
             }).collect(Collectors.toList());
         }
