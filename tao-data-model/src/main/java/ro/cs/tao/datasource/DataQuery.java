@@ -164,6 +164,10 @@ public abstract class DataQuery extends Identifiable {
                     String.format("Wrong type for parameter [%s]: expected %s, found %s",
                                   name, descriptor.getType().getSimpleName(), type.getSimpleName()));
         }
+        if (this.parameters.containsKey(name)) {
+            throw new QueryException(
+                    String.format("Parameter [%s] already exists", name));
+        }
     }
 
     protected abstract List<EOProduct> executeImpl();
