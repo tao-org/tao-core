@@ -38,6 +38,7 @@
 
 package ro.cs.tao.eodata;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.vividsolutions.jts.geom.Geometry;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import ro.cs.tao.eodata.enums.DataFormat;
@@ -93,6 +94,7 @@ public abstract class EOData {
     }
 
     @XmlTransient
+    @JsonIgnore
     public Geometry getPolygon() {
         return this.geometry;
     }

@@ -51,9 +51,13 @@ class Sentinel2Query extends DataQuery {
     @Override
     protected List<EOProduct> executeImpl() throws QueryException {
         QueryParameter currentParameter = this.parameters.get("platformName");
-        if (currentParameter == null ||
-                !"S2".equals(currentParameter.getValueAsString())) {
-            throw new QueryException("Wrong [platformName] parameter");
+        if (currentParameter == null) {
+            currentParameter = createParameter("platformName", String.class, "Sentinel-2");
+            this.parameters.put("platformName", currentParameter);
+        } else {
+            if (!"Sentinel-2".equals(currentParameter.getValueAsString())) {
+                throw new QueryException("Wrong [platformName] parameter");
+            }
         }
         Map<String, EOProduct> results = new LinkedHashMap<>();
         try {
@@ -155,6 +159,7 @@ class Sentinel2Query extends DataQuery {
                                                             DownloadStrategy.URL_SEPARATOR + "tileInfo.json";
                                                     jsonTile = jsonTile.replace(S2_SEARCH_URL_SUFFIX, "");
                                                     EOProduct product = new EOProduct();
+                                                    product.setProductType("Sentinel-2");
                                                     double clouds = getTileCloudPercentage(jsonTile, product);
                                                     if (clouds > cloudFilter) {
                                                         Calendar instance = new Calendar.Builder().setDate(year, month - 1, day).build();

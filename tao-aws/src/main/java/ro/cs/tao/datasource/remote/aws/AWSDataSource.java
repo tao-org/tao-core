@@ -55,6 +55,11 @@ public class AWSDataSource extends URLDataSource<AWSDataQuery> {
     }
 
     @Override
+    public void setCredentials(String username, String password) {
+        // no-op
+    }
+
+    @Override
     public String defaultName() { return "Amazon Web Services"; }
 
     @Override
