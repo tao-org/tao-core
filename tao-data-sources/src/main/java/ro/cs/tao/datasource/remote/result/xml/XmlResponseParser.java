@@ -16,18 +16,18 @@ import java.util.List;
 /**
  * @author Cosmin Cara
  */
-public class XmlResponseParser implements ResponseParser {
+public class XmlResponseParser<T extends EOData> implements ResponseParser<T> {
 
     private XmlResponseHandler handler;
 
     public void setHandler(XmlResponseHandler handler) { this.handler = handler; }
 
     @Override
-    public List<EOData> parse(String content) throws ParseException {
+    public List<T> parse(String content) throws ParseException {
         if (this.handler == null) {
             throw new ParseException("Handler not defined");
         }
-        List<EOData> result;
+        List<T> result;
         InputSource inputSource = new InputSource(new StringReader(content));
         SAXParserFactory factory = SAXParserFactory.newInstance();
         try {

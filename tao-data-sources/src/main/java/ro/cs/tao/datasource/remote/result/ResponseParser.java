@@ -7,8 +7,10 @@ import java.util.List;
 /**
  * @author Cosmin Cara
  */
-public interface ResponseParser {
+public interface ResponseParser<T extends EOData> {
 
-    List<EOData> parse(String content) throws ParseException;
+    List<T> parse(String content) throws ParseException;
+
+    default String[] getExcludedAttributes() { return null; }
 
 }
