@@ -116,6 +116,8 @@ public abstract class EOData {
         if (attributes != null) {
             if (this.attributes == null) {
                 this.attributes = new HashMap<>();
+            } else {
+                this.attributes.clear();
             }
             for (Attribute attribute : attributes) {
                 this.attributes.put(attribute.getName(), attribute);
@@ -129,9 +131,15 @@ public abstract class EOData {
         if (this.attributes == null) {
             this.attributes = new HashMap<>();
         }
+        if (value != null) {
+            if (value.startsWith("\"") && value.endsWith("\"")) {
+                value = value.substring(1, value.length() - 1);
+            }
+        }
+        final String val = value;
         this.attributes.put(name, new Attribute() {{
             setName(name);
-            setValue(value);
+            setValue(val);
         }});
     }
 
