@@ -1,5 +1,6 @@
 package ro.cs.tao.datasource.remote.peps;
 
+import ro.cs.tao.datasource.remote.result.filters.AttributeFilter;
 import ro.cs.tao.datasource.remote.result.json.JSonResponseHandler;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.Polygon2D;
@@ -22,7 +23,7 @@ import java.util.List;
  */
 public class PepsResponseHandler implements JSonResponseHandler<EOProduct> {
     @Override
-    public List<EOProduct> readValues(String content) throws IOException {
+    public List<EOProduct> readValues(String content, AttributeFilter...filters) throws IOException {
         List<EOProduct> results = new ArrayList<>();
         JsonReader reader = Json.createReader(new StringReader(content));
         JsonObject rootObject = reader.readObject();

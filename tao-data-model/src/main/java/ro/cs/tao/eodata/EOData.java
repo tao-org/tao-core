@@ -38,6 +38,7 @@
 
 package ro.cs.tao.eodata;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.vividsolutions.jts.geom.Geometry;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import ro.cs.tao.eodata.enums.DataFormat;
@@ -94,10 +95,11 @@ public abstract class EOData {
         }
     }
 
-    /**@XmlTransient
+    @XmlTransient
+    @JsonIgnore
     public Geometry getPolygon() {
         return this.geometry;
-    }**/
+    }
 
     public void setGeometry(String geometryAsText) {
         try {
@@ -116,6 +118,8 @@ public abstract class EOData {
         if (attributes != null) {
             if (this.attributes == null) {
                 this.attributes = new HashMap<>();
+            } else {
+                this.attributes.clear();
             }
             for (Attribute attribute : attributes) {
                 this.attributes.put(attribute.getName(), attribute);
@@ -129,9 +133,15 @@ public abstract class EOData {
         if (this.attributes == null) {
             this.attributes = new HashMap<>();
         }
+        if (value != null) {
+            if (value.startsWith("\"") && value.endsWith("\"")) {
+                value = value.substring(1, value.length() - 1);
+            }
+        }
+        final String val = value;
         this.attributes.put(name, new Attribute() {{
             setName(name);
-            setValue(value);
+            setValue(val);
         }});
     }
 
