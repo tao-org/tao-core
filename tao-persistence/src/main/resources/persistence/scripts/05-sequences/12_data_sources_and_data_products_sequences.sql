@@ -102,19 +102,6 @@ ALTER TABLE tao.data_source ALTER COLUMN id SET DEFAULT nextval('tao.data_source
 ALTER SEQUENCE tao.data_source_id_seq OWNED BY tao.data_source.id;
 
 
------ table: tao.data_product ---------------------------------------------------------------------
-DROP SEQUENCE IF EXISTS tao.data_product_id_seq CASCADE;
--- create sequence
-CREATE SEQUENCE tao.data_product_id_seq 
-	INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
-
--- assign sequence to column
-ALTER TABLE tao.data_product ALTER COLUMN id SET DEFAULT nextval('tao.data_product_id_seq');
-
--- assign column to sequence
-ALTER SEQUENCE tao.data_product_id_seq OWNED BY tao.data_product.id;
-
-
 ----- table: tao.data_type ------------------------------------------------------------------------
 DROP SEQUENCE IF EXISTS tao.data_type_id_seq CASCADE;
 -- create sequence

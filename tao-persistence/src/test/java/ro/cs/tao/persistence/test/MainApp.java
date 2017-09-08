@@ -1,8 +1,7 @@
-package ro.cs.tao.persistence;
+package ro.cs.tao.persistence.test;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
-
 import ro.cs.tao.datasource.DataQuery;
 import ro.cs.tao.datasource.DataSource;
 import ro.cs.tao.datasource.param.QueryParameter;
@@ -10,6 +9,7 @@ import ro.cs.tao.datasource.remote.peps.Collection;
 import ro.cs.tao.datasource.remote.peps.PepsDataSource;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.Polygon2D;
+import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.config.DatabaseConfiguration;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.spi.ServiceRegistry;
@@ -59,7 +59,7 @@ public class MainApp {
 
     private static void saveNewNode(PersistenceManager dbManager) {
         NodeDescription node  = new NodeDescription();
-        node.setHostName("No host name");
+        node.setHostName("No host name test 1");
         node.setIpAddr("No IP adr");
         node.setUserName("No user name");
         node.setUserPass("No user pass");

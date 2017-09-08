@@ -128,7 +128,6 @@ DROP TABLE IF EXISTS tao.data_product CASCADE;
 
 CREATE TABLE tao.data_product
 (
-	id bigint NOT NULL,
 	identifier character varying(250) NOT NULL,
 	name varchar(250) NOT NULL,
 	type_id integer NOT NULL,
@@ -138,17 +137,18 @@ CREATE TABLE tao.data_product
 	sensor_type_id integer NOT NULL,
 	acquisition_date timestamp NULL,
 	pixel_type_id integer NOT NULL,
+	product_type varchar(512) NOT NULL,
 	width integer NOT NULL,
 	height integer NOT NULL,
 	attributes hstore,
 	user_id integer NULL,
 	data_source_id integer NULL,
-	created timestamp NOT NULL,
+	created timestamp NOT NULL DEFAULT now(),
 	modified timestamp NULL
 );
 
 ALTER TABLE tao.data_product ADD CONSTRAINT PK_data_product
-	PRIMARY KEY (id);
+	PRIMARY KEY (identifier);
 	
 ALTER TABLE tao.data_product ADD CONSTRAINT FK_data_product_data_format
 	FOREIGN KEY (type_id) REFERENCES tao.data_format (id) ON DELETE No Action ON UPDATE No Action;
@@ -169,16 +169,16 @@ DROP TABLE IF EXISTS tao.data_product_metadata CASCADE;
 
 CREATE TABLE tao.data_product_metadata
 (
-	data_product_id integer NOT NULL,
+	data_product_identifier character varying(250) NOT NULL,
 	attribute_name varchar(250) NOT NULL,
 	attribute_value varchar(500) NOT NULL
 );
 
 ALTER TABLE tao.data_product_metadata ADD CONSTRAINT PK_data_product_metadata
-	PRIMARY KEY (data_product_id, attribute_name);
+	PRIMARY KEY (data_product_identifier, attribute_name);
 
 ALTER TABLE tao.data_product_metadata ADD CONSTRAINT FK_data_product_metadata_data_product
-	FOREIGN KEY (data_product_id) REFERENCES tao.data_product (id) ON DELETE No Action ON UPDATE No Action;
+	FOREIGN KEY (data_product_identifier) REFERENCES tao.data_product (identifier) ON DELETE No Action ON UPDATE No Action;
 
 	
 -------------------------------------------------------------------------------
