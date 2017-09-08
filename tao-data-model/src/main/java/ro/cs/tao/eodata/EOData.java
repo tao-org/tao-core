@@ -95,11 +95,11 @@ public abstract class EOData {
         }
     }
 
-    @XmlTransient
+    /**@XmlTransient
     @JsonIgnore
     public Geometry getPolygon() {
         return this.geometry;
-    }
+    }**/
 
     public void setGeometry(String geometryAsText) {
         try {
