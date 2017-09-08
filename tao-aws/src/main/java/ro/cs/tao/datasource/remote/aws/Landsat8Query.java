@@ -50,8 +50,13 @@ class Landsat8Query extends DataQuery {
     @Override
     protected List<EOProduct> executeImpl() throws QueryException {
         QueryParameter currentParameter = this.parameters.get("platformName");
-        if (currentParameter == null || !"Landsat-8".equals(currentParameter.getValueAsString())) {
-            throw new QueryException("Wrong [platformName] parameter");
+        if (currentParameter == null) {
+            currentParameter = createParameter("platformName", String.class, "Landsat-8");
+            this.parameters.put("platformName", currentParameter);
+        } else {
+            if (!"Landsat-8".equals(currentParameter.getValueAsString())) {
+                throw new QueryException("Wrong [platformName] parameter");
+            }
         }
         String baseUrl = this.source.getConnectionString();
         currentParameter = this.parameters.get("collection");

@@ -89,9 +89,13 @@ public class PepsDataQuery extends DataQuery {
             try (CloseableHttpResponse response = NetUtils.openConnection(queryUrl, this.source.getCredentials())) {
                 switch (response.getStatusLine().getStatusCode()) {
                     case 200:
-                        JsonResponseParser<EOProduct> parser = new JsonResponseParser<>();
-                        tmpResults = parser.parse(EntityUtils.toString(response.getEntity()),
-                                                  new PepsResponseHandler());
+                        JsonResponseParser<EOProduct> parser = new JsonResponseParser<EOProduct>(new PepsResponseHandler()) {
+                            @Override
+                            public String[] getExcludedAttributes() {
+                                return new String[] { "keywords", "links", "services" };
+                            }
+                        };
+                        tmpResults = parser.parse(EntityUtils.toString(response.getEntity()));
                         if (tmpResults != null) {
                             retrieved = tmpResults.size();
                             if ("Sentinel-2".equals(this.parameters.get("platform").getValue()) &&
