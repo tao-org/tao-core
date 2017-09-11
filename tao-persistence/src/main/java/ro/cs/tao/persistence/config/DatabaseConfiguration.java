@@ -193,8 +193,8 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
 	}
 
 	/**
-	 * Transaction Manager
-	 * @return
+	 * Transaction Manager retrieval
+	 * @return transaction manager
 	 * @throws ClassNotFoundException
 	 */
 	@Bean
@@ -208,13 +208,14 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
 	}
 
 	@Bean
-	public LocalContainerEntityManagerFactoryBean entityManagerFactory() throws ClassNotFoundException {
+	public LocalContainerEntityManagerFactoryBean entityManagerFactory() {
 
 		final LocalContainerEntityManagerFactoryBean entityManagerFactoryBean = new LocalContainerEntityManagerFactoryBean();
 		entityManagerFactoryBean.setDataSource(dataSource());
 		entityManagerFactoryBean
 				.setPackagesToScan(environment.getRequiredProperty(PROPERTY_NAME_ENTITYMANAGER_PACKAGES_TO_SCAN));
 		entityManagerFactoryBean.setPersistenceProviderClass(HibernatePersistenceProvider.class);
+		entityManagerFactoryBean.setPersistenceXmlLocation("classpath:META-INF/persistence.xml");
 
 		final Properties jpaProperties = new Properties();
 		jpaProperties.put(PROPERTY_NAME_HIBERNATE_DIALECT,

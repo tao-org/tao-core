@@ -63,19 +63,6 @@ ALTER TABLE tao.job ALTER COLUMN id SET DEFAULT nextval('tao.job_id_seq');
 ALTER SEQUENCE tao.job_id_seq OWNED BY tao.job.id;
 
 
------ table: tao.execution_node -------------------------------------------------------------------
-DROP SEQUENCE IF EXISTS tao.execution_node_id_seq CASCADE;
--- create sequence
-CREATE SEQUENCE tao.execution_node_id_seq 
-	INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
-
--- assign sequence to column
-ALTER TABLE tao.execution_node ALTER COLUMN id SET DEFAULT nextval('tao.execution_node_id_seq');
-
--- assign column to sequence
-ALTER SEQUENCE tao.execution_node_id_seq OWNED BY tao.execution_node.id;
-
-
 ----- table: tao.task_status ----------------------------------------------------------------------
 DROP SEQUENCE IF EXISTS tao.task_status_id_seq CASCADE;
 -- create sequence
