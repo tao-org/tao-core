@@ -137,10 +137,10 @@ public abstract class EOData {
             }
         }
         final String val = value;
-        this.attributes.put(name, new Attribute() {{
-            setName(name);
-            setValue(val);
-        }});
+        Attribute attr = new Attribute();
+        attr.setName(name);
+        attr.setValue(val);
+        this.attributes.put(name, attr);
     }
 
     public void addAttribute(Attribute attribute) {
