@@ -160,6 +160,20 @@ ALTER TABLE tao.component_visibility ADD CONSTRAINT PK_component_visibility
 
 
 -------------------------------------------------------------------------------
+-- table: template_type
+DROP TABLE IF EXISTS tao.template_type CASCADE;
+
+CREATE TABLE tao.template_type
+(
+	id integer NOT NULL,
+	type varchar(250) NOT NULL
+);
+
+ALTER TABLE tao.template_type ADD CONSTRAINT PK_template_type
+	PRIMARY KEY (id);
+
+
+-------------------------------------------------------------------------------
 -- table: processing_component
 DROP TABLE IF EXISTS tao.processing_component CASCADE;
 
@@ -174,17 +188,22 @@ CREATE TABLE tao.processing_component
 	copyright text NOT NULL,
 	main_tool_file_location varchar(512) NULL,
 	working_directory varchar(512) NULL,
-	template_type varchar(50) NOT NULL,
+	template_type_id integer NOT NULL,
 	template_name varchar(500) NOT NULL,
 	owner_user_id integer NULL,
 	visibility_id integer NOT NULL,
 	operation_id integer NOT NULL,
 	multi_thread boolean NOT NULL,
+	created timestamp NOT NULL,
+    modified timestamp NULL,
 	active boolean NULL
 );
 
 ALTER TABLE tao.processing_component ADD CONSTRAINT PK_processing_component
 	PRIMARY KEY (id);
+
+ALTER TABLE tao.processing_component ADD CONSTRAINT FK_processing_component_template_type
+	FOREIGN KEY (template_type_id) REFERENCES tao.template_type (id) ON DELETE No Action ON UPDATE No Action;
 
 ALTER TABLE tao.processing_component ADD CONSTRAINT FK_processing_component_user
 	FOREIGN KEY (owner_user_id) REFERENCES tao.user (id) ON DELETE No Action ON UPDATE No Action;

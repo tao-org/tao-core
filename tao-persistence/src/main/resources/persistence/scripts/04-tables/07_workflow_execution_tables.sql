@@ -101,25 +101,24 @@ DROP TABLE IF EXISTS tao.execution_node CASCADE;
 
 CREATE TABLE tao.execution_node
 (
-	id integer NOT NULL,
+	host_name varchar(250) NOT NULL,
 	ip_address varchar(50) NOT NULL,
 	username varchar(50) NOT NULL,
 	password text NOT NULL,
 	total_CPU integer NOT NULL,
 	total_RAM integer NOT NULL,
 	total_HDD integer NOT NULL,
-	name varchar(250) NOT NULL,
 	description text NULL,
 	SSH_key text NULL,
 	used_CPU integer NULL,
 	used_RAM integer NULL,
 	used_HDD integer NULL,
-	created timestamp NOT NULL,
+	created timestamp NOT NULL DEFAULT now(),
     modified timestamp NULL,
-	active boolean NOT NULL
+	active boolean NOT NULL DEFAULT true
 );
 
-ALTER TABLE tao.execution_node ADD CONSTRAINT PK_execution_node PRIMARY KEY (id);
+ALTER TABLE tao.execution_node ADD CONSTRAINT PK_execution_node PRIMARY KEY (host_name);
 
 
 -------------------------------------------------------------------------------
@@ -147,7 +146,7 @@ CREATE TABLE tao.task
 	start_time timestamp without time zone NULL,
 	end_time timestamp without time zone NULL,
 	job_id bigint NOT NULL,
-	execution_node_id integer NOT NULL,
+	execution_node_host_name varchar(250) NOT NULL,
 	task_status_id integer NOT NULL,
 	used_CPU integer NULL,
     used_RAM integer NULL,
@@ -163,7 +162,7 @@ ALTER TABLE tao.task ADD CONSTRAINT FK_task_job
 	FOREIGN KEY (job_id) REFERENCES tao.job (id) ON DELETE No Action ON UPDATE No Action;
 
 ALTER TABLE tao.task ADD CONSTRAINT FK_task_execution_node
-	FOREIGN KEY (execution_node_id) REFERENCES tao.execution_node (id) ON DELETE No Action ON UPDATE No Action;
+	FOREIGN KEY (execution_node_host_name) REFERENCES tao.execution_node (host_name) ON DELETE No Action ON UPDATE No Action;
 
 ALTER TABLE tao.task ADD CONSTRAINT FK_task_task_status
 	FOREIGN KEY (task_status_id) REFERENCES tao.task_status (id) ON DELETE No Action ON UPDATE No Action;

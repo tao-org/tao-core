@@ -1,6 +1,5 @@
 package ro.cs.tao.datasource.remote.aws;
 
-import ro.cs.tao.component.Identifiable;
 import ro.cs.tao.datasource.DataQuery;
 import ro.cs.tao.datasource.DataSource;
 import ro.cs.tao.datasource.QueryException;
@@ -15,7 +14,6 @@ import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.Polygon2D;
 import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.eodata.enums.SensorType;
-import ro.cs.tao.eodata.serialization.GeometryAdapter;
 import ro.cs.tao.eodata.util.Conversions;
 
 import javax.json.Json;
@@ -52,8 +50,13 @@ class Landsat8Query extends DataQuery {
     @Override
     protected List<EOProduct> executeImpl() throws QueryException {
         QueryParameter currentParameter = this.parameters.get("platformName");
-        if (currentParameter == null || !"Landsat-8".equals(currentParameter.getValueAsString())) {
-            throw new QueryException("Wrong [platformName] parameter");
+        if (currentParameter == null) {
+            currentParameter = createParameter("platformName", String.class, "Landsat-8");
+            this.parameters.put("platformName", currentParameter);
+        } else {
+            if (!"Landsat-8".equals(currentParameter.getValueAsString())) {
+                throw new QueryException("Wrong [platformName] parameter");
+            }
         }
         String baseUrl = this.source.getConnectionString();
         currentParameter = this.parameters.get("collection");
@@ -181,7 +184,7 @@ class Landsat8Query extends DataQuery {
             } else {
                 product.setName(obj.getString("LANDSAT_SCENE_ID"));
             }
-            product.setType(DataFormat.RASTER);
+            product.setFormatType(DataFormat.RASTER);
             product.setSensorType(SensorType.OPTICAL);
             obj = rootObject.getJsonObject("PRODUCT_METADATA");
             product.setAcquisitionDate(dateFormat.parse(obj.getString("DATE_ACQUIRED")));
@@ -198,7 +201,7 @@ class Landsat8Query extends DataQuery {
                              obj.getJsonNumber("CORNER_LL_LON_PRODUCT").doubleValue());
             footprint.append(obj.getJsonNumber("CORNER_UL_LAT_PRODUCT").doubleValue(),
                              obj.getJsonNumber("CORNER_UL_LON_PRODUCT").doubleValue());
-            product.setGeometry(new GeometryAdapter().marshal(footprint.toWKT()));
+            product.setGeometry(footprint.toWKT());
 
             obj = rootObject.getJsonObject("MIN_MAX_PIXEL_VALUE");
             product.setPixelType(Conversions.pixelTypeFromRange(obj.getInt("QUANTIZE_CAL_MIN_BAND_1"),
@@ -234,10 +237,5 @@ class Landsat8Query extends DataQuery {
     @Override
     public String defaultName() {
         return "LandsatAWSQuery";
-    }
-
-    @Override
-    public Identifiable copy() {
-        return null;
     }
 }

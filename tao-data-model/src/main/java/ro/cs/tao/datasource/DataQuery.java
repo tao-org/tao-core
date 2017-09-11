@@ -36,14 +36,15 @@ import java.util.stream.Collectors;
 public abstract class DataQuery extends Identifiable {
     protected static final int DEFAULT_LIMIT = 20;
     protected DataSource source;
+    protected String sensorName;
     protected String queryText;
     protected Map<String, QueryParameter> parameters;
     protected int pageSize;
     protected int pageNumber;
     protected int limit;
     protected long timeout;
-    protected final Map<String, ParameterDescriptor> supportedParams;
-    protected final Set<String> mandatoryParams;
+    protected Map<String, ParameterDescriptor> supportedParams;
+    protected Set<String> mandatoryParams;
 
     public DataQuery(DataSource source, String sensorName) {
         if (source == null) {
@@ -52,19 +53,7 @@ public abstract class DataQuery extends Identifiable {
         if (sensorName == null || Arrays.stream(source.getSupportedSensors()).noneMatch(sensorName::equals)) {
             throw new QueryException("Empty sensor name");
         }
-        this.source = source;
-        this.parameters = new LinkedHashMap<>();
-        this.timeout = 10000;
-
-        this.pageSize = -1;
-        this.pageNumber = -1;
-        this.limit = -1;
-        Map<String, Map<String, ParameterDescriptor>> supportedParameters = source.getSupportedParameters();
-        this.supportedParams = supportedParameters.get(sensorName);
-        this.mandatoryParams = this.supportedParams.values().stream()
-                .filter(p -> p.isRequired() && p.getDefaultValue() == null)
-                .map(ParameterDescriptor::getName)
-                .collect(Collectors.toSet());
+        initialize(source, sensorName);
     }
 
     public QueryParameter addParameter(QueryParameter parameter) {
@@ -157,6 +146,14 @@ public abstract class DataQuery extends Identifiable {
         return new QueryParameter(type, name, minValue, maxValue, optional);
     }
 
+    @Override
+    public DataQuery clone() throws CloneNotSupportedException {
+        DataQuery newQuery = (DataQuery) super.clone();
+        newQuery.initialize(this.source, this.sensorName);
+        this.parameters.forEach((key, value) -> newQuery.parameters.put(key, value));
+        return newQuery;
+    }
+
     protected void checkSupported(String name, Class type) {
         ParameterDescriptor descriptor = this.supportedParams.get(name);
         if (descriptor == null) {
@@ -167,7 +164,28 @@ public abstract class DataQuery extends Identifiable {
                     String.format("Wrong type for parameter [%s]: expected %s, found %s",
                                   name, descriptor.getType().getSimpleName(), type.getSimpleName()));
         }
+        if (this.parameters.containsKey(name)) {
+            throw new QueryException(
+                    String.format("Parameter [%s] already exists", name));
+        }
     }
 
     protected abstract List<EOProduct> executeImpl();
+
+    private void initialize(DataSource source, String sensorName) {
+        this.source = source;
+        this.sensorName = sensorName;
+        this.parameters = new LinkedHashMap<>();
+        this.timeout = 10000;
+
+        this.pageSize = -1;
+        this.pageNumber = -1;
+        this.limit = -1;
+        Map<String, Map<String, ParameterDescriptor>> supportedParameters = source.getSupportedParameters();
+        this.supportedParams = supportedParameters.get(sensorName);
+        this.mandatoryParams = this.supportedParams.values().stream()
+                .filter(p -> p.isRequired() && p.getDefaultValue() == null)
+                .map(ParameterDescriptor::getName)
+                .collect(Collectors.toSet());
+    }
 }

@@ -35,29 +35,25 @@
  *  *
  *
  */
-
 package ro.cs.tao.component;
+
+import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  * @author Cosmin Cara
  */
+@XmlRootElement(name = "variable")
 public class Variable extends Identifiable {
 
     private String value;
-    private boolean isSystem;
 
     public Variable() {
         super();
     }
 
     public Variable(String key, String value) {
-        this.name = key;
+        this.id = key;
         this.value = value;
-    }
-
-    public Variable(String key, String value, boolean isSystem) {
-        this(key, value);
-        this.isSystem = isSystem;
     }
 
     /**
@@ -70,17 +66,15 @@ public class Variable extends Identifiable {
      */
     public void setValue(String value) { this.value = value; }
 
-    public boolean isSystem() { return this.isSystem; }
-
-    public void setSystem(boolean value) { this.isSystem = value; }
-
     @Override
     public String defaultName() {
         return "NewVariable";
     }
 
+    @SuppressWarnings("MethodDoesntCallSuperMethod")
     @Override
-    public Variable copy() {
-        return new Variable(this.name, this.value, this.isSystem);
+    protected Variable clone() throws CloneNotSupportedException {
+        return new Variable(this.id, this.value);
     }
+
 }

@@ -1,10 +1,14 @@
 package ro.cs.tao.topology;
 
+import java.util.List;
+
 /**
  * Created by cosmin on 7/17/2017.
  */
 public interface ITopologyManager {
-    void addNode(NodeDescription info);
-    void removeNode(NodeDescription info);
-    void editNode(NodeDescription nodeInfo);
+    NodeDescription get(String name) throws TopologyException;
+    List<NodeDescription> list() throws TopologyException;
+    void add(NodeDescription info) throws TopologyException;
+    void update(NodeDescription nodeInfo) throws TopologyException;
+    void remove(String name) throws TopologyException;
 }

@@ -1,27 +1,33 @@
 package ro.cs.tao.topology;
 
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+
 /**
  * Created by cosmin on 7/17/2017.
  */
+@XmlRootElement(name = "node")
 public class NodeDescription {
     private String hostName;
     private String ipAddr;
     private String userName;
     private String userPass;
-    private int     nodeProcessorsCnt = 2;
+    private int processorCount;
+    private int memorySizeGB;
+    private int diskSpaceSizeGB;
 
-    public NodeDescription() {
-
-    }
+    public NodeDescription() { }
 
     public void setHostName(String hostName) {
         this.hostName = hostName;
     }
 
+    @XmlElement(name = "hostName")
     public String getHostName() {
         return hostName;
     }
 
+    @XmlElement(name = "ipAddress")
     public String getIpAddr() {
         return ipAddr;
     }
@@ -30,6 +36,7 @@ public class NodeDescription {
         this.ipAddr = ipAddr;
     }
 
+    @XmlElement(name = "userName")
     public String getUserName() {
         return userName;
     }
@@ -38,6 +45,7 @@ public class NodeDescription {
         this.userName = userName;
     }
 
+    @XmlElement(name = "password")
     public String getUserPass() {
         return userPass;
     }
@@ -46,11 +54,22 @@ public class NodeDescription {
         this.userPass = userPass;
     }
 
-    public void setNodeProcessorsCnt(int nodeProcessorsCnt) {
-        this.nodeProcessorsCnt = nodeProcessorsCnt;
+    public void setProcessorCount(int processorCount) {
+        this.processorCount = processorCount;
     }
 
-    public int getNodeProcessorsCnt() {
-        return nodeProcessorsCnt;
+    @XmlElement(name = "processors")
+    public int getProcessorCount() {
+        return processorCount;
     }
+
+    @XmlElement(name = "memory")
+    public int getMemorySizeGB() { return memorySizeGB; }
+
+    public void setMemorySizeGB(int memorySizeGB) { this.memorySizeGB = memorySizeGB; }
+
+    @XmlElement(name = "diskSpace")
+    public int getDiskSpaceSizeGB() { return diskSpaceSizeGB; }
+
+    public void setDiskSpaceSizeGB(int diskSpaceSizeGB) { this.diskSpaceSizeGB = diskSpaceSizeGB; }
 }

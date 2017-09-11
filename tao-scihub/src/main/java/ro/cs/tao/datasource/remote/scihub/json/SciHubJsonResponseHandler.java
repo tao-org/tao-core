@@ -1,6 +1,7 @@
 package ro.cs.tao.datasource.remote.scihub.json;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import ro.cs.tao.datasource.remote.result.filters.AttributeFilter;
 import ro.cs.tao.datasource.remote.result.json.JSonResponseHandler;
 import ro.cs.tao.datasource.remote.scihub.download.SentinelDownloadStrategy;
 import ro.cs.tao.eodata.EOProduct;
@@ -8,8 +9,7 @@ import ro.cs.tao.eodata.Polygon2D;
 import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.eodata.enums.PixelType;
 import ro.cs.tao.eodata.enums.SensorType;
-import ro.cs.tao.eodata.serialization.DateAdapter;
-import ro.cs.tao.eodata.serialization.GeometryAdapter;
+import ro.cs.tao.serialization.DateAdapter;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
  */
 public class SciHubJsonResponseHandler implements JSonResponseHandler<EOProduct> {
     @Override
-    public List<EOProduct> readValues(String content) throws IOException {
+    public List<EOProduct> readValues(String content, AttributeFilter...filters) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         Result[] results = mapper.readValue(content, Result[].class);
         SentinelDownloadStrategy downloader = new SentinelDownloadStrategy("");
@@ -30,7 +30,7 @@ public class SciHubJsonResponseHandler implements JSonResponseHandler<EOProduct>
                 EOProduct product = new EOProduct();
                 product.setName(r.getIdentifier());
                 product.setId(r.getUuid());
-                product.setType(DataFormat.RASTER);
+                product.setFormatType(DataFormat.RASTER);
                 product.setSensorType(SensorType.OPTICAL);
                 product.setPixelType(PixelType.UINT16);
                 product.setWidth(-1);
@@ -39,7 +39,7 @@ public class SciHubJsonResponseHandler implements JSonResponseHandler<EOProduct>
                 for (List<Double> doubleList : r.getFootprint().get(0)) {
                     footprint.append(doubleList.get(0), doubleList.get(1));
                 }
-                product.setGeometry(new GeometryAdapter().marshal(footprint.toWKT()));
+                product.setGeometry(footprint.toWKT());
                 product.setProductType(r.getProductType());
                 product.setLocation(downloader.getProductUrl(product));
                 r.getIndexes().forEach(i -> i.getChildren().forEach(c -> {

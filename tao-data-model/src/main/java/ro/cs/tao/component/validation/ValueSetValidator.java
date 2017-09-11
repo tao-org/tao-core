@@ -2,12 +2,14 @@ package ro.cs.tao.component.validation;
 
 import ro.cs.tao.component.ParameterDescriptor;
 
+import javax.xml.bind.annotation.XmlRootElement;
 import java.util.Arrays;
 
 /**
  * @author Cosmin Cara
  */
-public class ValueSetValidator implements Validator {
+@XmlRootElement
+public class ValueSetValidator extends Validator {
 
     ValueSetValidator() { }
 
@@ -19,7 +21,7 @@ public class ValueSetValidator implements Validator {
         if (value != null && parameter.isNotNull()) {
             final String[] valueSet = parameter.getValueSet();
             if (valueSet != null && Arrays.stream(valueSet).noneMatch(v -> v.equals(value))) {
-                throw new ValidationException(String.format("Value for [%s] is invalid.", parameter.getName()));
+                throw new ValidationException(String.format("Value for [%s] is invalid.", parameter.getId()));
             }
         }
     }

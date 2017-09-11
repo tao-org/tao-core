@@ -1,5 +1,6 @@
 package ro.cs.tao.persistence.data;
 
+import java.io.Serializable;
 import java.util.Collection;
 
 import javax.persistence.*;
@@ -17,7 +18,7 @@ import org.hibernate.annotations.FetchMode;
  */
 @Entity
 @Table(name = "tao.\"group\"")
-public class Group {
+public class Group implements Serializable {
 
     /**
      * Group name column maximum length

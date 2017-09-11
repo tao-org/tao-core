@@ -2,6 +2,8 @@ package ro.cs.tao.component;
 
 import ro.cs.tao.eodata.EOData;
 
+import javax.xml.bind.annotation.XmlElementWrapper;
+import javax.xml.bind.annotation.XmlTransient;
 import java.util.Arrays;
 
 /**
@@ -13,6 +15,8 @@ public abstract class TaoComponent extends Identifiable {
     protected String description;
     protected String authors;
     protected String copyright;
+
+    protected String nodeAffinity;
 
     protected SourceDescriptor[] sources;
     protected TargetDescriptor[] targets;
@@ -57,12 +61,18 @@ public abstract class TaoComponent extends Identifiable {
         this.copyright = copyright;
     }
 
+    public String getNodeAffinity() { return nodeAffinity; }
+
+    public void setNodeAffinity(String nodeAffinity) { this.nodeAffinity = nodeAffinity; }
+
+    @XmlElementWrapper(name = "inputs")
     public SourceDescriptor[] getSources() {
         return sources;
     }
 
     public void setSources(SourceDescriptor[] sources) { this.sources = sources; }
 
+    @XmlTransient
     public void setSourcesCount(int value) {
         if (this.sources == null) {
             this.sources = new SourceDescriptor[value];
@@ -92,12 +102,14 @@ public abstract class TaoComponent extends Identifiable {
         }
     }
 
+    @XmlElementWrapper(name = "outputs")
     public TargetDescriptor[] getTargets() {
         return targets;
     }
 
     public void setTargets(TargetDescriptor[] targets) { this.targets = targets; }
 
+    @XmlTransient
     public void setTargetCount(int value) {
         if (this.targets == null) {
             this.targets = new TargetDescriptor[value];
@@ -128,17 +140,15 @@ public abstract class TaoComponent extends Identifiable {
         }
     }
 
-    protected void copyTo(TaoComponent newComponent) {
-        newComponent.label = this.label;
-        newComponent.version = this.version;
-        newComponent.description = this.description;
-        newComponent.authors = this.authors;
-        newComponent.copyright = this.copyright;
+    @Override
+    public TaoComponent clone() throws CloneNotSupportedException {
+        TaoComponent clone = (TaoComponent) super.clone();
         if (this.sources != null) {
-            newComponent.setSources(Arrays.copyOf(this.sources, this.sources.length));
+            clone.setSources(Arrays.copyOf(this.sources, this.sources.length));
         }
         if (this.targets != null) {
-            newComponent.setTargets(Arrays.copyOf(this.targets, this.targets.length));
+            clone.setTargets(Arrays.copyOf(this.targets, this.targets.length));
         }
+        return clone;
     }
 }
