@@ -17,11 +17,8 @@ import ro.cs.tao.persistence.data.DataSourceType;
 import ro.cs.tao.persistence.data.ExecutionNode;
 import ro.cs.tao.persistence.data.User;
 import ro.cs.tao.persistence.exception.PersistenceException;
-import ro.cs.tao.persistence.repository.DataProductRepository;
-import ro.cs.tao.persistence.repository.DataSourceRepository;
-import ro.cs.tao.persistence.repository.DataSourceTypeRepository;
-import ro.cs.tao.persistence.repository.ExecutionNodeRepository;
-import ro.cs.tao.persistence.repository.ProcessingComponentRepository;
+import ro.cs.tao.persistence.repository.*;
+import ro.cs.tao.topology.NodeDescription;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -37,126 +34,133 @@ import java.util.stream.Collectors;
 
 @Configuration
 @EnableTransactionManagement
-@ComponentScan(basePackages = { "ro.cs.tao.persistence" })
 @EnableJpaRepositories(basePackages = { "ro.cs.tao.persistence.repository" })
 @Scope("singleton")
 public class PersistenceManager {
 
-    /** CRUD Repository for DataSource entities */
+    /** CRUD Repository for EOProduct entities */
     @Autowired
-    private DataSourceRepository dataSourceRepository;
+    private EOProductRepository eoProductRepository;
 
-    /** CRUD Repository for DataSourceType entities */
+    /** CRUD Repository for NodeDescription entities */
     @Autowired
-    private DataSourceTypeRepository dataSourceTypeRepository;
+    private NodeRepository nodeRepository;
 
-    /** CRUD Repository for DataProduct entities */
-    @Autowired
-    private DataProductRepository dataProductRepository;
+//    /** CRUD Repository for DataSource entities */
+//    @Autowired
+//    private DataSourceRepository dataSourceRepository;
+//
+//    /** CRUD Repository for DataSourceType entities */
+//    @Autowired
+//    private DataSourceTypeRepository dataSourceTypeRepository;
+//
+//    /** CRUD Repository for DataProduct entities */
+//    @Autowired
+//    private DataProductRepository dataProductRepository;
+//
+//    /** CRUD Repository for ExecutionNode entities */
+//    @Autowired
+//    private ExecutionNodeRepository executionNodeRepository;
+//
+//    /** CRUD Repository for ProcessingComponent entities */
+//    @Autowired
+//    private ProcessingComponentRepository processingComponentRepository;
 
-    /** CRUD Repository for ExecutionNode entities */
-    @Autowired
-    private ExecutionNodeRepository executionNodeRepository;
+//    @Transactional
+//    public Integer saveDataSourceType(String type) throws PersistenceException
+//    {
+//        // check method parameters
+//        if(type == null || type.length() == 0)
+//        {
+//            throw new PersistenceException("Invalid parameters were provided for adding new data source type (empty type)!");
+//        }
+//
+//        // check if there is already an identical type persisted
+//        DataSourceType existingType = dataSourceTypeRepository.findByType(type);
+//        if (existingType != null)
+//        {
+//            throw new PersistenceException("Invalid parameters were provided for adding new data source type (type already exists)!");
+//        }
+//
+//        DataSourceType dataSourceTypeEnt = new DataSourceType();
+//        dataSourceTypeEnt.setType(type);
+//
+//        // save the DataSourceType entity
+//        dataSourceTypeEnt = dataSourceTypeRepository.save(dataSourceTypeEnt);
+//
+//        if(dataSourceTypeEnt.getId() == null)
+//        {
+//            throw new PersistenceException("Error saving data source type: " + dataSourceTypeEnt.getType());
+//        }
+//
+//        return dataSourceTypeEnt.getId();
+//    }
+//
+//    @Transactional(readOnly = true)
+//    public DataSourceType getDataSourceTypeById(final Integer dataSourceTypeId) throws PersistenceException
+//    {
+//        // check method parameters
+//        if (dataSourceTypeId == null || dataSourceTypeId <= 0)
+//        {
+//            throw new PersistenceException("Invalid parameters were provided for retrieving data source type by its identifier (" + String.valueOf(dataSourceTypeId) + ")");
+//        }
+//
+//        // retrieve the DataSourceType entity based on its id
+//        final DataSourceType dataSourceType = dataSourceTypeRepository.findById(dataSourceTypeId);
+//        if (dataSourceType == null)
+//        {
+//            throw new PersistenceException("There is no data source type with the specified identfier (" + dataSourceTypeId.toString() + ")");
+//        }
+//
+//        return dataSourceType;
+//    }
+//
+//
+//    /**
+//     * Retrieve the list of data source types
+//     * @return the list of data source types
+//     */
+//    @Transactional(readOnly = true)
+//    public List<DataSourceType> getDataSourceTypes()
+//    {
+//        // retrieve all entities DataSourceType
+//        return (List<DataSourceType>) dataSourceTypeRepository.findAll();
+//    }
+//
+//    @Transactional
+//    public <Q extends DataQuery, S extends AbstractDataSource<Q>> Integer saveDataSource(S dataSource, DataSourceType dataSourceType, String name, String description) throws PersistenceException
+//    {
+//        if(dataSource == null || dataSource.getCredentials() == null || dataSource.getConnectionString() == null ||
+//          dataSourceType == null || name == null)
+//        {
+//            throw new PersistenceException("Invalid parameters were provided for adding new data source!");
+//        }
+//
+//        ro.cs.tao.persistence.data.DataSource dataSourceEnt = new ro.cs.tao.persistence.data.DataSource();
+//        dataSourceEnt.setName(name);
+//        dataSourceEnt.setDataSourceType(dataSourceType);
+//        dataSourceEnt.setUsername(dataSource.getCredentials().getUserName());
+//        dataSourceEnt.setPassword(dataSource.getCredentials().getPassword());
+//        dataSourceEnt.setConnectionString(dataSource.getConnectionString());
+//        if(description != null)
+//        {
+//            dataSourceEnt.setDescription(description);
+//        }
+//        dataSourceEnt.setCreatedDate(LocalDateTime.now());
+//
+//        // save the DataSource entity
+//        dataSourceEnt = dataSourceRepository.save(dataSourceEnt);
+//
+//        if(dataSourceEnt.getId() == null)
+//        {
+//            throw new PersistenceException("Error saving data source with name: " + dataSourceEnt.getName());
+//        }
+//
+//        return dataSourceEnt.getId();
+//
+//    }
 
-    /** CRUD Repository for ProcessingComponent entities */
-    @Autowired
-    private ProcessingComponentRepository processingComponentRepository;
-
-    @Transactional
-    public Integer saveDataSourceType(String type) throws PersistenceException
-    {
-        // check method parameters
-        if(type == null || type.length() == 0)
-        {
-            throw new PersistenceException("Invalid parameters were provided for adding new data source type (empty type)!");
-        }
-
-        // check if there is already an identical type persisted
-        DataSourceType existingType = dataSourceTypeRepository.findByType(type);
-        if (existingType != null)
-        {
-            throw new PersistenceException("Invalid parameters were provided for adding new data source type (type already exists)!");
-        }
-
-        DataSourceType dataSourceTypeEnt = new DataSourceType();
-        dataSourceTypeEnt.setType(type);
-
-        // save the DataSourceType entity
-        dataSourceTypeEnt = dataSourceTypeRepository.save(dataSourceTypeEnt);
-
-        if(dataSourceTypeEnt.getId() == null)
-        {
-            throw new PersistenceException("Error saving data source type: " + dataSourceTypeEnt.getType());
-        }
-
-        return dataSourceTypeEnt.getId();
-    }
-
-    @Transactional(readOnly = true)
-    public DataSourceType getDataSourceTypeById(final Integer dataSourceTypeId) throws PersistenceException
-    {
-        // check method parameters
-        if (dataSourceTypeId == null || dataSourceTypeId <= 0)
-        {
-            throw new PersistenceException("Invalid parameters were provided for retrieving data source type by its identifier (" + String.valueOf(dataSourceTypeId) + ")");
-        }
-
-        // retrieve the DataSourceType entity based on its id
-        final DataSourceType dataSourceType = dataSourceTypeRepository.findById(dataSourceTypeId);
-        if (dataSourceType == null)
-        {
-            throw new PersistenceException("There is no data source type with the specified identfier (" + dataSourceTypeId.toString() + ")");
-        }
-
-        return dataSourceType;
-    }
-
-
-    /**
-     * Retrieve the list of data source types
-     * @return the list of data source types
-     */
-    @Transactional(readOnly = true)
-    public List<DataSourceType> getDataSourceTypes()
-    {
-        // retrieve all entities DataSourceType
-        return (List<DataSourceType>) dataSourceTypeRepository.findAll();
-    }
-
-    @Transactional
-    public <Q extends DataQuery, S extends AbstractDataSource<Q>> Integer saveDataSource(S dataSource, DataSourceType dataSourceType, String name, String description) throws PersistenceException
-    {
-        if(dataSource == null || dataSource.getCredentials() == null || dataSource.getConnectionString() == null ||
-          dataSourceType == null || name == null)
-        {
-            throw new PersistenceException("Invalid parameters were provided for adding new data source!");
-        }
-
-        ro.cs.tao.persistence.data.DataSource dataSourceEnt = new ro.cs.tao.persistence.data.DataSource();
-        dataSourceEnt.setName(name);
-        dataSourceEnt.setDataSourceType(dataSourceType);
-        dataSourceEnt.setUsername(dataSource.getCredentials().getUserName());
-        dataSourceEnt.setPassword(dataSource.getCredentials().getPassword());
-        dataSourceEnt.setConnectionString(dataSource.getConnectionString());
-        if(description != null)
-        {
-            dataSourceEnt.setDescription(description);
-        }
-        dataSourceEnt.setCreatedDate(LocalDateTime.now());
-
-        // save the DataSource entity
-        dataSourceEnt = dataSourceRepository.save(dataSourceEnt);
-
-        if(dataSourceEnt.getId() == null)
-        {
-            throw new PersistenceException("Error saving data source with name: " + dataSourceEnt.getName());
-        }
-
-        return dataSourceEnt.getId();
-
-    }
-
-    @Transactional
+    /**@Transactional
     public Long saveDataProduct(EOProduct dataProduct, User user) throws PersistenceException
     {
         // check method parameters
@@ -210,101 +214,141 @@ public class PersistenceManager {
         }
 
         return dataProductEnt.getId();
+    }**/
+
+//    // TODO Use a data model entity when ready
+//    @Transactional
+//    public Integer saveExecutionNode(String name, String description, String ipAddress, String sshKey,
+//                                     String username, String password,
+//                                     Integer totalCPU, Integer totalRAM, Integer totalHDD) throws PersistenceException
+//    {
+//        // check method parameters
+//        if(name == null || ipAddress == null || username == null || password == null ||
+//          totalCPU == null || totalHDD == null || totalRAM == null)
+//        {
+//            throw new PersistenceException("Invalid parameters were provided for adding new execution node!");
+//        }
+//
+//        ExecutionNode executionNodeEnt = new ExecutionNode();
+//        // set all info
+//        executionNodeEnt.setName(name);
+//        if(description != null)
+//        {
+//            executionNodeEnt.setDescription(description);
+//        }
+//        executionNodeEnt.setIpAddress(ipAddress);
+//        if(sshKey != null)
+//        {
+//            executionNodeEnt.setSshKey(sshKey);
+//        }
+//        executionNodeEnt.setUsername(username);
+//        executionNodeEnt.setPassword(password);
+//        executionNodeEnt.setTotalCPU(totalCPU);
+//        executionNodeEnt.setTotalRAM(totalRAM);
+//        executionNodeEnt.setTotalHDD(totalHDD);
+//        executionNodeEnt.setCreatedDate(LocalDateTime.now());
+//        executionNodeEnt.setActive(true);
+//
+//        // save the ExecutionNode entity
+//        executionNodeEnt = executionNodeRepository.save(executionNodeEnt);
+//
+//        if(executionNodeEnt.getId() == null)
+//        {
+//            throw new PersistenceException("Error saving execution node with name: " + executionNodeEnt.getName());
+//        }
+//
+//        return executionNodeEnt.getId();
+//    }
+//
+//
+//    @Transactional
+//    public Integer saveProcessingComponent(ProcessingComponent processingComponent, User owner) throws PersistenceException
+//    {
+//        // check method parameters
+//        if(processingComponent == null ||
+//          processingComponent.getId() == null || processingComponent.getLabel() == null ||
+//          processingComponent.getVersion() == null || processingComponent.getDescription() == null ||
+//          processingComponent.getCopyright() == null || processingComponent.getFileLocation() == null ||
+//          processingComponent.getWorkingDirectory() == null || processingComponent.getTemplateType() == null ||
+//          processingComponent.getTemplate() == null || processingComponent.getTemplate().getName() == null)
+//        {
+//            throw new PersistenceException("Invalid parameters were provided for adding new processing component!");
+//        }
+//
+//        // create new entity
+//        ro.cs.tao.persistence.data.ProcessingComponent processingComponentEnt = new ro.cs.tao.persistence.data.ProcessingComponent();
+//        // set all info
+//        processingComponentEnt.setName(processingComponent.getId());
+//
+//        processingComponentEnt.setLabel(processingComponent.getLabel());
+//        processingComponentEnt.setVersion(processingComponent.getVersion());
+//        processingComponentEnt.setDescription(processingComponent.getDescription());
+//        processingComponentEnt.setAuthors(processingComponent.getAuthors());
+//        processingComponentEnt.setCopyright(processingComponent.getCopyright());
+//
+//        processingComponentEnt.setMainToolFileLocation(processingComponent.getFileLocation());
+//        processingComponentEnt.setWorkingDirectory(processingComponent.getWorkingDirectory());
+//        processingComponentEnt.setTemplateType(Integer.parseInt(processingComponent.getTemplateType().toString()));
+//        processingComponentEnt.setTemplateName(processingComponent.getTemplate().getName());
+//
+//        // TODO variables
+//        // TODO parameters
+//
+//        // ?? TODO processing component
+//
+//
+//        processingComponentEnt.setCreatedDate(LocalDateTime.now());
+//        processingComponentEnt.setActive(true);
+//
+//        // save the new entity
+//        processingComponentEnt = processingComponentRepository.save(processingComponentEnt);
+//
+//        if(processingComponentEnt.getId() == null)
+//        {
+//            throw new PersistenceException("Error saving processing component with name: " + processingComponentEnt.getName());
+//        }
+//
+//        return processingComponentEnt.getId();
+//    }
+
+    @Transactional
+    public EOProduct saveEOProduct(EOProduct eoProduct) throws PersistenceException {
+        // check method parameters
+        if (eoProduct == null ||
+          eoProduct.getName() == null || eoProduct.getGeometry() == null || eoProduct.getProductType() == null ||
+          eoProduct.getLocation() == null || eoProduct.getSensorType() == null || eoProduct.getPixelType() == null) {
+            throw new PersistenceException("Invalid parameters were provided for adding new EO product!");
+        }
+
+        // save the EOProduct entity
+        EOProduct savedEOProduct = eoProductRepository.save(eoProduct);
+
+        if (savedEOProduct.getId() == null) {
+            throw new PersistenceException("Error saving EO product with name: " + eoProduct.getName());
+        }
+
+        return savedEOProduct;
     }
 
-    // TODO Use a data model entity when ready
     @Transactional
-    public Integer saveExecutionNode(String name, String description, String ipAddress, String sshKey,
-                                     String username, String password,
-                                     Integer totalCPU, Integer totalRAM, Integer totalHDD) throws PersistenceException
+    public NodeDescription saveExecutionNode(NodeDescription node) throws PersistenceException
     {
         // check method parameters
-        if(name == null || ipAddress == null || username == null || password == null ||
-          totalCPU == null || totalHDD == null || totalRAM == null)
+        if(node.getHostName() == null || node.getIpAddr() == null || node.getUserName() == null || node.getUserPass() == null ||
+           node.getProcessorCount() <= 0 || node.getDiskSpaceSizeGB() <= 0 || node.getMemorySizeGB() <= 0)
         {
             throw new PersistenceException("Invalid parameters were provided for adding new execution node!");
         }
 
-        ExecutionNode executionNodeEnt = new ExecutionNode();
-        // set all info
-        executionNodeEnt.setName(name);
-        if(description != null)
-        {
-            executionNodeEnt.setDescription(description);
-        }
-        executionNodeEnt.setIpAddress(ipAddress);
-        if(sshKey != null)
-        {
-            executionNodeEnt.setSshKey(sshKey);
-        }
-        executionNodeEnt.setUsername(username);
-        executionNodeEnt.setPassword(password);
-        executionNodeEnt.setTotalCPU(totalCPU);
-        executionNodeEnt.setTotalRAM(totalRAM);
-        executionNodeEnt.setTotalHDD(totalHDD);
-        executionNodeEnt.setCreatedDate(LocalDateTime.now());
-        executionNodeEnt.setActive(true);
+        // save the NodeDescription entity
+        NodeDescription savedNode = nodeRepository.save(node);
 
-        // save the ExecutionNode entity
-        executionNodeEnt = executionNodeRepository.save(executionNodeEnt);
-
-        if(executionNodeEnt.getId() == null)
+        if(savedNode.getHostName() == null)
         {
-            throw new PersistenceException("Error saving execution node with name: " + executionNodeEnt.getName());
+            throw new PersistenceException("Error saving execution node with host name: " + node.getHostName());
         }
 
-        return executionNodeEnt.getId();
-    }
-
-
-    @Transactional
-    public Integer saveProcessingComponent(ProcessingComponent processingComponent, User owner) throws PersistenceException
-    {
-        // check method parameters
-        if(processingComponent == null ||
-          processingComponent.getId() == null || processingComponent.getLabel() == null ||
-          processingComponent.getVersion() == null || processingComponent.getDescription() == null ||
-          processingComponent.getCopyright() == null || processingComponent.getFileLocation() == null ||
-          processingComponent.getWorkingDirectory() == null || processingComponent.getTemplateType() == null ||
-          processingComponent.getTemplate() == null || processingComponent.getTemplate().getName() == null)
-        {
-            throw new PersistenceException("Invalid parameters were provided for adding new processing component!");
-        }
-
-        // create new entity
-        ro.cs.tao.persistence.data.ProcessingComponent processingComponentEnt = new ro.cs.tao.persistence.data.ProcessingComponent();
-        // set all info
-        processingComponentEnt.setName(processingComponent.getId());
-
-        processingComponentEnt.setLabel(processingComponent.getLabel());
-        processingComponentEnt.setVersion(processingComponent.getVersion());
-        processingComponentEnt.setDescription(processingComponent.getDescription());
-        processingComponentEnt.setAuthors(processingComponent.getAuthors());
-        processingComponentEnt.setCopyright(processingComponent.getCopyright());
-
-        processingComponentEnt.setMainToolFileLocation(processingComponent.getFileLocation());
-        processingComponentEnt.setWorkingDirectory(processingComponent.getWorkingDirectory());
-        processingComponentEnt.setTemplateType(Integer.parseInt(processingComponent.getTemplateType().toString()));
-        processingComponentEnt.setTemplateName(processingComponent.getTemplate().getName());
-
-        // TODO variables
-        // TODO parameters
-
-        // ?? TODO processing component
-
-
-        processingComponentEnt.setCreatedDate(LocalDateTime.now());
-        processingComponentEnt.setActive(true);
-
-        // save the new entity
-        processingComponentEnt = processingComponentRepository.save(processingComponentEnt);
-
-        if(processingComponentEnt.getId() == null)
-        {
-            throw new PersistenceException("Error saving processing component with name: " + processingComponentEnt.getName());
-        }
-
-        return processingComponentEnt.getId();
+        return savedNode;
     }
 
 }

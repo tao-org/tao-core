@@ -51,6 +51,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @author Cosmin Cara
@@ -93,11 +95,11 @@ public abstract class EOData {
         }
     }
 
-    @XmlTransient
+    /**@XmlTransient
     @JsonIgnore
     public Geometry getPolygon() {
         return this.geometry;
-    }
+    }**/
 
     public void setGeometry(String geometryAsText) {
         try {
@@ -156,6 +158,48 @@ public abstract class EOData {
             attribute = this.attributes.get(name);
         }
         return attribute != null ? attribute.getValue() : null;
+    }
+
+    /**
+     *
+     * @return map of attributes
+     */
+    public Map<String, String> getAttributesMap() {
+        if (this.attributes == null)
+        {
+            return null;
+        }
+
+        Map<String, String> attributesMap = attributes.values().stream().collect(Collectors.toMap(Attribute::getName, Attribute::getValue));
+        // remove entries having null values
+        attributesMap.values().removeIf(Objects::isNull);
+
+        attributesMap = attributesMap.entrySet()
+          .stream()
+          .filter(e -> e.getValue() != null && !e.getValue().equals("null"))
+          .collect(Collectors.toMap(p -> p.getKey(), p -> p.getValue()));
+
+        return attributesMap;
+    }
+
+    public void setAttributesMap(Map<String, String> attributes) {
+        if (attributes != null) {
+            if (this.attributes == null) {
+                this.attributes = new HashMap<>();
+            }
+            Map<String, Attribute> newAttributes = new HashMap<>();
+            attributes.entrySet().stream().forEach(e -> newAttributes.put(e.getKey(),
+              new Attribute() {{
+                  setName(e.getKey());
+                  setValue(e.getValue());
+              }}));
+            this.attributes.putAll(newAttributes.entrySet()
+              .stream()
+              .filter(e -> e.getValue().getValue() != null && !"null".equals(e.getValue().getValue()))
+              .collect(Collectors.toMap(p -> p.getKey(), p -> p.getValue())));
+        } else {
+            this.attributes = new HashMap<>();
+        }
     }
 
     public String getCrs() {
