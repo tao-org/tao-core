@@ -10,6 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>tao-aws</artifactId>
+    <packaging>jar</packaging>
 
     <dependencies>
         <dependency>
@@ -20,6 +21,11 @@
         <dependency>
             <groupId>ro.cs.tao</groupId>
             <artifactId>tao-data-sources</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ro.cs.tao</groupId>
+            <artifactId>tao-config</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>

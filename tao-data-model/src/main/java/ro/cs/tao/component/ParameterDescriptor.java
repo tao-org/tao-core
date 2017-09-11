@@ -39,7 +39,6 @@
 package ro.cs.tao.component;
 
 import ro.cs.tao.component.validation.CompositeValidator;
-import ro.cs.tao.component.validation.NotEmptyValidator;
 import ro.cs.tao.component.validation.NotNullValidator;
 import ro.cs.tao.component.validation.TypeValidator;
 import ro.cs.tao.component.validation.ValidationException;
@@ -47,6 +46,7 @@ import ro.cs.tao.component.validation.Validator;
 import ro.cs.tao.component.validation.ValidatorRegistry;
 import ro.cs.tao.component.validation.ValueSetValidator;
 
+import javax.xml.bind.annotation.XmlRootElement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -54,6 +54,7 @@ import java.util.List;
 /**
  * @author Cosmin Cara
  */
+@XmlRootElement(name = "parameter")
 public class ParameterDescriptor extends Identifiable {
     private ParameterType type;
     private Class<?> dataType;
@@ -64,16 +65,15 @@ public class ParameterDescriptor extends Identifiable {
     private String[] valueSet;
     private String format;
     private Boolean notNull;
-    private Boolean notEmpty;
     private Validator customValidator;
     private Validator validator;
 
     public ParameterDescriptor() { super(); }
 
-    private ParameterDescriptor(String name, ParameterType type, Class<?> dataType, String defaultValue,
+    private ParameterDescriptor(String id, ParameterType type, Class<?> dataType, String defaultValue,
                                 String description, String label, String unit, String[] valueSet,
-                                String format, Boolean notNull, Boolean notEmpty) {
-        super(name);
+                                String format, Boolean notNull) {
+        super(id);
         this.type = type;
         this.dataType = dataType;
         this.defaultValue = defaultValue;
@@ -83,11 +83,10 @@ public class ParameterDescriptor extends Identifiable {
         this.valueSet = valueSet;
         this.format = format;
         this.notNull = notNull;
-        this.notEmpty = notEmpty;
     }
 
-    public ParameterDescriptor(String name) {
-        super(name);
+    public ParameterDescriptor(String id) {
+        super(id);
     }
 
     public ParameterType getType() {
@@ -138,6 +137,7 @@ public class ParameterDescriptor extends Identifiable {
         this.unit = unit;
     }
 
+    //@XmlJavaTypeAdapter(StringArrayAdapter.class)
     public String[] getValueSet() {
         return valueSet;
     }
@@ -162,13 +162,7 @@ public class ParameterDescriptor extends Identifiable {
         this.notNull = notNull;
     }
 
-    public Boolean isNotEmpty() {
-        return notEmpty;
-    }
-
-    public void setNotEmpty(Boolean notEmpty) {
-        this.notEmpty = notEmpty;
-    }
+    public Validator getValidator() { return customValidator; }
 
     public void setValidator(Validator customValidator) { this.customValidator = customValidator; }
 
@@ -182,11 +176,11 @@ public class ParameterDescriptor extends Identifiable {
     }
 
     @Override
-    public ParameterDescriptor copy() {
-        return new ParameterDescriptor(defaultName(), this.type, this.dataType, this.defaultValue,
-                                       this.description, this.label, this.unit,
-                                       Arrays.copyOf(this.valueSet, this.valueSet.length),
-                                       this.format, this.notNull, this.notEmpty);
+    public ParameterDescriptor clone() throws CloneNotSupportedException {
+        ParameterDescriptor clone = (ParameterDescriptor) super.clone();
+        clone.id = defaultName();
+        clone.valueSet = Arrays.copyOf(this.valueSet, this.valueSet.length);
+        return clone;
     }
 
     protected Validator createValidator() {
@@ -197,9 +191,6 @@ public class ParameterDescriptor extends Identifiable {
                 validators.add(ValidatorRegistry.INSTANCE.getValidator(NotNullValidator.class));
             }
             validators.add(ValidatorRegistry.INSTANCE.getValidator(TypeValidator.class));
-            if (this.notEmpty) {
-                validators.add(ValidatorRegistry.INSTANCE.getValidator(NotEmptyValidator.class));
-            }
             if (this.notNull) {
                 validators.add(ValidatorRegistry.INSTANCE.getValidator(NotNullValidator.class));
             }

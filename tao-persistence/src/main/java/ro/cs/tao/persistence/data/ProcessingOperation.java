@@ -3,6 +3,7 @@ package ro.cs.tao.persistence.data;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 import java.util.Set;
 
 /**
@@ -13,7 +14,7 @@ import java.util.Set;
  */
 @Entity
 @Table(name = "tao.processing_operation")
-public class ProcessingOperation {
+public class ProcessingOperation implements Serializable {
 
     /**
      * Processing operation name column maximum length

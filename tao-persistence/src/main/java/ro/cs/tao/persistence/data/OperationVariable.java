@@ -5,6 +5,7 @@ import ro.cs.tao.persistence.data.util.OperationVariableKey;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 
 /**
  * OperationVariable persistent entity
@@ -15,7 +16,7 @@ import javax.validation.constraints.Size;
 @Entity
 @Table(name = "tao.operation_variables")
 @IdClass(OperationVariableKey.class)
-public class OperationVariable {
+public class OperationVariable implements Serializable {
 
     /**
      * Processing operation variable name column maximum length

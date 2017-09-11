@@ -38,19 +38,21 @@
 
 package ro.cs.tao.eodata;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.vividsolutions.jts.geom.Geometry;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import ro.cs.tao.eodata.enums.DataFormat;
-import ro.cs.tao.eodata.serialization.CRSAdapter;
-import ro.cs.tao.eodata.serialization.GeometryAdapter;
+import ro.cs.tao.serialization.CRSAdapter;
+import ro.cs.tao.serialization.GeometryAdapter;
 
-import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import javax.xml.bind.annotation.XmlTransient;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @author Cosmin Cara
@@ -59,13 +61,12 @@ public abstract class EOData {
 
     private String id;
     private String name;
-    private DataFormat type;
+    private DataFormat formatType;
     private Geometry geometry;
     private Map<String, Attribute> attributes;
     private CoordinateReferenceSystem crs;
     private URI location;
 
-    @XmlElement(name = "id")
     public String getId() {
         return id;
     }
@@ -74,7 +75,6 @@ public abstract class EOData {
         this.id = id;
     }
 
-    @XmlElement(name = "name")
     public String getName() {
         return name;
     }
@@ -83,19 +83,28 @@ public abstract class EOData {
         this.name = name;
     }
 
-    @XmlElement(name = "type")
-    public DataFormat getType() { return type; }
+    public DataFormat getFormatType() { return formatType; }
 
-    public void setType(DataFormat type) { this.type = type; }
+    public void setFormatType(DataFormat type) { this.formatType = type; }
 
-    @XmlElement(name = "geometry")
-    @XmlJavaTypeAdapter(GeometryAdapter.class)
-    public Geometry getGeometry() {
-        return geometry;
+    public String getGeometry() {
+        try {
+            return new GeometryAdapter().unmarshal(geometry);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
-    public void setGeometry(Geometry geometry) {
-        this.geometry = geometry;
+    /**@XmlTransient
+    @JsonIgnore
+    public Geometry getPolygon() {
+        return this.geometry;
+    }**/
+
+    public void setGeometry(String geometryAsText) {
+        try {
+            this.geometry = new GeometryAdapter().marshal(geometryAsText);
+        } catch (Exception ignored) { }
     }
 
     @XmlElementWrapper(name = "attributes")
@@ -109,6 +118,8 @@ public abstract class EOData {
         if (attributes != null) {
             if (this.attributes == null) {
                 this.attributes = new HashMap<>();
+            } else {
+                this.attributes.clear();
             }
             for (Attribute attribute : attributes) {
                 this.attributes.put(attribute.getName(), attribute);
@@ -122,10 +133,16 @@ public abstract class EOData {
         if (this.attributes == null) {
             this.attributes = new HashMap<>();
         }
-        this.attributes.put(name, new Attribute() {{
-            setName(name);
-            setValue(value);
-        }});
+        if (value != null) {
+            if (value.startsWith("\"") && value.endsWith("\"")) {
+                value = value.substring(1, value.length() - 1);
+            }
+        }
+        final String val = value;
+        Attribute attr = new Attribute();
+        attr.setName(name);
+        attr.setValue(val);
+        this.attributes.put(name, attr);
     }
 
     public void addAttribute(Attribute attribute) {
@@ -143,17 +160,62 @@ public abstract class EOData {
         return attribute != null ? attribute.getValue() : null;
     }
 
-    @XmlElement(name = "crs")
-    @XmlJavaTypeAdapter(CRSAdapter.class)
-    public CoordinateReferenceSystem getCrs() {
-        return crs;
+    /**
+     *
+     * @return map of attributes
+     */
+    public Map<String, String> getAttributesMap() {
+        if (this.attributes == null)
+        {
+            return null;
+        }
+
+        Map<String, String> attributesMap = attributes.values().stream().collect(Collectors.toMap(Attribute::getName, Attribute::getValue));
+        // remove entries having null values
+        attributesMap.values().removeIf(Objects::isNull);
+
+        attributesMap = attributesMap.entrySet()
+          .stream()
+          .filter(e -> e.getValue() != null && !e.getValue().equals("null"))
+          .collect(Collectors.toMap(p -> p.getKey(), p -> p.getValue()));
+
+        return attributesMap;
     }
 
-    public void setCrs(CoordinateReferenceSystem crs) {
-        this.crs = crs;
+    public void setAttributesMap(Map<String, String> attributes) {
+        if (attributes != null) {
+            if (this.attributes == null) {
+                this.attributes = new HashMap<>();
+            }
+            Map<String, Attribute> newAttributes = new HashMap<>();
+            attributes.entrySet().stream().forEach(e -> newAttributes.put(e.getKey(),
+              new Attribute() {{
+                  setName(e.getKey());
+                  setValue(e.getValue());
+              }}));
+            this.attributes.putAll(newAttributes.entrySet()
+              .stream()
+              .filter(e -> e.getValue().getValue() != null && !"null".equals(e.getValue().getValue()))
+              .collect(Collectors.toMap(p -> p.getKey(), p -> p.getValue())));
+        } else {
+            this.attributes = new HashMap<>();
+        }
     }
 
-    @XmlElement(name = "location")
+    public String getCrs() {
+        try {
+            return new CRSAdapter().unmarshal(this.crs);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public void setCrs(String crsCode) {
+        try {
+            this.crs = new CRSAdapter().marshal(crsCode);
+        } catch (Exception ignored) { }
+    }
+
     public URI getLocation() { return location; }
 
     public void setLocation(String value) throws URISyntaxException { this.location = new URI(value); }

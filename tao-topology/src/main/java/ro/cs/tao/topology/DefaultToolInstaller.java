@@ -2,10 +2,13 @@ package ro.cs.tao.topology;
 
 import ro.cs.tao.topology.xml.ToolInstallersConfigHandler;
 import ro.cs.tao.topology.xml.ToolInstallersConfigParser;
-import ro.cs.tao.utils.executors.*;
+import ro.cs.tao.utils.executors.ExecutionUnit;
+import ro.cs.tao.utils.executors.Executor;
+import ro.cs.tao.utils.executors.ExecutorType;
+import ro.cs.tao.utils.executors.OutputConsumer;
+import ro.cs.tao.utils.executors.SSHMode;
 
 import java.io.File;
-import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -135,7 +138,7 @@ public class DefaultToolInstaller implements ITopologyToolInstaller {
                         replacementStr = masterNodeInfo.getHostName();
                         break;
                     case ToolCommandsTokens.MASTER_IP_ADDR:
-                        replacementStr = masterNodeInfo.getHostName();
+                        replacementStr = masterNodeInfo.getIpAddr();
                         break;
                     case ToolCommandsTokens.NODE_HOSTNAME:
                         replacementStr = info.getHostName();
@@ -150,7 +153,7 @@ public class DefaultToolInstaller implements ITopologyToolInstaller {
                         replacementStr = info.getUserPass();
                         break;
                     case ToolCommandsTokens.NODE_PROCESSORS_CNT:
-                        replacementStr = String.valueOf(info.getNodeProcessorsCnt());
+                        replacementStr = String.valueOf(info.getProcessorCount());
                         break;
                     case ToolCommandsTokens.INSTALL_SCRIPTS_ROOT_PATH:
                         replacementStr = installToolsRootPath;

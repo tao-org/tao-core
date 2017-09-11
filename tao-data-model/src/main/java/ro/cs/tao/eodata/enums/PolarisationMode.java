@@ -19,10 +19,13 @@
 
 package ro.cs.tao.eodata.enums;
 
+import javax.xml.bind.annotation.XmlEnum;
+
 /**
  * @author kraftek
  * @date 2/28/2017
  */
+@XmlEnum
 public enum PolarisationMode {
     D,
     Q,

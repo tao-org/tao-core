@@ -1,13 +1,13 @@
 package ro.cs.tao.datasource.remote.peps;
 
+import ro.cs.tao.datasource.remote.result.filters.AttributeFilter;
 import ro.cs.tao.datasource.remote.result.json.JSonResponseHandler;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.Polygon2D;
 import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.eodata.enums.PixelType;
 import ro.cs.tao.eodata.enums.SensorType;
-import ro.cs.tao.eodata.serialization.DateAdapter;
-import ro.cs.tao.eodata.serialization.GeometryAdapter;
+import ro.cs.tao.serialization.DateAdapter;
 
 import javax.json.Json;
 import javax.json.JsonArray;
@@ -23,7 +23,7 @@ import java.util.List;
  */
 public class PepsResponseHandler implements JSonResponseHandler<EOProduct> {
     @Override
-    public List<EOProduct> readValues(String content) throws IOException {
+    public List<EOProduct> readValues(String content, AttributeFilter...filters) throws IOException {
         List<EOProduct> results = new ArrayList<>();
         JsonReader reader = Json.createReader(new StringReader(content));
         JsonObject rootObject = reader.readObject();
@@ -39,11 +39,11 @@ public class PepsResponseHandler implements JSonResponseHandler<EOProduct> {
                     footprint.append(coordinates.getJsonArray(j).getJsonNumber(0).doubleValue(),
                                      coordinates.getJsonArray(j).getJsonNumber(1).doubleValue());
                 }
-                result.setGeometry(new GeometryAdapter().marshal(footprint.toWKT()));
+                result.setGeometry(footprint.toWKT());
                 JsonObject properties = jsonObject.getJsonObject("properties");
                 result.setName(properties.getString("title"));
                 result.setAcquisitionDate(new DateAdapter().unmarshal(properties.getString("startDate")));
-                result.setType(DataFormat.RASTER);
+                result.setFormatType(DataFormat.RASTER);
                 result.setProductType(properties.getString("productType"));
                 result.setPixelType(PixelType.UINT16);
                 result.setLocation(properties.getJsonObject("services").getJsonObject("download").getString("url"));

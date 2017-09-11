@@ -31,7 +31,7 @@ public interface DataSource<Q extends DataQuery> {
     void setConnectionString(String connectionString);
     /**
      * Sets the credentials needed to connect to this data source
-     * @param username  The user name
+     * @param username  The user id
      * @param password  The user password
      */
     void setCredentials(String username, String password);
@@ -63,12 +63,12 @@ public interface DataSource<Q extends DataQuery> {
     default Q createQuery() { return createQuery(null); }
     /**
      * Creates a query object that can be used to look for products of the given type in this data source.
-     * @param sensorName  The sensor name
+     * @param sensorName  The sensor id
      */
     Q createQuery(String sensorName);
     /**
-     * Retrieves the fetch strategy for products of the given sensor name
-     * @param sensorName    The sensor name
+     * Retrieves the fetch strategy for products of the given sensor id
+     * @param sensorName    The sensor id
      */
     ProductFetchStrategy getProductFetchStrategy(String sensorName);
 }

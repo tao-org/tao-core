@@ -76,3 +76,16 @@ ALTER TABLE tao.processing_component ALTER COLUMN id SET DEFAULT nextval('tao.pr
 ALTER SEQUENCE tao.processing_component_id_seq OWNED BY tao.processing_component.id;
 
 
+----- table: tao.template_type --------------------------------------------------------------------
+DROP SEQUENCE IF EXISTS tao.template_type_id_seq CASCADE;
+-- create sequence
+CREATE SEQUENCE tao.template_type_id_seq
+	INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+
+-- assign sequence to column
+ALTER TABLE tao.template_type ALTER COLUMN id SET DEFAULT nextval('tao.template_type_id_seq');
+
+-- assign column to sequence
+ALTER SEQUENCE tao.template_type_id_seq OWNED BY tao.template_type.id;
+
+

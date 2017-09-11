@@ -47,6 +47,7 @@ public enum ParameterType {
     /**
      * The parameter is an input to the component
      */
+    @Deprecated
     SOURCE,
     /**
      * The parameter is a regular parameter
@@ -55,6 +56,7 @@ public enum ParameterType {
     /**
      * The parameter is an output of the component
      */
+    @Deprecated
     TARGET,
     /**
      * The parameter is a template parameter (describing the invocation of the component, for example)

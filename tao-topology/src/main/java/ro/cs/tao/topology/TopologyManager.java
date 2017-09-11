@@ -9,17 +9,20 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Created by cosmin on 8/23/2017.
  */
 public class TopologyManager implements ITopologyManager {
+    private static final TopologyManager instance;
+
     private ServiceRegistry<ITopologyToolInstaller> installersRegistry;
     private NodeDescription masterNodeInfo;
-    private static TopologyManager instance = new TopologyManager();
-    Set<ITopologyToolInstaller> installers;
+    private Set<ITopologyToolInstaller> installers;
+
+    static {
+        instance = new TopologyManager();
+    }
 
     private TopologyManager() {
         // initialize the hostname and ip address in the master node description
@@ -40,7 +43,45 @@ public class TopologyManager implements ITopologyManager {
     }
 
     @Override
-    public void addNode(NodeDescription info) {
+    public NodeDescription get(String name) {
+        NodeDescription node = new NodeDescription();
+        node.setHostName("host_sample");
+        node.setIpAddr("10.0.0.1");
+        node.setUserName("user");
+        node.setUserPass("drowssap");
+        node.setProcessorCount(4);
+        node.setMemorySizeGB(16);
+        node.setDiskSpaceSizeGB(500);
+        return node;
+    }
+
+    @Override
+    public List<NodeDescription> list() {
+        List<NodeDescription> list = new ArrayList<NodeDescription>();
+        NodeDescription node = new NodeDescription();
+        node.setHostName("host_sample_1");
+        node.setIpAddr("10.0.0.1");
+        node.setUserName("user");
+        node.setUserPass("drowssap");
+        node.setProcessorCount(4);
+        node.setMemorySizeGB(16);
+        node.setDiskSpaceSizeGB(500);
+        list.add(node);
+
+        node = new NodeDescription();
+        node.setHostName("host_sample_2");
+        node.setIpAddr("10.0.0.2");
+        node.setUserName("user");
+        node.setUserPass("drowssap");
+        node.setProcessorCount(4);
+        node.setMemorySizeGB(16);
+        node.setDiskSpaceSizeGB(500);
+        list.add(node);
+        return list;
+    }
+
+    @Override
+    public void add(NodeDescription info) {
         // execute all the installers
         for (ITopologyToolInstaller installer: installers) {
             installer.installNewNode(info);
@@ -48,15 +89,19 @@ public class TopologyManager implements ITopologyManager {
     }
 
     @Override
-    public void removeNode(NodeDescription info) {
+    public void remove(String name) {
+        NodeDescription node = get(name);
+        if (node == null) {
+            throw new TopologyException(String.format("Node [%s] does not exist", name));
+        }
         // execute all the installers
         for (ITopologyToolInstaller installer: installers) {
-            installer.uninstallNode(info);
+            installer.uninstallNode(node);
         }
     }
 
     @Override
-    public void editNode(NodeDescription nodeInfo) {
+    public void update(NodeDescription nodeInfo) {
         // execute all the installers
         for (ITopologyToolInstaller installer: installers) {
             installer.editNode(nodeInfo);

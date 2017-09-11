@@ -1,5 +1,6 @@
 package ro.cs.tao.datasource;
 
+import ro.cs.tao.datasource.param.ParameterDescriptor;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
 
@@ -22,6 +23,10 @@ public class DataSourceManager {
         instance = new DataSourceManager();
     }
 
+    public static void main(String[] args) {
+        System.out.println("OK!");
+    }
+
     public static DataSourceManager getInstance() { return instance; }
 
     private DataSourceManager() {
@@ -38,6 +43,10 @@ public class DataSourceManager {
                 this.registeredSources.get(sensor).add(className);
             }
         });
+    }
+
+    public List<String> getSupportedSensors() {
+        return new ArrayList<>(this.registeredSources.keySet());
     }
 
     /**
@@ -95,5 +104,15 @@ public class DataSourceManager {
             dataSource = this.registry.getService(className);
         }
         return dataSource;
+    }
+
+    public Map<String, ParameterDescriptor> getSupportedParameters(String sensorName, String className) {
+        DataSource dataSource = get(sensorName, className);
+        Map<String, ParameterDescriptor> parameters = null;
+        if (dataSource != null) {
+            Map<String, Map<String, ParameterDescriptor>> supportedParameters = dataSource.getSupportedParameters();
+            parameters = supportedParameters.get(sensorName);
+        }
+        return parameters;
     }
 }

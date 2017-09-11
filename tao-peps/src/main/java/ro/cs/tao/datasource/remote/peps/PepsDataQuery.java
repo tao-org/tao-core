@@ -5,7 +5,6 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
-import ro.cs.tao.component.Identifiable;
 import ro.cs.tao.datasource.DataQuery;
 import ro.cs.tao.datasource.DataSource;
 import ro.cs.tao.datasource.QueryException;
@@ -90,9 +89,13 @@ public class PepsDataQuery extends DataQuery {
             try (CloseableHttpResponse response = NetUtils.openConnection(queryUrl, this.source.getCredentials())) {
                 switch (response.getStatusLine().getStatusCode()) {
                     case 200:
-                        JsonResponseParser<EOProduct> parser = new JsonResponseParser<>();
-                        tmpResults = parser.parse(EntityUtils.toString(response.getEntity()),
-                                                  new PepsResponseHandler());
+                        JsonResponseParser<EOProduct> parser = new JsonResponseParser<EOProduct>(new PepsResponseHandler()) {
+                            @Override
+                            public String[] getExcludedAttributes() {
+                                return new String[] { "keywords", "links", "services" };
+                            }
+                        };
+                        tmpResults = parser.parse(EntityUtils.toString(response.getEntity()));
                         if (tmpResults != null) {
                             retrieved = tmpResults.size();
                             if ("Sentinel-2".equals(this.parameters.get("platform").getValue()) &&
@@ -128,8 +131,4 @@ public class PepsDataQuery extends DataQuery {
         return "PepsQuery";
     }
 
-    @Override
-    public Identifiable copy() {
-        return null;
-    }
 }
