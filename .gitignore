@@ -6,6 +6,8 @@
 .gitignore
 .settings
 *.iml
+*.ipr
+*.iws
 build
 generated
 output
