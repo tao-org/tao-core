@@ -1,6 +1,7 @@
 package ro.cs.tao.topology;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -35,25 +36,25 @@ public class ToolInstallConfig {
     public void addToolInstallStep(ToolInstallStep installStep) {
         this.installSteps.add(installStep);
         // sort the steps according to their order id
-        installSteps.sort((o1, o2) -> Integer.compare(o1.getOrderId(), o2.getOrderId()));
+        installSteps.sort(Comparator.comparingInt(ToolInstallStep::getOrderId));
     }
 
     public void addToolUninstallStep(ToolInstallStep installStep) {
         this.uninstallSteps.add(installStep);
         // sort the steps according to their order id
-        uninstallSteps.sort((o1, o2) -> Integer.compare(o1.getOrderId(), o2.getOrderId()));
+        uninstallSteps.sort(Comparator.comparingInt(ToolInstallStep::getOrderId));
     }
 
     public void setInstallSteps(List<ToolInstallStep> installSteps) {
         this.installSteps = installSteps;
         // sort the steps according to their order id
-        installSteps.sort((o1, o2) -> Integer.compare(o1.getOrderId(), o2.getOrderId()));
+        installSteps.sort(Comparator.comparingInt(ToolInstallStep::getOrderId));
     }
 
     public void setUninstallSteps(List<ToolInstallStep> uninstallSteps) {
         this.uninstallSteps = uninstallSteps;
         // sort the steps according to their order id
-        uninstallSteps.sort((o1, o2) -> Integer.compare(o1.getOrderId(), o2.getOrderId()));
+        uninstallSteps.sort(Comparator.comparingInt(ToolInstallStep::getOrderId));
     }
 
     public String getName() {
