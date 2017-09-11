@@ -138,7 +138,7 @@ public class DefaultToolInstaller implements ITopologyToolInstaller {
                         replacementStr = masterNodeInfo.getHostName();
                         break;
                     case ToolCommandsTokens.MASTER_IP_ADDR:
-                        replacementStr = masterNodeInfo.getHostName();
+                        replacementStr = masterNodeInfo.getIpAddr();
                         break;
                     case ToolCommandsTokens.NODE_HOSTNAME:
                         replacementStr = info.getHostName();
