@@ -28,6 +28,6 @@ public class TopologyTest {
         nodeInfo.setUserName("sen2agri");
         nodeInfo.setUserPass("sen2agri");
         nodeInfo.setProcessorCount(2);
-        TopologyManager.getInstance().addNode(nodeInfo);
+        TopologyManager.getInstance().add(nodeInfo);
     }
 }

@@ -29,4 +29,5 @@ public class ConfigurationManager {
         return this.settings.getProperty(name);
     }
 
+    public Properties getAll() { return this.settings; }
 }
