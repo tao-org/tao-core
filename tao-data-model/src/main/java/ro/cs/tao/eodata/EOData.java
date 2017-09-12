@@ -183,10 +183,11 @@ public abstract class EOData implements Serializable{
                 value = value.substring(1, value.length() - 1);
             }
         }
-        Attribute newAttr = new Attribute();
-        newAttr.setName(name);
-        newAttr.setValue(value);
-        this.attributes.put(name, newAttr);
+        final String val = value;
+        Attribute attr = new Attribute();
+        attr.setName(name);
+        attr.setValue(val);
+        this.attributes.put(name, attr);
     }
 
     public void addAttribute(Attribute attribute) {

@@ -61,12 +61,12 @@
         </dependency>
         <dependency>
             <groupId>ro.cs.tao</groupId>
-            <artifactId>tao-pc-deployment</artifactId>
+            <artifactId>tao-topology</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>ro.cs.tao</groupId>
-            <artifactId>tao-topology</artifactId>
+            <artifactId>tao-executors</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>
