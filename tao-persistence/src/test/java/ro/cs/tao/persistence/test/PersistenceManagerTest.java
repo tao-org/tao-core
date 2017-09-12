@@ -4,8 +4,10 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.Assert;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ImportResource;
 import org.springframework.test.context.ContextConfiguration;
@@ -44,6 +46,7 @@ import java.util.logging.Logger;
 @RunWith(SpringRunner.class)
 @ContextConfiguration("classpath:tao-persistence-context.xml")
 @ImportResource({"classpath:META-INF/persistence.xml" })
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class PersistenceManagerTest {
 
     private static Log logger = LogFactory.getLog(PersistenceManagerTest.class);
@@ -175,13 +178,13 @@ public class PersistenceManagerTest {
     }**/
 
     @Test
-    public void save_new_execution_node()
+    public void TC_01_save_new_execution_node()
     {
         try
         {
             // add a new execution node for test
             NodeDescription node  = new NodeDescription();
-            node.setHostName("No host name test 2");
+            node.setHostName("Test host name");
             node.setIpAddr("No IP adr");
             node.setUserName("No user name");
             node.setUserPass("No user pass");
@@ -192,6 +195,58 @@ public class PersistenceManagerTest {
             node = persistenceManager.saveExecutionNode(node);
             // check persisted node
             Assert.assertTrue(node != null && node.getHostName() != null);
+        }
+        catch (PersistenceException e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void TC_02_retrieve_all_execution_nodes()
+    {
+        try
+        {
+
+            List<NodeDescription> nodes  = persistenceManager.getNodes();
+            Assert.assertTrue(nodes != null && nodes.size() > 0);
+
+            for (NodeDescription node : nodes)
+            {
+                logger.info("Found node " + node.getHostName());
+            }
+        }
+        catch (Exception e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void TC_03_check_execution_node_existence_by_host_name()
+    {
+        try
+        {
+            String hostName = "Test host name";
+            Assert.assertTrue(persistenceManager.checkIfExistsNodeByHostName(hostName));
+        }
+        catch (Exception e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void TC_04_retrieve_execution_node_by_host_name()
+    {
+        try
+        {
+            String hostName = "Test host name";
+            NodeDescription node  = persistenceManager.getNodeByHostName(hostName);
+            Assert.assertTrue(node != null && node.getHostName().equals(hostName));
         }
         catch (PersistenceException e)
         {
