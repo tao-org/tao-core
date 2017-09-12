@@ -58,12 +58,13 @@
 package ro.cs.tao.eodata;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import java.io.Serializable;
 
 /**
  * @author Cosmin Cara
  */
 @XmlRootElement(name = "Attribute")
-public class Attribute {
+public class Attribute implements Serializable {
     private String name;
     private String value;
 

@@ -69,12 +69,15 @@ public class PepsDataSourceTest {
             results.forEach(r -> {
                 System.out.println("ID=" + r.getId());
                 System.out.println("NAME=" + r.getName());
-                System.out.println("LOCATION=" + r.getLocation().toString());
+                System.out.println("LOCATION=" + r.getLocation());
                 System.out.println("FOOTPRINT=" + r.getGeometry());
                 System.out.println("Attributes ->");
-                Arrays.stream(r.getAttributes())
-                        .forEach(a -> System.out.println("\tName='" + a.getName() +
-                                                                 "', value='" + a.getValue() + "'"));
+//                Arrays.stream(r.getAttributes())
+//                        .forEach(a -> System.out.println("\tName='" + a.getName() +
+//                                                                 "', value='" + a.getValue() + "'"));
+                r.getAttributes().stream()
+                  .forEach(a -> System.out.println("\tName='" + a.getName() +
+                    "', value='" + a.getValue() + "'"));
             });
         } catch (QueryException e) {
             e.printStackTrace();

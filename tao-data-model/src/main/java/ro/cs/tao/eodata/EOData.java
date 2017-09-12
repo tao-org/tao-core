@@ -47,23 +47,22 @@ import ro.cs.tao.serialization.GeometryAdapter;
 
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlTransient;
+import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * @author Cosmin Cara
  */
-public abstract class EOData {
+public abstract class EOData implements Serializable{
 
     private String id;
     private String name;
     private DataFormat formatType;
     private Geometry geometry;
-    private Map<String, Attribute> attributes;
+    private Map<String, Attribute> attributes = new HashMap<>();
     private CoordinateReferenceSystem crs;
     private URI location;
 
@@ -95,11 +94,11 @@ public abstract class EOData {
         }
     }
 
-    /**@XmlTransient
-    @JsonIgnore
-    public Geometry getPolygon() {
-        return this.geometry;
-    }**/
+//    @XmlTransient
+//    @JsonIgnore
+//    public Geometry getPolygon() {
+//        return this.geometry;
+//    }
 
     public void setGeometry(String geometryAsText) {
         try {
@@ -107,22 +106,68 @@ public abstract class EOData {
         } catch (Exception ignored) { }
     }
 
+//    @XmlElementWrapper(name = "attributes")
+//    public Attribute[] getAttributes() {
+//        return attributes != null ?
+//                attributes.values().toArray(new Attribute[attributes.size()]) :
+//                null;
+//    }
+
+//    public void setAttributes(Attribute[] attributes) {
+//        if (attributes != null) {
+//            if (this.attributes == null) {
+//                this.attributes = new HashMap<>();
+//            } else {
+//                this.attributes.clear();
+//            }
+//            for (Attribute attribute : attributes) {
+//                this.attributes.put(attribute.getName(), attribute);
+//            }
+//        } else {
+//            this.attributes = new HashMap<>();
+//        }
+//    }
+
     @XmlElementWrapper(name = "attributes")
-    public Attribute[] getAttributes() {
-        return attributes != null ?
-                attributes.values().toArray(new Attribute[attributes.size()]) :
-                null;
+    public List<Attribute> getAttributes() {
+        List<Attribute> result = null;
+
+        if(attributes != null)
+        {
+            if(attributes.size() > 0)
+            {
+                result = attributes.values().stream().collect(Collectors.toList());
+            }
+            else
+            {
+                // empty map of attributes
+                result = new ArrayList<>();
+            }
+        }
+         return result;
+
+//        return attributes != null ?
+//          attributes.values().stream().collect(Collectors.toList()) :
+//          null;
     }
 
-    public void setAttributes(Attribute[] attributes) {
+    public void setAttributes(List<Attribute> attributes) {
         if (attributes != null) {
             if (this.attributes == null) {
                 this.attributes = new HashMap<>();
             } else {
                 this.attributes.clear();
             }
-            for (Attribute attribute : attributes) {
-                this.attributes.put(attribute.getName(), attribute);
+
+            if(attributes.isEmpty())
+            {
+                this.attributes = new HashMap<>();
+            }
+            else
+            {
+                for (Attribute attribute : attributes) {
+                    this.attributes.put(attribute.getName(), attribute);
+                }
             }
         } else {
             this.attributes = new HashMap<>();
@@ -138,11 +183,10 @@ public abstract class EOData {
                 value = value.substring(1, value.length() - 1);
             }
         }
-        final String val = value;
-        this.attributes.put(name, new Attribute() {{
-            setName(name);
-            setValue(val);
-        }});
+        Attribute newAttr = new Attribute();
+        newAttr.setName(name);
+        newAttr.setValue(value);
+        this.attributes.put(name, newAttr);
     }
 
     public void addAttribute(Attribute attribute) {
@@ -160,47 +204,47 @@ public abstract class EOData {
         return attribute != null ? attribute.getValue() : null;
     }
 
-    /**
-     *
-     * @return map of attributes
-     */
-    public Map<String, String> getAttributesMap() {
-        if (this.attributes == null)
-        {
-            return null;
-        }
-
-        Map<String, String> attributesMap = attributes.values().stream().collect(Collectors.toMap(Attribute::getName, Attribute::getValue));
-        // remove entries having null values
-        attributesMap.values().removeIf(Objects::isNull);
-
-        attributesMap = attributesMap.entrySet()
-          .stream()
-          .filter(e -> e.getValue() != null && !e.getValue().equals("null"))
-          .collect(Collectors.toMap(p -> p.getKey(), p -> p.getValue()));
-
-        return attributesMap;
-    }
-
-    public void setAttributesMap(Map<String, String> attributes) {
-        if (attributes != null) {
-            if (this.attributes == null) {
-                this.attributes = new HashMap<>();
-            }
-            Map<String, Attribute> newAttributes = new HashMap<>();
-            attributes.entrySet().stream().forEach(e -> newAttributes.put(e.getKey(),
-              new Attribute() {{
-                  setName(e.getKey());
-                  setValue(e.getValue());
-              }}));
-            this.attributes.putAll(newAttributes.entrySet()
-              .stream()
-              .filter(e -> e.getValue().getValue() != null && !"null".equals(e.getValue().getValue()))
-              .collect(Collectors.toMap(p -> p.getKey(), p -> p.getValue())));
-        } else {
-            this.attributes = new HashMap<>();
-        }
-    }
+//    /**
+//     *
+//     * @return map of attributes
+//     */
+//    public Map<String, String> getAttributesMap() {
+//        if (this.attributes == null)
+//        {
+//            return null;
+//        }
+//
+//        Map<String, String> attributesMap = attributes.values().stream().collect(Collectors.toMap(Attribute::getName, Attribute::getValue));
+//        // remove entries having null values
+//        attributesMap.values().removeIf(Objects::isNull);
+//
+//        attributesMap = attributesMap.entrySet()
+//          .stream()
+//          .filter(e -> e.getValue() != null && !e.getValue().equals("null"))
+//          .collect(Collectors.toMap(p -> p.getKey(), p -> p.getValue()));
+//
+//        return attributesMap;
+//    }
+//
+//    public void setAttributesMap(Map<String, String> attributes) {
+//        if (attributes != null) {
+//            if (this.attributes == null) {
+//                this.attributes = new HashMap<>();
+//            }
+//            HashMap<String, Attribute> newAttributes = new HashMap<>();
+//            attributes.entrySet().stream().forEach(e -> newAttributes.put(e.getKey(),
+//              new Attribute() {{
+//                  setName(e.getKey());
+//                  setValue(e.getValue());
+//              }}));
+//            this.attributes.putAll(newAttributes.entrySet()
+//              .stream()
+//              .filter(e -> e.getValue().getValue() != null && !"null".equals(e.getValue().getValue()))
+//              .collect(Collectors.toMap(p -> p.getKey(), p -> p.getValue())));
+//        } else {
+//            this.attributes = new HashMap<>();
+//        }
+//    }
 
     public String getCrs() {
         try {
@@ -216,7 +260,7 @@ public abstract class EOData {
         } catch (Exception ignored) { }
     }
 
-    public URI getLocation() { return location; }
+   public String getLocation() { return location != null ? location.toString() : null; }
 
     public void setLocation(String value) throws URISyntaxException { this.location = new URI(value); }
 }

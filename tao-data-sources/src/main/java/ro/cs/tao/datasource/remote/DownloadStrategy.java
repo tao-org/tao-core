@@ -48,6 +48,7 @@ import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.FileVisitResult;
@@ -165,8 +166,12 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         return retCode;
     }
 
-    public String getProductUrl(EOProduct descriptor) {
-        final URI location = descriptor.getLocation();
+    public String getProductUrl(EOProduct descriptor){
+        URI location = null;
+        try {
+            location = new URI(descriptor.getLocation());
+        } catch (URISyntaxException ignored) {
+        }
         return location != null ? location.toString() : null;
     }
 

@@ -40,8 +40,9 @@ public class JsonResponseParser<T extends EOData> implements ResponseParser<T> {
             }
             result = handler.readValues(content);
             result.forEach(r -> {
-                Attribute[] attrs = r.getAttributes();
-                List<Attribute> attributes = Arrays.stream(attrs).collect(Collectors.toList());
+//                Attribute[] attrs = r.getAttributes();
+//                List<Attribute> attributes = Arrays.stream(attrs).collect(Collectors.toList());
+                List<Attribute> attributes = r.getAttributes();
                 int idx = 0;
                 while (idx < attributes.size()) {
                     Attribute attribute = attributes.get(idx);
@@ -51,8 +52,12 @@ public class JsonResponseParser<T extends EOData> implements ResponseParser<T> {
                         idx++;
                     }
                 }
-                if (attrs.length != attributes.size()) {
-                    r.setAttributes(attributes.toArray(new Attribute[attributes.size()]));
+//                if (attrs.length != attributes.size()) {
+//                    r.setAttributes(attributes.toArray(new Attribute[attributes.size()]));
+//                }
+
+                if (r.getAttributes().size() != attributes.size()) {
+                    r.setAttributes(attributes);
                 }
             });
         } catch (IOException e) {

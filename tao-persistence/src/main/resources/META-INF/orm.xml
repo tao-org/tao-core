@@ -16,7 +16,7 @@
     <mapped-superclass class="ro.cs.tao.eodata.EOData" access="PROPERTY">
         <attributes>
             <id name="id">
-                <column name="identifier" nullable="false" column-definition="varchar(250) not null"/>
+                <column name="id" nullable="false" column-definition="varchar(1000) not null"/>
             </id>
             <basic name="name">
                 <column name="name" nullable="false" column-definition="varchar(250) not null"/>
@@ -27,11 +27,6 @@
             <basic name="geometry">
                 <column name="geometry" nullable="false" column-definition="geography(Polygon,4326) not null"/>
             </basic>
-            <!--
-            <basic name="attributesMap">
-                <column name="attributes" nullable="true" column-definition="hstore"/>
-            </basic>
-            -->
             <basic name="crs">
                 <column name="coordinate_reference_system" nullable="true" column-definition="text"/>
             </basic>
@@ -39,10 +34,51 @@
                 <column name="location" nullable="false" column-definition="varchar(512) not null"/>
             </basic>
 
-
+<!--
+            <basic name="attributes">
+                <column name="attributes" nullable="true" column-definition="hstore"/>
+            </basic>
+-->
+<!--
             <element-collection name="attributesMap" target-class="java.lang.String">
                 <map-key-class class="java.lang.String" />
                 <map-key-column name="attributes" nullable="true" column-definition="hstore"/>
+            </element-collection>
+-->
+            <!--<element-collection name="attributes" target-class="ro.cs.tao.eodata.Attribute">
+                <order-column name="name"/>
+                <map-key-class class="java.lang.String" />
+                <map-key-column name="attributes" nullable="true" column-definition="hstore"/>
+                <column name="attributes" nullable="true" column-definition="hstore"/>
+            </element-collection>-->
+
+            <!--<element-collection name="attributes" target-class="ro.cs.tao.eodata.Attribute">
+                <order-column name="name"/>
+                <map-key-column name="name" table="tao.product_attributes" nullable="false" column-definition="varchar(1000) NOT NULL"/>
+                <column name="value" table="tao.product_attributes" nullable="false" column-definition="text NOT NULL"/>
+                <collection-table name="tao.product_attributes" >
+                    <join-column name="data_product_id"/>
+                </collection-table>
+            </element-collection>-->
+
+            <!--<one-to-many name="attributes" target-entity="ro.cs.tao.eodata.Attribute" fetch="EAGER" orphan-removal="true">
+                <join-column name="data_product_id" referenced-column-name="id" />
+            </one-to-many>-->
+
+            <!--<element-collection name="attributes" target-class="ro.cs.tao.eodata.Attribute">
+                <column name="attributesJson" nullable="true" column-definition="json"/>
+            </element-collection>-->
+
+
+            <!--<element-collection name="attributes" target-class="ro.cs.tao.eodata.Attribute" />
+            <embedded name="attributes" />-->
+            
+            <!--<embedded name="attributes" /> -->
+
+            <element-collection name="attributes">
+                <collection-table name="tao.data_product_attributes">
+                    <join-column name="id" referenced-column-name="id"/>
+                </collection-table>
             </element-collection>
 
         </attributes>
@@ -51,15 +87,9 @@
 
     <entity class="ro.cs.tao.eodata.EOProduct" access="PROPERTY">
         <table name="tao.data_product"/>
+        <!--<secondary-table name="tao.data_product_attributes"/>-->
+        <!--<inheritance strategy="JOINED"/>-->
         <attributes>
-            <!--
-            <id name="automaticId">
-                <column name="id" nullable="false"/>
-                <generated-value strategy="SEQUENCE" generator="data_product_identifier"/>
-                <sequence-generator name="data_product_identifier" sequence-name="tao.data_product_id_seq" allocation-size="1" />
-            </id>
-            -->
-
             <basic name="sensorType">
                 <column name="sensor_type_id" nullable="false" column-definition="integer not null"/>
             </basic>
@@ -80,6 +110,27 @@
             </basic>
         </attributes>
     </entity>
+
+    <!--<entity class="ro.cs.tao.eodata.Attribute" access="PROPERTY">
+        <table name="tao.product_attributes"/>
+        <attributes>-->
+            <!--<many-to-one name="data_product_id" id="true">
+                <join-table name="tao.data_product" />
+                <join-column name="data_product_id" referenced-column-name="identifier" />
+            </many-to-one>-->
+            <!--<id name="data_product_id">
+                <column name="data_product_id" nullable="false" column-definition="character varying(250) NOT NULL"/>
+            </id>
+            <id name="name">
+                <column name="name" nullable="false" column-definition="character varying(1000) NOT NULL"/>
+            </id>
+            <basic name="value">
+                <column name="value" nullable="false" column-definition="text NOT NULL"/>
+            </basic>
+
+        </attributes>
+    </entity>-->
+
 
     <entity class="ro.cs.tao.topology.NodeDescription" access="PROPERTY">
         <table name="tao.execution_node"/>
@@ -114,4 +165,16 @@
             </basic>
         </attributes>
     </entity>
+
+    <embeddable class="ro.cs.tao.eodata.Attribute" access="PROPERTY">
+        <attributes>
+            <basic name="name">
+                <column name="name" nullable="false" column-definition="character varying(1000) NOT NULL"/>
+            </basic>
+            <basic name="value">
+                <column name="value" nullable="false" column-definition="text NOT NULL"/>
+            </basic>
+        </attributes>
+    </embeddable>
+
 </entity-mappings>
