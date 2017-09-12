@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +24,7 @@ import ro.cs.tao.topology.NodeDescription;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -37,6 +39,9 @@ import java.util.stream.Collectors;
 @EnableJpaRepositories(basePackages = { "ro.cs.tao.persistence.repository" })
 @Scope("singleton")
 public class PersistenceManager {
+
+    /** Constant for the identifier member name of execution node entity */
+    private static final String NODE_IDENTIFIER_PROPERTY_NAME = "hostName";
 
     /** CRUD Repository for EOProduct entities */
     @Autowired
@@ -349,6 +354,54 @@ public class PersistenceManager {
         }
 
         return savedNode;
+    }
+
+
+    @Transactional(readOnly = true)
+    public List<NodeDescription> getNodes()
+    {
+        final List<NodeDescription> nodes = new ArrayList<>();
+        // retrieve nodes and filter them
+        nodes.addAll(((List<NodeDescription>) nodeRepository.findAll(new Sort(Sort.Direction.ASC, NODE_IDENTIFIER_PROPERTY_NAME))).stream()
+          .collect(Collectors.toList()));
+        return nodes;
+    }
+
+    @Transactional(readOnly = true)
+    public boolean checkIfExistsNodeByHostName(final String hostName)
+    {
+        boolean result = false;
+
+        if (hostName != null && !hostName.isEmpty())
+        {
+            // try to retrieve NodeDescription after its host name
+            final NodeDescription nodeEnt = nodeRepository.findByHostName(hostName);
+            if (nodeEnt != null)
+            {
+                result = true;
+            }
+        }
+
+        return result;
+    }
+
+    @Transactional(readOnly = true)
+    public NodeDescription getNodeByHostName(final String hostName) throws PersistenceException
+    {
+        // check method parameters
+        if (hostName == null || hostName.isEmpty())
+        {
+            throw new PersistenceException("Invalid parameters were provided for searching execution node by host name ("+ String.valueOf(hostName) +") !");
+        }
+
+        // retrieve NodeDescription after its host name
+        final NodeDescription nodeEnt = nodeRepository.findByHostName(hostName);
+        if (nodeEnt == null)
+        {
+            throw new PersistenceException("There is no execution node with the specified host name: " + hostName);
+        }
+
+        return nodeEnt;
     }
 
 }
