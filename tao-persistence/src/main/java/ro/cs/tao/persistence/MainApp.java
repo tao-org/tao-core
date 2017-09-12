@@ -47,7 +47,7 @@ public class MainApp {
 		if(dbManager != null)
 		{
 			logger.info("PersistenceManager loaded!");
-            //saveNewProduct(dbManager);
+            saveNewProduct(dbManager);
             saveNewNode(dbManager);
 
         }

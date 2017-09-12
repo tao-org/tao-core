@@ -133,6 +133,9 @@ public class DataProduct implements Serializable {
 	@NotNull
 	private Integer height;
 
+	/**
+	 * Attributes
+	 */
     @Type(type = "hstore")
     @Column(name = "attributes" , columnDefinition = "hstore")
     private Map<String, String> attributes = new HashMap<>();

@@ -128,7 +128,7 @@ DROP TABLE IF EXISTS tao.data_product CASCADE;
 
 CREATE TABLE tao.data_product
 (
-	identifier character varying(250) NOT NULL,
+	id character varying(1000) NOT NULL,
 	name varchar(250) NOT NULL,
 	type_id integer NOT NULL,
 	geometry geography(POLYGON, 4326) NOT NULL,
@@ -141,6 +141,7 @@ CREATE TABLE tao.data_product
 	width integer NOT NULL,
 	height integer NOT NULL,
 	attributes hstore,
+	attributesJson json,
 	user_id integer NULL,
 	data_source_id integer NULL,
 	created timestamp NOT NULL DEFAULT now(),
@@ -148,7 +149,7 @@ CREATE TABLE tao.data_product
 );
 
 ALTER TABLE tao.data_product ADD CONSTRAINT PK_data_product
-	PRIMARY KEY (identifier);
+	PRIMARY KEY (id);
 	
 ALTER TABLE tao.data_product ADD CONSTRAINT FK_data_product_data_format
 	FOREIGN KEY (type_id) REFERENCES tao.data_format (id) ON DELETE No Action ON UPDATE No Action;
@@ -163,22 +164,42 @@ ALTER TABLE tao.data_product ADD CONSTRAINT FK_data_product_data_source
 	FOREIGN KEY (data_source_id) REFERENCES tao.data_source (id) ON DELETE No Action ON UPDATE No Action;
 
 
+
+-------------------------------------------------------------------------------
+-- table: product_attributes
+DROP TABLE IF EXISTS tao.data_product_attributes CASCADE;
+
+CREATE TABLE tao.data_product_attributes
+(
+	id varchar(1000) NOT NULL,
+	name varchar(1000) NOT NULL,
+	value text NOT NULL
+);
+
+ALTER TABLE tao.data_product_attributes ADD CONSTRAINT PK_data_product_attributes
+	PRIMARY KEY (id, name);
+
+ALTER TABLE tao.data_product_attributes ADD CONSTRAINT FK_data_product_attributes_data_product
+	FOREIGN KEY (id) REFERENCES tao.data_product (id) ON DELETE No Action ON UPDATE No Action;
+
+
+
 -------------------------------------------------------------------------------
 -- table: data_product_metadata
 DROP TABLE IF EXISTS tao.data_product_metadata CASCADE;
 
 CREATE TABLE tao.data_product_metadata
 (
-	data_product_identifier character varying(250) NOT NULL,
+	data_product_id character varying(250) NOT NULL,
 	attribute_name varchar(250) NOT NULL,
 	attribute_value varchar(500) NOT NULL
 );
 
 ALTER TABLE tao.data_product_metadata ADD CONSTRAINT PK_data_product_metadata
-	PRIMARY KEY (data_product_identifier, attribute_name);
+	PRIMARY KEY (data_product_id, attribute_name);
 
 ALTER TABLE tao.data_product_metadata ADD CONSTRAINT FK_data_product_metadata_data_product
-	FOREIGN KEY (data_product_identifier) REFERENCES tao.data_product (identifier) ON DELETE No Action ON UPDATE No Action;
+	FOREIGN KEY (data_product_id) REFERENCES tao.data_product (id) ON DELETE No Action ON UPDATE No Action;
 
 	
 -------------------------------------------------------------------------------

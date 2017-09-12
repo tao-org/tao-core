@@ -11,9 +11,7 @@ import ro.cs.tao.spi.ServiceRegistryManager;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
@@ -61,12 +59,15 @@ public class AWSDataSourceTest {
             results.forEach(r -> {
                 System.out.println("ID=" + r.getId());
                 System.out.println("NAME=" + r.getName());
-                System.out.println("LOCATION=" + r.getLocation().toString());
+                System.out.println("LOCATION=" + r.getLocation());
                 System.out.println("FOOTPRINT=" + r.getGeometry());
                 System.out.println("Attributes ->");
-                Arrays.stream(r.getAttributes())
-                        .forEach(a -> System.out.println("\tName='" + a.getName() +
-                                                                 "', value='" + a.getValue() + "'"));
+//                Arrays.stream(r.getAttributes())
+//                        .forEach(a -> System.out.println("\tName='" + a.getName() +
+//                                                                 "', value='" + a.getValue() + "'"));
+                r.getAttributes().stream()
+                  .forEach(a -> System.out.println("\tName='" + a.getName() +
+                    "', value='" + a.getValue() + "'"));
             });
         } catch (QueryException e) {
             e.printStackTrace();
@@ -105,12 +106,15 @@ public class AWSDataSourceTest {
             results.forEach(r -> {
                 System.out.println("ID=" + r.getId());
                 System.out.println("NAME=" + r.getName());
-                System.out.println("LOCATION=" + r.getLocation().toString());
+                System.out.println("LOCATION=" + r.getLocation());
                 System.out.println("FOOTPRINT=" + r.getGeometry());
                 System.out.println("Attributes ->");
-                Arrays.stream(r.getAttributes())
-                        .forEach(a -> System.out.println("\tName='" + a.getName() +
-                                                                 "', value='" + a.getValue() + "'"));
+//                Arrays.stream(r.getAttributes())
+//                        .forEach(a -> System.out.println("\tName='" + a.getName() +
+//                                                                 "', value='" + a.getValue() + "'"));
+                r.getAttributes().stream()
+                  .forEach(a -> System.out.println("\tName='" + a.getName() +
+                    "', value='" + a.getValue() + "'"));
             });
         } catch (QueryException e) {
             e.printStackTrace();
