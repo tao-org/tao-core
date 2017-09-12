@@ -64,6 +64,11 @@
             <artifactId>tao-topology</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>ro.cs.tao</groupId>
+            <artifactId>tao-executors</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
