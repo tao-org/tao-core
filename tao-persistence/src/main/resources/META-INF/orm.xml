@@ -145,9 +145,6 @@
             <id name="hostName">
                 <column name="host_name" nullable="false" column-definition="character varying(250) NOT NULL"/>
             </id>
-            <basic name="ipAddr">
-                <column name="ip_address" nullable="false" column-definition="character varying(50) NOT NULL"/>
-            </basic>
             <basic name="userName">
                 <column name="username" nullable="false" column-definition="character varying(50) NOT NULL"/>
             </basic>
