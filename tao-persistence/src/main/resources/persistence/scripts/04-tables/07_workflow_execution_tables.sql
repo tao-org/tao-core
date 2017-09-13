@@ -102,7 +102,6 @@ DROP TABLE IF EXISTS tao.execution_node CASCADE;
 CREATE TABLE tao.execution_node
 (
 	host_name varchar(250) NOT NULL,
-	ip_address varchar(50) NOT NULL,
 	username varchar(50) NOT NULL,
 	password text NOT NULL,
 	total_CPU integer NOT NULL,
