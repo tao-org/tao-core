@@ -64,7 +64,7 @@ public class PersistenceManagerTest {
     private DatabaseConfiguration dbConfig;
 
     @Test
-    public void check_DB_configuration()
+    public void TC_00_check_DB_configuration()
     {
         try
         {
@@ -204,7 +204,28 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_02_retrieve_all_execution_nodes()
+    public void TC_02_update_execution_node()
+    {
+        try
+        {
+            String hostName = "Test host name";
+            NodeDescription node  = persistenceManager.getNodeByHostName(hostName);
+            Assert.assertTrue(node != null && node.getHostName().equals(hostName));
+
+            node.setDiskSpaceSizeGB(10);
+            node = persistenceManager.updateExecutionNode(node);
+
+            Assert.assertTrue(node.getDiskSpaceSizeGB() == 10);
+        }
+        catch (PersistenceException e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void TC_03_retrieve_all_execution_nodes()
     {
         try
         {
@@ -225,7 +246,7 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_03_check_execution_node_existence_by_host_name()
+    public void TC_04_check_execution_node_existence_by_host_name()
     {
         try
         {
@@ -240,7 +261,7 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_04_retrieve_execution_node_by_host_name()
+    public void TC_05_retrieve_execution_node_by_host_name()
     {
         try
         {

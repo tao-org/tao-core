@@ -316,12 +316,44 @@ public class PersistenceManager {
 //        return processingComponentEnt.getId();
 //    }
 
+    private boolean checkEOProduct(EOProduct eoProduct)
+    {
+        if(eoProduct == null)
+        {
+            return false;
+        }
+        if(eoProduct.getName() == null)
+        {
+            return false;
+        }
+        if(eoProduct.getGeometry() == null)
+        {
+            return false;
+        }
+        if(eoProduct.getProductType() == null)
+        {
+            return false;
+        }
+        if(eoProduct.getLocation() == null)
+        {
+            return false;
+        }
+        if(eoProduct.getSensorType() == null)
+        {
+            return false;
+        }
+        if(eoProduct.getPixelType() == null)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
     @Transactional
     public EOProduct saveEOProduct(EOProduct eoProduct) throws PersistenceException {
         // check method parameters
-        if (eoProduct == null ||
-          eoProduct.getName() == null || eoProduct.getGeometry() == null || eoProduct.getProductType() == null ||
-          eoProduct.getLocation() == null || eoProduct.getSensorType() == null || eoProduct.getPixelType() == null) {
+        if (!checkEOProduct(eoProduct)) {
             throw new PersistenceException("Invalid parameters were provided for adding new EO product!");
         }
 
@@ -335,17 +367,61 @@ public class PersistenceManager {
         return savedEOProduct;
     }
 
+    private boolean checkExecutionNode(NodeDescription node)
+    {
+        if(node == null)
+        {
+            return false;
+        }
+        if(node.getHostName() == null)
+        {
+            return false;
+        }
+        if(node.getIpAddr() == null)
+        {
+            return false;
+        }
+        if(node.getUserName() == null)
+        {
+            return false;
+        }
+        if(node.getUserPass() == null)
+        {
+            return false;
+        }
+        if(node.getProcessorCount() <= 0)
+        {
+            return false;
+        }
+        if(node.getDiskSpaceSizeGB() <= 0)
+        {
+            return false;
+        }
+        if(node.getMemorySizeGB() <= 0)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
     @Transactional
     public NodeDescription saveExecutionNode(NodeDescription node) throws PersistenceException
     {
         // check method parameters
-        if(node.getHostName() == null || node.getIpAddr() == null || node.getUserName() == null || node.getUserPass() == null ||
-           node.getProcessorCount() <= 0 || node.getDiskSpaceSizeGB() <= 0 || node.getMemorySizeGB() <= 0)
+        if(!checkExecutionNode(node))
         {
             throw new PersistenceException("Invalid parameters were provided for adding new execution node!");
         }
 
-        // save the NodeDescription entity
+        // check if there is already another node with the same host name
+        final NodeDescription nodeWithSameHostName = nodeRepository.findByHostName(node.getHostName());
+        if (nodeWithSameHostName != null)
+        {
+            throw new PersistenceException("There is already another node with the host name: " + node.getHostName());
+        }
+
+        // save the new NodeDescription entity
         NodeDescription savedNode = nodeRepository.save(node);
 
         if(savedNode.getHostName() == null)
@@ -354,6 +430,26 @@ public class PersistenceManager {
         }
 
         return savedNode;
+    }
+
+    @Transactional
+    public NodeDescription updateExecutionNode(NodeDescription node) throws PersistenceException
+    {
+        // check method parameters
+        if(!checkExecutionNode(node))
+        {
+            throw new PersistenceException("Invalid parameters were provided for updating the execution node " + (node != null && node.getHostName() != null ? "(host name " + node.getHostName() + ")" : "") + "!");
+        }
+
+        NodeDescription updatedNode = nodeRepository.save(node);
+
+//        // TODO check creation date and modified date
+//        if(updatedNode.getIpAddr() == null)
+//        {
+//            throw new PersistenceException("Error updating execution node with host name: " + node.getHostName());
+//        }
+
+        return updatedNode;
     }
 
 
