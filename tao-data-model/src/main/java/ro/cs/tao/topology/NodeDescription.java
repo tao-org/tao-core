@@ -9,7 +9,6 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement(name = "node")
 public class NodeDescription {
     private String hostName;
-    private String ipAddr;
     private String userName;
     private String userPass;
     private int processorCount;
@@ -25,15 +24,6 @@ public class NodeDescription {
     @XmlElement(name = "hostName")
     public String getHostName() {
         return hostName;
-    }
-
-    @XmlElement(name = "ipAddress")
-    public String getIpAddr() {
-        return ipAddr;
-    }
-
-    public void setIpAddr(String ipAddr) {
-        this.ipAddr = ipAddr;
     }
 
     @XmlElement(name = "userName")

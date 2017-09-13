@@ -2,9 +2,7 @@
 <tool_install_configurations>
     <!-- Possible tokens to be replaced in code:
             #master_hostname#
-            #master_ip#
             #node_hostname#
-            #node_ip#
             #node_user#
             #node_pass#
             #TODO: Add node memory for torque
@@ -84,7 +82,7 @@
                 <invocation_type>ssh2</invocation_type>
                 <ssh_mode>exec</ssh_mode>
                 <!-- Optional params -->
-                <ip>192.168.146.134</ip>
+                <host>192.168.146.134</host>
                 <user>sen2agri</user>
                 <pass>sen2agri</pass>
                 <command>
@@ -98,7 +96,7 @@
                 <ssh_mode>exec</ssh_mode>
                 <execution_mode>user</execution_mode>
                 <!-- Optional params -->
-                <ip>192.168.146.134</ip>
+                <host>192.168.146.134</host>
                 <user>sen2agri</user>
                 <pass>sen2agri</pass>
                 <command>
@@ -113,7 +111,7 @@
                 <ssh_mode>sftp</ssh_mode>
                 <execution_mode>user</execution_mode>
                 <!-- Optional params -->
-                <ip>192.168.146.134</ip>
+                <host>192.168.146.134</host>
                 <user>sen2agri</user>
                 <pass>sen2agri</pass>
                 <command>
@@ -131,7 +129,7 @@
                 <order_id>4</order_id>
                 <invocation_type>ssh2</invocation_type>
                 <!-- Optional params -->
-                <ip>192.168.146.134</ip>
+                <host>192.168.146.134</host>
                 <user>sen2agri</user>
                 <pass>sen2agri</pass>
                 <command>
@@ -145,7 +143,7 @@
                 <order_id>5</order_id>
                 <invocation_type>ssh2</invocation_type>
                 <!-- Optional params -->
-                <ip>192.168.146.134</ip>
+                <host>192.168.146.134</host>
                 <user>sen2agri</user>
                 <pass>sen2agri</pass>
                 <command>
@@ -187,7 +185,6 @@
                     ]]>
                 </command>
             </step>
-
             <!-- ============ END-OF STEPS TO UPDATE THE EXECUTION NODE -->
         </install_steps>
 

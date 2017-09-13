@@ -9,9 +9,7 @@ import java.util.List;
  */
 public class ToolCommandsTokens {
     public static final String MASTER_HOSTNAME = "#master_hostname#";
-    public static final String MASTER_IP_ADDR = "#master_ip#";
     public static final String NODE_HOSTNAME = "#node_hostname#";
-    public static final String NODE_IP_ADDR = "#node_ip#";
     public static final String NODE_USER = "#node_user#";
     public static final String NODE_PASSWORD = "#node_pass#";
     public static final String NODE_PROCESSORS_CNT = "#procs_cnt#";

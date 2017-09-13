@@ -46,7 +46,6 @@ public class TopologyManager implements ITopologyManager {
     public NodeDescription get(String name) {
         NodeDescription node = new NodeDescription();
         node.setHostName("host_sample");
-        node.setIpAddr("10.0.0.1");
         node.setUserName("user");
         node.setUserPass("drowssap");
         node.setProcessorCount(4);
@@ -60,7 +59,6 @@ public class TopologyManager implements ITopologyManager {
         List<NodeDescription> list = new ArrayList<NodeDescription>();
         NodeDescription node = new NodeDescription();
         node.setHostName("host_sample_1");
-        node.setIpAddr("10.0.0.1");
         node.setUserName("user");
         node.setUserPass("drowssap");
         node.setProcessorCount(4);
@@ -70,7 +68,6 @@ public class TopologyManager implements ITopologyManager {
 
         node = new NodeDescription();
         node.setHostName("host_sample_2");
-        node.setIpAddr("10.0.0.2");
         node.setUserName("user");
         node.setUserPass("drowssap");
         node.setProcessorCount(4);
@@ -136,12 +133,9 @@ public class TopologyManager implements ITopologyManager {
             // TODO: Aparently, the hostname obtained by this method might return a different value
             // than the call to "hostname" call in Linux. Maybe an invocation of hostname will solve the problem
             // but this might break the portability
-            String hostName = InetAddress.getLocalHost().getHostName();
             masterNodeInfo = new NodeDescription();
-
+            String hostName = InetAddress.getLocalHost().getHostName();
             masterNodeInfo.setHostName(hostName);
-            //TODO: Get the IP Address - or just not set it and determine it dynamically???
-            masterNodeInfo.setIpAddr(InetAddress.getLocalHost().getHostAddress());
         } catch (UnknownHostException e) {
             e.printStackTrace();
             throw new TopologyException("Master hostname retrieval failure", e);
