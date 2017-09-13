@@ -185,7 +185,6 @@ public class PersistenceManagerTest {
             // add a new execution node for test
             NodeDescription node  = new NodeDescription();
             node.setHostName("Test host name");
-            node.setIpAddr("No IP adr");
             node.setUserName("No user name");
             node.setUserPass("No user pass");
             node.setProcessorCount(2);

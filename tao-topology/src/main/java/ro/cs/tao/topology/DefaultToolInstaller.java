@@ -95,7 +95,7 @@ public class DefaultToolInstaller implements ITopologyToolInstaller {
 
         System.out.println(argsList);
 
-        String ipAddr = curStep.getIp() == null ? info.getIpAddr() : curStep.getIp();
+        String hostName = curStep.getHostName() == null ? info.getHostName() : curStep.getHostName();
         String user = curStep.getUser() == null ? info.getUserName() : curStep.getUser();
         String pass = curStep.getPass() == null ? info.getUserPass() : curStep.getPass();
 
@@ -103,13 +103,13 @@ public class DefaultToolInstaller implements ITopologyToolInstaller {
         switch (invokeType) {
             case SSH2:
                 job = new ExecutionUnit(ExecutorType.SSH2,
-                        ipAddr, user, pass,
+                        hostName, user, pass,
                         argsList, curStep.getExecutionModeMode().value(),
                         curStep.getSshMode());
                 break;
             case PROCESS:
                 job = new ExecutionUnit(ExecutorType.PROCESS,
-                        ipAddr, user, pass,
+                        hostName, user, pass,
                         argsList, curStep.getExecutionModeMode().value(),
                         SSHMode.EXEC);
                 break;
@@ -137,14 +137,8 @@ public class DefaultToolInstaller implements ITopologyToolInstaller {
                     case ToolCommandsTokens.MASTER_HOSTNAME:
                         replacementStr = masterNodeInfo.getHostName();
                         break;
-                    case ToolCommandsTokens.MASTER_IP_ADDR:
-                        replacementStr = masterNodeInfo.getIpAddr();
-                        break;
                     case ToolCommandsTokens.NODE_HOSTNAME:
                         replacementStr = info.getHostName();
-                        break;
-                    case ToolCommandsTokens.NODE_IP_ADDR:
-                        replacementStr = info.getIpAddr();
                         break;
                     case ToolCommandsTokens.NODE_USER:
                         replacementStr = info.getUserName();

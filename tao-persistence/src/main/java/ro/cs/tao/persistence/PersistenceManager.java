@@ -377,10 +377,6 @@ public class PersistenceManager {
         {
             return false;
         }
-        if(node.getIpAddr() == null)
-        {
-            return false;
-        }
         if(node.getUserName() == null)
         {
             return false;
