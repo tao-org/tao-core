@@ -45,25 +45,25 @@ public class DefaultToolInstaller implements ITopologyToolInstaller {
     }
 
     @Override
-    public void installNewNode(NodeDescription info) {
+    public void installNewNode(NodeDescription info) throws TopologyException {
         for(ToolInstallConfig toolCfg: toolInstallConfigs) {
             invokeSteps(info, toolCfg, false);
         }
     }
 
     @Override
-    public void uninstallNode(NodeDescription info) {
+    public void uninstallNode(NodeDescription info) throws TopologyException {
         for(ToolInstallConfig toolCfg: toolInstallConfigs) {
             invokeSteps(info, toolCfg, true);
         }
     }
 
     @Override
-    public void editNode(NodeDescription nodeInfo) {
+    public void editNode(NodeDescription nodeInfo) throws TopologyException {
         // TODO:
     }
 
-    private void invokeSteps(NodeDescription info, ToolInstallConfig toolCfg, boolean uninstall) {
+    private void invokeSteps(NodeDescription info, ToolInstallConfig toolCfg, boolean uninstall) throws TopologyException {
         List<ToolInstallStep> steps = uninstall ? toolCfg.getUninstallSteps() : toolCfg.getInstallSteps();
         for (ToolInstallStep step: steps) {
             int retCode = doStepInvocation(info, steps, step);
@@ -80,7 +80,7 @@ public class DefaultToolInstaller implements ITopologyToolInstaller {
         }
     }
 
-    private int doStepInvocation(NodeDescription info, List<ToolInstallStep> allSteps, ToolInstallStep curStep) {
+    private int doStepInvocation(NodeDescription info, List<ToolInstallStep> allSteps, ToolInstallStep curStep) throws TopologyException {
         ExecutorType invokeType = curStep.getInvocationType();
         List<String> argsList = new ArrayList<>();
         String stepInvocationCmd = curStep.getInvocationCommand();
@@ -128,7 +128,7 @@ public class DefaultToolInstaller implements ITopologyToolInstaller {
      * @param cmd
      * @return
      */
-    private String replaceTokensInCmd(String cmd, NodeDescription info, List<ToolInstallStep> allSteps) {
+    private String replaceTokensInCmd(String cmd, NodeDescription info, List<ToolInstallStep> allSteps) throws TopologyException {
         List<String> tokens = ToolCommandsTokens.getDefinedTokensList();
         for (String token: tokens) {
             if(cmd.contains(token)) {
@@ -166,7 +166,7 @@ public class DefaultToolInstaller implements ITopologyToolInstaller {
         return cmd;
     }
 
-    private String handleStepOutputReplacements(String cmd, List<ToolInstallStep> allSteps) {
+    private String handleStepOutputReplacements(String cmd, List<ToolInstallStep> allSteps) throws TopologyException {
         int curSearchIdx = 0;
         while (true) {
             int idx = cmd.indexOf(ToolCommandsTokens.STEP_OUTPUT);
@@ -189,7 +189,7 @@ public class DefaultToolInstaller implements ITopologyToolInstaller {
         return cmd;
     }
 
-    private ToolInstallStep getStepByName(String stepName, List<ToolInstallStep> allSteps) {
+    private ToolInstallStep getStepByName(String stepName, List<ToolInstallStep> allSteps) throws TopologyException {
         for(ToolInstallStep step: allSteps) {
             if(step.getName().equals(stepName)) {
                 return step;
