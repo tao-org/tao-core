@@ -5,7 +5,7 @@ package ro.cs.tao.topology;
  */
 public interface ITopologyToolInstaller {
     void setMasterNodeDescription(NodeDescription masterNodeInfo);
-    void installNewNode(NodeDescription info);
-    void uninstallNode(NodeDescription info);
-    void editNode(NodeDescription nodeInfo);
+    void installNewNode(NodeDescription info) throws TopologyException;
+    void uninstallNode(NodeDescription info)throws TopologyException;
+    void editNode(NodeDescription nodeInfo)throws TopologyException;
 }

@@ -24,6 +24,7 @@
         <module>tao-topology</module>
         <module>tao-executors</module>
         <module>tao-core-kit</module>
+        <module>tao-spring-bridge</module>
     </modules>
 
     <properties>
