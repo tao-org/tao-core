@@ -30,16 +30,18 @@
             <version>${project.version}</version>
         </dependency>
 
-        <dependency>
+        <!--<dependency>
             <groupId>ro.cs.tao</groupId>
             <artifactId>tao-persistence</artifactId>
             <version>${project.version}</version>
-        </dependency>
+        </dependency>-->
 
         <dependency>
             <groupId>ro.cs.tao</groupId>
             <artifactId>tao-spring-bridge</artifactId>
             <version>${project.version}</version>
+            <!--<type>jar</type>
+            <classifier>jar-with-dependencies</classifier>-->
         </dependency>
 
         <dependency>

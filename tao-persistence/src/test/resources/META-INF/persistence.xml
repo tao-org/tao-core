@@ -8,6 +8,7 @@
 
         <mapping-file>META-INF/orm.xml</mapping-file>
 
+        <class>ro.cs.tao.eodata.EOData</class>
         <class>ro.cs.tao.eodata.EOProduct</class>
         <class>ro.cs.tao.topology.NodeDescription</class>
 

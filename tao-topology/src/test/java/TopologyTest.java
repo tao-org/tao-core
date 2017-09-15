@@ -1,9 +1,12 @@
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 //import org.mockito.Mock;
 //import org.mockito.MockitoAnnotations;
 //import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.ImportResource;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 //import org.testng.annotations.BeforeMethod;
 import ro.cs.tao.persistence.PersistenceManager;
@@ -17,7 +20,10 @@ import java.util.List;
  * Created by cosmin on 8/30/2017.
  */
 //@RunWith(MockitoJUnitRunner.class)
+@ImportResource({"classpath*:META-INF/persistence.xml" })
 public class TopologyTest {
+
+    private static Log logger = LogFactory.getLog(TopologyTest.class);
 /*    @Mock
     private PersistenceManager persistenceMng;
 
@@ -53,7 +59,15 @@ public class TopologyTest {
         System.out.println(tokens);
         NodeDescription masterInfo = new NodeDescription();
         masterInfo.setHostName("master.testtorque.ro");
-        TopologyManager.getInstance().setMasterNodeInfo(masterInfo);
+        try
+        {
+            TopologyManager.getInstance().setMasterNodeInfo(masterInfo);
+        }
+        catch(Exception e)
+        {
+            logger.error(e.getMessage());
+        }
+
 
         NodeDescription nodeInfo = new NodeDescription();
         nodeInfo.setHostName("node01.testtorque.ro");
