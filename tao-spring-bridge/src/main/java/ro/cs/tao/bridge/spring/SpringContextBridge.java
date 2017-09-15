@@ -7,6 +7,7 @@ package ro.cs.tao.bridge.spring;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.annotation.ImportResource;
 import org.springframework.stereotype.Component;
 import ro.cs.tao.persistence.PersistenceManager;
 
@@ -17,6 +18,7 @@ import ro.cs.tao.persistence.PersistenceManager;
  *
  */
 @Component
+@ImportResource({"classpath*:META-INF/persistence.xml", "classpath*:META-INF/orm.xml" })
 public class SpringContextBridge implements SpringContextBridgedServices, ApplicationContextAware
 {
     /**
