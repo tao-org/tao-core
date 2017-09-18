@@ -10,7 +10,7 @@
 	http://www.springframework.org/schema/tx 
 	http://www.springframework.org/schema/tx/spring-tx.xsd">
 
-	<context:component-scan base-package="ro.cs.tao.persistence" />
+	<context:component-scan base-package="ro.cs.tao" />
 	<context:annotation-config />
 	<tx:annotation-driven />
 
