@@ -1,4 +1,4 @@
-﻿-- Processing components visibility
+-- Processing components visibility
 
 INSERT INTO tao.component_visibility (visibility) VALUES ('SYSTEM');
 

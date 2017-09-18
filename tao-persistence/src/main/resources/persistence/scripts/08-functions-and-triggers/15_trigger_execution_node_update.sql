@@ -1,4 +1,4 @@
-﻿-- trigger that updates the "modified" column value in "tao.execution_node" table when a node is updated
+-- trigger that updates the "modified" column value in "tao.execution_node" table when a node is updated
 
 -- the trigger function
 CREATE OR REPLACE FUNCTION tao.execution_node_update()

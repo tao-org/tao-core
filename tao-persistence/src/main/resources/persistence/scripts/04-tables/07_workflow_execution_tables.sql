@@ -140,7 +140,7 @@ DROP TABLE IF EXISTS tao.task CASCADE;
 CREATE TABLE tao.task
 (
 	id bigint NOT NULL,
-	processing_component_id integer NOT NULL,
+	processing_component_id varchar(512) NOT NULL,
 	graph_node_id bigint NOT NULL,
 	start_time timestamp without time zone NULL,
 	end_time timestamp without time zone NULL,
