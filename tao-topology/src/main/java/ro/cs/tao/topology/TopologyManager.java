@@ -1,6 +1,6 @@
 package ro.cs.tao.topology;
 
-import ro.cs.tao.bridge.spring.SpringContextBridge;
+import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.spi.ServiceLoader;
@@ -9,7 +9,6 @@ import ro.cs.tao.spi.ServiceRegistryManager;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;

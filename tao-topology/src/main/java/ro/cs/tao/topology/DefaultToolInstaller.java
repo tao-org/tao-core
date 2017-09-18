@@ -1,7 +1,9 @@
 package ro.cs.tao.topology;
 
+import org.apache.commons.io.IOUtils;
 import ro.cs.tao.topology.xml.ToolInstallersConfigHandler;
 import ro.cs.tao.topology.xml.ToolInstallersConfigParser;
+import ro.cs.tao.utils.Platform;
 import ro.cs.tao.utils.executors.ExecutionUnit;
 import ro.cs.tao.utils.executors.Executor;
 import ro.cs.tao.utils.executors.ExecutorType;
@@ -9,10 +11,16 @@ import ro.cs.tao.utils.executors.OutputConsumer;
 import ro.cs.tao.utils.executors.SSHMode;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.*;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,16 +35,14 @@ public class DefaultToolInstaller implements ITopologyToolInstaller {
     Logger logger;
 
     public DefaultToolInstaller() {
-        // read the tool install configurations
-        URL cfgUrl = this.getClass().getResource("/DefaultToolInstallConfig.xml");
-        this.toolInstallConfigs = ToolInstallersConfigParser.parse(cfgUrl.getFile(),
+        String taoWorkingDir = getTaoWorkingDir();
+        // extract the tools script dir to tao working dir
+        extractResourceDir(taoWorkingDir, "tools_scripts");
+
+        InputStream is = this.getClass().getResourceAsStream("/DefaultToolInstallConfig.xml");
+        this.toolInstallConfigs = ToolInstallersConfigParser.parse(is,
                 new ToolInstallersConfigHandler("tool_install_configurations"));
-        try {
-            this.installToolsRootPath = new File(cfgUrl.toURI()).getParent();
-            this.installToolsRootPath += "/tools_scripts/";
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
+        this.installToolsRootPath = taoWorkingDir + "/tools_scripts/";
     }
 
     @Override
@@ -196,5 +202,96 @@ public class DefaultToolInstaller implements ITopologyToolInstaller {
             }
         }
         throw new TopologyException("No such referenced step name " + stepName);
+    }
+
+    private String getTaoWorkingDir() {
+        Platform platform = Platform.getCurrentPlatform();
+        String workingDirectory;
+        if(platform.getId() == Platform.ID.win) {
+            workingDirectory = System.getenv("AppData");
+        } else {
+            workingDirectory = System.getProperty("user.home");
+        }
+        String taoUserDir = workingDirectory + "/TAO";
+        File taoUserDirFile = new File(taoUserDir);
+        if (!taoUserDirFile.exists()) {
+            taoUserDirFile.mkdir();
+            System.out.println("Directory created :: " + taoUserDir);
+        }
+        return taoUserDir;
+    }
+
+    private static void copyFolder(File sourceFolder, File destinationFolder) throws IOException
+    {
+        //Check if sourceFolder is a directory or file
+        //If sourceFolder is file; then copy the file directly to new location
+        if (sourceFolder.isDirectory())
+        {
+            //Verify if destinationFolder is already present; If not then create it
+            if (!destinationFolder.exists())
+            {
+                destinationFolder.mkdir();
+                System.out.println("Directory created :: " + destinationFolder);
+            }
+
+            //Get all files from source directory
+            String files[] = sourceFolder.list();
+
+            //Iterate over all files and copy them to destinationFolder one by one
+            for (String file : files)
+            {
+                File srcFile = new File(sourceFolder, file);
+                File destFile = new File(destinationFolder, file);
+
+                //Recursive function call
+                copyFolder(srcFile, destFile);
+            }
+        }
+        else
+        {
+            //Copy the file content from one place to another
+            Files.copy(sourceFolder.toPath(), destinationFolder.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            System.out.println("File copied :: " + destinationFolder);
+        }
+    }
+
+    private void extractResourceDir(String targetDir, String dirNameToExtract) {
+        try {
+            // read the tool install configurations
+            final File jarFile = new File(getClass().getProtectionDomain().getCodeSource().getLocation().getPath());
+
+            if(jarFile.isFile()) {  // Run with JAR file
+                final JarFile jar = new JarFile(jarFile);
+                final Enumeration<JarEntry> entries = jar.entries(); //gives ALL entries in jar
+                String extractedDir = dirNameToExtract + "/";
+                while(entries.hasMoreElements()) {
+                    java.util.jar.JarEntry file = (java.util.jar.JarEntry) entries.nextElement();
+                    if (file.getName().startsWith(extractedDir)) {
+                        java.io.File f = new java.io.File(targetDir + java.io.File.separator + file.getName());
+                        if (file.isDirectory()) { // if its a directory, create it
+                            f.mkdir();
+                            continue;
+                        }
+                        java.io.InputStream is = jar.getInputStream(file); // get the input stream
+                        java.io.FileOutputStream fos = new java.io.FileOutputStream(f);
+                        IOUtils.copy(is,fos);
+                        fos.close();
+                        is.close();
+                    }
+                }
+                jar.close();
+            } else { // Run with IDE
+                final URL url = getClass().getResource("/" + dirNameToExtract + "/");
+                if (url != null) {
+                    try {
+                        copyFolder(new File(url.toURI()), new File(targetDir + File.separator + dirNameToExtract));
+                    } catch (URISyntaxException ex) {
+                        // never happens
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
