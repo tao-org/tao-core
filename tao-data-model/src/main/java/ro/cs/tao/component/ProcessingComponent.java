@@ -38,6 +38,7 @@
 
 package ro.cs.tao.component;
 
+import ro.cs.tao.component.enums.ProcessingComponentVisibility;
 import ro.cs.tao.component.template.Template;
 import ro.cs.tao.component.template.TemplateException;
 import ro.cs.tao.component.template.TemplateType;
@@ -66,6 +67,9 @@ public class ProcessingComponent extends TaoComponent {
     private Template template;
     private List<Variable> variables;
     private List<ParameterDescriptor> parameters;
+    private Boolean multiThread;
+    private ProcessingComponentVisibility visibility;
+    private String nodeAffinity;
 
     public ProcessingComponent() {
         super();
@@ -118,8 +122,34 @@ public class ProcessingComponent extends TaoComponent {
         return this.parameters;
     }
 
-    public void setParameters(List<ParameterDescriptor> parameters) {
+    public void setParameterDescriptors(List<ParameterDescriptor> parameters) {
         this.parameters = parameters;
+    }
+
+    public Boolean getMultiThread() {
+        return multiThread;
+    }
+
+    public void setMultiThread(Boolean multiThread) {
+        this.multiThread = multiThread;
+    }
+
+    public ProcessingComponentVisibility getVisibility() {
+        return visibility;
+    }
+
+    public void setVisibility(ProcessingComponentVisibility visibility) {
+        this.visibility = visibility;
+    }
+
+    @Override
+    public String getNodeAffinity() {
+        return nodeAffinity;
+    }
+
+    @Override
+    public void setNodeAffinity(String nodeAffinity) {
+        this.nodeAffinity = nodeAffinity;
     }
 
     @XmlTransient
@@ -129,6 +159,15 @@ public class ProcessingComponent extends TaoComponent {
 
     public void setTemplateType(TemplateType templateType) {
         this.templateType = templateType;
+    }
+
+    @XmlTransient
+    public String getTemplateName() {
+        return getTemplate().getName();
+    }
+
+    public void setTemplateName(String templateName){
+        getTemplate().setName(templateName);
     }
 
     public TemplateEngine getTemplateEngine() {

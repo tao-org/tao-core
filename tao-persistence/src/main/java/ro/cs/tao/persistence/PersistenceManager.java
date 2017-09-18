@@ -51,6 +51,10 @@ public class PersistenceManager {
     @Autowired
     private NodeRepository nodeRepository;
 
+    /** CRUD Repository for ProcessingComponent entities */
+    @Autowired
+    private ProcessingComponentRepository processingComponentRepository;
+
 //    /** CRUD Repository for DataSource entities */
 //    @Autowired
 //    private DataSourceRepository dataSourceRepository;
@@ -417,15 +421,8 @@ public class PersistenceManager {
             throw new PersistenceException("There is already another node with the host name: " + node.getHostName());
         }
 
-        // save the new NodeDescription entity
-        NodeDescription savedNode = nodeRepository.save(node);
-
-        if(savedNode.getHostName() == null)
-        {
-            throw new PersistenceException("Error saving execution node with host name: " + node.getHostName());
-        }
-
-        return savedNode;
+        // save the new NodeDescription entity and return it
+        return nodeRepository.save(node);
     }
 
     @Transactional
@@ -494,6 +491,85 @@ public class PersistenceManager {
         }
 
         return nodeEnt;
+    }
+
+    private boolean checkProcessingComponent(ProcessingComponent component)
+    {
+        if(component == null)
+        {
+            return false;
+        }
+        if(component.getId() == null)
+        {
+            return false;
+        }
+        if(component.getId().isEmpty())
+        {
+            return false;
+        }
+        if(component.getLabel() == null)
+        {
+            return false;
+        }
+        if(component.getVersion() == null)
+        {
+            return false;
+        }
+        if(component.getDescription() == null)
+        {
+            return false;
+        }
+        if(component.getAuthors() == null)
+        {
+            return false;
+        }
+
+        if(component.getCopyright() == null)
+        {
+            return false;
+        }
+
+        if(component.getFileLocation() == null)
+        {
+            return false;
+        }
+
+        if(component.getTemplateType() == null)
+        {
+            return false;
+        }
+
+        if(component.getTemplateName() == null)
+        {
+            return false;
+        }
+
+        if(component.getVisibility() == null)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Transactional
+    public ProcessingComponent saveProcessingComponent(ProcessingComponent component) throws PersistenceException
+    {
+        // check method parameters
+        if(!checkProcessingComponent(component))
+        {
+            throw new PersistenceException("Invalid parameters were provided for adding new processing !");
+        }
+
+        // check if there is already another component with the same identifier
+        final ProcessingComponent componentWithSameHostName = processingComponentRepository.findById(component.getId());
+        if (componentWithSameHostName != null)
+        {
+            throw new PersistenceException("There is already another component with the identifier: " + component.getId());
+        }
+
+        // save the new ProcessingComponent entity and return it
+        return processingComponentRepository.save(component);
     }
 
 }

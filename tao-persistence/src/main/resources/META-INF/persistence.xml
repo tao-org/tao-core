@@ -11,6 +11,7 @@
         <class>ro.cs.tao.eodata.EOData</class>
         <class>ro.cs.tao.eodata.EOProduct</class>
         <class>ro.cs.tao.topology.NodeDescription</class>
+        <class>ro.cs.tao.component.ProcessingComponent</class>
 
         <exclude-unlisted-classes>true</exclude-unlisted-classes>
 

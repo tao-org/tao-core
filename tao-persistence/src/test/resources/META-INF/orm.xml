@@ -70,16 +70,53 @@
             </element-collection>-->
 
 
-            <element-collection name="attributes" target-class="ro.cs.tao.eodata.Attribute" />
-            <embedded name="attributes" />
+            <!--<element-collection name="attributes" target-class="ro.cs.tao.eodata.Attribute" />
+            <embedded name="attributes" />-->
+
+            <!--<embedded name="attributes" /> -->
+
+            <element-collection name="attributes">
+                <collection-table name="tao.data_product_attributes">
+                    <join-column name="id" referenced-column-name="id"/>
+                </collection-table>
+            </element-collection>
 
         </attributes>
 
     </mapped-superclass>
 
+    <mapped-superclass class="ro.cs.tao.component.TaoComponent" access="PROPERTY">
+        <attributes>
+            <basic name="label">
+                <column name="label" nullable="false" column-definition="varchar(250) NOT NULL"/>
+            </basic>
+            <basic name="version">
+                <column name="version" nullable="false" column-definition="varchar(50) NOT NULL"/>
+            </basic>
+            <basic name="description">
+                <column name="description" nullable="false" column-definition="text NOT NULL"/>
+            </basic>
+            <basic name="authors">
+                <column name="authors" nullable="false" column-definition="varchar(1024) NOT NULL"/>
+            </basic>
+            <basic name="copyright">
+                <column name="copyright" nullable="false" column-definition="text NOT NULL"/>
+            </basic>
+        </attributes>
+    </mapped-superclass>
+
+    <mapped-superclass class="ro.cs.tao.component.Identifiable" access="PROPERTY">
+        <attributes>
+            <id name="id">
+                <column name="id" nullable="false" column-definition="varchar(512) NOT NULL"/>
+            </id>
+        </attributes>
+    </mapped-superclass>
+
     <entity class="ro.cs.tao.eodata.EOProduct" access="PROPERTY">
         <table name="tao.data_product"/>
-        <secondary-table name="tao.data_product_attributes"/>
+        <!--<secondary-table name="tao.data_product_attributes"/>-->
+        <!--<inheritance strategy="JOINED"/>-->
         <attributes>
             <basic name="sensorType">
                 <column name="sensor_type_id" nullable="false" column-definition="integer not null"/>
@@ -151,6 +188,37 @@
             <basic name="diskSpaceSizeGB">
                 <column name="total_hdd" nullable="false" column-definition="integer not null"/>
             </basic>
+        </attributes>
+    </entity>
+
+    <entity class="ro.cs.tao.component.ProcessingComponent" access="PROPERTY">
+        <table name="tao.processing_component"/>
+        <attributes>
+            <basic name="fileLocation">
+                <column name="main_tool_file_location" nullable="false" column-definition="character varying(512) NOT NULL"/>
+            </basic>
+            <basic name="workingDirectory">
+                <column name="working_directory" nullable="true" column-definition="character varying(512)"/>
+            </basic>
+            <basic name="templateType">
+                <column name="template_type_id" nullable="false" column-definition="integer not null"/>
+            </basic>
+            <basic name="templateName">
+                <column name="template_name" nullable="false" column-definition="character varying(512) NOT NULL"/>
+            </basic>
+            <basic name="multiThread">
+                <column name="multi_thread" nullable="false" column-definition="boolean NOT NULL DEFAULT false"/>
+            </basic>
+            <basic name="visibility">
+                <column name="visibility_id" nullable="false" column-definition="integer not null"/>
+            </basic>
+            <basic name="nodeAffinity">
+                <column name="node_affinity" nullable="true" column-definition="varchar(250) NULL"/>
+            </basic>
+            <transient name="variables" />
+            <transient name="parameterDescriptors"/>
+            <transient name="template" />
+            <transient name="templateEngine" />
         </attributes>
     </entity>
 
