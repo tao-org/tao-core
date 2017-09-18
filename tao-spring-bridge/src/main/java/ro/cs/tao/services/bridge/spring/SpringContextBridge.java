@@ -1,4 +1,4 @@
-package ro.cs.tao.bridge.spring;
+package ro.cs.tao.services.bridge.spring;
 
 /**
  * Created by cosmin on 9/13/2017.
@@ -8,7 +8,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.ImportResource;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import ro.cs.tao.persistence.PersistenceManager;
 
 /**
@@ -17,8 +17,7 @@ import ro.cs.tao.persistence.PersistenceManager;
  * @author cosmin
  *
  */
-@Component
-@ImportResource({"classpath*:META-INF/persistence.xml", "classpath*:META-INF/orm.xml" })
+@Service
 public class SpringContextBridge implements SpringContextBridgedServices, ApplicationContextAware
 {
     /**
@@ -29,7 +28,7 @@ public class SpringContextBridge implements SpringContextBridgedServices, Applic
     /**
      * Default empty constructor
      */
-    public SpringContextBridge()
+    private SpringContextBridge()
     {
     }
 

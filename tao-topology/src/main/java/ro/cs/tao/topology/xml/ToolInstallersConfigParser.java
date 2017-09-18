@@ -7,8 +7,9 @@ import ro.cs.tao.topology.ToolInstallConfig;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -18,15 +19,25 @@ import java.util.logging.Logger;
 public class ToolInstallersConfigParser {
     private static final Logger logger = Logger.getLogger(ToolInstallersConfigHandler.class.getName());
 
-    public static List<ToolInstallConfig> parse(String xmlString, ToolInstallersConfigHandler handler) {
+    public static List<ToolInstallConfig> parse(InputStream is, ToolInstallersConfigHandler handler) {
         List<ToolInstallConfig> result = null;
         try {
-            InputSource inputSource = new InputSource(new FileReader(xmlString));
+            InputSource inputSource = new InputSource(is);
             SAXParserFactory factory = SAXParserFactory.newInstance();
             SAXParser parser = factory.newSAXParser();
             parser.parse(inputSource, handler);
             result = handler.getResults();
         } catch (ParserConfigurationException | IOException | SAXException e) {
+            logger.warning(e.getMessage());
+        }
+        return result;
+
+    }
+    public static List<ToolInstallConfig> parse(String xmlString, ToolInstallersConfigHandler handler) {
+        List<ToolInstallConfig> result = null;
+        try {
+            result = parse(new FileInputStream(xmlString), handler);
+        } catch (IOException e) {
             logger.warning(e.getMessage());
         }
         return result;
