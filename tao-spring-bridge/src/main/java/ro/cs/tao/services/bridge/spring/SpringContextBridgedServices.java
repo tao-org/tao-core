@@ -1,4 +1,4 @@
-package ro.cs.tao.bridge.spring;
+package ro.cs.tao.services.bridge.spring;
 
 import ro.cs.tao.persistence.PersistenceManager;
 
