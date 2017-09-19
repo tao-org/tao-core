@@ -63,13 +63,13 @@ public class ProcessingComponent extends TaoComponent {
     private String fileLocation;
     private String workingDirectory;
     private TemplateType templateType;
+    private String templateName;
     private TemplateEngine templateEngine;
     private Template template;
     private List<Variable> variables;
     private List<ParameterDescriptor> parameters;
     private Boolean multiThread;
     private ProcessingComponentVisibility visibility;
-    private String nodeAffinity;
 
     public ProcessingComponent() {
         super();
@@ -142,16 +142,6 @@ public class ProcessingComponent extends TaoComponent {
         this.visibility = visibility;
     }
 
-    @Override
-    public String getNodeAffinity() {
-        return nodeAffinity;
-    }
-
-    @Override
-    public void setNodeAffinity(String nodeAffinity) {
-        this.nodeAffinity = nodeAffinity;
-    }
-
     @XmlTransient
     public TemplateType getTemplateType() {
         return templateType != null ? templateType : TemplateType.VELOCITY;
@@ -163,11 +153,11 @@ public class ProcessingComponent extends TaoComponent {
 
     @XmlTransient
     public String getTemplateName() {
-        return getTemplate().getName();
+        return templateName;
     }
 
     public void setTemplateName(String templateName){
-        getTemplate().setName(templateName);
+        this.templateName = templateName;
     }
 
     public TemplateEngine getTemplateEngine() {

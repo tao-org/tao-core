@@ -562,8 +562,8 @@ public class PersistenceManager {
         }
 
         // check if there is already another component with the same identifier
-        final ProcessingComponent componentWithSameHostName = processingComponentRepository.findById(component.getId());
-        if (componentWithSameHostName != null)
+        final ProcessingComponent componentWithSameid = processingComponentRepository.findById(component.getId());
+        if (componentWithSameid != null)
         {
             throw new PersistenceException("There is already another component with the identifier: " + component.getId());
         }
