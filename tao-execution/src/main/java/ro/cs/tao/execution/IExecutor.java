@@ -1,6 +1,5 @@
-package ro.cs.tao.executor;
+package ro.cs.tao.execution;
 
-import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.TaoComponent;
 
 /**
