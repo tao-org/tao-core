@@ -38,6 +38,7 @@
 
 package ro.cs.tao.component;
 
+import ro.cs.tao.component.enums.ProcessingComponentVisibility;
 import ro.cs.tao.component.template.Template;
 import ro.cs.tao.component.template.TemplateException;
 import ro.cs.tao.component.template.TemplateType;
@@ -62,10 +63,13 @@ public class ProcessingComponent extends TaoComponent {
     private String fileLocation;
     private String workingDirectory;
     private TemplateType templateType;
+    private String templateName;
     private TemplateEngine templateEngine;
     private Template template;
     private List<Variable> variables;
     private List<ParameterDescriptor> parameters;
+    private Boolean multiThread;
+    private ProcessingComponentVisibility visibility;
 
     public ProcessingComponent() {
         super();
@@ -118,8 +122,24 @@ public class ProcessingComponent extends TaoComponent {
         return this.parameters;
     }
 
-    public void setParameters(List<ParameterDescriptor> parameters) {
+    public void setParameterDescriptors(List<ParameterDescriptor> parameters) {
         this.parameters = parameters;
+    }
+
+    public Boolean getMultiThread() {
+        return multiThread;
+    }
+
+    public void setMultiThread(Boolean multiThread) {
+        this.multiThread = multiThread;
+    }
+
+    public ProcessingComponentVisibility getVisibility() {
+        return visibility;
+    }
+
+    public void setVisibility(ProcessingComponentVisibility visibility) {
+        this.visibility = visibility;
     }
 
     @XmlTransient
@@ -129,6 +149,15 @@ public class ProcessingComponent extends TaoComponent {
 
     public void setTemplateType(TemplateType templateType) {
         this.templateType = templateType;
+    }
+
+    @XmlTransient
+    public String getTemplateName() {
+        return templateName;
+    }
+
+    public void setTemplateName(String templateName){
+        this.templateName = templateName;
     }
 
     public TemplateEngine getTemplateEngine() {

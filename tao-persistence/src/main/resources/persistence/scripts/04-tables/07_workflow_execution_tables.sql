@@ -102,7 +102,6 @@ DROP TABLE IF EXISTS tao.execution_node CASCADE;
 CREATE TABLE tao.execution_node
 (
 	host_name varchar(250) NOT NULL,
-	ip_address varchar(50) NOT NULL,
 	username varchar(50) NOT NULL,
 	password text NOT NULL,
 	total_CPU integer NOT NULL,
@@ -141,7 +140,7 @@ DROP TABLE IF EXISTS tao.task CASCADE;
 CREATE TABLE tao.task
 (
 	id bigint NOT NULL,
-	processing_component_id integer NOT NULL,
+	processing_component_id varchar(512) NOT NULL,
 	graph_node_id bigint NOT NULL,
 	start_time timestamp without time zone NULL,
 	end_time timestamp without time zone NULL,

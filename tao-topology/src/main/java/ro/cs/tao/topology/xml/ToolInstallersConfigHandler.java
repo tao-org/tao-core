@@ -201,8 +201,8 @@ public class ToolInstallersConfigHandler extends DefaultHandler {
             case "execution_mode":
                 currentStep.setExecutionModeMode(ExecutionMode.valueOf(elementValue.toUpperCase()));
                 break;
-            case "ip":
-                currentStep.setIp(elementValue);
+            case "host":
+                currentStep.setHostName(elementValue);
                 break;
             case "user":
                 currentStep.setUser(elementValue);
