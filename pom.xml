@@ -22,7 +22,7 @@
         <module>tao-persistence</module>
 		<module>tao-integration</module>
         <module>tao-topology</module>
-        <module>tao-executors</module>
+        <module>tao-execution</module>
         <module>tao-core-kit</module>
     </modules>
 
