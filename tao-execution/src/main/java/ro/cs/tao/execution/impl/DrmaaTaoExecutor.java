@@ -1,10 +1,14 @@
-package ro.cs.tao.executor.impl;
+package ro.cs.tao.execution.impl;
 
-import org.ggf.drmaa.v1.*;
+import org.ggf.drmaa.DrmaaException;
+import org.ggf.drmaa.JobInfo;
+import org.ggf.drmaa.JobTemplate;
+import org.ggf.drmaa.Session;
+import org.ggf.drmaa.SessionFactory;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.TaoComponent;
-import ro.cs.tao.executor.ExecutionException;
-import ro.cs.tao.executor.IExecutor;
+import ro.cs.tao.execution.ExecutionException;
+import ro.cs.tao.execution.IExecutor;
 
 import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;

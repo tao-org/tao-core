@@ -1,14 +1,9 @@
-package ro.cs.tao.executor;
+package ro.cs.tao.execution;
 
-import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.TaoComponent;
-import ro.cs.tao.datasource.DataSource;
-import ro.cs.tao.executor.impl.DrmaaTaoExecutor;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
 
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Optional;
 import java.util.Set;
 
