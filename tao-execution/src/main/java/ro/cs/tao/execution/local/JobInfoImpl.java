@@ -10,13 +10,13 @@ import java.util.Map;
  */
 public class JobInfoImpl implements JobInfo {
     private final Process process;
-    private final int exited;
-    private final int signaled;
-    private final int coredump;
-    private final int aborted;
-    private final int exitStatus;
-    private final String signal;
-    private final String jobId;
+    private int exited;
+    private int signaled;
+    private int coredump;
+    private int aborted;
+    private int exitStatus;
+    private String signal;
+    private String jobId;
 
     public JobInfoImpl(Process process) {
         this.process = process;
@@ -24,7 +24,6 @@ public class JobInfoImpl implements JobInfo {
 
     @Override
     public String getJobId() throws DrmaaException {
-        Process p = new ProcessBuilder().start();
         return String.valueOf(PID.getPID(process));
     }
 
@@ -60,6 +59,6 @@ public class JobInfoImpl implements JobInfo {
 
     @Override
     public boolean wasAborted() throws DrmaaException {
-        return this.process.;
+        return false;
     }
 }
