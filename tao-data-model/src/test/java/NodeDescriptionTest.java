@@ -42,7 +42,6 @@ public class NodeDescriptionTest extends BaseSerializationTest<NodeDescription> 
         super.setUp();
         entity = new NodeDescription() {{
             setHostName("host_sample");
-            setIpAddr("10.0.0.1");
             setUserName("user");
             setUserPass("drowssap");
             setProcessorCount(4);

@@ -18,7 +18,7 @@ public class ToolInstallStep {
     private ExecutionMode executionModeMode = ExecutionMode.SUPERUSER;
     private String invocationCommand;
     private List<String> executionMessages = new ArrayList<>();
-    private String ip;
+    private String hostName;
     private String user;
     private String pass;
     private boolean ignoreErr = false;
@@ -87,12 +87,12 @@ public class ToolInstallStep {
         return executionMessages;
     }
 
-    public void setIp(String ip) {
-        this.ip = ip;
+    public void setHostName(String hostName) {
+        this.hostName = hostName;
     }
 
-    public String getIp() {
-        return ip;
+    public String getHostName() {
+        return hostName;
     }
 
     public void setUser(String user) {

@@ -215,7 +215,8 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
 		entityManagerFactoryBean
 				.setPackagesToScan(environment.getRequiredProperty(PROPERTY_NAME_ENTITYMANAGER_PACKAGES_TO_SCAN));
 		entityManagerFactoryBean.setPersistenceProviderClass(HibernatePersistenceProvider.class);
-		entityManagerFactoryBean.setPersistenceXmlLocation("classpath:META-INF/persistence.xml");
+        entityManagerFactoryBean.setPersistenceXmlLocation("classpath:META-INF/persistence.xml");
+		entityManagerFactoryBean.setPersistenceUnitName("tao");
 
 		final Properties jpaProperties = new Properties();
 		jpaProperties.put(PROPERTY_NAME_HIBERNATE_DIALECT,

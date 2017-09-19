@@ -208,7 +208,7 @@ public class ProcessingComponentTest extends BaseSerializationTest<ProcessingCom
             setSources(new SourceDescriptor[] {sourceDescriptor});
             setTargets(new TargetDescriptor[] { new TargetDescriptor("out_str") });
             setVersion("1.0");
-            setParameters(parameters);
+            setParameterDescriptors(parameters);
             setVariables(variables);
             setTemplateType(TemplateType.VELOCITY);
             setTemplate(template);

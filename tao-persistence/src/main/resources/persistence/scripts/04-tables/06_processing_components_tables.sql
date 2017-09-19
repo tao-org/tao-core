@@ -179,24 +179,23 @@ DROP TABLE IF EXISTS tao.processing_component CASCADE;
 
 CREATE TABLE tao.processing_component
 (
-	id integer NOT NULL,
-	name varchar(250) NOT NULL,
+	id varchar(512) NOT NULL,
 	label varchar(250) NOT NULL,
 	version varchar(50) NOT NULL,
-	description varchar(1024) NOT NULL,
-	authors varchar(50) NULL,
+	description text NOT NULL,
+	authors varchar(1024) NOT NULL,
 	copyright text NOT NULL,
-	main_tool_file_location varchar(512) NULL,
+	main_tool_file_location varchar(512) NOT NULL,
 	working_directory varchar(512) NULL,
 	template_type_id integer NOT NULL,
-	template_name varchar(500) NOT NULL,
+	template_name varchar(512) NOT NULL,
 	owner_user_id integer NULL,
 	visibility_id integer NOT NULL,
-	operation_id integer NOT NULL,
-	multi_thread boolean NOT NULL,
-	created timestamp NOT NULL,
+	multi_thread boolean NOT NULL DEFAULT false,
+	node_affinity varchar(250) NULL,
+	created timestamp NOT NULL DEFAULT now(),
     modified timestamp NULL,
-	active boolean NULL
+	active boolean NOT NULL DEFAULT true
 );
 
 ALTER TABLE tao.processing_component ADD CONSTRAINT PK_processing_component
@@ -210,7 +209,4 @@ ALTER TABLE tao.processing_component ADD CONSTRAINT FK_processing_component_user
 	
 ALTER TABLE tao.processing_component ADD CONSTRAINT FK_processing_component_component_visibility
 	FOREIGN KEY (visibility_id) REFERENCES tao.component_visibility (id) ON DELETE No Action ON UPDATE No Action;
-
-ALTER TABLE tao.processing_component ADD CONSTRAINT FK_processing_component_processing_operation
-	FOREIGN KEY (operation_id) REFERENCES tao.processing_operation (id) ON DELETE No Action ON UPDATE No Action;
 

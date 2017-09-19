@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +24,7 @@ import ro.cs.tao.topology.NodeDescription;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -38,6 +40,9 @@ import java.util.stream.Collectors;
 @Scope("singleton")
 public class PersistenceManager {
 
+    /** Constant for the identifier member name of execution node entity */
+    private static final String NODE_IDENTIFIER_PROPERTY_NAME = "hostName";
+
     /** CRUD Repository for EOProduct entities */
     @Autowired
     private EOProductRepository eoProductRepository;
@@ -45,6 +50,10 @@ public class PersistenceManager {
     /** CRUD Repository for NodeDescription entities */
     @Autowired
     private NodeRepository nodeRepository;
+
+    /** CRUD Repository for ProcessingComponent entities */
+    @Autowired
+    private ProcessingComponentRepository processingComponentRepository;
 
 //    /** CRUD Repository for DataSource entities */
 //    @Autowired
@@ -311,12 +320,44 @@ public class PersistenceManager {
 //        return processingComponentEnt.getId();
 //    }
 
+    private boolean checkEOProduct(EOProduct eoProduct)
+    {
+        if(eoProduct == null)
+        {
+            return false;
+        }
+        if(eoProduct.getName() == null)
+        {
+            return false;
+        }
+        if(eoProduct.getGeometry() == null)
+        {
+            return false;
+        }
+        if(eoProduct.getProductType() == null)
+        {
+            return false;
+        }
+        if(eoProduct.getLocation() == null)
+        {
+            return false;
+        }
+        if(eoProduct.getSensorType() == null)
+        {
+            return false;
+        }
+        if(eoProduct.getPixelType() == null)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
     @Transactional
     public EOProduct saveEOProduct(EOProduct eoProduct) throws PersistenceException {
         // check method parameters
-        if (eoProduct == null ||
-          eoProduct.getName() == null || eoProduct.getGeometry() == null || eoProduct.getProductType() == null ||
-          eoProduct.getLocation() == null || eoProduct.getSensorType() == null || eoProduct.getPixelType() == null) {
+        if (!checkEOProduct(eoProduct)) {
             throw new PersistenceException("Invalid parameters were provided for adding new EO product!");
         }
 
@@ -330,25 +371,205 @@ public class PersistenceManager {
         return savedEOProduct;
     }
 
+    private boolean checkExecutionNode(NodeDescription node)
+    {
+        if(node == null)
+        {
+            return false;
+        }
+        if(node.getHostName() == null)
+        {
+            return false;
+        }
+        if(node.getUserName() == null)
+        {
+            return false;
+        }
+        if(node.getUserPass() == null)
+        {
+            return false;
+        }
+        if(node.getProcessorCount() <= 0)
+        {
+            return false;
+        }
+        if(node.getDiskSpaceSizeGB() <= 0)
+        {
+            return false;
+        }
+        if(node.getMemorySizeGB() <= 0)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
     @Transactional
     public NodeDescription saveExecutionNode(NodeDescription node) throws PersistenceException
     {
         // check method parameters
-        if(node.getHostName() == null || node.getIpAddr() == null || node.getUserName() == null || node.getUserPass() == null ||
-           node.getProcessorCount() <= 0 || node.getDiskSpaceSizeGB() <= 0 || node.getMemorySizeGB() <= 0)
+        if(!checkExecutionNode(node))
         {
             throw new PersistenceException("Invalid parameters were provided for adding new execution node!");
         }
 
-        // save the NodeDescription entity
-        NodeDescription savedNode = nodeRepository.save(node);
-
-        if(savedNode.getHostName() == null)
+        // check if there is already another node with the same host name
+        final NodeDescription nodeWithSameHostName = nodeRepository.findByHostName(node.getHostName());
+        if (nodeWithSameHostName != null)
         {
-            throw new PersistenceException("Error saving execution node with host name: " + node.getHostName());
+            throw new PersistenceException("There is already another node with the host name: " + node.getHostName());
         }
 
-        return savedNode;
+        // save the new NodeDescription entity and return it
+        return nodeRepository.save(node);
+    }
+
+    @Transactional
+    public NodeDescription updateExecutionNode(NodeDescription node) throws PersistenceException
+    {
+        // check method parameters
+        if(!checkExecutionNode(node))
+        {
+            throw new PersistenceException("Invalid parameters were provided for updating the execution node " + (node != null && node.getHostName() != null ? "(host name " + node.getHostName() + ")" : "") + "!");
+        }
+
+        NodeDescription updatedNode = nodeRepository.save(node);
+
+//        // TODO check creation date and modified date
+//        if(updatedNode.getIpAddr() == null)
+//        {
+//            throw new PersistenceException("Error updating execution node with host name: " + node.getHostName());
+//        }
+
+        return updatedNode;
+    }
+
+
+    @Transactional(readOnly = true)
+    public List<NodeDescription> getNodes()
+    {
+        final List<NodeDescription> nodes = new ArrayList<>();
+        // retrieve nodes and filter them
+        nodes.addAll(((List<NodeDescription>) nodeRepository.findAll(new Sort(Sort.Direction.ASC, NODE_IDENTIFIER_PROPERTY_NAME))).stream()
+          .collect(Collectors.toList()));
+        return nodes;
+    }
+
+    @Transactional(readOnly = true)
+    public boolean checkIfExistsNodeByHostName(final String hostName)
+    {
+        boolean result = false;
+
+        if (hostName != null && !hostName.isEmpty())
+        {
+            // try to retrieve NodeDescription after its host name
+            final NodeDescription nodeEnt = nodeRepository.findByHostName(hostName);
+            if (nodeEnt != null)
+            {
+                result = true;
+            }
+        }
+
+        return result;
+    }
+
+    @Transactional(readOnly = true)
+    public NodeDescription getNodeByHostName(final String hostName) throws PersistenceException
+    {
+        // check method parameters
+        if (hostName == null || hostName.isEmpty())
+        {
+            throw new PersistenceException("Invalid parameters were provided for searching execution node by host name ("+ String.valueOf(hostName) +") !");
+        }
+
+        // retrieve NodeDescription after its host name
+        final NodeDescription nodeEnt = nodeRepository.findByHostName(hostName);
+        if (nodeEnt == null)
+        {
+            throw new PersistenceException("There is no execution node with the specified host name: " + hostName);
+        }
+
+        return nodeEnt;
+    }
+
+    private boolean checkProcessingComponent(ProcessingComponent component)
+    {
+        if(component == null)
+        {
+            return false;
+        }
+        if(component.getId() == null)
+        {
+            return false;
+        }
+        if(component.getId().isEmpty())
+        {
+            return false;
+        }
+        if(component.getLabel() == null)
+        {
+            return false;
+        }
+        if(component.getVersion() == null)
+        {
+            return false;
+        }
+        if(component.getDescription() == null)
+        {
+            return false;
+        }
+        if(component.getAuthors() == null)
+        {
+            return false;
+        }
+
+        if(component.getCopyright() == null)
+        {
+            return false;
+        }
+
+        if(component.getFileLocation() == null)
+        {
+            return false;
+        }
+
+        if(component.getTemplateType() == null)
+        {
+            return false;
+        }
+
+        if(component.getTemplateName() == null)
+        {
+            return false;
+        }
+
+        if(component.getVisibility() == null)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Transactional
+    public ProcessingComponent saveProcessingComponent(ProcessingComponent component) throws PersistenceException
+    {
+        // check method parameters
+        if(!checkProcessingComponent(component))
+        {
+            throw new PersistenceException("Invalid parameters were provided for adding new processing !");
+        }
+
+        // check if there is already another component with the same identifier
+        final ProcessingComponent componentWithSameid = processingComponentRepository.findById(component.getId());
+        if (componentWithSameid != null)
+        {
+            throw new PersistenceException("There is already another component with the identifier: " + component.getId());
+        }
+
+        // save the new ProcessingComponent entity and return it
+        return processingComponentRepository.save(component);
     }
 
 }

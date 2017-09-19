@@ -4,12 +4,21 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.Assert;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ImportResource;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
+import ro.cs.tao.component.ProcessingComponent;
+import ro.cs.tao.component.enums.ProcessingComponentVisibility;
+import ro.cs.tao.component.template.BasicTemplate;
+import ro.cs.tao.component.template.Template;
+import ro.cs.tao.component.template.TemplateException;
+import ro.cs.tao.component.template.TemplateType;
+import ro.cs.tao.component.template.engine.TemplateEngine;
 import ro.cs.tao.datasource.AbstractDataSource;
 import ro.cs.tao.datasource.DataQuery;
 import ro.cs.tao.datasource.DataSource;
@@ -44,6 +53,7 @@ import java.util.logging.Logger;
 @RunWith(SpringRunner.class)
 @ContextConfiguration("classpath:tao-persistence-context.xml")
 @ImportResource({"classpath:META-INF/persistence.xml" })
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class PersistenceManagerTest {
 
     private static Log logger = LogFactory.getLog(PersistenceManagerTest.class);
@@ -61,7 +71,7 @@ public class PersistenceManagerTest {
     private DatabaseConfiguration dbConfig;
 
     @Test
-    public void check_DB_configuration()
+    public void TC_00_check_DB_configuration()
     {
         try
         {
@@ -175,16 +185,15 @@ public class PersistenceManagerTest {
     }**/
 
     @Test
-    public void save_new_execution_node()
+    public void TC_01_save_new_execution_node()
     {
         try
         {
             // add a new execution node for test
             NodeDescription node  = new NodeDescription();
-            node.setHostName("No host name test 2");
-            node.setIpAddr("No IP adr");
-            node.setUserName("No user name");
-            node.setUserPass("No user pass");
+            node.setHostName("Test1 host name");
+            node.setUserName("Test user name");
+            node.setUserPass("Test user pass");
             node.setProcessorCount(2);
             node.setMemorySizeGB(10);
             node.setDiskSpaceSizeGB(1000);
@@ -192,6 +201,135 @@ public class PersistenceManagerTest {
             node = persistenceManager.saveExecutionNode(node);
             // check persisted node
             Assert.assertTrue(node != null && node.getHostName() != null);
+        }
+        catch (PersistenceException e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void TC_02_retrieve_all_execution_nodes()
+    {
+        try
+        {
+
+            List<NodeDescription> nodes  = persistenceManager.getNodes();
+            Assert.assertTrue(nodes != null && nodes.size() > 0);
+
+            for (NodeDescription node : nodes)
+            {
+                logger.info("Found node " + node.getHostName());
+            }
+        }
+        catch (Exception e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void TC_03_update_execution_node()
+    {
+        try
+        {
+            List<NodeDescription> nodes  = persistenceManager.getNodes();
+
+            if(nodes.size() > 0)
+            {
+                NodeDescription firstNode = nodes.get(0);
+
+                firstNode.setDiskSpaceSizeGB(9);
+                firstNode = persistenceManager.updateExecutionNode(firstNode);
+
+                Assert.assertTrue(firstNode.getDiskSpaceSizeGB() == 9);
+            }
+
+        }
+        catch (PersistenceException e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void TC_04_check_execution_node_existence_by_host_name()
+    {
+        try
+        {
+            List<NodeDescription> nodes  = persistenceManager.getNodes();
+
+            if(nodes.size() > 0)
+            {
+                NodeDescription firstNode = nodes.get(0);
+                String hostName = firstNode.getHostName();
+                Assert.assertTrue(persistenceManager.checkIfExistsNodeByHostName(hostName));
+            }
+        }
+        catch (Exception e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void TC_05_retrieve_execution_node_by_host_name()
+    {
+        try
+        {
+            List<NodeDescription> nodes  = persistenceManager.getNodes();
+
+            if(nodes.size() > 0)
+            {
+                NodeDescription firstNode = nodes.get(0);
+                String hostName = firstNode.getHostName();
+
+                NodeDescription searchedNode  = persistenceManager.getNodeByHostName(hostName);
+                Assert.assertTrue(searchedNode != null && searchedNode.getHostName().equals(hostName));
+            }
+        }
+        catch (PersistenceException e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void TC_06_save_new_processing_component()
+    {
+        try
+        {
+            // add a new processing component for test
+            ProcessingComponent component = new ProcessingComponent();
+            component.setId("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
+            component.setLabel("component label");
+            component.setVersion("component version");
+            component.setDescription("component description");
+            component.setAuthors("component authors");
+            component.setCopyright("component copyright");
+            component.setFileLocation("component file location");
+            component.setWorkingDirectory("component working directory");
+
+            Template template = new BasicTemplate();
+            template.setName("basic template name");
+            template.setTemplateType(TemplateType.VELOCITY);
+            component.setTemplate(template);
+            component.setTemplateType(TemplateType.VELOCITY);
+            // TODO ??
+            component.setTemplateName("basic template name");
+
+            component.setVisibility(ProcessingComponentVisibility.CONTRIBUTOR);
+            component.setNodeAffinity("Any");
+            component.setMultiThread(true);
+
+            component = persistenceManager.saveProcessingComponent(component);
+            // check persisted component
+            Assert.assertTrue(component != null && component.getId() != null);
         }
         catch (PersistenceException e)
         {

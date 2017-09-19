@@ -60,7 +60,6 @@ public class MainApp {
     private static void saveNewNode(PersistenceManager dbManager) {
         NodeDescription node  = new NodeDescription();
         node.setHostName("No host name test 1");
-        node.setIpAddr("No IP adr");
         node.setUserName("No user name");
         node.setUserPass("No user pass");
         node.setProcessorCount(2);

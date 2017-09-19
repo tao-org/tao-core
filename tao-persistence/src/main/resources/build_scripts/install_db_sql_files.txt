@@ -18,3 +18,6 @@
 ../persistence/scripts/06-grant/13_grant_tao.sql;taodata
 
 ../persistence/scripts/07-settings-data/14_settings_data.sql;taodata
+
+../persistence/scripts/08-functions-and-triggers/15_trigger_execution_node_update.sql;taodata
+../persistence/scripts/08-functions-and-triggers/16_trigger_processing_component_update.sql;taodata

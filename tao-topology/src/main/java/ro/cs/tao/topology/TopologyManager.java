@@ -1,14 +1,17 @@
 package ro.cs.tao.topology;
 
+import ro.cs.tao.services.bridge.spring.SpringContextBridge;
+import ro.cs.tao.persistence.PersistenceManager;
+import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.spi.ServiceLoader;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Logger;
 
 /**
  * Created by cosmin on 8/23/2017.
@@ -16,9 +19,11 @@ import java.util.Set;
 public class TopologyManager implements ITopologyManager {
     private static final TopologyManager instance;
 
+    protected Logger logger = Logger.getLogger(TopologyManager.class.getName());
     private ServiceRegistry<ITopologyToolInstaller> installersRegistry;
     private NodeDescription masterNodeInfo;
     private Set<ITopologyToolInstaller> installers;
+    private PersistenceManager persistenceManager = SpringContextBridge.services().getPersistenceManager();
 
     static {
         instance = new TopologyManager();
@@ -44,47 +49,33 @@ public class TopologyManager implements ITopologyManager {
 
     @Override
     public NodeDescription get(String name) {
-        NodeDescription node = new NodeDescription();
-        node.setHostName("host_sample");
-        node.setIpAddr("10.0.0.1");
-        node.setUserName("user");
-        node.setUserPass("drowssap");
-        node.setProcessorCount(4);
-        node.setMemorySizeGB(16);
-        node.setDiskSpaceSizeGB(500);
-        return node;
+        try {
+            return persistenceManager.getNodeByHostName(name);
+        } catch (PersistenceException e) {
+            logger.severe("Cannot get node description from database for node " + name);
+            throw new TopologyException(e);
+        }
     }
 
     @Override
     public List<NodeDescription> list() {
-        List<NodeDescription> list = new ArrayList<NodeDescription>();
-        NodeDescription node = new NodeDescription();
-        node.setHostName("host_sample_1");
-        node.setIpAddr("10.0.0.1");
-        node.setUserName("user");
-        node.setUserPass("drowssap");
-        node.setProcessorCount(4);
-        node.setMemorySizeGB(16);
-        node.setDiskSpaceSizeGB(500);
-        list.add(node);
-
-        node = new NodeDescription();
-        node.setHostName("host_sample_2");
-        node.setIpAddr("10.0.0.2");
-        node.setUserName("user");
-        node.setUserPass("drowssap");
-        node.setProcessorCount(4);
-        node.setMemorySizeGB(16);
-        node.setDiskSpaceSizeGB(500);
-        list.add(node);
-        return list;
+        return persistenceManager.getNodes();
     }
 
     @Override
-    public void add(NodeDescription info) {
+    public void add(NodeDescription info) throws TopologyException {
         // execute all the installers
         for (ITopologyToolInstaller installer: installers) {
             installer.installNewNode(info);
+        }
+        try {
+            persistenceManager.saveExecutionNode(info);
+        } catch (PersistenceException e) {
+            logger.severe("Cannot save node description to database. Rolling back installation on node " + info.getHostName() + "...");
+            for (ITopologyToolInstaller installer: installers) {
+                installer.uninstallNode(info);
+            }
+            throw new TopologyException(e);
         }
     }
 
@@ -98,6 +89,13 @@ public class TopologyManager implements ITopologyManager {
         for (ITopologyToolInstaller installer: installers) {
             installer.uninstallNode(node);
         }
+        try {
+            // TODO: Update when we have remove execution node
+            persistenceManager.saveExecutionNode(node);
+        } catch (PersistenceException e) {
+            logger.severe("Cannot remove node description from database. Host name is :" + node.getHostName());
+            throw new TopologyException(e);
+        }
     }
 
     @Override
@@ -105,6 +103,12 @@ public class TopologyManager implements ITopologyManager {
         // execute all the installers
         for (ITopologyToolInstaller installer: installers) {
             installer.editNode(nodeInfo);
+        }
+        try {
+            persistenceManager.updateExecutionNode(nodeInfo);
+        } catch (PersistenceException e) {
+            logger.severe("Cannot update node description in database for the host name:" + nodeInfo.getHostName());
+            throw new TopologyException(e);
         }
     }
 
@@ -136,12 +140,9 @@ public class TopologyManager implements ITopologyManager {
             // TODO: Aparently, the hostname obtained by this method might return a different value
             // than the call to "hostname" call in Linux. Maybe an invocation of hostname will solve the problem
             // but this might break the portability
-            String hostName = InetAddress.getLocalHost().getHostName();
             masterNodeInfo = new NodeDescription();
-
+            String hostName = InetAddress.getLocalHost().getHostName();
             masterNodeInfo.setHostName(hostName);
-            //TODO: Get the IP Address - or just not set it and determine it dynamically???
-            masterNodeInfo.setIpAddr(InetAddress.getLocalHost().getHostAddress());
         } catch (UnknownHostException e) {
             e.printStackTrace();
             throw new TopologyException("Master hostname retrieval failure", e);
