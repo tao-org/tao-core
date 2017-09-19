@@ -75,6 +75,9 @@ public class TopologyTest {
         nodeInfo.setUserPass("sen2agri");
         nodeInfo.setProcessorCount(2);
         TopologyManager.getInstance().add(nodeInfo);
+
+        // close application context
+        ((ClassPathXmlApplicationContext) context).close();
     }
 
 }

@@ -162,6 +162,13 @@ INSERT INTO tao.task_status (status) VALUES ('COMPLETED');
 INSERT INTO tao.task_status (status) VALUES ('ERROR');
 
 
+-- Template type
+
+INSERT INTO tao.template_type (type) VALUES ('VELOCITY');
+INSERT INTO tao.template_type (type) VALUES ('JAVASCRIPT');
+INSERT INTO tao.template_type (type) VALUES ('XSLT');
+
+
 
 -- Workflow graph visibility
 
