@@ -113,6 +113,10 @@
     <mapped-superclass class="ro.cs.tao.component.Identifiable" access="PROPERTY">
         <attributes>
             <id name="id">
+                <!-- ! IMPORTANT NOTICE:
+                Because Identifiable class is extended by several other classes,
+                but the mapping to a column name can be only done once (here!),
+                all correspondant columns must have the same name (and definition) defined here  -->
                 <column name="id" nullable="false" column-definition="varchar(512) NOT NULL"/>
             </id>
         </attributes>
@@ -198,8 +202,11 @@
 
     <entity class="ro.cs.tao.component.ProcessingComponent" access="PROPERTY">
         <table name="tao.processing_component"/>
+        <secondary-table name="tao.component_variables"/>
+
         <convert converter="ro.cs.tao.persistence.convert.TemplateTypeConverter" attribute-name="templateType" />
         <convert converter="ro.cs.tao.persistence.convert.ProcessingComponentVisibilityConverter" attribute-name="visibility" />
+
         <attributes>
             <basic name="fileLocation">
                 <column name="main_tool_file_location" nullable="false" column-definition="character varying(512) NOT NULL"/>
@@ -222,6 +229,8 @@
             <basic name="multiThread">
                 <column name="multi_thread" nullable="false" column-definition="boolean NOT NULL DEFAULT false"/>
             </basic>
+
+            <!--<embedded name="Variables" />-->
             <transient name="variables" />
             <transient name="parameterDescriptors" />
             <transient name="template" />
@@ -236,6 +245,14 @@
             </basic>
             <basic name="value">
                 <column name="value" nullable="false" column-definition="text NOT NULL"/>
+            </basic>
+        </attributes>
+    </embeddable>
+
+    <embeddable class="ro.cs.tao.component.Variable" access="PROPERTY">
+        <attributes>
+            <basic name="value">
+                <column name="value" nullable="false" column-definition="character varying(512) NOT NULL"/>
             </basic>
         </attributes>
     </embeddable>

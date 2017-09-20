@@ -71,80 +71,42 @@ ALTER TABLE tao.parameter_values_set ADD CONSTRAINT PK_parameter_values_set
 ALTER TABLE tao.parameter_values_set ADD CONSTRAINT FK_parameter_values_set_parameter
 	FOREIGN KEY (parameter_id) REFERENCES tao.parameter (id) ON DELETE No Action ON UPDATE No Action;
 	
-	
--------------------------------------------------------------------------------
--- table: operation_source
-DROP TABLE IF EXISTS tao.operation_source CASCADE;
 
-CREATE TABLE tao.operation_source
+-------------------------------------------------------------------------------
+-- table: component_source
+DROP TABLE IF EXISTS tao.component_source CASCADE;
+
+CREATE TABLE tao.component_source
 (
 	id integer NOT NULL,
 	source varchar(50) NOT NULL
 );
 
-ALTER TABLE tao.operation_source ADD CONSTRAINT PK_operation_source
-	PRIMARY KEY (id);	
+ALTER TABLE tao.component_source ADD CONSTRAINT PK_component_source
+	PRIMARY KEY (id);
 
 
 -------------------------------------------------------------------------------
 -- table: processing_operation
-DROP TABLE IF EXISTS tao.processing_operation CASCADE;
+--DROP TABLE IF EXISTS tao.processing_operation CASCADE;
 
-CREATE TABLE tao.processing_operation
-(
-	id integer NOT NULL,
-	name varchar(250) NULL,
-	progress_pattern varchar(500) NULL,
-	error_pattern varchar(500) NULL,
-	source_id integer NOT NULL,
-	is_handling_output_name boolean NULL
-);
+--CREATE TABLE tao.processing_operation
+--(
+--	id integer NOT NULL,
+--	name varchar(250) NULL,
+--	progress_pattern varchar(500) NULL,
+--	error_pattern varchar(500) NULL,
+--	source_id integer NOT NULL,
+--	is_handling_output_name boolean NULL
+--);
 
-ALTER TABLE tao.processing_operation ADD CONSTRAINT PK_processing_operation
-	PRIMARY KEY (id);
+--ALTER TABLE tao.processing_operation ADD CONSTRAINT PK_processing_operation
+--	PRIMARY KEY (id);
 
-ALTER TABLE tao.processing_operation ADD CONSTRAINT FK_processing_operation_operation_source
-	FOREIGN KEY (source_id) REFERENCES tao.operation_source (id) ON DELETE No Action ON UPDATE No Action;
+--ALTER TABLE tao.processing_operation ADD CONSTRAINT FK_processing_operation_operation_source
+--	FOREIGN KEY (source_id) REFERENCES tao.operation_source (id) ON DELETE No Action ON UPDATE No Action;
 
 
--------------------------------------------------------------------------------
--- table: operation_parameters
-DROP TABLE IF EXISTS tao.operation_parameters CASCADE;
-
-CREATE TABLE tao.operation_parameters
-(
-	operation_id integer NOT NULL,
-	parameter_id bigint NULL
-);
-
-ALTER TABLE tao.operation_parameters ADD CONSTRAINT PK_operation_parameters
-	PRIMARY KEY (operation_id, parameter_id);
-	
-ALTER TABLE tao.operation_parameters ADD CONSTRAINT FK_operation_parameters_parameter
-	FOREIGN KEY (parameter_id) REFERENCES tao.parameter (id) ON DELETE No Action ON UPDATE No Action;
-
-ALTER TABLE tao.operation_parameters ADD CONSTRAINT FK_operation_parameters_processing_operation
-	FOREIGN KEY (operation_id) REFERENCES tao.processing_operation (id) ON DELETE No Action ON UPDATE No Action;
-
-	
--------------------------------------------------------------------------------
--- table: operation_variables
-DROP TABLE IF EXISTS tao.operation_variables CASCADE;
-
-CREATE TABLE tao.operation_variables
-(
-	operation_id integer NOT NULL,
-	variable_name varchar(50) NOT NULL,
-	variable_value varchar(500) NOT NULL
-);
-
-ALTER TABLE tao.operation_variables ADD CONSTRAINT PK_operation_variables
-	PRIMARY KEY (operation_id, variable_name);
-	
-ALTER TABLE tao.operation_variables ADD CONSTRAINT FK_operation_variables_processing_operation
-	FOREIGN KEY (operation_id) REFERENCES tao.processing_operation (id) ON DELETE No Action ON UPDATE No Action;
-	
-	
 -------------------------------------------------------------------------------
 -- table: component_visibility
 DROP TABLE IF EXISTS tao.component_visibility CASCADE;
@@ -206,7 +168,46 @@ ALTER TABLE tao.processing_component ADD CONSTRAINT FK_processing_component_temp
 
 ALTER TABLE tao.processing_component ADD CONSTRAINT FK_processing_component_user
 	FOREIGN KEY (owner_user_id) REFERENCES tao.user (id) ON DELETE No Action ON UPDATE No Action;
-	
+
 ALTER TABLE tao.processing_component ADD CONSTRAINT FK_processing_component_component_visibility
 	FOREIGN KEY (visibility_id) REFERENCES tao.component_visibility (id) ON DELETE No Action ON UPDATE No Action;
+
+
+-------------------------------------------------------------------------------
+-- table: component_parameters
+DROP TABLE IF EXISTS tao.component_parameters CASCADE;
+
+CREATE TABLE tao.component_parameters
+(
+	processing_component_id varchar(512) NOT NULL,
+	parameter_id bigint NULL
+);
+
+ALTER TABLE tao.component_parameters ADD CONSTRAINT PK_component_parameters
+	PRIMARY KEY (processing_component_id, parameter_id);
+	
+ALTER TABLE tao.component_parameters ADD CONSTRAINT FK_component_parameters_parameter
+	FOREIGN KEY (parameter_id) REFERENCES tao.parameter (id) ON DELETE No Action ON UPDATE No Action;
+
+ALTER TABLE tao.component_parameters ADD CONSTRAINT FK_component_parameters_processing_component
+	FOREIGN KEY (processing_component_id) REFERENCES tao.processing_component (id) ON DELETE No Action ON UPDATE No Action;
+
+	
+-------------------------------------------------------------------------------
+-- table: component_variables
+DROP TABLE IF EXISTS tao.component_variables CASCADE;
+
+CREATE TABLE tao.component_variables
+(
+	processing_component_id varchar(512) NOT NULL,
+	id varchar(512) NOT NULL,
+	value varchar(512) NOT NULL
+);
+
+ALTER TABLE tao.component_variables ADD CONSTRAINT PK_component_variables
+	PRIMARY KEY (processing_component_id, variable_name);
+	
+ALTER TABLE tao.component_variables ADD CONSTRAINT FK_component_variables_processing_component
+	FOREIGN KEY (processing_component_id) REFERENCES tao.processing_component (id) ON DELETE No Action ON UPDATE No Action;
+	
 
