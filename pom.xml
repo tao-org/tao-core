@@ -41,6 +41,7 @@
         <taoReleasesUrl>http://cayman.c-s.ro:8081/nexus/repository/tao-releases/</taoReleasesUrl>
         <osgeoUrl>http://cayman.c-s.ro:8081/nexus/repository/osgeo/</osgeoUrl>
         <hibernatespatialUrl>http://cayman:8081/nexus/repository/hibernatespatial/</hibernatespatialUrl>
+        <springio-milestoneUrl>http://cayman:8081/nexus/repository/springio-milestone/</springio-milestoneUrl>
 
         <!-- SonarQube -->
         <sonar.host.url>http://cayman.c-s.ro:9000/sonar</sonar.host.url>
@@ -68,6 +69,10 @@
             <id>hibernatespatial</id>
             <name>Hibernate Spatial</name>
             <url>${hibernatespatialUrl}</url>
+        </repository>
+        <repository>
+            <id>springio-milestone</id>
+            <url>${springio-milestoneUrl}</url>
         </repository>
     </repositories>
 
