@@ -1,3 +1,11 @@
+-- Processing components source
+
+INSERT INTO tao.component_source (source) VALUES ('USER');
+
+INSERT INTO tao.component_source (source) VALUES ('SYSTEM');
+
+
+
 -- Processing components visibility
 
 INSERT INTO tao.component_visibility (visibility) VALUES ('SYSTEM');
@@ -61,14 +69,6 @@ INSERT INTO tao.job_status (status) VALUES ('CANCELLED');
 INSERT INTO tao.job_status (status) VALUES ('ERROR');
 INSERT INTO tao.job_status (status) VALUES ('PLANNED');
 INSERT INTO tao.job_status (status) VALUES ('SUSPENDED');
-
-
-
--- Operation source
-
-INSERT INTO tao.operation_source (source) VALUES ('USER');
-
-INSERT INTO tao.operation_source (source) VALUES ('SYSTEM');
 
 
 

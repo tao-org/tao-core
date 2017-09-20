@@ -24,30 +24,17 @@ ALTER TABLE tao.parameter ALTER COLUMN id SET DEFAULT nextval('tao.parameter_id_
 ALTER SEQUENCE tao.parameter_id_seq OWNED BY tao.parameter.id;
 
 
------ table: tao.operation_source -----------------------------------------------------------------
-DROP SEQUENCE IF EXISTS tao.operation_source_id_seq CASCADE;
+----- table: tao.component_source -----------------------------------------------------------------
+DROP SEQUENCE IF EXISTS tao.component_source_id_seq CASCADE;
 -- create sequence
-CREATE SEQUENCE tao.operation_source_id_seq 
+CREATE SEQUENCE tao.component_source_id_seq
 	INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
 
 -- assign sequence to column
-ALTER TABLE tao.operation_source ALTER COLUMN id SET DEFAULT nextval('tao.operation_source_id_seq');
+ALTER TABLE tao.component_source ALTER COLUMN id SET DEFAULT nextval('tao.component_source_id_seq');
 
 -- assign column to sequence
-ALTER SEQUENCE tao.operation_source_id_seq OWNED BY tao.operation_source.id;
-
-
------ table: tao.processing_operation -------------------------------------------------------------
-DROP SEQUENCE IF EXISTS tao.processing_operation_id_seq CASCADE;
--- create sequence
-CREATE SEQUENCE tao.processing_operation_id_seq 
-	INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
-
--- assign sequence to column
-ALTER TABLE tao.processing_operation ALTER COLUMN id SET DEFAULT nextval('tao.processing_operation_id_seq');
-
--- assign column to sequence
-ALTER SEQUENCE tao.processing_operation_id_seq OWNED BY tao.processing_operation.id;
+ALTER SEQUENCE tao.component_source_id_seq OWNED BY tao.component_source.id;
 
 
 ----- table: tao.component_visibility -------------------------------------------------------------
