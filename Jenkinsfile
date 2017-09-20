@@ -37,8 +37,8 @@ node{
             stage('Deploy') {
                 configFileProvider([configFile(fileId: mycfg_file, variable: 'GLOBAL_MAVEN_SETTINGS')]) {
                     echo "'settings.xml' path: $GLOBAL_MAVEN_SETTINGS"
-                    echo "run task --> mvn -s $GLOBAL_MAVEN_SETTINGS deploy:deploy"
-                    sh '''mvn -s $GLOBAL_MAVEN_SETTINGS deploy:deploy'''
+                    echo "run task --> mvn -s $GLOBAL_MAVEN_SETTINGS jar:jar deploy:deploy"
+                    sh '''mvn -s $GLOBAL_MAVEN_SETTINGS jar:jar deploy:deploy'''
                 }
             }
         } catch (err) {
