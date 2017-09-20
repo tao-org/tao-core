@@ -66,7 +66,7 @@
         </dependency>
         <dependency>
             <groupId>ro.cs.tao</groupId>
-            <artifactId>tao-executors</artifactId>
+            <artifactId>tao-execution</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>
