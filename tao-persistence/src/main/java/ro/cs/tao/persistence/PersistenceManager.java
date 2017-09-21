@@ -434,15 +434,14 @@ public class PersistenceManager {
             throw new PersistenceException("Invalid parameters were provided for updating the execution node " + (node != null && node.getHostName() != null ? "(host name " + node.getHostName() + ")" : "") + "!");
         }
 
-        NodeDescription updatedNode = nodeRepository.save(node);
+        // check if there is such node (to update) with the given host name
+        final NodeDescription existingNode = nodeRepository.findByHostName(node.getHostName());
+        if (existingNode == null)
+        {
+            throw new PersistenceException("There is no node with the given host name: " + node.getHostName());
+        }
 
-//        // TODO check creation date and modified date
-//        if(updatedNode.getIpAddr() == null)
-//        {
-//            throw new PersistenceException("Error updating execution node with host name: " + node.getHostName());
-//        }
-
-        return updatedNode;
+        return nodeRepository.save(node);
     }
 
 
