@@ -1,6 +1,6 @@
 package ro.cs.tao.execution;
 
-import ro.cs.tao.component.TaoComponent;
+import ro.cs.tao.component.execution.ExecutionTask;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
 
@@ -12,27 +12,33 @@ import java.util.Set;
  */
 public class ExecutionsManager {
 
-    private ServiceRegistry registry;
+    private static ExecutionsManager instance = new ExecutionsManager();
+    private ServiceRegistry<IExecutor> registry;
     private Set<IExecutor> services;
     private ExecutionsManager() {
         this.registry = ServiceRegistryManager.getInstance().getServiceRegistry(IExecutor.class);
         services = this.registry.getServices();
+        services.stream().forEach(x -> x.initialize());
     }
 
-    public void executeComponent(TaoComponent component) {
-        IExecutor executor = getExecutor(component);
-        executor.executeComponent(component);
+    public static ExecutionsManager getInstance() {
+        return instance;
     }
 
-    public void stopExecution(TaoComponent component) {
-        IExecutor executor = getExecutor(component);
-        executor.stopExecution(component);
+    public void execute(ExecutionTask task) {
+        IExecutor executor = getExecutor(task);
+        executor.execute(task);
     }
 
-    private IExecutor getExecutor(TaoComponent component) {
+    public void stop(ExecutionTask task) {
+        IExecutor executor = getExecutor(task);
+        executor.stop(task);
+    }
+
+    private IExecutor getExecutor(ExecutionTask task) {
 
         Optional<IExecutor> optional = services.stream()
-                .filter(x -> x.supports(component))
+                .filter(x -> x.supports(task.getProcessingComponent()))
                 .findFirst();
         if(optional.isPresent()) {
             return optional.get();
