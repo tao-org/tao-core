@@ -20,7 +20,6 @@ public class TopologyManager implements ITopologyManager {
     private static final TopologyManager instance;
 
     protected Logger logger = Logger.getLogger(TopologyManager.class.getName());
-    private ServiceRegistry<ITopologyToolInstaller> installersRegistry;
     private NodeDescription masterNodeInfo;
     private Set<ITopologyToolInstaller> installers;
     private PersistenceManager persistenceManager = SpringContextBridge.services().getPersistenceManager();
@@ -35,9 +34,9 @@ public class TopologyManager implements ITopologyManager {
 
         // load all services for tool installers and initialize the master node info
         ServiceRegistryManager serviceRegistryManager = ServiceRegistryManager.getInstance();
-        installersRegistry = serviceRegistryManager.getServiceRegistry(ITopologyToolInstaller.class);
+        ServiceRegistry<ITopologyToolInstaller> installersRegistry = serviceRegistryManager.getServiceRegistry(ITopologyToolInstaller.class);
         ServiceLoader.loadServices(installersRegistry);
-        this.installers = getInstallerServices();
+        this.installers = installersRegistry.getServices();
 
         // Set the autodetermined master node info
         setMasterNodeInfo(masterNodeInfo);
@@ -117,22 +116,6 @@ public class TopologyManager implements ITopologyManager {
         for (ITopologyToolInstaller installer: this.installers) {
             installer.setMasterNodeDescription(masterNodeInfo);
         }
-    }
-
-    private Set<ITopologyToolInstaller> getInstallerServices() {
-        Set<ITopologyToolInstaller> installers = installersRegistry.getServices();
-        boolean hasDefaultInstaller = false;
-        for(ITopologyToolInstaller installer: installers) {
-            if (installer.getClass().isAssignableFrom(DefaultToolInstaller.class)) {
-                hasDefaultInstaller = true;
-                break;
-            }
-        }
-        if(!hasDefaultInstaller) {
-            installers.add(new DefaultToolInstaller());
-        }
-
-        return installers;
     }
 
     private void initMasterNodeDescription() throws TopologyException {
