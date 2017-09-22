@@ -50,6 +50,7 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -207,4 +208,15 @@ public class ProcessingComponent extends TaoComponent {
         }
         return newDescriptor;
     }
+
+    public String buildExecutionCommand() throws TemplateException {
+        Map<String, Object> params = new HashMap<String, Object>();
+        for (ParameterDescriptor descriptor: parameters) {
+            params.put(descriptor.getId(), descriptor.getValueSet().toString());
+        }
+        TemplateEngine templateEngine = getTemplateEngine();
+        String cmdLine = templateEngine.transform(this.template, params);
+        return cmdLine == null || "null".equals(cmdLine) ? "" : cmdLine;
+    }
+
 }

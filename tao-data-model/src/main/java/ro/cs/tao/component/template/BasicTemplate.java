@@ -98,7 +98,7 @@ public class BasicTemplate extends Template {
 
     @Override
     public TemplateType getTemplateType() {
-        return this.templateType;
+        return templateType != null ? templateType : TemplateType.VELOCITY;
     }
 
     @Override
