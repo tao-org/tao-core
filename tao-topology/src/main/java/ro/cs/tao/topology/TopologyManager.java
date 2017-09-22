@@ -89,8 +89,7 @@ public class TopologyManager implements ITopologyManager {
             installer.uninstallNode(node);
         }
         try {
-            // TODO: Update when we have remove execution node
-            persistenceManager.saveExecutionNode(node);
+            persistenceManager.deleteExecutionNode(node.getHostName());
         } catch (PersistenceException e) {
             logger.severe("Cannot remove node description from database. Host name is :" + node.getHostName());
             throw new TopologyException(e);
