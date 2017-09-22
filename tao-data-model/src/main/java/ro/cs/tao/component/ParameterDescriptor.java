@@ -47,6 +47,7 @@ import ro.cs.tao.component.validation.ValidatorRegistry;
 import ro.cs.tao.component.validation.ValueSetValidator;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -55,7 +56,7 @@ import java.util.List;
  * @author Cosmin Cara
  */
 @XmlRootElement(name = "parameter")
-public class ParameterDescriptor extends Identifiable {
+public class ParameterDescriptor extends Identifiable implements Serializable {
     private ParameterType type;
     private Class<?> dataType;
     private String defaultValue;

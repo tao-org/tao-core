@@ -199,15 +199,15 @@ DROP TABLE IF EXISTS tao.component_variables CASCADE;
 
 CREATE TABLE tao.component_variables
 (
-	processing_component_id varchar(512) NOT NULL,
 	id varchar(512) NOT NULL,
+	key varchar(512) NOT NULL,
 	value varchar(512) NOT NULL
 );
 
 ALTER TABLE tao.component_variables ADD CONSTRAINT PK_component_variables
-	PRIMARY KEY (processing_component_id, variable_name);
+	PRIMARY KEY (id, key);
 	
 ALTER TABLE tao.component_variables ADD CONSTRAINT FK_component_variables_processing_component
-	FOREIGN KEY (processing_component_id) REFERENCES tao.processing_component (id) ON DELETE No Action ON UPDATE No Action;
+	FOREIGN KEY (id) REFERENCES tao.processing_component (id) ON DELETE No Action ON UPDATE No Action;
 	
 

@@ -13,6 +13,8 @@
         </persistence-unit-defaults>
     </persistence-unit-metadata>
 
+    <!-- Mapped superclasses are only seen for entities (not for embeddables too) -->
+
     <mapped-superclass class="ro.cs.tao.eodata.EOData" access="PROPERTY">
         <attributes>
             <id name="id">
@@ -85,6 +87,18 @@
         
     </mapped-superclass>
 
+    <mapped-superclass class="ro.cs.tao.component.Identifiable" access="PROPERTY">
+        <attributes>
+            <id name="id">
+                <!-- ! IMPORTANT NOTICE:
+                Because Identifiable class is extended by several other classes,
+                but the mapping to a column name can be only done once (here!),
+                all correspondant columns must have the same name (and definition) defined here  -->
+                <column name="id" nullable="false" column-definition="varchar(512) NOT NULL"/>
+            </id>
+        </attributes>
+    </mapped-superclass>
+
     <mapped-superclass class="ro.cs.tao.component.TaoComponent" access="PROPERTY">
         <attributes>
             <basic name="label">
@@ -107,18 +121,6 @@
             </basic>
             <transient name="sources"/>
             <transient name="targets"/>
-        </attributes>
-    </mapped-superclass>
-
-    <mapped-superclass class="ro.cs.tao.component.Identifiable" access="PROPERTY">
-        <attributes>
-            <id name="id">
-                <!-- ! IMPORTANT NOTICE:
-                Because Identifiable class is extended by several other classes,
-                but the mapping to a column name can be only done once (here!),
-                all correspondant columns must have the same name (and definition) defined here  -->
-                <column name="id" nullable="false" column-definition="varchar(512) NOT NULL"/>
-            </id>
         </attributes>
     </mapped-superclass>
 
@@ -230,8 +232,12 @@
                 <column name="multi_thread" nullable="false" column-definition="boolean NOT NULL DEFAULT false"/>
             </basic>
 
-            <!--<embedded name="Variables" />-->
-            <transient name="variables" />
+            <element-collection name="variables" target-class="ro.cs.tao.component.Variable" access="FIELD">
+                <collection-table name="tao.component_variables" >
+                    <join-column name="id" referenced-column-name="id" />
+                </collection-table>
+            </element-collection>
+
             <transient name="parameterDescriptors" />
             <transient name="template" />
             <transient name="templateEngine" />
@@ -251,6 +257,9 @@
 
     <embeddable class="ro.cs.tao.component.Variable" access="PROPERTY">
         <attributes>
+            <basic name="key">
+                <column name="key" nullable="false" column-definition="varchar(512) NOT NULL"/>
+            </basic>
             <basic name="value">
                 <column name="value" nullable="false" column-definition="character varying(512) NOT NULL"/>
             </basic>
