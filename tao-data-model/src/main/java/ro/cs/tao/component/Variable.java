@@ -38,13 +38,15 @@
 package ro.cs.tao.component;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import java.io.Serializable;
 
 /**
  * @author Cosmin Cara
  */
 @XmlRootElement(name = "variable")
-public class Variable extends Identifiable {
+public class Variable implements Serializable{
 
+    private String key;
     private String value;
 
     public Variable() {
@@ -52,8 +54,16 @@ public class Variable extends Identifiable {
     }
 
     public Variable(String key, String value) {
-        this.id = key;
+        this.key = key;
         this.value = value;
+    }
+
+    public String getKey() {
+        return key;
+    }
+
+    public void setKey(String key) {
+        this.key = key;
     }
 
     /**
@@ -66,7 +76,6 @@ public class Variable extends Identifiable {
      */
     public void setValue(String value) { this.value = value; }
 
-    @Override
     public String defaultName() {
         return "NewVariable";
     }
@@ -74,7 +83,7 @@ public class Variable extends Identifiable {
     @SuppressWarnings("MethodDoesntCallSuperMethod")
     @Override
     protected Variable clone() throws CloneNotSupportedException {
-        return new Variable(this.id, this.value);
+        return new Variable(this.key, this.value);
     }
 
 }

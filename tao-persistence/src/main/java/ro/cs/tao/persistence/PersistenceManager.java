@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.component.ProcessingComponent;
+import ro.cs.tao.component.enums.ProcessingComponentVisibility;
 import ro.cs.tao.datasource.AbstractDataSource;
 import ro.cs.tao.datasource.DataQuery;
 import ro.cs.tao.eodata.Attribute;
@@ -42,6 +43,9 @@ public class PersistenceManager {
 
     /** Constant for the identifier member name of execution node entity */
     private static final String NODE_IDENTIFIER_PROPERTY_NAME = "hostName";
+
+    /** Constant for the identifier member name of processing component entity */
+    private static final String COMPONENT_IDENTIFIER_PROPERTY_NAME = "id";
 
     /** CRUD Repository for EOProduct entities */
     @Autowired
@@ -561,14 +565,103 @@ public class PersistenceManager {
         }
 
         // check if there is already another component with the same identifier
-        final ProcessingComponent componentWithSameid = processingComponentRepository.findById(component.getId());
-        if (componentWithSameid != null)
+        final ProcessingComponent componentWithSameId = processingComponentRepository.findById(component.getId());
+        if (componentWithSameId != null)
         {
             throw new PersistenceException("There is already another component with the identifier: " + component.getId());
         }
 
         // save the new ProcessingComponent entity and return it
         return processingComponentRepository.save(component);
+    }
+
+    @Transactional
+    public ProcessingComponent updateProcessingComponent(ProcessingComponent component) throws PersistenceException
+    {
+        // check method parameters
+        if(!checkProcessingComponent(component))
+        {
+            throw new PersistenceException("Invalid parameters were provided for updating the processing component " + (component != null && component.getId() != null ? "(identifier " + component.getId() + ")" : "") + "!");
+        }
+
+        // check if there is such component (to update) with the given identifier
+        final ProcessingComponent existingComponent = processingComponentRepository.findById(component.getId());
+        if (existingComponent == null)
+        {
+            throw new PersistenceException("There is no processing component with the given identifier: " + component.getId());
+        }
+
+        return processingComponentRepository.save(component);
+    }
+
+
+    /**
+     * Retrieve processing components with SYSTEM and CONTRIBUTOR visibility
+     * @return
+     */
+    @Transactional(readOnly = true)
+    public List<ProcessingComponent> getProcessingComponents()
+    {
+        final List<ProcessingComponent> components = new ArrayList<>();
+        // retrieve components and filter them
+        components.addAll(((List<ProcessingComponent>) processingComponentRepository.findAll(new Sort(Sort.Direction.ASC, COMPONENT_IDENTIFIER_PROPERTY_NAME))).stream()
+          .filter(c -> (c.getVisibility().equals(ProcessingComponentVisibility.SYSTEM) || c.getVisibility().equals(ProcessingComponentVisibility.CONTRIBUTOR)))
+            .collect(Collectors.toList()));
+        return components;
+    }
+
+    /**
+     * TODO (User entity from data model)
+     * Retrieve processing components with USER visibility, for a given user
+     * @return
+     */
+    @Transactional(readOnly = true)
+    public List<ProcessingComponent> getUserProcessingComponents(User user)
+    {
+        final List<ProcessingComponent> components = new ArrayList<>();
+        // retrieve components and filter them
+        components.addAll(((List<ProcessingComponent>) processingComponentRepository.findAll(new Sort(Sort.Direction.ASC, COMPONENT_IDENTIFIER_PROPERTY_NAME))).stream()
+          // TODO c.getUser() = user  =>  add user property on component
+          .filter(c -> c.getVisibility().equals(ProcessingComponentVisibility.USER))
+          .collect(Collectors.toList()));
+        return components;
+    }
+
+    @Transactional(readOnly = true)
+    public boolean checkIfExistsComponentById(final String id)
+    {
+        boolean result = false;
+
+        if (id != null && !id.isEmpty())
+        {
+            // try to retrieve ProcessingComponent after its identifier
+            final ProcessingComponent componentEnt = processingComponentRepository.findById(id);
+            if (componentEnt != null)
+            {
+                result = true;
+            }
+        }
+
+        return result;
+    }
+
+    @Transactional(readOnly = true)
+    public ProcessingComponent getProcessingComponentById(final String id) throws PersistenceException
+    {
+        // check method parameters
+        if (id == null || id.isEmpty())
+        {
+            throw new PersistenceException("Invalid parameters were provided for searching processing component by identifier ("+ String.valueOf(id) +") !");
+        }
+
+        // retrieve ProcessingComponent after its identifier
+        final ProcessingComponent componentEnt = processingComponentRepository.findById(id);
+        if (componentEnt == null)
+        {
+            throw new PersistenceException("There is no processing component with the specified identifier: " + id);
+        }
+
+        return componentEnt;
     }
 
 }
