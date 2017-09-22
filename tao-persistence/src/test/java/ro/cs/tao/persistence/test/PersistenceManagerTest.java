@@ -202,6 +202,8 @@ public class PersistenceManagerTest {
             node.setMemorySizeGB(10);
             node.setDiskSpaceSizeGB(1000);
 
+            node.setDescription("Node just for test");
+
             node = persistenceManager.saveExecutionNode(node);
             // check persisted node
             Assert.assertTrue(node != null && node.getHostName() != null);
@@ -295,7 +297,29 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_06_save_new_processing_component()
+    public void TC_06_delete_execution_node()
+    {
+        try
+        {
+            final List<NodeDescription> nodes  = persistenceManager.getNodes();
+            if(nodes.size() > 0)
+            {
+                final NodeDescription firstNode = nodes.get(0);
+                final String hostName = firstNode.getHostName();
+                final NodeDescription deletedNode = persistenceManager.deleteExecutionNode(hostName);
+
+                Assert.assertTrue(deletedNode != null && deletedNode.getActive() == false);
+            }
+        }
+        catch (PersistenceException e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void TC_07_save_new_processing_component()
     {
         try
         {
@@ -348,7 +372,7 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_07_retrieve_processing_components()
+    public void TC_08_retrieve_processing_components()
     {
         try
         {
@@ -370,7 +394,7 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_08_update_processing_component()
+    public void TC_09_update_processing_component()
     {
         try
         {
@@ -391,7 +415,7 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_09_check_processing_component_existence_by_id()
+    public void TC_10_check_processing_component_existence_by_id()
     {
         try
         {
@@ -412,7 +436,7 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_10_retrieve_processing_component_by_id()
+    public void TC_11_retrieve_processing_component_by_id()
     {
         try
         {
@@ -433,7 +457,7 @@ public class PersistenceManagerTest {
     }
 
     /**@Test
-    public void TC_10_save_new_data_product()
+    public void TC_12_save_new_data_product()
     {
 //        try
 //        {

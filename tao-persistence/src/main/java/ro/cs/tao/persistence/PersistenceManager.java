@@ -496,6 +496,29 @@ public class PersistenceManager {
         return nodeEnt;
     }
 
+    @Transactional(readOnly = true)
+    public NodeDescription deleteExecutionNode(final String hostName) throws PersistenceException
+    {
+        // check method parameters
+        if (hostName == null || hostName.isEmpty())
+        {
+            throw new PersistenceException("Invalid parameters were provided for deleting execution node (host name \""+ String.valueOf(hostName) +"\") !");
+        }
+
+        // retrieve NodeDescription after its host name
+        final NodeDescription nodeEnt = nodeRepository.findByHostName(hostName);
+        if (nodeEnt == null)
+        {
+            throw new PersistenceException("There is no execution node with the specified host name: " + hostName);
+        }
+
+        // deactivate the node
+        nodeEnt.setActive(false);
+
+        // save it
+        return nodeRepository.save(nodeEnt);
+    }
+
     private boolean checkProcessingComponent(ProcessingComponent component)
     {
         if(component == null)
@@ -593,7 +616,6 @@ public class PersistenceManager {
 
         return processingComponentRepository.save(component);
     }
-
 
     /**
      * Retrieve processing components with SYSTEM and CONTRIBUTOR visibility
