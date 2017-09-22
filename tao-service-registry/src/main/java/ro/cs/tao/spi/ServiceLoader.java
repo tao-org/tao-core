@@ -17,6 +17,7 @@ package ro.cs.tao.spi;
 
 import java.util.Iterator;
 import java.util.ServiceConfigurationError;
+import java.util.logging.Logger;
 
 /**
  * <p><i><b>IMPORTANT NOTE:</b>
@@ -36,8 +37,7 @@ public class ServiceLoader {
             try {
                 registry.addService(iterator.next());
             } catch (ServiceConfigurationError e) {
-                //SystemUtils.LOG.log(Level.WARNING, e.getMessage(), e.getCause());
-            	//TODO: Log this 
+                Logger.getLogger(ServiceLoader.class.getName()).severe(e.getMessage());
             }
         }
     }
