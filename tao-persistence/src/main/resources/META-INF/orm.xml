@@ -94,7 +94,7 @@
                 Because Identifiable class is extended by several other classes,
                 but the mapping to a column name can be only done once (here!),
                 all correspondant columns must have the same name (and definition) defined here  -->
-                <column name="id" nullable="false" column-definition="varchar(512) NOT NULL"/>
+                <column name="id" nullable="false" column-definition="varchar(512) NOT NULL" unique="true"/>
             </id>
         </attributes>
     </mapped-superclass>
@@ -198,6 +198,13 @@
             </basic>
             <basic name="diskSpaceSizeGB">
                 <column name="total_hdd" nullable="false" column-definition="integer not null"/>
+            </basic>
+
+            <basic name="description">
+                <column name="description" nullable="true" column-definition="text null"/>
+            </basic>
+            <basic name="active">
+                <column name="active" nullable="true" column-definition="boolean NOT NULL DEFAULT true"/>
             </basic>
         </attributes>
     </entity>

@@ -15,7 +15,10 @@ public class NodeDescription {
     private int memorySizeGB;
     private int diskSpaceSizeGB;
 
-    public NodeDescription() { }
+    private String description;
+    private Boolean active;
+
+    public NodeDescription() { this.active = true;}
 
     public void setHostName(String hostName) {
         this.hostName = hostName;
@@ -62,4 +65,20 @@ public class NodeDescription {
     public int getDiskSpaceSizeGB() { return diskSpaceSizeGB; }
 
     public void setDiskSpaceSizeGB(int diskSpaceSizeGB) { this.diskSpaceSizeGB = diskSpaceSizeGB; }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public Boolean getActive() {
+        return active;
+    }
+
+    public void setActive(Boolean active) {
+        this.active = active;
+    }
 }
