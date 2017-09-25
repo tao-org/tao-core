@@ -1,6 +1,7 @@
 package ro.cs.tao.topology;
 
 import org.apache.commons.io.IOUtils;
+import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.topology.xml.ToolInstallersConfigHandler;
 import ro.cs.tao.topology.xml.ToolInstallersConfigParser;
 import ro.cs.tao.utils.Platform;
@@ -39,7 +40,8 @@ public class DefaultToolInstaller implements ITopologyToolInstaller {
         // extract the tools script dir to tao working dir
         extractResourceDir(taoWorkingDir, "tools_scripts");
 
-        InputStream is = this.getClass().getResourceAsStream("/DefaultToolInstallConfig.xml");
+        final String toolInstallCfgFile = ConfigurationManager.getInstance().getValue("topology.tool_install_config");
+        InputStream is = this.getClass().getResourceAsStream(toolInstallCfgFile);
         this.toolInstallConfigs = ToolInstallersConfigParser.parse(is,
                 new ToolInstallersConfigHandler("tool_install_configurations"));
         this.installToolsRootPath = taoWorkingDir + "/tools_scripts/";

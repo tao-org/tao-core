@@ -1,0 +1,39 @@
+<?xml version='1.0' encoding='utf-8'?>
+<tool_install_configurations>
+    <!-- Possible tokens to be replaced in code:
+            #master_hostname#
+            #node_hostname#
+            #node_user#
+            #node_pass#
+            #mem_size#
+            #procs_cnt#
+            #scripts_root_path#
+            #step_output#
+    -->
+    <tool_install_config>
+        <name>Torque installer</name>
+        <priority>1</priority>
+        <install_steps>
+            <!-- No steps for tests -->
+        </install_steps>
+
+        <uninstall_steps>
+            <!-- No steps for tests -->
+        </uninstall_steps>
+
+    </tool_install_config>
+
+    <tool_install_config>
+        <name>Docker installer</name>
+        <priority>1</priority>
+        <install_steps>
+            <!-- No steps for tests -->
+        </install_steps>
+        <uninstall_steps>
+            <!-- No steps for tests -->
+        </uninstall_steps>
+
+    </tool_install_config>
+
+</tool_install_configurations>
+
