@@ -393,15 +393,15 @@ public class PersistenceManager {
         {
             return false;
         }
-        if(node.getProcessorCount() <= 0)
+        if(node.getProcessorCount() < 0)
         {
             return false;
         }
-        if(node.getDiskSpaceSizeGB() <= 0)
+        if(node.getDiskSpaceSizeGB() < 0)
         {
             return false;
         }
-        if(node.getMemorySizeGB() <= 0)
+        if(node.getMemorySizeGB() < 0)
         {
             return false;
         }
