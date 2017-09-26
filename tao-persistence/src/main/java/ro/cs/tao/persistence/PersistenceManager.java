@@ -496,7 +496,7 @@ public class PersistenceManager {
         return nodeEnt;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public NodeDescription deleteExecutionNode(final String hostName) throws PersistenceException
     {
         // check method parameters
