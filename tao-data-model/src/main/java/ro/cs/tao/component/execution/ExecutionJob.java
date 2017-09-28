@@ -8,7 +8,8 @@ import java.util.List;
  * Created by cosmin on 9/21/2017.
  */
 public class ExecutionJob {
-    private String id;
+    private Long id;
+    private String resourceId;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private ExecutionStatus executionStatus;
@@ -17,12 +18,20 @@ public class ExecutionJob {
     public ExecutionJob() {
     }
 
-    public void setId(String id) {
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
         this.id = id;
     }
 
-    public String getId() {
-        return id;
+    public void setResourceId(String resourceId) {
+        this.resourceId = resourceId;
+    }
+
+    public String getResourceId() {
+        return resourceId;
     }
 
     public void setStartTime(LocalDateTime startTime) {

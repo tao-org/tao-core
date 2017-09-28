@@ -251,6 +251,67 @@
         </attributes>
     </entity>
 
+    <entity class="ro.cs.tao.component.execution.ExecutionTask" access="PROPERTY">
+        <table name="tao.task"/>
+        <convert converter="ro.cs.tao.persistence.convert.ExecutionStatusConverter" attribute-name="executionStatus" />
+        <attributes>
+            <id name="id">
+                <column name="id" nullable="false" column-definition="bigserial NOT NULL"/>
+                <generated-value strategy="SEQUENCE" generator="task_identifier"/>
+                <sequence-generator name="task_identifier" sequence-name="tao.task_id_seq" allocation-size="1" />
+            </id>
+            <basic name="resourceId">
+                <column name="resource_id" nullable="false" column-definition="character varying(512) NOT NULL"/>
+            </basic>
+            <basic name="executionStatus">
+                <column name="execution_status_id" nullable="false" column-definition="integer not null"/>
+            </basic>
+            <basic name="executionNodeHostName">
+                <column name="execution_node_host_name" nullable="false" column-definition="character varying(250) NOT NULL"/>
+            </basic>
+            <basic name="startTime">
+                <column name="start_time" nullable="true" column-definition="timestamp NULL"/>
+            </basic>
+            <basic name="endTime">
+                <column name="end_time" nullable="true" column-definition="timestamp NULL"/>
+            </basic>
+
+            <many-to-one name="processingComponent" fetch="LAZY">
+                <join-column name="processing_component_id" nullable="false"/>
+            </many-to-one>
+
+            <many-to-one name="job" fetch="LAZY">
+                <join-column name="job_id" nullable="false"/>
+            </many-to-one>
+        </attributes>
+    </entity>
+
+    <entity class="ro.cs.tao.component.execution.ExecutionJob" access="PROPERTY">
+        <table name="tao.job"/>
+        <convert converter="ro.cs.tao.persistence.convert.ExecutionStatusConverter" attribute-name="executionStatus" />
+        <attributes>
+            <id name="id">
+                <column name="id" nullable="false" column-definition="bigserial NOT NULL"/>
+                <generated-value strategy="SEQUENCE" generator="job_identifier"/>
+                <sequence-generator name="job_identifier" sequence-name="tao.job_id_seq" allocation-size="1" />
+            </id>
+            <basic name="resourceId">
+                <column name="resource_id" nullable="false" column-definition="character varying(512) NOT NULL"/>
+            </basic>
+            <basic name="executionStatus">
+                <column name="execution_status_id" nullable="false" column-definition="integer not null"/>
+            </basic>
+            <basic name="startTime">
+                <column name="start_time" nullable="true" column-definition="timestamp NULL"/>
+            </basic>
+            <basic name="endTime">
+                <column name="end_time" nullable="true" column-definition="timestamp NULL"/>
+            </basic>
+
+            <one-to-many name="tasks" fetch="EAGER" mapped-by="job" />
+        </attributes>
+    </entity>
+
     <embeddable class="ro.cs.tao.eodata.Attribute" access="PROPERTY">
         <attributes>
             <basic name="name">

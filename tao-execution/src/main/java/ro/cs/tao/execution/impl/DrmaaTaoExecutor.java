@@ -92,7 +92,7 @@ public class DrmaaTaoExecutor implements IExecutor {
             jt.setRemoteCommand (cmd);
             jt.setArgs (argsList);
             String id = session.runJob (jt);
-            task.setId(id);
+            task.setResourceId(id);
             // TODO: add function to PersistenceManager
             //persistenceManager.saveExecutionTask(task);
             session.deleteJobTemplate (jt);
@@ -104,27 +104,27 @@ public class DrmaaTaoExecutor implements IExecutor {
     @Override
     public void stop(ExecutionTask task)  throws ExecutionException {
         try {
-            session.control (task.getId(), Session.TERMINATE);
+            session.control (task.getResourceId(), Session.TERMINATE);
         } catch (DrmaaException e) {
-            throw new ExecutionException("Error executing DRMAA session terminate for task with id " + task.getId(), e);
+            throw new ExecutionException("Error executing DRMAA session terminate for task with id " + task.getResourceId(), e);
         }
     }
 
     @Override
     public void suspend(ExecutionTask task) throws ExecutionException {
         try {
-            session.control (task.getId(), Session.SUSPEND);
+            session.control (task.getResourceId(), Session.SUSPEND);
         } catch (DrmaaException e) {
-            throw new ExecutionException("Error executing DRMAA session suspend for task with id " + task.getId(), e);
+            throw new ExecutionException("Error executing DRMAA session suspend for task with id " + task.getResourceId(), e);
         }
     }
 
     @Override
     public void resume(ExecutionTask task) throws ExecutionException {
         try {
-            session.control (task.getId(), Session.RESUME);
+            session.control (task.getResourceId(), Session.RESUME);
         } catch (DrmaaException e) {
-            throw new ExecutionException("Error executing DRMAA session resume for task with id " + task.getId(), e);
+            throw new ExecutionException("Error executing DRMAA session resume for task with id " + task.getResourceId(), e);
         }
     }
 
@@ -136,7 +136,7 @@ public class DrmaaTaoExecutor implements IExecutor {
             //infos = persistence.getRunningTasks();
             // For each job, get its status from DRMAA
             for (ExecutionTask task: tasks) {
-                int jobStatus = session.getJobProgramStatus(task.getId());
+                int jobStatus = session.getJobProgramStatus(task.getResourceId());
                 switch (jobStatus) {
                     case Session.SYSTEM_ON_HOLD:
                     case Session.USER_ON_HOLD:

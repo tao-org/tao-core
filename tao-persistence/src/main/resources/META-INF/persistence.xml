@@ -16,6 +16,8 @@
         <class>ro.cs.tao.component.Variable</class>
         <class>ro.cs.tao.component.ProcessingComponent</class>
 
+        <class>ro.cs.tao.component.execution.ExecutionTask</class>
+
         <exclude-unlisted-classes>true</exclude-unlisted-classes>
 
     </persistence-unit>

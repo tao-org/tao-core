@@ -7,7 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.eodata.EOProduct;
 
 /**
- * CRUD repository for DataProduct entities
+ * CRUD repository for EOProduct entities
  *
  * @author oana
  *

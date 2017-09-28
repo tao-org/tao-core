@@ -37,7 +37,12 @@ public enum ExecutionStatus {
      * Job finished, but terminated abnormally.
      */
     @XmlEnumValue("5")
-    FAILED(5);
+    FAILED(5),
+    /**
+     * Job cancelled.
+     */
+    @XmlEnumValue("6")
+    CANCELLED(6);
 
     /**
      * Numerical value for enum constants

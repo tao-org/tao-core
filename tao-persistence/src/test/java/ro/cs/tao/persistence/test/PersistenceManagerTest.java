@@ -15,6 +15,9 @@ import org.springframework.test.context.junit4.SpringRunner;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.Variable;
 import ro.cs.tao.component.enums.ProcessingComponentVisibility;
+import ro.cs.tao.component.execution.ExecutionJob;
+import ro.cs.tao.component.execution.ExecutionStatus;
+import ro.cs.tao.component.execution.ExecutionTask;
 import ro.cs.tao.component.template.BasicTemplate;
 import ro.cs.tao.component.template.Template;
 import ro.cs.tao.component.template.TemplateException;
@@ -450,6 +453,94 @@ public class PersistenceManagerTest {
             }
         }
         catch (PersistenceException e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void TC_12_save_new_execution_job()
+    {
+        try
+        {
+            // add a new job for test
+            ExecutionJob job = new ExecutionJob();
+            job.setResourceId("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
+            job.setExecutionStatus(ExecutionStatus.UNDETERMINED);
+
+            job = persistenceManager.saveExecutionJob(job);
+            // check persisted job
+            Assert.assertTrue(job != null && job.getId() != null);
+        }
+        catch (PersistenceException e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void TC_13_save_new_execution_task()
+    {
+        try
+        {
+            // retrieve one existing job, for test
+            List<ExecutionJob> jobs = persistenceManager.getAllJobs();
+            // retrieve processing components
+            List<ProcessingComponent> components = persistenceManager.getProcessingComponents();
+            // retrieve execution nodes
+            List<NodeDescription> nodes = persistenceManager.getNodes();
+
+            if(jobs != null && jobs.size() > 0 &&
+              components != null && components.size() > 0 &&
+              nodes != null && nodes.size() > 0)
+            {
+                // retrieve first job
+                ExecutionJob job = jobs.get(0);
+                // retrieve first component
+                ProcessingComponent component = components.get(0);
+
+                NodeDescription node = nodes.get(0);
+
+                // add a new task for test
+                ExecutionTask task = new ExecutionTask();
+                task.setResourceId("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
+                task.setExecutionStatus(ExecutionStatus.RUNNING);
+                task.setExecutionNodeHostName(node.getHostName());
+                task.setProcessingComponent(component);
+
+                task = persistenceManager.saveExecutionTask(task, job);
+                // check persisted task
+                Assert.assertTrue(task != null && task.getId() != null);
+                // check if job correctly updated
+                Assert.assertTrue(job.getTasks().contains(task));
+            }
+        }
+        catch (PersistenceException e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void TC_14_get_running_execution_tasks()
+    {
+        try
+        {
+            // retrieve running tasks
+            List<ExecutionTask> tasks = persistenceManager.getRunningTasks();
+
+            Assert.assertTrue(tasks != null && tasks.size() > 0);
+
+            for(ExecutionTask task: tasks)
+            {
+                logger.info("Running task: " + task.getResourceId());
+            }
+
+        }
+        catch (Exception e)
         {
             logger.error(ExceptionUtils.getStackTrace(e));
             Assert.fail(e.getMessage());

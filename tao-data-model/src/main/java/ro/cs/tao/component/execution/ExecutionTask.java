@@ -8,12 +8,15 @@ import java.time.LocalDateTime;
  * Created by cosmin on 9/19/2017.
  */
 public class ExecutionTask {
+    private Long id;
     private ProcessingComponent processingComponent;
     private ExecutionStatus executionStatus = ExecutionStatus.UNDETERMINED;
-    private String id;
-    private String taskName;
+    private String resourceId;
+    private String executionNodeHostName;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
+
+    private ExecutionJob job;
 
     public ExecutionTask() {
     }
@@ -22,9 +25,12 @@ public class ExecutionTask {
         this.processingComponent = processingComponent;
     }
 
-    public ExecutionTask(ProcessingComponent processingComponent, String taskName) {
-        this.processingComponent = processingComponent;
-        this.taskName = taskName;
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public void setProcessingComponent(ProcessingComponent processingComponent) {
@@ -43,19 +49,43 @@ public class ExecutionTask {
         return executionStatus;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setResourceId(String resourceId) {
+        this.resourceId = resourceId;
     }
 
-    public String getId() {
-        return id;
+    public String getResourceId() {
+        return resourceId;
     }
 
-    public void setTaskName(String taskName) {
-        this.taskName = taskName;
+    public String getExecutionNodeHostName() {
+        return executionNodeHostName;
     }
 
-    public String getTaskName() {
-        return taskName;
+    public void setExecutionNodeHostName(String executionNodeHostName) {
+        this.executionNodeHostName = executionNodeHostName;
+    }
+
+    public LocalDateTime getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(LocalDateTime startTime) {
+        this.startTime = startTime;
+    }
+
+    public LocalDateTime getEndTime() {
+        return endTime;
+    }
+
+    public void setEndTime(LocalDateTime endTime) {
+        this.endTime = endTime;
+    }
+
+    public ExecutionJob getJob() {
+        return job;
+    }
+
+    public void setJob(ExecutionJob job) {
+        this.job = job;
     }
 }
