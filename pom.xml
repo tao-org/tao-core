@@ -60,10 +60,15 @@
             <name>Maven public</name>
             <url>${mavenPublicUrl}/</url>
         </repository>
-        <repository>
+        <!--<repository>
             <id>osgeo</id>
             <name>Open Source Geospatial Foundation Repository</name>
             <url>${osgeoUrl}</url>
+        </repository>-->
+        <repository>
+            <id>osgeo_original</id>
+            <name>Open Source Geospatial Foundation Repository</name>
+            <url>http://download.osgeo.org/webdav/geotools/</url>
         </repository>
         <repository>
             <id>hibernatespatial</id>

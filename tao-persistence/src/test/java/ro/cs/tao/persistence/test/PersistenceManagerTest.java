@@ -304,15 +304,25 @@ public class PersistenceManagerTest {
     {
         try
         {
-            final List<NodeDescription> nodes  = persistenceManager.getNodes();
-            if(nodes.size() > 0)
-            {
-                final NodeDescription firstNode = nodes.get(0);
-                final String hostName = firstNode.getHostName();
-                final NodeDescription deletedNode = persistenceManager.deleteExecutionNode(hostName);
+            // add a new execution node in order to deactivate it
+            NodeDescription node  = new NodeDescription();
+            node.setHostName("hostname2");
+            node.setUserName("Test user name");
+            node.setUserPass("Test user pass");
+            node.setProcessorCount(2);
+            node.setMemorySizeGB(10);
+            node.setDiskSpaceSizeGB(1000);
 
-                Assert.assertTrue(deletedNode != null && deletedNode.getActive() == false);
-            }
+            node.setDescription("Node 2 just for test");
+
+            node = persistenceManager.saveExecutionNode(node);
+            // check persisted node
+            Assert.assertTrue(node != null && node.getHostName() != null);
+
+            // deactivate node
+            node = persistenceManager.deleteExecutionNode(node.getHostName());
+
+            Assert.assertTrue(node != null && node.getActive() == false);
         }
         catch (PersistenceException e)
         {

@@ -174,13 +174,6 @@
     <entity class="ro.cs.tao.topology.NodeDescription" access="PROPERTY">
         <table name="tao.execution_node"/>
         <attributes>
-            <!--
-            <id name="id">
-                <column name="id" nullable="false"/>
-                <generated-value strategy="SEQUENCE" generator="execution_node_identifier"/>
-                <sequence-generator name="execution_node_identifier" sequence-name="tao.execution_node_id_seq" allocation-size="1" />
-            </id>
-            -->
             <id name="hostName">
                 <column name="host_name" nullable="false" column-definition="character varying(250) NOT NULL"/>
             </id>
@@ -208,6 +201,7 @@
             </basic>
         </attributes>
     </entity>
+
 
     <entity class="ro.cs.tao.component.ProcessingComponent" access="PROPERTY">
         <table name="tao.processing_component"/>
@@ -251,6 +245,7 @@
         </attributes>
     </entity>
 
+
     <entity class="ro.cs.tao.component.execution.ExecutionTask" access="PROPERTY">
         <table name="tao.task"/>
         <convert converter="ro.cs.tao.persistence.convert.ExecutionStatusConverter" attribute-name="executionStatus" />
@@ -286,6 +281,7 @@
         </attributes>
     </entity>
 
+
     <entity class="ro.cs.tao.component.execution.ExecutionJob" access="PROPERTY">
         <table name="tao.job"/>
         <convert converter="ro.cs.tao.persistence.convert.ExecutionStatusConverter" attribute-name="executionStatus" />
@@ -312,6 +308,7 @@
         </attributes>
     </entity>
 
+
     <embeddable class="ro.cs.tao.eodata.Attribute" access="PROPERTY">
         <attributes>
             <basic name="name">
@@ -322,6 +319,7 @@
             </basic>
         </attributes>
     </embeddable>
+
 
     <embeddable class="ro.cs.tao.component.Variable" access="PROPERTY">
         <attributes>
@@ -334,7 +332,9 @@
         </attributes>
     </embeddable>
 
-    <converter class="ro.cs.tao.persistence.convert.TemplateTypeConverter"/>
-    <converter class="ro.cs.tao.persistence.convert.ProcessingComponentVisibilityConverter"/>
+
+    <converter class="ro.cs.tao.persistence.convert.TemplateTypeConverter" />
+    <converter class="ro.cs.tao.persistence.convert.ProcessingComponentVisibilityConverter" />
+    <converter class="ro.cs.tao.persistence.convert.ExecutionStatusConverter" />
 
 </entity-mappings>
