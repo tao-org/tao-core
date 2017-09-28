@@ -54,21 +54,21 @@ ALTER TABLE tao.graph_node ADD CONSTRAINT PK_graph_node PRIMARY KEY (id);
 
 ALTER TABLE tao.graph_node ADD CONSTRAINT FK_graph_node_workflow_graph
 	FOREIGN KEY (workflow_id) REFERENCES tao.workflow_graph (id) ON DELETE No Action ON UPDATE No Action;
-	
-	
--------------------------------------------------------------------------------
--- table: job_status
-DROP TABLE IF EXISTS tao.job_status CASCADE;
 
-CREATE TABLE tao.job_status
+
+-------------------------------------------------------------------------------
+-- execution_status
+DROP TABLE IF EXISTS tao.execution_status CASCADE;
+
+CREATE TABLE tao.execution_status
 (
 	id integer NOT NULL,
 	status varchar(50) NOT NULL
 );
 
-ALTER TABLE tao.job_status ADD CONSTRAINT PK_job_status PRIMARY KEY (id);
-	
-	
+ALTER TABLE tao.execution_status ADD CONSTRAINT PK_execution_status PRIMARY KEY (id);
+
+
 -------------------------------------------------------------------------------
 -- table: job
 DROP TABLE IF EXISTS tao.job CASCADE;
@@ -76,17 +76,19 @@ DROP TABLE IF EXISTS tao.job CASCADE;
 CREATE TABLE tao.job
 (
 	id bigint NOT NULL,
+	resource_id varchar(512) NOT NULL,
 	start_time timestamp without time zone NULL,
 	end_time timestamp without time zone NULL,
 	user_id integer NULL,
-	workflow_id bigint NOT NULL,
-	job_status_id integer NULL
+	-- TODO: NOT NULL after workflow-graph implementation
+	workflow_id bigint NULL,
+	execution_status_id integer NOT NULL
 );
 
 ALTER TABLE tao.job ADD CONSTRAINT PK_job PRIMARY KEY (id);
 
-ALTER TABLE tao.job ADD CONSTRAINT FK_job_job_status
-	FOREIGN KEY (job_status_id) REFERENCES tao.job_status (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE tao.job ADD CONSTRAINT FK_job_execution_status
+	FOREIGN KEY (execution_status_id) REFERENCES tao.execution_status (id) ON DELETE No Action ON UPDATE No Action;
 	
 ALTER TABLE tao.job ADD CONSTRAINT FK_job_user
 	FOREIGN KEY (user_id) REFERENCES tao."user" (id) ON DELETE No Action ON UPDATE No Action;
@@ -121,19 +123,6 @@ ALTER TABLE tao.execution_node ADD CONSTRAINT PK_execution_node PRIMARY KEY (hos
 
 
 -------------------------------------------------------------------------------
--- task_status
-DROP TABLE IF EXISTS tao.task_status CASCADE;
-
-CREATE TABLE tao.task_status
-(
-	id integer NOT NULL,
-	status varchar(50) NOT NULL
-);
-
-ALTER TABLE tao.task_status ADD CONSTRAINT PK_task_status PRIMARY KEY (id);
-
-
--------------------------------------------------------------------------------
 -- table: task
 DROP TABLE IF EXISTS tao.task CASCADE;
 
@@ -141,12 +130,14 @@ CREATE TABLE tao.task
 (
 	id bigint NOT NULL,
 	processing_component_id varchar(512) NOT NULL,
-	graph_node_id bigint NOT NULL,
+	resource_id varchar(512) NOT NULL,
+	-- TODO: NOT NULL after workflow-graph implementation
+	graph_node_id bigint NULL,
 	start_time timestamp without time zone NULL,
 	end_time timestamp without time zone NULL,
 	job_id bigint NOT NULL,
 	execution_node_host_name varchar(250) NOT NULL,
-	task_status_id integer NOT NULL,
+	execution_status_id integer NOT NULL,
 	used_CPU integer NULL,
     used_RAM integer NULL,
     used_HDD integer NULL
@@ -163,8 +154,8 @@ ALTER TABLE tao.task ADD CONSTRAINT FK_task_job
 ALTER TABLE tao.task ADD CONSTRAINT FK_task_execution_node
 	FOREIGN KEY (execution_node_host_name) REFERENCES tao.execution_node (host_name) ON DELETE No Action ON UPDATE No Action;
 
-ALTER TABLE tao.task ADD CONSTRAINT FK_task_task_status
-	FOREIGN KEY (task_status_id) REFERENCES tao.task_status (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE tao.task ADD CONSTRAINT FK_task_execution_status
+	FOREIGN KEY (execution_status_id) REFERENCES tao.execution_status (id) ON DELETE No Action ON UPDATE No Action;
 
 
 -------------------------------------------------------------------------------
