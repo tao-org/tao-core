@@ -717,10 +717,6 @@ public class PersistenceManager {
         {
             return false;
         }
-        if(job.getResourceId() == null || job.getResourceId().isEmpty())
-        {
-            return false;
-        }
 
         return true;
     }
@@ -732,13 +728,6 @@ public class PersistenceManager {
         if(!checkExecutionJob(job, false))
         {
             throw new PersistenceException("Invalid parameters were provided for adding new execution job !");
-        }
-
-        // check if there is already job with the same resource identifier
-        final ExecutionJob jobWithSameResourceId = executionJobRepository.findByResourceId(job.getResourceId());
-        if (jobWithSameResourceId != null)
-        {
-            throw new PersistenceException("There is already another job with the resource identifier: " + job.getResourceId());
         }
 
         // save the new ExecutionJob entity and return it

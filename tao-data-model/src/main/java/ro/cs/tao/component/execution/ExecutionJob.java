@@ -9,7 +9,6 @@ import java.util.List;
  */
 public class ExecutionJob {
     private Long id;
-    private String resourceId;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private ExecutionStatus executionStatus;
@@ -24,14 +23,6 @@ public class ExecutionJob {
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public void setResourceId(String resourceId) {
-        this.resourceId = resourceId;
-    }
-
-    public String getResourceId() {
-        return resourceId;
     }
 
     public void setStartTime(LocalDateTime startTime) {

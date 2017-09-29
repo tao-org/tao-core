@@ -76,7 +76,6 @@ DROP TABLE IF EXISTS tao.job CASCADE;
 CREATE TABLE tao.job
 (
 	id bigint NOT NULL,
-	resource_id varchar(512) NOT NULL,
 	start_time timestamp without time zone NULL,
 	end_time timestamp without time zone NULL,
 	user_id integer NULL,
