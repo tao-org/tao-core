@@ -291,9 +291,6 @@
                 <generated-value strategy="SEQUENCE" generator="job_identifier"/>
                 <sequence-generator name="job_identifier" sequence-name="tao.job_id_seq" allocation-size="1" />
             </id>
-            <basic name="resourceId">
-                <column name="resource_id" nullable="false" column-definition="character varying(512) NOT NULL"/>
-            </basic>
             <basic name="executionStatus">
                 <column name="execution_status_id" nullable="false" column-definition="integer not null"/>
             </basic>

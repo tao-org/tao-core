@@ -476,7 +476,6 @@ public class PersistenceManagerTest {
         {
             // add a new job for test
             ExecutionJob job = new ExecutionJob();
-            job.setResourceId("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
             job.setExecutionStatus(ExecutionStatus.UNDETERMINED);
 
             job = persistenceManager.saveExecutionJob(job);

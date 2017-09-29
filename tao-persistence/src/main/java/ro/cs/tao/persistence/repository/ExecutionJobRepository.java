@@ -22,11 +22,4 @@ public interface ExecutionJobRepository extends PagingAndSortingRepository<Execu
      * @return the corresponding ExecutionJob entity
      */
     ExecutionJob findById(Long id);
-
-    /**
-     * Find ExecutionJob entity by its resource identifier
-     * @param resourceId - the given job resource identifier
-     * @return the corresponding ExecutionJob entity
-     */
-    ExecutionJob findByResourceId(String resourceId);
 }
