@@ -129,7 +129,7 @@ CREATE TABLE tao.task
 (
 	id bigint NOT NULL,
 	processing_component_id varchar(512) NOT NULL,
-	resource_id varchar(512) NOT NULL,
+	resource_id varchar(512) NULL,
 	-- TODO: NOT NULL after workflow-graph implementation
 	graph_node_id bigint NULL,
 	start_time timestamp without time zone NULL,

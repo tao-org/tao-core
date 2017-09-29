@@ -256,7 +256,7 @@
                 <sequence-generator name="task_identifier" sequence-name="tao.task_id_seq" allocation-size="1" />
             </id>
             <basic name="resourceId">
-                <column name="resource_id" nullable="false" column-definition="character varying(512) NOT NULL"/>
+                <column name="resource_id" nullable="false" column-definition="character varying(512) NULL"/>
             </basic>
             <basic name="executionStatus">
                 <column name="execution_status_id" nullable="false" column-definition="integer not null"/>
