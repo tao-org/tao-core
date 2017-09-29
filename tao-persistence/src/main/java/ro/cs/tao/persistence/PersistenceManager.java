@@ -810,7 +810,7 @@ public class PersistenceManager {
         {
             return false;
         }
-        if(task.getResourceId() == null || task.getResourceId().isEmpty())
+        if(existingEntity && (task.getResourceId() == null || task.getResourceId().isEmpty()))
         {
             return false;
         }
