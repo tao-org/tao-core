@@ -49,6 +49,10 @@ public class ExecutionJob {
         return executionStatus;
     }
 
+    public void addTask(ExecutionTask task) {
+        this.tasks.add(task);
+    }
+
     public void setTasks(List<ExecutionTask> tasks) {
         this.tasks = tasks;
     }

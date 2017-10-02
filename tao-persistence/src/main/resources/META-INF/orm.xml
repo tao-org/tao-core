@@ -256,7 +256,7 @@
                 <sequence-generator name="task_identifier" sequence-name="tao.task_id_seq" allocation-size="1" />
             </id>
             <basic name="resourceId">
-                <column name="resource_id" nullable="false" column-definition="character varying(512) NULL"/>
+                <column name="resource_id" nullable="true" column-definition="character varying(512) NULL"/>
             </basic>
             <basic name="executionStatus">
                 <column name="execution_status_id" nullable="false" column-definition="integer not null"/>
@@ -278,6 +278,8 @@
             <many-to-one name="job" fetch="LAZY">
                 <join-column name="job_id" nullable="false"/>
             </many-to-one>
+
+            <transient name="inputParameterValues" />
         </attributes>
     </entity>
 
