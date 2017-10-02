@@ -47,11 +47,11 @@ public class TopologyManager implements ITopologyManager {
     }
 
     @Override
-    public NodeDescription get(String name) {
+    public NodeDescription get(String hostName) {
         try {
-            return persistenceManager.getNodeByHostName(name);
+            return persistenceManager.getNodeByHostName(hostName);
         } catch (PersistenceException e) {
-            logger.severe("Cannot get node description from database for node " + name);
+            logger.severe("Cannot get node description from database for node " + hostName);
             throw new TopologyException(e);
         }
     }
@@ -79,10 +79,10 @@ public class TopologyManager implements ITopologyManager {
     }
 
     @Override
-    public void remove(String name) {
-        NodeDescription node = get(name);
+    public void remove(String hostName) {
+        NodeDescription node = get(hostName);
         if (node == null) {
-            throw new TopologyException(String.format("Node [%s] does not exist", name));
+            throw new TopologyException(String.format("Node [%s] does not exist", hostName));
         }
         // execute all the installers
         for (TopologyToolInstaller installer: installers) {
