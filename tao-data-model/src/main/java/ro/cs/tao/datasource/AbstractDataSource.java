@@ -17,7 +17,6 @@
 package ro.cs.tao.datasource;
 
 import org.apache.http.auth.UsernamePasswordCredentials;
-import ro.cs.tao.component.Identifiable;
 import ro.cs.tao.datasource.param.ParameterDescriptor;
 import ro.cs.tao.datasource.param.ParameterProvider;
 
@@ -28,9 +27,7 @@ import java.util.Map;
  *
  * @author Cosmin Cara
  */
-public abstract class AbstractDataSource<Q extends DataQuery>
-    extends Identifiable
-        implements DataSource<Q> {
+public abstract class AbstractDataSource<Q extends DataQuery> extends DataSource<Q> {
     protected String connectionString;
     protected long timeout;
     protected UsernamePasswordCredentials credentials;
