@@ -1,8 +1,17 @@
 package ro.cs.tao.component.execution;
 
+import ro.cs.tao.component.ParameterDescriptor;
 import ro.cs.tao.component.ProcessingComponent;
+import ro.cs.tao.component.Variable;
+import ro.cs.tao.component.validation.ValidationException;
 
+import javax.xml.bind.annotation.XmlTransient;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Created by cosmin on 9/19/2017.
@@ -15,7 +24,7 @@ public class ExecutionTask {
     private String executionNodeHostName;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
-
+    private List<Variable> inputParameterValues = new ArrayList<>();
     private ExecutionJob job;
 
     public ExecutionTask() {
@@ -65,6 +74,31 @@ public class ExecutionTask {
         this.executionNodeHostName = executionNodeHostName;
     }
 
+    public void setInputParameterValues(List<Variable> inputParameterValues) {
+        this.inputParameterValues = inputParameterValues;
+    }
+
+    public void setParameterValue(String parameterId, String value) {
+        List<ParameterDescriptor> descriptorList = this.processingComponent.getParameterDescriptors();
+        boolean descriptorExists = false;
+        for(ParameterDescriptor descriptor: descriptorList) {
+            if (descriptor.getId().equals(parameterId)) {
+                descriptorExists = true;
+                break;
+            }
+        }
+        if(!descriptorExists) {
+            throw new ValidationException("The parameter ID " + parameterId +
+                    " does not exists in the processing component " +
+                    processingComponent.getLabel());
+        }
+        this.inputParameterValues.add(new Variable(parameterId, value));
+    }
+
+    public List<Variable> getInputParameterValues() {
+        return inputParameterValues;
+    }
+
     public LocalDateTime getStartTime() {
         return startTime;
     }
@@ -87,5 +121,11 @@ public class ExecutionTask {
 
     public void setJob(ExecutionJob job) {
         this.job = job;
+    }
+
+    public String buildExecutionCommand() {
+        Map<String, String> inputParams = inputParameterValues.stream().collect(
+                Collectors.toMap(Variable::getKey, Variable::getValue));
+        return this.processingComponent.buildExecutionCommand(inputParams);
     }
 }
