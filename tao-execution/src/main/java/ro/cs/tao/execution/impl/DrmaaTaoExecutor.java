@@ -8,12 +8,14 @@ import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.IExecutor;
 import ro.cs.tao.component.execution.ExecutionTask;
 import ro.cs.tao.persistence.PersistenceManager;
+import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -21,6 +23,8 @@ import java.util.regex.Pattern;
  * Created by cosmin on 9/12/2017.
  */
 public class DrmaaTaoExecutor implements IExecutor {
+    protected Logger logger = Logger.getLogger(DrmaaTaoExecutor.class.getName());
+
     private static final int TIMER_PERIOD = 1000;
     private final Timer executionsCheckTimer = new Timer();
     /* Flag for trying to close the monitoring thread in an elegant manner */
@@ -28,7 +32,7 @@ public class DrmaaTaoExecutor implements IExecutor {
     protected Session session;
     protected SessionFactory sessionFactory = SessionFactory.getFactory();
     private PersistenceManager persistenceManager = SpringContextBridge.services().getPersistenceManager();
-
+    private List<ExecutionTask> scheduledTasks = new ArrayList<>();
     @Override
     public void initialize() throws ExecutionException {
         synchronized (isInitialized) {
@@ -72,32 +76,39 @@ public class DrmaaTaoExecutor implements IExecutor {
 
     @Override
     public void execute(ExecutionTask task) throws ExecutionException  {
+        // Get from the component the execution command
+        String executionCmd = task.buildExecutionCommand();
+        List<String> argsList = new ArrayList<>();
+        // split the execution command but preserving the entities between double quotes
+        Matcher m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(executionCmd);
+        while (m.find()) {
+            argsList.add(m.group(1)); // Add .replace("\"", "") to remove surrounding quotes.
+        }
+        String cmd = argsList.remove(0);
+
         try {
-            ProcessingComponent processingComponent = task.getProcessingComponent();
-            // TODO: Get from the component the execution command
-            String executionCmd = processingComponent.buildExecutionCommand();
-
-            List<String> argsList = new ArrayList<>();
-            // split the execution command but preserving the entities between double quotes
-            Matcher m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(executionCmd);
-            while (m.find()) {
-                argsList.add(m.group(1)); // Add .replace("\"", "") to remove surrounding quotes.
-            }
-            String cmd = argsList.remove(0);
-
             JobTemplate jt = session.createJobTemplate ();
+            if (jt == null) {
+                throw new ExecutionException("Error creating job template from the session!");
+            }
             // TODO: We should create a job name specific to TAO, for job and for task name
             //jt.setJobName();
 
             jt.setRemoteCommand (cmd);
             jt.setArgs (argsList);
             String id = session.runJob (jt);
-            task.setResourceId(id);
-            // TODO: add function to PersistenceManager
-            //persistenceManager.saveExecutionTask(task);
             session.deleteJobTemplate (jt);
+
+            task.setResourceId(id);
+            task.setExecutionStatus(ExecutionStatus.RUNNING);
+            persistenceManager.updateExecutionTask(task);
+            logger.info("DrmaaExecutor: Succesfully submitted task with id " + id);
         } catch (DrmaaException e) {
+            logger.severe("DrmaaExecutor: Error submitting task with id " + task.getId() + " for command " + cmd +
+                        ". The exception was " + e.getMessage());
             throw new ExecutionException("Error executing DRMAA session operation", e);
+        } catch (PersistenceException e) {
+            throw new ExecutionException("Unable to save execution state in the database", e);
         }
     }
 
@@ -131,40 +142,52 @@ public class DrmaaTaoExecutor implements IExecutor {
     protected void monitorExecutions() {
         // check for the finished
         try {
-            List<ExecutionTask> tasks = null;
-            // TODO: add function to PersistenceManager
-            //infos = persistence.getRunningTasks();
+            List<ExecutionTask> tasks = persistenceManager.getRunningTasks();
             // For each job, get its status from DRMAA
             for (ExecutionTask task: tasks) {
-                int jobStatus = session.getJobProgramStatus(task.getResourceId());
-                switch (jobStatus) {
-                    case Session.SYSTEM_ON_HOLD:
-                    case Session.USER_ON_HOLD:
-                    case Session.USER_SYSTEM_ON_HOLD:
-                    case Session.SYSTEM_SUSPENDED:
-                    case Session.USER_SUSPENDED:
-                    case Session.USER_SYSTEM_SUSPENDED:
-                    case Session.UNDETERMINED:
-                    case Session.QUEUED_ACTIVE:
-                    case Session.RUNNING:
-                        // nothing to do
-                        break;
-                    case Session.DONE:
-                        task.setExecutionStatus(ExecutionStatus.DONE);
-                        // TODO: add function to PersistenceManager
-                        //persistenceManager.saveExecutionTask(task);
-                        break;
-                    case Session.FAILED:
-                        task.setExecutionStatus(ExecutionStatus.FAILED);
-                        // TODO: add function to PersistenceManager
-                        //persistenceManager.saveExecutionTask(task);
-                        break;
-                }
+                try {
+                    if(task.getResourceId() == null) {
+                        System.out.println("Null???");
+                    }
+                    int jobStatus = session.getJobProgramStatus(task.getResourceId());
 
+                    switch (jobStatus) {
+                        case Session.SYSTEM_ON_HOLD:
+                        case Session.USER_ON_HOLD:
+                        case Session.USER_SYSTEM_ON_HOLD:
+                        case Session.SYSTEM_SUSPENDED:
+                        case Session.USER_SUSPENDED:
+                        case Session.USER_SYSTEM_SUSPENDED:
+                        case Session.UNDETERMINED:
+                        case Session.QUEUED_ACTIVE:
+                        case Session.RUNNING:
+                            // nothing to do
+                            break;
+                        case Session.DONE:
+                            // TODO: Get the results for the job
+                            task.setExecutionStatus(ExecutionStatus.DONE);
+                            persistenceManager.updateExecutionTask(task);
+                            logger.info("DrmaaExecutor: task with id " + task.getResourceId() + " finished OK");
+                            break;
+                        case Session.FAILED:
+                            task.setExecutionStatus(ExecutionStatus.FAILED);
+                            persistenceManager.updateExecutionTask(task);
+                            logger.info("DrmaaExecutor: task with id " + task.getResourceId() + " finished NOK");
+                            break;
+                    }
+                } catch (InvalidJobException e) {
+                    logger.severe("DrmaaExecutor: Cannot get the status for the task with " + task.getResourceId());
+                    task.setExecutionStatus(ExecutionStatus.DONE);
+                    persistenceManager.updateExecutionTask(task);
+                }
+                catch (DrmaaException | InternalException e1) {
+                    // TODO: Here we have no idea about what happened with that job. Did it finished normally or failed?
+                    // TODO: Unfortunatelly, we do not know about the results produced by that job
+                    throw new ExecutionException("Unable to save execution state in the database", e1);
+                }
             }
-        } catch (DrmaaException e) {
-            e.printStackTrace();
-            throw new ExecutionException("Error executing DRMAA session operation", e);
+        } catch (PersistenceException e) {
+            throw new ExecutionException("Unable to save execution state in the database", e);
         }
     }
 

@@ -49,10 +49,7 @@ import ro.cs.tao.component.validation.ValidationException;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -209,13 +206,11 @@ public class ProcessingComponent extends TaoComponent {
         return newDescriptor;
     }
 
-    public String buildExecutionCommand() throws TemplateException {
-        Map<String, Object> params = new HashMap<String, Object>();
-        for (ParameterDescriptor descriptor: parameters) {
-            params.put(descriptor.getId(), descriptor.getValueSet().toString());
-        }
+    public String buildExecutionCommand(Map<String, String> parameterValues) throws TemplateException {
         TemplateEngine templateEngine = getTemplateEngine();
-        String cmdLine = templateEngine.transform(this.template, params);
+        Map<String, Object> clonedMap = new HashMap<>();
+        clonedMap.putAll(parameterValues);
+        String cmdLine = templateEngine.transform(this.template, clonedMap);
         return cmdLine == null || "null".equals(cmdLine) ? "" : cmdLine;
     }
 
