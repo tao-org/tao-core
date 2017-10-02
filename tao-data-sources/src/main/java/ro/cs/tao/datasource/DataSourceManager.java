@@ -4,11 +4,14 @@ import ro.cs.tao.datasource.param.ParameterDescriptor;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
 
-import java.util.ArrayList;
+import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 /**
  * @author Cosmin Cara
@@ -17,7 +20,7 @@ public class DataSourceManager {
 
     private static final DataSourceManager instance;
     private final ServiceRegistry<DataSource> registry;
-    private final Map<String, List<String>> registeredSources;
+    private final Map<Map.Entry<String, String>, Map<String, ParameterDescriptor>> registeredSources;
 
     static {
         instance = new DataSourceManager();
@@ -35,18 +38,19 @@ public class DataSourceManager {
         final Set<DataSource> services = this.registry.getServices();
         services.forEach(ds -> {
             final String[] sensors = ds.getSupportedSensors();
-            final String className = ds.getClass().getName();
+            final String dsName = ds.getId();
             for (String sensor : sensors) {
-                if (!this.registeredSources.containsKey(sensor)) {
-                    this.registeredSources.put(sensor, new ArrayList<>());
+                Map.Entry<String, String> key = new AbstractMap.SimpleEntry<>(sensor, dsName);
+                if (!this.registeredSources.containsKey(key)) {
+                    final Map<String, Map<String, ParameterDescriptor>> parameters = ds.getSupportedParameters();
+                    this.registeredSources.put(key, parameters.get(sensor));
                 }
-                this.registeredSources.get(sensor).add(className);
             }
         });
     }
 
-    public List<String> getSupportedSensors() {
-        return new ArrayList<>(this.registeredSources.keySet());
+    public SortedSet<String> getSupportedSensors() {
+        return new TreeSet<>(this.registeredSources.keySet().stream().map(Map.Entry::getKey).collect(Collectors.toList()));
     }
 
     /**
@@ -56,8 +60,9 @@ public class DataSourceManager {
      * @param sensorName    The sensor name
      */
     public String getFirst(String sensorName) {
-        List<String> found = this.registeredSources.get(sensorName);
-        return found != null ? found.get(0) : null;
+        return this.registeredSources.keySet().stream()
+                .filter(e -> e.getKey().equals(sensorName)).findFirst()
+                .map(Map.Entry::getValue).orElse(null);
     }
 
     /**
@@ -67,12 +72,9 @@ public class DataSourceManager {
      * @param sensorName    The sensor name
      */
     public List<String> getNames(String sensorName) {
-        List<String> names = new ArrayList<>();
-        List<String> found = this.registeredSources.get(sensorName);
-        if (found != null) {
-            names.addAll(found);
-        }
-        return names;
+        return this.registeredSources.keySet().stream()
+                .filter(e -> e.getKey().equals(sensorName))
+                .map(Map.Entry::getValue).collect(Collectors.toList());
     }
 
     /**
@@ -83,9 +85,9 @@ public class DataSourceManager {
      */
     public DataSource get(String sensorName) {
         DataSource dataSource = null;
-        List<String> sourceNames = this.registeredSources.get(sensorName);
-        if (sourceNames != null) {
-            dataSource = this.registry.getService(sourceNames.get(0));
+        String firstName = getFirst(sensorName);
+        if (firstName != null) {
+            dataSource = this.registry.getService(firstName);
         }
         return dataSource;
     }
@@ -95,24 +97,17 @@ public class DataSourceManager {
      * is registered.
      *
      * @param sensorName    The sensor name
-     * @param className     The data source class name
+     * @param dataSourceName     The data source class name
      */
-    public DataSource get(String sensorName, String className) {
+    public DataSource get(String sensorName, String dataSourceName) {
         DataSource dataSource = null;
-        List<String> sourceNames = this.registeredSources.get(sensorName);
-        if (sourceNames != null && sourceNames.stream().anyMatch(s -> s.equals(className))) {
-            dataSource = this.registry.getService(className);
+        if (this.registeredSources.containsKey(new AbstractMap.SimpleEntry<>(sensorName, dataSourceName))) {
+            dataSource = this.registry.getService(dataSourceName);
         }
         return dataSource;
     }
 
-    public Map<String, ParameterDescriptor> getSupportedParameters(String sensorName, String className) {
-        DataSource dataSource = get(sensorName, className);
-        Map<String, ParameterDescriptor> parameters = null;
-        if (dataSource != null) {
-            Map<String, Map<String, ParameterDescriptor>> supportedParameters = dataSource.getSupportedParameters();
-            parameters = supportedParameters.get(sensorName);
-        }
-        return parameters;
+    public Map<String, ParameterDescriptor> getSupportedParameters(String sensorName, String dataSourceName) {
+        return this.registeredSources.get(new AbstractMap.SimpleEntry<>(sensorName, dataSourceName));
     }
 }
