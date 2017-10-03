@@ -69,6 +69,8 @@ public class ProcessingComponent extends TaoComponent {
     private Boolean multiThread;
     private ProcessingComponentVisibility visibility;
 
+    private Boolean active;
+
     public ProcessingComponent() {
         super();
     }
@@ -138,6 +140,14 @@ public class ProcessingComponent extends TaoComponent {
 
     public void setVisibility(ProcessingComponentVisibility visibility) {
         this.visibility = visibility;
+    }
+
+    public Boolean getActive() {
+        return active;
+    }
+
+    public void setActive(Boolean active) {
+        this.active = active;
     }
 
     @XmlTransient

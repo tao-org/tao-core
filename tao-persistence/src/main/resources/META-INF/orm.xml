@@ -233,6 +233,10 @@
                 <column name="multi_thread" nullable="false" column-definition="boolean NOT NULL DEFAULT false"/>
             </basic>
 
+            <basic name="active">
+                <column name="active" nullable="true" column-definition="boolean NOT NULL DEFAULT true"/>
+            </basic>
+
             <element-collection name="variables" target-class="ro.cs.tao.component.Variable" access="FIELD">
                 <collection-table name="tao.component_variables" >
                     <join-column name="id" referenced-column-name="id" />

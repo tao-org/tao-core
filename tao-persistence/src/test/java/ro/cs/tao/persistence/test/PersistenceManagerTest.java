@@ -358,6 +358,7 @@ public class PersistenceManagerTest {
             component.setVisibility(ProcessingComponentVisibility.CONTRIBUTOR);
             component.setNodeAffinity("Any");
             component.setMultiThread(true);
+            component.setActive(true);
 
             List<Variable> variables = new ArrayList<>();
 
@@ -470,7 +471,66 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_12_save_new_execution_job()
+    public void TC_13_delete_processing_component()
+    {
+        try
+        {
+            // add a new processing component for test
+            ProcessingComponent component = new ProcessingComponent();
+            component.setId("delete_0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
+            component.setLabel("component label");
+            component.setVersion("component version");
+            component.setDescription("component description");
+            component.setAuthors("component authors");
+            component.setCopyright("component copyright");
+            component.setFileLocation("component file location");
+            component.setWorkingDirectory("component working directory");
+
+            Template template = new BasicTemplate();
+            template.setName("basic template name");
+            template.setTemplateType(TemplateType.VELOCITY);
+            component.setTemplate(template);
+            component.setTemplateType(TemplateType.VELOCITY);
+            // TODO ??
+            component.setTemplateName("basic template name");
+
+            component.setVisibility(ProcessingComponentVisibility.CONTRIBUTOR);
+            component.setNodeAffinity("Any");
+            component.setMultiThread(true);
+            component.setActive(true);
+
+            List<Variable> variables = new ArrayList<>();
+
+            final Variable var1 = new Variable();
+            var1.setKey("var1");
+            var1.setValue("value1");
+            variables.add(var1);
+
+            final Variable var2 = new Variable();
+            var2.setKey("var2");
+            var2.setValue("value2");
+            variables.add(var2);
+
+            component.setVariables(variables);
+
+            component = persistenceManager.saveProcessingComponent(component);
+            // check persisted component
+            Assert.assertTrue(component != null && component.getId() != null);
+
+            // deactivate component
+            component = persistenceManager.deleteProcessingComponent(component.getId());
+
+            Assert.assertTrue(component != null && !component.getActive());
+        }
+        catch (PersistenceException e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void TC_14_save_new_execution_job()
     {
         try
         {
@@ -490,7 +550,7 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_13_save_new_execution_task()
+    public void TC_15_save_new_execution_task()
     {
         try
         {
@@ -534,7 +594,7 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_14_get_running_execution_tasks()
+    public void TC_16_get_running_execution_tasks()
     {
         try
         {
