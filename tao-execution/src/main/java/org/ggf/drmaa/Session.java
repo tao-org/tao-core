@@ -99,103 +99,101 @@ import java.util.List;
  * @since 0.5
  * @version 1.0
  */
-public abstract interface Session {
+public interface Session {
     /**
      * Suspend the job.  Used with the Session.control() method.
      */
-    public static final int SUSPEND = 0;
+    int SUSPEND = 0;
     /**
      * Resume the job.  Used with the Session.control() method.
      */
-    public static final int RESUME = 1;
+    int RESUME = 1;
     /**
      * Put the job on hold.  Used with the Session.control() method.
      */
-    public static final int HOLD = 2;
+    int HOLD = 2;
     /**
      * Release the hold on the job.  Used with the Session.control() method.
      */
-    public static final int RELEASE = 3;
+    int RELEASE = 3;
     /**
      * Kill the job.  Used with the Session.control() method.
      */
-    public static final int TERMINATE = 4;
+    int TERMINATE = 4;
     /**
      * All jobs submitted during this DRMAA session.  Used with the
      * Session.control() and Session.synchronize() methods.
      */
-    public static final String JOB_IDS_SESSION_ALL =
-            "DRMAA_JOB_IDS_SESSION_ALL";
+    String JOB_IDS_SESSION_ALL = "DRMAA_JOB_IDS_SESSION_ALL";
     /**
      * Any job from the session.  Used with the Session.wait() method.
      */
-    public static final String JOB_IDS_SESSION_ANY =
-            "DRMAA_JOB_IDS_SESSION_ANY";
+    String JOB_IDS_SESSION_ANY = "DRMAA_JOB_IDS_SESSION_ANY";
     /**
      * Wait indefinitely for a result.  Used with the Session.wait() and
      * Session.synchronize() methods.
      */
-    public static final long TIMEOUT_WAIT_FOREVER = -1L;
+    long TIMEOUT_WAIT_FOREVER = -1L;
     /**
      * Return immediately if no result is available.  Used with the
      * Session.wait() and Session.synchronize() methods.
      */
-    public static final long TIMEOUT_NO_WAIT = 0L;
+    long TIMEOUT_NO_WAIT = 0L;
     /**
      * Job status cannot be determined.  Used with the
      * Session.getJobProgramStatus() method.
      */
-    public static final int UNDETERMINED = 0x00;
+    int UNDETERMINED = 0x00;
     /**
      * Job is queued and active.  Used with the
      * Session.getJobProgramStatus() method.
      */
-    public static final int QUEUED_ACTIVE = 0x10;
+    int QUEUED_ACTIVE = 0x10;
     /**
      * Job is queued and in system hold.  Used with the
      * Session.getJobProgramStatus() method.
      */
-    public static final int SYSTEM_ON_HOLD = 0x11;
+    int SYSTEM_ON_HOLD = 0x11;
     /**
      * Job is queued and in user hold.  Used with the
      * Session.getJobProgramStatus() method.
      */
-    public static final int USER_ON_HOLD = 0x12;
+    int USER_ON_HOLD = 0x12;
     /**
      * Job is queued and in user and system hold.  Used with the
      * Session.getJobProgramStatus() method.
      */
-    public static final int USER_SYSTEM_ON_HOLD = 0x13;
+    int USER_SYSTEM_ON_HOLD = 0x13;
     /**
      * Job is running.  Used with the
      * Session.getJobProgramStatus() method.
      */
-    public static final int RUNNING = 0x20;
+    int RUNNING = 0x20;
     /**
      * Job is system suspended.  Used with the
      * Session.getJobProgramStatus() method.
      */
-    public static final int SYSTEM_SUSPENDED = 0x21;
+    int SYSTEM_SUSPENDED = 0x21;
     /**
      * Job is user suspended.  Used with the
      * Session.getJobProgramStatus() method.
      */
-    public static final int USER_SUSPENDED = 0x22;
+    int USER_SUSPENDED = 0x22;
     /**
      * Job is user suspended.  Used with the
      * Session.getJobProgramStatus() method.
      */
-    public static final int USER_SYSTEM_SUSPENDED = 0x23;
+    int USER_SYSTEM_SUSPENDED = 0x23;
     /**
      * Job has finished normally.  Used with the
      * Session.getJobProgramStatus() method.
      */
-    public static final int DONE = 0x30;
+    int DONE = 0x30;
     /**
      * Job finished, but terminated abnormally.  Used with the
      * Session.getJobProgramStatus() method.
      */
-    public static final int FAILED = 0x40;
+    int FAILED = 0x40;
     
     /**
      * Initialize the DRMAA implementation.
@@ -236,7 +234,7 @@ public abstract interface Session {
      * implementation</LI>
      * </UL>
      */
-    public abstract void init(String contact) throws DrmaaException;
+    void init(String contact) throws DrmaaException;
     
     /**
      * Disengage from the DRM and allow the DRMAA implementation to perform
@@ -261,7 +259,7 @@ public abstract interface Session {
      * implementation</LI>
      * </UL>
      */
-    public abstract void exit() throws DrmaaException;
+    void exit() throws DrmaaException;
     
     /**
      * Get a new job template.  A job template is used to set the
@@ -282,7 +280,7 @@ public abstract interface Session {
      * @return a blank JobTemplate instance
      * @see JobTemplate
      */
-    public abstract JobTemplate createJobTemplate() throws DrmaaException;
+    JobTemplate createJobTemplate() throws DrmaaException;
     
     /**
      * Deallocate a job template. This routine has no effect on jobs which have
@@ -304,8 +302,7 @@ public abstract interface Session {
      * implementation</LI>
      * </UL>
      */
-    public abstract void deleteJobTemplate(JobTemplate jt)
-            throws DrmaaException;
+    void deleteJobTemplate(JobTemplate jt) throws DrmaaException;
     
     /**
      * Submit a job with attributes defined in the job template, <i>jt</i>.
@@ -334,7 +331,7 @@ public abstract interface Session {
      * @return job identifier String identical to that returned from the
      * underlying DRM system
      */
-    public abstract String runJob(JobTemplate jt) throws DrmaaException;
+    String runJob(JobTemplate jt) throws DrmaaException;
     
     /**
      * Submit a range of parametric jobs,
@@ -374,8 +371,7 @@ public abstract interface Session {
      * implementation</LI>
      * </UL>
      */
-    public abstract List runBulkJobs(JobTemplate jt, int start, int end,
-                                     int incr) throws DrmaaException;
+    List runBulkJobs(JobTemplate jt, int start, int end, int increment) throws DrmaaException;
     
     /**
      * <p>Hold, release, suspend, resume, or kill the job identified by
@@ -433,8 +429,7 @@ public abstract interface Session {
      * implementation</LI>
      * </UL>
      */
-    public abstract void control(String jobId, int action)
-            throws DrmaaException;
+    void control(String jobId, int action) throws DrmaaException;
     
     /**
      * Wait until all jobs specified by <i>jobIds</i> have finished
@@ -484,8 +479,7 @@ public abstract interface Session {
      * </UL>
      * @see #wait
      */
-    public abstract void synchronize(List jobIds, long timeout, boolean dispose)
-            throws DrmaaException;
+    void synchronize(List jobIds, long timeout, boolean dispose) throws DrmaaException;
     
     /**
      * This method will wait for a job with <i>jobId</i> to finish execution
@@ -548,8 +542,7 @@ public abstract interface Session {
      * </UL>
      * @see JobInfo
      */
-    public abstract JobInfo wait(String jobId, long timeout)
-            throws DrmaaException;
+    JobInfo wait(String jobId, long timeout) throws DrmaaException;
     
     /**
      * Get the program status of the job identified by jobId. The possible
@@ -593,7 +586,7 @@ public abstract interface Session {
      * implementation</LI>
      * </UL>
      */
-    public abstract int getJobProgramStatus(String jobId) throws DrmaaException;
+    int getJobProgramStatus(String jobId) throws DrmaaException;
     
     /**
      * If called before init(), this method returns a comma delimited String
@@ -614,7 +607,7 @@ public abstract interface Session {
      * implementation</LI>
      * </UL>
      */
-    public abstract String getContact();
+    String getContact();
     
     /**
      * Returns a Version instance containing the major and minor version numbers
@@ -633,7 +626,7 @@ public abstract interface Session {
      * implementation</LI>
      * </UL>
      */
-    public abstract Version getVersion();
+    Version getVersion();
     
     /**
      * If called before init(), this method returns a comma delimited list of
@@ -651,7 +644,7 @@ public abstract interface Session {
      * implementation</LI>
      * </UL>
      */
-    public abstract String getDrmSystem();
+    String getDrmSystem();
     
     /**
      * If called before init(), this method returns a comma delimited list of
@@ -670,5 +663,5 @@ public abstract interface Session {
      * implementation</LI>
      * </UL>
      */
-    public abstract String getDrmaaImplementation();
+    String getDrmaaImplementation();
 }

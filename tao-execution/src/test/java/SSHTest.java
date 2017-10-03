@@ -1,10 +1,10 @@
-import ro.cs.tao.utils.executors.DebugOutputConsumer;
-import ro.cs.tao.utils.executors.ExecutionMode;
-import ro.cs.tao.utils.executors.ExecutionUnit;
-import ro.cs.tao.utils.executors.Executor;
-import ro.cs.tao.utils.executors.ExecutorType;
-import ro.cs.tao.utils.executors.OutputConsumer;
-import ro.cs.tao.utils.executors.SSHMode;
+import ro.cs.tao.execution.simple.DebugOutputConsumer;
+import ro.cs.tao.execution.simple.ExecutionMode;
+import ro.cs.tao.execution.simple.ExecutionUnit;
+import ro.cs.tao.execution.simple.Executor;
+import ro.cs.tao.execution.simple.ExecutorType;
+import ro.cs.tao.execution.simple.OutputConsumer;
+import ro.cs.tao.execution.simple.SSHMode;
 
 import java.util.ArrayList;
 import java.util.List;

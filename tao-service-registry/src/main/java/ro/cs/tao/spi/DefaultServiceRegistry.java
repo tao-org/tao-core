@@ -34,7 +34,7 @@ import java.util.stream.StreamSupport;
 /**
  * {@inheritDoc}
  */
-public class DefaultServiceRegistry<T extends Identifiable> implements ServiceRegistry<T> {
+public class DefaultServiceRegistry<T> implements ServiceRegistry<T> {
 
     private final Class<T> serviceType;
     private final HashMap<String, T> services;
@@ -103,7 +103,9 @@ public class DefaultServiceRegistry<T extends Identifiable> implements ServiceRe
         if (existingService != null && existingService.getClass().equals(service.getClass())) {
             return false;
         } else {
-            serviceIds.put(service.getId(), service.getClass().getName());
+            if (service instanceof Identifiable) {
+                serviceIds.put(((Identifiable) service).getId(), service.getClass().getName());
+            }
         }
         for (ServiceRegistryListener<T> listener : listeners) {
             listener.serviceAdded(this, service);
@@ -121,7 +123,9 @@ public class DefaultServiceRegistry<T extends Identifiable> implements ServiceRe
         if (existingService != service) {
             return false;
         } else {
-            serviceIds.remove(service.getId());
+            if (service instanceof Identifiable) {
+                serviceIds.remove(((Identifiable) service).getId());
+            }
         }
         for (ServiceRegistryListener<T> listener : listeners) {
             listener.serviceRemoved(this, service);

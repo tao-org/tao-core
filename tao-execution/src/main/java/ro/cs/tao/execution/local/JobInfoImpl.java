@@ -2,6 +2,7 @@ package ro.cs.tao.execution.local;
 
 import org.ggf.drmaa.DrmaaException;
 import org.ggf.drmaa.JobInfo;
+import ro.cs.tao.execution.simple.Executor;
 
 import java.util.Map;
 
@@ -9,22 +10,18 @@ import java.util.Map;
  * @author Cosmin Cara
  */
 public class JobInfoImpl implements JobInfo {
-    private final Process process;
-    private int exited;
-    private int signaled;
-    private int coredump;
-    private int aborted;
-    private int exitStatus;
-    private String signal;
+    private final Executor runner;
     private String jobId;
 
-    public JobInfoImpl(Process process) {
-        this.process = process;
+    public JobInfoImpl(String jobId, Executor runner) {
+        this.jobId = jobId;
+        this.runner = runner;
     }
 
     @Override
     public String getJobId() throws DrmaaException {
-        return String.valueOf(PID.getPID(process));
+        //return String.valueOf(PID.getPID(process));
+        return jobId;
     }
 
     @Override
@@ -34,12 +31,12 @@ public class JobInfoImpl implements JobInfo {
 
     @Override
     public boolean hasExited() throws DrmaaException {
-        return this.process.exitValue() == 0;
+        return this.runner.getReturnCode() == 0;
     }
 
     @Override
     public int getExitStatus() throws DrmaaException {
-        return this.process.exitValue();
+        return this.runner.getReturnCode();
     }
 
     @Override
@@ -59,6 +56,6 @@ public class JobInfoImpl implements JobInfo {
 
     @Override
     public boolean wasAborted() throws DrmaaException {
-        return false;
+        return this.runner.isCancelled() || this.runner.isStopped();
     }
 }

@@ -1,10 +1,24 @@
-package ro.cs.tao.utils.executors;
+package ro.cs.tao.execution.simple;
 
-import com.jcraft.jsch.*;
+import com.jcraft.jsch.Channel;
+import com.jcraft.jsch.ChannelExec;
+import com.jcraft.jsch.ChannelSftp;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
+import com.jcraft.jsch.SftpATTRS;
+import com.jcraft.jsch.SftpException;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 
 /**
  * Executor class based on JSch. It uses SSH2 for remote host connection and command invocation.
@@ -15,13 +29,13 @@ public class SSHExecutor extends Executor {
 
     private SSHMode mode;
 
-    public SSHExecutor(String host, List<String> args, boolean asSU, CountDownLatch sharedCounter) {
-        super(host, args, asSU, sharedCounter);
+    public SSHExecutor(String host, List<String> args, boolean asSU) {
+        super(host, args, asSU);
         this.mode = SSHMode.EXEC;
     }
 
-    public SSHExecutor(String host, List<String> args, boolean asSU, CountDownLatch sharedCounter, SSHMode mode) {
-        super(host, args, asSU, sharedCounter);
+    public SSHExecutor(String host, List<String> args, boolean asSU, SSHMode mode) {
+        super(host, args, asSU);
         this.mode = mode;
     }
 
