@@ -16,7 +16,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -29,7 +30,7 @@ import java.util.regex.Pattern;
 /**
  * Created by cosmin on 8/7/2017.
  */
-public class DefaultToolInstaller implements ITopologyToolInstaller {
+public class DefaultToolInstaller extends TopologyToolInstaller {
     private List<ToolInstallConfig> toolInstallConfigs;
     private String installToolsRootPath;
     private NodeDescription masterNodeInfo;
@@ -46,6 +47,9 @@ public class DefaultToolInstaller implements ITopologyToolInstaller {
                 new ToolInstallersConfigHandler("tool_install_configurations"));
         this.installToolsRootPath = taoWorkingDir + "/tools_scripts/";
     }
+
+    @Override
+    public String defaultName() { return "DefaultInstaller"; }
 
     @Override
     public void setMasterNodeDescription(NodeDescription masterNodeInfo) {

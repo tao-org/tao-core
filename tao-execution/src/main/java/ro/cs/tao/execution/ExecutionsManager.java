@@ -13,10 +13,10 @@ import java.util.Set;
 public class ExecutionsManager {
 
     private static ExecutionsManager instance = new ExecutionsManager();
-    private ServiceRegistry<IExecutor> registry;
-    private Set<IExecutor> services;
+    private ServiceRegistry<Executor> registry;
+    private Set<Executor> services;
     private ExecutionsManager() {
-        this.registry = ServiceRegistryManager.getInstance().getServiceRegistry(IExecutor.class);
+        this.registry = ServiceRegistryManager.getInstance().getServiceRegistry(Executor.class);
         services = this.registry.getServices();
         services.stream().forEach(x -> x.initialize());
     }
@@ -26,18 +26,18 @@ public class ExecutionsManager {
     }
 
     public void execute(ExecutionTask task) {
-        IExecutor executor = getExecutor(task);
+        Executor executor = getExecutor(task);
         executor.execute(task);
     }
 
     public void stop(ExecutionTask task) {
-        IExecutor executor = getExecutor(task);
+        Executor executor = getExecutor(task);
         executor.stop(task);
     }
 
-    private IExecutor getExecutor(ExecutionTask task) {
+    private Executor getExecutor(ExecutionTask task) {
 
-        Optional<IExecutor> optional = services.stream()
+        Optional<Executor> optional = services.stream()
                 .filter(x -> x.supports(task.getProcessingComponent()))
                 .findFirst();
         if(optional.isPresent()) {

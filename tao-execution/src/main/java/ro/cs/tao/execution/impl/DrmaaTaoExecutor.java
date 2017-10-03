@@ -1,12 +1,17 @@
 package ro.cs.tao.execution.impl;
 
-import org.ggf.drmaa.*;
+import org.ggf.drmaa.DrmaaException;
+import org.ggf.drmaa.InternalException;
+import org.ggf.drmaa.InvalidJobException;
+import org.ggf.drmaa.JobTemplate;
+import org.ggf.drmaa.Session;
+import org.ggf.drmaa.SessionFactory;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.component.execution.ExecutionStatus;
-import ro.cs.tao.execution.ExecutionException;
-import ro.cs.tao.execution.IExecutor;
 import ro.cs.tao.component.execution.ExecutionTask;
+import ro.cs.tao.execution.ExecutionException;
+import ro.cs.tao.execution.Executor;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
@@ -22,7 +27,7 @@ import java.util.regex.Pattern;
 /**
  * Created by cosmin on 9/12/2017.
  */
-public class DrmaaTaoExecutor implements IExecutor {
+public class DrmaaTaoExecutor extends Executor {
     protected Logger logger = Logger.getLogger(DrmaaTaoExecutor.class.getName());
 
     private static final int TIMER_PERIOD = 1000;
@@ -190,6 +195,9 @@ public class DrmaaTaoExecutor implements IExecutor {
             throw new ExecutionException("Unable to save execution state in the database", e);
         }
     }
+
+    @Override
+    public String defaultName() { return "DRMAAExecutor"; }
 
     private class ExecutionsCheckTimer extends TimerTask {
         private DrmaaTaoExecutor executor;

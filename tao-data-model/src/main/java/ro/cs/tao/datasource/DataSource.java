@@ -1,6 +1,7 @@
 package ro.cs.tao.datasource;
 
 import org.apache.http.auth.UsernamePasswordCredentials;
+import ro.cs.tao.component.Identifiable;
 import ro.cs.tao.datasource.param.ParameterDescriptor;
 
 import java.util.Map;
@@ -8,67 +9,68 @@ import java.util.Map;
 /**
  * @author Cosmin Cara
  */
-public interface DataSource<Q extends DataQuery> {
+public abstract class DataSource<Q extends DataQuery> extends Identifiable {
+
     /**
      * Returns the timeout for this data source connection
      */
-    long getTimeout();
+    public abstract long getTimeout();
     /**
      * Sets the timeout for this data source connection
      * @param value     The timeout value in milliseconds
      */
-    void setTimeout(long value);
+    public abstract void setTimeout(long value);
     /**
      * Returns the connection string for this data source.
      * In the case of a remote data source, it is the base url of the remote endpoint.
      * In the case of a database data source, it is the connection string of the database.
      */
-    String getConnectionString();
+    public abstract String getConnectionString();
     /**
      * Sets the connection string for this data source.
      * @param connectionString      The connection string
      */
-    void setConnectionString(String connectionString);
+    public abstract void setConnectionString(String connectionString);
     /**
      * Sets the credentials needed to connect to this data source
      * @param username  The user id
      * @param password  The user password
      */
-    void setCredentials(String username, String password);
+    public abstract void setCredentials(String username, String password);
     /**
      * Gets the credentials set for this data source.
      */
-    UsernamePasswordCredentials getCredentials();
+    public abstract UsernamePasswordCredentials getCredentials();
     /**
      * Tests that the datasource source is reachable.
      * Must return <code>true</code> if the source is reachable, <code>false</code> otherwise.
      */
-    boolean ping();
+    public abstract boolean ping();
     /**
      * Closes the data source connection.
      */
-    void close();
+    public abstract void close();
     /**
      * Returns the sensors (product types) supported by this data source
      */
-    String[] getSupportedSensors();
+    public abstract String[] getSupportedSensors();
     /**
      * Returns a the query parameters for each sensor supported by this data source
      */
-    Map<String, Map<String, ParameterDescriptor>> getSupportedParameters();
+    public abstract Map<String, Map<String, ParameterDescriptor>> getSupportedParameters();
     /**
      * Creates a query object that can be used to look for products in this data source.
      * This is intended to be used on single product type data source.
      */
-    default Q createQuery() { return createQuery(null); }
+    public Q createQuery() { return createQuery(null); }
     /**
      * Creates a query object that can be used to look for products of the given type in this data source.
      * @param sensorName  The sensor id
      */
-    Q createQuery(String sensorName);
+    public abstract Q createQuery(String sensorName);
     /**
      * Retrieves the fetch strategy for products of the given sensor id
      * @param sensorName    The sensor id
      */
-    ProductFetchStrategy getProductFetchStrategy(String sensorName);
+    public abstract ProductFetchStrategy getProductFetchStrategy(String sensorName);
 }
