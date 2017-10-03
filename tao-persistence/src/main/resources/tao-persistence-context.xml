@@ -11,7 +11,9 @@
 	http://www.springframework.org/schema/tx/spring-tx.xsd">
 
 	<context:component-scan base-package="ro.cs.tao.persistence" />
+	<!-- Sets annotation-configured context -->
 	<context:annotation-config />
-	<tx:annotation-driven />
+	<!-- Sets annotation-driven transactions -->
+	<tx:annotation-driven transaction-manager="transactionManager"/>
 
 </beans>
