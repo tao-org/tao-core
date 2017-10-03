@@ -1,4 +1,4 @@
-package ro.cs.tao.execution.simple;
+package ro.cs.tao.utils.executors;
 
 /**
  * @author Cosmin Cara

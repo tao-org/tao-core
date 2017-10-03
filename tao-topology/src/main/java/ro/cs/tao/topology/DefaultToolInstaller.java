@@ -130,7 +130,7 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
         }
         if (job != null) {
             OutputConsumer consumer = new StepExecutionOutputConsumer(curStep);
-            return Executor.execute(consumer, 10, job);
+            return Executor.execute(consumer, 10, job).getReturnCode();
         }
         return ToolInvocationCodes.INVALID_INVOCATION_TYPE;
     }

@@ -1,4 +1,4 @@
-package ro.cs.tao.execution.simple;
+package ro.cs.tao.utils.executors;
 
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelExec;

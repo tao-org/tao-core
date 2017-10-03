@@ -1,4 +1,4 @@
-package ro.cs.tao.execution.simple;
+package ro.cs.tao.utils.executors;
 
 import java.io.IOException;
 import java.time.Duration;

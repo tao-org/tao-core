@@ -2,7 +2,7 @@ package ro.cs.tao.execution.local;
 
 import org.ggf.drmaa.DrmaaException;
 import org.ggf.drmaa.JobInfo;
-import ro.cs.tao.execution.simple.Executor;
+import ro.cs.tao.utils.executors.Executor;
 
 import java.util.Map;
 

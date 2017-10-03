@@ -12,14 +12,14 @@ import org.ggf.drmaa.Session;
 import org.ggf.drmaa.SessionFactory;
 import org.ggf.drmaa.SimpleJobTemplate;
 import org.ggf.drmaa.Version;
-import ro.cs.tao.execution.simple.ExecutionUnit;
-import ro.cs.tao.execution.simple.Executor;
-import ro.cs.tao.execution.simple.ExecutorType;
-import ro.cs.tao.execution.simple.SSHMode;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.topology.TopologyManager;
+import ro.cs.tao.utils.executors.ExecutionUnit;
+import ro.cs.tao.utils.executors.Executor;
+import ro.cs.tao.utils.executors.ExecutorType;
+import ro.cs.tao.utils.executors.SSHMode;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
