@@ -1,4 +1,4 @@
-package ro.cs.tao.execution.impl;
+package ro.cs.tao.execution.drmaa;
 
 import org.ggf.drmaa.DrmaaException;
 import org.ggf.drmaa.InternalException;

@@ -1,4 +1,4 @@
-package ro.cs.tao.utils.executors;
+package ro.cs.tao.execution.simple;
 
 /**
  * The types of supported executors.

@@ -1,4 +1,4 @@
-package ro.cs.tao.utils.executors;
+package ro.cs.tao.execution.simple;
 
 import java.util.List;
 

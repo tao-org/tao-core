@@ -1,4 +1,4 @@
-package ro.cs.tao.utils.executors;
+package ro.cs.tao.execution.simple;
 
 import java.io.BufferedReader;
 import java.io.Closeable;
@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 
 /**
  * Executes a process with given arguments.
@@ -15,8 +14,8 @@ import java.util.concurrent.CountDownLatch;
  */
 public class ProcessExecutor extends Executor {
 
-    public ProcessExecutor(String nodeName, List<String> args, boolean asSU, CountDownLatch sharedCounter) {
-        super(nodeName, args, asSU, sharedCounter);
+    public ProcessExecutor(String nodeName, List<String> args, boolean asSU) {
+        super(nodeName, args, asSU);
     }
 
     @Override

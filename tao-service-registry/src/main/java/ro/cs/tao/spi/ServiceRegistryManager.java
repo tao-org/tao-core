@@ -16,7 +16,6 @@
 
 package ro.cs.tao.spi;
 
-import ro.cs.tao.component.Identifiable;
 import ro.cs.tao.utils.Assert;
 
 import java.util.HashMap;
@@ -44,7 +43,7 @@ public class ServiceRegistryManager {
         ServiceRegistryManager.instance = instance;
     }
 
-    public <T extends Identifiable> ServiceRegistry<T> getServiceRegistry(Class<T> serviceType) {
+    public <T> ServiceRegistry<T> getServiceRegistry(Class<T> serviceType) {
         Assert.notNull(serviceType, "serviceType");
         ServiceRegistry<T> serviceRegistry = serviceRegistries.get(serviceType);
         if (serviceRegistry == null) {
@@ -54,11 +53,11 @@ public class ServiceRegistryManager {
         return serviceRegistry;
     }
 
-    public <T extends Identifiable> void setServiceRegistry(Class<T> serviceType, ServiceRegistry<T> serviceRegistry) {
+    public <T> void setServiceRegistry(Class<T> serviceType, ServiceRegistry<T> serviceRegistry) {
         serviceRegistries.put(serviceType, serviceRegistry);
     }
 
-    protected <T extends Identifiable> ServiceRegistry<T> createServiceRegistry(Class<T> serviceType) {
+    protected <T> ServiceRegistry<T> createServiceRegistry(Class<T> serviceType) {
         Assert.notNull(serviceType, "serviceType");
         return new DefaultServiceRegistry<>(serviceType);
     }
