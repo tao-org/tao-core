@@ -703,6 +703,29 @@ public class PersistenceManager {
         return componentEnt;
     }
 
+    @Transactional
+    public ProcessingComponent deleteProcessingComponent(final String id) throws PersistenceException
+    {
+        // check method parameters
+        if (id == null || id.isEmpty())
+        {
+            throw new PersistenceException("Invalid parameters were provided for deleting processing component (id\""+ String.valueOf(id) +"\") !");
+        }
+
+        // retrieve ProcessingComponent after its id
+        final ProcessingComponent componentEnt = processingComponentRepository.findById(id);
+        if (componentEnt == null)
+        {
+            throw new PersistenceException("There is no processing component with the specified id: " + id);
+        }
+
+        // deactivate the processing component
+        componentEnt.setActive(false);
+
+        // save it
+        return processingComponentRepository.save(componentEnt);
+    }
+
     private boolean checkExecutionJob(ExecutionJob job, boolean existingEntity)
     {
         if(job == null)
