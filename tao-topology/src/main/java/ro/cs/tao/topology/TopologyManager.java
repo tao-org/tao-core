@@ -1,8 +1,8 @@
 package ro.cs.tao.topology;
 
-import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.spi.ServiceLoader;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
@@ -21,7 +21,7 @@ public class TopologyManager implements ITopologyManager {
 
     protected Logger logger = Logger.getLogger(TopologyManager.class.getName());
     private NodeDescription masterNodeInfo;
-    private Set<ITopologyToolInstaller> installers;
+    private Set<TopologyToolInstaller> installers;
     private PersistenceManager persistenceManager = SpringContextBridge.services().getPersistenceManager();
 
     static {
@@ -34,7 +34,7 @@ public class TopologyManager implements ITopologyManager {
 
         // load all services for tool installers and initialize the master node info
         ServiceRegistryManager serviceRegistryManager = ServiceRegistryManager.getInstance();
-        ServiceRegistry<ITopologyToolInstaller> installersRegistry = serviceRegistryManager.getServiceRegistry(ITopologyToolInstaller.class);
+        ServiceRegistry<TopologyToolInstaller> installersRegistry = serviceRegistryManager.getServiceRegistry(TopologyToolInstaller.class);
         ServiceLoader.loadServices(installersRegistry);
         this.installers = installersRegistry.getServices();
 
@@ -64,14 +64,14 @@ public class TopologyManager implements ITopologyManager {
     @Override
     public void add(NodeDescription info) throws TopologyException {
         // execute all the installers
-        for (ITopologyToolInstaller installer: installers) {
+        for (TopologyToolInstaller installer: installers) {
             installer.installNewNode(info);
         }
         try {
             persistenceManager.saveExecutionNode(info);
         } catch (PersistenceException e) {
             logger.severe("Cannot save node description to database. Rolling back installation on node " + info.getHostName() + "...");
-            for (ITopologyToolInstaller installer: installers) {
+            for (TopologyToolInstaller installer: installers) {
                 installer.uninstallNode(info);
             }
             throw new TopologyException(e);
@@ -85,7 +85,7 @@ public class TopologyManager implements ITopologyManager {
             throw new TopologyException(String.format("Node [%s] does not exist", hostName));
         }
         // execute all the installers
-        for (ITopologyToolInstaller installer: installers) {
+        for (TopologyToolInstaller installer: installers) {
             installer.uninstallNode(node);
         }
         try {
@@ -99,7 +99,7 @@ public class TopologyManager implements ITopologyManager {
     @Override
     public void update(NodeDescription nodeInfo) {
         // execute all the installers
-        for (ITopologyToolInstaller installer: installers) {
+        for (TopologyToolInstaller installer: installers) {
             installer.editNode(nodeInfo);
         }
         try {
@@ -112,7 +112,7 @@ public class TopologyManager implements ITopologyManager {
 
     public void setMasterNodeInfo(NodeDescription masterNodeInfo) {
         this.masterNodeInfo = masterNodeInfo;
-        for (ITopologyToolInstaller installer: this.installers) {
+        for (TopologyToolInstaller installer: this.installers) {
             installer.setMasterNodeDescription(masterNodeInfo);
         }
     }

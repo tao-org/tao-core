@@ -16,6 +16,7 @@
 
 package ro.cs.tao.spi;
 
+import ro.cs.tao.component.Identifiable;
 import ro.cs.tao.utils.Assert;
 
 import java.util.ArrayList;
@@ -33,16 +34,18 @@ import java.util.stream.StreamSupport;
 /**
  * {@inheritDoc}
  */
-public class DefaultServiceRegistry<T> implements ServiceRegistry<T> {
+public class DefaultServiceRegistry<T extends Identifiable> implements ServiceRegistry<T> {
 
     private final Class<T> serviceType;
     private final HashMap<String, T> services;
+    private final HashMap<String, String> serviceIds;
     private final ArrayList<ServiceRegistryListener<T>> listeners;
 
     public DefaultServiceRegistry(Class<T> serviceType) {
         Assert.notNull(serviceType, "serviceType");
         this.serviceType = serviceType;
         this.services = new HashMap<>(10);
+        this.serviceIds = new HashMap<>(10);
         this.listeners = new ArrayList<>(3);
         ServiceLoader.loadServices(this);
     }
@@ -86,8 +89,8 @@ public class DefaultServiceRegistry<T> implements ServiceRegistry<T> {
      * {@inheritDoc}
      */
     @Override
-    public T getService(String className) {
-        return services.get(className);
+    public T getService(String serviceName) {
+        return services.get(serviceIds.get(serviceName));
     }
 
     /**
@@ -99,6 +102,8 @@ public class DefaultServiceRegistry<T> implements ServiceRegistry<T> {
         final T existingService = services.put(service.getClass().getName(), service);
         if (existingService != null && existingService.getClass().equals(service.getClass())) {
             return false;
+        } else {
+            serviceIds.put(service.getId(), service.getClass().getName());
         }
         for (ServiceRegistryListener<T> listener : listeners) {
             listener.serviceAdded(this, service);
@@ -115,6 +120,8 @@ public class DefaultServiceRegistry<T> implements ServiceRegistry<T> {
         final T existingService = services.remove(service.getClass().getName());
         if (existingService != service) {
             return false;
+        } else {
+            serviceIds.remove(service.getId());
         }
         for (ServiceRegistryListener<T> listener : listeners) {
             listener.serviceRemoved(this, service);
