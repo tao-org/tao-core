@@ -73,7 +73,7 @@ public abstract class SessionFactory {
      * class name.
      */
     private static final String SESSION_PROPERTY =
-            "org.ggf.SessionFactory";
+            "org.ggf.drmaa.SessionFactory";
     
     /**
      * Gets a Session instance appropriate for the DRM in use.

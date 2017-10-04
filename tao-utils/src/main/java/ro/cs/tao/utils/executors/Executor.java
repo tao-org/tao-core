@@ -1,8 +1,6 @@
 package ro.cs.tao.utils.executors;
 
 import java.io.IOException;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -160,27 +158,17 @@ public abstract class Executor implements Runnable {
 
     @Override
     public void run() {
-        Instant start = Instant.now();
         try {
             isStopped = isSuspended = false;
             retCode = execute(true);
-            logger.info(String.format("[[%s]] completed %s", host, retCode == 0 ? "OK" : "NOK (code " + String.valueOf(retCode) + ")"));
-            if (this.counter != null) {
-                counter.countDown();
-                logger.info(String.format("Active nodes: %s", this.counter.getCount()));
-            }
         } catch (Exception e) {
             retCode = -255;
-            logger.severe(String.format("[[%s]] produced an error: %s", host, e.getMessage()));
+            logger.severe(e.getMessage());
         } finally {
+            if (this.counter != null) {
+                counter.countDown();
+            }
             isStopped = true;
-            Instant end = Instant.now();
-            long seconds = Duration.between(start, end).getSeconds();
-            long hours = seconds / 3600;
-            seconds -= hours * 3600;
-            long minutes = seconds / 60;
-            seconds -= minutes * 60;
-            logger.info(String.format("[[%s]] Execution took %02dh%02dm%02ds", host, hours, minutes, seconds));
         }
     }
 

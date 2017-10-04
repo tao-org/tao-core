@@ -19,7 +19,6 @@ import org.ggf.drmaa.Version;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.topology.NodeDescription;
-import ro.cs.tao.topology.TopologyManager;
 import ro.cs.tao.utils.executors.ExecutionUnit;
 import ro.cs.tao.utils.executors.Executor;
 import ro.cs.tao.utils.executors.ExecutorType;
@@ -54,18 +53,12 @@ public class SessionImpl implements Session {
     private AtomicInteger nodeCounter;
     private Logger logger = Logger.getLogger(SessionImpl.class.getName());
 
+    public void setNodes(NodeDescription[] nodes) { this.nodes = nodes; }
+
     @Override
     public void init(String contact) throws DrmaaException {
         synchronized (this) {
             this.initialized = true;
-            final List<NodeDescription> list = TopologyManager.getInstance().list();
-            if (list != null) {
-                int size = list.size();
-                this.nodes = new NodeDescription[size];
-                for (int i = 0; i < size; i++) {
-                    this.nodes[i] = list.get(i);
-                }
-            }
             try {
                 final InetAddress inetAddress = InetAddress.getLocalHost();
                 final String hostName = inetAddress.getHostName();
@@ -103,7 +96,18 @@ public class SessionImpl implements Session {
     @Override
     public JobTemplate createJobTemplate() throws DrmaaException {
         checkSession();
-        JobTemplate jobTemplate = new SimpleJobTemplate();
+        JobTemplate jobTemplate = new SimpleJobTemplate() {
+            private long softTimeLimit;
+            @Override
+            public void setSoftRunDurationLimit(long softRunDurationLimit) throws DrmaaException {
+                this.softTimeLimit = softRunDurationLimit;
+            }
+
+            @Override
+            public long getSoftRunDurationLimit() throws DrmaaException {
+                return this.softTimeLimit;
+            }
+        };
         jobTemplate.setJobName(UUID.randomUUID().toString());
         this.jobTemplates.put(jobTemplate.getJobName(), jobTemplate);
         return jobTemplate;
@@ -168,18 +172,16 @@ public class SessionImpl implements Session {
                 runner.suspend();
                 break;
             case TERMINATE:
-                if (runner.isRunning()) {
-                    runner.stop();
-                }
+                runner.stop();
                 break;
             case RELEASE:
-                if (!runner.isRunning()) {
+                if (!runner.isSuspended()) {
                     throw new ReleaseInconsistentStateException();
                 }
                 runner.resume();
                 break;
             case RESUME:
-                if (!runner.isRunning()) {
+                if (!runner.isSuspended()) {
                     throw new ResumeInconsistentStateException();
                 }
                 runner.resume();
@@ -201,23 +203,29 @@ public class SessionImpl implements Session {
             }
             runners.add(runner);
         }
-        final CountDownLatch singleLatch = new CountDownLatch(runners.size());
-        final ExecutorService threadPool = Executors.newCachedThreadPool();
-        final boolean[] timeoutOccured = { false };
-        runners.stream()
-                .map(Executor::getWaitObject)
-                .forEach(w -> threadPool.execute(() -> {
-                    try {
-                        w.await(timeout, TimeUnit.SECONDS);
-                    } catch (InterruptedException e) {
-                        timeoutOccured[0] = true;
-                        logger.warning(e.getMessage());
-                    } finally {
-                        singleLatch.countDown();
-                    }
-                }));
-        if (timeoutOccured[0]) {
-            throw new ExitTimeoutException();
+        try {
+            final CountDownLatch singleLatch = new CountDownLatch(runners.size());
+            final ExecutorService threadPool = Executors.newCachedThreadPool();
+            final boolean[] timeoutOccured = {false};
+            runners.stream()
+                    .map(Executor::getWaitObject)
+                    .forEach(w -> threadPool.execute(() -> {
+                        try {
+                            w.await(timeout, TimeUnit.SECONDS);
+                        } catch (InterruptedException e) {
+                            timeoutOccured[0] = true;
+                            logger.warning(e.getMessage());
+                        } finally {
+                            singleLatch.countDown();
+                        }
+                    }));
+            if (timeoutOccured[0]) {
+                throw new ExitTimeoutException();
+            }
+        } finally {
+            for (Object obj : jobIds) {
+                this.runningJobs.remove(obj);
+            }
         }
     }
 
@@ -228,16 +236,21 @@ public class SessionImpl implements Session {
         if (runner == null) {
             throw new InvalidJobException();
         }
-        final CountDownLatch waitObject = runner.getWaitObject();
         try {
-            waitObject.await(timeout, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            logger.warning(e.getMessage());
+            final CountDownLatch waitObject = runner.getWaitObject();
+            try {
+                waitObject.await(timeout, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                logger.warning(e.getMessage());
+            }
+            if (!runner.hasCompleted()) {
+                runner.stop();
+                throw new ExitTimeoutException(jobId);
+            }
+            return new JobInfoImpl(jobId, runner);
+        } finally {
+            this.runningJobs.remove(jobId);
         }
-        if (!runner.hasCompleted()) {
-            throw new ExitTimeoutException(jobId);
-        }
-        return new JobInfoImpl(jobId, runner);
     }
 
     @Override
@@ -266,7 +279,7 @@ public class SessionImpl implements Session {
     @Override
     public String getDrmSystem() {
         List<String> drmFactories = new ArrayList<>();
-        drmFactories.add(SessionFactoryImpl.class.getPackage().getName());
+        //drmFactories.add(SessionFactoryImpl.class.getPackage().getName());
         if (!this.initialized) {
             ServiceRegistry<SessionFactory> serviceRegistry =
                     ServiceRegistryManager.getInstance().getServiceRegistry(SessionFactory.class);
