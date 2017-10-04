@@ -3,14 +3,18 @@ package ro.cs.tao.execution.local;
 import org.ggf.drmaa.DeniedByDrmException;
 import org.ggf.drmaa.DrmaaException;
 import org.ggf.drmaa.ExitTimeoutException;
+import org.ggf.drmaa.HoldInconsistentStateException;
 import org.ggf.drmaa.InvalidJobException;
 import org.ggf.drmaa.InvalidJobTemplateException;
 import org.ggf.drmaa.JobInfo;
 import org.ggf.drmaa.JobTemplate;
 import org.ggf.drmaa.NoActiveSessionException;
+import org.ggf.drmaa.ReleaseInconsistentStateException;
+import org.ggf.drmaa.ResumeInconsistentStateException;
 import org.ggf.drmaa.Session;
 import org.ggf.drmaa.SessionFactory;
 import org.ggf.drmaa.SimpleJobTemplate;
+import org.ggf.drmaa.SuspendInconsistentStateException;
 import org.ggf.drmaa.Version;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
@@ -145,7 +149,42 @@ public class SessionImpl implements Session {
 
     @Override
     public void control(String jobId, int action) throws DrmaaException {
-
+        checkSession();
+        Executor runner = this.runningJobs.get(jobId);
+        if (runner == null) {
+            throw new InvalidJobException();
+        }
+        switch (action) {
+            case HOLD:
+                if (!runner.isRunning()) {
+                    throw new HoldInconsistentStateException();
+                }
+                runner.suspend();
+                break;
+            case SUSPEND:
+                if (!runner.isRunning()) {
+                    throw new SuspendInconsistentStateException();
+                }
+                runner.suspend();
+                break;
+            case TERMINATE:
+                if (runner.isRunning()) {
+                    runner.stop();
+                }
+                break;
+            case RELEASE:
+                if (!runner.isRunning()) {
+                    throw new ReleaseInconsistentStateException();
+                }
+                runner.resume();
+                break;
+            case RESUME:
+                if (!runner.isRunning()) {
+                    throw new ResumeInconsistentStateException();
+                }
+                runner.resume();
+                break;
+        }
     }
 
     @Override
@@ -209,9 +248,9 @@ public class SessionImpl implements Session {
             throw new InvalidJobException();
         }
         return runner.isRunning() ? RUNNING :
-                runner.hasCompleted() ? DONE :
-                        runner.isStopped() || runner.isCancelled() ? USER_SYSTEM_SUSPENDED :
-                                runner.getReturnCode() != 0 ? FAILED : UNDETERMINED;
+                runner.isSuspended() ? USER_SYSTEM_SUSPENDED :
+                    runner.hasCompleted() ? DONE :
+                            runner.getReturnCode() != 0 ? FAILED : UNDETERMINED;
     }
 
     @Override

@@ -13,6 +13,7 @@ import java.util.List;
  * @author Cosmin Cara
  */
 public class ProcessExecutor extends Executor {
+    private Process process;
 
     public ProcessExecutor(String nodeName, List<String> args, boolean asSU) {
         super(nodeName, args, asSU);
@@ -20,22 +21,22 @@ public class ProcessExecutor extends Executor {
 
     @Override
     public int execute(boolean logMessages) throws IOException, InterruptedException {
-        Process process = null;
         BufferedReader outReader = null;
-        int ret = -1;
+        int ret = 0x80000000;
         try {
-            logger.info("[[" + host + "]] " + String.join(" ", arguments));
+            this.logger.info("[" + this.host + "] " + String.join(" ", arguments));
+            resetProcess();
             ProcessBuilder pb = new ProcessBuilder(arguments);
             //redirect the error of the tool to the standard output
             pb.redirectErrorStream(true);
             pb.environment().putAll(System.getenv());
             //start the process
-            process = pb.start();
+            this.process = pb.start();
             //get the process output
-            InputStream inputStream = process.getInputStream();
+            InputStream inputStream = this.process.getInputStream();
             outReader = new BufferedReader(new InputStreamReader(inputStream));
             while (!isStopped()) {
-                while (!isStopped && outReader.ready()) {
+                while (!this.isStopped && outReader.ready()) {
                     //read the process output line by line
                     String line = outReader.readLine();
                     //consume the line if possible
@@ -49,7 +50,7 @@ public class ProcessExecutor extends Executor {
                     }
                 }
                 // check if the project finished execution
-                if (!process.isAlive()) {
+                if (!this.process.isAlive()) {
                     //isStopped the loop
                     stop();
                 } else {
@@ -57,34 +58,53 @@ public class ProcessExecutor extends Executor {
                     Thread.yield();
                 }
             }
-            ret = process.exitValue();
+            ret = this.process.exitValue();
         } catch (IOException e) {
-            logger.severe(String.format("[[%s]] failed: %s", host, e.getMessage()));
-            wasCancelled = true;
+            this.logger.severe(String.format("[[%s]] failed: %s", host, e.getMessage()));
+            this.isStopped = true;
             throw e;
         } finally {
-            if (process != null) {
-                // if the process is still running, force it to isStopped
-                if (process.isAlive()) {
-                    //destroy the process
-                    process.destroyForcibly();
-                }
-                try {
-                    //wait for the project to end.
-                    ret = process.waitFor();
-                } catch (InterruptedException ignored) {
-                }
-
-                //close the reader
-                closeStream(outReader);
-                //close all streams
-                closeStream(process.getErrorStream());
-                closeStream(process.getInputStream());
-                closeStream(process.getOutputStream());
-            }
+            closeStream(outReader);
+            resetProcess();
         }
-
         return ret;
+    }
+
+    @Override
+    public void suspend() {
+        super.suspend();
+        ProcessHelper.suspend(this.process);
+    }
+
+    @Override
+    public void resume() {
+        super.resume();
+        ProcessHelper.resume(this.process);
+    }
+
+    @Override
+    public void stop() {
+        super.stop();
+        ProcessHelper.terminate(this.process);
+    }
+
+    private void resetProcess() {
+        if (this.process != null) {
+            // if the process is still running, force it to isStopped
+            if (this.process.isAlive()) {
+                //destroy the process
+                this.process.destroyForcibly();
+            }
+            try {
+                //wait for the project to end.
+                this.process.waitFor();
+            } catch (InterruptedException ignored) {
+            }
+            //close all streams
+            closeStream(this.process.getErrorStream());
+            closeStream(this.process.getInputStream());
+            closeStream(this.process.getOutputStream());
+        }
     }
 
     private void closeStream(Closeable stream) {

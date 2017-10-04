@@ -19,10 +19,8 @@ public abstract class Executor implements Runnable {
     public static final String SHELL_COMMAND_SEPARATOR_AMP = "&&";
     public static final String SHELL_COMMAND_SEPARATOR_BAR = "||";
     private static final ExecutorService executorService;
-    private static final Logger mainLogger;
 
     static {
-        mainLogger = Logger.getLogger(Executor.class.getSimpleName());
         executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     }
 
@@ -30,8 +28,7 @@ public abstract class Executor implements Runnable {
     String user;
     String password;
     volatile boolean isStopped;
-    volatile boolean wasCancelled;
-    volatile boolean isRunning;
+    volatile boolean isSuspended;
     List<String> arguments;
     Logger logger;
     boolean asSuperUser;
@@ -114,7 +111,7 @@ public abstract class Executor implements Runnable {
      */
     Executor(String host, List<String> args, boolean asSU) {
         this.isStopped = false;
-        this.wasCancelled = false;
+        this.isSuspended = false;
         this.host = host;
         this.arguments = args;
         this.counter = new CountDownLatch(1);
@@ -127,14 +124,10 @@ public abstract class Executor implements Runnable {
      */
     public int getReturnCode() { return this.retCode; }
 
-    private String getHost() { return this.host; }
-
     /**
      * Signals the stop of the execution.
      */
-    void stop() {
-        this.isStopped = true;
-    }
+    public void stop() { this.isStopped = true; }
 
     /**
      * Checks if the process is/has stopped.
@@ -143,9 +136,13 @@ public abstract class Executor implements Runnable {
         return this.isStopped;
     }
 
-    public boolean isCancelled() { return this.wasCancelled; }
+    public void suspend() { this.isSuspended = true; }
 
-    public boolean isRunning() { return this.isRunning; }
+    public void resume() { this.isSuspended = false; }
+
+    public boolean isSuspended() { return this.isSuspended; };
+
+    public boolean isRunning() { return !this.isStopped && !this.isSuspended; }
 
     public boolean hasCompleted() { return this.retCode != Integer.MAX_VALUE; }
 
@@ -165,7 +162,7 @@ public abstract class Executor implements Runnable {
     public void run() {
         Instant start = Instant.now();
         try {
-            isRunning = true;
+            isStopped = isSuspended = false;
             retCode = execute(true);
             logger.info(String.format("[[%s]] completed %s", host, retCode == 0 ? "OK" : "NOK (code " + String.valueOf(retCode) + ")"));
             if (this.counter != null) {
@@ -176,7 +173,7 @@ public abstract class Executor implements Runnable {
             retCode = -255;
             logger.severe(String.format("[[%s]] produced an error: %s", host, e.getMessage()));
         } finally {
-            isRunning = false;
+            isStopped = true;
             Instant end = Instant.now();
             long seconds = Duration.between(start, end).getSeconds();
             long hours = seconds / 3600;

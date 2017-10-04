@@ -12,7 +12,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  */
-package ro.cs.tao.execution.local.win;
+package ro.cs.tao.utils.executors.win;
 
 /**
  * @author Cosmin Cara

@@ -20,7 +20,7 @@ public class JobInfoImpl implements JobInfo {
 
     @Override
     public String getJobId() throws DrmaaException {
-        //return String.valueOf(PID.getPID(process));
+        //return String.valueOf(ProcessHelper.getPID(process));
         return jobId;
     }
 
@@ -56,6 +56,6 @@ public class JobInfoImpl implements JobInfo {
 
     @Override
     public boolean wasAborted() throws DrmaaException {
-        return this.runner.isCancelled() || this.runner.isStopped();
+        return this.runner.isStopped();
     }
 }
