@@ -52,15 +52,20 @@ public class ProcessExecutor extends Executor {
                 // check if the project finished execution
                 if (!this.process.isAlive()) {
                     //isStopped the loop
-                    stop();
+                    super.stop();
                 } else {
                     //yield the control to other threads
                     Thread.yield();
                 }
             }
+            try {
+                //wait for the project to end.
+                this.process.waitFor();
+            } catch (InterruptedException ignored) {
+            }
             ret = this.process.exitValue();
-        } catch (IOException e) {
-            this.logger.severe(String.format("[[%s]] failed: %s", host, e.getMessage()));
+        } catch (Exception e) {
+            this.logger.severe(String.format("[%s] failed: %s", host, e.getMessage()));
             this.isStopped = true;
             throw e;
         } finally {

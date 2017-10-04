@@ -53,7 +53,9 @@ public final class ProcessHelper {
                 Win32Api.HANDLE h = new Win32Api.HANDLE();
                 h.setPointer(Pointer.createConstant(handle));
                 ntDll.NtSuspendProcess(h);
-            } catch (Throwable ignored) { }
+            } catch (Throwable ignored) {
+                ignored.printStackTrace();
+            }
         } else if (SystemUtils.IS_OS_LINUX) {
             try {
                 Runtime.getRuntime().exec(String.format(LINUX_SUSPEND, getPID(process)));
