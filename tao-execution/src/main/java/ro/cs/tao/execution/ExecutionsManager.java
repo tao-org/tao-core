@@ -35,6 +35,16 @@ public class ExecutionsManager {
         executor.stop(task);
     }
 
+    public void suspend(ExecutionTask task) {
+        Executor executor = getExecutor(task);
+        executor.suspend(task);
+    }
+
+    public void resume(ExecutionTask task) {
+        Executor executor = getExecutor(task);
+        executor.resume(task);
+    }
+
     private Executor getExecutor(ExecutionTask task) {
 
         Optional<Executor> optional = services.stream()

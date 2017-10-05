@@ -1,1 +1,2 @@
 ro.cs.tao.execution.local.SessionFactoryImpl
+com.sun.grid.drmaa.SessionFactoryImpl

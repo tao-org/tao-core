@@ -851,10 +851,11 @@ public class PersistenceManager {
         }
 
         // check if there is already task with the same resource identifier
-        final ExecutionTask taskWithSameResourceId = executionTaskRepository.findByResourceId(task.getResourceId());
-        if (taskWithSameResourceId != null)
-        {
-            throw new PersistenceException("There is already another task with the resource identifier: " + task.getResourceId());
+        if (task.getResourceId() != null) {
+            final ExecutionTask taskWithSameResourceId = executionTaskRepository.findByResourceId(task.getResourceId());
+            if (taskWithSameResourceId != null) {
+                throw new PersistenceException("There is already another task with the resource identifier: " + task.getResourceId());
+            }
         }
 
         task.setJob(job);
@@ -901,6 +902,28 @@ public class PersistenceManager {
           .filter(t -> (t.getExecutionStatus() == ExecutionStatus.RUNNING || t.getExecutionStatus() == ExecutionStatus.QUEUED_ACTIVE))
           .collect(Collectors.toList()));
         return runningTasks;
+    }
+
+    @Transactional(readOnly = true)
+    public ExecutionTask getTaskById(Long id) throws PersistenceException
+    {
+        final ExecutionTask existingTask = executionTaskRepository.findById(id);
+        if (existingTask == null)
+        {
+            throw new PersistenceException("There is no execution task with the given identifier: " + id);
+        }
+        return existingTask;
+    }
+
+    @Transactional(readOnly = true)
+    public ExecutionTask getTaskByResourceId(String id) throws PersistenceException
+    {
+        final ExecutionTask existingTask = executionTaskRepository.findByResourceId(id);
+        if (existingTask == null)
+        {
+            throw new PersistenceException("There is no execution task with the given resource identifier: " + id);
+        }
+        return existingTask;
     }
 
 }

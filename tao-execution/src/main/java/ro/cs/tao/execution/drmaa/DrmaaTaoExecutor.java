@@ -16,6 +16,7 @@ import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
@@ -35,17 +36,16 @@ public class DrmaaTaoExecutor extends Executor {
     /* Flag for trying to close the monitoring thread in an elegant manner */
     private Boolean isInitialized = false;
     protected Session session;
-    protected SessionFactory sessionFactory = SessionFactory.getFactory();
     private PersistenceManager persistenceManager = SpringContextBridge.services().getPersistenceManager();
-    private List<ExecutionTask> scheduledTasks = new ArrayList<>();
     @Override
     public void initialize() throws ExecutionException {
         synchronized (isInitialized) {
             if (isInitialized)
                 return;
+            // mark the executor as initialized
             isInitialized = true;
         }
-        session = sessionFactory.getSession();
+        session = SessionFactory.getFactory().getSession();
         try {
             session.init (null);
         } catch (DrmaaException e) {
@@ -54,8 +54,6 @@ public class DrmaaTaoExecutor extends Executor {
         }
         // once the session was created, start the timer
         executionsCheckTimer.schedule(new ExecutionsCheckTimer(this), 0, TIMER_PERIOD);
-        // mark the executor as initialized
-        isInitialized = true;
     }
 
     @Override
@@ -96,19 +94,22 @@ public class DrmaaTaoExecutor extends Executor {
             if (jt == null) {
                 throw new ExecutionException("Error creating job template from the session!");
             }
-            // TODO: We should create a job name specific to TAO, for job and for task name
-            //jt.setJobName();
 
             jt.setRemoteCommand (cmd);
             jt.setArgs (argsList);
             String id = session.runJob (jt);
+            if(id == null) {
+                throw new ExecutionException("Unable to run job (id null) for task " + task.getId());
+            }
+
             session.deleteJobTemplate (jt);
 
             task.setResourceId(id);
-            task.setExecutionStatus(ExecutionStatus.RUNNING);
+            task.setStartTime(LocalDateTime.now());
+            task.setExecutionStatus(ExecutionStatus.QUEUED_ACTIVE);
             persistenceManager.updateExecutionTask(task);
             logger.info("DrmaaExecutor: Succesfully submitted task with id " + id);
-        } catch (DrmaaException e) {
+        } catch (DrmaaException | InternalException e) {
             logger.severe("DrmaaExecutor: Error submitting task with id " + task.getId() + " for command " + cmd +
                         ". The exception was " + e.getMessage());
             throw new ExecutionException("Error executing DRMAA session operation", e);
@@ -130,8 +131,11 @@ public class DrmaaTaoExecutor extends Executor {
     public void suspend(ExecutionTask task) throws ExecutionException {
         try {
             session.control (task.getResourceId(), Session.SUSPEND);
+            changeTaskStatus(task, ExecutionStatus.SUSPENDED);
         } catch (DrmaaException e) {
             throw new ExecutionException("Error executing DRMAA session suspend for task with id " + task.getResourceId(), e);
+        } catch (PersistenceException e) {
+            throw new ExecutionException("Error saving suspended status for task with id " + task.getResourceId(), e);
         }
     }
 
@@ -139,12 +143,18 @@ public class DrmaaTaoExecutor extends Executor {
     public void resume(ExecutionTask task) throws ExecutionException {
         try {
             session.control (task.getResourceId(), Session.RESUME);
+            changeTaskStatus(task, ExecutionStatus.RUNNING);
         } catch (DrmaaException e) {
             throw new ExecutionException("Error executing DRMAA session resume for task with id " + task.getResourceId(), e);
+        } catch (PersistenceException e) {
+            throw new ExecutionException("Error saving resumed status for task with id " + task.getResourceId(), e);
         }
-    }
+}
 
     protected void monitorExecutions() {
+        if(!isInitialized) {
+            return;
+        }
         // check for the finished
         try {
             List<ExecutionTask> tasks = persistenceManager.getRunningTasks();
@@ -152,7 +162,8 @@ public class DrmaaTaoExecutor extends Executor {
             for (ExecutionTask task: tasks) {
                 try {
                     if(task.getResourceId() == null) {
-                        System.out.println("Null???");
+                        // ignore tasks having resourceId null
+                        continue;
                     }
                     int jobStatus = session.getJobProgramStatus(task.getResourceId());
 
@@ -165,30 +176,25 @@ public class DrmaaTaoExecutor extends Executor {
                         case Session.USER_SYSTEM_SUSPENDED:
                         case Session.UNDETERMINED:
                         case Session.QUEUED_ACTIVE:
-                        case Session.RUNNING:
                             // nothing to do
                             break;
+                        case Session.RUNNING:
+                            changeTaskStatus(task, ExecutionStatus.RUNNING);
+                            break;
                         case Session.DONE:
-                            // TODO: Get the results for the job
-                            task.setExecutionStatus(ExecutionStatus.DONE);
-                            persistenceManager.updateExecutionTask(task);
+                            // Just mark the job as finished with success status
+                            markTaskFinished(task, ExecutionStatus.DONE);
                             logger.info("DrmaaExecutor: task with id " + task.getResourceId() + " finished OK");
                             break;
                         case Session.FAILED:
-                            task.setExecutionStatus(ExecutionStatus.FAILED);
-                            persistenceManager.updateExecutionTask(task);
+                            // Just mark the job as finished with failed status
+                            markTaskFinished(task, ExecutionStatus.FAILED);
                             logger.info("DrmaaExecutor: task with id " + task.getResourceId() + " finished NOK");
                             break;
                     }
-                } catch (InvalidJobException e) {
-                    logger.severe("DrmaaExecutor: Cannot get the status for the task with " + task.getResourceId());
-                    task.setExecutionStatus(ExecutionStatus.DONE);
-                    persistenceManager.updateExecutionTask(task);
-                }
-                catch (DrmaaException | InternalException e1) {
-                    // TODO: Here we have no idea about what happened with that job. Did it finished normally or failed?
-                    // TODO: Unfortunatelly, we do not know about the results produced by that job
-                    throw new ExecutionException("Unable to save execution state in the database", e1);
+                } catch (DrmaaException | InternalException e) {
+                    logger.severe("DrmaaExecuto exception " + e.getClass().getName() + ": Cannot get the status for the task with id " + task.getResourceId());
+                    markTaskFinished(task, ExecutionStatus.DONE);
                 }
             }
         } catch (PersistenceException e) {
@@ -199,6 +205,18 @@ public class DrmaaTaoExecutor extends Executor {
     @Override
     public String defaultName() { return "DRMAAExecutor"; }
 
+    private void markTaskFinished(ExecutionTask task, ExecutionStatus status) throws PersistenceException {
+        task.setEndTime(LocalDateTime.now());
+        changeTaskStatus(task, status);
+    }
+
+    private void changeTaskStatus(ExecutionTask task, ExecutionStatus status) throws PersistenceException {
+        if(status != task.getExecutionStatus()) {
+            task.setExecutionStatus(status);
+            persistenceManager.updateExecutionTask(task);
+        }
+    }
+
     private class ExecutionsCheckTimer extends TimerTask {
         private DrmaaTaoExecutor executor;
         public ExecutionsCheckTimer(DrmaaTaoExecutor executor) {
@@ -206,7 +224,12 @@ public class DrmaaTaoExecutor extends Executor {
         }
         @Override
         public void run() {
-            executor.monitorExecutions();
+            try {
+                executor.monitorExecutions();
+            } catch (ExecutionException e) {
+                logger.severe("DrmaaExecutor: Error during monitoring executions " + e.getMessage());
+            }
+
         }
     }
 }
