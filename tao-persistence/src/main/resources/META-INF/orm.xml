@@ -199,6 +199,8 @@
             <basic name="active">
                 <column name="active" nullable="true" column-definition="boolean NOT NULL DEFAULT true"/>
             </basic>
+            
+            <transient name="services" />
         </attributes>
     </entity>
 
