@@ -1,7 +1,5 @@
 package ro.cs.tao.component.execution;
 
-import ro.cs.tao.component.enums.ProcessingComponentVisibility;
-
 import javax.xml.bind.annotation.XmlEnumValue;
 
 /**

@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ImportResource;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
+import ro.cs.tao.component.ParameterDescriptor;
+import ro.cs.tao.component.ParameterType;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.Variable;
 import ro.cs.tao.component.enums.ProcessingComponentVisibility;
@@ -42,6 +44,7 @@ import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.topology.NodeDescription;
 
+import java.lang.reflect.Parameter;
 import java.net.URISyntaxException;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
@@ -360,6 +363,7 @@ public class PersistenceManagerTest {
             component.setMultiThread(true);
             component.setActive(true);
 
+            // list of component variables
             List<Variable> variables = new ArrayList<>();
 
             final Variable var1 = new Variable();
@@ -373,6 +377,25 @@ public class PersistenceManagerTest {
             variables.add(var2);
 
             component.setVariables(variables);
+
+            // list of component parameters
+            List<ParameterDescriptor> parameters = new ArrayList<>();
+
+            final ParameterDescriptor param1 = new ParameterDescriptor();
+            param1.setId("testParam1");
+            param1.setType(ParameterType.REGULAR);
+            param1.setDataType(String.class);
+            param1.setLabel("Test Param 1");
+            parameters.add(param1);
+
+            final ParameterDescriptor param2 = new ParameterDescriptor();
+            param2.setId("testParam2");
+            param2.setType(ParameterType.REGULAR);
+            param2.setDataType(Integer.class);
+            param2.setLabel("Test Param 2");
+            parameters.add(param2);
+
+            component.setParameterDescriptors(parameters);
 
             component = persistenceManager.saveProcessingComponent(component);
             // check persisted component

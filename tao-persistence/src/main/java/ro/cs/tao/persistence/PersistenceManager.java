@@ -8,6 +8,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
+import ro.cs.tao.component.ParameterDescriptor;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.enums.ProcessingComponentVisibility;
 import ro.cs.tao.component.execution.ExecutionJob;
@@ -610,6 +611,13 @@ public class PersistenceManager {
         {
             throw new PersistenceException("There is already another component with the identifier: " + component.getId());
         }
+
+        // save the parameters first
+// TODO
+//        for (ParameterDescriptor parameter: component.getParameterDescriptors())
+//        {
+//
+//        }
 
         // save the new ProcessingComponent entity and return it
         return processingComponentRepository.save(component);

@@ -11,66 +11,6 @@ CREATE TABLE tao.parameter_type
 ALTER TABLE tao.parameter_type ADD CONSTRAINT PK_parameter_type
 	PRIMARY KEY (id);
 
-	
--------------------------------------------------------------------------------
--- table: parameter
-DROP TABLE IF EXISTS tao.parameter CASCADE;
-
-CREATE TABLE tao.parameter
-(
-	id bigint NOT NULL,
-	name varchar(50) NOT NULL,
-	data_type varchar(50) NOT NULL,
-	default_value varchar(250) NULL,
-	description varchar(250) NULL,
-	not_null boolean NULL,
-	not_empty boolean NULL,
-	type_id integer NULL
-);
-
-ALTER TABLE tao.parameter ADD CONSTRAINT PK_parameter
-	PRIMARY KEY (id);
-	
-ALTER TABLE tao.parameter ADD CONSTRAINT FK_parameter_parameter_type
-	FOREIGN KEY (type_id) REFERENCES tao.parameter_type (id) ON DELETE No Action ON UPDATE No Action;
-	
-
--------------------------------------------------------------------------------
--- table: parameter_parameter
-DROP TABLE IF EXISTS tao.parameter_parameter CASCADE;
-
-CREATE TABLE tao.parameter_parameter
-(
-	template_parameter_id bigint NOT NULL,
-	regular_parameter_id bigint NOT NULL
-);
-
-ALTER TABLE tao.parameter_parameter ADD CONSTRAINT PK_parameter_parameter
-	PRIMARY KEY (template_parameter_id, regular_parameter_id);
-	
-ALTER TABLE tao.parameter_parameter ADD CONSTRAINT FK_parameter_parameter_parameter_01
-	FOREIGN KEY (template_parameter_id) REFERENCES tao.parameter (id) ON DELETE No Action ON UPDATE No Action;
-
-ALTER TABLE tao.parameter_parameter ADD CONSTRAINT FK_parameter_parameter_parameter_02
-	FOREIGN KEY (regular_parameter_id) REFERENCES tao.parameter (id) ON DELETE No Action ON UPDATE No Action;
-	
-	
--------------------------------------------------------------------------------
--- table: parameter_values_set
-DROP TABLE IF EXISTS tao.parameter_values_set CASCADE;
-
-CREATE TABLE tao.parameter_values_set
-(
-	parameter_id bigint NOT NULL,
-	parameter_value varchar(250) NOT NULL
-);
-
-ALTER TABLE tao.parameter_values_set ADD CONSTRAINT PK_parameter_values_set
-	PRIMARY KEY (parameter_id, parameter_value);
-
-ALTER TABLE tao.parameter_values_set ADD CONSTRAINT FK_parameter_values_set_parameter
-	FOREIGN KEY (parameter_id) REFERENCES tao.parameter (id) ON DELETE No Action ON UPDATE No Action;
-	
 
 -------------------------------------------------------------------------------
 -- table: component_source
@@ -84,27 +24,6 @@ CREATE TABLE tao.component_source
 
 ALTER TABLE tao.component_source ADD CONSTRAINT PK_component_source
 	PRIMARY KEY (id);
-
-
--------------------------------------------------------------------------------
--- table: processing_operation
---DROP TABLE IF EXISTS tao.processing_operation CASCADE;
-
---CREATE TABLE tao.processing_operation
---(
---	id integer NOT NULL,
---	name varchar(250) NULL,
---	progress_pattern varchar(500) NULL,
---	error_pattern varchar(500) NULL,
---	source_id integer NOT NULL,
---	is_handling_output_name boolean NULL
---);
-
---ALTER TABLE tao.processing_operation ADD CONSTRAINT PK_processing_operation
---	PRIMARY KEY (id);
-
---ALTER TABLE tao.processing_operation ADD CONSTRAINT FK_processing_operation_operation_source
---	FOREIGN KEY (source_id) REFERENCES tao.operation_source (id) ON DELETE No Action ON UPDATE No Action;
 
 
 -------------------------------------------------------------------------------
@@ -179,20 +98,72 @@ DROP TABLE IF EXISTS tao.component_parameters CASCADE;
 
 CREATE TABLE tao.component_parameters
 (
-	processing_component_id varchar(512) NOT NULL,
-	parameter_id bigint NULL
+	id varchar(512) NOT NULL,
+    type_id integer NOT NULL,
+    label varchar(512) NOT NULL,
+    data_type varchar(512) NOT NULL,
+    default_value varchar(250) NULL,
+    description text NULL,
+    unit varchar(250) NULL,
+    format varchar(250) NULL,
+    value_set text NULL,
+    not_null boolean NULL,
+    not_empty boolean NULL,
+    processing_component_id varchar(512) NOT NULL
 );
 
 ALTER TABLE tao.component_parameters ADD CONSTRAINT PK_component_parameters
-	PRIMARY KEY (processing_component_id, parameter_id);
-	
-ALTER TABLE tao.component_parameters ADD CONSTRAINT FK_component_parameters_parameter
-	FOREIGN KEY (parameter_id) REFERENCES tao.parameter (id) ON DELETE No Action ON UPDATE No Action;
+	PRIMARY KEY (id, processing_component_id);
+
+ALTER TABLE tao.component_parameters ADD CONSTRAINT FK_component_parameters_parameter_type
+	FOREIGN KEY (type_id) REFERENCES tao.parameter_type (id) ON DELETE No Action ON UPDATE No Action;
 
 ALTER TABLE tao.component_parameters ADD CONSTRAINT FK_component_parameters_processing_component
 	FOREIGN KEY (processing_component_id) REFERENCES tao.processing_component (id) ON DELETE No Action ON UPDATE No Action;
 
-	
+
+-------------------------------------------------------------------------------
+-- table: template_parameter_parameters
+DROP TABLE IF EXISTS tao.template_parameter_parameters CASCADE;
+
+CREATE TABLE tao.template_parameter_parameters
+(
+    processing_component_id varchar(512) NOT NULL,
+	template_parameter_id varchar(512) NOT NULL,
+	regular_parameter_id varchar(512) NOT NULL
+);
+
+ALTER TABLE tao.template_parameter_parameters ADD CONSTRAINT PK_template_parameter_parameters
+	PRIMARY KEY (processing_component_id, template_parameter_id, regular_parameter_id);
+
+--ALTER TABLE tao.template_parameter_parameters ADD CONSTRAINT FK_template_parameter_parameters_processing_component
+--	FOREIGN KEY (processing_component_id) REFERENCES tao.processing_component (id) ON DELETE No Action ON UPDATE No Action;
+
+ALTER TABLE tao.template_parameter_parameters ADD CONSTRAINT FK_template_parameter_parameters_parameter_01
+	FOREIGN KEY (template_parameter_id, processing_component_id) REFERENCES tao.component_parameters (id, processing_component_id) ON DELETE No Action ON UPDATE No Action;
+
+ALTER TABLE tao.template_parameter_parameters ADD CONSTRAINT FK_template_parameter_parameters_parameter_02
+	FOREIGN KEY (regular_parameter_id, processing_component_id) REFERENCES tao.component_parameters (id, processing_component_id) ON DELETE No Action ON UPDATE No Action;
+
+
+-------------------------------------------------------------------------------
+-- table: component_parameter_values_set
+DROP TABLE IF EXISTS tao.component_parameter_values_set CASCADE;
+
+CREATE TABLE tao.component_parameter_values_set
+(
+	parameter_id varchar(512) NOT NULL,
+	processing_component_id varchar(512) NOT NULL,
+	parameter_value varchar(250) NOT NULL
+);
+
+ALTER TABLE tao.component_parameter_values_set ADD CONSTRAINT PK_component_parameter_values_set
+	PRIMARY KEY (parameter_id, processing_component_id, parameter_value);
+
+ALTER TABLE tao.component_parameter_values_set ADD CONSTRAINT FK_component_parameter_values_set_component_parameters
+	FOREIGN KEY (parameter_id, processing_component_id) REFERENCES tao.component_parameters (id, processing_component_id) ON DELETE No Action ON UPDATE No Action;
+
+
 -------------------------------------------------------------------------------
 -- table: component_variables
 DROP TABLE IF EXISTS tao.component_variables CASCADE;

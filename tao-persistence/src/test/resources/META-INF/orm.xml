@@ -206,6 +206,7 @@
     <entity class="ro.cs.tao.component.ProcessingComponent" access="PROPERTY">
         <table name="tao.processing_component"/>
         <secondary-table name="tao.component_variables"/>
+        <secondary-table name="tao.component_parameters"/>
 
         <convert converter="ro.cs.tao.persistence.convert.TemplateTypeConverter" attribute-name="templateType" />
         <convert converter="ro.cs.tao.persistence.convert.ProcessingComponentVisibilityConverter" attribute-name="visibility" />
@@ -237,6 +238,13 @@
                 <column name="active" nullable="true" column-definition="boolean NOT NULL DEFAULT true"/>
             </basic>
 
+            <!--<many-to-many name="parameterDescriptors">
+                <join-table name="tao.component_parameters">
+                    <join-column name="id" referenced-column-name="id"/>
+                    <inverse-join-column name="parameter_id" referenced-column-name="id"/>
+                </join-table>
+            </many-to-many>-->
+
             <element-collection name="variables" target-class="ro.cs.tao.component.Variable" access="FIELD">
                 <collection-table name="tao.component_variables" >
                     <join-column name="id" referenced-column-name="id" />
@@ -246,6 +254,47 @@
             <transient name="parameterDescriptors" />
             <transient name="template" />
             <transient name="templateEngine" />
+        </attributes>
+    </entity>
+
+
+    <entity class="ro.cs.tao.component.ParameterDescriptor" access="PROPERTY">
+        <table name="tao.component_parameters"/>
+
+        <convert converter="ro.cs.tao.persistence.convert.ParameterTypeConverter" attribute-name="type" />
+        <convert converter="ro.cs.tao.persistence.convert.DataTypeConverter" attribute-name="dataType" />
+        <convert converter="ro.cs.tao.persistence.convert.StringArrayToStringConverter" attribute-name="valueSet" />
+
+        <attributes>
+            <basic name="type">
+                <column name="type_id" nullable="false" column-definition="integer NOT NULL"/>
+            </basic>
+            <basic name="dataType">
+                <column name="data_type" nullable="false" column-definition="varchar(512) NOT NULL"/>
+            </basic>
+            <basic name="defaultValue">
+                <column name="default_value" nullable="true" column-definition="varchar(250) NULL"/>
+            </basic>
+            <basic name="description">
+                <column name="description" nullable="true" column-definition="text NULL"/>
+            </basic>
+            <basic name="label">
+                <column name="label" nullable="false" column-definition="varchar(512) NOT NULL"/>
+            </basic>
+            <basic name="unit">
+                <column name="unit" nullable="true" column-definition="varchar(250) NULL"/>
+            </basic>
+            <basic name="valueSet">
+                <column name="value_set" nullable="true" column-definition="text NULL"/>
+            </basic>
+            <basic name="format">
+                <column name="format" nullable="true" column-definition="varchar(250) NULL"/>
+            </basic>
+            <basic name="notNull">
+                <column name="not_null" nullable="true" column-definition="boolean NULL"/>
+            </basic>
+
+            <transient name="validator" />
         </attributes>
     </entity>
 
@@ -339,5 +388,8 @@
     <converter class="ro.cs.tao.persistence.convert.TemplateTypeConverter" />
     <converter class="ro.cs.tao.persistence.convert.ProcessingComponentVisibilityConverter" />
     <converter class="ro.cs.tao.persistence.convert.ExecutionStatusConverter" />
+    <converter class="ro.cs.tao.persistence.convert.ParameterTypeConverter" />
+    <converter class="ro.cs.tao.persistence.convert.DataTypeConverter" />
+    <converter class="ro.cs.tao.persistence.convert.StringArrayToStringConverter" />
 
 </entity-mappings>
