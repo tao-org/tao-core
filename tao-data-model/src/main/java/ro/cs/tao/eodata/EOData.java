@@ -38,7 +38,6 @@
 
 package ro.cs.tao.eodata;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.vividsolutions.jts.geom.Geometry;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import ro.cs.tao.eodata.enums.DataFormat;
@@ -46,11 +45,14 @@ import ro.cs.tao.serialization.CRSAdapter;
 import ro.cs.tao.serialization.GeometryAdapter;
 
 import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlTransient;
 import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -94,84 +96,22 @@ public abstract class EOData implements Serializable{
         }
     }
 
-//    @XmlTransient
-//    @JsonIgnore
-//    public Geometry getPolygon() {
-//        return this.geometry;
-//    }
-
     public void setGeometry(String geometryAsText) {
         try {
             this.geometry = new GeometryAdapter().marshal(geometryAsText);
         } catch (Exception ignored) { }
     }
 
-//    @XmlElementWrapper(name = "attributes")
-//    public Attribute[] getAttributes() {
-//        return attributes != null ?
-//                attributes.values().toArray(new Attribute[attributes.size()]) :
-//                null;
-//    }
-
-//    public void setAttributes(Attribute[] attributes) {
-//        if (attributes != null) {
-//            if (this.attributes == null) {
-//                this.attributes = new HashMap<>();
-//            } else {
-//                this.attributes.clear();
-//            }
-//            for (Attribute attribute : attributes) {
-//                this.attributes.put(attribute.getName(), attribute);
-//            }
-//        } else {
-//            this.attributes = new HashMap<>();
-//        }
-//    }
-
     @XmlElementWrapper(name = "attributes")
     public List<Attribute> getAttributes() {
-        List<Attribute> result = null;
-
-        if(attributes != null)
-        {
-            if(attributes.size() > 0)
-            {
-                result = attributes.values().stream().collect(Collectors.toList());
-            }
-            else
-            {
-                // empty map of attributes
-                result = new ArrayList<>();
-            }
-        }
-         return result;
-
-//        return attributes != null ?
-//          attributes.values().stream().collect(Collectors.toList()) :
-//          null;
+        return this.attributes != null ?
+                new ArrayList<>(this.attributes.values()) : new ArrayList<>();
     }
 
     public void setAttributes(List<Attribute> attributes) {
-        if (attributes != null) {
-            if (this.attributes == null) {
-                this.attributes = new HashMap<>();
-            } else {
-                this.attributes.clear();
-            }
-
-            if(attributes.isEmpty())
-            {
-                this.attributes = new HashMap<>();
-            }
-            else
-            {
-                for (Attribute attribute : attributes) {
-                    this.attributes.put(attribute.getName(), attribute);
-                }
-            }
-        } else {
-            this.attributes = new HashMap<>();
-        }
+        this.attributes = attributes != null ?
+                            attributes.stream().collect(Collectors.toMap(Attribute::getName,Function.identity())) :
+                            null;
     }
 
     public void addAttribute(String name, String value) {

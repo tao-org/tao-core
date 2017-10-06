@@ -2,6 +2,11 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import ro.cs.tao.topology.NodeDescription;
+import ro.cs.tao.topology.ServiceDescription;
+import ro.cs.tao.topology.ServiceStatus;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Cosmin Cara
@@ -12,11 +17,24 @@ public class NodeDescriptionTest extends BaseSerializationTest<NodeDescription> 
     protected String referenceJSON() {
         return "{\n" +
                 "   \"node\" : {\n" +
+                "      \"active\" : true,\n" +
                 "      \"diskSpace\" : 500,\n" +
                 "      \"hostName\" : \"host_sample\",\n" +
-                "      \"ipAddress\" : \"10.0.0.1\",\n" +
                 "      \"memory\" : 16,\n" +
                 "      \"processors\" : 4,\n" +
+                "      \"services\" : {\n" +
+                "         \"services\" : [ {\n" +
+                "            \"description\" : \"Docker description\",\n" +
+                "            \"name\" : \"Docker\",\n" +
+                "            \"status\" : \"INSTALLED\",\n" +
+                "            \"version\" : \"1.9\"\n" +
+                "         }, {\n" +
+                "            \"description\" : \"Torque CRM\",\n" +
+                "            \"name\" : \"Torque\",\n" +
+                "            \"status\" : \"NOT_FOUND\",\n" +
+                "            \"version\" : \"1.5\"\n" +
+                "         } ]\n" +
+                "      },\n" +
                 "      \"userName\" : \"user\",\n" +
                 "      \"password\" : \"drowssap\"\n" +
                 "   }\n" +
@@ -33,6 +51,20 @@ public class NodeDescriptionTest extends BaseSerializationTest<NodeDescription> 
                 "   <processors>4</processors>\n" +
                 "   <userName>user</userName>\n" +
                 "   <password>drowssap</password>\n" +
+                "   <services>\n" +
+                "      <service>\n" +
+                "         <name>Docker</name>\n" +
+                "         <version>1.9</version>\n" +
+                "         <description>Docker description</description>\n" +
+                "         <status>INSTALLED</status>\n" +
+                "      </service>\n" +
+                "      <service>\n" +
+                "         <name>Torque</name>\n" +
+                "         <version>1.5</version>\n" +
+                "         <description>Torque CRM</description>\n" +
+                "         <status>NOT_FOUND</status>\n" +
+                "      </service>\n" +
+                "   </services>\n" +
                 "</node>";
     }
 
@@ -40,14 +72,17 @@ public class NodeDescriptionTest extends BaseSerializationTest<NodeDescription> 
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        entity = new NodeDescription() {{
-            setHostName("host_sample");
-            setUserName("user");
-            setUserPass("drowssap");
-            setProcessorCount(4);
-            setMemorySizeGB(16);
-            setDiskSpaceSizeGB(500);
-        }};
+        entity = new NodeDescription();
+        entity.setHostName("host_sample");
+        entity.setUserName("user");
+        entity.setUserPass("drowssap");
+        entity.setProcessorCount(4);
+        entity.setMemorySizeGB(16);
+        entity.setDiskSpaceSizeGB(500);
+        List<ServiceDescription> services = new ArrayList<>();
+        services.add(new ServiceDescription("Docker", "1.9", "Docker description", ServiceStatus.INSTALLED));
+        services.add(new ServiceDescription("Torque", "1.5", "Torque CRM", ServiceStatus.NOT_FOUND));
+        entity.setServices(services);
     }
 
     @Test
