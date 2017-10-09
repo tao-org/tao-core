@@ -25,6 +25,7 @@
         <module>tao-execution</module>
         <module>tao-core-kit</module>
         <module>tao-spring-bridge</module>
+        <module>tao-notification</module>
     </modules>
 
     <properties>
