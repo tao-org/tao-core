@@ -84,4 +84,11 @@ public class NodeDescription {
         return this.services != null ? this.services : new ArrayList<>();
     }
     public void setServices(List<ServiceDescription> services) { this.services = services; }
+
+    public void addService(ServiceDescription service) {
+        if (this.services == null) {
+            this.services = new ArrayList<>();
+        }
+        this.services.add(service);
+    }
 }

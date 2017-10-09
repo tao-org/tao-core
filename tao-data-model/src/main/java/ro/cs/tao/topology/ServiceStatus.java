@@ -11,7 +11,8 @@ import javax.xml.bind.annotation.XmlEnum;
 public enum ServiceStatus {
     NOT_FOUND(1),
     INSTALLED(2),
-    ERROR(3);
+    UNINSTALLED(3),
+    ERROR(4);
 
     /**
      * Numerical value for enum constants

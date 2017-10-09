@@ -1,16 +1,20 @@
 package ro.cs.tao.topology;
 
+import ro.cs.tao.notifications.MessageBus;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.spi.ServiceLoader;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
+import ro.cs.tao.utils.async.BinaryTask;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 
 /**
@@ -19,16 +23,20 @@ import java.util.logging.Logger;
 public class TopologyManager implements ITopologyManager {
     private static final TopologyManager instance;
 
-    protected Logger logger = Logger.getLogger(TopologyManager.class.getName());
+    private final Logger logger;
     private NodeDescription masterNodeInfo;
-    private Set<TopologyToolInstaller> installers;
-    private PersistenceManager persistenceManager = SpringContextBridge.services().getPersistenceManager();
+    private final Set<TopologyToolInstaller> installers;
+    private final PersistenceManager persistenceManager;
+    private final ExecutorService executorService;
 
     static {
         instance = new TopologyManager();
     }
 
     private TopologyManager() {
+        this.logger = Logger.getLogger(TopologyManager.class.getName());
+        this.persistenceManager = SpringContextBridge.services().getPersistenceManager();
+        this.executorService = Executors.newSingleThreadExecutor();
         // initialize the hostname and ip address in the master node description
         initMasterNodeDescription();
 
@@ -54,6 +62,16 @@ public class TopologyManager implements ITopologyManager {
             logger.severe("Cannot get node description from database for node " + hostName);
             throw new TopologyException(e);
         }
+        // FOR TESTS ONLY
+        /*NodeDescription nodeInfo = new NodeDescription();
+        nodeInfo.setHostName("node01.testtorque.ro");
+        nodeInfo.setUserName("sen2agri");
+        nodeInfo.setUserPass("sen2agri");
+        nodeInfo.setProcessorCount(2);
+        nodeInfo.setMemorySizeGB(16);
+        nodeInfo.setDiskSpaceSizeGB(500);
+        nodeInfo.setActive(true);
+        return nodeInfo;*/
     }
 
     @Override
@@ -63,18 +81,45 @@ public class TopologyManager implements ITopologyManager {
 
     @Override
     public void add(NodeDescription info) throws TopologyException {
-        // execute all the installers
-        for (TopologyToolInstaller installer: installers) {
-            installer.installNewNode(info);
-        }
         try {
             persistenceManager.saveExecutionNode(info);
         } catch (PersistenceException e) {
             logger.severe("Cannot save node description to database. Rolling back installation on node " + info.getHostName() + "...");
-            for (TopologyToolInstaller installer: installers) {
-                installer.uninstallNode(info);
-            }
             throw new TopologyException(e);
+        }
+        // FOR TEST ONLY
+        /*Timer timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            private AtomicInteger counter = new AtomicInteger(0);
+            @Override
+            public void run() {
+                TopologyManager.this.executorService.submit(
+                        new BinaryTask<NodeDescription, ToolInstallStatus>(info, TopologyManager.this::onInstallationCompleted) {
+                    @Override
+                    public ToolInstallStatus execute(NodeDescription node) {
+                        return new ToolInstallStatus() {{
+                            setToolName("TestTool");
+                            int i = counter.getAndIncrement();
+                            if (i % 2 == 0) {
+                                setStatus(ServiceStatus.INSTALLED);
+                                setReason(String.format("%s completed ok", i));
+                            } else {
+                                setStatus(ServiceStatus.ERROR);
+                                setReason(String.format("Some failure reason %s", i));
+                            }
+                        }};
+                    }
+                });
+            }
+        }, 5000, 2000);*/
+        for (TopologyToolInstaller installer: installers) {
+            // execute all the installers
+            this.executorService.submit(new BinaryTask<NodeDescription, ToolInstallStatus>(info, this::onInstallationCompleted) {
+                @Override
+                public ToolInstallStatus execute(NodeDescription node) {
+                    return installer.installNewNode(node);
+                }
+            });
         }
     }
 
@@ -114,6 +159,26 @@ public class TopologyManager implements ITopologyManager {
         this.masterNodeInfo = masterNodeInfo;
         for (TopologyToolInstaller installer: this.installers) {
             installer.setMasterNodeDescription(masterNodeInfo);
+        }
+    }
+
+    private void onInstallationCompleted(NodeDescription node, ToolInstallStatus status) {
+        switch (status.getStatus()) {
+            case INSTALLED:
+                MessageBus.send(MessageBus.INFORMATION,
+                                this,
+                                String.format("%s installation on %s completed",
+                                              status.getToolName(),
+                                              node.getHostName()));
+                break;
+            case ERROR:
+                MessageBus.send(MessageBus.WARNING,
+                                this,
+                                String.format("%s installation on %s failed [reason: %s]",
+                                              status.getToolName(),
+                                              node.getHostName(),
+                                              status.getReason()));
+                break;
         }
     }
 
