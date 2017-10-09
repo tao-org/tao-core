@@ -53,7 +53,7 @@ public class TopologyTest {
 
 
     private static void testAddTopologyNode() {
-        ApplicationContext context = new ClassPathXmlApplicationContext("classpath:tao-persistence-context.xml");
+        ApplicationContext context = new ClassPathXmlApplicationContext("classpath:tao-topology-context.xml");
 
         List<String> tokens = ToolCommandsTokens.getDefinedTokensList();
         System.out.println(tokens);
