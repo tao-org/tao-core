@@ -126,8 +126,6 @@
 
     <entity class="ro.cs.tao.eodata.EOProduct" access="PROPERTY">
         <table name="tao.data_product"/>
-        <!--<secondary-table name="tao.data_product_attributes"/>-->
-        <!--<inheritance strategy="JOINED"/>-->
         <attributes>
             <basic name="sensorType">
                 <column name="sensor_type_id" nullable="false" column-definition="integer not null"/>
@@ -204,11 +202,28 @@
         </attributes>
     </entity>
 
+    <entity class="ro.cs.tao.topology.ServiceDescription" access="PROPERTY">
+        <table name="tao.service"/>
+        <!--<convert converter="ro.cs.tao.persistence.convert.ServiceStatusConverter" attribute-name="status" />-->
+        <attributes>
+            <id name="name">
+                <column name="name" nullable="false" column-definition="character varying(250) NOT NULL"/>
+            </id>
+            <basic name="version">
+                <column name="version" nullable="false" column-definition="character varying(50) NOT NULL"/>
+            </basic>
+            <basic name="description">
+                <column name="description" nullable="true" column-definition="text NULL"/>
+            </basic>
+            <!--<basic name="status">
+                <column name="service_status_id" nullable="false" column-definition="integer NOT NULL"/>
+            </basic>-->
+        </attributes>
+    </entity>
+
 
     <entity class="ro.cs.tao.component.ProcessingComponent" access="PROPERTY">
         <table name="tao.processing_component"/>
-        <secondary-table name="tao.component_variables"/>
-        <secondary-table name="tao.component_parameters"/>
 
         <convert converter="ro.cs.tao.persistence.convert.TemplateTypeConverter" attribute-name="templateType" />
         <convert converter="ro.cs.tao.persistence.convert.ProcessingComponentVisibilityConverter" attribute-name="visibility" />
@@ -240,20 +255,22 @@
                 <column name="active" nullable="true" column-definition="boolean NOT NULL DEFAULT true"/>
             </basic>
 
-            <!--<many-to-many name="parameterDescriptors">
+            <many-to-many name="parameterDescriptors" fetch="EAGER">
                 <join-table name="tao.component_parameters">
-                    <join-column name="id" referenced-column-name="id"/>
-                    <inverse-join-column name="parameter_id" referenced-column-name="id"/>
+                    <join-column name="processing_component_id" referenced-column-name="id"/>
+                    <inverse-join-column name="processing_parameter_id" referenced-column-name="id"/>
                 </join-table>
-            </many-to-many>-->
+                <cascade>
+                    <cascade-all/>
+                </cascade>
+            </many-to-many>
 
             <element-collection name="variables" target-class="ro.cs.tao.component.Variable" access="FIELD">
                 <collection-table name="tao.component_variables" >
-                    <join-column name="id" referenced-column-name="id" />
+                    <join-column name="processing_component_id" referenced-column-name="id" />
                 </collection-table>
             </element-collection>
 
-            <transient name="parameterDescriptors" />
             <transient name="template" />
             <transient name="templateEngine" />
         </attributes>
@@ -261,7 +278,7 @@
 
 
     <entity class="ro.cs.tao.component.ParameterDescriptor" access="PROPERTY">
-        <table name="tao.component_parameters"/>
+        <table name="tao.processing_parameter"/>
 
         <convert converter="ro.cs.tao.persistence.convert.ParameterTypeConverter" attribute-name="type" />
         <convert converter="ro.cs.tao.persistence.convert.DataTypeConverter" attribute-name="dataType" />

@@ -189,6 +189,53 @@ ALTER TABLE tao.task_output ADD CONSTRAINT PK_task_output PRIMARY KEY (task_id, 
 ALTER TABLE tao.task_output ADD CONSTRAINT FK_task_output_task
 	FOREIGN KEY (task_id) REFERENCES tao.task (id) ON DELETE No Action ON UPDATE No Action;
 
+
 -------------------------------------------------------------------------------
+-- service_status
+DROP TABLE IF EXISTS tao.service_status CASCADE;
+
+CREATE TABLE tao.service_status
+(
+	id integer NOT NULL,
+	status varchar(50) NOT NULL
+);
+
+ALTER TABLE tao.service_status ADD CONSTRAINT PK_service_status PRIMARY KEY (id);
 
 
+-------------------------------------------------------------------------------
+-- table: service
+DROP TABLE IF EXISTS tao.service CASCADE;
+
+CREATE TABLE tao.service
+(
+	name varchar(250) NOT NULL,
+	version varchar(50) NOT NULL,
+	description text NULL
+);
+
+ALTER TABLE tao.service ADD CONSTRAINT PK_service PRIMARY KEY (name);
+
+
+-------------------------------------------------------------------------------
+-- table: execution_node_service
+DROP TABLE IF EXISTS tao.execution_node_service CASCADE;
+
+CREATE TABLE tao.execution_node_service
+(
+	host_name varchar(250) NOT NULL,
+	service_name varchar(250) NOT NULL,
+	service_status_id integer NOT NULL
+);
+
+ALTER TABLE tao.execution_node_service ADD CONSTRAINT PK_execution_node_service PRIMARY KEY (host_name, service_name);
+
+ALTER TABLE tao.execution_node_service ADD CONSTRAINT FK_execution_node_service_execution_node
+	FOREIGN KEY (host_name) REFERENCES tao.execution_node (host_name) ON DELETE No Action ON UPDATE No Action;
+
+ALTER TABLE tao.execution_node_service ADD CONSTRAINT FK_execution_node_service_service
+    FOREIGN KEY (service_name) REFERENCES tao.service (name) ON DELETE No Action ON UPDATE No Action;
+
+ALTER TABLE tao.execution_node_service ADD CONSTRAINT FK_execution_node_service_service_status
+	FOREIGN KEY (service_status_id) REFERENCES tao.service_status (id) ON DELETE No Action ON UPDATE No Action;
+-------------------------------------------------------------------------------
