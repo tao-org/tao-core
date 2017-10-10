@@ -57,17 +57,39 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
     }
 
     @Override
-    public void installNewNode(NodeDescription info) throws TopologyException {
-        for(ToolInstallConfig toolCfg: toolInstallConfigs) {
-            invokeSteps(info, toolCfg, false);
+    public ToolInstallStatus installNewNode(NodeDescription info) throws TopologyException {
+        ToolInstallStatus installStatus = new ToolInstallStatus();
+        for (ToolInstallConfig toolCfg : toolInstallConfigs) {
+            try {
+                installStatus.setToolName(toolCfg.getName());
+                invokeSteps(info, toolCfg, false);
+                installStatus.setStatus(ServiceStatus.INSTALLED);
+            } catch (TopologyException tex) {
+                installStatus.setStatus(ServiceStatus.ERROR);
+                installStatus.setReason(tex.getMessage());
+            }
+            info.addService(new ServiceDescription(installStatus.getToolName(),
+                                                   toolCfg.getVersion(),
+                                                   toolCfg.getDescription(),
+                                                   installStatus.getStatus()));
         }
+        return installStatus;
     }
 
     @Override
-    public void uninstallNode(NodeDescription info) throws TopologyException {
-        for(ToolInstallConfig toolCfg: toolInstallConfigs) {
-            invokeSteps(info, toolCfg, true);
+    public ToolInstallStatus uninstallNode(NodeDescription info) throws TopologyException {
+        ToolInstallStatus installStatus = new ToolInstallStatus();
+        for (ToolInstallConfig toolCfg : toolInstallConfigs) {
+            try {
+                installStatus.setToolName(toolCfg.getName());
+                invokeSteps(info, toolCfg, true);
+                installStatus.setStatus(ServiceStatus.UNINSTALLED);
+            } catch (TopologyException tex) {
+                installStatus.setStatus(ServiceStatus.ERROR);
+                installStatus.setReason(tex.getMessage());
+            }
         }
+        return installStatus;
     }
 
     @Override

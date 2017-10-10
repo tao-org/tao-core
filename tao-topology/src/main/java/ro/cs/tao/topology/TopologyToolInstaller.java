@@ -7,7 +7,7 @@ import ro.cs.tao.component.Identifiable;
  */
 public abstract class TopologyToolInstaller extends Identifiable {
     public abstract void setMasterNodeDescription(NodeDescription masterNodeInfo);
-    public abstract void installNewNode(NodeDescription info) throws TopologyException;
-    public abstract void uninstallNode(NodeDescription info)throws TopologyException;
+    public abstract ToolInstallStatus installNewNode(NodeDescription info) throws TopologyException;
+    public abstract ToolInstallStatus uninstallNode(NodeDescription info)throws TopologyException;
     public abstract void editNode(NodeDescription nodeInfo)throws TopologyException;
 }
