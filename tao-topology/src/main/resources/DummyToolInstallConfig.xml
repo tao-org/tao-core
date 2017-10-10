@@ -12,6 +12,8 @@
     -->
     <tool_install_config>
         <name>Torque installer</name>
+        <description>Installs Torque on the executin nodes</description>
+        <version>1.0</version>
         <priority>1</priority>
         <install_steps>
             <!-- No steps for tests -->
@@ -26,6 +28,8 @@
     <tool_install_config>
         <name>Docker installer</name>
         <priority>1</priority>
+        <description>Installs Docker on the executin nodes</description>
+        <version>1.0</version>
         <install_steps>
             <!-- No steps for tests -->
         </install_steps>

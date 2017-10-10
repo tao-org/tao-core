@@ -115,6 +115,16 @@ public class ToolInstallersConfigHandler extends DefaultHandler {
                     throw new SAXException("Invalid element name without config or step");
                 }
                 break;
+            case "description":
+                if (currentCfg == null) {
+                    throw new SAXException("Invalid element description without config");
+                }
+                break;
+            case "version":
+                if (currentCfg == null) {
+                    throw new SAXException("Invalid element version without config");
+                }
+                break;
             case "priority":
                 if (currentCfg == null) {
                     throw new SAXException("Invalid element priority without config");
@@ -172,6 +182,12 @@ public class ToolInstallersConfigHandler extends DefaultHandler {
                 break;
             case "priority":
                 currentCfg.setPriority(Integer.parseInt(elementValue));
+                break;
+            case "description":
+                currentCfg.setDescription(elementValue);
+                break;
+            case "version":
+                currentCfg.setVersion(elementValue);
                 break;
             case "install_steps":
                 checkStepsConsistency(currentCfg.getInstallSteps());
