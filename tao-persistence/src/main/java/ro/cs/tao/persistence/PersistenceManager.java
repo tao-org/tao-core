@@ -69,6 +69,10 @@ public class PersistenceManager {
     @Autowired
     private ProcessingComponentRepository processingComponentRepository;
 
+    /** CRUD Repository for ParameterDescriptor entities */
+    @Autowired
+    private ParameterDescriptorRepository parameterDescriptorRepository;
+
     /** CRUD Repository for ExecutionJob entities */
     @Autowired
     private ExecutionJobRepository executionJobRepository;
@@ -537,17 +541,82 @@ public class PersistenceManager {
         return nodeRepository.save(nodeEnt);
     }
 
+    private boolean checkParameterDescriptor(ParameterDescriptor parameterDesc)
+    {
+        if(parameterDesc == null)
+        {
+            return false;
+        }
+        if(parameterDesc.getId() == null || parameterDesc.getId().isEmpty())
+        {
+            return false;
+        }
+        if(parameterDesc.getType() == null)
+        {
+            return false;
+        }
+        if(parameterDesc.getDataType() == null)
+        {
+            return false;
+        }
+        if(parameterDesc.getLabel() == null || parameterDesc.getLabel().isEmpty())
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    /*@Transactional
+    public ParameterDescriptor saveParameterDescriptor(ParameterDescriptor parameter, ProcessingComponent component) throws PersistenceException
+    {
+        // check method parameters
+        if(!checkParameterDescriptor(parameter) || !checkProcessingComponent(component))
+        {
+            throw new PersistenceException("Invalid parameters were provided for adding new processing component parameter!");
+        }
+
+        // check if there is already another parameter with the same identifier
+        final ParameterDescriptor parameterWithSameId = parameterDescriptorRepository.findById(parameter.getId());
+        if (parameterWithSameId != null)
+        {
+            throw new PersistenceException("There is already another processing parameter with the identifier: " + parameter.getId());
+        }
+
+        parameter.setProcessingComponent(component);
+
+        // save the new ParameterDescriptor entity and return it
+        return parameterDescriptorRepository.save(parameter);
+    }*/
+
+    /*public ParameterDescriptor saveParameterDescriptorWithinExistingTransaction(ParameterDescriptor parameter, ProcessingComponent component) throws PersistenceException
+    {
+        // check method parameters
+        if(!checkParameterDescriptor(parameter) || !checkProcessingComponent(component))
+        {
+            throw new PersistenceException("Invalid parameters were provided for adding new processing component parameter!");
+        }
+
+        // check if there is already another parameter with the same identifier
+        final ParameterDescriptor parameterWithSameId = parameterDescriptorRepository.findById(parameter.getId());
+        if (parameterWithSameId != null)
+        {
+            throw new PersistenceException("There is already another processing parameter with the identifier: " + parameter.getId());
+        }
+
+        parameter.setProcessingComponent(component);
+
+        // save the new ParameterDescriptor entity and return it
+        return parameterDescriptorRepository.save(parameter);
+    }*/
+
     private boolean checkProcessingComponent(ProcessingComponent component)
     {
         if(component == null)
         {
             return false;
         }
-        if(component.getId() == null)
-        {
-            return false;
-        }
-        if(component.getId().isEmpty())
+        if(component.getId() == null || component.getId().isEmpty())
         {
             return false;
         }
@@ -593,16 +662,24 @@ public class PersistenceManager {
             return false;
         }
 
+        for(ParameterDescriptor parameter: component.getParameterDescriptors())
+        {
+            if(!checkParameterDescriptor(parameter))
+            {
+                return false;
+            }
+        }
+
         return true;
     }
 
-    @Transactional
+    /*@Transactional
     public ProcessingComponent saveProcessingComponent(ProcessingComponent component) throws PersistenceException
     {
         // check method parameters
         if(!checkProcessingComponent(component))
         {
-            throw new PersistenceException("Invalid parameters were provided for adding new processing !");
+            throw new PersistenceException("Invalid parameters were provided for adding new processing component !");
         }
 
         // check if there is already another component with the same identifier
@@ -612,12 +689,42 @@ public class PersistenceManager {
             throw new PersistenceException("There is already another component with the identifier: " + component.getId());
         }
 
-        // save the parameters first
-// TODO
-//        for (ParameterDescriptor parameter: component.getParameterDescriptors())
-//        {
-//
-//        }
+        // we must save the component first (without parameters), after save the parameters and associate them
+        // this cannot be done in one step, because of FK of parameters towards the component
+        List<ParameterDescriptor> parameters = component.getParameterDescriptors();
+
+        // erase the parameters and save it
+        component.setParameterDescriptors(null);
+        ProcessingComponent savedComponent = processingComponentRepository.save(component);
+
+        // save the parameters
+        for (ParameterDescriptor parameter: parameters)
+        {
+            saveParameterDescriptorWithinExistingTransaction(parameter, savedComponent);
+        }
+
+        // associate the saved parameters
+        savedComponent.setParameterDescriptors(parameters);
+
+        // save the new ProcessingComponent entity
+       return processingComponentRepository.save(savedComponent);
+    }*/
+
+    @Transactional
+    public ProcessingComponent saveProcessingComponent(ProcessingComponent component) throws PersistenceException
+    {
+        // check method parameters
+        if(!checkProcessingComponent(component))
+        {
+            throw new PersistenceException("Invalid parameters were provided for adding new processing component !");
+        }
+
+        // check if there is already another component with the same identifier
+        final ProcessingComponent componentWithSameId = processingComponentRepository.findById(component.getId());
+        if (componentWithSameId != null)
+        {
+            throw new PersistenceException("There is already another component with the identifier: " + component.getId());
+        }
 
         // save the new ProcessingComponent entity and return it
         return processingComponentRepository.save(component);
