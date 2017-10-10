@@ -130,6 +130,8 @@ INSERT INTO  tao.service_status (status) VALUES ('NOT_FOUND');
 
 INSERT INTO  tao.service_status (status) VALUES ('INSTALLED');
 
+INSERT INTO  tao.service_status (status) VALUES ('UNINSTALLED');
+
 INSERT INTO  tao.service_status (status) VALUES ('ERROR');
 
 
