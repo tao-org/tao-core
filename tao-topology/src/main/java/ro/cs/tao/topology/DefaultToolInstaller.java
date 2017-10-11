@@ -68,10 +68,10 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
                 installStatus.setStatus(ServiceStatus.ERROR);
                 installStatus.setReason(tex.getMessage());
             }
-            info.addService(new ServiceDescription(installStatus.getToolName(),
-                                                   toolCfg.getVersion(),
-                                                   toolCfg.getDescription(),
-                                                   installStatus.getStatus()));
+            info.addServiceStatus(new NodeServiceStatus(new ServiceDescription(installStatus.getToolName(),
+                toolCfg.getVersion(),
+                toolCfg.getDescription()),
+              installStatus.getStatus()));
         }
         return installStatus;
     }

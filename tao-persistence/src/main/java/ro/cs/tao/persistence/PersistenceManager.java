@@ -1,7 +1,6 @@
 package ro.cs.tao.persistence;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import org.springframework.data.domain.Sort;
@@ -14,23 +13,15 @@ import ro.cs.tao.component.enums.ProcessingComponentVisibility;
 import ro.cs.tao.component.execution.ExecutionJob;
 import ro.cs.tao.component.execution.ExecutionStatus;
 import ro.cs.tao.component.execution.ExecutionTask;
-import ro.cs.tao.datasource.AbstractDataSource;
-import ro.cs.tao.datasource.DataQuery;
-import ro.cs.tao.eodata.Attribute;
 import ro.cs.tao.eodata.EOProduct;
-import ro.cs.tao.persistence.data.DataProduct;
-import ro.cs.tao.persistence.data.DataSourceType;
-import ro.cs.tao.persistence.data.ExecutionNode;
 import ro.cs.tao.persistence.data.User;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.persistence.repository.*;
 import ro.cs.tao.topology.NodeDescription;
+import ro.cs.tao.topology.NodeServiceStatus;
+import ro.cs.tao.topology.ServiceDescription;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -64,6 +55,10 @@ public class PersistenceManager {
     /** CRUD Repository for NodeDescription entities */
     @Autowired
     private NodeRepository nodeRepository;
+
+    /** CRUD Repository for ServiceDescription entities */
+    @Autowired
+    private ServiceRepository serviceRepository;
 
     /** CRUD Repository for ProcessingComponent entities */
     @Autowired
@@ -397,6 +392,62 @@ public class PersistenceManager {
         return savedEOProduct;
     }
 
+    private boolean checkServiceDescription(ServiceDescription service)
+    {
+        if(service == null)
+        {
+            return false;
+        }
+        if(service.getName() == null || service.getName().isEmpty())
+        {
+            return false;
+        }
+        if(service.getVersion() == null || service.getVersion().isEmpty())
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Transactional
+    public ServiceDescription saveServiceDescription(ServiceDescription service) throws PersistenceException
+    {
+        // check method parameters
+        if(!checkServiceDescription(service))
+        {
+            throw new PersistenceException("Invalid parameters were provided for adding new service!");
+        }
+
+        // check if there is already another service with the same name
+        final ServiceDescription serviceWithSameName = serviceRepository.findByName(service.getName());
+        if (serviceWithSameName != null)
+        {
+            throw new PersistenceException("There is already another service with the name: " + service.getName());
+        }
+
+        // save the new ServiceDescription entity and return it
+        return serviceRepository.save(service);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean checkIfExistsServiceByName(final String serviceName)
+    {
+        boolean result = false;
+
+        if (serviceName != null && !serviceName.isEmpty())
+        {
+            // try to retrieve ServiceDescription after its name
+            final ServiceDescription serviceEnt = serviceRepository.findByName(serviceName);
+            if (serviceEnt != null)
+            {
+                result = true;
+            }
+        }
+
+        return result;
+    }
+
     private boolean checkExecutionNode(NodeDescription node)
     {
         if(node == null)
@@ -445,6 +496,15 @@ public class PersistenceManager {
         if (nodeWithSameHostName != null)
         {
             throw new PersistenceException("There is already another node with the host name: " + node.getHostName());
+        }
+
+        // save the services first
+        for(NodeServiceStatus serviceStatus: node.getServicesStatus())
+        {
+            if (!checkIfExistsServiceByName(serviceStatus.getServiceDescription().getName()))
+            {
+                serviceRepository.save(serviceStatus.getServiceDescription());
+            }
         }
 
         // save the new NodeDescription entity and return it

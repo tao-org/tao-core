@@ -21,7 +21,7 @@ public class NodeDescription {
     private int diskSpaceSizeGB;
     private String description;
     private Boolean active;
-    private List<ServiceDescription> services;
+    private List<NodeServiceStatus> servicesStatus;
 
     public NodeDescription() { this.active = true;}
 
@@ -80,15 +80,15 @@ public class NodeDescription {
     }
 
     @XmlElementWrapper(name = "services")
-    public List<ServiceDescription> getServices() {
-        return this.services != null ? this.services : new ArrayList<>();
+    public List<NodeServiceStatus> getServicesStatus() {
+        return this.servicesStatus != null ? this.servicesStatus : new ArrayList<>();
     }
-    public void setServices(List<ServiceDescription> services) { this.services = services; }
+    public void setServicesStatus(List<NodeServiceStatus> servicesStatus) { this.servicesStatus = servicesStatus; }
 
-    public void addService(ServiceDescription service) {
-        if (this.services == null) {
-            this.services = new ArrayList<>();
+    public void addServiceStatus(NodeServiceStatus serviceStatus) {
+        if (this.servicesStatus == null) {
+            this.servicesStatus = new ArrayList<>();
         }
-        this.services.add(service);
+        this.servicesStatus.add(serviceStatus);
     }
 }

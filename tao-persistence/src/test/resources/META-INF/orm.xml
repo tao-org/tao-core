@@ -198,13 +198,17 @@
                 <column name="active" nullable="true" column-definition="boolean NOT NULL DEFAULT true"/>
             </basic>
 
-            <transient name="services" />
+            <element-collection name="servicesStatus" target-class="ro.cs.tao.topology.NodeServiceStatus" access="FIELD">
+                <collection-table name="tao.execution_node_service" >
+                    <join-column name="host_name" referenced-column-name="host_name" />
+                </collection-table>
+            </element-collection>
+
         </attributes>
     </entity>
 
     <entity class="ro.cs.tao.topology.ServiceDescription" access="PROPERTY">
         <table name="tao.service"/>
-        <!--<convert converter="ro.cs.tao.persistence.convert.ServiceStatusConverter" attribute-name="status" />-->
         <attributes>
             <id name="name">
                 <column name="name" nullable="false" column-definition="character varying(250) NOT NULL"/>
@@ -215,12 +219,8 @@
             <basic name="description">
                 <column name="description" nullable="true" column-definition="text NULL"/>
             </basic>
-            <!--<basic name="status">
-                <column name="service_status_id" nullable="false" column-definition="integer NOT NULL"/>
-            </basic>-->
         </attributes>
     </entity>
-
 
     <entity class="ro.cs.tao.component.ProcessingComponent" access="PROPERTY">
         <table name="tao.processing_component"/>
@@ -400,6 +400,19 @@
             <basic name="value">
                 <column name="value" nullable="false" column-definition="character varying(512) NOT NULL"/>
             </basic>
+        </attributes>
+    </embeddable>
+
+
+    <embeddable class="ro.cs.tao.topology.NodeServiceStatus" access="PROPERTY">
+        <attributes>
+            <basic name="status">
+                <column name="service_status_id" nullable="false" column-definition="integer NOT NULL"/>
+                <convert converter="ro.cs.tao.persistence.convert.ServiceStatusConverter" attribute-name="status" />
+            </basic>
+            <many-to-one name="serviceDescription" fetch="LAZY">
+                <join-column name="service_name" nullable="false"/>
+            </many-to-one>
         </attributes>
     </embeddable>
 

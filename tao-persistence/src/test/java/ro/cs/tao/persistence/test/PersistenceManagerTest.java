@@ -22,40 +22,15 @@ import ro.cs.tao.component.execution.ExecutionStatus;
 import ro.cs.tao.component.execution.ExecutionTask;
 import ro.cs.tao.component.template.BasicTemplate;
 import ro.cs.tao.component.template.Template;
-import ro.cs.tao.component.template.TemplateException;
 import ro.cs.tao.component.template.TemplateType;
-import ro.cs.tao.component.template.engine.TemplateEngine;
-import ro.cs.tao.datasource.AbstractDataSource;
-import ro.cs.tao.datasource.DataQuery;
-import ro.cs.tao.datasource.DataSource;
-import ro.cs.tao.datasource.QueryException;
-import ro.cs.tao.datasource.param.QueryParameter;
-import ro.cs.tao.datasource.remote.peps.Collection;
-import ro.cs.tao.datasource.remote.peps.PepsDataSource;
-import ro.cs.tao.datasource.remote.scihub.SciHubDataQuery;
-import ro.cs.tao.datasource.remote.scihub.SciHubDataSource;
-import ro.cs.tao.eodata.EOProduct;
-import ro.cs.tao.eodata.Polygon2D;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.config.DatabaseConfiguration;
-import ro.cs.tao.persistence.data.DataSourceType;
 import ro.cs.tao.persistence.exception.PersistenceException;
-import ro.cs.tao.spi.ServiceRegistry;
-import ro.cs.tao.spi.ServiceRegistryManager;
-import ro.cs.tao.topology.NodeDescription;
+import ro.cs.tao.topology.*;
 
-import java.lang.reflect.Parameter;
-import java.net.URISyntaxException;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.LogManager;
-import java.util.logging.Logger;
 
 /**
  * Created by oana on 7/18/2017.
@@ -209,6 +184,11 @@ public class PersistenceManagerTest {
             node.setDiskSpaceSizeGB(1000);
 
             node.setDescription("Node just for test");
+
+            List<NodeServiceStatus> servicesStatus = new ArrayList<>();
+            servicesStatus.add(new NodeServiceStatus(new ServiceDescription("Docker", "1.9", "Docker description"), ServiceStatus.INSTALLED));
+            servicesStatus.add(new NodeServiceStatus(new ServiceDescription("Torque", "1.5", "Torque CRM"), ServiceStatus.NOT_FOUND));
+            node.setServicesStatus(servicesStatus);
 
             node = persistenceManager.saveExecutionNode(node);
             // check persisted node

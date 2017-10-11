@@ -2,6 +2,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import ro.cs.tao.topology.NodeDescription;
+import ro.cs.tao.topology.NodeServiceStatus;
 import ro.cs.tao.topology.ServiceDescription;
 import ro.cs.tao.topology.ServiceStatus;
 
@@ -79,10 +80,10 @@ public class NodeDescriptionTest extends BaseSerializationTest<NodeDescription> 
         entity.setProcessorCount(4);
         entity.setMemorySizeGB(16);
         entity.setDiskSpaceSizeGB(500);
-        List<ServiceDescription> services = new ArrayList<>();
-        services.add(new ServiceDescription("Docker", "1.9", "Docker description", ServiceStatus.INSTALLED));
-        services.add(new ServiceDescription("Torque", "1.5", "Torque CRM", ServiceStatus.NOT_FOUND));
-        entity.setServices(services);
+        List<NodeServiceStatus> servicesStatus = new ArrayList<>();
+        servicesStatus.add(new NodeServiceStatus(new ServiceDescription("Docker", "1.9", "Docker description"), ServiceStatus.INSTALLED));
+        servicesStatus.add(new NodeServiceStatus(new ServiceDescription("Torque", "1.5", "Torque CRM"), ServiceStatus.NOT_FOUND));
+        entity.setServicesStatus(servicesStatus);
     }
 
     @Test
