@@ -1,6 +1,7 @@
 package ro.cs.tao.topology;
 
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import java.io.Serializable;
 
@@ -9,6 +10,7 @@ import java.io.Serializable;
  *
  * @author  Oana H.
  */
+@XmlRootElement(name = "serviceStatus")
 public class NodeServiceStatus implements Serializable {
 
     private ServiceDescription serviceDescription;
