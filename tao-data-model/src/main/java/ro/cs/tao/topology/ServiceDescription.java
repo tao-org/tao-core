@@ -13,15 +13,13 @@ public class ServiceDescription {
     private String name;
     private String version;
     private String description;
-    private ServiceStatus status;
 
     public ServiceDescription() { }
 
-    public ServiceDescription(String name, String version, String description, ServiceStatus status) {
+    public ServiceDescription(String name, String version, String description) {
         this.name = name;
         this.version = version;
         this.description = description;
-        this.status = status;
     }
 
     @XmlElement(name = "name")
@@ -36,7 +34,4 @@ public class ServiceDescription {
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
-    @XmlElement(name = "status")
-    public ServiceStatus getStatus() { return status; }
-    public void setStatus(ServiceStatus status) { this.status = status; }
 }
