@@ -170,24 +170,88 @@ public class PersistenceManagerTest {
     }**/
 
     @Test
-    public void TC_01_save_new_execution_node()
+    public void TC_01_01_save_new_execution_node_new_services()
     {
         try
         {
             // add a new execution node for test
             NodeDescription node  = new NodeDescription();
-            node.setHostName("Test_host_name");
-            node.setUserName("Test user name");
-            node.setUserPass("Test user pass");
+            node.setHostName("Test1_host_name");
+            node.setUserName("Test1 user name");
+            node.setUserPass("Test1 user pass");
             node.setProcessorCount(2);
             node.setMemorySizeGB(10);
             node.setDiskSpaceSizeGB(1000);
 
-            node.setDescription("Node just for test");
+            node.setDescription("Node1 just for test");
 
             List<NodeServiceStatus> servicesStatus = new ArrayList<>();
             servicesStatus.add(new NodeServiceStatus(new ServiceDescription("Docker", "1.9", "Docker description"), ServiceStatus.INSTALLED));
             servicesStatus.add(new NodeServiceStatus(new ServiceDescription("Torque", "1.5", "Torque CRM"), ServiceStatus.NOT_FOUND));
+            node.setServicesStatus(servicesStatus);
+
+            node = persistenceManager.saveExecutionNode(node);
+            // check persisted node
+            Assert.assertTrue(node != null && node.getHostName() != null);
+        }
+        catch (PersistenceException e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void TC_01_02_save_new_execution_node_existing_services()
+    {
+        try
+        {
+            // add a new execution node for test
+            NodeDescription node  = new NodeDescription();
+            node.setHostName("Test2_host_name");
+            node.setUserName("Test2 user name");
+            node.setUserPass("Test2 user pass");
+            node.setProcessorCount(2);
+            node.setMemorySizeGB(10);
+            node.setDiskSpaceSizeGB(1000);
+
+            node.setDescription("Node2 just for test");
+
+            List<NodeServiceStatus> servicesStatus = new ArrayList<>();
+            servicesStatus.add(new NodeServiceStatus(new ServiceDescription("Docker", "1.9", "Docker description"), ServiceStatus.UNINSTALLED));
+            servicesStatus.add(new NodeServiceStatus(new ServiceDescription("Torque", "1.5", "Torque CRM"), ServiceStatus.UNINSTALLED));
+            node.setServicesStatus(servicesStatus);
+
+            node = persistenceManager.saveExecutionNode(node);
+            // check persisted node
+            Assert.assertTrue(node != null && node.getHostName() != null);
+        }
+        catch (PersistenceException e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void TC_01_03_save_new_execution_node_mixt_services()
+    {
+        try
+        {
+            // add a new execution node for test
+            NodeDescription node  = new NodeDescription();
+            node.setHostName("Test3_host_name");
+            node.setUserName("Test3 user name");
+            node.setUserPass("Test3 user pass");
+            node.setProcessorCount(2);
+            node.setMemorySizeGB(10);
+            node.setDiskSpaceSizeGB(1000);
+
+            node.setDescription("Node3 just for test");
+
+            List<NodeServiceStatus> servicesStatus = new ArrayList<>();
+            servicesStatus.add(new NodeServiceStatus(new ServiceDescription("Docker", "2.0", "Docker description"), ServiceStatus.INSTALLED));
+            servicesStatus.add(new NodeServiceStatus(new ServiceDescription("Torque", "1.5", "Torque CRM"), ServiceStatus.INSTALLED));
             node.setServicesStatus(servicesStatus);
 
             node = persistenceManager.saveExecutionNode(node);
@@ -396,7 +460,7 @@ public class PersistenceManagerTest {
             List<ProcessingComponent> components  = persistenceManager.getProcessingComponents();
             Assert.assertTrue(components != null && components.size() > 0);
 
-            logger.info("Found " + components.size() + " processing components.");
+            logger.info("Found " + components.size() + " processing component(s).");
 
             for (ProcessingComponent component : components)
             {

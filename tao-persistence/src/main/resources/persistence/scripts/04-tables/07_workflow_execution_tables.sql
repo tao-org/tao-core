@@ -209,12 +209,15 @@ DROP TABLE IF EXISTS tao.service CASCADE;
 
 CREATE TABLE tao.service
 (
+    id integer NOT NULL,
 	name varchar(250) NOT NULL,
 	version varchar(50) NOT NULL,
 	description text NULL
 );
 
-ALTER TABLE tao.service ADD CONSTRAINT PK_service PRIMARY KEY (name);
+ALTER TABLE tao.service ADD CONSTRAINT PK_service PRIMARY KEY (id);
+
+ALTER TABLE tao.service ADD CONSTRAINT K_service UNIQUE (name, version);
 
 
 -------------------------------------------------------------------------------
@@ -224,17 +227,17 @@ DROP TABLE IF EXISTS tao.execution_node_service CASCADE;
 CREATE TABLE tao.execution_node_service
 (
 	host_name varchar(250) NOT NULL,
-	service_name varchar(250) NOT NULL,
+	service_id integer NOT NULL,
 	service_status_id integer NOT NULL
 );
 
-ALTER TABLE tao.execution_node_service ADD CONSTRAINT PK_execution_node_service PRIMARY KEY (host_name, service_name);
+ALTER TABLE tao.execution_node_service ADD CONSTRAINT PK_execution_node_service PRIMARY KEY (host_name, service_id);
 
 ALTER TABLE tao.execution_node_service ADD CONSTRAINT FK_execution_node_service_execution_node
 	FOREIGN KEY (host_name) REFERENCES tao.execution_node (host_name) ON DELETE No Action ON UPDATE No Action;
 
 ALTER TABLE tao.execution_node_service ADD CONSTRAINT FK_execution_node_service_service
-    FOREIGN KEY (service_name) REFERENCES tao.service (name) ON DELETE No Action ON UPDATE No Action;
+    FOREIGN KEY (service_id) REFERENCES tao.service (id) ON DELETE No Action ON UPDATE No Action;
 
 ALTER TABLE tao.execution_node_service ADD CONSTRAINT FK_execution_node_service_service_status
 	FOREIGN KEY (service_status_id) REFERENCES tao.service_status (id) ON DELETE No Action ON UPDATE No Action;
