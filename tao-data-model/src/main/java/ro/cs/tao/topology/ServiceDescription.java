@@ -2,6 +2,7 @@ package ro.cs.tao.topology;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 
 /**
  * A service represents a mandatory software component that should be on a topology node.
@@ -10,18 +11,26 @@ import javax.xml.bind.annotation.XmlRootElement;
  */
 @XmlRootElement(name = "service")
 public class ServiceDescription {
+    private Integer id;
     private String name;
     private String version;
     private String description;
-    private ServiceStatus status;
 
     public ServiceDescription() { }
 
-    public ServiceDescription(String name, String version, String description, ServiceStatus status) {
+    public ServiceDescription(String name, String version, String description) {
         this.name = name;
         this.version = version;
         this.description = description;
-        this.status = status;
+    }
+
+    @XmlTransient
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
     }
 
     @XmlElement(name = "name")
@@ -36,7 +45,4 @@ public class ServiceDescription {
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
-    @XmlElement(name = "status")
-    public ServiceStatus getStatus() { return status; }
-    public void setStatus(ServiceStatus status) { this.status = status; }
 }

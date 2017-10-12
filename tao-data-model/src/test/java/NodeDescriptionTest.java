@@ -2,6 +2,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import ro.cs.tao.topology.NodeDescription;
+import ro.cs.tao.topology.NodeServiceStatus;
 import ro.cs.tao.topology.ServiceDescription;
 import ro.cs.tao.topology.ServiceStatus;
 
@@ -23,18 +24,22 @@ public class NodeDescriptionTest extends BaseSerializationTest<NodeDescription> 
                 "      \"memory\" : 16,\n" +
                 "      \"processors\" : 4,\n" +
                 "      \"services\" : {\n" +
-                "         \"services\" : [ {\n" +
-                "            \"description\" : \"Docker description\",\n" +
-                "            \"name\" : \"Docker\",\n" +
-                "            \"status\" : \"INSTALLED\",\n" +
-                "            \"version\" : \"1.9\"\n" +
-                "         }, {\n" +
-                "            \"description\" : \"Torque CRM\",\n" +
-                "            \"name\" : \"Torque\",\n" +
-                "            \"status\" : \"NOT_FOUND\",\n" +
-                "            \"version\" : \"1.5\"\n" +
-                "         } ]\n" +
-                "      },\n" +
+                "         \"servicesStatus\" : [ {\n" +
+                "            \"service\" : {\n" +
+                "               \"description\" : \"Docker description\",\n" +
+                "               \"name\" : \"Docker\",\n" +
+                "               \"version\" : \"1.9\"\n" +
+                "            },\n" +
+                "            \"status\" : \"INSTALLED\"\n" +
+                "        }, {\n" +
+                "            \"service\" : {\n" +
+                "               \"description\" : \"Torque CRM\",\n" +
+                "               \"name\" : \"Torque\",\n" +
+                "               \"version\" : \"1.5\"\n" +
+                "            },\n" +
+                "            \"status\" : \"NOT_FOUND\"\n" +
+                "        } ]\n" +
+                "    },\n" +
                 "      \"userName\" : \"user\",\n" +
                 "      \"password\" : \"drowssap\"\n" +
                 "   }\n" +
@@ -52,18 +57,22 @@ public class NodeDescriptionTest extends BaseSerializationTest<NodeDescription> 
                 "   <userName>user</userName>\n" +
                 "   <password>drowssap</password>\n" +
                 "   <services>\n" +
-                "      <service>\n" +
-                "         <name>Docker</name>\n" +
-                "         <version>1.9</version>\n" +
-                "         <description>Docker description</description>\n" +
+                "      <servicesStatus>" +
+                "         <service>\n" +
+                "            <name>Docker</name>\n" +
+                "            <version>1.9</version>\n" +
+                "            <description>Docker description</description>\n" +
+                "         </service>\n" +
                 "         <status>INSTALLED</status>\n" +
-                "      </service>\n" +
-                "      <service>\n" +
-                "         <name>Torque</name>\n" +
-                "         <version>1.5</version>\n" +
-                "         <description>Torque CRM</description>\n" +
+                "      </servicesStatus>\n" +
+                "      <servicesStatus>" +
+                "         <service>\n" +
+                "            <name>Torque</name>\n" +
+                "            <version>1.5</version>\n" +
+                "            <description>Torque CRM</description>\n" +
+                "         </service>\n" +
                 "         <status>NOT_FOUND</status>\n" +
-                "      </service>\n" +
+                "      </servicesStatus>\n" +
                 "   </services>\n" +
                 "</node>";
     }
@@ -79,10 +88,10 @@ public class NodeDescriptionTest extends BaseSerializationTest<NodeDescription> 
         entity.setProcessorCount(4);
         entity.setMemorySizeGB(16);
         entity.setDiskSpaceSizeGB(500);
-        List<ServiceDescription> services = new ArrayList<>();
-        services.add(new ServiceDescription("Docker", "1.9", "Docker description", ServiceStatus.INSTALLED));
-        services.add(new ServiceDescription("Torque", "1.5", "Torque CRM", ServiceStatus.NOT_FOUND));
-        entity.setServices(services);
+        List<NodeServiceStatus> servicesStatus = new ArrayList<>();
+        servicesStatus.add(new NodeServiceStatus(new ServiceDescription("Docker", "1.9", "Docker description"), ServiceStatus.INSTALLED));
+        servicesStatus.add(new NodeServiceStatus(new ServiceDescription("Torque", "1.5", "Torque CRM"), ServiceStatus.NOT_FOUND));
+        entity.setServicesStatus(servicesStatus);
     }
 
     @Test

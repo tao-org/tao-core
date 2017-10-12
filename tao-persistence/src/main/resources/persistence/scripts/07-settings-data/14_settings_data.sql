@@ -63,11 +63,17 @@ INSERT INTO tao.data_type (type) VALUES ('Polygon2D');
 -- Execution status
 
 INSERT INTO tao.execution_status (status) VALUES ('UNDETERMINED');
+
 INSERT INTO tao.execution_status (status) VALUES ('QUEUED_ACTIVE');
+
 INSERT INTO tao.execution_status (status) VALUES ('RUNNING');
+
 INSERT INTO tao.execution_status (status) VALUES ('SUSPENDED');
+
 INSERT INTO tao.execution_status (status) VALUES ('DONE');
+
 INSERT INTO tao.execution_status (status) VALUES ('FAILED');
+
 INSERT INTO tao.execution_status (status) VALUES ('CANCELLED');
 
 
@@ -116,6 +122,17 @@ INSERT INTO tao.sensor_type (type) VALUES ('RADAR');
 INSERT INTO tao.sensor_type (type) VALUES ('ALTIMETRIC');
 
 INSERT INTO tao.sensor_type (type) VALUES ('ATMOSPHERIC');
+
+
+-- Service status
+
+INSERT INTO  tao.service_status (status) VALUES ('NOT_FOUND');
+
+INSERT INTO  tao.service_status (status) VALUES ('INSTALLED');
+
+INSERT INTO  tao.service_status (status) VALUES ('UNINSTALLED');
+
+INSERT INTO  tao.service_status (status) VALUES ('ERROR');
 
 
 -- Data Query parameters

@@ -22,40 +22,15 @@ import ro.cs.tao.component.execution.ExecutionStatus;
 import ro.cs.tao.component.execution.ExecutionTask;
 import ro.cs.tao.component.template.BasicTemplate;
 import ro.cs.tao.component.template.Template;
-import ro.cs.tao.component.template.TemplateException;
 import ro.cs.tao.component.template.TemplateType;
-import ro.cs.tao.component.template.engine.TemplateEngine;
-import ro.cs.tao.datasource.AbstractDataSource;
-import ro.cs.tao.datasource.DataQuery;
-import ro.cs.tao.datasource.DataSource;
-import ro.cs.tao.datasource.QueryException;
-import ro.cs.tao.datasource.param.QueryParameter;
-import ro.cs.tao.datasource.remote.peps.Collection;
-import ro.cs.tao.datasource.remote.peps.PepsDataSource;
-import ro.cs.tao.datasource.remote.scihub.SciHubDataQuery;
-import ro.cs.tao.datasource.remote.scihub.SciHubDataSource;
-import ro.cs.tao.eodata.EOProduct;
-import ro.cs.tao.eodata.Polygon2D;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.config.DatabaseConfiguration;
-import ro.cs.tao.persistence.data.DataSourceType;
 import ro.cs.tao.persistence.exception.PersistenceException;
-import ro.cs.tao.spi.ServiceRegistry;
-import ro.cs.tao.spi.ServiceRegistryManager;
-import ro.cs.tao.topology.NodeDescription;
+import ro.cs.tao.topology.*;
 
-import java.lang.reflect.Parameter;
-import java.net.URISyntaxException;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.LogManager;
-import java.util.logging.Logger;
 
 /**
  * Created by oana on 7/18/2017.
@@ -195,20 +170,89 @@ public class PersistenceManagerTest {
     }**/
 
     @Test
-    public void TC_01_save_new_execution_node()
+    public void TC_01_01_save_new_execution_node_new_services()
     {
         try
         {
             // add a new execution node for test
             NodeDescription node  = new NodeDescription();
-            node.setHostName("Test_host_name");
-            node.setUserName("Test user name");
-            node.setUserPass("Test user pass");
+            node.setHostName("Test1_host_name");
+            node.setUserName("Test1 user name");
+            node.setUserPass("Test1 user pass");
             node.setProcessorCount(2);
             node.setMemorySizeGB(10);
             node.setDiskSpaceSizeGB(1000);
 
-            node.setDescription("Node just for test");
+            node.setDescription("Node1 just for test");
+
+            List<NodeServiceStatus> servicesStatus = new ArrayList<>();
+            servicesStatus.add(new NodeServiceStatus(new ServiceDescription("Docker", "1.9", "Docker description"), ServiceStatus.INSTALLED));
+            servicesStatus.add(new NodeServiceStatus(new ServiceDescription("Torque", "1.5", "Torque CRM"), ServiceStatus.NOT_FOUND));
+            node.setServicesStatus(servicesStatus);
+
+            node = persistenceManager.saveExecutionNode(node);
+            // check persisted node
+            Assert.assertTrue(node != null && node.getHostName() != null);
+        }
+        catch (PersistenceException e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void TC_01_02_save_new_execution_node_existing_services()
+    {
+        try
+        {
+            // add a new execution node for test
+            NodeDescription node  = new NodeDescription();
+            node.setHostName("Test2_host_name");
+            node.setUserName("Test2 user name");
+            node.setUserPass("Test2 user pass");
+            node.setProcessorCount(2);
+            node.setMemorySizeGB(10);
+            node.setDiskSpaceSizeGB(1000);
+
+            node.setDescription("Node2 just for test");
+
+            List<NodeServiceStatus> servicesStatus = new ArrayList<>();
+            servicesStatus.add(new NodeServiceStatus(new ServiceDescription("Docker", "1.9", "Docker description"), ServiceStatus.UNINSTALLED));
+            servicesStatus.add(new NodeServiceStatus(new ServiceDescription("Torque", "1.5", "Torque CRM"), ServiceStatus.UNINSTALLED));
+            node.setServicesStatus(servicesStatus);
+
+            node = persistenceManager.saveExecutionNode(node);
+            // check persisted node
+            Assert.assertTrue(node != null && node.getHostName() != null);
+        }
+        catch (PersistenceException e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void TC_01_03_save_new_execution_node_mixt_services()
+    {
+        try
+        {
+            // add a new execution node for test
+            NodeDescription node  = new NodeDescription();
+            node.setHostName("Test3_host_name");
+            node.setUserName("Test3 user name");
+            node.setUserPass("Test3 user pass");
+            node.setProcessorCount(2);
+            node.setMemorySizeGB(10);
+            node.setDiskSpaceSizeGB(1000);
+
+            node.setDescription("Node3 just for test");
+
+            List<NodeServiceStatus> servicesStatus = new ArrayList<>();
+            servicesStatus.add(new NodeServiceStatus(new ServiceDescription("Docker", "2.0", "Docker description"), ServiceStatus.INSTALLED));
+            servicesStatus.add(new NodeServiceStatus(new ServiceDescription("Torque", "1.5", "Torque CRM"), ServiceStatus.INSTALLED));
+            node.setServicesStatus(servicesStatus);
 
             node = persistenceManager.saveExecutionNode(node);
             // check persisted node
@@ -416,7 +460,7 @@ public class PersistenceManagerTest {
             List<ProcessingComponent> components  = persistenceManager.getProcessingComponents();
             Assert.assertTrue(components != null && components.size() > 0);
 
-            logger.info("Found " + components.size() + " processing components.");
+            logger.info("Found " + components.size() + " processing component(s).");
 
             for (ProcessingComponent component : components)
             {
