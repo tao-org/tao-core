@@ -210,9 +210,14 @@
     <entity class="ro.cs.tao.topology.ServiceDescription" access="PROPERTY">
         <table name="tao.service"/>
         <attributes>
-            <id name="name">
-                <column name="name" nullable="false" column-definition="character varying(250) NOT NULL"/>
+            <id name="id">
+                <column name="id" nullable="false" column-definition="integer NOT NULL"/>
+                <generated-value strategy="SEQUENCE" generator="service_identifier"/>
+                <sequence-generator name="service_identifier" sequence-name="tao.service_id_seq" allocation-size="1" />
             </id>
+            <basic name="name">
+                <column name="name" nullable="false" column-definition="character varying(250) NOT NULL"/>
+            </basic>
             <basic name="version">
                 <column name="version" nullable="false" column-definition="character varying(50) NOT NULL"/>
             </basic>
@@ -411,7 +416,7 @@
                 <convert converter="ro.cs.tao.persistence.convert.ServiceStatusConverter" attribute-name="status" />
             </basic>
             <many-to-one name="serviceDescription" fetch="LAZY">
-                <join-column name="service_name" nullable="false"/>
+                <join-column name="service_id" nullable="false"/>
             </many-to-one>
         </attributes>
     </embeddable>

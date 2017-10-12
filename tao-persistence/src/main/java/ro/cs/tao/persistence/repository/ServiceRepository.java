@@ -15,11 +15,19 @@ import ro.cs.tao.topology.ServiceDescription;
 @Repository
 @Qualifier(value = "serviceRepository")
 @Transactional
-public interface ServiceRepository extends PagingAndSortingRepository<ServiceDescription, String> {
+public interface ServiceRepository extends PagingAndSortingRepository<ServiceDescription, Integer> {
     /**
-     * Find ServiceDescription entity by its name
-     * @param name - the given service name
+     * Find ServiceDescription entity by its identifier
+     * @param id - the given service id
      * @return the corresponding ServiceDescription entity
      */
-    ServiceDescription findByName(String name);
+    ServiceDescription findById(Integer id);
+
+    /**
+     * Find ServiceDescription entity by its name and version (unique)
+     * @param name - the given service name
+     * @param version - the given service version
+     * @return the corresponding ServiceDescription entity
+     */
+    ServiceDescription findByNameAndVersion(String name, String version);
 }

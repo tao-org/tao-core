@@ -419,8 +419,8 @@ public class PersistenceManager {
             throw new PersistenceException("Invalid parameters were provided for adding new service!");
         }
 
-        // check if there is already another service with the same name
-        final ServiceDescription serviceWithSameName = serviceRepository.findByName(service.getName());
+        // check if there is already another service with the same name and version
+        final ServiceDescription serviceWithSameName = serviceRepository.findByNameAndVersion(service.getName(), service.getVersion());
         if (serviceWithSameName != null)
         {
             throw new PersistenceException("There is already another service with the name: " + service.getName());
@@ -431,14 +431,14 @@ public class PersistenceManager {
     }
 
     @Transactional(readOnly = true)
-    public boolean checkIfExistsServiceByName(final String serviceName)
+    public boolean checkIfExistsServiceByNameAndVersion(final String serviceName, final String serviceVersion)
     {
         boolean result = false;
 
         if (serviceName != null && !serviceName.isEmpty())
         {
             // try to retrieve ServiceDescription after its name
-            final ServiceDescription serviceEnt = serviceRepository.findByName(serviceName);
+            final ServiceDescription serviceEnt = serviceRepository.findByNameAndVersion(serviceName, serviceVersion);
             if (serviceEnt != null)
             {
                 result = true;
@@ -501,9 +501,15 @@ public class PersistenceManager {
         // save the services first
         for(NodeServiceStatus serviceStatus: node.getServicesStatus())
         {
-            if (!checkIfExistsServiceByName(serviceStatus.getServiceDescription().getName()))
+            if (!checkIfExistsServiceByNameAndVersion(serviceStatus.getServiceDescription().getName(), serviceStatus.getServiceDescription().getVersion()))
             {
                 serviceRepository.save(serviceStatus.getServiceDescription());
+            }
+            else
+            {
+                // retrieve the existent entities and associate them on the node
+                ServiceDescription existingService = serviceRepository.findByNameAndVersion(serviceStatus.getServiceDescription().getName(), serviceStatus.getServiceDescription().getVersion());
+                serviceStatus.setServiceDescription(existingService);
             }
         }
 
