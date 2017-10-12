@@ -11,7 +11,8 @@ import ro.cs.tao.spi.ServiceRegistryManager;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
@@ -34,7 +35,7 @@ public class AWSDataSourceTest {
                 handler.setLevel(Level.INFO);
             }
             ServiceRegistry<DataSource> serviceRegistry = getServiceRegistry();
-            DataSource dataSource = serviceRegistry.getService(AWSDataSource.class.getName());
+            DataSource dataSource = serviceRegistry.getService(AWSDataSource.class);
             String[] sensors = dataSource.getSupportedSensors();
 
             DataQuery query = dataSource.createQuery(sensors[0]);

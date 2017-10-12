@@ -49,7 +49,6 @@ import ro.cs.tao.spi.ServiceRegistryManager;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Handler;
@@ -74,7 +73,7 @@ public class DataSourceTest {
             for (Handler handler : logger.getHandlers()) {
                 handler.setLevel(Level.INFO);
             }
-            DataSource dataSource = getDatasourceRegistry().getService(SciHubDataSource.class.getName());
+            DataSource dataSource = getDatasourceRegistry().getService(SciHubDataSource.class);
             dataSource.setCredentials("kraftek", "cei7pitici.");
             String[] sensors = dataSource.getSupportedSensors();
 
