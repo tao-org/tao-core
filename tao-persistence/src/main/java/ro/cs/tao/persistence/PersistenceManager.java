@@ -1,7 +1,6 @@
 package ro.cs.tao.persistence;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import org.springframework.data.domain.Sort;
@@ -14,23 +13,15 @@ import ro.cs.tao.component.enums.ProcessingComponentVisibility;
 import ro.cs.tao.component.execution.ExecutionJob;
 import ro.cs.tao.component.execution.ExecutionStatus;
 import ro.cs.tao.component.execution.ExecutionTask;
-import ro.cs.tao.datasource.AbstractDataSource;
-import ro.cs.tao.datasource.DataQuery;
-import ro.cs.tao.eodata.Attribute;
 import ro.cs.tao.eodata.EOProduct;
-import ro.cs.tao.persistence.data.DataProduct;
-import ro.cs.tao.persistence.data.DataSourceType;
-import ro.cs.tao.persistence.data.ExecutionNode;
 import ro.cs.tao.persistence.data.User;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.persistence.repository.*;
 import ro.cs.tao.topology.NodeDescription;
+import ro.cs.tao.topology.NodeServiceStatus;
+import ro.cs.tao.topology.ServiceDescription;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -65,9 +56,17 @@ public class PersistenceManager {
     @Autowired
     private NodeRepository nodeRepository;
 
+    /** CRUD Repository for ServiceDescription entities */
+    @Autowired
+    private ServiceRepository serviceRepository;
+
     /** CRUD Repository for ProcessingComponent entities */
     @Autowired
     private ProcessingComponentRepository processingComponentRepository;
+
+    /** CRUD Repository for ParameterDescriptor entities */
+    @Autowired
+    private ParameterDescriptorRepository parameterDescriptorRepository;
 
     /** CRUD Repository for ExecutionJob entities */
     @Autowired
@@ -393,6 +392,62 @@ public class PersistenceManager {
         return savedEOProduct;
     }
 
+    private boolean checkServiceDescription(ServiceDescription service)
+    {
+        if(service == null)
+        {
+            return false;
+        }
+        if(service.getName() == null || service.getName().isEmpty())
+        {
+            return false;
+        }
+        if(service.getVersion() == null || service.getVersion().isEmpty())
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Transactional
+    public ServiceDescription saveServiceDescription(ServiceDescription service) throws PersistenceException
+    {
+        // check method parameters
+        if(!checkServiceDescription(service))
+        {
+            throw new PersistenceException("Invalid parameters were provided for adding new service!");
+        }
+
+        // check if there is already another service with the same name and version
+        final ServiceDescription serviceWithSameName = serviceRepository.findByNameAndVersion(service.getName(), service.getVersion());
+        if (serviceWithSameName != null)
+        {
+            throw new PersistenceException("There is already another service with the name: " + service.getName());
+        }
+
+        // save the new ServiceDescription entity and return it
+        return serviceRepository.save(service);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean checkIfExistsServiceByNameAndVersion(final String serviceName, final String serviceVersion)
+    {
+        boolean result = false;
+
+        if (serviceName != null && !serviceName.isEmpty())
+        {
+            // try to retrieve ServiceDescription after its name
+            final ServiceDescription serviceEnt = serviceRepository.findByNameAndVersion(serviceName, serviceVersion);
+            if (serviceEnt != null)
+            {
+                result = true;
+            }
+        }
+
+        return result;
+    }
+
     private boolean checkExecutionNode(NodeDescription node)
     {
         if(node == null)
@@ -441,6 +496,21 @@ public class PersistenceManager {
         if (nodeWithSameHostName != null)
         {
             throw new PersistenceException("There is already another node with the host name: " + node.getHostName());
+        }
+
+        // save the services first
+        for(NodeServiceStatus serviceStatus: node.getServicesStatus())
+        {
+            if (!checkIfExistsServiceByNameAndVersion(serviceStatus.getServiceDescription().getName(), serviceStatus.getServiceDescription().getVersion()))
+            {
+                serviceRepository.save(serviceStatus.getServiceDescription());
+            }
+            else
+            {
+                // retrieve the existent entities and associate them on the node
+                ServiceDescription existingService = serviceRepository.findByNameAndVersion(serviceStatus.getServiceDescription().getName(), serviceStatus.getServiceDescription().getVersion());
+                serviceStatus.setServiceDescription(existingService);
+            }
         }
 
         // save the new NodeDescription entity and return it
@@ -537,17 +607,82 @@ public class PersistenceManager {
         return nodeRepository.save(nodeEnt);
     }
 
+    private boolean checkParameterDescriptor(ParameterDescriptor parameterDesc)
+    {
+        if(parameterDesc == null)
+        {
+            return false;
+        }
+        if(parameterDesc.getId() == null || parameterDesc.getId().isEmpty())
+        {
+            return false;
+        }
+        if(parameterDesc.getType() == null)
+        {
+            return false;
+        }
+        if(parameterDesc.getDataType() == null)
+        {
+            return false;
+        }
+        if(parameterDesc.getLabel() == null || parameterDesc.getLabel().isEmpty())
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    /*@Transactional
+    public ParameterDescriptor saveParameterDescriptor(ParameterDescriptor parameter, ProcessingComponent component) throws PersistenceException
+    {
+        // check method parameters
+        if(!checkParameterDescriptor(parameter) || !checkProcessingComponent(component))
+        {
+            throw new PersistenceException("Invalid parameters were provided for adding new processing component parameter!");
+        }
+
+        // check if there is already another parameter with the same identifier
+        final ParameterDescriptor parameterWithSameId = parameterDescriptorRepository.findById(parameter.getId());
+        if (parameterWithSameId != null)
+        {
+            throw new PersistenceException("There is already another processing parameter with the identifier: " + parameter.getId());
+        }
+
+        parameter.setProcessingComponent(component);
+
+        // save the new ParameterDescriptor entity and return it
+        return parameterDescriptorRepository.save(parameter);
+    }*/
+
+    /*public ParameterDescriptor saveParameterDescriptorWithinExistingTransaction(ParameterDescriptor parameter, ProcessingComponent component) throws PersistenceException
+    {
+        // check method parameters
+        if(!checkParameterDescriptor(parameter) || !checkProcessingComponent(component))
+        {
+            throw new PersistenceException("Invalid parameters were provided for adding new processing component parameter!");
+        }
+
+        // check if there is already another parameter with the same identifier
+        final ParameterDescriptor parameterWithSameId = parameterDescriptorRepository.findById(parameter.getId());
+        if (parameterWithSameId != null)
+        {
+            throw new PersistenceException("There is already another processing parameter with the identifier: " + parameter.getId());
+        }
+
+        parameter.setProcessingComponent(component);
+
+        // save the new ParameterDescriptor entity and return it
+        return parameterDescriptorRepository.save(parameter);
+    }*/
+
     private boolean checkProcessingComponent(ProcessingComponent component)
     {
         if(component == null)
         {
             return false;
         }
-        if(component.getId() == null)
-        {
-            return false;
-        }
-        if(component.getId().isEmpty())
+        if(component.getId() == null || component.getId().isEmpty())
         {
             return false;
         }
@@ -593,16 +728,24 @@ public class PersistenceManager {
             return false;
         }
 
+        for(ParameterDescriptor parameter: component.getParameterDescriptors())
+        {
+            if(!checkParameterDescriptor(parameter))
+            {
+                return false;
+            }
+        }
+
         return true;
     }
 
-    @Transactional
+    /*@Transactional
     public ProcessingComponent saveProcessingComponent(ProcessingComponent component) throws PersistenceException
     {
         // check method parameters
         if(!checkProcessingComponent(component))
         {
-            throw new PersistenceException("Invalid parameters were provided for adding new processing !");
+            throw new PersistenceException("Invalid parameters were provided for adding new processing component !");
         }
 
         // check if there is already another component with the same identifier
@@ -612,12 +755,42 @@ public class PersistenceManager {
             throw new PersistenceException("There is already another component with the identifier: " + component.getId());
         }
 
-        // save the parameters first
-// TODO
-//        for (ParameterDescriptor parameter: component.getParameterDescriptors())
-//        {
-//
-//        }
+        // we must save the component first (without parameters), after save the parameters and associate them
+        // this cannot be done in one step, because of FK of parameters towards the component
+        List<ParameterDescriptor> parameters = component.getParameterDescriptors();
+
+        // erase the parameters and save it
+        component.setParameterDescriptors(null);
+        ProcessingComponent savedComponent = processingComponentRepository.save(component);
+
+        // save the parameters
+        for (ParameterDescriptor parameter: parameters)
+        {
+            saveParameterDescriptorWithinExistingTransaction(parameter, savedComponent);
+        }
+
+        // associate the saved parameters
+        savedComponent.setParameterDescriptors(parameters);
+
+        // save the new ProcessingComponent entity
+       return processingComponentRepository.save(savedComponent);
+    }*/
+
+    @Transactional
+    public ProcessingComponent saveProcessingComponent(ProcessingComponent component) throws PersistenceException
+    {
+        // check method parameters
+        if(!checkProcessingComponent(component))
+        {
+            throw new PersistenceException("Invalid parameters were provided for adding new processing component !");
+        }
+
+        // check if there is already another component with the same identifier
+        final ProcessingComponent componentWithSameId = processingComponentRepository.findById(component.getId());
+        if (componentWithSameId != null)
+        {
+            throw new PersistenceException("There is already another component with the identifier: " + component.getId());
+        }
 
         // save the new ProcessingComponent entity and return it
         return processingComponentRepository.save(component);

@@ -12,6 +12,7 @@
         <class>ro.cs.tao.eodata.EOProduct</class>
 
         <class>ro.cs.tao.topology.NodeDescription</class>
+        <class>ro.cs.tao.topology.ServiceDescription</class>
 
         <class>ro.cs.tao.component.Variable</class>
         <class>ro.cs.tao.component.ParameterDescriptor</class>

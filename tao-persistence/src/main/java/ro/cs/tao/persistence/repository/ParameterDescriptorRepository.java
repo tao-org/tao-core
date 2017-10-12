@@ -15,7 +15,7 @@ import ro.cs.tao.component.ParameterDescriptor;
 @Repository
 @Qualifier(value = "parameterDescriptorRepository")
 @Transactional
-public interface ParameterRepository extends PagingAndSortingRepository<ParameterDescriptor, String> {
+public interface ParameterDescriptorRepository extends PagingAndSortingRepository<ParameterDescriptor, String> {
 
     /**
      * Find ParameterDescriptor entity by its identifier
