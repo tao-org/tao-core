@@ -171,16 +171,16 @@ DROP TABLE IF EXISTS tao.data_product_attributes CASCADE;
 
 CREATE TABLE tao.data_product_attributes
 (
-	id varchar(1000) NOT NULL,
+	data_product_id varchar(1000) NOT NULL,
 	name varchar(1000) NOT NULL,
 	value text NOT NULL
 );
 
 ALTER TABLE tao.data_product_attributes ADD CONSTRAINT PK_data_product_attributes
-	PRIMARY KEY (id, name);
+	PRIMARY KEY (data_product_id, name);
 
 ALTER TABLE tao.data_product_attributes ADD CONSTRAINT FK_data_product_attributes_data_product
-	FOREIGN KEY (id) REFERENCES tao.data_product (id) ON DELETE No Action ON UPDATE No Action;
+	FOREIGN KEY (data_product_id) REFERENCES tao.data_product (id) ON DELETE No Action ON UPDATE No Action;
 
 
 

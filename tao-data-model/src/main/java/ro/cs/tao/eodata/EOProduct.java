@@ -42,7 +42,10 @@ import ro.cs.tao.eodata.enums.PixelType;
 import ro.cs.tao.eodata.enums.SensorType;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @author Cosmin Cara
@@ -100,4 +103,13 @@ public class EOProduct extends EOData {
     public String getProductType() { return productType; }
 
     public void setProductType(String value) { this.productType = value; }
+
+    /*
+    public List<Attribute> getAttributes() {
+        return super.getAttributes();
+    }
+
+    public void setAttributes(List<Attribute> attributes) {
+        super.setAttributes(attributes);
+    }*/
 }

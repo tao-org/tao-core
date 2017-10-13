@@ -23,14 +23,27 @@ import ro.cs.tao.component.execution.ExecutionTask;
 import ro.cs.tao.component.template.BasicTemplate;
 import ro.cs.tao.component.template.Template;
 import ro.cs.tao.component.template.TemplateType;
+import ro.cs.tao.datasource.DataQuery;
+import ro.cs.tao.datasource.DataSource;
+import ro.cs.tao.datasource.param.QueryParameter;
+import ro.cs.tao.datasource.remote.peps.Collection;
+import ro.cs.tao.datasource.remote.peps.PepsDataSource;
+import ro.cs.tao.eodata.EOProduct;
+import ro.cs.tao.eodata.Polygon2D;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.config.DatabaseConfiguration;
 import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.spi.ServiceRegistry;
+import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.topology.*;
 
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.logging.Level;
 
 /**
  * Created by oana on 7/18/2017.
@@ -683,15 +696,16 @@ public class PersistenceManagerTest {
         }
     }
 
-    /**@Test
-    public void TC_12_save_new_data_product()
+    @Test
+    public void TC_17_save_new_data_products()
     {
-//        try
-//        {
+        try
+        {
             ServiceRegistry<DataSource> serviceRegistry =
               ServiceRegistryManager.getInstance().getServiceRegistry(DataSource.class);
 
-            DataSource dataSource = serviceRegistry.getService(PepsDataSource.class.getName());
+            //DataSource dataSource = serviceRegistry.getService(PepsDataSource.class.getName());
+            DataSource dataSource = serviceRegistry.getService("PEPS");
             dataSource.setCredentials("kraftek@c-s.ro", "cei7pitici.");
             String[] sensors = dataSource.getSupportedSensors();
 
@@ -724,36 +738,49 @@ public class PersistenceManagerTest {
 
             if(!results.isEmpty())
             {
-                // save only the first result, for example
-                EOProduct eoProduct = (EOProduct)results.get(0);
-                try {
-                    persistenceManager.saveEOProduct(eoProduct);
-                }catch (Exception e)
+                // save all results
+                for(EOProduct result : results)
                 {
-                    e.printStackTrace();
+                    try
+                    {
+                        persistenceManager.saveEOProduct((EOProduct) result);
+                    } catch (PersistenceException e) {
+                        logger.error("Error saving EOProduct", e);
+                    }
                 }
-
-//                // save all results
-//                for(EOProduct result : results)
-//                {
-//                    try
-//                    {
-//                        dbManager.saveEOProduct((EOProduct) result);
-//                    } catch (PersistenceException e) {
-//                        logger.log(Level.SEVERE, "Error saving EOProduct", e);
-//                    }
-//                }
             }
             else
             {
                 logger.info("No EO product found with the given query!");
             }
-//        }
-//        catch (PersistenceException e)
-//        {
-//            logger.error(ExceptionUtils.getStackTrace(e));
-//            Assert.fail(e.getMessage());
-//        }
-    }**/
+        }
+        catch (Exception e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void TC_18_retrieve_data_products()
+    {
+        try
+        {
+            List<EOProduct> products  = persistenceManager.getEOProducts();
+            Assert.assertTrue(products != null && products.size() > 0);
+
+            logger.info("Found " + products.size() + " data product(s).");
+
+            for (EOProduct product : products)
+            {
+                logger.info("\t\tFound product " + product.getId());
+            }
+        }
+        catch (Exception e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
 
 }
