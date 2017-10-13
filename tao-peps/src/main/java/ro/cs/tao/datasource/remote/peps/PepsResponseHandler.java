@@ -30,7 +30,7 @@ public class PepsResponseHandler implements JSonResponseHandler<EOProduct> {
         JsonArray jsonArray = rootObject.getJsonArray("features");
         for (int i = 0; i < jsonArray.size(); i++) {
             try {
-                JsonObject jsonObject = jsonArray.getJsonObject(0);
+                JsonObject jsonObject = jsonArray.getJsonObject(i);
                 EOProduct result = new EOProduct();
                 result.setId(jsonObject.getString("id"));
                 JsonArray coordinates = jsonObject.getJsonObject("geometry").getJsonArray("coordinates").getJsonArray(0);
