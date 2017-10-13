@@ -64,7 +64,7 @@ public abstract class EOData implements Serializable{
     private String name;
     private DataFormat formatType;
     private Geometry geometry;
-    private Map<String, Attribute> attributes = new HashMap<>();
+    private Map<String, Attribute> attributesMap = new HashMap<>();
     private CoordinateReferenceSystem crs;
     private URI location;
 
@@ -104,19 +104,19 @@ public abstract class EOData implements Serializable{
 
     @XmlElementWrapper(name = "attributes")
     public List<Attribute> getAttributes() {
-        return this.attributes != null ?
-                new ArrayList<>(this.attributes.values()) : new ArrayList<>();
+        return this.attributesMap != null ?
+                new ArrayList<>(this.attributesMap.values()) : new ArrayList<>();
     }
 
     public void setAttributes(List<Attribute> attributes) {
-        this.attributes = attributes != null ?
+        this.attributesMap = attributes != null ?
                             attributes.stream().collect(Collectors.toMap(Attribute::getName,Function.identity())) :
                             null;
     }
 
     public void addAttribute(String name, String value) {
-        if (this.attributes == null) {
-            this.attributes = new HashMap<>();
+        if (this.attributesMap == null) {
+            this.attributesMap = new HashMap<>();
         }
         if (value != null) {
             if (value.startsWith("\"") && value.endsWith("\"")) {
@@ -127,20 +127,20 @@ public abstract class EOData implements Serializable{
         Attribute attr = new Attribute();
         attr.setName(name);
         attr.setValue(val);
-        this.attributes.put(name, attr);
+        this.attributesMap.put(name, attr);
     }
 
     public void addAttribute(Attribute attribute) {
-        if (this.attributes == null) {
-            this.attributes = new HashMap<>();
+        if (this.attributesMap == null) {
+            this.attributesMap = new HashMap<>();
         }
-        this.attributes.put(attribute.getName(), attribute);
+        this.attributesMap.put(attribute.getName(), attribute);
     }
 
     public String getAttributeValue(String name) {
         Attribute attribute = null;
-        if (this.attributes != null) {
-            attribute = this.attributes.get(name);
+        if (this.attributesMap != null) {
+            attribute = this.attributesMap.get(name);
         }
         return attribute != null ? attribute.getValue() : null;
     }

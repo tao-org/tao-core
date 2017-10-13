@@ -42,6 +42,9 @@ public class PersistenceManager {
     /** Constant for the identifier member name of processing component entity */
     private static final String COMPONENT_IDENTIFIER_PROPERTY_NAME = "id";
 
+    /** Constant for the identifier member name of EOProduct entity */
+    private static final String DATA_PRODUCT_IDENTIFIER_PROPERTY_NAME = "id";
+
     /** Constant for the identifier member name of execution job entity */
     private static final String JOB_IDENTIFIER_PROPERTY_NAME = "id";
 
@@ -390,6 +393,19 @@ public class PersistenceManager {
         }
 
         return savedEOProduct;
+    }
+
+    /**
+     * Retrieve all EOProduct
+     * @return
+     */
+    @Transactional(readOnly = true)
+    public List<EOProduct> getEOProducts()
+    {
+        final List<EOProduct> products = new ArrayList<>();
+        // retrieve products
+        products.addAll(((List<EOProduct>) eoProductRepository.findAll(new Sort(Sort.Direction.ASC, DATA_PRODUCT_IDENTIFIER_PROPERTY_NAME))));
+        return products;
     }
 
     private boolean checkServiceDescription(ServiceDescription service)

@@ -22,6 +22,8 @@ INSERT INTO tao.data_format (type) VALUES ('RASTER');
 
 INSERT INTO tao.data_format (type) VALUES ('VECTOR');
 
+INSERT INTO tao.data_format (type) VALUES ('OTHER');
+
 
 
 -- Data Sources types
