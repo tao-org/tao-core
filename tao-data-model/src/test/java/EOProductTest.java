@@ -2,7 +2,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import ro.cs.tao.eodata.EOProduct;
-import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.eodata.enums.PixelType;
 import ro.cs.tao.eodata.enums.SensorType;
 
@@ -62,7 +61,7 @@ public class EOProductTest extends BaseSerializationTest<EOProduct> {
             setName("Product");
             setAcquisitionDate(new SimpleDateFormat("yyyyMMdd'T'hh:mm:ss").parse("20170901T18:33:47"));
             setLocation("http://some.url.com/some_location/product.zip");
-            setFormatType(DataFormat.RASTER);
+            //setFormatType(DataFormat.RASTER);
             setProductType("Satellite-5");
             setPixelType(PixelType.UINT16);
             setCrs("EPSG:4326");

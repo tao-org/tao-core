@@ -6,7 +6,6 @@ import ro.cs.tao.datasource.remote.result.json.JSonResponseHandler;
 import ro.cs.tao.datasource.remote.scihub.download.SentinelDownloadStrategy;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.Polygon2D;
-import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.eodata.enums.PixelType;
 import ro.cs.tao.eodata.enums.SensorType;
 import ro.cs.tao.serialization.DateAdapter;
@@ -19,7 +18,7 @@ import java.util.stream.Collectors;
 /**
  * @author Cosmin Cara
  */
-public class SciHubJsonResponseHandler implements JSonResponseHandler<EOProduct> {
+public class SciHubJsonResponseHandler implements JSonResponseHandler {
     @Override
     public List<EOProduct> readValues(String content, AttributeFilter...filters) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
@@ -30,7 +29,6 @@ public class SciHubJsonResponseHandler implements JSonResponseHandler<EOProduct>
                 EOProduct product = new EOProduct();
                 product.setName(r.getIdentifier());
                 product.setId(r.getUuid());
-                product.setFormatType(DataFormat.RASTER);
                 product.setSensorType(SensorType.OPTICAL);
                 product.setPixelType(PixelType.UINT16);
                 product.setWidth(-1);

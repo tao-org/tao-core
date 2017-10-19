@@ -20,7 +20,7 @@
 package ro.cs.tao.component;
 
 import ro.cs.tao.component.constraints.Constraint;
-import ro.cs.tao.eodata.EOData;
+import ro.cs.tao.eodata.EOProduct;
 
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -32,9 +32,9 @@ import java.util.List;
  * @author Cosmin Cara
  */
 @XmlRootElement(name = "output")
-public class TargetDescriptor extends Identifiable {
+public class TargetDescriptor<T> extends Identifiable {
     private static final String DEFAULT_NAME = "Output";
-    private EOData data;
+    private EOProduct data;
     private List<Constraint> constraints;
 
     public TargetDescriptor() {
@@ -50,11 +50,11 @@ public class TargetDescriptor extends Identifiable {
     public String defaultName() { return DEFAULT_NAME; }
 
     @XmlTransient
-    public EOData getData() {
+    public EOProduct getData() {
         return data;
     }
 
-    public void setData(EOData data) {
+    public void setData(EOProduct data) {
         this.data = data;
     }
 

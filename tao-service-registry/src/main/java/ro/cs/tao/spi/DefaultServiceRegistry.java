@@ -81,7 +81,7 @@ public class DefaultServiceRegistry<T> implements ServiceRegistry<T> {
      * {@inheritDoc}
      */
     @Override
-    public T getService(Class<T> tClass) {
+    public T getService(Class<? extends T> tClass) {
         return services.get(tClass.getName());
     }
 

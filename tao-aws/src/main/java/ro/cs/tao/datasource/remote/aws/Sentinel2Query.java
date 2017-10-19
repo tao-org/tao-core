@@ -11,7 +11,6 @@ import ro.cs.tao.datasource.util.Logger;
 import ro.cs.tao.datasource.util.NetUtils;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.Polygon2D;
-import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.eodata.enums.PixelType;
 import ro.cs.tao.eodata.enums.SensorType;
 
@@ -198,7 +197,6 @@ class Sentinel2Query extends DataQuery {
         try (InputStream inputStream = new URI(jsonUrl).toURL().openStream()) {
             reader = Json.createReader(inputStream);
             JsonObject obj = reader.readObject();
-            product.setFormatType(DataFormat.RASTER);
             product.setSensorType(SensorType.OPTICAL);
             product.setPixelType(PixelType.UINT16);
             product.setName(obj.getString("name"));

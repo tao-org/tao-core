@@ -142,7 +142,7 @@ public class SciHubDataQuery extends DataQuery {
             try (CloseableHttpResponse response = NetUtils.openConnection(queryUrl, this.source.getCredentials())) {
                 switch (response.getStatusLine().getStatusCode()) {
                     case 200:
-                        JsonResponseParser<EOProduct> parser = new JsonResponseParser<>(new SciHubJsonResponseHandler());
+                        JsonResponseParser parser = new JsonResponseParser(new SciHubJsonResponseHandler());
                         tmpResults = parser.parse(EntityUtils.toString(response.getEntity()));
                         if (tmpResults != null) {
                             retrieved = tmpResults.size();
