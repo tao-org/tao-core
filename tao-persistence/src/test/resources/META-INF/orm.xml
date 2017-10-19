@@ -15,42 +15,6 @@
 
     <!-- Mapped superclasses are only seen for entities (not for embeddables too) -->
 
-    <mapped-superclass class="ro.cs.tao.eodata.EOData" access="PROPERTY">
-        <attributes>
-            <id name="id">
-                <column name="id" nullable="false" column-definition="varchar(1000) not null"/>
-            </id>
-            <basic name="name">
-                <column name="name" nullable="false" column-definition="varchar(250) not null"/>
-            </basic>
-            <basic name="formatType">
-                <column name="type_id" nullable="false" column-definition="integer not null"/>
-                <convert converter="ro.cs.tao.persistence.convert.DataFormatConverter" attribute-name="formatType" />
-            </basic>
-            <basic name="geometry">
-                <column name="geometry" nullable="false" column-definition="geography(Polygon,4326) not null"/>
-            </basic>
-            <basic name="crs">
-                <column name="coordinate_reference_system" nullable="true" column-definition="text"/>
-            </basic>
-            <basic name="location">
-                <column name="location" nullable="false" column-definition="varchar(512) not null"/>
-            </basic>
-
-            <!-- The embedable collections are not seen in mapped superclasses (because no table can be mapped here),
-                 therefore is mapped in EOProduct and transient here -->
-            <!--
-           <element-collection name="attributes" target-class="ro.cs.tao.eodata.Attribute" access="FIELD">
-                <collection-table name="tao.data_product_attributes" >
-                    <join-column name="data_product_id" referenced-column-name="id" />
-                </collection-table>
-            </element-collection>
-            -->
-            <transient name="attributes"/>
-        </attributes>
-
-    </mapped-superclass>
-
     <mapped-superclass class="ro.cs.tao.component.Identifiable" access="PROPERTY">
         <attributes>
             <id name="id">
@@ -89,11 +53,26 @@
     </mapped-superclass>
 
     <entity class="ro.cs.tao.eodata.EOProduct" access="PROPERTY">
-        <table name="tao.data_product"/>
-        <convert converter="ro.cs.tao.persistence.convert.DataFormatConverter" attribute-name="formatType" />
+        <table name="tao.raster_data_product"/>
         <convert converter="ro.cs.tao.persistence.convert.SensorTypeConverter" attribute-name="sensorType" />
         <convert converter="ro.cs.tao.persistence.convert.PixelTypeConverter" attribute-name="pixelType" />
         <attributes>
+            <id name="id">
+                <column name="id" nullable="false" column-definition="varchar(1000) not null"/>
+            </id>
+            <basic name="name">
+                <column name="name" nullable="false" column-definition="varchar(250) not null"/>
+            </basic>
+            <basic name="geometry">
+                <column name="geometry" nullable="false" column-definition="geography(Polygon,4326) not null"/>
+            </basic>
+            <basic name="crs">
+                <column name="coordinate_reference_system" nullable="true" column-definition="text"/>
+            </basic>
+            <basic name="location">
+                <column name="location" nullable="false" column-definition="varchar(512) not null"/>
+            </basic>
+
             <basic name="sensorType">
                 <column name="sensor_type_id" nullable="false" column-definition="integer not null"/>
             </basic>
@@ -113,11 +92,14 @@
                 <column name="height" nullable="false" column-definition="integer not null"/>
             </basic>
 
-            <element-collection name="attributes" target-class="ro.cs.tao.eodata.Attribute" access="FIELD">
-                <collection-table name="tao.data_product_attributes" >
-                    <join-column name="data_product_id" referenced-column-name="id" />
+            <!--
+            <element-collection name="attributes" target-class="ro.cs.tao.eodata.Attribute" access="PROPERTY">
+                <collection-table name="tao.raster_data_product_attributes" >
+                    <join-column name="raster_data_product_id" referenced-column-name="id" />
                 </collection-table>
             </element-collection>
+            -->
+            <transient name="attributes"/>
         </attributes>
     </entity>
 
@@ -151,7 +133,7 @@
                 <column name="active" nullable="true" column-definition="boolean NOT NULL DEFAULT true"/>
             </basic>
 
-            <element-collection name="servicesStatus" target-class="ro.cs.tao.topology.NodeServiceStatus" access="FIELD">
+            <element-collection name="servicesStatus" target-class="ro.cs.tao.topology.NodeServiceStatus" access="PROPERTY">
                 <collection-table name="tao.execution_node_service" >
                     <join-column name="host_name" referenced-column-name="host_name" />
                 </collection-table>
@@ -225,7 +207,7 @@
                 </cascade>
             </many-to-many>
 
-            <element-collection name="variables" target-class="ro.cs.tao.component.Variable" access="FIELD">
+            <element-collection name="variables" target-class="ro.cs.tao.component.Variable" access="PROPERTY">
                 <collection-table name="tao.component_variables" >
                     <join-column name="processing_component_id" referenced-column-name="id" />
                 </collection-table>
@@ -383,6 +365,5 @@
     <converter class="ro.cs.tao.persistence.convert.ParameterTypeConverter" />
     <converter class="ro.cs.tao.persistence.convert.DataTypeConverter" />
     <converter class="ro.cs.tao.persistence.convert.StringArrayToStringConverter" />
-    <converter class="ro.cs.tao.persistence.convert.DataFormatConverter" />
 
 </entity-mappings>

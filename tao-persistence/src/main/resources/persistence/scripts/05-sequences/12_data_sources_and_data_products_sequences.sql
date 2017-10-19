@@ -1,16 +1,4 @@
-﻿----- table: tao.data_format ----------------------------------------------------------------------
-DROP SEQUENCE IF EXISTS tao.data_format_id_seq CASCADE;
--- create sequence
-CREATE SEQUENCE tao.data_format_id_seq 
-	INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
-
--- assign sequence to column
-ALTER TABLE tao.data_format ALTER COLUMN id SET DEFAULT nextval('tao.data_format_id_seq');
-
--- assign column to sequence
-ALTER SEQUENCE tao.data_format_id_seq OWNED BY tao.data_format.id;
-
-
+﻿
 ----- table: tao.pixel_type -----------------------------------------------------------------------
 DROP SEQUENCE IF EXISTS tao.pixel_type_id_seq CASCADE;
 -- create sequence
