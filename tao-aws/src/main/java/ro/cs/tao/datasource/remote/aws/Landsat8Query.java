@@ -12,7 +12,6 @@ import ro.cs.tao.datasource.util.Logger;
 import ro.cs.tao.datasource.util.NetUtils;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.Polygon2D;
-import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.eodata.enums.SensorType;
 import ro.cs.tao.eodata.util.Conversions;
 
@@ -184,7 +183,6 @@ class Landsat8Query extends DataQuery {
             } else {
                 product.setName(obj.getString("LANDSAT_SCENE_ID"));
             }
-            product.setFormatType(DataFormat.RASTER);
             product.setSensorType(SensorType.OPTICAL);
             obj = rootObject.getJsonObject("PRODUCT_METADATA");
             product.setAcquisitionDate(dateFormat.parse(obj.getString("DATE_ACQUIRED")));

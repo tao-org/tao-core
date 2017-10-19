@@ -22,7 +22,7 @@ package ro.cs.tao.component.constraints;
 import org.geotools.referencing.CRS;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import ro.cs.tao.eodata.EOData;
+import ro.cs.tao.eodata.EOProduct;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.Arrays;
@@ -31,9 +31,9 @@ import java.util.Arrays;
  * @author Cosmin Cara
  */
 @XmlRootElement
-public class CRSConstraint extends Constraint<EOData> {
+public class CRSConstraint extends Constraint<EOProduct> {
     @Override
-    public boolean check(EOData... args) {
+    public boolean check(EOProduct... args) {
         return args != null && args.length > 0 &&
                 Arrays.stream(args)
                         .allMatch(a -> {
