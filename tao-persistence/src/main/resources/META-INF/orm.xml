@@ -92,14 +92,12 @@
                 <column name="height" nullable="false" column-definition="integer not null"/>
             </basic>
 
-            <!--
-            <element-collection name="attributes" target-class="ro.cs.tao.eodata.Attribute" access="PROPERTY">
+            <element-collection name="attributes" target-class="ro.cs.tao.eodata.Attribute" access="PROPERTY" fetch="EAGER">
                 <collection-table name="tao.raster_data_product_attributes" >
                     <join-column name="raster_data_product_id" referenced-column-name="id" />
                 </collection-table>
             </element-collection>
-            -->
-            <transient name="attributes"/>
+
         </attributes>
     </entity>
 
