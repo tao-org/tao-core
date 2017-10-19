@@ -4,6 +4,7 @@ import ro.cs.tao.datasource.remote.result.filters.AttributeFilter;
 import ro.cs.tao.datasource.remote.result.json.JSonResponseHandler;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.Polygon2D;
+import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.eodata.enums.PixelType;
 import ro.cs.tao.eodata.enums.SensorType;
 import ro.cs.tao.serialization.DateAdapter;
@@ -20,7 +21,7 @@ import java.util.List;
 /**
  * @author Cosmin Cara
  */
-public class PepsResponseHandler implements JSonResponseHandler {
+public class PepsResponseHandler implements JSonResponseHandler<EOProduct> {
     @Override
     public List<EOProduct> readValues(String content, AttributeFilter...filters) throws IOException {
         List<EOProduct> results = new ArrayList<>();
@@ -36,12 +37,13 @@ public class PepsResponseHandler implements JSonResponseHandler {
                 Polygon2D footprint = new Polygon2D();
                 for (int j = 0; j < coordinates.size(); j++) {
                     footprint.append(coordinates.getJsonArray(j).getJsonNumber(0).doubleValue(),
-                                     coordinates.getJsonArray(j).getJsonNumber(1).doubleValue());
+                      coordinates.getJsonArray(j).getJsonNumber(1).doubleValue());
                 }
                 result.setGeometry(footprint.toWKT());
                 JsonObject properties = jsonObject.getJsonObject("properties");
                 result.setName(properties.getString("title"));
                 result.setAcquisitionDate(new DateAdapter().unmarshal(properties.getString("startDate")));
+                result.setFormatType(DataFormat.RASTER);
                 result.setProductType(properties.getString("productType"));
                 result.setPixelType(PixelType.UINT16);
                 result.setLocation(properties.getJsonObject("services").getJsonObject("download").getString("url"));

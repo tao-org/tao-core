@@ -1,4 +1,18 @@
 ﻿-------------------------------------------------------------------------------
+-- table: data_format
+DROP TABLE IF EXISTS tao.data_format CASCADE;
+
+CREATE TABLE tao.data_format
+(
+	id integer NOT NULL,
+	type varchar(50) NOT NULL
+);
+
+ALTER TABLE tao.data_format ADD CONSTRAINT PK_data_format
+	PRIMARY KEY (id);
+
+
+-------------------------------------------------------------------------------
 -- table: pixel_type
 DROP TABLE IF EXISTS tao.pixel_type CASCADE;
 
@@ -116,6 +130,7 @@ CREATE TABLE tao.raster_data_product
 (
 	id character varying(1000) NOT NULL,
 	name varchar(250) NOT NULL,
+	type_id integer NOT NULL,
 	geometry geography(POLYGON, 4326) NOT NULL,
 	coordinate_reference_system text NULL,
 	location varchar(512) NOT NULL,
@@ -125,8 +140,6 @@ CREATE TABLE tao.raster_data_product
 	product_type varchar(512) NOT NULL,
 	width integer NOT NULL,
 	height integer NOT NULL,
-	attributes hstore,
-	attributesJson json,
 	user_id integer NULL,
 	data_source_id integer NULL,
 	created timestamp NOT NULL DEFAULT now(),
@@ -135,6 +148,9 @@ CREATE TABLE tao.raster_data_product
 
 ALTER TABLE tao.raster_data_product ADD CONSTRAINT PK_raster_data_product
 	PRIMARY KEY (id);
+
+ALTER TABLE tao.raster_data_product ADD CONSTRAINT FK_raster_data_product_data_format
+	FOREIGN KEY (type_id) REFERENCES tao.data_format (id) ON DELETE No Action ON UPDATE No Action;
 	
 ALTER TABLE tao.raster_data_product ADD CONSTRAINT FK_raster_data_product_sensor_type
 	FOREIGN KEY (sensor_type_id) REFERENCES tao.sensor_type (id) ON DELETE No Action ON UPDATE No Action;

@@ -1,6 +1,6 @@
 package ro.cs.tao.component;
 
-import ro.cs.tao.eodata.EOProduct;
+import ro.cs.tao.eodata.EOData;
 
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlTransient;
@@ -94,8 +94,8 @@ public abstract class TaoComponent extends Identifiable {
         if (this.sources != null) {
             this.sources = Arrays.stream(this.sources)
                     .filter(s -> {
-                        EOProduct src = s.getData();
-                        EOProduct ref = source.getData();
+                        EOData src = s.getData();
+                        EOData ref = source.getData();
                         return (src.getId() != null && !src.getId().equals(ref.getId())) ||
                                 (src.getName() != null && !src.getName().equals(ref.getName()));
                     }).toArray(SourceDescriptor[]::new);
@@ -131,8 +131,8 @@ public abstract class TaoComponent extends Identifiable {
         if (this.targets != null) {
             this.targets = Arrays.stream(this.targets)
                     .filter(t -> {
-                        EOProduct tar = t.getData();
-                        EOProduct ref = target.getData();
+                        EOData tar = t.getData();
+                        EOData ref = target.getData();
                         return (tar.getId() != null && !tar.getId().equals(ref.getId())) ||
                                 (tar.getName() != null && !tar.getName().equals(ref.getName()));
                     })
