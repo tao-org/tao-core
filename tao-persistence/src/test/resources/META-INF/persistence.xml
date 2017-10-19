@@ -10,6 +10,7 @@
 
         <class>ro.cs.tao.eodata.Attribute</class>
         <class>ro.cs.tao.eodata.EOProduct</class>
+        <class>ro.cs.tao.eodata.VectorData</class>
 
         <class>ro.cs.tao.topology.NodeDescription</class>
         <class>ro.cs.tao.topology.ServiceDescription</class>

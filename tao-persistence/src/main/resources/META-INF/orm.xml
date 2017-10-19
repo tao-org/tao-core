@@ -38,8 +38,8 @@
             </basic>
 
             <element-collection name="attributes" target-class="ro.cs.tao.eodata.Attribute" access="PROPERTY" fetch="EAGER">
-                <collection-table name="tao.raster_data_product_attributes" >
-                    <join-column name="raster_data_product_id" referenced-column-name="id" />
+                <collection-table name="tao.data_product_attributes" >
+                    <join-column name="data_product_id" referenced-column-name="id" />
                 </collection-table>
             </element-collection>
 
@@ -86,6 +86,7 @@
 
     <entity class="ro.cs.tao.eodata.EOProduct" access="PROPERTY">
         <table name="tao.raster_data_product"/>
+        <!-- Converter DataFormatConverter not seen in mapped superclass, therefore declared here -->
         <convert converter="ro.cs.tao.persistence.convert.DataFormatConverter" attribute-name="formatType" />
         <convert converter="ro.cs.tao.persistence.convert.SensorTypeConverter" attribute-name="sensorType" />
         <convert converter="ro.cs.tao.persistence.convert.PixelTypeConverter" attribute-name="pixelType" />
@@ -109,6 +110,13 @@
                 <column name="height" nullable="false" column-definition="integer not null"/>
             </basic>
         </attributes>
+    </entity>
+
+    <entity class="ro.cs.tao.eodata.VectorData" access="PROPERTY">
+        <table name="tao.vector_data_product"/>
+        <!-- Converter DataFormatConverter not seen in mapped superclass, therefore declared here -->
+        <convert converter="ro.cs.tao.persistence.convert.DataFormatConverter" attribute-name="formatType" />
+        <attributes/>
     </entity>
 
 
