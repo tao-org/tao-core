@@ -162,42 +162,47 @@ ALTER TABLE tao.raster_data_product ADD CONSTRAINT FK_raster_data_product_data_s
 	FOREIGN KEY (data_source_id) REFERENCES tao.data_source (id) ON DELETE No Action ON UPDATE No Action;
 
 
+-------------------------------------------------------------------------------
+-- table: vector_data_product
+DROP TABLE IF EXISTS tao.vector_data_product CASCADE;
+
+CREATE TABLE tao.vector_data_product
+(
+	id character varying(1000) NOT NULL,
+	name varchar(250) NOT NULL,
+	type_id integer NOT NULL,
+	geometry geography(POLYGON, 4326) NOT NULL,
+	coordinate_reference_system text NULL,
+	location varchar(512) NOT NULL,
+	user_id integer NULL,
+	data_source_id integer NULL,
+	created timestamp NOT NULL DEFAULT now(),
+	modified timestamp NULL
+);
+
+ALTER TABLE tao.vector_data_product ADD CONSTRAINT PK_vector_data_product
+	PRIMARY KEY (id);
+
+ALTER TABLE tao.vector_data_product ADD CONSTRAINT FK_vector_data_product_data_format
+	FOREIGN KEY (type_id) REFERENCES tao.data_format (id) ON DELETE No Action ON UPDATE No Action;
+
+ALTER TABLE tao.vector_data_product ADD CONSTRAINT FK_vector_data_product_data_source
+	FOREIGN KEY (data_source_id) REFERENCES tao.data_source (id) ON DELETE No Action ON UPDATE No Action;
+
 
 -------------------------------------------------------------------------------
--- table: raster_data_product_attributes
-DROP TABLE IF EXISTS tao.raster_data_product_attributes CASCADE;
+-- table: data_product_attributes
+DROP TABLE IF EXISTS tao.data_product_attributes CASCADE;
 
-CREATE TABLE tao.raster_data_product_attributes
+CREATE TABLE tao.data_product_attributes
 (
-	raster_data_product_id varchar(1000) NOT NULL,
+	data_product_id varchar(1000) NOT NULL,
 	name varchar(1000) NOT NULL,
 	value text NOT NULL
 );
 
-ALTER TABLE tao.raster_data_product_attributes ADD CONSTRAINT PK_raster_data_product_attributes
-	PRIMARY KEY (raster_data_product_id, name);
-
-ALTER TABLE tao.raster_data_product_attributes ADD CONSTRAINT FK_raster_data_product_attributes_raster_data_product
-	FOREIGN KEY (raster_data_product_id) REFERENCES tao.raster_data_product (id) ON DELETE No Action ON UPDATE No Action;
-
-
-
--------------------------------------------------------------------------------
--- table: data_product_metadata
---DROP TABLE IF EXISTS tao.data_product_metadata CASCADE;
-
---CREATE TABLE tao.data_product_metadata
---(
---	data_product_id character varying(250) NOT NULL,
---	attribute_name varchar(250) NOT NULL,
---	attribute_value varchar(500) NOT NULL
---);
-
---ALTER TABLE tao.data_product_metadata ADD CONSTRAINT PK_data_product_metadata
---	PRIMARY KEY (data_product_id, attribute_name);
-
---ALTER TABLE tao.data_product_metadata ADD CONSTRAINT FK_data_product_metadata_data_product
---	FOREIGN KEY (data_product_id) REFERENCES tao.data_product (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE tao.data_product_attributes ADD CONSTRAINT PK_data_product_attributes
+	PRIMARY KEY (data_product_id, name);
 
 	
 -------------------------------------------------------------------------------
