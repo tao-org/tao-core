@@ -72,7 +72,8 @@ public class EOProduct implements Serializable {
     private String id;
     private String name;
     private Geometry geometry;
-    private Map<String, Attribute> attributes = new HashMap<>();
+    //private Map<String, Attribute> attributesMap = new HashMap<>();
+    private List<Attribute> attributes;
     private CoordinateReferenceSystem crs;
     private URI location;
 
@@ -106,21 +107,31 @@ public class EOProduct implements Serializable {
         } catch (Exception ignored) { }
     }
 
-    @XmlElementWrapper(name = "attributes")
+    /*@XmlElementWrapper(name = "attributes")
     public List<Attribute> getAttributes() {
-        return this.attributes != null ?
-                new ArrayList<>(this.attributes.values()) : new ArrayList<>();
+        return this.attributesMap != null ?
+                new ArrayList<>(this.attributesMap.values()) : new ArrayList<>();
     }
 
     public void setAttributes(List<Attribute> attributes) {
-        this.attributes = attributes != null ?
+        this.attributesMap = attributes != null ?
                 attributes.stream().collect(Collectors.toMap(Attribute::getName, Function.identity())) :
                 null;
+    }*/
+
+    @XmlElementWrapper(name = "attributes")
+    public List<Attribute> getAttributes() {
+        return this.attributes;
     }
 
-    public void addAttribute(String name, String value) {
-        if (this.attributes == null) {
-            this.attributes = new HashMap<>();
+    public void setAttributes(List<Attribute> attributes) {
+        this.attributes = attributes;
+    }
+
+
+    /*public void addAttribute(String name, String value) {
+        if (this.attributesMap == null) {
+            this.attributesMap = new HashMap<>();
         }
         if (value != null) {
             if (value.startsWith("\"") && value.endsWith("\"")) {
@@ -131,65 +142,61 @@ public class EOProduct implements Serializable {
         Attribute attr = new Attribute();
         attr.setName(name);
         attr.setValue(val);
-        this.attributes.put(name, attr);
+        this.attributesMap.put(name, attr);
+    }*/
+
+    public void addAttribute(String name, String value) {
+        if (this.attributes == null) {
+            this.attributes = new ArrayList<>();
+        }
+        if (value != null) {
+            if (value.startsWith("\"") && value.endsWith("\"")) {
+                value = value.substring(1, value.length() - 1);
+            }
+        }
+        final String val = value;
+        Attribute attr = new Attribute();
+        attr.setName(name);
+        attr.setValue(val);
+        this.attributes.add(attr);
     }
+
+    /*public void addAttribute(Attribute attribute) {
+        if (this.attributesMap == null) {
+            this.attributesMap = new HashMap<>();
+        }
+        this.attributesMap.put(attribute.getName(), attribute);
+    }*/
 
     public void addAttribute(Attribute attribute) {
         if (this.attributes == null) {
-            this.attributes = new HashMap<>();
+            this.attributes = new ArrayList<>();
         }
-        this.attributes.put(attribute.getName(), attribute);
+        this.attributes.add(attribute);
     }
+
+    /*public String getAttributeValue(String name) {
+        Attribute attribute = null;
+        if (this.attributesMap != null) {
+            attribute = this.attributesMap.get(name);
+        }
+        return attribute != null ? attribute.getValue() : null;
+    }*/
 
     public String getAttributeValue(String name) {
         Attribute attribute = null;
         if (this.attributes != null) {
-            attribute = this.attributes.get(name);
+            for(Attribute attr : this.attributes)
+            {
+                if(attr.getName().equals(name))
+                {
+                    attribute = attr;
+                    break;
+                }
+            }
         }
         return attribute != null ? attribute.getValue() : null;
     }
-
-//    /**
-//     *
-//     * @return map of attributes
-//     */
-//    public Map<String, String> getAttributesMap() {
-//        if (this.attributes == null)
-//        {
-//            return null;
-//        }
-//
-//        Map<String, String> attributesMap = attributes.values().stream().collect(Collectors.toMap(Attribute::getName, Attribute::getValue));
-//        // remove entries having null values
-//        attributesMap.values().removeIf(Objects::isNull);
-//
-//        attributesMap = attributesMap.entrySet()
-//          .stream()
-//          .filter(e -> e.getValue() != null && !e.getValue().equals("null"))
-//          .collect(Collectors.toMap(p -> p.getKey(), p -> p.getValue()));
-//
-//        return attributesMap;
-//    }
-//
-//    public void setAttributesMap(Map<String, String> attributes) {
-//        if (attributes != null) {
-//            if (this.attributes == null) {
-//                this.attributes = new HashMap<>();
-//            }
-//            HashMap<String, Attribute> newAttributes = new HashMap<>();
-//            attributes.entrySet().stream().forEach(e -> newAttributes.put(e.getKey(),
-//              new Attribute() {{
-//                  setName(e.getKey());
-//                  setValue(e.getValue());
-//              }}));
-//            this.attributes.putAll(newAttributes.entrySet()
-//              .stream()
-//              .filter(e -> e.getValue().getValue() != null && !"null".equals(e.getValue().getValue()))
-//              .collect(Collectors.toMap(p -> p.getKey(), p -> p.getValue())));
-//        } else {
-//            this.attributes = new HashMap<>();
-//        }
-//    }
 
     public String getCrs() {
         try {

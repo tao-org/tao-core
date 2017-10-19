@@ -8,7 +8,7 @@
 
         <mapping-file>META-INF/orm.xml</mapping-file>
 
-        <class>ro.cs.tao.eodata.EOData</class>
+        <class>ro.cs.tao.eodata.Attribute</class>
         <class>ro.cs.tao.eodata.EOProduct</class>
 
         <class>ro.cs.tao.topology.NodeDescription</class>
@@ -21,7 +21,7 @@
         <class>ro.cs.tao.component.execution.ExecutionJob</class>
         <class>ro.cs.tao.component.execution.ExecutionTask</class>
 
-        <exclude-unlisted-classes>true</exclude-unlisted-classes>
+        <exclude-unlisted-classes>false</exclude-unlisted-classes>
 
     </persistence-unit>
 </persistence>
