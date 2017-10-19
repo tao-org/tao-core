@@ -7,7 +7,7 @@ import ro.cs.tao.datasource.remote.result.filters.NameFilter;
 import ro.cs.tao.datasource.remote.result.filters.NullFilter;
 import ro.cs.tao.datasource.remote.result.filters.ValueFilter;
 import ro.cs.tao.eodata.Attribute;
-import ro.cs.tao.eodata.EOProduct;
+import ro.cs.tao.eodata.EOData;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -18,17 +18,17 @@ import java.util.stream.Collectors;
 /**
  * @author Cosmin Cara
  */
-public class JsonResponseParser implements ResponseParser<EOProduct> {
+public class JsonResponseParser<T extends EOData> implements ResponseParser<T> {
     private static final Logger logger = Logger.getLogger(JsonResponseParser.class.getName());
-    private final JSonResponseHandler handler;
+    private final JSonResponseHandler<T> handler;
 
-    public JsonResponseParser(JSonResponseHandler handler) {
+    public JsonResponseParser(JSonResponseHandler<T> handler) {
         this.handler = handler;
     }
 
     @Override
-    public List<EOProduct> parse(String content) throws ParseException {
-        List<EOProduct> result = null;
+    public List<T> parse(String content) throws ParseException {
+        List<T> result = null;
         try {
             CompositeFilter filter = new CompositeFilter();
             filter.addFilter(new NullFilter());

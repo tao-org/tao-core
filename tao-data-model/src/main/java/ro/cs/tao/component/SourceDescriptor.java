@@ -20,7 +20,7 @@
 package ro.cs.tao.component;
 
 import ro.cs.tao.component.constraints.Constraint;
-import ro.cs.tao.eodata.EOProduct;
+import ro.cs.tao.eodata.EOData;
 
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -34,7 +34,7 @@ import java.util.List;
 @XmlRootElement(name = "input")
 public class SourceDescriptor extends Identifiable {
     private static final String DEFAULT_NAME = "Input";
-    private EOProduct data;
+    private EOData data;
     private List<Constraint> constraints;
 
     public SourceDescriptor() {
@@ -50,11 +50,11 @@ public class SourceDescriptor extends Identifiable {
     public String defaultName() { return DEFAULT_NAME; }
 
     @XmlTransient
-    public EOProduct getData() {
+    public EOData getData() {
         return data;
     }
 
-    public void setData(EOProduct data) {
+    public void setData(EOData data) {
         this.data = data;
     }
 

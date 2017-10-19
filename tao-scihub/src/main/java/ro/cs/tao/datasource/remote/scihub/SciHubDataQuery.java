@@ -75,8 +75,8 @@ public class SciHubDataQuery extends DataQuery {
                 throw new QueryException(String.format("Parameter [%s] is required but no value is supplied", parameter.getName()));
             }
             if (parameter.isOptional() &
-                    ((!parameter.isInterval() & parameter.getValue() == null) |
-                            (parameter.isInterval() & parameter.getMinValue() == null & parameter.getMaxValue() == null))) {
+              ((!parameter.isInterval() & parameter.getValue() == null) |
+                (parameter.isInterval() & parameter.getMinValue() == null & parameter.getMaxValue() == null))) {
                 continue;
             }
             if (idx > 0) {
@@ -138,20 +138,20 @@ public class SciHubDataQuery extends DataQuery {
             params.add(new BasicNameValuePair("offset", page > 0 ? String.valueOf((page - 1) * this.pageSize) : "0"));
 
             String queryUrl = this.source.getConnectionString() + "?"
-                    + URLEncodedUtils.format(params, "UTF-8").replace("+", "%20");
+              + URLEncodedUtils.format(params, "UTF-8").replace("+", "%20");
             try (CloseableHttpResponse response = NetUtils.openConnection(queryUrl, this.source.getCredentials())) {
                 switch (response.getStatusLine().getStatusCode()) {
                     case 200:
-                        JsonResponseParser parser = new JsonResponseParser(new SciHubJsonResponseHandler());
+                        JsonResponseParser<EOProduct> parser = new JsonResponseParser<>(new SciHubJsonResponseHandler());
                         tmpResults = parser.parse(EntityUtils.toString(response.getEntity()));
                         if (tmpResults != null) {
                             retrieved = tmpResults.size();
                             if ("Sentinel-2".equals(this.parameters.get("platformName").getValue()) &&
-                                    this.parameters.containsKey("cloudcoverpercentage")) {
+                              this.parameters.containsKey("cloudcoverpercentage")) {
                                 final Double clouds = (Double) this.parameters.get("cloudcoverpercentage").getValue();
                                 tmpResults = tmpResults.stream()
-                                        .filter(r -> Double.parseDouble(r.getAttributeValue("Cloud cover percentage")) <= clouds)
-                                        .collect(Collectors.toList());
+                                  .filter(r -> Double.parseDouble(r.getAttributeValue("Cloud cover percentage")) <= clouds)
+                                  .collect(Collectors.toList());
                             }
                             results.addAll(tmpResults);
                             page++;
@@ -161,7 +161,7 @@ public class SciHubDataQuery extends DataQuery {
                         throw new QueryException("The supplied credentials are invalid!");
                     default:
                         throw new QueryException(String.format("The request was not successful. Reason: %s",
-                                                               response.getStatusLine().getReasonPhrase()));
+                          response.getStatusLine().getReasonPhrase()));
                 }
             } catch (IOException ex) {
                 throw new QueryException(ex);

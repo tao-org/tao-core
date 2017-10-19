@@ -20,7 +20,7 @@
 package ro.cs.tao.component.constraints;
 
 import com.vividsolutions.jts.geom.Geometry;
-import ro.cs.tao.eodata.EOProduct;
+import ro.cs.tao.eodata.EOData;
 import ro.cs.tao.serialization.GeometryAdapter;
 
 import javax.xml.bind.annotation.XmlRootElement;
@@ -30,9 +30,9 @@ import java.util.Arrays;
  * @author Cosmin Cara
  */
 @XmlRootElement
-public class GeometryConstraint extends Constraint<EOProduct> {
+public class GeometryConstraint extends Constraint<EOData> {
     @Override
-    public boolean check(EOProduct... args) {
+    public boolean check(EOData... args) {
         return args != null && args.length > 0 &&
                 Arrays.stream(args)
                         .allMatch(a -> {

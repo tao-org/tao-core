@@ -16,6 +16,16 @@ INSERT INTO tao.component_visibility (visibility) VALUES ('CONTRIBUTOR');
 
 
 
+-- Data formats
+
+INSERT INTO tao.data_format (type) VALUES ('RASTER');
+
+INSERT INTO tao.data_format (type) VALUES ('VECTOR');
+
+INSERT INTO tao.data_format (type) VALUES ('OTHER');
+
+
+
 -- Data Sources types
 
 INSERT INTO tao.data_source_type (type) VALUES ('LOCAL_DATA_SOURCE');
