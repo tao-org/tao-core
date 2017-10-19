@@ -89,7 +89,7 @@ public class PepsDataQuery extends DataQuery {
             try (CloseableHttpResponse response = NetUtils.openConnection(queryUrl, this.source.getCredentials())) {
                 switch (response.getStatusLine().getStatusCode()) {
                     case 200:
-                        JsonResponseParser<EOProduct> parser = new JsonResponseParser<EOProduct>(new PepsResponseHandler()) {
+                        JsonResponseParser parser = new JsonResponseParser(new PepsResponseHandler()) {
                             @Override
                             public String[] getExcludedAttributes() {
                                 return new String[] { "keywords", "links", "services" };

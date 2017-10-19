@@ -4,7 +4,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import ro.cs.tao.datasource.remote.result.ParseException;
 import ro.cs.tao.datasource.remote.result.ResponseParser;
-import ro.cs.tao.eodata.EOData;
+import ro.cs.tao.eodata.EOProduct;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -16,18 +16,18 @@ import java.util.List;
 /**
  * @author Cosmin Cara
  */
-public class XmlResponseParser<T extends EOData> implements ResponseParser<T> {
+public class XmlResponseParser implements ResponseParser<EOProduct> {
 
     private XmlResponseHandler handler;
 
     public void setHandler(XmlResponseHandler handler) { this.handler = handler; }
 
     @Override
-    public List<T> parse(String content) throws ParseException {
+    public List<EOProduct> parse(String content) throws ParseException {
         if (this.handler == null) {
             throw new ParseException("Handler not defined");
         }
-        List<T> result;
+        List<EOProduct> result;
         InputSource inputSource = new InputSource(new StringReader(content));
         SAXParserFactory factory = SAXParserFactory.newInstance();
         try {
