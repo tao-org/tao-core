@@ -19,8 +19,6 @@
 
 package ro.cs.tao.component.constraints;
 
-import ro.cs.tao.eodata.EOData;
-
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.Arrays;
 
@@ -28,10 +26,10 @@ import java.util.Arrays;
  * @author Cosmin Cara
  */
 @XmlRootElement
-public class FormatConstraint extends Constraint<EOData> {
+public class FormatConstraint<T> extends Constraint<T> {
     @Override
-    public boolean check(EOData... args) {
+    public boolean check(T... args) {
         return args != null && args.length > 0 &&
-                Arrays.stream(args).allMatch(a -> args[0].getFormatType().equals(a.getFormatType()));
+                Arrays.stream(args).allMatch(a -> args[0].getClass().equals(a.getClass()));
     }
 }

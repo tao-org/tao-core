@@ -4,7 +4,6 @@ import ro.cs.tao.datasource.remote.result.filters.AttributeFilter;
 import ro.cs.tao.datasource.remote.result.json.JSonResponseHandler;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.Polygon2D;
-import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.eodata.enums.PixelType;
 import ro.cs.tao.eodata.enums.SensorType;
 import ro.cs.tao.serialization.DateAdapter;
@@ -21,7 +20,7 @@ import java.util.List;
 /**
  * @author Cosmin Cara
  */
-public class PepsResponseHandler implements JSonResponseHandler<EOProduct> {
+public class PepsResponseHandler implements JSonResponseHandler {
     @Override
     public List<EOProduct> readValues(String content, AttributeFilter...filters) throws IOException {
         List<EOProduct> results = new ArrayList<>();
@@ -30,7 +29,7 @@ public class PepsResponseHandler implements JSonResponseHandler<EOProduct> {
         JsonArray jsonArray = rootObject.getJsonArray("features");
         for (int i = 0; i < jsonArray.size(); i++) {
             try {
-                JsonObject jsonObject = jsonArray.getJsonObject(0);
+                JsonObject jsonObject = jsonArray.getJsonObject(i);
                 EOProduct result = new EOProduct();
                 result.setId(jsonObject.getString("id"));
                 JsonArray coordinates = jsonObject.getJsonObject("geometry").getJsonArray("coordinates").getJsonArray(0);
@@ -43,7 +42,6 @@ public class PepsResponseHandler implements JSonResponseHandler<EOProduct> {
                 JsonObject properties = jsonObject.getJsonObject("properties");
                 result.setName(properties.getString("title"));
                 result.setAcquisitionDate(new DateAdapter().unmarshal(properties.getString("startDate")));
-                result.setFormatType(DataFormat.RASTER);
                 result.setProductType(properties.getString("productType"));
                 result.setPixelType(PixelType.UINT16);
                 result.setLocation(properties.getJsonObject("services").getJsonObject("download").getString("url"));

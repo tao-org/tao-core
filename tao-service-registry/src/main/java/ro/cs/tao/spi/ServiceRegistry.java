@@ -54,7 +54,7 @@ public interface ServiceRegistry<T> {
      * @param tClass The class of the service.
      * @return The service instance or {@code null} if no such exists.
      */
-    T getService(Class<T> tClass);
+    T getService(Class<? extends T> tClass);
 
     /**
      * Gets a registered service instance for the given class name.

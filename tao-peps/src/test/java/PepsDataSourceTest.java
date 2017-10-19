@@ -11,7 +11,6 @@ import ro.cs.tao.spi.ServiceRegistryManager;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Handler;
@@ -36,7 +35,7 @@ public class PepsDataSourceTest {
             for (Handler handler : logger.getHandlers()) {
                 handler.setLevel(Level.INFO);
             }
-            DataSource dataSource = serviceRegistry.getService(PepsDataSource.class.getName());
+            DataSource dataSource = serviceRegistry.getService(PepsDataSource.class);
             dataSource.setCredentials("kraftek@c-s.ro", "cei7pitici.");
             String[] sensors = dataSource.getSupportedSensors();
 
