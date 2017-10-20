@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ImportResource;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.w3c.dom.Attr;
 import ro.cs.tao.component.ParameterDescriptor;
 import ro.cs.tao.component.ParameterType;
 import ro.cs.tao.component.ProcessingComponent;
@@ -27,9 +28,11 @@ import ro.cs.tao.datasource.DataQuery;
 import ro.cs.tao.datasource.DataSource;
 import ro.cs.tao.datasource.param.QueryParameter;
 import ro.cs.tao.datasource.remote.peps.Collection;
-import ro.cs.tao.datasource.remote.peps.PepsDataSource;
+import ro.cs.tao.eodata.Attribute;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.Polygon2D;
+import ro.cs.tao.eodata.VectorData;
+import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.config.DatabaseConfiguration;
 import ro.cs.tao.persistence.exception.PersistenceException;
@@ -43,7 +46,6 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.logging.Level;
 
 /**
  * Created by oana on 7/18/2017.
@@ -762,18 +764,76 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_18_retrieve_data_products()
+    public void TC_18_retrieve_raster_data_products()
     {
         try
         {
             List<EOProduct> products  = persistenceManager.getEOProducts();
             Assert.assertTrue(products != null && products.size() > 0);
 
-            logger.info("Found " + products.size() + " data product(s).");
+            logger.info("Found " + products.size() + " raster data product(s).");
 
             for (EOProduct product : products)
             {
-                logger.info("\t\tFound product " + product.getId());
+                logger.info("\t\tFound raster product \"" + product.getName() + "\"");
+            }
+        }
+        catch (Exception e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void TC_19_save_new_vector_data_product()
+    {
+        try
+        {
+            VectorData newVectorProduct = new VectorData();
+            newVectorProduct.setId("test-vector-product" + LocalDateTime.now().toString());
+            newVectorProduct.setName("test vector data product");
+            newVectorProduct.setFormatType(DataFormat.VECTOR);
+            newVectorProduct.setGeometry("POLYGON((0 0, 1 1, 2 2, 3 3, 0 0))");
+            newVectorProduct.setLocation("nowhere");
+
+            // attributs
+            List<Attribute> attributes = new ArrayList<>();
+            Attribute attr1 = new Attribute();
+            attr1.setName("attr1");
+            attr1.setValue("value1-attr1");
+            attributes.add(attr1);
+            Attribute attr2 = new Attribute();
+            attr2.setName("attr2");
+            attr2.setValue("value2-attr2");
+            attributes.add(attr2);
+
+            newVectorProduct.setAttributes(attributes);
+
+            newVectorProduct = persistenceManager.saveVectorDataProduct(newVectorProduct);
+            Assert.assertTrue(newVectorProduct != null && newVectorProduct.getId() != null);
+
+        }
+        catch (Exception e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void TC_20_retrieve_vector_data_products()
+    {
+        try
+        {
+            List<VectorData> vectorProducts  = persistenceManager.getVectorDataProducts();
+            Assert.assertTrue(vectorProducts != null && vectorProducts.size() > 0);
+
+            logger.info("Found " + vectorProducts.size() + " vector data product(s).");
+
+            for (VectorData vectorProduct : vectorProducts)
+            {
+                logger.info("\t\tFound vector product \"" + vectorProduct.getName() + "\"");
             }
         }
         catch (Exception e)
