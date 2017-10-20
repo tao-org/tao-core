@@ -14,6 +14,7 @@ import ro.cs.tao.component.execution.ExecutionJob;
 import ro.cs.tao.component.execution.ExecutionStatus;
 import ro.cs.tao.component.execution.ExecutionTask;
 import ro.cs.tao.eodata.EOProduct;
+import ro.cs.tao.eodata.VectorData;
 import ro.cs.tao.persistence.data.User;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.persistence.repository.*;
@@ -55,6 +56,10 @@ public class PersistenceManager {
     @Autowired
     private EOProductRepository eoProductRepository;
 
+    /** CRUD Repository for VectorData entities */
+    @Autowired
+    private VectorDataRepository vectorDataRepository;
+
     /** CRUD Repository for NodeDescription entities */
     @Autowired
     private NodeRepository nodeRepository;
@@ -86,18 +91,6 @@ public class PersistenceManager {
 //    /** CRUD Repository for DataSourceType entities */
 //    @Autowired
 //    private DataSourceTypeRepository dataSourceTypeRepository;
-//
-//    /** CRUD Repository for DataProduct entities */
-//    @Autowired
-//    private DataProductRepository dataProductRepository;
-//
-//    /** CRUD Repository for ExecutionNode entities */
-//    @Autowired
-//    private ExecutionNodeRepository executionNodeRepository;
-//
-//    /** CRUD Repository for ProcessingComponent entities */
-//    @Autowired
-//    private ProcessingComponentRepository processingComponentRepository;
 
 //    @Transactional
 //    public Integer saveDataSourceType(String type) throws PersistenceException
@@ -193,160 +186,13 @@ public class PersistenceManager {
 //
 //    }
 
-    /**@Transactional
-    public Long saveDataProduct(EOProduct dataProduct, User user) throws PersistenceException
-    {
-        // check method parameters
-        if(dataProduct == null ||
-          dataProduct.getName() == null || dataProduct.getGeometry() == null || dataProduct.getProductType() == null ||
-          dataProduct.getLocation() == null || dataProduct.getSensorType() == null || dataProduct.getPixelType() == null)
-        {
-            throw new PersistenceException("Invalid parameters were provided for adding new data product!");
-        }
-
-        DataProduct dataProductEnt = new DataProduct();
-        // set all info
-        dataProductEnt.setIdentifier(dataProduct.getId());
-        dataProductEnt.setName(dataProduct.getName());
-        dataProductEnt.setDataFormat(Integer.parseInt(dataProduct.getProductType()));
-        dataProductEnt.setGeometry(dataProduct.getPolygon());
-        if(dataProduct.getCrs() != null)
-        {
-            dataProductEnt.setCoordinateReferenceSystem(dataProduct.getCrs());
-        }
-        dataProductEnt.setLocation(dataProduct.getLocation().toString());
-        dataProductEnt.setSensorType(Integer.parseInt(dataProduct.getSensorType().toString()));
-        if(dataProduct.getAcquisitionDate() != null)
-        {
-            dataProductEnt.setAcquisitionDate(LocalDateTime.ofInstant(Instant.ofEpochMilli(dataProduct.getAcquisitionDate().getTime()), ZoneId.systemDefault()));
-        }
-        dataProductEnt.setPixelType(Integer.parseInt(dataProduct.getPixelType().toString()));
-        // TODO: update width and height after corrections
-        dataProductEnt.setWidth(dataProduct.getWidth() > 0 ? dataProduct.getWidth() : 0);
-        dataProductEnt.setHeight(dataProduct.getHeight() > 0 ? dataProduct.getHeight() : 0);
-
-        if(user != null)
-        {
-            dataProductEnt.setUser(user);
-        }
-
-        // attributs
-        if(dataProduct.getAttributes() != null && dataProduct.getAttributes().length > 0)
-        {
-            dataProductEnt.setAttributes(Arrays.stream(dataProduct.getAttributes()).collect(Collectors.toMap(Attribute::getName, Attribute::getValue)));
-        }
-
-        dataProductEnt.setCreatedDate(LocalDateTime.now());
-
-        // save the DataProduct entity
-        dataProductEnt = dataProductRepository.save(dataProductEnt);
-
-        if(dataProductEnt.getId() == null)
-        {
-            throw new PersistenceException("Error saving data product with name: " + dataProductEnt.getName());
-        }
-
-        return dataProductEnt.getId();
-    }**/
-
-//    // TODO Use a data model entity when ready
-//    @Transactional
-//    public Integer saveExecutionNode(String name, String description, String ipAddress, String sshKey,
-//                                     String username, String password,
-//                                     Integer totalCPU, Integer totalRAM, Integer totalHDD) throws PersistenceException
-//    {
-//        // check method parameters
-//        if(name == null || ipAddress == null || username == null || password == null ||
-//          totalCPU == null || totalHDD == null || totalRAM == null)
-//        {
-//            throw new PersistenceException("Invalid parameters were provided for adding new execution node!");
-//        }
-//
-//        ExecutionNode executionNodeEnt = new ExecutionNode();
-//        // set all info
-//        executionNodeEnt.setName(name);
-//        if(description != null)
-//        {
-//            executionNodeEnt.setDescription(description);
-//        }
-//        executionNodeEnt.setIpAddress(ipAddress);
-//        if(sshKey != null)
-//        {
-//            executionNodeEnt.setSshKey(sshKey);
-//        }
-//        executionNodeEnt.setUsername(username);
-//        executionNodeEnt.setPassword(password);
-//        executionNodeEnt.setTotalCPU(totalCPU);
-//        executionNodeEnt.setTotalRAM(totalRAM);
-//        executionNodeEnt.setTotalHDD(totalHDD);
-//        executionNodeEnt.setCreatedDate(LocalDateTime.now());
-//        executionNodeEnt.setActive(true);
-//
-//        // save the ExecutionNode entity
-//        executionNodeEnt = executionNodeRepository.save(executionNodeEnt);
-//
-//        if(executionNodeEnt.getId() == null)
-//        {
-//            throw new PersistenceException("Error saving execution node with name: " + executionNodeEnt.getName());
-//        }
-//
-//        return executionNodeEnt.getId();
-//    }
-//
-//
-//    @Transactional
-//    public Integer saveProcessingComponent(ProcessingComponent processingComponent, User owner) throws PersistenceException
-//    {
-//        // check method parameters
-//        if(processingComponent == null ||
-//          processingComponent.getId() == null || processingComponent.getLabel() == null ||
-//          processingComponent.getVersion() == null || processingComponent.getDescription() == null ||
-//          processingComponent.getCopyright() == null || processingComponent.getFileLocation() == null ||
-//          processingComponent.getWorkingDirectory() == null || processingComponent.getTemplateType() == null ||
-//          processingComponent.getTemplate() == null || processingComponent.getTemplate().getName() == null)
-//        {
-//            throw new PersistenceException("Invalid parameters were provided for adding new processing component!");
-//        }
-//
-//        // create new entity
-//        ro.cs.tao.persistence.data.ProcessingComponent processingComponentEnt = new ro.cs.tao.persistence.data.ProcessingComponent();
-//        // set all info
-//        processingComponentEnt.setName(processingComponent.getId());
-//
-//        processingComponentEnt.setLabel(processingComponent.getLabel());
-//        processingComponentEnt.setVersion(processingComponent.getVersion());
-//        processingComponentEnt.setDescription(processingComponent.getDescription());
-//        processingComponentEnt.setAuthors(processingComponent.getAuthors());
-//        processingComponentEnt.setCopyright(processingComponent.getCopyright());
-//
-//        processingComponentEnt.setMainToolFileLocation(processingComponent.getFileLocation());
-//        processingComponentEnt.setWorkingDirectory(processingComponent.getWorkingDirectory());
-//        processingComponentEnt.setTemplateType(Integer.parseInt(processingComponent.getTemplateType().toString()));
-//        processingComponentEnt.setTemplateName(processingComponent.getTemplate().getName());
-//
-//        // TODO variables
-//        // TODO parameters
-//
-//        // ?? TODO processing component
-//
-//
-//        processingComponentEnt.setCreatedDate(LocalDateTime.now());
-//        processingComponentEnt.setActive(true);
-//
-//        // save the new entity
-//        processingComponentEnt = processingComponentRepository.save(processingComponentEnt);
-//
-//        if(processingComponentEnt.getId() == null)
-//        {
-//            throw new PersistenceException("Error saving processing component with name: " + processingComponentEnt.getName());
-//        }
-//
-//        return processingComponentEnt.getId();
-//    }
-
     private boolean checkEOProduct(EOProduct eoProduct)
     {
         if(eoProduct == null)
+        {
+            return false;
+        }
+        if(eoProduct.getId() == null || eoProduct.getId().isEmpty())
         {
             return false;
         }
@@ -378,18 +224,44 @@ public class PersistenceManager {
         return true;
     }
 
+    private boolean checkVectorData(VectorData vectorDataProduct)
+    {
+        if(vectorDataProduct == null)
+        {
+            return false;
+        }
+        if(vectorDataProduct.getId() == null || vectorDataProduct.getId().isEmpty())
+        {
+            return false;
+        }
+        if(vectorDataProduct.getName() == null)
+        {
+            return false;
+        }
+        if(vectorDataProduct.getGeometry() == null)
+        {
+            return false;
+        }
+        if(vectorDataProduct.getLocation() == null)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
     @Transactional
     public EOProduct saveEOProduct(EOProduct eoProduct) throws PersistenceException {
         // check method parameters
         if (!checkEOProduct(eoProduct)) {
-            throw new PersistenceException("Invalid parameters were provided for adding new EO product!");
+            throw new PersistenceException("Invalid parameters were provided for adding new EO data product!");
         }
 
         // save the EOProduct entity
         EOProduct savedEOProduct = eoProductRepository.save(eoProduct);
 
         if (savedEOProduct.getId() == null) {
-            throw new PersistenceException("Error saving EO product with name: " + eoProduct.getName());
+            throw new PersistenceException("Error saving EO data product with name: " + eoProduct.getName());
         }
 
         return savedEOProduct;
@@ -405,6 +277,36 @@ public class PersistenceManager {
         final List<EOProduct> products = new ArrayList<>();
         // retrieve products
         products.addAll(((List<EOProduct>) eoProductRepository.findAll(new Sort(Sort.Direction.ASC, DATA_PRODUCT_IDENTIFIER_PROPERTY_NAME))));
+        return products;
+    }
+
+    @Transactional
+    public VectorData saveVectorDataProduct(VectorData vectorDataProduct) throws PersistenceException {
+        // check method parameters
+        if (!checkVectorData(vectorDataProduct)) {
+            throw new PersistenceException("Invalid parameters were provided for adding new vector data product!");
+        }
+
+        // save the VectorData entity
+        VectorData savedVectorData = vectorDataRepository.save(vectorDataProduct);
+
+        if (savedVectorData.getId() == null) {
+            throw new PersistenceException("Error saving vector data product with name: " + vectorDataProduct.getName());
+        }
+
+        return savedVectorData;
+    }
+
+    /**
+     * Retrieve all VectorData
+     * @return
+     */
+    @Transactional(readOnly = true)
+    public List<VectorData> getVectorDataProducts()
+    {
+        final List<VectorData> products = new ArrayList<>();
+        // retrieve products
+        products.addAll(((List<VectorData>) vectorDataRepository.findAll(new Sort(Sort.Direction.ASC, DATA_PRODUCT_IDENTIFIER_PROPERTY_NAME))));
         return products;
     }
 

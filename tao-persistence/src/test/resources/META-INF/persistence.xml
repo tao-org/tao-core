@@ -17,6 +17,7 @@
 
         <class>ro.cs.tao.component.Variable</class>
         <class>ro.cs.tao.component.ParameterDescriptor</class>
+        <class>ro.cs.tao.component.TemplateParameterDescriptor</class>
         <class>ro.cs.tao.component.ProcessingComponent</class>
 
         <class>ro.cs.tao.component.execution.ExecutionJob</class>
