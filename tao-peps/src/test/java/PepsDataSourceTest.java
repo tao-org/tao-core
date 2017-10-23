@@ -6,6 +6,7 @@ import ro.cs.tao.datasource.remote.peps.Collection;
 import ro.cs.tao.datasource.remote.peps.PepsDataSource;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.Polygon2D;
+import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
 
@@ -23,11 +24,11 @@ import java.util.logging.Logger;
  */
 public class PepsDataSourceTest {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws SerializationException {
         Peps_Sentinel2_Test();
     }
 
-    public static void Peps_Sentinel2_Test() {
+    public static void Peps_Sentinel2_Test() throws SerializationException {
         try {
             ServiceRegistry<DataSource> serviceRegistry =
                     ServiceRegistryManager.getInstance().getServiceRegistry(DataSource.class);
@@ -49,7 +50,7 @@ public class PepsDataSourceTest {
                                                 .toInstant()));
             query.addParameter(begin);
             QueryParameter end = query.createParameter("completionDate", Date.class);
-            begin.setValue(Date.from(LocalDateTime.of(2017, 3, 1, 0, 0, 0, 0)
+            end.setValue(Date.from(LocalDateTime.of(2017, 3, 1, 0, 0, 0, 0)
                                                 .atZone(ZoneId.systemDefault())
                                                 .toInstant()));
             query.addParameter(end);
@@ -59,11 +60,20 @@ public class PepsDataSourceTest {
                                                       "22.8042573604346 44.795645304033826," +
                                                       "22.8042573604346 43.8379609098684))");
 
-            query.addParameter("box", aoi);
+            QueryParameter aoiParam = query.createParameter("box", Polygon2D.class);
+            aoiParam.setValue(aoi.toWKT());
+            query.addParameter(aoiParam);
 
             query.addParameter("cloudCover", 100.);
             query.setPageSize(20);
             query.setMaxResults(50);
+
+            String xml = query.exportParametersAsXML();
+            System.out.println(xml);
+
+            query.importParameters(xml);
+            xml = query.exportParametersAsXML();
+            System.out.println(xml);
             List<EOProduct> results = query.execute();
             results.forEach(r -> {
                 System.out.println("ID=" + r.getId());
@@ -71,9 +81,6 @@ public class PepsDataSourceTest {
                 System.out.println("LOCATION=" + r.getLocation());
                 System.out.println("FOOTPRINT=" + r.getGeometry());
                 System.out.println("Attributes ->");
-//                Arrays.stream(r.getAttributes())
-//                        .forEach(a -> System.out.println("\tName='" + a.getName() +
-//                                                                 "', value='" + a.getValue() + "'"));
                 r.getAttributes().stream()
                   .forEach(a -> System.out.println("\tName='" + a.getName() +
                     "', value='" + a.getValue() + "'"));

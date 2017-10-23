@@ -16,10 +16,13 @@
  */
 package ro.cs.tao.datasource.param;
 
-import org.opengis.annotation.XmlElement;
 import ro.cs.tao.datasource.converters.ParameterConverter;
+import ro.cs.tao.eodata.Polygon2D;
+import ro.cs.tao.serialization.PolygonAdapter;
 
-import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -28,7 +31,8 @@ import java.util.Date;
  *
  * @author Cosmin Cara
  */
-@XmlElement("QueryParameter")
+@XmlRootElement(name = "parameter")
+@XmlJavaTypeAdapter(value = PolygonAdapter.class, type = Polygon2D.class)
 public class QueryParameter {
     private Class<?> type;
     private boolean isOptional;
@@ -37,6 +41,8 @@ public class QueryParameter {
     private Object maxValue;
     private Object value;
     private ParameterConverter converter;
+
+    private QueryParameter() { }
 
     public QueryParameter(Class type, String name) {
         this(type, name, null, true);
@@ -72,17 +78,21 @@ public class QueryParameter {
         this.maxValue = maxValue;
     }
 
-    @XmlAttribute(name = "class", required = true)
+    @XmlElement(name = "class", required = true)
     public Class getType() {
         return type;
     }
 
-    @XmlAttribute(name = "name", required = true)
+    public void setType(Class<?> type) { this.type = type; }
+
+    @XmlElement(name = "name", required = true)
     public String getName() {
         return name;
     }
 
-    @XmlElement("Value")
+    public void setName(String name) { this.name = name; }
+
+    @XmlElement(name = "value")
     public Object getValue() {
         return value;
     }
@@ -91,7 +101,7 @@ public class QueryParameter {
         this.value = value;
     }
 
-    @XmlAttribute(name = "isOptional", required = true)
+    @XmlElement(name = "optional", required = true)
     public boolean isOptional() {
         return isOptional;
     }
@@ -100,14 +110,14 @@ public class QueryParameter {
         isOptional = optional;
     }
 
-    @XmlElement("MinValue")
+    @XmlElement(name = "minimum")
     public Object getMinValue() {
         return minValue;
     }
 
     public void setMinValue(Object minValue) { this.minValue = minValue; }
 
-    @XmlElement("MaxValue")
+    @XmlElement(name = "maximum")
     public Object getMaxValue() { return maxValue; }
 
     public void setMaxValue(Object maxValue) { this.maxValue = maxValue; }

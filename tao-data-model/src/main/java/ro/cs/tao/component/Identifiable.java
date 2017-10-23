@@ -45,6 +45,7 @@ import java.io.Serializable;
  */
 public abstract class Identifiable implements Cloneable, Serializable {
 
+    //@XmlAttribute(name = "id")
     protected String id;
 
     public Identifiable() { this.id = defaultName(); }

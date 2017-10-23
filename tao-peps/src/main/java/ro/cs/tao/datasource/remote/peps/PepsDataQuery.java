@@ -40,6 +40,8 @@ public class PepsDataQuery extends DataQuery {
         converterFactory.register(BooleanConverter.class, Boolean.class);
     }
 
+    private PepsDataQuery() { super(); }
+
     PepsDataQuery(DataSource source, String sensorName) {
         super(source, sensorName);
     }
