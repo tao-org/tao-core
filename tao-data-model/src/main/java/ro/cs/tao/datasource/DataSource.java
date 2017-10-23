@@ -4,16 +4,20 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import ro.cs.tao.component.Identifiable;
 import ro.cs.tao.datasource.param.ParameterDescriptor;
 
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 import java.util.Map;
 
 /**
  * @author Cosmin Cara
  */
+@XmlRootElement(name = "dataSource")
 public abstract class DataSource<Q extends DataQuery> extends Identifiable {
 
     /**
      * Returns the timeout for this data source connection
      */
+    @XmlTransient
     public abstract long getTimeout();
     /**
      * Sets the timeout for this data source connection
@@ -25,6 +29,7 @@ public abstract class DataSource<Q extends DataQuery> extends Identifiable {
      * In the case of a remote data source, it is the base url of the remote endpoint.
      * In the case of a database data source, it is the connection string of the database.
      */
+    @XmlTransient
     public abstract String getConnectionString();
     /**
      * Sets the connection string for this data source.

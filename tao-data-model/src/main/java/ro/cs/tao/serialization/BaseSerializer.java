@@ -13,6 +13,8 @@ import ro.cs.tao.component.validation.NotNullValidator;
 import ro.cs.tao.component.validation.TypeValidator;
 import ro.cs.tao.component.validation.Validator;
 import ro.cs.tao.component.validation.ValueSetValidator;
+import ro.cs.tao.datasource.param.QueryParameter;
+import ro.cs.tao.eodata.Polygon2D;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -22,15 +24,18 @@ import java.util.Map;
  * @author  kraftek
  * @date    2017-02-03
  */
-abstract class BaseSerializer<T> implements Serializer<T, String> {
+public abstract class BaseSerializer<T> implements Serializer<T, String> {
     private static Class[] classes;
 
     static {
         classes = new Class[] {
+                ListWrapper.class,
+                Polygon2D.class,
                 Template.class, BasicTemplate.class,
                 Constraint.class, CRSConstraint.class, DimensionConstraint.class, FormatConstraint.class, GeometryConstraint.class,
                 SensorConstraint.class,
-                Validator.class, NotEmptyValidator.class, NotNullValidator.class, TypeValidator.class, ValueSetValidator.class
+                Validator.class, NotEmptyValidator.class, NotNullValidator.class, TypeValidator.class, ValueSetValidator.class,
+                QueryParameter.class
         };
     }
 
@@ -43,6 +48,21 @@ abstract class BaseSerializer<T> implements Serializer<T, String> {
             final Class[] classesCopy = new Class[classes.length + 1];
             System.arraycopy(classes, 0, classesCopy, 0, classes.length);
             classesCopy[classes.length] = tClass;
+            this.context = JAXBContext.newInstance(classesCopy);
+        } catch (JAXBException e) {
+            throw new SerializationException(e);
+        }
+    }
+
+    BaseSerializer(Class<T> tClass, Class...dependencies) throws SerializationException {
+        this.tClass = tClass;
+        try {
+            final Class[] classesCopy = new Class[classes.length + (dependencies != null ? dependencies.length : 0) + 1];
+            System.arraycopy(classes, 0, classesCopy, 0, classes.length);
+            if (dependencies != null && dependencies.length > 0) {
+                System.arraycopy(dependencies, 0, classesCopy, classes.length, dependencies.length);
+            }
+            classesCopy[classesCopy.length - 1] = tClass;
             this.context = JAXBContext.newInstance(classesCopy);
         } catch (JAXBException e) {
             throw new SerializationException(e);

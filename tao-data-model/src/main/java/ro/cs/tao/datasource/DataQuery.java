@@ -20,7 +20,15 @@ import ro.cs.tao.component.Identifiable;
 import ro.cs.tao.datasource.param.ParameterDescriptor;
 import ro.cs.tao.datasource.param.QueryParameter;
 import ro.cs.tao.eodata.EOProduct;
+import ro.cs.tao.serialization.BaseSerializer;
+import ro.cs.tao.serialization.MediaType;
+import ro.cs.tao.serialization.SerializationException;
+import ro.cs.tao.serialization.SerializerFactory;
 
+import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.transform.stream.StreamSource;
+import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -33,6 +41,7 @@ import java.util.stream.Collectors;
  *
  * @author Cosmin Cara
  */
+@XmlTransient
 public abstract class DataQuery extends Identifiable {
     protected static final int DEFAULT_LIMIT = 20;
     protected DataSource source;
@@ -45,6 +54,8 @@ public abstract class DataQuery extends Identifiable {
     protected long timeout;
     protected Map<String, ParameterDescriptor> supportedParams;
     protected Set<String> mandatoryParams;
+
+    protected DataQuery() { }
 
     public DataQuery(DataSource source, String sensorName) {
         if (source == null) {
@@ -78,7 +89,7 @@ public abstract class DataQuery extends Identifiable {
     }
 
     public QueryParameter addParameter(String name, Object value) {
-        Class clazz = value != null ? value.getClass() : String.class;
+        Class clazz = this.supportedParams.get(name).getType();
         QueryParameter parameter = createParameter(name, clazz, value);
         this.parameters.put(name, parameter);
         return parameter;
@@ -152,6 +163,20 @@ public abstract class DataQuery extends Identifiable {
         newQuery.initialize(this.source, this.sensorName);
         this.parameters.forEach((key, value) -> newQuery.parameters.put(key, value));
         return newQuery;
+    }
+
+    public String exportParametersAsXML() throws SerializationException {
+        final BaseSerializer<QueryParameter> serializer = SerializerFactory.create(QueryParameter.class, MediaType.XML);
+        return serializer.serialize(new ArrayList<>(this.parameters.values()), "parameters");
+    }
+
+    public void importParameters(String xml) throws SerializationException {
+        final BaseSerializer<QueryParameter> serializer = SerializerFactory.create(QueryParameter.class, MediaType.XML);
+        List<QueryParameter> parameters = serializer.deserializeList(QueryParameter.class, new StreamSource(new StringReader(xml)));
+        this.parameters.clear();
+        for (QueryParameter parameter : parameters) {
+            addParameter(parameter.getName(), parameter.getValue());
+        }
     }
 
     protected void checkSupported(String name, Class type) {
