@@ -153,6 +153,9 @@ class Landsat8Query extends DataQuery {
                                                               tile, dateFormat.format(productDate.getTime()), clouds));
                                     } else {
                                         EOProduct product = parseProductJson(jsonTile);
+                                        if (this.limit < results.size()) {
+                                            break;
+                                        }
                                         results.put(product.getName(), product);
                                     }
                                 }
@@ -178,6 +181,7 @@ class Landsat8Query extends DataQuery {
             JsonObject rootObject = reader.readObject().getJsonObject("L1_METADATA_FILE");
             JsonObject obj = rootObject.getJsonObject("METADATA_FILE_INFO");
             product = new EOProduct();
+            product.setProductType("Landsat-8");
             product.setId(obj.getString("LANDSAT_SCENE_ID"));
             if (obj.containsKey("LANDSAT_PRODUCT_ID")) {
                 product.setName(obj.getString("LANDSAT_PRODUCT_ID"));
