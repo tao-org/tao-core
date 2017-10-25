@@ -70,7 +70,7 @@ class Sentinel2Query extends DataQuery {
             if (currentParameter != null) {
                 tiles.add(currentParameter.getValueAsString());
             } else if ((currentParameter = this.parameters.get("footprint")) != null) {
-                Polygon2D aoi = Polygon2D.fromWKT(currentParameter.getValueAsString());
+                Polygon2D aoi = (Polygon2D) currentParameter.getValue();
                 tiles.addAll(Sentinel2TileExtent.getInstance().intersectingTiles(aoi.getBounds2D()));
             } else {
                 throw new QueryException("Either [tileId] or [footprint] have to be given.");

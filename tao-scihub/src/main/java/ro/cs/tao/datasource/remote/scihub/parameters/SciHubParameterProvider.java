@@ -18,14 +18,17 @@ import java.util.Map;
  */
 public final class SciHubParameterProvider implements ParameterProvider {
 
-    private static final String[] sensors;
-    private static final Map<String, Map<String, ParameterDescriptor>> parameters;
-    private static final Map<String, ProductFetchStrategy> productFetchers;
+    private static String[] sensors;
+    private static Map<String, Map<String, ParameterDescriptor>> parameters;
+    private static Map<String, ProductFetchStrategy> productFetchers;
 
-    static {
-        sensors = new String[] { "Sentinel-1", "Sentinel-2" };
-        parameters = Collections.unmodifiableMap(
-                new HashMap<String, Map<String, ParameterDescriptor>>() {{
+    public SciHubParameterProvider() {
+        if (sensors == null) {
+            sensors = new String[] { "Sentinel-1", "Sentinel-2" };
+        }
+        if (parameters == null) {
+            parameters = Collections.unmodifiableMap(
+                    new HashMap<String, Map<String, ParameterDescriptor>>() {{
                         put("Sentinel-1", new HashMap<String, ParameterDescriptor>() {{
                             put("platformName", new ParameterDescriptor("platformName", String.class));
                             put("beginPosition", new ParameterDescriptor("beginPosition", Date.class));
@@ -45,13 +48,16 @@ public final class SciHubParameterProvider implements ParameterProvider {
                             put("cloudcoverpercentage", new ParameterDescriptor("cloudcoverpercentage", Double.class));
                             put("relativeOrbitNumber", new ParameterDescriptor("relativeOrbitNumber", Short.class));
                         }});
-                }});
-        final String targetFolder = ConfigurationManager.getInstance().getValue("product.location");
-        productFetchers = Collections.unmodifiableMap(
-                new HashMap<String, ProductFetchStrategy>() {{
-                    put("Sentinel-1", new SentinelDownloadStrategy(targetFolder));
-                    put("Sentinel-2", new Sentinel2DownloadStrategy(targetFolder));
-        }});
+                    }});
+        }
+        if (productFetchers == null) {
+            final String targetFolder = ConfigurationManager.getInstance().getValue("product.location");
+            productFetchers = Collections.unmodifiableMap(
+                    new HashMap<String, ProductFetchStrategy>() {{
+                        put("Sentinel-1", new SentinelDownloadStrategy(targetFolder));
+                        put("Sentinel-2", new Sentinel2DownloadStrategy(targetFolder));
+                    }});
+        }
     }
 
     @Override

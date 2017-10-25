@@ -71,6 +71,11 @@ public class SciHubDataSource extends URLDataSource<SciHubDataQuery> {
     public String defaultName() { return "Scientific Data Hub"; }
 
     @Override
+    public boolean ping() {
+        return NetUtils.isAvailable(URL);
+    }
+
+    @Override
     public void setCredentials(String username, String password) {
         super.setCredentials(username, password);
         String authToken = "Basic " + new String(Base64.getEncoder().encode((username + ":" + password).getBytes()));

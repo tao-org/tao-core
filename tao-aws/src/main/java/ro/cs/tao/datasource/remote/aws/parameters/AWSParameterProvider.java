@@ -7,6 +7,7 @@ import ro.cs.tao.datasource.param.ParameterProvider;
 import ro.cs.tao.datasource.remote.aws.LandsatCollection;
 import ro.cs.tao.datasource.remote.aws.download.Landsat8Strategy;
 import ro.cs.tao.datasource.remote.aws.download.Sentinel2Strategy;
+import ro.cs.tao.eodata.Polygon2D;
 
 import java.util.Collections;
 import java.util.Date;
@@ -31,7 +32,7 @@ public class AWSParameterProvider implements ParameterProvider {
                         put("beginPosition",  new ParameterDescriptor("beginPosition", Date.class));
                         put("endPosition",  new ParameterDescriptor("endPosition", Date.class));
                         put("tileId", new ParameterDescriptor("tileId", String.class));
-                        put("footprint",  new ParameterDescriptor("footprint", String.class));
+                        put("footprint",  new ParameterDescriptor("footprint", Polygon2D.class));
                         put("productType",  new ParameterDescriptor("productType", String.class));
                         put("cloudcoverpercentage",  new ParameterDescriptor("cloudcoverpercentage", Double.class));
                         put("relativeOrbitNumber",  new ParameterDescriptor("relativeOrbitNumber", Short.class));
@@ -42,7 +43,7 @@ public class AWSParameterProvider implements ParameterProvider {
                         put("sensingEnd", new ParameterDescriptor("sensingEnd", Date.class));
                         put("path", new ParameterDescriptor("path", String.class));
                         put("row", new ParameterDescriptor("row", String.class));
-                        put("footprint",  new ParameterDescriptor("footprint", String.class));
+                        put("footprint",  new ParameterDescriptor("footprint", Polygon2D.class));
                         put("cloudcoverpercentage", new ParameterDescriptor("cloudcoverpercentage", Double.class));
                         put("productType", new ParameterDescriptor("productType", String.class));
                         put("collection", new ParameterDescriptor("collection", String.class, LandsatCollection.COLLECTION_1.toString()));
