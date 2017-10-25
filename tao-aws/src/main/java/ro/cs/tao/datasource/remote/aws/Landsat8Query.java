@@ -124,7 +124,7 @@ class Landsat8Query extends DataQuery {
                 if (currentParameter == null) {
                     throw new QueryException("Either [footprint] or ([path] and [row]) should be provided");
                 }
-                Polygon2D aoi = Polygon2D.fromWKT(currentParameter.getValueAsString());
+                Polygon2D aoi = (Polygon2D) currentParameter.getValue();
                 tiles.addAll(Landsat8TileExtent.getInstance().intersectingTiles(aoi.getBounds2D()));
             }
 

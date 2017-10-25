@@ -2,6 +2,7 @@ package ro.cs.tao.datasource.remote.aws;
 
 import ro.cs.tao.datasource.remote.URLDataSource;
 import ro.cs.tao.datasource.remote.aws.parameters.AWSParameterProvider;
+import ro.cs.tao.datasource.util.NetUtils;
 
 import java.io.IOException;
 import java.net.URI;
@@ -57,6 +58,11 @@ public class AWSDataSource extends URLDataSource<AWSDataQuery> {
     @Override
     public void setCredentials(String username, String password) {
         // no-op
+    }
+
+    @Override
+    public boolean ping() {
+        return NetUtils.isAvailable(S2_URL);
     }
 
     @Override
