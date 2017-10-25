@@ -112,7 +112,7 @@ public class Landsat8Strategy extends DownloadStrategy {
 
     @Override
     protected String getMetadataUrl(EOProduct descriptor) {
-        return getProductUrl(descriptor) + descriptor.getName() + "_MTL.txt";
+        return getProductUrl(descriptor) + DownloadStrategy.URL_SEPARATOR + descriptor.getName() + "_MTL.txt";
     }
 
     private Logger getLogger() { return Logger.getLogger(Sentinel2Strategy.class.getSimpleName()); }

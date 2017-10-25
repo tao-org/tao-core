@@ -13,6 +13,14 @@ public class Message {
     private Object source;
     private String data;
 
+    public Message() { }
+
+    public Message(long timestamp, Object source, String data) {
+        this.timestamp = timestamp;
+        this.source = source;
+        this.data = data;
+    }
+
     @XmlElement(name = "timestamp")
     public long getTimestamp() { return timestamp; }
     public void setTimestamp(long timestamp) { this.timestamp = timestamp; }

@@ -173,6 +173,9 @@ class Sentinel2Query extends DataQuery {
                                                         parseProductJson(jsonProduct, product);
                                                         if (relativeOrbit == 0 ||
                                                                 product.getName().contains("_R" + String.format("%03d", relativeOrbit))) {
+                                                            if (this.limit <= results.size()) {
+                                                                break;
+                                                            }
                                                             results.put(product.getName(), product);
                                                         }
                                                     }
@@ -204,7 +207,7 @@ class Sentinel2Query extends DataQuery {
             product.setName(obj.getString("name"));
             product.setId(obj.getString("id"));
             product.setLocation(this.source.getConnectionString()
-                                           .replace(S2_SEARCH_URL_SUFFIX, "") + obj.getString("path"));
+                                           .replace(S2_SEARCH_URL_SUFFIX + "tiles/", "") + obj.getString("path"));
             product.setAcquisitionDate(dateFormat.parse(obj.getString("timestamp")));
             product.setWidth(-1);
             product.setHeight(-1);

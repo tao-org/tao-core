@@ -6,6 +6,7 @@ import ro.cs.tao.datasource.remote.aws.AWSDataSource;
 import ro.cs.tao.datasource.remote.aws.LandsatProduct;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.Polygon2D;
+import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
 
@@ -28,7 +29,7 @@ public class AWSDataSourceTest {
         Landsat8_Test();
     }
 
-    public static void Sentinel2_Test() {
+    public static void Sentinel2_Test() throws SerializationException {
         try {
             Logger logger = LogManager.getLogManager().getLogger("");
             for (Handler handler : logger.getHandlers()) {
@@ -56,6 +57,7 @@ public class AWSDataSourceTest {
             query.addParameter("cloudcoverpercentage", 100.);
             query.setPageSize(50);
             query.setMaxResults(83);
+            query.exportParametersAsXML();
             List<EOProduct> results = query.execute();
             results.forEach(r -> {
                 System.out.println("ID=" + r.getId());

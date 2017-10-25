@@ -85,6 +85,9 @@ public class Sentinel2Strategy extends DownloadStrategy {
         if (url == null) {
             url = productsUrl + Sentinel2ProductHelper.createHelper(descriptor.getName()).getProductRelativePath();
         }
+        if (!url.endsWith("/")) {
+            url += "/";
+        }
         return url;
     }
 
@@ -108,7 +111,7 @@ public class Sentinel2Strategy extends DownloadStrategy {
             // let's try to assemble the product
             rootPath = Utilities.ensureExists(Paths.get(destination, productName + ".SAFE"));
             String baseProductUrl = getProductUrl(product);
-            url = baseProductUrl + "metadata.xml";
+            url = getMetadataUrl(product);
             Path metadataFile = rootPath.resolve(helper.getMetadataFileName());
             currentStep = "Metadata";
             getLogger().info(String.format("Downloading metadata file %s", metadataFile));

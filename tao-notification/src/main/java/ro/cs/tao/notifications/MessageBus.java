@@ -16,6 +16,7 @@ public class MessageBus {
     public static final String INFORMATION = "info";
     public static final String WARNING = "warn";
     public static final String ERROR = "error";
+    public static final String PROGRESS = "progress";
 
     private static final int MAX_THREADS = 2;
     private static final MessageBus instance;

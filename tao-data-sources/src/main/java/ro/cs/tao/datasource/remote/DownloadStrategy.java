@@ -37,10 +37,12 @@
  */
 package ro.cs.tao.datasource.remote;
 
+import ro.cs.tao.ProgressListener;
 import ro.cs.tao.datasource.ProductFetchStrategy;
 import ro.cs.tao.datasource.util.NetUtils;
 import ro.cs.tao.datasource.util.Utilities;
 import ro.cs.tao.eodata.EOProduct;
+import ro.cs.tao.notifications.ProgressNotifier;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -91,7 +93,8 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     private boolean shouldDeleteAfterCompression;
     private DownloadMode downloadMode;
 
-    private DownloadProgressListener fileProgressListener;
+    private ProgressListener progressListener;
+    private volatile boolean cancelled;
 
     protected Logger logger = Logger.getLogger(DownloadStrategy.class.getName());
 
@@ -108,12 +111,13 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         this.localArchiveRoot = localArchiveRoot;
     }
 
-    public DownloadProgressListener getFileProgressListener() {
-        return fileProgressListener;
+    public void setProgressListener(ProgressNotifier progressListener) {
+        this.progressListener = progressListener;
     }
 
-    public void setFileProgressListener(DownloadProgressListener fileProgressListener) {
-        this.fileProgressListener = fileProgressListener;
+    @Override
+    public void cancel() {
+        this.cancelled = true;
     }
 
     public ReturnCode download(List<EOProduct> products) {
@@ -121,6 +125,9 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         if (products != null) {
             int productCounter = 1, productCount = products.size();
             for (EOProduct product : products) {
+                if (cancelled) {
+                    return ReturnCode.INTERRUPTED;
+                }
                 long startTime = System.currentTimeMillis();
                 Path file = null;
                 currentProduct = "Product " + String.valueOf(productCounter++) + "/" + String.valueOf(productCount);
@@ -230,6 +237,9 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
             Files.walkFileTree(sourcePath, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                    if (cancelled) {
+                        return FileVisitResult.TERMINATE;
+                    }
                     Path target = destinationPath.resolve(sourcePath.relativize(dir));
                     if (!Files.exists(target)) {
                         Files.createDirectory(target);
@@ -239,6 +249,9 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
 
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    if (cancelled) {
+                        return FileVisitResult.TERMINATE;
+                    }
                     Files.copy(file,
                                destinationPath.resolve(sourcePath.relativize(file)),
                                StandardCopyOption.REPLACE_EXISTING);
@@ -268,6 +281,9 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         HttpURLConnection connection = null;
         try {
             logger.fine(String.format("Begin download for %s", remoteUrl));
+            if (this.progressListener != null) {
+                this.progressListener.subActivityStarted(remoteUrl);
+            }
             connection = NetUtils.openConnection(remoteUrl, authToken);
             long remoteFileLength = connection.getContentLengthLong();
             long localFileLength = 0;
@@ -295,8 +311,8 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
                 InputStream inputStream = null;
                 SeekableByteChannel outputStream = null;
                 try {
-                    if (this.fileProgressListener != null) {
-                        this.fileProgressListener.notifyProgress(0, 0);
+                    if (this.progressListener != null) {
+                        this.progressListener.notifyProgress(0);
                     }
                     logger.fine(String.format("Local temporary file %s created", file.toString()));
                     long start = System.currentTimeMillis();
@@ -308,15 +324,12 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
                     byte[] buffer = new byte[BUFFER_SIZE];
                     int read;
                     int totalRead = 0;
-                    long millis;
                     logger.fine("Begin reading from input stream");
-                    while ((read = inputStream.read(buffer)) != -1) {
+                    while (!cancelled && (read = inputStream.read(buffer)) != -1) {
                         outputStream.write(ByteBuffer.wrap(buffer, 0, read));
                         totalRead += read;
-                        if (this.fileProgressListener != null) {
-                            millis = (System.currentTimeMillis() - start) / 1000;
-                            this.fileProgressListener.notifyProgress((double) totalRead / (double) remoteFileLength,
-                                                                     (double) (totalRead / 1024 / 1024) / (double) millis);
+                        if (this.progressListener != null) {
+                            this.progressListener.notifyProgress(remoteUrl, (double) totalRead / (double) remoteFileLength);
                         }
                     }
                     logger.fine("End reading from input stream");
@@ -341,6 +354,9 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         } finally {
             if (connection != null) {
                 connection.disconnect();
+            }
+            if (this.progressListener != null) {
+                this.progressListener.subActivityEnded(remoteUrl);
             }
         }
         return Utilities.ensurePermissions(file);

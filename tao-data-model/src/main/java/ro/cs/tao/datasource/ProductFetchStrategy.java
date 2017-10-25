@@ -28,4 +28,11 @@ public interface ProductFetchStrategy {
      * @return          The path to the retrieved product or <code>null</code> if fetch failed.
      */
     Path fetch(EOProduct product) throws IOException;
+
+    /**
+     * Cancels the operation in progress, if any.
+     * The operation is not guaranteed to be immediately terminated.
+     *
+     */
+    default void cancel() { }
 }
