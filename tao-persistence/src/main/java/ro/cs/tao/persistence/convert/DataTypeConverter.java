@@ -9,7 +9,6 @@ import javax.persistence.Converter;
  * @author oana
  *
  */
-@Converter
 public class DataTypeConverter implements AttributeConverter<Class<?> , String> {
 
     @Override

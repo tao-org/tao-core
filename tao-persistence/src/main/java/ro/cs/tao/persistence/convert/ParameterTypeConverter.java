@@ -11,7 +11,6 @@ import javax.persistence.Converter;
  * @author oana
  *
  */
-@Converter
 public class ParameterTypeConverter implements AttributeConverter<ParameterType, Integer> {
 
     @Override

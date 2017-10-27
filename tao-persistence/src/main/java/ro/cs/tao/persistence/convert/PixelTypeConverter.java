@@ -11,7 +11,6 @@ import javax.persistence.Converter;
  * @author oana
  *
  */
-@Converter
 public class PixelTypeConverter implements AttributeConverter<PixelType, Integer> {
 
     @Override

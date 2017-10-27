@@ -11,7 +11,6 @@ import javax.persistence.Converter;
  * @author oana
  *
  */
-@Converter
 public class DataFormatConverter implements AttributeConverter<DataFormat, Integer> {
 
     @Override

@@ -10,7 +10,6 @@ import java.util.Arrays;
  * @author oana
  *
  */
-@Converter
 public class StringArrayToStringConverter implements AttributeConverter<String[], String> {
 
     @Override
