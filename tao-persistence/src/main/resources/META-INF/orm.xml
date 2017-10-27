@@ -401,8 +401,11 @@
     <converter class="ro.cs.tao.persistence.convert.ProcessingComponentVisibilityConverter" />
     <converter class="ro.cs.tao.persistence.convert.ExecutionStatusConverter" />
     <converter class="ro.cs.tao.persistence.convert.ParameterTypeConverter" />
+    <converter class="ro.cs.tao.persistence.convert.PixelTypeConverter" />
+    <converter class="ro.cs.tao.persistence.convert.SensorTypeConverter" />
     <converter class="ro.cs.tao.persistence.convert.DataTypeConverter" />
     <converter class="ro.cs.tao.persistence.convert.StringArrayToStringConverter" />
     <converter class="ro.cs.tao.persistence.convert.DataFormatConverter" />
+    <converter class="ro.cs.tao.persistence.convert.ServiceStatusConverter" />
 
 </entity-mappings>

@@ -149,7 +149,7 @@
                 <column name="active" nullable="true" column-definition="boolean NOT NULL DEFAULT true"/>
             </basic>
 
-            <element-collection name="servicesStatus" target-class="ro.cs.tao.topology.NodeServiceStatus" access="PROPERTY">
+            <element-collection name="servicesStatus" target-class="ro.cs.tao.topology.NodeServiceStatus" access="PROPERTY" fetch="EAGER">
                 <collection-table name="tao.execution_node_service" >
                     <join-column name="host_name" referenced-column-name="host_name" />
                 </collection-table>
@@ -276,6 +276,28 @@
     </entity>
 
 
+    <!--
+    <entity class="ro.cs.tao.component.TemplateParameterDescriptor" access="PROPERTY">
+        <table name="tao.processing_parameter"/>
+        <attributes>
+            <many-to-many name="parameters" fetch="EAGER">
+                <join-table name="tao.template_parameter_parameters">
+                    <join-column name="processing_component_id" referenced-column-name="id"/>
+                    <inverse-join-column name="processing_parameter_id" referenced-column-name="id"/>
+                </join-table>
+                <cascade>
+                    <cascade-all/>
+                </cascade>
+            </many-to-many>
+
+            <transient name="template"/>
+            <transient name="templateEngine"/>
+        </attributes>
+
+    </entity>
+    -->
+
+
     <entity class="ro.cs.tao.component.execution.ExecutionTask" access="PROPERTY">
         <table name="tao.task"/>
         <convert converter="ro.cs.tao.persistence.convert.ExecutionStatusConverter" attribute-name="executionStatus" />
@@ -379,8 +401,11 @@
     <converter class="ro.cs.tao.persistence.convert.ProcessingComponentVisibilityConverter" />
     <converter class="ro.cs.tao.persistence.convert.ExecutionStatusConverter" />
     <converter class="ro.cs.tao.persistence.convert.ParameterTypeConverter" />
+    <converter class="ro.cs.tao.persistence.convert.PixelTypeConverter" />
+    <converter class="ro.cs.tao.persistence.convert.SensorTypeConverter" />
     <converter class="ro.cs.tao.persistence.convert.DataTypeConverter" />
     <converter class="ro.cs.tao.persistence.convert.StringArrayToStringConverter" />
     <converter class="ro.cs.tao.persistence.convert.DataFormatConverter" />
+    <converter class="ro.cs.tao.persistence.convert.ServiceStatusConverter" />
 
 </entity-mappings>
