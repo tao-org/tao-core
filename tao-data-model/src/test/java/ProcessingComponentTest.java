@@ -11,6 +11,8 @@ import ro.cs.tao.component.template.Template;
 import ro.cs.tao.component.template.TemplateType;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Cosmin Cara
@@ -165,7 +167,7 @@ public class ProcessingComponentTest extends BaseSerializationTest<ProcessingCom
                                     Boolean.class,
                                     Boolean.TRUE.toString(),
                                     "Activate 8-Neighborhood connectivity (default is 4)."));
-        ArrayList<Variable> variables = new ArrayList<>();
+        Set<Variable> variables = new HashSet<>();
         variables.add(new Variable("ITK_AUTOLOAD_PATH", "E:\\OTB\\bin"));
         Template template = new BasicTemplate();
         template.setName("segmentation-cc-template.vm");

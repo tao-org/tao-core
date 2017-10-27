@@ -223,7 +223,7 @@
                 </cascade>
             </many-to-many>
 
-            <element-collection name="variables" target-class="ro.cs.tao.component.Variable" access="PROPERTY">
+            <element-collection name="variables" target-class="ro.cs.tao.component.Variable" access="PROPERTY" fetch="EAGER">
                 <collection-table name="tao.component_variables" >
                     <join-column name="processing_component_id" referenced-column-name="id" />
                 </collection-table>

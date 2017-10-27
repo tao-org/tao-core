@@ -64,7 +64,7 @@ public class ProcessingComponent extends TaoComponent {
     private String templateName;
     private TemplateEngine templateEngine;
     private Template template;
-    private List<Variable> variables;
+    private Set<Variable> variables;
     private List<ParameterDescriptor> parameters;
     private Boolean multiThread;
     private ProcessingComponentVisibility visibility;
@@ -106,11 +106,11 @@ public class ProcessingComponent extends TaoComponent {
     }
 
     @XmlElementWrapper(name = "variables")
-    public List<Variable> getVariables() {
+    public Set<Variable> getVariables() {
         return variables;
     }
 
-    public void setVariables(List<Variable> variables) {
+    public void setVariables(Set<Variable> variables) {
         this.variables = variables;
     }
 
@@ -202,7 +202,7 @@ public class ProcessingComponent extends TaoComponent {
             newDescriptor.template = this.template.copy();
         }
         if (this.variables != null) {
-            newDescriptor.variables = new ArrayList<>();
+            newDescriptor.variables = new HashSet<>();
             for (Variable var : this.variables) {
                 newDescriptor.variables.add(var.clone());
             }
