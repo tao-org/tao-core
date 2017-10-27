@@ -11,7 +11,6 @@ import javax.persistence.Converter;
  * @author oana
  *
  */
-@Converter
 public class ServiceStatusConverter implements AttributeConverter<ServiceStatus, Integer> {
 
     @Override
