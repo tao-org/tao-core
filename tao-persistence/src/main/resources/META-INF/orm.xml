@@ -149,7 +149,7 @@
                 <column name="active" nullable="true" column-definition="boolean NOT NULL DEFAULT true"/>
             </basic>
 
-            <element-collection name="servicesStatus" target-class="ro.cs.tao.topology.NodeServiceStatus" access="PROPERTY">
+            <element-collection name="servicesStatus" target-class="ro.cs.tao.topology.NodeServiceStatus" access="PROPERTY" fetch="EAGER">
                 <collection-table name="tao.execution_node_service" >
                     <join-column name="host_name" referenced-column-name="host_name" />
                 </collection-table>
