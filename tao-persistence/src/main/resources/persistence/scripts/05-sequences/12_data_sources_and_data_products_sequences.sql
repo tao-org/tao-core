@@ -1,4 +1,4 @@
-﻿----- table: tao.data_format ----------------------------------------------------------------------
+----- table: tao.data_format ----------------------------------------------------------------------
 DROP SEQUENCE IF EXISTS tao.data_format_id_seq CASCADE;
 -- create sequence
 CREATE SEQUENCE tao.data_format_id_seq

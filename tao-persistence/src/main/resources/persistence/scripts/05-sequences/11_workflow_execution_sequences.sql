@@ -1,4 +1,4 @@
-﻿----- table: tao.workflow_graph_visibility -------------------------------------------------------------------
+----- table: tao.workflow_graph_visibility -------------------------------------------------------------------
 DROP SEQUENCE IF EXISTS tao.workflow_graph_visibility_id_seq CASCADE;
 -- create sequence
 CREATE SEQUENCE tao.workflow_graph_visibility_id_seq 
