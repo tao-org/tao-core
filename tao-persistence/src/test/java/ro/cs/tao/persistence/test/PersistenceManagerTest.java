@@ -43,9 +43,7 @@ import ro.cs.tao.topology.*;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by oana on 7/18/2017.
@@ -423,7 +421,7 @@ public class PersistenceManagerTest {
             component.setActive(true);
 
             // list of component variables
-            List<Variable> variables = new ArrayList<>();
+            Set<Variable> variables = new HashSet<>();
 
             final Variable var1 = new Variable();
             var1.setKey("var1");
@@ -581,7 +579,7 @@ public class PersistenceManagerTest {
             component.setMultiThread(true);
             component.setActive(true);
 
-            List<Variable> variables = new ArrayList<>();
+            Set<Variable> variables = new HashSet<>();
 
             final Variable var1 = new Variable();
             var1.setKey("var1");
