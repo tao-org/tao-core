@@ -6,20 +6,22 @@ import ro.cs.tao.ProgressListener;
  * @author Cosmin Cara
  */
 public class ProgressNotifier implements ProgressListener {
-    private static final String TASK_START = "%s started";
-    private static final String TASK_END = "%s completed";
-    private static final String SUBTASK_START = "%s:%s started";
-    private static final String SUBTASK_END = "%s:%s started";
-    private static final String TASK_PROGRESS = "%s %s";
-    private static final String SUBTASK_PROGRESS = "%s:%s %s:%s";
+    private static final String TASK_START = "Started %s";
+    private static final String TASK_END = "Completed %s";
+    private static final String SUBTASK_START = "Started %s:%s";
+    private static final String SUBTASK_END = "Completed %s:%s";
+    private static final String TASK_PROGRESS = "%s: %s";
+    private static final String SUBTASK_PROGRESS = "[%s: %s] - %s: %s";
 
-    private String owner;
+    private String topic;
+    private Object owner;
     private String taskName;
     private double taskCounter;
     private double subTaskCounter;
 
-    public ProgressNotifier(String owner) {
-        this.owner = owner;
+    public ProgressNotifier(Object source, String topic) {
+        this.owner = source;
+        this.topic = topic;
     }
 
     @Override
@@ -71,8 +73,9 @@ public class ProgressNotifier implements ProgressListener {
         }
         subTaskCounter = progressValue;
         if (subTaskCounter < 100) {
-            sendMessage(SUBTASK_PROGRESS, taskName, subTaskName,
+            sendMessage(SUBTASK_PROGRESS, taskName,
                         String.format("%.2f", taskCounter),
+                        subTaskName,
                         String.format("%.2f", subTaskCounter));
         } else {
             subActivityEnded(subTaskName);
@@ -80,6 +83,6 @@ public class ProgressNotifier implements ProgressListener {
     }
 
     private void sendMessage(String messageTemplate, Object...args) {
-        MessageBus.send(MessageBus.PROGRESS, owner, String.format(messageTemplate, args));
+        MessageBus.send(this.topic, this.owner, String.format(messageTemplate, args));
     }
 }

@@ -54,7 +54,7 @@ public class SciHubXmlResponseHandler extends XmlResponseHandler<EOProduct> {
 
     private String identifiedElement;
 
-    SciHubXmlResponseHandler(String recordElementName) {
+    public SciHubXmlResponseHandler(String recordElementName) {
         super(EOProduct.class, recordElementName);
     }
 
@@ -98,6 +98,9 @@ public class SciHubXmlResponseHandler extends XmlResponseHandler<EOProduct> {
                             break;
                         case "footprint":
                             this.current.setGeometry(elementValue);
+                            break;
+                        case "platformname":
+                            this.current.setProductType(elementValue);
                             break;
                         default:
                             this.current.addAttribute(this.identifiedElement, elementValue);
