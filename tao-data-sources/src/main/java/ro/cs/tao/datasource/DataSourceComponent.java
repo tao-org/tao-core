@@ -29,6 +29,10 @@ public class DataSourceComponent extends TaoComponent {
     private String userName;
     @XmlTransient
     private String password;
+    @XmlTransient
+    private boolean cancelled;
+    @XmlTransient
+    private ProductFetchStrategy currentFetcher;
 
     public DataSourceComponent(String sensorName, String dataSourceName) {
         if (sensorName == null) {
@@ -52,6 +56,7 @@ public class DataSourceComponent extends TaoComponent {
         DataSourceManager dsManager = DataSourceManager.getInstance();
         DataSource dataSource = this.dataSourceName != null ?
                 dsManager.get(this.sensorName, this.dataSourceName) : dsManager.get(this.sensorName);
+        dataSource.setCredentials(this.userName, this.password);
         return dataSource.createQuery(this.sensorName);
     }
 
@@ -71,18 +76,22 @@ public class DataSourceComponent extends TaoComponent {
         DataSourceManager dsManager = DataSourceManager.getInstance();
         DataSource dataSource = this.dataSourceName != null ?
                 dsManager.get(this.sensorName, this.dataSourceName) : dsManager.get(this.sensorName);
-        ProgressNotifier notifier = new ProgressNotifier(this.id);
-        notifier.started(String.format("Download-%s", this.id));
-        int counter = 1;
+        dataSource.setCredentials(this.userName, this.password);
+        ProgressNotifier notifier = new ProgressNotifier(this, DataSourceTopics.PRODUCT_PROGRESS);
+        //int counter = 1;
         for (EOProduct product : products) {
             try {
-                ProductFetchStrategy fetchStrategy = dataSource.getProductFetchStrategy(product.getProductType());
-                if (fetchStrategy instanceof DownloadStrategy) {
-                    ((DownloadStrategy) fetchStrategy).setProgressListener(notifier);
-                }
-                Path productPath = fetchStrategy.fetch(product);
-                if (productPath != null) {
-                    product.setLocation(productPath.toUri().toString());
+                if (!cancelled) {
+                    notifier.started(product.getName());
+                    this.currentFetcher = dataSource.getProductFetchStrategy(product.getProductType());
+                    if (this.currentFetcher instanceof DownloadStrategy) {
+                        ((DownloadStrategy) this.currentFetcher).setProgressListener(notifier);
+                    }
+                    Path productPath = this.currentFetcher.fetch(product);
+                    if (productPath != null) {
+                        product.setLocation(productPath.toUri().toString());
+                    }
+                    notifier.ended();
                 }
             } catch (IOException ex) {
                 Logger.getLogger(DataSourceComponent.class.getSimpleName()).warning(
@@ -91,11 +100,18 @@ public class DataSourceComponent extends TaoComponent {
                 Logger.getLogger(DataSourceComponent.class.getSimpleName()).warning(
                         String.format("Updating product location for '%s' failed: %s", product.getName(), e.getMessage()));
             } finally {
-                notifier.notifyProgress(counter++ / products.size());
+                //notifier.notifyProgress(counter++ / products.size());
+                this.currentFetcher = null;
             }
         }
-        notifier.ended();
         return products;
+    }
+
+    public void cancel() {
+        this.cancelled = true;
+        if (this.currentFetcher != null) {
+            this.currentFetcher.cancel();
+        }
     }
 
     @Override

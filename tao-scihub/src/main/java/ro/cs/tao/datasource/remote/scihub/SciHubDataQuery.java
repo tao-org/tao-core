@@ -29,8 +29,11 @@ import ro.cs.tao.datasource.converters.ConversionException;
 import ro.cs.tao.datasource.converters.ConverterFactory;
 import ro.cs.tao.datasource.converters.DateConverter;
 import ro.cs.tao.datasource.param.QueryParameter;
+import ro.cs.tao.datasource.remote.result.ResponseParser;
 import ro.cs.tao.datasource.remote.result.json.JsonResponseParser;
+import ro.cs.tao.datasource.remote.result.xml.XmlResponseParser;
 import ro.cs.tao.datasource.remote.scihub.json.SciHubJsonResponseHandler;
+import ro.cs.tao.datasource.remote.scihub.xml.SciHubXmlResponseHandler;
 import ro.cs.tao.datasource.util.NetUtils;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.Polygon2D;
@@ -69,6 +72,9 @@ public class SciHubDataQuery extends DataQuery {
         List<EOProduct> results = new ArrayList<>();
         String query = "";
         int idx = 0;
+        if (!this.parameters.containsKey("platformName")) {
+            addParameter("platformName", this.sensorName);
+        }
         for (Map.Entry<String, QueryParameter> entry : this.parameters.entrySet()) {
             QueryParameter parameter = entry.getValue();
             if (!parameter.isOptional() && !parameter.isInterval() && parameter.getValue() == null) {
@@ -133,24 +139,32 @@ public class SciHubDataQuery extends DataQuery {
         do {
             List<EOProduct> tmpResults;
             List<NameValuePair> params = new ArrayList<>();
-            params.add(new BasicNameValuePair("filter", query));
-            params.add(new BasicNameValuePair("limit", String.valueOf(this.pageSize)));
-            params.add(new BasicNameValuePair("offset", page > 0 ? String.valueOf((page - 1) * this.pageSize) : "0"));
+            params.add(new BasicNameValuePair("q", query));
+            params.add(new BasicNameValuePair("rows", String.valueOf(this.pageSize)));
+            params.add(new BasicNameValuePair("start", page > 0 ? String.valueOf((page - 1) * this.pageSize) : "0"));
 
             String queryUrl = this.source.getConnectionString() + "?"
               + URLEncodedUtils.format(params, "UTF-8").replace("+", "%20");
             try (CloseableHttpResponse response = NetUtils.openConnection(queryUrl, this.source.getCredentials())) {
                 switch (response.getStatusLine().getStatusCode()) {
                     case 200:
-                        JsonResponseParser<EOProduct> parser = new JsonResponseParser<>(new SciHubJsonResponseHandler());
-                        tmpResults = parser.parse(EntityUtils.toString(response.getEntity()));
+                        String rawResponse = EntityUtils.toString(response.getEntity());
+                        ResponseParser<EOProduct> parser;
+                        boolean isXml = rawResponse.startsWith("<?xml");
+                        if (isXml) {
+                            parser = new XmlResponseParser<>();
+                            ((XmlResponseParser) parser).setHandler(new SciHubXmlResponseHandler("entry"));
+                        } else {
+                            parser = new JsonResponseParser<>(new SciHubJsonResponseHandler());
+                        }
+                        tmpResults = parser.parse(rawResponse);
                         if (tmpResults != null) {
                             retrieved = tmpResults.size();
-                            if ("Sentinel-2".equals(this.parameters.get("platformName").getValue()) &&
+                            if ("Sentinel-2".equals(this.sensorName) &&
                               this.parameters.containsKey("cloudcoverpercentage")) {
                                 final Double clouds = (Double) this.parameters.get("cloudcoverpercentage").getValue();
                                 tmpResults = tmpResults.stream()
-                                  .filter(r -> Double.parseDouble(r.getAttributeValue("Cloud cover percentage")) <= clouds)
+                                  .filter(r -> Double.parseDouble(r.getAttributeValue(isXml ? "cloudcoverpercentage" : "Cloud Cover Percentage")) <= clouds)
                                   .collect(Collectors.toList());
                             }
                             results.addAll(tmpResults);
