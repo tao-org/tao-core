@@ -38,6 +38,7 @@
 
 package ro.cs.tao.datasource.remote.scihub.download;
 
+import ro.cs.tao.datasource.InterruptedException;
 import ro.cs.tao.datasource.remote.scihub.helpers.Sentinel2ProductHelper;
 import ro.cs.tao.datasource.util.NetUtils;
 import ro.cs.tao.datasource.util.Utilities;
@@ -178,7 +179,7 @@ public class Sentinel2DownloadStrategy extends SentinelDownloadStrategy {
     }
 
     @Override
-    public Path fetch(EOProduct product) throws IOException {
+    public Path fetch(EOProduct product) throws IOException, InterruptedException {
         Sentinel2ProductHelper helper = Sentinel2ProductHelper.createHelper(product.getName());
         String tileId = helper.getTileIdentifier();
         if (tileId != null && this.filteredTiles != null && !this.filteredTiles.contains(tileId)) {
@@ -189,7 +190,7 @@ public class Sentinel2DownloadStrategy extends SentinelDownloadStrategy {
         }
     }
 
-    private Path downloadImpl(EOProduct product) throws IOException {
+    private Path downloadImpl(EOProduct product) throws IOException, InterruptedException {
         Path rootPath = null;
         String url;
         Utilities.ensureExists(Paths.get(destination));

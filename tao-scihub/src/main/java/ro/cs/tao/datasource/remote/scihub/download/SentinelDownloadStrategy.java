@@ -19,6 +19,7 @@
 
 package ro.cs.tao.datasource.remote.scihub.download;
 
+import ro.cs.tao.datasource.InterruptedException;
 import ro.cs.tao.datasource.remote.DownloadStrategy;
 import ro.cs.tao.datasource.remote.scihub.SciHubDataSource;
 import ro.cs.tao.datasource.util.NetUtils;
@@ -75,7 +76,7 @@ public class SentinelDownloadStrategy extends DownloadStrategy {
     }
 
     @Override
-    public Path fetch(EOProduct product) throws IOException {
+    public Path fetch(EOProduct product) throws IOException, InterruptedException {
         Utilities.ensureExists(Paths.get(destination));
         String productName = product.getName();
         currentStep = "Archive";

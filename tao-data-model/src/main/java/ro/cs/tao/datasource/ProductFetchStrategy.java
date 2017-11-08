@@ -19,7 +19,7 @@ public interface ProductFetchStrategy {
      * @param productName   The name of the product
      * @return              The path to the retrieved product or <code>null</code> if fetch failed.
      */
-    default Path fetch(String productName) throws IOException {
+    default Path fetch(String productName) throws IOException, InterruptedException {
         return null;
     }
     /**
@@ -27,7 +27,7 @@ public interface ProductFetchStrategy {
      * @param product   The product descriptor
      * @return          The path to the retrieved product or <code>null</code> if fetch failed.
      */
-    Path fetch(EOProduct product) throws IOException;
+    Path fetch(EOProduct product) throws IOException, InterruptedException;
 
     /**
      * Cancels the operation in progress, if any.
