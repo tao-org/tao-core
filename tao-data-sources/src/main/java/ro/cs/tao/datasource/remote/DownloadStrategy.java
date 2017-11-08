@@ -38,6 +38,7 @@
 package ro.cs.tao.datasource.remote;
 
 import ro.cs.tao.ProgressListener;
+import ro.cs.tao.datasource.InterruptedException;
 import ro.cs.tao.datasource.ProductFetchStrategy;
 import ro.cs.tao.datasource.util.NetUtils;
 import ro.cs.tao.datasource.util.Utilities;
@@ -159,6 +160,8 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
                             }
                             break;
                     }
+                } catch (InterruptedException iex) {
+
                 } catch (IOException ignored) {
                     logger.warning("IO Exception: " + ignored.getMessage());
                     logger.warning("Product download failed");
@@ -196,11 +199,11 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
 
     protected abstract String getMetadataUrl(EOProduct descriptor);
 
-    protected Path downloadFile(String remoteUrl, Path file) throws IOException {
+    protected Path downloadFile(String remoteUrl, Path file) throws IOException, InterruptedException {
         return downloadFile(remoteUrl, file, null);
     }
 
-    protected Path downloadFile(String remoteUrl, Path file, String authToken) throws IOException {
+    protected Path downloadFile(String remoteUrl, Path file, String authToken) throws IOException, InterruptedException {
         return downloadFile(remoteUrl, file, this.downloadMode, authToken);
     }
 
@@ -277,7 +280,10 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         }
     }
 
-    private Path downloadFile(String remoteUrl, Path file, DownloadMode mode, String authToken) throws IOException {
+    private Path downloadFile(String remoteUrl, Path file, DownloadMode mode, String authToken) throws IOException, InterruptedException {
+        if (cancelled) {
+            throw new InterruptedException();
+        }
         HttpURLConnection connection = null;
         try {
             logger.fine(String.format("Begin download for %s", remoteUrl));
@@ -287,6 +293,9 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
             connection = NetUtils.openConnection(remoteUrl, authToken);
             long remoteFileLength = connection.getContentLengthLong();
             long localFileLength = 0;
+            if (cancelled) {
+                throw new InterruptedException();
+            }
             if (Files.exists(file)) {
                 localFileLength = Files.size(file);
                 if (localFileLength != remoteFileLength) {
@@ -304,6 +313,9 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
                                               remoteFileLength,
                                               localFileLength));
                 }
+            }
+            if (cancelled) {
+                throw new InterruptedException();
             }
             if (localFileLength != remoteFileLength) {
                 int kBytes = (int) (remoteFileLength / 1024);
@@ -333,6 +345,9 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
                         }
                     }
                     logger.fine("End reading from input stream");
+                    if (cancelled) {
+                        throw new InterruptedException();
+                    }
                     logger.info(String.format(completeMessage, currentProduct, currentStep, file.getFileName(), (System.currentTimeMillis() - start) / 1000));
                 } finally {
                     if (outputStream != null) outputStream.close();

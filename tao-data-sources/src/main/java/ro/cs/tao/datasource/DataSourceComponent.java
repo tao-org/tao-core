@@ -93,6 +93,9 @@ public class DataSourceComponent extends TaoComponent {
                     }
                     notifier.ended();
                 }
+            } catch (InterruptedException iex) {
+                Logger.getLogger(DataSourceComponent.class.getSimpleName()).info(
+                        String.format("Fetching product '%s' cancelled", product.getName()));
             } catch (IOException ex) {
                 Logger.getLogger(DataSourceComponent.class.getSimpleName()).warning(
                         String.format("Fetching product '%s' failed: %s", product.getName(), ex.getMessage()));
