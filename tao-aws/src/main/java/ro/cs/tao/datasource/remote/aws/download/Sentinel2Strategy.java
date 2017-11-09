@@ -82,7 +82,7 @@ public class Sentinel2Strategy extends DownloadStrategy {
     @Override
     public String getProductUrl(EOProduct descriptor) {
         String url = super.getProductUrl(descriptor);
-        if (url == null) {
+        if (url == null || !url.startsWith(baseUrl)) {
             url = productsUrl + Sentinel2ProductHelper.createHelper(descriptor.getName()).getProductRelativePath();
         }
         if (!url.endsWith("/")) {
@@ -104,6 +104,8 @@ public class Sentinel2Strategy extends DownloadStrategy {
     private Path downloadImpl(EOProduct product) throws IOException {
         Path rootPath = null;
         String url;
+        currentProduct = product;
+        currentProductProgress = 0;
         Utilities.ensureExists(Paths.get(destination));
         String productName = product.getName();
         Sentinel2ProductHelper helper = Sentinel2ProductHelper.createHelper(productName);

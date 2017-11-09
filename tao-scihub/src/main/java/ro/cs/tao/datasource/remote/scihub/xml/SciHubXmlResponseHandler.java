@@ -102,6 +102,16 @@ public class SciHubXmlResponseHandler extends XmlResponseHandler<EOProduct> {
                         case "platformname":
                             this.current.setProductType(elementValue);
                             break;
+                        case "size":
+                            long size;
+                            if (elementValue.endsWith("MB")) {
+                                size = (long) (1024.0 * 1024.0 * Double.parseDouble(elementValue.substring(0, elementValue.indexOf(" "))));
+                            } else if (elementValue.endsWith("GB")) {
+                                size = (long) (1024.0 * 1024.0 * 1024.0 * Double.parseDouble(elementValue.substring(0, elementValue.indexOf(" "))));
+                            } else {
+                                size = 0;
+                            }
+                            this.current.setApproximateSize(size);
                         default:
                             this.current.addAttribute(this.identifiedElement, elementValue);
                             break;

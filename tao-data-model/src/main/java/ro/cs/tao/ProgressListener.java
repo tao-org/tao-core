@@ -9,5 +9,6 @@ public interface ProgressListener {
     void subActivityEnded(String subTaskName);
     void ended();
     void notifyProgress(double progressValue);
-    default void notifyProgress(String subTaskName, double progressValue) { notifyProgress(progressValue); }
+    void notifyProgress(String subTaskName, double subTaskProgress);
+    void notifyProgress(String subTaskName, double subTaskProgress, double overallProgress);
 }

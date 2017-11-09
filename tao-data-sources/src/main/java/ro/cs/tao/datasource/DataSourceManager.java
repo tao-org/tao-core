@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
@@ -21,18 +22,16 @@ public class DataSourceManager {
     private static final DataSourceManager instance;
     private final ServiceRegistry<DataSource> registry;
     private final Map<Map.Entry<String, String>, Map<String, ParameterDescriptor>> registeredSources;
+    private final Logger logger;
 
     static {
         instance = new DataSourceManager();
     }
 
-    public static void main(String[] args) {
-        System.out.println("OK!");
-    }
-
     public static DataSourceManager getInstance() { return instance; }
 
     private DataSourceManager() {
+        this.logger = Logger.getLogger(DataSourceManager.class.getSimpleName());
         this.registry = ServiceRegistryManager.getInstance().getServiceRegistry(DataSource.class);
         this.registeredSources = new HashMap<>();
         final Set<DataSource> services = this.registry.getServices();
@@ -44,6 +43,7 @@ public class DataSourceManager {
                 if (!this.registeredSources.containsKey(key)) {
                     final Map<String, Map<String, ParameterDescriptor>> parameters = ds.getSupportedParameters();
                     this.registeredSources.put(key, parameters.get(sensor));
+                    this.logger.info(String.format("Registered data source %s for sensor %s", key.getValue(), key.getKey()));
                 }
             }
         });

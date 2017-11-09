@@ -56,6 +56,7 @@ public class EOProduct extends EOData implements Serializable {
     private String productType;
     private int width;
     private int height;
+    private long approximateSize;
 
     public SensorType getSensorType() {
         return sensorType;
@@ -100,4 +101,12 @@ public class EOProduct extends EOData implements Serializable {
     public String getProductType() { return productType; }
 
     public void setProductType(String value) { this.productType = value; }
+
+    public long getApproximateSize() {
+        return approximateSize;
+    }
+
+    public void setApproximateSize(long approximateSize) {
+        this.approximateSize = approximateSize;
+    }
 }
