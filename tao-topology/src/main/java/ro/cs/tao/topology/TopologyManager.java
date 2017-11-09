@@ -94,7 +94,7 @@ public class TopologyManager implements ITopologyManager {
             @Override
             public void run() {
                 TopologyManager.this.executorService.submit(
-                        new BinaryTask<NodeDescription, ToolInstallStatus>(info, TopologyManager.this::onInstallationCompleted) {
+                        new BinaryTask<NodeDescription, ToolInstallStatus>(info, TopologyManager.this::onCompleted) {
                     @Override
                     public ToolInstallStatus execute(NodeDescription node) {
                         return new ToolInstallStatus() {{
@@ -114,7 +114,7 @@ public class TopologyManager implements ITopologyManager {
         }, 5000, 2000);*/
         for (TopologyToolInstaller installer: installers) {
             // execute all the installers
-            this.executorService.submit(new BinaryTask<NodeDescription, ToolInstallStatus>(info, this::onInstallationCompleted) {
+            this.executorService.submit(new BinaryTask<NodeDescription, ToolInstallStatus>(info, this::onCompleted) {
                 @Override
                 public ToolInstallStatus execute(NodeDescription node) {
                     return installer.installNewNode(node);
@@ -129,15 +129,18 @@ public class TopologyManager implements ITopologyManager {
         if (node == null) {
             throw new TopologyException(String.format("Node [%s] does not exist", hostName));
         }
-        // execute all the installers
-        for (TopologyToolInstaller installer: installers) {
-            installer.uninstallNode(node);
-        }
         try {
             persistenceManager.deleteExecutionNode(node.getHostName());
         } catch (PersistenceException e) {
             logger.severe("Cannot remove node description from database. Host name is :" + node.getHostName());
             throw new TopologyException(e);
+        }
+        // execute all the installers
+        for (TopologyToolInstaller installer: installers) {
+            this.executorService.submit(new BinaryTask<NodeDescription, ToolInstallStatus>(node, this::onCompleted) {
+                @Override
+                public ToolInstallStatus execute(NodeDescription ref) { return installer.uninstallNode(node); }
+            });
         }
     }
 
@@ -162,12 +165,19 @@ public class TopologyManager implements ITopologyManager {
         }
     }
 
-    private void onInstallationCompleted(NodeDescription node, ToolInstallStatus status) {
+    private void onCompleted(NodeDescription node, ToolInstallStatus status) {
         switch (status.getStatus()) {
             case INSTALLED:
                 MessageBus.send(MessageBus.INFORMATION,
                                 this,
                                 String.format("%s installation on %s completed",
+                                              status.getToolName(),
+                                              node.getHostName()));
+                break;
+            case UNINSTALLED:
+                MessageBus.send(MessageBus.INFORMATION,
+                                this,
+                                String.format("%s uninstallation on %s completed",
                                               status.getToolName(),
                                               node.getHostName()));
                 break;
