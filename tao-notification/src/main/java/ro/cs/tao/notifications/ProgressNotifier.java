@@ -2,6 +2,9 @@ package ro.cs.tao.notifications;
 
 import ro.cs.tao.ProgressListener;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 /**
  * @author Cosmin Cara
  */
@@ -13,6 +16,7 @@ public class ProgressNotifier implements ProgressListener {
     private static final String TASK_PROGRESS = "%s: %s";
     private static final String SUBTASK_PROGRESS = "[%s: %s] - %s: %s";
 
+    private final ExecutorService worker;
     private String topic;
     private Object owner;
     private String taskName;
@@ -22,6 +26,7 @@ public class ProgressNotifier implements ProgressListener {
     public ProgressNotifier(Object source, String topic) {
         this.owner = source;
         this.topic = topic;
+        this.worker = Executors.newSingleThreadExecutor();
     }
 
     @Override
@@ -65,13 +70,19 @@ public class ProgressNotifier implements ProgressListener {
     }
 
     @Override
-    public void notifyProgress(String subTaskName, double progressValue) {
-        if (progressValue < subTaskCounter) {
+    public void notifyProgress(String subTaskName, double subTaskProgress) {
+        notifyProgress(subTaskName, subTaskProgress, taskCounter);
+    }
+
+    @Override
+    public void notifyProgress(String subTaskName, double subTaskProgress, double overallProgress) {
+        if (subTaskProgress < subTaskCounter) {
             throw new IllegalArgumentException(
                     String.format("Progress counter cannot go backwards [actual:%.2f%%, received:%.2f%%]",
-                                  subTaskCounter, progressValue));
+                                  subTaskCounter, subTaskProgress));
         }
-        subTaskCounter = progressValue;
+        subTaskCounter = subTaskProgress;
+        taskCounter = overallProgress;
         if (subTaskCounter < 100) {
             sendMessage(SUBTASK_PROGRESS, taskName,
                         String.format("%.2f", taskCounter),
@@ -83,6 +94,6 @@ public class ProgressNotifier implements ProgressListener {
     }
 
     private void sendMessage(String messageTemplate, Object...args) {
-        MessageBus.send(this.topic, this.owner, String.format(messageTemplate, args));
+        this.worker.submit(() -> MessageBus.send(this.topic, this.owner, String.format(messageTemplate, args)));
     }
 }
