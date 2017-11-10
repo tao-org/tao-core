@@ -19,19 +19,21 @@
 
 package ro.cs.tao.component.constraints;
 
-import ro.cs.tao.eodata.EOData;
+import ro.cs.tao.eodata.EOProduct;
+import ro.cs.tao.eodata.enums.DataFormat;
+import ro.cs.tao.serialization.ConstraintAdapter;
 
-import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.util.Arrays;
 
 /**
  * @author Cosmin Cara
  */
-@XmlRootElement
-public class FormatConstraint extends Constraint<EOData> {
+@XmlJavaTypeAdapter(ConstraintAdapter.class)
+public class RasterConstraint extends Constraint<EOProduct> {
     @Override
-    public boolean check(EOData... args) {
+    public boolean check(EOProduct... args) {
         return args != null && args.length > 0 &&
-               Arrays.stream(args).allMatch(a -> args[0].getFormatType().equals(a.getFormatType()));
+               Arrays.stream(args).allMatch(a -> DataFormat.RASTER.equals(a.getFormatType()));
     }
 }

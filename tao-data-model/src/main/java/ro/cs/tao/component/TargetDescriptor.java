@@ -19,7 +19,6 @@
 
 package ro.cs.tao.component;
 
-import ro.cs.tao.component.constraints.Constraint;
 import ro.cs.tao.eodata.EOData;
 
 import javax.xml.bind.annotation.XmlElementWrapper;
@@ -35,7 +34,7 @@ import java.util.List;
 public class TargetDescriptor extends Identifiable {
     private static final String DEFAULT_NAME = "Output";
     private EOData data;
-    private List<Constraint> constraints;
+    private List<String> constraints;
 
     public TargetDescriptor() {
         this(DEFAULT_NAME);
@@ -59,11 +58,11 @@ public class TargetDescriptor extends Identifiable {
     }
 
     @XmlElementWrapper(name = "constraints")
-    public List<Constraint> getConstraints() {
+    public List<String> getConstraints() {
         return constraints;
     }
 
-    public void addConstraint(Constraint constraint) {
+    public void addConstraint(String constraint) {
         this.constraints.add(constraint);
     }
 }

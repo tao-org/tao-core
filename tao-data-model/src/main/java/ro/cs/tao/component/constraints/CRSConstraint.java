@@ -23,14 +23,15 @@ import org.geotools.referencing.CRS;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import ro.cs.tao.eodata.EOData;
+import ro.cs.tao.serialization.ConstraintAdapter;
 
-import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.util.Arrays;
 
 /**
  * @author Cosmin Cara
  */
-@XmlRootElement
+@XmlJavaTypeAdapter(ConstraintAdapter.class)
 public class CRSConstraint extends Constraint<EOData> {
     @Override
     public boolean check(EOData... args) {

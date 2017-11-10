@@ -49,7 +49,12 @@ import ro.cs.tao.component.validation.ValidationException;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -61,7 +66,6 @@ public class ProcessingComponent extends TaoComponent {
     private String fileLocation;
     private String workingDirectory;
     private TemplateType templateType;
-    private String templateName;
     private TemplateEngine templateEngine;
     private Template template;
     private Set<Variable> variables;
@@ -157,15 +161,6 @@ public class ProcessingComponent extends TaoComponent {
 
     public void setTemplateType(TemplateType templateType) {
         this.templateType = templateType;
-    }
-
-    @XmlTransient
-    public String getTemplateName() {
-        return templateName;
-    }
-
-    public void setTemplateName(String templateName){
-        this.templateName = templateName;
     }
 
     public TemplateEngine getTemplateEngine() {

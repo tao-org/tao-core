@@ -20,14 +20,15 @@
 package ro.cs.tao.component.constraints;
 
 import ro.cs.tao.eodata.EOProduct;
+import ro.cs.tao.serialization.ConstraintAdapter;
 
-import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.util.Arrays;
 
 /**
  * @author Cosmin Cara
  */
-@XmlRootElement
+@XmlJavaTypeAdapter(ConstraintAdapter.class)
 public class SensorConstraint extends Constraint<EOProduct> {
     @Override
     public boolean check(EOProduct... args) {

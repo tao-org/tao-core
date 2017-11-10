@@ -1,3 +1,5 @@
+package ro.cs.tao.component.constraints;
+
 /*
  *
  *  * Copyright (C) 2017 CS ROMANIA
@@ -16,13 +18,9 @@
  *  *
  *
  */
-
-package ro.cs.tao.component.constraints;
-
-import com.vividsolutions.jts.geom.Geometry;
-import ro.cs.tao.eodata.EOData;
+import ro.cs.tao.eodata.VectorData;
+import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.serialization.ConstraintAdapter;
-import ro.cs.tao.serialization.GeometryAdapter;
 
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.util.Arrays;
@@ -31,21 +29,10 @@ import java.util.Arrays;
  * @author Cosmin Cara
  */
 @XmlJavaTypeAdapter(ConstraintAdapter.class)
-public class GeometryConstraint extends Constraint<EOData> {
+public class VectorConstraint extends Constraint<VectorData> {
     @Override
-    public boolean check(EOData... args) {
+    public boolean check(VectorData... args) {
         return args != null && args.length > 0 &&
-                Arrays.stream(args)
-                        .allMatch(a -> {
-                            try {
-                                GeometryAdapter geometryAdapter = new GeometryAdapter();
-                                Geometry first = geometryAdapter.marshal(args[0].getGeometry());
-                                Geometry second = geometryAdapter.marshal(a.getGeometry());
-                                return (first != null && first.equals(second)) ||
-                                        (first == null && a.getGeometry() == null);
-                            } catch (Exception ex) {
-                                return false;
-                            }
-                        });
+                Arrays.stream(args).allMatch(a -> DataFormat.VECTOR.equals(a.getFormatType()));
     }
 }

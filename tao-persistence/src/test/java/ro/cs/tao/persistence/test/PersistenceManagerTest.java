@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ImportResource;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.w3c.dom.Attr;
 import ro.cs.tao.component.ParameterDescriptor;
 import ro.cs.tao.component.ParameterType;
 import ro.cs.tao.component.ProcessingComponent;
@@ -38,12 +37,19 @@ import ro.cs.tao.persistence.config.DatabaseConfiguration;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
-import ro.cs.tao.topology.*;
+import ro.cs.tao.topology.NodeDescription;
+import ro.cs.tao.topology.NodeServiceStatus;
+import ro.cs.tao.topology.ServiceDescription;
+import ro.cs.tao.topology.ServiceStatus;
 
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Created by oana on 7/18/2017.
@@ -412,8 +418,6 @@ public class PersistenceManagerTest {
             template.setTemplateType(TemplateType.VELOCITY);
             component.setTemplate(template);
             component.setTemplateType(TemplateType.VELOCITY);
-            // TODO ??
-            component.setTemplateName("basic template name");
 
             component.setVisibility(ProcessingComponentVisibility.CONTRIBUTOR);
             component.setNodeAffinity("Any");
@@ -571,8 +575,6 @@ public class PersistenceManagerTest {
             template.setTemplateType(TemplateType.VELOCITY);
             component.setTemplate(template);
             component.setTemplateType(TemplateType.VELOCITY);
-            // TODO ??
-            component.setTemplateName("basic template name");
 
             component.setVisibility(ProcessingComponentVisibility.CONTRIBUTOR);
             component.setNodeAffinity("Any");

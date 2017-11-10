@@ -19,12 +19,9 @@
 
 package ro.cs.tao.component.constraints;
 
-import javax.xml.bind.annotation.XmlTransient;
-
 /**
  * @author Cosmin Cara
  */
-@XmlTransient
 public abstract class Constraint<T> {
     public abstract boolean check(T... args);
 }

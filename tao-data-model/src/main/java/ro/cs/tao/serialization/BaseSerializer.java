@@ -3,8 +3,8 @@ package ro.cs.tao.serialization;
 import ro.cs.tao.component.constraints.CRSConstraint;
 import ro.cs.tao.component.constraints.Constraint;
 import ro.cs.tao.component.constraints.DimensionConstraint;
-import ro.cs.tao.component.constraints.FormatConstraint;
 import ro.cs.tao.component.constraints.GeometryConstraint;
+import ro.cs.tao.component.constraints.RasterConstraint;
 import ro.cs.tao.component.constraints.SensorConstraint;
 import ro.cs.tao.component.template.BasicTemplate;
 import ro.cs.tao.component.template.Template;
@@ -32,7 +32,7 @@ public abstract class BaseSerializer<T> implements Serializer<T, String> {
                 ListWrapper.class,
                 Polygon2D.class,
                 Template.class, BasicTemplate.class,
-                Constraint.class, CRSConstraint.class, DimensionConstraint.class, FormatConstraint.class, GeometryConstraint.class,
+                Constraint.class, CRSConstraint.class, DimensionConstraint.class, RasterConstraint.class, GeometryConstraint.class,
                 SensorConstraint.class,
                 Validator.class, NotEmptyValidator.class, NotNullValidator.class, TypeValidator.class, ValueSetValidator.class,
                 QueryParameter.class
