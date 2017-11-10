@@ -16,10 +16,9 @@
  *  *
  *
  */
-
 package ro.cs.tao.component;
 
-import ro.cs.tao.component.constraints.Constraint;
+import ro.cs.tao.component.constraints.ConstraintFactory;
 import ro.cs.tao.eodata.EOData;
 
 import javax.xml.bind.annotation.XmlElementWrapper;
@@ -35,7 +34,7 @@ import java.util.List;
 public class SourceDescriptor extends Identifiable {
     private static final String DEFAULT_NAME = "Input";
     private EOData data;
-    private List<Constraint> constraints;
+    private List<String> constraints;
 
     public SourceDescriptor() {
         this(DEFAULT_NAME);
@@ -59,16 +58,16 @@ public class SourceDescriptor extends Identifiable {
     }
 
     @XmlElementWrapper(name = "constraints")
-    public List<Constraint> getConstraints() {
+    public List<String> getConstraints() {
         return constraints;
     }
 
-    public void addConstraint(Constraint constraint) {
+    public void addConstraint(String constraint) {
         this.constraints.add(constraint);
     }
 
     public boolean isCompatibleWith(TargetDescriptor other) {
         return other != null && (this.constraints.size() == 0 ||
-                this.constraints.stream().allMatch(c -> c.check(this, other)));
+                this.constraints.stream().allMatch(c -> ConstraintFactory.create(c).check(this, other)));
     }
 }

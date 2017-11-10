@@ -21,15 +21,16 @@ package ro.cs.tao.component.constraints;
 
 import com.vividsolutions.jts.geom.Geometry;
 import ro.cs.tao.eodata.EOData;
+import ro.cs.tao.serialization.ConstraintAdapter;
 import ro.cs.tao.serialization.GeometryAdapter;
 
-import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.util.Arrays;
 
 /**
  * @author Cosmin Cara
  */
-@XmlRootElement
+@XmlJavaTypeAdapter(ConstraintAdapter.class)
 public class GeometryConstraint extends Constraint<EOData> {
     @Override
     public boolean check(EOData... args) {
