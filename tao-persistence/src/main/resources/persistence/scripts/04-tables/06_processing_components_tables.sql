@@ -69,7 +69,6 @@ CREATE TABLE tao.processing_component
 	main_tool_file_location varchar(512) NOT NULL,
 	working_directory varchar(512) NULL,
 	template_type_id integer NOT NULL,
-	template_name varchar(512) NOT NULL,
 	owner_user_id integer NULL,
 	visibility_id integer NOT NULL,
 	multi_thread boolean NOT NULL DEFAULT false,

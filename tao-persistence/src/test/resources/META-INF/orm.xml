@@ -109,6 +109,9 @@
             <basic name="height">
                 <column name="height" nullable="false" column-definition="integer not null"/>
             </basic>
+            <basic name="approximateSize">
+                <column name="approximate_size" nullable="false" column-definition="bigint not null"/>
+            </basic>
         </attributes>
     </entity>
 
@@ -195,9 +198,6 @@
             </basic>
             <basic name="templateType">
                 <column name="template_type_id" nullable="false" column-definition="integer not null"/>
-            </basic>
-            <basic name="templateName">
-                <column name="template_name" nullable="false" column-definition="character varying(512) NOT NULL"/>
             </basic>
             <basic name="multiThread">
                 <column name="multi_thread" nullable="false" column-definition="boolean NOT NULL DEFAULT false"/>
