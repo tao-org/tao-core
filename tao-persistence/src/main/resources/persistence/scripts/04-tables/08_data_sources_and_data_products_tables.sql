@@ -140,6 +140,7 @@ CREATE TABLE tao.raster_data_product
 	product_type varchar(512) NOT NULL,
 	width integer NOT NULL,
 	height integer NOT NULL,
+	approximate_size bigint NOT NULL,
 	user_id integer NULL,
 	data_source_id integer NULL,
 	created timestamp NOT NULL DEFAULT now(),
