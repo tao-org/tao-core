@@ -13,12 +13,11 @@ import java.util.Set;
 public class ExecutionsManager {
 
     private static ExecutionsManager instance = new ExecutionsManager();
-    private ServiceRegistry<Executor> registry;
     private Set<Executor> services;
     private ExecutionsManager() {
-        this.registry = ServiceRegistryManager.getInstance().getServiceRegistry(Executor.class);
-        services = this.registry.getServices();
-        services.stream().forEach(x -> x.initialize());
+        ServiceRegistry<Executor> registry = ServiceRegistryManager.getInstance().getServiceRegistry(Executor.class);
+        services = registry.getServices();
+        services.forEach(Executor::initialize);
     }
 
     public static ExecutionsManager getInstance() {

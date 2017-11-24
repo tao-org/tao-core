@@ -33,6 +33,8 @@ public class DataSourceComponent extends TaoComponent {
     private boolean cancelled;
     @XmlTransient
     private ProductFetchStrategy currentFetcher;
+    @XmlTransient
+    private ProductStatusListener productStatusListener;
 
     public DataSourceComponent(String sensorName, String dataSourceName) {
         if (sensorName == null) {
@@ -50,6 +52,10 @@ public class DataSourceComponent extends TaoComponent {
     public void setUserCredentials(String userName, String password) {
         this.userName = userName;
         this.password = password;
+    }
+
+    public void setProductStatusListener(ProductStatusListener listener) {
+        this.productStatusListener = listener;
     }
 
     public DataQuery createQuery() {
@@ -72,7 +78,7 @@ public class DataSourceComponent extends TaoComponent {
         return query.execute();
     }
 
-    public List<EOProduct> doFetch(List<EOProduct> products) {
+    public List<EOProduct> doFetch(List<EOProduct> products, String path) {
         DataSourceManager dsManager = DataSourceManager.getInstance();
         DataSource dataSource = this.dataSourceName != null ?
                 dsManager.get(this.sensorName, this.dataSourceName) : dsManager.get(this.sensorName);
@@ -83,25 +89,41 @@ public class DataSourceComponent extends TaoComponent {
             try {
                 if (!cancelled) {
                     notifier.started(product.getName());
+                    if (this.productStatusListener != null) {
+                        this.productStatusListener.downloadStarted(product);
+                    }
                     this.currentFetcher = dataSource.getProductFetchStrategy(product.getProductType());
                     if (this.currentFetcher instanceof DownloadStrategy) {
                         ((DownloadStrategy) this.currentFetcher).setProgressListener(notifier);
+                        ((DownloadStrategy) this.currentFetcher).setDestination(path);
                     }
                     Path productPath = this.currentFetcher.fetch(product);
                     if (productPath != null) {
                         product.setLocation(productPath.toUri().toString());
                     }
                     notifier.ended();
+                    if (this.productStatusListener != null) {
+                        this.productStatusListener.downloadCompleted(product);
+                    }
                 }
             } catch (InterruptedException iex) {
                 Logger.getLogger(DataSourceComponent.class.getSimpleName()).info(
                         String.format("Fetching product '%s' cancelled", product.getName()));
+                if (this.productStatusListener != null) {
+                    this.productStatusListener.downloadFailed(product);
+                }
             } catch (IOException ex) {
                 Logger.getLogger(DataSourceComponent.class.getSimpleName()).warning(
                         String.format("Fetching product '%s' failed: %s", product.getName(), ex.getMessage()));
+                if (this.productStatusListener != null) {
+                    this.productStatusListener.downloadFailed(product);
+                }
             } catch (URISyntaxException e) {
                 Logger.getLogger(DataSourceComponent.class.getSimpleName()).warning(
                         String.format("Updating product location for '%s' failed: %s", product.getName(), e.getMessage()));
+                if (this.productStatusListener != null) {
+                    this.productStatusListener.downloadFailed(product);
+                }
             } finally {
                 //notifier.notifyProgress(counter++ / products.size());
                 this.currentFetcher = null;

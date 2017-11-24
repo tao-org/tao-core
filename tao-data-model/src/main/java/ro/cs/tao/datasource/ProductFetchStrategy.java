@@ -20,7 +20,7 @@ public interface ProductFetchStrategy {
      * @return              The path to the retrieved product or <code>null</code> if fetch failed.
      */
     default Path fetch(String productName) throws IOException, InterruptedException {
-        return null;
+        return fetch(new EOProduct() {{ setName(productName); }});
     }
     /**
      * Retrieves a product given its descriptor.

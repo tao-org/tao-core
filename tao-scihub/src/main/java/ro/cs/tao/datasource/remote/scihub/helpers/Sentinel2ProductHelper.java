@@ -108,4 +108,6 @@ public abstract class Sentinel2ProductHelper extends ProductHelper {
     public abstract String getBandFileName(String granuleIdentifier, String band);
 
     public abstract String getEcmWftFileName(String granuleIdentifier);
+
+    public abstract String getOrbit();
 }
