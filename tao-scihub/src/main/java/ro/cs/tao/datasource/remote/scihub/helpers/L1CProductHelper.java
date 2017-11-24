@@ -97,6 +97,20 @@ public class L1CProductHelper extends Sentinel2ProductHelper {
     }
 
     @Override
+    public String getOrbit() {
+        return this.oldFormat ?
+                getTokens(ProductV13, this.name, null)[6] :
+                getTokens(ProductV14, this.name, null)[4];
+    }
+
+    @Override
+    public String getSensingDate() {
+        return this.oldFormat ?
+                getTokens(ProductV13, this.name, null)[7] :
+                getTokens(ProductV14, this.name, null)[2];
+    }
+
+    @Override
     public String getProductRelativePath() {
         String year, day, month;
         if (this.oldFormat) {

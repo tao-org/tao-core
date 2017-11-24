@@ -148,6 +148,11 @@ public class L2AProductHelper extends Sentinel2ProductHelper {
     }
 
     @Override
+    public String getOrbit() {
+        return getTokens(ProductV14, this.name, null)[4];
+    }
+
+    @Override
     protected boolean verifyProductName(String name) {
         return ProductV14.matcher(name).matches();
     }

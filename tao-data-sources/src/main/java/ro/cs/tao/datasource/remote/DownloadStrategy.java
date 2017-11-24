@@ -105,6 +105,10 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         this.props = properties;
     }
 
+    public void setDestination(String destination) {
+        this.destination = destination;
+    }
+
     public String getLocalArchiveRoot() {
         return localArchiveRoot;
     }
