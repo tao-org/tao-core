@@ -52,7 +52,7 @@ public class AWSDataSourceTest {
             aoi.append(-8.9037319257, 24.413397299);
             aoi.append(-9.9866909768, 24.413397299);
             aoi.append(-9.9866909768, 23.4186029838);
-            query.addParameter("footprint", aoi.toWKT());
+            query.addParameter("footprint", aoi);
 
             query.addParameter("cloudcoverpercentage", 100.);
             query.setPageSize(50);
@@ -84,12 +84,12 @@ public class AWSDataSourceTest {
                 handler.setLevel(Level.INFO);
             }
             ServiceRegistry<DataSource> serviceRegistry = getServiceRegistry();
-            DataSource dataSource = serviceRegistry.getService(AWSDataSource.class.getName());
+            DataSource dataSource = serviceRegistry.getService(AWSDataSource.class);
             String[] sensors = dataSource.getSupportedSensors();
             DataQuery query = dataSource.createQuery(sensors[1]);
             //query.addParameter("platformName", "Landsat-8");
             QueryParameter begin = query.createParameter("sensingStart", Date.class);
-            begin.setValue(Date.from(LocalDateTime.now().minusDays(30)
+            begin.setValue(Date.from(LocalDateTime.now().minusDays(60)
                                                 .atZone(ZoneId.systemDefault())
                                                 .toInstant()));
             query.addParameter(begin);
@@ -99,7 +99,7 @@ public class AWSDataSourceTest {
             aoi.append(-8.9037319257, 24.413397299);
             aoi.append(-9.9866909768, 24.413397299);
             aoi.append(-9.9866909768, 23.4186029838);
-            query.addParameter("footprint", aoi.toWKT());
+            query.addParameter("footprint", aoi);
             //query.addParameter("collection", "COLLECTION_1");
             query.addParameter("cloudcoverpercentage", 100.);
             query.addParameter("productType", LandsatProduct.T1.toString());

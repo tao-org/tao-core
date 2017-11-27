@@ -60,10 +60,11 @@ public class Landsat8Strategy extends DownloadStrategy {
     @Override
     public Path fetch(EOProduct product) throws IOException {
         String url;
-        String productName = product.getName();
+        currentProduct = product;
+        String productName = currentProduct.getName();
         LandsatProductHelper helper = new LandsatProductHelper(productName);
         Path rootPath = Utilities.ensureExists(Paths.get(destination, productName));
-        url = getMetadataUrl(product);
+        url = getMetadataUrl(currentProduct);
         Path metadataFile = rootPath.resolve(productName + "_MTL.txt");
         currentStep = "Metadata";
         getLogger().info(String.format("Downloading metadata file %s", metadataFile));
@@ -73,7 +74,7 @@ public class Landsat8Strategy extends DownloadStrategy {
                 String bandFileName = productName + suffix;
                 currentStep = "Band " + bandFileName;
                 try {
-                    String bandFileUrl = getProductUrl(product) + bandFileName;
+                    String bandFileUrl = getProductUrl(currentProduct) + URL_SEPARATOR + bandFileName;
                     Path path = rootPath.resolve(bandFileName);
                     getLogger().info(String.format("Downloading band raster %s from %s", path, bandFileUrl));
                     downloadFile(bandFileUrl, path);
@@ -84,7 +85,7 @@ public class Landsat8Strategy extends DownloadStrategy {
             if ("coll".equals(helper.getVersion())) {
                 String fileName = productName + "_ANG.txt";
                 try {
-                    String fileUrl = getProductUrl(product) + fileName;
+                    String fileUrl = getProductUrl(currentProduct) + URL_SEPARATOR + fileName;
                     Path path = rootPath.resolve(fileName);
                     getLogger().info(String.format("Downloading band raster %s from %s", path, fileUrl));
                     downloadFile(fileUrl, path);
