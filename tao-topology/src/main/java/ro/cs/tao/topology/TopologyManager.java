@@ -1,6 +1,6 @@
 package ro.cs.tao.topology;
 
-import ro.cs.tao.notifications.MessageBus;
+import ro.cs.tao.messaging.MessageBus;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;

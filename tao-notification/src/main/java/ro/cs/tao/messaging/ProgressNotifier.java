@@ -1,4 +1,4 @@
-package ro.cs.tao.notifications;
+package ro.cs.tao.messaging;
 
 import ro.cs.tao.ProgressListener;
 

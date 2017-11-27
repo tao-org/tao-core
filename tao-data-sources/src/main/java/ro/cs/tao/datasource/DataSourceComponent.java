@@ -4,7 +4,7 @@ import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.datasource.param.QueryParameter;
 import ro.cs.tao.datasource.remote.DownloadStrategy;
 import ro.cs.tao.eodata.EOProduct;
-import ro.cs.tao.notifications.ProgressNotifier;
+import ro.cs.tao.messaging.ProgressNotifier;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
