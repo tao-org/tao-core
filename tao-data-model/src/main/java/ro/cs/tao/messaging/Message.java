@@ -1,4 +1,4 @@
-package ro.cs.tao;
+package ro.cs.tao.messaging;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;

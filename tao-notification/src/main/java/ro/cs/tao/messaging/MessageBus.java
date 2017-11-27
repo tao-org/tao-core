@@ -1,11 +1,10 @@
-package ro.cs.tao.notifications;
+package ro.cs.tao.messaging;
 
 import reactor.Environment;
 import reactor.bus.Event;
 import reactor.bus.EventBus;
 import reactor.core.config.DispatcherType;
 import reactor.fn.Consumer;
-import ro.cs.tao.Message;
 
 import static reactor.bus.selector.Selectors.$;
 

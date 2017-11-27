@@ -43,7 +43,7 @@ import ro.cs.tao.datasource.ProductFetchStrategy;
 import ro.cs.tao.datasource.util.NetUtils;
 import ro.cs.tao.datasource.util.Utilities;
 import ro.cs.tao.eodata.EOProduct;
-import ro.cs.tao.notifications.ProgressNotifier;
+import ro.cs.tao.messaging.ProgressNotifier;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
