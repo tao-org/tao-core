@@ -40,9 +40,9 @@ import java.util.Map;
 /**
  * @author Cosmin Cara
  */
-public class XsltTemplateEngine implements TemplateEngine {
+public class XsltTemplateEngine extends TemplateEngine {
     @Override
-    public TemplateType getType() {
+    public TemplateType getTemplateType() {
         return TemplateType.XSLT;
     }
 

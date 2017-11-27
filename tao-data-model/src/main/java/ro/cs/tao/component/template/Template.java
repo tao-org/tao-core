@@ -20,14 +20,19 @@
 package ro.cs.tao.component.template;
 
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import ro.cs.tao.component.template.engine.TemplateEngine;
-
-import javax.xml.bind.annotation.XmlTransient;
 
 /**
  * @author Cosmin Cara
  */
-@XmlTransient
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS,
+              include = JsonTypeInfo.As.PROPERTY,
+              property = "type")
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = BasicTemplate.class)
+})
 public abstract class Template {
 
     /**

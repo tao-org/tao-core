@@ -38,6 +38,8 @@
 
 package ro.cs.tao.component.template.engine;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import ro.cs.tao.component.template.Template;
 import ro.cs.tao.component.template.TemplateException;
 import ro.cs.tao.component.template.TemplateType;
@@ -47,12 +49,20 @@ import java.util.Map;
 /**
  * @author Cosmin Cara
  */
-public interface TemplateEngine {
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS,
+        include = JsonTypeInfo.As.PROPERTY,
+        property = "type")
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = JavascriptTemplateEngine.class),
+        @JsonSubTypes.Type(value = VelocityTemplateEngine.class),
+        @JsonSubTypes.Type(value = XsltTemplateEngine.class)
+})
+public abstract class TemplateEngine {
 
     /**
      * Returns the type of templates supported by this template engine
      */
-    TemplateType getType();
+    public abstract TemplateType getTemplateType();
 
     /**
      * Parses the given template object.
@@ -60,14 +70,14 @@ public interface TemplateEngine {
      * @param template  The template to parse.
      * @throws TemplateException    If the template doesn't follow the type syntax.
      */
-    void parse(Template template) throws TemplateException;
+    public abstract void parse(Template template) throws TemplateException;
     /**
      * Parses the given text according to this engine rules.
      *
      * @param text The text to parse.
      * @throws TemplateException    If the text doesn't follow the type syntax.
      */
-    void parse(String text) throws TemplateException;
+    public abstract void parse(String text) throws TemplateException;
 
     /**
      * Transforms the given template into a string by injecting the provided parameters.
@@ -76,6 +86,6 @@ public interface TemplateEngine {
      * @return  A string result of the transformation
      * @throws TemplateException    If the template has syntax errors.
      */
-    String transform(Template template, Map<String, Object> parameters) throws TemplateException;
+    public abstract String transform(Template template, Map<String, Object> parameters) throws TemplateException;
 
 }
