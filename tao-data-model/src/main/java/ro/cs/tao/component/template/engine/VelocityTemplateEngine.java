@@ -58,7 +58,7 @@ import java.util.Map;
 /**
  * @author Cosmin Cara
  */
-public class VelocityTemplateEngine implements TemplateEngine {
+public class VelocityTemplateEngine extends TemplateEngine {
     private static final String LINE_SEPARATOR = "\r\n|\n";
 
     private String macroTemplateContents;
@@ -80,7 +80,7 @@ public class VelocityTemplateEngine implements TemplateEngine {
     }
 
     @Override
-    public TemplateType getType() {
+    public TemplateType getTemplateType() {
         return TemplateType.VELOCITY;
     }
 

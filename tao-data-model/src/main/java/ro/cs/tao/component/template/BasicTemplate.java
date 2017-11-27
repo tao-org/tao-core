@@ -49,7 +49,7 @@ public class BasicTemplate extends Template {
             throw new NullPointerException("Argument 'templateEngine' cannot be null");
         }
         this.engine = templateEngine;
-        this.templateType = this.engine.getType();
+        this.templateType = this.engine.getTemplateType();
         this.name = name != null ? name : DEFAULT_NAME;
     }
 
@@ -68,7 +68,7 @@ public class BasicTemplate extends Template {
         if (engine == null) {
             throw new TemplateException("Null template engine");
         }
-        if (this.templateType == null || engine.getType().equals(this.templateType)) {
+        if (this.templateType == null || engine.getTemplateType().equals(this.templateType)) {
             this.engine = engine;
         } else {
             throw new TemplateException("Wrong template engine type");

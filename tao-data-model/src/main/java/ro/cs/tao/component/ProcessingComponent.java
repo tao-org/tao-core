@@ -70,10 +70,10 @@ public class ProcessingComponent extends TaoComponent {
     private Template template;
     private Set<Variable> variables;
     private List<ParameterDescriptor> parameters;
-    private Boolean multiThread;
+    private boolean multiThread;
     private ProcessingComponentVisibility visibility;
 
-    private Boolean active;
+    private boolean active;
 
     public ProcessingComponent() {
         super();
@@ -130,11 +130,11 @@ public class ProcessingComponent extends TaoComponent {
         this.parameters = parameters;
     }
 
-    public Boolean getMultiThread() {
+    public boolean getMultiThread() {
         return multiThread;
     }
 
-    public void setMultiThread(Boolean multiThread) {
+    public void setMultiThread(boolean multiThread) {
         this.multiThread = multiThread;
     }
 
@@ -146,11 +146,11 @@ public class ProcessingComponent extends TaoComponent {
         this.visibility = visibility;
     }
 
-    public Boolean getActive() {
+    public boolean getActive() {
         return active;
     }
 
-    public void setActive(Boolean active) {
+    public void setActive(boolean active) {
         this.active = active;
     }
 

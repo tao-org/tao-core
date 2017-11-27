@@ -65,7 +65,7 @@ public class ParameterDescriptor extends Identifiable implements Serializable {
     private String unit;
     private String[] valueSet;
     private String format;
-    private Boolean notNull;
+    private boolean notNull;
     private Validator customValidator;
     private Validator validator;
 
@@ -155,11 +155,11 @@ public class ParameterDescriptor extends Identifiable implements Serializable {
         this.format = format;
     }
 
-    public Boolean isNotNull() {
+    public boolean isNotNull() {
         return notNull;
     }
 
-    public void setNotNull(Boolean notNull) {
+    public void setNotNull(boolean notNull) {
         this.notNull = notNull;
     }
 

@@ -54,7 +54,7 @@ import java.util.Map;
 /**
  * @author Cosmin Cara
  */
-public class JavascriptTemplateEngine implements TemplateEngine {
+public class JavascriptTemplateEngine extends TemplateEngine {
     private ScriptEngine scriptEngine;
 
     public JavascriptTemplateEngine() {
@@ -62,7 +62,7 @@ public class JavascriptTemplateEngine implements TemplateEngine {
     }
 
     @Override
-    public TemplateType getType() {
+    public TemplateType getTemplateType() {
         return TemplateType.JAVASCRIPT;
     }
 
