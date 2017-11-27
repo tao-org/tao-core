@@ -67,6 +67,22 @@ public abstract class DataQuery extends Identifiable {
         initialize(source, sensorName);
     }
 
+    public DataSource getSource() {
+        return source;
+    }
+
+    public void setSource(DataSource source) {
+        this.source = source;
+    }
+
+    public String getSensorName() {
+        return sensorName;
+    }
+
+    public void setSensorName(String sensorName) {
+        this.sensorName = sensorName;
+    }
+
     public QueryParameter addParameter(QueryParameter parameter) {
         if (parameter == null) {
             throw new IllegalArgumentException("Cannot accept null parameter");
