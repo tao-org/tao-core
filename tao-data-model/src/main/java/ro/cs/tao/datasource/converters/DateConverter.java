@@ -43,28 +43,31 @@ public class DateConverter extends DefaultConverter {
     @Override
     public String stringValue() throws ConversionException {
         StringBuilder builder = new StringBuilder();
+        Object minValue = null, maxValue = null;
         if (parameter.isInterval()) {
-            Object minValue = parameter.getMinValue();
-            if (minValue != null) {
-                LocalDateTime minDate = ((Date) minValue).toInstant()
-                        .atZone(ZoneId.systemDefault()).toLocalDateTime();
-                builder.append(minDate.format(dateFormat));
-            } else {
-                throw new ConversionException("Parameter represents an interval, but the minimum value is absent");
-            }
-            builder.append(" TO ");
-            Object maxValue = parameter.getMaxValue();
-            if (maxValue != null) {
-                LocalDateTime maxDate = ((Date) parameter.getMaxValue()).toInstant()
-                        .atZone((ZoneId.systemDefault())).toLocalDateTime();
-                builder.append(maxDate.format(dateFormat));
-            } else {
-                throw new ConversionException("Parameter represents an interval, but the maximum value is absent");
-            }
+            minValue = parameter.getMinValue();
+            maxValue = parameter.getMaxValue();
         } else {
-            LocalDateTime date = ((Date) parameter.getValue()).toInstant()
+            minValue = parameter.getValue();
+            maxValue = Date.from(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant());
+            /*LocalDateTime date = ((Date) parameter.getValue()).toInstant()
                     .atZone(ZoneId.systemDefault()).toLocalDateTime();
-            builder.append(date.format(dateFormat));
+            builder.append(date.format(dateFormat));*/
+        }
+        if (minValue != null) {
+            LocalDateTime minDate = ((Date) minValue).toInstant()
+                    .atZone(ZoneId.systemDefault()).toLocalDateTime();
+            builder.append(minDate.format(dateFormat));
+        } else {
+            throw new ConversionException("Parameter represents an interval, but the minimum value is absent");
+        }
+        builder.append(" TO ");
+        if (maxValue != null) {
+            LocalDateTime maxDate = ((Date) maxValue).toInstant()
+                    .atZone((ZoneId.systemDefault())).toLocalDateTime();
+            builder.append(maxDate.format(dateFormat));
+        } else {
+            throw new ConversionException("Parameter represents an interval, but the maximum value is absent");
         }
         return builder.toString();
     }
