@@ -23,21 +23,16 @@ import ro.cs.tao.component.execution.ExecutionTask;
 import ro.cs.tao.component.template.BasicTemplate;
 import ro.cs.tao.component.template.Template;
 import ro.cs.tao.component.template.TemplateType;
-import ro.cs.tao.datasource.DataQuery;
-import ro.cs.tao.datasource.DataSource;
-import ro.cs.tao.datasource.param.QueryParameter;
-import ro.cs.tao.datasource.remote.peps.Collection;
 import ro.cs.tao.eodata.Attribute;
 import ro.cs.tao.eodata.EOProduct;
-import ro.cs.tao.eodata.Polygon2D;
 import ro.cs.tao.eodata.VectorData;
 import ro.cs.tao.eodata.enums.DataFormat;
+import ro.cs.tao.eodata.enums.PixelType;
+import ro.cs.tao.eodata.enums.SensorType;
 import ro.cs.tao.messaging.Message;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.config.DatabaseConfiguration;
 import ro.cs.tao.persistence.exception.PersistenceException;
-import ro.cs.tao.spi.ServiceRegistry;
-import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.topology.NodeServiceStatus;
 import ro.cs.tao.topology.ServiceDescription;
@@ -702,63 +697,22 @@ public class PersistenceManagerTest {
     @Test
     public void TC_17_save_new_data_products()
     {
-        try
-        {
-            ServiceRegistry<DataSource> serviceRegistry =
-              ServiceRegistryManager.getInstance().getServiceRegistry(DataSource.class);
+        try {
+            EOProduct product = new EOProduct();
+            product.setId("LC82010442017273LGN00");
+            product.setName("LC08_L1TP_201044_20170930_20171013_01_T1");
+            product.setAcquisitionDate(Date.from(LocalDateTime.of(2017, 9, 30, 0, 0).atZone(ZoneId.systemDefault()).toInstant()));
+            product.setSensorType(SensorType.OPTICAL);
+            product.setApproximateSize(1700000000);
+            product.setPixelType(PixelType.UINT16);
+            product.setWidth(7601);
+            product.setHeight(7761);
+            product.setFormatType(DataFormat.RASTER);
+            product.setGeometry("POLYGON ((24.16023 -9.60737, 24.15266 -7.36319, 22.05055 -7.38847, 22.05739 -9.59798, 24.16023 -9.60737))");
+            product.setLocation("https://landsat-pds.s3.amazonaws.com/c1/L8/201/044/LC08_L1TP_201044_20170930_20171013_01_T1");
 
-            //DataSource dataSource = serviceRegistry.getService(PepsDataSource.class.getName());
-            DataSource dataSource = serviceRegistry.getService("PEPS");
-            dataSource.setCredentials("kraftek@c-s.ro", "cei7pitici.");
-            String[] sensors = dataSource.getSupportedSensors();
-
-            DataQuery query = dataSource.createQuery(sensors[1]);
-            query.addParameter("collection", Collection.S2ST.toString());
-            query.addParameter("platform", "S2A");
-
-            QueryParameter begin = query.createParameter("startDate", Date.class);
-            begin.setValue(Date.from(LocalDateTime.of(2017, 2, 1, 0, 0, 0, 0)
-              .atZone(ZoneId.systemDefault())
-              .toInstant()));
-            query.addParameter(begin);
-            QueryParameter end = query.createParameter("completionDate", Date.class);
-            begin.setValue(Date.from(LocalDateTime.of(2017, 3, 1, 0, 0, 0, 0)
-              .atZone(ZoneId.systemDefault())
-              .toInstant()));
-            query.addParameter(end);
-            Polygon2D aoi = Polygon2D.fromWKT("POLYGON((22.8042573604346 43.8379609098684," +
-              "24.83885442747927 43.8379609098684," +
-              "24.83885442747927 44.795645304033826," +
-              "22.8042573604346 44.795645304033826," +
-              "22.8042573604346 43.8379609098684))");
-
-            query.addParameter("box", aoi);
-
-            query.addParameter("cloudCover", 100.);
-            query.setPageSize(20);
-            query.setMaxResults(50);
-            List<EOProduct> results = query.execute();
-
-            if(!results.isEmpty())
-            {
-                // save all results
-                for(EOProduct result : results)
-                {
-                    try
-                    {
-                        persistenceManager.saveEOProduct((EOProduct) result);
-                    } catch (PersistenceException e) {
-                        logger.error("Error saving EOProduct", e);
-                    }
-                }
-            }
-            else
-            {
-                logger.info("No EO product found with the given query!");
-            }
-        }
-        catch (Exception e)
-        {
+            persistenceManager.saveEOProduct(product);
+        } catch (Exception e) {
             logger.error(ExceptionUtils.getStackTrace(e));
             Assert.fail(e.getMessage());
         }
