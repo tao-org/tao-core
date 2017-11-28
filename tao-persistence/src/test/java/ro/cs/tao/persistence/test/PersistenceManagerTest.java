@@ -703,6 +703,7 @@ public class PersistenceManagerTest {
             product.setName("LC08_L1TP_201044_20170930_20171013_01_T1");
             product.setAcquisitionDate(Date.from(LocalDateTime.of(2017, 9, 30, 0, 0).atZone(ZoneId.systemDefault()).toInstant()));
             product.setSensorType(SensorType.OPTICAL);
+            product.setProductType("Landsat-8");
             product.setApproximateSize(1700000000);
             product.setPixelType(PixelType.UINT16);
             product.setWidth(7601);
