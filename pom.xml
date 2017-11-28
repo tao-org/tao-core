@@ -20,7 +20,6 @@
         <module>tao-aws</module>
         <module>tao-peps</module>
         <module>tao-persistence</module>
-		<module>tao-integration</module>
         <module>tao-topology</module>
         <module>tao-execution</module>
         <module>tao-core-kit</module>
