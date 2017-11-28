@@ -10,16 +10,28 @@ import java.beans.Transient;
 @XmlRootElement(name = "message")
 public class Message {
     private long timestamp;
+    private int userId;
+    private boolean read;
     private Object source;
     private String data;
 
     public Message() { }
 
-    public Message(long timestamp, Object source, String data) {
+    public Message(long timestamp, int userId, Object source, String data) {
         this.timestamp = timestamp;
         this.source = source;
         this.data = data;
+        this.userId = userId;
+        this.read = false;
     }
+
+    @XmlElement(name = "userId")
+    public int getUserId() { return userId; }
+    public void setUserId(int userId) { this.userId = userId; }
+
+    @XmlElement(name = "isRead")
+    public boolean isRead() { return read; }
+    public void setRead(boolean read) { this.read = read; }
 
     @XmlElement(name = "timestamp")
     public long getTimestamp() { return timestamp; }

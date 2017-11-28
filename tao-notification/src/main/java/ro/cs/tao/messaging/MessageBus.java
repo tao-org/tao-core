@@ -62,11 +62,8 @@ public class MessageBus {
         }
     }
 
-    public static void send(String topic, Object source, String message) {
-        Message msg = new Message();
-        msg.setTimestamp(System.nanoTime());
-        msg.setSource(source);
-        msg.setData(message);
+    public static void send(int userId, String topic, Object source, String message) {
+        Message msg = new Message(System.nanoTime(), userId, source, message);
         instance.messageBus.notify(topic, Event.wrap(msg));
     }
 

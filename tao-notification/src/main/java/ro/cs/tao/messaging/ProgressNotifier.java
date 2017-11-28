@@ -94,6 +94,6 @@ public class ProgressNotifier implements ProgressListener {
     }
 
     private void sendMessage(String messageTemplate, Object...args) {
-        this.worker.submit(() -> MessageBus.send(this.topic, this.owner, String.format(messageTemplate, args)));
+        this.worker.submit(() -> MessageBus.send(1, this.topic, this.owner, String.format(messageTemplate, args)));
     }
 }
