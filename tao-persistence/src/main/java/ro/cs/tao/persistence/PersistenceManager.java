@@ -3,6 +3,8 @@ package ro.cs.tao.persistence;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -52,6 +54,12 @@ public class PersistenceManager {
 
     /** Constant for the identifier member name of execution task entity */
     private static final String TASK_IDENTIFIER_PROPERTY_NAME = "id";
+
+    /** Constant for user messages page size */
+    private static final int MESSAGES_PAGE_SIZE = 10;
+
+    /** Constant for the identifier member name of EOProduct entity */
+    private static final String MESSAGE_TIMESTAMP_PROPERTY_NAME = "timestamp";
 
     /** CRUD Repository for EOProduct entities */
     @Autowired
@@ -1031,6 +1039,13 @@ public class PersistenceManager {
 
         // save the new Message entity and return it
         return messageRepository.save(message);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Message> getUserMessages(Integer userId, Integer pageNumber)
+    {
+        PageRequest pageRequest = new PageRequest(pageNumber - 1, MESSAGES_PAGE_SIZE, Sort.Direction.DESC, MESSAGE_TIMESTAMP_PROPERTY_NAME);
+        return messageRepository.findByUserId(userId, pageRequest);
     }
 
 }
