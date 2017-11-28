@@ -32,7 +32,7 @@ public class MessageBus {
     }
 
     private final EventBus messageBus;
-    private final PersistenceManager persistenceManager;
+    private PersistenceManager persistenceManager;
     private final ExecutorService executorService;
     private final Logger logger;
 
@@ -42,7 +42,6 @@ public class MessageBus {
                                           Environment.newDispatcher(MAX_THREADS,
                                                                     MAX_THREADS,
                                                                     DispatcherType.THREAD_POOL_EXECUTOR));
-        this.persistenceManager = SpringContextBridge.services().getPersistenceManager();
         this.executorService = Executors.newSingleThreadExecutor();
         this.logger = Logger.getLogger(MessageBus.class.getName());
     }
@@ -77,6 +76,13 @@ public class MessageBus {
         instance.messageBus.notify(topic, Event.wrap(msg));
         instance.executorService.submit(() -> {
             try {
+                if (instance.persistenceManager == null) {
+                    try {
+                        instance.persistenceManager = SpringContextBridge.services().getPersistenceManager();
+                    } catch (Exception ex) {
+                        instance.logger.severe(ex.getMessage());
+                    }
+                }
                 instance.persistenceManager.saveMessage(msg);
             } catch (PersistenceException e) {
                 instance.logger.severe(e.getMessage());
