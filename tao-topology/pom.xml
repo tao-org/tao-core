@@ -30,11 +30,11 @@
             <version>${project.version}</version>
         </dependency>
 
-        <!--<dependency>
+        <dependency>
             <groupId>ro.cs.tao</groupId>
-            <artifactId>tao-persistence</artifactId>
+            <artifactId>tao-config</artifactId>
             <version>${project.version}</version>
-        </dependency>-->
+        </dependency>
 
         <dependency>
             <groupId>ro.cs.tao</groupId>
