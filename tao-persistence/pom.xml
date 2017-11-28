@@ -20,30 +20,14 @@
 
 	<dependencies>
 
+		<!-- TAO modules -->
 		<dependency>
 			<groupId>ro.cs.tao</groupId>
 			<artifactId>tao-data-model</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 
-		<dependency>
-			<groupId>ro.cs.tao</groupId>
-			<artifactId>tao-data-sources</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-
-		<dependency>
-			<groupId>ro.cs.tao</groupId>
-			<artifactId>tao-scihub</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-
-		<dependency>
-			<groupId>ro.cs.tao</groupId>
-			<artifactId>tao-peps</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-
+		<!-- Spring -->
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-context</artifactId>
@@ -97,9 +81,9 @@
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-spatial</artifactId>
             <version>${hibernate.version}</version>
-    </dependency>
+    	</dependency>
 
-    <!-- C3p0 -->
+    	<!-- C3p0 -->
 		<dependency>
 			<groupId>com.mchange</groupId>
 			<artifactId>c3p0</artifactId>
@@ -117,16 +101,16 @@
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
 			<version>3.6</version>
-    </dependency>
+    	</dependency>
 
-    <!-- Junit tests -->
+    	<!-- Junit tests -->
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>4.12</version>
-    </dependency>
+    	</dependency>
 
-    <!-- slf4j -->
+    	<!-- slf4j -->
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-simple</artifactId>
