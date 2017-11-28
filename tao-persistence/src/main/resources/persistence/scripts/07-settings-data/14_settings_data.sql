@@ -187,3 +187,15 @@ INSERT INTO tao.workflow_graph_visibility (visibility) VALUES ('PRIVATE');
 
 INSERT INTO tao.workflow_graph_visibility (visibility) VALUES ('PUBLIC');
 
+
+
+-- Groups
+-- admin group
+INSERT INTO tao."group" (name)
+VALUES ('admin');
+
+
+-- Users
+-- admin user
+INSERT INTO tao."user" (username, password, email, last_name, first_name, quota, group_id, created, active)
+VALUES ('admin', md5('admin'), 'kraftek@c-s.ro', 'Cosmin', 'Cara', 1000, 1, CURRENT_TIMESTAMP, true);
