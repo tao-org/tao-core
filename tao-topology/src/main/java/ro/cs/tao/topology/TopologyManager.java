@@ -168,21 +168,21 @@ public class TopologyManager implements ITopologyManager {
     private void onCompleted(NodeDescription node, ToolInstallStatus status) {
         switch (status.getStatus()) {
             case INSTALLED:
-                MessageBus.send(MessageBus.INFORMATION,
+                MessageBus.send(1, MessageBus.INFORMATION,
                                 this,
                                 String.format("%s installation on %s completed",
                                               status.getToolName(),
                                               node.getHostName()));
                 break;
             case UNINSTALLED:
-                MessageBus.send(MessageBus.INFORMATION,
+                MessageBus.send(1, MessageBus.INFORMATION,
                                 this,
                                 String.format("%s uninstallation on %s completed",
                                               status.getToolName(),
                                               node.getHostName()));
                 break;
             case ERROR:
-                MessageBus.send(MessageBus.WARNING,
+                MessageBus.send(1, MessageBus.WARNING,
                                 this,
                                 String.format("%s installation on %s failed [reason: %s]",
                                               status.getToolName(),

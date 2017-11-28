@@ -32,6 +32,7 @@ import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.Polygon2D;
 import ro.cs.tao.eodata.VectorData;
 import ro.cs.tao.eodata.enums.DataFormat;
+import ro.cs.tao.messaging.Message;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.config.DatabaseConfiguration;
 import ro.cs.tao.persistence.exception.PersistenceException;
@@ -834,6 +835,32 @@ public class PersistenceManagerTest {
             for (VectorData vectorProduct : vectorProducts)
             {
                 logger.info("\t\tFound vector product \"" + vectorProduct.getName() + "\"");
+            }
+        }
+        catch (Exception e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void TC_21_save_new_notification()
+    {
+        try
+        {
+            Message message =  new Message();
+            message.setTimestamp(System.currentTimeMillis());
+            message.setUserId(1);
+            message.setRead(true);
+            message.setData("notification data");
+            message.setSource("notification source");
+
+            try
+            {
+                persistenceManager.saveMessage(message);
+            } catch (PersistenceException e) {
+                logger.error("Error saving notification message", e);
             }
         }
         catch (Exception e)

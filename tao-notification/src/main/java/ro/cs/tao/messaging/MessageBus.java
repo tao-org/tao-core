@@ -63,7 +63,7 @@ public class MessageBus {
     }
 
     public static void send(int userId, String topic, Object source, String message) {
-        Message msg = new Message(System.nanoTime(), userId, source, message);
+        Message msg = new Message(System.nanoTime(), userId, source.toString(), message);
         instance.messageBus.notify(topic, Event.wrap(msg));
     }
 
