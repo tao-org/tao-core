@@ -15,16 +15,10 @@ import ro.cs.tao.component.execution.ExecutionStatus;
 import ro.cs.tao.component.execution.ExecutionTask;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.VectorData;
+import ro.cs.tao.messaging.Message;
 import ro.cs.tao.persistence.data.User;
 import ro.cs.tao.persistence.exception.PersistenceException;
-import ro.cs.tao.persistence.repository.EOProductRepository;
-import ro.cs.tao.persistence.repository.ExecutionJobRepository;
-import ro.cs.tao.persistence.repository.ExecutionTaskRepository;
-import ro.cs.tao.persistence.repository.NodeRepository;
-import ro.cs.tao.persistence.repository.ParameterDescriptorRepository;
-import ro.cs.tao.persistence.repository.ProcessingComponentRepository;
-import ro.cs.tao.persistence.repository.ServiceRepository;
-import ro.cs.tao.persistence.repository.VectorDataRepository;
+import ro.cs.tao.persistence.repository.*;
 import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.topology.NodeServiceStatus;
 import ro.cs.tao.topology.ServiceDescription;
@@ -90,6 +84,10 @@ public class PersistenceManager {
     /** CRUD Repository for ExecutionTask entities */
     @Autowired
     private ExecutionTaskRepository executionTaskRepository;
+
+    /** CRUD Repository for Mesaage entities */
+    @Autowired
+    private MessageRepository messageRepository;
 
 //    /** CRUD Repository for DataSource entities */
 //    @Autowired
@@ -993,6 +991,46 @@ public class PersistenceManager {
             throw new PersistenceException("There is no execution task with the given resource identifier: " + id);
         }
         return existingTask;
+    }
+
+    private boolean checkMessage(Message message)
+    {
+        if(message == null)
+        {
+            return false;
+        }
+        if(message.getTimestamp() == 0)
+        {
+            return false;
+        }
+        if(message.getUserId() == 0)
+        {
+            return false;
+        }
+
+        if(message.getSource() == null)
+        {
+            return false;
+        }
+
+        if(message.getData() == null)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Transactional
+    public Message saveMessage(Message message) throws PersistenceException
+    {
+        // check method parameters
+        if(!checkMessage(message)) {
+            throw new PersistenceException("Invalid parameters were provided for adding new message !");
+        }
+
+        // save the new Message entity and return it
+        return messageRepository.save(message);
     }
 
 }

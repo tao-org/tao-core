@@ -335,4 +335,23 @@ ALTER TABLE tao.user_data_query ADD CONSTRAINT FK_user_data_query_job
 
 ALTER TABLE tao.user_data_query ADD CONSTRAINT FK_user_data_query_query_parameter
 	FOREIGN KEY (query_parameter_id) REFERENCES tao.query_parameter (id) ON DELETE No Action ON UPDATE No Action;
+
+
+-------------------------------------------------------------------------------
+-- table: notification
+DROP TABLE IF EXISTS tao.notification CASCADE;
+
+CREATE TABLE tao.notification
+(
+    timestamp bigint NOT NULL,
+	user_id integer NOT NULL,
+	read boolean NULL,
+	source varchar NOT NULL,
+	data varchar NOT NULL
+);
+
+ALTER TABLE tao.notification ADD CONSTRAINT PK_notification PRIMARY KEY (timestamp, user_id);
+
+--ALTER TABLE tao.notification ADD CONSTRAINT FK_notification_user
+--	FOREIGN KEY (user_id) REFERENCES tao."user" (id) ON DELETE No Action ON UPDATE No Action;
 	

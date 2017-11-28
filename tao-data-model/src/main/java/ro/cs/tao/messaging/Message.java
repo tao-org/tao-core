@@ -12,12 +12,12 @@ public class Message {
     private long timestamp;
     private int userId;
     private boolean read;
-    private Object source;
+    private String source;
     private String data;
 
     public Message() { }
 
-    public Message(long timestamp, int userId, Object source, String data) {
+    public Message(long timestamp, int userId, String source, String data) {
         this.timestamp = timestamp;
         this.source = source;
         this.data = data;
@@ -38,8 +38,8 @@ public class Message {
     public void setTimestamp(long timestamp) { this.timestamp = timestamp; }
 
     @Transient
-    public Object getSource() { return source; }
-    public void setSource(Object source) { this.source = source; }
+    public String getSource() { return source; }
+    public void setSource(String source) { this.source = source; }
 
     @XmlElement(name = "data")
     public String getData() { return data; }
