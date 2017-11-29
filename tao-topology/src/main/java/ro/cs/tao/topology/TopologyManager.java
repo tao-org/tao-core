@@ -8,6 +8,7 @@ import ro.cs.tao.spi.ServiceLoader;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.utils.async.BinaryTask;
+import ro.cs.tao.utils.async.LazyInitialize;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Supplier;
 import java.util.logging.Logger;
 
 /**
@@ -26,7 +28,7 @@ public class TopologyManager implements ITopologyManager {
     private final Logger logger;
     private NodeDescription masterNodeInfo;
     private final Set<TopologyToolInstaller> installers;
-    private final PersistenceManager persistenceManager;
+    private final Supplier<PersistenceManager> persistenceManager;
     private final ExecutorService executorService;
 
     static {
@@ -35,7 +37,7 @@ public class TopologyManager implements ITopologyManager {
 
     private TopologyManager() {
         this.logger = Logger.getLogger(TopologyManager.class.getName());
-        this.persistenceManager = SpringContextBridge.services().getPersistenceManager();
+        this.persistenceManager = LazyInitialize.using(() -> SpringContextBridge.services().getPersistenceManager());
         this.executorService = Executors.newSingleThreadExecutor();
         // initialize the hostname and ip address in the master node description
         initMasterNodeDescription();
@@ -57,7 +59,7 @@ public class TopologyManager implements ITopologyManager {
     @Override
     public NodeDescription get(String hostName) {
         try {
-            return persistenceManager.getNodeByHostName(hostName);
+            return getPersistenceManager().getNodeByHostName(hostName);
         } catch (PersistenceException e) {
             logger.severe("Cannot get node description from database for node " + hostName);
             throw new TopologyException(e);
@@ -76,13 +78,13 @@ public class TopologyManager implements ITopologyManager {
 
     @Override
     public List<NodeDescription> list() {
-        return persistenceManager.getNodes();
+        return getPersistenceManager().getNodes();
     }
 
     @Override
     public void add(NodeDescription info) throws TopologyException {
         try {
-            persistenceManager.saveExecutionNode(info);
+            getPersistenceManager().saveExecutionNode(info);
         } catch (PersistenceException e) {
             logger.severe("Cannot save node description to database. Rolling back installation on node " + info.getHostName() + "...");
             throw new TopologyException(e);
@@ -130,7 +132,7 @@ public class TopologyManager implements ITopologyManager {
             throw new TopologyException(String.format("Node [%s] does not exist", hostName));
         }
         try {
-            persistenceManager.deleteExecutionNode(node.getHostName());
+            getPersistenceManager().deleteExecutionNode(node.getHostName());
         } catch (PersistenceException e) {
             logger.severe("Cannot remove node description from database. Host name is :" + node.getHostName());
             throw new TopologyException(e);
@@ -151,7 +153,7 @@ public class TopologyManager implements ITopologyManager {
             installer.editNode(nodeInfo);
         }
         try {
-            persistenceManager.updateExecutionNode(nodeInfo);
+            getPersistenceManager().updateExecutionNode(nodeInfo);
         } catch (PersistenceException e) {
             logger.severe("Cannot update node description in database for the host name:" + nodeInfo.getHostName());
             throw new TopologyException(e);
@@ -204,5 +206,9 @@ public class TopologyManager implements ITopologyManager {
             e.printStackTrace();
             throw new TopologyException("Master hostname retrieval failure", e);
         }
+    }
+
+    private PersistenceManager getPersistenceManager() {
+        return this.persistenceManager.get();
     }
 }
