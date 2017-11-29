@@ -141,7 +141,7 @@ public class SessionImpl implements Session {
                     new ExecutionUnit(ExecutorType.SSH2, node.getHostName(), node.getUserName(), node.getUserPass(),
                                       args, false, SSHMode.EXEC);
             String jobId = jt.getJobName() + ":" + System.nanoTime();
-            this.runningJobs.put(jobId, Executor.execute(null, jt.getSoftRunDurationLimit(), unit));
+            this.runningJobs.put(jobId, Executor.execute(null, unit));
             return jobId;
         }
     }
