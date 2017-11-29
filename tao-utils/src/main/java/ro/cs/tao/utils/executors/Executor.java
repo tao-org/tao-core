@@ -1,10 +1,13 @@
 package ro.cs.tao.utils.executors;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 /**
@@ -35,7 +38,16 @@ public abstract class Executor implements Runnable {
     private volatile int retCode = Integer.MAX_VALUE;
     private final CountDownLatch counter;
 
-    public static Executor execute(OutputConsumer outputConsumer, long timeout, ExecutionUnit job) {
+    /**
+     * Submits for execution the given command and returns the executor object.
+     * The caller is responsible of waiting for the completion of the execution by waiting on
+     * Executor.getWaitObject() latch.
+     *
+     * @param outputConsumer    The counsumer of the process output
+     * @param job               The command (job) to be executed
+     * @return                  The Executor object that is responsible of execution
+     */
+    public static Executor execute(OutputConsumer outputConsumer, ExecutionUnit job) {
         if (job == null) {
             throw new IllegalArgumentException("ExecutionUnit must not be null");
         }
@@ -52,14 +64,33 @@ public abstract class Executor implements Runnable {
     }
 
     /**
-     * Executes the given commands setting a fixed timeout.
-     * When the timeout expires, the executions will be terminated.
+     * Executes the given command setting a fixed timeout.
+     * When the timeout expires, the execution will be terminated.
+     *
+     * @param outputConsumer    The counsumer of the process output
+     * @param timeout           The timeout in seconds
+     * @param job               The command (job) to be executed
+     * @return                  The return code of the execution
+     */
+    public static int execute(OutputConsumer outputConsumer, long timeout, ExecutionUnit job) {
+        Executor executor = execute(outputConsumer, job);
+        try {
+            executor.getWaitObject().await(timeout, TimeUnit.SECONDS);
+        } catch (InterruptedException ignored) {
+            executor.stop();
+        }
+        return executor.getReturnCode();
+    }
+
+    /**
+     * Submits for execution the given commands and returns the executor objects.
+     * The caller is responsible of waiting for the completion of the execution by waiting on each
+     * Executor.getWaitObject() latch.
      *
      * @param outputConsumer    The consumer of the process output
-     * @param timeout   The timeout in seconds
-     * @param jobs      One or more command descriptors
+     * @param jobs              One or more command descriptors
      */
-    public static Executor[] execute(OutputConsumer outputConsumer, long timeout, ExecutionUnit... jobs) {
+    public static Executor[] execute(OutputConsumer outputConsumer, ExecutionUnit... jobs) {
         if (jobs == null || jobs.length == 0) {
             throw new IllegalArgumentException("At least one ExecutionUnit expected");
         }
@@ -78,6 +109,38 @@ public abstract class Executor implements Runnable {
             executors[i] = executor;
         }
         return executors;
+    }
+
+    /**
+     * Executes the given commands setting a fixed timeout.
+     * When the timeout expires, the executions will be terminated.
+     *
+     * @param outputConsumer    The consumer of the process output
+     * @param timeout   The timeout in seconds
+     * @param jobs      One or more command descriptors
+     */
+    public static int[] execute(OutputConsumer outputConsumer, long timeout, ExecutionUnit... jobs) {
+        Executor[] executors = execute(outputConsumer, jobs);
+        int[] retCodes = new int[executors.length];
+        long duration, remaining;
+        remaining = timeout * 1000;
+        for (Executor executor : executors) {
+            if (remaining > 0) {
+                duration = System.nanoTime();
+                try {
+                    executor.getWaitObject().await(timeout, TimeUnit.SECONDS);
+                } catch (InterruptedException ignored) {
+                    executor.stop();
+                }
+                duration = System.nanoTime() - duration;
+                remaining -= duration;
+            }
+        }
+        Arrays.stream(executors).filter(Executor::isRunning).forEach(Executor::stop);
+        for (int i = 0; i < executors.length; i++) {
+            retCodes[i] = executors[i].getReturnCode();
+        }
+        return retCodes;
     }
 
     private static Executor create(ExecutorType type, String host, List<String> arguments) {
@@ -111,7 +174,7 @@ public abstract class Executor implements Runnable {
         this.isStopped = false;
         this.isSuspended = false;
         this.host = host;
-        this.arguments = args;
+        this.arguments = ensureTokenized(args);
         this.counter = new CountDownLatch(1);
         this.asSuperUser = asSU;
         logger = Logger.getLogger(Executor.class.getSimpleName());
@@ -182,4 +245,20 @@ public abstract class Executor implements Runnable {
      * @throws InterruptedException
      */
     public abstract int execute(boolean logMessages) throws Exception;
+
+    private List<String> ensureTokenized(List<String> arguments) {
+        List<String> args = new ArrayList<>();
+        if (arguments != null) {
+            arguments.forEach(arg -> {
+                if (arg.startsWith("\"")) {
+                    arg = arg.substring(1);
+                }
+                if (arg.endsWith("\"")) {
+                    arg = arg.substring(0, arg.length() - 1);
+                }
+                args.addAll(Arrays.asList(arg.split(" ")));
+            });
+        }
+        return args;
+    }
 }
