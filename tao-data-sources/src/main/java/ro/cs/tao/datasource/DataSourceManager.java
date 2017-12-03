@@ -1,6 +1,8 @@
 package ro.cs.tao.datasource;
 
+import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.datasource.param.ParameterDescriptor;
+import ro.cs.tao.datasource.util.NetUtils;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
 
@@ -32,6 +34,15 @@ public class DataSourceManager {
 
     private DataSourceManager() {
         this.logger = Logger.getLogger(DataSourceManager.class.getSimpleName());
+        Map<String, String> proxySettings = ConfigurationManager.getInstance().getValues("proxy");
+        if (proxySettings != null && proxySettings.size() > 0) {
+            String port = proxySettings.get("proxy.port");
+            NetUtils.setProxy(proxySettings.get("proxy.type"),
+                              proxySettings.get("proxy.host"),
+                              port == null ? 0 : Integer.parseInt(port),
+                              proxySettings.get("proxy.user"),
+                              proxySettings.get("proxy.password"));
+        }
         this.registry = ServiceRegistryManager.getInstance().getServiceRegistry(DataSource.class);
         this.registeredSources = new HashMap<>();
         final Set<DataSource> services = this.registry.getServices();
