@@ -39,7 +39,7 @@ public class DataSourceManager {
             String port = proxySettings.get("proxy.port");
             NetUtils.setProxy(proxySettings.get("proxy.type"),
                               proxySettings.get("proxy.host"),
-                              port == null ? 0 : Integer.parseInt(port),
+                              (port == null || "".equals(port.trim())) ? 0 : Integer.parseInt(port),
                               proxySettings.get("proxy.user"),
                               proxySettings.get("proxy.password"));
         }
