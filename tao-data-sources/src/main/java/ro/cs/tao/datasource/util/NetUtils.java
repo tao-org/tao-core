@@ -100,7 +100,7 @@ public class NetUtils {
     }
 
     public static void setProxy(String type, final String host, final int port, final String user, final String pwd) {
-        if (type != null && host != null) {
+        if (type != null && host != null && !"".equals(type) && !"".equals(host) ) {
             Proxy.Type proxyType = Enum.valueOf(Proxy.Type.class, type.toUpperCase());
             javaNetProxy = new Proxy(proxyType, new InetSocketAddress(host, port));
             Authenticator.setDefault(new Authenticator() {

@@ -21,7 +21,7 @@ import ro.cs.tao.docker.Container;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.VectorData;
 import ro.cs.tao.messaging.Message;
-import ro.cs.tao.persistence.data.User;
+//import ro.cs.tao.persistence.data.User;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.persistence.repository.*;
 import ro.cs.tao.topology.NodeDescription;
@@ -739,7 +739,7 @@ public class PersistenceManager {
      * Retrieve processing components with USER visibility, for a given user
      * @return
      */
-    @Transactional(readOnly = true)
+    /*@Transactional(readOnly = true)
     public List<ProcessingComponent> getUserProcessingComponents(User user)
     {
         final List<ProcessingComponent> components = new ArrayList<>();
@@ -749,7 +749,7 @@ public class PersistenceManager {
           .filter(c -> c.getVisibility().equals(ProcessingComponentVisibility.USER))
           .collect(Collectors.toList()));
         return components;
-    }
+    }*/
 
     @Transactional(readOnly = true)
     public boolean checkIfExistsComponentById(final String id)
