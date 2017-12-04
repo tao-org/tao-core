@@ -15,13 +15,14 @@ public class ToolInstallStep {
     private String name = "";
     private ExecutorType invocationType = ExecutorType.PROCESS;
     private SSHMode sshMode = SSHMode.EXEC;
-    private ExecutionMode executionModeMode = ExecutionMode.SUPERUSER;
+    private ExecutionMode executionModeMode = ExecutionMode.USER;
     private String invocationCommand;
     private List<String> executionMessages = new ArrayList<>();
     private String hostName;
     private String user;
     private String pass;
     private boolean ignoreErr = false;
+    private int executionTimeout = 60000;
 
     public void setName(String stepName) {
         this.name = stepName;
@@ -117,5 +118,13 @@ public class ToolInstallStep {
 
     boolean getIgnoreErr() {
         return this.ignoreErr;
+    }
+
+    public void setExecutionTimeout(int executionTimeout) {
+        this.executionTimeout = executionTimeout;
+    }
+
+    public int getExecutionTimeout() {
+        return executionTimeout;
     }
 }

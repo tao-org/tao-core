@@ -158,6 +158,7 @@ public class ToolInstallersConfigHandler extends DefaultHandler {
             case "user":
             case "pass":
             case "ignore_err":
+            case "execution_timeout":
             case "command":
                 if (currentStep == null) {
                     throw new SAXException("Invalid element " + qName + " without step");
@@ -231,6 +232,9 @@ public class ToolInstallersConfigHandler extends DefaultHandler {
                 break;
             case "ignore_err":
                 currentStep.setIgnoreErr(Boolean.valueOf(elementValue));
+                break;
+            case "execution_timeout":
+                currentStep.setExecutionTimeout(Integer.valueOf(elementValue));
                 break;
         }
     }

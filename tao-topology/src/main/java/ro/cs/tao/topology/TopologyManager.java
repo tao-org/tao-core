@@ -1,5 +1,6 @@
 package ro.cs.tao.topology;
 
+import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.messaging.MessageBus;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
@@ -132,9 +133,9 @@ public class TopologyManager implements ITopologyManager {
             throw new TopologyException(String.format("Node [%s] does not exist", hostName));
         }
         try {
-            getPersistenceManager().deleteExecutionNode(node.getHostName());
+            getPersistenceManager().deleteExecutionNode(hostName);
         } catch (PersistenceException e) {
-            logger.severe("Cannot remove node description from database. Host name is :" + node.getHostName());
+            logger.severe("Cannot remove node description from database. Host name is :" + hostName);
             throw new TopologyException(e);
         }
         // execute all the installers
@@ -202,6 +203,8 @@ public class TopologyManager implements ITopologyManager {
             masterNodeInfo = new NodeDescription();
             String hostName = InetAddress.getLocalHost().getHostName();
             masterNodeInfo.setHostName(hostName);
+            masterNodeInfo.setUserName(ConfigurationManager.getInstance().getValue("topology.master.user"));
+            masterNodeInfo.setUserPass(ConfigurationManager.getInstance().getValue("topology.master.password"));
         } catch (UnknownHostException e) {
             e.printStackTrace();
             throw new TopologyException("Master hostname retrieval failure", e);
