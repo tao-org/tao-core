@@ -9,6 +9,7 @@ import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.spi.ServiceLoader;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
+import ro.cs.tao.utils.Platform;
 import ro.cs.tao.utils.async.BinaryTask;
 import ro.cs.tao.utils.async.LazyInitialize;
 import ro.cs.tao.utils.executors.ExecutionUnit;
@@ -25,6 +26,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
 
@@ -186,7 +188,8 @@ public class TopologyManager implements ITopologyManager {
            add("docker");
            add("images");
            add("--format");
-           add("'table {{.ID}}\\t{{.Tag}}\\t{{.Repository}}'");
+            //noinspection ConstantConditions
+            add(Platform.ID.win != Platform.getCurrentPlatform().getId() ? "'table " : "'" + "{{.ID}}\\t{{.Tag}}\\t{{.Repository}}'");
         }};
         ExecutionUnit job = new ExecutionUnit(ExecutorType.PROCESS,
                                               masterNodeInfo.getHostName(),
@@ -200,23 +203,30 @@ public class TopologyManager implements ITopologyManager {
                 lines.add(message);
             }
         }, job);
+        try {
+            executor.getWaitObject().await(3, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            logger.warning("Process timed out: " + e.getMessage());
+        }
         if (executor.getReturnCode() == 0) {
-            for (int i = 1; i < lines.size(); i++) {
+            for (int i = 0; i < lines.size(); i++) {
                 String[] tokens = lines.get(i).split("\t");
-                Container container = new Container();
-                container.setId(tokens[0]);
-                container.setName(tokens[1].contains("/") ?
-                                          tokens[1].substring(tokens[1].indexOf("/") + 1) :
-                                          tokens[1]);
-                container.setTag(tokens[2]);
-                containers.add(container);
-                try {
-                    final Container existing = getPersistenceManager().getContainerById(tokens[0]);
-                    if (existing == null) {
-                        getPersistenceManager().saveContainer(container);
+                if (!"IMAGE_ID".equals(tokens[0])) {
+                    Container container = new Container();
+                    container.setId(tokens[0]);
+                    container.setName(tokens[2].contains("/") ?
+                                              tokens[2].substring(tokens[2].indexOf("/") + 1) :
+                                              tokens[2]);
+                    container.setTag(tokens[1]);
+                    containers.add(container);
+                    try {
+                        final Container existing = getPersistenceManager().getContainerById(tokens[0]);
+                        if (existing == null) {
+                            getPersistenceManager().saveContainer(container);
+                        }
+                    } catch (PersistenceException e) {
+                        logger.warning(e.getMessage());
                     }
-                } catch (PersistenceException e) {
-                    logger.warning(e.getMessage());
                 }
             }
         } else {

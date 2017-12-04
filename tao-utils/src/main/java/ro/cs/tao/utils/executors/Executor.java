@@ -1,6 +1,7 @@
 package ro.cs.tao.utils.executors;
 
 import com.jcraft.jsch.Channel;
+import ro.cs.tao.utils.Platform;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -279,33 +280,42 @@ public abstract class Executor<T> implements Runnable {
     protected void insertSudoParams() {
         int idx = 0;
         String curArg;
+        List<String> sudoArgs = new ArrayList<String>() {{
+            //noinspection ConstantConditions
+            if (Platform.ID.win != Platform.getCurrentPlatform().getId()) {
+               /*add("runas");
+               add("/user:");
+               add(Executor.this.user);
+           } else {*/
+               add("sudo");
+               add("-S");
+               add("-p");
+               add("''");
+           }
+        }};
         while (idx < arguments.size()) {
             curArg = arguments.get(idx);
             if (SHELL_COMMAND_SEPARATOR.equals(curArg) || SHELL_COMMAND_SEPARATOR_AMP.equals(curArg) ||
                     SHELL_COMMAND_SEPARATOR_BAR.equals(curArg)) {
-                arguments.add(idx + 1, "sudo");
-                arguments.add(idx + 2, "-S");
-                arguments.add(idx + 3, "-p");
-                arguments.add(idx + 4, "''");
+                arguments.addAll(idx + 1, sudoArgs);;
             }
             idx++;
         }
-        arguments.add(0, "''");
-        arguments.add(0, "-p");
-        arguments.add(0, "-S");
-        arguments.add(0, "sudo");
+        arguments.addAll(0, sudoArgs);
     }
 
     protected void writeSudoPassword() throws IOException {
-        OutputStream outputStream = null;
-        if (this.channel instanceof Channel) {
-            outputStream = ((Channel) this.channel).getOutputStream();
-        } else if (this.channel instanceof Process) {
-            outputStream = ((Process) this.channel).getOutputStream();
-        } else {
-            throw new IllegalArgumentException("This type of channel is not supported");
+        if (Platform.ID.win != Platform.getCurrentPlatform().getId()) {
+            OutputStream outputStream = null;
+            if (this.channel instanceof Channel) {
+                outputStream = ((Channel) this.channel).getOutputStream();
+            } else if (this.channel instanceof Process) {
+                outputStream = ((Process) this.channel).getOutputStream();
+            } else {
+                throw new IllegalArgumentException("This type of channel is not supported");
+            }
+            outputStream.write((this.password + "\n").getBytes());
+            outputStream.flush();
         }
-        outputStream.write((this.password + "\n").getBytes());
-        outputStream.flush();
     }
 }
