@@ -17,6 +17,7 @@ public class Container {
     private String id;
     private String name;
     private String tag;
+    private String applicationPath;
     private List<Application> applications;
 
     @XmlElement(name = "id")
@@ -30,6 +31,10 @@ public class Container {
     @XmlElement(name = "tag")
     public String getTag() { return tag; }
     public void setTag(String tag) { this.tag = tag; }
+
+    @XmlElement(name = "applicationPath")
+    public String getApplicationPath() { return applicationPath; }
+    public void setApplicationPath(String value) { applicationPath = value; }
 
     @XmlElementWrapper(name = "applications")
     public List<Application> getApplications() {

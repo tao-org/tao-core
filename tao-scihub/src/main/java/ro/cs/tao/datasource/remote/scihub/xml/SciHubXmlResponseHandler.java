@@ -52,6 +52,8 @@ import java.net.URISyntaxException;
  */
 public class SciHubXmlResponseHandler extends XmlResponseHandler<EOProduct> {
 
+    private static final double MEGABYTE = 1024.0 * 1024.0;
+    private static final double GIGABYTE = MEGABYTE * 1024.0;
     private String identifiedElement;
 
     public SciHubXmlResponseHandler(String recordElementName) {
@@ -105,9 +107,9 @@ public class SciHubXmlResponseHandler extends XmlResponseHandler<EOProduct> {
                         case "size":
                             long size;
                             if (elementValue.endsWith("MB")) {
-                                size = (long) (1024.0 * 1024.0 * Double.parseDouble(elementValue.substring(0, elementValue.indexOf(" "))));
+                                size = (long) (MEGABYTE * Double.parseDouble(elementValue.substring(0, elementValue.indexOf(" "))));
                             } else if (elementValue.endsWith("GB")) {
-                                size = (long) (1024.0 * 1024.0 * 1024.0 * Double.parseDouble(elementValue.substring(0, elementValue.indexOf(" "))));
+                                size = (long) (GIGABYTE * Double.parseDouble(elementValue.substring(0, elementValue.indexOf(" "))));
                             } else {
                                 size = 0;
                             }
