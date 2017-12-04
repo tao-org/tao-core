@@ -63,6 +63,7 @@ import java.util.stream.Collectors;
 @XmlRootElement(name = "processingComponent")
 public class ProcessingComponent extends TaoComponent {
 
+    private String containerId;
     private String fileLocation;
     private String workingDirectory;
     private TemplateType templateType;
@@ -181,6 +182,9 @@ public class ProcessingComponent extends TaoComponent {
             }
         }
     }
+
+    public String getContainerId() { return containerId; }
+    public void setContainerId(String containerId) { this.containerId = containerId; }
 
     @Override
     public String defaultName() {
