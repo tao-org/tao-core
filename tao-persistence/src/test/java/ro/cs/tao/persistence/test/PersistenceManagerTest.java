@@ -23,6 +23,8 @@ import ro.cs.tao.component.execution.ExecutionTask;
 import ro.cs.tao.component.template.BasicTemplate;
 import ro.cs.tao.component.template.Template;
 import ro.cs.tao.component.template.TemplateType;
+import ro.cs.tao.docker.Application;
+import ro.cs.tao.docker.Container;
 import ro.cs.tao.eodata.Attribute;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.VectorData;
@@ -394,6 +396,66 @@ public class PersistenceManagerTest {
     }
 
     @Test
+    public void TC_07_01_save_new_container()
+    {
+        try
+        {
+            // add a new container for test
+            Container container = new Container();
+            container.setId("container01");
+            container.setName("container for test");
+            container.setTag("container tag");
+            container.setApplicationPath(".\\mypath");
+
+            // list of container applications
+            List<Application> applications = new ArrayList<>();
+
+            final Application app1 = new Application();
+            app1.setPath(".\\mypath1");
+            app1.setName("App1");
+            applications.add(app1);
+
+            final Application app2 = new Application();
+            app2.setPath(".\\mypath2");
+            app2.setName("App2");
+            applications.add(app2);
+
+            container.setApplications(applications);
+
+            container = persistenceManager.saveContainer(container);
+            // check persisted container
+            Assert.assertTrue(container != null && container.getId() != null);
+        }
+        catch (PersistenceException e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void TC_07_02_retrieve_containers()
+    {
+        try
+        {
+            List<Container> containers  = persistenceManager.getContainers();
+            Assert.assertTrue(containers != null && containers.size() > 0);
+
+            logger.info("Found " + containers.size() + " container(s).");
+
+            for (Container container : containers)
+            {
+                logger.info("Found container " + container.getId());
+            }
+        }
+        catch (Exception e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    @Test
     public void TC_07_save_new_processing_component()
     {
         try
@@ -419,6 +481,8 @@ public class PersistenceManagerTest {
             component.setNodeAffinity("Any");
             component.setMultiThread(true);
             component.setActive(true);
+
+            component.setContainerId("container01");
 
             // list of component variables
             Set<Variable> variables = new HashSet<>();
@@ -576,6 +640,8 @@ public class PersistenceManagerTest {
             component.setNodeAffinity("Any");
             component.setMultiThread(true);
             component.setActive(true);
+
+            component.setContainerId("container01");
 
             Set<Variable> variables = new HashSet<>();
 

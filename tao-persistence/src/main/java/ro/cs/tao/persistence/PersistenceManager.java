@@ -15,6 +15,8 @@ import ro.cs.tao.component.enums.ProcessingComponentVisibility;
 import ro.cs.tao.component.execution.ExecutionJob;
 import ro.cs.tao.component.execution.ExecutionStatus;
 import ro.cs.tao.component.execution.ExecutionTask;
+import ro.cs.tao.docker.Application;
+import ro.cs.tao.docker.Container;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.VectorData;
 import ro.cs.tao.messaging.Message;
@@ -42,6 +44,9 @@ public class PersistenceManager {
 
     /** Constant for the identifier member name of execution node entity */
     private static final String NODE_IDENTIFIER_PROPERTY_NAME = "hostName";
+
+    /** Constant for the identifier member id of container entity */
+    private static final String CONTAINER_IDENTIFIER_PROPERTY_NAME = "id";
 
     /** Constant for the identifier member name of processing component entity */
     private static final String COMPONENT_IDENTIFIER_PROPERTY_NAME = "id";
@@ -76,6 +81,10 @@ public class PersistenceManager {
     /** CRUD Repository for ServiceDescription entities */
     @Autowired
     private ServiceRepository serviceRepository;
+
+    /** CRUD Repository for Container entities */
+    @Autowired
+    private ContainerRepository containerRepository;
 
     /** CRUD Repository for ProcessingComponent entities */
     @Autowired
@@ -1046,6 +1055,111 @@ public class PersistenceManager {
     {
         PageRequest pageRequest = new PageRequest(pageNumber - 1, MESSAGES_PAGE_SIZE, Sort.Direction.DESC, MESSAGE_TIMESTAMP_PROPERTY_NAME);
         return messageRepository.findByUserId(userId, pageRequest);
+    }
+
+    private boolean checkContainer(Container container)
+    {
+        if(container == null)
+        {
+            return false;
+        }
+        if(container.getId() == null || container.getId().isEmpty())
+        {
+            return false;
+        }
+        if(container.getName() == null)
+        {
+            return false;
+        }
+        if(container.getTag() == null)
+        {
+            return false;
+        }
+        if(container.getApplicationPath() == null)
+        {
+            return false;
+        }
+
+        for(Application application: container.getApplications())
+        {
+            if(!checkApplication(application))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private boolean checkApplication(Application application)
+    {
+        if(application == null)
+        {
+            return false;
+        }
+        if(application.getPath() == null || application.getPath().isEmpty())
+        {
+            return false;
+        }
+        if(application.getName() == null)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Transactional
+    public Container saveContainer(Container container) throws PersistenceException
+    {
+        // check method parameters
+        if(!checkContainer(container))
+        {
+            throw new PersistenceException("Invalid parameters were provided for adding new container !");
+        }
+
+        // check if there is already another container with the same identifier
+        final Container containerWithSameId = containerRepository.findById(container.getId());
+        if (containerWithSameId != null)
+        {
+            throw new PersistenceException("There is already another container with the identifier: " + container.getId());
+        }
+
+        // save the new Container entity and return it
+        return containerRepository.save(container);
+    }
+
+    @Transactional
+    public Container updateContainer(Container container) throws PersistenceException
+    {
+        // check method parameters
+        if(!checkContainer(container))
+        {
+            throw new PersistenceException("Invalid parameters were provided for updating the container " + (container != null && container.getId() != null ? "(identifier " + container.getId() + ")" : "") + "!");
+        }
+
+        // check if there is such container (to update) with the given identifier
+        final Container existingContainer = containerRepository.findById(container.getId());
+        if (existingContainer == null)
+        {
+            throw new PersistenceException("There is no container with the given identifier: " + container.getId());
+        }
+
+        return containerRepository.save(container);
+    }
+
+    /**
+     * Retrieve exsiting containers
+     * @return
+     */
+    @Transactional(readOnly = true)
+    public List<Container> getContainers()
+    {
+        final List<Container> containers = new ArrayList<>();
+        // retrieve containers and filter them
+        containers.addAll(((List<Container>) containerRepository.findAll(new Sort(Sort.Direction.ASC, CONTAINER_IDENTIFIER_PROPERTY_NAME))).stream()
+          .collect(Collectors.toList()));
+        return containers;
     }
 
 }

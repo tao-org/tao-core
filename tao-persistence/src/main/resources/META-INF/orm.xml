@@ -238,6 +238,10 @@
                 <column name="active" nullable="true" column-definition="boolean NOT NULL DEFAULT true"/>
             </basic>
 
+            <basic name="containerId">
+                <column name="container_id" nullable="false" column-definition="varchar(1024) NOT NULL"/>
+            </basic>
+
             <many-to-many name="parameterDescriptors" fetch="EAGER">
                 <join-table name="tao.component_parameters">
                     <join-column name="processing_component_id" referenced-column-name="id"/>
