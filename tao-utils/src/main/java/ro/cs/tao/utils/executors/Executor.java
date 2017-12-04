@@ -175,10 +175,20 @@ public abstract class Executor<T> implements Runnable {
      * @param args          The arguments
      */
     Executor(String host, List<String> args, boolean asSU) {
+        this(host, args, asSU, false);
+    }
+
+    /**
+     * Constructs an executor with given arguments and a shared latch counter.
+     *
+     * @param host      The execution node name
+     * @param args          The arguments
+     */
+    Executor(String host, List<String> args, boolean asSU, boolean ensureTokenizedArgs) {
         this.isStopped = false;
         this.isSuspended = false;
         this.host = host;
-        this.arguments = ensureTokenized(args);
+        this.arguments = ensureTokenizedArgs ? ensureTokenized(args) : args;
         this.counter = new CountDownLatch(1);
         this.asSuperUser = asSU;
         logger = Logger.getLogger(Executor.class.getSimpleName());
