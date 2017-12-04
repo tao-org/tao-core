@@ -37,11 +37,14 @@ public class DataSourceManager {
         Map<String, String> proxySettings = ConfigurationManager.getInstance().getValues("proxy");
         if (proxySettings != null && proxySettings.size() > 0) {
             String port = proxySettings.get("proxy.port");
-            NetUtils.setProxy(proxySettings.get("proxy.type"),
-                              proxySettings.get("proxy.host"),
-                              port == null ? 0 : Integer.parseInt(port),
-                              proxySettings.get("proxy.user"),
-                              proxySettings.get("proxy.password"));
+            String host = proxySettings.get("proxy.host");
+            if (host != null && !host.isEmpty()) {
+                NetUtils.setProxy(proxySettings.get("proxy.type"),
+                                  proxySettings.get("proxy.host"),
+                                  port == null || port.isEmpty() ? 0 : Integer.parseInt(port),
+                                  proxySettings.get("proxy.user"),
+                                  proxySettings.get("proxy.password"));
+            }
         }
         this.registry = ServiceRegistryManager.getInstance().getServiceRegistry(DataSource.class);
         this.registeredSources = new HashMap<>();
