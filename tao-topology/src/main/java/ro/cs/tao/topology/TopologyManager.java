@@ -141,9 +141,9 @@ public class TopologyManager implements ITopologyManager {
             throw new TopologyException(String.format("Node [%s] does not exist", hostName));
         }
         try {
-            getPersistenceManager().deleteExecutionNode(node.getHostName());
+            getPersistenceManager().deleteExecutionNode(hostName);
         } catch (PersistenceException e) {
-            logger.severe("Cannot remove node description from database. Host name is :" + node.getHostName());
+            logger.severe("Cannot remove node description from database. Host name is :" + hostName);
             throw new TopologyException(e);
         }
         // execute all the installers
@@ -170,7 +170,7 @@ public class TopologyManager implements ITopologyManager {
     }
 
     public void setMasterNodeInfo(NodeDescription masterNodeInfo) {
-        this.masterNodeInfo = masterNodeInfo != null ? masterNodeInfo : new NodeDescription();
+        this.masterNodeInfo = masterNodeInfo;
         for (TopologyToolInstaller installer: this.installers) {
             installer.setMasterNodeDescription(masterNodeInfo);
         }
@@ -260,6 +260,8 @@ public class TopologyManager implements ITopologyManager {
             masterNodeInfo = new NodeDescription();
             String hostName = InetAddress.getLocalHost().getHostName();
             masterNodeInfo.setHostName(hostName);
+            masterNodeInfo.setUserName(ConfigurationManager.getInstance().getValue("topology.master.user"));
+            masterNodeInfo.setUserPass(ConfigurationManager.getInstance().getValue("topology.master.password"));
         } catch (UnknownHostException e) {
             e.printStackTrace();
             throw new TopologyException("Master hostname retrieval failure", e);
