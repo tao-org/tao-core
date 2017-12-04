@@ -21,6 +21,8 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.logging.Logger;
@@ -114,12 +116,12 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
         }
     }
 
-    private int doStepInvocation(NodeDescription info, List<ToolInstallStep> allSteps, ToolInstallStep curStep) throws TopologyException {
+    private int doStepInvocation(NodeDescription nodeDescr, List<ToolInstallStep> allSteps, ToolInstallStep curStep) throws TopologyException {
         ExecutorType invokeType = curStep.getInvocationType();
         List<String> argsList = new ArrayList<>();
         String stepInvocationCmd = curStep.getInvocationCommand();
         // Replace the potential tokens in the command
-        stepInvocationCmd = replaceTokensInCmd(stepInvocationCmd, info, allSteps);
+        stepInvocationCmd = replaceTokensInCmd(stepInvocationCmd, nodeDescr, allSteps);
 
         // split the command but preserving the entities between double quotes
         Matcher m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(stepInvocationCmd);
@@ -129,9 +131,20 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
 
         System.out.println(argsList);
 
-        String hostName = curStep.getHostName() == null ? info.getHostName() : curStep.getHostName();
-        String user = curStep.getUser() == null ? info.getUserName() : curStep.getUser();
-        String pass = curStep.getPass() == null ? info.getUserPass() : curStep.getPass();
+        String hostName = curStep.getHostName() == null ? "localhost" : curStep.getHostName();
+        String user = curStep.getUser();
+        String pass = curStep.getPass();
+        if (invokeType != ExecutorType.PROCESS) {
+            if (nodeDescr.getHostName() != null) {
+                hostName = nodeDescr.getHostName();
+            }
+            if (nodeDescr.getUserName() != null) {
+                user = nodeDescr.getUserName();
+            }
+            if (nodeDescr.getUserPass() != null) {
+                pass = nodeDescr.getUserPass();
+            }
+        }
 
         ExecutionUnit job = null;
         switch (invokeType) {
@@ -152,7 +165,8 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
         }
         if (job != null) {
             OutputConsumer consumer = new StepExecutionOutputConsumer(curStep);
-            return Executor.execute(consumer, 10, job);
+            // wait for execution timeout
+            return Executor.execute(consumer, curStep.getExecutionTimeout(), job);
         }
         return ToolInvocationCodes.INVALID_INVOCATION_TYPE;
     }
@@ -170,6 +184,12 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
                 switch (token) {
                     case ToolCommandsTokens.MASTER_HOSTNAME:
                         replacementStr = masterNodeInfo.getHostName();
+                        break;
+                    case ToolCommandsTokens.MASTER_USER:
+                        replacementStr = masterNodeInfo.getUserName();
+                        break;
+                    case ToolCommandsTokens.MASTER_PASS:
+                        replacementStr = masterNodeInfo.getUserPass();
                         break;
                     case ToolCommandsTokens.NODE_HOSTNAME:
                         replacementStr = info.getHostName();
