@@ -12,8 +12,7 @@ import java.util.List;
  *
  * @author Cosmin Cara
  */
-public class ProcessExecutor extends Executor {
-    private Process process;
+public class ProcessExecutor extends Executor<Process> {
 
     public ProcessExecutor(String nodeName, List<String> args, boolean asSU) {
         super(nodeName, args, asSU);
@@ -30,10 +29,16 @@ public class ProcessExecutor extends Executor {
             //redirect the error of the tool to the standard output
             pb.redirectErrorStream(true);
             pb.environment().putAll(System.getenv());
+            if (asSuperUser) {
+                insertSudoParams();
+            }
             //start the process
-            this.process = pb.start();
+            this.channel = pb.start();
+            if (asSuperUser) {
+                writeSudoPassword();
+            }
             //get the process output
-            InputStream inputStream = this.process.getInputStream();
+            InputStream inputStream = this.channel.getInputStream();
             outReader = new BufferedReader(new InputStreamReader(inputStream));
             while (!isStopped()) {
                 while (!this.isStopped && outReader.ready()) {
@@ -50,7 +55,7 @@ public class ProcessExecutor extends Executor {
                     }
                 }
                 // check if the project finished execution
-                if (!this.process.isAlive()) {
+                if (!this.channel.isAlive()) {
                     //isStopped the loop
                     super.stop();
                 } else {
@@ -60,10 +65,10 @@ public class ProcessExecutor extends Executor {
             }
             try {
                 //wait for the project to end.
-                this.process.waitFor();
+                this.channel.waitFor();
             } catch (InterruptedException ignored) {
             }
-            ret = this.process.exitValue();
+            ret = this.channel.exitValue();
         } catch (Exception e) {
             this.logger.severe(String.format("[%s] failed: %s", host, e.getMessage()));
             this.isStopped = true;
@@ -78,37 +83,37 @@ public class ProcessExecutor extends Executor {
     @Override
     public void suspend() {
         super.suspend();
-        ProcessHelper.suspend(this.process);
+        ProcessHelper.suspend(this.channel);
     }
 
     @Override
     public void resume() {
         super.resume();
-        ProcessHelper.resume(this.process);
+        ProcessHelper.resume(this.channel);
     }
 
     @Override
     public void stop() {
         super.stop();
-        ProcessHelper.terminate(this.process);
+        ProcessHelper.terminate(this.channel);
     }
 
     private void resetProcess() {
-        if (this.process != null) {
+        if (this.channel != null) {
             // if the process is still running, force it to isStopped
-            if (this.process.isAlive()) {
+            if (this.channel.isAlive()) {
                 //destroy the process
-                this.process.destroyForcibly();
+                this.channel.destroyForcibly();
             }
             try {
                 //wait for the project to end.
-                this.process.waitFor();
+                this.channel.waitFor();
             } catch (InterruptedException ignored) {
             }
             //close all streams
-            closeStream(this.process.getErrorStream());
-            closeStream(this.process.getInputStream());
-            closeStream(this.process.getOutputStream());
+            closeStream(this.channel.getErrorStream());
+            closeStream(this.channel.getInputStream());
+            closeStream(this.channel.getOutputStream());
         }
     }
 
