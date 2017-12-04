@@ -1149,7 +1149,7 @@ public class PersistenceManager {
     }
 
     /**
-     * Retrieve exsiting containers
+     * Retrieve existing containers
      * @return
      */
     @Transactional(readOnly = true)
@@ -1160,6 +1160,16 @@ public class PersistenceManager {
         containers.addAll(((List<Container>) containerRepository.findAll(new Sort(Sort.Direction.ASC, CONTAINER_IDENTIFIER_PROPERTY_NAME))).stream()
           .collect(Collectors.toList()));
         return containers;
+    }
+
+    /**
+     * Retrieve container by its identifier
+     * @return
+     */
+    @Transactional(readOnly = true)
+    public Container getContainerById(String id)
+    {
+        return containerRepository.findById(id);
     }
 
 }
