@@ -1,6 +1,9 @@
 package ro.cs.tao.utils.executors;
 
+import com.jcraft.jsch.Channel;
+
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -15,7 +18,7 @@ import java.util.logging.Logger;
  *
  * @author Cosmin Cara
  */
-public abstract class Executor implements Runnable {
+public abstract class Executor<T> implements Runnable {
     public static final String SHELL_COMMAND_SEPARATOR = ";";
     public static final String SHELL_COMMAND_SEPARATOR_AMP = "&&";
     public static final String SHELL_COMMAND_SEPARATOR_BAR = "||";
@@ -25,6 +28,7 @@ public abstract class Executor implements Runnable {
         executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     }
 
+    T channel;
     String host;
     String user;
     String password;
@@ -260,5 +264,38 @@ public abstract class Executor implements Runnable {
             });
         }
         return args;
+    }
+
+    protected void insertSudoParams() {
+        int idx = 0;
+        String curArg;
+        while (idx < arguments.size()) {
+            curArg = arguments.get(idx);
+            if (SHELL_COMMAND_SEPARATOR.equals(curArg) || SHELL_COMMAND_SEPARATOR_AMP.equals(curArg) ||
+                    SHELL_COMMAND_SEPARATOR_BAR.equals(curArg)) {
+                arguments.add(idx + 1, "sudo");
+                arguments.add(idx + 2, "-S");
+                arguments.add(idx + 3, "-p");
+                arguments.add(idx + 4, "''");
+            }
+            idx++;
+        }
+        arguments.add(0, "''");
+        arguments.add(0, "-p");
+        arguments.add(0, "-S");
+        arguments.add(0, "sudo");
+    }
+
+    protected void writeSudoPassword() throws IOException {
+        OutputStream outputStream = null;
+        if (this.channel instanceof Channel) {
+            outputStream = ((Channel) this.channel).getOutputStream();
+        } else if (this.channel instanceof Process) {
+            outputStream = ((Process) this.channel).getOutputStream();
+        } else {
+            throw new IllegalArgumentException("This type of channel is not supported");
+        }
+        outputStream.write((this.password + "\n").getBytes());
+        outputStream.flush();
     }
 }

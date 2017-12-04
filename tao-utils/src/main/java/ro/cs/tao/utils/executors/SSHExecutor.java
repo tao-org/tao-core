@@ -17,7 +17,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.util.List;
 
 /**
@@ -25,10 +24,9 @@ import java.util.List;
  *
  * @author Cosmin Cara
  */
-public class SSHExecutor extends Executor {
+public class SSHExecutor extends Executor<Channel> {
 
     private SSHMode mode;
-    private Channel channel;
 
     public SSHExecutor(String host, List<String> args, boolean asSU) {
         super(host, args, asSU);
@@ -120,19 +118,7 @@ public class SSHExecutor extends Executor {
     private int executeSshCmd(boolean logMessages) throws JSchException, IOException {
         String cmdLine = String.join(" ", arguments);
         if (asSuperUser) {
-            int idx = 0;
-            String curArg;
-            while (idx < arguments.size()) {
-                curArg = arguments.get(idx);
-                if (SHELL_COMMAND_SEPARATOR.equals(curArg) || SHELL_COMMAND_SEPARATOR_AMP.equals(curArg) ||
-                        SHELL_COMMAND_SEPARATOR_BAR.equals(curArg)) {
-                    arguments.add(idx + 1, "sudo");
-                    arguments.add(idx + 2, "-S");
-                    arguments.add(idx + 3, "-p");
-                    arguments.add(idx + 4, "''");
-                }
-                idx++;
-            }
+            insertSudoParams();
             cmdLine = "sudo -S -p '' " + String.join(" ", arguments);
         }
         logger.info("[[" + host + "]] " + cmdLine);
@@ -151,9 +137,7 @@ public class SSHExecutor extends Executor {
         InputStream inputStream = this.channel.getInputStream();
         this.channel.connect();
         if (asSuperUser) {
-            OutputStream outputStream = this.channel.getOutputStream();
-            outputStream.write((this.password + "\n").getBytes());
-            outputStream.flush();
+            writeSudoPassword();
         }
         BufferedReader outReader = new BufferedReader(new InputStreamReader(inputStream));
         String line;
