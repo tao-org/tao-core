@@ -55,6 +55,41 @@ ALTER TABLE tao.template_type ADD CONSTRAINT PK_template_type
 
 
 -------------------------------------------------------------------------------
+-- table: container
+DROP TABLE IF EXISTS tao.container CASCADE;
+
+CREATE TABLE tao.container
+(
+	id varchar(1024) NOT NULL,
+	name varchar(1024) NOT NULL,
+	tag varchar(1024) NOT NULL,
+	application_path varchar(1024) NOT NULL,
+	created timestamp NOT NULL DEFAULT now(),
+    modified timestamp NULL
+);
+
+ALTER TABLE tao.container ADD CONSTRAINT PK_container
+	PRIMARY KEY (id);
+
+
+-------------------------------------------------------------------------------
+-- table: container_applications
+DROP TABLE IF EXISTS tao.container_applications CASCADE;
+
+CREATE TABLE tao.container_applications
+(
+	container_id varchar(1024) NOT NULL,
+	path varchar(1024) NOT NULL,
+	name varchar(1024) NOT NULL
+);
+
+ALTER TABLE tao.container_applications ADD CONSTRAINT PK_container_applications
+	PRIMARY KEY (container_id, path);
+
+ALTER TABLE tao.container_applications ADD CONSTRAINT FK_container_applications_container
+	FOREIGN KEY (container_id) REFERENCES tao.container (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
 -- table: processing_component
 DROP TABLE IF EXISTS tao.processing_component CASCADE;
 
@@ -73,6 +108,7 @@ CREATE TABLE tao.processing_component
 	visibility_id integer NOT NULL,
 	multi_thread boolean NOT NULL DEFAULT false,
 	node_affinity varchar(250) NULL,
+	container_id varchar(1024) NULL,
 	created timestamp NOT NULL DEFAULT now(),
     modified timestamp NULL,
 	active boolean NOT NULL DEFAULT true
@@ -89,6 +125,9 @@ ALTER TABLE tao.processing_component ADD CONSTRAINT FK_processing_component_user
 
 ALTER TABLE tao.processing_component ADD CONSTRAINT FK_processing_component_component_visibility
 	FOREIGN KEY (visibility_id) REFERENCES tao.component_visibility (id) ON DELETE No Action ON UPDATE No Action;
+
+ALTER TABLE tao.processing_component ADD CONSTRAINT FK_processing_component_container
+	FOREIGN KEY (container_id) REFERENCES tao.container (id) ON DELETE No Action ON UPDATE No Action;
 
 
 -------------------------------------------------------------------------------

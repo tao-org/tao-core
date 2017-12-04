@@ -182,6 +182,31 @@
         </attributes>
     </entity>
 
+    <entity class="ro.cs.tao.docker.Container" access="PROPERTY">
+        <table name="tao.container"/>
+
+        <attributes>
+            <id name="id">
+                <column name="id" nullable="false" column-definition="character varying(1024) NOT NULL"/>
+            </id>
+            <basic name="name">
+                <column name="name" nullable="false" column-definition="character varying(1024) NOT NULL"/>
+            </basic>
+            <basic name="tag">
+                <column name="tag" nullable="false" column-definition="character varying(1024) NOT NULL"/>
+            </basic>
+            <basic name="applicationPath">
+                <column name="application_path" nullable="false" column-definition="character varying(1024) NOT NULL"/>
+            </basic>
+
+            <element-collection name="applications" target-class="ro.cs.tao.docker.Application" access="PROPERTY" fetch="EAGER">
+                <collection-table name="tao.container_applications" >
+                    <join-column name="container_id" referenced-column-name="id" />
+                </collection-table>
+            </element-collection>
+        </attributes>
+    </entity>
+
 
     <entity class="ro.cs.tao.component.ProcessingComponent" access="PROPERTY">
         <table name="tao.processing_component"/>
@@ -400,7 +425,7 @@
                 <column name="key" nullable="false" column-definition="varchar(512) NOT NULL"/>
             </basic>
             <basic name="value">
-                <column name="value" nullable="false" column-definition="character varying(512) NOT NULL"/>
+                <column name="value" nullable="false" column-definition="varchar(512) NOT NULL"/>
             </basic>
         </attributes>
     </embeddable>
@@ -415,6 +440,17 @@
             <many-to-one name="serviceDescription" fetch="LAZY">
                 <join-column name="service_id" nullable="false"/>
             </many-to-one>
+        </attributes>
+    </embeddable>
+
+    <embeddable class="ro.cs.tao.docker.Application" access="PROPERTY">
+        <attributes>
+            <basic name="path">
+                <column name="path" nullable="false" column-definition="varchar(1024) NOT NULL"/>
+            </basic>
+            <basic name="name">
+                <column name="name" nullable="false" column-definition="varchar(1024) NOT NULL"/>
+            </basic>
         </attributes>
     </embeddable>
 
