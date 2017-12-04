@@ -1,5 +1,7 @@
 package ro.cs.tao.topology;
 
+import ro.cs.tao.configuration.ConfigurationManager;
+import ro.cs.tao.docker.Container;
 import ro.cs.tao.messaging.MessageBus;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
@@ -9,10 +11,17 @@ import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.utils.async.BinaryTask;
 import ro.cs.tao.utils.async.LazyInitialize;
+import ro.cs.tao.utils.executors.ExecutionUnit;
+import ro.cs.tao.utils.executors.Executor;
+import ro.cs.tao.utils.executors.ExecutorType;
+import ro.cs.tao.utils.executors.OutputConsumer;
+import ro.cs.tao.utils.executors.SSHMode;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -161,10 +170,59 @@ public class TopologyManager implements ITopologyManager {
     }
 
     public void setMasterNodeInfo(NodeDescription masterNodeInfo) {
-        this.masterNodeInfo = masterNodeInfo;
+        this.masterNodeInfo = masterNodeInfo != null ? masterNodeInfo : new NodeDescription();
         for (TopologyToolInstaller installer: this.installers) {
             installer.setMasterNodeDescription(masterNodeInfo);
         }
+        Map<String, String> settings = ConfigurationManager.getInstance().getValues("master");
+        this.masterNodeInfo.setUserName(settings.get("master.user"));
+        this.masterNodeInfo.setUserPass(settings.get("master.password"));
+    }
+
+    @Override
+    public List<Container> getAvailableDockerImages() {
+        List<Container> containers = new ArrayList<>();
+        List<String> args = new ArrayList<String>() {{
+           add("docker");
+           add("images");
+           add("--format");
+           add("'table {{.ID}}\\t{{.Tag}}\\t{{.Repository}}'");
+        }};
+        ExecutionUnit job = new ExecutionUnit(ExecutorType.PROCESS,
+                                              masterNodeInfo.getHostName(),
+                                              masterNodeInfo.getUserName(),
+                                              masterNodeInfo.getUserPass(),
+                                              args, true, SSHMode.EXEC);
+        List<String> lines = new ArrayList<>();
+        final Executor executor = Executor.execute(new OutputConsumer() {
+            @Override
+            public void consume(String message) {
+                lines.add(message);
+            }
+        }, job);
+        if (executor.getReturnCode() == 0) {
+            for (int i = 1; i < lines.size(); i++) {
+                String[] tokens = lines.get(i).split("\t");
+                Container container = new Container();
+                container.setId(tokens[0]);
+                container.setName(tokens[1].contains("/") ?
+                                          tokens[1].substring(tokens[1].indexOf("/") + 1) :
+                                          tokens[1]);
+                container.setTag(tokens[2]);
+                containers.add(container);
+                try {
+                    final Container existing = getPersistenceManager().getContainerById(tokens[0]);
+                    if (existing == null) {
+                        getPersistenceManager().saveContainer(container);
+                    }
+                } catch (PersistenceException e) {
+                    logger.warning(e.getMessage());
+                }
+            }
+        } else {
+            logger.severe("Docker execution failed. Check that Docker is installed and the sudo credentials are valid");
+        }
+        return containers;
     }
 
     private void onCompleted(NodeDescription node, ToolInstallStatus status) {
