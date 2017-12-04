@@ -1,5 +1,6 @@
 package ro.cs.tao.persistence;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
@@ -1167,9 +1168,72 @@ public class PersistenceManager {
      * @return
      */
     @Transactional(readOnly = true)
-    public Container getContainerById(String id)
+    public Container getContainerById(String id) throws PersistenceException
     {
-        return containerRepository.findById(id);
+        // check method parameters
+        if(id == null || StringUtils.isEmpty(id))
+        {
+            throw new PersistenceException("Invalid parameter was provided for retrieving a container (empty identifier)");
+        }
+
+        // check if there is such container (to retrieve) with the given identifier
+        final Container existingContainer = containerRepository.findById(id);
+        if (existingContainer == null)
+        {
+            throw new PersistenceException("There is no container with the given identifier: " + id);
+        }
+
+        return existingContainer;
+    }
+
+    /**
+     * Retrieve container by its identifier
+     * @return
+     */
+    @Transactional(readOnly = true)
+    public boolean checkIfExistsContainerById(String id) throws PersistenceException
+    {
+        boolean result = false;
+
+        // check method parameters
+        if(id == null || StringUtils.isEmpty(id))
+        {
+            throw new PersistenceException("Invalid parameter was provided for verifying a container existence (empty identifier)");
+        }
+
+        // check if there is such container (to retrieve) with the given identifier
+        final Container existingContainer = containerRepository.findById(id);
+        if (existingContainer != null)
+        {
+            result = true;
+        }
+
+        return result;
+    }
+
+    /**
+     * Delete container
+     * @param id - container identifier
+     * @return
+     * @throws PersistenceException
+     */
+    @Transactional
+    public void deleteContainer(String id) throws PersistenceException
+    {
+        // check method parameters
+        if(id == null || StringUtils.isEmpty(id))
+        {
+            throw new PersistenceException("Invalid parameter was provided for deleting a container (empty identifier)");
+        }
+
+        // check if there is such container (to delete) with the given identifier
+        final Container existingContainer = containerRepository.findById(id);
+        if (existingContainer == null)
+        {
+            throw new PersistenceException("There is no container with the given identifier: " + id);
+        }
+
+        containerRepository.delete(existingContainer);
     }
 
 }

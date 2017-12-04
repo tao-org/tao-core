@@ -456,6 +456,50 @@ public class PersistenceManagerTest {
     }
 
     @Test
+    public void TC_07_03_delete_container()
+    {
+        try
+        {
+            // add a new container for test
+            Container container = new Container();
+            container.setId("container02");
+            container.setName("container for test");
+            container.setTag("container tag");
+            container.setApplicationPath(".\\mypath");
+
+            // list of container applications
+            List<Application> applications = new ArrayList<>();
+
+            final Application app1 = new Application();
+            app1.setPath(".\\mypath1");
+            app1.setName("App1");
+            applications.add(app1);
+
+            final Application app2 = new Application();
+            app2.setPath(".\\mypath2");
+            app2.setName("App2");
+            applications.add(app2);
+
+            container.setApplications(applications);
+
+            container = persistenceManager.saveContainer(container);
+            // check persisted container
+            Assert.assertTrue(container != null && container.getId() != null);
+
+            // delete container
+            persistenceManager.deleteContainer(container.getId());
+
+            // check that the container was deleted
+            Assert.assertTrue(!persistenceManager.checkIfExistsContainerById("container02"));
+        }
+        catch (PersistenceException e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    @Test
     public void TC_07_save_new_processing_component()
     {
         try
