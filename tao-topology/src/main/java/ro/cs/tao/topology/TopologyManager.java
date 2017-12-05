@@ -230,7 +230,8 @@ public class TopologyManager implements ITopologyManager {
                 }
             }
         } else {
-            logger.severe("Docker execution failed. Check that Docker is installed and the sudo credentials are valid");
+            logger.warning("Docker execution failed. Check that Docker is installed and the sudo credentials are valid");
+            containers.addAll(getPersistenceManager().getContainers());
         }
         return containers;
     }
