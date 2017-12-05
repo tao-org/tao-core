@@ -176,9 +176,9 @@ public class TopologyManager implements ITopologyManager {
         for (TopologyToolInstaller installer: this.installers) {
             installer.setMasterNodeDescription(masterNodeInfo);
         }
-        Map<String, String> settings = ConfigurationManager.getInstance().getValues("master");
-        this.masterNodeInfo.setUserName(settings.get("master.user"));
-        this.masterNodeInfo.setUserPass(settings.get("master.password"));
+        Map<String, String> settings = ConfigurationManager.getInstance().getValues("topology.master");
+        this.masterNodeInfo.setUserName(settings.get("topology.master.user"));
+        this.masterNodeInfo.setUserPass(settings.get("topology.master.password"));
     }
 
     @Override
@@ -271,8 +271,9 @@ public class TopologyManager implements ITopologyManager {
             masterNodeInfo = new NodeDescription();
             String hostName = InetAddress.getLocalHost().getHostName();
             masterNodeInfo.setHostName(hostName);
-            masterNodeInfo.setUserName(ConfigurationManager.getInstance().getValue("topology.master.user"));
-            masterNodeInfo.setUserPass(ConfigurationManager.getInstance().getValue("topology.master.password"));
+            Map<String, String> settings = ConfigurationManager.getInstance().getValues("topology.master");
+            masterNodeInfo.setUserName(settings.get("topology.master.user"));
+            masterNodeInfo.setUserPass(settings.get("topology.master.password"));
         } catch (UnknownHostException e) {
             e.printStackTrace();
             throw new TopologyException("Master hostname retrieval failure", e);

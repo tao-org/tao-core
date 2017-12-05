@@ -18,7 +18,9 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.jar.JarEntry;
@@ -34,7 +36,7 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
     private List<ToolInstallConfig> toolInstallConfigs;
     private String installToolsRootPath;
     private NodeDescription masterNodeInfo;
-    Logger logger;
+    protected static Logger logger = Logger.getLogger(DefaultToolInstaller.class.getName());
 
     public DefaultToolInstaller() {
         String taoWorkingDir = getTaoWorkingDir();
@@ -142,6 +144,9 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
             if (nodeDescr.getUserPass() != null) {
                 pass = nodeDescr.getUserPass();
             }
+        } else {
+            user = masterNodeInfo.getUserName();
+            pass = masterNodeInfo.getUserPass();
         }
 
         ExecutionUnit job = null;
@@ -256,13 +261,21 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
         if(platform.getId() == Platform.ID.win) {
             workingDirectory = System.getenv("AppData");
         } else {
-            workingDirectory = System.getProperty("user.home");
+            try {
+                workingDirectory = Files.createTempDirectory("TAO").toString();
+                //workingDirectory = workingDirectory + "/TAO_" + new SimpleDateFormat("yyyyMMdd_HHmmss.SSS").format(new Date(System.currentTimeMillis()));
+            } catch (IOException e) {
+                throw new TopologyException("Cannot create TAO temporary directory for Topology scripts");
+            }
         }
         String taoUserDir = workingDirectory + "/TAO";
         File taoUserDirFile = new File(taoUserDir);
         if (!taoUserDirFile.exists()) {
-            taoUserDirFile.mkdir();
-            System.out.println("Directory created :: " + taoUserDir);
+            if (taoUserDirFile.mkdir()) {
+                System.out.println("TAO user working directory created :: " + taoUserDir);
+            } else {
+                logger.severe("TAO user working directory cannot be created in " + taoUserDir);
+            }
         }
         return taoUserDir;
     }
@@ -276,8 +289,11 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
             //Verify if destinationFolder is already present; If not then create it
             if (!destinationFolder.exists())
             {
-                destinationFolder.mkdir();
-                System.out.println("Directory created :: " + destinationFolder);
+                if (destinationFolder.mkdir()) {
+                    System.out.println("Destination directory created :: " + destinationFolder);
+                } else {
+                    logger.severe("TAO destination directory cannot be created in " + destinationFolder);
+                }
             }
 
             //Get all files from source directory

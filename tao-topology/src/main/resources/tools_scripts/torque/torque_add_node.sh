@@ -66,7 +66,7 @@ function addNode() {
        runCmd "env \"PATH=$PATH:/usr/local/bin/\" qmgr -c \"create node ${TARGET_NODE_NAME}\"" $USER $USER_PASS
     else
         echo "Executing env \"PATH=$PATH:/usr/local/bin/\" qmgr -c \"create node ${TARGET_NODE_NAME} np=${TARGET_NODE_NB_PROCS}\""
-	runCmd "env \"PATH=$PATH:/usr/local/bin/\" qmgr -c \"create node ${TARGET_NODE_NAME} np=${TARGET_NODE_NB_PROCS}\"" $USER $USER_PASS
+	    runCmd "env \"PATH=$PATH:/usr/local/bin/\" qmgr -c \"create node ${TARGET_NODE_NAME} np=${TARGET_NODE_NB_PROCS}\"" $USER $USER_PASS
     fi
 }
 
@@ -75,11 +75,14 @@ function runCmd() {
     USER="$2"
     USER_PASS="$3"
     if [ -z ${USER} ] ; then
+        echo "Executing: ${CMD} ..."
         ${CMD}
     else
         if [ -z ${USER_PASS} ] ; then
+            echo "Executing: su ${USER} -c \"${CMD}\" ..."
             su ${USER} -c "${CMD}"
         else
+            echo "Executing: echo ${USER_PASS} | su ${USER} -c \"echo ${USER_PASS} | sudo -S ${CMD}\" ..."
             echo ${USER_PASS} | su ${USER} -c "echo ${USER_PASS} | sudo -S ${CMD}"
         fi
     fi
