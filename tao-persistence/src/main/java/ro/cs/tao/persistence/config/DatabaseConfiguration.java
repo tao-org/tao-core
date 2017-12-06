@@ -29,6 +29,8 @@ import org.hibernate.jpa.HibernatePersistenceProvider;
 
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 
+import ro.cs.tao.configuration.ConfigurationManager;
+
 @Configuration
 @EnableTransactionManagement
 @PropertySource("classpath:persistence/persistence.properties")
@@ -43,17 +45,17 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
 	private static final String PROPERTY_NAME_DATABASE_DRIVER = "spring.database.driverClassName";
 
 	/**
-	 * TODO TO BE REPLACED from configuration
+	 * Constant for the DB connection URL
 	 */
 	private static final String PROPERTY_NAME_DATABASE_URL = "spring.datasource.url";
 
 	/**
-	 * TODO TO BE REPLACED from configuration
+	 * Constant for the DB connection username
 	 */
 	private static final String PROPERTY_NAME_DATABASE_USERNAME = "spring.datasource.username";
 
 	/**
-	 * TODO TO BE REPLACED from configuration
+	 * Constant for the DB connection password
 	 */
 	private static final String PROPERTY_NAME_DATABASE_PASSWORD = "spring.datasource.password";
 
@@ -85,7 +87,12 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
 	/**
 	 * C3p0 Connection Pool login timeout
 	 */
-	private static final String PROPERTY_NAME_DATABASE_CONNECTION_LOGINTIMEOUT = "spring.datasource.loginTimeout";
+	//private static final String PROPERTY_NAME_DATABASE_CONNECTION_LOGINTIMEOUT = "spring.datasource.loginTimeout";
+
+	/**
+	 * C3p0 Connection Pool test connection on checkout
+	 */
+	private static final String PROPERTY_NAME_DATABASE_CONNECTION_TESTONCHECKOUT = "spring.datasource.testConnectionOnCheckout";
 
 	/**
 	 * Constant for the hibernate dialect property name (within .properties
@@ -162,11 +169,16 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
 			dataSource.setDriverClass(environment.getRequiredProperty(PROPERTY_NAME_DATABASE_DRIVER));
 
 			// DB URL + user name + pass from persistence.properties
-			dataSource.setJdbcUrl(environment.getRequiredProperty(PROPERTY_NAME_DATABASE_URL));
-			dataSource.setUser(environment.getRequiredProperty(PROPERTY_NAME_DATABASE_USERNAME));
-			dataSource.setPassword(environment.getRequiredProperty(PROPERTY_NAME_DATABASE_PASSWORD));
+			//dataSource.setJdbcUrl(environment.getRequiredProperty(PROPERTY_NAME_DATABASE_URL));
+			//dataSource.setUser(environment.getRequiredProperty(PROPERTY_NAME_DATABASE_USERNAME));
+			//dataSource.setPassword(environment.getRequiredProperty(PROPERTY_NAME_DATABASE_PASSWORD));
 
-			dataSource.setInitialPoolSize(Integer
+            // DB URL + user name + pass from tao.properties
+            dataSource.setJdbcUrl(ConfigurationManager.getInstance().getValue(PROPERTY_NAME_DATABASE_URL));
+            dataSource.setUser(ConfigurationManager.getInstance().getValue(PROPERTY_NAME_DATABASE_USERNAME));
+            dataSource.setPassword(ConfigurationManager.getInstance().getValue(PROPERTY_NAME_DATABASE_PASSWORD));
+
+            dataSource.setInitialPoolSize(Integer
 					.parseInt(environment.getRequiredProperty(PROPERTY_NAME_DATABASE_CONNECTION_INITIALPOOLSIZE)));
 			dataSource.setMinPoolSize(
 					Integer.parseInt(environment.getRequiredProperty(PROPERTY_NAME_DATABASE_CONNECTION_MINPOOLSIZE)));
@@ -176,8 +188,9 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
 					Integer.parseInt(environment.getRequiredProperty(PROPERTY_NAME_DATABASE_CONNECTION_MAXSTATEMENTS)));
 			dataSource.setIdleConnectionTestPeriod(Integer
 					.parseInt(environment.getRequiredProperty(PROPERTY_NAME_DATABASE_CONNECTION_IDLETESTPERIOD)));
-			dataSource.setLoginTimeout(
-					Integer.parseInt(environment.getRequiredProperty(PROPERTY_NAME_DATABASE_CONNECTION_LOGINTIMEOUT)));
+//			dataSource.setLoginTimeout(
+//					Integer.parseInt(environment.getRequiredProperty(PROPERTY_NAME_DATABASE_CONNECTION_LOGINTIMEOUT)));
+			dataSource.setTestConnectionOnCheckout(Boolean.getBoolean(environment.getRequiredProperty(PROPERTY_NAME_DATABASE_CONNECTION_TESTONCHECKOUT)));
 
 			if (dataSource.getConnection() == null) {
 				logger.log(Level.SEVERE, "Database connection cannot be established!");
