@@ -1,4 +1,4 @@
--- trigger that updates the "modified" column value in "tao.processing_component" table when a node is updated
+-- trigger that updates the "modified" column value in "tao.processing_component" table when a component is updated
 
 -- the trigger function
 CREATE OR REPLACE FUNCTION tao.processing_component_update()
