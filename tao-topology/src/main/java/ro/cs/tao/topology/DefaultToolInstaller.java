@@ -145,8 +145,12 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
                 pass = nodeDescr.getUserPass();
             }
         } else {
-            user = masterNodeInfo.getUserName();
-            pass = masterNodeInfo.getUserPass();
+            if (user == null || "".equals(user)) {
+                user = masterNodeInfo.getUserName();
+            }
+            if (pass == null || "".equals(pass)) {
+                pass = masterNodeInfo.getUserPass();
+            }
         }
 
         ExecutionUnit job = null;
