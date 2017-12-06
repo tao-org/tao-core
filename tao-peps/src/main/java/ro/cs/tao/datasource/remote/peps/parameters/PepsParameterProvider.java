@@ -55,8 +55,9 @@ public class PepsParameterProvider implements ParameterProvider {
                         put("isNrt",  new ParameterDescriptor("isNrt", Boolean.class));
                         put("startDate",  new ParameterDescriptor("startDate", Date.class, true));
                         put("completionDate",  new ParameterDescriptor("completionDate", Date.class));
-                        put("box",  new ParameterDescriptor("box", Polygon2D.class, true));
+                        put("box",  new ParameterDescriptor("box", Polygon2D.class));
                         put("cloudCover",  new ParameterDescriptor("cloudCover", Double.class));
+                        put("tileid", new ParameterDescriptor("tileid", String.class));
                     }});
                 }});
         final String targetFolder = ConfigurationManager.getInstance().getValue("product.location");

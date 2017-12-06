@@ -37,6 +37,7 @@
  */
 package ro.cs.tao.datasource.remote;
 
+import org.apache.http.auth.UsernamePasswordCredentials;
 import ro.cs.tao.ProgressListener;
 import ro.cs.tao.datasource.InterruptedException;
 import ro.cs.tao.datasource.ProductFetchStrategy;
@@ -90,6 +91,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     protected EOProduct currentProduct;
     protected double currentProductProgress;
     protected String currentStep;
+    protected UsernamePasswordCredentials credentials;
 
     private boolean shouldCompress;
     private boolean shouldDeleteAfterCompression;
@@ -103,6 +105,11 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     public DownloadStrategy(String targetFolder, Properties properties) {
         this.destination = targetFolder;
         this.props = properties;
+    }
+
+    @Override
+    public void setCredentials(UsernamePasswordCredentials credentials) {
+        this.credentials = credentials;
     }
 
     public void setDestination(String destination) {
@@ -186,7 +193,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
             location = new URI(descriptor.getLocation());
         } catch (URISyntaxException ignored) {
         }
-        return location != null ? location.toString() : null;
+        return location != null ? location.toString() + "/?issuerId=peps" : null;
     }
 
     void shouldCompress(boolean shouldCompress) {
@@ -374,6 +381,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
             throw new IOException("Operation timed out");
         } catch (Exception ex) {
             logger.severe(String.format(errorMessage, remoteUrl, ex.getMessage()));
+            file = null;
         } finally {
             if (connection != null) {
                 connection.disconnect();

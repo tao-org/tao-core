@@ -99,6 +99,9 @@ public abstract class AbstractDataSource<Q extends DataQuery> extends DataSource
         ProductFetchStrategy productFetchStrategy = null;
         if (this.parameterProvider != null) {
             productFetchStrategy = this.parameterProvider.getRegisteredProductFetchStrategies().get(sensorName);
+            if (productFetchStrategy != null) {
+                productFetchStrategy.setCredentials(this.credentials);
+            }
         }
         return productFetchStrategy;
     }

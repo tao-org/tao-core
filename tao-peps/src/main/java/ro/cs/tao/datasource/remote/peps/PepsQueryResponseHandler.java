@@ -15,13 +15,16 @@ import javax.json.JsonObject;
 import javax.json.JsonReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Cosmin Cara
  */
-public class PepsResponseHandler implements JSonResponseHandler<EOProduct> {
+public class PepsQueryResponseHandler implements JSonResponseHandler<EOProduct> {
+    private final DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+
     @Override
     public List<EOProduct> readValues(String content, AttributeFilter...filters) throws IOException {
         List<EOProduct> results = new ArrayList<>();
@@ -47,6 +50,7 @@ public class PepsResponseHandler implements JSonResponseHandler<EOProduct> {
                 result.setProductType(properties.getString("productType"));
                 result.setPixelType(PixelType.UINT16);
                 result.setLocation(properties.getJsonObject("services").getJsonObject("download").getString("url"));
+                result.setApproximateSize(properties.getJsonObject("services").getJsonObject("download").getJsonNumber("size").longValue());
                 Collection collection = Enum.valueOf(Collection.class, properties.getString("collection"));
                 switch (collection) {
                     case S1:

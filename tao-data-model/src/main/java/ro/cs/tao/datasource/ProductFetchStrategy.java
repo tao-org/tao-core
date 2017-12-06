@@ -1,5 +1,6 @@
 package ro.cs.tao.datasource;
 
+import org.apache.http.auth.UsernamePasswordCredentials;
 import ro.cs.tao.eodata.EOProduct;
 
 import java.io.IOException;
@@ -11,6 +12,8 @@ import java.nio.file.Path;
  * @author Cosmin Cara
  */
 public interface ProductFetchStrategy {
+
+    void setCredentials(UsernamePasswordCredentials credentials);
 
     /**
      * Retrieves a product given its name. Since the data source may not be able to compose the product URI,

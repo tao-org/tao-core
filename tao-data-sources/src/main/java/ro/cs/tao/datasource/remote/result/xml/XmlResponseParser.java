@@ -4,7 +4,6 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import ro.cs.tao.datasource.remote.result.ParseException;
 import ro.cs.tao.datasource.remote.result.ResponseParser;
-import ro.cs.tao.eodata.EOData;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -16,7 +15,7 @@ import java.util.List;
 /**
  * @author Cosmin Cara
  */
-public class XmlResponseParser<T extends EOData> implements ResponseParser<T> {
+public class XmlResponseParser<T> implements ResponseParser<T> {
 
     private XmlResponseHandler handler;
 
