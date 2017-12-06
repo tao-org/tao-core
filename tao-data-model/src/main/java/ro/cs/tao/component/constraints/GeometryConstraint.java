@@ -30,8 +30,9 @@ import java.util.Arrays;
 /**
  * @author Cosmin Cara
  */
+@Constraint(name = "Same extent")
 @XmlJavaTypeAdapter(ConstraintAdapter.class)
-public class GeometryConstraint extends Constraint<EOData> {
+public class GeometryConstraint extends IOConstraint<EOData> {
     @Override
     public boolean check(EOData... args) {
         return args != null && args.length > 0 &&

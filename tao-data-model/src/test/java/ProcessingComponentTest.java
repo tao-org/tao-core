@@ -5,6 +5,7 @@ import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.SourceDescriptor;
 import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.component.Variable;
+import ro.cs.tao.component.constraints.Constraint;
 import ro.cs.tao.component.constraints.RasterConstraint;
 import ro.cs.tao.component.template.BasicTemplate;
 import ro.cs.tao.component.template.Template;
@@ -197,7 +198,7 @@ public class ProcessingComponentTest extends BaseSerializationTest<ProcessingCom
                              "-mode.vector.startlabel\n" +
                              "$startlabel_int", false);
         SourceDescriptor sourceDescriptor = new SourceDescriptor("sourceProductFile");
-        sourceDescriptor.addConstraint(RasterConstraint.class.getName());
+        sourceDescriptor.addConstraint(RasterConstraint.class.getAnnotation(Constraint.class).name());
         entity = new ProcessingComponent() {{
             setId("OTB-Segmentation-CC");
             setLabel("OTB Segmentation CC");

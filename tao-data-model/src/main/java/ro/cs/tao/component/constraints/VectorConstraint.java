@@ -28,8 +28,9 @@ import java.util.Arrays;
 /**
  * @author Cosmin Cara
  */
+@Constraint(name = "Only vectors")
 @XmlJavaTypeAdapter(ConstraintAdapter.class)
-public class VectorConstraint extends Constraint<VectorData> {
+public class VectorConstraint extends IOConstraint<VectorData> {
     @Override
     public boolean check(VectorData... args) {
         return args != null && args.length > 0 &&

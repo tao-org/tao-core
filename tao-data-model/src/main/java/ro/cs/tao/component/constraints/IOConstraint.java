@@ -19,22 +19,9 @@
 
 package ro.cs.tao.component.constraints;
 
-import ro.cs.tao.eodata.EOProduct;
-import ro.cs.tao.eodata.enums.DataFormat;
-import ro.cs.tao.serialization.ConstraintAdapter;
-
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
-import java.util.Arrays;
-
 /**
  * @author Cosmin Cara
  */
-@Constraint(name = "Only rasters")
-@XmlJavaTypeAdapter(ConstraintAdapter.class)
-public class RasterConstraint extends IOConstraint<EOProduct> {
-    @Override
-    public boolean check(EOProduct... args) {
-        return args != null && args.length > 0 &&
-               Arrays.stream(args).allMatch(a -> DataFormat.RASTER.equals(a.getFormatType()));
-    }
+public abstract class IOConstraint<T> {
+    public abstract boolean check(T... args);
 }
