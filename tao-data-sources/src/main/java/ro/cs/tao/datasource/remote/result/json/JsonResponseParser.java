@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 /**
  * @author Cosmin Cara
  */
-public class JsonResponseParser<T extends EOData> implements ResponseParser<T> {
+public class JsonResponseParser<T> implements ResponseParser<T> {
     private static final Logger logger = Logger.getLogger(JsonResponseParser.class.getName());
     private final JSonResponseHandler<T> handler;
 
@@ -39,25 +39,28 @@ public class JsonResponseParser<T extends EOData> implements ResponseParser<T> {
                                                                  .collect(Collectors.toSet())));
             }
             result = handler.readValues(content);
-            result.forEach(r -> {
+            result.forEach(res -> {
 //                Attribute[] attrs = r.getAttributes();
 //                List<Attribute> attributes = Arrays.stream(attrs).collect(Collectors.toList());
-                List<Attribute> attributes = r.getAttributes();
-                int idx = 0;
-                while (idx < attributes.size()) {
-                    Attribute attribute = attributes.get(idx);
-                    if (!filter.accept(attribute.getName(), attribute.getValue())) {
-                        attributes.remove(idx);
-                    } else {
-                        idx++;
+                if (res instanceof EOData) {
+                    EOData r = (EOData) res;
+                    List<Attribute> attributes = r.getAttributes();
+                    int idx = 0;
+                    while (idx < attributes.size()) {
+                        Attribute attribute = attributes.get(idx);
+                        if (!filter.accept(attribute.getName(), attribute.getValue())) {
+                            attributes.remove(idx);
+                        } else {
+                            idx++;
+                        }
                     }
-                }
 //                if (attrs.length != attributes.size()) {
 //                    r.setAttributes(attributes.toArray(new Attribute[attributes.size()]));
 //                }
 
-                if (r.getAttributes().size() != attributes.size()) {
-                    r.setAttributes(attributes);
+                    if (r.getAttributes().size() != attributes.size()) {
+                        r.setAttributes(attributes);
+                    }
                 }
             });
         } catch (IOException e) {

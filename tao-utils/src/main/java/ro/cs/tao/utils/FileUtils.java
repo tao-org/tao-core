@@ -25,11 +25,19 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.FileSystem;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This class provides additional functionality in handling with files. All methods in this class dealing with
@@ -538,5 +546,40 @@ public class FileUtils {
             uri = URI.create("jar:" + baseUri + "!/");
         }
         return uri;
+    }
+
+    public static Path unzip(Path zipFile) throws IOException {
+        URI uri = URI.create("jar:file:" + zipFile.toUri().getPath());
+        Map<String, String> env = new HashMap<>();
+        env.put("create", "false");
+        Path destination = zipFile.getParent().resolve(getFilenameWithoutExtension(zipFile.toFile()));
+        if (Files.notExists(destination)) {
+            Files.createDirectories(destination);
+        }
+        try (FileSystem zipFileSystem = FileSystems.newFileSystem(uri, env)) {
+            final Path root = zipFileSystem.getPath("/");
+            Files.walkFileTree(root, new SimpleFileVisitor<Path>(){
+                @Override
+                public FileVisitResult visitFile(Path file,
+                                                 BasicFileAttributes attrs) throws IOException {
+                    final Path destFile = Paths.get(destination.toString(),
+                                                    file.toString());
+                    Files.copy(file, destFile, StandardCopyOption.REPLACE_EXISTING);
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir,
+                                                         BasicFileAttributes attrs) throws IOException {
+                    final Path dirToCreate = Paths.get(destination.toString(),
+                                                       dir.toString());
+                    if(Files.notExists(dirToCreate)){
+                        Files.createDirectory(dirToCreate);
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        }
+        return destination;
     }
 }
