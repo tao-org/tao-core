@@ -29,8 +29,9 @@ import java.util.Arrays;
 /**
  * @author Cosmin Cara
  */
+@Constraint(name = "Only rasters")
 @XmlJavaTypeAdapter(ConstraintAdapter.class)
-public class RasterConstraint extends Constraint<EOProduct> {
+public class RasterConstraint extends IOConstraint<EOProduct> {
     @Override
     public boolean check(EOProduct... args) {
         return args != null && args.length > 0 &&

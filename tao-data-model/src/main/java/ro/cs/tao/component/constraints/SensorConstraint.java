@@ -28,8 +28,9 @@ import java.util.Arrays;
 /**
  * @author Cosmin Cara
  */
+@Constraint(name = "Same sensor")
 @XmlJavaTypeAdapter(ConstraintAdapter.class)
-public class SensorConstraint extends Constraint<EOProduct> {
+public class SensorConstraint extends IOConstraint<EOProduct> {
     @Override
     public boolean check(EOProduct... args) {
         return args != null && args.length > 0 &&

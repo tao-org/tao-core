@@ -28,8 +28,9 @@ import java.util.Arrays;
 /**
  * @author Cosmin Cara
  */
+@Constraint(name = "Same dimensions")
 @XmlJavaTypeAdapter(ConstraintAdapter.class)
-public class DimensionConstraint extends Constraint<EOProduct> {
+public class DimensionConstraint extends IOConstraint<EOProduct> {
     @Override
     public boolean check(EOProduct... args) {
         return args != null && args.length > 0 &&

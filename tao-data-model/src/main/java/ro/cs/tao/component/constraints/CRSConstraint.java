@@ -31,8 +31,9 @@ import java.util.Arrays;
 /**
  * @author Cosmin Cara
  */
+@Constraint(name = "Same CRS")
 @XmlJavaTypeAdapter(ConstraintAdapter.class)
-public class CRSConstraint extends Constraint<EOData> {
+public class CRSConstraint extends IOConstraint<EOData> {
     @Override
     public boolean check(EOData... args) {
         return args != null && args.length > 0 &&

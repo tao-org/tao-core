@@ -4,12 +4,19 @@ import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.serialization.MediaType;
 import ro.cs.tao.serialization.SerializationException;
 
+import java.util.List;
+
 /**
  * Service for managing ProcessingComponent entities.
  *
  * @author Cosmin Cara
  */
 public interface ComponentService extends CRUDService<ProcessingComponent> {
+
+    /**
+     * Retrieves the list of class names that represent component input/output constraints.
+     */
+    List<String> getAvailableConstraints();
 
     /**
      * Imports the definition of a processing component from the given data.
