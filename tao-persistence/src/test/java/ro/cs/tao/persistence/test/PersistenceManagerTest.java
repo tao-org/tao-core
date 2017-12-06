@@ -401,26 +401,7 @@ public class PersistenceManagerTest {
         try
         {
             // add a new container for test
-            Container container = new Container();
-            container.setId("container01");
-            container.setName("container for test");
-            container.setTag("container tag");
-            container.setApplicationPath(".\\mypath");
-
-            // list of container applications
-            List<Application> applications = new ArrayList<>();
-
-            final Application app1 = new Application();
-            app1.setPath(".\\mypath1");
-            app1.setName("App1");
-            applications.add(app1);
-
-            final Application app2 = new Application();
-            app2.setPath(".\\mypath2");
-            app2.setName("App2");
-            applications.add(app2);
-
-            container.setApplications(applications);
+            Container container = createNewTestContainer("container01");
 
             container = persistenceManager.saveContainer(container);
             // check persisted container
@@ -431,6 +412,31 @@ public class PersistenceManagerTest {
             logger.error(ExceptionUtils.getStackTrace(e));
             Assert.fail(e.getMessage());
         }
+    }
+
+    private Container createNewTestContainer(String containerId) {
+        // add a new container for test
+        Container container = new Container();
+        container.setId(containerId);
+        container.setName("container for test");
+        container.setTag("container tag");
+        container.setApplicationPath(".\\mypath");
+
+        // list of container applications
+        List<Application> applications = new ArrayList<>();
+
+        final Application app1 = new Application();
+        app1.setPath(".\\mypath1");
+        app1.setName("App1");
+        applications.add(app1);
+
+        final Application app2 = new Application();
+        app2.setPath(".\\mypath2");
+        app2.setName("App2");
+        applications.add(app2);
+
+        container.setApplications(applications);
+        return container;
     }
 
     @Test
@@ -456,31 +462,12 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_12_delete_container()
+    public void TC_12_delete_container_with_applications_no_PC()
     {
         try
         {
             // add a new container for test
-            Container container = new Container();
-            container.setId("container02");
-            container.setName("container for test");
-            container.setTag("container tag");
-            container.setApplicationPath(".\\mypath");
-
-            // list of container applications
-            List<Application> applications = new ArrayList<>();
-
-            final Application app1 = new Application();
-            app1.setPath(".\\mypath1");
-            app1.setName("App1");
-            applications.add(app1);
-
-            final Application app2 = new Application();
-            app2.setPath(".\\mypath2");
-            app2.setName("App2");
-            applications.add(app2);
-
-            container.setApplications(applications);
+            Container container = createNewTestContainer("container02");
 
             container = persistenceManager.saveContainer(container);
             // check persisted container
@@ -505,62 +492,7 @@ public class PersistenceManagerTest {
         try
         {
             // add a new processing component for test
-            ProcessingComponent component = new ProcessingComponent();
-            component.setId("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
-            component.setLabel("component label");
-            component.setVersion("component version");
-            component.setDescription("component description");
-            component.setAuthors("component authors");
-            component.setCopyright("component copyright");
-            component.setFileLocation("component file location");
-            component.setWorkingDirectory("component working directory");
-
-            Template template = new BasicTemplate();
-            template.setName("basic template name");
-            template.setTemplateType(TemplateType.VELOCITY);
-            component.setTemplate(template);
-            component.setTemplateType(TemplateType.VELOCITY);
-
-            component.setVisibility(ProcessingComponentVisibility.CONTRIBUTOR);
-            component.setNodeAffinity("Any");
-            component.setMultiThread(true);
-            component.setActive(true);
-
-            component.setContainerId("container01");
-
-            // list of component variables
-            Set<Variable> variables = new HashSet<>();
-
-            final Variable var1 = new Variable();
-            var1.setKey("var1");
-            var1.setValue("value1");
-            variables.add(var1);
-
-            final Variable var2 = new Variable();
-            var2.setKey("var2");
-            var2.setValue("value2");
-            variables.add(var2);
-
-            component.setVariables(variables);
-
-            // list of component parameters
-            List<ParameterDescriptor> parameters = new ArrayList<>();
-
-            final ParameterDescriptor param1 = new ParameterDescriptor();
-            param1.setId("testParam1");
-            param1.setType(ParameterType.REGULAR);
-            param1.setDataType(String.class);
-            param1.setLabel("Test Param 1");
-            parameters.add(param1);
-
-            final ParameterDescriptor param2 = new ParameterDescriptor();
-            param2.setId("testParam2");
-            param2.setType(ParameterType.REGULAR);
-            param2.setDataType(Integer.class);
-            param2.setLabel("Test Param 2");
-            parameters.add(param2);
-
-            component.setParameterDescriptors(parameters);
+            ProcessingComponent component = createNewProcessingComponent("component01", "container01");
 
             component = persistenceManager.saveProcessingComponent(component);
             // check persisted component
@@ -571,6 +503,67 @@ public class PersistenceManagerTest {
             logger.error(ExceptionUtils.getStackTrace(e));
             Assert.fail(e.getMessage());
         }
+    }
+
+    private ProcessingComponent createNewProcessingComponent(String componentId, String containerId) {
+        // add a new processing component for test
+        ProcessingComponent component = new ProcessingComponent();
+        component.setId(componentId);
+        component.setLabel("component label");
+        component.setVersion("component version");
+        component.setDescription("component description");
+        component.setAuthors("component authors");
+        component.setCopyright("component copyright");
+        component.setFileLocation("component file location");
+        component.setWorkingDirectory("component working directory");
+
+        Template template = new BasicTemplate();
+        template.setName("basic template name");
+        template.setTemplateType(TemplateType.VELOCITY);
+        component.setTemplate(template);
+        component.setTemplateType(TemplateType.VELOCITY);
+
+        component.setVisibility(ProcessingComponentVisibility.CONTRIBUTOR);
+        component.setNodeAffinity("Any");
+        component.setMultiThread(true);
+        component.setActive(true);
+
+        component.setContainerId(containerId);
+
+        // list of component variables
+        Set<Variable> variables = new HashSet<>();
+
+        final Variable var1 = new Variable();
+        var1.setKey("var1");
+        var1.setValue("value1");
+        variables.add(var1);
+
+        final Variable var2 = new Variable();
+        var2.setKey("var2");
+        var2.setValue("value2");
+        variables.add(var2);
+
+        component.setVariables(variables);
+
+        // list of component parameters
+        List<ParameterDescriptor> parameters = new ArrayList<>();
+
+        final ParameterDescriptor param1 = new ParameterDescriptor();
+        param1.setId("testParam1");
+        param1.setType(ParameterType.REGULAR);
+        param1.setDataType(String.class);
+        param1.setLabel("Test Param 1");
+        parameters.add(param1);
+
+        final ParameterDescriptor param2 = new ParameterDescriptor();
+        param2.setId("testParam2");
+        param2.setType(ParameterType.REGULAR);
+        param2.setDataType(Integer.class);
+        param2.setLabel("Test Param 2");
+        parameters.add(param2);
+
+        component.setParameterDescriptors(parameters);
+        return component;
     }
 
     @Test
@@ -664,42 +657,7 @@ public class PersistenceManagerTest {
         try
         {
             // add a new processing component for test
-            ProcessingComponent component = new ProcessingComponent();
-            component.setId("delete_0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
-            component.setLabel("component label");
-            component.setVersion("component version");
-            component.setDescription("component description");
-            component.setAuthors("component authors");
-            component.setCopyright("component copyright");
-            component.setFileLocation("component file location");
-            component.setWorkingDirectory("component working directory");
-
-            Template template = new BasicTemplate();
-            template.setName("basic template name");
-            template.setTemplateType(TemplateType.VELOCITY);
-            component.setTemplate(template);
-            component.setTemplateType(TemplateType.VELOCITY);
-
-            component.setVisibility(ProcessingComponentVisibility.CONTRIBUTOR);
-            component.setNodeAffinity("Any");
-            component.setMultiThread(true);
-            component.setActive(true);
-
-            component.setContainerId("container01");
-
-            Set<Variable> variables = new HashSet<>();
-
-            final Variable var1 = new Variable();
-            var1.setKey("var1");
-            var1.setValue("value1");
-            variables.add(var1);
-
-            final Variable var2 = new Variable();
-            var2.setKey("var2");
-            var2.setValue("value2");
-            variables.add(var2);
-
-            component.setVariables(variables);
+            ProcessingComponent component = createNewProcessingComponent("component02_to_delete", "container01");
 
             component = persistenceManager.saveProcessingComponent(component);
             // check persisted component
@@ -718,7 +676,38 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_19_save_new_execution_job()
+    public void TC_19_delete_container_with_applications_with_PC()
+    {
+        try
+        {
+            // add a new container for test
+            Container container = createNewTestContainer("container03");
+            container = persistenceManager.saveContainer(container);
+            // check persisted container
+            Assert.assertTrue(container != null && container.getId() != null);
+
+            // add a new processing component for test
+            ProcessingComponent component = createNewProcessingComponent("PC_container_to_delete", "container03");
+            component = persistenceManager.saveProcessingComponent(component);
+            // check persisted component
+            Assert.assertTrue(component != null && component.getId() != null);
+
+            // delete container
+            persistenceManager.deleteContainer(container.getId());
+            // check that the container was deleted
+            Assert.assertTrue(!persistenceManager.checkIfExistsContainerById("container03"));
+
+        }
+        catch (PersistenceException e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
+
+
+    @Test
+    public void TC_20_save_new_execution_job()
     {
         try
         {
@@ -738,7 +727,7 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_20_save_new_execution_task()
+    public void TC_21_save_new_execution_task()
     {
         try
         {
@@ -795,7 +784,7 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_21_get_running_execution_tasks()
+    public void TC_22_get_running_execution_tasks()
     {
         try
         {
@@ -818,7 +807,7 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_22_save_new_data_products()
+    public void TC_23_save_new_data_products()
     {
         try {
             EOProduct product = new EOProduct();
@@ -843,7 +832,7 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_23_retrieve_raster_data_products()
+    public void TC_24_retrieve_raster_data_products()
     {
         try
         {
@@ -865,7 +854,7 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_24_save_new_vector_data_product()
+    public void TC_25_save_new_vector_data_product()
     {
         try
         {
@@ -901,7 +890,7 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_25_retrieve_vector_data_products()
+    public void TC_26_retrieve_vector_data_products()
     {
         try
         {
@@ -923,7 +912,7 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_26_save_new_notification()
+    public void TC_27_save_new_notification()
     {
         try
         {
