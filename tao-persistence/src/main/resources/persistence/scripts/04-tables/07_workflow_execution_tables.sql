@@ -158,20 +158,21 @@ ALTER TABLE tao.task ADD CONSTRAINT FK_task_execution_status
 
 
 -------------------------------------------------------------------------------
--- table: task_input
-DROP TABLE IF EXISTS tao.task_input CASCADE;
+-- table: task_inputs
+DROP TABLE IF EXISTS tao.task_inputs CASCADE;
 
-CREATE TABLE tao.task_input
+CREATE TABLE tao.task_inputs
 (
 	task_id bigint NOT NULL,
-	input_name varchar(250) NOT NULL,
-	input_value varchar(500) NOT NULL
+	key varchar(512) NOT NULL,
+	value varchar(512) NOT NULL
 );
 
-ALTER TABLE tao.task_input ADD CONSTRAINT PK_task_input PRIMARY KEY (task_id, input_name);
+ALTER TABLE tao.task_inputs ADD CONSTRAINT PK_task_inputs PRIMARY KEY (task_id, key);
 
-ALTER TABLE tao.task_input ADD CONSTRAINT FK_task_input_task
+ALTER TABLE tao.task_inputs ADD CONSTRAINT FK_task_inputs_task
 	FOREIGN KEY (task_id) REFERENCES tao.task (id) ON DELETE No Action ON UPDATE No Action;
+
 
 -------------------------------------------------------------------------------
 -- table: task_output

@@ -73,7 +73,7 @@ public class PersistenceManagerTest {
     private DatabaseConfiguration dbConfig;
 
     @Test
-    public void TC_00_check_DB_configuration()
+    public void TC_01_check_DB_configuration()
     {
         try
         {
@@ -187,7 +187,7 @@ public class PersistenceManagerTest {
     }**/
 
     @Test
-    public void TC_01_01_save_new_execution_node_new_services()
+    public void TC_02_save_new_execution_node_new_services()
     {
         try
         {
@@ -219,7 +219,7 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_01_02_save_new_execution_node_existing_services()
+    public void TC_03_save_new_execution_node_existing_services()
     {
         try
         {
@@ -251,7 +251,7 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_01_03_save_new_execution_node_mixt_services()
+    public void TC_04_save_new_execution_node_mixt_services()
     {
         try
         {
@@ -283,7 +283,7 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_02_retrieve_all_execution_nodes()
+    public void TC_05_retrieve_all_execution_nodes()
     {
         try
         {
@@ -302,7 +302,7 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_03_update_execution_node()
+    public void TC_06_update_execution_node()
     {
         try
         {
@@ -323,7 +323,7 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_04_check_execution_node_existence_by_host_name()
+    public void TC_07_check_execution_node_existence_by_host_name()
     {
         try
         {
@@ -343,7 +343,7 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_05_retrieve_execution_node_by_host_name()
+    public void TC_08_retrieve_execution_node_by_host_name()
     {
         try
         {
@@ -364,7 +364,7 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_06_delete_execution_node()
+    public void TC_09_delete_execution_node()
     {
         try
         {
@@ -396,7 +396,7 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_07_01_save_new_container()
+    public void TC_10_save_new_container()
     {
         try
         {
@@ -434,7 +434,7 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_07_02_retrieve_containers()
+    public void TC_11_retrieve_containers()
     {
         try
         {
@@ -456,7 +456,7 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_07_03_delete_container()
+    public void TC_12_delete_container()
     {
         try
         {
@@ -500,7 +500,7 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_07_save_new_processing_component()
+    public void TC_13_save_new_processing_component()
     {
         try
         {
@@ -574,7 +574,7 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_08_retrieve_processing_components()
+    public void TC_14_retrieve_processing_components()
     {
         try
         {
@@ -596,7 +596,7 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_09_update_processing_component()
+    public void TC_15_update_processing_component()
     {
         try
         {
@@ -617,7 +617,7 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_10_check_processing_component_existence_by_id()
+    public void TC_16_check_processing_component_existence_by_id()
     {
         try
         {
@@ -638,7 +638,7 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_11_retrieve_processing_component_by_id()
+    public void TC_17_retrieve_processing_component_by_id()
     {
         try
         {
@@ -659,7 +659,7 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_13_delete_processing_component()
+    public void TC_18_delete_processing_component()
     {
         try
         {
@@ -718,7 +718,7 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_14_save_new_execution_job()
+    public void TC_19_save_new_execution_job()
     {
         try
         {
@@ -738,7 +738,7 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_15_save_new_execution_task()
+    public void TC_20_save_new_execution_task()
     {
         try
         {
@@ -767,6 +767,19 @@ public class PersistenceManagerTest {
                 task.setExecutionNodeHostName(node.getHostName());
                 task.setProcessingComponent(component);
 
+                List<Variable> inputsValues = new ArrayList<>();
+                Variable input1 = new Variable();
+                input1.setKey("input1");
+                input1.setValue("val1");
+                inputsValues.add(input1);
+
+                Variable input2 = new Variable();
+                input2.setKey("input2");
+                input2.setValue("val2");
+                inputsValues.add(input2);
+
+                task.setInputParameterValues(inputsValues);
+
                 task = persistenceManager.saveExecutionTask(task, job);
                 // check persisted task
                 Assert.assertTrue(task != null && task.getId() != null);
@@ -782,7 +795,7 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_16_get_running_execution_tasks()
+    public void TC_21_get_running_execution_tasks()
     {
         try
         {
@@ -805,7 +818,7 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_17_save_new_data_products()
+    public void TC_22_save_new_data_products()
     {
         try {
             EOProduct product = new EOProduct();
@@ -830,7 +843,7 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_18_retrieve_raster_data_products()
+    public void TC_23_retrieve_raster_data_products()
     {
         try
         {
@@ -852,7 +865,7 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_19_save_new_vector_data_product()
+    public void TC_24_save_new_vector_data_product()
     {
         try
         {
@@ -888,7 +901,7 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_20_retrieve_vector_data_products()
+    public void TC_25_retrieve_vector_data_products()
     {
         try
         {
@@ -910,7 +923,7 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_21_save_new_notification()
+    public void TC_26_save_new_notification()
     {
         try
         {

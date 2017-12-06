@@ -360,7 +360,12 @@
                 <join-column name="job_id" nullable="false"/>
             </many-to-one>
 
-            <transient name="inputParameterValues" />
+            <element-collection name="inputParameterValues" target-class="ro.cs.tao.component.Variable" access="PROPERTY" fetch="EAGER">
+                <collection-table name="tao.task_inputs" >
+                    <join-column name="task_id" referenced-column-name="id" />
+                </collection-table>
+            </element-collection>
+
         </attributes>
     </entity>
 
