@@ -1077,10 +1077,6 @@ public class PersistenceManager {
         {
             return false;
         }
-        if(container.getApplicationPath() == null)
-        {
-            return false;
-        }
 
         for(Application application: container.getApplications())
         {
@@ -1099,11 +1095,7 @@ public class PersistenceManager {
         {
             return false;
         }
-        if(application.getPath() == null || application.getPath().isEmpty())
-        {
-            return false;
-        }
-        if(application.getName() == null)
+        if(application.getName() == null || application.getName().isEmpty())
         {
             return false;
         }

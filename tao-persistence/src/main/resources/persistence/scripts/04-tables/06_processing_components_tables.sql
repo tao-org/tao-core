@@ -63,7 +63,7 @@ CREATE TABLE tao.container
 	id varchar(1024) NOT NULL,
 	name varchar(1024) NOT NULL,
 	tag varchar(1024) NOT NULL,
-	application_path varchar(1024) NOT NULL,
+	application_path varchar(1024) NULL,
 	created timestamp NOT NULL DEFAULT now(),
     modified timestamp NULL
 );
@@ -79,12 +79,12 @@ DROP TABLE IF EXISTS tao.container_applications CASCADE;
 CREATE TABLE tao.container_applications
 (
 	container_id varchar(1024) NOT NULL,
-	path varchar(1024) NOT NULL,
-	name varchar(1024) NOT NULL
+	name varchar(1024) NOT NULL,
+	path varchar(1024) NULL
 );
 
 ALTER TABLE tao.container_applications ADD CONSTRAINT PK_container_applications
-	PRIMARY KEY (container_id, path);
+	PRIMARY KEY (container_id, name);
 
 ALTER TABLE tao.container_applications ADD CONSTRAINT FK_container_applications_container
 	FOREIGN KEY (container_id) REFERENCES tao.container (id) ON DELETE No Action ON UPDATE No Action;
