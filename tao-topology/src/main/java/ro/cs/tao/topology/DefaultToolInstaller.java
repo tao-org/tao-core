@@ -131,20 +131,22 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
 
         System.out.println(argsList);
 
-        String hostName = curStep.getHostName() == null ? "localhost" : curStep.getHostName();
+        String hostName = curStep.getHostName();
         String user = curStep.getUser();
         String pass = curStep.getPass();
         if (invokeType != ExecutorType.PROCESS) {
-            if (nodeDescr.getHostName() != null) {
+            if (hostName == null && nodeDescr.getHostName() != null) {
                 hostName = nodeDescr.getHostName();
             }
-            if (nodeDescr.getUserName() != null) {
+            if (user == null && nodeDescr.getUserName() != null) {
                 user = nodeDescr.getUserName();
             }
-            if (nodeDescr.getUserPass() != null) {
+            if (pass == null && nodeDescr.getUserPass() != null) {
                 pass = nodeDescr.getUserPass();
             }
         } else {
+            // For process invocation type normally we will have always localhost
+            hostName = "localhost";
             if (user == null || "".equals(user)) {
                 user = masterNodeInfo.getUserName();
             }
