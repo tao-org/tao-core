@@ -68,6 +68,7 @@ function install_torque_client() {
     fi
 
     yum install openssl-devel -y
+     yum install hwloc -y
     
     echo "Installing torque-package-mom-linux ..."
     ${PACKAGE_DIR_NAME}/torque-package-mom-linux-*.sh --install

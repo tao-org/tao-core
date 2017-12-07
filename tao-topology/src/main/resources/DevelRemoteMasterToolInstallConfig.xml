@@ -84,9 +84,9 @@
                 <invocation_type>ssh2</invocation_type>
                 <ssh_mode>exec</ssh_mode>
                 <!-- Optional params -->
-                <host>192.168.146.134</host>
-                <user>sen2agri</user>
-                <pass>sen2agri</pass>
+                <host>192.168.60.76</host>
+                <user>root</user>
+                <pass>abc123.</pass>
                 <command>
                     <![CDATA[uuidgen]]>
                 </command>
@@ -98,9 +98,9 @@
                 <ssh_mode>exec</ssh_mode>
                 <execution_mode>user</execution_mode>
                 <!-- Optional params -->
-                <host>192.168.146.134</host>
-                <user>sen2agri</user>
-                <pass>sen2agri</pass>
+                <host>192.168.60.76</host>
+                <user>root</user>
+                <pass>abc123.</pass>
                 <command>
                     <![CDATA[
                         mkdir /tmp/#step_output#generate_master_unique_dir_name#
@@ -113,9 +113,9 @@
                 <ssh_mode>sftp</ssh_mode>
                 <execution_mode>user</execution_mode>
                 <!-- Optional params -->
-                <host>192.168.146.134</host>
-                <user>sen2agri</user>
-                <pass>sen2agri</pass>
+                <host>192.168.60.76</host>
+                <user>root</user>
+                <pass>abc123.</pass>
                 <command>
                     <![CDATA[
                     #scripts_root_path#/torque /tmp/#step_output#generate_master_unique_dir_name#
@@ -131,9 +131,9 @@
                 <order_id>4</order_id>
                 <invocation_type>ssh2</invocation_type>
                 <!-- Optional params -->
-                <host>192.168.146.134</host>
-                <user>sen2agri</user>
-                <pass>sen2agri</pass>
+                <host>192.168.60.76</host>
+                <user>root</user>
+                <pass>abc123.</pass>
                 <command>
                     <![CDATA[
                         chmod a+x /tmp/#step_output#generate_master_unique_dir_name#/torque/update_hosts_file.sh && /tmp/#step_output#generate_master_unique_dir_name#/torque/update_hosts_file.sh -s #node_hostname# -p #node_ip#
@@ -145,9 +145,9 @@
                 <order_id>5</order_id>
                 <invocation_type>ssh2</invocation_type>
                 <!-- Optional params -->
-                <host>192.168.146.134</host>
-                <user>sen2agri</user>
-                <pass>sen2agri</pass>
+                <host>192.168.60.76</host>
+                <user>root</user>
+                <pass>abc123.</pass>
                 <command>
                     <![CDATA[
                         env "PATH=$PATH" qmgr -c "delete node #node_hostname#" || env "PATH=$PATH" qmgr -c "create node #node_hostname# np=#procs_cnt#"

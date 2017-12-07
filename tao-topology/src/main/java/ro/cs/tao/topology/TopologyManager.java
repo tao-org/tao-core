@@ -29,6 +29,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * Created by cosmin on 8/23/2017.
@@ -89,16 +90,27 @@ public class TopologyManager implements ITopologyManager {
 
     @Override
     public List<NodeDescription> list() {
-        return getPersistenceManager().getNodes();
+        return getPersistenceManager().getNodes().stream()
+                .filter(node -> node.getActive())     // we take only active node but not the deleted ones
+                .collect(Collectors.toList());
     }
 
     @Override
     public void add(NodeDescription info) throws TopologyException {
-        try {
-            getPersistenceManager().saveExecutionNode(info);
-        } catch (PersistenceException e) {
-            logger.severe("Cannot save node description to database. Rolling back installation on node " + info.getHostName() + "...");
-            throw new TopologyException(e);
+        if (getPersistenceManager().checkIfExistsNodeByHostName(info.getHostName())) {
+            try {
+                getPersistenceManager().updateExecutionNode(info);
+            } catch (PersistenceException e) {
+                logger.severe("Cannot update node description to database. Rolling back installation on node " + info.getHostName() + "...");
+                throw new TopologyException(e);
+            }
+        } else {
+            try {
+                getPersistenceManager().saveExecutionNode(info);
+            } catch (PersistenceException e) {
+                logger.severe("Cannot save node description to database. Rolling back installation on node " + info.getHostName() + "...");
+                throw new TopologyException(e);
+            }
         }
         // FOR TEST ONLY
         /*Timer timer = new Timer();
