@@ -196,7 +196,7 @@
                 <column name="tag" nullable="false" column-definition="character varying(1024) NOT NULL"/>
             </basic>
             <basic name="applicationPath">
-                <column name="application_path" nullable="false" column-definition="character varying(1024) NOT NULL"/>
+                <column name="application_path" nullable="true" column-definition="character varying(1024) NULL"/>
             </basic>
 
             <element-collection name="applications" target-class="ro.cs.tao.docker.Application" access="PROPERTY" fetch="EAGER">
@@ -454,11 +454,11 @@
 
     <embeddable class="ro.cs.tao.docker.Application" access="PROPERTY">
         <attributes>
-            <basic name="path">
-                <column name="path" nullable="false" column-definition="varchar(1024) NOT NULL"/>
-            </basic>
             <basic name="name">
                 <column name="name" nullable="false" column-definition="varchar(1024) NOT NULL"/>
+            </basic>
+            <basic name="path">
+                <column name="path" nullable="true" column-definition="varchar(1024) NULL"/>
             </basic>
         </attributes>
     </embeddable>

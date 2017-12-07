@@ -420,7 +420,6 @@ public class PersistenceManagerTest {
         container.setId(containerId);
         container.setName("container for test");
         container.setTag("container tag");
-        container.setApplicationPath(".\\mypath");
 
         // list of container applications
         List<Application> applications = new ArrayList<>();
@@ -434,6 +433,10 @@ public class PersistenceManagerTest {
         app2.setPath(".\\mypath2");
         app2.setName("App2");
         applications.add(app2);
+
+        final Application app3 = new Application();
+        app3.setName("App3");
+        applications.add(app3);
 
         container.setApplications(applications);
         return container;
