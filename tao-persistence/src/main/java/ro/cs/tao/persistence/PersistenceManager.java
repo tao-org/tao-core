@@ -482,8 +482,9 @@ public class PersistenceManager {
     public List<NodeDescription> getNodes()
     {
         final List<NodeDescription> nodes = new ArrayList<>();
-        // retrieve nodes and filter them
+        // retrieve nodes and filter them by active flag
         nodes.addAll(((List<NodeDescription>) nodeRepository.findAll(new Sort(Sort.Direction.ASC, NODE_IDENTIFIER_PROPERTY_NAME))).stream()
+          .filter(node -> node.getActive())
           .collect(Collectors.toList()));
         return nodes;
     }
@@ -720,7 +721,7 @@ public class PersistenceManager {
     }
 
     /**
-     * Retrieve processing components with SYSTEM and CONTRIBUTOR visibility
+     * Retrieve active processing components with SYSTEM and CONTRIBUTOR visibility
      * @return
      */
     @Transactional(readOnly = true)
@@ -729,7 +730,7 @@ public class PersistenceManager {
         final List<ProcessingComponent> components = new ArrayList<>();
         // retrieve components and filter them
         components.addAll(((List<ProcessingComponent>) processingComponentRepository.findAll(new Sort(Sort.Direction.ASC, COMPONENT_IDENTIFIER_PROPERTY_NAME))).stream()
-          .filter(c -> (c.getVisibility().equals(ProcessingComponentVisibility.SYSTEM) || c.getVisibility().equals(ProcessingComponentVisibility.CONTRIBUTOR)))
+          .filter(c -> (c.getVisibility().equals(ProcessingComponentVisibility.SYSTEM) || c.getVisibility().equals(ProcessingComponentVisibility.CONTRIBUTOR)) && c.getActive())
             .collect(Collectors.toList()));
         return components;
     }
