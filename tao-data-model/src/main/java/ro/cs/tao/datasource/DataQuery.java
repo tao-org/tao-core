@@ -92,19 +92,19 @@ public abstract class DataQuery extends Identifiable {
         return parameter;
     }
 
-    public <V> QueryParameter addParameter(String name, Class<V> type) {
-        QueryParameter parameter = createParameter(name, type);
+    public <V> QueryParameter<V> addParameter(String name, Class<V> type) {
+        QueryParameter<V> parameter = createParameter(name, type);
         this.parameters.put(name, parameter);
         return parameter;
     }
 
-    public <V> QueryParameter addParameter(String name, Class<V> type, V value) {
-        QueryParameter parameter = createParameter(name, type, value);
+    public <V> QueryParameter<V> addParameter(String name, Class<V> type, V value) {
+        QueryParameter<V> parameter = createParameter(name, type, value);
         this.parameters.put(name, parameter);
         return parameter;
     }
 
-    public QueryParameter addParameter(String name, Object value) {
+    public <V> QueryParameter<V> addParameter(String name, V value) {
         Class clazz = this.supportedParams.get(name).getType();
         QueryParameter parameter = createParameter(name, clazz, value);
         this.parameters.put(name, parameter);
@@ -148,29 +148,29 @@ public abstract class DataQuery extends Identifiable {
 
     public Map<String, QueryParameter> getParameters() { return this.parameters; }
 
-    public QueryParameter createParameter(String name, Class<?> type) {
+    public <V> QueryParameter<V> createParameter(String name, Class<V> type) {
         checkSupported(name, type);
-        return new QueryParameter(type, name);
+        return new QueryParameter<>(type, name);
     }
 
-    public <V> QueryParameter createParameter(String name, Class<V> type, V value) {
+    public <V> QueryParameter<V> createParameter(String name, Class<V> type, V value) {
         checkSupported(name, type);
-        return new QueryParameter(type, name, value);
+        return new QueryParameter<>(type, name, value);
     }
 
-    public <V> QueryParameter createParameter(String name, Class<V> type, V value, boolean optional) {
+    public <V> QueryParameter<V> createParameter(String name, Class<V> type, V value, boolean optional) {
         checkSupported(name, type);
-        return new QueryParameter(type, name, value, optional);
+        return new QueryParameter<>(type, name, value, optional);
     }
 
     public <V> QueryParameter createParameter(String name, Class<V> type, V minValue, V maxValue) {
         checkSupported(name, type);
-        return new QueryParameter(type, name, minValue, maxValue);
+        return new QueryParameter<>(type, name, minValue, maxValue);
     }
 
     public <V> QueryParameter createParameter(String name, Class<V> type, V minValue, V maxValue, boolean optional) {
         checkSupported(name, type);
-        return new QueryParameter(type, name, minValue, maxValue, optional);
+        return new QueryParameter<>(type, name, minValue, maxValue, optional);
     }
 
     @Override

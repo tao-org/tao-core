@@ -1,5 +1,6 @@
 package ro.cs.tao.messaging;
 
+import org.esa.sen2agri.bridge.spring.SpringContextBridge;
 import reactor.Environment;
 import reactor.bus.Event;
 import reactor.bus.EventBus;
@@ -7,7 +8,6 @@ import reactor.core.config.DispatcherType;
 import reactor.fn.Consumer;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
-import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -72,7 +72,7 @@ public class MessageBus {
     }
 
     public static void send(int userId, String topic, Object source, String message) {
-        final Message msg = new Message(System.nanoTime(), userId, source.toString(), message);
+        final Message msg = new Message(System.currentTimeMillis(), userId, source.toString(), message);
         instance.messageBus.notify(topic, Event.wrap(msg));
         instance.executorService.submit(() -> {
             try {

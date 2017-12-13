@@ -1,5 +1,10 @@
 package ro.cs.tao.messaging;
 
+import ro.cs.tao.serialization.MediaType;
+import ro.cs.tao.serialization.SerializationException;
+import ro.cs.tao.serialization.Serializer;
+import ro.cs.tao.serialization.SerializerFactory;
+
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.beans.Transient;
@@ -9,11 +14,20 @@ import java.beans.Transient;
  */
 @XmlRootElement(name = "message")
 public class Message {
+    private static Serializer<Message, String> serializer;
     private long timestamp;
     private int userId;
     private boolean read;
     private String source;
     private String data;
+
+    static {
+        try {
+            serializer = SerializerFactory.create(Message.class, MediaType.JSON);
+        } catch (SerializationException e) {
+            e.printStackTrace();
+        }
+    }
 
     public Message() { }
 
@@ -44,4 +58,13 @@ public class Message {
     @XmlElement(name = "data")
     public String getData() { return data; }
     public void setData(String data) { this.data = data; }
+
+    @Override
+    public String toString() {
+        try {
+            return serializer != null ? serializer.serialize(this) : super.toString();
+        } catch (SerializationException e) {
+            return super.toString();
+        }
+    }
 }

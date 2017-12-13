@@ -35,6 +35,8 @@ public class DataSourceComponent extends TaoComponent {
     private ProductFetchStrategy currentFetcher;
     @XmlTransient
     private ProductStatusListener productStatusListener;
+    @XmlTransient
+    private EOProduct currentProduct;
 
     public DataSourceComponent(String sensorName, String dataSourceName) {
         if (sensorName == null) {
@@ -57,6 +59,8 @@ public class DataSourceComponent extends TaoComponent {
     public void setProductStatusListener(ProductStatusListener listener) {
         this.productStatusListener = listener;
     }
+
+    public EOProduct getCurrentProduct() { return currentProduct; }
 
     public DataQuery createQuery() {
         DataSourceManager dsManager = DataSourceManager.getInstance();
@@ -88,6 +92,7 @@ public class DataSourceComponent extends TaoComponent {
         for (EOProduct product : products) {
             try {
                 if (!cancelled) {
+                    currentProduct = product;
                     notifier.started(product.getName());
                     if (this.productStatusListener != null) {
                         this.productStatusListener.downloadStarted(product);
