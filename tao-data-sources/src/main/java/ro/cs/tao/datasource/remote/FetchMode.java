@@ -43,7 +43,7 @@ package ro.cs.tao.datasource.remote;
  *
  * @author Cosmin Cara
  */
-public enum DownloadMode {
+public enum FetchMode {
     /**
      * Product will be downloaded from the remote site and the corresponding local product,
      * if exists, it will be overwritten

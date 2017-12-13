@@ -3,7 +3,6 @@ package ro.cs.tao.persistence.convert;
 import ro.cs.tao.eodata.enums.DataFormat;
 
 import javax.persistence.AttributeConverter;
-import javax.persistence.Converter;
 
 /**
  * Converter for DataFormat enum stored values

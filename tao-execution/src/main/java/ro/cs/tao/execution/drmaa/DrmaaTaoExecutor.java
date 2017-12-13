@@ -1,8 +1,8 @@
 package ro.cs.tao.execution.drmaa;
 
+import org.esa.sen2agri.bridge.spring.SpringContextBridge;
 import org.ggf.drmaa.DrmaaException;
 import org.ggf.drmaa.InternalException;
-import org.ggf.drmaa.InvalidJobException;
 import org.ggf.drmaa.JobTemplate;
 import org.ggf.drmaa.Session;
 import org.ggf.drmaa.SessionFactory;
@@ -14,7 +14,6 @@ import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.Executor;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
-import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;

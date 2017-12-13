@@ -920,7 +920,7 @@ public class PersistenceManagerTest {
         try
         {
             Message message =  new Message();
-            message.setTimestamp(System.currentTimeMillis());
+            message.setTimestamp(System.nanoTime());
             message.setUserId(1);
             message.setRead(true);
             message.setData("notification data");
