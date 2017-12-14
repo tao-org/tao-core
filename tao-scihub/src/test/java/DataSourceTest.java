@@ -78,7 +78,7 @@ public class DataSourceTest {
             String[] sensors = dataSource.getSupportedSensors();
 
             DataQuery query = dataSource.createQuery(sensors[1]);
-            query.addParameter("platformName", "Sentinel-2");
+            query.addParameter("platformName", "Sentinel2");
             QueryParameter begin = query.createParameter("beginPosition", Date.class);
             begin.setMinValue(Date.from(LocalDateTime.of(2016, 2, 1, 0, 0, 0, 0)
                                                 .atZone(ZoneId.systemDefault())
@@ -129,7 +129,7 @@ public class DataSourceTest {
             String[] sensors = dataSource.getSupportedSensors();
 
             DataQuery query = dataSource.createQuery(sensors[0]);
-            query.addParameter("platformName", "Sentinel-1");
+            query.addParameter("platformName", "Sentinel1");
             QueryParameter begin = query.createParameter("beginPosition", Date.class);
             begin.setMinValue(Date.from(LocalDateTime.of(2017, 5, 30, 0, 0, 0, 0)
                                                 .atZone(ZoneId.systemDefault())

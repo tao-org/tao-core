@@ -45,17 +45,17 @@ class Sentinel2Query extends DataQuery {
     private static final DateTimeFormatter fileDateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     Sentinel2Query(DataSource source) {
-        super(source, "Sentinel-2");
+        super(source, "Sentinel2");
     }
 
     @Override
     protected List<EOProduct> executeImpl() throws QueryException {
         QueryParameter currentParameter = this.parameters.get("platformName");
         if (currentParameter == null) {
-            currentParameter = createParameter("platformName", String.class, "Sentinel-2");
+            currentParameter = createParameter("platformName", String.class, "Sentinel2");
             this.parameters.put("platformName", currentParameter);
         } else {
-            if (!"Sentinel-2".equals(currentParameter.getValueAsString())) {
+            if (!"Sentinel2".equals(currentParameter.getValueAsString())) {
                 throw new QueryException("Wrong [platformName] parameter");
             }
         }
@@ -159,7 +159,7 @@ class Sentinel2Query extends DataQuery {
                                                             DownloadStrategy.URL_SEPARATOR + "tileInfo.json";
                                                     jsonTile = jsonTile.replace(S2_SEARCH_URL_SUFFIX, "");
                                                     EOProduct product = new EOProduct();
-                                                    product.setProductType("Sentinel-2");
+                                                    product.setProductType("Sentinel2");
                                                     double clouds = getTileCloudPercentage(jsonTile, product);
                                                     if (clouds > cloudFilter) {
                                                         Calendar instance = new Calendar.Builder().setDate(year, month - 1, day).build();

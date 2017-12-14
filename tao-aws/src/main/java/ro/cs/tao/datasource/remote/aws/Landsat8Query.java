@@ -44,17 +44,17 @@ class Landsat8Query extends DataQuery {
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
     Landsat8Query(DataSource source) {
-        super(source, "Landsat-8");
+        super(source, "Landsat8");
     }
 
     @Override
     protected List<EOProduct> executeImpl() throws QueryException {
         QueryParameter currentParameter = this.parameters.get("platformName");
         if (currentParameter == null) {
-            currentParameter = createParameter("platformName", String.class, "Landsat-8");
+            currentParameter = createParameter("platformName", String.class, "Landsat8");
             this.parameters.put("platformName", currentParameter);
         } else {
-            if (!"Landsat-8".equals(currentParameter.getValueAsString())) {
+            if (!"Landsat8".equals(currentParameter.getValueAsString())) {
                 throw new QueryException("Wrong [platformName] parameter");
             }
         }
@@ -181,7 +181,7 @@ class Landsat8Query extends DataQuery {
             JsonObject rootObject = reader.readObject().getJsonObject("L1_METADATA_FILE");
             JsonObject obj = rootObject.getJsonObject("METADATA_FILE_INFO");
             product = new EOProduct();
-            product.setProductType("Landsat-8");
+            product.setProductType("Landsat8");
             product.setId(obj.getString("LANDSAT_SCENE_ID"));
             if (obj.containsKey("LANDSAT_PRODUCT_ID")) {
                 product.setName(obj.getString("LANDSAT_PRODUCT_ID"));
