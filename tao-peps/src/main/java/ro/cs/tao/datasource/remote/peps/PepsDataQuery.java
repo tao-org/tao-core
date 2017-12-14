@@ -100,7 +100,7 @@ public class PepsDataQuery extends DataQuery {
                         tmpResults = parser.parse(EntityUtils.toString(response.getEntity()));
                         if (tmpResults != null) {
                             retrieved = tmpResults.size();
-                            if ("Sentinel-2".equals(this.parameters.get("platform").getValue()) &&
+                            if ("Sentinel2".equals(this.parameters.get("platform").getValue()) &&
                                     this.parameters.containsKey("cloudCover")) {
                                 final Double clouds = (Double) this.parameters.get("cloudCover").getValue();
                                 tmpResults = tmpResults.stream()

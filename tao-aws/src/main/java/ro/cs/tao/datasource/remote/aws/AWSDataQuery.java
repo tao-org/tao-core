@@ -20,10 +20,10 @@ public class AWSDataQuery extends DataQuery {
     AWSDataQuery(DataSource source, String sensorName) {
         super(source, sensorName);
         switch(sensorName) {
-            case "Sentinel-2":
+            case "Sentinel2":
                 this.innerQuery = new Sentinel2Query(source);
                 break;
-            case "Landsat-8":
+            case "Landsat8":
                 this.innerQuery = new Landsat8Query(source);
                 break;
             default:

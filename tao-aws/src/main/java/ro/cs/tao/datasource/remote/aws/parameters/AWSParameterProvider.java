@@ -24,11 +24,11 @@ public class AWSParameterProvider implements ParameterProvider {
     private static final Map<String, ProductFetchStrategy> productFetchers;
 
     static {
-        sensors = new String[] { "Sentinel-2", "Landsat-8" };
+        sensors = new String[] { "Sentinel2", "Landsat8" };
         parameters = Collections.unmodifiableMap(
                 new HashMap<String, Map<String, ParameterDescriptor>>() {{
-                    put("Sentinel-2", new HashMap<String, ParameterDescriptor>() {{
-                        put("platformName", new ParameterDescriptor("platformName", String.class, "Sentinel-2", true));
+                    put("Sentinel2", new HashMap<String, ParameterDescriptor>() {{
+                        put("platformName", new ParameterDescriptor("platformName", String.class, "Sentinel2", true));
                         put("beginPosition",  new ParameterDescriptor("beginPosition", Date.class));
                         put("endPosition",  new ParameterDescriptor("endPosition", Date.class));
                         put("tileId", new ParameterDescriptor("tileId", String.class));
@@ -37,8 +37,8 @@ public class AWSParameterProvider implements ParameterProvider {
                         put("cloudcoverpercentage",  new ParameterDescriptor("cloudcoverpercentage", Double.class));
                         put("relativeOrbitNumber",  new ParameterDescriptor("relativeOrbitNumber", Short.class));
                     }});
-                    put("Landsat-8", new HashMap<String, ParameterDescriptor>() {{
-                        put("platformName", new ParameterDescriptor("platformName", String.class, "Landsat-8", true));
+                    put("Landsat8", new HashMap<String, ParameterDescriptor>() {{
+                        put("platformName", new ParameterDescriptor("platformName", String.class, "Landsat8", true));
                         put("sensingStart", new ParameterDescriptor("sensingStart", Date.class));
                         put("sensingEnd", new ParameterDescriptor("sensingEnd", Date.class));
                         put("path", new ParameterDescriptor("path", String.class));
@@ -52,8 +52,8 @@ public class AWSParameterProvider implements ParameterProvider {
         final String targetFolder = ConfigurationManager.getInstance().getValue("product.location");
         productFetchers = Collections.unmodifiableMap(
                 new HashMap<String, ProductFetchStrategy>() {{
-                    put("Sentinel-2", new Sentinel2Strategy(targetFolder));
-                    put("Landsat-8", new Landsat8Strategy(targetFolder));
+                    put("Sentinel2", new Sentinel2Strategy(targetFolder));
+                    put("Landsat8", new Landsat8Strategy(targetFolder));
                 }});
     }
 

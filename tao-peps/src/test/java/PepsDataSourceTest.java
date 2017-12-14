@@ -85,7 +85,7 @@ public class PepsDataSourceTest {
                   .forEach(a -> System.out.println("\tName='" + a.getName() +
                     "', value='" + a.getValue() + "'"));
             });
-            final ProductFetchStrategy strategy = dataSource.getProductFetchStrategy("Sentinel-2");
+            final ProductFetchStrategy strategy = dataSource.getProductFetchStrategy("Sentinel2");
             results.forEach(r -> {
                 try {
                     strategy.fetch(r);

@@ -110,14 +110,6 @@ public class SciHubDataQuery extends DataQuery {
                     throw new QueryException(e.getMessage());
                 }
                 query += "]";
-            /*} else if (Polygon2D.class.equals(parameter.getType())) {
-                query += entry.getKey() + ":Intersects(";
-                try {
-                    query += converterFactory.create(parameter).stringValue();
-                } catch (ConversionException e) {
-                    throw new QueryException(e.getMessage());
-                }
-                query += ")";*/
             } else {
                 query += entry.getKey() + ":";
                 try {
@@ -160,7 +152,7 @@ public class SciHubDataQuery extends DataQuery {
                         tmpResults = parser.parse(rawResponse);
                         if (tmpResults != null) {
                             retrieved = tmpResults.size();
-                            if ("Sentinel-2".equals(this.sensorName) &&
+                            if ("Sentinel2".equals(this.sensorName) &&
                               this.parameters.containsKey("cloudcoverpercentage")) {
                                 final Double clouds = (Double) this.parameters.get("cloudcoverpercentage").getValue();
                                 tmpResults = tmpResults.stream()
