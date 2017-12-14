@@ -3,6 +3,7 @@ package ro.cs.tao.datasource;
 import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.datasource.param.QueryParameter;
 import ro.cs.tao.datasource.remote.DownloadStrategy;
+import ro.cs.tao.datasource.remote.FetchMode;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.messaging.ProgressNotifier;
 
@@ -37,6 +38,8 @@ public class DataSourceComponent extends TaoComponent {
     private ProductStatusListener productStatusListener;
     @XmlTransient
     private EOProduct currentProduct;
+    @XmlTransient
+    private FetchMode fetchMode;
 
     public DataSourceComponent(String sensorName, String dataSourceName) {
         if (sensorName == null) {
@@ -55,6 +58,8 @@ public class DataSourceComponent extends TaoComponent {
         this.userName = userName;
         this.password = password;
     }
+
+    public void setFetchMode(FetchMode mode) { this.fetchMode = mode; }
 
     public void setProductStatusListener(ProductStatusListener listener) {
         this.productStatusListener = listener;
@@ -101,6 +106,7 @@ public class DataSourceComponent extends TaoComponent {
                     if (this.currentFetcher instanceof DownloadStrategy) {
                         ((DownloadStrategy) this.currentFetcher).setProgressListener(notifier);
                         ((DownloadStrategy) this.currentFetcher).setDestination(path);
+                        ((DownloadStrategy) this.currentFetcher).setFetchMode(this.fetchMode);
                     }
                     Path productPath = this.currentFetcher.fetch(product);
                     if (productPath != null) {
@@ -149,6 +155,7 @@ public class DataSourceComponent extends TaoComponent {
         DataSourceComponent newComponent = (DataSourceComponent) super.clone();
         newComponent.sensorName = this.sensorName;
         newComponent.dataSourceName = this.dataSourceName;
+        newComponent.fetchMode = this.fetchMode;
         return newComponent;
     }
 }
