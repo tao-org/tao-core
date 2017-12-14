@@ -32,7 +32,7 @@ class JsonSerializer<T> extends BaseSerializer<T> {
     }
 
     JsonSerializer(Class<T> tClass, Class[] dependencies) throws SerializationException {
-        super(tClass, dependencies);
+        super(tClass, properties, dependencies);
     }
 
     public T deserialize(StreamSource source) throws SerializationException {

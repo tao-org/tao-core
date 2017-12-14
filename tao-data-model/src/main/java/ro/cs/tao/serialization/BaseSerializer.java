@@ -69,12 +69,15 @@ public abstract class BaseSerializer<T> implements Serializer<T, String> {
         }
     }
 
-    BaseSerializer(Class<T> tClass, Map<String, Object> properties) throws SerializationException {
+    BaseSerializer(Class<T> tClass, Map<String, Object> properties, Class...dependencies) throws SerializationException {
         this.tClass = tClass;
         try {
             final Class[] classesCopy = new Class[classes.length + 1];
             System.arraycopy(classes, 0, classesCopy, 0, classes.length);
-            classesCopy[classes.length] = tClass;
+            if (dependencies != null && dependencies.length > 0) {
+                System.arraycopy(dependencies, 0, classesCopy, classes.length, dependencies.length);
+            }
+            classesCopy[classesCopy.length - 1] = tClass;
             if (properties != null) {
                 this.context = JAXBContext.newInstance(classesCopy, properties);
             } else {
