@@ -312,7 +312,9 @@
 
 
     <entity class="ro.cs.tao.component.TemplateParameterDescriptor" access="PROPERTY">
-        <table name="tao.processing_parameter"/>
+        <!-- no need to specify the table here, since TemplateParameterDescriptor inherits ParameterDescriptor;
+             TemplateParameterDescriptor is a subclass of a SINGLE_TABLE hierarchy -->
+        <!--<table name="tao.processing_parameter"/>-->
 
         <!-- any other value than 937389016 (set by JPA for the base class); e.g 2 - see tao.parameter_type identifier for TemplateParameter -->
         <discriminator-value>2</discriminator-value>
