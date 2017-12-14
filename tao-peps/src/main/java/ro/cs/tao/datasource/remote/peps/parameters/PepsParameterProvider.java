@@ -23,10 +23,10 @@ public class PepsParameterProvider implements ParameterProvider {
     private static final Map<String, ProductFetchStrategy> productFetchers;
 
     static {
-        sensors = new String[] { "Sentinel-1", "Sentinel-2" };
+        sensors = new String[] { "Sentinel1", "Sentinel2" };
         parameters = Collections.unmodifiableMap(
                 new HashMap<String, Map<String, ParameterDescriptor>>() {{
-                    put("Sentinel-1", new HashMap<String, ParameterDescriptor>() {{
+                    put("Sentinel1", new HashMap<String, ParameterDescriptor>() {{
                         put("collection", new ParameterDescriptor("collection", String.class, Collection.S1.toString(), true));
                         put("platform", new ParameterDescriptor("platform", String.class));
                         put("instrument", new ParameterDescriptor("instrument", String.class));
@@ -42,7 +42,7 @@ public class PepsParameterProvider implements ParameterProvider {
                         put("box",  new ParameterDescriptor("box", Polygon2D.class, true));
                         put("polarisation",  new ParameterDescriptor("polarisation", String.class));
                     }});
-                    put("Sentinel-2", new HashMap<String, ParameterDescriptor>() {{
+                    put("Sentinel2", new HashMap<String, ParameterDescriptor>() {{
                         put("collection", new ParameterDescriptor("collection", String.class, true));
                         put("platform", new ParameterDescriptor("platform", String.class));
                         put("instrument", new ParameterDescriptor("instrument", String.class));
@@ -63,8 +63,8 @@ public class PepsParameterProvider implements ParameterProvider {
         final String targetFolder = ConfigurationManager.getInstance().getValue("product.location");
         productFetchers = Collections.unmodifiableMap(
                 new HashMap<String, ProductFetchStrategy>() {{
-                    put("Sentinel-1", new PepsDownloadStrategy(targetFolder));
-                    put("Sentinel-2", new PepsDownloadStrategy(targetFolder));
+                    put("Sentinel1", new PepsDownloadStrategy(targetFolder));
+                    put("Sentinel2", new PepsDownloadStrategy(targetFolder));
                 }});
     }
 

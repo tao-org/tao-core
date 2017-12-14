@@ -24,12 +24,12 @@ public final class SciHubParameterProvider implements ParameterProvider {
 
     public SciHubParameterProvider() {
         if (sensors == null) {
-            sensors = new String[] { "Sentinel-1", "Sentinel-2" };
+            sensors = new String[] { "Sentinel1", "Sentinel2" };
         }
         if (parameters == null) {
             parameters = Collections.unmodifiableMap(
                     new HashMap<String, Map<String, ParameterDescriptor>>() {{
-                        put("Sentinel-1", new HashMap<String, ParameterDescriptor>() {{
+                        put("Sentinel1", new HashMap<String, ParameterDescriptor>() {{
                             put("platformName", new ParameterDescriptor("platformName", String.class));
                             put("beginPosition", new ParameterDescriptor("beginPosition", Date.class));
                             put("endPosition", new ParameterDescriptor("endPosition", Date.class));
@@ -39,7 +39,7 @@ public final class SciHubParameterProvider implements ParameterProvider {
                             put("sensorOperationalMode", new ParameterDescriptor("sensorOperationalMode", String.class));
                             put("relativeOrbitNumber", new ParameterDescriptor("relativeOrbitNumber", String.class));
                         }});
-                        put("Sentinel-2", new HashMap<String, ParameterDescriptor>() {{
+                        put("Sentinel2", new HashMap<String, ParameterDescriptor>() {{
                             put("platformName", new ParameterDescriptor("platformName", String.class));
                             put("beginPosition", new ParameterDescriptor("beginPosition", Date.class));
                             put("endPosition", new ParameterDescriptor("endPosition", Date.class));
@@ -54,8 +54,8 @@ public final class SciHubParameterProvider implements ParameterProvider {
             final String targetFolder = ConfigurationManager.getInstance().getValue("product.location");
             productFetchers = Collections.unmodifiableMap(
                     new HashMap<String, ProductFetchStrategy>() {{
-                        put("Sentinel-1", new SentinelDownloadStrategy(targetFolder));
-                        put("Sentinel-2", new Sentinel2DownloadStrategy(targetFolder));
+                        put("Sentinel1", new SentinelDownloadStrategy(targetFolder));
+                        put("Sentinel2", new Sentinel2DownloadStrategy(targetFolder));
                     }});
         }
     }

@@ -20,10 +20,10 @@ public class AWSDataQuery extends DataQuery {
     AWSDataQuery(DataSource source, String sensorName) {
         super(source, sensorName);
         switch(sensorName) {
-            case "Sentinel-2":
+            case "Sentinel2":
                 this.innerQuery = new Sentinel2Query(source);
                 break;
-            case "Landsat-8":
+            case "Landsat8":
                 this.innerQuery = new Landsat8Query(source);
                 break;
             default:
@@ -38,17 +38,17 @@ public class AWSDataQuery extends DataQuery {
     }
 
     @Override
-    public <V> QueryParameter addParameter(String name, Class<V> type) {
+    public <V> QueryParameter<V> addParameter(String name, Class<V> type) {
         return innerQuery.addParameter(name, type);
     }
 
     @Override
-    public <V> QueryParameter addParameter(String name, Class<V> type, V value) {
+    public <V> QueryParameter<V> addParameter(String name, Class<V> type, V value) {
         return innerQuery.addParameter(name, type, value);
     }
 
     @Override
-    public QueryParameter addParameter(String name, Object value) {
+    public <V> QueryParameter<V> addParameter(String name, V value) {
         return innerQuery.addParameter(name, value);
     }
 
@@ -73,7 +73,7 @@ public class AWSDataQuery extends DataQuery {
     }
 
     @Override
-    public QueryParameter createParameter(String name, Class<?> type) {
+    public <V> QueryParameter<V> createParameter(String name, Class<V> type) {
         return innerQuery.createParameter(name, type);
     }
 

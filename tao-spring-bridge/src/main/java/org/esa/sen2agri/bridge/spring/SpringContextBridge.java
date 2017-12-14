@@ -1,4 +1,4 @@
-package ro.cs.tao.services.bridge.spring;
+package org.esa.sen2agri.bridge.spring;
 
 /**
  * Created by cosmin on 9/13/2017.
@@ -7,7 +7,6 @@ package ro.cs.tao.services.bridge.spring;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-import org.springframework.context.annotation.ImportResource;
 import org.springframework.stereotype.Service;
 import ro.cs.tao.persistence.PersistenceManager;
 

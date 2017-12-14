@@ -87,7 +87,7 @@ public class AWSDataSourceTest {
             DataSource dataSource = serviceRegistry.getService(AWSDataSource.class);
             String[] sensors = dataSource.getSupportedSensors();
             DataQuery query = dataSource.createQuery(sensors[1]);
-            //query.addParameter("platformName", "Landsat-8");
+            //query.addParameter("platformName", "Landsat8");
             QueryParameter begin = query.createParameter("sensingStart", Date.class);
             begin.setValue(Date.from(LocalDateTime.now().minusDays(60)
                                                 .atZone(ZoneId.systemDefault())
