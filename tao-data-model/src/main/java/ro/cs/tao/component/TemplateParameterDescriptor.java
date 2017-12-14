@@ -55,21 +55,15 @@ public class TemplateParameterDescriptor extends ParameterDescriptor {
     }
 
     @XmlElementWrapper(name = "parameters")
-    public ParameterDescriptor[] getParameters() {
-        return parameters != null ?
-                parameters.toArray(new ParameterDescriptor[parameters.size()]) :
-                null;
-    }
-
-    public void setParameters(ParameterDescriptor[] parameters) {
-        if (parameters != null) {
-            if (this.parameters == null) {
-                this.parameters = new ArrayList<>();
-            }
-            Collections.addAll(this.parameters, parameters);
-        } else {
+    public List<ParameterDescriptor> getParameters() {
+        if (this.parameters == null) {
             this.parameters = new ArrayList<>();
         }
+        return this.parameters;
+    }
+
+    public void setParameters(List<ParameterDescriptor> parameters) {
+        this.parameters = parameters;
     }
 
     public void addParameter(ParameterDescriptor parameter) {
