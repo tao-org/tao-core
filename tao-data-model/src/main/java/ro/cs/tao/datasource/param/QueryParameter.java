@@ -33,27 +33,27 @@ import java.util.Date;
  */
 @XmlRootElement(name = "parameter")
 @XmlJavaTypeAdapter(value = PolygonAdapter.class, type = Polygon2D.class)
-public class QueryParameter {
-    private Class<?> type;
+public class QueryParameter<T> {
+    private Class<T> type;
     private boolean isOptional;
     private String name;
-    private Object minValue;
-    private Object maxValue;
-    private Object value;
+    private T minValue;
+    private T maxValue;
+    private T value;
     private ParameterConverter converter;
 
     private QueryParameter() { }
 
-    public QueryParameter(Class type, String name) {
+    public QueryParameter(Class<T> type, String name) {
         this(type, name, null, true);
     }
 
-    public QueryParameter(Class type, String name, Object value) {
+    public QueryParameter(Class<T> type, String name, T value) {
         this(type, name, value, true);
         //checkValid();
     }
 
-    public QueryParameter(Class type, String name, Object value, boolean isOptional) {
+    public QueryParameter(Class<T> type, String name, T value, boolean isOptional) {
         if (type == null) {
             throw new IllegalArgumentException("[type] cannot be empty");
         }
@@ -66,24 +66,24 @@ public class QueryParameter {
         this.value = value;
     }
 
-    public QueryParameter(Class type, String name, Object minValue, Object maxValue) {
+    public QueryParameter(Class<T> type, String name, T minValue, T maxValue) {
         this(type, name, null);
         this.minValue = minValue;
         this.maxValue = maxValue;
     }
 
-    public QueryParameter(Class type, String name, Object minValue, Object maxValue, boolean isOptional) {
+    public QueryParameter(Class<T> type, String name, T minValue, T maxValue, boolean isOptional) {
         this(type, name, null, isOptional);
         this.minValue = minValue;
         this.maxValue = maxValue;
     }
 
     @XmlElement(name = "class", required = true)
-    public Class getType() {
+    public Class<T> getType() {
         return type;
     }
 
-    public void setType(Class<?> type) { this.type = type; }
+    public void setType(Class<T> type) { this.type = type; }
 
     @XmlElement(name = "name", required = true)
     public String getName() {
@@ -93,11 +93,11 @@ public class QueryParameter {
     public void setName(String name) { this.name = name; }
 
     @XmlElement(name = "value")
-    public Object getValue() {
+    public T getValue() {
         return value;
     }
 
-    public void setValue(Object value) {
+    public void setValue(T value) {
         this.value = value;
     }
 
@@ -111,16 +111,16 @@ public class QueryParameter {
     }
 
     @XmlElement(name = "minimum")
-    public Object getMinValue() {
+    public T getMinValue() {
         return minValue;
     }
 
-    public void setMinValue(Object minValue) { this.minValue = minValue; }
+    public void setMinValue(T minValue) { this.minValue = minValue; }
 
     @XmlElement(name = "maximum")
-    public Object getMaxValue() { return maxValue; }
+    public T getMaxValue() { return maxValue; }
 
-    public void setMaxValue(Object maxValue) { this.maxValue = maxValue; }
+    public void setMaxValue(T maxValue) { this.maxValue = maxValue; }
 
     public boolean isInterval() {
         return this.minValue != null || this.maxValue != null;

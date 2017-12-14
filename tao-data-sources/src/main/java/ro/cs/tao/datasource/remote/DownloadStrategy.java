@@ -93,9 +93,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     protected String currentStep;
     protected UsernamePasswordCredentials credentials;
 
-    private boolean shouldCompress;
-    private boolean shouldDeleteAfterCompression;
-    private DownloadMode downloadMode;
+    private FetchMode fetchMode;
 
     private ProgressListener progressListener;
     private volatile boolean cancelled;
@@ -147,7 +145,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
                 try {
                     final Path destPath = Paths.get(destination);
                     Utilities.ensureExists(destPath);
-                    switch (this.downloadMode) {
+                    switch (this.fetchMode) {
                         case COPY:
                             file = copy(product, Paths.get(localArchiveRoot), destPath);
                             if (file == null) {
@@ -196,16 +194,8 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         return location != null ? location.toString() + "/?issuerId=peps" : null;
     }
 
-    void shouldCompress(boolean shouldCompress) {
-        this.shouldCompress = shouldCompress;
-    }
-
-    void shouldDeleteAfterCompression(boolean shouldDeleteAfterCompression) {
-        this.shouldDeleteAfterCompression = shouldDeleteAfterCompression;
-    }
-
-    void setDownloadMode(DownloadMode mode) {
-        this.downloadMode = mode;
+    public void setFetchMode(FetchMode mode) {
+        this.fetchMode = mode;
     }
 
     protected abstract String getMetadataUrl(EOProduct descriptor);
@@ -215,7 +205,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     }
 
     protected Path downloadFile(String remoteUrl, Path file, String authToken) throws IOException, InterruptedException {
-        return downloadFile(remoteUrl, file, this.downloadMode, authToken);
+        return downloadFile(remoteUrl, file, this.fetchMode, authToken);
     }
 
     protected Path findProductPath(Path root, EOProduct product) {
@@ -291,7 +281,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         }
     }
 
-    private Path downloadFile(String remoteUrl, Path file, DownloadMode mode, String authToken) throws IOException, InterruptedException {
+    private Path downloadFile(String remoteUrl, Path file, FetchMode mode, String authToken) throws IOException, InterruptedException {
         if (cancelled) {
             throw new InterruptedException();
         }
@@ -311,7 +301,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
             if (Files.exists(file)) {
                 localFileLength = Files.size(file);
                 if (localFileLength != remoteFileLength) {
-                    if (DownloadMode.RESUME.equals(mode)) {
+                    if (FetchMode.RESUME.equals(mode)) {
                         connection.disconnect();
                         connection = NetUtils.openConnection(remoteUrl, authToken);
                         connection.setRequestProperty("Range", "bytes=" + localFileLength + "-");
@@ -319,7 +309,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
                         Files.delete(file);
                     }
                     logger.fine(String.format("Remote file size: %s. Local file size: %s. File " +
-                                                      (DownloadMode.OVERWRITE.equals(mode) ?
+                                                      (FetchMode.OVERWRITE.equals(mode) ?
                                                               "will be downloaded again." :
                                                               "download will be resumed."),
                                               remoteFileLength,

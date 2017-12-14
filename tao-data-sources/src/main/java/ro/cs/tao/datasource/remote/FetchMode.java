@@ -38,32 +38,69 @@
 
 package ro.cs.tao.datasource.remote;
 
+import javax.xml.bind.annotation.XmlEnum;
+import javax.xml.bind.annotation.XmlEnumValue;
+
 /**
  * The download behavior enumeration
  *
  * @author Cosmin Cara
  */
-public enum DownloadMode {
+@XmlEnum(Integer.class)
+public enum FetchMode {
     /**
      * Product will be downloaded from the remote site and the corresponding local product,
      * if exists, it will be overwritten
      */
-    OVERWRITE,
+    @XmlEnumValue("1")
+    OVERWRITE(1),
     /**
      * Product will be downloaded from the remote site and, if a corresponding local product exists,
      * the download will be resumed from the current length of the local product
      */
-    RESUME,
+    @XmlEnumValue("2")
+    RESUME(2),
     /**
      * The product will be copied from a local (or shared) folder into the output folder.
      * No remote download will be performed.
      * This works only in conjunction with the --input command line parameter.
      */
-    COPY,
+    @XmlEnumValue("3")
+    COPY(3),
     /**
      * Only a symlink to the product file system location, into the output folder, will be created.
      * No remote download will be performed.
      * This works only in conjunction with the --input command line parameter.
      */
-    SYMLINK
+    @XmlEnumValue("4")
+    SYMLINK(4);
+
+    private final int value;
+    FetchMode(int value) { this.value = value; }
+
+    @Override
+    public String toString()
+    {
+        return String.valueOf(this.value);
+    }
+
+
+
+    /**
+     * Retrieve string enum token corresponding to the integer identifier
+     * @param value the integer value identifier
+     * @return the string token corresponding to the integer identifier
+     */
+    public static String getEnumConstantNameByValue(final int value)
+    {
+        for (FetchMode type : values())
+        {
+            if ((String.valueOf(value)).equals(type.toString()))
+            {
+                // return the name of the enum constant having the given value
+                return type.name();
+            }
+        }
+        return null;
+    }
 }

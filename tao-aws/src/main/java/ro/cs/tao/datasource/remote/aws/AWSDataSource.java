@@ -72,11 +72,11 @@ public class AWSDataSource extends URLDataSource<AWSDataQuery> {
     protected AWSDataQuery createQueryImpl(String sensorName) {
         try {
             switch (sensorName) {
-                case "Sentinel-2":
+                case "Sentinel2":
                     this.connectionString = S2_URL;
                     this.remoteUrl = new URI(this.connectionString);
                     break;
-                case "Landsat-8":
+                case "Landsat8":
                     this.connectionString = L8_URL;
                     this.remoteUrl = new URI(this.connectionString);
                     break;
