@@ -266,6 +266,11 @@
 
     <entity class="ro.cs.tao.component.ParameterDescriptor" access="PROPERTY">
         <table name="tao.processing_parameter"/>
+        <!-- set inheritance to single table, since TemplateParameterDescriptor inherits from ParameterDescriptor -->
+        <inheritance strategy="SINGLE_TABLE"/>
+
+        <!-- avoid default DTYPE -->
+        <discriminator-column name="discriminator" column-definition="integer NOT NULL" discriminator-type="INTEGER"/>
 
         <convert converter="ro.cs.tao.persistence.convert.ParameterTypeConverter" attribute-name="type" />
         <convert converter="ro.cs.tao.persistence.convert.DataTypeConverter" attribute-name="dataType" />
@@ -302,17 +307,23 @@
 
             <transient name="validator" />
         </attributes>
+
     </entity>
 
 
-    <!--
     <entity class="ro.cs.tao.component.TemplateParameterDescriptor" access="PROPERTY">
-        <table name="tao.processing_parameter"/>
+        <!-- no need to specify the table here, since TemplateParameterDescriptor inherits ParameterDescriptor;
+             TemplateParameterDescriptor is a subclass of a SINGLE_TABLE hierarchy -->
+        <!--<table name="tao.processing_parameter"/>-->
+
+        <!-- any other value than 937389016 (set by JPA for the base class); e.g 2 - see tao.parameter_type identifier for TemplateParameter -->
+        <discriminator-value>2</discriminator-value>
+
         <attributes>
             <many-to-many name="parameters" fetch="EAGER">
                 <join-table name="tao.template_parameter_parameters">
-                    <join-column name="processing_component_id" referenced-column-name="id"/>
-                    <inverse-join-column name="processing_parameter_id" referenced-column-name="id"/>
+                    <join-column name="template_parameter_id" referenced-column-name="id"/>
+                    <inverse-join-column name="regular_parameter_id" referenced-column-name="id"/>
                 </join-table>
                 <cascade>
                     <cascade-all/>
@@ -324,7 +335,6 @@
         </attributes>
 
     </entity>
-    -->
 
 
     <entity class="ro.cs.tao.component.execution.ExecutionTask" access="PROPERTY">

@@ -146,7 +146,8 @@ CREATE TABLE tao.processing_parameter
     format varchar(250) NULL,
     value_set text NULL,
     not_null boolean NULL,
-    not_empty boolean NULL
+    -- special column used by JPA to distinguish which type of object is stored in one row (since this table holds 2 types of entities)
+    discriminator integer NOT NULL
 );
 
 ALTER TABLE tao.processing_parameter ADD CONSTRAINT PK_processing_parameter
@@ -182,16 +183,12 @@ DROP TABLE IF EXISTS tao.template_parameter_parameters CASCADE;
 
 CREATE TABLE tao.template_parameter_parameters
 (
-    processing_component_id varchar(512) NOT NULL,
-	template_parameter_id varchar(512) NOT NULL,
+    template_parameter_id varchar(512) NOT NULL,
 	regular_parameter_id varchar(512) NOT NULL
 );
 
 ALTER TABLE tao.template_parameter_parameters ADD CONSTRAINT PK_template_parameter_parameters
-	PRIMARY KEY (processing_component_id, template_parameter_id, regular_parameter_id);
-
-ALTER TABLE tao.template_parameter_parameters ADD CONSTRAINT FK_template_parameter_parameters_processing_component
-	FOREIGN KEY (processing_component_id) REFERENCES tao.processing_component (id) ON DELETE No Action ON UPDATE No Action;
+	PRIMARY KEY (template_parameter_id, regular_parameter_id);
 
 ALTER TABLE tao.template_parameter_parameters ADD CONSTRAINT FK_template_parameter_parameters_processing_parameter_01
 	FOREIGN KEY (template_parameter_id) REFERENCES tao.processing_parameter (id) ON DELETE No Action ON UPDATE No Action;

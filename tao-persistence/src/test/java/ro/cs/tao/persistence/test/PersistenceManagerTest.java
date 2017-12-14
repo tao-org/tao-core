@@ -12,10 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ImportResource;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
-import ro.cs.tao.component.ParameterDescriptor;
-import ro.cs.tao.component.ParameterType;
-import ro.cs.tao.component.ProcessingComponent;
-import ro.cs.tao.component.Variable;
+import ro.cs.tao.component.*;
 import ro.cs.tao.component.enums.ProcessingComponentVisibility;
 import ro.cs.tao.component.execution.ExecutionJob;
 import ro.cs.tao.component.execution.ExecutionStatus;
@@ -75,6 +72,7 @@ public class PersistenceManagerTest {
     @Test
     public void TC_01_check_DB_configuration()
     {
+        logger.info("TC_01_check_DB_configuration");
         try
         {
             Assert.assertTrue(dbConfig.dataSource() != null);
@@ -189,6 +187,7 @@ public class PersistenceManagerTest {
     @Test
     public void TC_02_save_new_execution_node_new_services()
     {
+        logger.info("TC_02_save_new_execution_node_new_services");
         try
         {
             // add a new execution node for test
@@ -221,6 +220,7 @@ public class PersistenceManagerTest {
     @Test
     public void TC_03_save_new_execution_node_existing_services()
     {
+        logger.info("TC_03_save_new_execution_node_existing_services");
         try
         {
             // add a new execution node for test
@@ -253,6 +253,7 @@ public class PersistenceManagerTest {
     @Test
     public void TC_04_save_new_execution_node_mixt_services()
     {
+        logger.info("TC_04_save_new_execution_node_mixt_services");
         try
         {
             // add a new execution node for test
@@ -285,6 +286,7 @@ public class PersistenceManagerTest {
     @Test
     public void TC_05_retrieve_all_execution_nodes()
     {
+        logger.info("TC_05_retrieve_all_execution_nodes");
         try
         {
             List<NodeDescription> nodes  = persistenceManager.getNodes();
@@ -304,6 +306,7 @@ public class PersistenceManagerTest {
     @Test
     public void TC_06_update_execution_node()
     {
+        logger.info("TC_06_update_execution_node");
         try
         {
             List<NodeDescription> nodes  = persistenceManager.getNodes();
@@ -325,6 +328,7 @@ public class PersistenceManagerTest {
     @Test
     public void TC_07_check_execution_node_existence_by_host_name()
     {
+        logger.info("TC_07_check_execution_node_existence_by_host_name");
         try
         {
             List<NodeDescription> nodes  = persistenceManager.getNodes();
@@ -345,6 +349,7 @@ public class PersistenceManagerTest {
     @Test
     public void TC_08_retrieve_execution_node_by_host_name()
     {
+        logger.info("TC_08_retrieve_execution_node_by_host_name");
         try
         {
             List<NodeDescription> nodes  = persistenceManager.getNodes();
@@ -366,6 +371,7 @@ public class PersistenceManagerTest {
     @Test
     public void TC_09_delete_execution_node()
     {
+        logger.info("TC_09_delete_execution_node");
         try
         {
             // add a new execution node in order to deactivate it
@@ -398,6 +404,7 @@ public class PersistenceManagerTest {
     @Test
     public void TC_10_save_new_container()
     {
+        logger.info("TC_10_save_new_container");
         try
         {
             // add a new container for test
@@ -445,6 +452,7 @@ public class PersistenceManagerTest {
     @Test
     public void TC_11_retrieve_containers()
     {
+        logger.info("TC_11_retrieve_containers");
         try
         {
             List<Container> containers  = persistenceManager.getContainers();
@@ -467,6 +475,7 @@ public class PersistenceManagerTest {
     @Test
     public void TC_12_delete_container_with_applications_no_PC()
     {
+        logger.info("TC_12_delete_container_with_applications_no_PC");
         try
         {
             // add a new container for test
@@ -492,6 +501,7 @@ public class PersistenceManagerTest {
     @Test
     public void TC_13_save_new_processing_component()
     {
+        logger.info("TC_13_save_new_processing_component");
         try
         {
             // add a new processing component for test
@@ -565,6 +575,31 @@ public class PersistenceManagerTest {
         param2.setLabel("Test Param 2");
         parameters.add(param2);
 
+        // add also a template parameter, which regular parameter(s) inside
+        final TemplateParameterDescriptor tParam = new TemplateParameterDescriptor();
+        List<ParameterDescriptor> templateParamParameters = new ArrayList<>();
+        tParam.setId("templateParam");
+        tParam.setType(ParameterType.TEMPLATE);
+        tParam.setDataType(Integer.class);
+        tParam.setLabel("Test TemplateParam");
+
+        final ParameterDescriptor param3 = new ParameterDescriptor();
+        param3.setId("testParam3");
+        param3.setType(ParameterType.REGULAR);
+        param3.setDataType(Integer.class);
+        param3.setLabel("Test Param 3");
+        templateParamParameters.add(param3);
+
+        final ParameterDescriptor param4 = new ParameterDescriptor();
+        param4.setId("testParam4");
+        param4.setType(ParameterType.REGULAR);
+        param4.setDataType(Integer.class);
+        param4.setLabel("Test Param 4");
+        templateParamParameters.add(param4);
+
+        tParam.setParameters(templateParamParameters);
+        parameters.add(tParam);
+
         component.setParameterDescriptors(parameters);
         return component;
     }
@@ -572,6 +607,7 @@ public class PersistenceManagerTest {
     @Test
     public void TC_14_retrieve_processing_components()
     {
+        logger.info("TC_14_retrieve_processing_components");
         try
         {
             List<ProcessingComponent> components  = persistenceManager.getProcessingComponents();
@@ -594,6 +630,7 @@ public class PersistenceManagerTest {
     @Test
     public void TC_15_update_processing_component()
     {
+        logger.info("TC_15_update_processing_component");
         try
         {
             List<ProcessingComponent> components  = persistenceManager.getProcessingComponents();
@@ -615,6 +652,7 @@ public class PersistenceManagerTest {
     @Test
     public void TC_16_check_processing_component_existence_by_id()
     {
+        logger.info("TC_16_check_processing_component_existence_by_id");
         try
         {
             List<ProcessingComponent> components  = persistenceManager.getProcessingComponents();;
@@ -636,6 +674,7 @@ public class PersistenceManagerTest {
     @Test
     public void TC_17_retrieve_processing_component_by_id()
     {
+        logger.info("TC_17_retrieve_processing_component_by_id");
         try
         {
             List<ProcessingComponent> components  = persistenceManager.getProcessingComponents();;
@@ -657,6 +696,7 @@ public class PersistenceManagerTest {
     @Test
     public void TC_18_delete_processing_component()
     {
+        logger.info("TC_18_delete_processing_component");
         try
         {
             // add a new processing component for test
@@ -681,6 +721,7 @@ public class PersistenceManagerTest {
     @Test
     public void TC_19_delete_container_with_applications_with_PC()
     {
+        logger.info("TC_19_delete_container_with_applications_with_PC");
         try
         {
             // add a new container for test
@@ -712,6 +753,7 @@ public class PersistenceManagerTest {
     @Test
     public void TC_20_save_new_execution_job()
     {
+        logger.info("TC_20_save_new_execution_job");
         try
         {
             // add a new job for test
@@ -732,6 +774,7 @@ public class PersistenceManagerTest {
     @Test
     public void TC_21_save_new_execution_task()
     {
+        logger.info("TC_21_save_new_execution_task");
         try
         {
             // retrieve one existing job, for test
@@ -789,6 +832,7 @@ public class PersistenceManagerTest {
     @Test
     public void TC_22_get_running_execution_tasks()
     {
+        logger.info("TC_22_get_running_execution_tasks");
         try
         {
             // retrieve running tasks
@@ -812,6 +856,7 @@ public class PersistenceManagerTest {
     @Test
     public void TC_23_save_new_data_products()
     {
+        logger.info("TC_23_save_new_data_products");
         try {
             EOProduct product = new EOProduct();
             product.setId("LC82010442017273LGN00");
@@ -837,6 +882,7 @@ public class PersistenceManagerTest {
     @Test
     public void TC_24_retrieve_raster_data_products()
     {
+        logger.info("TC_24_retrieve_raster_data_products");
         try
         {
             List<EOProduct> products  = persistenceManager.getEOProducts();
@@ -859,6 +905,7 @@ public class PersistenceManagerTest {
     @Test
     public void TC_25_save_new_vector_data_product()
     {
+        logger.info("TC_25_save_new_vector_data_product");
         try
         {
             VectorData newVectorProduct = new VectorData();
@@ -895,6 +942,7 @@ public class PersistenceManagerTest {
     @Test
     public void TC_26_retrieve_vector_data_products()
     {
+        logger.info("TC_26_retrieve_vector_data_products");
         try
         {
             List<VectorData> vectorProducts  = persistenceManager.getVectorDataProducts();
@@ -917,6 +965,7 @@ public class PersistenceManagerTest {
     @Test
     public void TC_27_save_new_notification()
     {
+        logger.info("TC_27_save_new_notification");
         try
         {
             Message message =  new Message();
