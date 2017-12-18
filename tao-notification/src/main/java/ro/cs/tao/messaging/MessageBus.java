@@ -5,9 +5,6 @@ import reactor.bus.Event;
 import reactor.bus.EventBus;
 import reactor.core.config.DispatcherType;
 import reactor.fn.Consumer;
-import ro.cs.tao.persistence.PersistenceManager;
-import ro.cs.tao.persistence.exception.PersistenceException;
-import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -32,7 +29,7 @@ public class MessageBus {
     }
 
     private final EventBus messageBus;
-    private PersistenceManager persistenceManager;
+    private MessagePersister messagePersister;
     private final ExecutorService executorService;
     private final Logger logger;
 
@@ -48,6 +45,10 @@ public class MessageBus {
 
     private void exit() {
         Environment.terminate();
+    }
+
+    public static void registerPersister(MessagePersister messagePersister) {
+        instance.messagePersister = messagePersister;
     }
 
     public static void register(Consumer<Event<Message>> subscriber, String... topics) {
@@ -74,20 +75,17 @@ public class MessageBus {
     public static void send(int userId, String topic, Object source, String message) {
         final Message msg = new Message(System.currentTimeMillis(), userId, source.toString(), message);
         instance.messageBus.notify(topic, Event.wrap(msg));
-        instance.executorService.submit(() -> {
-            try {
-                if (instance.persistenceManager == null) {
-                    try {
-                        instance.persistenceManager = SpringContextBridge.services().getPersistenceManager();
-                    } catch (Exception ex) {
-                        instance.logger.severe(ex.getMessage());
+        if (instance.messagePersister != null) {
+            instance.executorService.submit(() -> {
+                try {
+                    if (instance.messagePersister != null) {
+                        instance.messagePersister.saveMessage(msg);
                     }
+                } catch (Exception e) {
+                    instance.logger.severe(e.getMessage());
                 }
-                instance.persistenceManager.saveMessage(msg);
-            } catch (PersistenceException e) {
-                instance.logger.severe(e.getMessage());
-            }
-        });
+            });
+        }
     }
 
 }

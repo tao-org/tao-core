@@ -17,7 +17,7 @@ import ro.cs.tao.persistence.PersistenceManager;
  *
  */
 @Service
-public class SpringContextBridge implements SpringContextBridgedServices, ApplicationContextAware
+public class SpringContextBridge implements SpringContextBridgedServices<PersistenceManager>, ApplicationContextAware
 {
     /**
      * The application context
@@ -45,7 +45,7 @@ public class SpringContextBridge implements SpringContextBridgedServices, Applic
      * @return the SpringContextBridgedServices, which exposes all the
      * Spring services that are bridged from the Spring context.
      */
-    public static SpringContextBridgedServices services() throws SpringBridgeException
+    public static SpringContextBridgedServices<PersistenceManager> services() throws SpringBridgeException
     {
         if(__applicationContext != null) {
             return __applicationContext.getBean(SpringContextBridgedServices.class);

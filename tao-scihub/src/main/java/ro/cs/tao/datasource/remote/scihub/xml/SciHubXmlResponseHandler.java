@@ -138,7 +138,7 @@ public class SciHubXmlResponseHandler extends XmlResponseHandler<EOProduct> {
             case "date":
                 try {
                     switch (this.identifiedElement) {
-                        case "beginPosition":
+                        case "beginposition":
                             this.current.setAcquisitionDate(new DateAdapter().unmarshal(elementValue));
                             break;
                         default:

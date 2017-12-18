@@ -100,7 +100,11 @@ public class EOProduct extends EOData implements Serializable {
 
     public String getProductType() { return productType; }
 
-    public void setProductType(String value) { this.productType = value; }
+    public void setProductType(String value) {
+        if (value != null) {
+            this.productType = value.replace("-", "");
+        }
+    }
 
     public long getApproximateSize() {
         return approximateSize;

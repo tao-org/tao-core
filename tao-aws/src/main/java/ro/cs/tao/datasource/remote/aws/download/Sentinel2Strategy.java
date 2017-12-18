@@ -116,7 +116,7 @@ public class Sentinel2Strategy extends DownloadStrategy {
             url = getMetadataUrl(product);
             Path metadataFile = rootPath.resolve(helper.getMetadataFileName());
             currentStep = "Metadata";
-            getLogger().info(String.format("Downloading metadata file %s", metadataFile));
+            getLogger().fine(String.format("Downloading metadata file %s", metadataFile));
             metadataFile = downloadFile(url, metadataFile);
             if (metadataFile != null && Files.exists(metadataFile)) {
                 Path inspireFile = metadataFile.resolveSibling("INSPIRE.xml");
@@ -150,11 +150,11 @@ public class Sentinel2Strategy extends DownloadStrategy {
                 InputStream inputStream = null;
                 JsonReader reader = null;
                 try {
-                    getLogger().info(String.format("Downloading json product descriptor %s", productJsonUrl));
+                    getLogger().fine(String.format("Downloading json product descriptor %s", productJsonUrl));
                     connection = NetUtils.openConnection(productJsonUrl);
                     inputStream = connection.getInputStream();
                     reader = Json.createReader(inputStream);
-                    getLogger().info(String.format("Parsing json descriptor %s", productJsonUrl));
+                    getLogger().fine(String.format("Parsing json descriptor %s", productJsonUrl));
                     JsonObject obj = reader.readObject();
                     final Map<String, String> tileNames = getTileNames(obj, metaTileNames, helper.getVersion());
                     String dataStripId = null;
@@ -169,14 +169,14 @@ public class Sentinel2Strategy extends DownloadStrategy {
                         Path imgData = Utilities.ensureExists(tileFolder.resolve(FOLDER_IMG_DATA));
                         Path qiData = Utilities.ensureExists(tileFolder.resolve(FOLDER_QI_DATA));
                         String metadataName = helper.getGranuleMetadataFileName(tileName);
-                        getLogger().info(String.format("Downloading tile metadata %s", tileFolder.resolve(metadataName)));
+                        getLogger().fine(String.format("Downloading tile metadata %s", tileFolder.resolve(metadataName)));
                         downloadFile(tileUrl + "/metadata.xml", tileFolder.resolve(metadataName));
                         List<String> tileMetadataLines = Files.readAllLines(metadataFile);
                         for (String bandFileName : l1cBandFiles) {
                             try {
                                 String bandFileUrl = tileUrl + URL_SEPARATOR + bandFileName;
                                 Path path = imgData.resolve(helper.getBandFileName(tileName, bandFileName));
-                                getLogger().info(String.format("Downloading band raster %s from %s", path, bandFileName));
+                                getLogger().fine(String.format("Downloading band raster %s from %s", path, bandFileName));
                                 downloadFile(bandFileUrl, path);
                             } catch (IOException ex) {
                                 getLogger().warning(String.format("Download for %s failed [%s]", bandFileName, ex.getMessage()));
@@ -201,13 +201,13 @@ public class Sentinel2Strategy extends DownloadStrategy {
 
                             try {
                                 String fileUrl = tileUrl + "/qi/" + remoteName;
-                                getLogger().info(String.format("Downloading file %s from %s", path, fileUrl));
+                                getLogger().fine(String.format("Downloading file %s from %s", path, fileUrl));
                                 downloadFile(fileUrl, path);
                             } catch (IOException ex) {
                                 getLogger().warning(String.format("Download for %s failed [%s]", path, ex.getMessage()));
                             }
                         }
-                        getLogger().info(String.format("Trying to download %s", tileUrl + "/auxiliary/ECMWFT"));
+                        getLogger().fine(String.format("Trying to download %s", tileUrl + "/auxiliary/ECMWFT"));
                         downloadFile(tileUrl + "/auxiliary/ECMWFT", auxData.resolve(helper.getEcmWftFileName(tileName)));
                         if (dataStripId == null) {
                             String tileJson = tileUrl + "/tileInfo.json";
@@ -215,18 +215,18 @@ public class Sentinel2Strategy extends DownloadStrategy {
                             InputStream is = null;
                             JsonReader tiReader = null;
                             try {
-                                getLogger().info(String.format("Downloading json tile descriptor %s", tileJson));
+                                getLogger().fine(String.format("Downloading json tile descriptor %s", tileJson));
                                 tileConnection = NetUtils.openConnection(tileJson);
                                 is = tileConnection.getInputStream();
                                 tiReader = Json.createReader(is);
-                                getLogger().info(String.format("Parsing json tile descriptor %s", tileJson));
+                                getLogger().fine(String.format("Parsing json tile descriptor %s", tileJson));
                                 JsonObject tileObj = tiReader.readObject();
                                 dataStripId = tileObj.getJsonObject("datastrip").getString("id");
                                 String dataStripPath = tileObj.getJsonObject("datastrip").getString("path") + "/metadata.xml";
                                 Path dataStrip = Utilities.ensureExists(dataStripFolder.resolve(helper.getDatastripFolder(dataStripId)));
                                 String dataStripFile = helper.getDatastripMetadataFileName(dataStripId);
                                 Utilities.ensureExists(dataStrip.resolve(FOLDER_QI_DATA));
-                                getLogger().info(String.format("Downloading %s", baseUrl + dataStripPath));
+                                getLogger().fine(String.format("Downloading %s", baseUrl + dataStripPath));
                                 downloadFile(baseUrl + dataStripPath, dataStrip.resolve(dataStripFile));
                             } finally {
                                 if (tiReader != null) tiReader.close();
@@ -241,7 +241,7 @@ public class Sentinel2Strategy extends DownloadStrategy {
                     if (connection != null) connection.disconnect();
                 }
             } else {
-                getLogger().info(String.format("Either the product %s was not found in the data bucket or the metadata file could not be downloaded", productName));
+                getLogger().warning(String.format("Either the product %s was not found in the data bucket or the metadata file could not be downloaded", productName));
                 rootPath = null;
             }
         }
