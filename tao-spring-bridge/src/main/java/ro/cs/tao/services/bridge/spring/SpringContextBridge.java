@@ -1,4 +1,4 @@
-package org.esa.sen2agri.bridge.spring;
+package ro.cs.tao.services.bridge.spring;
 
 /**
  * Created by cosmin on 9/13/2017.

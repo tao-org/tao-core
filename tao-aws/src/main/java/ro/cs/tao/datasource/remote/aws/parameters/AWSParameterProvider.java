@@ -28,7 +28,7 @@ public class AWSParameterProvider implements ParameterProvider {
         parameters = Collections.unmodifiableMap(
                 new HashMap<String, Map<String, ParameterDescriptor>>() {{
                     put("Sentinel2", new HashMap<String, ParameterDescriptor>() {{
-                        put("platformName", new ParameterDescriptor("platformName", String.class, "Sentinel2", true));
+                        put("platformName", new ParameterDescriptor("platformName", String.class, "Sentinel-2", true));
                         put("beginPosition",  new ParameterDescriptor("beginPosition", Date.class));
                         put("endPosition",  new ParameterDescriptor("endPosition", Date.class));
                         put("tileId", new ParameterDescriptor("tileId", String.class));

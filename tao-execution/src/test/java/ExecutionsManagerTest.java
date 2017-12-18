@@ -1,4 +1,3 @@
-import org.esa.sen2agri.bridge.spring.SpringContextBridge;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import ro.cs.tao.component.ParameterDescriptor;
@@ -14,6 +13,7 @@ import ro.cs.tao.component.template.TemplateType;
 import ro.cs.tao.execution.ExecutionsManager;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.utils.Platform;
 

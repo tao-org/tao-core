@@ -1,4 +1,4 @@
-package org.esa.sen2agri.bridge.spring;
+package ro.cs.tao.services.bridge.spring;
 
 import ro.cs.tao.persistence.PersistenceManager;
 

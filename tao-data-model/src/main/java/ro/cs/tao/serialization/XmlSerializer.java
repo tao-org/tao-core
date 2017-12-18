@@ -4,10 +4,8 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
-import javax.xml.namespace.QName;
 import javax.xml.transform.stream.StreamSource;
 import java.io.StringWriter;
-import java.util.List;
 
 /**
  * @author kraftek
@@ -33,7 +31,7 @@ class XmlSerializer<T> extends BaseSerializer<T> {
         }
     }
 
-    public List<T> deserializeList(Class<T> clazz, StreamSource source) throws SerializationException {
+    /*public List<T> deserializeList(Class<T> clazz, StreamSource source) throws SerializationException {
         try {
             Unmarshaller unmarshaller = this.context.createUnmarshaller();
             ListWrapper<T> wrapper = (ListWrapper<T>) unmarshaller.unmarshal(source, ListWrapper.class).getValue();
@@ -41,7 +39,7 @@ class XmlSerializer<T> extends BaseSerializer<T> {
         } catch (JAXBException e) {
             throw new SerializationException(e);
         }
-    }
+    }*/
 
     public String serialize(T object) throws SerializationException {
         try {
@@ -56,7 +54,7 @@ class XmlSerializer<T> extends BaseSerializer<T> {
         }
     }
 
-    public String serialize(List<T> objects, String name) throws SerializationException {
+    /*public String serialize(List<T> objects, String name) throws SerializationException {
         try {
             Marshaller marshaller = this.context.createMarshaller();
             marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
@@ -70,5 +68,5 @@ class XmlSerializer<T> extends BaseSerializer<T> {
         } catch (JAXBException e) {
             throw new SerializationException(e);
         }
-    }
+    }*/
 }

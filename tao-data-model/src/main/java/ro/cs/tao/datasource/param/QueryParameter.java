@@ -152,6 +152,22 @@ public class QueryParameter<T> {
         }
     }
 
+    public String getMinValueAsFormattedDate(String format) {
+        try {
+            return new SimpleDateFormat(format).format((Date) this.minValue);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public String getMaxValueAsFormattedDate(String format) {
+        try {
+            return new SimpleDateFormat(format).format((Date) this.maxValue);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     private void checkValid() {
         if (!isOptional && !isInterval() && value == null) {
             throw new IllegalArgumentException("Value missing for mandatory parameter");
