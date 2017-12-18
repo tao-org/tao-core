@@ -1,13 +1,11 @@
 package ro.cs.tao.messaging;
 
-import org.esa.sen2agri.bridge.spring.SpringContextBridge;
 import reactor.Environment;
 import reactor.bus.Event;
 import reactor.bus.EventBus;
 import reactor.core.config.DispatcherType;
 import reactor.fn.Consumer;
 import ro.cs.tao.persistence.PersistenceManager;
-import ro.cs.tao.persistence.exception.PersistenceException;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;

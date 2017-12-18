@@ -80,13 +80,21 @@ class Landsat8Query extends DataQuery {
             Calendar startDate = Calendar.getInstance();
             currentParameter = this.parameters.get("sensingStart");
             if (currentParameter != null) {
-                sensingStart = currentParameter.getValueAsFormattedDate(dateFormat.toPattern());
+                if (currentParameter.getValue() != null) {
+                    sensingStart = currentParameter.getValueAsFormattedDate(dateFormat.toPattern());
+                } else {
+                    sensingStart = currentParameter.getMinValueAsFormattedDate(dateFormat.toPattern());
+                }
             } else {
                 sensingStart = todayDate.minusDays(30).format(fileDateFormat);
             }
             currentParameter = this.parameters.get("sensingEnd");
             if (currentParameter != null) {
-                sensingEnd = currentParameter.getValueAsFormattedDate(dateFormat.toPattern());
+                if (currentParameter.getValue() != null) {
+                    sensingEnd = currentParameter.getValueAsFormattedDate(dateFormat.toPattern());
+                } else {
+                    sensingEnd = currentParameter.getMaxValueAsFormattedDate(dateFormat.toPattern());
+                }
             } else {
                 sensingEnd = todayDate.format(fileDateFormat);
             }

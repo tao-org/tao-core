@@ -30,7 +30,7 @@ public final class SciHubParameterProvider implements ParameterProvider {
             parameters = Collections.unmodifiableMap(
                     new HashMap<String, Map<String, ParameterDescriptor>>() {{
                         put("Sentinel1", new HashMap<String, ParameterDescriptor>() {{
-                            put("platformName", new ParameterDescriptor("platformName", String.class));
+                            put("platformName", new ParameterDescriptor("platformName", String.class, "Sentinel-1"));
                             put("beginPosition", new ParameterDescriptor("beginPosition", Date.class));
                             put("endPosition", new ParameterDescriptor("endPosition", Date.class));
                             put("footprint", new ParameterDescriptor("footprint", Polygon2D.class));
@@ -40,7 +40,7 @@ public final class SciHubParameterProvider implements ParameterProvider {
                             put("relativeOrbitNumber", new ParameterDescriptor("relativeOrbitNumber", String.class));
                         }});
                         put("Sentinel2", new HashMap<String, ParameterDescriptor>() {{
-                            put("platformName", new ParameterDescriptor("platformName", String.class));
+                            put("platformName", new ParameterDescriptor("platformName", String.class, "Sentinel-2"));
                             put("beginPosition", new ParameterDescriptor("beginPosition", Date.class));
                             put("endPosition", new ParameterDescriptor("endPosition", Date.class));
                             put("footprint", new ParameterDescriptor("footprint", Polygon2D.class));
