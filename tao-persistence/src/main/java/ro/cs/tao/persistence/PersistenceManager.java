@@ -21,9 +21,18 @@ import ro.cs.tao.docker.Container;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.VectorData;
 import ro.cs.tao.messaging.Message;
-//import ro.cs.tao.persistence.data.User;
+import ro.cs.tao.messaging.MessagePersister;
 import ro.cs.tao.persistence.exception.PersistenceException;
-import ro.cs.tao.persistence.repository.*;
+import ro.cs.tao.persistence.repository.ContainerRepository;
+import ro.cs.tao.persistence.repository.EOProductRepository;
+import ro.cs.tao.persistence.repository.ExecutionJobRepository;
+import ro.cs.tao.persistence.repository.ExecutionTaskRepository;
+import ro.cs.tao.persistence.repository.MessageRepository;
+import ro.cs.tao.persistence.repository.NodeRepository;
+import ro.cs.tao.persistence.repository.ParameterDescriptorRepository;
+import ro.cs.tao.persistence.repository.ProcessingComponentRepository;
+import ro.cs.tao.persistence.repository.ServiceRepository;
+import ro.cs.tao.persistence.repository.VectorDataRepository;
 import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.topology.NodeServiceStatus;
 import ro.cs.tao.topology.ServiceDescription;
@@ -31,6 +40,8 @@ import ro.cs.tao.topology.ServiceDescription;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+//import ro.cs.tao.persistence.data.User;
 
 /**
  * DAO
@@ -41,7 +52,7 @@ import java.util.stream.Collectors;
 @EnableTransactionManagement
 @EnableJpaRepositories(basePackages = { "ro.cs.tao.persistence.repository" })
 @Scope("singleton")
-public class PersistenceManager {
+public class PersistenceManager implements MessagePersister {
 
     /** Constant for the identifier member name of execution node entity */
     private static final String NODE_IDENTIFIER_PROPERTY_NAME = "hostName";

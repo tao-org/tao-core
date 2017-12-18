@@ -44,6 +44,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
@@ -56,6 +57,7 @@ public class SciHubDataQuery extends DataQuery {
     private static final ConverterFactory converterFactory = ConverterFactory.getInstance();
 
     private final String sensorName;
+    private final Logger logger = Logger.getLogger(SciHubDataQuery.class.getSimpleName());
 
     static {
         converterFactory.register(SciHubPolygonConverter.class, Polygon2D.class);
@@ -172,7 +174,8 @@ public class SciHubDataQuery extends DataQuery {
             } catch (IOException ex) {
                 throw new QueryException(ex);
             }
-        } while (this.pageNumber <= 0 && (retrieved > 0 && results.size() <= this.limit));
+        } while (this.pageNumber <= 0 && (retrieved > 0 && results.size() == this.limit));
+        logger.info(String.format("Query returned %s products", results.size()));
         if (results.size() > this.limit) {
             return results.subList(0, this.limit);
         } else {

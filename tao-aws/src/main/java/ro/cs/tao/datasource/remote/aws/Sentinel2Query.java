@@ -7,7 +7,6 @@ import ro.cs.tao.datasource.param.QueryParameter;
 import ro.cs.tao.datasource.remote.DownloadStrategy;
 import ro.cs.tao.datasource.remote.aws.internal.AwsResult;
 import ro.cs.tao.datasource.remote.aws.internal.IntermediateParser;
-import ro.cs.tao.datasource.util.Logger;
 import ro.cs.tao.datasource.util.NetUtils;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.Polygon2D;
@@ -34,6 +33,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
@@ -43,6 +43,7 @@ class Sentinel2Query extends DataQuery {
     private static final String S2_SEARCH_URL_SUFFIX = "?delimiter=/&prefix=";
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
     private static final DateTimeFormatter fileDateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private Logger logger = Logger.getLogger(Sentinel2Query.class.getSimpleName());
 
     Sentinel2Query(DataSource source) {
         super(source, "Sentinel2");
@@ -163,9 +164,10 @@ class Sentinel2Query extends DataQuery {
                                                     double clouds = getTileCloudPercentage(jsonTile, product);
                                                     if (clouds > cloudFilter) {
                                                         Calendar instance = new Calendar.Builder().setDate(year, month - 1, day).build();
-                                                        Logger.getRootLogger().warn(
-                                                                String.format("Tile %s from %s has %.2f %% clouds",
-                                                                              tile, dateFormat.format(instance.getTime()), clouds));
+                                                        logger.fine(String.format("Tile %s from %s has %.2f %% clouds",
+                                                                                     tile,
+                                                                                     dateFormat.format(instance.getTime()),
+                                                                                     clouds));
                                                     } else {
                                                         String jsonProduct = dayUrl + String.valueOf(sequence) +
                                                                 DownloadStrategy.URL_SEPARATOR + "productInfo.json";
@@ -190,9 +192,9 @@ class Sentinel2Query extends DataQuery {
                 }
             }
         } catch (Exception ex) {
-            Logger.getRootLogger().warn(ex.getMessage());
+            logger.warning(ex.getMessage());
         }
-        Logger.getRootLogger().info("Query returned %s products", results.size());
+        logger.info(String.format("Query returned %s products", results.size()));
         return new ArrayList<>(results.values());
     }
 

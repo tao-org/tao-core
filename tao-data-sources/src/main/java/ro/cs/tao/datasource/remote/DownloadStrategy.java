@@ -98,7 +98,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     private ProgressListener progressListener;
     private volatile boolean cancelled;
 
-    protected Logger logger = Logger.getLogger(DownloadStrategy.class.getName());
+    protected Logger logger = Logger.getLogger(DownloadStrategy.class.getSimpleName());
 
     public DownloadStrategy(String targetFolder, Properties properties) {
         this.destination = targetFolder;
@@ -178,7 +178,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
                 }
                 long millis = System.currentTimeMillis() - startTime;
                 if (file != null && Files.exists(file)) {
-                    logger.info(String.format("Product download completed in %s", Utilities.formatTime(millis)));
+                    logger.fine(String.format("Product download completed in %s", Utilities.formatTime(millis)));
                 }
             }
         }
@@ -321,7 +321,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
             }
             if (localFileLength != remoteFileLength) {
                 int kBytes = (int) (remoteFileLength / 1024);
-                logger.info(String.format(startMessage, currentProduct.getName(), currentStep, file.getFileName(), kBytes));
+                logger.fine(String.format(startMessage, currentProduct.getName(), currentStep, file.getFileName(), kBytes));
                 InputStream inputStream = null;
                 SeekableByteChannel outputStream = null;
                 try {
@@ -348,7 +348,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
                     if (cancelled) {
                         throw new InterruptedException();
                     }
-                    logger.info(String.format(completeMessage, currentProduct.getName(), currentStep, file.getFileName(), (System.currentTimeMillis() - start) / 1000));
+                    logger.fine(String.format(completeMessage, currentProduct.getName(), currentStep, file.getFileName(), (System.currentTimeMillis() - start) / 1000));
                 } finally {
                     if (outputStream != null) outputStream.close();
                     if (inputStream != null) inputStream.close();
@@ -356,7 +356,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
                 logger.fine(String.format("End download for %s", remoteUrl));
             } else {
                 logger.fine("File already downloaded");
-                logger.info(String.format(completeMessage, currentProduct.getName(), currentStep, file.getFileName(), 0));
+                logger.fine(String.format(completeMessage, currentProduct.getName(), currentStep, file.getFileName(), 0));
             }
             currentProductProgress += Math.min(1.0, currentProduct.getApproximateSize() > 0 ?
                     (double) remoteFileLength / (double) currentProduct.getApproximateSize() : 0);

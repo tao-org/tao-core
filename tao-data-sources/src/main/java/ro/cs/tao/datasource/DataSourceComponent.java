@@ -91,7 +91,9 @@ public class DataSourceComponent extends TaoComponent {
         DataSourceManager dsManager = DataSourceManager.getInstance();
         DataSource dataSource = this.dataSourceName != null ?
                 dsManager.get(this.sensorName, this.dataSourceName) : dsManager.get(this.sensorName);
-        dataSource.setCredentials(this.userName, this.password);
+        if (this.userName != null) {
+            dataSource.setCredentials(this.userName, this.password);
+        }
         ProgressNotifier notifier = new ProgressNotifier(this, DataSourceTopics.PRODUCT_PROGRESS);
         //int counter = 1;
         for (EOProduct product : products) {

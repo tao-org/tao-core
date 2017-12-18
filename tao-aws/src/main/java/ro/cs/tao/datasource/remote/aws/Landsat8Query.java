@@ -8,7 +8,6 @@ import ro.cs.tao.datasource.remote.DownloadStrategy;
 import ro.cs.tao.datasource.remote.aws.helpers.LandsatProductHelper;
 import ro.cs.tao.datasource.remote.aws.internal.AwsResult;
 import ro.cs.tao.datasource.remote.aws.internal.IntermediateParser;
-import ro.cs.tao.datasource.util.Logger;
 import ro.cs.tao.datasource.util.NetUtils;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.Polygon2D;
@@ -33,6 +32,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
@@ -42,6 +42,8 @@ class Landsat8Query extends DataQuery {
     private static final String L8_SEARCH_URL_SUFFIX = "?delimiter=/&prefix=";
     private static final DateTimeFormatter fileDateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+
+    private final Logger logger = Logger.getLogger(Landsat8Query.class.getSimpleName());
 
     Landsat8Query(DataSource source) {
         super(source, "Landsat8");
@@ -156,9 +158,10 @@ class Landsat8Query extends DataQuery {
                                     double clouds = getTileCloudPercentage(jsonTile);
                                     if (clouds > cloudFilter) {
                                         productDate.add(Calendar.MONTH, -1);
-                                        Logger.getRootLogger().warn(
-                                                String.format("Tile %s from %s has %.2f %% clouds",
-                                                              tile, dateFormat.format(productDate.getTime()), clouds));
+                                        logger.fine(String.format("Tile %s from %s has %.2f %% clouds",
+                                                                  tile,
+                                                                  dateFormat.format(productDate.getTime()),
+                                                                  clouds));
                                     } else {
                                         EOProduct product = parseProductJson(jsonTile);
                                         if (this.limit < results.size()) {
@@ -169,15 +172,15 @@ class Landsat8Query extends DataQuery {
                                 }
                             }
                         } catch (Exception ex) {
-                            Logger.getRootLogger().warn("Could not parse product %s: %s", name, ex.getMessage());
+                            logger.warning(String.format("Could not parse product %s: %s", name, ex.getMessage()));
                         }
                     }
                 }
             }
         } catch (Exception e) {
-            Logger.getRootLogger().warn(e.getMessage());
+            logger.warning(e.getMessage());
         }
-        Logger.getRootLogger().info("Query returned %s products", results.size());
+        logger.info(String.format("Query returned %s products", results.size()));
         return new ArrayList<>(results.values());
     }
 

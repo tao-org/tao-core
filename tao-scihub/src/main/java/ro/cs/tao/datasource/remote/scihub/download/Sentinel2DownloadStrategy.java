@@ -310,7 +310,7 @@ public class Sentinel2DownloadStrategy extends SentinelDownloadStrategy {
                                                      NetUtils.getAuthToken());
                                     }
                                 }
-                                logger.info(String.format("Tile download completed in %s", Utilities.formatTime(System.currentTimeMillis() - start)));
+                                logger.fine(String.format("Tile download completed in %s", Utilities.formatTime(System.currentTimeMillis() - start)));
                             } else {
                                 logger.warning(String.format("File %s was not downloaded", tileMetaFile.getFileName()));
                             }

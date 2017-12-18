@@ -67,7 +67,7 @@ public class Landsat8Strategy extends DownloadStrategy {
         url = getMetadataUrl(currentProduct);
         Path metadataFile = rootPath.resolve(productName + "_MTL.txt");
         currentStep = "Metadata";
-        getLogger().info(String.format("Downloading metadata file %s", metadataFile));
+        getLogger().fine(String.format("Downloading metadata file %s", metadataFile));
         metadataFile = downloadFile(url, metadataFile);
         if (metadataFile != null && Files.exists(metadataFile)) {
             for (String suffix : bandFiles) {
@@ -76,7 +76,7 @@ public class Landsat8Strategy extends DownloadStrategy {
                 try {
                     String bandFileUrl = getProductUrl(currentProduct) + URL_SEPARATOR + bandFileName;
                     Path path = rootPath.resolve(bandFileName);
-                    getLogger().info(String.format("Downloading band raster %s from %s", path, bandFileUrl));
+                    getLogger().fine(String.format("Downloading band raster %s from %s", path, bandFileUrl));
                     downloadFile(bandFileUrl, path);
                 } catch (IOException ex) {
                     getLogger().warning(String.format("Download for %s failed [%s]", bandFileName, ex.getMessage()));
@@ -87,7 +87,7 @@ public class Landsat8Strategy extends DownloadStrategy {
                 try {
                     String fileUrl = getProductUrl(currentProduct) + URL_SEPARATOR + fileName;
                     Path path = rootPath.resolve(fileName);
-                    getLogger().info(String.format("Downloading band raster %s from %s", path, fileUrl));
+                    getLogger().fine(String.format("Downloading band raster %s from %s", path, fileUrl));
                     downloadFile(fileUrl, path);
                 } catch (IOException ex) {
                     getLogger().warning(String.format("Download for %s failed [%s]", fileName, ex.getMessage()));
