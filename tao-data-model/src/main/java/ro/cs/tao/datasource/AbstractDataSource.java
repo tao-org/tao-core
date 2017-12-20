@@ -29,6 +29,7 @@ import java.util.Map;
  */
 public abstract class AbstractDataSource<Q extends DataQuery> extends DataSource<Q> {
     protected String connectionString;
+    protected String alternateConnectionString;
     protected long timeout;
     protected UsernamePasswordCredentials credentials;
     private ParameterProvider parameterProvider;
@@ -51,6 +52,9 @@ public abstract class AbstractDataSource<Q extends DataQuery> extends DataSource
 
     @Override
     public void setConnectionString(String connectionString) { this.connectionString = connectionString; }
+
+    @Override
+    public String getAlternateConnectionString() { return this.alternateConnectionString; }
 
     @Override
     public void setCredentials(String username, String password) {
