@@ -17,6 +17,7 @@ import java.util.logging.LogManager;
 public class AWSDataSource extends URLDataSource<AWSDataQuery> {
     private static String S2_URL;
     private static String L8_URL;
+    private static String L8_PRE_URL;
 
     static {
         Properties props = new Properties();
@@ -24,6 +25,7 @@ public class AWSDataSource extends URLDataSource<AWSDataQuery> {
             props.load(AWSDataSource.class.getResourceAsStream("aws.properties"));
             S2_URL = props.getProperty("s2.aws.search.url");
             L8_URL = props.getProperty("l8.aws.search.url");
+            L8_PRE_URL = props.getProperty("l8.aws.pre.search.url");
             Executors.newSingleThreadExecutor().submit(
                     () -> {
                         try {
@@ -78,6 +80,7 @@ public class AWSDataSource extends URLDataSource<AWSDataQuery> {
                     break;
                 case "Landsat8":
                     this.connectionString = L8_URL;
+                    this.alternateConnectionString = L8_PRE_URL;
                     this.remoteUrl = new URI(this.connectionString);
                     break;
                 default:
