@@ -12,7 +12,9 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -41,15 +43,19 @@ public class DataSourceComponent extends TaoComponent {
     @XmlTransient
     private FetchMode fetchMode;
 
+    @XmlTransient
+    private final Logger logger;
+
     public DataSourceComponent(String sensorName, String dataSourceName) {
         if (sensorName == null) {
             throw new IllegalArgumentException("Parameter [sensorName] must not be null");
         }
         this.sensorName = sensorName;
         this.dataSourceName = dataSourceName;
+        this.logger = Logger.getLogger(DataSourceComponent.class.getSimpleName());
     }
 
-    private DataSourceComponent() { }
+    private DataSourceComponent() { this.logger = Logger.getLogger(DataSourceComponent.class.getSimpleName()); }
 
     @Override
     public String defaultName() { return "NewDatasource"; }
@@ -87,7 +93,11 @@ public class DataSourceComponent extends TaoComponent {
         return query.execute();
     }
 
-    public List<EOProduct> doFetch(List<EOProduct> products, String path) {
+    public List<EOProduct> doFetch(List<EOProduct> products, String destinationPath) {
+        return doFetch(products, destinationPath, null);
+    }
+
+    public List<EOProduct> doFetch(List<EOProduct> products, String destinationPath, String localRootPath) {
         DataSourceManager dsManager = DataSourceManager.getInstance();
         DataSource dataSource = this.dataSourceName != null ?
                 dsManager.get(this.sensorName, this.dataSourceName) : dsManager.get(this.sensorName);
@@ -106,9 +116,18 @@ public class DataSourceComponent extends TaoComponent {
                     }
                     this.currentFetcher = dataSource.getProductFetchStrategy(product.getProductType());
                     if (this.currentFetcher instanceof DownloadStrategy) {
-                        ((DownloadStrategy) this.currentFetcher).setProgressListener(notifier);
-                        ((DownloadStrategy) this.currentFetcher).setDestination(path);
-                        ((DownloadStrategy) this.currentFetcher).setFetchMode(this.fetchMode);
+                        final DownloadStrategy downloadStrategy = (DownloadStrategy) this.currentFetcher;
+                        downloadStrategy.setProgressListener(notifier);
+                        downloadStrategy.setDestination(destinationPath);
+                        downloadStrategy.setFetchMode(this.fetchMode);
+                        if (localRootPath != null) {
+                            try {
+                                Path archivePath = Paths.get(localRootPath);
+                                downloadStrategy.setLocalArchiveRoot(archivePath.toAbsolutePath().toString());
+                            } catch (InvalidPathException e) {
+                                throw new IOException(e);
+                            }
+                        }
                     }
                     Path productPath = this.currentFetcher.fetch(product);
                     if (productPath != null) {
@@ -120,20 +139,20 @@ public class DataSourceComponent extends TaoComponent {
                     }
                 }
             } catch (InterruptedException iex) {
-                Logger.getLogger(DataSourceComponent.class.getSimpleName()).info(
-                        String.format("Fetching product '%s' cancelled", product.getName()));
+                logger.info(String.format("Fetching product '%s' cancelled",
+                                          product.getName()));
                 if (this.productStatusListener != null) {
                     this.productStatusListener.downloadFailed(product);
                 }
             } catch (IOException ex) {
-                Logger.getLogger(DataSourceComponent.class.getSimpleName()).warning(
-                        String.format("Fetching product '%s' failed: %s", product.getName(), ex.getMessage()));
+                logger.warning(String.format("Fetching product '%s' failed: %s",
+                                             product.getName(), ex.getMessage()));
                 if (this.productStatusListener != null) {
                     this.productStatusListener.downloadFailed(product);
                 }
             } catch (URISyntaxException e) {
-                Logger.getLogger(DataSourceComponent.class.getSimpleName()).warning(
-                        String.format("Updating product location for '%s' failed: %s", product.getName(), e.getMessage()));
+                logger.warning(String.format("Updating product location for '%s' failed: %s",
+                                             product.getName(), e.getMessage()));
                 if (this.productStatusListener != null) {
                     this.productStatusListener.downloadFailed(product);
                 }
