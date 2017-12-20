@@ -84,7 +84,7 @@ public enum FetchMode {
         return String.valueOf(this.value);
     }
 
-
+    public int value() { return this.value; }
 
     /**
      * Retrieve string enum token corresponding to the integer identifier
