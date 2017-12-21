@@ -11,11 +11,13 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.URISyntaxException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 
 /**
@@ -93,11 +95,11 @@ public class DataSourceComponent extends TaoComponent {
         return query.execute();
     }
 
-    public List<EOProduct> doFetch(List<EOProduct> products, String destinationPath) {
-        return doFetch(products, destinationPath, null);
+    public List<EOProduct> doFetch(List<EOProduct> products, Set<String> tiles, String destinationPath) {
+        return doFetch(products, tiles, destinationPath, null);
     }
 
-    public List<EOProduct> doFetch(List<EOProduct> products, String destinationPath, String localRootPath) {
+    public List<EOProduct> doFetch(List<EOProduct> products, Set<String> tiles, String destinationPath, String localRootPath) {
         DataSourceManager dsManager = DataSourceManager.getInstance();
         DataSource dataSource = this.dataSourceName != null ?
                 dsManager.get(this.sensorName, this.dataSourceName) : dsManager.get(this.sensorName);
@@ -128,6 +130,10 @@ public class DataSourceComponent extends TaoComponent {
                                 throw new IOException(e);
                             }
                         }
+                    }
+                    if (tiles != null && !tryApplyFilter(this.currentFetcher, tiles)) {
+                        logger.warning(String.format("Fetch strategy for data source [%s] doesn't support tiles filter",
+                                                     dataSourceName));
                     }
                     Path productPath = this.currentFetcher.fetch(product);
                     if (productPath != null) {
@@ -169,6 +175,18 @@ public class DataSourceComponent extends TaoComponent {
         if (this.currentFetcher != null) {
             this.currentFetcher.cancel();
         }
+    }
+
+    private boolean tryApplyFilter(ProductFetchStrategy strategy, Set<String> tiles) {
+        if (strategy != null) {
+            try {
+                final Method method = strategy.getClass().getMethod("setFilteredTiles", tiles.getClass());
+                method.invoke(strategy, tiles);
+                return true;
+            } catch (Exception ignored) {
+            }
+        }
+        return false;
     }
 
     @Override
