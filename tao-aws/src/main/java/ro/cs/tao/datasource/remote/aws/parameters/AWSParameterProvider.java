@@ -34,7 +34,7 @@ public class AWSParameterProvider implements ParameterProvider {
                         put("tileId", new ParameterDescriptor("tileId", String.class));
                         put("footprint",  new ParameterDescriptor("footprint", Polygon2D.class));
                         put("productType",  new ParameterDescriptor("productType", String.class));
-                        put("cloudcoverpercentage",  new ParameterDescriptor("cloudcoverpercentage", Double.class));
+                        put("cloudcoverpercentage",  new ParameterDescriptor("cloudcoverpercentage", Double.class, 100.));
                         put("relativeOrbitNumber",  new ParameterDescriptor("relativeOrbitNumber", Short.class));
                     }});
                     put("Landsat8", new HashMap<String, ParameterDescriptor>() {{
@@ -44,7 +44,7 @@ public class AWSParameterProvider implements ParameterProvider {
                         put("path", new ParameterDescriptor("path", String.class));
                         put("row", new ParameterDescriptor("row", String.class));
                         put("footprint",  new ParameterDescriptor("footprint", Polygon2D.class));
-                        put("cloudcoverpercentage", new ParameterDescriptor("cloudcoverpercentage", Double.class));
+                        put("cloudcoverpercentage", new ParameterDescriptor("cloudcoverpercentage", Double.class, 100.));
                         put("productType", new ParameterDescriptor("productType", String.class));
                         put("collection", new ParameterDescriptor("collection", String.class, LandsatCollection.COLLECTION_1.toString()));
                     }});

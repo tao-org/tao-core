@@ -34,7 +34,7 @@ public final class SciHubParameterProvider implements ParameterProvider {
                             put("beginPosition", new ParameterDescriptor("beginPosition", Date.class));
                             put("endPosition", new ParameterDescriptor("endPosition", Date.class));
                             put("footprint", new ParameterDescriptor("footprint", Polygon2D.class));
-                            put("productType", new ParameterDescriptor("productType", String.class));
+                            put("productType", new ParameterDescriptor("productType", String.class, "SLC"));
                             put("polarisationMode", new ParameterDescriptor("polarisationMode", String.class));
                             put("sensorOperationalMode", new ParameterDescriptor("sensorOperationalMode", String.class));
                             put("relativeOrbitNumber", new ParameterDescriptor("relativeOrbitNumber", String.class));
@@ -44,8 +44,8 @@ public final class SciHubParameterProvider implements ParameterProvider {
                             put("beginPosition", new ParameterDescriptor("beginPosition", Date.class));
                             put("endPosition", new ParameterDescriptor("endPosition", Date.class));
                             put("footprint", new ParameterDescriptor("footprint", Polygon2D.class));
-                            put("productType", new ParameterDescriptor("productType", String.class));
-                            put("cloudcoverpercentage", new ParameterDescriptor("cloudcoverpercentage", Double.class));
+                            put("productType", new ParameterDescriptor("productType", String.class, "S2MSI1C"));
+                            put("cloudcoverpercentage", new ParameterDescriptor("cloudcoverpercentage", Double.class, 100.));
                             put("relativeOrbitNumber", new ParameterDescriptor("relativeOrbitNumber", Short.class));
                         }});
                     }});
