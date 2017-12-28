@@ -38,7 +38,7 @@ public class AWSParameterProvider implements ParameterProvider {
                         put("relativeOrbitNumber",  new ParameterDescriptor("relativeOrbitNumber", Short.class));
                     }});
                     put("Landsat8", new HashMap<String, ParameterDescriptor>() {{
-                        put("platformName", new ParameterDescriptor("platformName", String.class, "Landsat8", true));
+                        put("platformName", new ParameterDescriptor("platformName", String.class, "Landsat-8", true));
                         put("sensingStart", new ParameterDescriptor("sensingStart", Date.class));
                         put("sensingEnd", new ParameterDescriptor("sensingEnd", Date.class));
                         put("path", new ParameterDescriptor("path", String.class));

@@ -215,16 +215,20 @@ public class NetUtils {
     public static String getResponseAsString(String url) throws IOException {
         String result = null;
         try (CloseableHttpResponse yearResponse = NetUtils.openConnection(url, (Credentials) null)) {
-            switch (yearResponse.getStatusLine().getStatusCode()) {
-                case 200:
-                    result = EntityUtils.toString(yearResponse.getEntity());
-                    break;
-                case 401:
-                    Logger.getRootLogger().info("The supplied credentials are invalid!");
-                    break;
-                default:
-                    Logger.getRootLogger().info("The request was not successful. Reason: %s", yearResponse.getStatusLine().getReasonPhrase());
-                    break;
+            if (yearResponse != null) {
+                switch (yearResponse.getStatusLine().getStatusCode()) {
+                    case 200:
+                        result = EntityUtils.toString(yearResponse.getEntity());
+                        break;
+                    case 401:
+                        Logger.getRootLogger().warn("The supplied credentials are invalid!");
+                        break;
+                    default:
+                        Logger.getRootLogger().warn("The request was not successful. Reason: %s", yearResponse.getStatusLine().getReasonPhrase());
+                        break;
+                }
+            } else {
+                Logger.getRootLogger().warn(String.format("The url %s was not reachable", url));
             }
         }
         return result;
