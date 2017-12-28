@@ -1,6 +1,7 @@
 package ro.cs.tao.datasource;
 
 import org.apache.http.auth.UsernamePasswordCredentials;
+import ro.cs.tao.ProgressListener;
 import ro.cs.tao.eodata.EOProduct;
 
 import java.io.IOException;
@@ -38,4 +39,10 @@ public interface ProductFetchStrategy {
      *
      */
     default void cancel() { }
+
+    /**
+     * Sets the progress listener to this strategy
+     * @param progressListener  The listener
+     */
+    default void setProgressListener(ProgressListener progressListener) { }
 }

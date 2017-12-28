@@ -44,7 +44,6 @@ import ro.cs.tao.datasource.ProductFetchStrategy;
 import ro.cs.tao.datasource.util.NetUtils;
 import ro.cs.tao.datasource.util.Utilities;
 import ro.cs.tao.eodata.EOProduct;
-import ro.cs.tao.messaging.ProgressNotifier;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -67,6 +66,8 @@ import java.text.SimpleDateFormat;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.logging.Logger;
 
 /**
@@ -76,20 +77,21 @@ import java.util.logging.Logger;
  * @author  Cosmin Cara
  */
 public abstract class DownloadStrategy implements ProductFetchStrategy {
+    public static final String URL_SEPARATOR = "/";
+    protected static final String NAME_SEPARATOR = "_";
     private static final String startMessage = "(%s,%s) %s [size: %skB]";
     private static final String completeMessage = "(%s,%s) %s [elapsed: %ss]";
     private static final String errorMessage ="Cannot download %s: %s";
     private static final int BUFFER_SIZE = 1024 * 1024;
-    protected static final String NAME_SEPARATOR = "_";
-    public static final String URL_SEPARATOR = "/";
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
+    private static final String PROGRESS_KEY = "progress.enabled";
 
     protected Properties props;
     protected String destination;
     private String localArchiveRoot;
 
     protected EOProduct currentProduct;
-    protected double currentProductProgress;
+    protected volatile double currentProductProgress;
     protected String currentStep;
     protected UsernamePasswordCredentials credentials;
 
@@ -98,11 +100,23 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     private ProgressListener progressListener;
     private volatile boolean cancelled;
 
+    private final boolean progressEnabled;
+    private Timer timer;
     protected Logger logger = Logger.getLogger(DownloadStrategy.class.getSimpleName());
+
+    private class TimedJob extends TimerTask {
+        @Override
+        public void run() {
+            if (progressListener != null) {
+                progressListener.notifyProgress(currentProductProgress);
+            }
+        }
+    }
 
     public DownloadStrategy(String targetFolder, Properties properties) {
         this.destination = targetFolder;
         this.props = properties;
+        this.progressEnabled = Boolean.parseBoolean(this.props.getProperty(PROGRESS_KEY, "true"));
     }
 
     @Override
@@ -122,7 +136,8 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         this.localArchiveRoot = localArchiveRoot;
     }
 
-    public void setProgressListener(ProgressNotifier progressListener) {
+    @Override
+    public void setProgressListener(ProgressListener progressListener) {
         this.progressListener = progressListener;
     }
 
@@ -281,6 +296,19 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         }
     }
 
+    private void markStart() {
+        if (this.progressEnabled) {
+            this.timer = new Timer("Progress reporter", true);
+            this.timer.scheduleAtFixedRate(new TimedJob(), 0, 1000);
+        }
+    }
+
+    private void markEnd() {
+        if (this.progressEnabled) {
+            this.timer.cancel();
+        }
+    }
+
     private Path downloadFile(String remoteUrl, Path file, FetchMode mode, String authToken) throws IOException, InterruptedException {
         if (cancelled) {
             throw new InterruptedException();
@@ -292,6 +320,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
             if (this.progressListener != null) {
                 this.progressListener.subActivityStarted(subActivity);
             }
+            markStart();
             connection = NetUtils.openConnection(remoteUrl, authToken);
             long remoteFileLength = connection.getContentLengthLong();
             long localFileLength = 0;
@@ -339,10 +368,12 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
                     while (!cancelled && (read = inputStream.read(buffer)) != -1) {
                         outputStream.write(ByteBuffer.wrap(buffer, 0, read));
                         totalRead += read;
-                        if (this.progressListener != null) {
+                        /*if (this.progressListener != null) {
                             this.progressListener.notifyProgress(subActivity,
                                                                  (double) totalRead / (double) remoteFileLength);
-                        }
+                        }*/
+                        currentProductProgress += Math.min(1.0, currentProduct.getApproximateSize() > 0 ?
+                                (double) totalRead / (double) currentProduct.getApproximateSize() : 0);
                     }
                     logger.fine("End reading from input stream");
                     if (cancelled) {
@@ -360,9 +391,9 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
             }
             currentProductProgress += Math.min(1.0, currentProduct.getApproximateSize() > 0 ?
                     (double) remoteFileLength / (double) currentProduct.getApproximateSize() : 0);
-            if (this.progressListener != null) {
+            /*if (this.progressListener != null) {
                 this.progressListener.notifyProgress(currentProductProgress);
-            }
+            }*/
         } catch (FileNotFoundException fnex) {
             logger.warning(String.format(errorMessage, remoteUrl, "No such file"));
             file = null;
@@ -376,6 +407,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
             if (connection != null) {
                 connection.disconnect();
             }
+            markEnd();
             if (this.progressListener != null) {
                 this.progressListener.subActivityEnded(subActivity);
             }

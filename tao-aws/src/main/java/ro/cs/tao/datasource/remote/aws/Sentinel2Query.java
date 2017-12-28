@@ -27,7 +27,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -53,10 +52,10 @@ class Sentinel2Query extends DataQuery {
     protected List<EOProduct> executeImpl() throws QueryException {
         QueryParameter currentParameter = this.parameters.get("platformName");
         if (currentParameter == null) {
-            currentParameter = createParameter("platformName", String.class, "Sentinel2");
+            currentParameter = createParameter("platformName", String.class, "Sentinel-2");
             this.parameters.put("platformName", currentParameter);
         } else {
-            if (!"Sentinel2".equals(currentParameter.getValueAsString())) {
+            if (!"Sentinel-2".equals(currentParameter.getValueAsString())) {
                 throw new QueryException("Wrong [platformName] parameter");
             }
         }
@@ -83,14 +82,30 @@ class Sentinel2Query extends DataQuery {
 
             currentParameter = this.parameters.get("beginPosition");
             if (currentParameter != null) {
-                sensingStart = currentParameter.getValueAsFormattedDate(dateFormat.toPattern());
+                if (currentParameter.getValue() != null) {
+                    sensingStart = currentParameter.getValueAsFormattedDate(dateFormat.toPattern());
+                } else {
+                    if (currentParameter.getMinValue() != null) {
+                        sensingStart = currentParameter.getMinValueAsFormattedDate(dateFormat.toPattern());
+                    } else {
+                        sensingStart = todayDate.minusDays(30).format(fileDateFormat);
+                    }
+                }
             } else {
                 sensingStart = todayDate.minusDays(30).format(fileDateFormat);
             }
             startDate.setTime(dateFormat.parse(sensingStart));
             currentParameter = this.parameters.get("endPosition");
             if (currentParameter != null) {
-                sensingEnd = dateFormat.format(new Date(System.currentTimeMillis()));
+                if (currentParameter.getValue() != null) {
+                    sensingEnd = currentParameter.getValueAsFormattedDate(dateFormat.toPattern());
+                } else {
+                    if (currentParameter.getMaxValue() != null) {
+                        sensingEnd = currentParameter.getMaxValueAsFormattedDate(dateFormat.toPattern());
+                    } else {
+                        sensingEnd = todayDate.format(fileDateFormat);
+                    }
+                }
             } else {
                 sensingEnd = todayDate.format(fileDateFormat);
             }
@@ -114,6 +129,9 @@ class Sentinel2Query extends DataQuery {
             int monthEnd = endDate.get(Calendar.MONTH) + 1;
             int dayEnd = endDate.get(Calendar.DAY_OF_MONTH);
             for (String tile : tiles) {
+                if (this.limit <= results.size()) {
+                    break;
+                }
                 String utmCode = tile.substring(0, 2);
                 String latBand = tile.substring(2, 3);
                 String square = tile.substring(3, 5);
@@ -121,6 +139,9 @@ class Sentinel2Query extends DataQuery {
                         DownloadStrategy.URL_SEPARATOR + latBand + DownloadStrategy.URL_SEPARATOR +
                         square + DownloadStrategy.URL_SEPARATOR;
                 for (int year = yearStart; year <= yearEnd; year++) {
+                    if (this.limit <= results.size()) {
+                        break;
+                    }
                     String yearUrl = tileUrl + String.valueOf(year) + DownloadStrategy.URL_SEPARATOR;
                     AwsResult yearResult = IntermediateParser.parse(NetUtils.getResponseAsString(yearUrl));
                     if (yearResult.getCommonPrefixes() != null) {
@@ -132,6 +153,9 @@ class Sentinel2Query extends DataQuery {
                         int monthS = year == yearStart ? monthStart : 1;
                         int monthE = year == yearEnd ? monthEnd : 12;
                         for (int month = monthS; month <= monthE; month++) {
+                            if (this.limit <= results.size()) {
+                                break;
+                            }
                             if (months.contains(month)) {
                                 String monthUrl = yearUrl + String.valueOf(month) + DownloadStrategy.URL_SEPARATOR;
                                 AwsResult monthResult = IntermediateParser.parse(NetUtils.getResponseAsString(monthUrl));
