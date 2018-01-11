@@ -51,10 +51,11 @@ import java.util.Properties;
  * @author Cosmin Cara
  */
 public class SciHubDataSource extends URLDataSource<SciHubDataQuery> {
+    private static final Properties props;
     private static String URL;
 
     static {
-        Properties props = new Properties();
+        props = new Properties();
         try {
             props.load(SciHubDataSource.class.getResourceAsStream("scihub.properties"));
             URL = props.getProperty("scihub.search.url");
@@ -65,6 +66,7 @@ public class SciHubDataSource extends URLDataSource<SciHubDataQuery> {
     public SciHubDataSource() throws URISyntaxException {
         super(URL);
         setParameterProvider(new SciHubParameterProvider());
+        this.properties = SciHubDataSource.props;
     }
 
     @Override
