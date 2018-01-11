@@ -95,6 +95,18 @@ public class DataSourceComponent extends TaoComponent {
         return query.execute();
     }
 
+    public long doCount(List<QueryParameter> parameters) throws QueryException {
+        DataSourceManager dsManager = DataSourceManager.getInstance();
+        DataSource dataSource = this.dataSourceName != null ?
+                dsManager.get(this.sensorName, this.dataSourceName) : dsManager.get(this.sensorName);
+        dataSource.setCredentials(this.userName, this.password);
+        final DataQuery query = dataSource.createQuery(this.sensorName);
+        if (parameters != null) {
+            parameters.forEach(query::addParameter);
+        }
+        return query.getCount();
+    }
+
     public List<EOProduct> doFetch(List<EOProduct> products, Set<String> tiles, String destinationPath) {
         return doFetch(products, tiles, destinationPath, null);
     }
@@ -109,7 +121,6 @@ public class DataSourceComponent extends TaoComponent {
         ProgressNotifier notifier = new ProgressNotifier(getSecurityContext().getPrincipal(),
                                                          this,
                                                          DataSourceTopics.PRODUCT_PROGRESS);
-        //int counter = 1;
         for (EOProduct product : products) {
             try {
                 if (!cancelled) {
