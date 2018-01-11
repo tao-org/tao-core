@@ -12,7 +12,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ImportResource;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
-import ro.cs.tao.component.*;
+import ro.cs.tao.component.ParameterDescriptor;
+import ro.cs.tao.component.ParameterType;
+import ro.cs.tao.component.ProcessingComponent;
+import ro.cs.tao.component.TemplateParameterDescriptor;
+import ro.cs.tao.component.Variable;
 import ro.cs.tao.component.enums.ProcessingComponentVisibility;
 import ro.cs.tao.component.execution.ExecutionJob;
 import ro.cs.tao.component.execution.ExecutionStatus;
@@ -970,9 +974,9 @@ public class PersistenceManagerTest {
         {
             Message message =  new Message();
             message.setTimestamp(System.nanoTime());
-            message.setUserId(1);
+            //message.setUserId(1);
             message.setRead(true);
-            message.setData("notification data");
+            message.addItem("Data", "notification data");
             message.setSource("notification source");
 
             try

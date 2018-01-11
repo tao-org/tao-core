@@ -4,10 +4,11 @@ import reactor.Environment;
 import reactor.bus.Event;
 import reactor.bus.EventBus;
 import reactor.core.config.DispatcherType;
-import reactor.fn.Consumer;
 
+import java.security.Principal;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 import java.util.logging.Logger;
 
 import static reactor.bus.selector.Selectors.$;
@@ -15,43 +16,36 @@ import static reactor.bus.selector.Selectors.$;
 /**
  * @author Cosmin Cara
  */
-public class MessageBus {
-    public static final String INFORMATION = "info";
-    public static final String WARNING = "warn";
-    public static final String ERROR = "error";
-    public static final String PROGRESS = "progress";
-
+public class DefaultMessageBus implements ro.cs.tao.messaging.EventBus<Event<Message>> {
     private static final int MAX_THREADS = 2;
-    private static final MessageBus instance;
-
-    static {
-        instance = new MessageBus();
-    }
 
     private final EventBus messageBus;
     private MessagePersister messagePersister;
     private final ExecutorService executorService;
     private final Logger logger;
 
-    private MessageBus() {
+    public DefaultMessageBus() {
         Environment environment = Environment.initializeIfEmpty();
         this.messageBus = EventBus.create(environment,
                                           Environment.newDispatcher(MAX_THREADS,
                                                                     MAX_THREADS,
                                                                     DispatcherType.THREAD_POOL_EXECUTOR));
         this.executorService = Executors.newSingleThreadExecutor();
-        this.logger = Logger.getLogger(MessageBus.class.getName());
+        this.logger = Logger.getLogger(DefaultMessageBus.class.getName());
     }
 
-    private void exit() {
+    @Override
+    public void shutdown() {
         Environment.terminate();
     }
 
-    public static void registerPersister(MessagePersister messagePersister) {
-        instance.messagePersister = messagePersister;
+    @Override
+    public void setPersister(MessagePersister messagePersister) {
+        this.messagePersister = messagePersister;
     }
 
-    public static void register(Consumer<Event<Message>> subscriber, String... topics) {
+    @Override
+    public void subscribe(Consumer<Event<Message>> subscriber, String... topics) {
         if (subscriber == null) {
             throw new IllegalArgumentException("Subscriber cannot be null");
         }
@@ -59,33 +53,39 @@ public class MessageBus {
             throw new IllegalArgumentException("At least one topic should be given");
         }
         for (String topic : topics) {
-            instance.messageBus.on($(topic), subscriber);
+            this.messageBus.on($(topic), ReactorConsumerAdapter.wrap(subscriber));
         }
     }
 
-    public static void close(String... topics) {
+    @Override
+    public void close(String... topics) {
         if (topics == null) {
             return;
         }
         for (String topic : topics) {
-            instance.messageBus.getConsumerRegistry().unregister(topic);
+            this.messageBus.getConsumerRegistry().unregister(topic);
         }
     }
 
-    public static void send(int userId, String topic, Object source, String message) {
-        final Message msg = new Message(System.currentTimeMillis(), userId, source.toString(), message);
-        instance.messageBus.notify(topic, Event.wrap(msg));
-        if (instance.messagePersister != null) {
-            instance.executorService.submit(() -> {
+    @Override
+    public void send(Principal principal, String topic, Event<Message> event) {
+        this.messageBus.notify(topic, event);
+        if (this.messagePersister != null) {
+            this.executorService.submit(() -> {
                 try {
-                    if (instance.messagePersister != null) {
-                        instance.messagePersister.saveMessage(msg);
+                    if (this.messagePersister != null) {
+                        this.messagePersister.saveMessage(event.getData());
                     }
                 } catch (Exception e) {
-                    instance.logger.severe(e.getMessage());
+                    this.logger.severe(e.getMessage());
                 }
             });
         }
+    }
+
+    @Override
+    public void send(Principal principal, String topic, Message message) {
+        send(principal, topic, Event.wrap(message));
     }
 
 }
