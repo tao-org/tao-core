@@ -144,6 +144,23 @@ public abstract class DataQuery extends Identifiable {
         return executeImpl();
     }
 
+    public long getCount() {
+        final Set<String> mandatoryParams = getMandatoryParams();
+        final Map<String, QueryParameter> parameters = getParameters();
+        List<String> missing = mandatoryParams.stream()
+                .filter(p -> !parameters.containsKey(p)).collect(Collectors.toList());
+        if (missing.size() > 0) {
+            QueryException ex = new QueryException("Mandatory parameter(s) not supplied");
+            ex.addAdditionalInfo("Missing", String.join(",", missing));
+            throw ex;
+        }
+        this.supportedParams.entrySet().stream()
+                .filter(entry -> entry.getValue().getDefaultValue() != null && !parameters.containsKey(entry.getKey()))
+                .map(Map.Entry::getValue)
+                .forEach(p -> addParameter(p.getName(), p.getType(), p.getDefaultValue()));
+        return getCountImpl();
+    }
+
     public Map<String, ParameterDescriptor> getSupportedParameters() { return this.supportedParams; }
 
     public Map<String, QueryParameter> getParameters() { return this.parameters; }
@@ -212,6 +229,8 @@ public abstract class DataQuery extends Identifiable {
     }
 
     protected abstract List<EOProduct> executeImpl();
+
+    protected long getCountImpl() { return -1; }
 
     private void initialize(DataSource source, String sensorName) {
         this.source = source;

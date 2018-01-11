@@ -34,7 +34,10 @@ public abstract class AbstractDataSource<Q extends DataQuery> extends DataSource
     protected UsernamePasswordCredentials credentials;
     private ParameterProvider parameterProvider;
 
-    public AbstractDataSource() { this.timeout = 10000; }
+    public AbstractDataSource() {
+        super();
+        this.timeout = 10000;
+    }
 
     public AbstractDataSource(String connectionString) {
         this();
