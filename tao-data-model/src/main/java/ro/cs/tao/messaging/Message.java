@@ -22,7 +22,7 @@ public class Message {
     private long timestamp;
     private boolean read;
     private Object source;
-    private Map<String, Object> data;
+    private Map<String, String> data;
 
     static {
         try {
@@ -33,7 +33,7 @@ public class Message {
     }
 
     public static Message create(String user, Object source, String message) {
-        Map<String, Object> data = new HashMap<>();
+        Map<String, String> data = new HashMap<>();
         data.put(PRINCIPAL_KEY, user);
         data.put(PAYLOAD_KEY, message);
         return new Message(System.currentTimeMillis(), source, data);
@@ -41,7 +41,7 @@ public class Message {
 
     public Message() { }
 
-    public Message(long timestamp, Object source, Map<String, Object> data) {
+    public Message(long timestamp, Object source, Map<String, String> data) {
         this.timestamp = timestamp;
         this.source = source;
         this.data = data;
@@ -61,13 +61,13 @@ public class Message {
     public void setSource(Object source) { this.source = source; }
 
     @XmlElement(name = "data")
-    public Map<String, Object> getData() { return data; }
-    public void setData(Map<String, Object> data) { this.data = data; }
+    public Map<String, String> getData() { return data; }
+    public void setData(Map<String, String> data) { this.data = data; }
 
-    public Object getItem(String key) {
+    public String getItem(String key) {
         return data != null ? data.get(key) : null;
     }
-    public void addItem(String key, Object value) {
+    public void addItem(String key, String value) {
         if (data == null) {
             data = new HashMap<>();
         }
