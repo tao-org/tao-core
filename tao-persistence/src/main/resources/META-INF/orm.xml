@@ -405,7 +405,7 @@
 
     <entity class="ro.cs.tao.messaging.Message" access="PROPERTY">
         <table name="tao.notification"/>
-
+        <convert converter="ro.cs.tao.persistence.convert.MapConverter" attribute-name="data" />
         <attributes>
             <id name="timestamp">
                 <column name="timestamp" nullable="false" column-definition="bigint NOT NULL"/>
@@ -420,7 +420,7 @@
                 <column name="source" nullable="false" column-definition="varchar NOT NULL"/>
             </basic>
             <basic name="data">
-                <column name="data" nullable="false" column-definition="varchar NOT NULL"/>
+                <column name="data" nullable="false" column-definition="json NOT NULL"/>
             </basic>
         </attributes>
     </entity>
