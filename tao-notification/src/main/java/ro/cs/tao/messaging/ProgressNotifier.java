@@ -1,6 +1,7 @@
 package ro.cs.tao.messaging;
 
 import ro.cs.tao.ProgressListener;
+import ro.cs.tao.security.SystemPrincipal;
 
 import java.security.Principal;
 
@@ -25,6 +26,10 @@ public class ProgressNotifier implements ProgressListener {
     private String taskName;
     private double taskCounter;
     private double subTaskCounter;
+
+    public ProgressNotifier(Object source, String topic) {
+        this(SystemPrincipal.instance(), source, topic);
+    }
 
     public ProgressNotifier(Principal principal, Object source, String topic) {
         this.owner = source;

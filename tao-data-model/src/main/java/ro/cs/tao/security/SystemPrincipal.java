@@ -12,6 +12,8 @@ public final class SystemPrincipal implements Principal {
 
     public static Principal instance() { return instance; }
 
+    private SystemPrincipal() { }
+
     @Override
     public String getName() {
         return "System Account";
