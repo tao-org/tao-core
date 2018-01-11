@@ -1023,31 +1023,19 @@ public class PersistenceManager implements MessagePersister {
         return existingTask;
     }
 
-    private boolean checkMessage(Message message)
-    {
-        if(message == null)
-        {
+    private boolean checkMessage(Message message) {
+        if(message == null) {
             return false;
         }
-        if(message.getTimestamp() == 0)
-        {
+        if(message.getTimestamp() == 0) {
             return false;
         }
-        if(message.getUserId() == 0)
-        {
+        if(message.getData() == null || message.getData().size() == 0) {
             return false;
         }
-
-        if(message.getSource() == null)
-        {
+        if(message.getSource() == null) {
             return false;
         }
-
-        if(message.getData() == null)
-        {
-            return false;
-        }
-
         return true;
     }
 

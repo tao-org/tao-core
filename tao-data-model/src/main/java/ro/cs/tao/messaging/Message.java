@@ -8,18 +8,22 @@ import ro.cs.tao.serialization.SerializerFactory;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.beans.Transient;
+import java.security.Principal;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Cosmin Cara
  */
 @XmlRootElement(name = "message")
 public class Message {
+    public static final String PRINCIPAL_KEY = "Principal";
+    public static final String PAYLOAD_KEY = "Payload";
     private static Serializer<Message, String> serializer;
     private long timestamp;
-    private int userId;
     private boolean read;
-    private String source;
-    private String data;
+    private Object source;
+    private Map<String, Object> data;
 
     static {
         try {
@@ -29,19 +33,21 @@ public class Message {
         }
     }
 
+    public static Message create(Principal principal, Object source, String message) {
+        Map<String, Object> data = new HashMap<>();
+        data.put(PRINCIPAL_KEY, principal);
+        data.put(PAYLOAD_KEY, message);
+        return new Message(System.currentTimeMillis(), source, data);
+    }
+
     public Message() { }
 
-    public Message(long timestamp, int userId, String source, String data) {
+    public Message(long timestamp, Object source, Map<String, Object> data) {
         this.timestamp = timestamp;
         this.source = source;
         this.data = data;
-        this.userId = userId;
         this.read = false;
     }
-
-    @XmlElement(name = "userId")
-    public int getUserId() { return userId; }
-    public void setUserId(int userId) { this.userId = userId; }
 
     @XmlElement(name = "isRead")
     public boolean isRead() { return read; }
@@ -52,12 +58,22 @@ public class Message {
     public void setTimestamp(long timestamp) { this.timestamp = timestamp; }
 
     @Transient
-    public String getSource() { return source; }
-    public void setSource(String source) { this.source = source; }
+    public Object getSource() { return source; }
+    public void setSource(Object source) { this.source = source; }
 
     @XmlElement(name = "data")
-    public String getData() { return data; }
-    public void setData(String data) { this.data = data; }
+    public Map<String, Object> getData() { return data; }
+    public void setData(Map<String, Object> data) { this.data = data; }
+
+    public Object getItem(String key) {
+        return data != null ? data.get(key) : null;
+    }
+    public void addItem(String key, Object value) {
+        if (data == null) {
+            data = new HashMap<>();
+        }
+        data.put(key, value);
+    }
 
     @Override
     public String toString() {
