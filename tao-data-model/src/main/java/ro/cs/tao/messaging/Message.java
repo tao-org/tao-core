@@ -8,7 +8,6 @@ import ro.cs.tao.serialization.SerializerFactory;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.beans.Transient;
-import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,9 +32,9 @@ public class Message {
         }
     }
 
-    public static Message create(Principal principal, Object source, String message) {
+    public static Message create(String user, Object source, String message) {
         Map<String, Object> data = new HashMap<>();
-        data.put(PRINCIPAL_KEY, principal);
+        data.put(PRINCIPAL_KEY, user);
         data.put(PAYLOAD_KEY, message);
         return new Message(System.currentTimeMillis(), source, data);
     }

@@ -14,7 +14,7 @@ public interface EventBus<T extends Serializable> {
     void send(Principal principal, String topic, T event);
     void send(Principal principal, String topic, Message message);
     default void send(Principal principal, String topic, Object source, String message) {
-        send(principal, topic, Message.create(principal, source, message));
+        send(principal, topic, Message.create(principal.getName(), source, message));
     }
     void shutdown();
 }
