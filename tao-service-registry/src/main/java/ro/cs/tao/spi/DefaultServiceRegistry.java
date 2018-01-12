@@ -90,7 +90,8 @@ public class DefaultServiceRegistry<T> implements ServiceRegistry<T> {
      */
     @Override
     public T getService(String serviceName) {
-        return services.get(serviceIds.get(serviceName));
+        String serviceId = serviceIds.get(serviceName);
+        return services.get(serviceId != null ? serviceId : serviceName);
     }
 
     /**
