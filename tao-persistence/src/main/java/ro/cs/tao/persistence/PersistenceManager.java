@@ -1030,10 +1030,7 @@ public class PersistenceManager implements MessagePersister {
         if(message.getTimestamp() == 0) {
             return false;
         }
-        if(message.getData() == null || message.getData().size() == 0) {
-            return false;
-        }
-        if(message.getSource() == null) {
+        if(message.getData() == null) {
             return false;
         }
         return true;
@@ -1052,10 +1049,10 @@ public class PersistenceManager implements MessagePersister {
     }
 
     @Transactional(readOnly = true)
-    public Page<Message> getUserMessages(Integer userId, Integer pageNumber)
+    public Page<Message> getUserMessages(String user, Integer pageNumber)
     {
         PageRequest pageRequest = new PageRequest(pageNumber - 1, MESSAGES_PAGE_SIZE, Sort.Direction.DESC, MESSAGE_TIMESTAMP_PROPERTY_NAME);
-        return messageRepository.findByUserId(userId, pageRequest);
+        return messageRepository.findByUser(user, pageRequest);
     }
 
     private boolean checkContainer(Container container)

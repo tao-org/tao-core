@@ -118,7 +118,7 @@ public class DataSourceComponent extends TaoComponent {
         if (this.userName != null) {
             dataSource.setCredentials(this.userName, this.password);
         }
-        ProgressNotifier notifier = new ProgressNotifier(getSecurityContext().getPrincipal(),
+        ProgressNotifier notifier = new ProgressNotifier(securityContext().getPrincipal(),
                                                          this,
                                                          DataSourceTopics.PRODUCT_PROGRESS);
         for (EOProduct product : products) {
