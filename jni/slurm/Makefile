@@ -20,7 +20,8 @@ LDFLAGS = -L/usr/lib64/slurm/ -lslurm -ldrmaa \
 jnilib: basis_types.h msg_drmaa.h com_sun_grid_drmaa_SessionImpl.h com_sun_grid_drmaa_SessionImpl.c
 	$(CC) com_sun_grid_drmaa_SessionImpl.c -o libdrmaa-jni-slurm.so $(CFLAGS) $(LDFLAGS)
 	#$(CP) libdrmaa-jni-slurm.so $(DRMAA_JAVA_JNI_LIBRARY_PATH)
-	$(CP) libdrmaa-jni-slurm.so /home/jcoravu/TAOWorkspace/Slurm/drmaa-libraries/
+	$(CP) libdrmaa-jni-slurm.so ../
+	$(CP) libdrmaa-jni-slurm.so ../../tao-drmaa-impl-slurm/jni
 		
 
 all: jnilib
@@ -28,5 +29,5 @@ all: jnilib
 clean:
 	rm -f libdrmaa-jni-slurm.so
 	#rm -f $(DRMAA_JAVA_JNI_LIBRARY_PATH)/libdrmaa-jni-slurm.so
-	rm -f /home/jcoravu/TAOWorkspace/Slurm/drmaa-libraries/libdrmaa-jni-slurm.so
+	rm -f ../../tao-drmaa-impl-slurm/jni/libdrmaa-jni-slurm.so
 
