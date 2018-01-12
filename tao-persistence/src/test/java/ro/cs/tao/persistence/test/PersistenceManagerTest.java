@@ -36,6 +36,7 @@ import ro.cs.tao.messaging.Message;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.config.DatabaseConfiguration;
 import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.security.SystemPrincipal;
 import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.topology.NodeServiceStatus;
 import ro.cs.tao.topology.ServiceDescription;
@@ -972,12 +973,11 @@ public class PersistenceManagerTest {
         logger.info("TC_27_save_new_notification");
         try
         {
-            Message message =  new Message();
-            message.setTimestamp(System.nanoTime());
-            //message.setUserId(1);
+            Message message =  Message.create(SystemPrincipal.instance().getName(),
+                                              "notification source",
+                                              "first item");
             message.setRead(true);
-            message.addItem("Data", "notification data");
-            message.setSource("notification source");
+            message.addItem("Auxiliary", "second item");
 
             try
             {
