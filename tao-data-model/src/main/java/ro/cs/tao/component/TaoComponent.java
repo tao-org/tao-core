@@ -1,6 +1,8 @@
 package ro.cs.tao.component;
 
 import ro.cs.tao.eodata.EOData;
+import ro.cs.tao.security.SecurityContext;
+import ro.cs.tao.security.SystemSecurityContext;
 
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlTransient;
@@ -20,6 +22,8 @@ public abstract class TaoComponent extends Identifiable {
 
     protected SourceDescriptor[] sources;
     protected TargetDescriptor[] targets;
+
+    private SecurityContext securityContext;
 
     public String getLabel() {
         return label;
@@ -140,6 +144,11 @@ public abstract class TaoComponent extends Identifiable {
         }
     }
 
+    @XmlTransient
+    public SecurityContext getSecurityContext() { return this.securityContext == null ?
+            SystemSecurityContext.instance() : this.securityContext; }
+    public void setSecurityContext(SecurityContext context) { this.securityContext = context; }
+
     @Override
     public TaoComponent clone() throws CloneNotSupportedException {
         TaoComponent clone = (TaoComponent) super.clone();
@@ -149,6 +158,7 @@ public abstract class TaoComponent extends Identifiable {
         if (this.targets != null) {
             clone.setTargets(Arrays.copyOf(this.targets, this.targets.length));
         }
+        clone.setSecurityContext(this.securityContext);
         return clone;
     }
 }

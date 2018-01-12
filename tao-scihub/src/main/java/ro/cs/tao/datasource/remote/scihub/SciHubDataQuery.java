@@ -72,56 +72,7 @@ public class SciHubDataQuery extends DataQuery {
     @Override
     protected List<EOProduct> executeImpl() throws QueryException {
         List<EOProduct> results = new ArrayList<>();
-        String query = "";
-        int idx = 0;
-        if (!this.parameters.containsKey("platformName")) {
-            addParameter("platformName", this.sensorName);
-        }
-        for (Map.Entry<String, QueryParameter> entry : this.parameters.entrySet()) {
-            QueryParameter parameter = entry.getValue();
-            if (!parameter.isOptional() && !parameter.isInterval() && parameter.getValue() == null) {
-                throw new QueryException(String.format("Parameter [%s] is required but no value is supplied", parameter.getName()));
-            }
-            if (parameter.isOptional() &
-              ((!parameter.isInterval() & parameter.getValue() == null) |
-                (parameter.isInterval() & parameter.getMinValue() == null & parameter.getMaxValue() == null))) {
-                continue;
-            }
-            if (idx > 0) {
-                query += " AND ";
-            }
-            if (parameter.getType().isArray()) {
-                query += "(";
-                Object value = parameter.getValue();
-                int length = Array.getLength(value);
-                for (int i = 0; i < length; i++) {
-                    query += Array.get(value, i).toString();
-                    if (i < length - 1) {
-                        query += " OR ";
-                    }
-                }
-                if (length > 1) {
-                    query = query.substring(0, query.length() - 4);
-                }
-                query += ")";
-            } else if (Date.class.equals(parameter.getType())) {
-                query += entry.getKey() + ":[";
-                try {
-                    query += converterFactory.create(parameter).stringValue();
-                } catch (ConversionException e) {
-                    throw new QueryException(e.getMessage());
-                }
-                query += "]";
-            } else {
-                query += entry.getKey() + ":";
-                try {
-                    query += converterFactory.create(parameter).stringValue();
-                } catch (ConversionException e) {
-                    throw new QueryException(e.getMessage());
-                }
-            }
-            idx++;
-        }
+        String query = buildQueryParameters();
         if (this.limit <= 0) {
             this.limit = DEFAULT_LIMIT;
         }
@@ -184,6 +135,87 @@ public class SciHubDataQuery extends DataQuery {
     }
 
     @Override
+    public long getCount() {
+        long count = -1;
+        String query = buildQueryParameters();
+        final String countUrl = this.source.getProperty("scihub.search.count.url");
+        if (countUrl != null) {
+            List<NameValuePair> params = new ArrayList<>();
+            params.add(new BasicNameValuePair("filter", query));
+            String queryUrl = countUrl + "?" + URLEncodedUtils.format(params, "UTF-8").replace("+", "%20");
+            try (CloseableHttpResponse response = NetUtils.openConnection(queryUrl, this.source.getCredentials())) {
+                switch (response.getStatusLine().getStatusCode()) {
+                    case 200:
+                        String rawResponse = EntityUtils.toString(response.getEntity());
+                        count = Long.parseLong(rawResponse);
+                        break;
+                    case 401:
+                        throw new QueryException("The supplied credentials are invalid!");
+                    default:
+                        throw new QueryException(String.format("The request was not successful. Reason: %s",
+                                                               response.getStatusLine().getReasonPhrase()));
+                }
+            } catch (IOException ex) {
+                throw new QueryException(ex);
+            }
+        }
+        return count;
+    }
+
+    @Override
     public String defaultName() { return "SciHubQuery"; }
 
+    private String buildQueryParameters() {
+        StringBuilder query = new StringBuilder();
+        int idx = 0;
+        if (!this.parameters.containsKey("platformName")) {
+            addParameter("platformName", this.sensorName);
+        }
+        for (Map.Entry<String, QueryParameter> entry : this.parameters.entrySet()) {
+            QueryParameter parameter = entry.getValue();
+            if (!parameter.isOptional() && !parameter.isInterval() && parameter.getValue() == null) {
+                throw new QueryException(String.format("Parameter [%s] is required but no value is supplied", parameter.getName()));
+            }
+            if (parameter.isOptional() &
+                    ((!parameter.isInterval() & parameter.getValue() == null) |
+                            (parameter.isInterval() & parameter.getMinValue() == null & parameter.getMaxValue() == null))) {
+                continue;
+            }
+            if (idx > 0) {
+                query.append(" AND ");
+            }
+            if (parameter.getType().isArray()) {
+                query.append("(");
+                Object value = parameter.getValue();
+                int length = Array.getLength(value);
+                for (int i = 0; i < length; i++) {
+                    query.append(Array.get(value, i).toString());
+                    if (i < length - 1) {
+                        query.append(" OR ");
+                    }
+                }
+                if (length > 1) {
+                    query = new StringBuilder(query.substring(0, query.length() - 4));
+                }
+                query.append(")");
+            } else if (Date.class.equals(parameter.getType())) {
+                query.append(entry.getKey()).append(":[");
+                try {
+                    query.append(converterFactory.create(parameter).stringValue());
+                } catch (ConversionException e) {
+                    throw new QueryException(e.getMessage());
+                }
+                query.append("]");
+            } else {
+                query.append(entry.getKey()).append(":");
+                try {
+                    query.append(converterFactory.create(parameter).stringValue());
+                } catch (ConversionException e) {
+                    throw new QueryException(e.getMessage());
+                }
+            }
+            idx++;
+        }
+        return query.toString();
+    }
 }

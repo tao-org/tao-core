@@ -405,13 +405,13 @@
 
     <entity class="ro.cs.tao.messaging.Message" access="PROPERTY">
         <table name="tao.notification"/>
-
+        <convert converter="ro.cs.tao.persistence.convert.MapConverter" attribute-name="data" />
         <attributes>
             <id name="timestamp">
                 <column name="timestamp" nullable="false" column-definition="bigint NOT NULL"/>
             </id>
             <basic name="userId">
-                <column name="user_id" nullable="false" column-definition="integer NOT NULL"/>
+                <column name="username" nullable="false" column-definition="character varying NOT NULL"/>
             </basic>
             <basic name="read">
                 <column name="read" nullable="true" column-definition="boolean NULL"/>
@@ -420,7 +420,7 @@
                 <column name="source" nullable="false" column-definition="varchar NOT NULL"/>
             </basic>
             <basic name="data">
-                <column name="data" nullable="false" column-definition="varchar NOT NULL"/>
+                <column name="data" nullable="false" column-definition="character varying NOT NULL"/>
             </basic>
         </attributes>
     </entity>

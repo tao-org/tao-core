@@ -2,9 +2,11 @@ package ro.cs.tao.topology;
 
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.docker.Container;
-import ro.cs.tao.messaging.MessageBus;
+import ro.cs.tao.messaging.Messaging;
+import ro.cs.tao.messaging.Topics;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.security.SystemPrincipal;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.spi.ServiceLoader;
 import ro.cs.tao.spi.ServiceRegistry;
@@ -251,23 +253,23 @@ public class TopologyManager implements ITopologyManager {
     private void onCompleted(NodeDescription node, ToolInstallStatus status) {
         switch (status.getStatus()) {
             case INSTALLED:
-                MessageBus.send(1, MessageBus.INFORMATION,
-                                this,
-                                String.format("%s installation on %s completed",
+                Messaging.send(SystemPrincipal.instance(), Topics.INFORMATION,
+                               this,
+                               String.format("%s installation on %s completed",
                                               status.getToolName(),
                                               node.getHostName()));
                 break;
             case UNINSTALLED:
-                MessageBus.send(1, MessageBus.INFORMATION,
-                                this,
-                                String.format("%s uninstallation on %s completed",
+                Messaging.send(SystemPrincipal.instance(), Topics.INFORMATION,
+                                       this,
+                                       String.format("%s uninstallation on %s completed",
                                               status.getToolName(),
                                               node.getHostName()));
                 break;
             case ERROR:
-                MessageBus.send(1, MessageBus.WARNING,
-                                this,
-                                String.format("%s installation on %s failed [reason: %s]",
+                Messaging.send(SystemPrincipal.instance(), Topics.WARNING,
+                                       this,
+                                       String.format("%s installation on %s failed [reason: %s]",
                                               status.getToolName(),
                                               node.getHostName(),
                                               status.getReason()));

@@ -7,12 +7,22 @@ import ro.cs.tao.datasource.param.ParameterDescriptor;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * @author Cosmin Cara
  */
 @XmlRootElement(name = "dataSource")
 public abstract class DataSource<Q extends DataQuery> extends Identifiable {
+    protected Properties properties;
+
+    public DataSource() {
+        this.properties = new Properties();
+    }
+
+    public String getProperty(String name) {
+        return this.properties.getProperty(name);
+    }
 
     /**
      * Returns the timeout for this data source connection

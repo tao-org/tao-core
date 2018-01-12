@@ -63,8 +63,42 @@ public class DataSourceTest {
 
     public static void main(String[] args) {
         //SciHub_Sentinel1_Test();
+        SciHub_Sentinel2_Count_Test();
+    }
 
-        SciHub_Sentinel2_Test();
+    public static void SciHub_Sentinel2_Count_Test() {
+        try {
+            Logger logger = LogManager.getLogManager().getLogger("");
+            for (Handler handler : logger.getHandlers()) {
+                handler.setLevel(Level.INFO);
+            }
+            DataSource dataSource = getDatasourceRegistry().getService(SciHubDataSource.class);
+            dataSource.setCredentials("kraftek", "cei7samurai");
+            String[] sensors = dataSource.getSupportedSensors();
+
+            DataQuery query = dataSource.createQuery(sensors[1]);
+            query.addParameter("platformName", "Sentinel-2");
+            QueryParameter<Date> begin = query.createParameter("beginPosition", Date.class);
+            begin.setMinValue(Date.from(LocalDateTime.of(2016, 2, 1, 0, 0, 0, 0)
+                                                .atZone(ZoneId.systemDefault())
+                                                .toInstant()));
+            begin.setMaxValue(Date.from(LocalDateTime.of(2017, 2, 1, 0, 0, 0, 0)
+                                                .atZone(ZoneId.systemDefault())
+                                                .toInstant()));
+            query.addParameter(begin);
+            Polygon2D aoi = Polygon2D.fromWKT("POLYGON((22.8042573604346 43.8379609098684," +
+                                                      "24.83885442747927 43.8379609098684," +
+                                                      "24.83885442747927 44.795645304033826," +
+                                                      "22.8042573604346 44.795645304033826," +
+                                                      "22.8042573604346 43.8379609098684))");
+
+            query.addParameter("footprint", aoi);
+
+            query.addParameter("cloudcoverpercentage", 100.);
+            System.out.println(String.format("Query returned %s",query.getCount()));
+        } catch (QueryException e) {
+            e.printStackTrace();
+        }
     }
 
     public static void SciHub_Sentinel2_Test() {
@@ -109,8 +143,8 @@ public class DataSourceTest {
 //                        .forEach(a -> System.out.println("\tName='" + a.getName() +
 //                                                                 "', value='" + a.getValue() + "'"));
                 r.getAttributes().stream()
-                  .forEach(a -> System.out.println("\tName='" + a.getName() +
-                    "', value='" + a.getValue() + "'"));
+                        .forEach(a -> System.out.println("\tName='" + a.getName() +
+                                                                 "', value='" + a.getValue() + "'"));
             });
         } catch (QueryException e) {
             e.printStackTrace();

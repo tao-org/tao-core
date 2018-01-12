@@ -1,6 +1,9 @@
 package ro.cs.tao.messaging;
 
 import ro.cs.tao.ProgressListener;
+import ro.cs.tao.security.SystemPrincipal;
+
+import java.security.Principal;
 
 //import java.util.concurrent.ExecutorService;
 //import java.util.concurrent.Executors;
@@ -17,15 +20,21 @@ public class ProgressNotifier implements ProgressListener {
     private static final String SUBTASK_PROGRESS = "[%s: %s] - %s: %s";
 
 //    private final ExecutorService worker;
-    private String topic;
-    private Object owner;
+    private final String topic;
+    private final Object owner;
+    private final Principal principal;
     private String taskName;
     private double taskCounter;
     private double subTaskCounter;
 
     public ProgressNotifier(Object source, String topic) {
+        this(SystemPrincipal.instance(), source, topic);
+    }
+
+    public ProgressNotifier(Principal principal, Object source, String topic) {
         this.owner = source;
         this.topic = topic;
+        this.principal = principal;
 //        this.worker = Executors.newSingleThreadExecutor();
     }
 
@@ -94,7 +103,7 @@ public class ProgressNotifier implements ProgressListener {
     }
 
     private void sendMessage(String messageTemplate, Object...args) {
-        //this.worker.submit(() -> MessageBus.send(1, this.topic, this.owner, String.format(messageTemplate, args)));
-        MessageBus.send(1, this.topic, this.owner, String.format(messageTemplate, args));
+        //this.worker.submit(() -> DefaultMessageBus.send(1, this.topic, this.owner, String.format(messageTemplate, args)));
+        Messaging.send(this.principal, this.topic, this.owner, String.format(messageTemplate, args));
     }
 }
