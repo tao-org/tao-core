@@ -10,6 +10,7 @@ import ro.cs.tao.eodata.EOProduct;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Cosmin Cara
@@ -115,6 +116,21 @@ public class AWSDataQuery extends DataQuery {
     @Override
     public Map<String, ParameterDescriptor> getSupportedParameters() {
         return innerQuery.getSupportedParameters();
+    }
+
+    @Override
+    public QueryParameter getParameter(String name) {
+        return innerQuery.getParameter(name);
+    }
+
+    @Override
+    public Set<String> getMandatoryParams() {
+        return innerQuery.getMandatoryParams();
+    }
+
+    @Override
+    public Map<String, QueryParameter> getParameters() {
+        return innerQuery.getParameters();
     }
 
     @Override
