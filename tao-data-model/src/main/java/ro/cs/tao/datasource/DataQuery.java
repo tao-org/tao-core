@@ -129,16 +129,16 @@ public abstract class DataQuery extends Identifiable {
 
     public List<EOProduct> execute() {
         final Set<String> mandatoryParams = getMandatoryParams();
-        final Map<String, QueryParameter> parameters = getParameters();
+        final Map<String, QueryParameter> actualParameters = getParameters();
         List<String> missing = mandatoryParams.stream()
-                .filter(p -> !parameters.containsKey(p)).collect(Collectors.toList());
+                .filter(p -> !actualParameters.containsKey(p)).collect(Collectors.toList());
         if (missing.size() > 0) {
             QueryException ex = new QueryException("Mandatory parameter(s) not supplied");
             ex.addAdditionalInfo("Missing", String.join(",", missing));
             throw ex;
         }
         this.supportedParams.entrySet().stream()
-                .filter(entry -> entry.getValue().getDefaultValue() != null && !parameters.containsKey(entry.getKey()))
+                .filter(entry -> entry.getValue().getDefaultValue() != null && !actualParameters.containsKey(entry.getKey()))
                 .map(Map.Entry::getValue)
                 .forEach(p -> addParameter(p.getName(), p.getType(), p.getDefaultValue()));
         return executeImpl();
