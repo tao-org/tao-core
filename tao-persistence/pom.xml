@@ -89,6 +89,12 @@
             <version>${hibernate.version}</version>
     	</dependency>
 
+		<dependency>
+			<groupId>com.vladmihalcea</groupId>
+			<artifactId>hibernate-types-52</artifactId>
+			<version>1.2.0</version>
+		</dependency>
+
     	<!-- C3p0 -->
 		<dependency>
 			<groupId>com.mchange</groupId>

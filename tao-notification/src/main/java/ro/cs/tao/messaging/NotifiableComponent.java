@@ -1,8 +1,8 @@
 package ro.cs.tao.messaging;
 
 import reactor.bus.Event;
-import reactor.fn.Consumer;
 
+import java.util.function.Consumer;
 import java.util.logging.Logger;
 
 /**
@@ -24,7 +24,7 @@ public abstract class NotifiableComponent implements Consumer<Event<Message>> {
     }
 
     protected void subscribe(String... topics) {
-        MessageBus.register(this, topics);
+        Messaging.subscribe(this, topics);
     }
 
     protected abstract void onMessageReceived(Message message);

@@ -8,9 +8,10 @@ import ro.cs.tao.datasource.remote.aws.LandsatProduct;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.Polygon2D;
 import ro.cs.tao.messaging.Message;
-import ro.cs.tao.messaging.MessageBus;
+import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.NotifiableComponent;
 import ro.cs.tao.messaging.ProgressNotifier;
+import ro.cs.tao.messaging.Topics;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
 
@@ -78,15 +79,15 @@ public class AWSDataSourceTest {
             });
 
             final ProductFetchStrategy strategy = dataSource.getProductFetchStrategy(sensors[0]);
-            strategy.setProgressListener(new ProgressNotifier(dataSource, MessageBus.PROGRESS));
+            strategy.setProgressListener(new ProgressNotifier(null, dataSource, Topics.PROGRESS));
 
-            MessageBus.register(new NotifiableComponent() {
+            Messaging.subscribe(new NotifiableComponent() {
                 @Override
                 protected void onMessageReceived(Message message) {
                     System.out.println(message.getData());
                     message.setRead(true);
                 }
-            }, MessageBus.PROGRESS);
+            }, Topics.PROGRESS);
 
             Path path = strategy.fetch(results.get(0));
             if (path != null) {
