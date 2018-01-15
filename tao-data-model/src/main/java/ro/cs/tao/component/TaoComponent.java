@@ -145,9 +145,9 @@ public abstract class TaoComponent extends Identifiable {
     }
 
     @XmlTransient
-    public SecurityContext getSecurityContext() { return this.securityContext == null ?
+    public SecurityContext securityContext() { return this.securityContext == null ?
             SystemSecurityContext.instance() : this.securityContext; }
-    public void setSecurityContext(SecurityContext context) { this.securityContext = context; }
+    public void attachSecurityContext(SecurityContext context) { this.securityContext = context; }
 
     @Override
     public TaoComponent clone() throws CloneNotSupportedException {
@@ -158,7 +158,7 @@ public abstract class TaoComponent extends Identifiable {
         if (this.targets != null) {
             clone.setTargets(Arrays.copyOf(this.targets, this.targets.length));
         }
-        clone.setSecurityContext(this.securityContext);
+        clone.attachSecurityContext(this.securityContext);
         return clone;
     }
 }
