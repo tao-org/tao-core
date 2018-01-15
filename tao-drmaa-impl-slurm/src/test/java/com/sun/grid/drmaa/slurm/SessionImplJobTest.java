@@ -40,9 +40,9 @@ package com.sun.grid.drmaa.slurm;
 
 import java.util.*;
 
-import com.sun.grid.drmaa.slurm.Util;
+import com.sun.grid.Util;
 import org.ggf.drmaa.*;
-import com.sun.grid.drmaa.slurm.Settings;
+import com.sun.grid.Settings;
 import static org.junit.Assert.*;
 import org.junit.After;
 import org.junit.Before;

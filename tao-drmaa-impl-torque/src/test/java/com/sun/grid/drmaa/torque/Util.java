@@ -1,4 +1,4 @@
-package com.sun.grid.drmaa.torque;
+package com.sun.grid;
 
 import org.ggf.drmaa.Session;
 
