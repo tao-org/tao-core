@@ -61,7 +61,7 @@ public class SessionImpl implements Session {
     static {
         AccessController.doPrivileged(new PrivilegedAction() {
             public Object run() {
-                System.loadLibrary("drmaa-jni");
+                System.loadLibrary("drmaa-jni-slurm");
                 return null;
             }
         });
