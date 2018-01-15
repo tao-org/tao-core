@@ -1,4 +1,4 @@
-package com.sun.grid.drmaa.slurm;
+package com.sun.grid;
 
 import org.ggf.drmaa.Session;
 

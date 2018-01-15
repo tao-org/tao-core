@@ -35,10 +35,12 @@
  *
  * Created on June 10, 2008
  */
-package com.sun.grid.drmaa.torque;
+package com.sun.grid.drmaa;
 
+import com.sun.grid.Settings;
 import java.util.Collections;
 
+import com.sun.grid.Util;
 import org.ggf.drmaa.*;
 import org.junit.After;
 import org.junit.Before;
@@ -85,7 +87,7 @@ public class Issue2608Test {
      * - job hold due to -hold_jid is not indicated as
      *   STATE_SYSTEM_ON_HOLD by drmaa_job_ps(3)
      *
-     * @throws DrmaaException
+     * @throws org.ggf.drmaa.DrmaaException
      */
     @Test
     public void test2608Test() throws DrmaaException {
@@ -153,7 +155,7 @@ public class Issue2608Test {
      *
      * @param sleep Time in second to sleep.
      * @return JobTemplate
-     * @throws DrmaaException
+     * @throws org.ggf.drmaa.DrmaaException
      */
     private JobTemplate createSleeperTemplate(final int sleep)
             throws DrmaaException {
