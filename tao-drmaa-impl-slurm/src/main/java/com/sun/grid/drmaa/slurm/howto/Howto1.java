@@ -28,7 +28,7 @@
  *
  ************************************************************************/
 /*___INFO__MARK_END__*/
-package com.sun.grid.drmaa.howto;
+package com.sun.grid.drmaa.slurm.howto;
 
 import org.ggf.drmaa.DrmaaException;
 import org.ggf.drmaa.Session;
