@@ -15,7 +15,6 @@ LDFLAGS = -L/usr/lib64/slurm/ -lslurm -ldrmaa \
       -l:select_alps.so \
       -l:select_cons_res.so
 	
-
 	
 jnilib: basis_types.h msg_drmaa.h com_sun_grid_drmaa_SessionImpl.h com_sun_grid_drmaa_SessionImpl.c
 	$(CC) com_sun_grid_drmaa_SessionImpl.c -o libdrmaa-jni-slurm.so $(CFLAGS) $(LDFLAGS)

@@ -28,7 +28,7 @@
  *
  ************************************************************************/
 /*___INFO__MARK_END__*/
-package com.sun.grid.drmaa.howto;
+package com.sun.grid.drmaa.torque.howto;
 
 import java.util.Collections;
 import java.util.Iterator;
