@@ -36,7 +36,7 @@
  * Created on November 15, 2004, 10:41 AM
  */
 
-package com.sun.grid.drmaa;
+package com.sun.grid.drmaa.torque;
 
 
 import org.ggf.drmaa.*;
