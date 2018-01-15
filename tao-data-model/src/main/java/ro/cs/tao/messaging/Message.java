@@ -1,5 +1,6 @@
 package ro.cs.tao.messaging;
 
+import ro.cs.tao.serialization.MapAdapter;
 import ro.cs.tao.serialization.MediaType;
 import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.serialization.Serializer;
@@ -18,34 +19,47 @@ import java.util.Map;
 public class Message {
     public static final String PRINCIPAL_KEY = "Principal";
     public static final String PAYLOAD_KEY = "Payload";
+    public static final String SOURCE_KEY = "Source";
     private static Serializer<Message, String> serializer;
+    private static MapAdapter mapAdapter;
     private long timestamp;
     private boolean read;
-    private Object source;
     private Map<String, String> data;
 
     static {
         try {
             serializer = SerializerFactory.create(Message.class, MediaType.JSON);
+            mapAdapter = new MapAdapter();
         } catch (SerializationException e) {
             e.printStackTrace();
         }
     }
 
     public static Message create(String user, Object source, String message) {
-        Map<String, String> data = new HashMap<>();
+        HashMap<String, String> data = new HashMap<>();
         data.put(PRINCIPAL_KEY, user);
         data.put(PAYLOAD_KEY, message);
-        return new Message(System.currentTimeMillis(), source, data);
+        if (source != null) {
+            data.put(SOURCE_KEY, source.toString());
+        }
+        return new Message(System.currentTimeMillis(), data);
     }
 
     public Message() { }
 
-    public Message(long timestamp, Object source, Map<String, String> data) {
+    private Message(long timestamp, HashMap<String, String> data) {
         this.timestamp = timestamp;
-        this.source = source;
         this.data = data;
         this.read = false;
+    }
+
+    @XmlElement(name = "user")
+    public String getUser() { return this.data != null ? this.data.get(PRINCIPAL_KEY) : null; }
+    public void setUser(String name) {
+        if (this.data == null) {
+            this.data = new HashMap<>();
+        }
+        this.data.put(PRINCIPAL_KEY, name);
     }
 
     @XmlElement(name = "isRead")
@@ -56,14 +70,24 @@ public class Message {
     public long getTimestamp() { return timestamp; }
     public void setTimestamp(long timestamp) { this.timestamp = timestamp; }
 
-    @Transient
-    public Object getSource() { return source; }
-    public void setSource(Object source) { this.source = source; }
-
     @XmlElement(name = "data")
-    public Map<String, String> getData() { return data; }
-    public void setData(Map<String, String> data) { this.data = data; }
+    public String getData() {
+        try {
+            return this.data != null ? mapAdapter.unmarshal(this.data) : null;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    public void setData(String data) {
+        try {
+            this.data = mapAdapter.marshal(data);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
+    @Transient
     public String getItem(String key) {
         return data != null ? data.get(key) : null;
     }

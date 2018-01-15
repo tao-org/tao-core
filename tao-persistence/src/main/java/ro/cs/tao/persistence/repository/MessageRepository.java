@@ -25,19 +25,12 @@ public interface MessageRepository extends PagingAndSortingRepository<Message, S
      * @param userId - the given user identifier
      * @return the corresponding Message entity
      */
-    List<Message> findByUserId(Integer userId);
+    List<Message> findByUser(String userName);
 
     /**
      * Find Message entity by user identifier
-     * @param userId - the given user identifier
+     * @param userName - the given user identifier
      * @return the corresponding Message entity
      */
-    Page<Message> findByUserId(Integer userId, Pageable pageRequest);
-
-    /**
-     * Find Message entity by source
-     * @param source - the given source
-     * @return the corresponding Message entity
-     */
-    Message findBySource(String source);
+    Page<Message> findByUser(String userName, Pageable pageRequest);
 }

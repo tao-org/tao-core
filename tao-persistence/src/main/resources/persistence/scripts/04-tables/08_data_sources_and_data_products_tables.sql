@@ -344,13 +344,12 @@ DROP TABLE IF EXISTS tao.notification CASCADE;
 CREATE TABLE tao.notification
 (
     timestamp bigint NOT NULL,
-	user_id integer NOT NULL,
+	username character varying NOT NULL,
 	read boolean NULL,
-	source varchar NOT NULL,
-	data varchar NOT NULL
+	data character varying NOT NULL
 );
 
-ALTER TABLE tao.notification ADD CONSTRAINT PK_notification PRIMARY KEY (timestamp, user_id);
+ALTER TABLE tao.notification ADD CONSTRAINT PK_notification PRIMARY KEY (timestamp, username);
 
 --ALTER TABLE tao.notification ADD CONSTRAINT FK_notification_user
 --	FOREIGN KEY (user_id) REFERENCES tao."user" (id) ON DELETE No Action ON UPDATE No Action;
