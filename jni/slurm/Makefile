@@ -1,7 +1,6 @@
 SHELL:= /bin/bash
 
 SLURM_DRMAA_INCLUDE=-I $(SLURM_DRMAA_INCLUDE_PATH)
-#SLURM_DRMAA_LIB=-L $(SLURM_DRMAA_LIBRARY_PATH)
 JAVA_HOME=/usr/lib/jvm/java-openjdk
 JAVA_INCLUDE=-I $(JAVA_HOME)/include/ -I $(JAVA_HOME)/include/linux/
 CP = cp
@@ -18,15 +17,12 @@ LDFLAGS = -L/usr/lib64/slurm/ -lslurm -ldrmaa \
 	
 jnilib: basis_types.h msg_drmaa.h com_sun_grid_drmaa_SessionImpl.h com_sun_grid_drmaa_SessionImpl.c
 	$(CC) com_sun_grid_drmaa_SessionImpl.c -o libdrmaa-jni-slurm.so $(CFLAGS) $(LDFLAGS)
-	#$(CP) libdrmaa-jni-slurm.so $(DRMAA_JAVA_JNI_LIBRARY_PATH)
 	$(CP) libdrmaa-jni-slurm.so ../
-	$(CP) libdrmaa-jni-slurm.so ../../tao-drmaa-impl-slurm/jni
 		
 
 all: jnilib
 
 clean:
 	rm -f libdrmaa-jni-slurm.so
-	#rm -f $(DRMAA_JAVA_JNI_LIBRARY_PATH)/libdrmaa-jni-slurm.so
-	rm -f ../../tao-drmaa-impl-slurm/jni/libdrmaa-jni-slurm.so
+	rm -f ../libdrmaa-jni-slurm.so
 
