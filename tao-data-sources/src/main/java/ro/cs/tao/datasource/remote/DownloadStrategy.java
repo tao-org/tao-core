@@ -44,6 +44,7 @@ import ro.cs.tao.datasource.ProductFetchStrategy;
 import ro.cs.tao.datasource.util.NetUtils;
 import ro.cs.tao.datasource.util.Utilities;
 import ro.cs.tao.eodata.EOProduct;
+import ro.cs.tao.utils.FileUtils;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -159,7 +160,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
                 currentProductProgress = 0;
                 try {
                     final Path destPath = Paths.get(destination);
-                    Utilities.ensureExists(destPath);
+                    FileUtils.ensureExists(destPath);
                     switch (this.fetchMode) {
                         case COPY:
                             file = copy(product, Paths.get(localArchiveRoot), destPath);
@@ -412,6 +413,6 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
                 this.progressListener.subActivityEnded(subActivity);
             }
         }
-        return Utilities.ensurePermissions(file);
+        return FileUtils.ensurePermissions(file);
     }
 }
