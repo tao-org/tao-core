@@ -74,6 +74,11 @@
             <artifactId>tao-service-api</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>ro.cs.tao</groupId>
+            <artifactId>tao-drmaa-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
