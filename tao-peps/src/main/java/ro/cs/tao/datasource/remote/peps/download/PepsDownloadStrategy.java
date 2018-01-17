@@ -8,7 +8,6 @@ import ro.cs.tao.datasource.remote.peps.PepsDataSource;
 import ro.cs.tao.datasource.remote.peps.PepsMetadataResponseHandler;
 import ro.cs.tao.datasource.remote.result.json.JsonResponseParser;
 import ro.cs.tao.datasource.util.NetUtils;
-import ro.cs.tao.datasource.util.Utilities;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.utils.FileUtils;
 
@@ -40,7 +39,7 @@ public class PepsDownloadStrategy extends DownloadStrategy {
 
     @Override
     public Path fetch(EOProduct product) throws IOException {
-        Utilities.ensureExists(Paths.get(destination));
+        FileUtils.ensureExists(Paths.get(destination));
         String productName = product.getName();
         currentStep = "Metadata";
         ProductState productState;

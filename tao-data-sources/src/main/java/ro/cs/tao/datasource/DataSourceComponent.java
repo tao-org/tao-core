@@ -6,6 +6,7 @@ import ro.cs.tao.datasource.remote.DownloadStrategy;
 import ro.cs.tao.datasource.remote.FetchMode;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.messaging.ProgressNotifier;
+import ro.cs.tao.utils.FileUtils;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -138,6 +139,7 @@ public class DataSourceComponent extends TaoComponent {
                         if (localRootPath != null) {
                             try {
                                 Path archivePath = Paths.get(localRootPath);
+                                FileUtils.ensureExists(archivePath);
                                 downloadStrategy.setLocalArchiveRoot(archivePath.toAbsolutePath().toString());
                             } catch (InvalidPathException e) {
                                 throw new IOException(e);

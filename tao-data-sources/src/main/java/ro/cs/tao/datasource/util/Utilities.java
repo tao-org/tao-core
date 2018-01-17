@@ -53,19 +53,8 @@
  */
 package ro.cs.tao.datasource.util;
 
-import java.io.IOException;
-import java.nio.file.FileStore;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.attribute.FileAttribute;
-import java.nio.file.attribute.PosixFileAttributeView;
-import java.nio.file.attribute.PosixFilePermission;
-import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -74,8 +63,6 @@ import java.util.concurrent.TimeUnit;
  * @author  Cosmin Cara
  */
 public class Utilities {
-
-    private static Boolean supportsPosix;
 
     public static String join(Iterable collection, String separator) {
         String result = "";
@@ -150,48 +137,5 @@ public class Utilities {
             value = xmlLine.substring(start, xmlLine.indexOf("\"", start));
         }
         return value;
-    }
-
-    public static Path ensureExists(Path folder) throws IOException {
-        if (folder != null && !Files.exists(folder)) {
-            if (isPosixFileSystem()) {
-                Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxr-xr-x");
-                FileAttribute<Set<PosixFilePermission>> attrs = PosixFilePermissions.asFileAttribute(perms);
-                folder = Files.createDirectory(folder, attrs);
-            } else {
-                folder = Files.createDirectory(folder);
-            }
-
-        }
-        return folder;
-    }
-
-    public static Path ensurePermissions(Path file) {
-        try {
-            if (file != null && Files.exists(file)) {
-                if (isPosixFileSystem()) {
-                    Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxr-xr-x");
-                    file = Files.setPosixFilePermissions(file, perms);
-                }
-            }
-        } catch (IOException ex) {
-            Logger.getRootLogger().warn("Cannot set permissions for %s", file.toString());
-        }
-        return file;
-    }
-
-    private static boolean isPosixFileSystem() {
-        if (supportsPosix == null) {
-            supportsPosix = Boolean.FALSE;
-            FileSystem fileSystem = FileSystems.getDefault();
-            Iterable<FileStore> fileStores = fileSystem.getFileStores();
-            for (FileStore fs : fileStores) {
-                supportsPosix = fs.supportsFileAttributeView(PosixFileAttributeView.class);
-                if (supportsPosix) {
-                    break;
-                }
-            }
-        }
-        return supportsPosix;
     }
 }
