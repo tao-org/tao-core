@@ -76,7 +76,6 @@ public abstract class TaoComponent extends Identifiable {
 
     public void setSources(SourceDescriptor[] sources) { this.sources = sources; }
 
-    @XmlTransient
     public void setSourcesCount(int value) {
         if (this.sources == null) {
             this.sources = new SourceDescriptor[value];
