@@ -35,12 +35,12 @@
  *
  * Created on June 10, 2008
  */
-package com.sun.grid.drmaa;
+package com.sun.grid.drmaa.torque;
 
-import com.sun.grid.Settings;
+import com.sun.grid.drmaa.torque.Settings;
 import java.util.Collections;
 
-import com.sun.grid.Util;
+import com.sun.grid.drmaa.torque.Util;
 import org.ggf.drmaa.*;
 import org.junit.After;
 import org.junit.Before;
