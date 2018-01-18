@@ -26,7 +26,6 @@
         <module>tao-spring-bridge</module>
         <module>tao-notification</module>
         <module>tao-service-api</module>
-        <module>tao-drmaa-api</module>
         <module>tao-drmaa-impl-slurm</module>
         <module>tao-drmaa-impl-torque</module>
     </modules>
