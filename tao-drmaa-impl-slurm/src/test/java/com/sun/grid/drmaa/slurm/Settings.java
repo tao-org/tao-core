@@ -4,7 +4,7 @@
  * Created on September 7, 2005, 4:01 PM
  */
 
-package com.sun.grid;
+package com.sun.grid.drmaa.slurm;
 
 import java.util.HashMap;
 import java.util.Map;

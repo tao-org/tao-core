@@ -35,12 +35,12 @@
  *
  * Created on June 10, 2008
  */
-package com.sun.grid.drmaa;
+package com.sun.grid.drmaa.slurm;
 
-import com.sun.grid.Settings;
+import com.sun.grid.drmaa.slurm.Settings;
 import java.util.Collections;
 
-import com.sun.grid.Util;
+import com.sun.grid.drmaa.slurm.Util;
 import org.ggf.drmaa.*;
 import org.junit.After;
 import org.junit.Before;

@@ -30,7 +30,7 @@
  ************************************************************************/
 /*___INFO__MARK_END__*/
 
-package com.sun.grid.drmaa;
+package com.sun.grid.drmaa.slurm;
 
 import org.ggf.drmaa.*;
 import org.junit.After;
