@@ -36,12 +36,12 @@
  * Created on September 7, 2005, 3:50 PM
  */
 
-package com.sun.grid.drmaa;
+package com.sun.grid.drmaa.slurm;
 
 import java.io.*;
 import java.util.*;
 import org.ggf.drmaa.*;
-import com.sun.grid.Settings;
+import com.sun.grid.drmaa.slurm.Settings;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

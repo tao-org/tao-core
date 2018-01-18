@@ -40,7 +40,7 @@ package com.sun.grid.drmaa.slurm;
 
 
 import org.ggf.drmaa.*;
-import com.sun.grid.Settings;
+import com.sun.grid.drmaa.slurm.Settings;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
