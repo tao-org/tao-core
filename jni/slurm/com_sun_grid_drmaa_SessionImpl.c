@@ -142,7 +142,7 @@ static char *get_exception_class_name (int errnum);
 static drmaa_job_template_t *get_from_list (int id);
 static int insert_into_list (drmaa_job_template_t *jt);
 
-JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeControl
+JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_slurm_SessionImpl_nativeControl
   (JNIEnv *env, jobject object, jstring jobId, jint action)
 {
    char error[DRMAA_ERROR_STRING_BUFFER + 1];
@@ -167,7 +167,7 @@ JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeControl
    }
 }
 
-JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeExit
+JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_slurm_SessionImpl_nativeExit
   (JNIEnv *env, jobject object)
 {
    char error[DRMAA_ERROR_STRING_BUFFER + 1];
@@ -203,7 +203,7 @@ JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeExit
    }
 }
 
-JNIEXPORT jstring JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeGetContact
+JNIEXPORT jstring JNICALL Java_com_sun_grid_drmaa_slurm_SessionImpl_nativeGetContact
   (JNIEnv *env, jobject object)
 {
    char error[DRMAA_ERROR_STRING_BUFFER + 1];
@@ -222,7 +222,7 @@ JNIEXPORT jstring JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeGetContact
    return (*env)->NewStringUTF (env, contact);
 }
 
-JNIEXPORT jstring JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeGetDRMSInfo
+JNIEXPORT jstring JNICALL Java_com_sun_grid_drmaa_slurm_SessionImpl_nativeGetDRMSInfo
   (JNIEnv *env, jobject object)
 {
    char error[DRMAA_ERROR_STRING_BUFFER + 1];
@@ -241,7 +241,7 @@ JNIEXPORT jstring JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeGetDRMSInfo
    return (*env)->NewStringUTF (env, system);
 }
 
-JNIEXPORT jint JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeGetJobProgramStatus
+JNIEXPORT jint JNICALL Java_com_sun_grid_drmaa_slurm_SessionImpl_nativeGetJobProgramStatus
   (JNIEnv *env, jobject object, jstring jobId)
 {
    char error[DRMAA_ERROR_STRING_BUFFER + 1];
@@ -271,7 +271,7 @@ JNIEXPORT jint JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeGetJobProgramSt
    return status;
 }
 
-JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeInit
+JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_slurm_SessionImpl_nativeInit
   (JNIEnv *env, jobject object, jstring contactString)
 {
    char error[DRMAA_ERROR_STRING_BUFFER + 1];
@@ -293,7 +293,7 @@ JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeInit
    }
 }
 
-JNIEXPORT jobjectArray JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeRunBulkJobs
+JNIEXPORT jobjectArray JNICALL Java_com_sun_grid_drmaa_slurm_SessionImpl_nativeRunBulkJobs
   (JNIEnv *env, jobject object, jint id, jint start, jint end, jint step)
 {
    char error[DRMAA_ERROR_STRING_BUFFER + 1];
@@ -361,7 +361,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeRunBulk
    return ret_val;
 }
 
-JNIEXPORT jstring JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeRunJob
+JNIEXPORT jstring JNICALL Java_com_sun_grid_drmaa_slurm_SessionImpl_nativeRunJob
   (JNIEnv *env, jobject object, jint id)
 {
    char error[DRMAA_ERROR_STRING_BUFFER + 1];
@@ -389,7 +389,7 @@ JNIEXPORT jstring JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeRunJob
    return (*env)->NewStringUTF (env, job_id);
 }
 
-JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeSynchronize
+JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_slurm_SessionImpl_nativeSynchronize
   (JNIEnv *env, jobject object, jobjectArray ids, jlong timeout,
    jboolean dispose)
 {
@@ -431,7 +431,7 @@ JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeSynchronize
    }
 }
 
-JNIEXPORT jobject JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeWait
+JNIEXPORT jobject JNICALL Java_com_sun_grid_drmaa_slurm_SessionImpl_nativeWait
   (JNIEnv *env, jobject object, jstring jobId, jlong timeout)
 {
    char error[DRMAA_ERROR_STRING_BUFFER + 1];
@@ -556,7 +556,7 @@ JNIEXPORT jobject JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeWait
       return NULL;
    }
 
-   clazz = (*env)->FindClass (env, "com/sun/grid/drmaa/JobInfoImpl");
+   clazz = (*env)->FindClass (env, "com/sun/grid/drmaa/slurm/JobInfoImpl");
    meth = (*env)->GetMethodID (env, clazz, "<init>",
                  "(Ljava/lang/String;IIII[Ljava/lang/String;ILjava/lang/String;)V");
    job_info = (*env)->NewObject (env, clazz, meth,
@@ -566,7 +566,7 @@ JNIEXPORT jobject JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeWait
    return job_info;
 }
 
-JNIEXPORT jint JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeAllocateJobTemplate
+JNIEXPORT jint JNICALL Java_com_sun_grid_drmaa_slurm_SessionImpl_nativeAllocateJobTemplate
   (JNIEnv *env, jobject object)
 {
    char error[DRMAA_ERROR_STRING_BUFFER + 1];
@@ -583,7 +583,7 @@ JNIEXPORT jint JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeAllocateJobTemp
    return insert_into_list (jt);
 }
 
-JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeSetAttributeValue
+JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_slurm_SessionImpl_nativeSetAttributeValue
   (JNIEnv *env, jobject object, jint id, jstring nameStr, jstring valueStr)
 {
    char error[DRMAA_ERROR_STRING_BUFFER + 1];
@@ -631,7 +631,7 @@ JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeSetAttributeVal
    }
 }
 
-JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeSetAttributeValues
+JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_slurm_SessionImpl_nativeSetAttributeValues
   (JNIEnv *env, jobject object, jint id, jstring nameStr, jobjectArray values)
 {
    char error[DRMAA_ERROR_STRING_BUFFER + 1];
@@ -700,7 +700,7 @@ JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeSetAttributeVal
    }
 }
 
-JNIEXPORT jobjectArray JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeGetAttributeNames
+JNIEXPORT jobjectArray JNICALL Java_com_sun_grid_drmaa_slurm_SessionImpl_nativeGetAttributeNames
   (JNIEnv *env, jobject object, jint id)
 {
    char error[DRMAA_ERROR_STRING_BUFFER + 1];
@@ -793,7 +793,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeGetAttr
    return retval;
 }
 
-JNIEXPORT jobjectArray JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeGetAttribute
+JNIEXPORT jobjectArray JNICALL Java_com_sun_grid_drmaa_slurm_SessionImpl_nativeGetAttribute
   (JNIEnv *env, jobject object, jint id, jstring name)
 {
    char error[DRMAA_ERROR_STRING_BUFFER + 1];
@@ -917,7 +917,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeGetAttr
    return retval;
 }
 
-JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeDeleteJobTemplate
+JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_slurm_SessionImpl_nativeDeleteJobTemplate
   (JNIEnv *env, jobject object, jint id)
 {
    char error[DRMAA_ERROR_STRING_BUFFER + 1];
@@ -1157,4 +1157,3 @@ static drmaa_job_template_t *get_from_list (int id)
 
    return retval;
 }
-

@@ -78,7 +78,7 @@ extern "C" {
  * Method:    nativeControl
  * Signature: (Ljava/lang/String;I)V
  */
-JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeControl
+JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_slurm_SessionImpl_nativeControl
   (JNIEnv *, jobject, jstring, jint);
 
 /*
@@ -86,7 +86,7 @@ JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeControl
  * Method:    nativeExit
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeExit
+JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_slurm_SessionImpl_nativeExit
   (JNIEnv *, jobject);
 
 /*
@@ -94,7 +94,7 @@ JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeExit
  * Method:    nativeGetContact
  * Signature: ()Ljava/lang/String;
  */
-JNIEXPORT jstring JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeGetContact
+JNIEXPORT jstring JNICALL Java_com_sun_grid_drmaa_slurm_SessionImpl_nativeGetContact
   (JNIEnv *, jobject);
 
 /*
@@ -102,7 +102,7 @@ JNIEXPORT jstring JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeGetContact
  * Method:    nativeGetDRMSInfo
  * Signature: ()Ljava/lang/String;
  */
-JNIEXPORT jstring JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeGetDRMSInfo
+JNIEXPORT jstring JNICALL Java_com_sun_grid_drmaa_slurm_SessionImpl_nativeGetDRMSInfo
   (JNIEnv *, jobject);
 
 /*
@@ -110,7 +110,7 @@ JNIEXPORT jstring JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeGetDRMSInfo
  * Method:    nativeGetJobProgramStatus
  * Signature: (Ljava/lang/String;)I
  */
-JNIEXPORT jint JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeGetJobProgramStatus
+JNIEXPORT jint JNICALL Java_com_sun_grid_drmaa_slurm_SessionImpl_nativeGetJobProgramStatus
   (JNIEnv *, jobject, jstring);
 
 /*
@@ -118,7 +118,7 @@ JNIEXPORT jint JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeGetJobProgramSt
  * Method:    nativeInit
  * Signature: (Ljava/lang/String;)V
  */
-JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeInit
+JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_slurm_SessionImpl_nativeInit
   (JNIEnv *, jobject, jstring);
 
 /*
@@ -126,7 +126,7 @@ JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeInit
  * Method:    nativeRunBulkJobs
  * Signature: (IIII)[Ljava/lang/String;
  */
-JNIEXPORT jobjectArray JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeRunBulkJobs
+JNIEXPORT jobjectArray JNICALL Java_com_sun_grid_drmaa_slurm_SessionImpl_nativeRunBulkJobs
   (JNIEnv *, jobject, jint, jint, jint, jint);
 
 /*
@@ -134,7 +134,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeRunBulk
  * Method:    nativeRunJob
  * Signature: (I)Ljava/lang/String;
  */
-JNIEXPORT jstring JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeRunJob
+JNIEXPORT jstring JNICALL Java_com_sun_grid_drmaa_slurm_SessionImpl_nativeRunJob
   (JNIEnv *, jobject, jint);
 
 /*
@@ -142,7 +142,7 @@ JNIEXPORT jstring JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeRunJob
  * Method:    nativeSynchronize
  * Signature: ([Ljava/lang/String;JZ)V
  */
-JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeSynchronize
+JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_slurm_SessionImpl_nativeSynchronize
   (JNIEnv *, jobject, jobjectArray, jlong, jboolean);
 
 /*
@@ -150,7 +150,7 @@ JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeSynchronize
  * Method:    nativeWait
  * Signature: (Ljava/lang/String;J)Lcom/sun/grid/drmaa/SGEJobInfo;
  */
-JNIEXPORT jobject JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeWait
+JNIEXPORT jobject JNICALL Java_com_sun_grid_drmaa_slurm_SessionImpl_nativeWait
   (JNIEnv *, jobject, jstring, jlong);
 
 /*
@@ -158,7 +158,7 @@ JNIEXPORT jobject JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeWait
  * Method:    nativeAllocateJobTemplate
  * Signature: ()I
  */
-JNIEXPORT jint JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeAllocateJobTemplate
+JNIEXPORT jint JNICALL Java_com_sun_grid_drmaa_slurm_SessionImpl_nativeAllocateJobTemplate
   (JNIEnv *, jobject);
 
 /*
@@ -166,7 +166,7 @@ JNIEXPORT jint JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeAllocateJobTemp
  * Method:    nativeSetAttributeValue
  * Signature: (ILjava/lang/String;Ljava/lang/String;)V
  */
-JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeSetAttributeValue
+JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_slurm_SessionImpl_nativeSetAttributeValue
   (JNIEnv *, jobject, jint, jstring, jstring);
 
 /*
@@ -174,7 +174,7 @@ JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeSetAttributeVal
  * Method:    nativeSetAttributeValues
  * Signature: (ILjava/lang/String;[Ljava/lang/String;)V
  */
-JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeSetAttributeValues
+JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_slurm_SessionImpl_nativeSetAttributeValues
   (JNIEnv *, jobject, jint, jstring, jobjectArray);
 
 /*
@@ -182,7 +182,7 @@ JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeSetAttributeVal
  * Method:    nativeGetAttributeNames
  * Signature: (I)[Ljava/lang/String;
  */
-JNIEXPORT jobjectArray JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeGetAttributeNames
+JNIEXPORT jobjectArray JNICALL Java_com_sun_grid_drmaa_slurm_SessionImpl_nativeGetAttributeNames
   (JNIEnv *, jobject, jint);
 
 /*
@@ -190,7 +190,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeGetAttr
  * Method:    nativeGetAttribute
  * Signature: (ILjava/lang/String;)[Ljava/lang/String;
  */
-JNIEXPORT jobjectArray JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeGetAttribute
+JNIEXPORT jobjectArray JNICALL Java_com_sun_grid_drmaa_slurm_SessionImpl_nativeGetAttribute
   (JNIEnv *, jobject, jint, jstring);
 
 /*
@@ -198,7 +198,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeGetAttr
  * Method:    nativeDeleteJobTemplate
  * Signature: (I)V
  */
-JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_SessionImpl_nativeDeleteJobTemplate
+JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_slurm_SessionImpl_nativeDeleteJobTemplate
   (JNIEnv *, jobject, jint);
 
 #ifdef __cplusplus

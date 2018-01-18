@@ -16,26 +16,6 @@
  *  *
  *
  */
-
-/*
- *
- *  * Copyright (C) 2017 CS ROMANIA
- *  *
- *  * This program is free software; you can redistribute it and/or modify it
- *  * under the terms of the GNU General Public License as published by the Free
- *  * Software Foundation; either version 3 of the License, or (at your option)
- *  * any later version.
- *  * This program is distributed in the hope that it will be useful, but WITHOUT
- *  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- *  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- *  * more details.
- *  *
- *  * You should have received a copy of the GNU General Public License along
- *  * with this program; if not, see http://www.gnu.org/licenses/
- *  *
- *
- */
-
 package ro.cs.tao.datasource.remote.scihub.download;
 
 import ro.cs.tao.datasource.InterruptedException;
@@ -43,6 +23,7 @@ import ro.cs.tao.datasource.remote.scihub.helpers.Sentinel2ProductHelper;
 import ro.cs.tao.datasource.util.NetUtils;
 import ro.cs.tao.datasource.util.Utilities;
 import ro.cs.tao.eodata.EOProduct;
+import ro.cs.tao.utils.FileUtils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -193,7 +174,7 @@ public class Sentinel2DownloadStrategy extends SentinelDownloadStrategy {
     private Path downloadImpl(EOProduct product) throws IOException, InterruptedException {
         Path rootPath = null;
         String url;
-        Utilities.ensureExists(Paths.get(destination));
+        FileUtils.ensureExists(Paths.get(destination));
         String productName = product.getName();
         boolean isL1C = "Level-1C".equals(product.getAttributeValue("processinglevel"));
         Sentinel2ProductHelper helper = Sentinel2ProductHelper.createHelper(productName);
@@ -204,7 +185,7 @@ public class Sentinel2DownloadStrategy extends SentinelDownloadStrategy {
             rootPath = downloadFile(url, rootPath, NetUtils.getAuthToken());
         }
         if (rootPath == null || !Files.exists(rootPath)) {
-            rootPath = Utilities.ensureExists(Paths.get(destination, productName + ".SAFE"));
+            rootPath = FileUtils.ensureExists(Paths.get(destination, productName + ".SAFE"));
             url = getMetadataUrl(product);
             Path metadataFile = rootPath.resolve(helper.getMetadataFileName());
             currentStep = "Metadata";
@@ -214,9 +195,9 @@ public class Sentinel2DownloadStrategy extends SentinelDownloadStrategy {
                 List<String> metaTileNames = Utilities.filter(allLines, "<Granule" + ("13".equals(helper.getVersion()) ? "s" : " "));
                 boolean hasTiles = updateMedatata(metadataFile, allLines);
                 if (hasTiles) {
-                    Path tilesFolder = Utilities.ensureExists(rootPath.resolve(FOLDER_GRANULE));
-                    Utilities.ensureExists(rootPath.resolve(FOLDER_AUXDATA));
-                    Path dataStripFolder = Utilities.ensureExists(rootPath.resolve(FOLDER_DATASTRIP));
+                    Path tilesFolder = FileUtils.ensureExists(rootPath.resolve(FOLDER_GRANULE));
+                    FileUtils.ensureExists(rootPath.resolve(FOLDER_AUXDATA));
+                    Path dataStripFolder = FileUtils.ensureExists(rootPath.resolve(FOLDER_DATASTRIP));
                     Map<String, String> tileNames = new HashMap<>();
                     String dataStripId = null;
                     String skippedTiles = "";
@@ -254,10 +235,10 @@ public class Sentinel2DownloadStrategy extends SentinelDownloadStrategy {
                         String tileUrl = entry.getValue();
                         String granuleId = entry.getKey();
                         String tileName = helper.getGranuleFolder(dataStripId, granuleId);
-                        Path tileFolder = Utilities.ensureExists(tilesFolder.resolve(tileName));
-                        Path auxData = Utilities.ensureExists(tileFolder.resolve(FOLDER_AUXDATA));
-                        Path imgData = Utilities.ensureExists(tileFolder.resolve(FOLDER_IMG_DATA));
-                        Path qiData = Utilities.ensureExists(tileFolder.resolve(FOLDER_QI_DATA));
+                        Path tileFolder = FileUtils.ensureExists(tilesFolder.resolve(tileName));
+                        Path auxData = FileUtils.ensureExists(tileFolder.resolve(FOLDER_AUXDATA));
+                        Path imgData = FileUtils.ensureExists(tileFolder.resolve(FOLDER_IMG_DATA));
+                        Path qiData = FileUtils.ensureExists(tileFolder.resolve(FOLDER_QI_DATA));
                         String metadataName = helper.getGranuleMetadataFileName(granuleId);
                         Path tileMetaFile = downloadFile(pathBuilder.root(tileUrl).node(metadataName).value(), tileFolder.resolve(metadataName), NetUtils.getAuthToken());
                         if (tileMetaFile != null) {
@@ -273,7 +254,7 @@ public class Sentinel2DownloadStrategy extends SentinelDownloadStrategy {
                                     }
                                 } else {
                                     for (Map.Entry<String, Set<String>> resEntry : l2aBandFiles.entrySet()) {
-                                        Path imgDataRes = Utilities.ensureExists(imgData.resolve(resEntry.getKey()));
+                                        Path imgDataRes = FileUtils.ensureExists(imgData.resolve(resEntry.getKey()));
                                         for (String bandFileName : resEntry.getValue()) {
                                             downloadFile(pathBuilder.root(tileUrl)
                                                                  .node(FOLDER_IMG_DATA)
@@ -324,7 +305,7 @@ public class Sentinel2DownloadStrategy extends SentinelDownloadStrategy {
                                 .node(FOLDER_DATASTRIP).node(dsFolder)
                                 .node(dsFileName)
                                 .value();
-                        Path dataStrip = Utilities.ensureExists(dataStripFolder.resolve(dsFolder));
+                        Path dataStrip = FileUtils.ensureExists(dataStripFolder.resolve(dsFolder));
                         downloadFile(dataStripPath, dataStrip.resolve(dsFileName), NetUtils.getAuthToken());
                     }
                 } else {

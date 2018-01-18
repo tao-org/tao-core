@@ -25,6 +25,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
@@ -35,9 +36,15 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.logging.Logger;
 
 /**
  * This class provides additional functionality in handling with files. All methods in this class dealing with
@@ -581,5 +588,51 @@ public class FileUtils {
             });
         }
         return destination;
+    }
+
+    public static Path ensureExists(Path folder) throws IOException {
+        if (folder != null && !Files.exists(folder)) {
+            if (isPosixFileSystem()) {
+                Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxr-xr-x");
+                FileAttribute<Set<PosixFilePermission>> attrs = PosixFilePermissions.asFileAttribute(perms);
+                folder = Files.createDirectories(folder, attrs);
+            } else {
+                folder = Files.createDirectories(folder);
+            }
+
+        }
+        return folder;
+    }
+
+    public static Path ensurePermissions(Path file) {
+        try {
+            if (file != null && Files.exists(file)) {
+                if (isPosixFileSystem()) {
+                    Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxr-xr-x");
+                    file = Files.setPosixFilePermissions(file, perms);
+                }
+            }
+        } catch (IOException ex) {
+            Logger.getLogger(FileUtils.class.getSimpleName()).warning(String.format("Cannot set permissions for %s",
+                                                                                    file.toString()));
+        }
+        return file;
+    }
+
+    private static Boolean supportsPosix;
+
+    private static boolean isPosixFileSystem() {
+        if (supportsPosix == null) {
+            supportsPosix = Boolean.FALSE;
+            FileSystem fileSystem = FileSystems.getDefault();
+            Iterable<FileStore> fileStores = fileSystem.getFileStores();
+            for (FileStore fs : fileStores) {
+                supportsPosix = fs.supportsFileAttributeView(PosixFileAttributeView.class);
+                if (supportsPosix) {
+                    break;
+                }
+            }
+        }
+        return supportsPosix;
     }
 }

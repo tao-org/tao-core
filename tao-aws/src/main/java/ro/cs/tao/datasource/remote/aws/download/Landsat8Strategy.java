@@ -3,8 +3,8 @@ package ro.cs.tao.datasource.remote.aws.download;
 import ro.cs.tao.datasource.remote.DownloadStrategy;
 import ro.cs.tao.datasource.remote.aws.AWSDataSource;
 import ro.cs.tao.datasource.remote.aws.helpers.LandsatProductHelper;
-import ro.cs.tao.datasource.util.Utilities;
 import ro.cs.tao.eodata.EOProduct;
+import ro.cs.tao.utils.FileUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -63,7 +63,7 @@ public class Landsat8Strategy extends DownloadStrategy {
         currentProduct = product;
         String productName = currentProduct.getName();
         LandsatProductHelper helper = new LandsatProductHelper(productName);
-        Path rootPath = Utilities.ensureExists(Paths.get(destination, productName));
+        Path rootPath = FileUtils.ensureExists(Paths.get(destination, productName));
         url = getMetadataUrl(currentProduct);
         Path metadataFile = rootPath.resolve(productName + "_MTL.txt");
         currentStep = "Metadata";
