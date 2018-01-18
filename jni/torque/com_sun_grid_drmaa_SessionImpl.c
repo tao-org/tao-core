@@ -556,7 +556,7 @@ JNIEXPORT jobject JNICALL Java_com_sun_grid_drmaa_torque_SessionImpl_nativeWait
       return NULL;
    }
 
-   clazz = (*env)->FindClass (env, "com/sun/grid/drmaa/JobInfoImpl");
+   clazz = (*env)->FindClass (env, "com/sun/grid/drmaa/torque/JobInfoImpl");
    meth = (*env)->GetMethodID (env, clazz, "<init>",
                  "(Ljava/lang/String;IIII[Ljava/lang/String;ILjava/lang/String;)V");
    job_info = (*env)->NewObject (env, clazz, meth,
