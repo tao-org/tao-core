@@ -41,21 +41,6 @@
         </dependency>
         <dependency>
             <groupId>ro.cs.tao</groupId>
-            <artifactId>tao-scihub</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ro.cs.tao</groupId>
-            <artifactId>tao-aws</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ro.cs.tao</groupId>
-            <artifactId>tao-peps</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ro.cs.tao</groupId>
             <artifactId>tao-persistence</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -72,6 +57,11 @@
         <dependency>
             <groupId>ro.cs.tao</groupId>
             <artifactId>tao-service-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ro.cs.tao</groupId>
+            <artifactId>tao-spring-bridge</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>
