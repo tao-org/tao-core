@@ -15,7 +15,7 @@ public interface MonitoringService<T> {
 
     List<T> getLiveNotifications();
 
-    List<T> getNotifications(int userId, int page);
+    List<T> getNotifications(String user, int page);
 
     List<T> acknowledgeNotification(List<T> notifications);
 
