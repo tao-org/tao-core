@@ -106,7 +106,7 @@ public class SessionImpl implements Session {
                 files = source.listFiles();
             }
             else{
-                throw new IOException(resourceFolder + " is not a resource folder");
+                throw new IOException(resourceFolder + " is not a folder");
             }
             for(File file : files){
                 String command = "cp " + resourceFolder + file.getName() + " ./" + file.getName();
@@ -134,10 +134,7 @@ public class SessionImpl implements Session {
         /* Remove files from working directory */
         try{
             File source = new File(resourceFolder);
-            File[] files = new File[]{};
-            if (source.isDirectory()){
-                files = source.listFiles();
-            }
+            File[] files = source.listFiles();
             for(File file : files){
                 String strPath = (new String("./")) + file.getName();
                 System.out.println("rm " + strPath);
