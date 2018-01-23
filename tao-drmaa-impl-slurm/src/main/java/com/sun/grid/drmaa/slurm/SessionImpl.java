@@ -77,14 +77,13 @@ public class SessionImpl implements Session {
     private static final String libraryName = "libdrmaa-jni-slurm.so";
     private static final String loadingLibraryName = "drmaa-jni-slurm";
 
-    private static boolean libraryExists() throws IOException{
+    private static boolean libraryExists() throws Exception{
         try {
             File folder = new File(libraryFolder);
-            if (folder == null || !folder.exists()) {
+            if (!folder.exists()) {
                 /* Create library folder */
+                folder.mkdir();
                 System.out.println(new String("mkdir ") + libraryFolder);
-                Process p = Runtime.getRuntime().exec(new String[]{"mkdir", libraryFolder});
-                writeCommand(p);
                 return false;
             }
             else{
@@ -94,7 +93,7 @@ public class SessionImpl implements Session {
                 }
                 return false;
             }
-        }catch(IOException e){
+        }catch(Exception e){
             throw e;
         }
     }
