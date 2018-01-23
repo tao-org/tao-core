@@ -98,23 +98,26 @@ public class SessionImpl implements Session {
         }
     }
 
-    private static void copyFiles(String sourcePath, String destPath) throws IOException{
+    private static void copyFiles() throws IOException{
         /* Copy the content of resources folder into working directory */
         try{
-            File source = new File(sourcePath);
+            File source = new File(resourceFolder);
             File[] files = new File[]{};
             if (source.isDirectory()){
                 files = source.listFiles();
             }
+            else{
+                throw new IOException(resourceFolder + " is not a resource folder");
+            }
             for(File file : files){
-                String command = "cp " + sourcePath + file.getName() + " " + destPath + file.getName();
+                String command = "cp " + resourceFolder + file.getName() + " ./" + file.getName();
                 System.out.println(command);
                 //                ClassLoader classloader = Thread.currentThread().getContextClassLoader();
 //                BufferedReader reader = new BufferedReader(
 //                        new InputStreamReader(classloader.getResourceAsStream(
 //                                file.getName())));
                 BufferedReader reader = new BufferedReader(new FileReader(file));
-                BufferedWriter writer = new BufferedWriter(new FileWriter(destPath+file.getName()));
+                BufferedWriter writer = new BufferedWriter(new FileWriter("./" + file.getName()));
                 String line = "";
                 while((line = reader.readLine()) != null){
                     writer.write(line);
@@ -217,7 +220,7 @@ public class SessionImpl implements Session {
                     if (!libraryExists()) {
                         /* Copy source library files from resources folder to working directory */
                         System.out.println("Create library");
-                        copyFiles(resourceFolder, "./");
+                        copyFiles();
                         /* Compile .... */
                         Process p;
                         System.out.println("Compile...");
