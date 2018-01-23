@@ -99,20 +99,23 @@ public class SessionImpl implements Session {
         }
     }
 
-    private static void copyFiles(String[] files) throws IOException{
+    private static void copyFiles(String sourcePath, String destPath) throws IOException{
         /* Copy the content of resources folder into working directory */
         try{
-            for(int i =0; i < files.length; i++){
-                String command = "cp " + resourceFolder + files[i] + " " + files[i];
+            File source = new File(sourcePath);
+            File[] files = new File[]{};
+            if (source.isDirectory()){
+                files = source.listFiles();
+            }
+            for(File file : files){
+                String command = "cp " + sourcePath + file.getName() + " " + destPath + file.getName();
                 System.out.println(command);
-                String name = resourceFolder + files[i];
-
-//                ClassLoader classloader = Thread.currentThread().getContextClassLoader();
+                //                ClassLoader classloader = Thread.currentThread().getContextClassLoader();
 //                BufferedReader reader = new BufferedReader(
 //                        new InputStreamReader(classloader.getResourceAsStream(
-//                                name)));
-                BufferedReader reader = new BufferedReader(new FileReader(name));
-                BufferedWriter writer = new BufferedWriter(new FileWriter(files[i]));
+//                                file.getName())));
+                BufferedReader reader = new BufferedReader(new FileReader(file));
+                BufferedWriter writer = new BufferedWriter(new FileWriter(destPath+file.getName()));
                 String line = "";
                 while((line = reader.readLine()) != null){
                     writer.write(line);
@@ -120,26 +123,30 @@ public class SessionImpl implements Session {
                 }
                 writer.close();
                 reader.close();
-
             }
-
         }catch(IOException e){
             throw e;
         }
     }
 
-    private static void removeFiles(String[] files){
+    private static void removeFiles() throws IOException{
         /* Remove files from working directory */
-        try {
-            for (int i = 0; i < files.length; i++) {
-                String strPath = (new String("./")) + files[i];
+        try{
+            File source = new File(resourceFolder);
+            File[] files = new File[]{};
+            if (source.isDirectory()){
+                files = source.listFiles();
+            }
+            for(File file : files){
+                String strPath = (new String("./")) + file.getName();
                 System.out.println("rm " + strPath);
                 Path path = Paths.get(strPath);
                 Files.deleteIfExists(path);
             }
-            System.out.println();
-        }catch(Exception e){
-            System.out.println(e.toString());
+            Path path = Paths.get(libraryName);
+            Files.deleteIfExists(path);
+        }catch(IOException e){
+            throw e;
         }
     }
 
@@ -184,13 +191,14 @@ public class SessionImpl implements Session {
         }
     }
 
-    private static void fixUpPermissions(Path destPath) throws IOException{
+    private static void fixUpPermissions(String strDestPath) throws IOException{
         /* Set execution permissions for all executables in path */
+        Path destPath = Paths.get(strDestPath);
         Stream<Path> files = Files.list(destPath);
         files.forEach(path->{
             if (Files.isDirectory(path)){
                 try {
-                    fixUpPermissions(path);
+                    fixUpPermissions(path.toString());
                 }catch(IOException e){
                     System.out.println("Failed to fix permissions on " + path.toString());
                 }
@@ -210,31 +218,27 @@ public class SessionImpl implements Session {
                     if (!libraryExists()) {
                         /* Copy source library files from resources folder to working directory */
                         System.out.println("Create library");
-                        copyFiles(new String[]{"Makefile", "basis_types.h", "msg_drmaa.h",
-                                "com_sun_grid_drmaa_SessionImpl.c", "com_sun_grid_drmaa_SessionImpl.h"});
+                        copyFiles(resourceFolder, "./");
                         /* Compile .... */
                         Process p;
+                        System.out.println("Compile...");
                         p = Runtime.getRuntime().exec(new String("make"));
                         writeCommand(p);
                         /* Copy .so library to dedicated folder */
-                        System.out.println("cp " + libraryName + " " + libraryFolder);
-                        /* cp line command */
+                        System.out.println("Copy .so library to dedicated folder");
                         p = Runtime.getRuntime().exec(new String[]{"cp", libraryName, libraryFolder});
                         writeCommand(p);
                         /* Remove files from working directory */
-                        System.out.println("Remove files from working directory");
-                        removeFiles(new String[]{"Makefile", "basis_types.h", "msg_drmaa.h",
-                                "com_sun_grid_drmaa_SessionImpl.c", "com_sun_grid_drmaa_SessionImpl.h",
-                                libraryName});
+                        System.out.println("Remove temporary files from working directory");
+                        removeFiles();
                         /* Set execution permissions for all libraries */
-                        System.out.println("Set execution permissions for all libraries in " + libraryFolder);
-                        Path path = Paths.get(libraryFolder);
-                        fixUpPermissions(path);
+                        System.out.println("Set execution permissions for libraries in " + libraryFolder);
+                        fixUpPermissions(libraryFolder);
                     }
 
                 } catch (Exception e) {
-                    System.out.println("Failed to genetrate jni library " + libraryName);
                     System.out.println(e.toString());
+                    System.out.println("Failed to genetrate jni library " + libraryName);
                 }
 
                 System.loadLibrary(loadingLibraryName);
