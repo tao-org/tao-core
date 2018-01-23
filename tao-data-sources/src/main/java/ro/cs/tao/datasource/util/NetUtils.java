@@ -54,13 +54,16 @@
 package ro.cs.tao.datasource.util;
 
 import org.apache.http.HttpHost;
+import org.apache.http.NameValuePair;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -206,6 +209,43 @@ public class NetUtils {
             }
             response = httpClient.execute(get);
             Logger.getRootLogger().debug("HTTP GET %s returned %s", url, response.getStatusLine().getStatusCode());
+        } catch (URISyntaxException | IOException e) {
+            Logger.getRootLogger().debug("Could not create connection to %s : %s", url, e.getMessage());
+        }
+        return response;
+    }
+
+    public static CloseableHttpResponse openConnection(String url, Credentials credentials, List<NameValuePair> parameters) {
+        CloseableHttpResponse response = null;
+        try {
+            CloseableHttpClient httpClient;
+            URI uri = new URI(url);
+            CredentialsProvider credentialsProvider = null;
+            if (credentials != null) {
+                credentialsProvider = proxyCredentials != null ? proxyCredentials : new BasicCredentialsProvider();
+                credentialsProvider.setCredentials(new AuthScope(uri.getHost(), uri.getPort()), credentials);
+            }
+            if (credentialsProvider != null) {
+                httpClient = HttpClients.custom()
+                        .setDefaultCredentialsProvider(credentialsProvider)
+                        .build();
+            } else {
+                httpClient = HttpClients.custom().build();
+            }
+            HttpPost post = new HttpPost(uri);
+            if (apacheHttpProxy != null) {
+                RequestConfig config = RequestConfig.custom().setProxy(apacheHttpProxy).build();
+                post.setConfig(config);
+            }
+            RequestConfig config = post.getConfig();
+            if (config != null) {
+                Logger.getRootLogger().debug("Details: %s", config.toString());
+            }
+            if (parameters != null) {
+                post.setEntity(new UrlEncodedFormEntity(parameters));
+            }
+            response = httpClient.execute(post);
+            Logger.getRootLogger().debug("HTTP POST %s returned %s", url, response.getStatusLine().getStatusCode());
         } catch (URISyntaxException | IOException e) {
             Logger.getRootLogger().debug("Could not create connection to %s : %s", url, e.getMessage());
         }
