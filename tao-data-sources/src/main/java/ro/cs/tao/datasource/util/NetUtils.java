@@ -64,9 +64,13 @@ import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.cookie.BasicClientCookie;
 import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
@@ -93,6 +97,7 @@ public class NetUtils {
     private static HttpHost apacheHttpProxy;
     private static CredentialsProvider proxyCredentials;
     private static int timeout = 30000;
+    private static HttpClientBuilder httpClientBuilder = HttpClients.custom().setDefaultCookieStore(new BasicCookieStore());
 
     public static void setAuthToken(String value) {
         authToken = value;
@@ -180,7 +185,7 @@ public class NetUtils {
         return connection;
     }
 
-    public static CloseableHttpResponse openConnection(String url, Credentials credentials) {
+    /*public static CloseableHttpResponse openConnection(String url, Credentials credentials) {
         CloseableHttpResponse response = null;
         try {
             CloseableHttpClient httpClient;
@@ -213,9 +218,17 @@ public class NetUtils {
             Logger.getRootLogger().debug("Could not create connection to %s : %s", url, e.getMessage());
         }
         return response;
+    }*/
+
+    public static CloseableHttpResponse openConnection(HttpMethod method, String url, Credentials credentials) {
+        return openConnection(method, url, credentials, null, null);
     }
 
-    public static CloseableHttpResponse openConnection(String url, Credentials credentials, List<NameValuePair> parameters) {
+    public static CloseableHttpResponse openConnection(HttpMethod method, String url, Credentials credentials, List<BasicClientCookie> cookies) {
+        return openConnection(method, url, credentials, cookies, null);
+    }
+
+    public static CloseableHttpResponse openConnection(HttpMethod method, String url, Credentials credentials, List<BasicClientCookie> cookies, List<NameValuePair> parameters) {
         CloseableHttpResponse response = null;
         try {
             CloseableHttpClient httpClient;
@@ -225,27 +238,43 @@ public class NetUtils {
                 credentialsProvider = proxyCredentials != null ? proxyCredentials : new BasicCredentialsProvider();
                 credentialsProvider.setCredentials(new AuthScope(uri.getHost(), uri.getPort()), credentials);
             }
+            /*BasicCookieStore cookieStore = new BasicCookieStore();
+            if (cookies != null) {
+                for (BasicClientCookie cookie : cookies) {
+                    cookieStore.addCookie(cookie);
+                }
+            }*/
             if (credentialsProvider != null) {
-                httpClient = HttpClients.custom()
-                        .setDefaultCredentialsProvider(credentialsProvider)
-                        .build();
+                httpClient = httpClientBuilder
+                                .setDefaultCredentialsProvider(credentialsProvider)
+                                .build();
             } else {
-                httpClient = HttpClients.custom().build();
+                httpClient = httpClientBuilder.build();
             }
-            HttpPost post = new HttpPost(uri);
+            HttpRequestBase requestBase;
+            switch (method) {
+                case GET:
+                    requestBase = new HttpGet(uri);
+                    break;
+                case POST:
+                    requestBase = new HttpPost(uri);
+                    if (parameters != null) {
+                        ((HttpPost) requestBase).setEntity(new UrlEncodedFormEntity(parameters));
+                    }
+                    break;
+                default:
+                    throw new IllegalArgumentException("Method not supported");
+            }
             if (apacheHttpProxy != null) {
                 RequestConfig config = RequestConfig.custom().setProxy(apacheHttpProxy).build();
-                post.setConfig(config);
+                requestBase.setConfig(config);
             }
-            RequestConfig config = post.getConfig();
+            RequestConfig config = requestBase.getConfig();
             if (config != null) {
                 Logger.getRootLogger().debug("Details: %s", config.toString());
             }
-            if (parameters != null) {
-                post.setEntity(new UrlEncodedFormEntity(parameters));
-            }
-            response = httpClient.execute(post);
-            Logger.getRootLogger().debug("HTTP POST %s returned %s", url, response.getStatusLine().getStatusCode());
+            response = httpClient.execute(requestBase);
+            Logger.getRootLogger().debug("HTTP %s %s returned %s", method.toString(), url, response.getStatusLine().getStatusCode());
         } catch (URISyntaxException | IOException e) {
             Logger.getRootLogger().debug("Could not create connection to %s : %s", url, e.getMessage());
         }
@@ -254,7 +283,7 @@ public class NetUtils {
 
     public static String getResponseAsString(String url) throws IOException {
         String result = null;
-        try (CloseableHttpResponse yearResponse = NetUtils.openConnection(url, (Credentials) null)) {
+        try (CloseableHttpResponse yearResponse = NetUtils.openConnection(HttpMethod.GET, url, (Credentials) null)) {
             if (yearResponse != null) {
                 switch (yearResponse.getStatusLine().getStatusCode()) {
                     case 200:
