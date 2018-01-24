@@ -53,7 +53,12 @@
  */
 package ro.cs.tao.datasource.util;
 
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
+
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
@@ -97,6 +102,34 @@ public class Zipper {
         if (deleteFolder) {
             delete(sourceFolder);
         }
+    }
+
+    public static Path decompressTarGz(Path source, Path target, boolean deleteAfterDecompress) throws IOException {
+        if (source == null || !source.toString().endsWith(".tar.gz")) {
+            return null;
+        }
+        Files.createDirectories(target);
+        try (TarArchiveInputStream tarStream = new TarArchiveInputStream(new GzipCompressorInputStream(Files.newInputStream(source)))) {
+            TarArchiveEntry entry;
+            while ((entry = tarStream.getNextTarEntry()) != null) {
+                final Path currentPath = target.resolve(entry.getName());
+                if (entry.isDirectory()) {
+                    Files.createDirectories(currentPath);
+                } else {
+                    int count;
+                    byte buffer[] = new byte[65536];
+                    try (OutputStream outputStream = Files.newOutputStream(currentPath)) {
+                        while ((count = tarStream.read(buffer, 0, 65536)) != -1) {
+                            outputStream.write(buffer, 0, count);
+                        }
+                    }
+                }
+            }
+        }
+        if (deleteAfterDecompress) {
+            Files.delete(source);
+        }
+        return target;
     }
 
     private static boolean delete(Path path) {

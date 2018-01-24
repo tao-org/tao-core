@@ -147,6 +147,8 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         this.cancelled = true;
     }
 
+    protected boolean isCancelled() { return this.cancelled; }
+
     public ReturnCode download(List<EOProduct> products) {
         ReturnCode retCode = ReturnCode.OK;
         if (products != null) {
@@ -207,7 +209,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
             location = new URI(descriptor.getLocation());
         } catch (URISyntaxException ignored) {
         }
-        return location != null ? location.toString() + "/?issuerId=peps" : null;
+        return location != null ? location.toString() : null;
     }
 
     public void setFetchMode(FetchMode mode) {
