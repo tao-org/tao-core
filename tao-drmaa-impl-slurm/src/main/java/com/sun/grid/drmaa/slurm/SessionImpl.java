@@ -45,6 +45,8 @@ import org.ggf.drmaa.JobTemplate;
 import org.ggf.drmaa.Session;
 import org.ggf.drmaa.Version;
 
+import ro.cs.tao.configuration.ConfigurationManager;
+
 
 /**
  * The SessionImpl class provides a DRMAA interface to Grid Engine.  This
@@ -64,12 +66,11 @@ import org.ggf.drmaa.Version;
 
 public class SessionImpl implements Session {
 
-    private static final String loadingLibraryName = "drmaa-jni-slurm";
-
     static {
         AccessController.doPrivileged(new PrivilegedAction() {
             public Object run() {
-                System.loadLibrary(loadingLibraryName);
+                System.loadLibrary(ConfigurationManager.getInstance()
+                        .getValue("tao.jni.drmaa.slurm.loadLibraryName"));
                 return null;
             }
         });
