@@ -45,10 +45,10 @@ public abstract class AbstractDataSource<Q extends DataQuery> extends DataSource
     }
 
     @Override
-    public long getTimeout() { return this.timeout; }
+    public Q createQuery(String type) { return createQueryImpl(type); }
 
     @Override
-    public void setTimeout(long value) { this.timeout = value; }
+    public String getAlternateConnectionString() { return this.alternateConnectionString; }
 
     @Override
     public String getConnectionString() { return connectionString; }
@@ -57,48 +57,14 @@ public abstract class AbstractDataSource<Q extends DataQuery> extends DataSource
     public void setConnectionString(String connectionString) { this.connectionString = connectionString; }
 
     @Override
-    public String getAlternateConnectionString() { return this.alternateConnectionString; }
-
-    @Override
-    public void setCredentials(String username, String password) {
-        if (username == null || username.isEmpty()) {
-            throw new IllegalArgumentException("Invalid user");
-        }
-        this.credentials = new UsernamePasswordCredentials(username, password);
-    }
-
-    @Override
     public UsernamePasswordCredentials getCredentials() { return this.credentials; }
-
-    @Override
-    public String[] getSupportedSensors() {
-        String[] sensors = null;
-        if (this.parameterProvider != null) {
-            sensors = this.parameterProvider.getSupportedSensors();
-        }
-        return sensors;
-    }
-
-    @Override
-    public Map<String, Map<String, ParameterDescriptor>> getSupportedParameters() {
-        Map<String, Map<String, ParameterDescriptor>> descriptors = null;
-        if (this.parameterProvider != null) {
-            descriptors = this.parameterProvider.getSupportedParameters();
-        }
-        return descriptors;
-    }
-
-    @Override
-    public Q createQuery(String type) { return createQueryImpl(type); }
-
-    protected abstract Q createQueryImpl(String code);
-
-    protected void setParameterProvider(ParameterProvider provider) {
-        this.parameterProvider = provider;
-    }
 
     public ParameterProvider getParameterProvider() {
         return this.parameterProvider;
+    }
+
+    protected void setParameterProvider(ParameterProvider provider) {
+        this.parameterProvider = provider;
     }
 
     @Override
@@ -112,4 +78,38 @@ public abstract class AbstractDataSource<Q extends DataQuery> extends DataSource
         }
         return productFetchStrategy;
     }
+
+    @Override
+    public Map<String, Map<String, ParameterDescriptor>> getSupportedParameters() {
+        Map<String, Map<String, ParameterDescriptor>> descriptors = null;
+        if (this.parameterProvider != null) {
+            descriptors = this.parameterProvider.getSupportedParameters();
+        }
+        return descriptors;
+    }
+
+    @Override
+    public String[] getSupportedSensors() {
+        String[] sensors = null;
+        if (this.parameterProvider != null) {
+            sensors = this.parameterProvider.getSupportedSensors();
+        }
+        return sensors;
+    }
+
+    @Override
+    public long getTimeout() { return this.timeout; }
+
+    @Override
+    public void setTimeout(long value) { this.timeout = value; }
+
+    @Override
+    public void setCredentials(String username, String password) {
+        if (username == null || username.isEmpty()) {
+            throw new IllegalArgumentException("Invalid user");
+        }
+        this.credentials = new UsernamePasswordCredentials(username, password);
+    }
+
+    protected abstract Q createQueryImpl(String code);
 }
