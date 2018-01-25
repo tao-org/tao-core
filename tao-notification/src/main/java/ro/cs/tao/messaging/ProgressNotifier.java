@@ -48,6 +48,9 @@ public class ProgressNotifier implements ProgressListener {
     @Override
     public void subActivityStarted(String subTaskName) {
         this.subTaskCounter = 0;
+        if (taskName == null) {
+            taskName = subTaskName;
+        }
         sendMessage(SUBTASK_START, taskName, subTaskName);
     }
 
