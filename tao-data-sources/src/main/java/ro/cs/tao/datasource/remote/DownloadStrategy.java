@@ -80,74 +80,39 @@ import java.util.logging.Logger;
 public abstract class DownloadStrategy implements ProductFetchStrategy {
     public static final String URL_SEPARATOR = "/";
     protected static final String NAME_SEPARATOR = "_";
+    protected static final int BUFFER_SIZE = 65536;
     private static final String startMessage = "(%s,%s) %s [size: %skB]";
     private static final String completeMessage = "(%s,%s) %s [elapsed: %ss]";
     private static final String errorMessage ="Cannot download %s: %s";
-    private static final int BUFFER_SIZE = 1024 * 1024;
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
     private static final String PROGRESS_KEY = "progress.enabled";
-
+    private static final String PROGRESS_INTERVAL = "progress.interval";
+    private final boolean progressEnabled;
     protected Properties props;
     protected String destination;
-    private String localArchiveRoot;
-
     protected EOProduct currentProduct;
     protected volatile double currentProductProgress;
     protected String currentStep;
     protected UsernamePasswordCredentials credentials;
-
+    protected Logger logger = Logger.getLogger(DownloadStrategy.class.getSimpleName());
+    private String localArchiveRoot;
     private FetchMode fetchMode;
-
     private ProgressListener progressListener;
     private volatile boolean cancelled;
-
-    private final boolean progressEnabled;
     private Timer timer;
-    protected Logger logger = Logger.getLogger(DownloadStrategy.class.getSimpleName());
-
-    private class TimedJob extends TimerTask {
-        @Override
-        public void run() {
-            if (progressListener != null) {
-                progressListener.notifyProgress(currentProductProgress);
-            }
-        }
-    }
+    private long progressReportInterval;
 
     public DownloadStrategy(String targetFolder, Properties properties) {
         this.destination = targetFolder;
         this.props = properties;
         this.progressEnabled = Boolean.parseBoolean(this.props.getProperty(PROGRESS_KEY, "true"));
-    }
-
-    @Override
-    public void setCredentials(UsernamePasswordCredentials credentials) {
-        this.credentials = credentials;
-    }
-
-    public void setDestination(String destination) {
-        this.destination = destination;
-    }
-
-    public String getLocalArchiveRoot() {
-        return localArchiveRoot;
-    }
-
-    public void setLocalArchiveRoot(String localArchiveRoot) {
-        this.localArchiveRoot = localArchiveRoot;
-    }
-
-    @Override
-    public void setProgressListener(ProgressListener progressListener) {
-        this.progressListener = progressListener;
+        this.progressReportInterval = Long.parseLong(this.props.getProperty(PROGRESS_INTERVAL, "2000"));
     }
 
     @Override
     public void cancel() {
         this.cancelled = true;
     }
-
-    protected boolean isCancelled() { return this.cancelled; }
 
     public ReturnCode download(List<EOProduct> products) {
         ReturnCode retCode = ReturnCode.OK;
@@ -203,6 +168,14 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         return retCode;
     }
 
+    public String getLocalArchiveRoot() {
+        return localArchiveRoot;
+    }
+
+    public void setLocalArchiveRoot(String localArchiveRoot) {
+        this.localArchiveRoot = localArchiveRoot;
+    }
+
     public String getProductUrl(EOProduct descriptor){
         URI location = null;
         try {
@@ -212,37 +185,28 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         return location != null ? location.toString() : null;
     }
 
+    @Override
+    public void setCredentials(UsernamePasswordCredentials credentials) {
+        this.credentials = credentials;
+    }
+
+    public void setDestination(String destination) {
+        this.destination = destination;
+    }
+
     public void setFetchMode(FetchMode mode) {
         this.fetchMode = mode;
     }
 
-    protected abstract String getMetadataUrl(EOProduct descriptor);
-
-    protected Path downloadFile(String remoteUrl, Path file) throws IOException, InterruptedException {
-        return downloadFile(remoteUrl, file, null);
+    @Override
+    public void setProgressListener(ProgressListener progressListener) {
+        this.progressListener = progressListener;
     }
 
-    protected Path downloadFile(String remoteUrl, Path file, String authToken) throws IOException, InterruptedException {
-        return downloadFile(remoteUrl, file, this.fetchMode, authToken);
-    }
-
-    protected Path findProductPath(Path root, EOProduct product) {
-        // Products are assumed to be organized by year (yyyy), month (MM) and day (dd)
-        // If it's not the case, this method should be overridden
-        String date = dateFormat.format(product.getAcquisitionDate());
-        Path productPath = root.resolve(date.substring(0, 4));
-        if (Files.exists(productPath)) {
-            productPath = productPath.resolve(date.substring(4, 6));
-            productPath = Files.exists(productPath) ?
-                    productPath.resolve(date.substring(6, 8)).resolve(product.getName()) :
-                    null;
-            if (productPath != null && !Files.exists(productPath)) {
-                productPath = null;
-            }
-        } else {
-            productPath = null;
+    protected void checkCancelled() throws InterruptedException {
+        if (cancelled) {
+            throw new InterruptedException();
         }
-        return productPath;
     }
 
     protected Path copy(EOProduct product, Path sourceRoot, Path targetRoot) throws IOException {
@@ -286,6 +250,37 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         return destinationPath;
     }
 
+    protected Path downloadFile(String remoteUrl, Path file) throws IOException, InterruptedException {
+        return downloadFile(remoteUrl, file, null);
+    }
+
+    protected Path downloadFile(String remoteUrl, Path file, String authToken) throws IOException, InterruptedException {
+        return downloadFile(remoteUrl, file, this.fetchMode, authToken);
+    }
+
+    protected Path findProductPath(Path root, EOProduct product) {
+        // Products are assumed to be organized by year (yyyy), month (MM) and day (dd)
+        // If it's not the case, this method should be overridden
+        String date = dateFormat.format(product.getAcquisitionDate());
+        Path productPath = root.resolve(date.substring(0, 4));
+        if (Files.exists(productPath)) {
+            productPath = productPath.resolve(date.substring(4, 6));
+            productPath = Files.exists(productPath) ?
+                    productPath.resolve(date.substring(6, 8)).resolve(product.getName()) :
+                    null;
+            if (productPath != null && !Files.exists(productPath)) {
+                productPath = null;
+            }
+        } else {
+            productPath = null;
+        }
+        return productPath;
+    }
+
+    protected abstract String getMetadataUrl(EOProduct descriptor);
+
+    protected boolean isCancelled() { return this.cancelled; }
+
     protected Path link(EOProduct product, Path sourceRoot, Path targetRoot) throws IOException {
         Path sourcePath = findProductPath(sourceRoot, product);
         if (sourcePath == null) {
@@ -299,37 +294,36 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         }
     }
 
-    private void markStart() {
+    protected void markEnd(String subActivity) {
         if (this.progressEnabled) {
-            this.timer = new Timer("Progress reporter", true);
-            this.timer.scheduleAtFixedRate(new TimedJob(), 0, 1000);
+            this.timer.cancel();
+        }
+        if (this.progressListener != null) {
+            this.progressListener.subActivityEnded(subActivity);
         }
     }
 
-    private void markEnd() {
+    protected void markStart(String subActivity) {
+        if (this.progressListener != null) {
+            this.progressListener.subActivityStarted(subActivity);
+        }
         if (this.progressEnabled) {
-            this.timer.cancel();
+            this.timer = new Timer("Progress reporter", true);
+            this.timer.scheduleAtFixedRate(new TimedJob(), 0, this.progressReportInterval);
         }
     }
 
     private Path downloadFile(String remoteUrl, Path file, FetchMode mode, String authToken) throws IOException, InterruptedException {
-        if (cancelled) {
-            throw new InterruptedException();
-        }
+        checkCancelled();
         String subActivity = remoteUrl.substring(remoteUrl.lastIndexOf(URL_SEPARATOR) + 1);
         HttpURLConnection connection = null;
         try {
             logger.fine(String.format("Begin download for %s", subActivity));
-            if (this.progressListener != null) {
-                this.progressListener.subActivityStarted(subActivity);
-            }
-            markStart();
+            markStart(subActivity);
             connection = NetUtils.openConnection(remoteUrl, authToken);
             long remoteFileLength = connection.getContentLengthLong();
             long localFileLength = 0;
-            if (cancelled) {
-                throw new InterruptedException();
-            }
+            checkCancelled();
             if (Files.exists(file)) {
                 localFileLength = Files.size(file);
                 if (localFileLength != remoteFileLength) {
@@ -348,9 +342,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
                                               localFileLength));
                 }
             }
-            if (cancelled) {
-                throw new InterruptedException();
-            }
+            checkCancelled();
             if (localFileLength != remoteFileLength) {
                 int kBytes = (int) (remoteFileLength / 1024);
                 logger.fine(String.format(startMessage, currentProduct.getName(), currentStep, file.getFileName(), kBytes));
@@ -379,9 +371,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
                                 (double) totalRead / (double) currentProduct.getApproximateSize() : 0);
                     }
                     logger.fine("End reading from input stream");
-                    if (cancelled) {
-                        throw new InterruptedException();
-                    }
+                    checkCancelled();
                     logger.fine(String.format(completeMessage, currentProduct.getName(), currentStep, file.getFileName(), (System.currentTimeMillis() - start) / 1000));
                 } finally {
                     if (outputStream != null) outputStream.close();
@@ -394,9 +384,6 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
             }
             currentProductProgress += Math.min(1.0, currentProduct.getApproximateSize() > 0 ?
                     (double) remoteFileLength / (double) currentProduct.getApproximateSize() : 0);
-            /*if (this.progressListener != null) {
-                this.progressListener.notifyProgress(currentProductProgress);
-            }*/
         } catch (FileNotFoundException fnex) {
             logger.warning(String.format(errorMessage, remoteUrl, "No such file"));
             file = null;
@@ -410,11 +397,17 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
             if (connection != null) {
                 connection.disconnect();
             }
-            markEnd();
-            if (this.progressListener != null) {
-                this.progressListener.subActivityEnded(subActivity);
-            }
+            markEnd(subActivity);
         }
         return FileUtils.ensurePermissions(file);
+    }
+
+    private class TimedJob extends TimerTask {
+        @Override
+        public void run() {
+            if (progressListener != null) {
+                progressListener.notifyProgress(currentProductProgress);
+            }
+        }
     }
 }

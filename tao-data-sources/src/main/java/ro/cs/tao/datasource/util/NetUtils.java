@@ -68,9 +68,7 @@ import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.cookie.BasicClientCookie;
 import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
@@ -82,6 +80,7 @@ import java.net.Proxy;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -97,14 +96,14 @@ public class NetUtils {
     private static HttpHost apacheHttpProxy;
     private static CredentialsProvider proxyCredentials;
     private static int timeout = 30000;
-    private static HttpClientBuilder httpClientBuilder = HttpClients.custom().setDefaultCookieStore(new BasicCookieStore());
-
-    public static void setAuthToken(String value) {
-        authToken = value;
-    }
+    private static Map<String, ThreadLocal<CloseableHttpClient>> httpClients = new HashMap<>();
 
     public static String getAuthToken() {
         return authToken;
+    }
+
+    public static void setAuthToken(String value) {
+        authToken = value;
     }
 
     public static void setProxy(String type, final String host, final int port, final String user, final String pwd) {
@@ -185,72 +184,42 @@ public class NetUtils {
         return connection;
     }
 
-    /*public static CloseableHttpResponse openConnection(String url, Credentials credentials) {
-        CloseableHttpResponse response = null;
-        try {
-            CloseableHttpClient httpClient;
-            URI uri = new URI(url);
-            CredentialsProvider credentialsProvider = null;
-            if (credentials != null) {
-                credentialsProvider = proxyCredentials != null ? proxyCredentials : new BasicCredentialsProvider();
-                credentialsProvider.setCredentials(new AuthScope(uri.getHost(), uri.getPort()), credentials);
-            }
-            if (credentialsProvider != null) {
-                httpClient = HttpClients.custom()
-                                        .setDefaultCredentialsProvider(credentialsProvider)
-                                        .build();
-            } else {
-                httpClient = HttpClients.custom().build();
-            }
-            HttpGet get = new HttpGet(uri);
-            if (apacheHttpProxy != null) {
-                RequestConfig config = RequestConfig.custom().setProxy(apacheHttpProxy).build();
-                get.setConfig(config);
-            }
-            //Logger.getRootLogger().debug("HTTP GET %s", url);
-            RequestConfig config = get.getConfig();
-            if (config != null) {
-                Logger.getRootLogger().debug("Details: %s", config.toString());
-            }
-            response = httpClient.execute(get);
-            Logger.getRootLogger().debug("HTTP GET %s returned %s", url, response.getStatusLine().getStatusCode());
-        } catch (URISyntaxException | IOException e) {
-            Logger.getRootLogger().debug("Could not create connection to %s : %s", url, e.getMessage());
-        }
-        return response;
-    }*/
-
     public static CloseableHttpResponse openConnection(HttpMethod method, String url, Credentials credentials) {
-        return openConnection(method, url, credentials, null, null);
+        return openConnection(method, url, credentials, null);
     }
 
-    public static CloseableHttpResponse openConnection(HttpMethod method, String url, Credentials credentials, List<BasicClientCookie> cookies) {
-        return openConnection(method, url, credentials, cookies, null);
-    }
-
-    public static CloseableHttpResponse openConnection(HttpMethod method, String url, Credentials credentials, List<BasicClientCookie> cookies, List<NameValuePair> parameters) {
+    public static CloseableHttpResponse openConnection(HttpMethod method, String url, Credentials credentials, List<NameValuePair> parameters) {
         CloseableHttpResponse response = null;
         try {
-            CloseableHttpClient httpClient;
             URI uri = new URI(url);
-            CredentialsProvider credentialsProvider = null;
-            if (credentials != null) {
-                credentialsProvider = proxyCredentials != null ? proxyCredentials : new BasicCredentialsProvider();
-                credentialsProvider.setCredentials(new AuthScope(uri.getHost(), uri.getPort()), credentials);
+            String domain = uri.getHost();
+            if (domain.indexOf(".") > 0) {
+                String[] tokens = domain.split("\\.");
+                domain = tokens[tokens.length - 2] + "." + tokens[tokens.length - 1];
             }
-            /*BasicCookieStore cookieStore = new BasicCookieStore();
-            if (cookies != null) {
-                for (BasicClientCookie cookie : cookies) {
-                    cookieStore.addCookie(cookie);
+            if (!httpClients.containsKey(domain)) {
+                ThreadLocal<CloseableHttpClient> local = new ThreadLocal<>();
+                CredentialsProvider credentialsProvider = null;
+                if (credentials != null) {
+                    credentialsProvider = proxyCredentials != null ? proxyCredentials : new BasicCredentialsProvider();
+                    credentialsProvider.setCredentials(new AuthScope(uri.getHost(), uri.getPort()), credentials);
                 }
-            }*/
-            if (credentialsProvider != null) {
-                httpClient = httpClientBuilder
-                                .setDefaultCredentialsProvider(credentialsProvider)
-                                .build();
-            } else {
-                httpClient = httpClientBuilder.build();
+                CloseableHttpClient httpClient;
+                if (credentialsProvider != null) {
+                    httpClient = HttpClients.custom().setDefaultCookieStore(new BasicCookieStore())
+                            .setDefaultCredentialsProvider(credentialsProvider)
+                            .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
+                            .build();
+                } else {
+                    httpClient = HttpClients.custom()
+                            .setDefaultCookieStore(new BasicCookieStore())
+                            .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
+                            .build();
+                }
+                local.set(httpClient);
+                httpClients.put(domain, local);
             }
+            CloseableHttpClient httpClient = httpClients.get(domain).get();
             HttpRequestBase requestBase;
             switch (method) {
                 case GET:

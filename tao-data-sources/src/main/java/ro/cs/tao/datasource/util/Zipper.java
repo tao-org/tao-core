@@ -104,30 +104,34 @@ public class Zipper {
         }
     }
 
-    public static Path decompressTarGz(Path source, Path target, boolean deleteAfterDecompress) throws IOException {
+    public static Path decompressTarGz(Path source, Path target, boolean deleteAfterDecompress) {
         if (source == null || !source.toString().endsWith(".tar.gz")) {
             return null;
         }
-        Files.createDirectories(target);
-        try (TarArchiveInputStream tarStream = new TarArchiveInputStream(new GzipCompressorInputStream(Files.newInputStream(source)))) {
-            TarArchiveEntry entry;
-            while ((entry = tarStream.getNextTarEntry()) != null) {
-                final Path currentPath = target.resolve(entry.getName());
-                if (entry.isDirectory()) {
-                    Files.createDirectories(currentPath);
-                } else {
-                    int count;
-                    byte buffer[] = new byte[65536];
-                    try (OutputStream outputStream = Files.newOutputStream(currentPath)) {
-                        while ((count = tarStream.read(buffer, 0, 65536)) != -1) {
-                            outputStream.write(buffer, 0, count);
+        try {
+            Files.createDirectories(target);
+            try (TarArchiveInputStream tarStream = new TarArchiveInputStream(new GzipCompressorInputStream(Files.newInputStream(source)))) {
+                TarArchiveEntry entry;
+                while ((entry = tarStream.getNextTarEntry()) != null) {
+                    final Path currentPath = target.resolve(entry.getName());
+                    if (entry.isDirectory()) {
+                        Files.createDirectories(currentPath);
+                    } else {
+                        int count;
+                        byte buffer[] = new byte[65536];
+                        try (OutputStream outputStream = Files.newOutputStream(currentPath)) {
+                            while ((count = tarStream.read(buffer, 0, buffer.length)) != -1) {
+                                outputStream.write(buffer, 0, count);
+                            }
                         }
                     }
                 }
             }
-        }
-        if (deleteAfterDecompress) {
-            Files.delete(source);
+            if (deleteAfterDecompress) {
+                Files.delete(source);
+            }
+        } catch (IOException ex) {
+            java.util.logging.Logger.getLogger(Zipper.class.getSimpleName()).warning(ex.getMessage());
         }
         return target;
     }
