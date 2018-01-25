@@ -45,14 +45,6 @@ import org.ggf.drmaa.JobTemplate;
 import org.ggf.drmaa.Session;
 import org.ggf.drmaa.Version;
 
-import java.nio.file.Path;
-import java.nio.file.attribute.PosixFilePermission;
-
-import org.apache.commons.lang3.SystemUtils;
-import java.util.Set;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.stream.Stream;
 
 /**
  * The SessionImpl class provides a DRMAA interface to Grid Engine.  This
@@ -71,177 +63,13 @@ import java.util.stream.Stream;
  */
 
 public class SessionImpl implements Session {
-    /* The folder ./src/resources must be "source route" */
-    private static final String resourceFolder = "./src/resources/";
-    private static final String libraryFolder = "../jni";
-    private static final String libraryName = "libdrmaa-jni-slurm.so";
+
     private static final String loadingLibraryName = "drmaa-jni-slurm";
-
-    private static boolean libraryExists() throws Exception{
-        try {
-            File folder = new File(libraryFolder);
-            if (!folder.exists()) {
-                /* Create library folder */
-                folder.mkdir();
-                System.out.println(new String("mkdir ") + libraryFolder);
-                return false;
-            }
-            else{
-                /* file exists ?*/
-                for(File file : folder.listFiles()){
-                    if (file.getName().equals(libraryName)) return true;
-                }
-                return false;
-            }
-        }catch(Exception e){
-            throw e;
-        }
-    }
-
-    private static void copyFiles() throws IOException{
-        /* Copy the content of resources folder into working directory */
-        try{
-            File source = new File(resourceFolder);
-            File[] files = new File[]{};
-            if (source.isDirectory()){
-                files = source.listFiles();
-            }
-            else{
-                throw new IOException(resourceFolder + " is not a resource folder");
-            }
-            for(File file : files){
-                String command = "cp " + resourceFolder + file.getName() + " ./" + file.getName();
-                System.out.println(command);
-                //                ClassLoader classloader = Thread.currentThread().getContextClassLoader();
-//                BufferedReader reader = new BufferedReader(
-//                        new InputStreamReader(classloader.getResourceAsStream(
-//                                file.getName())));
-                BufferedReader reader = new BufferedReader(new FileReader(file));
-                BufferedWriter writer = new BufferedWriter(new FileWriter("./" + file.getName()));
-                String line = "";
-                while((line = reader.readLine()) != null){
-                    writer.write(line);
-                    writer.newLine();
-                }
-                writer.close();
-                reader.close();
-            }
-        }catch(IOException e){
-            throw e;
-        }
-    }
-
-    private static void removeFiles() throws IOException{
-        /* Remove files from working directory */
-        try{
-            File source = new File(resourceFolder);
-            File[] files = source.listFiles();
-            for(File file : files){
-                String strPath = (new String("./")) + file.getName();
-                System.out.println("rm " + strPath);
-                Path path = Paths.get(strPath);
-                Files.deleteIfExists(path);
-            }
-            Path path = Paths.get(libraryName);
-            Files.deleteIfExists(path);
-        }catch(IOException e){
-            throw e;
-        }
-    }
-
-    private static void writeCommand(Process p) throws IOException {
-        /* Print output and errors of line command */
-        StringBuffer output = new StringBuffer();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        BufferedReader errReader = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-        String line = "";
-        try {
-            while ((line = reader.readLine()) != null) {
-                output.append(line + "\n");
-            }
-            System.out.println(output);
-            output = new StringBuffer();
-            while ((line = errReader.readLine()) != null) {
-                output.append(line + "\n");
-            }
-            System.out.println(output);
-        }catch(IOException e){
-            throw e;
-        }
-    }
-
-    private static void setExecutablePermissions(Path executablePathName){
-        /* Set execution permissions for executable in path */
-        if (SystemUtils.IS_OS_UNIX){
-            Set<PosixFilePermission> permissions = new HashSet<>(Arrays.asList(
-                  PosixFilePermission.OWNER_READ,
-                    PosixFilePermission.OWNER_WRITE,
-                    PosixFilePermission.OWNER_EXECUTE,
-                    PosixFilePermission.GROUP_READ,
-                    PosixFilePermission.GROUP_EXECUTE,
-                    PosixFilePermission.OTHERS_READ,
-                    PosixFilePermission.OTHERS_EXECUTE
-            ));
-            try{
-                Files.setPosixFilePermissions(executablePathName, permissions);
-            }catch(IOException e){
-                System.out.println("Can't set execution permissions for " + executablePathName.toString());
-            }
-        }
-    }
-
-    private static void fixUpPermissions(String strDestPath) throws IOException{
-        /* Set execution permissions for all executables in path */
-        Path destPath = Paths.get(strDestPath);
-        Stream<Path> files = Files.list(destPath);
-        files.forEach(path->{
-            if (Files.isDirectory(path)){
-                try {
-                    fixUpPermissions(path.toString());
-                }catch(IOException e){
-                    System.out.println("Failed to fix permissions on " + path.toString());
-                }
-            }
-            else{
-                setExecutablePermissions(path);
-            }
-        });
-    }
 
     static {
         AccessController.doPrivileged(new PrivilegedAction() {
             public Object run() {
-                System.out.println("Working directory " + System.getProperty("user.dir"));
-                System.out.println("C library path " + libraryFolder +"/" + libraryName);
-                try {
-                    if (!libraryExists()) {
-                        /* Copy source library files from resources folder to working directory */
-                        System.out.println("Create library");
-                        copyFiles();
-                        /* Compile .... */
-                        Process p;
-                        System.out.println("Compile...");
-                        p = Runtime.getRuntime().exec(new String("make"));
-                        writeCommand(p);
-                        /* Copy .so library to dedicated folder */
-                        System.out.println("Copy .so library to dedicated folder");
-                        p = Runtime.getRuntime().exec(new String[]{"cp", libraryName, libraryFolder});
-                        writeCommand(p);
-                        /* Remove files from working directory */
-                        System.out.println("Remove temporary files from working directory");
-                        removeFiles();
-                        /* Set execution permissions for all libraries */
-                        System.out.println("Set execution permissions for libraries in " + libraryFolder);
-                        fixUpPermissions(libraryFolder);
-                    }
-
-                } catch (Exception e) {
-                    System.out.println(e.toString());
-                    System.out.println("Failed to genetrate jni library " + libraryName);
-                }
-
                 System.loadLibrary(loadingLibraryName);
-                System.out.println("Running tests\n");
                 return null;
             }
         });

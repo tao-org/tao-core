@@ -31,8 +31,24 @@
 /*___INFO__MARK_END__*/
 package com.sun.grid.drmaa.slurm;
 
+import org.apache.commons.lang3.SystemUtils;
 import org.ggf.drmaa.Session;
 import org.ggf.drmaa.SessionFactory;
+
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFilePermission;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Stream;
+
+import java.util.Properties;
+//import ro.cs.tao.configuration;
 
 /**
  * This class is used to create a SessionImpl instance.  In order to use the
@@ -46,12 +62,104 @@ import org.ggf.drmaa.SessionFactory;
  * @version 1.0
  */
 public class SessionFactoryImpl extends SessionFactory {
+    private static final String libraryName = "libdrmaa-jni-slurm.so";
+    private static final String destLibraryFolder = "../jni/";
     private Session thisSession = null;
-    
+
+    private static void copyLibrary() throws IOException{
+        ClassLoader loader = Thread.currentThread().getContextClassLoader();
+        byte[] buffer = new byte[1000];
+        try{
+            BufferedInputStream is = new BufferedInputStream(loader.getResourceAsStream(libraryName));
+            OutputStream os = new BufferedOutputStream(new FileOutputStream(destLibraryFolder + libraryName));
+            while(is.read(buffer) != -1)
+                os.write(buffer);
+        }catch(IOException e){
+            throw e;
+        }
+    }
+
+    private static boolean libraryExists() throws Exception{
+        try {
+            File folder = new File(destLibraryFolder);
+            if (!folder.exists()) {
+                /* Create library folder */
+                folder.mkdir();
+                System.out.println(new String("mkdir ") + destLibraryFolder);
+                return false;
+            }
+            else{
+                /* file exists ?*/
+                for(File file : folder.listFiles()){
+                    if (file.getName().equals(libraryName)) return true;
+                }
+                return false;
+            }
+        }catch(Exception e){
+            throw e;
+        }
+    }
+
+    private static void setExecutablePermissions(Path executablePathName){
+        /* Set execution permissions for executable in path */
+        if (SystemUtils.IS_OS_UNIX){
+            Set<PosixFilePermission> permissions = new HashSet<>(Arrays.asList(
+                    PosixFilePermission.OWNER_READ,
+                    PosixFilePermission.OWNER_WRITE,
+                    PosixFilePermission.OWNER_EXECUTE,
+                    PosixFilePermission.GROUP_READ,
+                    PosixFilePermission.GROUP_EXECUTE,
+                    PosixFilePermission.OTHERS_READ,
+                    PosixFilePermission.OTHERS_EXECUTE
+            ));
+            try{
+                Files.setPosixFilePermissions(executablePathName, permissions);
+            }catch(IOException e){
+                System.out.println("Can't set execution permissions for " + executablePathName.toString());
+            }
+        }
+    }
+
+    private static void fixUpPermissions(String strDestPath) throws IOException{
+        /* Set execution permissions for all executables in path */
+        Path destPath = Paths.get(strDestPath);
+        Stream<Path> files = Files.list(destPath);
+        files.forEach(path->{
+            if (Files.isDirectory(path)){
+                try {
+                    fixUpPermissions(path.toString());
+                }catch(IOException e){
+                    System.out.println("Failed to fix permissions on " + path.toString());
+                }
+            }
+            else{
+                setExecutablePermissions(path);
+            }
+        });
+    }
+
+    static {
+        AccessController.doPrivileged(new PrivilegedAction() {
+            public Object run() {
+                try {
+                    if (!libraryExists()) {
+                        System.out.println("Copy library " + libraryName +" to " + destLibraryFolder);
+                        copyLibrary();
+                        fixUpPermissions(destLibraryFolder);
+                    }
+                }catch(Exception e){
+                    System.out.println(e.toString());
+                }
+                return null;
+            }
+        });
+    }
     /**
      * Creates a new instance of SessionFactoryImpl.
      */
     public SessionFactoryImpl() {
+        System.out.println("Working directory " + System.getProperty("user.dir"));
+//        copyLibrary();
     }
     
     public Session getSession() {
