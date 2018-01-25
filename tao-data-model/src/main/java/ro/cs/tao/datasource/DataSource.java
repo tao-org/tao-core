@@ -24,6 +24,9 @@ public abstract class DataSource<Q extends DataQuery> extends Identifiable {
         return this.properties.getProperty(name);
     }
 
+    @XmlTransient
+    public int getCapabilities() { return DataSourceCapability.QUERY | DataSourceCapability.DOWNLOAD; }
+
     /**
      * Returns the timeout for this data source connection
      */
