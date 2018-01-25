@@ -47,8 +47,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import java.util.Properties;
-//import ro.cs.tao.configuration;
+import ro.cs.tao.configuration.ConfigurationManager;
 
 /**
  * This class is used to create a SessionImpl instance.  In order to use the
@@ -62,16 +61,19 @@ import java.util.Properties;
  * @version 1.0
  */
 public class SessionFactoryImpl extends SessionFactory {
-    private static final String libraryName = "libdrmaa-jni-slurm.so";
-    private static final String destLibraryFolder = "../jni/";
+
     private Session thisSession = null;
+    private static ConfigurationManager config = null;
+    private static String libraryPath = null;
+    private static String libraryName = null;
 
     private static void copyLibrary() throws IOException{
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
         byte[] buffer = new byte[1000];
+
         try{
             BufferedInputStream is = new BufferedInputStream(loader.getResourceAsStream(libraryName));
-            OutputStream os = new BufferedOutputStream(new FileOutputStream(destLibraryFolder + libraryName));
+            OutputStream os = new BufferedOutputStream(new FileOutputStream(libraryPath + libraryName));
             while(is.read(buffer) != -1)
                 os.write(buffer);
         }catch(IOException e){
@@ -81,11 +83,11 @@ public class SessionFactoryImpl extends SessionFactory {
 
     private static boolean libraryExists() throws Exception{
         try {
-            File folder = new File(destLibraryFolder);
+            File folder = new File(libraryPath);
             if (!folder.exists()) {
                 /* Create library folder */
                 folder.mkdir();
-                System.out.println(new String("mkdir ") + destLibraryFolder);
+                System.out.println(new String("mkdir ") + libraryPath);
                 return false;
             }
             else{
@@ -141,11 +143,14 @@ public class SessionFactoryImpl extends SessionFactory {
     static {
         AccessController.doPrivileged(new PrivilegedAction() {
             public Object run() {
+                config = ConfigurationManager.getInstance();
+                libraryName = config.getValue("tao.jni.drmaa.slurm.library");
+                libraryPath = config.getValue("tao.jni.drmaa.librarypath");
                 try {
                     if (!libraryExists()) {
-                        System.out.println("Copy library " + libraryName +" to " + destLibraryFolder);
+                        System.out.println("Copy library " + libraryName +" to " + libraryPath);
                         copyLibrary();
-                        fixUpPermissions(destLibraryFolder);
+                        fixUpPermissions(libraryPath);
                     }
                 }catch(Exception e){
                     System.out.println(e.toString());
@@ -158,8 +163,6 @@ public class SessionFactoryImpl extends SessionFactory {
      * Creates a new instance of SessionFactoryImpl.
      */
     public SessionFactoryImpl() {
-        System.out.println("Working directory " + System.getProperty("user.dir"));
-//        copyLibrary();
     }
     
     public Session getSession() {
