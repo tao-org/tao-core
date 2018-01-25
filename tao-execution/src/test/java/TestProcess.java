@@ -9,6 +9,9 @@ import org.ggf.drmaa.SessionFactory;
 import java.util.Arrays;
 import java.util.List;
 
+//import org.junit.runner.JUnitCore;
+//import com.sun.grid.drmaa.slurm.*;
+
 /**
  * @author Cosmin Cara
  */
@@ -51,5 +54,6 @@ public class TestProcess {
         session.deleteJobTemplate(jobTemplate2);
         session.exit();
         System.exit(0);
+//        JUnitCore.main(com.sun.grid.drmaa.slurm.SessionImplJobTest);
     }
 }
