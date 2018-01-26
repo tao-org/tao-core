@@ -47,7 +47,11 @@
             <artifactId>tao-config</artifactId>
             <version>${project.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>ro.cs.tao</groupId>
+            <artifactId>tao-drmaa-impl-slurm</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <repositories>

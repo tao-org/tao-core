@@ -31,9 +31,6 @@
 /*___INFO__MARK_END__*/
 package com.sun.grid.drmaa.slurm;
 
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Arrays;
