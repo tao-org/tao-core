@@ -74,11 +74,11 @@ public abstract class SessionFactory {
      * The name of the property used to find the Session implementation
      * class name.
      */
-//    private static final String SESSION_PROPERTY =
-//            "org.ggf.drmaa.SessionFactory";
-    private static String str;
-    private static final String SESSION_PROPERTY = ((str = ConfigurationManager.getInstance().getValue("tao.drmaa.sessionfactory")) != null && !str.isEmpty()) ?
-            str : "org.ggf.drmaa.SessionFactory";
+    private static final String SESSION_PROPERTY =
+            "org.ggf.drmaa.SessionFactory";
+//    private static String str;
+//    private static final String SESSION_PROPERTY = ((str = ConfigurationManager.getInstance().getValue("tao.drmaa.sessionfactory")) != null && !str.isEmpty()) ?
+//            str : "org.ggf.drmaa.SessionFactory";
     
     /**
      * Gets a Session instance appropriate for the DRM in use.
@@ -171,31 +171,35 @@ public abstract class SessionFactory {
         String serviceId = "META-INF/services/" + SESSION_PROPERTY;
         // try to find services in CLASSPATH
         try {
-            InputStream is = null;
-            
-            if (classLoader == null) {
-                is = ClassLoader.getSystemResourceAsStream(serviceId);
-            } else {
-                is = classLoader.getResourceAsStream(serviceId);
-            }
-            
-            if (is != null) {
-                BufferedReader rd =
-                        new BufferedReader(new InputStreamReader(is, "UTF-8"));
-                
-                String className = rd.readLine();
-                
-                rd.close();
-                
-                if (className != null && ! className.equals("")) {
-                    return (SessionFactory)newInstance(className, classLoader);
-                }
+//            InputStream is = null;
+//
+//            if (classLoader == null) {
+//                is = ClassLoader.getSystemResourceAsStream(serviceId);
+//            } else {
+//                is = classLoader.getResourceAsStream(serviceId);
+//            }
+//
+//            if (is != null) {
+//                BufferedReader rd =
+//                        new BufferedReader(new InputStreamReader(is, "UTF-8"));
+//
+//                String className = rd.readLine();
+//
+//                rd.close();
+//
+//                if (className != null && ! className.equals("")) {
+//                    return (SessionFactory)newInstance(className, classLoader);
+//                }
+//            }
+            String className = ConfigurationManager.getInstance().getValue("tao.drmaa.sessionfactory");
+            if (className != null && ! className.equals("")) {
+                return (SessionFactory)Class.forName(className).newInstance();
             }
         } catch (Exception ex) {
             //Ignore exceptions here and let the config error be thrown
             e = ex;
         }
-        
+
         throw new ConfigurationError("Provider for " + SESSION_PROPERTY +
                 " cannot be found", e);
     }
