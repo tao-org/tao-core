@@ -31,9 +31,6 @@
 /*___INFO__MARK_END__*/
 package com.sun.grid.drmaa.torque;
 
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Arrays;
@@ -45,16 +42,7 @@ import org.ggf.drmaa.JobTemplate;
 import org.ggf.drmaa.Session;
 import org.ggf.drmaa.Version;
 
-import java.nio.file.Path;
-import java.nio.file.attribute.PosixFilePermission;
-
-//import org.apache.commons.lang3.SystemUtils;
 import ro.cs.tao.configuration.ConfigurationManager;
-
-import java.util.Set;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.stream.Stream;
 
 /**
  * The SessionImpl class provides a DRMAA interface to Grid Engine.  This

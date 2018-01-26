@@ -31,7 +31,7 @@
 /*___INFO__MARK_END__*/
 package com.sun.grid.drmaa.slurm;
 
-import org.apache.commons.lang3.SystemUtils;
+//import org.apache.commons.lang3.SystemUtils;
 
 import org.ggf.drmaa.Session;
 import org.ggf.drmaa.SessionFactory;
