@@ -31,17 +31,17 @@
 /*___INFO__MARK_END__*/
 package org.ggf.drmaa;
 
-import java.io.BufferedReader;
+import ro.cs.tao.configuration.ConfigurationManager;
+import ro.cs.tao.spi.ServiceRegistry;
+import ro.cs.tao.spi.ServiceRegistryManager;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Properties;
-
-import ro.cs.tao.configuration.ConfigurationManager;
+import java.util.Set;
 
 /**
  * This class is used to retrieve a Session instance tailored to the DRM and
@@ -167,34 +167,24 @@ public abstract class SessionFactory {
             // method
             e = ie;
         }
-        
-        String serviceId = "META-INF/services/" + SESSION_PROPERTY;
+        SessionFactory factory = null;
+        String className = ConfigurationManager.getInstance().getValue("tao.drmaa.sessionfactory");
+        //String serviceId = "META-INF/services/" + SESSION_PROPERTY;
         // try to find services in CLASSPATH
         try {
-//            InputStream is = null;
-//
-//            if (classLoader == null) {
-//                is = ClassLoader.getSystemResourceAsStream(serviceId);
-//            } else {
-//                is = classLoader.getResourceAsStream(serviceId);
-//            }
-//
-//            if (is != null) {
-//                BufferedReader rd =
-//                        new BufferedReader(new InputStreamReader(is, "UTF-8"));
-//
-//                String className = rd.readLine();
-//
-//                rd.close();
-//
-//                if (className != null && ! className.equals("")) {
-//                    return (SessionFactory)newInstance(className, classLoader);
-//                }
-//            }
-            String className = ConfigurationManager.getInstance().getValue("tao.drmaa.sessionfactory");
             if (className != null && ! className.equals("")) {
-                return (SessionFactory)Class.forName(className).newInstance();
+                factory = (SessionFactory)Class.forName(className).newInstance();
+            } else {
+                final ServiceRegistry<SessionFactory> registry =
+                        ServiceRegistryManager.getInstance().getServiceRegistry(SessionFactory.class);
+                if (registry != null) {
+                    final Set<SessionFactory> services = registry.getServices();
+                    if (services != null && services.size() > 0) {
+                        factory = services.iterator().next();
+                    }
+                }
             }
+            return factory;
         } catch (Exception ex) {
             //Ignore exceptions here and let the config error be thrown
             e = ex;
