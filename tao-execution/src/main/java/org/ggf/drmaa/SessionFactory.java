@@ -41,6 +41,8 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Properties;
 
+import ro.cs.tao.configuration.ConfigurationManager;
+
 /**
  * This class is used to retrieve a Session instance tailored to the DRM and
  * DRMAA implementation in use.  The factory will use the
@@ -72,8 +74,11 @@ public abstract class SessionFactory {
      * The name of the property used to find the Session implementation
      * class name.
      */
-    private static final String SESSION_PROPERTY =
-            "org.ggf.drmaa.SessionFactory";
+//    private static final String SESSION_PROPERTY =
+//            "org.ggf.drmaa.SessionFactory";
+    private static String str;
+    private static final String SESSION_PROPERTY = ((str = ConfigurationManager.getInstance().getValue("tao.drmaa.sessionfactory")) != null && !str.isEmpty()) ?
+            str : "org.ggf.drmaa.SessionFactory";
     
     /**
      * Gets a Session instance appropriate for the DRM in use.

@@ -69,8 +69,10 @@ public class SessionImpl implements Session {
     static {
         AccessController.doPrivileged(new PrivilegedAction() {
             public Object run() {
-                System.loadLibrary(ConfigurationManager.getInstance()
-                        .getValue("tao.jni.drmaa.slurm.loadLibraryName"));
+                String library = ConfigurationManager.getInstance()
+                        .getValue("tao.jni.drmaa.slurm.library");
+                int index = library.indexOf(".");
+                System.loadLibrary(library.substring(3, index));
                 return null;
             }
         });
