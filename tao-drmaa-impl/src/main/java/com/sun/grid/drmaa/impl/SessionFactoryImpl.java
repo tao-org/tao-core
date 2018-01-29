@@ -103,43 +103,46 @@ public class SessionFactoryImpl extends SessionFactory {
         }
     }
 
-//    private static void setExecutablePermissions(Path executablePathName){
-//        /* Set execution permissions for executable in path */
-//        if (SystemUtils.IS_OS_UNIX){
-//            Set<PosixFilePermission> permissions = new HashSet<>(Arrays.asList(
-//                    PosixFilePermission.OWNER_READ,
-//                    PosixFilePermission.OWNER_WRITE,
-//                    PosixFilePermission.OWNER_EXECUTE,
-//                    PosixFilePermission.GROUP_READ,
-//                    PosixFilePermission.GROUP_EXECUTE,
-//                    PosixFilePermission.OTHERS_READ,
-//                    PosixFilePermission.OTHERS_EXECUTE
-//            ));
-//            try{
-//                Files.setPosixFilePermissions(executablePathName, permissions);
-//            }catch(IOException e){
-//                System.out.println("Can't set execution permissions for " + executablePathName.toString());
-//            }
-//        }
-//    }
-//
-//    private static void fixUpPermissions(String strDestPath) throws IOException{
-//        /* Set execution permissions for all executables in path */
-//        Path destPath = Paths.get(strDestPath);
-//        Stream<Path> files = Files.list(destPath);
-//        files.forEach(path->{
-//            if (Files.isDirectory(path)){
-//                try {
-//                    fixUpPermissions(path.toString());
-//                }catch(IOException e){
-//                    System.out.println("Failed to fix permissions on " + path.toString());
-//                }
-//            }
-//            else{
-//                setExecutablePermissions(path);
-//            }
-//        });
-//    }
+    private static void setExecutablePermissions(Path pathName) throws IOException{
+        /* Set execution permissions for path */
+        Set<PosixFilePermission> permissions = new HashSet<>(Arrays.asList(
+                PosixFilePermission.OWNER_READ,
+                PosixFilePermission.OWNER_WRITE,
+                PosixFilePermission.OWNER_EXECUTE,
+                PosixFilePermission.GROUP_READ,
+                PosixFilePermission.GROUP_EXECUTE,
+                PosixFilePermission.OTHERS_READ,
+                PosixFilePermission.OTHERS_EXECUTE
+        ));
+        try{
+            Files.setPosixFilePermissions(pathName, permissions);
+        }catch(IOException e){
+            throw e;
+        }
+    }
+
+    private static void fixUpPermissions(String strDestPath) throws IOException {
+        /* Set execution permissions for all entries in path */
+        Path destPath = Paths.get(strDestPath);
+        try {
+            setExecutablePermissions(destPath);
+            if (Files.isDirectory(destPath)) {
+                Stream<Path> files = Files.list(destPath);
+                files.forEach(path -> {
+                    try {
+                        fixUpPermissions(path.toString());
+                    }
+                    catch (IOException e) {
+                        System.out.println("Failed to fix permissions on " + path.toString());
+                        return;
+                    }
+                });
+            }
+        }
+        catch (IOException e) {
+            System.out.println("Failed to fix permissions on " + destPath.toString());
+        }
+    }
 
     static {
         AccessController.doPrivileged(new PrivilegedAction() {
@@ -151,7 +154,7 @@ public class SessionFactoryImpl extends SessionFactory {
                     if (!libraryExists()) {
                         System.out.println("Copy library " + libraryName +" to " + libraryPath);
                         copyLibrary();
-                        //fixUpPermissions(libraryPath);
+                        fixUpPermissions(libraryPath);
                     }
                 }catch(Exception e){
                     System.out.println(e.toString());

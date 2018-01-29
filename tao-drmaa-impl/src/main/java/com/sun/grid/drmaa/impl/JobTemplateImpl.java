@@ -199,7 +199,7 @@ public class JobTemplateImpl implements JobTemplate {
      * Returns this template's native job template table index.
      * @return the template's native job template table index
      */
-    int getId() {
+    public int getId() {
         return id;
     }
     
