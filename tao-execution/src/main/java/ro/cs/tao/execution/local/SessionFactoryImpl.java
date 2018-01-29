@@ -25,7 +25,7 @@ public class SessionFactoryImpl extends SessionFactory {
                         this.nodes[i] = list.get(i);
                     }
                 */
-                thisSession.setNodes(new NodeDescription[0]);
+                //thisSession.setNodes(new NodeDescription[0]);
             }
         }
 
