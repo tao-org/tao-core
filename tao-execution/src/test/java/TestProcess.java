@@ -9,8 +9,7 @@ import org.ggf.drmaa.SessionFactory;
 import java.util.Arrays;
 import java.util.List;
 
-//import org.junit.runner.JUnitCore;
-//import com.sun.grid.drmaa.slurm.*;
+import org.junit.runner.JUnitCore;
 
 /**
  * @author Cosmin Cara
@@ -21,6 +20,7 @@ public class TestProcess {
     private static final String PING_LIN = "ping %s -c 100";
 
     public static void main(String[] args) throws DrmaaException, InterruptedException {
+        System.out.println("TestProcess");
         SessionFactory sessionFactory = SessionFactory.getFactory();
         Session session = sessionFactory.getSession();
         System.out.println(session.getDrmSystem());
@@ -54,6 +54,7 @@ public class TestProcess {
         session.deleteJobTemplate(jobTemplate2);
         session.exit();
         System.exit(0);
-//        JUnitCore.main(com.sun.grid.drmaa.slurm.SessionImplJobTest);
+
+        //JUnitCore.main(com.sun.grid.drmaa.slurm.SessionImplJobTest);
     }
 }
