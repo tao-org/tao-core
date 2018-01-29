@@ -1,10 +1,8 @@
-/*
+package org.ggf.drmaa;/*
  * Settings.java
  *
  * Created on September 7, 2005, 4:01 PM
  */
-
-package com.sun.grid.drmaa.impl;
 
 import java.util.HashMap;
 import java.util.Map;

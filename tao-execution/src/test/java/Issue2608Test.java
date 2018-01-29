@@ -40,6 +40,7 @@ import org.ggf.drmaa.DrmaaException;
 import org.ggf.drmaa.JobTemplate;
 import org.ggf.drmaa.Session;
 import org.ggf.drmaa.SessionFactory;
+import org.ggf.drmaa.Util;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

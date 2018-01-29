@@ -37,10 +37,8 @@
  */
 package com.sun.grid.drmaa.impl;
 
-import com.sun.grid.drmaa.impl.Settings;
 import java.util.Collections;
 
-import com.sun.grid.drmaa.impl.Util;
 import org.ggf.drmaa.*;
 import org.junit.After;
 import org.junit.Before;

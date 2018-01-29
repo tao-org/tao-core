@@ -4,6 +4,8 @@
  * Created on September 7, 2005, 4:01 PM
  */
 
+package org.ggf.drmaa;
+
 import java.util.HashMap;
 import java.util.Map;
 

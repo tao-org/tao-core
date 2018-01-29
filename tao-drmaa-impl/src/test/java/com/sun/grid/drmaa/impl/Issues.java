@@ -41,7 +41,6 @@ package com.sun.grid.drmaa.impl;
 import java.io.*;
 import java.util.*;
 import org.ggf.drmaa.*;
-import com.sun.grid.drmaa.impl.Settings;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

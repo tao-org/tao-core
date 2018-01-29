@@ -40,7 +40,6 @@ package com.sun.grid.drmaa.impl;
 
 
 import org.ggf.drmaa.*;
-import com.sun.grid.drmaa.impl.Settings;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
