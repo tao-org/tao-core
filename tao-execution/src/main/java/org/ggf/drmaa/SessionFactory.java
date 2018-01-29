@@ -105,7 +105,7 @@ public abstract class SessionFactory {
                 NewFactoryAction action = new NewFactoryAction();
                 
                 thisFactory =
-                        (SessionFactory)AccessController.doPrivileged(action);
+                        (SessionFactory)newFactory();//AccessController.doPrivileged(action);
             }
         }
         
