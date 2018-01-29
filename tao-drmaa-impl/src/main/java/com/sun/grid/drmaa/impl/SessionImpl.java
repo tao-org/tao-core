@@ -426,6 +426,10 @@ public class SessionImpl implements Session {
      * on the native job template found using the provided index.
      * @param jtId the table index for the native job template
      */
+    public String[] getAttributeNames(int jtId) throws DrmaaException{
+        return nativeGetAttributeNames(jtId);
+    }
+
     native String[] nativeGetAttributeNames(int jtId) throws DrmaaException;
     
     /**
