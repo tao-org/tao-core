@@ -40,13 +40,11 @@ package com.sun.grid.drmaa.impl;
 
 import java.util.*;
 
-import com.sun.grid.drmaa.impl.Util;
 import org.ggf.drmaa.*;
-import com.sun.grid.drmaa.impl.Settings;
+
 import static org.junit.Assert.*;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**

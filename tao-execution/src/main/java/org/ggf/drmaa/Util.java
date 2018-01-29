@@ -1,6 +1,4 @@
-package com.sun.grid.drmaa.impl;
-
-import org.ggf.drmaa.Session;
+package org.ggf.drmaa;
 
 public class Util {
     public static boolean isTorqueSession(Session session) {
