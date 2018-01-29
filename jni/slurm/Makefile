@@ -17,12 +17,11 @@ LDFLAGS = -L/usr/lib64/slurm/ -lslurm -ldrmaa \
 	
 jnilib: basis_types.h msg_drmaa.h com_sun_grid_drmaa_SessionImpl.h com_sun_grid_drmaa_SessionImpl.c
 	$(CC) com_sun_grid_drmaa_SessionImpl.c -o libdrmaa-jni-slurm.so $(CFLAGS) $(LDFLAGS)
-	$(CP) libdrmaa-jni-slurm.so ../
 		
 
 all: jnilib
 
 clean:
 	rm -f libdrmaa-jni-slurm.so
-	rm -f ../libdrmaa-jni-slurm.so
+
 
