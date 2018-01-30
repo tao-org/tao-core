@@ -31,20 +31,23 @@
 /*___INFO__MARK_END__*/
 package org.ggf.drmaa;
 
-import java.io.BufferedReader;
+import ro.cs.tao.configuration.ConfigurationManager;
+import ro.cs.tao.spi.ServiceRegistry;
+import ro.cs.tao.spi.ServiceRegistryManager;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Properties;
+import java.util.Set;
+
 
 /**
  * This class is used to retrieve a Session instance tailored to the DRM and
  * DRMAA implementation in use.  The factory will use the
- * org.ggf.drmaa.SessionFactory property to discover the DRM-specific Session
+ * org.ggf.SessionFactory property to discover the DRM-specific Session
  * implementation class.
  *
  * <p>Example:</p>
@@ -73,22 +76,25 @@ public abstract class SessionFactory {
      * class name.
      */
     private static final String SESSION_PROPERTY =
-            "org.ggf.drmaa.SessionFactory";
+            "org.ggf.drmaa.local.SessionFactory";
+//    private static String str;
+//    private static final String SESSION_PROPERTY = ((str = ConfigurationManager.getInstance().getValue("tao.drmaa.sessionfactory")) != null && !str.isEmpty()) ?
+//            str : "org.ggf.drmaa.SessionFactory";
     
     /**
      * Gets a Session instance appropriate for the DRM in use.
      * @return a Session instance appropriate for the DRM in use
      */
-    public abstract Session getSession();
+    public abstract org.ggf.drmaa.Session getSession();
     
     /**
      * Gets a SessionFactory instance appropriate for the DRM in use.  This
-     * method uses the org.ggf.drmaa.SessionFactory property to find
+     * method uses the org.ggf.SessionFactory property to find
      * the appropriate class.  It looks first in the system properties.  If the
      * property is not present, the method looks in
      * $java.home/lib/drmaa.properties.  If the property still isn't found, the
      * method will search the classpath for a
-     * META-INF/services/org.ggf.drmaa.SessionFactory resource.  If the
+     * META-INF/services/org.ggf.SessionFactory resource.  If the
      * property still has not been found, the method throws an Error.
      * @return a SessionFactory instance appropriate for the DRM in use
      * @throws Error if an appropriate SessionFactory implementation could not
@@ -109,12 +115,12 @@ public abstract class SessionFactory {
     
     /**
      * Creates a SessionFactory object appropriate for the DRM in use.  This
-     * method uses the org.ggf.drmaa.SessionFactory property to find
+     * method uses the org.ggf.SessionFactory property to find
      * the appropriate class.  It looks first in the system properties.  If the
      * property is not present, the method looks in
      * $java.home/lib/drmaa.properties.  If the property still isn't found, the
      * method will search the classpath for a
-     * META-INF/services/org.ggf.drmaa.SessionFactory resource.  If the
+     * META-INF/services/org.ggf.SessionFactory resource.  If the
      * property still has not been found, the method throws an Error.
      * @return a DRMAASession object appropriate for the DRM in use
      * @throws ConfigurationError if an appropriate SessionFactory
@@ -162,36 +168,31 @@ public abstract class SessionFactory {
             // method
             e = ie;
         }
-        
-        String serviceId = "META-INF/services/" + SESSION_PROPERTY;
+        SessionFactory factory = null;
+        String className = ConfigurationManager.getInstance().getValue("tao.drmaa.sessionfactory");
+        //String serviceId = "META-INF/services/" + SESSION_PROPERTY;
         // try to find services in CLASSPATH
         try {
-            InputStream is = null;
-            
-            if (classLoader == null) {
-                is = ClassLoader.getSystemResourceAsStream(serviceId);
+            if (className != null && ! className.equals("")) {
+                factory = (SessionFactory)Class.forName(className).newInstance();
+                //factory = (SessionFactory)com.sun.grid.drmaa.impl.SessionFactoryImpl.class;
             } else {
-                is = classLoader.getResourceAsStream(serviceId);
-            }
-            
-            if (is != null) {
-                BufferedReader rd =
-                        new BufferedReader(new InputStreamReader(is, "UTF-8"));
-                
-                String className = rd.readLine();
-                
-                rd.close();
-                
-                if (className != null && ! className.equals("")) {
-                    return (SessionFactory)newInstance(className, classLoader);
+                final ServiceRegistry<SessionFactory> registry =
+                        ServiceRegistryManager.getInstance().getServiceRegistry(SessionFactory.class);
+                if (registry != null) {
+                    final Set<SessionFactory> services = registry.getServices();
+                    if (services != null && services.size() > 0) {
+                        factory = services.iterator().next();
+                    }
                 }
             }
+            return factory;
         } catch (Exception ex) {
             //Ignore exceptions here and let the config error be thrown
             e = ex;
         }
-        
-        throw new ConfigurationError("Provider for " + SESSION_PROPERTY +
+
+        throw new ConfigurationError("Provider for " + className +
                 " cannot be found", e);
     }
     
