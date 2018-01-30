@@ -96,7 +96,7 @@ public class NetUtils {
     private static HttpHost apacheHttpProxy;
     private static CredentialsProvider proxyCredentials;
     private static int timeout = 30000;
-    private static Map<String, ThreadLocal<CloseableHttpClient>> httpClients = new HashMap<>();
+    private static Map<String, CloseableHttpClient> httpClients = new HashMap<>();
 
     public static String getAuthToken() {
         return authToken;
@@ -198,7 +198,7 @@ public class NetUtils {
                 domain = tokens[tokens.length - 2] + "." + tokens[tokens.length - 1];
             }
             if (!httpClients.containsKey(domain)) {
-                ThreadLocal<CloseableHttpClient> local = new ThreadLocal<>();
+                //ThreadLocal<CloseableHttpClient> local = new ThreadLocal<>();
                 CredentialsProvider credentialsProvider = null;
                 if (credentials != null) {
                     credentialsProvider = proxyCredentials != null ? proxyCredentials : new BasicCredentialsProvider();
@@ -216,10 +216,9 @@ public class NetUtils {
                             .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
                             .build();
                 }
-                local.set(httpClient);
-                httpClients.put(domain, local);
+                httpClients.put(domain, httpClient);
             }
-            CloseableHttpClient httpClient = httpClients.get(domain).get();
+            CloseableHttpClient httpClient = httpClients.get(domain);
             HttpRequestBase requestBase;
             switch (method) {
                 case GET:
