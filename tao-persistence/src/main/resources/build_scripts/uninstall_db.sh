@@ -1,6 +1,8 @@
 #!/bin/bash
 MyPwd=`pwd`
 
+exit 0
+
 local host port user password
 while getopts 'h:p:u:s:' arg
 do

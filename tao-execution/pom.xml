@@ -37,11 +37,13 @@
             <artifactId>jsch</artifactId>
             <version>0.1.53</version>
         </dependency>
+<!--
         <dependency>
             <groupId>ro.cs</groupId>
             <artifactId>drmaa-impl</artifactId>
             <version>0.1-SNAPSHOT</version>
         </dependency>
+-->
         <dependency>
             <groupId>ro.cs.tao</groupId>
             <artifactId>tao-config</artifactId>
@@ -49,9 +51,10 @@
         </dependency>
         <dependency>
             <groupId>ro.cs.tao</groupId>
-            <artifactId>tao-drmaa-impl</artifactId>
+            <artifactId>tao-drmaa-api</artifactId>
             <version>${project.version}</version>
         </dependency>
+
     </dependencies>
 
     <repositories>
