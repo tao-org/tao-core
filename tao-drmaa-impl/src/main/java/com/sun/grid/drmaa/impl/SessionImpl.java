@@ -63,18 +63,6 @@ import ro.cs.tao.configuration.ConfigurationManager;
 
 public class SessionImpl implements Session {
 
-    static {
-        AccessController.doPrivileged(new PrivilegedAction() {
-            public Object run() {
-                String library = ConfigurationManager.getInstance()
-                        .getValue("tao.jni.drmaa.impl.library");
-                int index = library.indexOf(".");
-                System.loadLibrary(library.substring(3, index));
-                return null;
-            }
-        });
-    }
-    
     /**
      * Creates a new instance of SessionImpl
      */
@@ -412,14 +400,14 @@ public class SessionImpl implements Session {
      * provided index.
      * @param jtId the table index for the native job template
      */
-    native void nativeSetAttributeValue(int jtId, String name, String value) throws DrmaaException;
+    protected native void nativeSetAttributeValue(int jtId, String name, String value) throws DrmaaException;
 
     /**
      * Calls drmaa_set_vector_attribute() on the native job template found using
      * the provided index.
      * @param jtId the table index for the native job template
      */
-    native void nativeSetAttributeValues(int jtId, String name, String[] values) throws DrmaaException;
+    protected native void nativeSetAttributeValues(int jtId, String name, String[] values) throws DrmaaException;
     
     /**
      * Calls drmaa_get_attribute_names() and drmaa_get_vector_attribute_names()
@@ -430,19 +418,19 @@ public class SessionImpl implements Session {
         return nativeGetAttributeNames(jtId);
     }
 
-    native String[] nativeGetAttributeNames(int jtId) throws DrmaaException;
+    protected native String[] nativeGetAttributeNames(int jtId) throws DrmaaException;
     
     /**
      * Calls drmaa_get_attribute() or drmaa_get_vector_attribute() (as
      * appropriate) on the native job template found using the provided index.
      * @param jtId the table index for the native job template
      */
-    native String[] nativeGetAttribute(int jtId, String name) throws DrmaaException;
+    protected native String[] nativeGetAttribute(int jtId, String name) throws DrmaaException;
 
     /**
      * Calls drmaa_delete_job_template() with the native job template found
      * using the provided index.
      * @param jtId the table index for the native job template
      */
-    native void nativeDeleteJobTemplate(int jtId) throws DrmaaException;
+    protected native void nativeDeleteJobTemplate(int jtId) throws DrmaaException;
 }
