@@ -44,14 +44,14 @@ import java.util.Map;
  * version 1.0
  */
 public class JobInfoImpl implements JobInfo {
-    private final int exited;
-    private final int signaled;
-    private final int coredump;
-    private final int aborted;
-    private final int exitStatus;
-    private final String signal;
-    private final String jobId;
-    private final Map resources;
+    protected final int exited;
+    protected final int signaled;
+    protected final int coredump;
+    protected final int aborted;
+    protected final int exitStatus;
+    protected final String signal;
+    protected final String jobId;
+    protected final Map resources;
     
     /**
      * Creates a new instance of JobInfoImpl

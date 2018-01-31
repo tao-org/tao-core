@@ -152,22 +152,22 @@ import org.ggf.drmaa.UnsupportedAttributeException;
  * @version 1.0
  */
 public class JobTemplateImpl implements JobTemplate {
-    private static final String REMOTE_COMMAND = "drmaa_remote_command";
-    private static final String INPUT_PARAMETERS = "drmaa_v_argv";
-    private static final String JOB_SUBMISSION_STATE = "drmaa_js_state";
-    private static final String JOB_ENVIRONMENT = "drmaa_v_env";
-    private static final String WORKING_DIRECTORY = "drmaa_wd";
-    private static final String JOB_CATEGORY = "drmaa_job_category";
-    private static final String NATIVE_SPECIFICATION = "drmaa_native_specification";
-    private static final String EMAIL_ADDRESS = "drmaa_v_email";
-    private static final String BLOCK_EMAIL = "drmaa_block_email";
-    private static final String START_TIME = "drmaa_start_time";
-    private static final String JOB_NAME = "drmaa_job_name";
-    private static final String INPUT_PATH = "drmaa_input_path";
-    private static final String OUTPUT_PATH = "drmaa_output_path";
-    private static final String ERROR_PATH = "drmaa_error_path";
-    private static final String JOIN_FILES = "drmaa_join_files";
-    private static final String TRANSFER_FILES = "drmaa_transfer_files";
+    protected static final String REMOTE_COMMAND = "drmaa_remote_command";
+    protected static final String INPUT_PARAMETERS = "drmaa_v_argv";
+    protected static final String JOB_SUBMISSION_STATE = "drmaa_js_state";
+    protected static final String JOB_ENVIRONMENT = "drmaa_v_env";
+    protected static final String WORKING_DIRECTORY = "drmaa_wd";
+    protected static final String JOB_CATEGORY = "drmaa_job_category";
+    protected static final String NATIVE_SPECIFICATION = "drmaa_native_specification";
+    protected static final String EMAIL_ADDRESS = "drmaa_v_email";
+    protected static final String BLOCK_EMAIL = "drmaa_block_email";
+    protected static final String START_TIME = "drmaa_start_time";
+    protected static final String JOB_NAME = "drmaa_job_name";
+    protected static final String INPUT_PATH = "drmaa_input_path";
+    protected static final String OUTPUT_PATH = "drmaa_output_path";
+    protected static final String ERROR_PATH = "drmaa_error_path";
+    protected static final String JOIN_FILES = "drmaa_join_files";
+    protected static final String TRANSFER_FILES = "drmaa_transfer_files";
     /* Not supported
     private static final String DEADLINE_TIME = "drmaa_deadline_time"
     private static final String HARD_WALLCLOCK_TIME_LIMIT = "drmaa_wct_hlimit"
@@ -175,15 +175,15 @@ public class JobTemplateImpl implements JobTemplate {
     private static final String HARD_RUN_DURATION_LIMIT = "drmaa_run_duration_hlimit"
     private static final String SOFT_RUN_DURATION_LIMIT = "drmaa_run_duration_slimit"
     */
-    private static final String HOLD_STRING = "drmaa_hold";
-    private static final String ACTIVE_STRING = "drmaa_active";
-    private static final String BLOCK_EMAIL_TRUE_STRING = "1";
-    private static final String BLOCK_EMAIL_FALSE_STRING = "0";
-    private static final String JOIN_FILES_TRUE_STRING = "y";
-    private static final String JOIN_FILES_FALSE_STRING = "n";
-    private static PartialTimestampFormat ptf = new PartialTimestampFormat();
+    protected static final String HOLD_STRING = "drmaa_hold";
+    protected static final String ACTIVE_STRING = "drmaa_active";
+    protected static final String BLOCK_EMAIL_TRUE_STRING = "1";
+    protected static final String BLOCK_EMAIL_FALSE_STRING = "0";
+    protected static final String JOIN_FILES_TRUE_STRING = "y";
+    protected static final String JOIN_FILES_FALSE_STRING = "n";
+    protected static PartialTimestampFormat ptf = new PartialTimestampFormat();
     private SessionImpl session = null;
-    private int id = -1;
+    protected int id = -1;
     
     /**
      * Creates a new instance of JobTemplateImpl
