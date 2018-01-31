@@ -170,12 +170,10 @@ public abstract class SessionFactory {
         }
         SessionFactory factory = null;
         String className = ConfigurationManager.getInstance().getValue("tao.drmaa.sessionfactory");
-        //String serviceId = "META-INF/services/" + SESSION_PROPERTY;
-        // try to find services in CLASSPATH
+        // try to find services in properties or CLASSPATH
         try {
             if (className != null && ! className.equals("")) {
                 factory = (SessionFactory)Class.forName(className).newInstance();
-                //factory = (SessionFactory)com.sun.grid.drmaa.impl.SessionFactoryImpl.class;
             } else {
                 final ServiceRegistry<SessionFactory> registry =
                         ServiceRegistryManager.getInstance().getServiceRegistry(SessionFactory.class);

@@ -64,7 +64,7 @@ public class JobInfoImpl implements JobInfo {
      * @param exitStatus the low-order 8 bits of the process exit status
      * @param signal the string description of the terminating signal
      */
-    public JobInfoImpl(String jobId, int exited, int signaled, int coredump, int aborted, String[] resourceUsage, int exitStatus, String signal) {
+    protected JobInfoImpl(String jobId, int exited, int signaled, int coredump, int aborted, String[] resourceUsage, int exitStatus, String signal) {
         this.jobId = jobId;
         this.exited = exited;
         this.signaled = signaled;
@@ -75,7 +75,7 @@ public class JobInfoImpl implements JobInfo {
         this.signal = signal;
     }
     
-    private static Map nameValuesToMap(String[] nameValuePairs) {
+    protected static Map nameValuesToMap(String[] nameValuePairs) {
         Map map = null;
 
         if (nameValuePairs != null) {

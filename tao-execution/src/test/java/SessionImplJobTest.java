@@ -39,7 +39,6 @@
 import java.util.*;
 
 import org.ggf.drmaa.*;
-//import org.ggf.drmaa.SessionFactory;
 import static org.junit.Assert.*;
 import org.junit.After;
 import org.junit.Before;
@@ -60,7 +59,7 @@ public class SessionImplJobTest {
 
     @Before
     public void setUp() throws DrmaaException {
-        session = (org.ggf.drmaa.Session)SessionFactory.getFactory().getSession();
+        session = (org.ggf.drmaa.Session)org.ggf.drmaa.SessionFactory.getFactory().getSession();
         session.init(null);
     }
 

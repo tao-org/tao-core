@@ -78,7 +78,7 @@ public class SessionImpl implements Session {
     /**
      * Creates a new instance of SessionImpl
      */
-    SessionImpl() {
+    protected SessionImpl() {
     }
     
     /**
@@ -115,7 +115,7 @@ public class SessionImpl implements Session {
     /**
      * Calls drmaa_control().
      */
-    private native void nativeControl(String jobId, int action) throws DrmaaException;
+    protected native void nativeControl(String jobId, int action) throws DrmaaException;
     
     /**
      * The exit() method closes the DRMAA session for all threads and must be
@@ -142,7 +142,7 @@ public class SessionImpl implements Session {
     /**
      * Calls drmaa_exit().
      */
-    private native void nativeExit() throws DrmaaException;
+    protected native void nativeExit() throws DrmaaException;
     
     /**
      * getContact() returns an opaque string containing contact information
@@ -173,7 +173,7 @@ public class SessionImpl implements Session {
     /**
      * Calls drmaa_get_contact().
      */
-    private native String nativeGetContact();
+    protected native String nativeGetContact();
     
     /**
      * The getDRMSystem() method returns a string containing the DRM product and
@@ -189,7 +189,7 @@ public class SessionImpl implements Session {
     /**
      * Calls drmaa_get_DRM_system().
      */
-    private native String nativeGetDRMSInfo();
+    protected native String nativeGetDRMSInfo();
     
     /**
      * The getDrmaaImplementation() method returns a string containing the DRMAA
@@ -224,7 +224,7 @@ public class SessionImpl implements Session {
     /**
      * Calls drmaa_job_ps().
      */
-    private native int nativeGetJobProgramStatus(String jobId) throws DrmaaException;
+    protected native int nativeGetJobProgramStatus(String jobId) throws DrmaaException;
     
     /**
      * {@inheritDoc}
@@ -302,7 +302,7 @@ public class SessionImpl implements Session {
     /**
      * Calls drmaa_init().
      */
-    private native void nativeInit(String contact) throws DrmaaException;
+    protected native void nativeInit(String contact) throws DrmaaException;
     
     /**
      * The runBulkJobs() method submits a Grid Engine array job very much as
@@ -341,7 +341,7 @@ public class SessionImpl implements Session {
     /**
      * Calls drmaa_run_bulk_jobs().
      */
-    private native String[] nativeRunBulkJobs(int jtId, int start, int end, int incr) throws DrmaaException;
+    protected native String[] nativeRunBulkJobs(int jtId, int start, int end, int incr) throws DrmaaException;
     
     /**
      * The runJob() method submits a Grid Engine job with attributes defined in
@@ -364,7 +364,7 @@ public class SessionImpl implements Session {
     /**
      * Calls drmaa_run_job().
      */
-    private native String nativeRunJob(int jtId) throws DrmaaException;
+    protected native String nativeRunJob(int jtId) throws DrmaaException;
     
     /**
      * {@inheritDoc}
@@ -380,7 +380,7 @@ public class SessionImpl implements Session {
     /**
      * Calls drmaa_synchronize().
      */
-    private native void nativeSynchronize(String[] jobIds, long timeout, boolean dispose) throws DrmaaException;
+    protected native void nativeSynchronize(String[] jobIds, long timeout, boolean dispose) throws DrmaaException;
     
     /**
      * {@inheritDoc}
@@ -397,7 +397,7 @@ public class SessionImpl implements Session {
     /**
      * Calls drmaa_wait().
      */
-    private native JobInfoImpl nativeWait(String jobId, long timeout) throws DrmaaException;
+    protected native JobInfoImpl nativeWait(String jobId, long timeout) throws DrmaaException;
 
     /**
      * Calls drmaa_allocate_job_template() to create a native job template and
@@ -405,7 +405,7 @@ public class SessionImpl implements Session {
      * reference is then returned.
      * @return the table index for the native job template
      */
-    private native int nativeAllocateJobTemplate() throws DrmaaException;
+    protected native int nativeAllocateJobTemplate() throws DrmaaException;
 
     /**
      * Calls drmaa_set_attribute() on the native job template found using the
