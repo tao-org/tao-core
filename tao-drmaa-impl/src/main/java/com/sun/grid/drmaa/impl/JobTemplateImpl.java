@@ -190,7 +190,7 @@ public class JobTemplateImpl implements JobTemplate {
      * @param session the associated SessionImpl object
      * @param id the table index of the native job template
      */
-    JobTemplateImpl(SessionImpl session, int id) {
+    protected JobTemplateImpl(SessionImpl session, int id) {
         this.session = session;
         this.id = id;
     }

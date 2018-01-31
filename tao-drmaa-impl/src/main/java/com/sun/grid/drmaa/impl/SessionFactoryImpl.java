@@ -63,12 +63,12 @@ import ro.cs.tao.configuration.ConfigurationManager;
  */
 public class SessionFactoryImpl extends SessionFactory {
 
-    private Session thisSession = null;
-    private static ConfigurationManager config = null;
-    private static String libraryPath = null;
-    private static String libraryName = null;
+    public Session thisSession = null;
+    public static ConfigurationManager config = null;
+    public static String libraryPath = null;
+    public static String libraryName = null;
 
-    private static void copyLibrary() throws IOException{
+    public static void copyLibrary() throws IOException{
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
         byte[] buffer = new byte[1000];
 
@@ -82,7 +82,7 @@ public class SessionFactoryImpl extends SessionFactory {
         }
     }
 
-    private static boolean libraryExists() throws Exception{
+    public static boolean libraryExists() throws Exception{
         try {
             File folder = new File(libraryPath);
             if (!folder.exists()) {
@@ -103,7 +103,7 @@ public class SessionFactoryImpl extends SessionFactory {
         }
     }
 
-    private static void setExecutablePermissions(Path pathName) throws IOException{
+    public static void setExecutablePermissions(Path pathName) throws IOException{
         /* Set execution permissions for path */
         Set<PosixFilePermission> permissions = new HashSet<>(Arrays.asList(
                 PosixFilePermission.OWNER_READ,
@@ -121,7 +121,7 @@ public class SessionFactoryImpl extends SessionFactory {
         }
     }
 
-    private static void fixUpPermissions(String strDestPath) throws IOException {
+    public static void fixUpPermissions(String strDestPath) throws IOException {
         /* Set execution permissions for all entries in path */
         Path destPath = Paths.get(strDestPath);
         try {

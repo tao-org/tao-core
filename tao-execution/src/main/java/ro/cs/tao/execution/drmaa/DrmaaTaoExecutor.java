@@ -4,7 +4,7 @@ import org.ggf.drmaa.DrmaaException;
 import org.ggf.drmaa.InternalException;
 import org.ggf.drmaa.JobTemplate;
 import org.ggf.drmaa.Session;
-import org.ggf.drmaa.local.SessionFactory;
+//import org.ggf.drmaa.local.SessionFactory;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.component.execution.ExecutionStatus;
@@ -44,7 +44,7 @@ public class DrmaaTaoExecutor extends Executor {
             // mark the executor as initialized
             isInitialized = true;
         }
-        session = org.ggf.drmaa.local.SessionFactory.getFactory().getSession();
+        session = org.ggf.drmaa.SessionFactory.getFactory().getSession();
         try {
             session.init (null);
         } catch (DrmaaException e) {
