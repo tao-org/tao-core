@@ -4,17 +4,18 @@ import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlEnumValue;
 
 /**
+ * Workflow visibility enumeration
  * @author Cosmin Cara
  */
 @XmlEnum(Integer.class)
 public enum Visibility {
     /**
-     * The parameter is a regular parameter
+     * The workflow is public
      */
     @XmlEnumValue("1")
     PUBLIC(1),
     /**
-     * The parameter is a template parameter (describing the invocation of the component, for example)
+     * The workflow is private (visible only to the author)
      */
     @XmlEnumValue("2")
     PRIVATE(2);
