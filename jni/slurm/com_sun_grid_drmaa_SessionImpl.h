@@ -38,47 +38,47 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#undef com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_SUSPEND
-#define com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_SUSPEND 0L
-#undef com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_RESUME
-#define com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_RESUME 1L
-#undef com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_HOLD
-#define com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_HOLD 2L
-#undef com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_RELEASE
-#define com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_RELEASE 3L
-#undef com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_TERMINATE
-#define com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_TERMINATE 4L
+#undef com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_SUSPEND
+#define com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_SUSPEND 0L
+#undef com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_RESUME
+#define com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_RESUME 1L
+#undef com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_HOLD
+#define com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_HOLD 2L
+#undef com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_RELEASE
+#define com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_RELEASE 3L
+#undef com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_TERMINATE
+#define com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_TERMINATE 4L
 /* Inaccessible static: JOB_IDS_SESSION_ALL */
-#undef com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_TIMEOUT_WAIT_FOREVER
-#define com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_TIMEOUT_WAIT_FOREVER -1LL
-#undef com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_TIMEOUT_NO_WAIT
-#define com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_TIMEOUT_NO_WAIT 0LL
-#undef com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_UNDETERMINED
-#define com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_UNDETERMINED 0L
-#undef com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_QUEUED_ACTIVE
-#define com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_QUEUED_ACTIVE 16L
-#undef com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_SYSTEM_ON_HOLD
-#define com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_SYSTEM_ON_HOLD 17L
-#undef com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_USER_ON_HOLD
-#define com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_USER_ON_HOLD 18L
-#undef com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_USER_SYSTEM_ON_HOLD
-#define com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_USER_SYSTEM_ON_HOLD 19L
-#undef com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_RUNNING
-#define com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_RUNNING 32L
-#undef com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_SYSTEM_SUSPENDED
-#define com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_SYSTEM_SUSPENDED 33L
-#undef com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_USER_SUSPENDED
-#define com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_USER_SUSPENDED 34L
-#undef com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_DONE
-#define com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_DONE 48L
-#undef com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_FAILED
-#define com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_FAILED 64L
+#undef com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_TIMEOUT_WAIT_FOREVER
+#define com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_TIMEOUT_WAIT_FOREVER -1LL
+#undef com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_TIMEOUT_NO_WAIT
+#define com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_TIMEOUT_NO_WAIT 0LL
+#undef com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_UNDETERMINED
+#define com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_UNDETERMINED 0L
+#undef com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_QUEUED_ACTIVE
+#define com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_QUEUED_ACTIVE 16L
+#undef com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_SYSTEM_ON_HOLD
+#define com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_SYSTEM_ON_HOLD 17L
+#undef com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_USER_ON_HOLD
+#define com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_USER_ON_HOLD 18L
+#undef com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_USER_SYSTEM_ON_HOLD
+#define com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_USER_SYSTEM_ON_HOLD 19L
+#undef com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_RUNNING
+#define com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_RUNNING 32L
+#undef com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_SYSTEM_SUSPENDED
+#define com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_SYSTEM_SUSPENDED 33L
+#undef com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_USER_SUSPENDED
+#define com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_USER_SUSPENDED 34L
+#undef com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_DONE
+#define com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_DONE 48L
+#undef com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_FAILED
+#define com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_FAILED 64L
 /*
- * Class:     com_sun_grid_drmaa_impl_slurm_Sessionimpl
+ * Class:     com_sun_grid_drmaa_impl_slurm_SessionImplSlurm
  * Method:    nativeControl
  * Signature: (Ljava/lang/String;I)V
  */
-JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_nativeControl
+JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_nativeControl
   (JNIEnv *, jobject, jstring, jint);
 
 /*
@@ -86,7 +86,7 @@ JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_nativ
  * Method:    nativeExit
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_nativeExit
+JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_nativeExit
   (JNIEnv *, jobject);
 
 /*
@@ -94,7 +94,7 @@ JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_nativ
  * Method:    nativeGetContact
  * Signature: ()Ljava/lang/String;
  */
-JNIEXPORT jstring JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_nativeGetContact
+JNIEXPORT jstring JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_nativeGetContact
   (JNIEnv *, jobject);
 
 /*
@@ -102,7 +102,7 @@ JNIEXPORT jstring JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_na
  * Method:    nativeGetDRMSInfo
  * Signature: ()Ljava/lang/String;
  */
-JNIEXPORT jstring JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_nativeGetDRMSInfo
+JNIEXPORT jstring JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_nativeGetDRMSInfo
   (JNIEnv *, jobject);
 
 /*
@@ -110,7 +110,7 @@ JNIEXPORT jstring JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_na
  * Method:    nativeGetJobProgramStatus
  * Signature: (Ljava/lang/String;)I
  */
-JNIEXPORT jint JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_nativeGetJobProgramStatus
+JNIEXPORT jint JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_nativeGetJobProgramStatus
   (JNIEnv *, jobject, jstring);
 
 /*
@@ -118,7 +118,7 @@ JNIEXPORT jint JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_nativ
  * Method:    nativeInit
  * Signature: (Ljava/lang/String;)V
  */
-JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_nativeInit
+JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_nativeInit
   (JNIEnv *, jobject, jstring);
 
 /*
@@ -126,7 +126,7 @@ JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_nativ
  * Method:    nativeRunBulkJobs
  * Signature: (IIII)[Ljava/lang/String;
  */
-JNIEXPORT jobjectArray JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_nativeRunBulkJobs
+JNIEXPORT jobjectArray JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_nativeRunBulkJobs
   (JNIEnv *, jobject, jint, jint, jint, jint);
 
 /*
@@ -134,7 +134,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionimplSlu
  * Method:    nativeRunJob
  * Signature: (I)Ljava/lang/String;
  */
-JNIEXPORT jstring JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_nativeRunJob
+JNIEXPORT jstring JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_nativeRunJob
   (JNIEnv *, jobject, jint);
 
 /*
@@ -142,7 +142,7 @@ JNIEXPORT jstring JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_na
  * Method:    nativeSynchronize
  * Signature: ([Ljava/lang/String;JZ)V
  */
-JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_nativeSynchronize
+JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_nativeSynchronize
   (JNIEnv *, jobject, jobjectArray, jlong, jboolean);
 
 /*
@@ -150,7 +150,7 @@ JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_nativ
  * Method:    nativeWait
  * Signature: (Ljava/lang/String;J)Lcom/sun/grid/drmaa/SGEJobInfo;
  */
-JNIEXPORT jobject JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_nativeWait
+JNIEXPORT jobject JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_nativeWait
   (JNIEnv *, jobject, jstring, jlong);
 
 /*
@@ -158,7 +158,7 @@ JNIEXPORT jobject JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_na
  * Method:    nativeAllocateJobTemplate
  * Signature: ()I
  */
-JNIEXPORT jint JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_nativeAllocateJobTemplate
+JNIEXPORT jint JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_nativeAllocateJobTemplate
   (JNIEnv *, jobject);
 
 /*
@@ -166,7 +166,7 @@ JNIEXPORT jint JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_nativ
  * Method:    nativeSetAttributeValue
  * Signature: (ILjava/lang/String;Ljava/lang/String;)V
  */
-JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_nativeSetAttributeValue
+JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_nativeSetAttributeValue
   (JNIEnv *, jobject, jint, jstring, jstring);
 
 /*
@@ -174,7 +174,7 @@ JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_nativ
  * Method:    nativeSetAttributeValues
  * Signature: (ILjava/lang/String;[Ljava/lang/String;)V
  */
-JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_nativeSetAttributeValues
+JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_nativeSetAttributeValues
   (JNIEnv *, jobject, jint, jstring, jobjectArray);
 
 /*
@@ -182,7 +182,7 @@ JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_nativ
  * Method:    nativeGetAttributeNames
  * Signature: (I)[Ljava/lang/String;
  */
-JNIEXPORT jobjectArray JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_nativeGetAttributeNames
+JNIEXPORT jobjectArray JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_nativeGetAttributeNames
   (JNIEnv *, jobject, jint);
 
 /*
@@ -190,7 +190,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionimplSlu
  * Method:    nativeGetAttribute
  * Signature: (ILjava/lang/String;)[Ljava/lang/String;
  */
-JNIEXPORT jobjectArray JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_nativeGetAttribute
+JNIEXPORT jobjectArray JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_nativeGetAttribute
   (JNIEnv *, jobject, jint, jstring);
 
 /*
@@ -198,7 +198,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionimplSlu
  * Method:    nativeDeleteJobTemplate
  * Signature: (I)V
  */
-JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionimplSlurm_nativeDeleteJobTemplate
+JNIEXPORT void JNICALL Java_com_sun_grid_drmaa_impl_slurm_SessionImplSlurm_nativeDeleteJobTemplate
   (JNIEnv *, jobject, jint);
 
 #ifdef __cplusplus
