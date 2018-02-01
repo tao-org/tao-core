@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Descriptor for an input of a component
  * @author Cosmin Cara
  */
 @XmlRootElement(name = "input")

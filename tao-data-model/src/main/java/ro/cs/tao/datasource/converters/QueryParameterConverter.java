@@ -38,28 +38,9 @@
 
 package ro.cs.tao.datasource.converters;
 
-import ro.cs.tao.datasource.param.QueryParameter;
-import ro.cs.tao.eodata.Polygon2D;
-
 /**
  * @author Cosmin Cara
  */
-public class PolygonConverter extends DefaultConverter {
-
-    public PolygonConverter(QueryParameter parameter) {
-        super(parameter);
-        if (!Polygon2D.class.equals(parameter.getType())) {
-            throw new IllegalArgumentException("Incorrect parameter type");
-        }
-    }
-
-    @Override
-    public String stringValue() throws ConversionException {
-        Polygon2D polygon2D = (Polygon2D) this.parameter.getValue();
-        if (polygon2D != null && polygon2D.getNumPoints() > 0) {
-            return polygon2D.getNumPoints() < 200 ? polygon2D.toWKT() : polygon2D.toWKTBounds();
-        } else {
-            return null;
-        }
-    }
+public interface QueryParameterConverter {
+    String stringValue() throws ConversionException;
 }
