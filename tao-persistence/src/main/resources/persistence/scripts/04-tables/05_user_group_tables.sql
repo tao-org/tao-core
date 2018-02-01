@@ -35,6 +35,8 @@ CREATE TABLE tao."user"
 
 ALTER TABLE tao."user" ADD CONSTRAINT PK_user PRIMARY KEY (id);
 
+ALTER TABLE tao."user" ADD CONSTRAINT UQ_user UNIQUE (username);
+
 ALTER TABLE tao."user" ADD CONSTRAINT FK_user_group
 	FOREIGN KEY (group_id) REFERENCES tao."group" (id) ON DELETE No Action ON UPDATE No Action;
 

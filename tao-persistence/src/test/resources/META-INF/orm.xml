@@ -81,7 +81,6 @@
             </basic>
             <transient name="sources"/>
             <transient name="targets"/>
-            <transient name="securityContext" />
         </attributes>
     </mapped-superclass>
 
@@ -438,6 +437,9 @@
             <basic name="userName">
                 <column name="username" nullable="false" column-definition="character varying(50) NOT NULL"/>
             </basic>
+            <basic name="path">
+                <column name="definition_path" nullable="false" column-definition="character varying(512) NULL"/>
+            </basic>
             <basic name="status">
                 <column name="status_id" nullable="false" column-definition="integer NOT NULL"/>
             </basic>
@@ -447,6 +449,57 @@
             <basic name="active">
                 <column name="active" nullable="true" column-definition="boolean NOT NULL DEFAULT true"/>
             </basic>
+
+            <one-to-many name="nodes" fetch="EAGER" mapped-by="workflow" />
+        </attributes>
+    </entity>
+
+
+    <entity class="ro.cs.tao.workflow.WorkflowNodeDescriptor" access="PROPERTY">
+        <table name="tao.graph_node"/>
+        <attributes>
+            <id name="id">
+                <column name="id" nullable="false" column-definition="bigserial NOT NULL"/>
+                <generated-value strategy="SEQUENCE" generator="graph_node_identifier"/>
+                <sequence-generator name="graph_node_identifier" sequence-name="tao.graph_node_id_seq" allocation-size="1" />
+            </id>
+            <basic name="name">
+                <column name="name" nullable="false" column-definition="character varying(250) NULL"/>
+            </basic>
+            <!--<basic name="workflowId">
+                <column name="workflow_id" nullable="false" column-definition="integer NOT NULL"/>
+            </basic>-->
+
+            <basic name="componentId">
+                <column name="processing_component_id" nullable="false" column-definition="integer NOT NULL"/>
+            </basic>
+            <basic name="xCoord">
+                <column name="xCoord" nullable="true" column-definition="real NULL"/>
+            </basic>
+            <basic name="yCoord">
+                <column name="yCoord" nullable="true" column-definition="real NULL"/>
+            </basic>
+
+            <many-to-one name="workflow" fetch="LAZY">
+                <join-column name="workflow_id" nullable="false"/>
+            </many-to-one>
+
+            <many-to-many name="incomingNodes" fetch="EAGER">
+                <join-table name="tao.graph_node_incomings">
+                    <join-column name="graph_node_id" referenced-column-name="id"/>
+                    <inverse-join-column name="graph_node_incoming_id" referenced-column-name="id"/>
+                </join-table>
+                <cascade>
+                    <cascade-all/>
+                </cascade>
+            </many-to-many>
+
+            <element-collection name="customValues" target-class="ro.cs.tao.workflow.ParameterValue" access="PROPERTY" fetch="LAZY">
+                <collection-table name="tao.graph_node_processing_custom_values" >
+                    <join-column name="graph_node_id" referenced-column-name="id" />
+                </collection-table>
+            </element-collection>
+
         </attributes>
     </entity>
 
@@ -498,6 +551,17 @@
         </attributes>
     </embeddable>
 
+    <embeddable class="ro.cs.tao.workflow.ParameterValue" access="PROPERTY">
+        <attributes>
+            <basic name="parameterName">
+                <column name="name" nullable="false" column-definition="character varying(512) NOT NULL"/>
+            </basic>
+            <basic name="parameterValue">
+                <column name="value" nullable="false" column-definition="text NOT NULL"/>
+            </basic>
+        </attributes>
+    </embeddable>
+
 
     <converter class="ro.cs.tao.persistence.convert.TemplateTypeConverter" />
     <converter class="ro.cs.tao.persistence.convert.ProcessingComponentVisibilityConverter" />
@@ -509,5 +573,8 @@
     <converter class="ro.cs.tao.persistence.convert.StringArrayToStringConverter" />
     <converter class="ro.cs.tao.persistence.convert.DataFormatConverter" />
     <converter class="ro.cs.tao.persistence.convert.ServiceStatusConverter" />
+    <converter class="ro.cs.tao.persistence.convert.WorkflowGraphStatusConverter" />
+    <converter class="ro.cs.tao.persistence.convert.WorkflowGraphVisibilityConverter" />
+
 
 </entity-mappings>

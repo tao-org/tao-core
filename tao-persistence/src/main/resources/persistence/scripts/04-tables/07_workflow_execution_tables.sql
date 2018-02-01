@@ -34,7 +34,7 @@ CREATE TABLE tao.workflow_graph
 	name varchar(250) NOT NULL,
 	created timestamp without time zone NOT NULL DEFAULT now(),
 	username varchar(50) NOT NULL,
-	--definition_path varchar(512) NOT NULL,
+	definition_path varchar(512) NULL,
 	status_id integer NOT NULL,
 	visibility_id integer NOT NULL,
 	active boolean NOT NULL DEFAULT true
@@ -49,7 +49,7 @@ ALTER TABLE tao.workflow_graph ADD CONSTRAINT FK_workflow_graph_visibility
 	FOREIGN KEY (visibility_id) REFERENCES tao.workflow_graph_visibility (id) ON DELETE No Action ON UPDATE No Action;
 
 ALTER TABLE tao.workflow_graph ADD CONSTRAINT FK_workflow_user
-	FOREIGN KEY (user_id) REFERENCES tao."user" (id) ON DELETE No Action ON UPDATE No Action;
+	FOREIGN KEY (username) REFERENCES tao."user" (username) ON DELETE No Action ON UPDATE No Action;
 
 
 -------------------------------------------------------------------------------
@@ -61,16 +61,55 @@ CREATE TABLE tao.graph_node
 	id bigint NOT NULL,
 	name varchar(250) NULL,
 	workflow_id bigint NOT NULL,
+	processing_component_id varchar(512) NOT NULL,
 	xCoord real NULL,
-	yCoord real NULL,
-	origin bigint NULL,
-	destination bigint NULL
+	yCoord real NULL
 );
 
 ALTER TABLE tao.graph_node ADD CONSTRAINT PK_graph_node PRIMARY KEY (id);
 
 ALTER TABLE tao.graph_node ADD CONSTRAINT FK_graph_node_workflow_graph
 	FOREIGN KEY (workflow_id) REFERENCES tao.workflow_graph (id) ON DELETE No Action ON UPDATE No Action;
+
+ALTER TABLE tao.graph_node ADD CONSTRAINT FK_graph_node_processing_component
+	FOREIGN KEY (processing_component_id) REFERENCES tao.processing_component (id) ON DELETE No Action ON UPDATE No Action;
+
+
+-------------------------------------------------------------------------------
+-- table: graph_node_incomings
+DROP TABLE IF EXISTS tao.graph_node_incomings CASCADE;
+
+CREATE TABLE tao.graph_node_incomings
+(
+	graph_node_id bigint NOT NULL,
+	graph_node_incoming_id bigint NOT NULL
+);
+
+ALTER TABLE tao.graph_node_incomings ADD CONSTRAINT PK_graph_node_incomings PRIMARY KEY (graph_node_id, graph_node_incoming_id);
+
+ALTER TABLE tao.graph_node_incomings ADD CONSTRAINT FK_graph_node_incomings_graph_node_1
+	FOREIGN KEY (graph_node_id) REFERENCES tao.graph_node (id) ON DELETE No Action ON UPDATE No Action;
+
+ALTER TABLE tao.graph_node_incomings ADD CONSTRAINT FK_graph_node_incomings_graph_node_2
+	FOREIGN KEY (graph_node_incoming_id) REFERENCES tao.graph_node (id) ON DELETE No Action ON UPDATE No Action;
+
+
+-------------------------------------------------------------------------------
+-- table: graph_node_processing_custom_values
+DROP TABLE IF EXISTS tao.graph_node_processing_custom_values CASCADE;
+
+CREATE TABLE tao.graph_node_processing_custom_values
+(
+	graph_node_id bigint NOT NULL,
+	name varchar(512) NOT NULL,
+	value text NOT NULL
+);
+
+ALTER TABLE tao.graph_node_processing_custom_values ADD CONSTRAINT PK_graph_node_processing_custom_values
+	PRIMARY KEY (graph_node_id, name);
+
+ALTER TABLE tao.graph_node_processing_custom_values ADD CONSTRAINT FK_graph_node_processing_custom_values_graph_node
+	FOREIGN KEY (graph_node_id) REFERENCES tao.graph_node (id) ON DELETE No Action ON UPDATE No Action;
 
 
 -------------------------------------------------------------------------------
