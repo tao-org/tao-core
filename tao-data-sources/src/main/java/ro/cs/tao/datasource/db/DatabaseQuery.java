@@ -22,8 +22,8 @@ package ro.cs.tao.datasource.db;
 import ro.cs.tao.datasource.DataQuery;
 import ro.cs.tao.datasource.QueryException;
 import ro.cs.tao.datasource.converters.ConverterFactory;
-import ro.cs.tao.datasource.converters.DateConverter;
-import ro.cs.tao.datasource.converters.PolygonConverter;
+import ro.cs.tao.datasource.converters.DateParameterConverter;
+import ro.cs.tao.datasource.converters.PolygonParameterConverter;
 import ro.cs.tao.datasource.param.QueryParameter;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.Polygon2D;
@@ -52,8 +52,8 @@ public class DatabaseQuery extends DataQuery {
     private static final ConverterFactory converterFactory = ConverterFactory.getInstance();
 
     static {
-        converterFactory.register(PolygonConverter.class, Polygon2D.class);
-        converterFactory.register(DateConverter.class, Date.class);
+        converterFactory.register(PolygonParameterConverter.class, Polygon2D.class);
+        converterFactory.register(DateParameterConverter.class, Date.class);
     }
     DatabaseQuery(DatabaseSource source, String sensorName) {
         super(source, sensorName);

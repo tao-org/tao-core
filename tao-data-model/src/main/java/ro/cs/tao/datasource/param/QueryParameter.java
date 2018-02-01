@@ -16,7 +16,7 @@
  */
 package ro.cs.tao.datasource.param;
 
-import ro.cs.tao.datasource.converters.ParameterConverter;
+import ro.cs.tao.datasource.converters.QueryParameterConverter;
 import ro.cs.tao.eodata.Polygon2D;
 import ro.cs.tao.serialization.PolygonAdapter;
 
@@ -40,7 +40,7 @@ public class QueryParameter<T> {
     private T minValue;
     private T maxValue;
     private T value;
-    private ParameterConverter converter;
+    private QueryParameterConverter converter;
 
     private QueryParameter() { }
 
