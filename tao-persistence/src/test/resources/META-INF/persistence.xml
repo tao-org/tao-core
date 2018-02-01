@@ -22,6 +22,7 @@
 
         <class>ro.cs.tao.component.execution.ExecutionJob</class>
         <class>ro.cs.tao.component.execution.ExecutionTask</class>
+        <class>ro.cs.tao.workflow.WorkflowDescriptor</class>
 
         <exclude-unlisted-classes>false</exclude-unlisted-classes>
 

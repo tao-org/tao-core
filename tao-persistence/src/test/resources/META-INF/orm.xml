@@ -422,6 +422,34 @@
         </attributes>
     </entity>
 
+    <entity class="ro.cs.tao.workflow.WorkflowDescriptor" access="PROPERTY">
+        <table name="tao.workflow_graph"/>
+        <convert converter="ro.cs.tao.persistence.convert.WorkflowGraphStatusConverter" attribute-name="status" />
+        <convert converter="ro.cs.tao.persistence.convert.WorkflowGraphVisibilityConverter" attribute-name="visibility" />
+        <attributes>
+            <id name="id">
+                <column name="id" nullable="false" column-definition="bigserial NOT NULL"/>
+                <generated-value strategy="SEQUENCE" generator="workflow_graph_identifier"/>
+                <sequence-generator name="workflow_graph_identifier" sequence-name="tao.workflow_graph_id_seq" allocation-size="1" />
+            </id>
+            <basic name="name">
+                <column name="name" nullable="false" column-definition="character varying(250) NOT NULL"/>
+            </basic>
+            <basic name="userName">
+                <column name="username" nullable="false" column-definition="character varying(50) NOT NULL"/>
+            </basic>
+            <basic name="status">
+                <column name="status_id" nullable="false" column-definition="integer NOT NULL"/>
+            </basic>
+            <basic name="visibility">
+                <column name="visibility_id" nullable="false" column-definition="integer NOT NULL"/>
+            </basic>
+            <basic name="active">
+                <column name="active" nullable="true" column-definition="boolean NOT NULL DEFAULT true"/>
+            </basic>
+        </attributes>
+    </entity>
+
 
     <embeddable class="ro.cs.tao.eodata.Attribute" access="PROPERTY">
         <attributes>
