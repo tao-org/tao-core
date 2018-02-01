@@ -1,4 +1,17 @@
 -------------------------------------------------------------------------------
+-- table: workflow_graph_status
+DROP TABLE IF EXISTS tao.workflow_graph_status CASCADE;
+
+CREATE TABLE tao.workflow_graph_status
+(
+	id integer NOT NULL,
+	status varchar(250) NOT NULL
+);
+
+ALTER TABLE tao.workflow_graph_status ADD CONSTRAINT PK_workflow_graph_status PRIMARY KEY (id);
+
+
+-------------------------------------------------------------------------------
 -- table: workflow_graph_visibility
 DROP TABLE IF EXISTS tao.workflow_graph_visibility CASCADE;
 
@@ -22,11 +35,15 @@ CREATE TABLE tao.workflow_graph
 	created timestamp without time zone NOT NULL,
 	user_id integer NOT NULL,
 	definition_path varchar(512) NOT NULL,
+	status_id integer NOT NULL,
 	visibility_id integer NOT NULL,
 	active boolean NOT NULL
 );
 
 ALTER TABLE tao.workflow_graph ADD CONSTRAINT PK_workflow PRIMARY KEY (id);
+
+ALTER TABLE tao.workflow_graph ADD CONSTRAINT FK_workflow_graph_status
+	FOREIGN KEY (status_id) REFERENCES tao.workflow_graph_status (id) ON DELETE No Action ON UPDATE No Action;
 
 ALTER TABLE tao.workflow_graph ADD CONSTRAINT FK_workflow_graph_visibility
 	FOREIGN KEY (visibility_id) REFERENCES tao.workflow_graph_visibility (id) ON DELETE No Action ON UPDATE No Action;

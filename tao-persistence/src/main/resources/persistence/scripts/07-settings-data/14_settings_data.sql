@@ -181,11 +181,21 @@ INSERT INTO tao.template_type (type) VALUES ('XSLT');
 
 
 
+-- Workflow graph status
+
+INSERT INTO tao.workflow_graph_status (status) VALUES ('DRAFT');
+
+INSERT INTO tao.workflow_graph_status (status) VALUES ('READY');
+
+INSERT INTO tao.workflow_graph_status (status) VALUES ('PUBLISHED');
+
+
+
 -- Workflow graph visibility
 
-INSERT INTO tao.workflow_graph_visibility (visibility) VALUES ('PRIVATE');
-
 INSERT INTO tao.workflow_graph_visibility (visibility) VALUES ('PUBLIC');
+
+INSERT INTO tao.workflow_graph_visibility (visibility) VALUES ('PRIVATE');
 
 
 
