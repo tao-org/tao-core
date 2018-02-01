@@ -1,3 +1,2 @@
-ro.cs.tao.execution.local.SessionFactoryImpl
-com.sun.grid.drmaa.SessionFactoryImpl
+ro.cs.tao.execution.local.DefaultSessionFactory
 
