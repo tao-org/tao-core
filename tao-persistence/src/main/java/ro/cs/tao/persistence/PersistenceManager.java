@@ -23,19 +23,11 @@ import ro.cs.tao.eodata.VectorData;
 import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.MessagePersister;
 import ro.cs.tao.persistence.exception.PersistenceException;
-import ro.cs.tao.persistence.repository.ContainerRepository;
-import ro.cs.tao.persistence.repository.EOProductRepository;
-import ro.cs.tao.persistence.repository.ExecutionJobRepository;
-import ro.cs.tao.persistence.repository.ExecutionTaskRepository;
-import ro.cs.tao.persistence.repository.MessageRepository;
-import ro.cs.tao.persistence.repository.NodeRepository;
-import ro.cs.tao.persistence.repository.ParameterDescriptorRepository;
-import ro.cs.tao.persistence.repository.ProcessingComponentRepository;
-import ro.cs.tao.persistence.repository.ServiceRepository;
-import ro.cs.tao.persistence.repository.VectorDataRepository;
+import ro.cs.tao.persistence.repository.*;
 import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.topology.NodeServiceStatus;
 import ro.cs.tao.topology.ServiceDescription;
+import ro.cs.tao.workflow.WorkflowDescriptor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -78,6 +70,9 @@ public class PersistenceManager implements MessagePersister {
     /** Constant for the identifier member name of EOProduct entity */
     private static final String MESSAGE_TIMESTAMP_PROPERTY_NAME = "timestamp";
 
+    /** Constant for the identifier member name of workflow entity */
+    private static final String WORKFLOW_IDENTIFIER_PROPERTY_NAME = "id";
+
     /** CRUD Repository for EOProduct entities */
     @Autowired
     private EOProductRepository eoProductRepository;
@@ -117,6 +112,10 @@ public class PersistenceManager implements MessagePersister {
     /** CRUD Repository for Mesaage entities */
     @Autowired
     private MessageRepository messageRepository;
+
+    /** CRUD Repository for WorkflowDescriptor entities */
+    @Autowired
+    private WorkflowDescriptorRepository workflowDescriptorRepository;
 
 //    /** CRUD Repository for DataSource entities */
 //    @Autowired
@@ -1223,6 +1222,109 @@ public class PersistenceManager implements MessagePersister {
         }
 
         containerRepository.delete(existingContainer);
+    }
+
+    private boolean checkWorkflowDescriptor(WorkflowDescriptor workflow, boolean existingEntity)
+    {
+        if(workflow == null)
+        {
+            return false;
+        }
+        if(existingEntity && workflow.getId() == null)
+        {
+            return false;
+        }
+        if(!existingEntity && workflow.getId() != null)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Transactional
+    public WorkflowDescriptor saveWorkflowDescriptor(WorkflowDescriptor workflow) throws PersistenceException
+    {
+        // check method parameters
+        if(!checkWorkflowDescriptor(workflow, false))
+        {
+            throw new PersistenceException("Invalid parameters were provided for adding new workflow !");
+        }
+
+        // save the new WorkflowDescriptor entity and return it
+        return workflowDescriptorRepository.save(workflow);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean checkIfExistsWorkflowDescriptorById(final Long workflowId)
+    {
+        boolean result = false;
+
+        if (workflowId != null && workflowId > 0)
+        {
+            // try to retrieve WorkflowDescriptor after its identifier
+            final WorkflowDescriptor workflowEnt = workflowDescriptorRepository.findById(workflowId);
+            if (workflowEnt != null)
+            {
+                result = true;
+            }
+        }
+
+        return result;
+    }
+
+    @Transactional
+    public WorkflowDescriptor updateWorkflowDescriptor(WorkflowDescriptor workflow) throws PersistenceException
+    {
+        // check method parameters
+        if(!checkWorkflowDescriptor(workflow, true))
+        {
+            throw new PersistenceException("Invalid parameters were provided for updating the workflow " + (workflow != null && workflow.getId() != null ? "(identifier " + workflow.getId() + ")" : "") + "!");
+        }
+
+        // check if there is such workflow (to update) with the given identifier
+        final WorkflowDescriptor existingWorkflow = workflowDescriptorRepository.findById(workflow.getId());
+        if (existingWorkflow == null)
+        {
+            throw new PersistenceException("There is no workflow with the given identifier: " + workflow.getId());
+        }
+
+        // save the updated entity
+        return workflowDescriptorRepository.save(workflow);
+    }
+
+    @Transactional(readOnly = true)
+    public List<WorkflowDescriptor> getAllWorkflows()
+    {
+        final List<WorkflowDescriptor> workflows = new ArrayList<>();
+        // retrieve workflows and filter them
+        workflows.addAll(((List<WorkflowDescriptor>) workflowDescriptorRepository.findAll(new Sort(Sort.Direction.ASC, WORKFLOW_IDENTIFIER_PROPERTY_NAME))).stream()
+          .filter(workflow -> workflow.isActive())
+          .collect(Collectors.toList()));
+        return workflows;
+    }
+
+    @Transactional
+    public WorkflowDescriptor deleteWorkflowDescriptor(final Long workflowId) throws PersistenceException
+    {
+        // check method parameters
+        if (workflowId == null)
+        {
+            throw new PersistenceException("Invalid parameters were provided for deleting workflow (identifier \""+ String.valueOf(workflowId) +"\") !");
+        }
+
+        // retrieve WorkflowDescriptor after its identifier
+        final WorkflowDescriptor workflowEnt = workflowDescriptorRepository.findById(workflowId);
+        if (workflowEnt == null)
+        {
+            throw new PersistenceException("There is no workflow with the specified identifier: " + workflowId);
+        }
+
+        // deactivate the workflow
+        workflowEnt.setActive(false);
+
+        // save it
+        return workflowDescriptorRepository.save(workflowEnt);
     }
 
 }

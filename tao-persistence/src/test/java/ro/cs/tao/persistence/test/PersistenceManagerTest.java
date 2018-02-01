@@ -41,6 +41,10 @@ import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.topology.NodeServiceStatus;
 import ro.cs.tao.topology.ServiceDescription;
 import ro.cs.tao.topology.ServiceStatus;
+import ro.cs.tao.workflow.Status;
+import ro.cs.tao.workflow.Visibility;
+import ro.cs.tao.workflow.WorkflowDescriptor;
+import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 
 import java.sql.SQLException;
 import java.time.LocalDateTime;
@@ -987,6 +991,44 @@ public class PersistenceManagerTest {
             }
         }
         catch (Exception e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void TC_28_save_new_workflow()
+    {
+        logger.info("TC_28_save_new_workflow");
+        try
+        {
+            // add a new workflow for test
+            WorkflowDescriptor workflow = new WorkflowDescriptor();
+            workflow.setName("test_workflow");
+            workflow.setStatus(Status.DRAFT);
+            workflow.setVisibility(Visibility.PRIVATE);
+            workflow.setUserName("admin");
+            workflow.setCreated(LocalDateTime.now());
+
+            List<WorkflowNodeDescriptor> nodes = new ArrayList<>();
+            WorkflowNodeDescriptor node1 = new WorkflowNodeDescriptor();
+            node1.setName("node1");
+            node1.setWorkflow(workflow);
+            nodes.add(node1);
+
+            WorkflowNodeDescriptor node2 = new WorkflowNodeDescriptor();
+            node2.setName("node2");
+            node2.setWorkflow(workflow);
+            nodes.add(node2);
+
+            workflow.setNodes(nodes);
+
+            workflow = persistenceManager.saveWorkflowDescriptor(workflow);
+            // check persisted workflow
+            Assert.assertTrue(workflow != null && workflow.getId() != null);
+        }
+        catch (PersistenceException e)
         {
             logger.error(ExceptionUtils.getStackTrace(e));
             Assert.fail(e.getMessage());
