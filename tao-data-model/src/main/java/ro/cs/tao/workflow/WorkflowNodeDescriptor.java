@@ -13,7 +13,6 @@ import java.util.List;
 public class WorkflowNodeDescriptor {
     private long id;
     private String name;
-    //private long workflowId;
     private String componentId;
     private float xCoord;
     private float yCoord;
@@ -29,10 +28,6 @@ public class WorkflowNodeDescriptor {
     @XmlElement(name = "name")
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
-
-    /*@XmlElement(name = "workflowId")
-    public long getWorkflowId() { return workflowId; }
-    public void setWorkflowId(long workflowId) { this.workflowId = workflowId; }*/
 
     @XmlElement(name = "componentId")
     public String getComponentId() { return componentId; }
@@ -66,7 +61,6 @@ public class WorkflowNodeDescriptor {
     public WorkflowDescriptor getWorkflow() {
         return workflow;
     }
-
     public void setWorkflow(WorkflowDescriptor workflow) {
         this.workflow = workflow;
     }
