@@ -32,12 +32,12 @@ CREATE TABLE tao.workflow_graph
 (
 	id bigint NOT NULL,
 	name varchar(250) NOT NULL,
-	created timestamp without time zone NOT NULL,
-	user_id integer NOT NULL,
-	definition_path varchar(512) NOT NULL,
+	created timestamp without time zone NOT NULL DEFAULT now(),
+	username varchar(50) NOT NULL,
+	--definition_path varchar(512) NOT NULL,
 	status_id integer NOT NULL,
 	visibility_id integer NOT NULL,
-	active boolean NOT NULL
+	active boolean NOT NULL DEFAULT true
 );
 
 ALTER TABLE tao.workflow_graph ADD CONSTRAINT PK_workflow PRIMARY KEY (id);
@@ -61,8 +61,8 @@ CREATE TABLE tao.graph_node
 	id bigint NOT NULL,
 	name varchar(250) NULL,
 	workflow_id bigint NOT NULL,
-	xCoord real NOT NULL,
-	yCoord real NOT NULL,
+	xCoord real NULL,
+	yCoord real NULL,
 	origin bigint NULL,
 	destination bigint NULL
 );
