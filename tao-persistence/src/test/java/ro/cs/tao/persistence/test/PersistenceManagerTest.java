@@ -771,7 +771,7 @@ public class PersistenceManagerTest {
 
             job = persistenceManager.saveExecutionJob(job);
             // check persisted job
-            Assert.assertTrue(job != null && job.getId() != null);
+            Assert.assertTrue(job != null && job.getId() != 0);
         }
         catch (PersistenceException e)
         {
@@ -826,7 +826,7 @@ public class PersistenceManagerTest {
 
                 task = persistenceManager.saveExecutionTask(task, job);
                 // check persisted task
-                Assert.assertTrue(task != null && task.getId() != null);
+                Assert.assertTrue(task != null && task.getId() != 0);
                 // check if job correctly updated
                 Assert.assertTrue(job.getTasks().contains(task));
             }

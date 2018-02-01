@@ -24,6 +24,7 @@
         <module>tao-service-api</module>
         <module>tao-drmaa-api</module>
         <module>tao-core-kit</module>
+        <module>tao-orchestration</module>
     </modules>
 
     <properties>

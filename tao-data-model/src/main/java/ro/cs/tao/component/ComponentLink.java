@@ -52,6 +52,6 @@ public class ComponentLink {
     }
 
     public void follow() {
-        this.input.setData(this.output.getData());
+        this.output.setData(this.input.getData());
     }
 }
