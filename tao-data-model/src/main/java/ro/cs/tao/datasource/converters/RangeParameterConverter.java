@@ -5,9 +5,9 @@ import ro.cs.tao.datasource.param.QueryParameter;
 /**
  * @author Cosmin Cara
  */
-public class RangeConverter extends DefaultConverter {
+public class RangeParameterConverter extends DefaultParameterConverter {
 
-    public RangeConverter(QueryParameter parameter) {
+    public RangeParameterConverter(QueryParameter parameter) {
         super(parameter);
         if (!Number.class.isAssignableFrom(parameter.getType()) &&
                 !parameter.isInterval()) {
