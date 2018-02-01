@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Descriptor of an output of a component
  * @author Cosmin Cara
  */
 @XmlRootElement(name = "output")

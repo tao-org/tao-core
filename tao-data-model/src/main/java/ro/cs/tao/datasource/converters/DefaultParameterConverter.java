@@ -38,9 +38,20 @@
 
 package ro.cs.tao.datasource.converters;
 
+import ro.cs.tao.datasource.param.QueryParameter;
+
 /**
  * @author Cosmin Cara
  */
-public interface ParameterConverter {
-    String stringValue() throws ConversionException;
+public class DefaultParameterConverter implements QueryParameterConverter {
+    protected QueryParameter parameter;
+
+    public DefaultParameterConverter(QueryParameter parameter) {
+        this.parameter = parameter;
+    }
+
+    @Override
+    public String stringValue() throws ConversionException {
+        return String.valueOf(this.parameter.getValue());
+    }
 }
