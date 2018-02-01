@@ -11,7 +11,7 @@ import java.util.List;
  */
 @XmlRootElement(name = "workflow")
 public class WorkflowDescriptor {
-    private long id;
+    private Long id;
     private String name;
     private LocalDateTime created;
     private String userName;
@@ -22,8 +22,8 @@ public class WorkflowDescriptor {
     private List<WorkflowNodeDescriptor> nodes;
 
     @XmlElement(name = "id")
-    public long getId() { return id; }
-    public void setId(long id) { this.id = id; }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
     @XmlElement(name = "name")
     public String getName() { return name; }

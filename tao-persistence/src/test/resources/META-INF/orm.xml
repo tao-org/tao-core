@@ -438,7 +438,7 @@
                 <column name="username" nullable="false" column-definition="character varying(50) NOT NULL"/>
             </basic>
             <basic name="path">
-                <column name="definition_path" nullable="false" column-definition="character varying(512) NULL"/>
+                <column name="definition_path" nullable="true" column-definition="character varying(512) NULL"/>
             </basic>
             <basic name="status">
                 <column name="status_id" nullable="false" column-definition="integer NOT NULL"/>
@@ -466,9 +466,6 @@
             <basic name="name">
                 <column name="name" nullable="false" column-definition="character varying(250) NULL"/>
             </basic>
-            <!--<basic name="workflowId">
-                <column name="workflow_id" nullable="false" column-definition="integer NOT NULL"/>
-            </basic>-->
 
             <basic name="componentId">
                 <column name="processing_component_id" nullable="false" column-definition="integer NOT NULL"/>
