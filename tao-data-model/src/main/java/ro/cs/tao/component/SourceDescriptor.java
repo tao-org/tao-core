@@ -34,6 +34,7 @@ import java.util.List;
 @XmlRootElement(name = "input")
 public class SourceDescriptor extends Identifiable {
     private static final String DEFAULT_NAME = "Input";
+    private ProcessingComponent parent;
     private EOData data;
     private List<String> constraints;
 
@@ -48,6 +49,9 @@ public class SourceDescriptor extends Identifiable {
 
     @Override
     public String defaultName() { return DEFAULT_NAME; }
+
+    public ProcessingComponent getParent() { return parent; }
+    public void setParent(ProcessingComponent parent) { this.parent = parent; }
 
     @XmlTransient
     public EOData getData() {

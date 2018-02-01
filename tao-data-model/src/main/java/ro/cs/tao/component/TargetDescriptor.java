@@ -34,6 +34,7 @@ import java.util.List;
 @XmlRootElement(name = "output")
 public class TargetDescriptor extends Identifiable {
     private static final String DEFAULT_NAME = "Output";
+    private ProcessingComponent parent;
     private EOData data;
     private List<String> constraints;
 
@@ -45,6 +46,9 @@ public class TargetDescriptor extends Identifiable {
         super(identifier);
         this.constraints = new ArrayList<>();
     }
+
+    public ProcessingComponent getParent() { return parent; }
+    public void setParent(ProcessingComponent parent) { this.parent = parent; }
 
     @Override
     public String defaultName() { return DEFAULT_NAME; }

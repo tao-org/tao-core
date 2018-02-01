@@ -1,5 +1,7 @@
 package ro.cs.tao.workflow;
 
+import ro.cs.tao.component.ComponentLink;
+
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -16,7 +18,7 @@ public class WorkflowNodeDescriptor {
     private String componentId;
     private float xCoord;
     private float yCoord;
-    private List<WorkflowNodeDescriptor> incomingNodes;
+    private List<ComponentLink> incomingLinks;
     private List<ParameterValue> customValues;
 
     private WorkflowDescriptor workflow;
@@ -50,8 +52,8 @@ public class WorkflowNodeDescriptor {
     }
 
     @XmlElementWrapper(name = "incomingNodes")
-    public List<WorkflowNodeDescriptor> getIncomingNodes() { return incomingNodes; }
-    public void setIncomingNodes(List<WorkflowNodeDescriptor> incomingNodes) { this.incomingNodes = incomingNodes; }
+    public List<ComponentLink> getIncomingLinks() { return incomingLinks; }
+    public void setIncomingLinks(List<ComponentLink> links) { this.incomingLinks = links; }
 
     @XmlElementWrapper(name = "customValues")
     public List<ParameterValue> getCustomValues() { return customValues; }

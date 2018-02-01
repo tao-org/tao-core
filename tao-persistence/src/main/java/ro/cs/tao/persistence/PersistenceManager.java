@@ -23,7 +23,17 @@ import ro.cs.tao.eodata.VectorData;
 import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.MessagePersister;
 import ro.cs.tao.persistence.exception.PersistenceException;
-import ro.cs.tao.persistence.repository.*;
+import ro.cs.tao.persistence.repository.ContainerRepository;
+import ro.cs.tao.persistence.repository.EOProductRepository;
+import ro.cs.tao.persistence.repository.ExecutionJobRepository;
+import ro.cs.tao.persistence.repository.ExecutionTaskRepository;
+import ro.cs.tao.persistence.repository.MessageRepository;
+import ro.cs.tao.persistence.repository.NodeRepository;
+import ro.cs.tao.persistence.repository.ParameterDescriptorRepository;
+import ro.cs.tao.persistence.repository.ProcessingComponentRepository;
+import ro.cs.tao.persistence.repository.ServiceRepository;
+import ro.cs.tao.persistence.repository.VectorDataRepository;
+import ro.cs.tao.persistence.repository.WorkflowDescriptorRepository;
 import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.topology.NodeServiceStatus;
 import ro.cs.tao.topology.ServiceDescription;
@@ -822,22 +832,8 @@ public class PersistenceManager implements MessagePersister {
         return processingComponentRepository.save(componentEnt);
     }
 
-    private boolean checkExecutionJob(ExecutionJob job, boolean existingEntity)
-    {
-        if(job == null)
-        {
-            return false;
-        }
-        if(existingEntity && job.getId() == null)
-        {
-            return false;
-        }
-        if(!existingEntity && job.getId() != null)
-        {
-            return false;
-        }
-
-        return true;
+    private boolean checkExecutionJob(ExecutionJob job, boolean existingEntity) {
+        return job != null && !(existingEntity && job.getId() == 0);
     }
 
     @Transactional
@@ -877,7 +873,7 @@ public class PersistenceManager implements MessagePersister {
         // check method parameters
         if(!checkExecutionJob(job, true))
         {
-            throw new PersistenceException("Invalid parameters were provided for updating the execution job " + (job != null && job.getId() != null ? "(identifier " + job.getId() + ")" : "") + "!");
+            throw new PersistenceException("Invalid parameters were provided for updating the execution job " + (job != null && job.getId() != 0 ? "(identifier " + job.getId() + ")" : "") + "!");
         }
 
         // check if there is such job (to update) with the given identifier
@@ -901,40 +897,15 @@ public class PersistenceManager implements MessagePersister {
         return jobs;
     }
 
-    private boolean checkExecutionTask(ExecutionTask task, ExecutionJob job, boolean existingEntity)
-    {
+    private boolean checkExecutionTask(ExecutionTask task, ExecutionJob job, boolean existingEntity) {
         // check first the job (that should already be persisted)
-        if (!checkExecutionJob(job, true) || !checkIfExistsExecutionJobById(job.getId()))
-        {
-            return false;
-        }
-        if(!checkExecutionTask(task, existingEntity))
-        {
-            return false;
-        }
-        return true;
+        return !(!checkExecutionJob(job, true) || !checkIfExistsExecutionJobById(job.getId())) && checkExecutionTask(task, existingEntity);
     }
 
-    private boolean checkExecutionTask(ExecutionTask task, boolean existingEntity)
-    {
-        if(task == null)
-        {
-            return false;
-        }
-        if(existingEntity && task.getId() == null)
-        {
-            return false;
-        }
-        if(!existingEntity && task.getId() != null)
-        {
-            return false;
-        }
-        if(existingEntity && (task.getResourceId() == null || task.getResourceId().isEmpty()))
-        {
-            return false;
-        }
-
-        return true;
+    private boolean checkExecutionTask(ExecutionTask task, boolean existingEntity) {
+        return task != null && !(existingEntity && task.getId() == 0) &&
+                !(!existingEntity && task.getId() != 0) &&
+                !(existingEntity && (task.getResourceId() == null || task.getResourceId().isEmpty()));
     }
 
     @Transactional
@@ -975,7 +946,7 @@ public class PersistenceManager implements MessagePersister {
         // check method parameters
         if(!checkExecutionTask(task, true))
         {
-            throw new PersistenceException("Invalid parameters were provided for updating the execution task " + (task != null && task.getId() != null ? "(identifier " + task.getId() + ")" : "") + "!");
+            throw new PersistenceException("Invalid parameters were provided for updating the execution task " + (task != null && task.getId() != 0 ? "(identifier " + task.getId() + ")" : "") + "!");
         }
 
         // check if there is such task (to update) with the given identifier
