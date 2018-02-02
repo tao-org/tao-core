@@ -35,21 +35,13 @@ public class WorkflowNodeDescriptor {
     public String getComponentId() { return componentId; }
     public void setComponentId(String componentId) { this.componentId = componentId; }
 
-    public float getxCoord() {
-        return xCoord;
-    }
+    @XmlTransient
+    public float getxCoord() { return xCoord; }
+    public void setxCoord(float xCoord) { this.xCoord = xCoord; }
 
-    public void setxCoord(float xCoord) {
-        this.xCoord = xCoord;
-    }
-
-    public float getyCoord() {
-        return yCoord;
-    }
-
-    public void setyCoord(float yCoord) {
-        this.yCoord = yCoord;
-    }
+    @XmlTransient
+    public float getyCoord() { return yCoord; }
+    public void setyCoord(float yCoord) { this.yCoord = yCoord; }
 
     @XmlElementWrapper(name = "incomingNodes")
     public List<ComponentLink> getIncomingLinks() { return incomingLinks; }

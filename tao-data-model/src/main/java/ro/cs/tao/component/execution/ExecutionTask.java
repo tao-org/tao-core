@@ -27,8 +27,7 @@ public class ExecutionTask {
     private List<Variable> inputParameterValues;
     private ExecutionJob job;
 
-    public ExecutionTask() {
-    }
+    public ExecutionTask() { }
 
     public ExecutionTask(ProcessingComponent processingComponent) {
         this.processingComponent = processingComponent;
