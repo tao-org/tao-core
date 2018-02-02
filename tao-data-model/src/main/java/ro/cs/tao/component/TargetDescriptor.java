@@ -34,7 +34,7 @@ import java.util.List;
 @XmlRootElement(name = "output")
 public class TargetDescriptor extends Identifiable {
     private static final String DEFAULT_NAME = "Output";
-    private ProcessingComponent parent;
+    private TaoComponent parent;
     private EOData data;
     private List<String> constraints;
 
@@ -46,27 +46,46 @@ public class TargetDescriptor extends Identifiable {
         super(identifier);
         this.constraints = new ArrayList<>();
     }
-
-    public ProcessingComponent getParent() { return parent; }
-    public void setParent(ProcessingComponent parent) { this.parent = parent; }
+    /**
+     * Returns the component that owns this instance
+     */
+    public TaoComponent getParent() { return parent; }
+    /**
+     * Sets the component that owns this instance
+     *
+     * @param parent    The owning component
+     */
+    public void setParent(TaoComponent parent) { this.parent = parent; }
 
     @Override
     public String defaultName() { return DEFAULT_NAME; }
-
+    /**
+     * Returns the data associated to this instance.
+     */
     @XmlTransient
     public EOData getData() {
         return data;
     }
-
+    /**
+     * Sets the data associated to this instance.
+     *
+     * @param data  The data to be associated with this instance.
+     */
     public void setData(EOData data) {
         this.data = data;
     }
-
+    /**
+     * Returns a list of constraints to be satisfied by the data of this instance.
+     */
     @XmlElementWrapper(name = "constraints")
     public List<String> getConstraints() {
         return constraints;
     }
-
+    /**
+     * Adds a constraint for the data of this instance.
+     *
+     * @param constraint    The constraint class name.
+     */
     public void addConstraint(String constraint) {
         this.constraints.add(constraint);
     }

@@ -58,6 +58,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
+ * A processing component acts as a descriptor for an external tool to be invoked.
  * @author Cosmin Cara
  */
 @XmlRootElement(name = "processingComponent")
@@ -73,17 +74,20 @@ public class ProcessingComponent extends TaoComponent {
     private List<ParameterDescriptor> parameters;
     private boolean multiThread;
     private ProcessingComponentVisibility visibility;
-
     private boolean active;
 
     public ProcessingComponent() {
         super();
     }
-
+    /**
+     * Returns the location of the tool (where the tool binaries should be found inside its container)
+     */
     public String getFileLocation() {
         return fileLocation;
     }
-
+    /**
+     * Sets the location of the tool (where the tool binaries should be found on any machine)
+     */
     public void setFileLocation(String fileLocation) {
         this.fileLocation = fileLocation;
     }

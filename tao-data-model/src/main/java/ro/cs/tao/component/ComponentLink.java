@@ -24,6 +24,10 @@ import ro.cs.tao.component.constraints.ConstraintException;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
+ * Models a link between an output of a component and an input of another component.
+ * From a link perspective, the output of a component is the link input,
+ * while the input of a component is the link output.
+ *
  * @author Cosmin Cara
  */
 @XmlRootElement(name = "link")
@@ -31,6 +35,12 @@ public class ComponentLink {
     private SourceDescriptor output;
     private TargetDescriptor input;
 
+    /**
+     * Checks that the two arguments are compatible in order to create a link.
+     *
+     * @param input     The output of a component
+     * @param output    The input of a component
+     */
     public static boolean canConnect(TargetDescriptor input, SourceDescriptor output) {
         return input != null && output != null && output.isCompatibleWith(input);
     }
@@ -42,15 +52,21 @@ public class ComponentLink {
         this.input = input;
         this.output = output;
     }
-
+    /**
+     * Returns the output of this link, which is a component input.
+     */
     public SourceDescriptor getOutput() {
         return this.output;
     }
-
+    /**
+     * Returns the input of this link, which is a component output.
+     */
     public TargetDescriptor getInput() {
         return this.input;
     }
-
+    /**
+     * Propagates the data associated with the input of this instance to its output.
+     */
     public void follow() {
         this.output.setData(this.input.getData());
     }
