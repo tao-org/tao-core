@@ -212,7 +212,7 @@ public abstract class TaoComponent extends Identifiable {
     /**
      * Returns the security context of this component
      */
-    @XmlTransient
+    //@XmlTransient
     public SecurityContext securityContext() { return this.securityContext == null ?
             SystemSecurityContext.instance() : this.securityContext; }
     public void attachSecurityContext(SecurityContext context) { this.securityContext = context; }
