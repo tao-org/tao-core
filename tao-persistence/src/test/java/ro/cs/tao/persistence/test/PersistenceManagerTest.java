@@ -759,7 +759,7 @@ public class PersistenceManagerTest {
     }
 
 
-    @Test
+    /**@Test
     public void TC_20_save_new_execution_job()
     {
         logger.info("TC_20_save_new_execution_job");
@@ -860,7 +860,7 @@ public class PersistenceManagerTest {
             logger.error(ExceptionUtils.getStackTrace(e));
             Assert.fail(e.getMessage());
         }
-    }
+    }**/
 
     @Test
     public void TC_23_save_new_data_products()
