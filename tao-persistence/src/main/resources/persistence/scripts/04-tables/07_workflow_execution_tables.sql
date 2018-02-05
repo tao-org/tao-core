@@ -135,8 +135,7 @@ CREATE TABLE tao.job
 	start_time timestamp without time zone NULL,
 	end_time timestamp without time zone NULL,
 	user_id integer NULL,
-	-- TODO: NOT NULL after workflow-graph implementation
-	workflow_id bigint NULL,
+	workflow_id bigint NOT NULL,
 	execution_status_id integer NOT NULL
 );
 
@@ -186,8 +185,7 @@ CREATE TABLE tao.task
 	id bigint NOT NULL,
 	processing_component_id varchar(512) NOT NULL,
 	resource_id varchar(512) NULL,
-	-- TODO: NOT NULL after workflow-graph implementation
-	graph_node_id bigint NULL,
+	graph_node_id bigint NOT NULL,
 	start_time timestamp without time zone NULL,
 	end_time timestamp without time zone NULL,
 	job_id bigint NOT NULL,
