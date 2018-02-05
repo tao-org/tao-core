@@ -8,6 +8,7 @@ import ro.cs.tao.component.Variable;
 import ro.cs.tao.component.template.BasicTemplate;
 import ro.cs.tao.component.template.Template;
 import ro.cs.tao.component.template.TemplateType;
+import ro.cs.tao.eodata.enums.DataFormat;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -30,6 +31,8 @@ public class ProcessingComponentTest extends BaseSerializationTest<ProcessingCom
                 "      \"inputs\" : {\n" +
                 "         \"sources\" : [ {\n" +
                 "            \"id\" : \"sourceProductFile\",\n" +
+                "            \"parentId\" : \"OTB-Segmentation-Cc\",\n" +
+                "            \"dataType\" : \"RASTER\",\n" +
                 "            \"constraints\" : {\n" +
                 "               \"constraints\" : [ {\n" +
                 "                  \"type\" : \"sensorConstraint\"\n" +
@@ -40,6 +43,8 @@ public class ProcessingComponentTest extends BaseSerializationTest<ProcessingCom
                 "      \"outputs\" : {\n" +
                 "         \"targets\" : [ {\n" +
                 "            \"id\" : \"out_str\",\n" +
+                "            \"parentId\" : \"OTB-Segmentation-Cc\",\n" +
+                "            \"dataType\" : \"RASTER\",\n" +
                 "            \"constraints\" : {\n" +
                 "               \"constraints\" : [ ]\n" +
                 "            }\n" +
@@ -89,6 +94,8 @@ public class ProcessingComponentTest extends BaseSerializationTest<ProcessingCom
                 "    <inputs>\n" +
                 "        <sources>\n" +
                 "            <id>sourceProductFile</id>\n" +
+                "            <parentId>OTB-Segmentation-CC</parentId>\n" +
+                "            <dataType>RASTER</dataType>\n" +
                 "            <constraints>\n" +
                 "                <constraints xsi:type=\"sensorConstraint\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"/>\n" +
                 "            </constraints>\n" +
@@ -97,6 +104,8 @@ public class ProcessingComponentTest extends BaseSerializationTest<ProcessingCom
                 "    <outputs>\n" +
                 "        <targets>\n" +
                 "            <id>out_str</id>\n" +
+                "            <parentId>OTB-Segmentation-CC</parentId>\n" +
+                "            <dataType>RASTER</dataType>\n" +
                 "            <constraints/>\n" +
                 "        </targets>\n" +
                 "    </outputs>\n" +
@@ -196,7 +205,9 @@ public class ProcessingComponentTest extends BaseSerializationTest<ProcessingCom
                              "-mode.vector.startlabel\n" +
                              "$startlabel_int", false);
         SourceDescriptor sourceDescriptor = new SourceDescriptor("sourceProductFile");
-        //sourceDescriptor.addConstraint(RasterConstraint.class.getAnnotation(Constraint.class).name());
+        sourceDescriptor.setDataType(DataFormat.RASTER);
+        TargetDescriptor targetDescriptor = new TargetDescriptor("out_str");
+        targetDescriptor.setDataType(DataFormat.RASTER);
         entity = new ProcessingComponent() {{
             setId("OTB-Segmentation-CC");
             setLabel("OTB Segmentation CC");
@@ -206,8 +217,8 @@ public class ProcessingComponentTest extends BaseSerializationTest<ProcessingCom
             setFileLocation("E:\\OTB\\otbcli_Segmentation.bat");
             setWorkingDirectory("E:\\OTB");
             setNodeAffinity("Any");
-            setSources(new SourceDescriptor[] {sourceDescriptor});
-            setTargets(new TargetDescriptor[] { new TargetDescriptor("out_str") });
+            addSource(sourceDescriptor);
+            addTarget(targetDescriptor);
             setVersion("1.0");
             setParameterDescriptors(parameters);
             setVariables(variables);
