@@ -1,5 +1,7 @@
 package ro.cs.tao.component;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import ro.cs.tao.eodata.EOData;
 import ro.cs.tao.security.SecurityContext;
 import ro.cs.tao.security.SystemSecurityContext;
@@ -15,6 +17,7 @@ import java.util.Arrays;
  *
  * @author Cosmin Cara
  */
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public abstract class TaoComponent extends Identifiable {
     protected String label;
     protected String version;
@@ -124,7 +127,7 @@ public abstract class TaoComponent extends Identifiable {
      * Adds an input to this component
      */
     public void addSource(SourceDescriptor source) {
-        source.setParent(this);
+        source.setParentId(this.id);
         if (this.sources != null) {
             this.sources = Arrays.copyOf(this.sources, this.sources.length + 1);
             this.sources[this.sources.length - 1] = source;
@@ -136,7 +139,7 @@ public abstract class TaoComponent extends Identifiable {
      * Removes an input of this component
      */
     public void removeSource(SourceDescriptor source) {
-        source.setParent(null);
+        source.setParentId(null);
         if (this.sources != null) {
             this.sources = Arrays.stream(this.sources)
                     .filter(s -> {
@@ -180,7 +183,7 @@ public abstract class TaoComponent extends Identifiable {
      * @param target    The output descriptor to be added
      */
     public void addTarget(TargetDescriptor target) {
-        target.setParent(this);
+        target.setParentId(this.id);
         if (this.targets != null) {
             this.targets = Arrays.copyOf(this.targets, this.targets.length + 1);
             this.targets[this.targets.length - 1] = target;
@@ -194,7 +197,7 @@ public abstract class TaoComponent extends Identifiable {
      * @param target    The output descriptor to be removed
      */
     public void removeTarget(TargetDescriptor target) {
-        target.setParent(null);
+        target.setParentId(null);
         if (this.targets != null) {
             this.targets = Arrays.stream(this.targets)
                     .filter(t -> {

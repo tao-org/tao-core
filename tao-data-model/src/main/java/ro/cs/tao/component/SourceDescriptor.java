@@ -18,9 +18,15 @@
  */
 package ro.cs.tao.component;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import ro.cs.tao.component.constraints.ConstraintFactory;
+import ro.cs.tao.component.constraints.IOConstraint;
 import ro.cs.tao.eodata.EOData;
+import ro.cs.tao.eodata.enums.DataFormat;
 
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
@@ -31,10 +37,12 @@ import java.util.List;
  * Descriptor for an input of a component
  * @author Cosmin Cara
  */
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 @XmlRootElement(name = "input")
 public class SourceDescriptor extends Identifiable {
     private static final String DEFAULT_NAME = "Input";
-    private TaoComponent parent;
+    private String parentId;
+    private DataFormat dataType;
     private EOData data;
     private List<String> constraints;
 
@@ -52,17 +60,19 @@ public class SourceDescriptor extends Identifiable {
     /**
      * Returns the component that owns this instance
      */
-    public TaoComponent getParent() { return parent; }
+    @XmlTransient
+    public String getParentId() { return parentId; }
     /**
      * Sets the component that owns this instance
      *
      * @param parent    The owning component
      */
-    public void setParent(TaoComponent parent) { this.parent = parent; }
+    public void setParentId(String parent) { this.parentId = parent; }
     /**
      * Returns the data associated to this instance.
      */
     @XmlTransient
+    @JsonIgnore
     public EOData getData() {
         return data;
     }
@@ -74,6 +84,9 @@ public class SourceDescriptor extends Identifiable {
     public void setData(EOData data) {
         this.data = data;
     }
+    @XmlElement(name = "type")
+    public DataFormat getDataType() { return dataType; }
+    public void setDataType(DataFormat dataType) { this.dataType = dataType; }
     /**
      * Returns a list of constraints to be satisfied by the data of this instance.
      */
@@ -96,7 +109,10 @@ public class SourceDescriptor extends Identifiable {
      * @param other     The target descriptor
      */
     public boolean isCompatibleWith(TargetDescriptor other) {
-        return other != null && (this.constraints.size() == 0 ||
-                this.constraints.stream().allMatch(c -> ConstraintFactory.create(c).check(this, other)));
+        return other != null && this.dataType == other.getDataType() &&
+                (this.constraints.size() == 0 || this.constraints.stream().allMatch(c -> {
+                    IOConstraint constraint = ConstraintFactory.create(c);
+                    return constraint == null || constraint.check(this.getData(), other.getData());
+                }));
     }
 }

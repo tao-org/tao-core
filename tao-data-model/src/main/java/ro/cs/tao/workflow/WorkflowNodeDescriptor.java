@@ -1,5 +1,7 @@
 package ro.cs.tao.workflow;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import ro.cs.tao.component.ComponentLink;
 
 import javax.xml.bind.annotation.XmlElement;
@@ -13,6 +15,7 @@ import java.util.List;
  * @author Cosmin Cara
  */
 @XmlRootElement(name = "node")
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class WorkflowNodeDescriptor {
     private long id;
     private String name;
