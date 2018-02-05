@@ -19,9 +19,11 @@
 
 package ro.cs.tao.component.constraints;
 
+import ro.cs.tao.eodata.EOData;
+
 /**
  * @author Cosmin Cara
  */
-public abstract class IOConstraint<T> {
+public abstract class IOConstraint<T extends EOData> {
     public abstract boolean check(T... args);
 }
