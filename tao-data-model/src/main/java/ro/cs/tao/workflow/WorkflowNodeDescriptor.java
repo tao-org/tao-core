@@ -6,6 +6,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -18,8 +19,8 @@ public class WorkflowNodeDescriptor {
     private String componentId;
     private float xCoord;
     private float yCoord;
-    private List<ComponentLink> incomingLinks;
-    private List<ParameterValue> customValues;
+    private ArrayList<ComponentLink> incomingLinks;
+    private ArrayList<ParameterValue> customValues;
 
     private WorkflowDescriptor workflow;
 
@@ -45,11 +46,11 @@ public class WorkflowNodeDescriptor {
 
     @XmlElementWrapper(name = "incomingNodes")
     public List<ComponentLink> getIncomingLinks() { return incomingLinks; }
-    public void setIncomingLinks(List<ComponentLink> links) { this.incomingLinks = links; }
+    public void setIncomingLinks(ArrayList<ComponentLink> links) { this.incomingLinks = links; }
 
     @XmlElementWrapper(name = "customValues")
     public List<ParameterValue> getCustomValues() { return customValues; }
-    public void setCustomValues(List<ParameterValue> customValues) { this.customValues = customValues; }
+    public void setCustomValues(ArrayList<ParameterValue> customValues) { this.customValues = customValues; }
 
     @XmlTransient
     public WorkflowDescriptor getWorkflow() {

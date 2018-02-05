@@ -67,9 +67,11 @@ import java.text.SimpleDateFormat;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 /**
  * Base class for download fetching strategies.
@@ -94,6 +96,8 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     protected volatile double currentProductProgress;
     protected String currentStep;
     protected UsernamePasswordCredentials credentials;
+    protected Set<String> filteredTiles;
+    protected Pattern tileIdPattern;
     protected Logger logger = Logger.getLogger(DownloadStrategy.class.getSimpleName());
     private String localArchiveRoot;
     private FetchMode fetchMode;
@@ -109,6 +113,22 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         this.progressReportInterval = Long.parseLong(this.props.getProperty(PROGRESS_INTERVAL, "2000"));
     }
 
+    public void setFilteredTiles(Set<String> tiles) {
+        this.filteredTiles = tiles;
+        if (tiles != null && tiles.size() > 0) {
+            StringBuilder text = new StringBuilder();
+            text.append("(?:.+)(");
+            int idx = 1, n = tiles.size();
+            for (String tile : tiles) {
+                text.append(tile);
+                if (idx++ < n)
+                    text.append("|");
+            }
+            text.append(")(?:.+)");
+            tileIdPattern = Pattern.compile(text.toString());
+        }
+    }
+
     @Override
     public void cancel() {
         this.cancelled = true;
@@ -120,6 +140,9 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
             for (EOProduct product : products) {
                 if (cancelled) {
                     return ReturnCode.INTERRUPTED;
+                }
+                if (!checkTileFilter(product)) {
+                    return ReturnCode.EMPTY;
                 }
                 long startTime = System.currentTimeMillis();
                 Path file = null;
@@ -201,6 +224,10 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     @Override
     public void setProgressListener(ProgressListener progressListener) {
         this.progressListener = progressListener;
+    }
+
+    protected boolean checkTileFilter(EOProduct product) {
+        return this.filteredTiles == null || this.tileIdPattern.matcher(product.getName()).matches();
     }
 
     protected void checkCancelled() throws InterruptedException {
