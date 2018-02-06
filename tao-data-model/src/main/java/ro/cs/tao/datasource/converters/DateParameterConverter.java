@@ -29,10 +29,10 @@ import java.util.Date;
 /**
  * @author Cosmin Cara
  */
-public class DateConverter extends DefaultConverter {
+public class DateParameterConverter extends DefaultParameterConverter {
     private static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
     protected DateTimeFormatter dateFormat;
-    public DateConverter(QueryParameter parameter) {
+    public DateParameterConverter(QueryParameter parameter) {
         super(parameter);
         if (!Date.class.equals(parameter.getType())) {
             throw new IllegalArgumentException("Invalid parameter type");

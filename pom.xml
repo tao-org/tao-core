@@ -23,6 +23,7 @@
         <module>tao-notification</module>
         <module>tao-service-api</module>
         <module>tao-drmaa-api</module>
+        <module>tao-orchestration</module>
         <module>tao-core-kit</module>
     </modules>
 

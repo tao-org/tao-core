@@ -33,17 +33,17 @@ import java.util.Map;
  */
 public class ConverterFactory {
 
-    private final Map<Class, Class<? extends ParameterConverter>> converters;
+    private final Map<Class, Class<? extends QueryParameterConverter>> converters;
 
     public static ConverterFactory getInstance() { return new ConverterFactory(); }
 
     private ConverterFactory() {
         converters = new HashMap<>();
-        converters.put(Date.class, DateConverter.class);
-        converters.put(Polygon2D.class, PolygonConverter.class);
+        converters.put(Date.class, DateParameterConverter.class);
+        converters.put(Polygon2D.class, PolygonParameterConverter.class);
     }
 
-    public void register(Class<? extends ParameterConverter> converter, Class forClass) {
+    public void register(Class<? extends QueryParameterConverter> converter, Class forClass) {
         converters.put(forClass, converter);
     }
 
@@ -51,14 +51,14 @@ public class ConverterFactory {
         converters.remove(forClass);
     }
 
-    public ParameterConverter create(QueryParameter parameter) {
+    public QueryParameterConverter create(QueryParameter parameter) {
         Class parameterType = parameter.getType();
-        Class<? extends ParameterConverter> converterClass = converters.get(parameterType);
+        Class<? extends QueryParameterConverter> converterClass = converters.get(parameterType);
         if (converterClass == null) {
-            converterClass = DefaultConverter.class;
+            converterClass = DefaultParameterConverter.class;
         }
-        Constructor<? extends ParameterConverter> ctor;
-        ParameterConverter instance = null;
+        Constructor<? extends QueryParameterConverter> ctor;
+        QueryParameterConverter instance = null;
         try {
             ctor = converterClass.getConstructor(QueryParameter.class);
             instance = ctor.newInstance(parameter);
