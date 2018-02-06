@@ -50,7 +50,7 @@ public class Orchestrator {
         if (links != null) {
             links.forEach(link -> {
                 String name = link.getInput().getId();
-                String value = link.getInput().getData().getLocation();
+                String value = link.getInput().getDataDescriptor().getLocation();
                 task.setParameterValue(name, value);
             });
         }

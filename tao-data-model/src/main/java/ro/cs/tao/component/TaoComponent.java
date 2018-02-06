@@ -2,7 +2,6 @@ package ro.cs.tao.component;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
-import ro.cs.tao.eodata.EOData;
 import ro.cs.tao.security.SecurityContext;
 import ro.cs.tao.security.SystemSecurityContext;
 
@@ -142,12 +141,8 @@ public abstract class TaoComponent extends Identifiable {
         source.setParentId(null);
         if (this.sources != null) {
             this.sources = Arrays.stream(this.sources)
-                    .filter(s -> {
-                        EOData src = s.getData();
-                        EOData ref = source.getData();
-                        return (src.getId() != null && !src.getId().equals(ref.getId())) ||
-                                (src.getName() != null && !src.getName().equals(ref.getName()));
-                    }).toArray(SourceDescriptor[]::new);
+                    .filter(s -> !s.getId().equals(source.getId()))
+                    .toArray(SourceDescriptor[]::new);
         }
     }
     /**
@@ -200,12 +195,7 @@ public abstract class TaoComponent extends Identifiable {
         target.setParentId(null);
         if (this.targets != null) {
             this.targets = Arrays.stream(this.targets)
-                    .filter(t -> {
-                        EOData tar = t.getData();
-                        EOData ref = target.getData();
-                        return (tar.getId() != null && !tar.getId().equals(ref.getId())) ||
-                                (tar.getName() != null && !tar.getName().equals(ref.getName()));
-                    })
+                    .filter(t -> !t.getId().equals(target.getId()))
                     .toArray(TargetDescriptor[]::new);
         }
     }

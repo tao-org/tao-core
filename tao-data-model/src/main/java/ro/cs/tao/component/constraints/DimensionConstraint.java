@@ -19,7 +19,7 @@
 
 package ro.cs.tao.component.constraints;
 
-import ro.cs.tao.eodata.EOProduct;
+import ro.cs.tao.component.DataDescriptor;
 import ro.cs.tao.serialization.ConstraintAdapter;
 
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
@@ -30,11 +30,11 @@ import java.util.Arrays;
  */
 @Constraint(name = "Same dimensions")
 @XmlJavaTypeAdapter(ConstraintAdapter.class)
-public class DimensionConstraint extends IOConstraint<EOProduct> {
+public class DimensionConstraint extends IOConstraint {
     @Override
-    public boolean check(EOProduct... args) {
+    public boolean check(DataDescriptor... args) {
         return args != null && args.length > 0 &&
                 Arrays.stream(args)
-                        .allMatch(a -> args[0].getHeight() == a.getHeight() && args[0].getWidth() == a.getWidth());
+                        .allMatch(a -> args[0].getDimension().equals(a.getDimension()));
     }
 }
