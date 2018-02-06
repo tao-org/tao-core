@@ -588,7 +588,7 @@ public class PartialTimestamp extends Calendar {
      * @param year the year to test
      * @return whether the year is a leap year
      */
-    static boolean isLeapYear(int year) {
+    protected static boolean isLeapYear(int year) {
         return ((year % 400) == 0) || (((year % 100) != 0) && ((year % 4) == 0));
     }
     
