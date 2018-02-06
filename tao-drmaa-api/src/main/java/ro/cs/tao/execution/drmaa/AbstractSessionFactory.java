@@ -35,10 +35,7 @@ import org.ggf.drmaa.Session;
 import org.ggf.drmaa.SessionFactory;
 import ro.cs.tao.configuration.ConfigurationManager;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -85,7 +82,7 @@ public abstract class AbstractSessionFactory extends SessionFactory {
 
     protected abstract String getJniLibraryName();
 
-    private void initLibrary() {
+    protected void initLibrary() {
         String path = ConfigurationManager.getInstance().getValue("native.library.path");
         if (path == null) {
             throw new MissingResourceException("Native library path is not defined",
@@ -102,7 +99,9 @@ public abstract class AbstractSessionFactory extends SessionFactory {
                     copyLibrary(libraryPath.getParent(), libraryPath.getFileName().toString());
                     fixUpPermissions(libraryPath);
                 }
+
                 System.load(libraryPath.toAbsolutePath().toString());
+                System.out.println("\nLibrary "+libraryPath.toAbsolutePath().toString() + " is loaded");
             } catch (Exception e){
                 logger.severe(e.getMessage());
             }
@@ -113,14 +112,20 @@ public abstract class AbstractSessionFactory extends SessionFactory {
     private void copyLibrary(Path path, String libraryName) throws IOException {
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
         byte[] buffer = new byte[1024];
-        try (BufferedInputStream is = new BufferedInputStream(loader.getResourceAsStream("/auxdata/" + libraryName))) {
+        //try (BufferedInputStream is = new BufferedInputStream(loader.getResourceAsStream("/auxdata/" + libraryName))) {
+        try (BufferedInputStream is = new BufferedInputStream(loader.getResourceAsStream(libraryName))) {
             int read;
-            try (OutputStream os = new BufferedOutputStream(Files.newOutputStream(path.resolve(libraryName)))) {
+            try (OutputStream os = new BufferedOutputStream(Files.newOutputStream(path.resolve(libraryName))))
+            {
                 while ((read = is.read(buffer)) != -1) {
                     os.write(buffer, 0, read);
                 }
-                os.flush();
+                os.close();
             }
+            is.close();
+        }catch(IOException e){
+            System.out.println(e.toString());
+            throw e;
         }
     }
 
