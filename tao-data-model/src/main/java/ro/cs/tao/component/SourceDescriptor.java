@@ -19,12 +19,9 @@
 package ro.cs.tao.component;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import ro.cs.tao.component.constraints.ConstraintFactory;
 import ro.cs.tao.component.constraints.IOConstraint;
-import ro.cs.tao.eodata.EOData;
-import ro.cs.tao.eodata.enums.DataFormat;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
@@ -42,8 +39,7 @@ import java.util.List;
 public class SourceDescriptor extends Identifiable {
     private static final String DEFAULT_NAME = "Input";
     private String parentId;
-    private DataFormat dataType;
-    private EOData data;
+    private DataDescriptor dataDescriptor;
     private List<String> constraints;
 
     public SourceDescriptor() {
@@ -71,26 +67,22 @@ public class SourceDescriptor extends Identifiable {
     /**
      * Returns the data associated to this instance.
      */
-    @XmlTransient
-    @JsonIgnore
-    public EOData getData() {
-        return data;
+    public DataDescriptor getDataDescriptor() {
+        return dataDescriptor;
     }
     /**
      * Sets the data associated to this instance.
      *
      * @param data  The data to be associated with this instance.
      */
-    public void setData(EOData data) {
-        this.data = data;
+    public void setDataDescriptor(DataDescriptor descriptor) {
+        this.dataDescriptor = descriptor;
     }
-    @XmlElement(name = "type")
-    public DataFormat getDataType() { return dataType; }
-    public void setDataType(DataFormat dataType) { this.dataType = dataType; }
     /**
      * Returns a list of constraints to be satisfied by the data of this instance.
      */
     @XmlElementWrapper(name = "constraints")
+    @XmlElement(name = "constraint")
     public List<String> getConstraints() {
         return constraints;
     }
@@ -109,10 +101,11 @@ public class SourceDescriptor extends Identifiable {
      * @param other     The target descriptor
      */
     public boolean isCompatibleWith(TargetDescriptor other) {
-        return other != null && this.dataType == other.getDataType() &&
+        return other != null && this.dataDescriptor != null && other.getDataDescriptor() != null &&
+                this.dataDescriptor.getFormatType().equals(other.getDataDescriptor().getFormatType()) &&
                 (this.constraints.size() == 0 || this.constraints.stream().allMatch(c -> {
                     IOConstraint constraint = ConstraintFactory.create(c);
-                    return constraint == null || constraint.check(this.getData(), other.getData());
+                    return constraint == null || constraint.check(this.getDataDescriptor(), other.getDataDescriptor());
                 }));
     }
 }

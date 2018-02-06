@@ -64,10 +64,5 @@ public class ComponentLink {
     public TargetDescriptor getInput() {
         return this.input;
     }
-    /**
-     * Propagates the data associated with the input of this instance to its output.
-     */
-    public void follow() {
-        this.output.setData(this.input.getData());
-    }
+
 }

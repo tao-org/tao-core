@@ -20,10 +20,7 @@
 package ro.cs.tao.component;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
-import ro.cs.tao.eodata.EOData;
-import ro.cs.tao.eodata.enums.DataFormat;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
@@ -41,8 +38,7 @@ import java.util.List;
 public class TargetDescriptor extends Identifiable {
     private static final String DEFAULT_NAME = "Output";
     private String parentId;
-    private DataFormat dataType;
-    private EOData data;
+    private DataDescriptor dataDescriptor;
     private List<String> constraints;
 
     public TargetDescriptor() {
@@ -70,28 +66,23 @@ public class TargetDescriptor extends Identifiable {
     /**
      * Returns the data associated to this instance.
      */
-    @XmlTransient
-    @JsonIgnore
-    public EOData getData() {
-        return data;
+    public DataDescriptor getDataDescriptor() {
+        return dataDescriptor;
     }
     /**
      * Sets the data associated to this instance.
      *
      * @param data  The data to be associated with this instance.
      */
-    public void setData(EOData data) {
-        this.data = data;
+    public void setDataDescriptor(DataDescriptor descriptor) {
+        this.dataDescriptor = descriptor;
     }
-
-    @XmlElement(name = "type")
-    public DataFormat getDataType() { return dataType; }
-    public void setDataType(DataFormat dataType) { this.dataType = dataType; }
 
     /**
      * Returns a list of constraints to be satisfied by the data of this instance.
      */
     @XmlElementWrapper(name = "constraints")
+    @XmlElement(name = "constraint")
     public List<String> getConstraints() {
         return constraints;
     }
