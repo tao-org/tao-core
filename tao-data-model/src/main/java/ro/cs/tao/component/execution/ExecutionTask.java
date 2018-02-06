@@ -5,7 +5,6 @@ import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.Variable;
 import ro.cs.tao.component.validation.ValidationException;
 
-import javax.xml.bind.annotation.XmlTransient;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,35 +16,36 @@ import java.util.stream.Collectors;
  * Created by cosmin on 9/19/2017.
  */
 public class ExecutionTask {
-    private Long id;
+    private long id;
+    private long workflowNodeId;
     private ProcessingComponent processingComponent;
     private ExecutionStatus executionStatus = ExecutionStatus.UNDETERMINED;
     private String resourceId;
     private String executionNodeHostName;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
-    private List<Variable> inputParameterValues = new ArrayList<>();
+    private List<Variable> inputParameterValues;
     private ExecutionJob job;
 
-    public ExecutionTask() {
-    }
+    public ExecutionTask() { }
 
     public ExecutionTask(ProcessingComponent processingComponent) {
         this.processingComponent = processingComponent;
     }
 
-    public Long getId() {
+    public long getId() {
         return id;
     }
-
-    public void setId(Long id) {
+    public void setId(long id) {
         this.id = id;
     }
+
+    public long getWorkflowNodeId() { return workflowNodeId; }
+    public void setWorkflowNodeId(long workflowNodeId) { this.workflowNodeId = workflowNodeId; }
 
     public void setProcessingComponent(ProcessingComponent processingComponent) {
         this.processingComponent = processingComponent;
     }
-
     public ProcessingComponent getProcessingComponent() {
         return processingComponent;
     }
@@ -53,7 +53,6 @@ public class ExecutionTask {
     public void setExecutionStatus(ExecutionStatus executionStatus) {
         this.executionStatus = executionStatus;
     }
-
     public ExecutionStatus getExecutionStatus() {
         return executionStatus;
     }
@@ -61,7 +60,6 @@ public class ExecutionTask {
     public void setResourceId(String resourceId) {
         this.resourceId = resourceId;
     }
-
     public String getResourceId() {
         return resourceId;
     }
@@ -69,15 +67,16 @@ public class ExecutionTask {
     public String getExecutionNodeHostName() {
         return executionNodeHostName;
     }
-
     public void setExecutionNodeHostName(String executionNodeHostName) {
         this.executionNodeHostName = executionNodeHostName;
     }
 
+    public List<Variable> getInputParameterValues() {
+        return inputParameterValues;
+    }
     public void setInputParameterValues(List<Variable> inputParameterValues) {
         this.inputParameterValues = inputParameterValues;
     }
-
     public void setParameterValue(String parameterId, String value) {
         List<ParameterDescriptor> descriptorList = this.processingComponent.getParameterDescriptors();
         boolean descriptorExists = false;
@@ -92,17 +91,15 @@ public class ExecutionTask {
                     " does not exists in the processing component " +
                     processingComponent.getLabel());
         }
+        if (this.inputParameterValues == null) {
+            this.inputParameterValues = new ArrayList<>();
+        }
         this.inputParameterValues.add(new Variable(parameterId, value));
-    }
-
-    public List<Variable> getInputParameterValues() {
-        return inputParameterValues;
     }
 
     public LocalDateTime getStartTime() {
         return startTime;
     }
-
     public void setStartTime(LocalDateTime startTime) {
         this.startTime = startTime;
     }
@@ -110,7 +107,6 @@ public class ExecutionTask {
     public LocalDateTime getEndTime() {
         return endTime;
     }
-
     public void setEndTime(LocalDateTime endTime) {
         this.endTime = endTime;
     }
@@ -118,14 +114,19 @@ public class ExecutionTask {
     public ExecutionJob getJob() {
         return job;
     }
-
     public void setJob(ExecutionJob job) {
         this.job = job;
     }
 
     public String buildExecutionCommand() {
-        Map<String, String> inputParams = inputParameterValues.stream().collect(
-                Collectors.toMap(Variable::getKey, Variable::getValue));
+        if (processingComponent == null) {
+            return null;
+        }
+        Map<String, String> inputParams = new HashMap<>();
+        if (inputParameterValues != null) {
+            inputParams.putAll(inputParameterValues.stream()
+                                       .collect(Collectors.toMap(Variable::getKey, Variable::getValue)));
+        }
         return this.processingComponent.buildExecutionCommand(inputParams);
     }
 }

@@ -9,7 +9,8 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>tao-execution</artifactId>
+    <artifactId>tao-orchestration</artifactId>
+    <name>TAO Orchestrator</name>
 
     <dependencies>
         <dependency>
@@ -29,22 +30,12 @@
         </dependency>
         <dependency>
             <groupId>ro.cs.tao</groupId>
-            <artifactId>tao-spring-bridge</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.jcraft</groupId>
-            <artifactId>jsch</artifactId>
-            <version>0.1.53</version>
-        </dependency>
-        <dependency>
-            <groupId>ro.cs.tao</groupId>
             <artifactId>tao-config</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>ro.cs.tao</groupId>
-            <artifactId>tao-drmaa-api</artifactId>
+            <artifactId>tao-execution</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>
