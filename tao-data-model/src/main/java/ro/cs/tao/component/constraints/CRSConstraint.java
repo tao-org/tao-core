@@ -22,7 +22,7 @@ package ro.cs.tao.component.constraints;
 import org.geotools.referencing.CRS;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import ro.cs.tao.eodata.EOData;
+import ro.cs.tao.component.DataDescriptor;
 import ro.cs.tao.serialization.ConstraintAdapter;
 
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
@@ -33,9 +33,9 @@ import java.util.Arrays;
  */
 @Constraint(name = "Same CRS")
 @XmlJavaTypeAdapter(ConstraintAdapter.class)
-public class CRSConstraint extends IOConstraint<EOData> {
+public class CRSConstraint extends IOConstraint {
     @Override
-    public boolean check(EOData... args) {
+    public boolean check(DataDescriptor... args) {
         return args != null && args.length > 0 &&
                 Arrays.stream(args)
                         .allMatch(a -> {

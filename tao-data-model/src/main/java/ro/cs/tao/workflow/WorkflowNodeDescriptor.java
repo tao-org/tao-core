@@ -22,8 +22,8 @@ public class WorkflowNodeDescriptor {
     private String componentId;
     private float xCoord;
     private float yCoord;
-    private ArrayList<ComponentLink> incomingLinks;
-    private ArrayList<ParameterValue> customValues;
+    private List<ComponentLink> incomingLinks;
+    private List<ParameterValue> customValues;
 
     private WorkflowDescriptor workflow;
 
@@ -49,11 +49,23 @@ public class WorkflowNodeDescriptor {
 
     @XmlElementWrapper(name = "incomingNodes")
     public List<ComponentLink> getIncomingLinks() { return incomingLinks; }
-    public void setIncomingLinks(ArrayList<ComponentLink> links) { this.incomingLinks = links; }
+    public void setIncomingLinks(List<ComponentLink> links) { this.incomingLinks = links; }
 
     @XmlElementWrapper(name = "customValues")
     public List<ParameterValue> getCustomValues() { return customValues; }
-    public void setCustomValues(ArrayList<ParameterValue> customValues) { this.customValues = customValues; }
+    public void setCustomValues(List<ParameterValue> customValues) { this.customValues = customValues; }
+    public void addCustomValue(ParameterValue parameterValue) {
+        if (this.customValues == null) {
+            this.customValues = new ArrayList<>();
+        }
+        this.customValues.add(parameterValue);
+    }
+    public void addCustomValue(String name, String value) {
+        ParameterValue parameterValue = new ParameterValue();
+        parameterValue.setParameterName(name);
+        parameterValue.setParameterValue(value);
+        addCustomValue(parameterValue);
+    }
 
     @XmlTransient
     public WorkflowDescriptor getWorkflow() {

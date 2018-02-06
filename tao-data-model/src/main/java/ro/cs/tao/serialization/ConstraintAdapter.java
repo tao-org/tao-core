@@ -1,21 +1,20 @@
 package ro.cs.tao.serialization;
 
 import ro.cs.tao.component.constraints.IOConstraint;
-import ro.cs.tao.eodata.EOData;
 
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 
 /**
  * @author Cosmin Cara
  */
-public class ConstraintAdapter<T extends EOData> extends XmlAdapter<IOConstraint<T>, String> {
+public class ConstraintAdapter extends XmlAdapter<IOConstraint, String> {
     @Override
-    public String unmarshal(IOConstraint<T> v) throws Exception {
+    public String unmarshal(IOConstraint v) throws Exception {
         return v == null ? null : v.getClass().getName();
     }
 
     @Override
-    public IOConstraint<T> marshal(String v) throws Exception {
-        return v == null ? null : (IOConstraint<T>) Class.forName(v).newInstance();
+    public IOConstraint marshal(String v) throws Exception {
+        return v == null ? null : (IOConstraint) Class.forName(v).newInstance();
     }
 }
