@@ -77,10 +77,7 @@ public abstract class SessionFactory {
      */
     private static final String SESSION_PROPERTY =
             "org.ggf.drmaa.local.SessionFactory";
-//    private static String str;
-//    private static final String SESSION_PROPERTY = ((str = ConfigurationManager.getInstance().getValue("tao.drmaa.sessionfactory")) != null && !str.isEmpty()) ?
-//            str : "org.ggf.drmaa.SessionFactory";
-    
+
     /**
      * Gets a Session instance appropriate for the DRM in use.
      * @return a Session instance appropriate for the DRM in use
@@ -174,6 +171,7 @@ public abstract class SessionFactory {
         try {
             if (className != null && ! className.equals("")) {
                 factory = (SessionFactory)Class.forName(className).newInstance();
+                System.out.println("Class "+className+" is loaded");
             } else {
                 final ServiceRegistry<SessionFactory> registry =
                         ServiceRegistryManager.getInstance().getServiceRegistry(SessionFactory.class);
