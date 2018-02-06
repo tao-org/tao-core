@@ -19,7 +19,9 @@
 
 package ro.cs.tao.component.constraints;
 
-import ro.cs.tao.eodata.EOProduct;
+import ro.cs.tao.component.DataDescriptor;
+import ro.cs.tao.eodata.enums.DataFormat;
+import ro.cs.tao.eodata.enums.SensorType;
 import ro.cs.tao.serialization.ConstraintAdapter;
 
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
@@ -30,11 +32,16 @@ import java.util.Arrays;
  */
 @Constraint(name = "Same sensor")
 @XmlJavaTypeAdapter(ConstraintAdapter.class)
-public class SensorConstraint extends IOConstraint<EOProduct> {
+public class SensorConstraint extends IOConstraint {
     @Override
-    public boolean check(EOProduct... args) {
+    public boolean check(DataDescriptor... args) {
         return args != null && args.length > 0 &&
                 Arrays.stream(args)
-                        .allMatch(a -> args[0].getSensorType().equals(a.getSensorType()));
+                        .allMatch(a -> {
+                            final DataFormat sourceFormat = args[0].getFormatType();
+                            final SensorType sourceSensor = args[0].getSensorType();
+                            return sourceFormat != null && sourceFormat.equals(a.getFormatType()) &&
+                                    sourceSensor != null && sourceSensor.equals(a.getSensorType());
+                        });
     }
 }

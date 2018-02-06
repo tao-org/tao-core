@@ -20,7 +20,7 @@
 package ro.cs.tao.component.constraints;
 
 import com.vividsolutions.jts.geom.Geometry;
-import ro.cs.tao.eodata.EOData;
+import ro.cs.tao.component.DataDescriptor;
 import ro.cs.tao.serialization.ConstraintAdapter;
 import ro.cs.tao.serialization.GeometryAdapter;
 
@@ -32,9 +32,9 @@ import java.util.Arrays;
  */
 @Constraint(name = "Same extent")
 @XmlJavaTypeAdapter(ConstraintAdapter.class)
-public class GeometryConstraint extends IOConstraint<EOData> {
+public class GeometryConstraint extends IOConstraint {
     @Override
-    public boolean check(EOData... args) {
+    public boolean check(DataDescriptor... args) {
         return args != null && args.length > 0 &&
                 Arrays.stream(args)
                         .allMatch(a -> {

@@ -1,5 +1,6 @@
 import org.junit.Assert;
 import org.junit.Test;
+import ro.cs.tao.component.DataDescriptor;
 import ro.cs.tao.component.ParameterDescriptor;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.SourceDescriptor;
@@ -32,11 +33,11 @@ public class ProcessingComponentTest extends BaseSerializationTest<ProcessingCom
                 "         \"sources\" : [ {\n" +
                 "            \"id\" : \"sourceProductFile\",\n" +
                 "            \"parentId\" : \"OTB-Segmentation-Cc\",\n" +
-                "            \"dataType\" : \"RASTER\",\n" +
+                "            \"dataDescriptor\" : {\n" +
+                "                   \"dataFormat\" : \"RASTER\"" +
+                "             },\n" +
                 "            \"constraints\" : {\n" +
-                "               \"constraints\" : [ {\n" +
-                "                  \"type\" : \"sensorConstraint\"\n" +
-                "               } ]\n" +
+                "               \"constraint\" : [ \"Only rasters\" ]\n" +
                 "            }\n" +
                 "         } ]\n" +
                 "      },\n" +
@@ -44,9 +45,11 @@ public class ProcessingComponentTest extends BaseSerializationTest<ProcessingCom
                 "         \"targets\" : [ {\n" +
                 "            \"id\" : \"out_str\",\n" +
                 "            \"parentId\" : \"OTB-Segmentation-Cc\",\n" +
-                "            \"dataType\" : \"RASTER\",\n" +
+                "            \"dataDescriptor\" : {\n" +
+                "                   \"dataFormat\" : \"RASTER\"" +
+                "             },\n" +
                 "            \"constraints\" : {\n" +
-                "               \"constraints\" : [ ]\n" +
+                "               \"constraint\" : [ ]\n" +
                 "            }\n" +
                 "         } ]\n" +
                 "      },\n" +
@@ -95,9 +98,11 @@ public class ProcessingComponentTest extends BaseSerializationTest<ProcessingCom
                 "        <sources>\n" +
                 "            <id>sourceProductFile</id>\n" +
                 "            <parentId>OTB-Segmentation-CC</parentId>\n" +
-                "            <dataType>RASTER</dataType>\n" +
+                "            <dataDescriptor>\n" +
+                "               <dataFormat>RASTER</dataFormat>\n" +
+                "            </dataDescriptor>\n" +
                 "            <constraints>\n" +
-                "                <constraints xsi:type=\"sensorConstraint\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"/>\n" +
+                "                <constraint>Only rasters</constraint>/>\n" +
                 "            </constraints>\n" +
                 "        </sources>\n" +
                 "    </inputs>\n" +
@@ -105,7 +110,9 @@ public class ProcessingComponentTest extends BaseSerializationTest<ProcessingCom
                 "        <targets>\n" +
                 "            <id>out_str</id>\n" +
                 "            <parentId>OTB-Segmentation-CC</parentId>\n" +
-                "            <dataType>RASTER</dataType>\n" +
+                "            <dataDescriptor>\n" +
+                "               <dataFormat>RASTER</dataFormat>\n" +
+                "            </dataDescriptor>\n" +
                 "            <constraints/>\n" +
                 "        </targets>\n" +
                 "    </outputs>\n" +
@@ -205,9 +212,14 @@ public class ProcessingComponentTest extends BaseSerializationTest<ProcessingCom
                              "-mode.vector.startlabel\n" +
                              "$startlabel_int", false);
         SourceDescriptor sourceDescriptor = new SourceDescriptor("sourceProductFile");
-        sourceDescriptor.setDataType(DataFormat.RASTER);
+        DataDescriptor sourceDataDescriptor = new DataDescriptor();
+        sourceDataDescriptor.setFormatType(DataFormat.RASTER);
+        sourceDescriptor.setDataDescriptor(sourceDataDescriptor);
+        sourceDescriptor.addConstraint("Same dimensions");
         TargetDescriptor targetDescriptor = new TargetDescriptor("out_str");
-        targetDescriptor.setDataType(DataFormat.RASTER);
+        DataDescriptor targetDataDescriptor = new DataDescriptor();
+        targetDataDescriptor.setFormatType(DataFormat.RASTER);
+        targetDescriptor.setDataDescriptor(targetDataDescriptor);
         entity = new ProcessingComponent() {{
             setId("OTB-Segmentation-CC");
             setLabel("OTB Segmentation CC");

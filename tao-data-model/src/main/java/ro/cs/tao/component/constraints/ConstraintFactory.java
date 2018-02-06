@@ -1,7 +1,6 @@
 package ro.cs.tao.component.constraints;
 
 import org.reflections.Reflections;
-import ro.cs.tao.eodata.EOData;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,11 +22,11 @@ public final class ConstraintFactory {
         initAliases();
     }
 
-    public static <T extends EOData> IOConstraint<T> create(String name) {
+    public static IOConstraint create(String name) {
         String className = aliases.getOrDefault(name, name);
         try {
             if (!cache.containsKey(className)) {
-                cache.put(className, (IOConstraint<T>) Class.forName(className).newInstance());
+                cache.put(className, (IOConstraint) Class.forName(className).newInstance());
             }
             return cache.get(className);
         } catch (Exception e) {
