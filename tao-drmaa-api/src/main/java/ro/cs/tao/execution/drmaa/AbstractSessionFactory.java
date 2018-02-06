@@ -36,7 +36,9 @@ import org.ggf.drmaa.SessionFactory;
 import ro.cs.tao.configuration.ConfigurationManager;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -110,8 +112,16 @@ public abstract class AbstractSessionFactory extends SessionFactory {
     }
 
     private void copyLibrary(Path path, String libraryName) throws IOException {
-        try (BufferedInputStream is = new BufferedInputStream(getClass().getResourceAsStream("/auxdata/" + libraryName))) {
-            Files.copy(is, path.resolve(libraryName), StandardCopyOption.REPLACE_EXISTING);
+        ClassLoader loader = Thread.currentThread().getContextClassLoader();
+        byte[] buffer = new byte[1024];
+        try (BufferedInputStream is = new BufferedInputStream(loader.getResourceAsStream("/auxdata/" + libraryName))) {
+            int read;
+            try (OutputStream os = new BufferedOutputStream(Files.newOutputStream(path.resolve(libraryName)))) {
+                while ((read = is.read(buffer)) != -1) {
+                    os.write(buffer, 0, read);
+                }
+                os.flush();
+            }
         }
     }
 

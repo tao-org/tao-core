@@ -64,6 +64,7 @@ public class AbstractSession implements Session {
      * Creates a new instance of AbstractSession
      */
     protected AbstractSession() {
+
     }
     
     /**
@@ -316,7 +317,6 @@ public class AbstractSession implements Session {
             String[] jobIds =
                     this.nativeRunBulkJobs(((DrmaaJobTemplate)jt).getId(),
                                            start, end, incr);
-            
             return Arrays.asList(jobIds);
         } else {
             throw new InvalidJobTemplateException();
