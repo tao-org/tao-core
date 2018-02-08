@@ -195,7 +195,7 @@ public class DataSourceComponent extends TaoComponent {
     private boolean tryApplyFilter(ProductFetchStrategy strategy, Set<String> tiles) {
         if (strategy != null) {
             try {
-                final Method method = strategy.getClass().getMethod("setFilteredTiles", tiles.getClass());
+                final Method method = strategy.getClass().getMethod("setFilteredTiles", Set.class);
                 method.invoke(strategy, tiles);
                 return true;
             } catch (Exception ignored) {
