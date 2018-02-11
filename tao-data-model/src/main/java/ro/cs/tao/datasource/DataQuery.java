@@ -28,12 +28,7 @@ import ro.cs.tao.serialization.SerializerFactory;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.transform.stream.StreamSource;
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -141,7 +136,9 @@ public abstract class DataQuery extends Identifiable {
                 .filter(entry -> entry.getValue().getDefaultValue() != null && !actualParameters.containsKey(entry.getKey()))
                 .map(Map.Entry::getValue)
                 .forEach(p -> addParameter(p.getName(), p.getType(), p.getDefaultValue()));
-        return executeImpl();
+        List<EOProduct> retList = executeImpl();
+        retList.sort(Comparator.comparing(EOProduct::getAcquisitionDate));
+        return retList;
     }
 
     public long getCount() {

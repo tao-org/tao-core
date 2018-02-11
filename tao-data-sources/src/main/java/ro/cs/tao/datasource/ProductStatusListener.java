@@ -9,7 +9,7 @@ public interface ProductStatusListener {
     /**
      * Signals that the download of a product has started
      */
-    void downloadStarted(EOProduct product);
+    boolean downloadStarted(EOProduct product);
     /**
      * Signals that the download of a product has completed successfully
      */
