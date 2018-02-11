@@ -71,6 +71,7 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -338,6 +339,15 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
             this.timer = new Timer("Progress reporter", true);
             this.timer.scheduleAtFixedRate(new TimedJob(), 0, this.progressReportInterval);
         }
+    }
+
+    protected String getTileId(String tileName) {
+        Matcher matcher = tileIdPattern.matcher(tileName);
+        if (matcher.matches() && matcher.groupCount() == 1) {
+            // group(0) contains whole matched string and group(1) is actually the group we want
+            return matcher.group(1);
+        }
+        return "";
     }
 
     private Path downloadFile(String remoteUrl, Path file, FetchMode mode, String authToken) throws IOException, InterruptedException {

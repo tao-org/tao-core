@@ -38,6 +38,7 @@
 
 package ro.cs.tao.eodata;
 
+import org.apache.commons.lang.StringUtils;
 import ro.cs.tao.eodata.enums.PixelType;
 import ro.cs.tao.eodata.enums.SensorType;
 
@@ -102,7 +103,7 @@ public class EOProduct extends EOData implements Serializable {
 
     public void setProductType(String value) {
         if (value != null) {
-            this.productType = value.replace("-", "");
+            this.productType = StringUtils.capitalize(value.replace("-", ""));
         }
     }
 

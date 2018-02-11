@@ -125,11 +125,14 @@ public class DataSourceComponent extends TaoComponent {
         for (EOProduct product : products) {
             try {
                 if (!cancelled) {
+                    if (this.productStatusListener != null) {
+                        if (!this.productStatusListener.downloadStarted(product)) {
+                            continue;
+                        }
+                    }
                     currentProduct = product;
                     notifier.started(product.getName());
-                    if (this.productStatusListener != null) {
-                        this.productStatusListener.downloadStarted(product);
-                    }
+
                     this.currentFetcher = dataSource.getProductFetchStrategy(product.getProductType());
                     if (this.currentFetcher instanceof DownloadStrategy) {
                         final DownloadStrategy downloadStrategy = (DownloadStrategy) this.currentFetcher;
@@ -156,7 +159,13 @@ public class DataSourceComponent extends TaoComponent {
                     }
                     notifier.ended();
                     if (this.productStatusListener != null) {
-                        this.productStatusListener.downloadCompleted(product);
+                        // if the path is null, it means that either the product failed downloading or the
+                        // tiles filter did not passed
+                        if (productPath != null) {
+                            this.productStatusListener.downloadCompleted(product);
+                        } else {
+                            this.productStatusListener.downloadFailed(product);
+                        }
                     }
                 }
             } catch (InterruptedException iex) {
