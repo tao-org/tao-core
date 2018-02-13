@@ -25,7 +25,8 @@ public class RangeParameterConverter extends DefaultParameterConverter {
         builder.append("[").append(minValue).append(",");
         Number maxValue = (Number) this.parameter.getMaxValue();
         if (maxValue == null) {
-            maxValue = 100;
+            Number value = (Number) this.parameter.getValue();
+            maxValue = value != null ? value : 100;
         }
         builder.append(maxValue).append("]");
         return builder.toString();
