@@ -52,6 +52,12 @@ public class DefaultParameterConverter implements QueryParameterConverter {
 
     @Override
     public String stringValue() throws ConversionException {
-        return String.valueOf(this.parameter.getValue());
+        if (this.parameter.isInterval()) {
+            return String.valueOf(this.parameter.getMinValue()) + " TO " +
+                    String.valueOf(parameter.getMaxValue());
+
+        } else {
+            return String.valueOf(this.parameter.getValue());
+        }
     }
 }
