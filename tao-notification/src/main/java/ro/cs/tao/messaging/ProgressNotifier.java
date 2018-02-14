@@ -75,7 +75,7 @@ public class ProgressNotifier implements ProgressListener {
         }
         taskCounter = progressValue;
         if (taskCounter < 100) {
-            sendMessage(TASK_PROGRESS, taskName, String.format("%.2f", progressValue));
+            sendMessage(TASK_PROGRESS, taskName, String.format("%.4f", progressValue));
         } else {
             ended();
         }
@@ -97,9 +97,9 @@ public class ProgressNotifier implements ProgressListener {
         taskCounter = overallProgress;
         if (subTaskCounter < 100) {
             sendMessage(SUBTASK_PROGRESS, taskName,
-                        String.format("%.2f", taskCounter),
+                        String.format("%.4f", taskCounter),
                         subTaskName,
-                        String.format("%.2f", subTaskCounter));
+                        String.format("%.4f", subTaskCounter));
         } else {
             subActivityEnded(subTaskName);
         }
