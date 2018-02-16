@@ -10,7 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>tao-execution</artifactId>
-
+    <name>TAO Execution Base</name>
     <dependencies>
         <dependency>
             <groupId>ro.cs.tao</groupId>
