@@ -342,10 +342,12 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     }
 
     protected String getTileId(String tileName) {
-        Matcher matcher = tileIdPattern.matcher(tileName);
-        if (matcher.matches() && matcher.groupCount() == 1) {
-            // group(0) contains whole matched string and group(1) is actually the group we want
-            return matcher.group(1);
+        if (tileIdPattern != null) {
+            Matcher matcher = tileIdPattern.matcher(tileName);
+            if (matcher.matches() && matcher.groupCount() == 1) {
+                // group(0) contains whole matched string and group(1) is actually the group we want
+                return matcher.group(1);
+            }
         }
         return "";
     }
