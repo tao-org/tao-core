@@ -9,6 +9,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<artifactId>tao-persistence</artifactId>
+	<name>TAO Database Persistence</name>
 	<packaging>jar</packaging>
 
 	<properties>

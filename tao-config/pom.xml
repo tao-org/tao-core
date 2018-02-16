@@ -10,6 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>tao-config</artifactId>
+    <name>TAO Configuration</name>
     <packaging>jar</packaging>
 
 </project>

@@ -10,6 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>tao-data-sources</artifactId>
+    <name>TAO Data Souces Base</name>
     <packaging>jar</packaging>
 
     <dependencies>
