@@ -6,8 +6,8 @@ import ro.cs.tao.security.SecurityContext;
 import ro.cs.tao.security.SystemSecurityContext;
 
 import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlTransient;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Base class for TAO components. Components can be:
@@ -25,8 +25,10 @@ public abstract class TaoComponent extends Identifiable {
     protected String copyright;
     protected String nodeAffinity;
 
-    protected SourceDescriptor[] sources;
-    protected TargetDescriptor[] targets;
+    protected int sourceCardinality;
+    protected int targetCardinality = 1;
+    protected List<SourceDescriptor> sources;
+    protected List<TargetDescriptor> targets;
 
     private SecurityContext securityContext;
 
@@ -97,42 +99,76 @@ public abstract class TaoComponent extends Identifiable {
      * @param nodeAffinity  The name of the topology node
      */
     public void setNodeAffinity(String nodeAffinity) { this.nodeAffinity = nodeAffinity; }
+
+    /**
+     * Returns the cardinality of inputs.
+     * If the value is -1, the inputs represent a list of data objects.
+     */
+    public int getSourceCardinality() { return sourceCardinality; }
+    public void setSourceCardinality(int sourceCardinality) {
+        this.sourceCardinality = sourceCardinality;
+        if (this.sources == null) {
+            this.sources = new ArrayList<>(sourceCardinality);
+        } else {
+            if (this.sources.size() < sourceCardinality) {
+                int toRemove = sourceCardinality - this.sources.size();
+                while (toRemove > 0) {
+                    this.sources.remove(this.sources.size() - 1);
+                    toRemove++;
+                }
+            }
+        }
+    }
+
+    /**
+     * Returns the cardinality of outputs.
+     * If the value is -1, the outputs represent a list of data objects.
+     * By default, the cardinality of the outputs is 1.
+     */
+    public int getTargetCardinality() { return targetCardinality; }
+    public void setTargetCardinality(int targetCardinality) {
+        this.targetCardinality = targetCardinality;
+        if (this.targets == null) {
+            this.targets = new ArrayList<>(targetCardinality);
+        } else {
+            if (this.targets.size() < targetCardinality) {
+                int toRemove = targetCardinality - this.targets.size();
+                while (toRemove > 0) {
+                    this.targets.remove(this.targets.size() - 1);
+                    toRemove++;
+                }
+            }
+        }
+    }
+
     /**
      * Returns the inputs of this component
      */
     @XmlElementWrapper(name = "inputs")
-    public SourceDescriptor[] getSources() {
+    public List<SourceDescriptor> getSources() {
         return sources;
     }
     /**
      * Sets the inputs of this component
      * @param sources   An array of source (input) descriptors
      */
-    public void setSources(SourceDescriptor[] sources) { this.sources = sources; }
-    /**
-     * Sets the number of inputs of this component. If some inputs already exist, the array will be resized (either
-     * truncated or expanded) to the new value, potentially keeping existing values.
-     *
-     * @param value     The new dimension for the inputs array
-     */
-    public void setSourcesCount(int value) {
-        if (this.sources == null) {
-            this.sources = new SourceDescriptor[value];
-        } else {
-            this.sources = Arrays.copyOf(this.sources, value);
+    public void setSources(List<SourceDescriptor> sources) {
+        this.sources = sources;
+        if (this.sources != null) {
+            this.sourceCardinality = this.sources.size();
         }
     }
+
     /**
      * Adds an input to this component
      */
     public void addSource(SourceDescriptor source) {
-        source.setParentId(this.id);
-        if (this.sources != null) {
-            this.sources = Arrays.copyOf(this.sources, this.sources.length + 1);
-            this.sources[this.sources.length - 1] = source;
-        } else {
-            this.sources = new SourceDescriptor[] { source };
+        if (this.sources == null) {
+            this.sources = new ArrayList<>();
         }
+        source.setParentId(this.id);
+        this.sources.add(source);
+        this.sourceCardinality = this.sources.size();
     }
     /**
      * Removes an input of this component
@@ -140,16 +176,15 @@ public abstract class TaoComponent extends Identifiable {
     public void removeSource(SourceDescriptor source) {
         source.setParentId(null);
         if (this.sources != null) {
-            this.sources = Arrays.stream(this.sources)
-                    .filter(s -> !s.getId().equals(source.getId()))
-                    .toArray(SourceDescriptor[]::new);
+            this.sources.remove(source);
+            this.sourceCardinality = this.sources.size();
         }
     }
     /**
      * Returns the outputs of this component
      */
     @XmlElementWrapper(name = "outputs")
-    public TargetDescriptor[] getTargets() {
+    public List<TargetDescriptor> getTargets() {
         return targets;
     }
     /**
@@ -157,19 +192,10 @@ public abstract class TaoComponent extends Identifiable {
      *
      * @param targets   An array of target (output) descriptors
      */
-    public void setTargets(TargetDescriptor[] targets) { this.targets = targets; }
-    /**
-     * Sets the number of outputs of this component. If some outputs already exist, the array will be resized (either
-     * truncated or expanded) to the new value, potentially keeping existing values.
-     *
-     * @param value     The new dimension for the outputs array
-     */
-    @XmlTransient
-    public void setTargetCount(int value) {
-        if (this.targets == null) {
-            this.targets = new TargetDescriptor[value];
-        } else {
-            this.targets = Arrays.copyOf(this.targets, value);
+    public void setTargets(List<TargetDescriptor> targets) {
+        this.targets = targets;
+        if(this.targets != null) {
+            this.targetCardinality = this.targets.size();
         }
     }
     /**
@@ -178,13 +204,12 @@ public abstract class TaoComponent extends Identifiable {
      * @param target    The output descriptor to be added
      */
     public void addTarget(TargetDescriptor target) {
-        target.setParentId(this.id);
-        if (this.targets != null) {
-            this.targets = Arrays.copyOf(this.targets, this.targets.length + 1);
-            this.targets[this.targets.length - 1] = target;
-        } else {
-            this.targets = new TargetDescriptor[] { target };
+        if (this.targets == null) {
+            this.targets = new ArrayList<>();
         }
+        target.setParentId(this.id);
+        this.targets.add(target);
+        this.targetCardinality = this.targets.size();
     }
     /**
      * Removes an output of this component
@@ -194,9 +219,8 @@ public abstract class TaoComponent extends Identifiable {
     public void removeTarget(TargetDescriptor target) {
         target.setParentId(null);
         if (this.targets != null) {
-            this.targets = Arrays.stream(this.targets)
-                    .filter(t -> !t.getId().equals(target.getId()))
-                    .toArray(TargetDescriptor[]::new);
+            this.targets.remove(target);
+            this.targetCardinality = this.targets.size();
         }
     }
     /**
@@ -213,10 +237,10 @@ public abstract class TaoComponent extends Identifiable {
     public TaoComponent clone() throws CloneNotSupportedException {
         TaoComponent clone = (TaoComponent) super.clone();
         if (this.sources != null) {
-            clone.setSources(Arrays.copyOf(this.sources, this.sources.length));
+            clone.setSources(this.sources);
         }
         if (this.targets != null) {
-            clone.setTargets(Arrays.copyOf(this.targets, this.targets.length));
+            clone.setTargets(this.targets);
         }
         clone.attachSecurityContext(this.securityContext);
         return clone;

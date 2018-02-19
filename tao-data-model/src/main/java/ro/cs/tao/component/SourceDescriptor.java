@@ -65,15 +65,15 @@ public class SourceDescriptor extends Identifiable {
      */
     public void setParentId(String parent) { this.parentId = parent; }
     /**
-     * Returns the data associated to this instance.
+     * Returns the data descriptor associated to this instance.
      */
     public DataDescriptor getDataDescriptor() {
         return dataDescriptor;
     }
     /**
-     * Sets the data associated to this instance.
+     * Sets the data descriptor associated to this instance.
      *
-     * @param data  The data to be associated with this instance.
+     * @param descriptor  The data descriptors to be associated with this instance.
      */
     public void setDataDescriptor(DataDescriptor descriptor) {
         this.dataDescriptor = descriptor;
@@ -105,7 +105,7 @@ public class SourceDescriptor extends Identifiable {
                 this.dataDescriptor.getFormatType().equals(other.getDataDescriptor().getFormatType()) &&
                 (this.constraints.size() == 0 || this.constraints.stream().allMatch(c -> {
                     IOConstraint constraint = ConstraintFactory.create(c);
-                    return constraint == null || constraint.check(this.getDataDescriptor(), other.getDataDescriptor());
+                    return constraint == null || constraint.check(this.dataDescriptor, other.getDataDescriptor());
                 }));
     }
 }
