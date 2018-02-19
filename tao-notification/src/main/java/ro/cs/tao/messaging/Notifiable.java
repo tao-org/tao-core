@@ -8,11 +8,11 @@ import java.util.logging.Logger;
 /**
  * @author Cosmin Cara
  */
-public abstract class NotifiableComponent implements Consumer<Event<Message>> {
+public abstract class Notifiable implements Consumer<Event<Message>> {
     private String[] topics;
     protected final Logger logger;
 
-    public NotifiableComponent() {
+    public Notifiable() {
         this.logger = Logger.getLogger(this.getClass().getName());
     }
 

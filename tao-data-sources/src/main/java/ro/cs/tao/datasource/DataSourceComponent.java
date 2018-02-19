@@ -1,5 +1,6 @@
 package ro.cs.tao.datasource;
 
+import ro.cs.tao.component.SourceDescriptor;
 import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.datasource.param.QueryParameter;
 import ro.cs.tao.datasource.remote.DownloadStrategy;
@@ -55,6 +56,7 @@ public class DataSourceComponent extends TaoComponent {
         }
         this.sensorName = sensorName;
         this.dataSourceName = dataSourceName;
+        this.targetCardinality = -1;
         this.logger = Logger.getLogger(DataSourceComponent.class.getSimpleName());
     }
 
@@ -62,6 +64,36 @@ public class DataSourceComponent extends TaoComponent {
 
     @Override
     public String defaultName() { return "NewDatasource"; }
+
+    @Override
+    public List<SourceDescriptor> getSources() {
+        throw new RuntimeException("Not allowed on " + getClass().getName());
+    }
+
+    @Override
+    public void setSources(List<SourceDescriptor> sources) {
+        throw new RuntimeException("Not allowed on " + getClass().getName());
+    }
+
+    @Override
+    public int getSourceCardinality() {
+        throw new RuntimeException("Not allowed on " + getClass().getName());
+    }
+
+    @Override
+    public void setSourceCardinality(int sourceCardinality) {
+        throw new RuntimeException("Not allowed on " + getClass().getName());
+    }
+
+    @Override
+    public void addSource(SourceDescriptor source) {
+        throw new RuntimeException("Not allowed on " + getClass().getName());
+    }
+
+    @Override
+    public void removeSource(SourceDescriptor source) {
+        throw new RuntimeException("Not allowed on " + getClass().getName());
+    }
 
     public void setUserCredentials(String userName, String password) {
         this.userName = userName;
