@@ -27,7 +27,7 @@ public class WorkflowDescriptor {
     private String path;
     private boolean active;
     private Status status;
-    private List<WorkflowNodeDescriptor> nodes;
+    private List<WorkflowNodeDescriptor> nodes = new ArrayList<>();
 
     @XmlElement(name = "id")
     public Long getId() { return id; }
@@ -66,9 +66,53 @@ public class WorkflowDescriptor {
         if (nodes != null && nodes.size() > 0) {
             orderNodes();
         }
-        return nodes;
+        return nodes != null ? nodes : new ArrayList<>();
     }
-    public void setNodes(List<WorkflowNodeDescriptor> nodes) { this.nodes = nodes; }
+
+    // needed for bidirectional relationship
+    public void addNode(WorkflowNodeDescriptor node)
+    {
+        if (this.nodes == null)
+        {
+            this.nodes = new ArrayList<>();
+        }
+        if (!this.nodes.contains(node))
+        {
+            node.setWorkflow(this);
+            this.nodes.add(node);
+        }
+    }
+    public void removeNode(WorkflowNodeDescriptor node)
+    {
+        if(nodes.contains(node))
+        {
+            nodes.remove(node);
+            node.setWorkflow(null);
+        }
+    }
+
+    public void removeAllNodes()
+    {
+        for (WorkflowNodeDescriptor node : this.nodes)
+        {
+            removeNode(node);
+        }
+    }
+
+
+    /* NNEVER use a classic setter for a one to many
+    * HHH000346: Error during managed flush [java.util.ArrayList cannot be cast to org.hibernate.collection.spi.PersistentCollection]
+     */
+   /*public void setNodes(List<WorkflowNodeDescriptor> nodes) { this.nodes = nodes; }*/
+
+    public void setNodes(List<WorkflowNodeDescriptor> nodes)
+    {
+        this.nodes.clear();
+        for (WorkflowNodeDescriptor node : nodes)
+        {
+            addNode(node);
+        }
+    }
 
     private void orderNodes() {
         List<WorkflowNodeDescriptor> newList = new ArrayList<>();

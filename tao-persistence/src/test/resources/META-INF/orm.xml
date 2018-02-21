@@ -79,6 +79,12 @@
             <basic name="nodeAffinity">
                 <column name="node_affinity" nullable="true" column-definition="varchar(250) NULL"/>
             </basic>
+            <basic name="sourceCardinality">
+                <column name="source_cardinality" nullable="true" column-definition="integer NOT NULL"/>
+            </basic>
+            <basic name="targetCardinality">
+                <column name="target_cardinality" nullable="true" column-definition="integer NOT NULL"/>
+            </basic>
             <transient name="sources"/>
             <transient name="targets"/>
         </attributes>
@@ -457,7 +463,11 @@
                 <column name="active" nullable="true" column-definition="boolean NOT NULL DEFAULT true"/>
             </basic>
 
-            <one-to-many name="nodes" fetch="EAGER" mapped-by="workflow" />
+            <one-to-many name="nodes" fetch="EAGER" mapped-by="workflow" orphan-removal="true">
+                <cascade>
+                    <cascade-all/>
+                </cascade>
+            </one-to-many>
         </attributes>
     </entity>
 
