@@ -17,7 +17,7 @@ import java.util.List;
 @XmlRootElement(name = "node")
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class WorkflowNodeDescriptor {
-    private long id;
+    private Long id;
     private String name;
     private String componentId;
     private float xCoord;
@@ -28,8 +28,8 @@ public class WorkflowNodeDescriptor {
     private WorkflowDescriptor workflow;
 
     @XmlElement(name = "id")
-    public long getId() { return id; }
-    public void setId(long id) { this.id = id; }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
     @XmlElement(name = "name")
     public String getName() { return name; }
@@ -73,5 +73,16 @@ public class WorkflowNodeDescriptor {
     }
     public void setWorkflow(WorkflowDescriptor workflow) {
         this.workflow = workflow;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof WorkflowNodeDescriptor )) return false;
+        return id != null && id.equals(((WorkflowNodeDescriptor) o).id);
+    }
+    @Override
+    public int hashCode() {
+        return 67;
     }
 }

@@ -23,27 +23,16 @@ import ro.cs.tao.eodata.VectorData;
 import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.MessagePersister;
 import ro.cs.tao.persistence.exception.PersistenceException;
-import ro.cs.tao.persistence.repository.ContainerRepository;
-import ro.cs.tao.persistence.repository.EOProductRepository;
-import ro.cs.tao.persistence.repository.ExecutionJobRepository;
-import ro.cs.tao.persistence.repository.ExecutionTaskRepository;
-import ro.cs.tao.persistence.repository.MessageRepository;
-import ro.cs.tao.persistence.repository.NodeRepository;
-import ro.cs.tao.persistence.repository.ParameterDescriptorRepository;
-import ro.cs.tao.persistence.repository.ProcessingComponentRepository;
-import ro.cs.tao.persistence.repository.ServiceRepository;
-import ro.cs.tao.persistence.repository.VectorDataRepository;
-import ro.cs.tao.persistence.repository.WorkflowDescriptorRepository;
+import ro.cs.tao.persistence.repository.*;
 import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.topology.NodeServiceStatus;
 import ro.cs.tao.topology.ServiceDescription;
 import ro.cs.tao.workflow.WorkflowDescriptor;
+import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-
-//import ro.cs.tao.persistence.data.User;
 
 /**
  * DAO
@@ -1195,17 +1184,58 @@ public class PersistenceManager implements MessagePersister {
         containerRepository.delete(existingContainer);
     }
 
-    private boolean checkWorkflowDescriptor(WorkflowDescriptor workflow, boolean existingEntity)
+    private boolean checkWorkflowNodeDescriptor(WorkflowNodeDescriptor nodeDescriptor)
+    {
+        if(nodeDescriptor == null)
+        {
+            return false;
+        }
+
+        if(nodeDescriptor.getWorkflow() == null)
+        {
+            return false;
+        }
+        if(nodeDescriptor.getComponentId() == null)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private boolean checkWorkflowNodesDescriptors(List<WorkflowNodeDescriptor> nodesDescriptors)
+    {
+        for (WorkflowNodeDescriptor nodeDescriptor : nodesDescriptors)
+        {
+            if (!checkWorkflowNodeDescriptor(nodeDescriptor))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+     private boolean checkWorkflowDescriptor(WorkflowDescriptor workflow)
     {
         if(workflow == null)
         {
             return false;
         }
-        if(existingEntity && workflow.getId() == null)
+        if(workflow.getName() == null)
         {
             return false;
         }
-        if(!existingEntity && workflow.getId() != null)
+        if(workflow.getStatus() == null)
+        {
+            return false;
+        }
+        if(workflow.getVisibility() == null)
+        {
+            return false;
+        }
+
+        if (workflow.getNodes() != null && !checkWorkflowNodesDescriptors(workflow.getNodes()))
         {
             return false;
         }
@@ -1217,7 +1247,7 @@ public class PersistenceManager implements MessagePersister {
     public WorkflowDescriptor saveWorkflowDescriptor(WorkflowDescriptor workflow) throws PersistenceException
     {
         // check method parameters
-        if(!checkWorkflowDescriptor(workflow, false))
+        if(!checkWorkflowDescriptor(workflow))
         {
             throw new PersistenceException("Invalid parameters were provided for adding new workflow !");
         }
@@ -1248,7 +1278,7 @@ public class PersistenceManager implements MessagePersister {
     public WorkflowDescriptor updateWorkflowDescriptor(WorkflowDescriptor workflow) throws PersistenceException
     {
         // check method parameters
-        if(!checkWorkflowDescriptor(workflow, true))
+        if(!checkWorkflowDescriptor(workflow))
         {
             throw new PersistenceException("Invalid parameters were provided for updating the workflow " + (workflow != null && workflow.getId() != null ? "(identifier " + workflow.getId() + ")" : "") + "!");
         }

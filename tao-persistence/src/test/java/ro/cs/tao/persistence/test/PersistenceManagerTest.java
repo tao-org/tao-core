@@ -551,6 +551,8 @@ public class PersistenceManagerTest {
         component.setActive(true);
 
         component.setContainerId(containerId);
+        component.setSourceCardinality(0);
+        component.setTargetCardinality(0);
 
         // list of component variables
         Set<Variable> variables = new HashSet<>();
@@ -1011,22 +1013,31 @@ public class PersistenceManagerTest {
             workflow.setUserName("admin");
             workflow.setCreated(LocalDateTime.now());
 
-            List<WorkflowNodeDescriptor> nodes = new ArrayList<>();
             WorkflowNodeDescriptor node1 = new WorkflowNodeDescriptor();
             node1.setName("node1");
-            node1.setWorkflow(workflow);
-            nodes.add(node1);
+            node1.setComponentId("component01");
+
+            workflow.addNode(node1);
 
             WorkflowNodeDescriptor node2 = new WorkflowNodeDescriptor();
             node2.setName("node2");
-            node2.setWorkflow(workflow);
-            nodes.add(node2);
+            node2.setComponentId("component01");
 
-            workflow.setNodes(nodes);
+            workflow.addNode(node2);
 
             workflow = persistenceManager.saveWorkflowDescriptor(workflow);
             // check persisted workflow
-            Assert.assertTrue(workflow != null && workflow.getId() != null);
+            Assert.assertTrue(workflow != null && workflow.getNodes() != null);
+            logger.info("Workflow nodes count " + workflow.getNodes() != null ? workflow.getNodes().size() : " null");
+
+            if(workflow.getNodes() != null)
+            {
+                logger.info("Workflow nodes count " + workflow.getNodes().size());
+            }
+            else
+            {
+                logger.info("Workflow nodes NULL ");
+            }
         }
         catch (PersistenceException e)
         {
@@ -1034,5 +1045,6 @@ public class PersistenceManagerTest {
             Assert.fail(e.getMessage());
         }
     }
+
 
 }
