@@ -9,6 +9,7 @@ import java.util.List;
  */
 public interface Serializer<S, R> {
 
+    void setFormatOutput(boolean value);
     S deserialize(StreamSource source) throws SerializationException;
     List<S> deserializeList(Class<S> sClass, StreamSource source) throws SerializationException;
     R serialize(S object) throws SerializationException;

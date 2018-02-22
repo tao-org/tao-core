@@ -1,10 +1,6 @@
 package ro.cs.tao.serialization;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
-import javax.xml.bind.Unmarshaller;
+import javax.xml.bind.*;
 import javax.xml.transform.stream.StreamSource;
 import java.io.StringWriter;
 import java.util.HashMap;
@@ -56,7 +52,7 @@ class JsonSerializer<T> extends BaseSerializer<T> {
     public String serialize(T object) throws SerializationException {
         try {
             Marshaller marshaller = this.context.createMarshaller();
-            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, this.formatOutput);
             StringWriter writer = new StringWriter();
             marshaller.marshal(object, writer);
             return writer.toString();
