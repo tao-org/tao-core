@@ -1,25 +1,14 @@
 package ro.cs.tao.serialization;
 
-import ro.cs.tao.component.constraints.CRSConstraint;
-import ro.cs.tao.component.constraints.DimensionConstraint;
-import ro.cs.tao.component.constraints.GeometryConstraint;
-import ro.cs.tao.component.constraints.IOConstraint;
-import ro.cs.tao.component.constraints.SensorConstraint;
+import ro.cs.tao.component.constraints.*;
 import ro.cs.tao.component.template.BasicTemplate;
 import ro.cs.tao.component.template.Template;
-import ro.cs.tao.component.validation.NotEmptyValidator;
-import ro.cs.tao.component.validation.NotNullValidator;
-import ro.cs.tao.component.validation.TypeValidator;
+import ro.cs.tao.component.validation.*;
 import ro.cs.tao.component.validation.Validator;
-import ro.cs.tao.component.validation.ValueSetValidator;
 import ro.cs.tao.datasource.param.QueryParameter;
 import ro.cs.tao.eodata.Polygon2D;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
-import javax.xml.bind.Unmarshaller;
+import javax.xml.bind.*;
 import javax.xml.namespace.QName;
 import javax.xml.transform.stream.StreamSource;
 import java.io.StringWriter;
@@ -32,6 +21,7 @@ import java.util.Map;
  */
 public abstract class BaseSerializer<T> implements Serializer<T, String> {
     private static Class[] classes;
+    protected boolean formatOutput;
 
     static {
         classes = new Class[] {
@@ -94,6 +84,8 @@ public abstract class BaseSerializer<T> implements Serializer<T, String> {
         }
     }
 
+    public void setFormatOutput(boolean value) { this.formatOutput = value; }
+
     public List<T> deserializeList(Class<T> clazz, StreamSource source) throws SerializationException {
         try {
             Unmarshaller unmarshaller = this.context.createUnmarshaller();
@@ -107,7 +99,7 @@ public abstract class BaseSerializer<T> implements Serializer<T, String> {
     public String serialize(List<T> objects, String name) throws SerializationException {
         try {
             Marshaller marshaller = this.context.createMarshaller();
-            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
+            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, this.formatOutput);
             marshaller.setProperty(Marshaller.JAXB_FRAGMENT, Boolean.TRUE);
             QName qName = new QName(name);
             ListWrapper<T> wrapper = new ListWrapper<>(objects);
