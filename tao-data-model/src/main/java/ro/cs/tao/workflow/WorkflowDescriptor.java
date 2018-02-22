@@ -100,7 +100,7 @@ public class WorkflowDescriptor {
     }
 
 
-    /* NNEVER use a classic setter for a one to many
+    /* NEVER use a classic setter for a one to many
     * HHH000346: Error during managed flush [java.util.ArrayList cannot be cast to org.hibernate.collection.spi.PersistentCollection]
      */
    /*public void setNodes(List<WorkflowNodeDescriptor> nodes) { this.nodes = nodes; }*/
