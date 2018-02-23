@@ -892,8 +892,8 @@ public class PersistenceManager implements MessagePersister {
     }
 
     private boolean checkExecutionTask(ExecutionTask task, boolean existingEntity) {
-        return task != null && !(existingEntity && task.getId() == 0) &&
-                !(!existingEntity && task.getId() != 0) &&
+        return task != null && !(existingEntity && task.getId() == null) &&
+                !(!existingEntity && task.getId() != null) &&
                 !(existingEntity && (task.getResourceId() == null || task.getResourceId().isEmpty()));
     }
 
