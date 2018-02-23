@@ -16,8 +16,8 @@ import java.util.stream.Collectors;
  * Created by cosmin on 9/19/2017.
  */
 public class ExecutionTask {
-    private long id;
-    private long workflowNodeId;
+    private Long id;
+    private Long workflowNodeId;
     private ProcessingComponent processingComponent;
     private ExecutionStatus executionStatus = ExecutionStatus.UNDETERMINED;
     private String resourceId;
@@ -33,15 +33,15 @@ public class ExecutionTask {
         this.processingComponent = processingComponent;
     }
 
-    public long getId() {
+    public Long getId() {
         return id;
     }
-    public void setId(long id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
-    public long getWorkflowNodeId() { return workflowNodeId; }
-    public void setWorkflowNodeId(long workflowNodeId) { this.workflowNodeId = workflowNodeId; }
+    public Long getWorkflowNodeId() { return workflowNodeId; }
+    public void setWorkflowNodeId(Long workflowNodeId) { this.workflowNodeId = workflowNodeId; }
 
     public void setProcessingComponent(ProcessingComponent processingComponent) {
         this.processingComponent = processingComponent;

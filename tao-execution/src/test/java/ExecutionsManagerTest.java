@@ -54,6 +54,7 @@ public class ExecutionsManagerTest {
 
         ExecutionJob job = new ExecutionJob();
         job.setExecutionStatus(ExecutionStatus.RUNNING);
+        job.setWorkflowId(1);
 
         ExecutionTask task = creatTask(processingComponent, "test_hostname",
             Collections.unmodifiableMap(Stream.of(
@@ -195,6 +196,9 @@ public class ExecutionsManagerTest {
         processingComponent.setCopyright("");
         processingComponent.setActive(true);
         processingComponent.setVisibility(ProcessingComponentVisibility.USER);
+        processingComponent.setSourceCardinality(0);
+        processingComponent.setTargetCardinality(0);
+        processingComponent.setContainerId("container01");
 
         return processingComponent;
     }
