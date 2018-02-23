@@ -6,9 +6,7 @@ import reactor.bus.EventBus;
 import reactor.core.config.DispatcherType;
 
 import java.security.Principal;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
@@ -26,6 +24,8 @@ public class DefaultMessageBus implements ro.cs.tao.messaging.EventBus<Event<Mes
 
     private final EventBus messageBus;
     private final Set<String> topics;
+    private final Map<Pattern, Set<reactor.fn.Consumer<Event<Message>>>> patternSubscribers;
+    private final Set<String> matchedTopics;
     private MessagePersister messagePersister;
     private final ExecutorService executorService;
     private final Logger logger;
@@ -37,6 +37,8 @@ public class DefaultMessageBus implements ro.cs.tao.messaging.EventBus<Event<Mes
                                                                     MAX_THREADS,
                                                                     DispatcherType.THREAD_POOL_EXECUTOR));
         this.topics = new HashSet<>();
+        this.patternSubscribers = new HashMap<>();
+        this.matchedTopics = new HashSet<>();
         this.executorService = Executors.newSingleThreadExecutor();
         this.logger = Logger.getLogger(DefaultMessageBus.class.getName());
     }
@@ -66,18 +68,22 @@ public class DefaultMessageBus implements ro.cs.tao.messaging.EventBus<Event<Mes
     }
 
     @Override
-    public void subscribe(Consumer<Event<Message>> subscriber, String topicPattern) {
+    public void subscribe(Consumer<Event<Message>> subscriber, Pattern topicPattern) {
         if (subscriber == null) {
             throw new IllegalArgumentException("Subscriber cannot be null");
         }
-        if (topicPattern == null || topicPattern.isEmpty()) {
+        if (topicPattern == null) {
             throw new IllegalArgumentException("Invalid topic pattern");
         }
-        Pattern pattern = Pattern.compile(topicPattern);
-        List<String> matched = this.topics.stream().filter(t -> pattern.matcher(t).matches()).collect(Collectors.toList());
+        reactor.fn.Consumer<Event<Message>> eventConsumer = ReactorConsumerAdapter.wrap(subscriber);
+        List<String> matched = this.topics.stream().filter(t -> topicPattern.matcher(t).matches()).collect(Collectors.toList());
         for (String topic : matched) {
-            this.messageBus.on($(topic), ReactorConsumerAdapter.wrap(subscriber));
+            this.messageBus.on($(topic), eventConsumer);
         }
+        if (!this.patternSubscribers.containsKey(topicPattern)) {
+            this.patternSubscribers.put(topicPattern, new HashSet<>());
+        }
+        this.patternSubscribers.get(topicPattern).add(eventConsumer);
     }
 
     @Override
@@ -87,11 +93,13 @@ public class DefaultMessageBus implements ro.cs.tao.messaging.EventBus<Event<Mes
         }
         for (String topic : topics) {
             this.messageBus.getConsumerRegistry().unregister(topic);
+            this.matchedTopics.remove(topic);
         }
     }
 
     @Override
     public void send(Principal principal, String topic, Event<Message> event) {
+        checkPatternConsumers(topic);
         this.messageBus.notify(topic, event);
         if (this.messagePersister != null) {
             this.executorService.submit(() -> {
@@ -109,6 +117,19 @@ public class DefaultMessageBus implements ro.cs.tao.messaging.EventBus<Event<Mes
     @Override
     public void send(Principal principal, String topic, Message message) {
         send(principal, topic, Event.wrap(message));
+    }
+
+    private void checkPatternConsumers(String topic) {
+        if (!this.matchedTopics.contains(topic)) {
+            Set<Set<reactor.fn.Consumer<Event<Message>>>> set = this.patternSubscribers.entrySet().stream()
+                    .filter(e -> e.getKey().matcher(topic).matches())
+                    .map(Map.Entry::getValue)
+                    .collect(Collectors.toSet());
+            if (set != null && set.size() > 0) {
+                set.forEach(sub -> sub.forEach(s -> this.messageBus.on($(topic), s)));
+                this.matchedTopics.add(topic);
+            }
+        }
     }
 
 }
