@@ -35,6 +35,10 @@ public class Messaging {
         instance.subscribe(subscriber, topics);
     }
 
+    public static void subscribe(Consumer subscriber, String topicPattern) {
+        instance.subscribe(subscriber, topicPattern);
+    }
+
     public static void close(String... topics) {
         instance.close(topics);
     }

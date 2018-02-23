@@ -9,6 +9,7 @@ import java.util.function.Consumer;
  */
 public interface EventBus<T extends Serializable> {
     void subscribe(Consumer<T> subscriber, String... topics);
+    void subscribe(Consumer<T> subscriber, String topicPattern);
     void close(String... topics);
     void setPersister(MessagePersister persister);
     void send(Principal principal, String topic, T event);
