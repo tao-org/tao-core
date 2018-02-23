@@ -6,10 +6,15 @@ import reactor.bus.EventBus;
 import reactor.core.config.DispatcherType;
 
 import java.security.Principal;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static reactor.bus.selector.Selectors.$;
 
@@ -20,6 +25,7 @@ public class DefaultMessageBus implements ro.cs.tao.messaging.EventBus<Event<Mes
     private static final int MAX_THREADS = 2;
 
     private final EventBus messageBus;
+    private final Set<String> topics;
     private MessagePersister messagePersister;
     private final ExecutorService executorService;
     private final Logger logger;
@@ -30,6 +36,7 @@ public class DefaultMessageBus implements ro.cs.tao.messaging.EventBus<Event<Mes
                                           Environment.newDispatcher(MAX_THREADS,
                                                                     MAX_THREADS,
                                                                     DispatcherType.THREAD_POOL_EXECUTOR));
+        this.topics = new HashSet<>();
         this.executorService = Executors.newSingleThreadExecutor();
         this.logger = Logger.getLogger(DefaultMessageBus.class.getName());
     }
@@ -53,6 +60,22 @@ public class DefaultMessageBus implements ro.cs.tao.messaging.EventBus<Event<Mes
             throw new IllegalArgumentException("At least one topic should be given");
         }
         for (String topic : topics) {
+            this.topics.add(topic);
+            this.messageBus.on($(topic), ReactorConsumerAdapter.wrap(subscriber));
+        }
+    }
+
+    @Override
+    public void subscribe(Consumer<Event<Message>> subscriber, String topicPattern) {
+        if (subscriber == null) {
+            throw new IllegalArgumentException("Subscriber cannot be null");
+        }
+        if (topicPattern == null || topicPattern.isEmpty()) {
+            throw new IllegalArgumentException("Invalid topic pattern");
+        }
+        Pattern pattern = Pattern.compile(topicPattern);
+        List<String> matched = this.topics.stream().filter(t -> pattern.matcher(t).matches()).collect(Collectors.toList());
+        for (String topic : matched) {
             this.messageBus.on($(topic), ReactorConsumerAdapter.wrap(subscriber));
         }
     }
