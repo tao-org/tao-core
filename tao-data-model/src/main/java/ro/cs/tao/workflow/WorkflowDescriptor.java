@@ -61,15 +61,20 @@ public class WorkflowDescriptor {
     public Status getStatus() { return status; }
     public void setStatus(Status status) { this.status = status; }
 
-    @XmlElementWrapper(name = "nodes")
+    /*@XmlElementWrapper(name = "nodes")
     public List<WorkflowNodeDescriptor> getNodes() {
-        if (nodes != null && nodes.size() > 0) {
+        if (this.nodes != null && this.nodes.size() > 0) {
             orderNodes();
         }
-        return nodes != null ? nodes : new ArrayList<>();
+        return this.nodes != null ? this.nodes : new ArrayList<>();
+    }*/
+
+    @XmlElementWrapper(name = "nodes")
+    public List<WorkflowNodeDescriptor> getNodes() {
+        return this.nodes;
     }
 
-    // needed for bidirectional relationship
+   // addNode and removeNode are needed for bidirectional relationship
     public void addNode(WorkflowNodeDescriptor node)
     {
         if (this.nodes == null)
@@ -78,41 +83,56 @@ public class WorkflowDescriptor {
         }
         if (!this.nodes.contains(node))
         {
-            node.setWorkflow(this);
             this.nodes.add(node);
+            node.setWorkflow(this);
         }
     }
+
     public void removeNode(WorkflowNodeDescriptor node)
     {
-        if(nodes.contains(node))
+        if(this.nodes.contains(node))
         {
-            nodes.remove(node);
             node.setWorkflow(null);
+            this.nodes.remove(node);
         }
     }
-
-    public void removeAllNodes()
-    {
-        for (WorkflowNodeDescriptor node : this.nodes)
-        {
-            removeNode(node);
-        }
-    }
-
 
     /* NEVER use a classic setter for a one to many
     * HHH000346: Error during managed flush [java.util.ArrayList cannot be cast to org.hibernate.collection.spi.PersistentCollection]
      */
    /*public void setNodes(List<WorkflowNodeDescriptor> nodes) { this.nodes = nodes; }*/
 
-    public void setNodes(List<WorkflowNodeDescriptor> nodes)
-    {
-        this.nodes.clear();
-        for (WorkflowNodeDescriptor node : nodes)
-        {
-            addNode(node);
-        }
-    }
+//    public void setNodes(List<WorkflowNodeDescriptor> nodes)
+//    {
+//        System.out.println("-------------call setNodes " + nodes.size());
+//        if (this.nodes == null)
+//        {
+//            this.nodes = new ArrayList<>();
+//        }
+//        else
+//        {
+//            this.nodes.clear();
+//        }
+//
+//        /*if (this.nodes.size() > 0)
+//        {
+//            for (WorkflowNodeDescriptor node : this.nodes)
+//            {
+//                removeNode(node);
+//            }
+//        }*/
+//
+//        for (WorkflowNodeDescriptor node : nodes)
+//        {
+//            addNode(node);
+//        }
+//    }
+
+//    public void setNodes(List<WorkflowNodeDescriptor> nodes)
+//    {
+//        this.nodes.clear();
+//        this.nodes.addAll(nodes);
+//    }
 
     private void orderNodes() {
         List<WorkflowNodeDescriptor> newList = new ArrayList<>();
@@ -137,7 +157,18 @@ public class WorkflowDescriptor {
                 });
             }
         }
-        nodes = newList;
+
+        // WRONG !!!
+        //nodes = newList;
+        /* Hibernate requires complete ownership of the children collection in the parent object.
+        If you set it to a new object, Hibernate is unable to track changes to that collection and thus has no idea how to apply
+        the cascading persistence to your objects. */
+
+        this.nodes.clear();
+        this.nodes.addAll(newList);
+
+        //setNodes(newList);
+
     }
 
     private List<WorkflowNodeDescriptor> findChildren(WorkflowNodeDescriptor node) {

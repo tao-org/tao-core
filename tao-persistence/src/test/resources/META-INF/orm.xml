@@ -463,11 +463,14 @@
                 <column name="active" nullable="true" column-definition="boolean NOT NULL DEFAULT true"/>
             </basic>
 
-            <one-to-many name="nodes" fetch="EAGER" mapped-by="workflow" orphan-removal="true">
+            <one-to-many name="nodes" target-entity="ro.cs.tao.workflow.WorkflowNodeDescriptor"
+                         fetch="EAGER" access="FIELD" orphan-removal="true"
+                         mapped-by="workflow">
                 <cascade>
                     <cascade-all/>
                 </cascade>
             </one-to-many>
+
         </attributes>
     </entity>
 
@@ -495,7 +498,7 @@
             </basic>
 
             <many-to-one name="workflow" fetch="LAZY">
-                <join-column name="workflow_id" nullable="false"/>
+                <join-column name="workflow_id" referenced-column-name="id" nullable="false"/>
             </many-to-one>
 
             <!--

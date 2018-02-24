@@ -1000,44 +1000,50 @@ public class PersistenceManagerTest {
     }
 
     @Test
-    public void TC_28_save_new_workflow()
+    public void TC_28_save_new_workflow_add_nodes_individually()
     {
-        logger.info("TC_28_save_new_workflow");
+        logger.info("TC_28_save_new_workflow_add_nodes_individually");
         try
         {
             // add a new workflow for test
             WorkflowDescriptor workflow = new WorkflowDescriptor();
-            workflow.setName("test_workflow");
+            workflow.setName("test_workflow_1");
             workflow.setStatus(Status.DRAFT);
             workflow.setVisibility(Visibility.PRIVATE);
             workflow.setUserName("admin");
             workflow.setCreated(LocalDateTime.now());
 
+            // save the parent workflow entity
+            workflow = persistenceManager.saveWorkflowDescriptor(workflow);
+            Assert.assertTrue(workflow != null && workflow.getId() != null);
+            logger.info("Workflow " + workflow.getName() + " saved, ID = " + workflow.getId().toString());
+
+            // save nodes within this workflow
             WorkflowNodeDescriptor node1 = new WorkflowNodeDescriptor();
             node1.setName("node1");
             node1.setComponentId("component01");
-
-            workflow.addNode(node1);
+            node1 = persistenceManager.saveWorkflowNodeDescriptor(node1, workflow);
+            Assert.assertTrue(node1 != null && node1.getId() != null);
+            logger.info("Workflow node " + node1.getName() + " saved, ID = " + node1.getId().toString());
 
             WorkflowNodeDescriptor node2 = new WorkflowNodeDescriptor();
             node2.setName("node2");
             node2.setComponentId("component01");
+            node2 = persistenceManager.saveWorkflowNodeDescriptor(node2, workflow);
+            Assert.assertTrue(node2 != null && node2.getId() != null);
+            logger.info("Workflow node " + node2.getName() + " saved, ID = " + node2.getId().toString());
 
-            workflow.addNode(node2);
+            WorkflowNodeDescriptor node3 = new WorkflowNodeDescriptor();
+            node3.setName("node3");
+            node3.setComponentId("component01");
+            node3 = persistenceManager.saveWorkflowNodeDescriptor(node3, workflow);
+            Assert.assertTrue(node3 != null && node3.getId() != null);
+            logger.info("Workflow node " + node3.getName() + " saved, ID = " + node3.getId().toString());
 
-            workflow = persistenceManager.saveWorkflowDescriptor(workflow);
-            // check persisted workflow
-            Assert.assertTrue(workflow != null && workflow.getNodes() != null);
-            logger.info("Workflow nodes count " + workflow.getNodes() != null ? workflow.getNodes().size() : " null");
+            logger.info("After saving each node separate : Workflow has " + workflow.getNodes().size() + " nodes");
 
-            if(workflow.getNodes() != null)
-            {
-                logger.info("Workflow nodes count " + workflow.getNodes().size());
-            }
-            else
-            {
-                logger.info("Workflow nodes NULL ");
-            }
+            // check persisted workflow nodes
+            Assert.assertTrue(workflow.getNodes() != null && workflow.getNodes().size() == 3);
         }
         catch (PersistenceException e)
         {
@@ -1045,6 +1051,55 @@ public class PersistenceManagerTest {
             Assert.fail(e.getMessage());
         }
     }
+
+    @Test
+    public void TC_29_save_new_workflow_together_with_nodes_cascade()
+    {
+        logger.info("TC_29_save_new_workflow_together_with_nodes_cascade");
+        try
+        {
+            // add a new workflow for test
+            WorkflowDescriptor workflow = new WorkflowDescriptor();
+            workflow.setName("test_workflow_2");
+            workflow.setStatus(Status.DRAFT);
+            workflow.setVisibility(Visibility.PRIVATE);
+            workflow.setUserName("admin");
+            workflow.setCreated(LocalDateTime.now());
+
+            // add nodes within this workflow
+            WorkflowNodeDescriptor node1 = new WorkflowNodeDescriptor();
+            node1.setName("node1");
+            node1.setComponentId("component01");
+
+            WorkflowNodeDescriptor node2 = new WorkflowNodeDescriptor();
+            node2.setName("node2");
+            node2.setComponentId("component01");
+
+            WorkflowNodeDescriptor node3 = new WorkflowNodeDescriptor();
+            node3.setName("node3");
+            node3.setComponentId("component01");
+
+            workflow.addNode(node1);
+            workflow.addNode(node2);
+            workflow.addNode(node3);
+
+            // save the parent workflow entity
+            workflow = persistenceManager.saveWorkflowDescriptor(workflow);
+            Assert.assertTrue(workflow != null && workflow.getId() != null);
+            logger.info("Workflow " + workflow.getName() + " saved, ID = " + workflow.getId().toString());
+
+            logger.info("After saving nodes cascade : Workflow has " + workflow.getNodes().size() + " nodes");
+
+            // check persisted workflow
+            Assert.assertTrue(workflow != null && workflow.getNodes() != null && workflow.getNodes().size() == 3);
+        }
+        catch (PersistenceException e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
+
 
 
 }
