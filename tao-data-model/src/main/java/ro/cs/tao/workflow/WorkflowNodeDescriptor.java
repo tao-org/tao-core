@@ -83,6 +83,6 @@ public class WorkflowNodeDescriptor {
     }
     @Override
     public int hashCode() {
-        return 67;
+        return 31 * (name != null ? name.hashCode() : 0) + 67 * (id != null ? id.hashCode() : 0);
     }
 }

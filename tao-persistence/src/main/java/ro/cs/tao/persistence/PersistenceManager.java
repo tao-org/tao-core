@@ -116,6 +116,10 @@ public class PersistenceManager implements MessagePersister {
     @Autowired
     private WorkflowDescriptorRepository workflowDescriptorRepository;
 
+    /** CRUD Repository for WorkflowDescriptor entities */
+    @Autowired
+    private WorkflowNodeDescriptorRepository workflowNodeDescriptorRepository;
+
 //    /** CRUD Repository for DataSource entities */
 //    @Autowired
 //    private DataSourceRepository dataSourceRepository;
@@ -1184,30 +1188,24 @@ public class PersistenceManager implements MessagePersister {
         containerRepository.delete(existingContainer);
     }
 
-    private boolean checkWorkflowNodeDescriptor(WorkflowNodeDescriptor nodeDescriptor)
+    private boolean checkWorkflowNodeDescriptor(WorkflowNodeDescriptor nodeDescriptor, WorkflowDescriptor workflowDescriptor, boolean existingEntity)
     {
-        if(nodeDescriptor == null)
-        {
-            return false;
-        }
-
-        if(nodeDescriptor.getWorkflow() == null)
-        {
-            return false;
-        }
-        if(nodeDescriptor.getComponentId() == null)
-        {
-            return false;
-        }
-
-        return true;
+        // check first the workflow (that should already be persisted)
+        return !(!checkWorkflowDescriptor(workflowDescriptor, true) ||
+          !checkIfExistsWorkflowDescriptorById(workflowDescriptor.getId())) && checkWorkflowNodeDescriptor(nodeDescriptor, existingEntity);
     }
 
-    private boolean checkWorkflowNodesDescriptors(List<WorkflowNodeDescriptor> nodesDescriptors)
+    private boolean checkWorkflowNodeDescriptor(WorkflowNodeDescriptor nodeDescriptor, boolean existingEntity) {
+        return nodeDescriptor != null && !(existingEntity && nodeDescriptor.getId() == null) &&
+          !(!existingEntity && nodeDescriptor.getId() != null) &&
+          !(existingEntity && (nodeDescriptor.getComponentId() == null || nodeDescriptor.getComponentId().isEmpty()));
+    }
+
+    private boolean checkWorkflowNodesDescriptors(List<WorkflowNodeDescriptor> nodesDescriptors , boolean existingEntity)
     {
         for (WorkflowNodeDescriptor nodeDescriptor : nodesDescriptors)
         {
-            if (!checkWorkflowNodeDescriptor(nodeDescriptor))
+            if (!checkWorkflowNodeDescriptor(nodeDescriptor, existingEntity))
             {
                 return false;
             }
@@ -1216,9 +1214,17 @@ public class PersistenceManager implements MessagePersister {
         return true;
     }
 
-     private boolean checkWorkflowDescriptor(WorkflowDescriptor workflow)
+     private boolean checkWorkflowDescriptor(WorkflowDescriptor workflow, boolean existingEntity)
     {
         if(workflow == null)
+        {
+            return false;
+        }
+        if(!existingEntity && workflow.getId() != null)
+        {
+            return false;
+        }
+        if (existingEntity && workflow.getId() == null)
         {
             return false;
         }
@@ -1235,7 +1241,7 @@ public class PersistenceManager implements MessagePersister {
             return false;
         }
 
-        if (workflow.getNodes() != null && !checkWorkflowNodesDescriptors(workflow.getNodes()))
+        if (workflow.getNodes() != null && !checkWorkflowNodesDescriptors(workflow.getNodes(), existingEntity))
         {
             return false;
         }
@@ -1247,7 +1253,7 @@ public class PersistenceManager implements MessagePersister {
     public WorkflowDescriptor saveWorkflowDescriptor(WorkflowDescriptor workflow) throws PersistenceException
     {
         // check method parameters
-        if(!checkWorkflowDescriptor(workflow))
+        if(!checkWorkflowDescriptor(workflow, false))
         {
             throw new PersistenceException("Invalid parameters were provided for adding new workflow !");
         }
@@ -1278,7 +1284,7 @@ public class PersistenceManager implements MessagePersister {
     public WorkflowDescriptor updateWorkflowDescriptor(WorkflowDescriptor workflow) throws PersistenceException
     {
         // check method parameters
-        if(!checkWorkflowDescriptor(workflow))
+        if(!checkWorkflowDescriptor(workflow, true))
         {
             throw new PersistenceException("Invalid parameters were provided for updating the workflow " + (workflow != null && workflow.getId() != null ? "(identifier " + workflow.getId() + ")" : "") + "!");
         }
@@ -1326,6 +1332,48 @@ public class PersistenceManager implements MessagePersister {
 
         // save it
         return workflowDescriptorRepository.save(workflowEnt);
+    }
+
+    @Transactional
+    public WorkflowNodeDescriptor saveWorkflowNodeDescriptor(WorkflowNodeDescriptor node, WorkflowDescriptor workflow) throws PersistenceException
+    {
+        // check method parameters
+        if(!checkWorkflowNodeDescriptor(node, workflow, false))
+        {
+            throw new PersistenceException("Invalid parameters were provided for adding new workflow node !");
+        }
+
+        node.setWorkflow(workflow);
+
+        // save the new WorkflowNodeDescriptor entity
+        final WorkflowNodeDescriptor savedWorkflowNodeDescriptor =  workflowNodeDescriptorRepository.save(node);
+
+        // add the node to workflow nodes collection
+        workflow.addNode(savedWorkflowNodeDescriptor);
+        workflow = workflowDescriptorRepository.save(workflow);
+
+        return savedWorkflowNodeDescriptor;
+
+    }
+
+    @Transactional
+    public WorkflowNodeDescriptor updateWorkflowNodeDescriptor(WorkflowNodeDescriptor node) throws PersistenceException
+    {
+        // check method parameters
+        if(!checkWorkflowNodeDescriptor(node, true))
+        {
+            throw new PersistenceException("Invalid parameters were provided for updating the workflow node " + (node != null && node.getId() != 0 ? "(identifier " + node.getId() + ")" : "") + "!");
+        }
+
+        // check if there is such node (to update) with the given identifier
+        final WorkflowNodeDescriptor existingNode = workflowNodeDescriptorRepository.findById(node.getId());
+        if (existingNode == null)
+        {
+            throw new PersistenceException("There is no workflow node with the given identifier: " + node.getId());
+        }
+
+        // save the updated entity
+        return workflowNodeDescriptorRepository.save(node);
     }
 
 }
