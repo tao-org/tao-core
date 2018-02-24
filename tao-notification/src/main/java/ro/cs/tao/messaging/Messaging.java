@@ -8,6 +8,7 @@ import java.io.Serializable;
 import java.security.Principal;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.regex.Pattern;
 
 /**
  * @author Cosmin Cara
@@ -35,7 +36,7 @@ public class Messaging {
         instance.subscribe(subscriber, topics);
     }
 
-    public static void subscribe(Consumer subscriber, String topicPattern) {
+    public static void subscribe(Consumer subscriber, Pattern topicPattern) {
         instance.subscribe(subscriber, topicPattern);
     }
 
