@@ -1100,6 +1100,162 @@ public class PersistenceManagerTest {
         }
     }
 
+    @Test
+    public void TC_30_save_new_workflow_with_node_custom_values()
+    {
+        logger.info("TC_30_save_new_workflow_with_node_custom_values");
+        try
+        {
+            // add a new workflow for test
+            WorkflowDescriptor workflow = new WorkflowDescriptor();
+            workflow.setName("test_workflow_3");
+            workflow.setStatus(Status.DRAFT);
+            workflow.setVisibility(Visibility.PRIVATE);
+            workflow.setUserName("admin");
+            workflow.setCreated(LocalDateTime.now());
+
+            // add nodes within this workflow
+            WorkflowNodeDescriptor node1 = new WorkflowNodeDescriptor();
+            node1.setName("node1");
+            node1.setComponentId("component01");
+
+            node1.addCustomValue("customName1", "customValue1");
+            node1.addCustomValue("customName2", "customValue2");
+            node1.addCustomValue("customName3", "customValue3");
+
+            workflow.addNode(node1);
+
+            // save the parent workflow entity
+            workflow = persistenceManager.saveWorkflowDescriptor(workflow);
+            Assert.assertTrue(workflow != null && workflow.getId() != null);
+            logger.info("Workflow " + workflow.getName() + " saved, ID = " + workflow.getId().toString());
+
+            // check persisted workflow
+            Assert.assertTrue(workflow != null && workflow.getNodes() != null && workflow.getNodes().size() == 1);
+
+            // check persisted node custom values
+            Assert.assertTrue(workflow.getNodes().get(0).getCustomValues().size() == 3);
+        }
+        catch (PersistenceException e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
+
+
+    @Test
+    public void TC_31_delete_workflow_node()
+    {
+        logger.info("TC_31_delete_workflow_node");
+        try
+        {
+            // add a new workflow for test
+            WorkflowDescriptor workflow = new WorkflowDescriptor();
+            workflow.setName("test_workflow_4");
+            workflow.setStatus(Status.DRAFT);
+            workflow.setVisibility(Visibility.PRIVATE);
+            workflow.setUserName("admin");
+            workflow.setCreated(LocalDateTime.now());
+
+            // add nodes within this workflow
+            WorkflowNodeDescriptor node1 = new WorkflowNodeDescriptor();
+            node1.setName("node1");
+            node1.setComponentId("component01");
+
+            WorkflowNodeDescriptor node2 = new WorkflowNodeDescriptor();
+            node2.setName("node2");
+            node2.setComponentId("component01");
+
+            WorkflowNodeDescriptor node3 = new WorkflowNodeDescriptor();
+            node3.setName("node3");
+            node3.setComponentId("component01");
+
+            workflow.addNode(node1);
+            workflow.addNode(node2);
+            workflow.addNode(node3);
+
+            // save the parent workflow entity
+            workflow = persistenceManager.saveWorkflowDescriptor(workflow);
+            Assert.assertTrue(workflow != null && workflow.getId() != null);
+            logger.info("Workflow " + workflow.getName() + " saved, ID = " + workflow.getId().toString());
+
+            logger.info("After saving nodes cascade : Workflow has " + workflow.getNodes().size() + " nodes");
+            // check persisted workflow
+            Assert.assertTrue(workflow != null && workflow.getNodes() != null && workflow.getNodes().size() == 3);
+
+            // remove a node
+            workflow.removeNode(node2);
+            workflow = persistenceManager.updateWorkflowDescriptor(workflow);
+
+            logger.info("After removing a node : Workflow has " + workflow.getNodes().size() + " nodes");
+            // check persisted workflow
+            Assert.assertTrue(workflow != null && workflow.getNodes() != null && workflow.getNodes().size() == 2);
+
+        }
+        catch (PersistenceException e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void TC_32_delete_workflow()
+    {
+        logger.info("TC_32_delete_workflow");
+        try
+        {
+            // add a new workflow for test
+            WorkflowDescriptor workflow = new WorkflowDescriptor();
+            workflow.setName("test_workflow_5");
+            workflow.setStatus(Status.DRAFT);
+            workflow.setVisibility(Visibility.PRIVATE);
+            workflow.setUserName("admin");
+            workflow.setCreated(LocalDateTime.now());
+
+            // add nodes within this workflow
+            WorkflowNodeDescriptor node1 = new WorkflowNodeDescriptor();
+            node1.setName("node1");
+            node1.setComponentId("component01");
+
+            WorkflowNodeDescriptor node2 = new WorkflowNodeDescriptor();
+            node2.setName("node2");
+            node2.setComponentId("component01");
+
+            WorkflowNodeDescriptor node3 = new WorkflowNodeDescriptor();
+            node3.setName("node3");
+            node3.setComponentId("component01");
+
+            WorkflowNodeDescriptor node4 = new WorkflowNodeDescriptor();
+            node4.setName("node4");
+            node4.setComponentId("component01");
+
+            workflow.addNode(node1);
+            workflow.addNode(node2);
+            workflow.addNode(node3);
+            workflow.addNode(node4);
+
+            // save the parent workflow entity
+            workflow = persistenceManager.saveWorkflowDescriptor(workflow);
+            Assert.assertTrue(workflow != null && workflow.getId() != null);
+            logger.info("Workflow " + workflow.getName() + " saved, ID = " + workflow.getId().toString());
+
+            logger.info("After saving nodes cascade : Workflow has " + workflow.getNodes().size() + " nodes");
+            // check persisted workflow
+            Assert.assertTrue(workflow != null && workflow.getNodes() != null && workflow.getNodes().size() == 4);
+
+            // delete workflow
+            workflow = persistenceManager.deleteWorkflowDescriptor(workflow.getId());
+            Assert.assertTrue(workflow != null && workflow.getNodes() != null && workflow.getNodes().size() == 4 && !workflow.isActive());
+
+        }
+        catch (PersistenceException e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
 
 
 }

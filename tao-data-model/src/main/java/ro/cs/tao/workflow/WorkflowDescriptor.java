@@ -61,6 +61,7 @@ public class WorkflowDescriptor {
     public Status getStatus() { return status; }
     public void setStatus(Status status) { this.status = status; }
 
+    // NOT WORKING! (save nodes not working properly)
     /*@XmlElementWrapper(name = "nodes")
     public List<WorkflowNodeDescriptor> getNodes() {
         if (this.nodes != null && this.nodes.size() > 0) {

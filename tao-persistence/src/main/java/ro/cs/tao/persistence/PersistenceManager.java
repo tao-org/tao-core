@@ -1258,6 +1258,9 @@ public class PersistenceManager implements MessagePersister {
             throw new PersistenceException("Invalid parameters were provided for adding new workflow !");
         }
 
+        // by default a new workflow is active
+        workflow.setActive(true);
+
         // save the new WorkflowDescriptor entity and return it
         return workflowDescriptorRepository.save(workflow);
     }
