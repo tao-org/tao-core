@@ -135,6 +135,15 @@ public class WorkflowDescriptor {
 //        this.nodes.addAll(nodes);
 //    }
 
+    public void setNodes(List<WorkflowNodeDescriptor> nodes)
+    {
+        this.nodes.clear();
+        for (WorkflowNodeDescriptor node : nodes)
+        {
+           addNode(node);
+        }
+    }
+
     private void orderNodes() {
         List<WorkflowNodeDescriptor> newList = new ArrayList<>();
         WorkflowNodeDescriptor root = nodes.stream()
