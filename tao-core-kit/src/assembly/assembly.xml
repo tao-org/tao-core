@@ -17,7 +17,7 @@
             <outputFileNameMapping>${artifact.artifactId}-${artifact.version}.${artifact.extension}
             </outputFileNameMapping>
             <excludes>
-                <exclude>ro.cs.tao:*</exclude>
+                <exclude>ro.cs.tao:tao-*</exclude>
             </excludes>
         </dependencySet>
         <dependencySet>

@@ -1,0 +1,1 @@
+java -cp ../modules/*;../lib/* ro.cs.tao.TAO %*
