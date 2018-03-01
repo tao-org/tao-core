@@ -5,6 +5,9 @@ import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.component.execution.ExecutionJob;
+import ro.cs.tao.component.execution.ExecutionStatus;
+
+import java.util.List;
 
 /**
  * CRUD repository for ExecutionJob entities
@@ -17,9 +20,17 @@ import ro.cs.tao.component.execution.ExecutionJob;
 @Transactional
 public interface ExecutionJobRepository extends PagingAndSortingRepository<ExecutionJob, Long> {
     /**
-     * Find ExecutionJob entity by its given identifier
+     * Finds ExecutionJob entity by its given identifier
      * @param id - the given job identifier
      * @return the corresponding ExecutionJob entity
      */
     ExecutionJob findById(Long id);
+
+    ExecutionJob findByWorkflowId(long workflowId);
+
+    /**
+     * Returns all the entities having the given status
+     * @param status    The status to lookup for
+     */
+    List<ExecutionJob> findByExecutionStatus(ExecutionStatus status);
 }
