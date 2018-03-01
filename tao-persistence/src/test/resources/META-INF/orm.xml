@@ -501,17 +501,11 @@
                 <join-column name="workflow_id" referenced-column-name="id" nullable="false"/>
             </many-to-one>
 
-            <!--
-            <many-to-many name="incomingNodes" fetch="EAGER">
-                <join-table name="tao.graph_node_incomings">
-                    <join-column name="graph_node_id" referenced-column-name="id"/>
-                    <inverse-join-column name="graph_node_incoming_id" referenced-column-name="id"/>
-                </join-table>
-                <cascade>
-                    <cascade-all/>
-                </cascade>
-            </many-to-many>
-            -->
+            <element-collection name="incomingLinks" target-class="ro.cs.tao.component.ComponentLink" access="PROPERTY" fetch="LAZY">
+                <collection-table name="tao.component_link" >
+                    <join-column name="graph_node_id" referenced-column-name="id" />
+                </collection-table>
+            </element-collection>
 
             <element-collection name="customValues" target-class="ro.cs.tao.workflow.ParameterValue" access="PROPERTY" fetch="LAZY">
                 <collection-table name="tao.graph_node_processing_custom_values" >
@@ -519,7 +513,57 @@
                 </collection-table>
             </element-collection>
 
-            <transient name="incomingLinks"/>
+        </attributes>
+    </entity>
+
+
+    <entity class="ro.cs.tao.component.SourceDescriptor" access="PROPERTY">
+        <table name="tao.source_descriptor"/>
+        <secondary-table name="tao.data_descriptor">
+            <primary-key-join-column name="source_descriptor_id" referenced-column-name="id"/>
+        </secondary-table>
+        <convert converter="ro.cs.tao.persistence.convert.ConstraintsConverter" attribute-name="constraints"/>
+        <attributes>
+            <basic name="parentId">
+                <column name="parent_id" nullable="false" column-definition="varchar(512) NOT NULL"/>
+            </basic>
+            <basic name="constraints">
+                <column name="constraints" nullable="true" column-definition="text NULL"/>
+            </basic>
+
+            <embedded name="dataDescriptor" >
+                <!--<association-override name="xx">
+                    <join-table name="tao.data_descriptor">
+                        <join-column name="source_descriptor_id" referenced-column-name="id" />
+                    </join-table>
+                </association-override>-->
+            </embedded>
+
+        </attributes>
+    </entity>
+
+
+    <entity class="ro.cs.tao.component.TargetDescriptor" access="PROPERTY">
+        <table name="tao.target_descriptor"/>
+        <secondary-table name="tao.data_descriptor">
+            <primary-key-join-column name="target_descriptor_id" referenced-column-name="id"/>
+        </secondary-table>
+        <convert converter="ro.cs.tao.persistence.convert.ConstraintsConverter" attribute-name="constraints"/>
+        <attributes>
+            <basic name="parentId">
+                <column name="parent_id" nullable="false" column-definition="varchar(512) NOT NULL"/>
+            </basic>
+            <basic name="constraints">
+                <column name="constraints" nullable="true" column-definition="text NULL"/>
+            </basic>
+
+            <embedded name="dataDescriptor" >
+                <!--<association-override name="xx">
+                    <join-table name="tao.data_descriptor">
+                        <join-column name="source_descriptor_id" referenced-column-name="id" />
+                    </join-table>
+                </association-override>-->
+            </embedded>
 
         </attributes>
     </entity>
@@ -583,6 +627,49 @@
         </attributes>
     </embeddable>
 
+    <embeddable class="ro.cs.tao.component.DataDescriptor" access="PROPERTY">
+        <attributes>
+            <basic name="formatType">
+                <column name="data_format_id" nullable="false" column-definition="integer NOT NULL"/>
+                <convert converter="ro.cs.tao.persistence.convert.DataFormatConverter" attribute-name="formatType" />
+            </basic>
+            <basic name="geometry">
+                <column name="geometry" nullable="false" column-definition="geography(POLYGON, 4326) NOT NULL"/>
+            </basic>
+            <basic name="crs">
+                <column name="coordinate_reference_system" nullable="true" column-definition="text NULL"/>
+            </basic>
+            <basic name="sensorType">
+                <column name="sensor_type_id" nullable="false" column-definition="integer NOT NULL"/>
+                <convert converter="ro.cs.tao.persistence.convert.SensorTypeConverter" attribute-name="sensorType" />
+            </basic>
+            <basic name="dimension">
+                <column name="dimension" nullable="false" column-definition="json NOT NULL"/>
+            </basic>
+            <basic name="location">
+                <column name="location" nullable="false" column-definition="varchar(512) NOT NULL"/>
+            </basic>
+        </attributes>
+    </embeddable>
+
+
+    <embeddable class="ro.cs.tao.component.ComponentLink" access="PROPERTY">
+        <attributes>
+            <many-to-one name="output" fetch="LAZY">
+                <join-column name="source_descriptor_id" nullable="false"/>
+                <!--<cascade>
+                    <cascade-persist/>
+                </cascade>-->
+            </many-to-one>
+            <many-to-one name="input" fetch="LAZY">
+                <join-column name="target_descriptor_id" nullable="false"/>
+                <!--<cascade>
+                    <cascade-persist/>
+                </cascade>-->
+            </many-to-one>
+        </attributes>
+    </embeddable>
+
 
     <converter class="ro.cs.tao.persistence.convert.TemplateTypeConverter" />
     <converter class="ro.cs.tao.persistence.convert.ProcessingComponentVisibilityConverter" />
@@ -596,6 +683,7 @@
     <converter class="ro.cs.tao.persistence.convert.ServiceStatusConverter" />
     <converter class="ro.cs.tao.persistence.convert.WorkflowGraphStatusConverter" />
     <converter class="ro.cs.tao.persistence.convert.WorkflowGraphVisibilityConverter" />
+    <converter class="ro.cs.tao.persistence.convert.ConstraintsConverter" />
 
 
 </entity-mappings>

@@ -353,4 +353,87 @@ ALTER TABLE tao.notification ADD CONSTRAINT PK_notification PRIMARY KEY (timesta
 
 --ALTER TABLE tao.notification ADD CONSTRAINT FK_notification_user
 --	FOREIGN KEY (user_id) REFERENCES tao."user" (id) ON DELETE No Action ON UPDATE No Action;
-	
+
+
+-------------------------------------------------------------------------------
+-- table: source_descriptor
+DROP TABLE IF EXISTS tao.source_descriptor CASCADE;
+
+CREATE TABLE tao.source_descriptor
+(
+    id varchar(512) NOT NULL,
+	parent_id varchar(512) NOT NULL,
+	constraints text NULL
+);
+
+ALTER TABLE tao.source_descriptor ADD CONSTRAINT PK_source_descriptor PRIMARY KEY (id);
+
+ALTER TABLE tao.source_descriptor ADD CONSTRAINT FK_source_descriptor_processing_component
+	FOREIGN KEY (parent_id) REFERENCES tao.processing_component (id) ON DELETE No Action ON UPDATE No Action;
+
+
+-------------------------------------------------------------------------------
+-- table: target_descriptor
+DROP TABLE IF EXISTS tao.target_descriptor CASCADE;
+
+CREATE TABLE tao.target_descriptor
+(
+    id varchar(512) NOT NULL,
+	parent_id varchar(512) NOT NULL,
+	constraints text NULL
+);
+
+ALTER TABLE tao.target_descriptor ADD CONSTRAINT PK_target_descriptor PRIMARY KEY (id);
+
+ALTER TABLE tao.target_descriptor ADD CONSTRAINT FK_target_descriptor_processing_component
+	FOREIGN KEY (parent_id) REFERENCES tao.processing_component (id) ON DELETE No Action ON UPDATE No Action;
+
+
+-------------------------------------------------------------------------------
+-- table: data_descriptor
+DROP TABLE IF EXISTS tao.data_descriptor CASCADE;
+
+CREATE TABLE tao.data_descriptor
+(
+    source_descriptor_id varchar(512) NULL,
+    target_descriptor_id varchar(512) NULL,
+	data_format_id integer NOT NULL,
+	geometry geography(POLYGON, 4326) NOT NULL,
+	coordinate_reference_system text NULL,
+	sensor_type_id integer NOT NULL,
+	dimension json NOT NULL,
+	location varchar(512) NOT NULL
+);
+
+ALTER TABLE tao.data_descriptor ADD CONSTRAINT PK_data_descriptor PRIMARY KEY (source_descriptor_id, target_descriptor_id, location);
+
+ALTER TABLE tao.data_descriptor ADD CONSTRAINT FK_data_descriptor_data_format
+	FOREIGN KEY (data_format_id) REFERENCES tao.data_format (id) ON DELETE No Action ON UPDATE No Action;
+
+ALTER TABLE tao.data_descriptor ADD CONSTRAINT FK_data_descriptor_sensor_type
+	FOREIGN KEY (sensor_type_id) REFERENCES tao.sensor_type (id) ON DELETE No Action ON UPDATE No Action;
+
+
+-------------------------------------------------------------------------------
+-- table: component_link
+DROP TABLE IF EXISTS tao.component_link CASCADE;
+
+CREATE TABLE tao.component_link
+(
+    graph_node_id bigint NOT NULL,
+    source_descriptor_id varchar(512) NOT NULL,
+    target_descriptor_id varchar(512) NOT NULL
+);
+
+ALTER TABLE tao.component_link ADD CONSTRAINT PK_component_link PRIMARY KEY (graph_node_id, source_descriptor_id, target_descriptor_id);
+
+ALTER TABLE tao.component_link ADD CONSTRAINT FK_component_link_graph_node
+	FOREIGN KEY (graph_node_id) REFERENCES tao.graph_node (id) ON DELETE No Action ON UPDATE No Action;
+
+ALTER TABLE tao.component_link ADD CONSTRAINT FK_component_link_source_descriptor
+	FOREIGN KEY (source_descriptor_id) REFERENCES tao.source_descriptor (id) ON DELETE No Action ON UPDATE No Action;
+
+ALTER TABLE tao.component_link ADD CONSTRAINT FK_component_link_target_descriptor
+	FOREIGN KEY (target_descriptor_id) REFERENCES tao.target_descriptor (id) ON DELETE No Action ON UPDATE No Action;
+
+

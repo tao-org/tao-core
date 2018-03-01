@@ -35,6 +35,9 @@ public class ComponentLink {
     private SourceDescriptor output;
     private TargetDescriptor input;
 
+    // default constructor needed for hibernate entity instantiation
+    public ComponentLink(){}
+
     /**
      * Checks that the two arguments are compatible in order to create a link.
      *
@@ -58,6 +61,11 @@ public class ComponentLink {
     public SourceDescriptor getOutput() {
         return this.output;
     }
+
+    public void setOutput(SourceDescriptor output) {
+        this.output = output;
+    }
+
     /**
      * Returns the input of this link, which is a component output.
      */
@@ -65,4 +73,7 @@ public class ComponentLink {
         return this.input;
     }
 
+    public void setInput(TargetDescriptor input) {
+        this.input = input;
+    }
 }

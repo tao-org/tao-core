@@ -95,6 +95,10 @@ public class SourceDescriptor extends Identifiable {
         this.constraints.add(constraint);
     }
 
+    public void setConstraints(List<String> constraints) {
+        this.constraints = constraints;
+    }
+
     /**
      * Verifies if all the constraints defined on this instance are satisfied by the target descriptor.
      *

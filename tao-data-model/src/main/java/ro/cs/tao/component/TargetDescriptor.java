@@ -93,4 +93,8 @@ public class TargetDescriptor extends Identifiable {
     public void addConstraint(String constraint) {
         this.constraints.add(constraint);
     }
+
+    public void setConstraints(List<String> constraints) {
+        this.constraints = constraints;
+    }
 }
