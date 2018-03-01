@@ -4,7 +4,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+import ro.cs.tao.workflow.Status;
 import ro.cs.tao.workflow.WorkflowDescriptor;
+
+import java.util.List;
 
 /**
  * CRUD repository for WorkflowDescriptor entities
@@ -22,4 +25,6 @@ public interface WorkflowDescriptorRepository extends PagingAndSortingRepository
      * @return the corresponding WorkflowDescriptor entity
      */
     WorkflowDescriptor findById(Long id);
+
+    List<WorkflowDescriptor> findByStatus(Status status);
 }
