@@ -399,8 +399,7 @@ CREATE TABLE tao.target_descriptor
     geometry geography(POLYGON, 4326) NOT NULL,
     coordinate_reference_system text NULL,
     sensor_type_id integer NOT NULL,
---    dimension json NOT NULL,
-    dimension text NOT NULL,
+    dimension json NOT NULL,
     location varchar(512) NOT NULL
 );
 
