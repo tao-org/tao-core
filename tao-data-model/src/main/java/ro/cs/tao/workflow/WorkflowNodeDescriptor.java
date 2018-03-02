@@ -8,7 +8,6 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,25 +16,13 @@ import java.util.List;
  */
 @XmlRootElement(name = "node")
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
-public class WorkflowNodeDescriptor {
-    protected Long id;
-    protected String name;
-    protected LocalDateTime created;
+public class WorkflowNodeDescriptor extends GraphObject {
     private String componentId;
     private float xCoord;
     private float yCoord;
     private List<ComponentLink> incomingLinks;
-    private List<ParameterValue> customValues;
 
     private WorkflowDescriptor workflow;
-
-    @XmlElement(name = "id")
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-
-    @XmlElement(name = "name")
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
 
     @XmlElement(name = "componentId")
     public String getComponentId() { return componentId; }
@@ -48,10 +35,6 @@ public class WorkflowNodeDescriptor {
     @XmlTransient
     public float getyCoord() { return yCoord; }
     public void setyCoord(float yCoord) { this.yCoord = yCoord; }
-
-    @XmlElement(name = "created")
-    public LocalDateTime getCreated() { return created; }
-    public void setCreated(LocalDateTime created) { this.created = created; }
 
     @XmlElementWrapper(name = "incomingNodes")
     public List<ComponentLink> getIncomingLinks() { return incomingLinks; }
@@ -78,22 +61,6 @@ public class WorkflowNodeDescriptor {
         if (this.incomingLinks.contains(link)) {
             this.incomingLinks.remove(link);
         }
-    }
-
-    @XmlElementWrapper(name = "customValues")
-    public List<ParameterValue> getCustomValues() { return customValues; }
-    public void setCustomValues(List<ParameterValue> customValues) { this.customValues = customValues; }
-    public void addCustomValue(ParameterValue parameterValue) {
-        if (this.customValues == null) {
-            this.customValues = new ArrayList<>();
-        }
-        this.customValues.add(parameterValue);
-    }
-    public void addCustomValue(String name, String value) {
-        ParameterValue parameterValue = new ParameterValue();
-        parameterValue.setParameterName(name);
-        parameterValue.setParameterValue(value);
-        addCustomValue(parameterValue);
     }
 
     @XmlTransient
