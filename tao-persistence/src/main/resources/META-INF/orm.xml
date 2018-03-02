@@ -625,15 +625,27 @@
                 <column name="sensor_type_id" nullable="false" column-definition="integer NOT NULL"/>
                 <convert converter="ro.cs.tao.persistence.convert.SensorTypeConverter" attribute-name="sensorType" />
             </basic>
+
+            <!-- error: column dimension is of type json but expression is of type bytea -->
             <!--
             <basic name="dimension">
                 <column name="dimension" nullable="false" column-definition="json NOT NULL"/>
             </basic>
             -->
+
+            <!-- works with converter, here column declared as text, but in DB as json ! -->
+            <!--
             <basic name="dimension">
                 <column name="dimension" nullable="false" column-definition="text NOT NULL"/>
                 <convert converter="ro.cs.tao.persistence.convert.DimensionConverter" />
             </basic>
+            -->
+
+            <basic name="dimension">
+                <column name="dimension" nullable="false" column-definition="json NOT NULL"/>
+                <convert converter="ro.cs.tao.persistence.convert.DimensionConverter" />
+            </basic>
+
             <basic name="location">
                 <column name="location" nullable="false" column-definition="varchar(512) NOT NULL"/>
             </basic>
