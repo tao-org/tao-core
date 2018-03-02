@@ -830,11 +830,9 @@ public class PersistenceManager implements MessagePersister {
     }
 
     @Transactional
-    public ExecutionJob saveExecutionJob(ExecutionJob job) throws PersistenceException
-    {
+    public ExecutionJob saveExecutionJob(ExecutionJob job) throws PersistenceException {
         // check method parameters
-        if(!checkExecutionJob(job, false))
-        {
+        if(!checkExecutionJob(job, false)) {
             throw new PersistenceException("Invalid parameters were provided for adding new execution job !");
         }
 
@@ -843,16 +841,13 @@ public class PersistenceManager implements MessagePersister {
     }
 
     @Transactional(readOnly = true)
-    public boolean checkIfExistsExecutionJobById(final Long jobId)
-    {
+    public boolean checkIfExistsExecutionJobById(final Long jobId) {
         boolean result = false;
 
-        if (jobId != null && jobId > 0)
-        {
+        if (jobId != null && jobId > 0) {
             // try to retrieve ExecutionJob after its identifier
             final ExecutionJob jobEnt = executionJobRepository.findById(jobId);
-            if (jobEnt != null)
-            {
+            if (jobEnt != null) {
                 result = true;
             }
         }
@@ -861,18 +856,15 @@ public class PersistenceManager implements MessagePersister {
     }
 
     @Transactional
-    public ExecutionJob updateExecutionJob(ExecutionJob job) throws PersistenceException
-    {
+    public ExecutionJob updateExecutionJob(ExecutionJob job) throws PersistenceException {
         // check method parameters
-        if(!checkExecutionJob(job, true))
-        {
+        if(!checkExecutionJob(job, true)) {
             throw new PersistenceException("Invalid parameters were provided for updating the execution job " + (job != null && job.getId() != 0 ? "(identifier " + job.getId() + ")" : "") + "!");
         }
 
         // check if there is such job (to update) with the given identifier
         final ExecutionJob existingJob = executionJobRepository.findById(job.getId());
-        if (existingJob == null)
-        {
+        if (existingJob == null) {
             throw new PersistenceException("There is no execution job with the given identifier: " + job.getId());
         }
 
