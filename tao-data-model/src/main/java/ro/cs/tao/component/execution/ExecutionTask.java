@@ -17,15 +17,17 @@ import java.util.stream.Collectors;
  */
 public class ExecutionTask {
     private Long id;
+    private ExecutionTask groupTask;
     private Long workflowNodeId;
     private ProcessingComponent processingComponent;
-    private ExecutionStatus executionStatus = ExecutionStatus.UNDETERMINED;
+    private Integer internalState;
     private String resourceId;
     private String executionNodeHostName;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private List<Variable> inputParameterValues;
     private ExecutionJob job;
+    ExecutionStatus executionStatus = ExecutionStatus.UNDETERMINED;
 
     public ExecutionTask() { }
 
@@ -39,6 +41,9 @@ public class ExecutionTask {
     public void setId(Long id) {
         this.id = id;
     }
+
+    public ExecutionTask getGroupTask() { return groupTask; }
+    public void setGroupTask(ExecutionTask groupTask) { this.groupTask = groupTask; }
 
     public Long getWorkflowNodeId() { return workflowNodeId; }
     public void setWorkflowNodeId(Long workflowNodeId) { this.workflowNodeId = workflowNodeId; }
@@ -56,6 +61,9 @@ public class ExecutionTask {
     public ExecutionStatus getExecutionStatus() {
         return executionStatus;
     }
+
+    public Integer getInternalState() { return internalState; }
+    public void setInternalState(Integer internalState) { this.internalState = internalState; }
 
     public void setResourceId(String resourceId) {
         this.resourceId = resourceId;
@@ -128,5 +136,9 @@ public class ExecutionTask {
                                        .collect(Collectors.toMap(Variable::getKey, Variable::getValue)));
         }
         return this.processingComponent.buildExecutionCommand(inputParams);
+    }
+
+    public ExecutionTask getNext() {
+        return groupTask != null ? groupTask.getNext() : job.getNext();
     }
 }

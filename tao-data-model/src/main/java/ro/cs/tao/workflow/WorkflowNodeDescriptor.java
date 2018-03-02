@@ -8,6 +8,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,8 +18,9 @@ import java.util.List;
 @XmlRootElement(name = "node")
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class WorkflowNodeDescriptor {
-    private Long id;
-    private String name;
+    protected Long id;
+    protected String name;
+    protected LocalDateTime created;
     private String componentId;
     private float xCoord;
     private float yCoord;
@@ -47,9 +49,36 @@ public class WorkflowNodeDescriptor {
     public float getyCoord() { return yCoord; }
     public void setyCoord(float yCoord) { this.yCoord = yCoord; }
 
+    @XmlElement(name = "created")
+    public LocalDateTime getCreated() { return created; }
+    public void setCreated(LocalDateTime created) { this.created = created; }
+
     @XmlElementWrapper(name = "incomingNodes")
     public List<ComponentLink> getIncomingLinks() { return incomingLinks; }
-    public void setIncomingLinks(List<ComponentLink> links) { this.incomingLinks = links; }
+    public void setIncomingLinks(List<ComponentLink> links) {
+        if (this.incomingLinks != null) {
+            this.incomingLinks.clear();
+        }
+        if (links != null) {
+            for (ComponentLink link : links) {
+                addLink(link);
+            }
+        }
+    }
+    public void addLink (ComponentLink link) {
+        if (this.incomingLinks == null) {
+            this.incomingLinks = new ArrayList<>();
+        }
+        if (!this.incomingLinks.contains(link)) {
+            this.incomingLinks.add(link);
+        }
+    }
+
+    public void removeLink(ComponentLink link) {
+        if (this.incomingLinks.contains(link)) {
+            this.incomingLinks.remove(link);
+        }
+    }
 
     @XmlElementWrapper(name = "customValues")
     public List<ParameterValue> getCustomValues() { return customValues; }

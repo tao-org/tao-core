@@ -4,23 +4,15 @@ import org.ggf.drmaa.DrmaaException;
 import org.ggf.drmaa.InternalException;
 import org.ggf.drmaa.JobTemplate;
 import org.ggf.drmaa.Session;
-//import org.ggf.drmaa.local.SessionFactory;
-import ro.cs.tao.component.ProcessingComponent;
-import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.component.execution.ExecutionStatus;
 import ro.cs.tao.component.execution.ExecutionTask;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.Executor;
-import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
-import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,52 +20,28 @@ import java.util.regex.Pattern;
  * Created by cosmin on 9/12/2017.
  */
 public class DrmaaTaoExecutor extends Executor {
-    protected Logger logger = Logger.getLogger(DrmaaTaoExecutor.class.getName());
+    private Session session;
 
-    private static final int TIMER_PERIOD = 1000;
-    private final Timer executionsCheckTimer = new Timer();
-    /* Flag for trying to close the monitoring thread in an elegant manner */
-    private Boolean isInitialized = false;
-    protected Session session;
-    private PersistenceManager persistenceManager = SpringContextBridge.services().getPersistenceManager();
     @Override
     public void initialize() throws ExecutionException {
-        synchronized (isInitialized) {
-            if (isInitialized)
-                return;
-            // mark the executor as initialized
-            isInitialized = true;
-        }
         session = org.ggf.drmaa.SessionFactory.getFactory().getSession();
         try {
-            session.init (null);
+            session.init(null);
+            super.initialize();
         } catch (DrmaaException e) {
             isInitialized = false;
             throw new ExecutionException("Error initiating DRMAA session", e);
         }
-        // once the session was created, start the timer
-        executionsCheckTimer.schedule(new ExecutionsCheckTimer(this), 0, TIMER_PERIOD);
     }
 
     @Override
-    public void close()  throws ExecutionException {
-        // stop the monitoring thread
-        synchronized (isInitialized) {
-            if (!isInitialized)
-                return;
-            isInitialized = false;
-        }
-        executionsCheckTimer.cancel();
+    public void close() throws ExecutionException {
+        super.close();
         try {
-            session.exit ();
+            session.exit();
         } catch (DrmaaException e) {
-            e.printStackTrace();
+            logger.severe(e.getMessage());
         }
-    }
-
-    @Override
-    public boolean supports(TaoComponent component) {
-        return (component instanceof ProcessingComponent);
     }
 
     @Override
@@ -89,19 +57,19 @@ public class DrmaaTaoExecutor extends Executor {
         String cmd = argsList.remove(0);
 
         try {
-            JobTemplate jt = session.createJobTemplate ();
+            JobTemplate jt = session.createJobTemplate();
             if (jt == null) {
                 throw new ExecutionException("Error creating job template from the session!");
             }
 
-            jt.setRemoteCommand (cmd);
-            jt.setArgs (argsList);
-            String id = session.runJob (jt);
+            jt.setRemoteCommand(cmd);
+            jt.setArgs(argsList);
+            String id = session.runJob(jt);
             if(id == null) {
                 throw new ExecutionException("Unable to run job (id null) for task " + task.getId());
             }
 
-            session.deleteJobTemplate (jt);
+            session.deleteJobTemplate(jt);
 
             task.setResourceId(id);
             task.setStartTime(LocalDateTime.now());
@@ -120,7 +88,7 @@ public class DrmaaTaoExecutor extends Executor {
     @Override
     public void stop(ExecutionTask task)  throws ExecutionException {
         try {
-            session.control (task.getResourceId(), Session.TERMINATE);
+            session.control(task.getResourceId(), Session.TERMINATE);
         } catch (DrmaaException e) {
             throw new ExecutionException("Error executing DRMAA session terminate for task with id " + task.getResourceId(), e);
         }
@@ -129,7 +97,7 @@ public class DrmaaTaoExecutor extends Executor {
     @Override
     public void suspend(ExecutionTask task) throws ExecutionException {
         try {
-            session.control (task.getResourceId(), Session.SUSPEND);
+            session.control(task.getResourceId(), Session.SUSPEND);
             changeTaskStatus(task, ExecutionStatus.SUSPENDED);
         } catch (DrmaaException e) {
             throw new ExecutionException("Error executing DRMAA session suspend for task with id " + task.getResourceId(), e);
@@ -141,16 +109,17 @@ public class DrmaaTaoExecutor extends Executor {
     @Override
     public void resume(ExecutionTask task) throws ExecutionException {
         try {
-            session.control (task.getResourceId(), Session.RESUME);
+            session.control(task.getResourceId(), Session.RESUME);
             changeTaskStatus(task, ExecutionStatus.RUNNING);
         } catch (DrmaaException e) {
             throw new ExecutionException("Error executing DRMAA session resume for task with id " + task.getResourceId(), e);
         } catch (PersistenceException e) {
             throw new ExecutionException("Error saving resumed status for task with id " + task.getResourceId(), e);
         }
-}
+    }
 
-    protected void monitorExecutions() {
+    @Override
+    public void monitorExecutions() {
         if(!isInitialized) {
             return;
         }
@@ -203,32 +172,4 @@ public class DrmaaTaoExecutor extends Executor {
 
     @Override
     public String defaultName() { return "DRMAAExecutor"; }
-
-    private void markTaskFinished(ExecutionTask task, ExecutionStatus status) throws PersistenceException {
-        task.setEndTime(LocalDateTime.now());
-        changeTaskStatus(task, status);
-    }
-
-    private void changeTaskStatus(ExecutionTask task, ExecutionStatus status) throws PersistenceException {
-        if(status != task.getExecutionStatus()) {
-            task.setExecutionStatus(status);
-            persistenceManager.updateExecutionTask(task);
-        }
-    }
-
-    private class ExecutionsCheckTimer extends TimerTask {
-        private DrmaaTaoExecutor executor;
-        public ExecutionsCheckTimer(DrmaaTaoExecutor executor) {
-            this.executor = executor;
-        }
-        @Override
-        public void run() {
-            try {
-                executor.monitorExecutions();
-            } catch (ExecutionException e) {
-                logger.severe("DrmaaExecutor: Error during monitoring executions " + e.getMessage());
-            }
-
-        }
-    }
 }

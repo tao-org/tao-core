@@ -3,6 +3,7 @@ package ro.cs.tao.component.execution;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created by cosmin on 9/21/2017.
@@ -60,5 +61,46 @@ public class ExecutionJob {
             this.tasks = new ArrayList<>();
         }
         this.tasks.add(task);
+    }
+
+    public List<ExecutionTask> find(ExecutionStatus status) {
+        List<ExecutionTask> running = null;
+        if (this.tasks != null && this.tasks.size() > 0) {
+            running = this.tasks.stream()
+                                .filter(t -> t.getExecutionStatus() == status)
+                                .collect(Collectors.toList());
+        }
+        return running;
+    }
+
+    public ExecutionTask getNext() {
+        ExecutionTask next = null;
+        if (this.tasks != null && this.tasks.size() > 0) {
+            switch (this.executionStatus) {
+                case UNDETERMINED:
+                case QUEUED_ACTIVE:
+                    next = this.tasks.get(0);
+                    break;
+                case SUSPENDED:
+                    next = this.tasks.stream()
+                            .filter(t -> t.getExecutionStatus() == ExecutionStatus.SUSPENDED)
+                            .findFirst().orElse(null);
+                    break;
+                case RUNNING:
+                    for (ExecutionTask task : this.tasks) {
+                        if (task.getExecutionStatus() != ExecutionStatus.RUNNING) {
+                            next = task;
+                            break;
+                        }
+                    }
+                    break;
+                case DONE:
+                case FAILED:
+                case CANCELLED:
+                default:
+                    break;
+            }
+        }
+        return next;
     }
 }
