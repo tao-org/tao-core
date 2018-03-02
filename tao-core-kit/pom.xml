@@ -109,6 +109,7 @@
                         </goals>
                         <configuration>
                             <includeScope>runtime</includeScope>
+                            <excludeGroupIds>ro.cs.tao</excludeGroupIds>
                             <overWriteReleases>false</overWriteReleases>
                             <overWriteSnapshots>true</overWriteSnapshots>
                             <outputDirectory>${project.build.directory}</outputDirectory>
