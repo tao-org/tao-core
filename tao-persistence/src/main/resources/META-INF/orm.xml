@@ -385,6 +385,9 @@
                     <join-column name="task_id" referenced-column-name="id" />
                 </collection-table>
             </element-collection>
+            
+            <transient name="groupTask"/>
+            <transient name="next"/>
 
         </attributes>
     </entity>
@@ -413,6 +416,8 @@
             </basic>
 
             <one-to-many name="tasks" fetch="EAGER" mapped-by="job" />
+            
+            <transient name="next"/>
         </attributes>
     </entity>
 
