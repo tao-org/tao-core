@@ -76,25 +76,6 @@ ALTER TABLE tao.graph_node ADD CONSTRAINT FK_graph_node_processing_component
 
 
 -------------------------------------------------------------------------------
--- table: graph_node_incomings
---DROP TABLE IF EXISTS tao.graph_node_incomings CASCADE;
-
---CREATE TABLE tao.graph_node_incomings
---(
---	graph_node_id bigint NOT NULL,
---	graph_node_incoming_id bigint NOT NULL
---);
-
---ALTER TABLE tao.graph_node_incomings ADD CONSTRAINT PK_graph_node_incomings PRIMARY KEY (graph_node_id, graph_node_incoming_id);
-
---ALTER TABLE tao.graph_node_incomings ADD CONSTRAINT FK_graph_node_incomings_graph_node_1
---	FOREIGN KEY (graph_node_id) REFERENCES tao.graph_node (id) ON DELETE No Action ON UPDATE No Action;
-
---ALTER TABLE tao.graph_node_incomings ADD CONSTRAINT FK_graph_node_incomings_graph_node_2
---	FOREIGN KEY (graph_node_incoming_id) REFERENCES tao.graph_node (id) ON DELETE No Action ON UPDATE No Action;
-
-
--------------------------------------------------------------------------------
 -- table: graph_node_processing_custom_values
 DROP TABLE IF EXISTS tao.graph_node_processing_custom_values CASCADE;
 

@@ -519,9 +519,6 @@
 
     <entity class="ro.cs.tao.component.SourceDescriptor" access="PROPERTY">
         <table name="tao.source_descriptor"/>
-        <secondary-table name="tao.data_descriptor">
-            <primary-key-join-column name="source_descriptor_id" referenced-column-name="id"/>
-        </secondary-table>
         <convert converter="ro.cs.tao.persistence.convert.ConstraintsConverter" attribute-name="constraints"/>
         <attributes>
             <basic name="parentId">
@@ -531,13 +528,7 @@
                 <column name="constraints" nullable="true" column-definition="text NULL"/>
             </basic>
 
-            <embedded name="dataDescriptor" >
-                <!--<association-override name="xx">
-                    <join-table name="tao.data_descriptor">
-                        <join-column name="source_descriptor_id" referenced-column-name="id" />
-                    </join-table>
-                </association-override>-->
-            </embedded>
+            <embedded name="dataDescriptor" />
 
         </attributes>
     </entity>
@@ -545,9 +536,6 @@
 
     <entity class="ro.cs.tao.component.TargetDescriptor" access="PROPERTY">
         <table name="tao.target_descriptor"/>
-        <secondary-table name="tao.data_descriptor">
-            <primary-key-join-column name="target_descriptor_id" referenced-column-name="id"/>
-        </secondary-table>
         <convert converter="ro.cs.tao.persistence.convert.ConstraintsConverter" attribute-name="constraints"/>
         <attributes>
             <basic name="parentId">
@@ -557,13 +545,7 @@
                 <column name="constraints" nullable="true" column-definition="text NULL"/>
             </basic>
 
-            <embedded name="dataDescriptor" >
-                <!--<association-override name="xx">
-                    <join-table name="tao.data_descriptor">
-                        <join-column name="source_descriptor_id" referenced-column-name="id" />
-                    </join-table>
-                </association-override>-->
-            </embedded>
+            <embedded name="dataDescriptor" />
 
         </attributes>
     </entity>
@@ -643,8 +625,14 @@
                 <column name="sensor_type_id" nullable="false" column-definition="integer NOT NULL"/>
                 <convert converter="ro.cs.tao.persistence.convert.SensorTypeConverter" attribute-name="sensorType" />
             </basic>
+            <!--
             <basic name="dimension">
                 <column name="dimension" nullable="false" column-definition="json NOT NULL"/>
+            </basic>
+            -->
+            <basic name="dimension">
+                <column name="dimension" nullable="false" column-definition="text NOT NULL"/>
+                <convert converter="ro.cs.tao.persistence.convert.DimensionConverter" />
             </basic>
             <basic name="location">
                 <column name="location" nullable="false" column-definition="varchar(512) NOT NULL"/>
@@ -657,15 +645,15 @@
         <attributes>
             <many-to-one name="output" fetch="LAZY">
                 <join-column name="source_descriptor_id" nullable="false"/>
-                <!--<cascade>
-                    <cascade-persist/>
-                </cascade>-->
+                <cascade>
+                    <cascade-all/>
+                </cascade>
             </many-to-one>
             <many-to-one name="input" fetch="LAZY">
                 <join-column name="target_descriptor_id" nullable="false"/>
-                <!--<cascade>
-                    <cascade-persist/>
-                </cascade>-->
+                <cascade>
+                    <cascade-all/>
+                </cascade>
             </many-to-one>
         </attributes>
     </embeddable>
@@ -684,6 +672,7 @@
     <converter class="ro.cs.tao.persistence.convert.WorkflowGraphStatusConverter" />
     <converter class="ro.cs.tao.persistence.convert.WorkflowGraphVisibilityConverter" />
     <converter class="ro.cs.tao.persistence.convert.ConstraintsConverter" />
+    <converter class="ro.cs.tao.persistence.convert.DimensionConverter" />
 
 
 </entity-mappings>

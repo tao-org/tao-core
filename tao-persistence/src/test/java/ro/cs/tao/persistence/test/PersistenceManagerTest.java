@@ -1256,7 +1256,7 @@ public class PersistenceManagerTest {
         }
     }
 
-    /*@Test
+    @Test
     public void TC_33_save_new_workflow_with_node_custom_values_and_incoming_links()
     {
         logger.info("TC_33_save_new_workflow_with_node_custom_values_and_incoming_links");
@@ -1332,7 +1332,7 @@ public class PersistenceManagerTest {
             logger.error(ExceptionUtils.getStackTrace(e));
             Assert.fail(e.getMessage());
         }
-    }*/
+    }
 
 
 }
