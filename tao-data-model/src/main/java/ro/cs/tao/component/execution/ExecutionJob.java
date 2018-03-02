@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 /**
  * Created by cosmin on 9/21/2017.
  */
-public class ExecutionJob {
+public class ExecutionJob implements StatusChangeListener {
     private long id;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
@@ -102,5 +102,46 @@ public class ExecutionJob {
             }
         }
         return next;
+    }
+
+    @Override
+    public void statusChanged(ExecutionTask changedTask) {
+        ExecutionStatus previous = this.executionStatus;
+        ExecutionStatus taskStatus = changedTask.getExecutionStatus();
+        switch (taskStatus) {
+            case SUSPENDED:
+            case CANCELLED:
+            case FAILED:
+                bulkSetStatus(changedTask, taskStatus);
+                this.executionStatus = taskStatus;
+                break;
+            case DONE:
+                if (this.tasks.get(this.tasks.size() - 1).getId().equals(changedTask.getId())) {
+                    this.executionStatus = ExecutionStatus.DONE;
+                }
+                break;
+            default:
+                // do nothing for other states
+                break;
+        }
+    }
+
+    private void bulkSetStatus(ExecutionTask firstExculde, ExecutionStatus status) {
+        if (this.tasks == null) {
+            return;
+        }
+        int idx = 0;
+        boolean found = false;
+        while (idx < this.tasks.size()) {
+            if (!found) {
+                found = this.tasks.get(idx).getId().equals(firstExculde.getId());
+            } else {
+                this.tasks.get(idx).internalStatusChange(status);
+            }
+            idx++;
+        }
+        if (!found) {
+            throw new IllegalArgumentException("Task not found");
+        }
     }
 }
