@@ -15,18 +15,18 @@ import java.util.stream.Collectors;
 /**
  * Created by cosmin on 9/19/2017.
  */
-public class ExecutionTask {
+public class ExecutionTask implements StatusChangeListener {
     private Long id;
     private ExecutionTask groupTask;
     private Long workflowNodeId;
     private ProcessingComponent processingComponent;
-    private Integer internalState;
     private String resourceId;
     private String executionNodeHostName;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private List<Variable> inputParameterValues;
-    private ExecutionJob job;
+    Integer internalState;
+    ExecutionJob job;
     ExecutionStatus executionStatus = ExecutionStatus.UNDETERMINED;
 
     public ExecutionTask() { }
@@ -55,11 +55,16 @@ public class ExecutionTask {
         return processingComponent;
     }
 
-    public void setExecutionStatus(ExecutionStatus executionStatus) {
-        this.executionStatus = executionStatus;
-    }
+    public void setExecutionStatus(ExecutionStatus executionStatus) { this.executionStatus = executionStatus; }
     public ExecutionStatus getExecutionStatus() {
         return executionStatus;
+    }
+    void internalStatusChange(ExecutionStatus status) {
+        ExecutionStatus previous = this.executionStatus;
+        this.executionStatus = status;
+        if (groupTask != null && previous != null && previous != status) {
+            groupTask.statusChanged(this);
+        }
     }
 
     public Integer getInternalState() { return internalState; }
