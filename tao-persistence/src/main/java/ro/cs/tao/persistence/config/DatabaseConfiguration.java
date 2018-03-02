@@ -14,6 +14,7 @@ import javax.sql.DataSource;
 
 import com.mchange.v2.c3p0.DataSources;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.hibernate.annotations.TypeDef;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,10 +31,12 @@ import org.hibernate.jpa.HibernatePersistenceProvider;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 
 import ro.cs.tao.configuration.ConfigurationManager;
+import ro.cs.tao.persistence.data.jsonutil.JsonStringType;
 
 @Configuration
 @EnableTransactionManagement
 @PropertySource("classpath:persistence/persistence.properties")
+@TypeDef(name = "json", typeClass = JsonStringType.class)
 public class DatabaseConfiguration implements ApplicationListener<ContextClosedEvent> {
 
 	private static final Logger logger = LogManager.getLogManager().getLogger("");
