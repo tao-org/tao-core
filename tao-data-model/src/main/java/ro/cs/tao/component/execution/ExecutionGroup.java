@@ -43,6 +43,31 @@ public class ExecutionGroup extends ExecutionTask {
         throw new java.lang.UnsupportedOperationException("Operation not permitted on a task group");
     }
 
+    @Override
+    public void statusChanged(ExecutionTask changedTask) {
+        ExecutionStatus previous = this.executionStatus;
+        ExecutionStatus taskStatus = changedTask.getExecutionStatus();
+        switch (taskStatus) {
+            case SUSPENDED:
+            case CANCELLED:
+            case FAILED:
+                bulkSetStatus(changedTask, taskStatus);
+                this.executionStatus = taskStatus;
+                break;
+            case DONE:
+                if (this.tasks.get(this.tasks.size() - 1).getId().equals(changedTask.getId())) {
+                    this.executionStatus = ExecutionStatus.DONE;
+                }
+                break;
+            default:
+                // do nothing for other states
+                break;
+        }
+        if (previous != null && previous != this.executionStatus) {
+            this.job.statusChanged(this);
+        }
+    }
+
     public void addTask(ExecutionTask task) {
         if (this.tasks == null) {
             this.tasks = new ArrayList<>();
@@ -105,6 +130,42 @@ public class ExecutionGroup extends ExecutionTask {
                     .findFirst().orElse(null);
         }
         return task;
+    }
+
+    @Override
+    void internalStatusChange(ExecutionStatus status) {
+        this.executionStatus = status;
+        switch (status) {
+            case SUSPENDED:
+            case CANCELLED:
+            case FAILED:
+                for (int i = this.internalState; i < this.tasks.size(); i++) {
+                    this.tasks.get(i).setExecutionStatus(status);
+                }
+                break;
+            default:
+                // do nothing for other states
+                break;
+        }
+    }
+
+    private void bulkSetStatus(ExecutionTask firstExculde, ExecutionStatus status) {
+        if (this.tasks == null) {
+            return;
+        }
+        int idx = 0;
+        boolean found = false;
+        while (idx < this.tasks.size()) {
+            if (!found) {
+                found = this.tasks.get(idx).getId().equals(firstExculde.getId());
+            } else {
+                this.tasks.get(idx).internalStatusChange(status);
+            }
+            idx++;
+        }
+        if (!found) {
+            throw new IllegalArgumentException("Task not found");
+        }
     }
 
     private boolean contains(ExecutionTask task) {
