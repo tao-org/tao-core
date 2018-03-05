@@ -438,3 +438,43 @@ ALTER TABLE tao.component_link ADD CONSTRAINT FK_component_link_target_descripto
 	FOREIGN KEY (target_descriptor_id) REFERENCES tao.target_descriptor (id) ON DELETE No Action ON UPDATE No Action;
 
 
+-------------------------------------------------------------------------------
+-- table: component_sources
+DROP TABLE IF EXISTS tao.component_sources CASCADE;
+
+CREATE TABLE tao.component_sources
+(
+	processing_component_id varchar(512) NOT NULL,
+	source_descriptor_id varchar(512) NOT NULL
+);
+
+ALTER TABLE tao.component_sources ADD CONSTRAINT PK_component_sources
+	PRIMARY KEY (processing_component_id, source_descriptor_id);
+
+ALTER TABLE tao.component_sources ADD CONSTRAINT FK_component_sources_processing_component
+	FOREIGN KEY (processing_component_id) REFERENCES tao.processing_component (id) ON DELETE No Action ON UPDATE No Action;
+
+ALTER TABLE tao.component_sources ADD CONSTRAINT FK_component_sources_source_descriptor
+	FOREIGN KEY (source_descriptor_id) REFERENCES tao.source_descriptor (id) ON DELETE No Action ON UPDATE No Action;
+
+
+-------------------------------------------------------------------------------
+-- table: component_targets
+DROP TABLE IF EXISTS tao.component_targets CASCADE;
+
+CREATE TABLE tao.component_targets
+(
+	processing_component_id varchar(512) NOT NULL,
+	target_descriptor_id varchar(512) NOT NULL
+);
+
+ALTER TABLE tao.component_targets ADD CONSTRAINT PK_component_targets
+	PRIMARY KEY (processing_component_id, target_descriptor_id);
+
+ALTER TABLE tao.component_targets ADD CONSTRAINT FK_component_targets_processing_component
+	FOREIGN KEY (processing_component_id) REFERENCES tao.processing_component (id) ON DELETE No Action ON UPDATE No Action;
+
+ALTER TABLE tao.component_targets ADD CONSTRAINT FK_component_targets_target_descriptor
+	FOREIGN KEY (target_descriptor_id) REFERENCES tao.target_descriptor (id) ON DELETE No Action ON UPDATE No Action;
+
+
