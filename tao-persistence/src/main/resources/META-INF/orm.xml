@@ -90,6 +90,24 @@
         </attributes>
     </mapped-superclass>
 
+
+    <mapped-superclass class="ro.cs.tao.workflow.GraphObject" access="PROPERTY">
+
+        <attributes>
+
+            <basic name="name">
+                <column name="name" nullable="false" column-definition="character varying(250) NULL"/>
+            </basic>
+
+            <basic name="customValues">
+                <column name="custom_values" nullable="true" column-definition="json NULL"/>
+                <convert converter="ro.cs.tao.persistence.convert.ParameterValueListConverter"/>
+            </basic>
+
+        </attributes>
+    </mapped-superclass>
+
+
     <entity class="ro.cs.tao.eodata.EOProduct" access="PROPERTY">
         <table name="tao.raster_data_product"/>
         <!-- Converter DataFormatConverter not seen in mapped superclass, therefore declared here -->
@@ -449,9 +467,11 @@
                 <generated-value strategy="SEQUENCE" generator="workflow_graph_identifier"/>
                 <sequence-generator name="workflow_graph_identifier" sequence-name="tao.workflow_graph_id_seq" allocation-size="1" />
             </id>
+            <!--
             <basic name="name">
                 <column name="name" nullable="false" column-definition="character varying(250) NOT NULL"/>
             </basic>
+            -->
             <basic name="userName">
                 <column name="username" nullable="false" column-definition="character varying(50) NOT NULL"/>
             </basic>
@@ -476,6 +496,14 @@
                 </cascade>
             </one-to-many>
 
+            <element-collection name="customValues" target-class="ro.cs.tao.workflow.ParameterValue" access="PROPERTY" fetch="LAZY">
+                <collection-table name="tao.workflow_graph_processing_custom_values" >
+                    <join-column name="workflow_graph_id" referenced-column-name="id" />
+                </collection-table>
+            </element-collection>
+
+            <transient name="orderedNodes"/>
+
         </attributes>
     </entity>
 
@@ -488,9 +516,11 @@
                 <generated-value strategy="SEQUENCE" generator="graph_node_identifier"/>
                 <sequence-generator name="graph_node_identifier" sequence-name="tao.graph_node_id_seq" allocation-size="1" />
             </id>
+            <!--
             <basic name="name">
                 <column name="name" nullable="false" column-definition="character varying(250) NULL"/>
             </basic>
+            -->
 
             <basic name="componentId">
                 <column name="processing_component_id" nullable="false" column-definition="integer NOT NULL"/>
@@ -690,6 +720,7 @@
     <converter class="ro.cs.tao.persistence.convert.WorkflowGraphVisibilityConverter" />
     <converter class="ro.cs.tao.persistence.convert.ConstraintsConverter" />
     <converter class="ro.cs.tao.persistence.convert.DimensionConverter" />
+    <converter class="ro.cs.tao.persistence.convert.ParameterValueListConverter"/>
 
 
 </entity-mappings>

@@ -37,6 +37,7 @@ CREATE TABLE tao.workflow_graph
 	definition_path varchar(512) NULL,
 	status_id integer NOT NULL,
 	visibility_id integer NOT NULL,
+	custom_values json NULL,
 	active boolean NOT NULL DEFAULT true
 );
 
@@ -53,6 +54,24 @@ ALTER TABLE tao.workflow_graph ADD CONSTRAINT FK_workflow_user
 
 
 -------------------------------------------------------------------------------
+-- table: workflow_graph_processing_custom_values
+--DROP TABLE IF EXISTS tao.workflow_graph_processing_custom_values CASCADE;
+
+--CREATE TABLE tao.workflow_graph_processing_custom_values
+--(
+--	workflow_graph_id bigint NOT NULL,
+--	name varchar(512) NOT NULL,
+--	value text NOT NULL
+--);
+
+--ALTER TABLE tao.workflow_graph_processing_custom_values ADD CONSTRAINT PK_workflow_graph_processing_custom_values
+--	PRIMARY KEY (workflow_graph_id, name);
+
+--ALTER TABLE tao.workflow_graph_processing_custom_values ADD CONSTRAINT FK_workflow_graph_processing_custom_values_workflow_graph
+--	FOREIGN KEY (workflow_graph_id) REFERENCES tao.workflow_graph (id) ON DELETE No Action ON UPDATE No Action;
+
+
+-------------------------------------------------------------------------------
 -- table: graph_node
 DROP TABLE IF EXISTS tao.graph_node CASCADE;
 
@@ -60,10 +79,12 @@ CREATE TABLE tao.graph_node
 (
 	id bigint NOT NULL,
 	name varchar(250) NULL,
+	created timestamp without time zone NOT NULL DEFAULT now(),
 	workflow_id bigint NOT NULL,
 	processing_component_id varchar(512) NOT NULL,
 	xCoord real NULL,
-	yCoord real NULL
+	yCoord real NULL,
+	custom_values json NULL
 );
 
 ALTER TABLE tao.graph_node ADD CONSTRAINT PK_graph_node PRIMARY KEY (id);
@@ -77,20 +98,20 @@ ALTER TABLE tao.graph_node ADD CONSTRAINT FK_graph_node_processing_component
 
 -------------------------------------------------------------------------------
 -- table: graph_node_processing_custom_values
-DROP TABLE IF EXISTS tao.graph_node_processing_custom_values CASCADE;
+--DROP TABLE IF EXISTS tao.graph_node_processing_custom_values CASCADE;
 
-CREATE TABLE tao.graph_node_processing_custom_values
-(
-	graph_node_id bigint NOT NULL,
-	name varchar(512) NOT NULL,
-	value text NOT NULL
-);
+--CREATE TABLE tao.graph_node_processing_custom_values
+--(
+--	graph_node_id bigint NOT NULL,
+--	name varchar(512) NOT NULL,
+--	value text NOT NULL
+--);
 
-ALTER TABLE tao.graph_node_processing_custom_values ADD CONSTRAINT PK_graph_node_processing_custom_values
-	PRIMARY KEY (graph_node_id, name);
+--ALTER TABLE tao.graph_node_processing_custom_values ADD CONSTRAINT PK_graph_node_processing_custom_values
+--	PRIMARY KEY (graph_node_id, name);
 
-ALTER TABLE tao.graph_node_processing_custom_values ADD CONSTRAINT FK_graph_node_processing_custom_values_graph_node
-	FOREIGN KEY (graph_node_id) REFERENCES tao.graph_node (id) ON DELETE No Action ON UPDATE No Action;
+--ALTER TABLE tao.graph_node_processing_custom_values ADD CONSTRAINT FK_graph_node_processing_custom_values_graph_node
+--	FOREIGN KEY (graph_node_id) REFERENCES tao.graph_node (id) ON DELETE No Action ON UPDATE No Action;
 
 
 -------------------------------------------------------------------------------

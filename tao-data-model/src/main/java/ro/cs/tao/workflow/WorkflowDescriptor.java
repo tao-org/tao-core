@@ -17,12 +17,17 @@ import java.util.List;
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class WorkflowDescriptor
         extends GraphObject implements NodeListOrderer {
+    protected Long id;
     private String userName;
     private Visibility visibility;
     protected Status status;
     private String path;
     private boolean active;
     private List<WorkflowNodeDescriptor> nodes = new ArrayList<>();
+
+    @XmlElement(name = "id")
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
     @XmlElement(name = "userName")
     public String getUserName() { return userName; }

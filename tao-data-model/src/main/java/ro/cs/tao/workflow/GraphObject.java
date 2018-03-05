@@ -7,14 +7,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class GraphObject {
-    protected Long id;
+
     protected String name;
     protected LocalDateTime created;
     private List<ParameterValue> customValues;
-
-    @XmlElement(name = "id")
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
 
     @XmlElement(name = "name")
     public String getName() { return name; }
