@@ -85,8 +85,27 @@
             <basic name="targetCardinality">
                 <column name="target_cardinality" nullable="true" column-definition="integer NOT NULL"/>
             </basic>
-            <transient name="sources"/>
-            <transient name="targets"/>
+
+            <many-to-many name="sources" fetch="LAZY">
+                <join-table name="tao.component_sources">
+                    <join-column name="processing_component_id" referenced-column-name="id"/>
+                    <inverse-join-column name="source_descriptor_id" referenced-column-name="id"/>
+                </join-table>
+                <cascade>
+                    <cascade-all/>
+                </cascade>
+            </many-to-many>
+
+            <many-to-many name="targets" fetch="LAZY">
+                <join-table name="tao.component_targets">
+                    <join-column name="processing_component_id" referenced-column-name="id"/>
+                    <inverse-join-column name="target_descriptor_id" referenced-column-name="id"/>
+                </join-table>
+                <cascade>
+                    <cascade-all/>
+                </cascade>
+            </many-to-many>
+
         </attributes>
     </mapped-superclass>
 
