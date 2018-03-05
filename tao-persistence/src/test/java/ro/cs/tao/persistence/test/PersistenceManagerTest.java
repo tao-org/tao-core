@@ -37,10 +37,7 @@ import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.topology.NodeServiceStatus;
 import ro.cs.tao.topology.ServiceDescription;
 import ro.cs.tao.topology.ServiceStatus;
-import ro.cs.tao.workflow.Status;
-import ro.cs.tao.workflow.Visibility;
-import ro.cs.tao.workflow.WorkflowDescriptor;
-import ro.cs.tao.workflow.WorkflowNodeDescriptor;
+import ro.cs.tao.workflow.*;
 
 import java.awt.*;
 import java.sql.SQLException;
@@ -1348,6 +1345,98 @@ public class PersistenceManagerTest {
             Assert.fail(e.getMessage());
         }
     }
+
+    @Test
+    public void TC_34_save_new_workflow_with_node_groups()
+    {
+        logger.info("TC_34_save_new_workflow_with_node_groups");
+        try
+        {
+            // add a new workflow for test
+            WorkflowDescriptor workflow = new WorkflowDescriptor();
+            workflow.setName("test_workflow_7");
+            workflow.setStatus(Status.DRAFT);
+            workflow.setVisibility(Visibility.PRIVATE);
+            workflow.setUserName("admin");
+            workflow.setCreated(LocalDateTime.now());
+
+            // add nodes within this workflow
+            WorkflowNodeDescriptor node1 = new WorkflowNodeDescriptor();
+            node1.setName("node1");
+            node1.setComponentId("component01");
+            node1.setCreated(LocalDateTime.now());
+
+            // add processing custom values for the node
+            node1.addCustomValue("customName1", "customValue1");
+            node1.addCustomValue("customName2", "customValue2");
+            node1.addCustomValue("customName3", "customValue3");
+
+            // add incoming links for the node
+            DataDescriptor dataDescriptor = new DataDescriptor();
+            dataDescriptor.setFormatType(DataFormat.RASTER);
+            dataDescriptor.setGeometry("POLYGON ((24.16023 -9.60737, 24.15266 -7.36319, 22.05055 -7.38847, 22.05739 -9.59798, 24.16023 -9.60737))");
+            dataDescriptor.setLocation("https://landsat-pds.s3.amazonaws.com/c1/L8/201/044/LC08_L1TP_201044_20170930_20171013_01_T1");
+            dataDescriptor.setSensorType(SensorType.OPTICAL);
+            dataDescriptor.setDimension(new Dimension(100, 200));
+
+            TargetDescriptor targetDescriptor = new TargetDescriptor("targetDescriptor01");
+            targetDescriptor.setParentId("component01");
+            targetDescriptor.setDataDescriptor(dataDescriptor);
+            List<String> targetConstraints = new ArrayList<>();
+            // TODO put correct constraints
+            targetConstraints.add("target_constraint01");
+            targetConstraints.add("target_constraint02");
+            targetConstraints.add("target_constraint03");
+            //targetDescriptor.setConstraints(targetConstraints);
+
+            SourceDescriptor sourceDescriptor = new SourceDescriptor("sourceDescriptor01");
+            sourceDescriptor.setParentId("component01");
+            sourceDescriptor.setDataDescriptor(dataDescriptor);
+            List<String> sourceConstraints = new ArrayList<>();
+            // TODO put correct constraints
+            sourceConstraints.add("source_constraint01");
+            sourceConstraints.add("source_constraint02");
+            sourceConstraints.add("source_constraint03");
+            //sourceDescriptor.setConstraints(sourceConstraints);
+
+            ComponentLink componentLink1 = new ComponentLink(targetDescriptor, sourceDescriptor);
+            List<ComponentLink> links = new ArrayList<>();
+            links.add(componentLink1);
+            node1.setIncomingLinks(links);
+
+            // add the node within the workflow
+            workflow.addNode(node1);
+
+
+            // add a group node
+            WorkflowNodeGroupDescriptor nodeGroup = new WorkflowNodeGroupDescriptor();
+            nodeGroup.setName("groupNode01");
+            nodeGroup.setComponentId("component01");
+            nodeGroup.setCreated(LocalDateTime.now());
+
+            nodeGroup.addNode(node1);
+
+            // add the group node
+            workflow.addNode(nodeGroup);
+
+            // save the parent workflow entity
+            workflow = persistenceManager.saveWorkflowDescriptor(workflow);
+            Assert.assertTrue(workflow != null && workflow.getId() != null);
+            logger.info("Workflow " + workflow.getName() + " saved, ID = " + workflow.getId().toString());
+
+            // check persisted workflow
+            Assert.assertTrue(workflow != null && workflow.getNodes() != null && workflow.getNodes().size() == 2);
+
+            // check persisted node custom values
+            Assert.assertTrue(workflow.getNodes().get(0).getCustomValues().size() == 3);
+        }
+        catch (Exception e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
+
 
 
 }
