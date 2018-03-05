@@ -17,12 +17,17 @@ import java.util.List;
 @XmlRootElement(name = "node")
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class WorkflowNodeDescriptor extends GraphObject {
+    protected Long id;
     private String componentId;
     private float xCoord;
     private float yCoord;
     private List<ComponentLink> incomingLinks;
 
     private WorkflowDescriptor workflow;
+
+    @XmlElement(name = "id")
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
     @XmlElement(name = "componentId")
     public String getComponentId() { return componentId; }

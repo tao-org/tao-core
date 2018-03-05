@@ -378,10 +378,10 @@ ALTER TABLE tao.source_descriptor ADD CONSTRAINT PK_source_descriptor PRIMARY KE
 ALTER TABLE tao.source_descriptor ADD CONSTRAINT FK_source_descriptor_processing_component
 	FOREIGN KEY (parent_id) REFERENCES tao.processing_component (id) ON DELETE No Action ON UPDATE No Action;
 
-ALTER TABLE tao.data_descriptor ADD CONSTRAINT FK_data_descriptor_data_format
+ALTER TABLE tao.source_descriptor ADD CONSTRAINT FK_data_descriptor_data_format
 	FOREIGN KEY (data_format_id) REFERENCES tao.data_format (id) ON DELETE No Action ON UPDATE No Action;
 
-ALTER TABLE tao.data_descriptor ADD CONSTRAINT FK_data_descriptor_sensor_type
+ALTER TABLE tao.source_descriptor ADD CONSTRAINT FK_data_descriptor_sensor_type
 	FOREIGN KEY (sensor_type_id) REFERENCES tao.sensor_type (id) ON DELETE No Action ON UPDATE No Action;
 
 
@@ -408,10 +408,10 @@ ALTER TABLE tao.target_descriptor ADD CONSTRAINT PK_target_descriptor PRIMARY KE
 ALTER TABLE tao.target_descriptor ADD CONSTRAINT FK_target_descriptor_processing_component
 	FOREIGN KEY (parent_id) REFERENCES tao.processing_component (id) ON DELETE No Action ON UPDATE No Action;
 
-ALTER TABLE tao.data_descriptor ADD CONSTRAINT FK_data_descriptor_data_format
+ALTER TABLE tao.target_descriptor ADD CONSTRAINT FK_data_descriptor_data_format
 	FOREIGN KEY (data_format_id) REFERENCES tao.data_format (id) ON DELETE No Action ON UPDATE No Action;
 
-ALTER TABLE tao.data_descriptor ADD CONSTRAINT FK_data_descriptor_sensor_type
+ALTER TABLE tao.target_descriptor ADD CONSTRAINT FK_data_descriptor_sensor_type
 	FOREIGN KEY (sensor_type_id) REFERENCES tao.sensor_type (id) ON DELETE No Action ON UPDATE No Action;
 
 
