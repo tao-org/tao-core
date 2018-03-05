@@ -84,7 +84,9 @@ CREATE TABLE tao.graph_node
 	processing_component_id varchar(512) NOT NULL,
 	xCoord real NULL,
 	yCoord real NULL,
-	custom_values json NULL
+	custom_values json NULL,
+    -- special column used by JPA to distinguish which type of object is stored in one row (since this table holds 2 types of entities)
+    discriminator integer NOT NULL
 );
 
 ALTER TABLE tao.graph_node ADD CONSTRAINT PK_graph_node PRIMARY KEY (id);
@@ -112,6 +114,26 @@ ALTER TABLE tao.graph_node ADD CONSTRAINT FK_graph_node_processing_component
 
 --ALTER TABLE tao.graph_node_processing_custom_values ADD CONSTRAINT FK_graph_node_processing_custom_values_graph_node
 --	FOREIGN KEY (graph_node_id) REFERENCES tao.graph_node (id) ON DELETE No Action ON UPDATE No Action;
+
+
+-------------------------------------------------------------------------------
+-- table: graph_node_group_nodes
+DROP TABLE IF EXISTS tao.graph_node_group_nodes CASCADE;
+
+CREATE TABLE tao.graph_node_group_nodes
+(
+    graph_node_group_id bigint NOT NULL,
+	graph_node_id bigint NOT NULL
+);
+
+ALTER TABLE tao.graph_node_group_nodes ADD CONSTRAINT PK_graph_node_group_nodes
+	PRIMARY KEY (graph_node_group_id, graph_node_id);
+
+ALTER TABLE tao.graph_node_group_nodes ADD CONSTRAINT FK_graph_node_group_nodes_graph_node_01
+	FOREIGN KEY (graph_node_group_id) REFERENCES tao.graph_node (id) ON DELETE No Action ON UPDATE No Action;
+
+ALTER TABLE tao.graph_node_group_nodes ADD CONSTRAINT FK_graph_node_group_nodes_graph_node_02
+	FOREIGN KEY (graph_node_id) REFERENCES tao.graph_node (id) ON DELETE No Action ON UPDATE No Action;
 
 
 -------------------------------------------------------------------------------

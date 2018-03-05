@@ -467,11 +467,6 @@
                 <generated-value strategy="SEQUENCE" generator="workflow_graph_identifier"/>
                 <sequence-generator name="workflow_graph_identifier" sequence-name="tao.workflow_graph_id_seq" allocation-size="1" />
             </id>
-            <!--
-            <basic name="name">
-                <column name="name" nullable="false" column-definition="character varying(250) NOT NULL"/>
-            </basic>
-            -->
             <basic name="userName">
                 <column name="username" nullable="false" column-definition="character varying(50) NOT NULL"/>
             </basic>
@@ -510,18 +505,18 @@
 
     <entity class="ro.cs.tao.workflow.WorkflowNodeDescriptor" access="PROPERTY">
         <table name="tao.graph_node"/>
+        <!-- set inheritance to single table, since WorkflowNodeGroupDescriptor inherits from WorkflowNodeDescriptor -->
+        <inheritance strategy="SINGLE_TABLE"/>
+
+        <!-- avoid default DTYPE -->
+        <discriminator-column name="discriminator" column-definition="integer NOT NULL" discriminator-type="INTEGER"/>
+
         <attributes>
             <id name="id">
                 <column name="id" nullable="false" column-definition="bigserial NOT NULL"/>
                 <generated-value strategy="SEQUENCE" generator="graph_node_identifier"/>
                 <sequence-generator name="graph_node_identifier" sequence-name="tao.graph_node_id_seq" allocation-size="1" />
             </id>
-            <!--
-            <basic name="name">
-                <column name="name" nullable="false" column-definition="character varying(250) NULL"/>
-            </basic>
-            -->
-
             <basic name="componentId">
                 <column name="processing_component_id" nullable="false" column-definition="integer NOT NULL"/>
             </basic>
@@ -549,6 +544,30 @@
             </element-collection>
 
         </attributes>
+    </entity>
+
+
+    <entity class="ro.cs.tao.workflow.WorkflowNodeGroupDescriptor" access="PROPERTY">
+        <!-- no need to specify the table here, since WorkflowNodeGroupDescriptor inherits WorkflowNodeDescriptor;
+             WorkflowNodeGroupDescriptor is a subclass of a SINGLE_TABLE hierarchy -->
+
+        <!-- any other value than 937389016 (set by JPA for the base class); e.g 7  -->
+        <discriminator-value>7</discriminator-value>
+
+        <attributes>
+            <many-to-many name="nodes" fetch="EAGER">
+                <join-table name="tao.graph_node_group_nodes">
+                    <join-column name="graph_node_group_id" referenced-column-name="id"/>
+                    <inverse-join-column name="graph_node_id" referenced-column-name="id"/>
+                </join-table>
+                <cascade>
+                    <cascade-all/>
+                </cascade>
+            </many-to-many>
+
+            <transient name="orderedNodes"/>
+        </attributes>
+
     </entity>
 
 
