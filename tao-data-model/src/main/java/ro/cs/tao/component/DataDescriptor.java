@@ -8,9 +8,8 @@ import ro.cs.tao.serialization.CRSAdapter;
 import ro.cs.tao.serialization.GeometryAdapter;
 
 import javax.xml.bind.annotation.XmlRootElement;
-import java.awt.Dimension;
+import java.awt.*;
 import java.net.URI;
-import java.net.URISyntaxException;
 
 /**
  * @author Cosmin Cara
@@ -22,7 +21,7 @@ public class DataDescriptor {
     private CoordinateReferenceSystem crs;
     private SensorType sensorType;
     private Dimension dimension;
-    private URI location;
+    private String location;
 
     public DataFormat getFormatType() { return formatType; }
     public void setFormatType(DataFormat formatType) { this.formatType = formatType; }
@@ -60,6 +59,10 @@ public class DataDescriptor {
     public Dimension getDimension() { return dimension; }
     public void setDimension(Dimension dimension) { this.dimension = dimension; }
 
-    public String getLocation() { return location != null ? location.toString() : null; }
-    public void setLocation(String value) throws URISyntaxException { this.location = new URI(value); }
+    public String getLocation() { return this.location; }
+    public void setLocation(String value) {
+        //noinspection ResultOfMethodCallIgnored
+        URI.create(value);
+        this.location = value;
+    }
 }
