@@ -491,11 +491,13 @@
                 </cascade>
             </one-to-many>
 
+            <!--
             <element-collection name="customValues" target-class="ro.cs.tao.workflow.ParameterValue" access="PROPERTY" fetch="LAZY">
                 <collection-table name="tao.workflow_graph_processing_custom_values" >
                     <join-column name="workflow_graph_id" referenced-column-name="id" />
                 </collection-table>
             </element-collection>
+            -->
 
             <transient name="orderedNodes"/>
 
@@ -537,11 +539,13 @@
                 </collection-table>
             </element-collection>
 
+            <!--
             <element-collection name="customValues" target-class="ro.cs.tao.workflow.ParameterValue" access="PROPERTY" fetch="LAZY">
                 <collection-table name="tao.graph_node_processing_custom_values" >
                     <join-column name="graph_node_id" referenced-column-name="id" />
                 </collection-table>
             </element-collection>
+            -->
 
         </attributes>
     </entity>
