@@ -132,6 +132,7 @@ public class Zipper {
             }
         } catch (IOException ex) {
             java.util.logging.Logger.getLogger(Zipper.class.getSimpleName()).warning(ex.getMessage());
+            return null;
         }
         return target;
     }
