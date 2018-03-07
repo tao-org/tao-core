@@ -55,21 +55,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.SimpleDateFormat;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Properties;
-import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -232,6 +221,19 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         this.progressListener = progressListener;
     }
 
+    @Override
+    public Path fetch(EOProduct product) throws IOException {
+        activityStart(product.getName());
+        try {
+            currentProductProgress = 0;
+            return fetchImpl(product);
+        } finally {
+            activityEnd();
+        }
+    }
+
+    protected abstract Path fetchImpl(EOProduct product) throws IOException;
+
     protected boolean checkTileFilter(EOProduct product) {
         return this.filteredTiles == null || this.tileIdPattern.matcher(product.getName()).matches();
     }
@@ -327,22 +329,41 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         }
     }
 
-    protected void markEnd(String subActivity) {
-        if (this.progressEnabled && timer != null) {
-            this.timer.cancel();
-        }
+    protected void activityStart(String activity) {
         if (this.progressListener != null) {
-            this.progressListener.subActivityEnded(subActivity);
+            this.progressListener.started(activity);
+        }
+        if (this.progressEnabled) {
+            this.timer = new Timer("Progress reporter", true);
+            this.timer.scheduleAtFixedRate(new TimedJob(), 0, this.progressReportInterval);
         }
     }
 
-    protected void markStart(String subActivity) {
+    protected void subActivityStart(String subActivity) {
         if (this.progressListener != null) {
             this.progressListener.subActivityStarted(subActivity);
         }
         if (this.progressEnabled) {
             this.timer = new Timer("Progress reporter", true);
             this.timer.scheduleAtFixedRate(new TimedJob(), 0, this.progressReportInterval);
+        }
+    }
+
+    protected void activityEnd() {
+        if (this.progressEnabled && timer != null) {
+            this.timer.cancel();
+        }
+        if (this.progressListener != null) {
+            this.progressListener.ended();
+        }
+    }
+
+    protected void subActivityEnd(String subActivity) {
+        if (this.progressEnabled && timer != null) {
+            this.timer.cancel();
+        }
+        if (this.progressListener != null) {
+            this.progressListener.subActivityEnded(subActivity);
         }
     }
 
@@ -363,7 +384,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         HttpURLConnection connection = null;
         try {
             logger.fine(String.format("Begin download for %s", subActivity));
-            markStart(subActivity);
+            subActivityStart(subActivity);
             connection = NetUtils.openConnection(remoteUrl, authToken);
             long remoteFileLength = connection.getContentLengthLong();
             long localFileLength = 0;
@@ -402,17 +423,17 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
                     outputStream.position(localFileLength);
                     byte[] buffer = new byte[BUFFER_SIZE];
                     int read;
-                    int totalRead = 0;
+                    //int totalRead = 0;
                     logger.fine("Begin reading from input stream");
                     while (!cancelled && (read = inputStream.read(buffer)) != -1) {
                         outputStream.write(ByteBuffer.wrap(buffer, 0, read));
-                        totalRead += read;
+                        //totalRead += read;
                         /*if (this.progressListener != null) {
                             this.progressListener.notifyProgress(subActivity,
                                                                  (double) totalRead / (double) remoteFileLength);
                         }*/
-                        currentProductProgress += Math.min(1.0, currentProduct.getApproximateSize() > 0 ?
-                                (double) totalRead / (double) currentProduct.getApproximateSize() : 0);
+                        currentProductProgress += currentProduct.getApproximateSize() > 0 ?
+                                (double) read / (double) currentProduct.getApproximateSize() : 0;
                     }
                     logger.fine("End reading from input stream");
                     checkCancelled();
@@ -425,9 +446,9 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
             } else {
                 logger.fine("File already downloaded");
                 logger.fine(String.format(completeMessage, currentProduct.getName(), currentStep, file.getFileName(), 0));
+                currentProductProgress += Math.min(1.0, currentProduct.getApproximateSize() > 0 ?
+                        (double) remoteFileLength / (double) currentProduct.getApproximateSize() : 0);
             }
-            currentProductProgress += Math.min(1.0, currentProduct.getApproximateSize() > 0 ?
-                    (double) remoteFileLength / (double) currentProduct.getApproximateSize() : 0);
         } catch (FileNotFoundException fnex) {
             logger.warning(String.format(errorMessage, remoteUrl, "No such file"));
             file = null;
@@ -441,7 +462,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
             if (connection != null) {
                 connection.disconnect();
             }
-            markEnd(subActivity);
+            subActivityEnd(subActivity);
         }
         return FileUtils.ensurePermissions(file);
     }
