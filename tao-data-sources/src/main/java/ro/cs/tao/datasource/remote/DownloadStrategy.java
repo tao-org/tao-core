@@ -42,7 +42,6 @@ import ro.cs.tao.ProgressListener;
 import ro.cs.tao.datasource.InterruptedException;
 import ro.cs.tao.datasource.ProductFetchStrategy;
 import ro.cs.tao.datasource.util.NetUtils;
-import ro.cs.tao.datasource.util.Utilities;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.utils.FileUtils;
 
@@ -129,7 +128,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         this.cancelled = true;
     }
 
-    public ReturnCode download(List<EOProduct> products) {
+    /*public ReturnCode download(List<EOProduct> products) {
         ReturnCode retCode = ReturnCode.OK;
         if (products != null) {
             for (EOProduct product : products) {
@@ -184,7 +183,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
             }
         }
         return retCode;
-    }
+    }*/
 
     public String getLocalArchiveRoot() {
         return localArchiveRoot;
@@ -226,7 +225,34 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         activityStart(product.getName());
         try {
             currentProductProgress = 0;
-            return fetchImpl(product);
+            Path file;
+            currentProduct = product;
+            currentProductProgress = 0;
+            final Path destPath = Paths.get(destination);
+            FileUtils.ensureExists(destPath);
+            switch (this.fetchMode) {
+                case COPY:
+                    file = copy(product, Paths.get(localArchiveRoot), destPath);
+                    if (file == null) {
+                        logger.warning("Product copy failed");
+                    }
+                    break;
+                case SYMLINK:
+                    file = link(product, Paths.get(localArchiveRoot), destPath);
+                    if (file == null) {
+                        logger.warning("Product link failed");
+                    }
+                    break;
+                case OVERWRITE:
+                case RESUME:
+                default:
+                    file = fetchImpl(product);
+                    if (file == null) {
+                        logger.warning("Product download aborted");
+                    }
+                    break;
+            }
+            return file;
         } finally {
             activityEnd();
         }
