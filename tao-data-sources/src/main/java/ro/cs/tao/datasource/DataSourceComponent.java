@@ -38,8 +38,8 @@ public class DataSourceComponent extends TaoComponent {
     private String password;
     @XmlTransient
     private boolean cancelled;
-    @XmlTransient
-    private ProductFetchStrategy currentFetcher;
+    /*@XmlTransient
+    private ProductFetchStrategy currentFetcher;*/
     @XmlTransient
     private ProductStatusListener productStatusListener;
     @XmlTransient
@@ -151,10 +151,8 @@ public class DataSourceComponent extends TaoComponent {
         if (this.userName != null) {
             dataSource.setCredentials(this.userName, this.password);
         }
-        ProgressNotifier notifier = new ProgressNotifier(securityContext().getPrincipal(),
-                                                         this,
-                                                         DataSourceTopics.PRODUCT_PROGRESS);
         for (EOProduct product : products) {
+            ProductFetchStrategy currentFetcher = null;
             try {
                 if (!cancelled) {
                     if (this.productStatusListener != null) {
@@ -163,11 +161,13 @@ public class DataSourceComponent extends TaoComponent {
                         }
                     }
                     currentProduct = product;
-                    notifier.started(product.getName());
-
-                    this.currentFetcher = dataSource.getProductFetchStrategy(product.getProductType());
-                    if (this.currentFetcher instanceof DownloadStrategy) {
-                        final DownloadStrategy downloadStrategy = (DownloadStrategy) this.currentFetcher;
+                    ProgressNotifier notifier = new ProgressNotifier(securityContext().getPrincipal(),
+                            this,
+                            DataSourceTopics.PRODUCT_PROGRESS);
+                    //notifier.started(product.getName());
+                    ProductFetchStrategy templateFetcher = dataSource.getProductFetchStrategy(product.getProductType());
+                    if (templateFetcher instanceof DownloadStrategy) {
+                        DownloadStrategy downloadStrategy = ((DownloadStrategy) templateFetcher).clone();
                         downloadStrategy.setProgressListener(notifier);
                         downloadStrategy.setDestination(destinationPath);
                         downloadStrategy.setFetchMode(this.fetchMode);
@@ -180,12 +180,15 @@ public class DataSourceComponent extends TaoComponent {
                                 throw new IOException(e);
                             }
                         }
+                        currentFetcher = downloadStrategy;
+                    } else {
+                        currentFetcher = templateFetcher.clone();
                     }
-                    if (tiles != null && !tryApplyFilter(this.currentFetcher, tiles)) {
+                    if (tiles != null && !tryApplyFilter(currentFetcher, tiles)) {
                         logger.warning(String.format("Fetch strategy for data source [%s] doesn't support tiles filter",
                                                      dataSourceName));
                     }
-                    Path productPath = this.currentFetcher.fetch(product);
+                    Path productPath = currentFetcher.fetch(product);
                     if (productPath != null) {
                         product.setLocation(productPath.toUri().toString());
                     }
@@ -220,10 +223,10 @@ public class DataSourceComponent extends TaoComponent {
                 }
             } finally {
                 //notifier.notifyProgress(counter++ / products.size());
-                if (this.currentFetcher != null) {
-                    this.currentFetcher.resume();
+                if (currentFetcher != null) {
+                    currentFetcher.resume();
                 }
-                this.currentFetcher = null;
+                currentFetcher = null;
             }
         }
         return products;
@@ -231,16 +234,16 @@ public class DataSourceComponent extends TaoComponent {
 
     public void resume() {
         this.cancelled = false;
-        if (this.currentFetcher != null) {
+        /*if (this.currentFetcher != null) {
             this.currentFetcher.resume();
-        }
+        }*/
     }
 
     public void cancel() {
         this.cancelled = true;
-        if (this.currentFetcher != null) {
+        /*if (this.currentFetcher != null) {
             this.currentFetcher.cancel();
-        }
+        }*/
     }
 
     private boolean tryApplyFilter(ProductFetchStrategy strategy, Set<String> tiles) {

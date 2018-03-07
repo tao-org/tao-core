@@ -102,6 +102,24 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         this.progressReportInterval = Long.parseLong(this.props.getProperty(PROGRESS_INTERVAL, "2000"));
     }
 
+    protected DownloadStrategy(DownloadStrategy other) {
+        this.progressEnabled = other.progressEnabled;
+        if (other.props != null) {
+            this.props = new Properties();
+            this.props.putAll(other.props);
+        }
+        this.destination = other.destination;
+        this.credentials = other.credentials;
+        if (other.filteredTiles != null) {
+            this.filteredTiles = new HashSet<>();
+            this.filteredTiles.addAll(other.filteredTiles);
+        }
+        this.tileIdPattern = other.tileIdPattern;
+        this.localArchiveRoot = other.localArchiveRoot;
+        this.fetchMode = other.fetchMode;
+        this.progressReportInterval = other.progressReportInterval;
+    }
+
     public void setFilteredTiles(Set<String> tiles) {
         this.filteredTiles = tiles;
         if (tiles != null && tiles.size() > 0) {
@@ -127,63 +145,6 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     public void cancel() {
         this.cancelled = true;
     }
-
-    /*public ReturnCode download(List<EOProduct> products) {
-        ReturnCode retCode = ReturnCode.OK;
-        if (products != null) {
-            for (EOProduct product : products) {
-                if (cancelled) {
-                    return ReturnCode.INTERRUPTED;
-                }
-                if (!checkTileFilter(product)) {
-                    return ReturnCode.EMPTY;
-                }
-                long startTime = System.currentTimeMillis();
-                Path file = null;
-                currentProduct = product;
-                currentProductProgress = 0;
-                try {
-                    final Path destPath = Paths.get(destination);
-                    FileUtils.ensureExists(destPath);
-                    switch (this.fetchMode) {
-                        case COPY:
-                            file = copy(product, Paths.get(localArchiveRoot), destPath);
-                            if (file == null) {
-                                retCode = ReturnCode.EMPTY;
-                                logger.warning("Product copy failed");
-                            }
-                            break;
-                        case SYMLINK:
-                            file = link(product, Paths.get(localArchiveRoot), destPath);
-                            if (file == null) {
-                                retCode = ReturnCode.EMPTY;
-                                logger.warning("Product link failed");
-                            }
-                            break;
-                        case OVERWRITE:
-                        case RESUME:
-                        default:
-                            file = fetch(product);
-                            if (file == null) {
-                                retCode = ReturnCode.EMPTY;
-                                logger.warning("Product download aborted");
-                            }
-                            break;
-                    }
-                } catch (InterruptedException ignored) {
-                } catch (IOException ex) {
-                    logger.warning("IO Exception: " + ex.getMessage());
-                    logger.warning("Product download failed");
-                    retCode = ReturnCode.INTERRUPTED;
-                }
-                long millis = System.currentTimeMillis() - startTime;
-                if (file != null && Files.exists(file)) {
-                    logger.fine(String.format("Product download completed in %s", Utilities.formatTime(millis)));
-                }
-            }
-        }
-        return retCode;
-    }*/
 
     public String getLocalArchiveRoot() {
         return localArchiveRoot;
@@ -376,6 +337,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     }
 
     protected void activityEnd() {
+        currentProductProgress = 1.0;
         if (this.progressEnabled && timer != null) {
             this.timer.cancel();
         }
@@ -434,6 +396,8 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
                 }
             }
             checkCancelled();
+            double factor = currentProduct.getApproximateSize() > 0 ?
+                    (double) 1 / (double) currentProduct.getApproximateSize() : 0;
             if (localFileLength != remoteFileLength) {
                 int kBytes = (int) (remoteFileLength / 1024);
                 logger.fine(String.format(startMessage, currentProduct.getName(), currentStep, file.getFileName(), kBytes));
@@ -453,13 +417,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
                     logger.fine("Begin reading from input stream");
                     while (!cancelled && (read = inputStream.read(buffer)) != -1) {
                         outputStream.write(ByteBuffer.wrap(buffer, 0, read));
-                        //totalRead += read;
-                        /*if (this.progressListener != null) {
-                            this.progressListener.notifyProgress(subActivity,
-                                                                 (double) totalRead / (double) remoteFileLength);
-                        }*/
-                        currentProductProgress += currentProduct.getApproximateSize() > 0 ?
-                                (double) read / (double) currentProduct.getApproximateSize() : 0;
+                        currentProductProgress = Math.min(currentProductProgress + (double) read * factor, 1.0);
                     }
                     logger.fine("End reading from input stream");
                     checkCancelled();
@@ -472,8 +430,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
             } else {
                 logger.fine("File already downloaded");
                 logger.fine(String.format(completeMessage, currentProduct.getName(), currentStep, file.getFileName(), 0));
-                currentProductProgress += Math.min(1.0, currentProduct.getApproximateSize() > 0 ?
-                        (double) remoteFileLength / (double) currentProduct.getApproximateSize() : 0);
+                currentProductProgress = Math.min(1.0, currentProductProgress + (double) remoteFileLength * factor);
             }
         } catch (FileNotFoundException fnex) {
             logger.warning(String.format(errorMessage, remoteUrl, "No such file"));
@@ -492,6 +449,8 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         }
         return FileUtils.ensurePermissions(file);
     }
+
+    public abstract DownloadStrategy clone();
 
     private class TimedJob extends TimerTask {
         @Override

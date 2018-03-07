@@ -52,4 +52,6 @@ public interface ProductFetchStrategy {
      * @param progressListener  The listener
      */
     default void setProgressListener(ProgressListener progressListener) { }
+
+    ProductFetchStrategy clone();
 }
