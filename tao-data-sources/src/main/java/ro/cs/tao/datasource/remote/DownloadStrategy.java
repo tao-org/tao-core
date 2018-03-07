@@ -131,6 +131,11 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     }
 
     @Override
+    public void resume() {
+        this.cancelled = false;
+    }
+
+    @Override
     public void cancel() {
         this.cancelled = true;
     }
@@ -323,7 +328,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     }
 
     protected void markEnd(String subActivity) {
-        if (this.progressEnabled) {
+        if (this.progressEnabled && timer != null) {
             this.timer.cancel();
         }
         if (this.progressListener != null) {

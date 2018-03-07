@@ -220,10 +220,20 @@ public class DataSourceComponent extends TaoComponent {
                 }
             } finally {
                 //notifier.notifyProgress(counter++ / products.size());
+                if (this.currentFetcher != null) {
+                    this.currentFetcher.resume();
+                }
                 this.currentFetcher = null;
             }
         }
         return products;
+    }
+
+    public void resume() {
+        this.cancelled = false;
+        if (this.currentFetcher != null) {
+            this.currentFetcher.resume();
+        }
     }
 
     public void cancel() {

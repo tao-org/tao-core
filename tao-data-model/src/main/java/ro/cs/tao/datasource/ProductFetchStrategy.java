@@ -34,6 +34,13 @@ public interface ProductFetchStrategy {
     Path fetch(EOProduct product) throws IOException, InterruptedException;
 
     /**
+     * Allows further fetch operations.
+     * The operation is not guaranteed to be immediately terminated.
+     *
+     */
+    default void resume() { }
+
+    /**
      * Cancels the operation in progress, if any.
      * The operation is not guaranteed to be immediately terminated.
      *
