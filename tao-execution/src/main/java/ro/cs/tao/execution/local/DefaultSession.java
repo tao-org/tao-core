@@ -1,21 +1,21 @@
+/*
+ * Copyright (C) 2017 CS ROMANIA
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation; either version 3 of the License, or (at your option)
+ * any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, see http://www.gnu.org/licenses/
+ */
 package ro.cs.tao.execution.local;
 
-import org.ggf.drmaa.DeniedByDrmException;
-import org.ggf.drmaa.DrmaaException;
-import org.ggf.drmaa.ExitTimeoutException;
-import org.ggf.drmaa.HoldInconsistentStateException;
-import org.ggf.drmaa.InvalidJobException;
-import org.ggf.drmaa.InvalidJobTemplateException;
-import org.ggf.drmaa.JobInfo;
-import org.ggf.drmaa.JobTemplate;
-import org.ggf.drmaa.NoActiveSessionException;
-import org.ggf.drmaa.ReleaseInconsistentStateException;
-import org.ggf.drmaa.ResumeInconsistentStateException;
-import org.ggf.drmaa.Session;
-import org.ggf.drmaa.SessionFactory;
-import org.ggf.drmaa.SimpleJobTemplate;
-import org.ggf.drmaa.SuspendInconsistentStateException;
-import org.ggf.drmaa.Version;
+import org.ggf.drmaa.*;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.topology.NodeDescription;
@@ -26,14 +26,7 @@ import ro.cs.tao.utils.executors.SSHMode;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;

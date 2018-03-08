@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2017 CS ROMANIA
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation; either version 3 of the License, or (at your option)
+ * any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, see http://www.gnu.org/licenses/
+ */
 package ro.cs.tao.topology;
 
 import org.apache.commons.io.IOUtils;
@@ -5,11 +20,7 @@ import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.topology.xml.ToolInstallersConfigHandler;
 import ro.cs.tao.topology.xml.ToolInstallersConfigParser;
 import ro.cs.tao.utils.Platform;
-import ro.cs.tao.utils.executors.ExecutionUnit;
-import ro.cs.tao.utils.executors.Executor;
-import ro.cs.tao.utils.executors.ExecutorType;
-import ro.cs.tao.utils.executors.OutputConsumer;
-import ro.cs.tao.utils.executors.SSHMode;
+import ro.cs.tao.utils.executors.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,9 +29,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.jar.JarEntry;
@@ -30,7 +39,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Created by cosmin on 8/7/2017.
+ * @author Cosmin Udroiu
  */
 public class DefaultToolInstaller extends TopologyToolInstaller {
     private List<ToolInstallConfig> toolInstallConfigs;
