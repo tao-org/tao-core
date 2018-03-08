@@ -288,8 +288,20 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         if (Files.exists(productPath)) {
             productPath = productPath.resolve(date.substring(4, 6));
             productPath = Files.exists(productPath) ?
-                    productPath.resolve(date.substring(6, 8)).resolve(product.getName()) :
+                    productPath.resolve(date.substring(6, 8)) :
                     null;
+            if (productPath != null && Files.exists(productPath)) {
+                Path fullProductPath = productPath.resolve(product.getName());
+                // first check if we have the product name
+                if (!Files.exists(fullProductPath)) {
+                    // otherwise try to see if we have the filename attribute and if exists the folder with that name
+                    String fileNameAttr = product.getAttributeValue("filename");
+                    if (fileNameAttr != null) {
+                        fullProductPath = productPath.resolve(fileNameAttr);
+                    }
+                }
+                productPath = fullProductPath;
+            }
             if (productPath != null && !Files.exists(productPath)) {
                 productPath = null;
             }
