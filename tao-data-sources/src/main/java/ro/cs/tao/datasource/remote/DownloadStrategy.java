@@ -199,7 +199,11 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
                     }
                     break;
                 case SYMLINK:
-                    file = link(product, Paths.get(localArchiveRoot), destPath);
+                    if (this.filteredTiles != null) {
+                        file = link(product);
+                    } else {
+                        file = link(product, Paths.get(localArchiveRoot), destPath);
+                    }
                     if (file == null) {
                         logger.warning("Product link failed");
                     }
@@ -219,7 +223,15 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         }
     }
 
+    public abstract DownloadStrategy clone();
+
     protected abstract Path fetchImpl(EOProduct product) throws IOException;
+
+    protected Path link(EOProduct product) throws IOException {
+        return link(product, Paths.get(localArchiveRoot), Paths.get(destination));
+    }
+
+    protected abstract String getMetadataUrl(EOProduct descriptor);
 
     protected boolean checkTileFilter(EOProduct product) {
         return this.filteredTiles == null || this.tileIdPattern.matcher(product.getName()).matches();
@@ -311,8 +323,6 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         return productPath;
     }
 
-    protected abstract String getMetadataUrl(EOProduct descriptor);
-
     protected boolean isCancelled() { return this.cancelled; }
 
     protected Path link(EOProduct product, Path sourceRoot, Path targetRoot) throws IOException {
@@ -326,6 +336,14 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         } else {
             return destinationPath;
         }
+    }
+
+    protected Path copyFile(Path sourcePath, Path file) throws IOException {
+        return Files.exists(file) ? file : Files.copy(sourcePath, file);
+    }
+
+    protected Path linkFile(Path sourcePath, Path file) throws IOException {
+        return Files.exists(file) ? file : Files.createSymbolicLink(file, sourcePath);
     }
 
     protected void activityStart(String activity) {
@@ -461,8 +479,6 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         }
         return FileUtils.ensurePermissions(file);
     }
-
-    public abstract DownloadStrategy clone();
 
     private class TimedJob extends TimerTask {
         @Override

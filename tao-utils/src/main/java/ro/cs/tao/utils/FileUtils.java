@@ -15,36 +15,17 @@
  */
 package ro.cs.tao.utils;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.io.Reader;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.FileStore;
+import java.nio.file.*;
 import java.nio.file.FileSystem;
-import java.nio.file.FileSystemNotFoundException;
-import java.nio.file.FileSystems;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.FileAttribute;
-import java.nio.file.attribute.PosixFileAttributeView;
-import java.nio.file.attribute.PosixFilePermission;
-import java.nio.file.attribute.PosixFilePermissions;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.nio.file.attribute.*;
+import java.util.*;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * This class provides additional functionality in handling with files. All methods in this class dealing with
@@ -617,6 +598,28 @@ public class FileUtils {
                                                                                     file.toString()));
         }
         return file;
+    }
+
+    public static List<Path> listFolders(Path root) throws IOException {
+        final List<Path> folders = new ArrayList<>();
+        Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                folders.add(dir);
+                return FileVisitResult.CONTINUE;
+            }
+        });
+        return folders;
+    }
+
+    public static List<Path> listFiles(Path folder) {
+        final File[] files = folder.toFile().listFiles();
+        return files != null ?
+                Arrays.stream(files)
+                        .filter(File::isFile)
+                        .map(File::toPath)
+                        .collect(Collectors.toList()) :
+                null;
     }
 
     private static Boolean supportsPosix;
