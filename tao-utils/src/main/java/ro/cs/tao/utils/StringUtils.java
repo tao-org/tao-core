@@ -15,12 +15,10 @@
  */
 package ro.cs.tao.utils;
 
-import java.awt.Color;
+import java.awt.*;
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.StringTokenizer;
 
 /**
  * The <code>StringUtils</code> class provides frequently used utility methods dealing with <code>String</code> values
@@ -159,7 +157,7 @@ public class StringUtils {
      * @throws IllegalArgumentException if one of the arguments was null
      * @see #join(Object[], String)
      */
-    public static String join(List tokens, String separator) {
+    public static String join(Collection tokens, String separator) {
         if (tokens == null) {
             throw new IllegalArgumentException("Null tokens");
         }

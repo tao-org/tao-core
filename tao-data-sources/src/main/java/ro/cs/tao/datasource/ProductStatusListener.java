@@ -30,7 +30,7 @@ public interface ProductStatusListener {
      */
     void downloadCompleted(EOProduct product);
     /**
-     * Signals that the download of a product was not successful
+     * Signals that the download of a product was not successful, and the reason why
      */
-    void downloadFailed(EOProduct product);
+    void downloadFailed(EOProduct product, String reason);
 }
