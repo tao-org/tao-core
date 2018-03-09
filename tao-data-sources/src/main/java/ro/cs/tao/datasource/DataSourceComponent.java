@@ -53,8 +53,8 @@ public class DataSourceComponent extends TaoComponent {
     private String password;
     @XmlTransient
     private boolean cancelled;
-    /*@XmlTransient
-    private ProductFetchStrategy currentFetcher;*/
+    @XmlTransient
+    private ProductFetchStrategy currentFetcher;
     @XmlTransient
     private ProductStatusListener productStatusListener;
     @XmlTransient
@@ -167,7 +167,6 @@ public class DataSourceComponent extends TaoComponent {
             dataSource.setCredentials(this.userName, this.password);
         }
         for (EOProduct product : products) {
-            ProductFetchStrategy currentFetcher = null;
             try {
                 if (!cancelled) {
                     if (this.productStatusListener != null) {
@@ -179,7 +178,6 @@ public class DataSourceComponent extends TaoComponent {
                     ProgressNotifier notifier = new ProgressNotifier(securityContext().getPrincipal(),
                             this,
                             DataSourceTopics.PRODUCT_PROGRESS);
-                    //notifier.started(product.getName());
                     ProductFetchStrategy templateFetcher = dataSource.getProductFetchStrategy(product.getProductType());
                     if (templateFetcher instanceof DownloadStrategy) {
                         DownloadStrategy downloadStrategy = ((DownloadStrategy) templateFetcher).clone();
@@ -214,7 +212,7 @@ public class DataSourceComponent extends TaoComponent {
                         if (productPath != null) {
                             this.productStatusListener.downloadCompleted(product);
                         } else {
-                            this.productStatusListener.downloadFailed(product);
+                            this.productStatusListener.downloadFailed(product, "Could not download or no tiles");
                         }
                     }
                 }
@@ -222,19 +220,19 @@ public class DataSourceComponent extends TaoComponent {
                 logger.info(String.format("Fetching product '%s' cancelled",
                                           product.getName()));
                 if (this.productStatusListener != null) {
-                    this.productStatusListener.downloadFailed(product);
+                    this.productStatusListener.downloadFailed(product, "Cancelled");
                 }
             } catch (IOException ex) {
                 logger.warning(String.format("Fetching product '%s' failed: %s",
                                              product.getName(), ex.getMessage()));
                 if (this.productStatusListener != null) {
-                    this.productStatusListener.downloadFailed(product);
+                    this.productStatusListener.downloadFailed(product, ex.getMessage());
                 }
             } catch (URISyntaxException e) {
                 logger.warning(String.format("Updating product location for '%s' failed: %s",
                                              product.getName(), e.getMessage()));
                 if (this.productStatusListener != null) {
-                    this.productStatusListener.downloadFailed(product);
+                    this.productStatusListener.downloadFailed(product, e.getMessage());
                 }
             } finally {
                 //notifier.notifyProgress(counter++ / products.size());
@@ -249,16 +247,16 @@ public class DataSourceComponent extends TaoComponent {
 
     public void resume() {
         this.cancelled = false;
-        /*if (this.currentFetcher != null) {
+        if (this.currentFetcher != null) {
             this.currentFetcher.resume();
-        }*/
+        }
     }
 
     public void cancel() {
         this.cancelled = true;
-        /*if (this.currentFetcher != null) {
+        if (this.currentFetcher != null) {
             this.currentFetcher.cancel();
-        }*/
+        }
     }
 
     private boolean tryApplyFilter(ProductFetchStrategy strategy, Set<String> tiles) {
