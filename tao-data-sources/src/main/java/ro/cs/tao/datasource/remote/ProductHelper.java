@@ -63,6 +63,8 @@ public abstract class ProductHelper {
 
     public abstract String getProductRelativePath();
 
+    public abstract Pattern getTilePattern();
+
     @Override
     public String toString() {
         return this.name;
