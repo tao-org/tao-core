@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.component.execution;
 
+import java.beans.Transient;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +31,7 @@ public class ExecutionJob implements StatusChangeListener {
     private long workflowId;
     private ExecutionStatus executionStatus;
     private List<ExecutionTask> tasks;
+    private JobVisitor taskChooser;
 
     public ExecutionJob() {}
 
@@ -71,11 +73,22 @@ public class ExecutionJob implements StatusChangeListener {
         return tasks;
     }
 
+    @Transient
+    public void setTaskChooser(JobVisitor visitor) { this.taskChooser = visitor; }
+    public JobVisitor getTaskChooser() { return this.taskChooser; }
+
     public void addTask(ExecutionTask task) {
         if (this.tasks == null) {
             this.tasks = new ArrayList<>();
         }
         this.tasks.add(task);
+    }
+
+    public ExecutionTask getNextTask() {
+        if (this.taskChooser == null) {
+            throw new IllegalArgumentException("No algorithm for choosing tasks is set");
+        }
+        return this.taskChooser.visit(this);
     }
 
     public List<ExecutionTask> find(ExecutionStatus status) {
@@ -86,37 +99,6 @@ public class ExecutionJob implements StatusChangeListener {
                                 .collect(Collectors.toList());
         }
         return running;
-    }
-
-    public ExecutionTask getNext() {
-        ExecutionTask next = null;
-        if (this.tasks != null && this.tasks.size() > 0) {
-            switch (this.executionStatus) {
-                case UNDETERMINED:
-                case QUEUED_ACTIVE:
-                    next = this.tasks.get(0);
-                    break;
-                case SUSPENDED:
-                    next = this.tasks.stream()
-                            .filter(t -> t.getExecutionStatus() == ExecutionStatus.SUSPENDED)
-                            .findFirst().orElse(null);
-                    break;
-                case RUNNING:
-                    for (ExecutionTask task : this.tasks) {
-                        if (task.getExecutionStatus() != ExecutionStatus.RUNNING) {
-                            next = task;
-                            break;
-                        }
-                    }
-                    break;
-                case DONE:
-                case FAILED:
-                case CANCELLED:
-                default:
-                    break;
-            }
-        }
-        return next;
     }
 
     @Override
