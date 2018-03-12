@@ -159,6 +159,6 @@ public class ExecutionTask implements StatusChangeListener {
     }
 
     public ExecutionTask getNext() {
-        return groupTask != null ? groupTask.getNext() : job.getNext();
+        return groupTask != null ? groupTask.getNext() : job.getNextTask();
     }
 }

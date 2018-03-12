@@ -105,7 +105,7 @@ public abstract class JobCommand {
         }
         @Override
         protected void doAction(ExecutionJob job) {
-            ExecutionTask firstTask = job.getNext();
+            ExecutionTask firstTask = job.getNextTask();
             TaskCommand.START.applyTo(firstTask);
         }
     }

@@ -61,6 +61,7 @@ public class Orchestrator {
                 WorkflowDescriptor descriptor = persistenceManager.getWorkflowDescriptor(workflowId);
                 job = create(descriptor);
             }
+            job.setTaskChooser(new DefaultJobVisitor());
             JobCommand.START.applyTo(job);
         } catch (PersistenceException e) {
             logger.severe(e.getMessage());
@@ -87,7 +88,7 @@ public class Orchestrator {
      */
     public void pauseWorkflow(long workflowId) throws ExecutionException {
         ExecutionJob job = checkWorkflow(workflowId);
-        JobCommand.STOP.applyTo(job);
+        JobCommand.SUSPEND.applyTo(job);
     }
 
     /**
