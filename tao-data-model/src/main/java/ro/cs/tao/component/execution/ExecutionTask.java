@@ -70,11 +70,22 @@ public class ExecutionTask implements StatusChangeListener {
         return processingComponent;
     }
 
+    /**
+     * Sets the status of this task.
+     * This method is intended to be called by the underlying persistence layer.
+     * If the caller wants to change the status of the task,
+     * the <code>changeStatus(ExecutionStatus)</code> should be used instead.
+     */
     public void setExecutionStatus(ExecutionStatus executionStatus) { this.executionStatus = executionStatus; }
     public ExecutionStatus getExecutionStatus() {
         return executionStatus;
     }
-    void internalStatusChange(ExecutionStatus status) {
+
+    /**
+     * Changes the status of this task and signals this to the parent group, if available.
+     * @param status The new status.
+     */
+    public void changeStatus(ExecutionStatus status) {
         ExecutionStatus previous = this.executionStatus;
         this.executionStatus = status;
         if (groupTask != null && previous != null && previous != status) {

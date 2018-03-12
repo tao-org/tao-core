@@ -31,7 +31,7 @@ public class ExecutionJob implements StatusChangeListener {
     private long workflowId;
     private ExecutionStatus executionStatus;
     private List<ExecutionTask> tasks;
-    private JobVisitor taskChooser;
+    private TaskChooser taskChooser;
 
     public ExecutionJob() {}
 
@@ -74,8 +74,8 @@ public class ExecutionJob implements StatusChangeListener {
     }
 
     @Transient
-    public void setTaskChooser(JobVisitor visitor) { this.taskChooser = visitor; }
-    public JobVisitor getTaskChooser() { return this.taskChooser; }
+    public void setTaskChooser(TaskChooser visitor) { this.taskChooser = visitor; }
+    public TaskChooser getTaskChooser() { return this.taskChooser; }
 
     public void addTask(ExecutionTask task) {
         if (this.tasks == null) {
@@ -84,11 +84,15 @@ public class ExecutionJob implements StatusChangeListener {
         this.tasks.add(task);
     }
 
+    /**
+     * Returns the next task chosen to be executed.
+     * The actual selection is performed by a concrete <code>TaskChooser</code>.
+     */
     public ExecutionTask getNextTask() {
         if (this.taskChooser == null) {
             throw new IllegalArgumentException("No algorithm for choosing tasks is set");
         }
-        return this.taskChooser.visit(this);
+        return this.taskChooser.chooseNext(this);
     }
 
     public List<ExecutionTask> find(ExecutionStatus status) {
@@ -133,7 +137,7 @@ public class ExecutionJob implements StatusChangeListener {
             if (!found) {
                 found = this.tasks.get(idx).getId().equals(firstExculde.getId());
             } else {
-                this.tasks.get(idx).internalStatusChange(status);
+                this.tasks.get(idx).changeStatus(status);
             }
             idx++;
         }

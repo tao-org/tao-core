@@ -88,7 +88,7 @@ public class DrmaaTaoExecutor extends Executor {
 
             task.setResourceId(id);
             task.setStartTime(LocalDateTime.now());
-            task.setExecutionStatus(ExecutionStatus.QUEUED_ACTIVE);
+            task.changeStatus(ExecutionStatus.QUEUED_ACTIVE);
             persistenceManager.updateExecutionTask(task);
             logger.info("DrmaaExecutor: Succesfully submitted task with id " + id);
         } catch (DrmaaException | InternalException e) {
