@@ -22,6 +22,9 @@ import ro.cs.tao.component.execution.ExecutionJob;
 import ro.cs.tao.component.execution.ExecutionStatus;
 import ro.cs.tao.component.execution.ExecutionTask;
 import ro.cs.tao.execution.ExecutionException;
+import ro.cs.tao.messaging.Message;
+import ro.cs.tao.messaging.Notifiable;
+import ro.cs.tao.messaging.Topics;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.workflow.ParameterValue;
@@ -36,10 +39,22 @@ import java.util.logging.Logger;
 /**
  * @author Cosmin Cara
  */
-public class Orchestrator {
+public class Orchestrator extends Notifiable {
+
+    private static final Orchestrator instance;
+
+    static {
+        instance = new Orchestrator();
+    }
+
+    public static final Orchestrator getInstance() { return instance; }
 
     private final Logger logger = Logger.getLogger(Orchestrator.class.getSimpleName());
     private PersistenceManager persistenceManager;
+
+    private Orchestrator() {
+        subscribe(Topics.TASK_STATUS_CHANGED);
+    }
 
     public void setPersistenceManager(PersistenceManager persistenceManager) {
         this.persistenceManager = persistenceManager;
@@ -171,5 +186,28 @@ public class Orchestrator {
             task.setExecutionStatus(ExecutionStatus.UNDETERMINED);
         }
         return task;
+    }
+
+    @Override
+    protected void onMessageReceived(Message message) {
+        try {
+            String taskId = message.getItem(Message.SOURCE_KEY);
+            ExecutionStatus status = Enum.valueOf(ExecutionStatus.class, message.getItem(Message.PAYLOAD_KEY));
+            logger.fine(String.format("Received status change for task %s: %s", taskId, status));
+            ExecutionTask task = persistenceManager.getTaskById(Long.parseLong(taskId));
+            task.changeStatus(status);
+            persistenceManager.updateExecutionTask(task);
+            ExecutionJob job = task.getJob();
+            job.getTasks().forEach(t -> {
+                try {
+                    persistenceManager.updateExecutionTask(t);
+                } catch (PersistenceException e) {
+                    logger.severe(e.getMessage());
+                }
+            });
+            persistenceManager.updateExecutionJob(task.getJob());
+        } catch (PersistenceException e) {
+            logger.severe(e.getMessage());
+        }
     }
 }

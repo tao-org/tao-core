@@ -23,4 +23,5 @@ public class Topics {
     public static final String WARNING = "warn";
     public static final String ERROR = "error";
     public static final String PROGRESS = "progress";
+    public static final String TASK_STATUS_CHANGED = "task.changed";
 }
