@@ -24,6 +24,11 @@
             <artifactId>tao-data-sources</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>ro.cs.tao</groupId>
+            <artifactId>tao-orchestration</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
 </project>

@@ -20,8 +20,11 @@ import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.component.execution.ExecutionStatus;
 import ro.cs.tao.component.execution.ExecutionTask;
+import ro.cs.tao.messaging.Messaging;
+import ro.cs.tao.messaging.Topics;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.security.SystemPrincipal;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 
 import java.time.LocalDateTime;
@@ -37,7 +40,7 @@ public abstract class Executor extends Identifiable {
     /* Flag for trying to close the monitoring thread in an elegant manner */
     protected Boolean isInitialized = false;
     protected final PersistenceManager persistenceManager = SpringContextBridge.services().getPersistenceManager();
-    protected final Logger logger = Logger.getLogger(getClass().getSimpleName());
+    protected final Logger logger = Logger.getLogger(getClass().getName());
     private final Timer executionsCheckTimer = new Timer();
 
     public Executor() {
@@ -136,8 +139,10 @@ public abstract class Executor extends Identifiable {
 
     protected void changeTaskStatus(ExecutionTask task, ExecutionStatus status) throws PersistenceException {
         if(status != task.getExecutionStatus()) {
-            task.changeStatus(status);
-            persistenceManager.updateExecutionTask(task);
+            //task.setExecutionStatus(status);
+            // Don't persist here, it's handled by the Orchestrator
+            //persistenceManager.updateExecutionTask(task);
+            Messaging.send(SystemPrincipal.instance(), Topics.TASK_STATUS_CHANGED, task.getId(), status.toString());
         }
     }
 
