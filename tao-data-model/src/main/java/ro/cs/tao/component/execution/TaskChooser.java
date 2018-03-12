@@ -16,6 +16,11 @@
 
 package ro.cs.tao.component.execution;
 
-public interface JobVisitor {
-    ExecutionTask visit(ExecutionJob job);
+/**
+ * Interface for implementors of task choosing algorithms
+ *
+ * @author Cosmin Cara
+ */
+public interface TaskChooser {
+    ExecutionTask chooseNext(ExecutionJob job);
 }

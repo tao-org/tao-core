@@ -19,34 +19,41 @@ package ro.cs.tao.orchestration;
 import ro.cs.tao.component.execution.ExecutionJob;
 import ro.cs.tao.component.execution.ExecutionStatus;
 import ro.cs.tao.component.execution.ExecutionTask;
-import ro.cs.tao.component.execution.JobVisitor;
+import ro.cs.tao.component.execution.TaskChooser;
 
 import java.util.List;
 
-public class DefaultJobVisitor implements JobVisitor {
+/**
+ * Default implementation for choosing the next task to be executed from a job.
+ */
+public class DefaultTaskChooser implements TaskChooser {
     @Override
-    public ExecutionTask visit(ExecutionJob job) {
+    public ExecutionTask chooseNext(ExecutionJob job) {
         ExecutionTask next = null;
         List<ExecutionTask> tasks = job.getTasks();
         if (tasks != null && tasks.size() > 0) {
             switch (job.getExecutionStatus()) {
+                // If the job is not started, we return the first task in line
                 case UNDETERMINED:
-                case QUEUED_ACTIVE:
                     next = tasks.get(0);
                     break;
+                // If the job is already queued for execution,
+                // there should be already at least one task queued for execution, so we don't return another one
+                case QUEUED_ACTIVE:
+                    break;
+                // If the job is suspended, return the first task that was suspended
                 case SUSPENDED:
                     next = tasks.stream()
                             .filter(t -> t.getExecutionStatus() == ExecutionStatus.SUSPENDED)
                             .findFirst().orElse(null);
                     break;
+                // If the job is running, return the first task that is not started
                 case RUNNING:
-                    for (ExecutionTask task : tasks) {
-                        if (task.getExecutionStatus() != ExecutionStatus.RUNNING) {
-                            next = task;
-                            break;
-                        }
-                    }
+                    next = tasks.stream()
+                            .filter(t -> t.getExecutionStatus() == ExecutionStatus.UNDETERMINED)
+                            .findFirst().orElse(null);
                     break;
+                // If the job was cancelled, or failed, or completed its execution, do nothing
                 case DONE:
                 case FAILED:
                 case CANCELLED:

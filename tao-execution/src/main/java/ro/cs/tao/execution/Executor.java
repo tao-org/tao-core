@@ -136,7 +136,7 @@ public abstract class Executor extends Identifiable {
 
     protected void changeTaskStatus(ExecutionTask task, ExecutionStatus status) throws PersistenceException {
         if(status != task.getExecutionStatus()) {
-            task.setExecutionStatus(status);
+            task.changeStatus(status);
             persistenceManager.updateExecutionTask(task);
         }
     }

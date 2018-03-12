@@ -151,7 +151,7 @@ public class ExecutionGroup extends ExecutionTask {
     }
 
     @Override
-    void internalStatusChange(ExecutionStatus status) {
+    public void changeStatus(ExecutionStatus status) {
         this.executionStatus = status;
         switch (status) {
             case SUSPENDED:
@@ -177,7 +177,7 @@ public class ExecutionGroup extends ExecutionTask {
             if (!found) {
                 found = this.tasks.get(idx).getId().equals(firstExculde.getId());
             } else {
-                this.tasks.get(idx).internalStatusChange(status);
+                this.tasks.get(idx).changeStatus(status);
             }
             idx++;
         }
