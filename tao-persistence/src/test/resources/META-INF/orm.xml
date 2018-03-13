@@ -409,7 +409,7 @@
                 <column name="graph_node_id" nullable="false" column-definition="bigint NOT NULL"/>
             </basic>
 
-            <many-to-one name="processingComponent" fetch="LAZY">
+            <many-to-one name="processingComponent" fetch="LAZY" target-entity="ro.cs.tao.component.ProcessingComponent">
                 <join-column name="processing_component_id" nullable="false"/>
             </many-to-one>
 
@@ -454,7 +454,8 @@
 
             <one-to-many name="tasks" fetch="EAGER" mapped-by="job" />
 
-            <transient name="next"/>
+            <transient name="nextTask"/>
+            <transient name="taskChooser"/>
         </attributes>
     </entity>
 
