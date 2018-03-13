@@ -380,7 +380,7 @@
     </entity>
 
 
-    <entity class="ro.cs.tao.component.execution.ExecutionTask" access="PROPERTY">
+    <entity class="ro.cs.tao.execution.model.ExecutionTask" access="PROPERTY">
         <table name="tao.task"/>
         <convert converter="ro.cs.tao.persistence.convert.ExecutionStatusConverter" attribute-name="executionStatus" />
         <attributes>
@@ -430,7 +430,7 @@
     </entity>
 
 
-    <entity class="ro.cs.tao.component.execution.ExecutionJob" access="PROPERTY">
+    <entity class="ro.cs.tao.execution.model.ExecutionJob" access="PROPERTY">
         <table name="tao.job"/>
         <convert converter="ro.cs.tao.persistence.convert.ExecutionStatusConverter" attribute-name="executionStatus" />
         <attributes>

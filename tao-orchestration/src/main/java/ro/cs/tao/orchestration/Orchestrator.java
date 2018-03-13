@@ -17,11 +17,11 @@ package ro.cs.tao.orchestration;
 
 import ro.cs.tao.component.ComponentLink;
 import ro.cs.tao.component.ProcessingComponent;
-import ro.cs.tao.component.execution.ExecutionGroup;
-import ro.cs.tao.component.execution.ExecutionJob;
-import ro.cs.tao.component.execution.ExecutionStatus;
-import ro.cs.tao.component.execution.ExecutionTask;
 import ro.cs.tao.execution.ExecutionException;
+import ro.cs.tao.execution.model.ExecutionGroup;
+import ro.cs.tao.execution.model.ExecutionJob;
+import ro.cs.tao.execution.model.ExecutionStatus;
+import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.Notifiable;
 import ro.cs.tao.messaging.Topics;
@@ -136,7 +136,7 @@ public class Orchestrator extends Notifiable {
             job.setStartTime(LocalDateTime.now());
             job.setWorkflowId(workflow.getId());
             job.setExecutionStatus(ExecutionStatus.UNDETERMINED);
-            List<WorkflowNodeDescriptor> nodes = workflow.getNodes();
+            List<WorkflowNodeDescriptor> nodes = workflow.getOrderedNodes();
             for (WorkflowNodeDescriptor node : nodes) {
                 ExecutionTask task = createTask(node);
                 job.addTask(task);
@@ -149,7 +149,7 @@ public class Orchestrator extends Notifiable {
 
     private ExecutionTask createGroup(WorkflowNodeGroupDescriptor groupNode) throws PersistenceException {
         ExecutionGroup group = new ExecutionGroup();
-        List<WorkflowNodeDescriptor> nodes = groupNode.getNodes();
+        List<WorkflowNodeDescriptor> nodes = groupNode.getOrderedNodes();
         for (WorkflowNodeDescriptor node : nodes) {
             ExecutionTask task = createTask(node);
             group.addTask(task);

@@ -1,9 +1,8 @@
 package ro.cs.tao.persistence.convert;
 
-import ro.cs.tao.component.execution.ExecutionStatus;
+import ro.cs.tao.execution.model.ExecutionStatus;
 
 import javax.persistence.AttributeConverter;
-import javax.persistence.Converter;
 
 /**
  * Converter for ExecutionStatus enum stored values

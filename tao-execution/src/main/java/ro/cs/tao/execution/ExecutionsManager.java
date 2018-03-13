@@ -15,7 +15,7 @@
  */
 package ro.cs.tao.execution;
 
-import ro.cs.tao.component.execution.ExecutionTask;
+import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
 
@@ -60,7 +60,6 @@ public class ExecutionsManager {
     }
 
     private Executor getExecutor(ExecutionTask task) {
-
         Optional<Executor> optional = services.stream()
                 .filter(x -> x.supports(task.getProcessingComponent()))
                 .findFirst();

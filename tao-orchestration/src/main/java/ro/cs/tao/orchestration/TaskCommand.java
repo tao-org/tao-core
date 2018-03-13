@@ -15,10 +15,10 @@
  */
 package ro.cs.tao.orchestration;
 
-import ro.cs.tao.component.execution.ExecutionStatus;
-import ro.cs.tao.component.execution.ExecutionTask;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.ExecutionsManager;
+import ro.cs.tao.execution.model.ExecutionStatus;
+import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.persistence.PersistenceManager;
 
 import java.util.HashSet;

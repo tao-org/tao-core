@@ -18,12 +18,11 @@ package ro.cs.tao.execution;
 import ro.cs.tao.component.Identifiable;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.TaoComponent;
-import ro.cs.tao.component.execution.ExecutionStatus;
-import ro.cs.tao.component.execution.ExecutionTask;
+import ro.cs.tao.execution.model.ExecutionStatus;
+import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.Topics;
 import ro.cs.tao.persistence.PersistenceManager;
-import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.security.SystemPrincipal;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 
@@ -132,12 +131,12 @@ public abstract class Executor extends Identifiable {
      */
     public abstract void monitorExecutions() throws ExecutionException;
 
-    protected void markTaskFinished(ExecutionTask task, ExecutionStatus status) throws PersistenceException {
+    protected void markTaskFinished(ExecutionTask task, ExecutionStatus status) {
         task.setEndTime(LocalDateTime.now());
         changeTaskStatus(task, status);
     }
 
-    protected void changeTaskStatus(ExecutionTask task, ExecutionStatus status) throws PersistenceException {
+    protected void changeTaskStatus(ExecutionTask task, ExecutionStatus status) {
         if(status != task.getExecutionStatus()) {
             //task.setExecutionStatus(status);
             // Don't persist here, it's handled by the Orchestrator
