@@ -61,7 +61,7 @@ public class ExecutionsManager {
 
     private Executor getExecutor(ExecutionTask task) {
         Optional<Executor> optional = services.stream()
-                .filter(x -> x.supports(task.getProcessingComponent()))
+                .filter(x -> x.supports(task.getComponent()))
                 .findFirst();
         if(optional.isPresent()) {
             return optional.get();

@@ -14,13 +14,23 @@
  * with this program; if not, see http://www.gnu.org/licenses/
  */
 
-package ro.cs.tao.execution.model;
+package ro.cs.tao.persistence.repository;
+
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+import ro.cs.tao.datasource.DataSourceComponent;
 
 /**
- * Interface for implementors of task choosing algorithms
+ * CRUD repository for Query entities
  *
  * @author Cosmin Cara
+ *
  */
-public interface TaskChooser {
-    ExecutionTask chooseNext(ExecutionJob job);
+@Repository
+@Qualifier(value = "dataSource")
+@Transactional
+public interface DataSourceRepository extends PagingAndSortingRepository<DataSourceComponent, String> {
+
 }

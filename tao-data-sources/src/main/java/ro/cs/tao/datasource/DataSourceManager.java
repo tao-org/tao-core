@@ -31,6 +31,9 @@ import java.util.stream.Collectors;
 public class DataSourceManager {
 
     private static final DataSourceManager instance;
+    private static final int DEFAULT_MAX_RETRIES = 1;
+    private static final int DEFAULT_MAX_CONNECTIONS = 1;
+    private static final int DEFAULT_RETRY_INTERVAL = 60;
     private final ServiceRegistry<DataSource> registry;
     private final Map<Map.Entry<String, String>, Map<String, ParameterDescriptor>> registeredSources;
     private final Logger logger;

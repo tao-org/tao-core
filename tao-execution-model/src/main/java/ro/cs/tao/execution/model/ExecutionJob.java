@@ -29,9 +29,10 @@ public class ExecutionJob implements StatusChangeListener {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private long workflowId;
+    private String queryId;
     private ExecutionStatus executionStatus;
     private List<ExecutionTask> tasks;
-    private TaskChooser taskChooser;
+    private TaskSelector taskSelector;
 
     public ExecutionJob() {}
 
@@ -41,6 +42,9 @@ public class ExecutionJob implements StatusChangeListener {
     public void setId(long id) {
         this.id = id;
     }
+
+    public String getQueryId() { return queryId; }
+    public void setQueryId(String queryId) { this.queryId = queryId; }
 
     public long getWorkflowId() { return workflowId; }
     public void setWorkflowId(long workflowId) { this.workflowId = workflowId; }
@@ -74,8 +78,8 @@ public class ExecutionJob implements StatusChangeListener {
     }
 
     @Transient
-    public void setTaskChooser(TaskChooser visitor) { this.taskChooser = visitor; }
-    public TaskChooser getTaskChooser() { return this.taskChooser; }
+    public void setTaskSelector(TaskSelector visitor) { this.taskSelector = visitor; }
+    public TaskSelector getTaskSelector() { return this.taskSelector; }
 
     public void addTask(ExecutionTask task) {
         if (this.tasks == null) {
@@ -86,13 +90,13 @@ public class ExecutionJob implements StatusChangeListener {
 
     /**
      * Returns the next task chosen to be executed.
-     * The actual selection is performed by a concrete <code>TaskChooser</code>.
+     * The actual selection is performed by a concrete <code>TaskSelector</code>.
      */
     public ExecutionTask getNextTask() {
-        if (this.taskChooser == null) {
+        if (this.taskSelector == null) {
             throw new IllegalArgumentException("No algorithm for choosing tasks is set");
         }
-        return this.taskChooser.chooseNext(this);
+        return this.taskSelector.chooseNext(this);
     }
 
     public List<ExecutionTask> find(ExecutionStatus status) {

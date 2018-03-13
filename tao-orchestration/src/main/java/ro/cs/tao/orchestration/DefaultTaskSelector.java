@@ -19,14 +19,14 @@ package ro.cs.tao.orchestration;
 import ro.cs.tao.execution.model.ExecutionJob;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
-import ro.cs.tao.execution.model.TaskChooser;
+import ro.cs.tao.execution.model.TaskSelector;
 
 import java.util.List;
 
 /**
  * Default implementation for choosing the next task to be executed from a job.
  */
-public class DefaultTaskChooser implements TaskChooser {
+public class DefaultTaskSelector implements TaskSelector {
 
     @Override
     public ExecutionTask chooseNext(ExecutionJob job) {

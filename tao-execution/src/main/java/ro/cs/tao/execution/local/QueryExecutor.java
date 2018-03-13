@@ -30,6 +30,7 @@ import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.Executor;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
+import ro.cs.tao.serialization.GenericAdapter;
 
 import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
@@ -42,38 +43,28 @@ import java.util.concurrent.Future;
 
 public class QueryExecutor extends Executor {
 
-    private static final String USERNAME = "username";
-    private static final String PASSWORD = "password";
     private ExecutorService backgroundWorker = Executors.newSingleThreadExecutor();
     private DataSourceComponent dataSourceComponent;
-
     @Override
     public boolean supports(TaoComponent component) { return component instanceof DataSourceComponent; }
 
     @Override
     public void execute(ExecutionTask task) throws ExecutionException {
-        dataSourceComponent = (DataSourceComponent) task.getProcessingComponent();
-        List<Variable> values = task.getInputParameterValues();
-        Variable user = values.stream().filter(v -> USERNAME.equalsIgnoreCase(v.getKey())).findFirst().orElse(null);
-        if (user != null) {
-            Variable pwd = values.stream().filter(v -> PASSWORD.equalsIgnoreCase(v.getKey())).findFirst().orElse(null);
-            if (pwd != null) {
-                dataSourceComponent.setUserCredentials(user.getValue(), pwd.getValue());
-                values.remove(user);
-                values.remove(pwd);
-            }
-        }
         try {
+            dataSourceComponent = (DataSourceComponent) task.getComponent();
             final Map<String, ParameterDescriptor> parameterDescriptorMap =
                     DataSourceManager.getInstance()
                             .getSupportedParameters(dataSourceComponent.getSensorName(),
                                     dataSourceComponent.getDataSourceName());
-            DataQuery query = dataSourceComponent.createQuery();
+            DataQuery dataQuery = dataSourceComponent.createQuery();
+            //List<Parameter> parameters = dataSourceComponent.getOverriddenParameters();
+            List<Variable> values = task.getInputParameterValues();
             for (Variable entry : values) {
-                final ParameterDescriptor descriptor = parameterDescriptorMap.get(entry.getKey());
+                final String paramName = entry.getKey();
+                final ParameterDescriptor descriptor = parameterDescriptorMap.get(paramName);
                 if (descriptor == null) {
                     throw new QueryException(String.format("Parameter [%s] not supported by data source '%s' for sensor '%s'",
-                            entry.getKey(),
+                            paramName,
                             dataSourceComponent.getDataSourceName(),
                             dataSourceComponent.getSensorName()));
                 }
@@ -82,24 +73,29 @@ public class QueryExecutor extends Executor {
                 final QueryParameter queryParameter;
                 if (value != null && isArray(value)) {
                     String[] elements = value.substring(0, value.length() - 1).split(",");
-                    queryParameter = query.createParameter(entry.getKey(),
-                            type,
-                            Date.class.isAssignableFrom(type) ?
-                                    new SimpleDateFormat("yyyy-MM-dd").parse(elements[0])
-                                    : Array.get(value, 0),
-                            Date.class.isAssignableFrom(type) ?
-                                    new SimpleDateFormat("yyyy-MM-dd").parse(elements[1])
-                                    : Array.get(value, 1));
+                    if (Date.class.isAssignableFrom(type)) {
+                        queryParameter = dataQuery.createParameter(paramName,
+                                type,
+                                new SimpleDateFormat("yyyy-MM-dd").parse(elements[0]),
+                                new SimpleDateFormat("yyyy-MM-dd").parse(elements[1]));
+                    } else {
+                        Object array = Array.newInstance(type, elements.length);
+                        GenericAdapter adapter = new GenericAdapter(type.getName());
+                        for (int i = 0; i < elements.length; i++) {
+                            Array.set(array, i, adapter.marshal(elements[i]));
+                        }
+                        queryParameter = dataQuery.createParameter(paramName, type, array);
+                    }
                 } else {
-                    queryParameter = query.createParameter(entry.getKey(),
+                    queryParameter = dataQuery.createParameter(paramName,
                             type,
                             Date.class.isAssignableFrom(type) ?
                                     new SimpleDateFormat("yyyy-MM-dd").parse(value)
-                                    : entry.getValue());
+                                    : value);
                 }
-                query.addParameter(queryParameter);
+                dataQuery.addParameter(queryParameter);
             }
-            final Future<List<EOProduct>> future = backgroundWorker.submit(query::execute);
+            final Future<List<EOProduct>> future = backgroundWorker.submit(dataQuery::execute);
             List<EOProduct> results = future.get();
             if (results != null && results.size() > 0) {
                 String sensorName = dataSourceComponent.getSensorName().toLowerCase().replace(" ", "-");
@@ -117,7 +113,7 @@ public class QueryExecutor extends Executor {
 
     @Override
     public void stop(ExecutionTask task) throws ExecutionException {
-        if (dataSourceComponent == null || !dataSourceComponent.equals(task.getProcessingComponent())) {
+        if (dataSourceComponent == null || !dataSourceComponent.equals(task.getComponent())) {
             throw new ExecutionException("stop() called on different component");
         }
         dataSourceComponent.cancel();

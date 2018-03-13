@@ -18,7 +18,7 @@ package ro.cs.tao.services.interfaces;
 import ro.cs.tao.datasource.param.ParameterDescriptor;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.serialization.SerializationException;
-import ro.cs.tao.services.model.datasource.DataSourceInstance;
+import ro.cs.tao.services.model.datasource.DataSourceDescriptor;
 import ro.cs.tao.services.model.datasource.Query;
 
 import java.util.List;
@@ -33,7 +33,7 @@ public interface DataSourceService {
 
     List<String> getDatasourcesForSensor(String sensorName);
 
-    List<DataSourceInstance> getDatasourceInstances();
+    List<DataSourceDescriptor> getDatasourceInstances();
 
     List<ParameterDescriptor> getSupportedParameters(String sensorName, String dataSourceName);
 

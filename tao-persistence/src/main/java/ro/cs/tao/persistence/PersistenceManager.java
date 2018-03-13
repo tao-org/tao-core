@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.component.ParameterDescriptor;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.enums.ProcessingComponentVisibility;
+import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.docker.Application;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.eodata.EOProduct;
@@ -119,6 +120,9 @@ public class PersistenceManager implements MessagePersister {
     /** CRUD Repository for WorkflowDescriptor entities */
     @Autowired
     private WorkflowNodeDescriptorRepository workflowNodeDescriptorRepository;
+
+    @Autowired
+    private DataSourceRepository dataSourceRepository;
 
 //    /** CRUD Repository for DataSource entities */
 //    @Autowired
@@ -604,7 +608,7 @@ public class PersistenceManager implements MessagePersister {
             throw new PersistenceException("There is already another processing parameter with the identifier: " + parameter.getId());
         }
 
-        parameter.setProcessingComponent(component);
+        parameter.setComponent(component);
 
         // save the new ParameterDescriptor entity and return it
         return parameterDescriptorRepository.save(parameter);
@@ -625,7 +629,7 @@ public class PersistenceManager implements MessagePersister {
             throw new PersistenceException("There is already another processing parameter with the identifier: " + parameter.getId());
         }
 
-        parameter.setProcessingComponent(component);
+        parameter.setComponent(component);
 
         // save the new ParameterDescriptor entity and return it
         return parameterDescriptorRepository.save(parameter);
@@ -1325,6 +1329,10 @@ public class PersistenceManager implements MessagePersister {
 
         // save the updated entity
         return workflowNodeDescriptorRepository.save(node);
+    }
+
+    public DataSourceComponent getDataSourceInstance(String id) throws PersistenceException {
+        return dataSourceRepository.findOne(id);
     }
 
 }

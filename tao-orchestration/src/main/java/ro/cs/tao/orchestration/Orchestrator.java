@@ -16,7 +16,7 @@
 package ro.cs.tao.orchestration;
 
 import ro.cs.tao.component.ComponentLink;
-import ro.cs.tao.component.ProcessingComponent;
+import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.model.ExecutionGroup;
 import ro.cs.tao.execution.model.ExecutionJob;
@@ -76,7 +76,7 @@ public class Orchestrator extends Notifiable {
                 WorkflowDescriptor descriptor = persistenceManager.getWorkflowDescriptor(workflowId);
                 job = create(descriptor);
             }
-            job.setTaskChooser(new DefaultTaskChooser());
+            job.setTaskSelector(new DefaultTaskSelector());
             JobCommand.START.applyTo(job);
         } catch (PersistenceException e) {
             logger.severe(e.getMessage());
@@ -165,16 +165,19 @@ public class Orchestrator extends Notifiable {
         } else {
             task = new ExecutionTask();
             task.setWorkflowNodeId(workflowNode.getId());
-            ProcessingComponent component = persistenceManager.getProcessingComponentById(workflowNode.getComponentId());
+            TaoComponent component;
             List<ParameterValue> customValues = workflowNode.getCustomValues();
-            task.setProcessingComponent(component);
             List<ComponentLink> links = workflowNode.getIncomingLinks();
             if (links != null) {
+                component = persistenceManager.getProcessingComponentById(workflowNode.getComponentId());
+                task.setComponent(component);
                 links.forEach(link -> {
                     String name = link.getInput().getId();
                     String value = link.getInput().getDataDescriptor().getLocation();
                     task.setParameterValue(name, value);
                 });
+            } else {
+                component = persistenceManager.getDataSourceInstance(workflowNode.getComponentId());
             }
             if (customValues != null) {
                 customValues.forEach(v -> task.setParameterValue(v.getParameterName(), v.getParameterValue()));
