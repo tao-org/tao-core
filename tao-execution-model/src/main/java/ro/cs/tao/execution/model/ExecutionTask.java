@@ -13,28 +13,28 @@
  * You should have received a copy of the GNU General Public License along
  * with this program; if not, see http://www.gnu.org/licenses/
  */
-package ro.cs.tao.component.execution;
+package ro.cs.tao.execution.model;
 
 import ro.cs.tao.component.ParameterDescriptor;
 import ro.cs.tao.component.ProcessingComponent;
+import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.component.Variable;
 import ro.cs.tao.component.validation.ValidationException;
+import ro.cs.tao.datasource.DataSourceComponent;
+import ro.cs.tao.datasource.DataSourceManager;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * @author Cosmin Udroiu
  */
-public class ExecutionTask implements StatusChangeListener {
+public class ExecutionTask<T extends TaoComponent> implements StatusChangeListener {
     private Long id;
     private ExecutionTask groupTask;
     private Long workflowNodeId;
-    private ProcessingComponent processingComponent;
+    private T processingComponent;
     private String resourceId;
     private String executionNodeHostName;
     private LocalDateTime startTime;
@@ -46,7 +46,7 @@ public class ExecutionTask implements StatusChangeListener {
 
     public ExecutionTask() { }
 
-    public ExecutionTask(ProcessingComponent processingComponent) {
+    public ExecutionTask(T processingComponent) {
         this.processingComponent = processingComponent;
     }
 
@@ -63,10 +63,10 @@ public class ExecutionTask implements StatusChangeListener {
     public Long getWorkflowNodeId() { return workflowNodeId; }
     public void setWorkflowNodeId(Long workflowNodeId) { this.workflowNodeId = workflowNodeId; }
 
-    public void setProcessingComponent(ProcessingComponent processingComponent) {
+    public void setProcessingComponent(T processingComponent) {
         this.processingComponent = processingComponent;
     }
-    public ProcessingComponent getProcessingComponent() {
+    public T getProcessingComponent() {
         return processingComponent;
     }
 
@@ -117,18 +117,31 @@ public class ExecutionTask implements StatusChangeListener {
         this.inputParameterValues = inputParameterValues;
     }
     public void setParameterValue(String parameterId, String value) {
-        List<ParameterDescriptor> descriptorList = this.processingComponent.getParameterDescriptors();
         boolean descriptorExists = false;
-        for(ParameterDescriptor descriptor: descriptorList) {
-            if (descriptor.getId().equals(parameterId)) {
-                descriptorExists = true;
-                break;
+        if (this.processingComponent instanceof ProcessingComponent) {
+            List<ParameterDescriptor> descriptorList = ((ProcessingComponent) this.processingComponent).getParameterDescriptors();
+            for (ParameterDescriptor descriptor : descriptorList) {
+                if (descriptor.getId().equals(parameterId)) {
+                    descriptorExists = true;
+                    break;
+                }
             }
         }
-        if(!descriptorExists) {
-            throw new ValidationException("The parameter ID " + parameterId +
-                    " does not exists in the processing component " +
-                    processingComponent.getLabel());
+        if (this.processingComponent instanceof DataSourceComponent) {
+            DataSourceComponent component = (DataSourceComponent) this.processingComponent;
+            Collection<ro.cs.tao.datasource.param.ParameterDescriptor> descriptors =
+                    DataSourceManager.getInstance().getSupportedParameters(component.getSensorName(),
+                                                                            component.getDataSourceName()).values();
+            for (ro.cs.tao.datasource.param.ParameterDescriptor descriptor : descriptors) {
+                if (descriptor.getName().equalsIgnoreCase(parameterId)) {
+                    descriptorExists = true;
+                    break;
+                }
+            }
+        }
+        if (!descriptorExists) {
+            throw new ValidationException(String.format("The parameter ID [%s] does not exists in the component '%s'",
+                                                        parameterId, processingComponent.getLabel()));
         }
         if (this.inputParameterValues == null) {
             this.inputParameterValues = new ArrayList<>();
@@ -166,7 +179,8 @@ public class ExecutionTask implements StatusChangeListener {
             inputParams.putAll(inputParameterValues.stream()
                                        .collect(Collectors.toMap(Variable::getKey, Variable::getValue)));
         }
-        return this.processingComponent.buildExecutionCommand(inputParams);
+        return this.processingComponent instanceof ProcessingComponent ?
+                ((ProcessingComponent) this.processingComponent).buildExecutionCommand(inputParams) : null;
     }
 
     public ExecutionTask getNext() {

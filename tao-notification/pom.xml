@@ -23,11 +23,11 @@
             <artifactId>tao-config</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <dependency>
+        <!--<dependency>
             <groupId>ro.cs.tao</groupId>
             <artifactId>tao-spring-bridge</artifactId>
             <version>${project.version}</version>
-        </dependency>
+        </dependency>-->
         <dependency>
             <groupId>io.projectreactor</groupId>
             <artifactId>reactor-bus</artifactId>

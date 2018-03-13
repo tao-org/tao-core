@@ -14,7 +14,7 @@
  * with this program; if not, see http://www.gnu.org/licenses/
  */
 
-package ro.cs.tao.component.execution;
+package ro.cs.tao.execution.model;
 
 /**
  * Interface for implementors of task choosing algorithms

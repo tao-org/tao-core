@@ -20,8 +20,8 @@
         <class>ro.cs.tao.component.TemplateParameterDescriptor</class>
         <class>ro.cs.tao.component.ProcessingComponent</class>
 
-        <class>ro.cs.tao.component.execution.ExecutionJob</class>
-        <class>ro.cs.tao.component.execution.ExecutionTask</class>
+        <class>ro.cs.tao.execution.model.ExecutionJob</class>
+        <class>ro.cs.tao.execution.model.ExecutionTask</class>
 
         <class>ro.cs.tao.component.SourceDescriptor</class>
         <class>ro.cs.tao.component.TargetDescriptor</class>

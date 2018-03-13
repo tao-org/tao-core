@@ -14,9 +14,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import ro.cs.tao.component.*;
 import ro.cs.tao.component.enums.ProcessingComponentVisibility;
-import ro.cs.tao.component.execution.ExecutionJob;
-import ro.cs.tao.component.execution.ExecutionStatus;
-import ro.cs.tao.component.execution.ExecutionTask;
 import ro.cs.tao.component.template.BasicTemplate;
 import ro.cs.tao.component.template.Template;
 import ro.cs.tao.component.template.TemplateType;
@@ -43,11 +40,8 @@ import java.awt.*;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Created by oana on 7/18/2017.

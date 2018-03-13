@@ -15,18 +15,22 @@
  */
 package ro.cs.tao.datasource;
 
+import ro.cs.tao.component.DataDescriptor;
 import ro.cs.tao.component.SourceDescriptor;
 import ro.cs.tao.component.TaoComponent;
+import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.datasource.param.QueryParameter;
 import ro.cs.tao.datasource.remote.DownloadStrategy;
 import ro.cs.tao.datasource.remote.FetchMode;
 import ro.cs.tao.eodata.EOProduct;
+import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.messaging.ProgressNotifier;
 import ro.cs.tao.utils.FileUtils;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
+import java.awt.*;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.URISyntaxException;
@@ -76,6 +80,9 @@ public class DataSourceComponent extends TaoComponent {
     }
 
     private DataSourceComponent() { this.logger = Logger.getLogger(DataSourceComponent.class.getSimpleName()); }
+
+    public String getSensorName() { return sensorName; }
+    public String getDataSourceName() { return dataSourceName; }
 
     @Override
     public String defaultName() { return "NewDatasource"; }
@@ -240,6 +247,22 @@ public class DataSourceComponent extends TaoComponent {
                     currentFetcher.resume();
                 }
                 currentFetcher = null;
+            }
+        }
+        if (products != null) {
+            for (EOProduct product : products) {
+                TargetDescriptor targetDescriptor = new TargetDescriptor();
+                targetDescriptor.setParentId(this.id);
+                DataDescriptor dataDescriptor = new DataDescriptor();
+                dataDescriptor.setFormatType(DataFormat.RASTER);
+                dataDescriptor.setDimension(new Dimension()
+                        {{ width = product.getWidth(); height = product.getHeight(); }});
+                dataDescriptor.setSensorType(product.getSensorType());
+                dataDescriptor.setGeometry(product.getGeometry());
+                dataDescriptor.setLocation(product.getLocation());
+                dataDescriptor.setCrs(product.getCrs());
+                targetDescriptor.setDataDescriptor(dataDescriptor);
+                addTarget(targetDescriptor);
             }
         }
         return products;

@@ -16,8 +16,8 @@
 
 package ro.cs.tao.services.interfaces;
 
-import ro.cs.tao.component.execution.ExecutionTask;
 import ro.cs.tao.execution.ExecutionException;
+import ro.cs.tao.execution.model.ExecutionTask;
 
 import java.util.List;
 

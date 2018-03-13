@@ -19,10 +19,10 @@ import org.ggf.drmaa.DrmaaException;
 import org.ggf.drmaa.InternalException;
 import org.ggf.drmaa.JobTemplate;
 import org.ggf.drmaa.Session;
-import ro.cs.tao.component.execution.ExecutionStatus;
-import ro.cs.tao.component.execution.ExecutionTask;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.Executor;
+import ro.cs.tao.execution.model.ExecutionStatus;
+import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.persistence.exception.PersistenceException;
 
 import java.time.LocalDateTime;
@@ -116,8 +116,6 @@ public class DrmaaTaoExecutor extends Executor {
             changeTaskStatus(task, ExecutionStatus.SUSPENDED);
         } catch (DrmaaException e) {
             throw new ExecutionException("Error executing DRMAA session suspend for task with id " + task.getResourceId(), e);
-        } catch (PersistenceException e) {
-            throw new ExecutionException("Error saving suspended status for task with id " + task.getResourceId(), e);
         }
     }
 
@@ -128,8 +126,6 @@ public class DrmaaTaoExecutor extends Executor {
             changeTaskStatus(task, ExecutionStatus.RUNNING);
         } catch (DrmaaException e) {
             throw new ExecutionException("Error executing DRMAA session resume for task with id " + task.getResourceId(), e);
-        } catch (PersistenceException e) {
-            throw new ExecutionException("Error saving resumed status for task with id " + task.getResourceId(), e);
         }
     }
 
@@ -139,49 +135,45 @@ public class DrmaaTaoExecutor extends Executor {
             return;
         }
         // check for the finished
-        try {
-            List<ExecutionTask> tasks = persistenceManager.getRunningTasks();
-            // For each job, get its status from DRMAA
-            for (ExecutionTask task: tasks) {
-                try {
-                    if(task.getResourceId() == null) {
-                        // ignore tasks having resourceId null
-                        continue;
-                    }
-                    int jobStatus = session.getJobProgramStatus(task.getResourceId());
-
-                    switch (jobStatus) {
-                        case Session.SYSTEM_ON_HOLD:
-                        case Session.USER_ON_HOLD:
-                        case Session.USER_SYSTEM_ON_HOLD:
-                        case Session.SYSTEM_SUSPENDED:
-                        case Session.USER_SUSPENDED:
-                        case Session.USER_SYSTEM_SUSPENDED:
-                        case Session.UNDETERMINED:
-                        case Session.QUEUED_ACTIVE:
-                            // nothing to do
-                            break;
-                        case Session.RUNNING:
-                            changeTaskStatus(task, ExecutionStatus.RUNNING);
-                            break;
-                        case Session.DONE:
-                            // Just mark the job as finished with success status
-                            markTaskFinished(task, ExecutionStatus.DONE);
-                            logger.info("DrmaaExecutor: task with id " + task.getResourceId() + " finished OK");
-                            break;
-                        case Session.FAILED:
-                            // Just mark the job as finished with failed status
-                            markTaskFinished(task, ExecutionStatus.FAILED);
-                            logger.info("DrmaaExecutor: task with id " + task.getResourceId() + " finished NOK");
-                            break;
-                    }
-                } catch (DrmaaException | InternalException e) {
-                    logger.severe("DrmaaExecuto exception " + e.getClass().getName() + ": Cannot get the status for the task with id " + task.getResourceId());
-                    markTaskFinished(task, ExecutionStatus.DONE);
+        List<ExecutionTask> tasks = persistenceManager.getRunningTasks();
+        // For each job, get its status from DRMAA
+        for (ExecutionTask task: tasks) {
+            try {
+                if(task.getResourceId() == null) {
+                    // ignore tasks having resourceId null
+                    continue;
                 }
+                int jobStatus = session.getJobProgramStatus(task.getResourceId());
+
+                switch (jobStatus) {
+                    case Session.SYSTEM_ON_HOLD:
+                    case Session.USER_ON_HOLD:
+                    case Session.USER_SYSTEM_ON_HOLD:
+                    case Session.SYSTEM_SUSPENDED:
+                    case Session.USER_SUSPENDED:
+                    case Session.USER_SYSTEM_SUSPENDED:
+                    case Session.UNDETERMINED:
+                    case Session.QUEUED_ACTIVE:
+                        // nothing to do
+                        break;
+                    case Session.RUNNING:
+                        changeTaskStatus(task, ExecutionStatus.RUNNING);
+                        break;
+                    case Session.DONE:
+                        // Just mark the job as finished with success status
+                        markTaskFinished(task, ExecutionStatus.DONE);
+                        logger.info("DrmaaExecutor: task with id " + task.getResourceId() + " finished OK");
+                        break;
+                    case Session.FAILED:
+                        // Just mark the job as finished with failed status
+                        markTaskFinished(task, ExecutionStatus.FAILED);
+                        logger.info("DrmaaExecutor: task with id " + task.getResourceId() + " finished NOK");
+                        break;
+                }
+            } catch (DrmaaException | InternalException e) {
+                logger.severe("DrmaaExecuto exception " + e.getClass().getName() + ": Cannot get the status for the task with id " + task.getResourceId());
+                markTaskFinished(task, ExecutionStatus.DONE);
             }
-        } catch (PersistenceException e) {
-            throw new ExecutionException("Unable to save execution state in the database", e);
         }
     }
 

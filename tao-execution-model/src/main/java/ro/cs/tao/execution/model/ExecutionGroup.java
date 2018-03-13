@@ -13,9 +13,9 @@
  * You should have received a copy of the GNU General Public License along
  * with this program; if not, see http://www.gnu.org/licenses/
  */
-package ro.cs.tao.component.execution;
+package ro.cs.tao.execution.model;
 
-import ro.cs.tao.component.ProcessingComponent;
+import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.component.Variable;
 
 import javax.xml.bind.annotation.XmlTransient;
@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * @author Cosmin Cara
  */
-public class ExecutionGroup extends ExecutionTask {
+public class ExecutionGroup<T extends TaoComponent> extends ExecutionTask<T> {
 
     private List<ExecutionTask> tasks;
 
@@ -36,7 +36,7 @@ public class ExecutionGroup extends ExecutionTask {
 
     public ExecutionGroup() { }
 
-    public ExecutionGroup(ProcessingComponent processingComponent) {
+    public ExecutionGroup(T processingComponent) {
         throw new IllegalArgumentException("Cannot assign a component to a task group");
     }
 

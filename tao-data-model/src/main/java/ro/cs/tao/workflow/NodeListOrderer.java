@@ -23,17 +23,25 @@ import java.util.Stack;
 import java.util.stream.Collectors;
 
 public interface NodeListOrderer {
-    default List<WorkflowNodeDescriptor> orderNodes(List<WorkflowNodeDescriptor> nodes) {
+
+    default WorkflowNodeDescriptor findRoot(List<WorkflowNodeDescriptor> nodes) {
+        WorkflowNodeDescriptor root = null;
         if (nodes != null) {
-            List<WorkflowNodeDescriptor> newList = new ArrayList<>();
-            WorkflowNodeDescriptor root = nodes.stream()
+            root = nodes.stream()
                     .filter(n -> n.getIncomingLinks() == null || n.getIncomingLinks().isEmpty())
                     .findFirst().orElse(null);
             if (root == null) {
                 throw new IllegalArgumentException("The collection must have exactly one node without incoming links");
-            } else {
-                newList.add(root);
             }
+        }
+        return root;
+    }
+
+    default List<WorkflowNodeDescriptor> orderNodes(List<WorkflowNodeDescriptor> nodes) {
+        if (nodes != null) {
+            List<WorkflowNodeDescriptor> newList = new ArrayList<>();
+            WorkflowNodeDescriptor root = findRoot(nodes);
+            newList.add(root);
             Stack<WorkflowNodeDescriptor> stack = new Stack<>();
             stack.push(root);
             while (!stack.isEmpty()) {
