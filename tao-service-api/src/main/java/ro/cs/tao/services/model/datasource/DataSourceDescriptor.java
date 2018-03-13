@@ -22,15 +22,15 @@ import java.util.Map;
 /**
  * @author Cosmin Cara
  */
-public class DataSourceInstance {
+public class DataSourceDescriptor {
     private String sensor;
     private String dataSourceName;
     private Map<String, ParameterDescriptor> parameters;
 
-    public DataSourceInstance() {
+    public DataSourceDescriptor() {
     }
 
-    public DataSourceInstance(String sensor, String dataSourceName, Map<String, ParameterDescriptor> parameters) {
+    public DataSourceDescriptor(String sensor, String dataSourceName, Map<String, ParameterDescriptor> parameters) {
         this.sensor = sensor;
         this.dataSourceName = dataSourceName;
         this.parameters = parameters;
@@ -39,7 +39,6 @@ public class DataSourceInstance {
     public String getSensor() {
         return sensor;
     }
-
     public void setSensor(String sensor) {
         this.sensor = sensor;
     }
@@ -47,7 +46,6 @@ public class DataSourceInstance {
     public String getDataSourceName() {
         return dataSourceName;
     }
-
     public void setDataSourceName(String dataSourceName) {
         this.dataSourceName = dataSourceName;
     }
@@ -55,7 +53,6 @@ public class DataSourceInstance {
     public Map<String, ParameterDescriptor> getParameters() {
         return parameters;
     }
-
     public void setParameters(Map<String, ParameterDescriptor> parameters) {
         this.parameters = parameters;
     }

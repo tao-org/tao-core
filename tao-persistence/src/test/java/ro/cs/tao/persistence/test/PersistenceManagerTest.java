@@ -800,7 +800,7 @@ public class PersistenceManagerTest {
                 task.setResourceId("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
                 task.setExecutionStatus(ExecutionStatus.RUNNING);
                 task.setExecutionNodeHostName(node.getHostName());
-                task.setProcessingComponent(component);
+                task.setComponent(component);
 
                 List<Variable> inputsValues = new ArrayList<>();
                 Variable input1 = new Variable();

@@ -19,15 +19,19 @@ import ro.cs.tao.component.DataDescriptor;
 import ro.cs.tao.component.SourceDescriptor;
 import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.component.TargetDescriptor;
+import ro.cs.tao.datasource.beans.Parameter;
 import ro.cs.tao.datasource.param.QueryParameter;
 import ro.cs.tao.datasource.remote.DownloadStrategy;
 import ro.cs.tao.datasource.remote.FetchMode;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.messaging.ProgressNotifier;
+import ro.cs.tao.serialization.GenericAdapter;
+import ro.cs.tao.utils.Crypto;
 import ro.cs.tao.utils.FileUtils;
 
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import java.awt.*;
@@ -38,6 +42,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -65,6 +70,8 @@ public class DataSourceComponent extends TaoComponent {
     private EOProduct currentProduct;
     @XmlTransient
     private FetchMode fetchMode;
+    @XmlTransient
+    private List<Parameter> overriddenParameters;
 
     @XmlTransient
     private final Logger logger;
@@ -86,6 +93,22 @@ public class DataSourceComponent extends TaoComponent {
 
     @Override
     public String defaultName() { return "NewDatasource"; }
+
+    @XmlElementWrapper(name = "specificParameters")
+    @XmlElement(name = "dsParameter")
+    public List<Parameter> getOverriddenParameters() { return overriddenParameters; }
+    public void setOverriddenParameters(List<Parameter> parameters) { this.overriddenParameters = parameters; }
+
+    public Object getParameterValue(String name) throws Exception {
+        if (this.overriddenParameters != null) {
+            Optional<Parameter> parameter = this.overriddenParameters.stream().filter(p -> p.getName().equals(name)).findFirst();
+            return parameter.isPresent() ?
+                    new GenericAdapter(parameter.get().getType()).marshal(parameter.get().getValue()) :
+                    null;
+        } else {
+            return null;
+        }
+    }
 
     @Override
     public List<SourceDescriptor> getSources() {
@@ -119,7 +142,7 @@ public class DataSourceComponent extends TaoComponent {
 
     public void setUserCredentials(String userName, String password) {
         this.userName = userName;
-        this.password = password;
+        this.password = Crypto.decrypt(password, userName);
     }
 
     public void setFetchMode(FetchMode mode) { this.fetchMode = mode; }

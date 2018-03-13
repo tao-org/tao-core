@@ -31,20 +31,20 @@ import java.util.Map;
  * @author Cosmin Cara
  */
 public class Query {
-    private String dataSource;
     private String sensor;
+    private String dataSource;
     private String user;
     private String password;
     private int pageSize;
     private int pageNumber;
     private int limit;
-    private Map<String, Object> values;
+    private Map<String, String> values;
 
     public Query() { }
 
-    public Map<String, Object> getValues() { return values; }
+    public Map<String, String> getValues() { return values; }
 
-    public void setValues(Map<String, Object> values) { this.values = values; }
+    public void setValues(Map<String, String> values) { this.values = values; }
 
     public String getDataSource() { return dataSource; }
 
@@ -98,8 +98,8 @@ public class Query {
                 query.setMaxResults(webQuery.getLimit());
                 query.setPageNumber(webQuery.getPageNumber());
                 query.setPageSize(webQuery.getPageSize());
-                Map<String, Object> paramValues = webQuery.getValues();
-                for (Map.Entry<String, Object> entry : paramValues.entrySet()) {
+                Map<String, String> paramValues = webQuery.getValues();
+                for (Map.Entry<String, String> entry : paramValues.entrySet()) {
                     final ParameterDescriptor descriptor = parameterDescriptorMap.get(entry.getKey());
                     final Class type = descriptor.getType();
                     if (Date.class.isAssignableFrom(type)) {

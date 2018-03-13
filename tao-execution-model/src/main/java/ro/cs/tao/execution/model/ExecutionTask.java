@@ -34,7 +34,7 @@ public class ExecutionTask<T extends TaoComponent> implements StatusChangeListen
     private Long id;
     private ExecutionTask groupTask;
     private Long workflowNodeId;
-    private T processingComponent;
+    private T component;
     private String resourceId;
     private String executionNodeHostName;
     private LocalDateTime startTime;
@@ -46,8 +46,8 @@ public class ExecutionTask<T extends TaoComponent> implements StatusChangeListen
 
     public ExecutionTask() { }
 
-    public ExecutionTask(T processingComponent) {
-        this.processingComponent = processingComponent;
+    public ExecutionTask(T component) {
+        this.component = component;
     }
 
     public Long getId() {
@@ -63,11 +63,11 @@ public class ExecutionTask<T extends TaoComponent> implements StatusChangeListen
     public Long getWorkflowNodeId() { return workflowNodeId; }
     public void setWorkflowNodeId(Long workflowNodeId) { this.workflowNodeId = workflowNodeId; }
 
-    public void setProcessingComponent(T processingComponent) {
-        this.processingComponent = processingComponent;
+    public void setComponent(T component) {
+        this.component = component;
     }
-    public T getProcessingComponent() {
-        return processingComponent;
+    public T getComponent() {
+        return component;
     }
 
     /**
@@ -118,8 +118,8 @@ public class ExecutionTask<T extends TaoComponent> implements StatusChangeListen
     }
     public void setParameterValue(String parameterId, String value) {
         boolean descriptorExists = false;
-        if (this.processingComponent instanceof ProcessingComponent) {
-            List<ParameterDescriptor> descriptorList = ((ProcessingComponent) this.processingComponent).getParameterDescriptors();
+        if (this.component instanceof ProcessingComponent) {
+            List<ParameterDescriptor> descriptorList = ((ProcessingComponent) this.component).getParameterDescriptors();
             for (ParameterDescriptor descriptor : descriptorList) {
                 if (descriptor.getId().equals(parameterId)) {
                     descriptorExists = true;
@@ -127,8 +127,8 @@ public class ExecutionTask<T extends TaoComponent> implements StatusChangeListen
                 }
             }
         }
-        if (this.processingComponent instanceof DataSourceComponent) {
-            DataSourceComponent component = (DataSourceComponent) this.processingComponent;
+        if (this.component instanceof DataSourceComponent) {
+            DataSourceComponent component = (DataSourceComponent) this.component;
             Collection<ro.cs.tao.datasource.param.ParameterDescriptor> descriptors =
                     DataSourceManager.getInstance().getSupportedParameters(component.getSensorName(),
                                                                             component.getDataSourceName()).values();
@@ -141,7 +141,7 @@ public class ExecutionTask<T extends TaoComponent> implements StatusChangeListen
         }
         if (!descriptorExists) {
             throw new ValidationException(String.format("The parameter ID [%s] does not exists in the component '%s'",
-                                                        parameterId, processingComponent.getLabel()));
+                                                        parameterId, component.getLabel()));
         }
         if (this.inputParameterValues == null) {
             this.inputParameterValues = new ArrayList<>();
@@ -171,7 +171,7 @@ public class ExecutionTask<T extends TaoComponent> implements StatusChangeListen
     }
 
     public String buildExecutionCommand() {
-        if (processingComponent == null) {
+        if (component == null) {
             return null;
         }
         Map<String, String> inputParams = new HashMap<>();
@@ -179,8 +179,8 @@ public class ExecutionTask<T extends TaoComponent> implements StatusChangeListen
             inputParams.putAll(inputParameterValues.stream()
                                        .collect(Collectors.toMap(Variable::getKey, Variable::getValue)));
         }
-        return this.processingComponent instanceof ProcessingComponent ?
-                ((ProcessingComponent) this.processingComponent).buildExecutionCommand(inputParams) : null;
+        return this.component instanceof ProcessingComponent ?
+                ((ProcessingComponent) this.component).buildExecutionCommand(inputParams) : null;
     }
 
     public ExecutionTask getNext() {
