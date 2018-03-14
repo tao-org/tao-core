@@ -29,8 +29,15 @@ import ro.cs.tao.datasource.DataSourceComponent;
  *
  */
 @Repository
-@Qualifier(value = "dataSource")
+@Qualifier(value = "dataSourceRepository")
 @Transactional
 public interface DataSourceRepository extends PagingAndSortingRepository<DataSourceComponent, String> {
+
+    /**
+     * Find DataSourceComponent entity by its identifier
+     * @param id - the given data source component identifier
+     * @return the corresponding DataSourceComponent entity
+     */
+    DataSourceComponent findById(String id);
 
 }

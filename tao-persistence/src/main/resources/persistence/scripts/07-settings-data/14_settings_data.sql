@@ -80,6 +80,18 @@ INSERT INTO tao.execution_status (status) VALUES ('CANCELLED');
 
 
 
+-- Fetch mode
+
+INSERT INTO tao.fetch_mode (fetch_mode) VALUES ('OVERWRITE');
+
+INSERT INTO tao.fetch_mode (fetch_mode) VALUES ('RESUME');
+
+INSERT INTO tao.fetch_mode (fetch_mode) VALUES ('COPY');
+
+INSERT INTO tao.fetch_mode (fetch_mode) VALUES ('SYMLINK');
+
+
+
 -- Orbit direction
 
 INSERT INTO tao.orbit_direction (direction) VALUES ('ASCENDING');

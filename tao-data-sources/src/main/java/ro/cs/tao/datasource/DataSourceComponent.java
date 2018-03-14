@@ -89,7 +89,32 @@ public class DataSourceComponent extends TaoComponent {
     private DataSourceComponent() { this.logger = Logger.getLogger(DataSourceComponent.class.getSimpleName()); }
 
     public String getSensorName() { return sensorName; }
+
+    public void setSensorName(String sensorName) {
+        this.sensorName = sensorName;
+    }
+
     public String getDataSourceName() { return dataSourceName; }
+
+    public void setDataSourceName(String dataSourceName) {
+        this.dataSourceName = dataSourceName;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
 
     @Override
     public String defaultName() { return "NewDatasource"; }
