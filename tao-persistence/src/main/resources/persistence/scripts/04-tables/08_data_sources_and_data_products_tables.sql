@@ -478,3 +478,50 @@ ALTER TABLE tao.component_targets ADD CONSTRAINT FK_component_targets_target_des
 	FOREIGN KEY (target_descriptor_id) REFERENCES tao.target_descriptor (id) ON DELETE No Action ON UPDATE No Action;
 
 
+
+-------------------------------------------------------------------------------
+-- table: fetch_mode
+DROP TABLE IF EXISTS tao.fetch_mode CASCADE;
+
+CREATE TABLE tao.fetch_mode
+(
+	id integer NOT NULL,
+	fetch_mode varchar(50) NOT NULL
+);
+
+ALTER TABLE tao.fetch_mode ADD CONSTRAINT PK_fetch_mode
+	PRIMARY KEY (id);
+
+
+-------------------------------------------------------------------------------
+-- table: data_source_component
+DROP TABLE IF EXISTS tao.data_source_component CASCADE;
+
+CREATE TABLE tao.data_source_component
+(
+	id varchar(512) NOT NULL,
+	label varchar(250) NOT NULL,
+	version varchar(50) NOT NULL,
+	description text NOT NULL,
+	authors varchar(1024) NOT NULL,
+	copyright text NOT NULL,
+	node_affinity varchar(250) NULL,
+	source_cardinality integer NOT NULL,
+    target_cardinality integer NOT NULL,
+
+    sensor_name varchar(1024) NOT NULL,
+	data_source_name  varchar(512) NOT NULL,
+	username varchar(512) NULL,
+	password bytea NULL,
+	fetch_mode_id integer NOT NULL,
+	overridden_parameters json NULL,
+	created timestamp NOT NULL DEFAULT now(),
+    modified timestamp NULL
+);
+
+ALTER TABLE tao.data_source_component ADD CONSTRAINT PK_data_source_component
+	PRIMARY KEY (id);
+
+ALTER TABLE tao.data_source_component ADD CONSTRAINT FK_data_source_component_fetch_mode
+	FOREIGN KEY (fetch_mode_id) REFERENCES tao.fetch_mode (id) ON DELETE No Action ON UPDATE No Action;
+
