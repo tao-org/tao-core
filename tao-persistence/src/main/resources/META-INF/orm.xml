@@ -90,7 +90,7 @@
             </basic>
 
             <many-to-many name="sources" fetch="LAZY">
-                <join-table name="tao.component_sources">
+                <join-table name="tao.processing_component_sources">
                     <join-column name="processing_component_id" referenced-column-name="id"/>
                     <inverse-join-column name="source_descriptor_id" referenced-column-name="id"/>
                 </join-table>
@@ -100,7 +100,7 @@
             </many-to-many>
 
             <many-to-many name="targets" fetch="LAZY">
-                <join-table name="tao.component_targets">
+                <join-table name="tao.processing_component_targets">
                     <join-column name="processing_component_id" referenced-column-name="id"/>
                     <inverse-join-column name="target_descriptor_id" referenced-column-name="id"/>
                 </join-table>
@@ -385,6 +385,20 @@
 
     <entity class="ro.cs.tao.datasource.DataSourceComponent" access="PROPERTY">
         <table name="tao.data_source_component"/>
+
+        <association-override name="sources">
+            <join-table name="tao.data_source_component_sources">
+                <join-column name="data_source_component_id" referenced-column-name="id"/>
+                <inverse-join-column name="source_descriptor_id" referenced-column-name="id"/>
+            </join-table>
+        </association-override>
+
+        <association-override name="targets">
+            <join-table name="tao.data_source_component_targets">
+                <join-column name="data_source_component_id" referenced-column-name="id"/>
+                <inverse-join-column name="target_descriptor_id" referenced-column-name="id"/>
+            </join-table>
+        </association-override>
 
         <convert converter="ro.cs.tao.persistence.convert.FetchModeConverter" attribute-name="fetchMode" />
         <!--<convert converter="ro.cs.tao.persistence.convert.DataSourceParameterListConverter" attribute-name="overriddenParameters" />-->
