@@ -40,6 +40,7 @@ public abstract class EOData implements Serializable {
     private List<Attribute> attributes;
     private CoordinateReferenceSystem crs;
     private URI location;
+    private URI entryPoint;
 
     public String getId() {
         return id;
@@ -139,4 +140,9 @@ public abstract class EOData implements Serializable {
     public String getLocation() { return location != null ? location.toString() : null; }
 
     public void setLocation(String value) throws URISyntaxException { this.location = new URI(value); }
+
+    public String getEntryPoint() { return entryPoint != null ? entryPoint.toString() : null; }
+
+    public void setEntryPoint(String entryPoint) throws URISyntaxException { this.entryPoint = new URI(entryPoint); }
+
 }
