@@ -18,20 +18,22 @@ package ro.cs.tao.orchestration;
 import ro.cs.tao.component.ComponentLink;
 import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.execution.ExecutionException;
-import ro.cs.tao.execution.model.ExecutionGroup;
-import ro.cs.tao.execution.model.ExecutionJob;
-import ro.cs.tao.execution.model.ExecutionStatus;
-import ro.cs.tao.execution.model.ExecutionTask;
+import ro.cs.tao.execution.model.*;
 import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.Notifiable;
 import ro.cs.tao.messaging.Topics;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.serialization.MediaType;
+import ro.cs.tao.serialization.SerializationException;
+import ro.cs.tao.serialization.Serializer;
+import ro.cs.tao.serialization.SerializerFactory;
 import ro.cs.tao.workflow.ParameterValue;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
 
+import javax.xml.transform.stream.StreamSource;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.logging.Logger;
@@ -76,7 +78,7 @@ public class Orchestrator extends Notifiable {
                 WorkflowDescriptor descriptor = persistenceManager.getWorkflowDescriptor(workflowId);
                 job = create(descriptor);
             }
-            job.setTaskSelector(new DefaultTaskSelector());
+            job.setTaskSelector(new DefaultJobTaskSelector());
             JobCommand.START.applyTo(job);
         } catch (PersistenceException e) {
             logger.severe(e.getMessage());
@@ -154,7 +156,23 @@ public class Orchestrator extends Notifiable {
             ExecutionTask task = createTask(node);
             group.addTask(task);
         }
+        group.setTaskSelector(new DefaultGroupTaskSelector());
         group.setExecutionStatus(ExecutionStatus.UNDETERMINED);
+        group.setInternalStateHandler(s -> {
+            Integer nextState = null;
+            try {
+                Serializer<LoopState, String> serializer = SerializerFactory.create(LoopState.class, MediaType.JSON);
+                LoopState state = serializer.deserialize(new StreamSource(group.getInternalState()));
+                if (state != null && state.getCurrent() <= state.getLimit()) {
+                    return state.getCurrent() + 1;
+                } else {
+                    return null;
+                }
+            } catch (SerializationException e) {
+                e.printStackTrace();
+            }
+            return nextState;
+        });
         return group;
     }
 
@@ -209,6 +227,9 @@ public class Orchestrator extends Notifiable {
                 }
             });
             persistenceManager.updateExecutionJob(task.getJob());
+            if (status == ExecutionStatus.DONE) {
+                TaskCommand.START.applyTo(task.getNext());
+            }
         } catch (PersistenceException e) {
             logger.severe(e.getMessage());
         }
