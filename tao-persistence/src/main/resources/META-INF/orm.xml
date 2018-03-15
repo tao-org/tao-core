@@ -401,7 +401,6 @@
         </association-override>
 
         <convert converter="ro.cs.tao.persistence.convert.FetchModeConverter" attribute-name="fetchMode" />
-        <!--<convert converter="ro.cs.tao.persistence.convert.DataSourceParameterListConverter" attribute-name="overriddenParameters" />-->
         <convert converter="ro.cs.tao.persistence.convert.ParameterListConverter" attribute-name="overriddenParameters" />
 
         <attributes>
@@ -817,7 +816,6 @@
     <converter class="ro.cs.tao.persistence.convert.DimensionConverter" />
     <converter class="ro.cs.tao.persistence.convert.ParameterValueListConverter"/>
     <converter class="ro.cs.tao.persistence.convert.ParameterListConverter"/>
-    <converter class="ro.cs.tao.persistence.convert.DataSourceParameterListConverter"/>
 
 
 </entity-mappings>
