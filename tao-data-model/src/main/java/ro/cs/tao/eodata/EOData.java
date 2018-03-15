@@ -143,6 +143,6 @@ public abstract class EOData implements Serializable {
 
     public String getEntryPoint() { return entryPoint != null ? entryPoint.toString() : null; }
 
-    public void setEntryPoint(String entryPoint) throws URISyntaxException { this.entryPoint = new URI(entryPoint); }
+    public void setEntryPoint(String entryPoint) throws URISyntaxException { this.entryPoint = entryPoint != null ? new URI(entryPoint) : null; }
 
 }

@@ -36,6 +36,9 @@
             <basic name="location">
                 <column name="location" nullable="false" column-definition="varchar(512) not null"/>
             </basic>
+            <basic name="entryPoint">
+                <column name="entry_point" nullable="true" column-definition="varchar(1000) null"/>
+            </basic>
 
             <element-collection name="attributes" target-class="ro.cs.tao.eodata.Attribute" access="PROPERTY" fetch="EAGER">
                 <collection-table name="tao.data_product_attributes" >
