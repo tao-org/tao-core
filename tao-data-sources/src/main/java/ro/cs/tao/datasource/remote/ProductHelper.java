@@ -45,6 +45,8 @@ public abstract class ProductHelper {
         this.name = name;
     }
 
+    public Class<? extends ProductHelper> getHelperClass() { return getClass(); }
+
     public String getId() {
         return id;
     }
@@ -60,6 +62,8 @@ public abstract class ProductHelper {
     public String getSensingDate() { return sensingDate; }
 
     public void setSensingDate(String date) { this.sensingDate = date; }
+
+    public abstract String getMetadataFileName();
 
     public abstract String getProductRelativePath();
 
