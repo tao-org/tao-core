@@ -455,6 +455,9 @@
             <basic name="endTime">
                 <column name="end_time" nullable="true" column-definition="timestamp NULL"/>
             </basic>
+            <basic name="internalState">
+                <column name="internal_state" nullable="true" column-definition="character varying(512) NULL"/>
+            </basic>
 
             <basic name="workflowNodeId">
                 <column name="graph_node_id" nullable="false" column-definition="bigint NOT NULL"/>
