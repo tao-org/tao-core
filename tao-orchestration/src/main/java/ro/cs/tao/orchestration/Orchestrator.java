@@ -215,6 +215,7 @@ public class Orchestrator extends Notifiable {
             String taskId = message.getItem(Message.SOURCE_KEY);
             ExecutionStatus status = Enum.valueOf(ExecutionStatus.class, message.getItem(Message.PAYLOAD_KEY));
             logger.fine(String.format("Received status change for task %s: %s", taskId, status));
+            System.out.println(String.format("Received status change for task %s: %s", taskId, status));
             ExecutionTask task = persistenceManager.getTaskById(Long.parseLong(taskId));
             task.changeStatus(status);
             persistenceManager.updateExecutionTask(task);

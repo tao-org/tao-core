@@ -24,8 +24,7 @@ import ro.cs.tao.serialization.SerializationException;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Cosmin Cara
@@ -46,35 +45,28 @@ public class Query {
     public String getId() {
         return id;
     }
-
     public void setId(String id) {
         this.id = id;
     }
 
     public Map<String, String> getValues() { return values; }
-
     public void setValues(Map<String, String> values) { this.values = values; }
 
     public String getDataSource() { return dataSource; }
-
     public void setDataSource(String dataSource) { this.dataSource = dataSource; }
 
     public String getSensor() { return sensor; }
-
     public void setSensor(String sensor) { this.sensor = sensor; }
 
     public String getUser() { return user; }
-
     public void setUser(String user) { this.user = user; }
 
     public String getPassword() { return password; }
-
     public void setPassword(String password) { this.password = password; }
 
     public int getPageSize() {
         return pageSize;
     }
-
     public void setPageSize(int pageSize) {
         this.pageSize = pageSize;
     }
@@ -82,7 +74,6 @@ public class Query {
     public int getPageNumber() {
         return pageNumber;
     }
-
     public void setPageNumber(int pageNumber) {
         this.pageNumber = pageNumber;
     }
@@ -90,7 +81,6 @@ public class Query {
     public int getLimit() {
         return limit;
     }
-
     public void setLimit(int limit) {
         this.limit = limit;
     }
@@ -100,7 +90,9 @@ public class Query {
         if (webQuery != null) {
             try {
                 DataSourceComponent dsComponent = new DataSourceComponent(webQuery.getSensor(), webQuery.getDataSource());
-                dsComponent.setUserCredentials(webQuery.getUser(), webQuery.getPassword());
+                if (webQuery.getUser() != null && webQuery.getPassword() != null) {
+                    dsComponent.setUserCredentials(webQuery.getUser(), webQuery.getPassword());
+                }
                 final Map<String, ParameterDescriptor> parameterDescriptorMap =
                         DataSourceManager.getInstance().getSupportedParameters(webQuery.getSensor(), webQuery.getDataSource());
                 query = dsComponent.createQuery();
@@ -125,5 +117,41 @@ public class Query {
             }
         }
         return query;
+    }
+
+    public List<Query> splitByParameter(String parameterName) {
+        List<Query> subQueries = new ArrayList<>();
+        if (this.values != null && this.values.containsKey(parameterName)) {
+            String value = this.values.get(parameterName);
+            if (value.startsWith("[") && value.endsWith("]")) {
+                String[] vals = value.substring(1, value.length() - 1).split(",");
+                for (int i = 0; i < vals.length; i++) {
+                    Query subQuery = new Query();
+                    subQuery.id = this.id + "-" + String.valueOf(i);
+                    subQuery.sensor = this.sensor;
+                    subQuery.dataSource = this.dataSource;
+                    subQuery.user = this.user;
+                    subQuery.password = this.password;
+                    subQuery.pageSize = this.pageSize;
+                    subQuery.pageNumber = this.pageNumber;
+                    subQuery.limit = this.limit;
+                    subQuery.values = new HashMap<>();
+                    if (this.values != null) {
+                        for (Map.Entry<String, String> entry : this.values.entrySet()) {
+                            if (!parameterName.equals(entry.getKey())) {
+                                subQuery.values.put(entry.getKey(), entry.getValue());
+                            }
+                        }
+                    }
+                    subQuery.values.put(parameterName, vals[i]);
+                    subQueries.add(subQuery);
+                }
+            } else {
+                subQueries.add(this);
+            }
+        } else {
+            subQueries.add(this);
+        }
+        return subQueries;
     }
 }

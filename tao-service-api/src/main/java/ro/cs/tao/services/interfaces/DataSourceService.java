@@ -37,6 +37,8 @@ public interface DataSourceService {
 
     List<ParameterDescriptor> getSupportedParameters(String sensorName, String dataSourceName);
 
+    long count(Query queryObject) throws SerializationException;
+
     List<EOProduct> query(Query queryObject) throws SerializationException;
 
     List<EOProduct> fetch(Query queryObject, List<EOProduct> products);
