@@ -1,4 +1,28 @@
 -------------------------------------------------------------------------------
+-- table: query
+DROP TABLE IF EXISTS tao.query CASCADE;
+
+CREATE TABLE tao.query
+(
+	id varchar(512) NOT NULL,
+	sensor_name varchar(1024) NOT NULL,
+    data_source_name  varchar(512) NOT NULL,
+	username varchar(512) NULL,
+	password bytea NULL,
+	page_size integer NULL,
+	page_number integer NULL,
+	"limit" integer NULL,  -- reserved word
+	"values" json NULL,    -- reserved word
+	created timestamp NOT NULL DEFAULT now(),
+    modified timestamp NULL
+);
+
+ALTER TABLE tao.query ADD CONSTRAINT PK_query
+	PRIMARY KEY (id);
+
+
+
+-------------------------------------------------------------------------------
 -- table: workflow_graph_status
 DROP TABLE IF EXISTS tao.workflow_graph_status CASCADE;
 
@@ -158,23 +182,27 @@ CREATE TABLE tao.job
 	id bigint NOT NULL,
 	start_time timestamp without time zone NULL,
 	end_time timestamp without time zone NULL,
-	user_id integer NULL,
 	workflow_id bigint NOT NULL,
+	username varchar(50) NOT NULL,
+	query_id varchar(512) NULL,
 	execution_status_id integer NOT NULL
 );
 
 ALTER TABLE tao.job ADD CONSTRAINT PK_job PRIMARY KEY (id);
 
-ALTER TABLE tao.job ADD CONSTRAINT FK_job_execution_status
-	FOREIGN KEY (execution_status_id) REFERENCES tao.execution_status (id) ON DELETE No Action ON UPDATE No Action;
-	
-ALTER TABLE tao.job ADD CONSTRAINT FK_job_user
-	FOREIGN KEY (user_id) REFERENCES tao."user" (id) ON DELETE No Action ON UPDATE No Action;
-
 ALTER TABLE tao.job ADD CONSTRAINT FK_job_workflow
 	FOREIGN KEY (workflow_id) REFERENCES tao.workflow_graph (id) ON DELETE No Action ON UPDATE No Action;
 
-		
+ALTER TABLE tao.job ADD CONSTRAINT FK_job_user
+	FOREIGN KEY (username) REFERENCES tao."user" (username) ON DELETE No Action ON UPDATE No Action;
+
+ALTER TABLE tao.job ADD CONSTRAINT FK_job_query
+	FOREIGN KEY (query_id) REFERENCES tao.query (id) ON DELETE No Action ON UPDATE No Action;
+
+ALTER TABLE tao.job ADD CONSTRAINT FK_job_execution_status
+	FOREIGN KEY (execution_status_id) REFERENCES tao.execution_status (id) ON DELETE No Action ON UPDATE No Action;
+
+
 -------------------------------------------------------------------------------
 -- table: execution_node
 DROP TABLE IF EXISTS tao.execution_node CASCADE;

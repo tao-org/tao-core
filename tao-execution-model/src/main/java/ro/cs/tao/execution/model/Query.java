@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License along
  * with this program; if not, see http://www.gnu.org/licenses/
  */
-package ro.cs.tao.services.model.datasource;
+package ro.cs.tao.execution.model;
 
 import ro.cs.tao.datasource.DataQuery;
 import ro.cs.tao.datasource.DataSourceComponent;
@@ -31,6 +31,7 @@ import java.util.Map;
  * @author Cosmin Cara
  */
 public class Query {
+    private String id;
     private String sensor;
     private String dataSource;
     private String user;
@@ -41,6 +42,14 @@ public class Query {
     private Map<String, String> values;
 
     public Query() { }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
 
     public Map<String, String> getValues() { return values; }
 

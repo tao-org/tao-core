@@ -170,6 +170,10 @@ public class DataSourceComponent extends TaoComponent {
         this.password = Crypto.decrypt(password, userName);
     }
 
+    public FetchMode getFetchMode() {
+        return fetchMode;
+    }
+
     public void setFetchMode(FetchMode mode) { this.fetchMode = mode; }
 
     public void setProductStatusListener(ProductStatusListener listener) {
