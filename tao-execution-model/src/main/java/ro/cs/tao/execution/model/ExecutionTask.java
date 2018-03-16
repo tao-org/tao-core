@@ -40,7 +40,7 @@ public class ExecutionTask<T extends TaoComponent> implements StatusChangeListen
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private List<Variable> inputParameterValues;
-    Integer internalState;
+    String internalState;
     ExecutionJob job;
     ExecutionStatus executionStatus = ExecutionStatus.UNDETERMINED;
 
@@ -93,8 +93,15 @@ public class ExecutionTask<T extends TaoComponent> implements StatusChangeListen
         }
     }
 
-    public Integer getInternalState() { return internalState; }
-    public void setInternalState(Integer internalState) { this.internalState = internalState; }
+    public String getInternalState() { return internalState; }
+    public void setInternalState(String internalState) { this.internalState = internalState; }
+
+    /**
+     * Generic method to handle the advancement to the next internal state.
+     * It returns <code>null</code> if there is no internal state or the current state was the last one.
+     * @param <S>   The type of the state data
+     */
+    <S> S nextInternalState() { return null; }
 
     public void setResourceId(String resourceId) {
         this.resourceId = resourceId;

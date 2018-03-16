@@ -21,6 +21,6 @@ package ro.cs.tao.execution.model;
  *
  * @author Cosmin Cara
  */
-public interface TaskSelector {
-    ExecutionTask chooseNext(ExecutionJob job);
+public interface TaskSelector<T> {
+    ExecutionTask chooseNext(T taskHolder);
 }
