@@ -16,45 +16,37 @@
 
 package ro.cs.tao.orchestration;
 
-import ro.cs.tao.execution.model.ExecutionJob;
+import ro.cs.tao.execution.model.ExecutionGroup;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.execution.model.TaskSelector;
 
 import java.util.List;
 
-/**
- * Default implementation for choosing the next task to be executed from a job.
- */
-public class DefaultTaskSelector implements TaskSelector {
-
+public class DefaultGroupTaskSelector implements TaskSelector<ExecutionGroup> {
     @Override
-    public ExecutionTask chooseNext(ExecutionJob job) {
+    public ExecutionTask chooseNext(ExecutionGroup taskHolder) {
         ExecutionTask next = null;
-        List<ExecutionTask> tasks = job.getTasks();
+        List<ExecutionTask> tasks = taskHolder.getTasks();
         if (tasks != null && tasks.size() > 0) {
-            switch (job.getExecutionStatus()) {
-                // If the job is not started, we return the first task in line
+            switch (taskHolder.getExecutionStatus()) {
                 case UNDETERMINED:
+                case QUEUED_ACTIVE:
                     next = tasks.get(0);
                     break;
-                // If the job is already queued for execution,
-                // there should be already at least one task queued for execution, so we don't return another one
-                case QUEUED_ACTIVE:
-                    break;
-                // If the job is suspended, return the first task that was suspended
                 case SUSPENDED:
                     next = tasks.stream()
                             .filter(t -> t.getExecutionStatus() == ExecutionStatus.SUSPENDED)
                             .findFirst().orElse(null);
                     break;
-                // If the job is running, return the first task that is not started
                 case RUNNING:
-                    next = tasks.stream()
-                            .filter(t -> t.getExecutionStatus() == ExecutionStatus.UNDETERMINED)
-                            .findFirst().orElse(null);
+                    for (ExecutionTask task : tasks) {
+                        if (task.getExecutionStatus() != ExecutionStatus.RUNNING) {
+                            next = task;
+                            break;
+                        }
+                    }
                     break;
-                // If the job was cancelled, or failed, or completed its execution, do nothing
                 case DONE:
                 case FAILED:
                 case CANCELLED:

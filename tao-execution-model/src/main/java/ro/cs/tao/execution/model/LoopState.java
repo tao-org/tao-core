@@ -16,11 +16,13 @@
 
 package ro.cs.tao.execution.model;
 
-/**
- * Interface for implementors of task choosing algorithms
- *
- * @author Cosmin Cara
- */
-public interface TaskSelector<T> {
-    ExecutionTask chooseNext(T taskHolder);
+public class LoopState {
+    private int limit;
+    private int current;
+
+    public int getLimit() { return limit; }
+    public void setLimit(int limit) { this.limit = limit; }
+
+    public int getCurrent() { return current; }
+    public void setCurrent(int current) { this.current = current; }
 }

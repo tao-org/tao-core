@@ -17,11 +17,18 @@ package ro.cs.tao.execution.model;
 
 import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.component.Variable;
+import ro.cs.tao.serialization.BaseSerializer;
+import ro.cs.tao.serialization.MediaType;
+import ro.cs.tao.serialization.SerializationException;
+import ro.cs.tao.serialization.SerializerFactory;
 
 import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.transform.stream.StreamSource;
+import java.beans.Transient;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * @author Cosmin Cara
@@ -29,6 +36,8 @@ import java.util.List;
 public class ExecutionGroup<T extends TaoComponent> extends ExecutionTask<T> {
 
     private List<ExecutionTask> tasks;
+    private TaskSelector taskSelector;
+    private Function<String, Integer> internalStateHandler;
 
     @XmlTransient
     public List<ExecutionTask> getTasks() { return tasks; }
@@ -61,6 +70,10 @@ public class ExecutionGroup<T extends TaoComponent> extends ExecutionTask<T> {
         throw new java.lang.UnsupportedOperationException("Operation not permitted on a task group");
     }
 
+    @Transient
+    public void setTaskSelector(TaskSelector visitor) { this.taskSelector = visitor; }
+    public TaskSelector getTaskSelector() { return this.taskSelector; }
+
     @Override
     public void statusChanged(ExecutionTask changedTask) {
         ExecutionStatus previous = this.executionStatus;
@@ -73,8 +86,23 @@ public class ExecutionGroup<T extends TaoComponent> extends ExecutionTask<T> {
                 this.executionStatus = taskStatus;
                 break;
             case DONE:
+                // If the task is the last one of this group
                 if (this.tasks.get(this.tasks.size() - 1).getId().equals(changedTask.getId())) {
-                    this.executionStatus = ExecutionStatus.DONE;
+                    Integer nextState = nextInternalState();
+                    if (nextState != null) {
+                        bulkSetStatus(null, ExecutionStatus.UNDETERMINED);
+                        this.executionStatus = ExecutionStatus.UNDETERMINED;
+                        try {
+                            BaseSerializer<LoopState> serializer = SerializerFactory.create(LoopState.class, MediaType.JSON);
+                            LoopState current = serializer.deserialize(new StreamSource(this.internalState));
+                            current.setCurrent(nextState);
+                            this.internalState = serializer.serialize(current);
+                        } catch (SerializationException e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        this.executionStatus = ExecutionStatus.DONE;
+                    }
                 }
                 break;
             default:
@@ -110,34 +138,10 @@ public class ExecutionGroup<T extends TaoComponent> extends ExecutionTask<T> {
 
     @Override
     public ExecutionTask getNext() {
-        ExecutionTask next = null;
-        if (this.tasks != null && this.tasks.size() > 0) {
-            switch (this.executionStatus) {
-                case UNDETERMINED:
-                case QUEUED_ACTIVE:
-                    next = this.tasks.get(0);
-                    break;
-                case SUSPENDED:
-                    next = this.tasks.stream()
-                                     .filter(t -> t.getExecutionStatus() == ExecutionStatus.SUSPENDED)
-                                     .findFirst().orElse(null);
-                    break;
-                case RUNNING:
-                    for (ExecutionTask task : this.tasks) {
-                        if (task.getExecutionStatus() != ExecutionStatus.RUNNING) {
-                            next = task;
-                            break;
-                        }
-                    }
-                    break;
-                case DONE:
-                case FAILED:
-                case CANCELLED:
-                default:
-                    break;
-            }
+        if (this.taskSelector == null) {
+            throw new IllegalArgumentException("No algorithm for choosing tasks is set");
         }
-        return next;
+        return this.taskSelector.chooseNext(this);
     }
 
     public ExecutionTask getByWorkflowNode(Long workflowNodeId) {
@@ -157,8 +161,11 @@ public class ExecutionGroup<T extends TaoComponent> extends ExecutionTask<T> {
             case SUSPENDED:
             case CANCELLED:
             case FAILED:
-                for (int i = this.internalState; i < this.tasks.size(); i++) {
-                    this.tasks.get(i).setExecutionStatus(status);
+                for (ExecutionTask task : this.tasks) {
+                    ExecutionStatus taskStatus = task.getExecutionStatus();
+                    if (taskStatus != ExecutionStatus.DONE) {
+                        task.setExecutionStatus(status);
+                    }
                 }
                 break;
             default:
@@ -167,12 +174,29 @@ public class ExecutionGroup<T extends TaoComponent> extends ExecutionTask<T> {
         }
     }
 
+    @Override
+    Integer nextInternalState() {
+        if (this.internalState == null || this.internalStateHandler == null) {
+            return null;
+        }
+        return this.internalStateHandler.apply(this.internalState);
+    }
+
+    @Transient
+    public void setInternalStateHandler(Function<String, Integer> stateHandler) {
+        this.internalStateHandler = stateHandler;
+    }
+
     private void bulkSetStatus(ExecutionTask firstExculde, ExecutionStatus status) {
         if (this.tasks == null) {
             return;
         }
         int idx = 0;
         boolean found = false;
+        if (firstExculde == null) {
+            firstExculde = this.tasks.get(0);
+            firstExculde.setExecutionStatus(status);
+        }
         while (idx < this.tasks.size()) {
             if (!found) {
                 found = this.tasks.get(idx).getId().equals(firstExculde.getId());
