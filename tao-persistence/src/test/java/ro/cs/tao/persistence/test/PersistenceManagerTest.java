@@ -17,6 +17,8 @@ import ro.cs.tao.component.enums.ProcessingComponentVisibility;
 import ro.cs.tao.component.template.BasicTemplate;
 import ro.cs.tao.component.template.Template;
 import ro.cs.tao.component.template.TemplateType;
+import ro.cs.tao.datasource.DataSourceComponent;
+import ro.cs.tao.datasource.remote.FetchMode;
 import ro.cs.tao.docker.Application;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.eodata.Attribute;
@@ -25,6 +27,7 @@ import ro.cs.tao.eodata.VectorData;
 import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.eodata.enums.PixelType;
 import ro.cs.tao.eodata.enums.SensorType;
+import ro.cs.tao.execution.model.Query;
 import ro.cs.tao.messaging.Message;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.config.DatabaseConfiguration;
@@ -749,6 +752,46 @@ public class PersistenceManagerTest {
         }
     }
 
+    private DataSourceComponent createNewDataSourceComponent(String componentId) {
+        // add a new data source component for test
+        final String sensorName = "Optical sensor";
+        final String dataSourceName = "AWS";
+
+        DataSourceComponent component = new DataSourceComponent(sensorName, dataSourceName);
+        component.setId(componentId);
+        component.setLabel("component label");
+        component.setVersion("component version");
+        component.setDescription("component description");
+        component.setAuthors("component authors");
+        component.setCopyright("component copyright");
+
+        component.setNodeAffinity("Any");
+        component.setTargetCardinality(0);
+        component.setFetchMode(FetchMode.RESUME);
+
+        return component;
+    }
+
+    @Test
+    public void TC_20_save_new_data_source_component()
+    {
+        logger.info("TC_20_save_new_data_source_component");
+        try
+        {
+            // add a new data source component for test
+            DataSourceComponent component = createNewDataSourceComponent("datasourcecomponent01");
+
+            component = persistenceManager.saveDataSourceComponent(component);
+            // check persisted component
+            Assert.assertTrue(component != null && component.getId() != null);
+        }
+        catch (PersistenceException e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
+
 
     /**@Test
     public void TC_20_save_new_execution_job()
@@ -1431,6 +1474,26 @@ public class PersistenceManagerTest {
         }
     }
 
+    @Test
+    public void TC_35_save_new_query()
+    {
+        logger.info("TC_35_save_new_query");
+        try
+        {
+            Query query = new Query();
+            query.setSensor("Optical sensor");
+            query.setDataSource("AWS");
+
+            query = persistenceManager.saveQuery(query);
+            // check persisted query
+            Assert.assertTrue(query != null && query.getId() != null);
+        }
+        catch (PersistenceException e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
 
 
 }

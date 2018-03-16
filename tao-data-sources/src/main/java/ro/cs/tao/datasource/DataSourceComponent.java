@@ -137,22 +137,24 @@ public class DataSourceComponent extends TaoComponent {
 
     @Override
     public List<SourceDescriptor> getSources() {
-        throw new RuntimeException("Not allowed on " + getClass().getName());
+        //throw new RuntimeException("Not allowed on " + getClass().getName());
+        return null;
     }
 
     @Override
     public void setSources(List<SourceDescriptor> sources) {
-        throw new RuntimeException("Not allowed on " + getClass().getName());
+        //throw new RuntimeException("Not allowed on " + getClass().getName());
     }
 
     @Override
     public int getSourceCardinality() {
-        throw new RuntimeException("Not allowed on " + getClass().getName());
+        //throw new RuntimeException("Not allowed on " + getClass().getName());
+        return -1;
     }
 
     @Override
     public void setSourceCardinality(int sourceCardinality) {
-        throw new RuntimeException("Not allowed on " + getClass().getName());
+        //throw new RuntimeException("Not allowed on " + getClass().getName());
     }
 
     @Override
