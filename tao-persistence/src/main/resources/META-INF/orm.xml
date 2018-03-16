@@ -694,6 +694,7 @@
         <attributes>
             <id name="id">
                 <column name="id" nullable="false" column-definition="varchar(512) NOT NULL"/>
+                <generated-value strategy="IDENTITY" />
             </id>
             <basic name="sensor">
                 <column name="sensor_name" nullable="false" column-definition="varchar(1024) NOT NULL"/>
@@ -714,7 +715,7 @@
                 <column name="page_number" nullable="true" column-definition="integer NULL"/>
             </basic>
             <basic name="limit">
-                <column name="limit" nullable="true" column-definition="integer NULL"/>
+                <column name="_limit" nullable="true" column-definition="integer NULL"/>
             </basic>
             <basic name="values">
                 <column name="values" nullable="true" column-definition="json NULL"/>

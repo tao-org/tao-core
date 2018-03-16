@@ -11,7 +11,7 @@ CREATE TABLE tao.query
 	password bytea NULL,
 	page_size integer NULL,
 	page_number integer NULL,
-	"limit" integer NULL,  -- reserved word
+	_limit integer NULL,  -- reserved word
 	"values" json NULL,    -- reserved word
 	created timestamp NOT NULL DEFAULT now(),
     modified timestamp NULL
