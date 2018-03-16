@@ -240,6 +240,7 @@ CREATE TABLE tao.task
 	graph_node_id bigint NOT NULL,
 	start_time timestamp without time zone NULL,
 	end_time timestamp without time zone NULL,
+	internal_state varchar(512) NULL,
 	job_id bigint NOT NULL,
 	execution_node_host_name varchar(250) NOT NULL,
 	execution_status_id integer NOT NULL,
