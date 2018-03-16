@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.component.ParameterDescriptor;
 import ro.cs.tao.component.ProcessingComponent;
+import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.component.enums.ProcessingComponentVisibility;
 import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.docker.Application;
@@ -21,6 +22,7 @@ import ro.cs.tao.eodata.VectorData;
 import ro.cs.tao.execution.model.ExecutionJob;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
+import ro.cs.tao.execution.model.Query;
 import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.MessagePersister;
 import ro.cs.tao.persistence.exception.PersistenceException;
@@ -97,6 +99,10 @@ public class PersistenceManager implements MessagePersister {
     @Autowired
     private ProcessingComponentRepository processingComponentRepository;
 
+    /** CRUD Repository for DataSourceComponent entities */
+    @Autowired
+    private DataSourceComponentRepository dataSourceComponentRepository;
+
     /** CRUD Repository for ParameterDescriptor entities */
     @Autowired
     private ParameterDescriptorRepository parameterDescriptorRepository;
@@ -121,8 +127,13 @@ public class PersistenceManager implements MessagePersister {
     @Autowired
     private WorkflowNodeDescriptorRepository workflowNodeDescriptorRepository;
 
+    /** CRUD Repository for DataSourceComponent entities */
     @Autowired
     private DataSourceRepository dataSourceRepository;
+
+    /** CRUD Repository for Query entities */
+    @Autowired
+    private QueryRepository queryRepository;
 
 //    /** CRUD Repository for DataSource entities */
 //    @Autowired
@@ -635,62 +646,54 @@ public class PersistenceManager implements MessagePersister {
         return parameterDescriptorRepository.save(parameter);
     }*/
 
+    private boolean checkComponent(TaoComponent component)
+    {
+        if(component == null){
+            return false;
+        }
+        if(component.getId() == null || component.getId().isEmpty()) {
+            return false;
+        }
+        if(component.getLabel() == null) {
+            return false;
+        }
+        if(component.getVersion() == null) {
+            return false;
+        }
+        if(component.getDescription() == null) {
+            return false;
+        }
+        if(component.getAuthors() == null) {
+            return false;
+        }
+
+        if(component.getCopyright() == null) {
+            return false;
+        }
+
+        return true;
+    }
+
     private boolean checkProcessingComponent(ProcessingComponent component)
     {
-        if(component == null)
-        {
-            return false;
-        }
-        if(component.getId() == null || component.getId().isEmpty())
-        {
-            return false;
-        }
-        if(component.getLabel() == null)
-        {
-            return false;
-        }
-        if(component.getVersion() == null)
-        {
-            return false;
-        }
-        if(component.getDescription() == null)
-        {
-            return false;
-        }
-        if(component.getAuthors() == null)
-        {
+        if(!checkComponent(component)){
             return false;
         }
 
-        if(component.getCopyright() == null)
-        {
+        if(component.getFileLocation() == null) {
             return false;
         }
 
-        if(component.getFileLocation() == null)
-        {
+        if(component.getTemplateType() == null) {
             return false;
         }
 
-        if(component.getTemplateType() == null)
-        {
+        if(component.getVisibility() == null) {
             return false;
         }
 
-        /*if(component.getTemplateName() == null)
-        {
-            return false;
-        }*/
-
-        if(component.getVisibility() == null)
-        {
-            return false;
-        }
-
-        for(ParameterDescriptor parameter: component.getParameterDescriptors())
-        {
-            if(!checkParameterDescriptor(parameter))
-            {
+        for(ParameterDescriptor parameter: component.getParameterDescriptors()) {
+            if(!checkParameterDescriptor(parameter)) {
                 return false;
             }
         }
@@ -827,6 +830,44 @@ public class PersistenceManager implements MessagePersister {
 
         // save it
         return processingComponentRepository.save(componentEnt);
+    }
+
+    private boolean checkDataSourceComponent(DataSourceComponent component)
+    {
+        if(!checkComponent(component)){
+            return false;
+        }
+
+        if(component.getSensorName() == null) {
+            return false;
+        }
+
+        if(component.getDataSourceName() == null) {
+            return false;
+        }
+
+        if(component.getFetchMode() == null) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Transactional
+    public DataSourceComponent saveDataSourceComponent(DataSourceComponent component) throws PersistenceException {
+        // check method parameters
+        if(!checkDataSourceComponent(component)) {
+            throw new PersistenceException("Invalid parameters were provided for adding new data source component !");
+        }
+
+        // check if there is already another component with the same identifier
+        final DataSourceComponent componentWithSameId = dataSourceComponentRepository.findById(component.getId());
+        if (componentWithSameId != null) {
+            throw new PersistenceException("There is already another component with the identifier: " + component.getId());
+        }
+
+        // save the new DataSourceComponent entity and return it
+        return dataSourceComponentRepository.save(component);
     }
 
     private boolean checkExecutionJob(ExecutionJob job, boolean existingEntity) {
@@ -1334,5 +1375,41 @@ public class PersistenceManager implements MessagePersister {
     public DataSourceComponent getDataSourceInstance(String id) throws PersistenceException {
         return dataSourceRepository.findOne(id);
     }
+
+    private boolean checkQuery(Query query, boolean existingEntity) {
+        if(query == null){
+            return false;
+        }
+
+        if (!existingEntity && query.getId() != null) {
+            return false;
+        }
+
+        if (existingEntity && query.getId() == null) {
+            return false;
+        }
+
+        if(query.getSensor() == null) {
+            return false;
+        }
+
+        if(query.getDataSource() == null) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Transactional
+    public Query saveQuery(Query query) throws PersistenceException {
+        // check method parameters
+        if(!checkQuery(query, false)) {
+            throw new PersistenceException("Invalid parameters were provided for adding new query !");
+        }
+
+        // save the new Query entity and return it
+        return queryRepository.save(query);
+    }
+
 
 }
