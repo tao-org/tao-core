@@ -502,6 +502,12 @@
             <basic name="workflowId">
                 <column name="workflow_id" nullable="false" column-definition="bigint NOT NULL"/>
             </basic>
+            <basic name="queryId">
+                <column name="query_id" nullable="true" column-definition="varchar(512) NULL"/>
+            </basic>
+            <basic name="userName">
+                <column name="username" nullable="false" column-definition="character varying(50) NOT NULL"/>
+            </basic>
 
             <one-to-many name="tasks" fetch="EAGER" mapped-by="job" />
 
@@ -679,6 +685,40 @@
         </attributes>
     </entity>
 
+    <entity class="ro.cs.tao.execution.model.Query" access="PROPERTY">
+        <table name="tao.query"/>
+        <convert converter="ro.cs.tao.persistence.convert.QueryValuesMapConverter" attribute-name="values"/>
+        <attributes>
+            <id name="id">
+                <column name="id" nullable="false" column-definition="varchar(512) NOT NULL"/>
+            </id>
+            <basic name="sensor">
+                <column name="sensor_name" nullable="false" column-definition="varchar(1024) NOT NULL"/>
+            </basic>
+            <basic name="dataSource">
+                <column name="data_source_name" nullable="false" column-definition="varchar(512) NOT NULL"/>
+            </basic>
+            <basic name="user">
+                <column name="username" nullable="true" column-definition="character varying(512) NULL"/>
+            </basic>
+            <basic name="password">
+                <column name="password" nullable="true" column-definition="bytea NULL"/>
+            </basic>
+            <basic name="pageSize">
+                <column name="page_size" nullable="true" column-definition="integer NULL"/>
+            </basic>
+            <basic name="pageNumber">
+                <column name="page_number" nullable="true" column-definition="integer NULL"/>
+            </basic>
+            <basic name="limit">
+                <column name="limit" nullable="true" column-definition="integer NULL"/>
+            </basic>
+            <basic name="values">
+                <column name="values" nullable="true" column-definition="json NULL"/>
+            </basic>
+        </attributes>
+    </entity>
+
 
     <embeddable class="ro.cs.tao.eodata.Attribute" access="PROPERTY">
         <attributes>
@@ -816,6 +856,7 @@
     <converter class="ro.cs.tao.persistence.convert.DimensionConverter" />
     <converter class="ro.cs.tao.persistence.convert.ParameterValueListConverter"/>
     <converter class="ro.cs.tao.persistence.convert.ParameterListConverter"/>
+    <converter class="ro.cs.tao.persistence.convert.QueryValuesMapConverter"/>
 
 
 </entity-mappings>

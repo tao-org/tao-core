@@ -559,7 +559,7 @@ CREATE TABLE tao.data_source_component_targets
 );
 
 ALTER TABLE tao.data_source_component_targets ADD CONSTRAINT PK_data_source_component_targets
-	PRIMARY KEY (processing_component_id, target_descriptor_id);
+	PRIMARY KEY (data_source_component_id, target_descriptor_id);
 
 ALTER TABLE tao.data_source_component_targets ADD CONSTRAINT FK_data_source_component_targets_processing_component
 	FOREIGN KEY (data_source_component_id) REFERENCES tao.data_source_component (id) ON DELETE No Action ON UPDATE No Action;

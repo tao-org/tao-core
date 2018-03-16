@@ -154,3 +154,16 @@ ALTER TABLE tao.fetch_mode ALTER COLUMN id SET DEFAULT nextval('tao.fetch_mode_i
 -- assign column to sequence
 ALTER SEQUENCE tao.fetch_mode_id_seq OWNED BY tao.fetch_mode.id;
 
+
+
+----- table: tao.query ----------------------------------------------------------------------------
+DROP SEQUENCE IF EXISTS tao.query_id_seq CASCADE;
+-- create sequence
+CREATE SEQUENCE tao.query_id_seq
+	INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+
+-- assign sequence to column
+ALTER TABLE tao.query ALTER COLUMN id SET DEFAULT 'query' || nextval('tao.query_id_seq');
+
+-- assign column to sequence
+ALTER SEQUENCE tao.query_id_seq OWNED BY tao.query.id;

@@ -30,6 +30,7 @@ public class ExecutionJob implements StatusChangeListener {
     private LocalDateTime endTime;
     private long workflowId;
     private String queryId;
+    private String userName;
     private ExecutionStatus executionStatus;
     private List<ExecutionTask> tasks;
     private TaskSelector taskSelector;
@@ -45,6 +46,9 @@ public class ExecutionJob implements StatusChangeListener {
 
     public String getQueryId() { return queryId; }
     public void setQueryId(String queryId) { this.queryId = queryId; }
+
+    public String getUserName() { return userName; }
+    public void setUserName(String userName) { this.userName = userName; }
 
     public long getWorkflowId() { return workflowId; }
     public void setWorkflowId(long workflowId) { this.workflowId = workflowId; }
