@@ -246,7 +246,9 @@ CREATE TABLE tao.task
 	execution_status_id integer NOT NULL,
 	used_CPU integer NULL,
     used_RAM integer NULL,
-    used_HDD integer NULL
+    used_HDD integer NULL,
+    -- special column used by JPA to distinguish which type of object is stored in one row (since this table holds 2 types of entities)
+    discriminator integer NOT NULL
 );
 
 ALTER TABLE tao.task ADD CONSTRAINT PK_task PRIMARY KEY (id);
@@ -262,6 +264,26 @@ ALTER TABLE tao.task ADD CONSTRAINT FK_task_execution_node
 
 ALTER TABLE tao.task ADD CONSTRAINT FK_task_execution_status
 	FOREIGN KEY (execution_status_id) REFERENCES tao.execution_status (id) ON DELETE No Action ON UPDATE No Action;
+
+
+-------------------------------------------------------------------------------
+-- table: execution_group_tasks
+DROP TABLE IF EXISTS tao.execution_group_tasks CASCADE;
+
+CREATE TABLE tao.execution_group_tasks
+(
+    execution_group_id bigint NOT NULL,
+	execution_task_id bigint NOT NULL
+);
+
+ALTER TABLE tao.execution_group_tasks ADD CONSTRAINT PK_execution_group_tasks
+	PRIMARY KEY (execution_group_id, execution_task_id);
+
+ALTER TABLE tao.execution_group_tasks ADD CONSTRAINT FK_execution_group_tasks_execution_group
+	FOREIGN KEY (execution_group_id) REFERENCES tao.task (id) ON DELETE No Action ON UPDATE No Action;
+
+ALTER TABLE tao.execution_group_tasks ADD CONSTRAINT FK_execution_group_tasks_execution_task
+	FOREIGN KEY (execution_task_id) REFERENCES tao.task (id) ON DELETE No Action ON UPDATE No Action;
 
 
 -------------------------------------------------------------------------------
