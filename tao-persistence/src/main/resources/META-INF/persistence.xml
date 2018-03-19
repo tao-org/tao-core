@@ -24,6 +24,7 @@
 
         <class>ro.cs.tao.execution.model.ExecutionJob</class>
         <class>ro.cs.tao.execution.model.ExecutionTask</class>
+        <class>ro.cs.tao.execution.model.ExecutionGroup</class>
 
         <class>ro.cs.tao.component.SourceDescriptor</class>
         <class>ro.cs.tao.component.TargetDescriptor</class>

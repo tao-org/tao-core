@@ -433,6 +433,12 @@
 
     <entity class="ro.cs.tao.execution.model.ExecutionTask" access="PROPERTY">
         <table name="tao.task"/>
+        <!-- set inheritance to single table, since ExecutionGroup inherits from ParameterDescriptor -->
+        <inheritance strategy="SINGLE_TABLE"/>
+
+        <!-- avoid default DTYPE -->
+        <discriminator-column name="discriminator" column-definition="integer NOT NULL" discriminator-type="INTEGER"/>
+
         <convert converter="ro.cs.tao.persistence.convert.ExecutionStatusConverter" attribute-name="executionStatus" />
         <attributes>
             <id name="id">
@@ -476,8 +482,35 @@
                     <join-column name="task_id" referenced-column-name="id" />
                 </collection-table>
             </element-collection>
-            
+
+            <transient name="next"/>
             <transient name="groupTask"/>
+
+        </attributes>
+    </entity>
+
+
+    <entity class="ro.cs.tao.execution.model.ExecutionGroup" access="PROPERTY">
+        <!-- no need to specify the table here, since ExecutionGroup inherits ExecutionTask;
+            ExecutionGroup is a subclass of a SINGLE_TABLE hierarchy -->
+        <!--<table name="tao.task"/>-->
+
+        <!-- any other value than 937389016 (set by JPA for the base class); e.g 13  -->
+        <discriminator-value>13</discriminator-value>
+
+        <attributes>
+            <many-to-many name="tasks" fetch="LAZY">
+                <join-table name="tao.execution_group_tasks">
+                    <join-column name="execution_group_id" referenced-column-name="id"/>
+                    <inverse-join-column name="execution_task_id" referenced-column-name="id"/>
+                </join-table>
+                <cascade>
+                    <cascade-all/>
+                </cascade>
+            </many-to-many>
+
+            <transient name="taskSelector"/>
+            <transient name="internalStateHandler"/>
             <transient name="next"/>
 
         </attributes>
