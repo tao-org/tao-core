@@ -422,6 +422,9 @@
             <basic name="overriddenParameters">
                 <column name="overridden_parameters" nullable="true" column-definition="json NULL"/>
             </basic>
+            <basic name="maxRetries">
+                <column name="max_retries" nullable="true" column-definition="integer NULL DEFAULT 3"/>
+            </basic>
             
             <transient name="cancelled" />
             <transient name="currentFetcher" />

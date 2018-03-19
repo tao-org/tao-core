@@ -517,6 +517,7 @@ CREATE TABLE tao.data_source_component
 	password bytea NULL,
 	fetch_mode_id integer NOT NULL,
 	overridden_parameters json NULL,
+	max_retries integer NULL DEFAULT 3,
 	created timestamp NOT NULL DEFAULT now(),
     modified timestamp NULL
 );
