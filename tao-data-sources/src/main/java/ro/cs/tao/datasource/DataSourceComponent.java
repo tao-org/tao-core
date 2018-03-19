@@ -42,6 +42,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -70,6 +71,8 @@ public class DataSourceComponent extends TaoComponent {
     private EOProduct currentProduct;
     @XmlTransient
     private FetchMode fetchMode;
+    @XmlTransient
+    private int maxRetries;
     @XmlTransient
     private List<Parameter> overriddenParameters;
 
@@ -169,14 +172,19 @@ public class DataSourceComponent extends TaoComponent {
 
     public void setUserCredentials(String userName, String password) {
         this.userName = userName;
-        this.password = Crypto.decrypt(password, userName);
+        this.password = password;
+        if (password != null && userName != null) {
+            String decryptedPass = Crypto.decrypt(password, userName);
+            if (decryptedPass != null) {
+                this.password = decryptedPass;
+            }
+        }
     }
 
-    public FetchMode getFetchMode() {
-        return fetchMode;
-    }
-
+    public FetchMode getFetchMode() { return fetchMode; }
     public void setFetchMode(FetchMode mode) { this.fetchMode = mode; }
+    public void setMaxRetries(int maxRetries) { this.maxRetries = maxRetries; }
+    public int getMaxRetries() { return maxRetries; }
 
     public void setProductStatusListener(ProductStatusListener listener) {
         this.productStatusListener = listener;
@@ -228,6 +236,9 @@ public class DataSourceComponent extends TaoComponent {
             dataSource.setCredentials(this.userName, this.password);
         }
         for (EOProduct product : products) {
+            // add the attribute for max retries such that if the maxRetries is exceeded
+            // to be set, on failure, to aborted state
+            product.addAttribute("maxRetries", String.valueOf(this.maxRetries));
             try {
                 if (!cancelled) {
                     if (this.productStatusListener != null) {
@@ -294,6 +305,12 @@ public class DataSourceComponent extends TaoComponent {
                                              product.getName(), e.getMessage()));
                 if (this.productStatusListener != null) {
                     this.productStatusListener.downloadFailed(product, e.getMessage());
+                }
+            } catch (NoSuchElementException e) {
+                logger.warning(String.format("Fetching product '%s' aborted: %s",
+                        product.getName(), e.getMessage()));
+                if (this.productStatusListener != null) {
+                    this.productStatusListener.downloadAborted(product, e.getMessage());
                 }
             } finally {
                 //notifier.notifyProgress(counter++ / products.size());
