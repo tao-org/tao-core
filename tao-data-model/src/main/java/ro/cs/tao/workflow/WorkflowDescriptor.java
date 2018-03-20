@@ -16,6 +16,7 @@
 package ro.cs.tao.workflow;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
 import javax.xml.bind.annotation.XmlElement;
@@ -29,7 +30,7 @@ import java.util.List;
  * @author Cosmin Cara
  */
 @XmlRootElement(name = "workflow")
-@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id", scope = WorkflowDescriptor.class)
 public class WorkflowDescriptor
         extends GraphObject implements NodeListOrderer {
     protected Long id;
@@ -65,6 +66,7 @@ public class WorkflowDescriptor
     public void setActive(boolean active) { this.active = active; }
 
     @XmlElementWrapper(name = "nodes")
+    @JsonManagedReference
     public List<WorkflowNodeDescriptor> getNodes() {
         return this.nodes;
     }

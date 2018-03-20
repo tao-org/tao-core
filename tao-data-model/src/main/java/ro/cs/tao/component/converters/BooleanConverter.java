@@ -21,8 +21,15 @@ import ro.cs.tao.datasource.converters.ConversionException;
  * @author Cosmin Cara
  */
 public class BooleanConverter extends DefaultConverter<Boolean> {
+
+    public BooleanConverter() { }
+
     @Override
     public Boolean fromString(String value) throws ConversionException {
-        return Boolean.parseBoolean(value);
+        try {
+            return value != null ? Boolean.parseBoolean(value) : null;
+        } catch (NumberFormatException ex) {
+            throw new ConversionException(ex.getMessage());
+        }
     }
 }

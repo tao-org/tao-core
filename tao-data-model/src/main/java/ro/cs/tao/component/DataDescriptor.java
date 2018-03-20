@@ -77,7 +77,9 @@ public class DataDescriptor {
     public String getLocation() { return this.location; }
     public void setLocation(String value) {
         //noinspection ResultOfMethodCallIgnored
-        URI.create(value);
+        if (value != null) {
+            URI.create(value);
+        }
         this.location = value;
     }
 }
