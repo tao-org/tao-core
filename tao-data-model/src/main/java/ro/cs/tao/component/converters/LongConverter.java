@@ -22,10 +22,12 @@ import ro.cs.tao.datasource.converters.ConversionException;
  */
 public class LongConverter extends DefaultConverter<Long> {
 
+    public LongConverter() { }
+
     @Override
     public Long fromString(String value) throws ConversionException {
         try {
-            return Long.parseLong(value);
+            return value != null ? Long.parseLong(value) : null;
         } catch (NumberFormatException ex) {
             throw new ConversionException(ex.getMessage());
         }

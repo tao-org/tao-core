@@ -21,10 +21,13 @@ import ro.cs.tao.datasource.converters.ConversionException;
  * @author Cosmin Cara
  */
 public class DoubleConverter extends DefaultConverter<Double> {
+
+    public DoubleConverter() { }
+
     @Override
     public Double fromString(String value) throws ConversionException {
         try {
-            return Double.parseDouble(value);
+            return value != null ? Double.parseDouble(value) : null;
         } catch (NumberFormatException ex) {
             throw new ConversionException(ex.getMessage());
         }
