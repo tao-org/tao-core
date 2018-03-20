@@ -695,6 +695,9 @@
             <basic name="parentId">
                 <column name="parent_id" nullable="false" column-definition="varchar(512) NOT NULL"/>
             </basic>
+            <basic name="name">
+                <column name="name" nullable="false" column-definition="varchar(512) NOT NULL"/>
+            </basic>
             <basic name="constraints">
                 <column name="constraints" nullable="true" column-definition="text NULL"/>
             </basic>
@@ -711,6 +714,9 @@
         <attributes>
             <basic name="parentId">
                 <column name="parent_id" nullable="false" column-definition="varchar(512) NOT NULL"/>
+            </basic>
+            <basic name="name">
+                <column name="name" nullable="false" column-definition="varchar(512) NOT NULL"/>
             </basic>
             <basic name="constraints">
                 <column name="constraints" nullable="true" column-definition="text NULL"/>

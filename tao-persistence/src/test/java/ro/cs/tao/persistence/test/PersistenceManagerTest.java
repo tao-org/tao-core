@@ -1375,6 +1375,9 @@ public class PersistenceManagerTest {
 
             // check persisted node custom values
             Assert.assertTrue(workflow.getNodes().get(0).getCustomValues().size() == 3);
+
+            // check persisted incoming links
+            Assert.assertTrue(workflow.getNodes().get(0).getIncomingLinks() != null && workflow.getNodes().get(0).getIncomingLinks().size() > 0);
         }
         catch (Exception e)
         {
