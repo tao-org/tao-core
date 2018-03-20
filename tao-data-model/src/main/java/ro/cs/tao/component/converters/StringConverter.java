@@ -22,6 +22,8 @@ import ro.cs.tao.datasource.converters.ConversionException;
  */
 public class StringConverter extends DefaultConverter<String> {
 
+    public StringConverter() { }
+
     @Override
     public String stringValue(String value) throws ConversionException {
         return value;

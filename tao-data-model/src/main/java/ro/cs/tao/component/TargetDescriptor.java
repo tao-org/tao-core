@@ -15,9 +15,6 @@
  */
 package ro.cs.tao.component;
 
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
-
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -29,7 +26,7 @@ import java.util.List;
  * Descriptor of an output of a component
  * @author Cosmin Cara
  */
-@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+//@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 @XmlRootElement(name = "output")
 public class TargetDescriptor extends Identifiable {
     private static final String DEFAULT_NAME = "Output";

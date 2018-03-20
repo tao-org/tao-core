@@ -22,10 +22,12 @@ import ro.cs.tao.datasource.converters.ConversionException;
  */
 public class IntegerConverter extends DefaultConverter<Integer> {
 
+    public IntegerConverter() { }
+
     @Override
     public Integer fromString(String value) throws ConversionException {
         try {
-            return Integer.parseInt(value);
+            return value != null ? Integer.parseInt(value) : null;
         } catch (NumberFormatException ex) {
             throw new ConversionException(ex.getMessage());
         }
