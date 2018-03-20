@@ -825,13 +825,13 @@
                 <convert converter="ro.cs.tao.persistence.convert.DataFormatConverter" attribute-name="formatType" />
             </basic>
             <basic name="geometry">
-                <column name="geometry" nullable="false" column-definition="geography(POLYGON, 4326) NOT NULL"/>
+                <column name="geometry" nullable="true" column-definition="geography(POLYGON, 4326) NULL"/>
             </basic>
             <basic name="crs">
                 <column name="coordinate_reference_system" nullable="true" column-definition="text NULL"/>
             </basic>
             <basic name="sensorType">
-                <column name="sensor_type_id" nullable="false" column-definition="integer NOT NULL"/>
+                <column name="sensor_type_id" nullable="true" column-definition="integer NULL"/>
                 <convert converter="ro.cs.tao.persistence.convert.SensorTypeConverter" attribute-name="sensorType" />
             </basic>
 
@@ -851,12 +851,12 @@
             -->
 
             <basic name="dimension">
-                <column name="dimension" nullable="false" column-definition="json NOT NULL"/>
+                <column name="dimension" nullable="true" column-definition="json NULL"/>
                 <convert converter="ro.cs.tao.persistence.convert.DimensionConverter" />
             </basic>
 
             <basic name="location">
-                <column name="location" nullable="false" column-definition="varchar(512) NOT NULL"/>
+                <column name="location" nullable="true" column-definition="varchar(512) NULL"/>
             </basic>
         </attributes>
     </embeddable>

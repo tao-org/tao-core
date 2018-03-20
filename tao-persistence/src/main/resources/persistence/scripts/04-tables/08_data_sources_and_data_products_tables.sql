@@ -368,11 +368,11 @@ CREATE TABLE tao.source_descriptor
 	constraints text NULL,
 
 	data_format_id integer NOT NULL,
-    geometry geography(POLYGON, 4326) NOT NULL,
+    geometry geography(POLYGON, 4326) NULL,
     coordinate_reference_system text NULL,
-    sensor_type_id integer NOT NULL,
-    dimension json NOT NULL,
-    location varchar(512) NOT NULL
+    sensor_type_id integer NULL,
+    dimension json NULL,
+    location varchar(512) NULL
 );
 
 ALTER TABLE tao.source_descriptor ADD CONSTRAINT PK_source_descriptor PRIMARY KEY (id);
@@ -398,11 +398,11 @@ CREATE TABLE tao.target_descriptor
 	constraints text NULL,
 
 	data_format_id integer NOT NULL,
-    geometry geography(POLYGON, 4326) NOT NULL,
+    geometry geography(POLYGON, 4326) NULL,
     coordinate_reference_system text NULL,
-    sensor_type_id integer NOT NULL,
-    dimension json NOT NULL,
-    location varchar(512) NOT NULL
+    sensor_type_id integer NULL,
+    dimension json NULL,
+    location varchar(512) NULL
 );
 
 ALTER TABLE tao.target_descriptor ADD CONSTRAINT PK_target_descriptor PRIMARY KEY (id);
