@@ -59,17 +59,22 @@ public class WorkflowNodeDescriptor extends GraphObject {
 
     @XmlElementWrapper(name = "incomingNodes")
     public List<ComponentLink> getIncomingLinks() { return incomingLinks; }
-    public void setIncomingLinks(List<ComponentLink> links) {
-        if (this.incomingLinks != null) {
-            this.incomingLinks.clear();
-        }
-        if (links != null) {
-            for (ComponentLink link : links) {
-                addLink(link);
-            }
-        }
+
+    public void setIncomingLinks(List<ComponentLink> incomingLinks) {
+        this.incomingLinks = incomingLinks;
     }
-    public void addLink (ComponentLink link) {
+
+    /*public void setIncomingLinks(List<ComponentLink> links) {
+            if (this.incomingLinks != null) {
+                this.incomingLinks.clear();
+            }
+            if (links != null) {
+                for (ComponentLink link : links) {
+                    addLink(link);
+                }
+            }
+        }*/
+    /*public void addLink (ComponentLink link) {
         if (this.incomingLinks == null) {
             this.incomingLinks = new ArrayList<>();
         }
@@ -82,7 +87,7 @@ public class WorkflowNodeDescriptor extends GraphObject {
         if (this.incomingLinks.contains(link)) {
             this.incomingLinks.remove(link);
         }
-    }
+    }*/
 
     @XmlTransient
     @JsonBackReference
