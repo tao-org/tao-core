@@ -195,7 +195,7 @@
                 <column name="description" nullable="true" column-definition="text null"/>
             </basic>
             <basic name="active">
-                <column name="active" nullable="true" column-definition="boolean NOT NULL DEFAULT true"/>
+                <column name="active" nullable="true" column-definition="boolean NULL DEFAULT true"/>
             </basic>
 
             <element-collection name="servicesStatus" target-class="ro.cs.tao.topology.NodeServiceStatus" access="PROPERTY" fetch="EAGER">
@@ -281,7 +281,7 @@
             </basic>
 
             <basic name="active">
-                <column name="active" nullable="true" column-definition="boolean NOT NULL DEFAULT true"/>
+                <column name="active" nullable="true" column-definition="boolean NULL DEFAULT true"/>
             </basic>
 
             <basic name="containerId">
@@ -596,7 +596,7 @@
                 <column name="visibility_id" nullable="false" column-definition="integer NOT NULL"/>
             </basic>
             <basic name="active">
-                <column name="active" nullable="true" column-definition="boolean NOT NULL DEFAULT true"/>
+                <column name="active" nullable="true" column-definition="boolean NULL DEFAULT true"/>
             </basic>
 
             <one-to-many name="nodes" target-entity="ro.cs.tao.workflow.WorkflowNodeDescriptor"

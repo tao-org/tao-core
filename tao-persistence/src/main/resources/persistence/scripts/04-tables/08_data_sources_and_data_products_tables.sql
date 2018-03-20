@@ -112,7 +112,7 @@ CREATE TABLE tao.data_source
 	description text NULL,
 	created timestamp NULL DEFAULT now(),
 	modified timestamp NULL,
-	active boolean NULL
+	active boolean NULL DEFAULT true
 );
 
 ALTER TABLE tao.data_source ADD CONSTRAINT PK_data_source

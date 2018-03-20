@@ -62,7 +62,7 @@ CREATE TABLE tao.workflow_graph
 	status_id integer NOT NULL,
 	visibility_id integer NOT NULL,
 	custom_values json NULL,
-	active boolean NOT NULL DEFAULT true
+	active boolean NULL DEFAULT true
 );
 
 ALTER TABLE tao.workflow_graph ADD CONSTRAINT PK_workflow PRIMARY KEY (id);
@@ -222,7 +222,7 @@ CREATE TABLE tao.execution_node
 	used_HDD integer NULL,
 	created timestamp NULL DEFAULT now(),
     modified timestamp NULL,
-	active boolean NOT NULL DEFAULT true
+	active boolean NULL DEFAULT true
 );
 
 ALTER TABLE tao.execution_node ADD CONSTRAINT PK_execution_node PRIMARY KEY (host_name);
