@@ -363,8 +363,9 @@ DROP TABLE IF EXISTS tao.source_descriptor CASCADE;
 
 CREATE TABLE tao.source_descriptor
 (
-    id varchar(512) NOT NULL,
+    id varchar(512) NOT NULL DEFAULT(uuid_generate_v4()),
 	parent_id varchar(512) NOT NULL,
+	name varchar(512) NOT NULL,
 	constraints text NULL,
 
 	data_format_id integer NOT NULL,
@@ -393,8 +394,9 @@ DROP TABLE IF EXISTS tao.target_descriptor CASCADE;
 
 CREATE TABLE tao.target_descriptor
 (
-    id varchar(512) NOT NULL,
-	parent_id varchar(512) NOT NULL,
+    id varchar(512) NOT NULL DEFAULT(uuid_generate_v4()),
+    parent_id varchar(512) NOT NULL,
+    name varchar(512) NOT NULL,
 	constraints text NULL,
 
 	data_format_id integer NOT NULL,
