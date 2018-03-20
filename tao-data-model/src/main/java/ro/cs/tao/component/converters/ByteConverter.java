@@ -21,10 +21,12 @@ import ro.cs.tao.datasource.converters.ConversionException;
  * @author Cosmin Cara
  */
 public class ByteConverter extends DefaultConverter<Byte> {
+
+    public ByteConverter() { }
     @Override
     public Byte fromString(String value) throws ConversionException {
         try {
-            return Byte.parseByte(value);
+            return value != null ? Byte.parseByte(value) : null;
         } catch (NumberFormatException ex) {
             throw new ConversionException(ex.getMessage());
         }

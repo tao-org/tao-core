@@ -1,2 +1,3 @@
-ro.cs.tao.execution.drmaa.DrmaaTaoExecutor
+##ro.cs.tao.execution.drmaa.DrmaaTaoExecutor
 ro.cs.tao.execution.local.QueryExecutor
+ro.cs.tao.execution.local.NullExecutor

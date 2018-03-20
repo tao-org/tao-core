@@ -21,10 +21,13 @@ import ro.cs.tao.datasource.converters.ConversionException;
  * @author Cosmin Cara
  */
 public class ShortConverter extends DefaultConverter<Short> {
+
+    public ShortConverter() { }
+
     @Override
     public Short fromString(String value) throws ConversionException {
         try {
-            return Short.parseShort(value);
+            return value != null ? Short.parseShort(value) : null;
         } catch (NumberFormatException ex) {
             throw new ConversionException(ex.getMessage());
         }

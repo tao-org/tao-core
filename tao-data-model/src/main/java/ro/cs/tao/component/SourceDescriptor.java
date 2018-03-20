@@ -15,8 +15,6 @@
  */
 package ro.cs.tao.component;
 
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import ro.cs.tao.component.constraints.ConstraintFactory;
 import ro.cs.tao.component.constraints.IOConstraint;
 
@@ -31,7 +29,7 @@ import java.util.List;
  * Descriptor for an input of a component
  * @author Cosmin Cara
  */
-@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+//@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 @XmlRootElement(name = "input")
 public class SourceDescriptor extends Identifiable {
     private static final String DEFAULT_NAME = "Input";
@@ -104,7 +102,7 @@ public class SourceDescriptor extends Identifiable {
     public boolean isCompatibleWith(TargetDescriptor other) {
         return other != null && this.dataDescriptor != null && other.getDataDescriptor() != null &&
                 this.dataDescriptor.getFormatType().equals(other.getDataDescriptor().getFormatType()) &&
-                (this.constraints.size() == 0 || this.constraints.stream().allMatch(c -> {
+                (this.constraints == null || this.constraints.size() == 0 || this.constraints.stream().allMatch(c -> {
                     IOConstraint constraint = ConstraintFactory.create(c);
                     return constraint == null || constraint.check(this.dataDescriptor, other.getDataDescriptor());
                 }));

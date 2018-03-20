@@ -27,10 +27,12 @@ import java.util.Date;
 public class DateConverter extends DefaultConverter<Date> {
     private static final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
 
+    public DateConverter() { }
+
     @Override
     public Date fromString(String value) throws ConversionException {
         try {
-            return format.parse(value);
+            return value != null ? format.parse(value) : null;
         } catch (ParseException e) {
             throw new ConversionException(e.getMessage());
         }
@@ -39,7 +41,7 @@ public class DateConverter extends DefaultConverter<Date> {
     @Override
     public String stringValue(Date value) throws ConversionException {
         try {
-            return format.format(value);
+            return value != null ? format.format(value) : null;
         } catch (Exception ex) {
             throw new ConversionException(ex.getMessage());
         }

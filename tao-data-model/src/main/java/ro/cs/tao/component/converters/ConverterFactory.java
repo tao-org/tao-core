@@ -62,8 +62,8 @@ public class ConverterFactory {
         Constructor<? extends ParameterConverter> ctor;
         ParameterConverter instance = null;
         try {
-            ctor = converterClass.getConstructor(ParameterDescriptor.class);
-            instance = ctor.newInstance(parameter);
+            ctor = converterClass.getConstructor();
+            instance = ctor.newInstance();
         } catch (NoSuchMethodException | IllegalAccessException |
                 InstantiationException | InvocationTargetException e) {
             e.printStackTrace();
