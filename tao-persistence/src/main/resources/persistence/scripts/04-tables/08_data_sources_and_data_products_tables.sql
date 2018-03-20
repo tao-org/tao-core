@@ -110,7 +110,7 @@ CREATE TABLE tao.data_source
 	auth_token text NULL,
 	connection_string varchar(500) NULL,
 	description text NULL,
-	created timestamp NOT NULL,
+	created timestamp NULL DEFAULT now(),
 	modified timestamp NULL,
 	active boolean NULL
 );
@@ -144,7 +144,7 @@ CREATE TABLE tao.raster_data_product
 	approximate_size bigint NOT NULL,
 	user_id integer NULL,
 	data_source_id integer NULL,
-	created timestamp NOT NULL DEFAULT now(),
+	created timestamp NULL DEFAULT now(),
 	modified timestamp NULL
 );
 
@@ -179,7 +179,7 @@ CREATE TABLE tao.vector_data_product
 	entry_point varchar(1000) NULL,
 	user_id integer NULL,
 	data_source_id integer NULL,
-	created timestamp NOT NULL DEFAULT now(),
+	created timestamp NULL DEFAULT now(),
 	modified timestamp NULL
 );
 
@@ -296,7 +296,7 @@ CREATE TABLE tao.user_data_source_connection
 	data_source_id integer NOT NULL,
 	username varchar(50) NULL,
 	password text NULL,
-	created timestamp NOT NULL,
+	created timestamp NULL DEFAULT now(),
 	modified timestamp NULL
 );
 
@@ -518,7 +518,7 @@ CREATE TABLE tao.data_source_component
 	fetch_mode_id integer NOT NULL,
 	overridden_parameters json NULL,
 	max_retries integer NULL DEFAULT 3,
-	created timestamp NOT NULL DEFAULT now(),
+	created timestamp NULL DEFAULT now(),
     modified timestamp NULL
 );
 
