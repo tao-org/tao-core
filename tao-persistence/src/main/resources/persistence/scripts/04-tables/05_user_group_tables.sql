@@ -30,7 +30,7 @@ CREATE TABLE tao."user"
 	group_id integer NULL,
 	created timestamp NULL DEFAULT now(),
 	modified timestamp NULL,
-	active boolean NOT NULL
+	active boolean NULL DEFAULT true
 );
 
 ALTER TABLE tao."user" ADD CONSTRAINT PK_user PRIMARY KEY (id);

@@ -113,7 +113,7 @@ CREATE TABLE tao.processing_component
 	multi_thread boolean NOT NULL DEFAULT false,
 	created timestamp NULL DEFAULT now(),
     modified timestamp NULL,
-	active boolean NOT NULL DEFAULT true
+	active boolean NULL DEFAULT true
 );
 
 ALTER TABLE tao.processing_component ADD CONSTRAINT PK_processing_component
