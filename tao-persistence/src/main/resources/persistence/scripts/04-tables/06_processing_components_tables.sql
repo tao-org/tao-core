@@ -110,7 +110,7 @@ CREATE TABLE tao.processing_component
 	template_type_id integer NOT NULL,
 	owner_user_id integer NULL,
 	visibility_id integer NOT NULL,
-	multi_thread boolean NOT NULL DEFAULT false,
+	multi_thread boolean NULL DEFAULT false,
 	created timestamp NULL DEFAULT now(),
     modified timestamp NULL,
 	active boolean NULL DEFAULT true

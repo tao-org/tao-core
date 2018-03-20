@@ -270,14 +270,11 @@
             <basic name="templateType">
                 <column name="template_type_id" nullable="false" column-definition="integer not null"/>
             </basic>
-            <basic name="multiThread">
-                <column name="multi_thread" nullable="false" column-definition="boolean NOT NULL DEFAULT false"/>
-            </basic>
             <basic name="visibility">
                 <column name="visibility_id" nullable="false" column-definition="integer not null"/>
             </basic>
             <basic name="multiThread">
-                <column name="multi_thread" nullable="false" column-definition="boolean NOT NULL DEFAULT false"/>
+                <column name="multi_thread" nullable="true" column-definition="boolean NULL DEFAULT false"/>
             </basic>
 
             <basic name="active">
