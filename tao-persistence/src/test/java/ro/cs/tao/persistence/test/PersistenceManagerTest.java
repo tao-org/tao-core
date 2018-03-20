@@ -1416,7 +1416,7 @@ public class PersistenceManagerTest {
             dataDescriptor.setSensorType(SensorType.OPTICAL);
             dataDescriptor.setDimension(new Dimension(100, 200));
 
-            TargetDescriptor targetDescriptor = new TargetDescriptor("targetDescriptor01");
+            TargetDescriptor targetDescriptor = new TargetDescriptor("targetDescriptor02");
             targetDescriptor.setParentId("component01");
             targetDescriptor.setDataDescriptor(dataDescriptor);
             List<String> targetConstraints = new ArrayList<>();
@@ -1426,7 +1426,7 @@ public class PersistenceManagerTest {
             targetConstraints.add("target_constraint03");
             //targetDescriptor.setConstraints(targetConstraints);
 
-            SourceDescriptor sourceDescriptor = new SourceDescriptor("sourceDescriptor01");
+            SourceDescriptor sourceDescriptor = new SourceDescriptor("sourceDescriptor02");
             sourceDescriptor.setParentId("component01");
             sourceDescriptor.setDataDescriptor(dataDescriptor);
             List<String> sourceConstraints = new ArrayList<>();
