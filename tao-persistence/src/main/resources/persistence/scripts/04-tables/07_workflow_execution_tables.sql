@@ -13,7 +13,7 @@ CREATE TABLE tao.query
 	page_number integer NULL,
 	_limit integer NULL,  -- reserved word
 	"values" json NULL,    -- reserved word
-	created timestamp NOT NULL DEFAULT now(),
+	created timestamp NULL DEFAULT now(),
     modified timestamp NULL
 );
 
@@ -56,7 +56,7 @@ CREATE TABLE tao.workflow_graph
 (
 	id bigint NOT NULL,
 	name varchar(250) NOT NULL,
-	created timestamp without time zone NOT NULL DEFAULT now(),
+	created timestamp NULL DEFAULT now(),
 	username varchar(50) NOT NULL,
 	definition_path varchar(512) NULL,
 	status_id integer NOT NULL,
@@ -103,7 +103,7 @@ CREATE TABLE tao.graph_node
 (
 	id bigint NOT NULL,
 	name varchar(250) NULL,
-	created timestamp without time zone NOT NULL DEFAULT now(),
+	created timestamp NULL DEFAULT now(),
 	workflow_id bigint NOT NULL,
 	processing_component_id varchar(512) NOT NULL,
 	xCoord real NULL,
@@ -220,7 +220,7 @@ CREATE TABLE tao.execution_node
 	used_CPU integer NULL,
 	used_RAM integer NULL,
 	used_HDD integer NULL,
-	created timestamp NOT NULL DEFAULT now(),
+	created timestamp NULL DEFAULT now(),
     modified timestamp NULL,
 	active boolean NOT NULL DEFAULT true
 );

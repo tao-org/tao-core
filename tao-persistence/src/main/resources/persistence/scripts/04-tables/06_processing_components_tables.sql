@@ -64,7 +64,7 @@ CREATE TABLE tao.container
 	name varchar(1024) NOT NULL,
 	tag varchar(1024) NOT NULL,
 	application_path varchar(1024) NULL,
-	created timestamp NOT NULL DEFAULT now(),
+	created timestamp NULL DEFAULT now(),
     modified timestamp NULL
 );
 
@@ -111,7 +111,7 @@ CREATE TABLE tao.processing_component
 	owner_user_id integer NULL,
 	visibility_id integer NOT NULL,
 	multi_thread boolean NOT NULL DEFAULT false,
-	created timestamp NOT NULL DEFAULT now(),
+	created timestamp NULL DEFAULT now(),
     modified timestamp NULL,
 	active boolean NOT NULL DEFAULT true
 );
