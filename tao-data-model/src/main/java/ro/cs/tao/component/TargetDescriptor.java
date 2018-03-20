@@ -21,6 +21,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Descriptor of an output of a component
@@ -31,12 +32,11 @@ import java.util.List;
 public class TargetDescriptor extends Identifiable {
     private static final String DEFAULT_NAME = "Output";
     private String parentId;
+    private String name;
     private DataDescriptor dataDescriptor;
     private List<String> constraints;
 
-    public TargetDescriptor() {
-        this(DEFAULT_NAME);
-    }
+    public TargetDescriptor() { }
 
     public TargetDescriptor(String identifier) {
         super(identifier);
@@ -55,7 +55,14 @@ public class TargetDescriptor extends Identifiable {
     public void setParentId(String parent) { this.parentId = parent; }
 
     @Override
-    public String defaultName() { return DEFAULT_NAME; }
+    public String defaultName() { return UUID.randomUUID().toString(); }
+
+    public String getName() {
+        if (name == null)
+            name = DEFAULT_NAME;
+        return name;
+    }
+    public void setName(String name) { this.name = name; }
     /**
      * Returns the data associated to this instance.
      */
@@ -65,7 +72,7 @@ public class TargetDescriptor extends Identifiable {
     /**
      * Sets the data associated to this instance.
      *
-     * @param data  The data to be associated with this instance.
+     * @param descriptor  The data to be associated with this instance.
      */
     public void setDataDescriptor(DataDescriptor descriptor) {
         this.dataDescriptor = descriptor;

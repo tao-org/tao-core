@@ -24,6 +24,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Descriptor for an input of a component
@@ -34,12 +35,11 @@ import java.util.List;
 public class SourceDescriptor extends Identifiable {
     private static final String DEFAULT_NAME = "Input";
     private String parentId;
+    private String name;
     private DataDescriptor dataDescriptor;
     private List<String> constraints;
 
-    public SourceDescriptor() {
-        this(DEFAULT_NAME);
-    }
+    public SourceDescriptor() { }
 
     public SourceDescriptor(String identifier) {
         super(identifier);
@@ -47,7 +47,7 @@ public class SourceDescriptor extends Identifiable {
     }
 
     @Override
-    public String defaultName() { return DEFAULT_NAME; }
+    public String defaultName() { return UUID.randomUUID().toString(); }
     /**
      * Returns the component that owns this instance
      */
@@ -59,6 +59,14 @@ public class SourceDescriptor extends Identifiable {
      * @param parent    The owning component
      */
     public void setParentId(String parent) { this.parentId = parent; }
+
+    public String getName() {
+        if (name == null)
+            name = DEFAULT_NAME;
+        return name;
+    }
+    public void setName(String name) { this.name = name; }
+
     /**
      * Returns the data descriptor associated to this instance.
      */
