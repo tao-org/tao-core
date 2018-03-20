@@ -539,8 +539,8 @@ public class PersistenceManagerTest {
 
         component.setVisibility(ProcessingComponentVisibility.CONTRIBUTOR);
         component.setNodeAffinity("Any");
-        component.setMultiThread(true);
-        component.setActive(true);
+        //component.setMultiThread(true);
+        component.setActive(true); // TODO
 
         component.setContainerId(containerId);
         component.setSourceCardinality(0);
@@ -1043,7 +1043,7 @@ public class PersistenceManagerTest {
             workflow.setStatus(Status.DRAFT);
             workflow.setVisibility(Visibility.PRIVATE);
             workflow.setUserName("admin");
-            workflow.setCreated(LocalDateTime.now());
+            //workflow.setCreated(LocalDateTime.now());
 
             // save the parent workflow entity
             workflow = persistenceManager.saveWorkflowDescriptor(workflow);
@@ -1054,7 +1054,7 @@ public class PersistenceManagerTest {
             WorkflowNodeDescriptor node1 = new WorkflowNodeDescriptor();
             node1.setName("node1");
             node1.setComponentId("component01");
-            node1.setCreated(LocalDateTime.now());
+            //node1.setCreated(LocalDateTime.now());
             node1 = persistenceManager.saveWorkflowNodeDescriptor(node1, workflow);
             Assert.assertTrue(node1 != null && node1.getId() != null);
             logger.info("Workflow node " + node1.getName() + " saved, ID = " + node1.getId().toString());
@@ -1062,7 +1062,7 @@ public class PersistenceManagerTest {
             WorkflowNodeDescriptor node2 = new WorkflowNodeDescriptor();
             node2.setName("node2");
             node2.setComponentId("component01");
-            node2.setCreated(LocalDateTime.now());
+            //node2.setCreated(LocalDateTime.now());
             node2 = persistenceManager.saveWorkflowNodeDescriptor(node2, workflow);
             Assert.assertTrue(node2 != null && node2.getId() != null);
             logger.info("Workflow node " + node2.getName() + " saved, ID = " + node2.getId().toString());
@@ -1070,7 +1070,7 @@ public class PersistenceManagerTest {
             WorkflowNodeDescriptor node3 = new WorkflowNodeDescriptor();
             node3.setName("node3");
             node3.setComponentId("component01");
-            node3.setCreated(LocalDateTime.now());
+            //node3.setCreated(LocalDateTime.now());
             node3 = persistenceManager.saveWorkflowNodeDescriptor(node3, workflow);
             Assert.assertTrue(node3 != null && node3.getId() != null);
             logger.info("Workflow node " + node3.getName() + " saved, ID = " + node3.getId().toString());
@@ -1099,23 +1099,23 @@ public class PersistenceManagerTest {
             workflow.setStatus(Status.DRAFT);
             workflow.setVisibility(Visibility.PRIVATE);
             workflow.setUserName("admin");
-            workflow.setCreated(LocalDateTime.now());
+            //workflow.setCreated(LocalDateTime.now());
 
             // add nodes within this workflow
             WorkflowNodeDescriptor node1 = new WorkflowNodeDescriptor();
             node1.setName("node1");
             node1.setComponentId("component01");
-            node1.setCreated(LocalDateTime.now());
+            //node1.setCreated(LocalDateTime.now());
 
             WorkflowNodeDescriptor node2 = new WorkflowNodeDescriptor();
             node2.setName("node2");
             node2.setComponentId("component01");
-            node2.setCreated(LocalDateTime.now());
+            //node2.setCreated(LocalDateTime.now());
 
             WorkflowNodeDescriptor node3 = new WorkflowNodeDescriptor();
             node3.setName("node3");
             node3.setComponentId("component01");
-            node3.setCreated(LocalDateTime.now());
+            //node3.setCreated(LocalDateTime.now());
 
             workflow.addNode(node1);
             workflow.addNode(node2);
@@ -1150,13 +1150,13 @@ public class PersistenceManagerTest {
             workflow.setStatus(Status.DRAFT);
             workflow.setVisibility(Visibility.PRIVATE);
             workflow.setUserName("admin");
-            workflow.setCreated(LocalDateTime.now());
+            //workflow.setCreated(LocalDateTime.now());
 
             // add nodes within this workflow
             WorkflowNodeDescriptor node1 = new WorkflowNodeDescriptor();
             node1.setName("node1");
             node1.setComponentId("component01");
-            node1.setCreated(LocalDateTime.now());
+            //node1.setCreated(LocalDateTime.now());
 
             node1.addCustomValue("customName1", "customValue1");
             node1.addCustomValue("customName2", "customValue2");
@@ -1195,23 +1195,23 @@ public class PersistenceManagerTest {
             workflow.setStatus(Status.DRAFT);
             workflow.setVisibility(Visibility.PRIVATE);
             workflow.setUserName("admin");
-            workflow.setCreated(LocalDateTime.now());
+            //workflow.setCreated(LocalDateTime.now());
 
             // add nodes within this workflow
             WorkflowNodeDescriptor node1 = new WorkflowNodeDescriptor();
             node1.setName("node1");
             node1.setComponentId("component01");
-            node1.setCreated(LocalDateTime.now());
+            //node1.setCreated(LocalDateTime.now());
 
             WorkflowNodeDescriptor node2 = new WorkflowNodeDescriptor();
             node2.setName("node2");
             node2.setComponentId("component01");
-            node2.setCreated(LocalDateTime.now());
+            //node2.setCreated(LocalDateTime.now());
 
             WorkflowNodeDescriptor node3 = new WorkflowNodeDescriptor();
             node3.setName("node3");
             node3.setComponentId("component01");
-            node3.setCreated(LocalDateTime.now());
+            //node3.setCreated(LocalDateTime.now());
 
             workflow.addNode(node1);
             workflow.addNode(node2);
@@ -1254,28 +1254,28 @@ public class PersistenceManagerTest {
             workflow.setStatus(Status.DRAFT);
             workflow.setVisibility(Visibility.PRIVATE);
             workflow.setUserName("admin");
-            workflow.setCreated(LocalDateTime.now());
+            //workflow.setCreated(LocalDateTime.now());
 
             // add nodes within this workflow
             WorkflowNodeDescriptor node1 = new WorkflowNodeDescriptor();
             node1.setName("node1");
             node1.setComponentId("component01");
-            node1.setCreated(LocalDateTime.now());
+            //node1.setCreated(LocalDateTime.now());
 
             WorkflowNodeDescriptor node2 = new WorkflowNodeDescriptor();
             node2.setName("node2");
             node2.setComponentId("component01");
-            node2.setCreated(LocalDateTime.now());
+            //node2.setCreated(LocalDateTime.now());
 
             WorkflowNodeDescriptor node3 = new WorkflowNodeDescriptor();
             node3.setName("node3");
             node3.setComponentId("component01");
-            node3.setCreated(LocalDateTime.now());
+            //node3.setCreated(LocalDateTime.now());
 
             WorkflowNodeDescriptor node4 = new WorkflowNodeDescriptor();
             node4.setName("node4");
             node4.setComponentId("component01");
-            node4.setCreated(LocalDateTime.now());
+            //node4.setCreated(LocalDateTime.now());
 
             workflow.addNode(node1);
             workflow.addNode(node2);
@@ -1316,13 +1316,13 @@ public class PersistenceManagerTest {
             workflow.setStatus(Status.DRAFT);
             workflow.setVisibility(Visibility.PRIVATE);
             workflow.setUserName("admin");
-            workflow.setCreated(LocalDateTime.now());
+            //workflow.setCreated(LocalDateTime.now());
 
             // add nodes within this workflow
             WorkflowNodeDescriptor node1 = new WorkflowNodeDescriptor();
             node1.setName("node1");
             node1.setComponentId("component01");
-            node1.setCreated(LocalDateTime.now());
+            //node1.setCreated(LocalDateTime.now());
 
             // add processing custom values for the node
             node1.addCustomValue("customName1", "customValue1");
@@ -1395,13 +1395,13 @@ public class PersistenceManagerTest {
             workflow.setStatus(Status.DRAFT);
             workflow.setVisibility(Visibility.PRIVATE);
             workflow.setUserName("admin");
-            workflow.setCreated(LocalDateTime.now());
+            //workflow.setCreated(LocalDateTime.now());
 
             // add nodes within this workflow
             WorkflowNodeDescriptor node1 = new WorkflowNodeDescriptor();
             node1.setName("node1");
             node1.setComponentId("component01");
-            node1.setCreated(LocalDateTime.now());
+            //node1.setCreated(LocalDateTime.now());
 
             // add processing custom values for the node
             node1.addCustomValue("customName1", "customValue1");
@@ -1449,7 +1449,7 @@ public class PersistenceManagerTest {
             WorkflowNodeGroupDescriptor nodeGroup = new WorkflowNodeGroupDescriptor();
             nodeGroup.setName("groupNode01");
             nodeGroup.setComponentId("component01");
-            nodeGroup.setCreated(LocalDateTime.now());
+            //nodeGroup.setCreated(LocalDateTime.now());
 
             nodeGroup.addNode(node1);
 
