@@ -409,8 +409,8 @@ CREATE TABLE tao.target_descriptor
 
 ALTER TABLE tao.target_descriptor ADD CONSTRAINT PK_target_descriptor PRIMARY KEY (id);
 
-ALTER TABLE tao.target_descriptor ADD CONSTRAINT FK_target_descriptor_processing_component
-	FOREIGN KEY (parent_id) REFERENCES tao.processing_component (id) ON DELETE No Action ON UPDATE No Action;
+--ALTER TABLE tao.target_descriptor ADD CONSTRAINT FK_target_descriptor_processing_component
+--	FOREIGN KEY (parent_id) REFERENCES tao.processing_component (id) ON DELETE No Action ON UPDATE No Action;
 
 ALTER TABLE tao.target_descriptor ADD CONSTRAINT FK_data_descriptor_data_format
 	FOREIGN KEY (data_format_id) REFERENCES tao.data_format (id) ON DELETE No Action ON UPDATE No Action;
