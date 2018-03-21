@@ -1375,6 +1375,10 @@ public class PersistenceManagerTest {
 
             // check persisted node custom values
             Assert.assertTrue(workflow.getNodes().get(0).getCustomValues().size() == 3);
+            logger.info("1st node custom values: ");
+            for (ParameterValue pValue: workflow.getNodes().get(0).getCustomValues()) {
+                logger.info("\t\t\t" + pValue.getParameterName() + "=" + pValue.getParameterValue());
+            }
 
             // check persisted incoming links
             Assert.assertTrue(workflow.getNodes().get(0).getIncomingLinks() != null && workflow.getNodes().get(0).getIncomingLinks().size() > 0);

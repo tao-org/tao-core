@@ -470,11 +470,15 @@
             </basic>
 
             <many-to-one name="component" fetch="LAZY" target-entity="ro.cs.tao.component.ProcessingComponent">
-                <join-column name="processing_component_id" nullable="false"/>
+                <join-column name="component_id" nullable="false"/>
             </many-to-one>
 
             <many-to-one name="job" fetch="LAZY">
                 <join-column name="job_id" nullable="false"/>
+            </many-to-one>
+
+            <many-to-one name="groupTask" fetch="LAZY"> <!-- target-entity="ro.cs.tao.execution.model.ExecutionGroup">-->
+                <join-column name="task_group_id" nullable="true"/>
             </many-to-one>
 
             <element-collection name="inputParameterValues" target-class="ro.cs.tao.component.Variable" access="PROPERTY" fetch="EAGER">
@@ -484,7 +488,6 @@
             </element-collection>
 
             <transient name="next"/>
-            <transient name="groupTask"/>
 
         </attributes>
     </entity>
