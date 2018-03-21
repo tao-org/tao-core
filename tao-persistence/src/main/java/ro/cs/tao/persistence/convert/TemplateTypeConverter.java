@@ -9,18 +9,16 @@ import javax.persistence.Converter;
  * Converter for TemplateType enum stored values
  *
  * @author oana
- *
  */
 public class TemplateTypeConverter implements AttributeConverter<TemplateType, Integer> {
 
     @Override
     public Integer convertToDatabaseColumn(TemplateType attribute) {
-
-        return Integer.parseInt(attribute.toString());
+        return attribute != null ? Integer.parseInt(attribute.toString()) : null;
     }
 
     @Override
     public TemplateType convertToEntityAttribute(Integer dbData) {
-        return TemplateType.valueOf(TemplateType.getEnumConstantNameByValue(dbData));
+        return dbData != null ? TemplateType.valueOf(TemplateType.getEnumConstantNameByValue(dbData)) : null;
     }
 }

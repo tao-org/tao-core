@@ -9,18 +9,16 @@ import javax.persistence.Converter;
  * Converter for ProcessingComponentVisibility enum stored values
  *
  * @author oana
- *
  */
 public class ProcessingComponentVisibilityConverter implements AttributeConverter<ProcessingComponentVisibility, Integer> {
 
     @Override
     public Integer convertToDatabaseColumn(ProcessingComponentVisibility attribute) {
-
-        return Integer.parseInt(attribute.toString());
+        return attribute != null ? Integer.parseInt(attribute.toString()) : null;
     }
 
     @Override
     public ProcessingComponentVisibility convertToEntityAttribute(Integer dbData) {
-        return ProcessingComponentVisibility.valueOf(ProcessingComponentVisibility.getEnumConstantNameByValue(dbData));
+        return dbData != null ? ProcessingComponentVisibility.valueOf(ProcessingComponentVisibility.getEnumConstantNameByValue(dbData)) : null;
     }
 }

@@ -6,10 +6,9 @@ import javax.persistence.AttributeConverter;
 import java.awt.*;
 
 /**
- *
+ * Converter for Dimension  stored values
  */
-public class DimensionConverter implements AttributeConverter<Dimension, String>
-{
+public class DimensionConverter implements AttributeConverter<Dimension, String> {
 
     @Override
     public String convertToDatabaseColumn(Dimension attribute) {

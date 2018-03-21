@@ -9,18 +9,16 @@ import javax.persistence.Converter;
  * Converter for PixelType enum stored values
  *
  * @author oana
- *
  */
 public class PixelTypeConverter implements AttributeConverter<PixelType, Integer> {
 
     @Override
     public Integer convertToDatabaseColumn(PixelType attribute) {
-
-        return Integer.parseInt(attribute.toString());
+        return attribute != null ? Integer.parseInt(attribute.toString()) : null;
     }
 
     @Override
     public PixelType convertToEntityAttribute(Integer dbData) {
-        return PixelType.valueOf(PixelType.getEnumConstantNameByValue(dbData));
+        return dbData != null ? PixelType.valueOf(PixelType.getEnumConstantNameByValue(dbData)) : null;
     }
 }
