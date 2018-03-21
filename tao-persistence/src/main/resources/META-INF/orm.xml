@@ -470,7 +470,7 @@
             </basic>
 
             <many-to-one name="component" fetch="LAZY" target-entity="ro.cs.tao.component.ProcessingComponent">
-                <join-column name="processing_component_id" nullable="false"/>
+                <join-column name="component_id" nullable="false"/>
             </many-to-one>
 
             <many-to-one name="job" fetch="LAZY">
