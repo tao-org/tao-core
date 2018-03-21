@@ -8,7 +8,6 @@ import java.util.Arrays;
  * Converter for String[] stored values
  *
  * @author oana
- *
  */
 public class StringArrayToStringConverter implements AttributeConverter<String[], String> {
 

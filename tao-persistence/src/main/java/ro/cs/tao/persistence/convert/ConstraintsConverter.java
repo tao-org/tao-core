@@ -11,45 +11,36 @@ import java.util.StringTokenizer;
  * Converter for List<String> stored values
  *
  * @author oana
- *
  */
-public class ConstraintsConverter implements AttributeConverter<List<String>, String>
+public class ConstraintsConverter implements AttributeConverter<List<String>, String> {
 
-    {
+    @Override
+    public String convertToDatabaseColumn(List<String> attribute) {
+        String result = null;
 
-        @Override
-        public String convertToDatabaseColumn(List<String> attribute)
-        {
-            String result = null;
-
-            if (attribute != null && attribute.size() > 0)
-            {
-                result = "";
-                for (String constraint : attribute)
-                {
-                    result = result.concat(constraint).concat(";");
-                }
-                result = result.substring(0, result.lastIndexOf(";"));
+        if (attribute != null && attribute.size() > 0) {
+            result = "";
+            for (String constraint : attribute) {
+                result = result.concat(constraint).concat(";");
             }
-
-            return result;
+            result = result.substring(0, result.lastIndexOf(";"));
         }
 
-        @Override
-        public List<String> convertToEntityAttribute(String dbData)
-        {
-            List<String> result = null;
+        return result;
+    }
 
-            if (!StringUtils.isEmpty(dbData))
-            {
-                result = new ArrayList<>();
-                StringTokenizer st = new StringTokenizer(dbData, ";");
-                while (st.hasMoreElements())
-                {
-                    result.add(st.nextToken());
-                }
+    @Override
+    public List<String> convertToEntityAttribute(String dbData) {
+        List<String> result = null;
+
+        if (!StringUtils.isEmpty(dbData)) {
+            result = new ArrayList<>();
+            StringTokenizer st = new StringTokenizer(dbData, ";");
+            while (st.hasMoreElements()) {
+                result.add(st.nextToken());
             }
-
-            return result;
         }
+
+        return result;
+    }
 }

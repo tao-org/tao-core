@@ -9,18 +9,16 @@ import javax.persistence.Converter;
  * Converter for ParameterType enum stored values
  *
  * @author oana
- *
  */
 public class ParameterTypeConverter implements AttributeConverter<ParameterType, Integer> {
 
     @Override
     public Integer convertToDatabaseColumn(ParameterType attribute) {
-
-        return Integer.parseInt(attribute.toString());
+        return attribute != null ? Integer.parseInt(attribute.toString()) : null;
     }
 
     @Override
     public ParameterType convertToEntityAttribute(Integer dbData) {
-        return ParameterType.valueOf(ParameterType.getEnumConstantNameByValue(dbData));
+        return dbData != null ? ParameterType.valueOf(ParameterType.getEnumConstantNameByValue(dbData)) : null;
     }
 }

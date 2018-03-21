@@ -8,7 +8,6 @@ import javax.persistence.AttributeConverter;
  * Converter for SensorType enum stored values
  *
  * @author oana
- *
  */
 public class SensorTypeConverter implements AttributeConverter<SensorType, Integer> {
 

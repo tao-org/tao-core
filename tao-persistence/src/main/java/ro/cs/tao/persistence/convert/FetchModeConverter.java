@@ -25,11 +25,11 @@ import javax.persistence.AttributeConverter;
 public class FetchModeConverter implements AttributeConverter<FetchMode, Integer> {
     @Override
     public Integer convertToDatabaseColumn(FetchMode fetchMode) {
-        return Integer.parseInt(fetchMode.toString());
+        return fetchMode != null ? Integer.parseInt(fetchMode.toString()) : null;
     }
 
     @Override
-    public FetchMode convertToEntityAttribute(Integer integer) {
-        return FetchMode.valueOf(FetchMode.getEnumConstantNameByValue(integer));
+    public FetchMode convertToEntityAttribute(Integer dbData) {
+        return dbData != null ? FetchMode.valueOf(FetchMode.getEnumConstantNameByValue(dbData)) : null;
     }
 }
