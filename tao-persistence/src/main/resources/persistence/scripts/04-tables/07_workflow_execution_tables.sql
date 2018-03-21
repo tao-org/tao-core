@@ -243,7 +243,7 @@ CREATE TABLE tao.task
 	internal_state varchar(512) NULL,
 	job_id bigint NOT NULL,
 	task_group_id bigint NULL,
-	execution_node_host_name varchar(250) NOT NULL,
+	execution_node_host_name varchar(250) NULL,
 	execution_status_id integer NOT NULL,
 	used_CPU integer NULL,
     used_RAM integer NULL,
