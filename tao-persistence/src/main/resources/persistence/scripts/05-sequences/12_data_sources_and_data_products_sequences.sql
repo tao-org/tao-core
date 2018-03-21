@@ -76,32 +76,6 @@ ALTER TABLE tao.polarisation_channel ALTER COLUMN id SET DEFAULT nextval('tao.po
 ALTER SEQUENCE tao.polarisation_channel_id_seq OWNED BY tao.polarisation_channel.id;
 
 
------ table: tao.data_source_type -----------------------------------------------------------------
-DROP SEQUENCE IF EXISTS tao.data_source_type_id_seq CASCADE;
--- create sequence
-CREATE SEQUENCE tao.data_source_type_id_seq 
-	INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
-
--- assign sequence to column
-ALTER TABLE tao.data_source_type ALTER COLUMN id SET DEFAULT nextval('tao.data_source_type_id_seq');
-
--- assign column to sequence
-ALTER SEQUENCE tao.data_source_type_id_seq OWNED BY tao.data_source_type.id;
-
-
------ table: tao.data_source ----------------------------------------------------------------------
-DROP SEQUENCE IF EXISTS tao.data_source_id_seq CASCADE;
--- create sequence
-CREATE SEQUENCE tao.data_source_id_seq 
-	INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
-
--- assign sequence to column
-ALTER TABLE tao.data_source ALTER COLUMN id SET DEFAULT nextval('tao.data_source_id_seq');
-
--- assign column to sequence
-ALTER SEQUENCE tao.data_source_id_seq OWNED BY tao.data_source.id;
-
-
 ----- table: tao.data_type ------------------------------------------------------------------------
 DROP SEQUENCE IF EXISTS tao.data_type_id_seq CASCADE;
 -- create sequence
@@ -126,20 +100,6 @@ ALTER TABLE tao.query_parameter ALTER COLUMN id SET DEFAULT nextval('tao.query_p
 
 -- assign column to sequence
 ALTER SEQUENCE tao.query_parameter_id_seq OWNED BY tao.query_parameter.id;
-
-
------ table: tao.data_query -----------------------------------------------------------------------
-DROP SEQUENCE IF EXISTS tao.data_query_id_seq CASCADE;
--- create sequence
-CREATE SEQUENCE tao.data_query_id_seq 
-	INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
-
--- assign sequence to column
-ALTER TABLE tao.data_query ALTER COLUMN id SET DEFAULT nextval('tao.data_query_id_seq');
-
--- assign column to sequence
-ALTER SEQUENCE tao.data_query_id_seq OWNED BY tao.data_query.id;
-
 
 
 ----- table: tao.fetch_mode -----------------------------------------------------------------------

@@ -83,46 +83,6 @@ ALTER TABLE tao.polarisation_channel ADD CONSTRAINT PK_polarisation_channel
 
 
 -------------------------------------------------------------------------------
--- table: data_source_type
-DROP TABLE IF EXISTS tao.data_source_type CASCADE;
-
-CREATE TABLE tao.data_source_type
-(
-	id integer NOT NULL,
-	type varchar(250) NOT NULL
-);
-
-ALTER TABLE tao.data_source_type ADD CONSTRAINT PK_data_source_type
-	PRIMARY KEY (id);
-
-
--------------------------------------------------------------------------------
--- table: data_source
-DROP TABLE IF EXISTS tao.data_source CASCADE;
-
-CREATE TABLE tao.data_source
-(
-	id integer NOT NULL,
-	name varchar(250) NOT NULL,
-	data_source_type_id integer NOT NULL,
-	username varchar(50) NULL,
-	password text NULL,
-	auth_token text NULL,
-	connection_string varchar(500) NULL,
-	description text NULL,
-	created timestamp NULL DEFAULT now(),
-	modified timestamp NULL,
-	active boolean NULL DEFAULT true
-);
-
-ALTER TABLE tao.data_source ADD CONSTRAINT PK_data_source
-	PRIMARY KEY (id);
-
-ALTER TABLE tao.data_source ADD CONSTRAINT FK_data_source_data_source_type
-	FOREIGN KEY (data_source_type_id) REFERENCES tao.data_source_type (id) ON DELETE No Action ON UPDATE No Action;
-
-
--------------------------------------------------------------------------------
 -- table: raster_data_product
 DROP TABLE IF EXISTS tao.raster_data_product CASCADE;
 
@@ -239,51 +199,7 @@ ALTER TABLE tao.query_parameter ADD CONSTRAINT PK_query_parameter
 ALTER TABLE tao.query_parameter ADD CONSTRAINT FK_query_parameter_data_type
 	FOREIGN KEY (data_type_id) REFERENCES tao.data_type (id) ON DELETE No Action ON UPDATE No Action;
 
--------------------------------------------------------------------------------
--- table: data_query
-DROP TABLE IF EXISTS tao.data_query CASCADE;
 
-CREATE TABLE tao.data_query
-(
-	id integer NOT NULL,
-	name varchar(50) NOT NULL,
-	data_source_id integer NOT NULL,
-	query_text text NOT NULL,
-	page_size integer,
-	page_number integer,
-	"limit" integer,
-	timeout bigint
-);
-
-ALTER TABLE tao.data_query ADD CONSTRAINT PK_data_query
-	PRIMARY KEY (id);
-	
-ALTER TABLE tao.data_query ADD CONSTRAINT FK_data_query_data_source
-	FOREIGN KEY (data_source_id) REFERENCES tao.data_source (id) ON DELETE No Action ON UPDATE No Action;
-
-
--------------------------------------------------------------------------------
--- table: data_query_parameters
-DROP TABLE IF EXISTS tao.data_query_parameters CASCADE;
-
-CREATE TABLE tao.data_query_parameters
-(
-	data_query_id integer NOT NULL,
-	query_parameter_id integer NOT NULL,
-	optional boolean NOT NULL,
-    min_value varchar(250),
-    max_value varchar(250),
-    value varchar(250)
-);
-
-ALTER TABLE tao.data_query_parameters ADD CONSTRAINT PK_data_query_parameters
-	PRIMARY KEY (data_query_id, query_parameter_id);	
-
-ALTER TABLE tao.data_query_parameters ADD CONSTRAINT FK_data_query_parameters_data_query
-	FOREIGN KEY (data_query_id) REFERENCES tao.data_query (id) ON DELETE No Action ON UPDATE No Action;
-
-ALTER TABLE tao.data_query_parameters ADD CONSTRAINT FK_data_query_parameters_query_parameter
-	FOREIGN KEY (query_parameter_id) REFERENCES tao.query_parameter (id) ON DELETE No Action ON UPDATE No Action;
 
 
 -------------------------------------------------------------------------------
@@ -515,10 +431,10 @@ CREATE TABLE tao.data_source_component
 
     sensor_name varchar(1024) NOT NULL,
 	data_source_name  varchar(512) NOT NULL,
-	username varchar(512) NULL,
-	password bytea NULL,
+--	username varchar(512) NULL,
+--	password bytea NULL,
 	fetch_mode_id integer NOT NULL,
-	overridden_parameters json NULL,
+--	overridden_parameters json NULL,
 	max_retries integer NULL DEFAULT 3,
 	created timestamp NULL DEFAULT now(),
     modified timestamp NULL
@@ -526,6 +442,9 @@ CREATE TABLE tao.data_source_component
 
 ALTER TABLE tao.data_source_component ADD CONSTRAINT PK_data_source_component
 	PRIMARY KEY (id);
+
+ALTER TABLE tao.data_source_component ADD CONSTRAINT UK_data_source_component
+	UNIQUE (sensor_name, data_source_name);
 
 ALTER TABLE tao.data_source_component ADD CONSTRAINT FK_data_source_component_fetch_mode
 	FOREIGN KEY (fetch_mode_id) REFERENCES tao.fetch_mode (id) ON DELETE No Action ON UPDATE No Action;

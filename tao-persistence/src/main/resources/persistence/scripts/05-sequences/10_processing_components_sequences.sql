@@ -11,19 +11,6 @@ ALTER TABLE tao.parameter_type ALTER COLUMN id SET DEFAULT nextval('tao.paramete
 ALTER SEQUENCE tao.parameter_type_id_seq OWNED BY tao.parameter_type.id;
 
 
------ table: tao.component_source -----------------------------------------------------------------
-DROP SEQUENCE IF EXISTS tao.component_source_id_seq CASCADE;
--- create sequence
-CREATE SEQUENCE tao.component_source_id_seq
-	INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
-
--- assign sequence to column
-ALTER TABLE tao.component_source ALTER COLUMN id SET DEFAULT nextval('tao.component_source_id_seq');
-
--- assign column to sequence
-ALTER SEQUENCE tao.component_source_id_seq OWNED BY tao.component_source.id;
-
-
 ----- table: tao.component_visibility -------------------------------------------------------------
 DROP SEQUENCE IF EXISTS tao.component_visibility_id_seq CASCADE;
 -- create sequence
