@@ -314,11 +314,11 @@ DROP TABLE IF EXISTS tao.task_output CASCADE;
 CREATE TABLE tao.task_output
 (
 	task_id bigint NOT NULL,
-	output_name varchar(250) NOT NULL,
-	output_value varchar(500) NOT NULL
+	key varchar(512) NOT NULL,
+    value varchar(512) NOT NULL
 );
 
-ALTER TABLE tao.task_output ADD CONSTRAINT PK_task_output PRIMARY KEY (task_id, output_name);
+ALTER TABLE tao.task_output ADD CONSTRAINT PK_task_output PRIMARY KEY (task_id, key);
 
 ALTER TABLE tao.task_output ADD CONSTRAINT FK_task_output_task
 	FOREIGN KEY (task_id) REFERENCES tao.task (id) ON DELETE No Action ON UPDATE No Action;

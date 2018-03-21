@@ -13,20 +13,6 @@ ALTER TABLE tao.parameter_type ADD CONSTRAINT PK_parameter_type
 
 
 -------------------------------------------------------------------------------
--- table: component_source
-DROP TABLE IF EXISTS tao.component_source CASCADE;
-
-CREATE TABLE tao.component_source
-(
-	id integer NOT NULL,
-	source varchar(50) NOT NULL
-);
-
-ALTER TABLE tao.component_source ADD CONSTRAINT PK_component_source
-	PRIMARY KEY (id);
-
-
--------------------------------------------------------------------------------
 -- table: component_visibility
 DROP TABLE IF EXISTS tao.component_visibility CASCADE;
 

@@ -398,7 +398,7 @@
         </association-override>
 
         <convert converter="ro.cs.tao.persistence.convert.FetchModeConverter" attribute-name="fetchMode" />
-        <convert converter="ro.cs.tao.persistence.convert.ParameterListConverter" attribute-name="overriddenParameters" />
+        <!--<convert converter="ro.cs.tao.persistence.convert.ParameterListConverter" attribute-name="overriddenParameters" />-->
 
         <attributes>
             <basic name="sensorName">
@@ -407,21 +407,29 @@
             <basic name="dataSourceName">
                 <column name="data_source_name" nullable="false" column-definition="character varying(512) NOT NULL"/>
             </basic>
+            <!--
             <basic name="userName">
                 <column name="username" nullable="true" column-definition="character varying(512) NULL"/>
             </basic>
             <basic name="password">
                 <column name="password" nullable="true" column-definition="bytea NULL"/>
             </basic>
+            -->
             <basic name="fetchMode">
                 <column name="fetch_mode_id" nullable="false" column-definition="integer NOT NULL"/>
             </basic>
+            <!--
             <basic name="overriddenParameters">
                 <column name="overridden_parameters" nullable="true" column-definition="json NULL"/>
             </basic>
+            -->
             <basic name="maxRetries">
                 <column name="max_retries" nullable="true" column-definition="integer NULL DEFAULT 3"/>
             </basic>
+
+            <transient name="userName"/>
+            <transient name="password"/>
+            <transient name="overriddenParameters"/>
 
             <transient name="cancelled" />
             <transient name="currentFetcher" />
@@ -901,7 +909,7 @@
     <converter class="ro.cs.tao.persistence.convert.ConstraintsConverter" />
     <converter class="ro.cs.tao.persistence.convert.DimensionConverter" />
     <converter class="ro.cs.tao.persistence.convert.ParameterValueListConverter"/>
-    <converter class="ro.cs.tao.persistence.convert.ParameterListConverter"/>
+    <!--<converter class="ro.cs.tao.persistence.convert.ParameterListConverter"/>-->
     <converter class="ro.cs.tao.persistence.convert.QueryValuesMapConverter"/>
 
 

@@ -1,9 +1,3 @@
--- Processing components source
-
-INSERT INTO tao.component_source (source) VALUES ('USER');
-
-INSERT INTO tao.component_source (source) VALUES ('SYSTEM');
-
 
 
 -- Processing components visibility
@@ -23,26 +17,6 @@ INSERT INTO tao.data_format (type) VALUES ('RASTER');
 INSERT INTO tao.data_format (type) VALUES ('VECTOR');
 
 INSERT INTO tao.data_format (type) VALUES ('OTHER');
-
-
-
--- Data Sources types
-
-INSERT INTO tao.data_source_type (type) VALUES ('LOCAL_DATA_SOURCE');
-
-INSERT INTO tao.data_source_type (type) VALUES ('SCIHUB_SENTINEL_1_DATA_SOURCE');
-
-INSERT INTO tao.data_source_type (type) VALUES ('SCIHUB_SENTINEL_2_DATA_SOURCE');
-
-INSERT INTO tao.data_source_type (type) VALUES ('AWS_SENTINEL_2_DATA_SOURCE');
-
-INSERT INTO tao.data_source_type (type) VALUES ('AWS_LANDSAT_8_DATA_SOURCE');
-
-INSERT INTO tao.data_source_type (type) VALUES ('PEPS_SENTINEL_1_DATA_SOURCE');
-
-INSERT INTO tao.data_source_type (type) VALUES ('PEPS_SENTINEL_2_DATA_SOURCE');
-
-INSERT INTO tao.data_source_type (type) VALUES ('PEPS_SENTINEL_3_DATA_SOURCE');
 
 
 
@@ -225,3 +199,10 @@ VALUES ('admin', md5('admin'), 'kraftek@c-s.ro', 'Cosmin', 'Cara', 1000, 1, CURR
 -- System Account
 INSERT INTO tao."user" (username, password, email, last_name, first_name, quota, group_id, created, active)
 VALUES ('System Account', md5('system'), 'kraftek@c-s.ro', 'Cosmin', 'Cara', 1000, 1, CURRENT_TIMESTAMP, true);
+
+
+
+-- localhost execution node
+INSERT INTO tao.execution_node (host_name, username, password, total_cpu, total_ram, total_hdd, description)
+VALUES ('localhost', 'admin', 'admin', 8, 32, 1024, 'Master Node');
+
