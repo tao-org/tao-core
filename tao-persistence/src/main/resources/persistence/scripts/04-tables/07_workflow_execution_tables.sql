@@ -235,13 +235,14 @@ DROP TABLE IF EXISTS tao.task CASCADE;
 CREATE TABLE tao.task
 (
 	id bigint NOT NULL,
-	processing_component_id varchar(512) NOT NULL,
+	component_id varchar(512) NOT NULL, -- FK to either tao.processing_component, either tao.data_source_component
 	resource_id varchar(512) NULL,
 	graph_node_id bigint NOT NULL,
 	start_time timestamp without time zone NULL,
 	end_time timestamp without time zone NULL,
 	internal_state varchar(512) NULL,
 	job_id bigint NOT NULL,
+	task_group_id bigint NULL,
 	execution_node_host_name varchar(250) NOT NULL,
 	execution_status_id integer NOT NULL,
 	used_CPU integer NULL,
@@ -258,6 +259,9 @@ ALTER TABLE tao.task ADD CONSTRAINT FK_task_graph_node
 
 ALTER TABLE tao.task ADD CONSTRAINT FK_task_job
 	FOREIGN KEY (job_id) REFERENCES tao.job (id) ON DELETE No Action ON UPDATE No Action;
+
+ALTER TABLE tao.task ADD CONSTRAINT FK_task_group
+	FOREIGN KEY (task_group_id) REFERENCES tao.task (id) ON DELETE No Action ON UPDATE No Action;
 
 ALTER TABLE tao.task ADD CONSTRAINT FK_task_execution_node
 	FOREIGN KEY (execution_node_host_name) REFERENCES tao.execution_node (host_name) ON DELETE No Action ON UPDATE No Action;
