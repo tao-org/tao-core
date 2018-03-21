@@ -769,6 +769,24 @@ public class PersistenceManagerTest {
         component.setTargetCardinality(0);
         component.setFetchMode(FetchMode.RESUME);
 
+        DataDescriptor dataDescriptor = new DataDescriptor();
+        dataDescriptor.setFormatType(DataFormat.RASTER);
+        dataDescriptor.setGeometry("POLYGON ((24.16023 -9.60737, 24.15266 -7.36319, 22.05055 -7.38847, 22.05739 -9.59798, 24.16023 -9.60737))");
+        dataDescriptor.setLocation("https://landsat-pds.s3.amazonaws.com/c1/L8/201/044/LC08_L1TP_201044_20170930_20171013_01_T1");
+        dataDescriptor.setSensorType(SensorType.OPTICAL);
+        dataDescriptor.setDimension(new Dimension(100, 200));
+
+        TargetDescriptor targetDescriptor1 = new TargetDescriptor("targetDescriptor10");
+        targetDescriptor1.setParentId("component01");
+        targetDescriptor1.setDataDescriptor(dataDescriptor);
+
+        TargetDescriptor targetDescriptor2 = new TargetDescriptor("targetDescriptor20");
+        targetDescriptor2.setParentId("component01");
+        targetDescriptor2.setDataDescriptor(dataDescriptor);
+
+        component.addTarget(targetDescriptor1);
+        component.addTarget(targetDescriptor2);
+
         return component;
     }
 
@@ -784,6 +802,8 @@ public class PersistenceManagerTest {
             component = persistenceManager.saveDataSourceComponent(component);
             // check persisted component
             Assert.assertTrue(component != null && component.getId() != null);
+            // check targets
+            Assert.assertTrue(component.getTargets() != null && component.getTargets().size() > 0);
         }
         catch (PersistenceException e)
         {
