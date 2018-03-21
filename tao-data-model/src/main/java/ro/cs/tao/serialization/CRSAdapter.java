@@ -30,12 +30,16 @@ public class CRSAdapter extends XmlAdapter<CoordinateReferenceSystem, String> {
     public CRSAdapter() { }
 
     public String unmarshal(CoordinateReferenceSystem v) throws Exception {
-        Optional<ReferenceIdentifier> identifier = v.getIdentifiers().stream().findFirst();
-        return identifier.map(Object::toString).orElse(null);
+        if (v != null) {
+            Optional<ReferenceIdentifier> identifier = v.getIdentifiers().stream().findFirst();
+            return identifier.map(Object::toString).orElse(null);
+        } else {
+            return null;
+        }
     }
 
 
     public CoordinateReferenceSystem marshal(String v) throws Exception {
-        return CRS.decode(v);
+        return v != null ? CRS.decode(v) : null;
     }
 }

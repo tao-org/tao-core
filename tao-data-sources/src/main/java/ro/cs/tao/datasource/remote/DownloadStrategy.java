@@ -339,8 +339,10 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
             this.progressListener.subActivityStarted(subActivity);
         }
         if (this.progressEnabled) {
-            this.timer = new Timer("Progress reporter", true);
-            this.timer.scheduleAtFixedRate(new TimedJob(), 0, this.progressReportInterval);
+            if (this.timer == null) {
+                this.timer = new Timer("Progress reporter", true);
+                this.timer.scheduleAtFixedRate(new TimedJob(), 0, this.progressReportInterval);
+            }
         }
     }
 
@@ -348,6 +350,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         currentProductProgress = 1.0;
         if (this.progressEnabled && timer != null) {
             this.timer.cancel();
+            this.timer = null;
         }
         if (this.progressListener != null) {
             this.progressListener.ended();
@@ -355,8 +358,14 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     }
 
     protected void subActivityEnd(String subActivity) {
-        if (this.progressEnabled && timer != null) {
+        /*if (this.progressEnabled && timer != null) {
             this.timer.cancel();
+        }*/
+        if (Double.compare(currentProductProgress, 1.0) >= 0) {
+            if (this.progressEnabled && timer != null) {
+                this.timer.cancel();
+                this.timer = null;
+            }
         }
         if (this.progressListener != null) {
             this.progressListener.subActivityEnded(subActivity);
