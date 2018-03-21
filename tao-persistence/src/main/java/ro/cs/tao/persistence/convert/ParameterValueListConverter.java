@@ -1,24 +1,60 @@
+/*
+ * Copyright (C) 2017 CS ROMANIA
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation; either version 3 of the License, or (at your option)
+ * any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, see http://www.gnu.org/licenses/
+ */
 package ro.cs.tao.persistence.convert;
 
-
-import ro.cs.tao.persistence.data.jsonutil.JacksonUtil;
+import ro.cs.tao.serialization.BaseSerializer;
+import ro.cs.tao.serialization.MediaType;
+import ro.cs.tao.serialization.SerializationException;
+import ro.cs.tao.serialization.SerializerFactory;
 import ro.cs.tao.workflow.ParameterValue;
 
 import javax.persistence.AttributeConverter;
+import javax.xml.transform.stream.StreamSource;
+import java.io.StringReader;
 import java.util.List;
 
-public class ParameterValueListConverter  implements AttributeConverter<List<ParameterValue>, String>
-{
+/**
+ * @author Cosmin Cara
+ */
+public class ParameterValueListConverter implements AttributeConverter<List<ParameterValue>, String> {
+    private static final BaseSerializer<ParameterValue> serializer;
 
-    @Override
-    public String convertToDatabaseColumn(List<ParameterValue> attribute) {
-        return JacksonUtil.toString(attribute);
+    static {
+        try {
+            serializer = SerializerFactory.create(ParameterValue.class, MediaType.JSON);
+        } catch (SerializationException e) {
+            throw new RuntimeException(e.getCause());
+        }
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public List<ParameterValue> convertToEntityAttribute(String dbData) {
+    public String convertToDatabaseColumn(List<ParameterValue> customValues) {
+        try {
+            return serializer.serialize(customValues, "customValues");
+        } catch (SerializationException e) {
+            throw new RuntimeException(e.getCause());
+        }
+    }
 
-        return (List<ParameterValue>) JacksonUtil.fromString(dbData, List.class);
+    @Override
+    public List<ParameterValue> convertToEntityAttribute(String s) {
+        try {
+            return serializer.deserializeList(ParameterValue.class, new StreamSource(new StringReader(s)));
+        } catch (SerializationException e) {
+            throw new RuntimeException(e.getCause());
+        }
     }
 }
