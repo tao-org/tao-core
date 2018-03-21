@@ -453,7 +453,7 @@
                 <column name="execution_status_id" nullable="false" column-definition="integer NOT NULL"/>
             </basic>
             <basic name="executionNodeHostName">
-                <column name="execution_node_host_name" nullable="false" column-definition="character varying(250) NOT NULL"/>
+                <column name="execution_node_host_name" nullable="true" column-definition="character varying(250) NULL"/>
             </basic>
             <basic name="startTime">
                 <column name="start_time" nullable="true" column-definition="timestamp NULL"/>
