@@ -174,9 +174,14 @@ public class DataSourceComponent extends TaoComponent {
         this.userName = userName;
         this.password = password;
         if (password != null && userName != null) {
-            String decryptedPass = Crypto.decrypt(password, userName);
+            String decryptedPass = null;
+            try {
+                decryptedPass = Crypto.decrypt(password, userName);
+            } catch (Exception ex) {
+                logger.warning(ex.getMessage());
+            }
             if (decryptedPass != null) {
-                this.password = decryptedPass;
+                this.password = password;
             }
         }
     }

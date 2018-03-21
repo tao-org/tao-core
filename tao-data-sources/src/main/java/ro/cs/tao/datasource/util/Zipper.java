@@ -27,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Iterator;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -56,7 +57,7 @@ public class Zipper {
                         }
                         outputStream.closeEntry();
                     } catch (Exception e) {
-                        System.out.println(e.getMessage());
+                        Logger.getLogger(Zipper.class.getName()).severe(e.getMessage());
                     }
                 }
             }
@@ -93,7 +94,7 @@ public class Zipper {
                 Files.delete(source);
             }
         } catch (IOException ex) {
-            java.util.logging.Logger.getLogger(Zipper.class.getSimpleName()).warning(ex.getMessage());
+            Logger.getLogger(Zipper.class.getSimpleName()).warning(ex.getMessage());
             return null;
         }
         return target;
@@ -133,7 +134,7 @@ public class Zipper {
                 retVal = Files.deleteIfExists(path);
             }
         } catch (IOException e) {
-            System.err.println(e.getMessage());
+            Logger.getLogger(Zipper.class.getName()).severe(e.getMessage());
             retVal = false;
         }
         return retVal;
