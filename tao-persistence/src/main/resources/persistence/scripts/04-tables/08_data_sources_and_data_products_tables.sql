@@ -103,7 +103,7 @@ CREATE TABLE tao.raster_data_product
 	height integer NOT NULL,
 	approximate_size bigint NOT NULL,
 	user_id integer NULL,
-	data_source_id integer NULL,
+--	data_source_id integer NULL,
 	created timestamp NULL DEFAULT now(),
 	modified timestamp NULL
 );
@@ -120,8 +120,8 @@ ALTER TABLE tao.raster_data_product ADD CONSTRAINT FK_raster_data_product_sensor
 ALTER TABLE tao.raster_data_product ADD CONSTRAINT FK_raster_data_product_pixel_type
 	FOREIGN KEY (pixel_type_id) REFERENCES tao.pixel_type (id) ON DELETE No Action ON UPDATE No Action;
 	
-ALTER TABLE tao.raster_data_product ADD CONSTRAINT FK_raster_data_product_data_source
-	FOREIGN KEY (data_source_id) REFERENCES tao.data_source (id) ON DELETE No Action ON UPDATE No Action;
+--ALTER TABLE tao.raster_data_product ADD CONSTRAINT FK_raster_data_product_data_source
+--	FOREIGN KEY (data_source_id) REFERENCES tao.data_source (id) ON DELETE No Action ON UPDATE No Action;
 
 
 -------------------------------------------------------------------------------
@@ -138,7 +138,7 @@ CREATE TABLE tao.vector_data_product
 	location varchar(512) NOT NULL,
 	entry_point varchar(1000) NULL,
 	user_id integer NULL,
-	data_source_id integer NULL,
+--	data_source_id integer NULL,
 	created timestamp NULL DEFAULT now(),
 	modified timestamp NULL
 );
@@ -149,8 +149,8 @@ ALTER TABLE tao.vector_data_product ADD CONSTRAINT PK_vector_data_product
 ALTER TABLE tao.vector_data_product ADD CONSTRAINT FK_vector_data_product_data_format
 	FOREIGN KEY (type_id) REFERENCES tao.data_format (id) ON DELETE No Action ON UPDATE No Action;
 
-ALTER TABLE tao.vector_data_product ADD CONSTRAINT FK_vector_data_product_data_source
-	FOREIGN KEY (data_source_id) REFERENCES tao.data_source (id) ON DELETE No Action ON UPDATE No Action;
+--ALTER TABLE tao.vector_data_product ADD CONSTRAINT FK_vector_data_product_data_source
+--	FOREIGN KEY (data_source_id) REFERENCES tao.data_source (id) ON DELETE No Action ON UPDATE No Action;
 
 
 -------------------------------------------------------------------------------
@@ -209,21 +209,24 @@ DROP TABLE IF EXISTS tao.user_data_source_connection CASCADE;
 CREATE TABLE tao.user_data_source_connection
 (
 	user_id integer NOT NULL,
-	data_source_id integer NOT NULL,
+--	data_source_id integer NOT NULL,
 	username varchar(50) NULL,
 	password text NULL,
 	created timestamp NULL DEFAULT now(),
 	modified timestamp NULL
 );
 
+--ALTER TABLE tao.user_data_source_connection ADD CONSTRAINT PK_user_data_source_connection
+--	PRIMARY KEY (user_id, data_source_id);
+
 ALTER TABLE tao.user_data_source_connection ADD CONSTRAINT PK_user_data_source_connection
-	PRIMARY KEY (user_id, data_source_id);
+	PRIMARY KEY (user_id);
 
 ALTER TABLE tao.user_data_source_connection ADD CONSTRAINT FK_user_data_source_connection_user
 	FOREIGN KEY (user_id) REFERENCES tao."user" (id) ON DELETE No Action ON UPDATE No Action;
 
-ALTER TABLE tao.user_data_source_connection ADD CONSTRAINT FK_user_data_source_connection_data_source
-	FOREIGN KEY (data_source_id) REFERENCES tao.data_source (id) ON DELETE No Action ON UPDATE No Action;
+--ALTER TABLE tao.user_data_source_connection ADD CONSTRAINT FK_user_data_source_connection_data_source
+--	FOREIGN KEY (data_source_id) REFERENCES tao.data_source (id) ON DELETE No Action ON UPDATE No Action;
 	
 
 -------------------------------------------------------------------------------
@@ -233,7 +236,7 @@ DROP TABLE IF EXISTS tao.user_data_query CASCADE;
 CREATE TABLE tao.user_data_query
 (
 	user_id integer NOT NULL,
-	data_source_id integer NOT NULL,
+--	data_source_id integer NOT NULL,
 	job_id bigint NOT NULL,
 	query_parameter_id integer NOT NULL,
 	query_parameter_value varchar(500)
@@ -245,8 +248,8 @@ ALTER TABLE tao.user_data_query ADD CONSTRAINT PK_user_data_query
 ALTER TABLE tao.user_data_query ADD CONSTRAINT FK_user_data_query_user
 	FOREIGN KEY (user_id) REFERENCES tao."user" (id) ON DELETE No Action ON UPDATE No Action;
 
-ALTER TABLE tao.user_data_query ADD CONSTRAINT FK_user_data_query_data_source
-	FOREIGN KEY (data_source_id) REFERENCES tao.data_source (id) ON DELETE No Action ON UPDATE No Action;
+--ALTER TABLE tao.user_data_query ADD CONSTRAINT FK_user_data_query_data_source
+--	FOREIGN KEY (data_source_id) REFERENCES tao.data_source (id) ON DELETE No Action ON UPDATE No Action;
 
 ALTER TABLE tao.user_data_query ADD CONSTRAINT FK_user_data_query_job
 	FOREIGN KEY (job_id) REFERENCES tao.job (id) ON DELETE No Action ON UPDATE No Action;
