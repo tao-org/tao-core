@@ -79,7 +79,7 @@ public abstract class TaskCommand {
             try {
                 doAction(task);
                 task.changeStatus(this.requestedStatus);
-                persistenceManager.saveExecutionTask(task, task.getJob());
+                persistenceManager.updateExecutionTask(task);
             } catch (Exception ex) {
                 task.changeStatus(ExecutionStatus.FAILED);
                 throw new ExecutionException(ex);

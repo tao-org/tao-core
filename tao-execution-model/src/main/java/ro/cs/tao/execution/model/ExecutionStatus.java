@@ -82,12 +82,9 @@ public enum ExecutionStatus {
      * @param value the integer value identifier
      * @return the string token corresponding to the integer identifier
      */
-    public static String getEnumConstantNameByValue(final int value)
-    {
-        for (ExecutionStatus type : values())
-        {
-            if ((String.valueOf(value)).equals(type.toString()))
-            {
+    public static String getEnumConstantNameByValue(final int value) {
+        for (ExecutionStatus type : values()) {
+            if ((String.valueOf(value)).equals(type.toString())) {
                 // return the name of the enum constant having the given value
                 return type.name();
             }
@@ -95,4 +92,13 @@ public enum ExecutionStatus {
         return null;
     }
 
+    public static ExecutionStatus getEnumConstantByValue(final int value) {
+        for (ExecutionStatus type : values()) {
+            if ((String.valueOf(value)).equals(type.toString())) {
+                // return the name of the enum constant having the given value
+                return type;
+            }
+        }
+        return null;
+    }
 }
