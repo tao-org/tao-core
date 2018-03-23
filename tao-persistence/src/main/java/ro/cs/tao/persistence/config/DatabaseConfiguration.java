@@ -1,20 +1,10 @@
 package ro.cs.tao.persistence.config;
 
-import java.beans.PropertyVetoException;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.LogManager;
-import java.util.logging.Logger;
-
-import javax.annotation.Resource;
-import javax.sql.DataSource;
-
+import com.mchange.v2.c3p0.ComboPooledDataSource;
 import com.mchange.v2.c3p0.DataSources;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hibernate.annotations.TypeDef;
+import org.hibernate.jpa.HibernatePersistenceProvider;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,12 +16,19 @@ import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaDialect;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-import org.hibernate.jpa.HibernatePersistenceProvider;
-
-import com.mchange.v2.c3p0.ComboPooledDataSource;
-
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.persistence.data.jsonutil.JsonStringType;
+
+import javax.annotation.Resource;
+import javax.sql.DataSource;
+import java.beans.PropertyVetoException;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 @Configuration
 @EnableTransactionManagement
@@ -251,7 +248,8 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
 				environment.getRequiredProperty(PROPERTY_NAME_HIBERNATE_CONNECTION_RELEASE_MODE));
 		jpaProperties.put(PROPERTY_NAME_HIBERNATE_TRANSACTION_AUTO_CLOSE_SESSION,
 				environment.getRequiredProperty(PROPERTY_NAME_HIBERNATE_TRANSACTION_AUTO_CLOSE_SESSION));
-
+		jpaProperties.put("hibernate.enable_lazy_load_no_trans",
+				environment.getRequiredProperty("hibernate.enable_lazy_load_no_trans"));
 		entityManagerFactoryBean.setJpaProperties(jpaProperties);
 		return entityManagerFactoryBean;
 	}

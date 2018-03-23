@@ -135,16 +135,18 @@ public class Orchestrator extends Notifiable {
         ExecutionJob job = null;
         if (workflow != null && workflow.isActive()) {
             job = new ExecutionJob();
+            job.setUserName("admin");
             job.setStartTime(LocalDateTime.now());
             job.setWorkflowId(workflow.getId());
             job.setExecutionStatus(ExecutionStatus.UNDETERMINED);
+            job = persistenceManager.saveExecutionJob(job);
             List<WorkflowNodeDescriptor> nodes = workflow.getOrderedNodes();
             for (WorkflowNodeDescriptor node : nodes) {
                 ExecutionTask task = createTask(node);
-                job.addTask(task);
+                //job.addTask(task);
                 persistenceManager.saveExecutionTask(task, job);
             }
-            persistenceManager.saveExecutionJob(job);
+            //persistenceManager.updateExecutionJob(job);
         }
         return job;
     }
@@ -190,7 +192,7 @@ public class Orchestrator extends Notifiable {
                 component = persistenceManager.getProcessingComponentById(workflowNode.getComponentId());
                 task.setComponent(component);
                 links.forEach(link -> {
-                    String name = link.getInput().getId();
+                    String name = link.getOutput().getName();
                     String value = link.getInput().getDataDescriptor().getLocation();
                     task.setParameterValue(name, value);
                 });
@@ -198,10 +200,12 @@ public class Orchestrator extends Notifiable {
                 component = persistenceManager.getDataSourceInstance(workflowNode.getComponentId());
             }
             if (customValues != null) {
-                customValues.forEach(v -> task.setParameterValue(v.getParameterName(), v.getParameterValue()));
+                for (ParameterValue customValue : customValues) {
+                    task.setParameterValue(customValue.getParameterName(), customValue.getParameterValue());
+                }
             }
             String nodeAffinity = component.getNodeAffinity();
-            if (nodeAffinity != null) {
+            if (nodeAffinity != null && !"Any".equals(nodeAffinity)) {
                 task.setExecutionNodeHostName(nodeAffinity);
             }
             task.setExecutionStatus(ExecutionStatus.UNDETERMINED);
@@ -213,23 +217,27 @@ public class Orchestrator extends Notifiable {
     protected void onMessageReceived(Message message) {
         try {
             String taskId = message.getItem(Message.SOURCE_KEY);
-            ExecutionStatus status = Enum.valueOf(ExecutionStatus.class, message.getItem(Message.PAYLOAD_KEY));
+            ExecutionStatus status = ExecutionStatus.getEnumConstantByValue(Integer.parseInt(message.getItem(Message.PAYLOAD_KEY)));
             logger.fine(String.format("Received status change for task %s: %s", taskId, status));
             System.out.println(String.format("Received status change for task %s: %s", taskId, status));
-            ExecutionTask task = persistenceManager.getTaskById(Long.parseLong(taskId));
+            long id = Long.parseLong(taskId);
+            ExecutionTask task = persistenceManager.getTaskById(id);
             task.changeStatus(status);
             persistenceManager.updateExecutionTask(task);
-            ExecutionJob job = task.getJob();
-            job.getTasks().forEach(t -> {
+            //ExecutionJob job = task.getJob();
+            /*job.getTasks().forEach(t -> {
                 try {
                     persistenceManager.updateExecutionTask(t);
                 } catch (PersistenceException e) {
                     logger.severe(e.getMessage());
                 }
-            });
+            });*/
             persistenceManager.updateExecutionJob(task.getJob());
             if (status == ExecutionStatus.DONE) {
-                TaskCommand.START.applyTo(task.getNext());
+                ExecutionTask nextTask = task.getNext();
+                if (nextTask != null) {
+                    TaskCommand.START.applyTo(nextTask);
+                }
             }
         } catch (PersistenceException e) {
             logger.severe(e.getMessage());

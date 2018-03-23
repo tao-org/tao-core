@@ -21,10 +21,7 @@ import ro.cs.tao.execution.Executor;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class NullExecutor extends Executor {
@@ -34,9 +31,10 @@ public class NullExecutor extends Executor {
 
     @Override
     public void execute(ExecutionTask task) throws ExecutionException {
+        task.setResourceId(UUID.randomUUID().toString());
         tasks.add(task);
         counters.put(task, 0);
-        task.changeStatus(ExecutionStatus.QUEUED_ACTIVE);
+        changeTaskStatus(task, ExecutionStatus.QUEUED_ACTIVE);
     }
 
     @Override
@@ -58,8 +56,9 @@ public class NullExecutor extends Executor {
         if (!tasks.contains(task)) {
             tasks.add(task);
             counters.put(task, 0);
+            task.setResourceId(UUID.randomUUID().toString());
         }
-        task.changeStatus(ExecutionStatus.QUEUED_ACTIVE);
+        changeTaskStatus(task, ExecutionStatus.QUEUED_ACTIVE);
     }
 
     @Override
@@ -69,13 +68,16 @@ public class NullExecutor extends Executor {
                     .forEach(t -> counters.put(t, counters.get(t) + 1));
             tasks.stream()
                     .filter(t -> t.getExecutionStatus() == ExecutionStatus.QUEUED_ACTIVE)
-                    .findFirst().ifPresent(task -> task.changeStatus(ExecutionStatus.RUNNING));
+                    .findFirst().ifPresent(task -> {
+                        changeTaskStatus(task, ExecutionStatus.RUNNING);
+            });
             List<Map.Entry<ExecutionTask, Integer>> toTerminate =
                     counters.entrySet().stream().filter(e -> e.getValue() == MAX).collect(Collectors.toList());
             for (Map.Entry<ExecutionTask, Integer> entry : toTerminate) {
-                counters.remove(entry.getKey());
-                tasks.remove(entry.getKey());
-                entry.getKey().changeStatus(ExecutionStatus.DONE);
+                ExecutionTask task = entry.getKey();
+                counters.remove(task);
+                tasks.remove(task);
+                markTaskFinished(task, ExecutionStatus.DONE);
             }
         }
     }
