@@ -33,7 +33,7 @@ public class ExecutionJob implements StatusChangeListener {
     private String userName;
     private ExecutionStatus executionStatus;
     private List<ExecutionTask> tasks;
-    private TaskSelector taskSelector;
+    private static TaskSelector taskSelector;
 
     public ExecutionJob() {}
 
@@ -78,18 +78,23 @@ public class ExecutionJob implements StatusChangeListener {
         this.tasks = tasks;
     }
     public List<ExecutionTask> getTasks() {
+        if (tasks == null) {
+            tasks = new ArrayList<>();
+        }
         return tasks;
     }
 
     @Transient
-    public void setTaskSelector(TaskSelector visitor) { this.taskSelector = visitor; }
-    public TaskSelector getTaskSelector() { return this.taskSelector; }
+    public void setTaskSelector(TaskSelector visitor) { taskSelector = visitor; }
+    public TaskSelector getTaskSelector() { return taskSelector; }
 
     public void addTask(ExecutionTask task) {
         if (this.tasks == null) {
             this.tasks = new ArrayList<>();
         }
-        this.tasks.add(task);
+        if (this.tasks.stream().noneMatch(t -> t.getId() != null && t.getId().equals(task.getId()))) {
+            this.tasks.add(task);
+        }
     }
 
     /**
@@ -97,10 +102,13 @@ public class ExecutionJob implements StatusChangeListener {
      * The actual selection is performed by a concrete <code>TaskSelector</code>.
      */
     public ExecutionTask getNextTask() {
-        if (this.taskSelector == null) {
+        if (this.executionStatus == ExecutionStatus.DONE || this.executionStatus == ExecutionStatus.FAILED) {
+            return null;
+        }
+        if (taskSelector == null) {
             throw new IllegalArgumentException("No algorithm for choosing tasks is set");
         }
-        return this.taskSelector.chooseNext(this);
+        return taskSelector.chooseNext(this);
     }
 
     public List<ExecutionTask> find(ExecutionStatus status) {
@@ -115,7 +123,6 @@ public class ExecutionJob implements StatusChangeListener {
 
     @Override
     public void statusChanged(ExecutionTask changedTask) {
-        ExecutionStatus previous = this.executionStatus;
         ExecutionStatus taskStatus = changedTask.getExecutionStatus();
         switch (taskStatus) {
             case SUSPENDED:
@@ -124,6 +131,11 @@ public class ExecutionJob implements StatusChangeListener {
                 bulkSetStatus(changedTask, taskStatus);
                 this.executionStatus = taskStatus;
                 break;
+            case RUNNING:
+                if (this.executionStatus == ExecutionStatus.QUEUED_ACTIVE ||
+                        this.executionStatus == ExecutionStatus.UNDETERMINED) {
+                    this.executionStatus = ExecutionStatus.RUNNING;
+                }
             case DONE:
                 if (this.tasks.get(this.tasks.size() - 1).getId().equals(changedTask.getId())) {
                     this.executionStatus = ExecutionStatus.DONE;

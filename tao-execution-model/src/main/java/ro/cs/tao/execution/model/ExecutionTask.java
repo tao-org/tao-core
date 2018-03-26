@@ -15,10 +15,7 @@
  */
 package ro.cs.tao.execution.model;
 
-import ro.cs.tao.component.ParameterDescriptor;
-import ro.cs.tao.component.ProcessingComponent;
-import ro.cs.tao.component.TaoComponent;
-import ro.cs.tao.component.Variable;
+import ro.cs.tao.component.*;
 import ro.cs.tao.component.validation.ValidationException;
 import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.datasource.DataSourceManager;
@@ -90,6 +87,8 @@ public class ExecutionTask<T extends TaoComponent> implements StatusChangeListen
         this.executionStatus = status;
         if (groupTask != null && previous != null && previous != status) {
             groupTask.statusChanged(this);
+        } else {
+            this.job.statusChanged(this);
         }
     }
 
@@ -129,6 +128,13 @@ public class ExecutionTask<T extends TaoComponent> implements StatusChangeListen
             List<ParameterDescriptor> descriptorList = ((ProcessingComponent) this.component).getParameterDescriptors();
             for (ParameterDescriptor descriptor : descriptorList) {
                 if (descriptor.getId().equals(parameterId)) {
+                    descriptorExists = true;
+                    break;
+                }
+            }
+            List<SourceDescriptor> sources = this.component.getSources();
+            for (SourceDescriptor source : sources) {
+                if (source.getName().equals(parameterId)) {
                     descriptorExists = true;
                     break;
                 }

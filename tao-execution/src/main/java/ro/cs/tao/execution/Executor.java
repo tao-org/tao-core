@@ -23,6 +23,7 @@ import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.Topics;
 import ro.cs.tao.persistence.PersistenceManager;
+import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.security.SystemPrincipal;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 
@@ -138,9 +139,12 @@ public abstract class Executor extends Identifiable {
 
     protected void changeTaskStatus(ExecutionTask task, ExecutionStatus status) {
         if(status != task.getExecutionStatus()) {
-            //task.setExecutionStatus(status);
-            // Don't persist here, it's handled by the Orchestrator
-            //persistenceManager.updateExecutionTask(task);
+            try {
+                task.setExecutionStatus(status);
+                persistenceManager.updateExecutionTask(task);
+            } catch (PersistenceException e) {
+                e.printStackTrace();
+            }
             Messaging.send(SystemPrincipal.instance(), Topics.TASK_STATUS_CHANGED, task.getId(), status.toString());
         }
     }

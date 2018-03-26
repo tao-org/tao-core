@@ -1053,7 +1053,7 @@ public class PersistenceManager implements MessagePersister {
         return executionTaskRepository.save(task);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<ExecutionTask> getRunningTasks() {
         // retrieve tasks and filter them
         return new ArrayList<>(((List<ExecutionTask>) executionTaskRepository.findAll(new Sort(Sort.Direction.ASC, TASK_IDENTIFIER_PROPERTY_NAME))).stream()
@@ -1061,7 +1061,6 @@ public class PersistenceManager implements MessagePersister {
                 .collect(Collectors.toList()));
     }
 
-    @Transactional(readOnly = true)
     public ExecutionTask getTaskById(Long id) throws PersistenceException {
         final ExecutionTask existingTask = executionTaskRepository.findById(id);
         if (existingTask == null) {

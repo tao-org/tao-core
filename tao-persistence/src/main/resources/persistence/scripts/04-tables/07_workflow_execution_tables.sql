@@ -298,7 +298,7 @@ CREATE TABLE tao.task_inputs
 (
 	task_id bigint NOT NULL,
 	key varchar(512) NOT NULL,
-	value varchar(512) NOT NULL
+	value varchar(512) NULL
 );
 
 ALTER TABLE tao.task_inputs ADD CONSTRAINT PK_task_inputs PRIMARY KEY (task_id, key);
@@ -315,7 +315,7 @@ CREATE TABLE tao.task_output
 (
 	task_id bigint NOT NULL,
 	key varchar(512) NOT NULL,
-    value varchar(512) NOT NULL
+    value varchar(512) NULL
 );
 
 ALTER TABLE tao.task_output ADD CONSTRAINT PK_task_output PRIMARY KEY (task_id, key);
