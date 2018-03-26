@@ -89,7 +89,7 @@ public class DataSourceComponent extends TaoComponent {
         this.logger = Logger.getLogger(DataSourceComponent.class.getSimpleName());
     }
 
-    private DataSourceComponent() { this.logger = Logger.getLogger(DataSourceComponent.class.getSimpleName()); }
+    public DataSourceComponent() { this.logger = Logger.getLogger(DataSourceComponent.class.getSimpleName()); }
 
     public String getSensorName() { return sensorName; }
 

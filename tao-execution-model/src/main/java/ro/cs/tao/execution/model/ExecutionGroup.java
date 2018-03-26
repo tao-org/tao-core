@@ -211,6 +211,6 @@ public class ExecutionGroup<T extends TaoComponent> extends ExecutionTask<T> {
     }
 
     private boolean contains(ExecutionTask task) {
-        return this.tasks != null && task != null && this.tasks.stream().anyMatch(t -> t.getId().equals(task.getId()));
+        return this.tasks != null && task != null && this.tasks.stream().anyMatch(t -> t.getId() == task.getId());
     }
 }

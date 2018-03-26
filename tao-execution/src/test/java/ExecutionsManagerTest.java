@@ -11,6 +11,7 @@ import ro.cs.tao.execution.ExecutionsManager;
 import ro.cs.tao.execution.model.ExecutionJob;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
+import ro.cs.tao.execution.model.ProcessingExecutionTask;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
@@ -51,6 +52,7 @@ public class ExecutionsManagerTest {
         ExecutionJob job = new ExecutionJob();
         job.setExecutionStatus(ExecutionStatus.RUNNING);
         job.setWorkflowId(1);
+        job.setUserName("admin");
 
         ExecutionTask task = creatTask(processingComponent, "test_hostname",
             Collections.unmodifiableMap(Stream.of(
@@ -96,6 +98,8 @@ public class ExecutionsManagerTest {
 
         ExecutionJob job = new ExecutionJob();
         job.setExecutionStatus(ExecutionStatus.RUNNING);
+        job.setWorkflowId(1);
+        job.setUserName("admin");
 
         ExecutionTask task = creatTask(processingComponent, "test_hostname", new HashMap<>());
         job.addTask(task);
@@ -224,8 +228,8 @@ public class ExecutionsManagerTest {
         }
     }
 
-    private static ExecutionTask creatTask(ProcessingComponent processingComponent, String hostName, Map<String, String> values) {
-        ExecutionTask task = new ExecutionTask(processingComponent);
+    private static ProcessingExecutionTask creatTask(ProcessingComponent processingComponent, String hostName, Map<String, String> values) {
+        ProcessingExecutionTask task = new ProcessingExecutionTask(processingComponent);
         task.setExecutionNodeHostName(hostName);
         task.setWorkflowNodeId(1L);
         values.forEach((k,v)-> task.setParameterValue(k, v));
