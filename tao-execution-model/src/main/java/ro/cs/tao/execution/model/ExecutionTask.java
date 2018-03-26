@@ -15,37 +15,33 @@
  */
 package ro.cs.tao.execution.model;
 
-import ro.cs.tao.component.*;
-import ro.cs.tao.component.validation.ValidationException;
-import ro.cs.tao.datasource.DataSourceComponent;
-import ro.cs.tao.datasource.DataSourceManager;
+import ro.cs.tao.component.Variable;
 
 import java.time.LocalDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.List;
 
 /**
  * @author Cosmin Udroiu
  */
-public class ExecutionTask<T extends TaoComponent> implements StatusChangeListener {
+public abstract class ExecutionTask implements StatusChangeListener {
     private Long id;
     private ExecutionTask groupTask;
     private Long workflowNodeId;
-    protected T component;
+    //protected T component;
     private String resourceId;
     private String executionNodeHostName;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
-    private List<Variable> inputParameterValues;
+    protected List<Variable> inputParameterValues;
     private String internalState;
     private ExecutionJob job;
     private ExecutionStatus executionStatus = ExecutionStatus.UNDETERMINED;
 
     public ExecutionTask() { }
 
-    public ExecutionTask(T component) {
+    /*public ExecutionTask(T component) {
         this.component = component;
-    }
+    }*/
 
     public Long getId() {
         return id;
@@ -60,12 +56,8 @@ public class ExecutionTask<T extends TaoComponent> implements StatusChangeListen
     public Long getWorkflowNodeId() { return workflowNodeId; }
     public void setWorkflowNodeId(Long workflowNodeId) { this.workflowNodeId = workflowNodeId; }
 
-    public void setComponent(T component) {
-        this.component = component;
-    }
-    public T getComponent() {
-        return component;
-    }
+    /*public abstract void setComponent(T component);
+    public abstract T getComponent();*/
 
     /**
      * Sets the status of this task.
@@ -121,45 +113,7 @@ public class ExecutionTask<T extends TaoComponent> implements StatusChangeListen
     public void setInputParameterValues(List<Variable> inputParameterValues) {
         this.inputParameterValues = inputParameterValues;
     }
-    public void setParameterValue(String parameterId, String value) {
-        boolean descriptorExists = false;
-        if (this.component instanceof ProcessingComponent) {
-            List<ParameterDescriptor> descriptorList = ((ProcessingComponent) this.component).getParameterDescriptors();
-            for (ParameterDescriptor descriptor : descriptorList) {
-                if (descriptor.getId().equals(parameterId)) {
-                    descriptorExists = true;
-                    break;
-                }
-            }
-            List<SourceDescriptor> sources = this.component.getSources();
-            for (SourceDescriptor source : sources) {
-                if (source.getName().equals(parameterId)) {
-                    descriptorExists = true;
-                    break;
-                }
-            }
-        }
-        if (this.component instanceof DataSourceComponent) {
-            DataSourceComponent component = (DataSourceComponent) this.component;
-            Collection<ro.cs.tao.datasource.param.ParameterDescriptor> descriptors =
-                    DataSourceManager.getInstance().getSupportedParameters(component.getSensorName(),
-                                                                            component.getDataSourceName()).values();
-            for (ro.cs.tao.datasource.param.ParameterDescriptor descriptor : descriptors) {
-                if (descriptor.getName().equalsIgnoreCase(parameterId)) {
-                    descriptorExists = true;
-                    break;
-                }
-            }
-        }
-        if (!descriptorExists) {
-            throw new ValidationException(String.format("The parameter ID [%s] does not exists in the component '%s'",
-                                                        parameterId, component.getLabel()));
-        }
-        if (this.inputParameterValues == null) {
-            this.inputParameterValues = new ArrayList<>();
-        }
-        this.inputParameterValues.add(new Variable(parameterId, value));
-    }
+    public abstract void setParameterValue(String parameterId, String value);
 
     public LocalDateTime getStartTime() {
         return startTime;
@@ -180,16 +134,5 @@ public class ExecutionTask<T extends TaoComponent> implements StatusChangeListen
         this.job = job;
     }
 
-    public String buildExecutionCommand() {
-        if (component == null) {
-            return null;
-        }
-        Map<String, String> inputParams = new HashMap<>();
-        if (inputParameterValues != null) {
-            inputParams.putAll(inputParameterValues.stream()
-                                       .collect(Collectors.toMap(Variable::getKey, Variable::getValue)));
-        }
-        return this.component instanceof ProcessingComponent ?
-                ((ProcessingComponent) this.component).buildExecutionCommand(inputParams) : null;
-    }
+    public abstract String buildExecutionCommand();
 }

@@ -16,9 +16,7 @@
 package ro.cs.tao.execution.model;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -84,9 +82,11 @@ public class ExecutionJob implements StatusChangeListener {
     }
 
     public List<ExecutionTask> orderTasks() {
-        List<ExecutionTask> tasks = getTasks();
-        tasks.sort(Comparator.comparing(ExecutionTask::getId));
-        return tasks;
+        // Until we figure out why Hibernate duplicates entries, use a HashSet
+        Set<ExecutionTask> tasks = new HashSet<>(getTasks());
+        return tasks.stream()
+                    .sorted(Comparator.comparing(ExecutionTask::getId))
+                    .collect(Collectors.toList());
     }
 
     public void addTask(ExecutionTask task) {

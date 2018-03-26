@@ -229,7 +229,8 @@ public class ExecutionsManagerTest {
     }
 
     private static ProcessingExecutionTask creatTask(ProcessingComponent processingComponent, String hostName, Map<String, String> values) {
-        ProcessingExecutionTask task = new ProcessingExecutionTask(processingComponent);
+        ProcessingExecutionTask task = new ProcessingExecutionTask();
+        task.setComponent(processingComponent);
         task.setExecutionNodeHostName(hostName);
         task.setWorkflowNodeId(1L);
         values.forEach((k,v)-> task.setParameterValue(k, v));

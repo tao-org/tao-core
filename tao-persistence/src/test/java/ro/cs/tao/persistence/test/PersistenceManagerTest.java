@@ -1472,7 +1472,7 @@ public class PersistenceManagerTest {
                 NodeDescription node = nodes.get(0);
 
                 // add a new task for test
-                ExecutionTask task = new ProcessingExecutionTask();
+                ProcessingExecutionTask task = new ProcessingExecutionTask();
                 task.setResourceId("ProcessingExecutionTask-resourceId01");
                 task.setExecutionStatus(ExecutionStatus.RUNNING);
                 task.setExecutionNodeHostName(node.getHostName());
@@ -1492,7 +1492,7 @@ public class PersistenceManagerTest {
 
                 task.setInputParameterValues(inputsValues);
 
-                task = persistenceManager.saveExecutionTask(task, job);
+                task = (ProcessingExecutionTask) persistenceManager.saveExecutionTask(task, job);
                 // check persisted task
                 Assert.assertTrue(task != null && task.getId() != 0);
                 // check if job correctly updated
@@ -1531,7 +1531,7 @@ public class PersistenceManagerTest {
                 NodeDescription node = nodes.get(0);
 
                 // add a new task for test
-                ExecutionTask task = new DataSourceExecutionTask();
+                DataSourceExecutionTask task = new DataSourceExecutionTask();
                 task.setResourceId("DataSourceExecutionTask-resourceId01");
                 task.setExecutionStatus(ExecutionStatus.RUNNING);
                 task.setExecutionNodeHostName(node.getHostName());
@@ -1551,7 +1551,7 @@ public class PersistenceManagerTest {
 
                 task.setInputParameterValues(inputsValues);
 
-                task = persistenceManager.saveExecutionTask(task, job);
+                task = (DataSourceExecutionTask) persistenceManager.saveExecutionTask(task, job);
                 // check persisted task
                 Assert.assertTrue(task != null && task.getId() != 0);
                 // check if job correctly updated

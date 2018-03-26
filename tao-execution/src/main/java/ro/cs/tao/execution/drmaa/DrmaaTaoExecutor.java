@@ -23,6 +23,7 @@ import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.Executor;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
+import ro.cs.tao.execution.model.ProcessingExecutionTask;
 import ro.cs.tao.persistence.exception.PersistenceException;
 
 import java.time.LocalDateTime;
@@ -34,7 +35,7 @@ import java.util.regex.Pattern;
 /**
  * @author Cosmin Cara
  */
-public class DrmaaTaoExecutor extends Executor {
+public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
     private Session session;
 
     @Override
@@ -60,7 +61,7 @@ public class DrmaaTaoExecutor extends Executor {
     }
 
     @Override
-    public void execute(ExecutionTask task) throws ExecutionException  {
+    public void execute(ProcessingExecutionTask task) throws ExecutionException  {
         // Get from the component the execution command
         String executionCmd = task.buildExecutionCommand();
         List<String> argsList = new ArrayList<>();
@@ -101,7 +102,7 @@ public class DrmaaTaoExecutor extends Executor {
     }
 
     @Override
-    public void stop(ExecutionTask task)  throws ExecutionException {
+    public void stop(ProcessingExecutionTask task)  throws ExecutionException {
         try {
             session.control(task.getResourceId(), Session.TERMINATE);
             markTaskFinished(task, ExecutionStatus.CANCELLED);
@@ -111,7 +112,7 @@ public class DrmaaTaoExecutor extends Executor {
     }
 
     @Override
-    public void suspend(ExecutionTask task) throws ExecutionException {
+    public void suspend(ProcessingExecutionTask task) throws ExecutionException {
         try {
             session.control(task.getResourceId(), Session.SUSPEND);
             changeTaskStatus(task, ExecutionStatus.SUSPENDED);
@@ -121,7 +122,7 @@ public class DrmaaTaoExecutor extends Executor {
     }
 
     @Override
-    public void resume(ExecutionTask task) throws ExecutionException {
+    public void resume(ProcessingExecutionTask task) throws ExecutionException {
         try {
             session.control(task.getResourceId(), Session.RESUME);
             changeTaskStatus(task, ExecutionStatus.QUEUED_ACTIVE);
