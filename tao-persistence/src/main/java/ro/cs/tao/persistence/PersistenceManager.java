@@ -1,6 +1,8 @@
 package ro.cs.tao.persistence;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
@@ -19,10 +21,7 @@ import ro.cs.tao.docker.Application;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.VectorData;
-import ro.cs.tao.execution.model.ExecutionJob;
-import ro.cs.tao.execution.model.ExecutionStatus;
-import ro.cs.tao.execution.model.ExecutionTask;
-import ro.cs.tao.execution.model.Query;
+import ro.cs.tao.execution.model.*;
 import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.MessagePersister;
 import ro.cs.tao.persistence.exception.PersistenceException;
@@ -47,6 +46,8 @@ import java.util.stream.Collectors;
 @EnableJpaRepositories(basePackages = { "ro.cs.tao.persistence.repository" })
 @Scope("singleton")
 public class PersistenceManager implements MessagePersister {
+
+    private static Log logger = LogFactory.getLog(PersistenceManager.class);
 
     /** Constant for the identifier member name of execution node entity */
     private static final String NODE_IDENTIFIER_PROPERTY_NAME = "hostName";
@@ -756,6 +757,20 @@ public class PersistenceManager implements MessagePersister {
     }
 
     /**
+     * Retrieve data sources components
+     * @return
+     */
+    @Transactional(readOnly = true)
+    public List<DataSourceComponent> getDataSourceComponents()
+    {
+        final List<DataSourceComponent> components = new ArrayList<>();
+        // retrieve components and filter them
+        components.addAll(((List<DataSourceComponent>) dataSourceComponentRepository.findAll(new Sort(Sort.Direction.ASC, COMPONENT_IDENTIFIER_PROPERTY_NAME))).stream()
+          .collect(Collectors.toList()));
+        return components;
+    }
+
+    /**
      * TODO (User entity from data model)
      * Retrieve processing components with USER visibility, for a given user
      * @return
@@ -952,8 +967,11 @@ public class PersistenceManager implements MessagePersister {
 
     @Transactional
     public ExecutionTask saveExecutionTask(ExecutionTask task, ExecutionJob job) throws PersistenceException {
+
+        logger.info("saveExecutionTask() of type " + task.getClass().getCanonicalName() + " having resource id: " + task.getResourceId());
+
         // check method parameters
-        if(!checkExecutionTask(task, job, false)) {
+        if (!checkExecutionTask(task, job, false)) {
             throw new PersistenceException("Invalid parameters were provided for adding new execution task !");
         }
 
@@ -965,10 +983,13 @@ public class PersistenceManager implements MessagePersister {
             }
         }
 
-        task.setJob(job);
+        if (task instanceof ProcessingExecutionTask || task instanceof DataSourceExecutionTask) {
 
-        // save the new ExecutionTask entity
-        final ExecutionTask savedExecutionTask =  executionTaskRepository.save(task);
+            // set the task parent job
+            task.setJob(job);
+
+            // save the new ExecutionTask entity
+            final ExecutionTask savedExecutionTask =  executionTaskRepository.save(task);
 
         // add the task to job tasks collection
         List<ExecutionTask> jobTasks = job.getTasks();
@@ -978,7 +999,45 @@ public class PersistenceManager implements MessagePersister {
             executionJobRepository.save(job);
         }
 
-        return savedExecutionTask;
+            return savedExecutionTask;
+        }
+
+        /*else if (task instanceof ExecutionGroup) {
+
+            List<ExecutionTask> groupSubTasks = ((ExecutionGroup) task).getTasks();
+
+            // save first the sub-tasks within the group
+            List<ExecutionTask> savedSubtasks = new ArrayList<>();
+            if (groupSubTasks != null && groupSubTasks.size() > 0) {
+                for (ExecutionTask groupSubTask : groupSubTasks) {
+                    // break the relation to can save the child first
+                    groupSubTask.setGroupTask(null);
+                    groupSubTask = saveExecutionTask(groupSubTask, job);
+                    savedSubtasks.add(groupSubTask);
+
+                    logger.info("Saved sub task " + groupSubTask.getResourceId());
+                }
+            }
+
+            // set the saved subtasks
+            ((ExecutionGroup) task).setTasks(savedSubtasks);
+
+            // finally save the group
+            task = saveExecutionTask(task, job);
+
+            // update the group tasks to set the groupTask property on them
+            for (ExecutionTask subTask: savedSubtasks) {
+                // add back the relation to the parent groupTask, that is now saved (no longer transient)
+                subTask.setGroupTask(task);
+                updateExecutionTask(subTask);
+            }
+
+            return task;
+
+        }*/
+
+
+        return null;
     }
 
     @Transactional

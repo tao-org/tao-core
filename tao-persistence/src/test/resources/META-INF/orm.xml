@@ -161,6 +161,7 @@
         </attributes>
     </entity>
 
+
     <entity class="ro.cs.tao.eodata.VectorData" access="PROPERTY">
         <table name="tao.vector_data_product"/>
         <!-- Converter DataFormatConverter not seen in mapped superclass, therefore declared here -->
@@ -441,10 +442,12 @@
 
     <entity class="ro.cs.tao.execution.model.ExecutionTask" access="PROPERTY">
         <table name="tao.task"/>
-        <!-- set inheritance to single table, since ExecutionGroup inherits from ParameterDescriptor -->
+        <!-- set inheritance to single table, since ExecutionGroup           inherits from ExecutionTask,
+                                                    ProcessingExecutionTask  inherits from ExecutionTask,
+                                                    DataSourceExecutionTask  inherits from ExecutionTask-->
         <inheritance strategy="SINGLE_TABLE"/>
 
-        <!-- avoid default DTYPE -->
+        <!-- define discriminator in root class, avoid default DTYPE -->
         <discriminator-column name="discriminator" column-definition="integer NOT NULL" discriminator-type="INTEGER"/>
 
         <convert converter="ro.cs.tao.persistence.convert.ExecutionStatusConverter" attribute-name="executionStatus" />
@@ -477,15 +480,15 @@
                 <column name="graph_node_id" nullable="false" column-definition="bigint NOT NULL"/>
             </basic>
 
-            <many-to-one name="component" fetch="LAZY" target-entity="ro.cs.tao.component.ProcessingComponent">
+            <!--<many-to-one name="component" fetch="LAZY" target-entity="ro.cs.tao.component.ProcessingComponent">
                 <join-column name="component_id" nullable="false"/>
-            </many-to-one>
+            </many-to-one>-->
 
             <many-to-one name="job" fetch="LAZY">
                 <join-column name="job_id" nullable="false"/>
             </many-to-one>
 
-            <many-to-one name="groupTask" fetch="LAZY"> <!-- target-entity="ro.cs.tao.execution.model.ExecutionGroup">-->
+            <many-to-one name="groupTask" fetch="LAZY">
                 <join-column name="task_group_id" nullable="true"/>
             </many-to-one>
 
@@ -496,7 +499,31 @@
             </element-collection>
 
             <transient name="next"/>
+            <transient name="component"/>
 
+        </attributes>
+    </entity>
+
+
+    <entity class="ro.cs.tao.execution.model.ProcessingExecutionTask" access="PROPERTY">
+
+        <discriminator-value>11</discriminator-value>
+
+        <attributes>
+            <many-to-one name="component" fetch="LAZY" target-entity="ro.cs.tao.component.ProcessingComponent">
+                <join-column name="component_id" nullable="false"/>
+            </many-to-one>
+        </attributes>
+    </entity>
+
+
+    <entity class="ro.cs.tao.execution.model.DataSourceExecutionTask" access="PROPERTY">
+        <discriminator-value>31</discriminator-value>
+
+        <attributes>
+            <many-to-one name="component" fetch="LAZY" target-entity="ro.cs.tao.datasource.DataSourceComponent">
+                <join-column name="component_id" nullable="false"/>
+            </many-to-one>
         </attributes>
     </entity>
 
@@ -510,7 +537,7 @@
         <discriminator-value>13</discriminator-value>
 
         <attributes>
-            <many-to-many name="tasks" fetch="LAZY">
+            <many-to-many name="tasks" fetch="LAZY"> <!-- target-entity="ro.cs.tao.execution.model.ProcessingExecutionTask">-->
                 <join-table name="tao.execution_group_tasks">
                     <join-column name="execution_group_id" referenced-column-name="id"/>
                     <inverse-join-column name="execution_task_id" referenced-column-name="id"/>

@@ -31,7 +31,7 @@ public class ExecutionTask<T extends TaoComponent> implements StatusChangeListen
     private Long id;
     private ExecutionTask groupTask;
     private Long workflowNodeId;
-    private T component;
+    protected T component;
     private String resourceId;
     private String executionNodeHostName;
     private LocalDateTime startTime;
