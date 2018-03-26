@@ -30,9 +30,13 @@ public class DefaultGroupTaskSelector implements TaskSelector<ExecutionGroup> {
         List<ExecutionTask> tasks = taskHolder.getTasks();
         if (tasks != null && tasks.size() > 0) {
             switch (taskHolder.getExecutionStatus()) {
+                // If the group is not started, we return the first task in line
                 case UNDETERMINED:
-                case QUEUED_ACTIVE:
                     next = tasks.get(0);
+                    break;
+                // If the group is already queued for execution,
+                // there should be already at least one task queued for execution, so we don't return another one
+                case QUEUED_ACTIVE:
                     break;
                 case SUSPENDED:
                     next = tasks.stream()
@@ -40,12 +44,9 @@ public class DefaultGroupTaskSelector implements TaskSelector<ExecutionGroup> {
                             .findFirst().orElse(null);
                     break;
                 case RUNNING:
-                    for (ExecutionTask task : tasks) {
-                        if (task.getExecutionStatus() != ExecutionStatus.RUNNING) {
-                            next = task;
-                            break;
-                        }
-                    }
+                    next = tasks.stream()
+                            .filter(t -> t.getExecutionStatus() == ExecutionStatus.UNDETERMINED)
+                            .findFirst().orElse(null);
                     break;
                 case DONE:
                 case FAILED:

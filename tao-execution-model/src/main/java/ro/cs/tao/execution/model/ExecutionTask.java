@@ -37,9 +37,9 @@ public class ExecutionTask<T extends TaoComponent> implements StatusChangeListen
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private List<Variable> inputParameterValues;
-    String internalState;
-    ExecutionJob job;
-    ExecutionStatus executionStatus = ExecutionStatus.UNDETERMINED;
+    private String internalState;
+    private ExecutionJob job;
+    private ExecutionStatus executionStatus = ExecutionStatus.UNDETERMINED;
 
     public ExecutionTask() { }
 
@@ -80,8 +80,7 @@ public class ExecutionTask<T extends TaoComponent> implements StatusChangeListen
 
     /**
      * Changes the status of this task and signals this to the parent group, if available.
-     * @param status The new status.
-     */
+     *
     public void changeStatus(ExecutionStatus status) {
         ExecutionStatus previous = this.executionStatus;
         this.executionStatus = status;
@@ -90,7 +89,7 @@ public class ExecutionTask<T extends TaoComponent> implements StatusChangeListen
         } else {
             this.job.statusChanged(this);
         }
-    }
+    }*/
 
     public String getInternalState() { return internalState; }
     public void setInternalState(String internalState) { this.internalState = internalState; }
@@ -100,7 +99,7 @@ public class ExecutionTask<T extends TaoComponent> implements StatusChangeListen
      * It returns <code>null</code> if there is no internal state or the current state was the last one.
      * @param <S>   The type of the state data
      */
-    <S> S nextInternalState() { return null; }
+    public <S> S nextInternalState() { return null; }
 
     public void setResourceId(String resourceId) {
         this.resourceId = resourceId;
@@ -176,9 +175,7 @@ public class ExecutionTask<T extends TaoComponent> implements StatusChangeListen
         this.endTime = endTime;
     }
 
-    public ExecutionJob getJob() {
-        return job;
-    }
+    public ExecutionJob getJob() { return job; }
     public void setJob(ExecutionJob job) {
         this.job = job;
     }
@@ -194,9 +191,5 @@ public class ExecutionTask<T extends TaoComponent> implements StatusChangeListen
         }
         return this.component instanceof ProcessingComponent ?
                 ((ProcessingComponent) this.component).buildExecutionCommand(inputParams) : null;
-    }
-
-    public ExecutionTask getNext() {
-        return groupTask != null ? groupTask.getNext() : job.getNextTask();
     }
 }

@@ -22,6 +22,7 @@ import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.persistence.PersistenceManager;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -79,7 +80,7 @@ public abstract class JobCommand {
             try {
                 doAction(job);
                 job.setExecutionStatus(this.requestedStatus);
-                persistenceManager.saveExecutionJob(job);
+                persistenceManager.updateExecutionJob(job);
             } catch (Exception ex) {
                 job.setExecutionStatus(ExecutionStatus.FAILED);
                 throw new ExecutionException(ex);
@@ -105,7 +106,11 @@ public abstract class JobCommand {
         }
         @Override
         protected void doAction(ExecutionJob job) {
-            ExecutionTask firstTask = job.getNextTask();
+            List<ExecutionTask> tasks = job.orderTasks();
+            if (tasks == null || tasks.size() == 0) {
+                throw new ExecutionException(String.format("Job %s doesn't contain any tasks", job.getId()));
+            }
+            ExecutionTask firstTask = tasks.get(0);
             TaskCommand.START.applyTo(firstTask);
         }
     }
@@ -132,7 +137,7 @@ public abstract class JobCommand {
         }
         @Override
         protected void doAction(ExecutionJob job) {
-            job.getTasks().stream()
+            job.orderTasks().stream()
                     .filter(t -> t.getExecutionStatus() == ExecutionStatus.RUNNING ||
                             t.getExecutionStatus() == ExecutionStatus.QUEUED_ACTIVE ||
                             t.getExecutionStatus() == ExecutionStatus.UNDETERMINED)
@@ -160,7 +165,7 @@ public abstract class JobCommand {
         }
         @Override
         protected void doAction(ExecutionJob job) {
-            job.getTasks().stream()
+            job.orderTasks().stream()
                     .filter(t -> t.getExecutionStatus() == ExecutionStatus.RUNNING ||
                             t.getExecutionStatus() == ExecutionStatus.QUEUED_ACTIVE)
                     .forEach(TaskCommand.SUSPEND::applyTo);
@@ -185,7 +190,7 @@ public abstract class JobCommand {
         }
         @Override
         protected void doAction(ExecutionJob job) {
-            job.getTasks().stream()
+            job.orderTasks().stream()
                     .filter(t -> t.getExecutionStatus() == ExecutionStatus.SUSPENDED)
                     .forEach(TaskCommand.RESUME::applyTo);
         }

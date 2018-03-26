@@ -927,8 +927,12 @@ public class PersistenceManager implements MessagePersister {
         return jobs;
     }
 
-    public ExecutionJob getJob(long workflowId) throws PersistenceException {
+    public ExecutionJob getJob(long workflowId) {
         return executionJobRepository.findByWorkflowId(workflowId);
+    }
+
+    public ExecutionJob getJobById(long jobId) {
+        return executionJobRepository.findById(jobId);
     }
 
     public List<ExecutionJob> getJobs(ExecutionStatus status) {
@@ -968,10 +972,11 @@ public class PersistenceManager implements MessagePersister {
 
         // add the task to job tasks collection
         List<ExecutionTask> jobTasks = job.getTasks();
-        jobTasks.add(task);
-        job.setTasks(jobTasks);
-
-        executionJobRepository.save(job);
+        if (jobTasks.stream().noneMatch(t -> t.getId().equals(task.getId()))) {
+            jobTasks.add(task);
+            job.setTasks(jobTasks);
+            executionJobRepository.save(job);
+        }
 
         return savedExecutionTask;
     }

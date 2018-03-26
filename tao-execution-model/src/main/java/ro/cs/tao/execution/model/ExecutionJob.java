@@ -15,9 +15,9 @@
  */
 package ro.cs.tao.execution.model;
 
-import java.beans.Transient;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,7 +33,6 @@ public class ExecutionJob implements StatusChangeListener {
     private String userName;
     private ExecutionStatus executionStatus;
     private List<ExecutionTask> tasks;
-    private static TaskSelector taskSelector;
 
     public ExecutionJob() {}
 
@@ -84,9 +83,11 @@ public class ExecutionJob implements StatusChangeListener {
         return tasks;
     }
 
-    @Transient
-    public void setTaskSelector(TaskSelector visitor) { taskSelector = visitor; }
-    public TaskSelector getTaskSelector() { return taskSelector; }
+    public List<ExecutionTask> orderTasks() {
+        List<ExecutionTask> tasks = getTasks();
+        tasks.sort(Comparator.comparing(ExecutionTask::getId));
+        return tasks;
+    }
 
     public void addTask(ExecutionTask task) {
         if (this.tasks == null) {
@@ -97,20 +98,6 @@ public class ExecutionJob implements StatusChangeListener {
         }
     }
 
-    /**
-     * Returns the next task chosen to be executed.
-     * The actual selection is performed by a concrete <code>TaskSelector</code>.
-     */
-    public ExecutionTask getNextTask() {
-        if (this.executionStatus == ExecutionStatus.DONE || this.executionStatus == ExecutionStatus.FAILED) {
-            return null;
-        }
-        if (taskSelector == null) {
-            throw new IllegalArgumentException("No algorithm for choosing tasks is set");
-        }
-        return taskSelector.chooseNext(this);
-    }
-
     public List<ExecutionTask> find(ExecutionStatus status) {
         List<ExecutionTask> running = null;
         if (this.tasks != null && this.tasks.size() > 0) {
@@ -119,50 +106,5 @@ public class ExecutionJob implements StatusChangeListener {
                                 .collect(Collectors.toList());
         }
         return running;
-    }
-
-    @Override
-    public void statusChanged(ExecutionTask changedTask) {
-        ExecutionStatus taskStatus = changedTask.getExecutionStatus();
-        switch (taskStatus) {
-            case SUSPENDED:
-            case CANCELLED:
-            case FAILED:
-                bulkSetStatus(changedTask, taskStatus);
-                this.executionStatus = taskStatus;
-                break;
-            case RUNNING:
-                if (this.executionStatus == ExecutionStatus.QUEUED_ACTIVE ||
-                        this.executionStatus == ExecutionStatus.UNDETERMINED) {
-                    this.executionStatus = ExecutionStatus.RUNNING;
-                }
-            case DONE:
-                if (this.tasks.get(this.tasks.size() - 1).getId().equals(changedTask.getId())) {
-                    this.executionStatus = ExecutionStatus.DONE;
-                }
-                break;
-            default:
-                // do nothing for other states
-                break;
-        }
-    }
-
-    private void bulkSetStatus(ExecutionTask firstExculde, ExecutionStatus status) {
-        if (this.tasks == null) {
-            return;
-        }
-        int idx = 0;
-        boolean found = false;
-        while (idx < this.tasks.size()) {
-            if (!found) {
-                found = this.tasks.get(idx).getId().equals(firstExculde.getId());
-            } else {
-                this.tasks.get(idx).changeStatus(status);
-            }
-            idx++;
-        }
-        if (!found) {
-            throw new IllegalArgumentException("Task not found");
-        }
     }
 }
