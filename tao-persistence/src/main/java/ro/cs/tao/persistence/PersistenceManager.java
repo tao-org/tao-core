@@ -1074,6 +1074,14 @@ public class PersistenceManager implements MessagePersister {
         return existingTask;
     }
 
+    public ExecutionTask getTaskByJobAndNode(long jobId, long nodeId) {
+        return executionTaskRepository.findByJobAndWorkflowNode(jobId, nodeId);
+    }
+
+    public ExecutionTask getTaskByGroupAndNode(long groupId, long nodeId) {
+        return executionTaskRepository.findByGroupAndWorkflowNode(groupId, nodeId);
+    }
+
     @Transactional(readOnly = true)
     public ExecutionTask getTaskByResourceId(String id) throws PersistenceException {
         final ExecutionTask existingTask = executionTaskRepository.findByResourceId(id);
@@ -1391,6 +1399,17 @@ public class PersistenceManager implements MessagePersister {
 
         // save it
         return workflowDescriptorRepository.save(workflowEnt);
+    }
+
+    public WorkflowNodeDescriptor getWorkflowNodeById(Long id) {
+        if (id == null) {
+            return null;
+        }
+        return workflowNodeDescriptorRepository.findById(id);
+    }
+
+    public List<WorkflowNodeDescriptor> getWorkflowNodesByComponentId(long workflowId, String componentId) {
+        return workflowNodeDescriptorRepository.findByComponentId(workflowId, componentId);
     }
 
     @Transactional

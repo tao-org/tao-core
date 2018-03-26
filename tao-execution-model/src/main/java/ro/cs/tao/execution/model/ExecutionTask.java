@@ -28,6 +28,7 @@ public abstract class ExecutionTask implements StatusChangeListener {
     private ExecutionTask groupTask;
     private Long workflowNodeId;
     //protected T component;
+    private int level;
     private String resourceId;
     private String executionNodeHostName;
     private LocalDateTime startTime;
@@ -56,7 +57,10 @@ public abstract class ExecutionTask implements StatusChangeListener {
     public Long getWorkflowNodeId() { return workflowNodeId; }
     public void setWorkflowNodeId(Long workflowNodeId) { this.workflowNodeId = workflowNodeId; }
 
-    /*public abstract void setComponent(T component);
+    public int getLevel() { return level; }
+    public void setLevel(int level) { this.level = level; }
+
+/*public abstract void setComponent(T component);
     public abstract T getComponent();*/
 
     /**

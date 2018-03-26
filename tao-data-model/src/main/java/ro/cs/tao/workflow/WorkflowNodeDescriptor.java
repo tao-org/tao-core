@@ -24,7 +24,6 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -37,6 +36,7 @@ public class WorkflowNodeDescriptor extends GraphObject {
     private String componentId;
     private float xCoord;
     private float yCoord;
+    private int level;
     private List<ComponentLink> incomingLinks;
 
     private WorkflowDescriptor workflow;
@@ -56,6 +56,9 @@ public class WorkflowNodeDescriptor extends GraphObject {
     @XmlTransient
     public float getyCoord() { return yCoord; }
     public void setyCoord(float yCoord) { this.yCoord = yCoord; }
+
+    public int getLevel() { return level; }
+    public void setLevel(int level) { this.level = level; }
 
     @XmlElementWrapper(name = "incomingNodes")
     public List<ComponentLink> getIncomingLinks() { return incomingLinks; }

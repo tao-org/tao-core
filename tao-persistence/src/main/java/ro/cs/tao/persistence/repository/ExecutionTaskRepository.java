@@ -1,7 +1,9 @@
 package ro.cs.tao.persistence.repository;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.execution.model.ExecutionTask;
@@ -31,4 +33,12 @@ public interface ExecutionTaskRepository extends PagingAndSortingRepository<Exec
          * @return the corresponding ExecutionTask entity
          */
         ExecutionTask findByResourceId(String resourceId);
+
+        @Query(value = "SELECT * from tao.task where job_id = :jobId and graph_node_id = :nodeId", nativeQuery = true)
+        ExecutionTask findByJobAndWorkflowNode(@Param("jobId") long jobId,
+                                               @Param("nodeId") long nodeId);
+
+        @Query(value = "SELECT * from tao.task where task_group_id = :groupId and graph_node_id = :nodeId", nativeQuery = true)
+        ExecutionTask findByGroupAndWorkflowNode(@Param("groupId") long groupId,
+                                                 @Param("nodeId") long nodeId);
 }
