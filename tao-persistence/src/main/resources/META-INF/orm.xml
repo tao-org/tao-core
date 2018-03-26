@@ -495,7 +495,7 @@
                 </collection-table>
             </element-collection>
 
-            <transient name="next"/>
+            <!--<transient name="next"/>-->
 
         </attributes>
     </entity>
@@ -520,9 +520,9 @@
                 </cascade>
             </many-to-many>
 
-            <transient name="taskSelector"/>
+            <!--<transient name="taskSelector"/>
             <transient name="internalStateHandler"/>
-            <transient name="next"/>
+            <transient name="next"/>-->
 
         </attributes>
     </entity>
@@ -558,8 +558,8 @@
 
             <one-to-many name="tasks" fetch="EAGER" mapped-by="job" />
 
-            <transient name="nextTask"/>
-            <transient name="taskSelector"/>
+            <!--<transient name="nextTask"/>
+            <transient name="taskSelector"/>-->
         </attributes>
     </entity>
 

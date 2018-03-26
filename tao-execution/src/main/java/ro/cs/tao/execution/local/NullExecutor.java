@@ -21,33 +21,41 @@ import ro.cs.tao.execution.Executor;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class NullExecutor extends Executor {
     private static final int MAX = 3;
-    private Map<ExecutionTask, Integer> counters = new HashMap<>();
-    private List<ExecutionTask> tasks = new ArrayList<>();
+    private final Map<ExecutionTask, Integer> counters = new HashMap<>();
+    private final List<ExecutionTask> tasks = new ArrayList<>();
 
     @Override
     public void execute(ExecutionTask task) throws ExecutionException {
         task.setResourceId(UUID.randomUUID().toString());
-        tasks.add(task);
-        counters.put(task, 0);
+        synchronized (tasks) {
+            tasks.add(task);
+            counters.put(task, 0);
+        }
+        task.setStartTime(LocalDateTime.now());
         changeTaskStatus(task, ExecutionStatus.QUEUED_ACTIVE);
     }
 
     @Override
     public void stop(ExecutionTask task) throws ExecutionException {
-        tasks.remove(task);
-        counters.remove(task);
+        synchronized (tasks) {
+            tasks.remove(task);
+            counters.remove(task);
+        }
         markTaskFinished(task, ExecutionStatus.CANCELLED);
     }
 
     @Override
     public void suspend(ExecutionTask task) throws ExecutionException {
-        tasks.remove(task);
-        counters.remove(task);
+        synchronized (tasks) {
+            tasks.remove(task);
+            counters.remove(task);
+        }
         markTaskFinished(task, ExecutionStatus.SUSPENDED);
     }
 
@@ -64,20 +72,22 @@ public class NullExecutor extends Executor {
     @Override
     public void monitorExecutions() throws ExecutionException {
         if (tasks != null) {
-            tasks.stream().filter(t -> t.getExecutionStatus() == ExecutionStatus.RUNNING)
-                    .forEach(t -> counters.put(t, counters.get(t) + 1));
-            tasks.stream()
-                    .filter(t -> t.getExecutionStatus() == ExecutionStatus.QUEUED_ACTIVE)
-                    .findFirst().ifPresent(task -> {
-                        changeTaskStatus(task, ExecutionStatus.RUNNING);
-            });
-            List<Map.Entry<ExecutionTask, Integer>> toTerminate =
-                    counters.entrySet().stream().filter(e -> e.getValue() == MAX).collect(Collectors.toList());
-            for (Map.Entry<ExecutionTask, Integer> entry : toTerminate) {
-                ExecutionTask task = entry.getKey();
-                counters.remove(task);
-                tasks.remove(task);
-                markTaskFinished(task, ExecutionStatus.DONE);
+            synchronized (tasks) {
+                tasks.stream().filter(t -> t.getExecutionStatus() == ExecutionStatus.RUNNING)
+                        .forEach(t -> counters.put(t, counters.get(t) + 1));
+                tasks.stream()
+                        .filter(t -> t.getExecutionStatus() == ExecutionStatus.QUEUED_ACTIVE)
+                        .findFirst().ifPresent(task -> {
+                    changeTaskStatus(task, ExecutionStatus.RUNNING);
+                });
+                List<Map.Entry<ExecutionTask, Integer>> toTerminate =
+                        counters.entrySet().stream().filter(e -> e.getValue() == MAX).collect(Collectors.toList());
+                for (Map.Entry<ExecutionTask, Integer> entry : toTerminate) {
+                    ExecutionTask task = entry.getKey();
+                    counters.remove(task);
+                    tasks.remove(task);
+                    markTaskFinished(task, ExecutionStatus.DONE);
+                }
             }
         }
     }

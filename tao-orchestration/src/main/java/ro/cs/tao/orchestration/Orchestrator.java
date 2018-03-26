@@ -24,9 +24,9 @@ import ro.cs.tao.messaging.Notifiable;
 import ro.cs.tao.messaging.Topics;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.serialization.BaseSerializer;
 import ro.cs.tao.serialization.MediaType;
 import ro.cs.tao.serialization.SerializationException;
-import ro.cs.tao.serialization.Serializer;
 import ro.cs.tao.serialization.SerializerFactory;
 import ro.cs.tao.workflow.ParameterValue;
 import ro.cs.tao.workflow.WorkflowDescriptor;
@@ -49,12 +49,18 @@ public class Orchestrator extends Notifiable {
         instance = new Orchestrator();
     }
 
-    public static final Orchestrator getInstance() { return instance; }
+    public static Orchestrator getInstance() { return instance; }
 
     private final Logger logger = Logger.getLogger(Orchestrator.class.getSimpleName());
     private PersistenceManager persistenceManager;
+    private final TaskSelector<ExecutionGroup> groupTaskSelector;
+    private final TaskSelector<ExecutionJob> jobTaskSelector;
+    private final LoopStateHandler groupInternalStateHandler;
 
     private Orchestrator() {
+        this.groupTaskSelector = new DefaultGroupTaskSelector();
+        this.jobTaskSelector = new DefaultJobTaskSelector();
+        this.groupInternalStateHandler = new LoopStateHandler();
         subscribe(Topics.TASK_STATUS_CHANGED);
     }
 
@@ -78,7 +84,6 @@ public class Orchestrator extends Notifiable {
                 WorkflowDescriptor descriptor = persistenceManager.getWorkflowDescriptor(workflowId);
                 job = create(descriptor);
             }
-            job.setTaskSelector(new DefaultJobTaskSelector());
             JobCommand.START.applyTo(job);
         } catch (PersistenceException e) {
             logger.severe(e.getMessage());
@@ -120,15 +125,11 @@ public class Orchestrator extends Notifiable {
     }
 
     private ExecutionJob checkWorkflow(long workflowId) {
-        try {
-            ExecutionJob job = persistenceManager.getJob(workflowId);
-            if (job == null) {
-                throw new ExecutionException(String.format("No job exists for workflow %s", workflowId));
-            }
-            return job;
-        } catch (PersistenceException pex) {
-            throw new ExecutionException(pex);
+        ExecutionJob job = persistenceManager.getJob(workflowId);
+        if (job == null) {
+            throw new ExecutionException(String.format("No job exists for workflow %s", workflowId));
         }
+        return job;
     }
 
     private ExecutionJob create(WorkflowDescriptor workflow) throws PersistenceException {
@@ -145,6 +146,7 @@ public class Orchestrator extends Notifiable {
                 ExecutionTask task = createTask(node);
                 //job.addTask(task);
                 persistenceManager.saveExecutionTask(task, job);
+                System.out.println("Created task for node " + node.getId());
             }
             //persistenceManager.updateExecutionJob(job);
         }
@@ -158,23 +160,7 @@ public class Orchestrator extends Notifiable {
             ExecutionTask task = createTask(node);
             group.addTask(task);
         }
-        group.setTaskSelector(new DefaultGroupTaskSelector());
         group.setExecutionStatus(ExecutionStatus.UNDETERMINED);
-        group.setInternalStateHandler(s -> {
-            Integer nextState = null;
-            try {
-                Serializer<LoopState, String> serializer = SerializerFactory.create(LoopState.class, MediaType.JSON);
-                LoopState state = serializer.deserialize(new StreamSource(group.getInternalState()));
-                if (state != null && state.getCurrent() <= state.getLimit()) {
-                    return state.getCurrent() + 1;
-                } else {
-                    return null;
-                }
-            } catch (SerializationException e) {
-                e.printStackTrace();
-            }
-            return nextState;
-        });
         return group;
     }
 
@@ -218,23 +204,13 @@ public class Orchestrator extends Notifiable {
         try {
             String taskId = message.getItem(Message.SOURCE_KEY);
             ExecutionStatus status = ExecutionStatus.getEnumConstantByValue(Integer.parseInt(message.getItem(Message.PAYLOAD_KEY)));
+            ExecutionTask task = persistenceManager.getTaskById(Long.parseLong(taskId));
             logger.fine(String.format("Received status change for task %s: %s", taskId, status));
-            System.out.println(String.format("Received status change for task %s: %s", taskId, status));
-            long id = Long.parseLong(taskId);
-            ExecutionTask task = persistenceManager.getTaskById(id);
-            task.changeStatus(status);
-            persistenceManager.updateExecutionTask(task);
-            //ExecutionJob job = task.getJob();
-            /*job.getTasks().forEach(t -> {
-                try {
-                    persistenceManager.updateExecutionTask(t);
-                } catch (PersistenceException e) {
-                    logger.severe(e.getMessage());
-                }
-            });*/
+            System.out.println(String.format("Received status change for task %s [node %s]: %s", taskId, task.getWorkflowNodeId(), status));
+            statusChanged(task);
             persistenceManager.updateExecutionJob(task.getJob());
             if (status == ExecutionStatus.DONE) {
-                ExecutionTask nextTask = task.getNext();
+                ExecutionTask nextTask = getNext(task);
                 if (nextTask != null) {
                     TaskCommand.START.applyTo(nextTask);
                 }
@@ -242,5 +218,137 @@ public class Orchestrator extends Notifiable {
         } catch (PersistenceException e) {
             logger.severe(e.getMessage());
         }
+    }
+
+    private void statusChanged(ExecutionTask task) {
+        ExecutionGroup groupTask = (ExecutionGroup) task.getGroupTask();
+        if (groupTask != null) {
+            notifyGroupStatusChanged(groupTask, task);
+        } else {
+            notifytJobStatusChanged(persistenceManager.getJobById(task.getJob().getId()), task);
+        }
+    }
+
+    private void notifyGroupStatusChanged(ExecutionGroup groupTask, ExecutionTask task) {
+        ExecutionStatus groupStatus = groupTask.getExecutionStatus();
+        List<ExecutionTask> tasks = groupTask.getTasks();
+        ExecutionStatus taskStatus = task.getExecutionStatus();
+        switch (taskStatus) {
+            case SUSPENDED:
+            case CANCELLED:
+            case FAILED:
+                bulkSetStatus(groupTask, task, taskStatus);
+                groupTask.setExecutionStatus(taskStatus);
+                break;
+            case DONE:
+                // If the task is the last one of this group
+                if (tasks.get(tasks.size() - 1).getId().equals(task.getId())) {
+                    Integer nextState = this.groupInternalStateHandler.apply(groupTask.getInternalState());
+                    if (nextState != null) {
+                        bulkSetStatus(groupTask, null, ExecutionStatus.UNDETERMINED);
+                        groupTask.setExecutionStatus(ExecutionStatus.UNDETERMINED);
+                        try {
+                            BaseSerializer<LoopState> serializer = SerializerFactory.create(LoopState.class, MediaType.JSON);
+                            LoopState current = serializer.deserialize(new StreamSource(groupTask.getInternalState()));
+                            current.setCurrent(nextState);
+                            groupTask.setInternalState(serializer.serialize(current));
+                        } catch (SerializationException e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        groupTask.setExecutionStatus(ExecutionStatus.DONE);
+                    }
+                }
+                break;
+            default:
+                // do nothing for other states
+                break;
+        }
+        if (groupStatus != null && groupStatus != groupTask.getExecutionStatus()) {
+            notifytJobStatusChanged(groupTask.getJob(), groupTask);
+        }
+    }
+
+    private void notifytJobStatusChanged(ExecutionJob job, ExecutionTask changedTask) {
+        ExecutionStatus taskStatus = changedTask.getExecutionStatus();
+        try {
+            switch (taskStatus) {
+                case SUSPENDED:
+                case CANCELLED:
+                case FAILED:
+                    bulkSetStatus(job, changedTask, taskStatus);
+                    job.setExecutionStatus(taskStatus);
+                    persistenceManager.updateExecutionJob(job);
+                    break;
+                case RUNNING:
+                    ExecutionStatus jobStatus = job.getExecutionStatus();
+                    if (jobStatus == ExecutionStatus.QUEUED_ACTIVE || jobStatus == ExecutionStatus.UNDETERMINED) {
+                        job.setExecutionStatus(ExecutionStatus.RUNNING);
+                        persistenceManager.updateExecutionJob(job);
+                    }
+                case DONE:
+                    List<ExecutionTask> tasks = job.orderTasks();
+                    if (tasks.get(tasks.size() - 1).getId().equals(changedTask.getId())) {
+                        job.setExecutionStatus(ExecutionStatus.DONE);
+                        persistenceManager.updateExecutionJob(job);
+                    }
+                    break;
+                default:
+                    // do nothing for other states
+                    break;
+            }
+        } catch (PersistenceException pex) {
+            logger.severe(pex.getMessage());
+        }
+    }
+
+    private void bulkSetStatus(ExecutionGroup group, ExecutionTask firstExculde, ExecutionStatus status) {
+        List<ExecutionTask> tasks = group.getTasks();
+        if (tasks == null) {
+            return;
+        }
+        int idx = 0;
+        boolean found = false;
+        if (firstExculde == null) {
+            firstExculde = tasks.get(0);
+            firstExculde.setExecutionStatus(status);
+        }
+        while (idx < tasks.size()) {
+            if (!found) {
+                found = tasks.get(idx).getId().equals(firstExculde.getId());
+            } else {
+                tasks.get(idx).setExecutionStatus(status);
+            }
+            idx++;
+        }
+        if (!found) {
+            throw new IllegalArgumentException("Task not found");
+        }
+    }
+
+    private void bulkSetStatus(ExecutionJob job, ExecutionTask firstExculde, ExecutionStatus status) {
+        List<ExecutionTask> tasks = job.orderTasks();
+        if (tasks == null) {
+            return;
+        }
+        int idx = 0;
+        boolean found = false;
+        while (idx < tasks.size()) {
+            if (!found) {
+                found = tasks.get(idx).getId().equals(firstExculde.getId());
+            } else {
+                tasks.get(idx).setExecutionStatus(status);
+            }
+            idx++;
+        }
+        if (!found) {
+            throw new IllegalArgumentException("Task not found");
+        }
+    }
+
+    private ExecutionTask getNext(ExecutionTask task) {
+        ExecutionGroup groupTask = (ExecutionGroup) task.getGroupTask();
+        return groupTask != null ? this.groupTaskSelector.chooseNext(groupTask) :
+                this.jobTaskSelector.chooseNext(task.getJob());
     }
 }

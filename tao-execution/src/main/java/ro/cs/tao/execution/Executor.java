@@ -143,7 +143,7 @@ public abstract class Executor extends Identifiable {
                 task.setExecutionStatus(status);
                 persistenceManager.updateExecutionTask(task);
             } catch (PersistenceException e) {
-                e.printStackTrace();
+                logger.severe(e.getMessage());
             }
             Messaging.send(SystemPrincipal.instance(), Topics.TASK_STATUS_CHANGED, task.getId(), status.toString());
         }

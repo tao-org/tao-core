@@ -88,7 +88,7 @@ public class DrmaaTaoExecutor extends Executor {
 
             task.setResourceId(id);
             task.setStartTime(LocalDateTime.now());
-            task.changeStatus(ExecutionStatus.QUEUED_ACTIVE);
+            task.setExecutionStatus(ExecutionStatus.QUEUED_ACTIVE);
             persistenceManager.updateExecutionTask(task);
             logger.info("DrmaaExecutor: Succesfully submitted task with id " + id);
         } catch (DrmaaException | InternalException e) {
@@ -104,6 +104,7 @@ public class DrmaaTaoExecutor extends Executor {
     public void stop(ExecutionTask task)  throws ExecutionException {
         try {
             session.control(task.getResourceId(), Session.TERMINATE);
+            markTaskFinished(task, ExecutionStatus.CANCELLED);
         } catch (DrmaaException e) {
             throw new ExecutionException("Error executing DRMAA session terminate for task with id " + task.getResourceId(), e);
         }
@@ -123,7 +124,7 @@ public class DrmaaTaoExecutor extends Executor {
     public void resume(ExecutionTask task) throws ExecutionException {
         try {
             session.control(task.getResourceId(), Session.RESUME);
-            changeTaskStatus(task, ExecutionStatus.RUNNING);
+            changeTaskStatus(task, ExecutionStatus.QUEUED_ACTIVE);
         } catch (DrmaaException e) {
             throw new ExecutionException("Error executing DRMAA session resume for task with id " + task.getResourceId(), e);
         }

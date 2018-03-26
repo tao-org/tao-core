@@ -31,7 +31,7 @@ public class DefaultJobTaskSelector implements TaskSelector<ExecutionJob> {
     @Override
     public ExecutionTask chooseNext(ExecutionJob job) {
         ExecutionTask next = null;
-        List<ExecutionTask> tasks = job.getTasks();
+        List<ExecutionTask> tasks = job.orderTasks();
         if (tasks != null && tasks.size() > 0) {
             switch (job.getExecutionStatus()) {
                 // If the job is not started, we return the first task in line
