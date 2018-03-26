@@ -27,7 +27,7 @@ import ro.cs.tao.eodata.VectorData;
 import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.eodata.enums.PixelType;
 import ro.cs.tao.eodata.enums.SensorType;
-import ro.cs.tao.execution.model.Query;
+import ro.cs.tao.execution.model.*;
 import ro.cs.tao.messaging.Message;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.config.DatabaseConfiguration;
@@ -813,109 +813,6 @@ public class PersistenceManagerTest {
     }
 
 
-    /**@Test
-    public void TC_20_save_new_execution_job()
-    {
-        logger.info("TC_20_save_new_execution_job");
-        try
-        {
-            // add a new job for test
-            ExecutionJob job = new ExecutionJob();
-            job.setExecutionStatus(ExecutionStatus.UNDETERMINED);
-
-            job = persistenceManager.saveExecutionJob(job);
-            // check persisted job
-            Assert.assertTrue(job != null && job.getId() != 0);
-        }
-        catch (PersistenceException e)
-        {
-            logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
-        }
-    }
-
-    @Test
-    public void TC_21_save_new_execution_task()
-    {
-        logger.info("TC_21_save_new_execution_task");
-        try
-        {
-            // retrieve one existing job, for test
-            List<ExecutionJob> jobs = persistenceManager.getAllJobs();
-            // retrieve processing components
-            List<ProcessingComponent> components = persistenceManager.getProcessingComponents();
-            // retrieve execution nodes
-            List<NodeDescription> nodes = persistenceManager.getNodes();
-
-            if(jobs != null && jobs.size() > 0 &&
-              components != null && components.size() > 0 &&
-              nodes != null && nodes.size() > 0)
-            {
-                // retrieve first job
-                ExecutionJob job = jobs.get(0);
-                // retrieve first component
-                ProcessingComponent component = components.get(0);
-
-                NodeDescription node = nodes.get(0);
-
-                // add a new task for test
-                ExecutionTask task = new ExecutionTask();
-                task.setResourceId("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
-                task.setExecutionStatus(ExecutionStatus.RUNNING);
-                task.setExecutionNodeHostName(node.getHostName());
-                task.setComponent(component);
-
-                List<Variable> inputsValues = new ArrayList<>();
-                Variable input1 = new Variable();
-                input1.setKey("input1");
-                input1.setValue("val1");
-                inputsValues.add(input1);
-
-                Variable input2 = new Variable();
-                input2.setKey("input2");
-                input2.setValue("val2");
-                inputsValues.add(input2);
-
-                task.setInputParameterValues(inputsValues);
-
-                task = persistenceManager.saveExecutionTask(task, job);
-                // check persisted task
-                Assert.assertTrue(task != null && task.getId() != 0);
-                // check if job correctly updated
-                Assert.assertTrue(job.getTasks().contains(task));
-            }
-        }
-        catch (PersistenceException e)
-        {
-            logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
-        }
-    }
-
-    @Test
-    public void TC_22_get_running_execution_tasks()
-    {
-        logger.info("TC_22_get_running_execution_tasks");
-        try
-        {
-            // retrieve running tasks
-            List<ExecutionTask> tasks = persistenceManager.getRunningTasks();
-
-            Assert.assertTrue(tasks != null && tasks.size() > 0);
-
-            for(ExecutionTask task: tasks)
-            {
-                logger.info("Running task: " + task.getResourceId());
-            }
-
-        }
-        catch (Exception e)
-        {
-            logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
-        }
-    }**/
-
     @Test
     public void TC_23_save_new_data_products()
     {
@@ -1521,6 +1418,261 @@ public class PersistenceManagerTest {
             Assert.assertTrue(query != null && query.getId() != null);
         }
         catch (PersistenceException e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void TC_36_save_new_execution_job()
+    {
+        logger.info("TC_36_save_new_execution_job");
+        try
+        {
+            // add a new job for test
+            ExecutionJob job = new ExecutionJob();
+            job.setExecutionStatus(ExecutionStatus.UNDETERMINED);
+            job.setWorkflowId(1L);
+            job.setUserName("admin");
+
+            job = persistenceManager.saveExecutionJob(job);
+            // check persisted job
+            Assert.assertTrue(job != null && job.getId() != 0);
+        }
+        catch (PersistenceException e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void TC_37_save_new_processing_execution_task()
+    {
+        logger.info("TC_37_save_new_execution_task");
+        try
+        {
+            // retrieve one existing job, for test
+            List<ExecutionJob> jobs = persistenceManager.getAllJobs();
+            // retrieve processing components
+            List<ProcessingComponent> components = persistenceManager.getProcessingComponents();
+            // retrieve execution nodes
+            List<NodeDescription> nodes = persistenceManager.getNodes();
+
+            if(jobs != null && jobs.size() > 0 &&
+              components != null && components.size() > 0 &&
+              nodes != null && nodes.size() > 0)
+            {
+                // retrieve first job
+                ExecutionJob job = jobs.get(0);
+                // retrieve first component
+                ProcessingComponent component = components.get(0);
+
+                NodeDescription node = nodes.get(0);
+
+                // add a new task for test
+                ExecutionTask task = new ProcessingExecutionTask();
+                task.setResourceId("ProcessingExecutionTask-resourceId01");
+                task.setExecutionStatus(ExecutionStatus.RUNNING);
+                task.setExecutionNodeHostName(node.getHostName());
+                task.setComponent(component);
+                task.setWorkflowNodeId(persistenceManager.getWorkflowDescriptor(job.getWorkflowId()).getNodes().get(0).getId());
+
+                List<Variable> inputsValues = new ArrayList<>();
+                Variable input1 = new Variable();
+                input1.setKey("input1");
+                input1.setValue("val1");
+                inputsValues.add(input1);
+
+                Variable input2 = new Variable();
+                input2.setKey("input2");
+                input2.setValue("val2");
+                inputsValues.add(input2);
+
+                task.setInputParameterValues(inputsValues);
+
+                task = persistenceManager.saveExecutionTask(task, job);
+                // check persisted task
+                Assert.assertTrue(task != null && task.getId() != 0);
+                // check if job correctly updated
+                Assert.assertTrue(job.getTasks().contains(task));
+            }
+        }
+        catch (PersistenceException e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void TC_38_save_new_data_source_query_execution_task()
+    {
+        logger.info("TC_38_save_new_data_source_query_execution_task");
+        try
+        {
+            // retrieve one existing job, for test
+            List<ExecutionJob> jobs = persistenceManager.getAllJobs();
+            // retrieve data sources components
+            List<DataSourceComponent> components = persistenceManager.getDataSourceComponents();
+            // retrieve execution nodes
+            List<NodeDescription> nodes = persistenceManager.getNodes();
+
+            if(jobs != null && jobs.size() > 0 &&
+              components != null && components.size() > 0 &&
+              nodes != null && nodes.size() > 0)
+            {
+                // retrieve first job
+                ExecutionJob job = jobs.get(0);
+                // retrieve first component
+                DataSourceComponent component = components.get(0);
+
+                NodeDescription node = nodes.get(0);
+
+                // add a new task for test
+                ExecutionTask task = new DataSourceExecutionTask();
+                task.setResourceId("DataSourceExecutionTask-resourceId01");
+                task.setExecutionStatus(ExecutionStatus.RUNNING);
+                task.setExecutionNodeHostName(node.getHostName());
+                task.setComponent(component);
+                task.setWorkflowNodeId(persistenceManager.getWorkflowDescriptor(job.getWorkflowId()).getNodes().get(0).getId());
+
+                List<Variable> inputsValues = new ArrayList<>();
+                Variable input1 = new Variable();
+                input1.setKey("input1");
+                input1.setValue("val1");
+                inputsValues.add(input1);
+
+                Variable input2 = new Variable();
+                input2.setKey("input2");
+                input2.setValue("val2");
+                inputsValues.add(input2);
+
+                task.setInputParameterValues(inputsValues);
+
+                task = persistenceManager.saveExecutionTask(task, job);
+                // check persisted task
+                Assert.assertTrue(task != null && task.getId() != 0);
+                // check if job correctly updated
+                Assert.assertTrue(job.getTasks().contains(task));
+            }
+        }
+        catch (PersistenceException e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    /*@Test
+    public void TC_39_save_new_group_execution_task()
+    {
+        logger.info("TC_39_save_new_group_execution_task");
+        try
+        {
+            // retrieve one existing job, for test
+            List<ExecutionJob> jobs = persistenceManager.getAllJobs();
+            // retrieve data sources components
+            List<DataSourceComponent> dataSourceComponents = persistenceManager.getDataSourceComponents();
+            // retrieve also processing components
+            List<ProcessingComponent> processingComponents = persistenceManager.getProcessingComponents();
+            // retrieve execution nodes
+            List<NodeDescription> nodes = persistenceManager.getNodes();
+
+            if(jobs != null && jobs.size() > 0 &&
+              dataSourceComponents != null && dataSourceComponents.size() > 0 &&
+              processingComponents != null && processingComponents.size() > 0 &&
+              nodes != null && nodes.size() > 0)
+            {
+                // retrieve first job
+                ExecutionJob job = jobs.get(0);
+                // retrieve first component
+                DataSourceComponent dataSourceComponent = dataSourceComponents.get(0);
+                ProcessingComponent processingComponent = processingComponents.get(0);
+
+                NodeDescription node = nodes.get(0);
+
+                // add a new processing task for test
+                ExecutionTask processingTask = new ProcessingExecutionTask();
+                processingTask.setResourceId("ProcessingExecutionTask-resourceId02");
+                processingTask.setExecutionStatus(ExecutionStatus.RUNNING);
+                processingTask.setExecutionNodeHostName(node.getHostName());
+                processingTask.setComponent(processingComponent);
+                processingTask.setWorkflowNodeId(persistenceManager.getWorkflowDescriptor(job.getWorkflowId()).getNodes().get(0).getId());
+
+                List<Variable> inputsValues = new ArrayList<>();
+                Variable input1 = new Variable();
+                input1.setKey("input1");
+                input1.setValue("val1");
+                inputsValues.add(input1);
+
+                Variable input2 = new Variable();
+                input2.setKey("input2");
+                input2.setValue("val2");
+                inputsValues.add(input2);
+
+                processingTask.setInputParameterValues(inputsValues);
+
+
+                // add a new data source task for test
+                ExecutionTask dataSourceTask = new DataSourceExecutionTask();
+                dataSourceTask.setResourceId("DataSourceExecutionTask-resourceId02");
+                dataSourceTask.setExecutionStatus(ExecutionStatus.RUNNING);
+                dataSourceTask.setExecutionNodeHostName(node.getHostName());
+                dataSourceTask.setComponent(dataSourceComponent);
+                dataSourceTask.setWorkflowNodeId(persistenceManager.getWorkflowDescriptor(job.getWorkflowId()).getNodes().get(0).getId());
+
+                dataSourceTask.setInputParameterValues(inputsValues);
+
+
+                // make a ExecutionGroup from the 2 tasks
+                ExecutionGroup taskGroup = new ExecutionGroup();
+                taskGroup.setResourceId("ExecutionGroup-resourceId01");
+                taskGroup.setExecutionStatus(ExecutionStatus.RUNNING);
+                taskGroup.setExecutionNodeHostName(node.getHostName());
+                taskGroup.setComponent(processingComponent);
+                taskGroup.setWorkflowNodeId(persistenceManager.getWorkflowDescriptor(job.getWorkflowId()).getNodes().get(0).getId());
+
+                // TODO sort it out
+                /*
+                taskGroup.addTask(processingTask);
+                taskGroup.addTask(dataSourceTask);
+                */
+
+
+                /*ExecutionTask taskGroupSaved = persistenceManager.saveExecutionTask(taskGroup, job);
+                // check persisted task group
+                Assert.assertTrue(taskGroupSaved != null && taskGroupSaved.getId() != 0);
+                // check if job correctly updated
+                Assert.assertTrue(job.getTasks().contains(taskGroupSaved));
+            }
+        }
+        catch (PersistenceException e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }*/
+
+    @Test
+    public void TC_40_get_running_execution_tasks()
+    {
+        logger.info("TC_40_get_running_execution_tasks");
+        try
+        {
+            // retrieve running tasks
+            List<ExecutionTask> tasks = persistenceManager.getRunningTasks();
+
+            Assert.assertTrue(tasks != null && tasks.size() > 0);
+
+            for(ExecutionTask task: tasks)
+            {
+                logger.info("Running task: " + task.getResourceId());
+            }
+
+        }
+        catch (Exception e)
         {
             logger.error(ExceptionUtils.getStackTrace(e));
             Assert.fail(e.getMessage());
