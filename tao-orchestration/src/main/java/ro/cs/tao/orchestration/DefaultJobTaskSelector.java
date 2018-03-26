@@ -20,23 +20,37 @@ import ro.cs.tao.execution.model.ExecutionJob;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.execution.model.TaskSelector;
+import ro.cs.tao.persistence.PersistenceManager;
+import ro.cs.tao.workflow.WorkflowDescriptor;
+import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * Default implementation for choosing the next task to be executed from a job.
  */
 public class DefaultJobTaskSelector implements TaskSelector<ExecutionJob> {
 
+    private final PersistenceManager persistenceManager;
+    private final Logger logger = Logger.getLogger(DefaultJobTaskSelector.class.getName());
+
+    DefaultJobTaskSelector(PersistenceManager persistenceManager) {
+        this.persistenceManager = persistenceManager;
+    }
+
     @Override
-    public ExecutionTask chooseNext(ExecutionJob job) {
-        ExecutionTask next = null;
+    public List<ExecutionTask> chooseNext(ExecutionJob job, ExecutionTask currentTask) {
+        List<ExecutionTask> next = null;
         List<ExecutionTask> tasks = job.orderTasks();
         if (tasks != null && tasks.size() > 0) {
+            next = new ArrayList<>();
             switch (job.getExecutionStatus()) {
                 // If the job is not started, we return the first task in line
                 case UNDETERMINED:
-                    next = tasks.get(0);
+                    next.add(tasks.get(0));
                     break;
                 // If the job is already queued for execution,
                 // there should be already at least one task queued for execution, so we don't return another one
@@ -44,15 +58,19 @@ public class DefaultJobTaskSelector implements TaskSelector<ExecutionJob> {
                     break;
                 // If the job is suspended, return the first task that was suspended
                 case SUSPENDED:
-                    next = tasks.stream()
-                            .filter(t -> t.getExecutionStatus() == ExecutionStatus.SUSPENDED)
-                            .findFirst().orElse(null);
+                    next.add(tasks.stream()
+                                  .filter(t -> t.getExecutionStatus() == ExecutionStatus.SUSPENDED)
+                                  .findFirst().orElse(null));
                     break;
                 // If the job is running, return the first task that is not started
                 case RUNNING:
-                    next = tasks.stream()
+                    /*next = tasks.stream()
                             .filter(t -> t.getExecutionStatus() == ExecutionStatus.UNDETERMINED)
-                            .findFirst().orElse(null);
+                            .findFirst().orElse(null);*/
+                    List<ExecutionTask> candidates = getCandidatesForExecution(job, currentTask);
+                    if (candidates != null) {
+                        next.addAll(candidates);
+                    }
                     break;
                 // If the job was cancelled, or failed, or completed its execution, do nothing
                 case DONE:
@@ -63,5 +81,32 @@ public class DefaultJobTaskSelector implements TaskSelector<ExecutionJob> {
             }
         }
         return next;
+    }
+
+    private List<ExecutionTask> getCandidatesForExecution(ExecutionJob job, ExecutionTask task) {
+        if (task == null || task.getExecutionStatus() != ExecutionStatus.DONE) {
+            return null;
+        }
+        WorkflowNodeDescriptor workflowNode = persistenceManager.getWorkflowNodeById(task.getWorkflowNodeId());
+        if (workflowNode == null) {
+            logger.severe(String.format("No workflow node with id %s was found in the database", task.getWorkflowNodeId()));
+            return null;
+        }
+        WorkflowDescriptor workflow = workflowNode.getWorkflow();
+        List<WorkflowNodeDescriptor> childNodes = workflow.findChildren(workflow.getNodes(), workflowNode);
+        if (childNodes == null || childNodes.size() == 0) {
+            return null;
+        }
+        return childNodes.stream().filter(n ->
+                n.getIncomingLinks().stream().allMatch(link -> {
+                    List<WorkflowNodeDescriptor> parents =
+                            persistenceManager.getWorkflowNodesByComponentId(workflow.getId(),link.getInput().getParentId());
+                    return parents.stream().allMatch(p -> {
+                        ExecutionTask taskByNode = persistenceManager.getTaskByJobAndNode(job.getId(), p.getId());
+                        return taskByNode != null && taskByNode.getExecutionStatus() == ExecutionStatus.DONE;
+                    });
+                }))
+                .map(n -> persistenceManager.getTaskByJobAndNode(job.getId(), n.getId()))
+                .collect(Collectors.toList());
     }
 }

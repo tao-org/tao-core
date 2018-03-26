@@ -39,6 +39,7 @@ import javax.xml.transform.stream.StreamSource;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * @author Cosmin Cara
@@ -55,13 +56,11 @@ public class Orchestrator extends Notifiable {
 
     private final Logger logger = Logger.getLogger(Orchestrator.class.getSimpleName());
     private PersistenceManager persistenceManager;
-    private final TaskSelector<ExecutionGroup> groupTaskSelector;
-    private final TaskSelector<ExecutionJob> jobTaskSelector;
+    private TaskSelector<ExecutionGroup> groupTaskSelector;
+    private TaskSelector<ExecutionJob> jobTaskSelector;
     private final LoopStateHandler groupInternalStateHandler;
 
     private Orchestrator() {
-        this.groupTaskSelector = new DefaultGroupTaskSelector();
-        this.jobTaskSelector = new DefaultJobTaskSelector();
         this.groupInternalStateHandler = new LoopStateHandler();
         subscribe(Topics.TASK_STATUS_CHANGED);
     }
@@ -70,6 +69,8 @@ public class Orchestrator extends Notifiable {
         this.persistenceManager = persistenceManager;
         JobCommand.setPersistenceManager(persistenceManager);
         TaskCommand.setPersistenceManager(persistenceManager);
+        this.groupTaskSelector = new DefaultGroupTaskSelector(this.persistenceManager);
+        this.jobTaskSelector = new DefaultJobTaskSelector(this.persistenceManager);
     }
 
     /**
@@ -146,8 +147,9 @@ public class Orchestrator extends Notifiable {
             List<WorkflowNodeDescriptor> nodes = workflow.getOrderedNodes();
             for (WorkflowNodeDescriptor node : nodes) {
                 ExecutionTask task = createTask(node);
+                task.setLevel(node.getLevel());
                 persistenceManager.saveExecutionTask(task, job);
-                System.out.println("Created task for node " + node.getId());
+                System.out.println(String.format("Created task for node %s [level %s]", node.getId(), task.getLevel()));
             }
         }
         return job;
@@ -207,16 +209,25 @@ public class Orchestrator extends Notifiable {
             String taskId = message.getItem(Message.SOURCE_KEY);
             ExecutionStatus status = ExecutionStatus.getEnumConstantByValue(Integer.parseInt(message.getItem(Message.PAYLOAD_KEY)));
             ExecutionTask task = persistenceManager.getTaskById(Long.parseLong(taskId));
-            logger.fine(String.format("Received status change for task %s: %s", taskId, status));
-            System.out.println(String.format("Received status change for task %s [node %s]: %s", taskId, task.getWorkflowNodeId(), status));
+            logger.fine(String.format("Status change for task %s: %s", taskId, status));
+            System.out.println(String.format("Status change for task %s [node %s]: %s", taskId, task.getWorkflowNodeId(), status.name()));
             statusChanged(task);
             persistenceManager.updateExecutionJob(task.getJob());
             if (status == ExecutionStatus.DONE) {
-                ExecutionTask nextTask = getNext(task);
-                if (nextTask != null) {
-                    TaskCommand.START.applyTo(nextTask);
+                List<ExecutionTask> nextTasks = getNext(task);
+                if (nextTasks != null && nextTasks.size() > 0) {
+                    System.out.println(String.format("Has %s next tasks", nextTasks.size()));
+                    for (ExecutionTask nextTask : nextTasks) {
+                        if (nextTask != null) {
+                            TaskCommand.START.applyTo(nextTask);
+                        }
+                    }
+                } else {
+                    logger.fine("No more child tasks to execute after the current task");
+                    System.out.println(String.format("No more child tasks to execute after the current task"));
                 }
             }
+            System.out.println("Job status: " + task.getJob().getExecutionStatus().name());
         } catch (PersistenceException e) {
             logger.severe(e.getMessage());
         }
@@ -348,9 +359,37 @@ public class Orchestrator extends Notifiable {
         }
     }
 
-    private ExecutionTask getNext(ExecutionTask task) {
+    private List<ExecutionTask> getCandidates(ExecutionTask task) {
+        if (task == null || task.getExecutionStatus() != ExecutionStatus.DONE) {
+            return null;
+        }
+        WorkflowNodeDescriptor workflowNode = persistenceManager.getWorkflowNodeById(task.getWorkflowNodeId());
+        if (workflowNode == null) {
+            logger.severe(String.format("No workflow node with id %s was found in the database", task.getWorkflowNodeId()));
+            return null;
+        }
+        WorkflowDescriptor workflow = workflowNode.getWorkflow();
+        ExecutionJob job = task.getJob();
+        List<WorkflowNodeDescriptor> childNodes = workflow.findChildren(workflow.getNodes(), workflowNode);
+        if (childNodes == null || childNodes.size() == 0) {
+            return null;
+        }
+        return childNodes.stream().filter(n ->
+                n.getIncomingLinks().stream().allMatch(link -> {
+                    List<WorkflowNodeDescriptor> parents =
+                            persistenceManager.getWorkflowNodesByComponentId(workflow.getId(),link.getInput().getParentId());
+                    return parents.stream().allMatch(p -> {
+                        ExecutionTask taskByNode = persistenceManager.getTaskByJobAndNode(job.getId(), p.getId());
+                        return taskByNode != null && taskByNode.getExecutionStatus() == ExecutionStatus.DONE;
+                    });
+                }))
+                .map(n -> persistenceManager.getTaskByJobAndNode(job.getId(), n.getId()))
+                .collect(Collectors.toList());
+    }
+
+    private List<ExecutionTask> getNext(ExecutionTask task) {
         ExecutionGroup groupTask = (ExecutionGroup) task.getGroupTask();
-        return groupTask != null ? this.groupTaskSelector.chooseNext(groupTask) :
-                this.jobTaskSelector.chooseNext(task.getJob());
+        return groupTask != null ? this.groupTaskSelector.chooseNext(groupTask, task) :
+                this.jobTaskSelector.chooseNext(task.getJob(), task);
     }
 }

@@ -41,6 +41,8 @@ public interface NodeListOrderer {
         if (nodes != null) {
             List<WorkflowNodeDescriptor> newList = new ArrayList<>();
             WorkflowNodeDescriptor root = findRoot(nodes);
+            int level = 1;
+            root.setLevel(level);
             newList.add(root);
             Stack<WorkflowNodeDescriptor> stack = new Stack<>();
             stack.push(root);
@@ -66,10 +68,12 @@ public interface NodeListOrderer {
         if (masterList == null || masterList.size() == 0 || node == null) {
             return null;
         }
-        return masterList.stream().filter(n -> {
+        List<WorkflowNodeDescriptor> children = masterList.stream().filter(n -> {
             List<ComponentLink> links = n.getIncomingLinks();
             return links != null &&
                     links.stream().anyMatch(l -> node.getComponentId().equals(l.getInput().getParentId()));
         }).collect(Collectors.toList());
+        children.forEach(c -> c.setLevel(node.getLevel() + 1));
+        return children;
     }
 }

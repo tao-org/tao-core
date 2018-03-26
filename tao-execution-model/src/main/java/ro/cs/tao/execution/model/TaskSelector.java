@@ -16,11 +16,13 @@
 
 package ro.cs.tao.execution.model;
 
+import java.util.List;
+
 /**
  * Interface for implementors of task choosing algorithms
  *
  * @author Cosmin Cara
  */
 public interface TaskSelector<T> {
-    ExecutionTask chooseNext(T taskHolder);
+    List<ExecutionTask> chooseNext(T taskHolder, ExecutionTask currentTask);
 }
