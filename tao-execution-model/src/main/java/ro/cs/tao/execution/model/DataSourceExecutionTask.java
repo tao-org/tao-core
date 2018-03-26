@@ -15,12 +15,19 @@
  */
 package ro.cs.tao.execution.model;
 
+import ro.cs.tao.component.Variable;
+import ro.cs.tao.component.validation.ValidationException;
 import ro.cs.tao.datasource.DataSourceComponent;
+import ro.cs.tao.datasource.DataSourceManager;
+import ro.cs.tao.datasource.param.ParameterDescriptor;
+
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * @author Oana H.
  */
-public class DataSourceExecutionTask extends ExecutionTask<DataSourceComponent> {
+public class DataSourceExecutionTask extends ExecutionTask {
 
     private DataSourceComponent component;
 
@@ -28,19 +35,44 @@ public class DataSourceExecutionTask extends ExecutionTask<DataSourceComponent> 
         super();
     }
 
-    public DataSourceExecutionTask(DataSourceComponent component) {
+    /*public DataSourceExecutionTask(DataSourceComponent component) {
         super(component);
         this.component = component;
-    }
+    }*/
 
-    @Override
     public DataSourceComponent getComponent() {
         return component;
     }
 
-    @Override
     public void setComponent(DataSourceComponent component) {
-        super.setComponent(component);
+//        super.setComponent(component);
         this.component = component;
+    }
+
+    @Override
+    public void setParameterValue(String parameterId, String value) {
+        boolean descriptorExists = false;
+        Collection<ParameterDescriptor> descriptors =
+                DataSourceManager.getInstance().getSupportedParameters(component.getSensorName(),
+                        component.getDataSourceName()).values();
+        for (ro.cs.tao.datasource.param.ParameterDescriptor descriptor : descriptors) {
+            if (descriptor.getName().equalsIgnoreCase(parameterId)) {
+                descriptorExists = true;
+                break;
+            }
+        }
+        if (!descriptorExists) {
+            throw new ValidationException(String.format("The parameter ID [%s] does not exists in the component '%s'",
+                    parameterId, component.getLabel()));
+        }
+        if (this.inputParameterValues == null) {
+            this.inputParameterValues = new ArrayList<>();
+        }
+        this.inputParameterValues.add(new Variable(parameterId, value));
+    }
+
+    @Override
+    public String buildExecutionCommand() {
+        return null;
     }
 }

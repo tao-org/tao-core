@@ -28,8 +28,8 @@ import ro.cs.tao.datasource.param.QueryParameter;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.Executor;
+import ro.cs.tao.execution.model.DataSourceExecutionTask;
 import ro.cs.tao.execution.model.ExecutionStatus;
-import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.serialization.GenericAdapter;
 
 import java.lang.reflect.Array;
@@ -41,7 +41,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-public class QueryExecutor extends Executor {
+public class QueryExecutor extends Executor<DataSourceExecutionTask> {
 
     private ExecutorService backgroundWorker = Executors.newSingleThreadExecutor();
     private DataSourceComponent dataSourceComponent;
@@ -49,7 +49,7 @@ public class QueryExecutor extends Executor {
     public boolean supports(TaoComponent component) { return component instanceof DataSourceComponent; }
 
     @Override
-    public void execute(ExecutionTask task) throws ExecutionException {
+    public void execute(DataSourceExecutionTask task) throws ExecutionException {
         try {
             dataSourceComponent = (DataSourceComponent) task.getComponent();
             final Map<String, ParameterDescriptor> parameterDescriptorMap =
@@ -112,7 +112,7 @@ public class QueryExecutor extends Executor {
     }
 
     @Override
-    public void stop(ExecutionTask task) throws ExecutionException {
+    public void stop(DataSourceExecutionTask task) throws ExecutionException {
         if (dataSourceComponent == null || !dataSourceComponent.equals(task.getComponent())) {
             throw new ExecutionException("stop() called on different component");
         }
@@ -121,12 +121,12 @@ public class QueryExecutor extends Executor {
     }
 
     @Override
-    public void suspend(ExecutionTask task) throws ExecutionException {
+    public void suspend(DataSourceExecutionTask task) throws ExecutionException {
         throw new ExecutionException("suspend() not supported on data sources");
     }
 
     @Override
-    public void resume(ExecutionTask task) throws ExecutionException {
+    public void resume(DataSourceExecutionTask task) throws ExecutionException {
         throw new ExecutionException("resume() not supported on data sources");
     }
 

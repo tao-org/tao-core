@@ -16,7 +16,9 @@
 package ro.cs.tao.orchestration;
 
 import ro.cs.tao.component.ComponentLink;
+import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.TaoComponent;
+import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.messaging.Message;
@@ -144,11 +146,9 @@ public class Orchestrator extends Notifiable {
             List<WorkflowNodeDescriptor> nodes = workflow.getOrderedNodes();
             for (WorkflowNodeDescriptor node : nodes) {
                 ExecutionTask task = createTask(node);
-                //job.addTask(task);
                 persistenceManager.saveExecutionTask(task, job);
                 System.out.println("Created task for node " + node.getId());
             }
-            //persistenceManager.updateExecutionJob(job);
         }
         return job;
     }
@@ -169,22 +169,24 @@ public class Orchestrator extends Notifiable {
         if (workflowNode instanceof WorkflowNodeGroupDescriptor) {
             task = createGroup((WorkflowNodeGroupDescriptor) workflowNode);
         } else {
-            task = new ExecutionTask();
-            task.setWorkflowNodeId(workflowNode.getId());
             TaoComponent component;
             List<ParameterValue> customValues = workflowNode.getCustomValues();
             List<ComponentLink> links = workflowNode.getIncomingLinks();
             if (links != null) {
+                task = new ProcessingExecutionTask();
                 component = persistenceManager.getProcessingComponentById(workflowNode.getComponentId());
-                task.setComponent(component);
+                ((ProcessingExecutionTask) task).setComponent((ProcessingComponent) component);
                 links.forEach(link -> {
                     String name = link.getOutput().getName();
                     String value = link.getInput().getDataDescriptor().getLocation();
                     task.setParameterValue(name, value);
                 });
             } else {
+                task = new DataSourceExecutionTask();
                 component = persistenceManager.getDataSourceInstance(workflowNode.getComponentId());
+                ((DataSourceExecutionTask) task).setComponent((DataSourceComponent) component);
             }
+            task.setWorkflowNodeId(workflowNode.getId());
             if (customValues != null) {
                 for (ParameterValue customValue : customValues) {
                     task.setParameterValue(customValue.getParameterName(), customValue.getParameterValue());

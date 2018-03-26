@@ -15,7 +15,9 @@
  */
 package ro.cs.tao.execution;
 
+import ro.cs.tao.execution.model.DataSourceExecutionTask;
 import ro.cs.tao.execution.model.ExecutionTask;
+import ro.cs.tao.execution.model.ProcessingExecutionTask;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
 
@@ -60,9 +62,16 @@ public class ExecutionsManager {
     }
 
     private Executor getExecutor(ExecutionTask task) {
-        Optional<Executor> optional = services.stream()
-                .filter(x -> x.supports(task.getComponent()))
-                .findFirst();
+        Optional<Executor> optional;
+        if (task instanceof ProcessingExecutionTask) {
+            optional = services.stream()
+                    .filter(x -> x.supports(((ProcessingExecutionTask) task).getComponent()))
+                    .findFirst();
+        } else {
+            optional = services.stream()
+                    .filter(x -> x.supports(((DataSourceExecutionTask) task).getComponent()))
+                    .findFirst();
+        }
         if(optional.isPresent()) {
             return optional.get();
         } else {

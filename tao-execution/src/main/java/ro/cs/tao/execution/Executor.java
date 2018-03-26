@@ -35,8 +35,8 @@ import java.util.logging.Logger;
 /**
  * @author Cosmin Udroi
  */
-public abstract class Executor extends Identifiable {
-    private static final int TIMER_PERIOD = 5000;
+public abstract class Executor<T extends ExecutionTask> extends Identifiable {
+    private static final int TIMER_PERIOD = 3000;
     /* Flag for trying to close the monitoring thread in an elegant manner */
     protected Boolean isInitialized = false;
     protected final PersistenceManager persistenceManager = SpringContextBridge.services().getPersistenceManager();
@@ -99,7 +99,7 @@ public abstract class Executor extends Identifiable {
      *
      * @throws ExecutionException
      */
-    public abstract void execute(ExecutionTask task) throws ExecutionException;
+    public abstract void execute(T task) throws ExecutionException;
 
     /**
      * Tries to stop the given task.
@@ -107,7 +107,7 @@ public abstract class Executor extends Identifiable {
      *
      * @throws ExecutionException
      */
-    public abstract void stop(ExecutionTask task) throws ExecutionException;
+    public abstract void stop(T task) throws ExecutionException;
 
     /**
      * Tries to suspend the execution of a task.
@@ -115,7 +115,7 @@ public abstract class Executor extends Identifiable {
      *
      * @throws ExecutionException
      */
-    public abstract void suspend(ExecutionTask task) throws ExecutionException;
+    public abstract void suspend(T task) throws ExecutionException;
 
     /**
      * Tries to resume the execution of a task.
@@ -123,7 +123,7 @@ public abstract class Executor extends Identifiable {
      *
      * @throws ExecutionException
      */
-    public abstract void resume(ExecutionTask task) throws ExecutionException;
+    public abstract void resume(T task) throws ExecutionException;
 
     /**
      * Polls for the execution status of the tasks that were started.
@@ -151,15 +151,22 @@ public abstract class Executor extends Identifiable {
 
     protected class ExecutionsCheckTimer extends TimerTask {
         private final Executor executor;
+        private boolean inProgress;
         ExecutionsCheckTimer(Executor executor) {
             this.executor = executor;
+            this.inProgress = false;
         }
         @Override
         public void run() {
             try {
-                executor.monitorExecutions();
+                if (!this.inProgress) {
+                    this.inProgress = true;
+                    executor.monitorExecutions();
+                }
             } catch (ExecutionException e) {
                 logger.severe("Error during monitoring executions: " + e.getMessage());
+            } finally {
+                this.inProgress = false;
             }
 
         }

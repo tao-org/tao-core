@@ -15,7 +15,6 @@
  */
 package ro.cs.tao.execution.model;
 
-import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.component.Variable;
 
 import javax.xml.bind.annotation.XmlTransient;
@@ -26,7 +25,7 @@ import java.util.List;
 /**
  * @author Cosmin Cara
  */
-public class ExecutionGroup<T extends TaoComponent> extends ExecutionTask<T> {
+public class ExecutionGroup extends ExecutionTask {
 
     private List<ExecutionTask> tasks;
 
@@ -36,13 +35,9 @@ public class ExecutionGroup<T extends TaoComponent> extends ExecutionTask<T> {
 
     public ExecutionGroup() { }
 
-    public ExecutionGroup(T processingComponent) {
-        throw new IllegalArgumentException("Cannot assign a component to a task group");
-    }
-
     @Override
     public void setParameterValue(String parameterId, String value) {
-        super.setParameterValue(parameterId, value);
+        //super.setParameterValue(parameterId, value);
         if (this.tasks != null && this.tasks.size() > 0) {
             this.tasks.get(0).setParameterValue(parameterId, value);
         }
