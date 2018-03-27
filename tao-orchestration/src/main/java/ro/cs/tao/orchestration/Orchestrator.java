@@ -15,31 +15,24 @@
  */
 package ro.cs.tao.orchestration;
 
-import ro.cs.tao.component.ComponentLink;
-import ro.cs.tao.component.ProcessingComponent;
-import ro.cs.tao.component.TaoComponent;
-import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.Notifiable;
 import ro.cs.tao.messaging.Topics;
+import ro.cs.tao.orchestration.commands.JobCommand;
+import ro.cs.tao.orchestration.commands.TaskCommand;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.serialization.BaseSerializer;
 import ro.cs.tao.serialization.MediaType;
 import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.serialization.SerializerFactory;
-import ro.cs.tao.workflow.ParameterValue;
 import ro.cs.tao.workflow.WorkflowDescriptor;
-import ro.cs.tao.workflow.WorkflowNodeDescriptor;
-import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
 
 import javax.xml.transform.stream.StreamSource;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 /**
  * @author Cosmin Cara
@@ -58,6 +51,7 @@ public class Orchestrator extends Notifiable {
     private PersistenceManager persistenceManager;
     private TaskSelector<ExecutionGroup> groupTaskSelector;
     private TaskSelector<ExecutionJob> jobTaskSelector;
+    private JobFactory jobFactory;
     private final LoopStateHandler groupInternalStateHandler;
 
     private Orchestrator() {
@@ -71,6 +65,7 @@ public class Orchestrator extends Notifiable {
         TaskCommand.setPersistenceManager(persistenceManager);
         this.groupTaskSelector = new DefaultGroupTaskSelector(this.persistenceManager);
         this.jobTaskSelector = new DefaultJobTaskSelector(this.persistenceManager);
+        this.jobFactory = new JobFactory(this.persistenceManager);
     }
 
     /**
@@ -85,7 +80,7 @@ public class Orchestrator extends Notifiable {
             ExecutionJob job = persistenceManager.getJob(workflowId);
             if (job == null) {
                 WorkflowDescriptor descriptor = persistenceManager.getWorkflowDescriptor(workflowId);
-                job = create(descriptor);
+                job = this.jobFactory.createJob(descriptor);
             }
             JobCommand.START.applyTo(job);
         } catch (PersistenceException e) {
@@ -127,90 +122,21 @@ public class Orchestrator extends Notifiable {
         JobCommand.RESUME.applyTo(job);
     }
 
-    private ExecutionJob checkWorkflow(long workflowId) {
-        ExecutionJob job = persistenceManager.getJob(workflowId);
-        if (job == null) {
-            throw new ExecutionException(String.format("No job exists for workflow %s", workflowId));
-        }
-        return job;
-    }
-
-    private ExecutionJob create(WorkflowDescriptor workflow) throws PersistenceException {
-        ExecutionJob job = null;
-        if (workflow != null && workflow.isActive()) {
-            job = new ExecutionJob();
-            job.setUserName("admin");
-            job.setStartTime(LocalDateTime.now());
-            job.setWorkflowId(workflow.getId());
-            job.setExecutionStatus(ExecutionStatus.UNDETERMINED);
-            job = persistenceManager.saveExecutionJob(job);
-            List<WorkflowNodeDescriptor> nodes = workflow.getOrderedNodes();
-            for (WorkflowNodeDescriptor node : nodes) {
-                ExecutionTask task = createTask(node);
-                task.setLevel(node.getLevel());
-                persistenceManager.saveExecutionTask(task, job);
-                System.out.println(String.format("Created task for node %s [level %s]", node.getId(), task.getLevel()));
-            }
-        }
-        return job;
-    }
-
-    private ExecutionTask createGroup(WorkflowNodeGroupDescriptor groupNode) throws PersistenceException {
-        ExecutionGroup group = new ExecutionGroup();
-        List<WorkflowNodeDescriptor> nodes = groupNode.getOrderedNodes();
-        for (WorkflowNodeDescriptor node : nodes) {
-            ExecutionTask task = createTask(node);
-            group.addTask(task);
-        }
-        group.setExecutionStatus(ExecutionStatus.UNDETERMINED);
-        return group;
-    }
-
-    private ExecutionTask createTask(WorkflowNodeDescriptor workflowNode) throws PersistenceException {
-        ExecutionTask task;
-        if (workflowNode instanceof WorkflowNodeGroupDescriptor) {
-            task = createGroup((WorkflowNodeGroupDescriptor) workflowNode);
-        } else {
-            TaoComponent component;
-            List<ParameterValue> customValues = workflowNode.getCustomValues();
-            List<ComponentLink> links = workflowNode.getIncomingLinks();
-            if (links != null) {
-                task = new ProcessingExecutionTask();
-                component = persistenceManager.getProcessingComponentById(workflowNode.getComponentId());
-                ((ProcessingExecutionTask) task).setComponent((ProcessingComponent) component);
-                links.forEach(link -> {
-                    String name = link.getOutput().getName();
-                    String value = link.getInput().getDataDescriptor().getLocation();
-                    task.setParameterValue(name, value);
-                });
-            } else {
-                task = new DataSourceExecutionTask();
-                component = persistenceManager.getDataSourceInstance(workflowNode.getComponentId());
-                ((DataSourceExecutionTask) task).setComponent((DataSourceComponent) component);
-            }
-            task.setWorkflowNodeId(workflowNode.getId());
-            if (customValues != null) {
-                for (ParameterValue customValue : customValues) {
-                    task.setParameterValue(customValue.getParameterName(), customValue.getParameterValue());
-                }
-            }
-            String nodeAffinity = component.getNodeAffinity();
-            if (nodeAffinity != null && !"Any".equals(nodeAffinity)) {
-                task.setExecutionNodeHostName(nodeAffinity);
-            }
-            task.setExecutionStatus(ExecutionStatus.UNDETERMINED);
-        }
-        return task;
-    }
-
     @Override
     protected void onMessageReceived(Message message) {
         try {
             String taskId = message.getItem(Message.SOURCE_KEY);
             ExecutionStatus status = ExecutionStatus.getEnumConstantByValue(Integer.parseInt(message.getItem(Message.PAYLOAD_KEY)));
+            if (status == null) {
+                throw new PersistenceException(String.format("Invalid status received: %s",
+                                                             message.getItem(Message.PAYLOAD_KEY)));
+            }
             ExecutionTask task = persistenceManager.getTaskById(Long.parseLong(taskId));
             logger.fine(String.format("Status change for task %s: %s", taskId, status));
-            System.out.println(String.format("Status change for task %s [node %s]: %s", taskId, task.getWorkflowNodeId(), status.name()));
+            System.out.println(String.format("Status change for task %s [node %s]: %s",
+                                             taskId,
+                                             task.getWorkflowNodeId(),
+                                             status.name()));
             statusChanged(task);
             persistenceManager.updateExecutionJob(task.getJob());
             if (status == ExecutionStatus.DONE) {
@@ -224,7 +150,7 @@ public class Orchestrator extends Notifiable {
                     }
                 } else {
                     logger.fine("No more child tasks to execute after the current task");
-                    System.out.println(String.format("No more child tasks to execute after the current task"));
+                    System.out.println("No more child tasks to execute after the current task");
                 }
             }
             System.out.println("Job status: " + task.getJob().getExecutionStatus().name());
@@ -236,13 +162,13 @@ public class Orchestrator extends Notifiable {
     private void statusChanged(ExecutionTask task) {
         ExecutionGroup groupTask = (ExecutionGroup) task.getGroupTask();
         if (groupTask != null) {
-            notifyGroupStatusChanged(groupTask, task);
+            notifyTaskGroup(groupTask, task);
         } else {
-            notifytJobStatusChanged(persistenceManager.getJobById(task.getJob().getId()), task);
+            notifyJob(persistenceManager.getJobById(task.getJob().getId()), task);
         }
     }
 
-    private void notifyGroupStatusChanged(ExecutionGroup groupTask, ExecutionTask task) {
+    private void notifyTaskGroup(ExecutionGroup groupTask, ExecutionTask task) {
         ExecutionStatus groupStatus = groupTask.getExecutionStatus();
         List<ExecutionTask> tasks = groupTask.getTasks();
         ExecutionStatus taskStatus = task.getExecutionStatus();
@@ -278,11 +204,11 @@ public class Orchestrator extends Notifiable {
                 break;
         }
         if (groupStatus != null && groupStatus != groupTask.getExecutionStatus()) {
-            notifytJobStatusChanged(groupTask.getJob(), groupTask);
+            notifyJob(groupTask.getJob(), groupTask);
         }
     }
 
-    private void notifytJobStatusChanged(ExecutionJob job, ExecutionTask changedTask) {
+    private void notifyJob(ExecutionJob job, ExecutionTask changedTask) {
         ExecutionStatus taskStatus = changedTask.getExecutionStatus();
         try {
             switch (taskStatus) {
@@ -313,6 +239,14 @@ public class Orchestrator extends Notifiable {
         } catch (PersistenceException pex) {
             logger.severe(pex.getMessage());
         }
+    }
+
+    private ExecutionJob checkWorkflow(long workflowId) {
+        ExecutionJob job = persistenceManager.getJob(workflowId);
+        if (job == null) {
+            throw new ExecutionException(String.format("No job exists for workflow %s", workflowId));
+        }
+        return job;
     }
 
     private void bulkSetStatus(ExecutionGroup group, ExecutionTask firstExculde, ExecutionStatus status) {
@@ -357,34 +291,6 @@ public class Orchestrator extends Notifiable {
         if (!found) {
             throw new IllegalArgumentException("Task not found");
         }
-    }
-
-    private List<ExecutionTask> getCandidates(ExecutionTask task) {
-        if (task == null || task.getExecutionStatus() != ExecutionStatus.DONE) {
-            return null;
-        }
-        WorkflowNodeDescriptor workflowNode = persistenceManager.getWorkflowNodeById(task.getWorkflowNodeId());
-        if (workflowNode == null) {
-            logger.severe(String.format("No workflow node with id %s was found in the database", task.getWorkflowNodeId()));
-            return null;
-        }
-        WorkflowDescriptor workflow = workflowNode.getWorkflow();
-        ExecutionJob job = task.getJob();
-        List<WorkflowNodeDescriptor> childNodes = workflow.findChildren(workflow.getNodes(), workflowNode);
-        if (childNodes == null || childNodes.size() == 0) {
-            return null;
-        }
-        return childNodes.stream().filter(n ->
-                n.getIncomingLinks().stream().allMatch(link -> {
-                    List<WorkflowNodeDescriptor> parents =
-                            persistenceManager.getWorkflowNodesByComponentId(workflow.getId(),link.getInput().getParentId());
-                    return parents.stream().allMatch(p -> {
-                        ExecutionTask taskByNode = persistenceManager.getTaskByJobAndNode(job.getId(), p.getId());
-                        return taskByNode != null && taskByNode.getExecutionStatus() == ExecutionStatus.DONE;
-                    });
-                }))
-                .map(n -> persistenceManager.getTaskByJobAndNode(job.getId(), n.getId()))
-                .collect(Collectors.toList());
     }
 
     private List<ExecutionTask> getNext(ExecutionTask task) {
