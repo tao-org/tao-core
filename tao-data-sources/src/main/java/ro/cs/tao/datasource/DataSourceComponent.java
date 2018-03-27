@@ -181,7 +181,7 @@ public class DataSourceComponent extends TaoComponent {
                 logger.warning(ex.getMessage());
             }
             if (decryptedPass != null) {
-                this.password = password;
+                this.password = decryptedPass;
             }
         }
     }
@@ -312,10 +312,10 @@ public class DataSourceComponent extends TaoComponent {
                     this.productStatusListener.downloadFailed(product, e.getMessage());
                 }
             } catch (NoSuchElementException e) {
-                logger.warning(String.format("Fetching product '%s' aborted: %s",
+                logger.warning(String.format("Fetching product '%s' ignored: %s",
                         product.getName(), e.getMessage()));
                 if (this.productStatusListener != null) {
-                    this.productStatusListener.downloadAborted(product, e.getMessage());
+                    this.productStatusListener.downloadIgnored(product, e.getMessage());
                 }
             } finally {
                 //notifier.notifyProgress(counter++ / products.size());
