@@ -431,10 +431,6 @@
             <transient name="userName"/>
             <transient name="password"/>
             <transient name="overriddenParameters"/>
-
-            <transient name="cancelled" />
-            <transient name="currentFetcher" />
-            <transient name="productStatusListener"/>
             <transient name="currentProduct"/>
         </attributes>
     </entity>
@@ -479,7 +475,9 @@
             <basic name="workflowNodeId">
                 <column name="graph_node_id" nullable="false" column-definition="bigint NOT NULL"/>
             </basic>
-
+            <basic name="level">
+                <column name="execution_level" nullable="false" column-definition="integer NOT NULL"/>
+            </basic>
             <!--<many-to-one name="component" fetch="LAZY" target-entity="ro.cs.tao.component.ProcessingComponent">
                 <join-column name="component_id" nullable="false"/>
             </many-to-one>-->
@@ -497,9 +495,6 @@
                     <join-column name="task_id" referenced-column-name="id" />
                 </collection-table>
             </element-collection>
-
-            <transient name="next"/>
-            <transient name="component"/>
 
         </attributes>
     </entity>
@@ -546,11 +541,6 @@
                     <cascade-all/>
                 </cascade>
             </many-to-many>
-
-            <transient name="taskSelector"/>
-            <transient name="internalStateHandler"/>
-            <transient name="next"/>
-
         </attributes>
     </entity>
 
@@ -584,9 +574,6 @@
             </basic>
 
             <one-to-many name="tasks" fetch="EAGER" mapped-by="job" />
-
-            <transient name="nextTask"/>
-            <transient name="taskSelector"/>
         </attributes>
     </entity>
 
@@ -679,7 +666,9 @@
             <basic name="yCoord">
                 <column name="yCoord" nullable="true" column-definition="real NULL"/>
             </basic>
-
+            <basic name="level">
+                <column name="node_level" nullable="false" column-definition="integer NOT NULL"/>
+            </basic>
             <many-to-one name="workflow" fetch="LAZY">
                 <join-column name="workflow_id" referenced-column-name="id" nullable="false"/>
             </many-to-one>

@@ -431,10 +431,6 @@
             <transient name="userName"/>
             <transient name="password"/>
             <transient name="overriddenParameters"/>
-
-            <transient name="cancelled" />
-            <transient name="currentFetcher" />
-            <transient name="productStatusListener"/>
             <transient name="currentProduct"/>
         </attributes>
     </entity>
@@ -500,8 +496,6 @@
                 </collection-table>
             </element-collection>
 
-            <!--<transient name="next"/>-->
-
         </attributes>
     </entity>
 
@@ -547,11 +541,6 @@
                     <cascade-all/>
                 </cascade>
             </many-to-many>
-
-            <!--<transient name="taskSelector"/>
-            <transient name="internalStateHandler"/>
-            <transient name="next"/>-->
-
         </attributes>
     </entity>
 
@@ -585,9 +574,6 @@
             </basic>
 
             <one-to-many name="tasks" fetch="EAGER" mapped-by="job" />
-
-            <!--<transient name="nextTask"/>
-            <transient name="taskSelector"/>-->
         </attributes>
     </entity>
 
