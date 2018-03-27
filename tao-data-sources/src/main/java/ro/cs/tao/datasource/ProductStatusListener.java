@@ -37,5 +37,9 @@ public interface ProductStatusListener {
      * Signals that the download of a product was not successful and aborted, and the reason why
      */
     void downloadAborted(EOProduct product, String reason);
+    /**
+     * Signals that the download of a product was ignored, and the reason why
+     */
+    void downloadIgnored(EOProduct product, String reason);
 
 }
