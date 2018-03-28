@@ -1,1 +1,2 @@
-java -cp ../modules/*;../lib/* ro.cs.tao.TAO %*
+@echo off
+java -cp ../services/*;../modules/*;../plugins/*;../lib/* ro.cs.tao.TAO %*
