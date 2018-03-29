@@ -16,6 +16,7 @@
 
 package ro.cs.tao.orchestration;
 
+import ro.cs.tao.component.Variable;
 import ro.cs.tao.execution.model.ExecutionJob;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
@@ -98,15 +99,26 @@ public class DefaultJobTaskSelector implements TaskSelector<ExecutionJob> {
             return null;
         }
         return childNodes.stream().filter(n ->
-                n.getIncomingLinks().stream().allMatch(link -> {
-                    List<WorkflowNodeDescriptor> parents =
-                            persistenceManager.getWorkflowNodesByComponentId(workflow.getId(),link.getInput().getParentId());
-                    return parents.stream().allMatch(p -> {
-                        ExecutionTask taskByNode = persistenceManager.getTaskByJobAndNode(job.getId(), p.getId());
-                        return taskByNode != null && taskByNode.getExecutionStatus() == ExecutionStatus.DONE;
-                    });
-                }))
-                .map(n -> persistenceManager.getTaskByJobAndNode(job.getId(), n.getId()))
-                .collect(Collectors.toList());
+            n.getIncomingLinks().stream().allMatch(link -> {
+                List<WorkflowNodeDescriptor> parents =
+                        persistenceManager.getWorkflowNodesByComponentId(workflow.getId(),link.getInput().getParentId());
+                return parents.stream().allMatch(p -> {
+                    ExecutionTask taskByNode = persistenceManager.getTaskByJobAndNode(job.getId(), p.getId());
+                    return taskByNode != null && taskByNode.getExecutionStatus() == ExecutionStatus.DONE;
+                });
+            }))
+            .map(n -> {
+                ExecutionTask next = persistenceManager.getTaskByJobAndNode(job.getId(), n.getId());
+                List<Variable> outputs = task.getOutputParameterValues();
+                n.getIncomingLinks().forEach(link -> {
+                    for (Variable variable : outputs) {
+                        if (variable.getKey().equals(link.getInput().getName())) {
+                            next.setInputParameterValue(link.getOutput().getName(), variable.getValue());
+                        }
+                    }
+                });
+                return next;
+            })
+            .collect(Collectors.toList());
     }
 }

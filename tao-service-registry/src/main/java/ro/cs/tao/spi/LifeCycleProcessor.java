@@ -34,7 +34,7 @@ public class LifeCycleProcessor {
 
     static {
         detectedComponents = new ArrayList<>();
-        executor = Executors.newCachedThreadPool();
+        executor = Executors.newSingleThreadExecutor();
         Runtime.getRuntime().addShutdownHook(new Thread(LifeCycleProcessor::onShutdown));
     }
 

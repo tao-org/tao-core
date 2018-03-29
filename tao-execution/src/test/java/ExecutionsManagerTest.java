@@ -233,7 +233,7 @@ public class ExecutionsManagerTest {
         task.setComponent(processingComponent);
         task.setExecutionNodeHostName(hostName);
         task.setWorkflowNodeId(1L);
-        values.forEach((k,v)-> task.setParameterValue(k, v));
+        values.forEach((k,v)-> task.setInputParameterValue(k, v));
 
         return task;
     }

@@ -140,11 +140,27 @@ public class Orchestrator extends Notifiable {
             statusChanged(task);
             persistenceManager.updateExecutionJob(task.getJob());
             if (status == ExecutionStatus.DONE) {
+                // For DataSourceExecutionTask, it is the executor that sets the outputs,
+                // hence we need to "confirm" here the outputs of a processing task.
+                if (task instanceof ProcessingExecutionTask) {
+                    ProcessingExecutionTask pcTask = (ProcessingExecutionTask) task;
+                    pcTask.getComponent().getTargets().forEach(t -> {
+                        pcTask.setOutputParameterValue(t.getName(), t.getDataDescriptor().getLocation());
+                        System.out.println(String.format("Task %s output: %s=%s",
+                                                            task.getId(), t.getName(),
+                                                            t.getDataDescriptor().getLocation()));
+                    });
+                    persistenceManager.updateExecutionTask(task);
+                }
                 List<ExecutionTask> nextTasks = getNext(task);
                 if (nextTasks != null && nextTasks.size() > 0) {
                     System.out.println(String.format("Has %s next tasks", nextTasks.size()));
                     for (ExecutionTask nextTask : nextTasks) {
                         if (nextTask != null) {
+                            System.out.println(String.format("Task %s about to start.", nextTask.getId()));
+                            task.getInputParameterValues().forEach(
+                                    v -> System.out.println(String.format("Input: %s=%s", v.getKey(), v.getValue()))
+                            );
                             TaskCommand.START.applyTo(nextTask);
                         }
                     }
@@ -226,8 +242,9 @@ public class Orchestrator extends Notifiable {
                         persistenceManager.updateExecutionJob(job);
                     }
                 case DONE:
-                    List<ExecutionTask> tasks = job.orderTasks();
-                    if (tasks.get(tasks.size() - 1).getId().equals(changedTask.getId())) {
+                    if (job.getTasks().stream().allMatch(t -> t.getExecutionStatus() == ExecutionStatus.DONE)) {
+                    /*List<ExecutionTask> tasks = job.orderTasks();
+                    if (tasks.get(tasks.size() - 1).getId().equals(changedTask.getId())) {*/
                         job.setExecutionStatus(ExecutionStatus.DONE);
                         persistenceManager.updateExecutionJob(job);
                     }

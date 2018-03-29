@@ -16,10 +16,12 @@
 
 package ro.cs.tao.execution.local;
 
+import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.Executor;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
+import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -86,6 +88,14 @@ public class NullExecutor extends Executor {
                     ExecutionTask task = entry.getKey();
                     counters.remove(task);
                     tasks.remove(task);
+                    try {
+                        WorkflowNodeDescriptor node = persistenceManager.getWorkflowNodeById(task.getWorkflowNodeId());
+                        ProcessingComponent component = persistenceManager.getProcessingComponentById(node.getComponentId());
+                        component.getTargets().forEach(t -> task.setOutputParameterValue(t.getName(), t.getDataDescriptor().getLocation()));
+                    } catch (Exception ex) {
+                        logger.severe(ex.getMessage());
+                        markTaskFinished(task, ExecutionStatus.FAILED);
+                    }
                     markTaskFinished(task, ExecutionStatus.DONE);
                 }
             }
