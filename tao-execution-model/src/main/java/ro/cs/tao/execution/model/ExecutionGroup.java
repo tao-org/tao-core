@@ -36,10 +36,10 @@ public class ExecutionGroup extends ExecutionTask {
     public ExecutionGroup() { }
 
     @Override
-    public void setParameterValue(String parameterId, String value) {
-        //super.setParameterValue(parameterId, value);
+    public void setInputParameterValue(String parameterId, String value) {
+        //super.setInputParameterValue(parameterId, value);
         if (this.tasks != null && this.tasks.size() > 0) {
-            this.tasks.get(0).setParameterValue(parameterId, value);
+            this.tasks.get(0).setInputParameterValue(parameterId, value);
         }
     }
 
@@ -48,6 +48,21 @@ public class ExecutionGroup extends ExecutionTask {
         super.setInputParameterValues(inputParameterValues);
         if (this.tasks != null && this.tasks.size() > 0) {
             this.tasks.get(0).setInputParameterValues(inputParameterValues);
+        }
+    }
+
+    @Override
+    public void setOutputParameterValue(String parameterId, String value) {
+        if (this.tasks != null && this.tasks.size() > 0) {
+            this.tasks.get(this.tasks.size() - 1).setOutputParameterValue(parameterId, value);
+        }
+    }
+
+    @Override
+    public void setOutputParameterValues(List<Variable> parameterValues) {
+        super.setOutputParameterValues(parameterValues);
+        if (this.tasks != null && this.tasks.size() > 0) {
+            this.tasks.get(this.tasks.size() - 1).setOutputParameterValues(parameterValues);
         }
     }
 

@@ -19,6 +19,7 @@ package ro.cs.tao.orchestration;
 import ro.cs.tao.component.ComponentLink;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.TaoComponent;
+import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.persistence.PersistenceManager;
@@ -82,11 +83,15 @@ public class JobFactory {
                 task = new ProcessingExecutionTask();
                 component = persistenceManager.getProcessingComponentById(workflowNode.getComponentId());
                 ((ProcessingExecutionTask) task).setComponent((ProcessingComponent) component);
+                // Placeholders for inputs of previous tasks
                 links.forEach(link -> {
                     String name = link.getOutput().getName();
-                    String value = link.getInput().getDataDescriptor().getLocation();
-                    task.setParameterValue(name, value);
+                    //String value = link.getInput().getDataDescriptor().getLocation();
+                    task.setInputParameterValue(name, null);
                 });
+                // Placeholders for outputs of this task
+                List<TargetDescriptor> targets = component.getTargets();
+                targets.forEach(t -> task.setOutputParameterValue(t.getName(), null));
             } else {
                 task = new DataSourceExecutionTask();
                 component = persistenceManager.getDataSourceInstance(workflowNode.getComponentId());
@@ -95,7 +100,7 @@ public class JobFactory {
             task.setWorkflowNodeId(workflowNode.getId());
             if (customValues != null) {
                 for (ParameterValue customValue : customValues) {
-                    task.setParameterValue(customValue.getParameterName(), customValue.getParameterValue());
+                    task.setInputParameterValue(customValue.getParameterName(), customValue.getParameterValue());
                 }
             }
             String nodeAffinity = component.getNodeAffinity();

@@ -34,6 +34,7 @@ public abstract class ExecutionTask implements StatusChangeListener {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     protected List<Variable> inputParameterValues;
+    protected List<Variable> outputParameterValues;
     private String internalState;
     private ExecutionJob job;
     private ExecutionStatus executionStatus = ExecutionStatus.UNDETERMINED;
@@ -117,7 +118,15 @@ public abstract class ExecutionTask implements StatusChangeListener {
     public void setInputParameterValues(List<Variable> inputParameterValues) {
         this.inputParameterValues = inputParameterValues;
     }
-    public abstract void setParameterValue(String parameterId, String value);
+    public abstract void setInputParameterValue(String parameterId, String value);
+
+    public List<Variable> getOutputParameterValues() {
+        return outputParameterValues;
+    }
+    public void setOutputParameterValues(List<Variable> parameterValues) {
+        this.outputParameterValues = parameterValues;
+    }
+    public abstract void setOutputParameterValue(String parameterId, String value);
 
     public LocalDateTime getStartTime() {
         return startTime;

@@ -50,7 +50,7 @@ public class DataSourceExecutionTask extends ExecutionTask {
     }
 
     @Override
-    public void setParameterValue(String parameterId, String value) {
+    public void setInputParameterValue(String parameterId, String value) {
         boolean descriptorExists = false;
         Collection<ParameterDescriptor> descriptors =
                 DataSourceManager.getInstance().getSupportedParameters(component.getSensorName(),
@@ -69,6 +69,14 @@ public class DataSourceExecutionTask extends ExecutionTask {
             this.inputParameterValues = new ArrayList<>();
         }
         this.inputParameterValues.add(new Variable(parameterId, value));
+    }
+
+    @Override
+    public void setOutputParameterValue(String parameterId, String value) {
+        if (this.outputParameterValues == null) {
+            this.outputParameterValues = new ArrayList<>();
+        }
+        this.outputParameterValues.add(new Variable(parameterId, value));
     }
 
     @Override

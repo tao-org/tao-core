@@ -51,7 +51,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> {
     @Override
     public void execute(DataSourceExecutionTask task) throws ExecutionException {
         try {
-            dataSourceComponent = (DataSourceComponent) task.getComponent();
+            dataSourceComponent = task.getComponent();
             final Map<String, ParameterDescriptor> parameterDescriptorMap =
                     DataSourceManager.getInstance()
                             .getSupportedParameters(dataSourceComponent.getSensorName(),
@@ -99,10 +99,11 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> {
             List<EOProduct> results = future.get();
             if (results != null && results.size() > 0) {
                 String sensorName = dataSourceComponent.getSensorName().toLowerCase().replace(" ", "-");
-                dataSourceComponent.doFetch(results,
-                            null,
-                            ConfigurationManager.getInstance().getValue("product.location"),
-                            ConfigurationManager.getInstance().getValue(String.format("local.%s.path", sensorName)));
+                List<EOProduct> products = dataSourceComponent.doFetch(results,
+                        null,
+                        ConfigurationManager.getInstance().getValue("product.location"),
+                        ConfigurationManager.getInstance().getValue(String.format("local.%s.path", sensorName)));
+                products.forEach(p -> task.setOutputParameterValue(p.getName(), p.getLocation()));
             }
             markTaskFinished(task, ExecutionStatus.DONE);
         } catch (Exception ex) {

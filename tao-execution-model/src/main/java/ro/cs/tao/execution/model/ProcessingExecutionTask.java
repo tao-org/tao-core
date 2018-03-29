@@ -15,10 +15,7 @@
  */
 package ro.cs.tao.execution.model;
 
-import ro.cs.tao.component.ParameterDescriptor;
-import ro.cs.tao.component.ProcessingComponent;
-import ro.cs.tao.component.SourceDescriptor;
-import ro.cs.tao.component.Variable;
+import ro.cs.tao.component.*;
 import ro.cs.tao.component.validation.ValidationException;
 
 import java.util.ArrayList;
@@ -53,7 +50,7 @@ public class ProcessingExecutionTask extends ExecutionTask {
     }
 
     @Override
-    public void setParameterValue(String parameterId, String value) {
+    public void setInputParameterValue(String parameterId, String value) {
         boolean descriptorExists = false;
         List<ParameterDescriptor> descriptorList = this.component.getParameterDescriptors();
         for (ParameterDescriptor descriptor : descriptorList) {
@@ -76,7 +73,37 @@ public class ProcessingExecutionTask extends ExecutionTask {
         if (this.inputParameterValues == null) {
             this.inputParameterValues = new ArrayList<>();
         }
-        this.inputParameterValues.add(new Variable(parameterId, value));
+        Variable variable = this.inputParameterValues.stream().filter(v -> v.getKey().equals(parameterId)).findFirst().orElse(null);
+        if (variable != null) {
+            variable.setValue(value);
+        } else {
+            this.inputParameterValues.add(new Variable(parameterId, value));
+        }
+    }
+
+    @Override
+    public void setOutputParameterValue(String parameterId, String value) {
+        boolean descriptorExists = false;
+        List<TargetDescriptor> targets = this.component.getTargets();
+        for (TargetDescriptor target : targets) {
+            if (target.getName().equals(parameterId)) {
+                descriptorExists = true;
+                break;
+            }
+        }
+        if (!descriptorExists) {
+            throw new ValidationException(String.format("The output parameter ID [%s] does not exists in the component '%s'",
+                    parameterId, component.getLabel()));
+        }
+        if (this.outputParameterValues == null) {
+            this.outputParameterValues = new ArrayList<>();
+        }
+        Variable variable = this.outputParameterValues.stream().filter(v -> v.getKey().equals(parameterId)).findFirst().orElse(null);
+        if (variable != null) {
+            variable.setValue(value);
+        } else {
+            this.outputParameterValues.add(new Variable(parameterId, value));
+        }
     }
 
     @Override

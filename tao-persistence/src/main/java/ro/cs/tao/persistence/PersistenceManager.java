@@ -805,7 +805,7 @@ public class PersistenceManager implements MessagePersister {
         return result;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public ProcessingComponent getProcessingComponentById(final String id) throws PersistenceException
     {
         // check method parameters

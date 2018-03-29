@@ -496,6 +496,12 @@
                 </collection-table>
             </element-collection>
 
+            <element-collection name="outputParameterValues" target-class="ro.cs.tao.component.Variable" access="PROPERTY" fetch="LAZY">
+                <collection-table name="tao.task_output" >
+                    <join-column name="task_id" referenced-column-name="id" />
+                </collection-table>
+            </element-collection>
+
         </attributes>
     </entity>
 
@@ -674,7 +680,7 @@
             </many-to-one>
 
             <element-collection name="incomingLinks" target-class="ro.cs.tao.component.ComponentLink" access="PROPERTY" fetch="LAZY">
-                <collection-table name="tao.component_link" >
+                <collection-table name="tao.component_link">
                     <join-column name="graph_node_id" referenced-column-name="id" />
                 </collection-table>
             </element-collection>
