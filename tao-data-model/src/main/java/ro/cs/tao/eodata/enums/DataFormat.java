@@ -64,14 +64,20 @@ public enum DataFormat {
      * @param value the integer value identifier
      * @return the string token corresponding to the integer identifier
      */
-    public static String getEnumConstantNameByValue(final int value)
-    {
-        for (DataFormat type : values())
-        {
-            if ((String.valueOf(value)).equals(type.toString()))
-            {
+    public static String getEnumConstantNameByValue(final int value) {
+        for (DataFormat type : values()) {
+            if ((String.valueOf(value)).equals(type.toString())) {
                 // return the name of the enum constant having the given value
                 return type.name();
+            }
+        }
+        return null;
+    }
+
+    public static DataFormat getEnumConstantByValue(final int value) {
+        for (DataFormat type : values()) {
+            if ((String.valueOf(value)).equals(type.toString())) {
+                return type;
             }
         }
         return null;

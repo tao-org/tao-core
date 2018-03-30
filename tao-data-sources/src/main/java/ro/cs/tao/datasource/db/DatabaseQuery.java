@@ -23,6 +23,7 @@ import ro.cs.tao.datasource.converters.PolygonParameterConverter;
 import ro.cs.tao.datasource.param.QueryParameter;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.Polygon2D;
+import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.eodata.enums.PixelType;
 import ro.cs.tao.eodata.enums.SensorType;
 
@@ -33,15 +34,16 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * @author Cosmin Cara
  */
 public class DatabaseQuery extends DataQuery {
 
-    private static final String PRODUCTS_TABLE = "Products";
-    private static final String PRODUCT_PARAMS_TABLE = "ProductsParams";
     private static final ConverterFactory converterFactory = ConverterFactory.getInstance();
+    private Logger logger;
+
 
     static {
         converterFactory.register(PolygonParameterConverter.class, Polygon2D.class);
@@ -49,6 +51,7 @@ public class DatabaseQuery extends DataQuery {
     }
     DatabaseQuery(DatabaseSource source, String sensorName) {
         super(source, sensorName);
+        this.logger = Logger.getLogger(DatabaseQuery.class.getName());
     }
 
     @Override
@@ -57,8 +60,9 @@ public class DatabaseQuery extends DataQuery {
         Connection sqlConnection = ((DatabaseSource) this.source).getConnection();
         if (sqlConnection != null) {
             try {
-                String query = "SELECT * FROM " + PRODUCTS_TABLE + " P JOIN " + PRODUCT_PARAMS_TABLE + " PP " +
-                        "ON P.ID = PP.ProductID WHERE ";
+                StringBuilder query = new StringBuilder("SELECT id, name, type_id, geometry, coordinate_reference_system, " +
+                        "location, entry_point, sensor_type_id, acquisition_date, pixel_type_id, product_type, width, height, " +
+                        "approximate_size FROM " + DatabaseSource.PRODUCTS_TABLE + " WHERE ");
                 int idx = 1;
                 List<ParameterIndex> values = new ArrayList<>();
                 for (Map.Entry<String, QueryParameter> entry : this.parameters.entrySet()) {
@@ -72,43 +76,42 @@ public class DatabaseQuery extends DataQuery {
                         continue;
                     }
                     if (idx > 1) {
-                        query += " AND ";
+                        query.append(" AND ");
                     }
-                    query += "PP.Name='" + parameter.getName() + "'";
                     if (parameter.getType().isArray()) {
-                        query += " AND PP.Value IN (";
+                        query.append(parameter.getName()).append(" IN (");
                         Object value = parameter.getValue();
                         int length = Array.getLength(value);
                         Object[] arrayValue = new Object[length];
                         for (int i = 0; i < length; i++) {
-                            query += "?";
+                            query.append("?");
                             if (i < length - 1) {
-                                query += ",";
+                                query.append(",");
                             }
                             arrayValue[i] = Array.get(value, i);
                         }
-                        query += ")";
+                        query.append(") ");
                         values.add(new ParameterIndex(idx, idx + length - 1, arrayValue));
                         idx += length;
                     } else {
                         if (parameter.isInterval()) {
-                            query += " AND PP.Value BETWEEN ? AND ?";
+                            query.append(parameter.getName()).append(" BETWEEN ? AND ?");
                             values.add(new ParameterIndex(idx, idx + 1,
                                                           parameter.getMinValue(),
                                                           parameter.getMaxValue()));
                             idx += 2;
                         } else {
                             if (!Polygon2D.class.equals(parameter.getType())) {
-                                query += " AND PP.Value=?";
+                                query.append(parameter.getName()).append("=? ");
                                 values.add(new ParameterIndex(idx, idx, parameter.getValue()));
                             } else {
-                                query += " AND st_intersects(P." + parameter.getName() + ", st_geomfromwkt(?))";
+                                query.append(" st_intersects(").append(parameter.getName()).append(", st_geomfromwkt(?)) ");
                             }
                             idx += 1;
                         }
                     }
                 }
-                final PreparedStatement statement = sqlConnection.prepareStatement(query);
+                final PreparedStatement statement = sqlConnection.prepareStatement(query.toString());
                 for (ParameterIndex paramIndex : values) {
                     for (int i = paramIndex.fromIndex; i <= paramIndex.toIndex; i++) {
                         Object value = paramIndex.values[i];
@@ -135,28 +138,49 @@ public class DatabaseQuery extends DataQuery {
                     }
                 }
                 final ResultSet resultSet = statement.executeQuery();
+                // TODO Fix field order
                 while (resultSet.next()) {
                     EOProduct product = new EOProduct();
                     product.setId(resultSet.getString(1));
                     product.setName(resultSet.getString(2));
-                    product.setAcquisitionDate(resultSet.getDate(3));
-                    product.setSensorType(Enum.valueOf(SensorType.class, resultSet.getString(4)));
-                    product.setPixelType(Enum.valueOf(PixelType.class, resultSet.getString(5)));
-                    try {
-                        product.setGeometry(resultSet.getString(6));
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                    int typeId = resultSet.getInt(3);
+                    if (typeId != 0) {
+                        product.setFormatType(DataFormat.getEnumConstantByValue(typeId));
+                    }
+                    String geometry = resultSet.getString(4);
+                    if (geometry != null) {
+                        try {
+                            product.setGeometry(geometry);
+                        } catch (Exception e) {
+                            logger.warning(e.getMessage());
+                        }
+                    }
+                    String crs = resultSet.getString(5);
+                    if (crs != null) {
+                        product.setCrs(crs);
                     }
                     try {
-                        product.setLocation(resultSet.getString(7));
+                        product.setLocation(resultSet.getString(6));
                     } catch (URISyntaxException e) {
-                        e.printStackTrace();
+                        logger.warning(e.getMessage());
                     }
-                    product.setCrs(resultSet.getString(8));
+                    int sensorTypeId = resultSet.getInt(8);
+                    if (sensorTypeId != 0) {
+                        product.setSensorType(SensorType.getEnumConstantByValue(sensorTypeId));
+                    }
+                    product.setAcquisitionDate(resultSet.getDate(9));
+                    int pixelTypeId = resultSet.getInt(10);
+                    if (pixelTypeId != 0) {
+                        product.setPixelType(PixelType.getEnumConstantByValue(pixelTypeId));
+                    }
+                    product.setProductType(resultSet.getString(11));
+                    product.setWidth(resultSet.getInt(12));
+                    product.setHeight(resultSet.getInt(13));
+                    product.setApproximateSize(resultSet.getLong(14));
                     results.add(product);
                 }
             } catch (SQLException ex) {
-                ex.printStackTrace();
+                logger.severe(ex.getMessage());
             }
         }
         return results;

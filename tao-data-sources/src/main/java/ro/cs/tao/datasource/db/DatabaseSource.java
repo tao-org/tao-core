@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.datasource.db;
 
+import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.datasource.AbstractDataSource;
 import ro.cs.tao.datasource.QueryException;
 import ro.cs.tao.datasource.param.ParameterDescriptor;
@@ -30,18 +31,24 @@ import java.util.logging.Logger;
  * @author Cosmin Cara
  */
 public class DatabaseSource extends AbstractDataSource<DatabaseQuery> {
+    static final String PRODUCTS_TABLE = "tao.raster_data_product";
+    static final String PRODUCT_PARAMS_TABLE = "tao.data_product_attributes";
+    private final String dbUser;
+    private final String dbPass;
+    private final Logger logger;
 
-    protected final Logger logger;
-
-    public DatabaseSource(String connectionString) {
-        super(connectionString);
+    public DatabaseSource() {
+        super();
+        this.connectionString = ConfigurationManager.getInstance().getValue("spring.datasource.url");
+        this.dbUser = ConfigurationManager.getInstance().getValue("spring.datasource.username");
+        this.dbPass = ConfigurationManager.getInstance().getValue("spring.datasource.password");
         this.logger = Logger.getLogger(DatabaseSource.class.getName());
         try {
             Class.forName("org.postgresql.Driver");
         } catch (ClassNotFoundException e) {
             this.logger.severe("PostgreSQL driver not registered");
         }
-        setParameterProvider(new DatabaseParameterProvider());
+        setParameterProvider(new DatabaseParameterProvider(this));
     }
 
     @Override
@@ -70,7 +77,7 @@ public class DatabaseSource extends AbstractDataSource<DatabaseQuery> {
     }
 
     @Override
-    public String defaultName() { return "NewDatabaseSource"; }
+    public String defaultName() { return "Local Database"; }
 
     @Override
     public DatabaseSource clone() throws CloneNotSupportedException {
@@ -94,7 +101,7 @@ public class DatabaseSource extends AbstractDataSource<DatabaseQuery> {
     Connection getConnection() {
         Connection connection = null;
         try {
-            connection = DriverManager.getConnection(this.connectionString);
+            connection = DriverManager.getConnection(this.connectionString, this.dbUser, this.dbPass);
         } catch (SQLException e) {
             this.logger.warning(e.getMessage());
         }

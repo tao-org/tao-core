@@ -132,8 +132,7 @@ public class Orchestrator extends Notifiable {
                                                              message.getItem(Message.PAYLOAD_KEY)));
             }
             ExecutionTask task = persistenceManager.getTaskById(Long.parseLong(taskId));
-            logger.fine(String.format("Status change for task %s: %s", taskId, status));
-            System.out.println(String.format("Status change for task %s [node %s]: %s",
+            logger.fine(String.format("Status change for task %s [node %s]: %s",
                                              taskId,
                                              task.getWorkflowNodeId(),
                                              status.name()));
@@ -146,9 +145,9 @@ public class Orchestrator extends Notifiable {
                     ProcessingExecutionTask pcTask = (ProcessingExecutionTask) task;
                     pcTask.getComponent().getTargets().forEach(t -> {
                         pcTask.setOutputParameterValue(t.getName(), t.getDataDescriptor().getLocation());
-                        System.out.println(String.format("Task %s output: %s=%s",
-                                                            task.getId(), t.getName(),
-                                                            t.getDataDescriptor().getLocation()));
+                        logger.fine(String.format("Task %s output: %s=%s",
+                                                  task.getId(), t.getName(),
+                                                  t.getDataDescriptor().getLocation()));
                     });
                     persistenceManager.updateExecutionTask(task);
                 }
@@ -157,19 +156,18 @@ public class Orchestrator extends Notifiable {
                     System.out.println(String.format("Has %s next tasks", nextTasks.size()));
                     for (ExecutionTask nextTask : nextTasks) {
                         if (nextTask != null) {
-                            System.out.println(String.format("Task %s about to start.", nextTask.getId()));
+                            logger.fine(String.format("Task %s about to start.", nextTask.getId()));
                             task.getInputParameterValues().forEach(
-                                    v -> System.out.println(String.format("Input: %s=%s", v.getKey(), v.getValue()))
+                                    v -> logger.fine(String.format("Input: %s=%s", v.getKey(), v.getValue()))
                             );
                             TaskCommand.START.applyTo(nextTask);
                         }
                     }
                 } else {
                     logger.fine("No more child tasks to execute after the current task");
-                    System.out.println("No more child tasks to execute after the current task");
                 }
             }
-            System.out.println("Job status: " + task.getJob().getExecutionStatus().name());
+            logger.fine("Job status: " + task.getJob().getExecutionStatus().name());
         } catch (PersistenceException e) {
             logger.severe(e.getMessage());
         }

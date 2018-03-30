@@ -15,31 +15,88 @@
  */
 package ro.cs.tao.datasource.db;
 
+import ro.cs.tao.datasource.DataSource;
 import ro.cs.tao.datasource.ProductFetchStrategy;
 import ro.cs.tao.datasource.param.ParameterDescriptor;
 import ro.cs.tao.datasource.param.ParameterProvider;
+import ro.cs.tao.eodata.Polygon2D;
+import ro.cs.tao.eodata.enums.DataFormat;
+import ro.cs.tao.eodata.enums.SensorType;
+import ro.cs.tao.spi.ServiceRegistry;
+import ro.cs.tao.spi.ServiceRegistryManager;
 
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Cosmin Cara
  */
 public class DatabaseParameterProvider implements ParameterProvider {
+
+    private final DatabaseSource source;
+
+    DatabaseParameterProvider(DatabaseSource source) {
+        this.source = source;
+    }
+
     @Override
     public Map<String, Map<String, ParameterDescriptor>> getSupportedParameters() {
-        //TODO: retrieve the parameters supported by the database query
-        return null;
+        String[] sensors = getSupportedSensors();
+        return Collections.unmodifiableMap(
+                new HashMap<String, Map<String, ParameterDescriptor>>() {{
+                    for (String sensor : sensors) {
+                        put(sensor, new HashMap<String, ParameterDescriptor>() {{
+                            put("name", new ParameterDescriptor("name", String.class, false));
+                            put("type_id", new ParameterDescriptor("type_id", DataFormat.class, false));
+                            put("geometry", new ParameterDescriptor("geometry", Polygon2D.class, false));
+                            put("coordinate_reference_system", new ParameterDescriptor("coordinate_reference_system", String.class, false));
+                            put("sensor_type_id", new ParameterDescriptor("sensor_type_id", SensorType.class, false));
+                            put("acquisition_date", new ParameterDescriptor("acquisition_date", Date.class, false));
+                            put("product_type", new ParameterDescriptor("product_type", String.class, sensor));
+                        }});
+                    }
+                }});
     }
 
     @Override
     public String[] getSupportedSensors() {
-        //TODO: retrieve the sensors supported by the database query
-        return new String[0];
+        Set<String> sensors = new HashSet<>();
+        ServiceRegistry<DataSource> serviceRegistry = ServiceRegistryManager.getInstance().getServiceRegistry(DataSource.class);
+        Set<DataSource> services = serviceRegistry.getServices();
+        for (DataSource service : services) {
+            if (!service.getClass().equals(this.source.getClass())) {
+                Collections.addAll(sensors, service.getSupportedSensors());
+            }
+        }
+        /*List<String> sensors = new ArrayList<>();
+        Connection sqlConnection = this.source.getConnection();
+        if (sqlConnection != null) {
+            try {
+                PreparedStatement statement = sqlConnection.prepareStatement("SELECT DISTINCT product_type FROM " + DatabaseSource.PRODUCTS_TABLE);
+                ResultSet resultSet = statement.executeQuery();
+                while (resultSet.next()) {
+                    sensors.add(resultSet.getString(0));
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    sqlConnection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }*/
+        return sensors.toArray(new String[sensors.size()]);
     }
 
     @Override
     public Map<String, ProductFetchStrategy> getRegisteredProductFetchStrategies() {
-        //TODO: implement the actual db record fetcher and register it here
-        return null;
+        String[] sensors = getSupportedSensors();
+        return Collections.unmodifiableMap(
+                new HashMap<String, ProductFetchStrategy>() {{
+                    for (String sensor : sensors) {
+                        put(sensor, new DatabaseFetchStrategy(DatabaseParameterProvider.this.source));
+                    }
+                }});
     }
 }
