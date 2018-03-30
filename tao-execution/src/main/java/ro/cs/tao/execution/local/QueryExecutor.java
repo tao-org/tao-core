@@ -30,7 +30,9 @@ import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.Executor;
 import ro.cs.tao.execution.model.DataSourceExecutionTask;
 import ro.cs.tao.execution.model.ExecutionStatus;
+import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.serialization.GenericAdapter;
+import ro.cs.tao.serialization.MapAdapter;
 
 import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
@@ -40,6 +42,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 public class QueryExecutor extends Executor<DataSourceExecutionTask> {
 
@@ -99,11 +102,15 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> {
             List<EOProduct> results = future.get();
             if (results != null && results.size() > 0) {
                 String sensorName = dataSourceComponent.getSensorName().toLowerCase().replace(" ", "-");
-                List<EOProduct> products = dataSourceComponent.doFetch(results,
+                final List<EOProduct> products = dataSourceComponent.doFetch(results,
                         null,
                         ConfigurationManager.getInstance().getValue("product.location"),
                         ConfigurationManager.getInstance().getValue(String.format("local.%s.path", sensorName)));
-                products.forEach(p -> task.setOutputParameterValue(p.getName(), p.getLocation()));
+                if (products != null) {
+                    task.setOutputParameterValue(dataSourceComponent.getTargets().get(0).getName(),
+                                                 serializeResults(results));
+                }
+                backgroundWorker.submit(() -> persistResults(results));
             }
             markTaskFinished(task, ExecutionStatus.DONE);
         } catch (Exception ex) {
@@ -142,4 +149,28 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> {
     private boolean isArray(String value) {
         return value != null && value.startsWith("[") & value.endsWith("]");
     }
+
+    private void persistResults(List<EOProduct> results) {
+        for (EOProduct product : results) {
+            try {
+                persistenceManager.saveEOProduct(product);
+            } catch (PersistenceException e) {
+                logger.severe(String.format("Product %s could not be written to database: %s",
+                                            product.getName(), e.getMessage()));
+            }
+        }
+    }
+
+    private String serializeResults(List<EOProduct> results) {
+        String json = null;
+        try {
+            MapAdapter mapAdapter = new MapAdapter();
+            json = mapAdapter.unmarshal(results.stream()
+                            .collect(Collectors.toMap(EOProduct::getName, EOProduct::getLocation)));
+        } catch (Exception e) {
+            logger.severe("Serialization of results failed: " + e.getMessage());
+        }
+        return json;
+    }
+
 }
