@@ -34,7 +34,6 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
-import java.awt.*;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.URISyntaxException;
@@ -83,10 +82,21 @@ public class DataSourceComponent extends TaoComponent {
         if (sensorName == null) {
             throw new IllegalArgumentException("Parameter [sensorName] must not be null");
         }
+        if (dataSourceName == null) {
+            throw new IllegalArgumentException("Parameter [dataSourcename] must not be null");
+        }
         this.sensorName = sensorName;
         this.dataSourceName = dataSourceName;
+        this.id = sensorName + "-" + dataSourceName;
         this.targetCardinality = -1;
         this.logger = Logger.getLogger(DataSourceComponent.class.getSimpleName());
+        TargetDescriptor targetDescriptor = new TargetDescriptor();
+        targetDescriptor.setParentId(this.id);
+        targetDescriptor.setName("results");
+        DataDescriptor dataDescriptor = new DataDescriptor();
+        dataDescriptor.setFormatType(DataFormat.RASTER);
+        targetDescriptor.setDataDescriptor(dataDescriptor);
+        addTarget(targetDescriptor);
     }
 
     public DataSourceComponent() { this.logger = Logger.getLogger(DataSourceComponent.class.getSimpleName()); }
@@ -120,7 +130,7 @@ public class DataSourceComponent extends TaoComponent {
     }
 
     @Override
-    public String defaultName() { return "NewDatasource"; }
+    public String defaultName() { return this.sensorName + "-" + this.dataSourceName; }
 
     @XmlElementWrapper(name = "specificParameters")
     @XmlElement(name = "dsParameter")
@@ -323,22 +333,6 @@ public class DataSourceComponent extends TaoComponent {
                     currentFetcher.resume();
                 }
                 currentFetcher = null;
-            }
-        }
-        if (products != null) {
-            for (EOProduct product : products) {
-                TargetDescriptor targetDescriptor = new TargetDescriptor();
-                targetDescriptor.setParentId(this.id);
-                DataDescriptor dataDescriptor = new DataDescriptor();
-                dataDescriptor.setFormatType(DataFormat.RASTER);
-                dataDescriptor.setDimension(new Dimension()
-                        {{ width = product.getWidth(); height = product.getHeight(); }});
-                dataDescriptor.setSensorType(product.getSensorType());
-                dataDescriptor.setGeometry(product.getGeometry());
-                dataDescriptor.setLocation(product.getLocation());
-                dataDescriptor.setCrs(product.getCrs());
-                targetDescriptor.setDataDescriptor(dataDescriptor);
-                addTarget(targetDescriptor);
             }
         }
         return products;
