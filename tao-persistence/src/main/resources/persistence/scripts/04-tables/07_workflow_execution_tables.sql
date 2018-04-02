@@ -236,7 +236,9 @@ DROP TABLE IF EXISTS tao.task CASCADE;
 CREATE TABLE tao.task
 (
 	id bigint NOT NULL,
-	component_id varchar(512) NOT NULL, -- FK to either tao.processing_component, either tao.data_source_component
+	-- FK to either tao.processing_component, either tao.data_source_component,
+	-- Also nullable, because execution group doesn't have a component
+	component_id varchar(512) NULL,
 	resource_id varchar(512) NULL,
 	graph_node_id bigint NOT NULL,
 	start_time timestamp without time zone NULL,

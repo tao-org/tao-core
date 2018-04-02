@@ -27,7 +27,6 @@ public abstract class ExecutionTask implements StatusChangeListener {
     private Long id;
     private ExecutionTask groupTask;
     private Long workflowNodeId;
-    //protected T component;
     private int level;
     private String resourceId;
     private String executionNodeHostName;
@@ -40,10 +39,6 @@ public abstract class ExecutionTask implements StatusChangeListener {
     private ExecutionStatus executionStatus = ExecutionStatus.UNDETERMINED;
 
     public ExecutionTask() { }
-
-    /*public ExecutionTask(T component) {
-        this.component = component;
-    }*/
 
     public Long getId() {
         return id;
@@ -60,9 +55,6 @@ public abstract class ExecutionTask implements StatusChangeListener {
 
     public int getLevel() { return level; }
     public void setLevel(int level) { this.level = level; }
-
-/*public abstract void setComponent(T component);
-    public abstract T getComponent();*/
 
     /**
      * Sets the status of this task.

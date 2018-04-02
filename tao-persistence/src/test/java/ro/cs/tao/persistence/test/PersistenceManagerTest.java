@@ -1497,6 +1497,8 @@ public class PersistenceManagerTest {
                 Assert.assertTrue(task != null && task.getId() != 0);
                 // check if job correctly updated
                 Assert.assertTrue(job.getTasks().contains(task));
+
+                logger.info("Now job ID" + job.getId()  + " has " + job.getTasks().size() + " tasks/groups");
             }
         }
         catch (PersistenceException e)
@@ -1556,6 +1558,8 @@ public class PersistenceManagerTest {
                 Assert.assertTrue(task != null && task.getId() != 0);
                 // check if job correctly updated
                 Assert.assertTrue(job.getTasks().contains(task));
+
+                logger.info("Now job ID" + job.getId()  + " has " + job.getTasks().size() + " tasks/groups");
             }
         }
         catch (PersistenceException e)
@@ -1565,7 +1569,7 @@ public class PersistenceManagerTest {
         }
     }
 
-    /*@Test
+    @Test
     public void TC_39_save_new_group_execution_task()
     {
         logger.info("TC_39_save_new_group_execution_task");
@@ -1594,7 +1598,7 @@ public class PersistenceManagerTest {
                 NodeDescription node = nodes.get(0);
 
                 // add a new processing task for test
-                ExecutionTask processingTask = new ProcessingExecutionTask();
+                ProcessingExecutionTask processingTask = new ProcessingExecutionTask();
                 processingTask.setResourceId("ProcessingExecutionTask-resourceId02");
                 processingTask.setExecutionStatus(ExecutionStatus.RUNNING);
                 processingTask.setExecutionNodeHostName(node.getHostName());
@@ -1616,7 +1620,7 @@ public class PersistenceManagerTest {
 
 
                 // add a new data source task for test
-                ExecutionTask dataSourceTask = new DataSourceExecutionTask();
+                DataSourceExecutionTask dataSourceTask = new DataSourceExecutionTask();
                 dataSourceTask.setResourceId("DataSourceExecutionTask-resourceId02");
                 dataSourceTask.setExecutionStatus(ExecutionStatus.RUNNING);
                 dataSourceTask.setExecutionNodeHostName(node.getHostName());
@@ -1631,21 +1635,30 @@ public class PersistenceManagerTest {
                 taskGroup.setResourceId("ExecutionGroup-resourceId01");
                 taskGroup.setExecutionStatus(ExecutionStatus.RUNNING);
                 taskGroup.setExecutionNodeHostName(node.getHostName());
-                taskGroup.setComponent(processingComponent);
                 taskGroup.setWorkflowNodeId(persistenceManager.getWorkflowDescriptor(job.getWorkflowId()).getNodes().get(0).getId());
 
-                // TODO sort it out
-                /*
-                taskGroup.addTask(processingTask);
-                taskGroup.addTask(dataSourceTask);
-                */
-
-
-                /*ExecutionTask taskGroupSaved = persistenceManager.saveExecutionTask(taskGroup, job);
+                ExecutionGroup taskGroupSaved = (ExecutionGroup)persistenceManager.saveExecutionTask(taskGroup, job);
                 // check persisted task group
                 Assert.assertTrue(taskGroupSaved != null && taskGroupSaved.getId() != 0);
                 // check if job correctly updated
                 Assert.assertTrue(job.getTasks().contains(taskGroupSaved));
+
+                logger.info("Now job ID" + job.getId()  + " has " + job.getTasks().size() + " tasks/groups");
+
+                processingTask.setGroupTask(taskGroupSaved);
+                processingTask = (ProcessingExecutionTask)persistenceManager.saveExecutionTask(processingTask, job);
+
+                dataSourceTask.setGroupTask(taskGroupSaved);
+                dataSourceTask = (DataSourceExecutionTask)persistenceManager.saveExecutionTask(dataSourceTask, job);
+
+                // add tasks to saved group
+                taskGroupSaved.addTask(processingTask);
+                taskGroupSaved.addTask(dataSourceTask);
+
+                persistenceManager.updateExecutionTask(taskGroupSaved);
+
+                logger.info("Now job ID" + job.getId()  + " has " + job.getTasks().size() + " tasks/groups");
+
             }
         }
         catch (PersistenceException e)
@@ -1653,7 +1666,7 @@ public class PersistenceManagerTest {
             logger.error(ExceptionUtils.getStackTrace(e));
             Assert.fail(e.getMessage());
         }
-    }*/
+    }
 
     @Test
     public void TC_40_get_running_execution_tasks()

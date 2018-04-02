@@ -35,17 +35,11 @@ public class DataSourceExecutionTask extends ExecutionTask {
         super();
     }
 
-    /*public DataSourceExecutionTask(DataSourceComponent component) {
-        super(component);
-        this.component = component;
-    }*/
-
     public DataSourceComponent getComponent() {
         return component;
     }
 
     public void setComponent(DataSourceComponent component) {
-//        super.setComponent(component);
         this.component = component;
     }
 
