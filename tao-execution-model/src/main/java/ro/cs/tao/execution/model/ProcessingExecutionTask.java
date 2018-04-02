@@ -35,17 +35,11 @@ public class ProcessingExecutionTask extends ExecutionTask {
         super();
     }
 
-    /*public ProcessingExecutionTask(ProcessingComponent component) {
-        super(component);
-        this.component = component;
-    }*/
-
     public ProcessingComponent getComponent() {
         return component;
     }
 
     public void setComponent(ProcessingComponent component) {
-        //super.setComponent(component);
         this.component = component;
     }
 

@@ -983,7 +983,8 @@ public class PersistenceManager implements MessagePersister {
             }
         }
 
-        if (task instanceof ProcessingExecutionTask || task instanceof DataSourceExecutionTask) {
+        if (task instanceof ProcessingExecutionTask || task instanceof DataSourceExecutionTask ||
+            task instanceof ExecutionGroup) {
 
             // set the task parent job
             task.setJob(job);
@@ -1001,41 +1002,6 @@ public class PersistenceManager implements MessagePersister {
 
             return savedExecutionTask;
         }
-
-        /*else if (task instanceof ExecutionGroup) {
-
-            List<ExecutionTask> groupSubTasks = ((ExecutionGroup) task).getTasks();
-
-            // save first the sub-tasks within the group
-            List<ExecutionTask> savedSubtasks = new ArrayList<>();
-            if (groupSubTasks != null && groupSubTasks.size() > 0) {
-                for (ExecutionTask groupSubTask : groupSubTasks) {
-                    // break the relation to can save the child first
-                    groupSubTask.setGroupTask(null);
-                    groupSubTask = saveExecutionTask(groupSubTask, job);
-                    savedSubtasks.add(groupSubTask);
-
-                    logger.info("Saved sub task " + groupSubTask.getResourceId());
-                }
-            }
-
-            // set the saved subtasks
-            ((ExecutionGroup) task).setTasks(savedSubtasks);
-
-            // finally save the group
-            task = saveExecutionTask(task, job);
-
-            // update the group tasks to set the groupTask property on them
-            for (ExecutionTask subTask: savedSubtasks) {
-                // add back the relation to the parent groupTask, that is now saved (no longer transient)
-                subTask.setGroupTask(task);
-                updateExecutionTask(subTask);
-            }
-
-            return task;
-
-        }*/
-
 
         return null;
     }

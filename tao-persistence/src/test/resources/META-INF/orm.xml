@@ -471,16 +471,12 @@
             <basic name="internalState">
                 <column name="internal_state" nullable="true" column-definition="character varying(512) NULL"/>
             </basic>
-
             <basic name="workflowNodeId">
                 <column name="graph_node_id" nullable="false" column-definition="bigint NOT NULL"/>
             </basic>
             <basic name="level">
                 <column name="execution_level" nullable="false" column-definition="integer NOT NULL"/>
             </basic>
-            <!--<many-to-one name="component" fetch="LAZY" target-entity="ro.cs.tao.component.ProcessingComponent">
-                <join-column name="component_id" nullable="false"/>
-            </many-to-one>-->
 
             <many-to-one name="job" fetch="LAZY">
                 <join-column name="job_id" nullable="false"/>
@@ -519,6 +515,7 @@
 
 
     <entity class="ro.cs.tao.execution.model.DataSourceExecutionTask" access="PROPERTY">
+
         <discriminator-value>31</discriminator-value>
 
         <attributes>
@@ -530,9 +527,6 @@
 
 
     <entity class="ro.cs.tao.execution.model.ExecutionGroup" access="PROPERTY">
-        <!-- no need to specify the table here, since ExecutionGroup inherits ExecutionTask;
-            ExecutionGroup is a subclass of a SINGLE_TABLE hierarchy -->
-        <!--<table name="tao.task"/>-->
 
         <!-- any other value than 937389016 (set by JPA for the base class); e.g 13  -->
         <discriminator-value>13</discriminator-value>
@@ -635,14 +629,6 @@
                 </cascade>
             </one-to-many>
 
-            <!--
-            <element-collection name="customValues" target-class="ro.cs.tao.workflow.ParameterValue" access="PROPERTY" fetch="LAZY">
-                <collection-table name="tao.workflow_graph_processing_custom_values" >
-                    <join-column name="workflow_graph_id" referenced-column-name="id" />
-                </collection-table>
-            </element-collection>
-            -->
-
             <transient name="orderedNodes"/>
 
         </attributes>
@@ -684,14 +670,6 @@
                     <join-column name="graph_node_id" referenced-column-name="id" />
                 </collection-table>
             </element-collection>
-
-            <!--
-            <element-collection name="customValues" target-class="ro.cs.tao.workflow.ParameterValue" access="PROPERTY" fetch="LAZY">
-                <collection-table name="tao.graph_node_processing_custom_values" >
-                    <join-column name="graph_node_id" referenced-column-name="id" />
-                </collection-table>
-            </element-collection>
-            -->
 
         </attributes>
     </entity>
@@ -871,21 +849,6 @@
                 <convert converter="ro.cs.tao.persistence.convert.SensorTypeConverter" attribute-name="sensorType" />
             </basic>
 
-            <!-- error: column dimension is of type json but expression is of type bytea -->
-            <!--
-            <basic name="dimension">
-                <column name="dimension" nullable="false" column-definition="json NOT NULL"/>
-            </basic>
-            -->
-
-            <!-- works with converter, here column declared as text, but in DB as json ! -->
-            <!--
-            <basic name="dimension">
-                <column name="dimension" nullable="false" column-definition="text NOT NULL"/>
-                <convert converter="ro.cs.tao.persistence.convert.DimensionConverter" />
-            </basic>
-            -->
-
             <basic name="dimension">
                 <column name="dimension" nullable="true" column-definition="json NULL"/>
                 <convert converter="ro.cs.tao.persistence.convert.DimensionConverter" />
@@ -931,7 +894,6 @@
     <converter class="ro.cs.tao.persistence.convert.ConstraintsConverter" />
     <converter class="ro.cs.tao.persistence.convert.DimensionConverter" />
     <converter class="ro.cs.tao.persistence.convert.ParameterValueListConverter"/>
-    <!--<converter class="ro.cs.tao.persistence.convert.ParameterListConverter"/>-->
     <converter class="ro.cs.tao.persistence.convert.QueryValuesMapConverter"/>
 
 
