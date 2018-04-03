@@ -103,7 +103,20 @@ public class ExecutionGroup extends ExecutionTask {
         return task;
     }
 
+    /**
+     *
+     * TASK ID is NULL until save, so this allows only adding the first sub-task on the group, the other are seen as duplicates, since all have identical ID null
+     */
     private boolean contains(ExecutionTask task) {
-        return this.tasks != null && task != null && this.tasks.stream().anyMatch(t -> t.getId() == task.getId());
+        // TASK ID is NULL until save, so no comparison by ID should be made in this case, because it will allow only adding the first sub-task on the group, the other are seen as duplicates, since all have identical ID null
+        if (task != null && task.getId() == null) {
+            return this.tasks != null && this.tasks.contains(task);
+        }
+
+        if (task != null && task.getId() != null) {
+            return this.tasks != null && task != null && this.tasks.stream().anyMatch(t -> t.getId() == task.getId());
+        }
+
+        return false;
     }
 }

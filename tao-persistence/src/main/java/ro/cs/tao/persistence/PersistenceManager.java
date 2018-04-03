@@ -986,6 +986,14 @@ public class PersistenceManager implements MessagePersister {
                 !(existingEntity && (task.getResourceId() == null || task.getResourceId().isEmpty()));
     }
 
+    /**
+     * Saves a task directly attached to an existent job
+     *
+     * @param task - the task to save
+     * @param job - the existent job
+     * @return - the newly saved task
+     * @throws PersistenceException
+     */
     @Transactional
     public ExecutionTask saveExecutionTask(ExecutionTask task, ExecutionJob job) throws PersistenceException {
 
@@ -1068,6 +1076,26 @@ public class PersistenceManager implements MessagePersister {
         }
 
         return null;
+    }
+
+    @Transactional
+    public ExecutionTask saveExecutionGroupWithSubTasks(ExecutionGroup taskGroup, ExecutionJob job) throws PersistenceException {
+
+        // check method parameters
+        if (!checkExecutionTask(taskGroup, job, false)) {
+            throw new PersistenceException("Invalid parameters were provided for adding new execution group with sub-tasks !");
+        }
+
+        List<ExecutionTask> subTasks = taskGroup.getTasks() != null ? taskGroup.getTasks() : new ArrayList<>();
+
+        taskGroup.setTasks(null);
+        taskGroup = (ExecutionGroup)saveExecutionTask(taskGroup, job);
+
+        for (ExecutionTask subTask : subTasks){
+            saveExecutionGroupSubTask(subTask, taskGroup);
+        }
+
+        return taskGroup;
     }
 
     @Transactional
