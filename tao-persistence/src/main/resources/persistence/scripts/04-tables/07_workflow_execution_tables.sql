@@ -244,7 +244,8 @@ CREATE TABLE tao.task
 	start_time timestamp without time zone NULL,
 	end_time timestamp without time zone NULL,
 	internal_state varchar(512) NULL,
-	job_id bigint NOT NULL,
+	-- for some tasks the parent is the task group, not the job, therefore job_id nullable
+	job_id bigint NULL,
 	task_group_id bigint NULL,
 	execution_node_host_name varchar(250) NULL,
 	execution_status_id integer NOT NULL,
