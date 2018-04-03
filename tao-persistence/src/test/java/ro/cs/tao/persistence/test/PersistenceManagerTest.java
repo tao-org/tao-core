@@ -1637,6 +1637,7 @@ public class PersistenceManagerTest {
                 taskGroup.setExecutionNodeHostName(node.getHostName());
                 taskGroup.setWorkflowNodeId(persistenceManager.getWorkflowDescriptor(job.getWorkflowId()).getNodes().get(0).getId());
 
+                // save first the execution group and after the sub-tasks within
                 ExecutionGroup taskGroupSaved = (ExecutionGroup)persistenceManager.saveExecutionTask(taskGroup, job);
                 // check persisted task group
                 Assert.assertTrue(taskGroupSaved != null && taskGroupSaved.getId() != 0);
@@ -1650,6 +1651,106 @@ public class PersistenceManagerTest {
 
                 dataSourceTask.setGroupTask(taskGroupSaved);
                 dataSourceTask = (DataSourceExecutionTask)persistenceManager.saveExecutionTask(dataSourceTask, job);
+
+                // add tasks to saved group
+                taskGroupSaved.addTask(processingTask);
+                taskGroupSaved.addTask(dataSourceTask);
+
+                persistenceManager.updateExecutionTask(taskGroupSaved);
+
+                logger.info("Now job ID" + job.getId()  + " has " + job.getTasks().size() + " tasks/groups");
+
+            }
+        }
+        catch (PersistenceException e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void TC_39_save_new_group_execution_task_with_subtasks_unattached_to_job()
+    {
+        logger.info("TC_39_save_new_group_execution_task_with_subtasks_unattached_to_job");
+        try
+        {
+            // retrieve one existing job, for test
+            List<ExecutionJob> jobs = persistenceManager.getAllJobs();
+            // retrieve data sources components
+            List<DataSourceComponent> dataSourceComponents = persistenceManager.getDataSourceComponents();
+            // retrieve also processing components
+            List<ProcessingComponent> processingComponents = persistenceManager.getProcessingComponents();
+            // retrieve execution nodes
+            List<NodeDescription> nodes = persistenceManager.getNodes();
+
+            if(jobs != null && jobs.size() > 0 &&
+              dataSourceComponents != null && dataSourceComponents.size() > 0 &&
+              processingComponents != null && processingComponents.size() > 0 &&
+              nodes != null && nodes.size() > 0)
+            {
+                // retrieve first job
+                ExecutionJob job = jobs.get(0);
+                // retrieve first component
+                DataSourceComponent dataSourceComponent = dataSourceComponents.get(0);
+                ProcessingComponent processingComponent = processingComponents.get(0);
+
+                NodeDescription node = nodes.get(0);
+
+                // add a new processing task for test
+                ProcessingExecutionTask processingTask = new ProcessingExecutionTask();
+                processingTask.setResourceId("ProcessingExecutionTask-resourceId03");
+                processingTask.setExecutionStatus(ExecutionStatus.RUNNING);
+                processingTask.setExecutionNodeHostName(node.getHostName());
+                processingTask.setComponent(processingComponent);
+                processingTask.setWorkflowNodeId(persistenceManager.getWorkflowDescriptor(job.getWorkflowId()).getNodes().get(0).getId());
+
+                List<Variable> inputsValues = new ArrayList<>();
+                Variable input1 = new Variable();
+                input1.setKey("input1");
+                input1.setValue("val1");
+                inputsValues.add(input1);
+
+                Variable input2 = new Variable();
+                input2.setKey("input2");
+                input2.setValue("val2");
+                inputsValues.add(input2);
+
+                processingTask.setInputParameterValues(inputsValues);
+
+
+                // add a new data source task for test
+                DataSourceExecutionTask dataSourceTask = new DataSourceExecutionTask();
+                dataSourceTask.setResourceId("DataSourceExecutionTask-resourceId03");
+                dataSourceTask.setExecutionStatus(ExecutionStatus.RUNNING);
+                dataSourceTask.setExecutionNodeHostName(node.getHostName());
+                dataSourceTask.setComponent(dataSourceComponent);
+                dataSourceTask.setWorkflowNodeId(persistenceManager.getWorkflowDescriptor(job.getWorkflowId()).getNodes().get(0).getId());
+
+                dataSourceTask.setInputParameterValues(inputsValues);
+
+
+                // make a ExecutionGroup from the 2 tasks
+                ExecutionGroup taskGroup = new ExecutionGroup();
+                taskGroup.setResourceId("ExecutionGroup-resourceId02");
+                taskGroup.setExecutionStatus(ExecutionStatus.RUNNING);
+                taskGroup.setExecutionNodeHostName(node.getHostName());
+                taskGroup.setWorkflowNodeId(persistenceManager.getWorkflowDescriptor(job.getWorkflowId()).getNodes().get(0).getId());
+
+                // save first the execution group and after the sub-tasks within
+                ExecutionGroup taskGroupSaved = (ExecutionGroup)persistenceManager.saveExecutionTask(taskGroup, job);
+                // check persisted task group
+                Assert.assertTrue(taskGroupSaved != null && taskGroupSaved.getId() != 0);
+                // check if job correctly updated
+                Assert.assertTrue(job.getTasks().contains(taskGroupSaved));
+
+                logger.info("Now job ID" + job.getId()  + " has " + job.getTasks().size() + " tasks/groups");
+
+                processingTask.setGroupTask(taskGroupSaved);
+                processingTask = (ProcessingExecutionTask)persistenceManager.saveExecutionGroupSubTask(processingTask, taskGroupSaved);
+
+                dataSourceTask.setGroupTask(taskGroupSaved);
+                dataSourceTask = (DataSourceExecutionTask)persistenceManager.saveExecutionGroupSubTask(dataSourceTask, taskGroupSaved);
 
                 // add tasks to saved group
                 taskGroupSaved.addTask(processingTask);

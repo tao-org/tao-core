@@ -479,7 +479,7 @@
             </basic>
 
             <many-to-one name="job" fetch="LAZY">
-                <join-column name="job_id" nullable="false"/>
+                <join-column name="job_id" nullable="true"/>
             </many-to-one>
 
             <many-to-one name="groupTask" fetch="LAZY">
