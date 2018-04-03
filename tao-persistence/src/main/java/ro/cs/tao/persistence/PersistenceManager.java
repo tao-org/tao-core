@@ -915,6 +915,22 @@ public class PersistenceManager implements MessagePersister {
         return result;
     }
 
+    @Transactional(readOnly = true)
+    public boolean checkIfExistsExecutionTaskById(final Long taskId) {
+        boolean result = false;
+
+        if (taskId != null && taskId > 0) {
+            // try to retrieve ExecutionTask after its identifier
+            final ExecutionTask taskEnt = executionTaskRepository.findById(taskId);
+            if (taskEnt != null) {
+                result = true;
+            }
+        }
+
+        return result;
+    }
+
+
     @Transactional
     public ExecutionJob updateExecutionJob(ExecutionJob job) throws PersistenceException {
         // check method parameters
@@ -959,6 +975,11 @@ public class PersistenceManager implements MessagePersister {
         return !(!checkExecutionJob(job, true) || !checkIfExistsExecutionJobById(job.getId())) && checkExecutionTask(task, existingEntity);
     }
 
+    private boolean checkExecutionGroupTask(ExecutionTask task, ExecutionGroup taskGroup, boolean existingEntity) {
+        // check first the task group (that should already be persisted)
+        return !(!checkExecutionTask(taskGroup, true) || !checkIfExistsExecutionTaskById(taskGroup.getId())) && checkExecutionTask(task, existingEntity);
+    }
+
     private boolean checkExecutionTask(ExecutionTask task, boolean existingEntity) {
         return task != null && !(existingEntity && task.getId() == null) &&
                 !(!existingEntity && task.getId() != null) &&
@@ -999,6 +1020,49 @@ public class PersistenceManager implements MessagePersister {
             job.setTasks(jobTasks);
             executionJobRepository.save(job);
         }
+
+            return savedExecutionTask;
+        }
+
+        return null;
+    }
+
+    @Transactional
+    public ExecutionTask saveExecutionGroupSubTask(ExecutionTask task, ExecutionGroup taskGroup) throws PersistenceException {
+
+        logger.info("saveExecutionGroupSubTask() of type " + task.getClass().getCanonicalName() + " having resource id: " + task.getResourceId());
+
+        // check method parameters
+        if (!checkExecutionGroupTask(task, taskGroup, false)) {
+            throw new PersistenceException("Invalid parameters were provided for adding new execution task within task group " + taskGroup.getId() + "!");
+        }
+
+        // check if there is already task with the same resource identifier
+        if (task.getResourceId() != null) {
+            final ExecutionTask taskWithSameResourceId = executionTaskRepository.findByResourceId(task.getResourceId());
+            if (taskWithSameResourceId != null) {
+                throw new PersistenceException("There is already another task with the resource identifier: " + task.getResourceId());
+            }
+        }
+
+        if (task instanceof ProcessingExecutionTask || task instanceof DataSourceExecutionTask) {
+
+            // set the task parent group
+            task.setGroupTask(taskGroup);
+
+            // save the new ExecutionTask entity
+            final ExecutionTask savedExecutionTask =  executionTaskRepository.save(task);
+
+            // add the task to job tasks collection
+            List<ExecutionTask> groupTasks = taskGroup.getTasks();
+            if (groupTasks == null){
+                groupTasks = new ArrayList<>();
+            }
+            if (groupTasks.stream().noneMatch(t -> t.getId().equals(task.getId()))) {
+                groupTasks.add(task);
+                taskGroup.setTasks(groupTasks);
+                executionTaskRepository.save(taskGroup);
+            }
 
             return savedExecutionTask;
         }
