@@ -1,2 +1,2 @@
 cd ..
-java -cp services/*;modules/*;lib/* ro.cs.tao.services.TaoServicesStartup
+java -cp services/*;modules/*;plugins/*;lib/* ro.cs.tao.services.TaoServicesStartup
