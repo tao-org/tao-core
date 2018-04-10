@@ -37,15 +37,18 @@ public class ExecutionGroup extends ExecutionTask {
 
     @Override
     public void setInputParameterValue(String parameterId, String value) {
-        //super.setInputParameterValue(parameterId, value);
-        if (this.tasks != null && this.tasks.size() > 0) {
-            this.tasks.get(0).setInputParameterValue(parameterId, value);
+        if (this.inputParameterValues == null) {
+            this.inputParameterValues = new ArrayList<>();
         }
+        this.inputParameterValues.add(new Variable(parameterId, value));
+        /*if (this.tasks != null && this.tasks.size() > 0) {
+            this.tasks.get(0).setInputParameterValue(parameterId, value);
+        }*/
     }
 
     @Override
     public void setInputParameterValues(List<Variable> inputParameterValues) {
-        super.setInputParameterValues(inputParameterValues);
+        //super.setInputParameterValues(inputParameterValues);
         if (this.tasks != null && this.tasks.size() > 0) {
             this.tasks.get(0).setInputParameterValues(inputParameterValues);
         }
@@ -114,7 +117,7 @@ public class ExecutionGroup extends ExecutionTask {
         }
 
         if (task != null && task.getId() != null) {
-            return this.tasks != null && task != null && this.tasks.stream().anyMatch(t -> t.getId() == task.getId());
+            return this.tasks != null && this.tasks.stream().anyMatch(t -> t.getId().equals(task.getId()));
         }
 
         return false;

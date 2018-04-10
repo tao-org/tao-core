@@ -16,16 +16,20 @@
 
 package ro.cs.tao.orchestration;
 
-import ro.cs.tao.execution.model.ExecutionGroup;
-import ro.cs.tao.execution.model.ExecutionStatus;
-import ro.cs.tao.execution.model.ExecutionTask;
-import ro.cs.tao.execution.model.TaskSelector;
+import ro.cs.tao.component.Variable;
+import ro.cs.tao.execution.model.*;
 import ro.cs.tao.persistence.PersistenceManager;
+import ro.cs.tao.serialization.BaseSerializer;
+import ro.cs.tao.serialization.MapAdapter;
+import ro.cs.tao.serialization.MediaType;
+import ro.cs.tao.serialization.SerializerFactory;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 
+import javax.xml.transform.stream.StreamSource;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -47,7 +51,21 @@ public class DefaultGroupTaskSelector implements TaskSelector<ExecutionGroup> {
             switch (taskHolder.getExecutionStatus()) {
                 // If the group is not started, we return the first task in line
                 case UNDETERMINED:
-                    next.add(tasks.get(0));
+                    ExecutionTask task = tasks.get(0);
+                    try {
+                        BaseSerializer<LoopState> serializer = SerializerFactory.create(LoopState.class, MediaType.JSON);
+                        LoopState current = serializer.deserialize(new StreamSource(taskHolder.getInternalState()));
+                        MapAdapter mapAdapter = new MapAdapter();
+                        Map<String, String> map = mapAdapter.marshal(taskHolder.getInputParameterValues().get(0).getValue());
+                        Variable nextInput = null;
+                        if (map != null) {
+                            nextInput = map.entrySet().stream().map(e -> new Variable(e.getKey(), e.getValue())).collect(Collectors.toList()).get(current.getCurrent());
+                            task.setInputParameterValue(nextInput.getKey(), nextInput.getValue());
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    next.add(task);
                     break;
                 // If the group is already queued for execution,
                 // there should be already at least one task queued for execution, so we don't return another one
@@ -93,11 +111,22 @@ public class DefaultGroupTaskSelector implements TaskSelector<ExecutionGroup> {
                     List<WorkflowNodeDescriptor> parents =
                             persistenceManager.getWorkflowNodesByComponentId(workflow.getId(),link.getInput().getParentId());
                     return parents.stream().allMatch(p -> {
-                        ExecutionTask taskByNode = persistenceManager.getTaskByGroupAndNode(group.getId(), p.getId());
+                        ExecutionTask taskByNode = persistenceManager.getTaskByJobAndNode(group.getJob().getId(), p.getId());
                         return taskByNode != null && taskByNode.getExecutionStatus() == ExecutionStatus.DONE;
                     });
                 }))
-                .map(n -> persistenceManager.getTaskByGroupAndNode(group.getId(), n.getId()))
+                .map(n -> {
+                    ExecutionTask next = persistenceManager.getTaskByJobAndNode(group.getJob().getId(), n.getId());
+                    List<Variable> outputs = task.getOutputParameterValues();
+                    n.getIncomingLinks().forEach(link -> {
+                        for (Variable variable : outputs) {
+                            if (variable.getKey().equals(link.getInput().getName())) {
+                                next.setInputParameterValue(link.getOutput().getName(), variable.getValue());
+                            }
+                        }
+                    });
+                    return next;
+                })
                 .collect(Collectors.toList());
     }
 }

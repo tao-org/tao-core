@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.orchestration;
 
+import ro.cs.tao.component.Variable;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.messaging.Message;
@@ -24,15 +25,14 @@ import ro.cs.tao.orchestration.commands.JobCommand;
 import ro.cs.tao.orchestration.commands.TaskCommand;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
-import ro.cs.tao.serialization.BaseSerializer;
-import ro.cs.tao.serialization.MediaType;
-import ro.cs.tao.serialization.SerializationException;
-import ro.cs.tao.serialization.SerializerFactory;
+import ro.cs.tao.serialization.*;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 
 import javax.xml.transform.stream.StreamSource;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * @author Cosmin Cara
@@ -156,8 +156,27 @@ public class Orchestrator extends Notifiable {
                     System.out.println(String.format("Has %s next tasks", nextTasks.size()));
                     for (ExecutionTask nextTask : nextTasks) {
                         if (nextTask != null) {
+                            if (task instanceof DataSourceExecutionTask && nextTask instanceof ExecutionGroup) {
+                                ExecutionGroup groupTask = (ExecutionGroup) nextTask;
+                                // A DataSourceExecutionTask outputs the list of results as a JSON
+                                List<Variable> values = task.getOutputParameterValues();
+                                if (values != null && values.size() > 0) {
+                                    Variable theOnlyValue = values.get(0);
+                                    List<Variable> results = deserializeResults(theOnlyValue.getValue());
+                                    try {
+                                        BaseSerializer<LoopState> serializer = SerializerFactory.create(LoopState.class, MediaType.JSON);
+                                        LoopState loopState = new LoopState();
+                                        loopState.setCurrent(1);
+                                        loopState.setLimit(results.size());
+                                        groupTask.setInternalState(serializer.serialize(loopState));
+                                        groupTask.setInputParameterValue(theOnlyValue.getKey(), theOnlyValue.getValue());
+                                    } catch (SerializationException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            }
                             logger.fine(String.format("Task %s about to start.", nextTask.getId()));
-                            task.getInputParameterValues().forEach(
+                            nextTask.getInputParameterValues().forEach(
                                     v -> logger.fine(String.format("Input: %s=%s", v.getKey(), v.getValue()))
                             );
                             TaskCommand.START.applyTo(nextTask);
@@ -194,8 +213,9 @@ public class Orchestrator extends Notifiable {
                 groupTask.setExecutionStatus(taskStatus);
                 break;
             case DONE:
-                // If the task is the last one of this group
-                if (tasks.get(tasks.size() - 1).getId().equals(task.getId())) {
+                // If the task is the last one executing of this group
+                if (tasks.stream().allMatch(t -> t.getExecutionStatus() == ExecutionStatus.DONE)) {
+                //if (tasks.get(tasks.size() - 1).getId().equals(task.getId())) {
                     Integer nextState = this.groupInternalStateHandler.apply(groupTask.getInternalState());
                     if (nextState != null) {
                         bulkSetStatus(groupTask, null, ExecutionStatus.UNDETERMINED);
@@ -312,5 +332,19 @@ public class Orchestrator extends Notifiable {
         ExecutionGroup groupTask = (ExecutionGroup) task.getGroupTask();
         return groupTask != null ? this.groupTaskSelector.chooseNext(groupTask, task) :
                 this.jobTaskSelector.chooseNext(task.getJob(), task);
+    }
+
+    private List<Variable> deserializeResults(String jsonValue) {
+        List<Variable> pairs = null;
+        try {
+            MapAdapter mapAdapter = new MapAdapter();
+            Map<String, String> map = mapAdapter.marshal(jsonValue);
+            if (map != null) {
+                pairs = map.entrySet().stream().map(e -> new Variable(e.getKey(), e.getValue())).collect(Collectors.toList());
+            }
+        } catch (Exception e) {
+            logger.severe("Serialization of results failed: " + e.getMessage());
+        }
+        return pairs;
     }
 }
