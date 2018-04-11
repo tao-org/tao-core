@@ -140,6 +140,16 @@ public class ProcessingComponent extends TaoComponent {
         this.templateType = templateType;
     }
 
+    public String getTemplateContents(){
+        return template != null ? template.getContents() : null;
+    }
+
+    public void setTemplateContents(String contents) {
+        if (template != null) {
+            template.setContents(contents, true);
+        }
+    }
+
     public TemplateEngine getTemplateEngine() {
         if (this.templateEngine == null) {
             this.templateEngine = EngineFactory.createInstance(getTemplateType());
