@@ -223,7 +223,6 @@ public class ProcessingComponent extends TaoComponent {
             }
         }
         StringBuilder cmdBuilder = new StringBuilder();
-        cmdBuilder.append("cmd.exe /c \"");
         cmdBuilder.append(this.fileLocation).append("\n");
         String cmdLine = templateEngine.transform(this.template, clonedMap);
         cmdBuilder.append(cmdLine == null || "null".equals(cmdLine) ? "" : cmdLine);
