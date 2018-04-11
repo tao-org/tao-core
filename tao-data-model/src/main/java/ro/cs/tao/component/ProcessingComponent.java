@@ -16,6 +16,7 @@
 package ro.cs.tao.component;
 
 import ro.cs.tao.component.enums.ProcessingComponentVisibility;
+import ro.cs.tao.component.template.BasicTemplate;
 import ro.cs.tao.component.template.Template;
 import ro.cs.tao.component.template.TemplateException;
 import ro.cs.tao.component.template.TemplateType;
@@ -26,6 +27,8 @@ import ro.cs.tao.component.validation.ValidationException;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
+import java.net.URI;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -145,9 +148,10 @@ public class ProcessingComponent extends TaoComponent {
     }
 
     public void setTemplateContents(String contents) {
-        if (template != null) {
-            template.setContents(contents, true);
-        }
+        this.template = new BasicTemplate();
+        template.setTemplateType(getTemplateType());
+        template.setContents(contents, false);
+        template.associateWith(getTemplateEngine());
     }
 
     public TemplateEngine getTemplateEngine() {
@@ -204,9 +208,27 @@ public class ProcessingComponent extends TaoComponent {
     public String buildExecutionCommand(Map<String, String> parameterValues) throws TemplateException {
         TemplateEngine templateEngine = getTemplateEngine();
         Map<String, Object> clonedMap = new HashMap<>();
-        clonedMap.putAll(parameterValues);
+        for (Map.Entry<String, String> entry : parameterValues.entrySet()) {
+            try {
+                clonedMap.put(entry.getKey(),
+                              Paths.get(URI.create(entry.getValue())).toString());
+            } catch (Exception ex) {
+                clonedMap.put(entry.getKey(), entry.getValue());
+            }
+        }
+        for (ParameterDescriptor parameterDescriptor : this.parameters) {
+            if (!clonedMap.containsKey(parameterDescriptor.getId()) &&
+                    parameterDescriptor.getDefaultValue() != null) {
+                clonedMap.put(parameterDescriptor.getId(), parameterDescriptor.getDefaultValue());
+            }
+        }
+        StringBuilder cmdBuilder = new StringBuilder();
+        cmdBuilder.append("cmd.exe /c \"");
+        cmdBuilder.append(this.fileLocation).append("\n");
         String cmdLine = templateEngine.transform(this.template, clonedMap);
-        return cmdLine == null || "null".equals(cmdLine) ? "" : cmdLine;
+        cmdBuilder.append(cmdLine == null || "null".equals(cmdLine) ? "" : cmdLine);
+        cmdBuilder.append("\"");
+        return cmdBuilder.toString();
     }
 
 }

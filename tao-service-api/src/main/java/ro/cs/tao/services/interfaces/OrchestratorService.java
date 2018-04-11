@@ -20,6 +20,7 @@ import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.model.ExecutionTask;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Interface for orchestration
@@ -34,7 +35,7 @@ public interface OrchestratorService {
      *
      * @throws ExecutionException   In case anything goes wrong or a job for this workflow was already created
      */
-    void startWorkflow(long workflowId) throws ExecutionException;
+    void startWorkflow(long workflowId, Map<String, String> inputs) throws ExecutionException;
     /**
      * Stops the execution of the job corresponding to this workflow.
      *

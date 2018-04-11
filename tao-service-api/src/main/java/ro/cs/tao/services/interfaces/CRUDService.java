@@ -16,6 +16,7 @@
 package ro.cs.tao.services.interfaces;
 
 import ro.cs.tao.component.validation.ValidationException;
+import ro.cs.tao.persistence.exception.PersistenceException;
 
 import java.util.List;
 
@@ -32,7 +33,7 @@ public interface CRUDService<T> {
      * @param id    The entity identifier
      * @return      An instance of the entity or <code>null</code> if not found
      */
-    T findById(String id);
+    T findById(String id) throws PersistenceException;
 
     /**
      * Retrieves all the entities of this type.
@@ -58,7 +59,7 @@ public interface CRUDService<T> {
      *
      * @param id    The entity identifier.
      */
-    void delete(String id);
+    void delete(String id) throws PersistenceException;
 
     /**
      * Validates the entity field values before persisting it.

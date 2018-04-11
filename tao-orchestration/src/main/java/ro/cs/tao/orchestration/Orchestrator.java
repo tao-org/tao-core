@@ -75,14 +75,18 @@ public class Orchestrator extends Notifiable {
      *
      * @throws ExecutionException   In case anything goes wrong or a job for this workflow was already created
      */
-    public void startWorkflow(long workflowId) throws ExecutionException {
+    public void startWorkflow(long workflowId, Map<String, String> inputs) throws ExecutionException {
         try {
-            ExecutionJob job = persistenceManager.getJob(workflowId);
-            if (job == null) {
+            List<ExecutionJob> jobs = persistenceManager.getJobs(workflowId);
+            ExecutionJob executionJob = null;
+            if (jobs == null || jobs.isEmpty()
+                    || jobs.stream().allMatch(job -> job.getExecutionStatus() == ExecutionStatus.DONE ||
+                                                        job.getExecutionStatus() == ExecutionStatus.FAILED ||
+                                                        job.getExecutionStatus() == ExecutionStatus.CANCELLED)) {
                 WorkflowDescriptor descriptor = persistenceManager.getWorkflowDescriptor(workflowId);
-                job = this.jobFactory.createJob(descriptor);
+                executionJob = this.jobFactory.createJob(descriptor, inputs);
             }
-            JobCommand.START.applyTo(job);
+            JobCommand.START.applyTo(executionJob);
         } catch (PersistenceException e) {
             logger.severe(e.getMessage());
             throw new ExecutionException(e.getMessage());
@@ -153,7 +157,7 @@ public class Orchestrator extends Notifiable {
                 }
                 List<ExecutionTask> nextTasks = getNext(task);
                 if (nextTasks != null && nextTasks.size() > 0) {
-                    System.out.println(String.format("Has %s next tasks", nextTasks.size()));
+                    logger.fine(String.format("Has %s next tasks", nextTasks.size()));
                     for (ExecutionTask nextTask : nextTasks) {
                         if (nextTask != null) {
                             if (task instanceof DataSourceExecutionTask && nextTask instanceof ExecutionGroup) {
@@ -277,11 +281,13 @@ public class Orchestrator extends Notifiable {
     }
 
     private ExecutionJob checkWorkflow(long workflowId) {
-        ExecutionJob job = persistenceManager.getJob(workflowId);
-        if (job == null) {
+        List<ExecutionJob> jobs = persistenceManager.getJobs(workflowId);
+        if (jobs == null || jobs.isEmpty()) {
             throw new ExecutionException(String.format("No job exists for workflow %s", workflowId));
         }
-        return job;
+        return jobs.stream().filter(j -> j.getExecutionStatus() != ExecutionStatus.DONE
+                && j.getExecutionStatus() != ExecutionStatus.CANCELLED
+                && j.getExecutionStatus() != ExecutionStatus.FAILED).findFirst().orElse(null);
     }
 
     private void bulkSetStatus(ExecutionGroup group, ExecutionTask firstExculde, ExecutionStatus status) {
