@@ -24,7 +24,6 @@ import ro.cs.tao.execution.Executor;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.execution.model.ProcessingExecutionTask;
-import ro.cs.tao.persistence.exception.PersistenceException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -89,16 +88,16 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
 
             task.setResourceId(id);
             task.setStartTime(LocalDateTime.now());
-            task.setExecutionStatus(ExecutionStatus.QUEUED_ACTIVE);
-            persistenceManager.updateExecutionTask(task);
+            changeTaskStatus(task, ExecutionStatus.QUEUED_ACTIVE);
+            //persistenceManager.updateExecutionTask(task);
             logger.info("DrmaaExecutor: Succesfully submitted task with id " + id);
         } catch (DrmaaException | InternalException e) {
             logger.severe("DrmaaExecutor: Error submitting task with id " + task.getId() + " for command " + cmd +
                         ". The exception was " + e.getMessage());
             throw new ExecutionException("Error executing DRMAA session operation", e);
-        } catch (PersistenceException e) {
+        }/* catch (PersistenceException e) {
             throw new ExecutionException("Unable to save execution state in the database", e);
-        }
+        }*/
     }
 
     @Override

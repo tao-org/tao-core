@@ -26,7 +26,7 @@ public interface ExecutionJobRepository extends PagingAndSortingRepository<Execu
      */
     ExecutionJob findById(Long id);
 
-    ExecutionJob findByWorkflowId(long workflowId);
+    List<ExecutionJob> findByWorkflowId(long workflowId);
 
     /**
      * Returns all the entities having the given status

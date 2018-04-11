@@ -958,7 +958,7 @@ public class PersistenceManager implements MessagePersister {
         return jobs;
     }
 
-    public ExecutionJob getJob(long workflowId) {
+    public List<ExecutionJob> getJobs(long workflowId) {
         return executionJobRepository.findByWorkflowId(workflowId);
     }
 

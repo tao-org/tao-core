@@ -31,16 +31,20 @@ import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.logging.Logger;
 
 public class JobFactory {
 
     private final PersistenceManager persistenceManager;
+    private final Logger logger;
 
     JobFactory(PersistenceManager persistenceManager) {
         this.persistenceManager = persistenceManager;
+        this.logger = Logger.getLogger(JobFactory.class.getName());
     }
 
-    public ExecutionJob createJob(WorkflowDescriptor workflow) throws PersistenceException {
+    public ExecutionJob createJob(WorkflowDescriptor workflow, Map<String, String> inputs) throws PersistenceException {
         ExecutionJob job = null;
         if (workflow != null && workflow.isActive()) {
             job = new ExecutionJob();
@@ -50,11 +54,17 @@ public class JobFactory {
             job.setExecutionStatus(ExecutionStatus.UNDETERMINED);
             job = persistenceManager.saveExecutionJob(job);
             List<WorkflowNodeDescriptor> nodes = workflow.getOrderedNodes();
-            for (WorkflowNodeDescriptor node : nodes) {
+            for (int i = 0; i < nodes.size(); i++) {
+                WorkflowNodeDescriptor node = nodes.get(i);
                 ExecutionTask task = createTask(node);
+                if (i == 0 && inputs != null) {
+                    for (Map.Entry<String, String> entry : inputs.entrySet()) {
+                        task.setInputParameterValue(entry.getKey(), entry.getValue());
+                    }
+                }
                 task.setLevel(node.getLevel());
                 persistenceManager.saveExecutionTask(task, job);
-                System.out.println(String.format("Created task for node %s [level %s]", node.getId(), task.getLevel()));
+                logger.fine(String.format("Created task for node %s [level %s]", node.getId(), task.getLevel()));
             }
         }
         return job;

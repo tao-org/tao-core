@@ -56,6 +56,9 @@ public class DefaultSession implements Session {
                 final InetAddress inetAddress = InetAddress.getLocalHost();
                 final String hostName = inetAddress.getHostName();
                 final String ipAddress = inetAddress.getHostAddress();
+                if (nodes == null) {
+                    nodes = new NodeDescription[0];
+                }
                 if (Arrays.stream(nodes).noneMatch(n -> hostName.equalsIgnoreCase(n.getHostName()) || hostName.equals(ipAddress))) {
                     NodeDescription localNode = new NodeDescription();
                     localNode.setHostName(hostName);
