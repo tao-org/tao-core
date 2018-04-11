@@ -69,8 +69,8 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         while (m.find()) {
             argsList.add(m.group(1)); // Add .replace("\"", "") to remove surrounding quotes.
         }
+        System.out.println(String.format("Task %s : %s", task.getId(), String.join(" ", argsList)));
         String cmd = argsList.remove(0);
-
         try {
             JobTemplate jt = session.createJobTemplate();
             if (jt == null) {
