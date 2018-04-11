@@ -604,6 +604,7 @@ public class PersistenceManagerTest {
         parameters.add(tParam);
 
         component.setParameterDescriptors(parameters);
+        component.setTemplateContents("");
         return component;
     }
 
