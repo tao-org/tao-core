@@ -751,7 +751,7 @@ public class PersistenceManager implements MessagePersister {
         final List<ProcessingComponent> components = new ArrayList<>();
         // retrieve components and filter them
         components.addAll(((List<ProcessingComponent>) processingComponentRepository.findAll(new Sort(Sort.Direction.ASC, COMPONENT_IDENTIFIER_PROPERTY_NAME))).stream()
-          .filter(c -> (c.getVisibility().equals(ProcessingComponentVisibility.SYSTEM) || c.getVisibility().equals(ProcessingComponentVisibility.CONTRIBUTOR)) && c.getActive())
+          .filter(c -> (c.getVisibility().getValue() == ProcessingComponentVisibility.SYSTEM.getValue() || c.getVisibility().getValue() == ProcessingComponentVisibility.CONTRIBUTOR.getValue()) && c.getActive())
             .collect(Collectors.toList()));
         return components;
     }

@@ -76,4 +76,8 @@ public enum ProcessingComponentVisibility {
         }
         return null;
     }
+
+    public int getValue() {
+        return value;
+    }
 }
