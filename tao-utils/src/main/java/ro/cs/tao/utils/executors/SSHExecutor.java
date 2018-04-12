@@ -40,6 +40,34 @@ public class SSHExecutor extends Executor<Channel> {
     }
 
     @Override
+    public boolean canConnect() {
+        if (!SSHMode.EXEC.equals(this.mode) && asSuperUser) {
+            throw new UnsupportedOperationException("Mode not permitted");
+        }
+        boolean ret = false;
+        Session session = null;
+        try {
+            JSch jSch = new JSch();
+            //jSch.setKnownHosts("D:\\known_hosts");
+            session = jSch.getSession(this.user, this.host, 22);
+            session.setUserInfo(new UserInfo(this.password));
+            session.setPassword(password.getBytes());
+            session.setConfig("StrictHostKeyChecking", "no");
+            session.connect(1000);
+            this.channel = session.openChannel(this.mode.toString());
+            ret = true;
+        } catch (Exception e) {
+            logger.severe(String.format("[[%s]] failed: %s", host, e.getMessage()));
+        } finally {
+            resetChannel();
+            if (session != null) {
+                session.disconnect();
+            }
+        }
+        return ret;
+    }
+
+    @Override
     public int execute(boolean logMessages) throws IOException, InterruptedException, JSchException, SftpException {
         if (!SSHMode.EXEC.equals(this.mode) && asSuperUser) {
             throw new UnsupportedOperationException("Mode not permitted");
