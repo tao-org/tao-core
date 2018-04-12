@@ -163,15 +163,15 @@ public abstract class Executor<T> implements Runnable {
         return retCodes;
     }
 
-    private static Executor create(ExecutorType type, String host, List<String> arguments) {
+    public static Executor create(ExecutorType type, String host, List<String> arguments) {
         return create(type, host, arguments, false, SSHMode.EXEC);
     }
 
-    private static Executor create(ExecutorType type, String host, List<String> arguments, boolean asSuperUser) {
+    public static Executor create(ExecutorType type, String host, List<String> arguments, boolean asSuperUser) {
         return create(type, host, arguments, asSuperUser, SSHMode.EXEC);
     }
 
-    private static Executor create(ExecutorType type, String host, List<String> arguments, boolean asSuperUser, SSHMode mode) {
+    public static Executor create(ExecutorType type, String host, List<String> arguments, boolean asSuperUser, SSHMode mode) {
         Executor executor = null;
         switch (type) {
             case PROCESS:
@@ -207,7 +207,7 @@ public abstract class Executor<T> implements Runnable {
         this.arguments = ensureTokenizedArgs ? ensureTokenized(args) : args;
         this.counter = new CountDownLatch(1);
         this.asSuperUser = asSU;
-        logger = Logger.getLogger(Executor.class.getSimpleName());
+        logger = Logger.getLogger(Executor.class.getName());
     }
 
     /**
@@ -275,6 +275,8 @@ public abstract class Executor<T> implements Runnable {
      * @throws InterruptedException
      */
     public abstract int execute(boolean logMessages) throws Exception;
+
+    public abstract boolean canConnect();
 
     private List<String> ensureTokenized(List<String> arguments) {
         List<String> args = new ArrayList<>();

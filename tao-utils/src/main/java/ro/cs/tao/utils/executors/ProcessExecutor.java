@@ -17,6 +17,7 @@ package ro.cs.tao.utils.executors;
 
 import java.io.*;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Executes a process with given arguments.
@@ -25,8 +26,13 @@ import java.util.List;
  */
 public class ProcessExecutor extends Executor<Process> {
 
-    public ProcessExecutor(String nodeName, List<String> args, boolean asSU) {
+    ProcessExecutor(String nodeName, List<String> args, boolean asSU) {
         super(nodeName, args, asSU);
+    }
+
+    @Override
+    public boolean canConnect() {
+        return true;
     }
 
     @Override
@@ -52,11 +58,10 @@ public class ProcessExecutor extends Executor<Process> {
             InputStream inputStream = this.channel.getInputStream();
             outReader = new BufferedReader(new InputStreamReader(inputStream));
             while (!isStopped()) {
-                while (!this.isStopped && outReader.ready()) {
-                    //read the process output line by line
-                    String line = outReader.readLine();
+                String line = null;
+                while (!this.isStopped && (line = outReader.readLine()) != null) {
                     //consume the line if possible
-                    if (line != null && !"".equals(line.trim())) {
+                    if (!"".equals(line.trim())) {
                         if (this.outputConsumer != null) {
                             this.outputConsumer.consume(line);
                         }
@@ -76,7 +81,7 @@ public class ProcessExecutor extends Executor<Process> {
             }
             try {
                 //wait for the project to end.
-                this.channel.waitFor();
+                this.channel.waitFor(500, TimeUnit.MILLISECONDS);
             } catch (InterruptedException ignored) {
             }
             ret = this.channel.exitValue();
