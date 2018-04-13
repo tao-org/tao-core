@@ -45,15 +45,7 @@ public class ConfigurationManager {
         if (settings == null) {
             settings = new Properties();
             try {
-                if (configFolder != null) {
-                    Path configFile = configFolder.resolve(CONFIG_FILE_NAME);
-                    if (!Files.exists(configFile)) {
-                        externalizeProperties(configFile);
-                    }
-                    settings.load(Files.newInputStream(configFile));
-                } else {
-                    settings.load(ConfigurationManager.class.getResourceAsStream("/" + CONFIG_FILE_NAME));
-                }
+                settings.load(ConfigurationManager.class.getResourceAsStream("/ro/cs/tao/configuration/" + CONFIG_FILE_NAME));
             } catch (IOException ignored) {
             }
         }
@@ -82,14 +74,13 @@ public class ConfigurationManager {
 
     private void externalizeProperties(Path target) throws IOException {
         byte[] buffer = new byte[1024];
-        try (BufferedInputStream is = new BufferedInputStream(ConfigurationManager.class.getResourceAsStream("/tao.properties"))) {
+        try (BufferedInputStream is = new BufferedInputStream(ConfigurationManager.class.getResourceAsStream("/ro/cs/tao/configuration/" + CONFIG_FILE_NAME));
+                OutputStream os = new BufferedOutputStream(Files.newOutputStream(target))) {
             int read;
-            try (OutputStream os = new BufferedOutputStream(Files.newOutputStream(target))) {
-                while ((read = is.read(buffer)) != -1) {
-                    os.write(buffer, 0, read);
-                }
-                os.flush();
+            while ((read = is.read(buffer)) != -1) {
+                os.write(buffer, 0, read);
             }
+            os.flush();
         }
     }
 }
