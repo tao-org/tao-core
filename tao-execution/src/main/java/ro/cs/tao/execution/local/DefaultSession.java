@@ -258,8 +258,9 @@ public class DefaultSession implements Session {
         }
         return runner.isRunning() ? RUNNING :
                 runner.isSuspended() ? USER_SYSTEM_SUSPENDED :
-                    runner.hasCompleted() ? DONE :
-                            runner.getReturnCode() != 0 ? FAILED : UNDETERMINED;
+                    runner.hasCompleted() ?
+                            runner.getReturnCode() != 0 ? FAILED : DONE
+                : UNDETERMINED;
     }
 
     @Override

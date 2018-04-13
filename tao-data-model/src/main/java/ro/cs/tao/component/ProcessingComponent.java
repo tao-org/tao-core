@@ -41,6 +41,7 @@ public class ProcessingComponent extends TaoComponent {
 
     private String containerId;
     private String fileLocation;
+    private String expandedFileLocation;
     private String workingDirectory;
     private TemplateType templateType;
     private TemplateEngine templateEngine;
@@ -65,6 +66,14 @@ public class ProcessingComponent extends TaoComponent {
      */
     public void setFileLocation(String fileLocation) {
         this.fileLocation = fileLocation;
+    }
+
+    public String getExpandedFileLocation() {
+        return expandedFileLocation;
+    }
+
+    public void setExpandedFileLocation(String expandedFileLocation) {
+        this.expandedFileLocation = expandedFileLocation;
     }
 
     public String getWorkingDirectory() {
@@ -223,7 +232,11 @@ public class ProcessingComponent extends TaoComponent {
             }
         }
         StringBuilder cmdBuilder = new StringBuilder();
-        cmdBuilder.append(this.fileLocation).append("\n");
+        if (this.expandedFileLocation != null) {
+            cmdBuilder.append(this.expandedFileLocation).append("\n");
+        } else {
+            cmdBuilder.append(this.fileLocation).append("\n");
+        }
         String cmdLine = templateEngine.transform(this.template, clonedMap);
         cmdBuilder.append(cmdLine == null || "null".equals(cmdLine) ? "" : cmdLine);
         cmdBuilder.append("\"");

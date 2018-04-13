@@ -141,7 +141,8 @@ public class Orchestrator extends Notifiable {
                                              task.getWorkflowNodeId(),
                                              status.name()));
             statusChanged(task);
-            persistenceManager.updateExecutionJob(task.getJob());
+            ExecutionJob job = task.getJob();
+            persistenceManager.updateExecutionJob(job);
             if (status == ExecutionStatus.DONE) {
                 // For DataSourceExecutionTask, it is the executor that sets the outputs,
                 // hence we need to "confirm" here the outputs of a processing task.
@@ -188,9 +189,11 @@ public class Orchestrator extends Notifiable {
                     }
                 } else {
                     logger.fine("No more child tasks to execute after the current task");
+                    logger.info(String.format("Job %s for workflow %s %s",
+                                                job.getId(), job.getWorkflowId(), job.getExecutionStatus().name()));
                 }
             }
-            logger.fine("Job status: " + task.getJob().getExecutionStatus().name());
+            logger.fine("Job status: " + job.getExecutionStatus().name());
         } catch (PersistenceException e) {
             logger.severe(e.getMessage());
         }

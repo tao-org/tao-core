@@ -19,12 +19,15 @@ import org.ggf.drmaa.DrmaaException;
 import org.ggf.drmaa.InternalException;
 import org.ggf.drmaa.JobTemplate;
 import org.ggf.drmaa.Session;
+import ro.cs.tao.docker.Container;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.Executor;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.execution.model.ProcessingExecutionTask;
+import ro.cs.tao.persistence.exception.PersistenceException;
 
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -61,17 +64,22 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
 
     @Override
     public void execute(ProcessingExecutionTask task) throws ExecutionException  {
-        // Get from the component the execution command
-        String executionCmd = task.buildExecutionCommand();
-        List<String> argsList = new ArrayList<>();
-        // split the execution command but preserving the entities between double quotes
-        Matcher m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(executionCmd);
-        while (m.find()) {
-            argsList.add(m.group(1)); // Add .replace("\"", "") to remove surrounding quotes.
-        }
-        System.out.println(String.format("Task %s : %s", task.getId(), String.join(" ", argsList)));
-        String cmd = argsList.remove(0);
         try {
+            // Get from the component the execution command
+            Container container = persistenceManager.getContainerById(task.getComponent().getContainerId());
+            String location = task.getComponent().getFileLocation();
+            if (!Paths.get(location).isAbsolute()) {
+                task.getComponent().setExpandedFileLocation(Paths.get(container.getApplicationPath(), location).toString());
+            }
+            String executionCmd = task.buildExecutionCommand();
+            List<String> argsList = new ArrayList<>();
+            // split the execution command but preserving the entities between double quotes
+            Matcher m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(executionCmd);
+            while (m.find()) {
+                argsList.add(m.group(1)); // Add .replace("\"", "") to remove surrounding quotes.
+            }
+            //logger.info(String.format("Task %s : %s", task.getId(), String.join(" ", argsList)));
+            String cmd = argsList.remove(0);
             JobTemplate jt = session.createJobTemplate();
             if (jt == null) {
                 throw new ExecutionException("Error creating job template from the session!");
@@ -81,7 +89,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             jt.setArgs(argsList);
             String id = session.runJob(jt);
             if(id == null) {
-                throw new ExecutionException("Unable to run job (id null) for task " + task.getId());
+                throw new ExecutionException(String.format("Unable to run job (id null) for task %s", task.getId()));
             }
 
             session.deleteJobTemplate(jt);
@@ -90,10 +98,9 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             task.setStartTime(LocalDateTime.now());
             changeTaskStatus(task, ExecutionStatus.QUEUED_ACTIVE);
             //persistenceManager.updateExecutionTask(task);
-            logger.info("DrmaaExecutor: Succesfully submitted task with id " + id);
-        } catch (DrmaaException | InternalException e) {
-            logger.severe("DrmaaExecutor: Error submitting task with id " + task.getId() + " for command " + cmd +
-                        ". The exception was " + e.getMessage());
+            logger.info(String.format("Succesfully submitted task with id %s", id));
+        } catch (DrmaaException | InternalException | PersistenceException e) {
+            logger.severe(String.format("Error submitting task with id %s: %s", task.getId(), e.getMessage()));
             throw new ExecutionException("Error executing DRMAA session operation", e);
         }/* catch (PersistenceException e) {
             throw new ExecutionException("Unable to save execution state in the database", e);
@@ -163,17 +170,18 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                     case Session.DONE:
                         // Just mark the job as finished with success status
                         markTaskFinished(task, ExecutionStatus.DONE);
-                        logger.info("DrmaaExecutor: task with id " + task.getResourceId() + " finished OK");
+                        logger.info(String.format("Task %s DONE", task.getResourceId()));
                         break;
                     case Session.FAILED:
                         // Just mark the job as finished with failed status
                         markTaskFinished(task, ExecutionStatus.FAILED);
-                        logger.info("DrmaaExecutor: task with id " + task.getResourceId() + " finished NOK");
+                        logger.info(String.format("Task %s FAILED", task.getResourceId()));
                         break;
                 }
             } catch (DrmaaException | InternalException e) {
-                logger.severe("DrmaaExecuto exception " + e.getClass().getName() + ": Cannot get the status for the task with id " + task.getResourceId());
-                markTaskFinished(task, ExecutionStatus.DONE);
+                logger.severe(String.format("%s: Cannot get the status for the task %s [%s]",
+                                            e.getClass().getName(), task.getResourceId(), e.getMessage()));
+                markTaskFinished(task, ExecutionStatus.FAILED);
             }
         }
     }
