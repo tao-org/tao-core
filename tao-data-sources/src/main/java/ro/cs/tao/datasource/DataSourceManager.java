@@ -76,7 +76,7 @@ public class DataSourceManager {
     }
 
     public SortedSet<String> getSupportedSensors() {
-        return new TreeSet<>(this.registeredSources.keySet().stream().map(Map.Entry::getKey).collect(Collectors.toList()));
+        return this.registeredSources.keySet().stream().map(Map.Entry::getKey).collect(Collectors.toCollection(TreeSet::new));
     }
 
     /**
