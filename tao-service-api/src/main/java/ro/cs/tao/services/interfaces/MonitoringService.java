@@ -15,7 +15,7 @@
  */
 package ro.cs.tao.services.interfaces;
 
-import ro.cs.tao.services.model.monitoring.Snapshot;
+import ro.cs.tao.services.model.monitoring.RuntimeInfo;
 
 import java.util.List;
 import java.util.Map;
@@ -25,9 +25,9 @@ import java.util.Map;
  */
 public interface MonitoringService<T> {
 
-    Snapshot getMasterSnapshot();
+    RuntimeInfo getMasterSnapshot();
 
-    Snapshot getNodeSnapshot(String hostName);
+    RuntimeInfo getNodeSnapshot(String hostName);
 
     List<T> getLiveNotifications();
 

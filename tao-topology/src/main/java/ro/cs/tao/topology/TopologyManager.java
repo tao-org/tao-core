@@ -196,6 +196,10 @@ public class TopologyManager implements ITopologyManager {
         }
     }
 
+    public NodeDescription getMasterNodeInfo() {
+        return this.masterNodeInfo;
+    }
+
     public void setMasterNodeInfo(NodeDescription masterNodeInfo) {
         this.masterNodeInfo = masterNodeInfo;
         for (TopologyToolInstaller installer: this.installers) {
