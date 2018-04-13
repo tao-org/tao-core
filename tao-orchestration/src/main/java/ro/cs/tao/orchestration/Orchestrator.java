@@ -19,16 +19,20 @@ import ro.cs.tao.component.Variable;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.messaging.Message;
+import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.Notifiable;
 import ro.cs.tao.messaging.Topics;
 import ro.cs.tao.orchestration.commands.JobCommand;
 import ro.cs.tao.orchestration.commands.TaskCommand;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.security.SystemPrincipal;
 import ro.cs.tao.serialization.*;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 
 import javax.xml.transform.stream.StreamSource;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -189,8 +193,14 @@ public class Orchestrator extends Notifiable {
                     }
                 } else {
                     logger.fine("No more child tasks to execute after the current task");
-                    logger.info(String.format("Job %s for workflow %s %s",
-                                                job.getId(), job.getWorkflowId(), job.getExecutionStatus().name()));
+                    WorkflowDescriptor workflow = persistenceManager.getWorkflowDescriptor(job.getWorkflowId());
+                    Duration time = Duration.between(job.getStartTime(), job.getEndTime());
+                    String msg = String.format("Job [%s] for workflow [%s]" +
+                                    (job.getExecutionStatus() == ExecutionStatus.DONE ?
+                                            " completed in %ss" :
+                                            " failed after %ss"),
+                            job.getId(), workflow.getName(), time.getSeconds());
+                    Messaging.send(SystemPrincipal.instance(), Topics.INFORMATION, this, msg);
                 }
             }
             logger.fine("Job status: " + job.getExecutionStatus().name());
@@ -271,6 +281,7 @@ public class Orchestrator extends Notifiable {
                     /*List<ExecutionTask> tasks = job.orderTasks();
                     if (tasks.get(tasks.size() - 1).getId().equals(changedTask.getId())) {*/
                         job.setExecutionStatus(ExecutionStatus.DONE);
+                        job.setEndTime(LocalDateTime.now());
                         persistenceManager.updateExecutionJob(job);
                     }
                     break;
