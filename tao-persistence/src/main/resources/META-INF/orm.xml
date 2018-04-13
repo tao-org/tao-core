@@ -308,6 +308,7 @@
 
             <transient name="template" />
             <transient name="templateEngine" />
+            <transient name="expandedFileLocation" />
         </attributes>
     </entity>
 

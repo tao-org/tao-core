@@ -1272,7 +1272,7 @@ public class PersistenceManager implements MessagePersister {
      * Retrieve container by its identifier
      * @return
      */
-    @Transactional(readOnly = true)
+    //@Transactional(readOnly = true)
     public Container getContainerById(String id) throws PersistenceException
     {
         // check method parameters
