@@ -79,7 +79,7 @@ public class Orchestrator extends Notifiable {
      *
      * @throws ExecutionException   In case anything goes wrong or a job for this workflow was already created
      */
-    public void startWorkflow(long workflowId, Map<String, String> inputs) throws ExecutionException {
+    public long startWorkflow(long workflowId, Map<String, String> inputs) throws ExecutionException {
         try {
             List<ExecutionJob> jobs = persistenceManager.getJobs(workflowId);
             ExecutionJob executionJob = null;
@@ -91,6 +91,7 @@ public class Orchestrator extends Notifiable {
                 executionJob = this.jobFactory.createJob(descriptor, inputs);
             }
             JobCommand.START.applyTo(executionJob);
+            return executionJob.getId();
         } catch (PersistenceException e) {
             logger.severe(e.getMessage());
             throw new ExecutionException(e.getMessage());
