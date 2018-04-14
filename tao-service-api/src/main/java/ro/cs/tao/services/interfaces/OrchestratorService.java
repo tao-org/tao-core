@@ -17,6 +17,7 @@
 package ro.cs.tao.services.interfaces;
 
 import ro.cs.tao.execution.ExecutionException;
+import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
 
 import java.util.List;
@@ -35,7 +36,7 @@ public interface OrchestratorService {
      *
      * @throws ExecutionException   In case anything goes wrong or a job for this workflow was already created
      */
-    void startWorkflow(long workflowId, Map<String, String> inputs) throws ExecutionException;
+    long startWorkflow(long workflowId, Map<String, String> inputs) throws ExecutionException;
     /**
      * Stops the execution of the job corresponding to this workflow.
      *
@@ -62,4 +63,8 @@ public interface OrchestratorService {
      * Returns (from the database) the list of tasks that are marked as being executed.
      */
     List<ExecutionTask> getRunningTasks();
+    /**
+     * Returns (from the database) the status of the tasks of the given job.
+     */
+    Map<Long, ExecutionStatus> getTasksStatus(long jobId);
 }
