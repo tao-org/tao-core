@@ -21,4 +21,6 @@ import ro.cs.tao.docker.Container;
  * @author Cosmin Cara
  */
 public interface ContainerService extends CRUDService<Container> {
+
+    Container initOTB(String path);
 }
