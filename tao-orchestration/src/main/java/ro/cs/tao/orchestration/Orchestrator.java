@@ -195,12 +195,15 @@ public class Orchestrator extends Notifiable {
                 } else {
                     logger.fine("No more child tasks to execute after the current task");
                     WorkflowDescriptor workflow = persistenceManager.getWorkflowDescriptor(job.getWorkflowId());
-                    Duration time = Duration.between(job.getStartTime(), job.getEndTime());
+                    Duration time = null;
+                    if (job.getStartTime() != null && job.getEndTime() != null) {
+                        time = Duration.between(job.getStartTime(), job.getEndTime());
+                    }
                     String msg = String.format("Job [%s] for workflow [%s]" +
                                     (job.getExecutionStatus() == ExecutionStatus.DONE ?
                                             " completed in %ss" :
                                             " failed after %ss"),
-                            job.getId(), workflow.getName(), time.getSeconds());
+                            job.getId(), workflow.getName(), time != null ? time.getSeconds() : "<unknown>");
                     Messaging.send(SystemPrincipal.instance(), Topics.INFORMATION, this, msg);
                 }
             }
