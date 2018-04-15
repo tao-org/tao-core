@@ -83,13 +83,13 @@ public class Orchestrator extends Notifiable {
         try {
             List<ExecutionJob> jobs = persistenceManager.getJobs(workflowId);
             ExecutionJob executionJob = null;
-            if (jobs == null || jobs.isEmpty()
+            /*if (jobs == null || jobs.isEmpty()
                     || jobs.stream().allMatch(job -> job.getExecutionStatus() == ExecutionStatus.DONE ||
                                                         job.getExecutionStatus() == ExecutionStatus.FAILED ||
-                                                        job.getExecutionStatus() == ExecutionStatus.CANCELLED)) {
+                                                        job.getExecutionStatus() == ExecutionStatus.CANCELLED)) {*/
                 WorkflowDescriptor descriptor = persistenceManager.getWorkflowDescriptor(workflowId);
                 executionJob = this.jobFactory.createJob(descriptor, inputs);
-            }
+            //}
             JobCommand.START.applyTo(executionJob);
             return executionJob.getId();
         } catch (PersistenceException e) {
@@ -154,7 +154,7 @@ public class Orchestrator extends Notifiable {
                 if (task instanceof ProcessingExecutionTask) {
                     ProcessingExecutionTask pcTask = (ProcessingExecutionTask) task;
                     pcTask.getComponent().getTargets().forEach(t -> {
-                        pcTask.setOutputParameterValue(t.getName(), t.getDataDescriptor().getLocation());
+                        pcTask.setOutputParameterValue(t.getName(), pcTask.getInstanceTargetOuptut(t));
                         logger.fine(String.format("Task %s output: %s=%s",
                                                   task.getId(), t.getName(),
                                                   t.getDataDescriptor().getLocation()));
