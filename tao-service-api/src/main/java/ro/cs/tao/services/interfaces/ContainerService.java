@@ -23,4 +23,5 @@ import ro.cs.tao.docker.Container;
 public interface ContainerService extends CRUDService<Container> {
 
     Container initOTB(String path);
+    Container initSNAP(String path);
 }
