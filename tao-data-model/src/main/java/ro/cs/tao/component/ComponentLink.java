@@ -30,6 +30,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class ComponentLink {
     private SourceDescriptor output;
     private TargetDescriptor input;
+    private Long sourceNodeId;
 
     // default constructor needed for hibernate entity instantiation
     public ComponentLink(){}
@@ -44,10 +45,11 @@ public class ComponentLink {
         return input != null && output != null && output.isCompatibleWith(input);
     }
 
-    public ComponentLink(TargetDescriptor input, SourceDescriptor output) throws ConstraintException {
+    public ComponentLink(long sourceNodeId, TargetDescriptor input, SourceDescriptor output) throws ConstraintException {
         if (!canConnect(input, output)) {
             throw new ConstraintException("Source and target are not compatible");
         }
+        this.sourceNodeId = sourceNodeId;
         this.input = input;
         this.output = output;
     }
@@ -71,5 +73,13 @@ public class ComponentLink {
 
     public void setInput(TargetDescriptor input) {
         this.input = input;
+    }
+
+    public Long getSourceNodeId() {
+        return sourceNodeId;
+    }
+
+    public void setSourceNodeId(Long sourceNodeId) {
+        this.sourceNodeId = sourceNodeId;
     }
 }
