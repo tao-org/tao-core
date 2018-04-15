@@ -34,7 +34,7 @@
                 <column name="coordinate_reference_system" nullable="true" column-definition="text"/>
             </basic>
             <basic name="location">
-                <column name="location" nullable="false" column-definition="varchar(512) not null"/>
+                <column name="location" nullable="false" column-definition="varchar not null"/>
             </basic>
             <basic name="entryPoint">
                 <column name="entry_point" nullable="true" column-definition="varchar(1000) null"/>
@@ -860,7 +860,7 @@
             </basic>
 
             <basic name="location">
-                <column name="location" nullable="true" column-definition="varchar(512) NULL"/>
+                <column name="location" nullable="true" column-definition="varchar NULL"/>
             </basic>
         </attributes>
     </embeddable>

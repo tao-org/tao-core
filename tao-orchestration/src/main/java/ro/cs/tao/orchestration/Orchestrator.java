@@ -35,6 +35,8 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -44,6 +46,7 @@ import java.util.stream.Collectors;
 public class Orchestrator extends Notifiable {
 
     private static final Orchestrator instance;
+    private final ExecutorService backgroundWorker;
 
     static {
         instance = new Orchestrator();
@@ -60,6 +63,7 @@ public class Orchestrator extends Notifiable {
 
     private Orchestrator() {
         this.groupInternalStateHandler = new LoopStateHandler();
+        this.backgroundWorker = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         subscribe(Topics.TASK_STATUS_CHANGED);
     }
 
@@ -82,15 +86,15 @@ public class Orchestrator extends Notifiable {
     public long startWorkflow(long workflowId, Map<String, String> inputs) throws ExecutionException {
         try {
             List<ExecutionJob> jobs = persistenceManager.getJobs(workflowId);
-            ExecutionJob executionJob = null;
+            //ExecutionJob executionJob = null;
             /*if (jobs == null || jobs.isEmpty()
                     || jobs.stream().allMatch(job -> job.getExecutionStatus() == ExecutionStatus.DONE ||
                                                         job.getExecutionStatus() == ExecutionStatus.FAILED ||
                                                         job.getExecutionStatus() == ExecutionStatus.CANCELLED)) {*/
-                WorkflowDescriptor descriptor = persistenceManager.getWorkflowDescriptor(workflowId);
-                executionJob = this.jobFactory.createJob(descriptor, inputs);
+            WorkflowDescriptor descriptor = persistenceManager.getWorkflowDescriptor(workflowId);
+            final ExecutionJob executionJob = this.jobFactory.createJob(descriptor, inputs);
             //}
-            JobCommand.START.applyTo(executionJob);
+            backgroundWorker.submit(() -> JobCommand.START.applyTo(executionJob));
             return executionJob.getId();
         } catch (PersistenceException e) {
             logger.severe(e.getMessage());

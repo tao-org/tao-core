@@ -93,8 +93,8 @@ CREATE TABLE tao.raster_data_product
 	type_id integer NOT NULL,
 	geometry geography(POLYGON, 4326) NOT NULL,
 	coordinate_reference_system text NULL,
-	location varchar(512) NOT NULL,
-	entry_point varchar(1000) NULL,
+	location varchar NOT NULL,
+	entry_point varchar NULL,
 	sensor_type_id integer NOT NULL,
 	acquisition_date timestamp NULL,
 	pixel_type_id integer NOT NULL,
@@ -135,8 +135,8 @@ CREATE TABLE tao.vector_data_product
 	type_id integer NOT NULL,
 	geometry geography(POLYGON, 4326) NOT NULL,
 	coordinate_reference_system text NULL,
-	location varchar(512) NOT NULL,
-	entry_point varchar(1000) NULL,
+	location varchar NOT NULL,
+	entry_point varchar NULL,
 	user_id integer NULL,
 --	data_source_id integer NULL,
 	created timestamp NULL DEFAULT now(),
@@ -292,7 +292,7 @@ CREATE TABLE tao.source_descriptor
     coordinate_reference_system text NULL,
     sensor_type_id integer NULL,
     dimension json NULL,
-    location varchar(512) NULL
+    location varchar NULL
 );
 
 ALTER TABLE tao.source_descriptor ADD CONSTRAINT PK_source_descriptor PRIMARY KEY (id);
@@ -323,7 +323,7 @@ CREATE TABLE tao.target_descriptor
     coordinate_reference_system text NULL,
     sensor_type_id integer NULL,
     dimension json NULL,
-    location varchar(512) NULL
+    location varchar NULL
 );
 
 ALTER TABLE tao.target_descriptor ADD CONSTRAINT PK_target_descriptor PRIMARY KEY (id);
