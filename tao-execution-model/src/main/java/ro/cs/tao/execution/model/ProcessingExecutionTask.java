@@ -24,6 +24,9 @@ import ro.cs.tao.serialization.SerializerFactory;
 
 import javax.xml.transform.stream.StreamSource;
 import java.io.StringReader;
+import java.net.URI;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -144,6 +147,26 @@ public class ProcessingExecutionTask extends ExecutionTask {
             inputParams.putAll(inputParameterValues.stream()
                     .collect(Collectors.toMap(Variable::getKey, Variable::getValue)));
         }
+        for (TargetDescriptor descriptor : this.component.getTargets()) {
+            String location = descriptor.getDataDescriptor().getLocation();
+            if (location != null) {
+                inputParams.put(descriptor.getName(), getInstanceTargetOuptut(descriptor));
+            }
+        }
         return this.component.buildExecutionCommand(inputParams);
+    }
+
+    public String getInstanceTargetOuptut(TargetDescriptor descriptor) {
+        String location = descriptor.getDataDescriptor().getLocation();
+        if (location != null) {
+            Path path;
+            try {
+                path = Paths.get(URI.create(location));
+            } catch (Exception e) {
+                path = Paths.get(location);
+            }
+            location = path.getParent().resolve(String.valueOf(this.getId()) + "-" + path.getFileName()).toString();
+        }
+        return location;
     }
 }

@@ -27,7 +27,7 @@ public class GeometryAdapter extends XmlAdapter<Geometry, String> {
 
     @Override
     public String unmarshal(Geometry v) throws Exception {
-        return v.toText();
+        return v != null ? v.toText() : null;
     }
 
     @Override
