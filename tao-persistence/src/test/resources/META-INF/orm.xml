@@ -672,7 +672,7 @@
 
             <element-collection name="incomingLinks" target-class="ro.cs.tao.component.ComponentLink" access="PROPERTY" fetch="LAZY">
                 <collection-table name="tao.component_link">
-                    <join-column name="graph_node_id" referenced-column-name="id" />
+                    <join-column name="target_graph_node_id" referenced-column-name="id" />
                 </collection-table>
             </element-collection>
 

@@ -1275,11 +1275,6 @@ public class PersistenceManagerTest {
             sourceConstraints.add("source_constraint03");
             //sourceDescriptor.setConstraints(sourceConstraints);
 
-            ComponentLink componentLink1 = new ComponentLink(targetDescriptor, sourceDescriptor);
-            List<ComponentLink> links = new ArrayList<>();
-            links.add(componentLink1);
-            node1.setIncomingLinks(links);
-
             // add the node within the workflow
             workflow.addNode(node1);
 
@@ -1290,6 +1285,13 @@ public class PersistenceManagerTest {
 
             // check persisted workflow
             Assert.assertTrue(workflow != null && workflow.getNodes() != null && workflow.getNodes().size() == 1);
+
+            ComponentLink componentLink1 = new ComponentLink(node1.getId(), targetDescriptor, sourceDescriptor);
+            List<ComponentLink> links = new ArrayList<>();
+            links.add(componentLink1);
+            node1.setIncomingLinks(links);
+
+            persistenceManager.updateWorkflowNodeDescriptor(node1);
 
             // check persisted node custom values
             final List<ParameterValue> customValues = workflow.getNodes().get(0).getCustomValues();
@@ -1366,11 +1368,6 @@ public class PersistenceManagerTest {
             sourceConstraints.add("source_constraint03");
             //sourceDescriptor.setConstraints(sourceConstraints);
 
-            ComponentLink componentLink1 = new ComponentLink(targetDescriptor, sourceDescriptor);
-            List<ComponentLink> links = new ArrayList<>();
-            links.add(componentLink1);
-            node1.setIncomingLinks(links);
-
             // add the node within the workflow
             workflow.addNode(node1);
 
@@ -1388,11 +1385,19 @@ public class PersistenceManagerTest {
 
             // save the parent workflow entity
             workflow = persistenceManager.saveWorkflowDescriptor(workflow);
+
             Assert.assertTrue(workflow != null && workflow.getId() != null);
             logger.info("Workflow " + workflow.getName() + " saved, ID = " + workflow.getId().toString());
 
             // check persisted workflow
             Assert.assertTrue(workflow != null && workflow.getNodes() != null && workflow.getNodes().size() == 2);
+
+            ComponentLink componentLink1 = new ComponentLink(node1.getId(), targetDescriptor, sourceDescriptor);
+            List<ComponentLink> links = new ArrayList<>();
+            links.add(componentLink1);
+            node1.setIncomingLinks(links);
+
+            persistenceManager.updateWorkflowNodeDescriptor(node1);
 
             // check persisted node custom values
             Assert.assertTrue(workflow.getNodes().get(0).getCustomValues().size() == 3);

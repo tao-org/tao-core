@@ -443,6 +443,10 @@ public class StringUtils {
         return indexOfIgnoreCase(l, s) >= 0;
     }
 
+    public static boolean containsIgnoreCase(String input, String value) {
+        return (input != null && value != null && input.toLowerCase().contains(value.toLowerCase()));
+    }
+
     /**
      * Retrieves whether the entries in the string array are unique - or not.
      *

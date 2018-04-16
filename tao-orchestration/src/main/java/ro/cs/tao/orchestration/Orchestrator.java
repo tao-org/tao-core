@@ -19,18 +19,24 @@ import ro.cs.tao.component.Variable;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.messaging.Message;
+import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.Notifiable;
 import ro.cs.tao.messaging.Topics;
 import ro.cs.tao.orchestration.commands.JobCommand;
 import ro.cs.tao.orchestration.commands.TaskCommand;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.security.SystemPrincipal;
 import ro.cs.tao.serialization.*;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 
 import javax.xml.transform.stream.StreamSource;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -40,6 +46,7 @@ import java.util.stream.Collectors;
 public class Orchestrator extends Notifiable {
 
     private static final Orchestrator instance;
+    private final ExecutorService backgroundWorker;
 
     static {
         instance = new Orchestrator();
@@ -56,6 +63,7 @@ public class Orchestrator extends Notifiable {
 
     private Orchestrator() {
         this.groupInternalStateHandler = new LoopStateHandler();
+        this.backgroundWorker = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         subscribe(Topics.TASK_STATUS_CHANGED);
     }
 
@@ -75,18 +83,19 @@ public class Orchestrator extends Notifiable {
      *
      * @throws ExecutionException   In case anything goes wrong or a job for this workflow was already created
      */
-    public void startWorkflow(long workflowId, Map<String, String> inputs) throws ExecutionException {
+    public long startWorkflow(long workflowId, Map<String, String> inputs) throws ExecutionException {
         try {
             List<ExecutionJob> jobs = persistenceManager.getJobs(workflowId);
-            ExecutionJob executionJob = null;
-            if (jobs == null || jobs.isEmpty()
+            //ExecutionJob executionJob = null;
+            /*if (jobs == null || jobs.isEmpty()
                     || jobs.stream().allMatch(job -> job.getExecutionStatus() == ExecutionStatus.DONE ||
                                                         job.getExecutionStatus() == ExecutionStatus.FAILED ||
-                                                        job.getExecutionStatus() == ExecutionStatus.CANCELLED)) {
-                WorkflowDescriptor descriptor = persistenceManager.getWorkflowDescriptor(workflowId);
-                executionJob = this.jobFactory.createJob(descriptor, inputs);
-            }
-            JobCommand.START.applyTo(executionJob);
+                                                        job.getExecutionStatus() == ExecutionStatus.CANCELLED)) {*/
+            WorkflowDescriptor descriptor = persistenceManager.getWorkflowDescriptor(workflowId);
+            final ExecutionJob executionJob = this.jobFactory.createJob(descriptor, inputs);
+            //}
+            backgroundWorker.submit(() -> JobCommand.START.applyTo(executionJob));
+            return executionJob.getId();
         } catch (PersistenceException e) {
             logger.severe(e.getMessage());
             throw new ExecutionException(e.getMessage());
@@ -149,7 +158,7 @@ public class Orchestrator extends Notifiable {
                 if (task instanceof ProcessingExecutionTask) {
                     ProcessingExecutionTask pcTask = (ProcessingExecutionTask) task;
                     pcTask.getComponent().getTargets().forEach(t -> {
-                        pcTask.setOutputParameterValue(t.getName(), t.getDataDescriptor().getLocation());
+                        pcTask.setOutputParameterValue(t.getName(), pcTask.getInstanceTargetOuptut(t));
                         logger.fine(String.format("Task %s output: %s=%s",
                                                   task.getId(), t.getName(),
                                                   t.getDataDescriptor().getLocation()));
@@ -189,8 +198,17 @@ public class Orchestrator extends Notifiable {
                     }
                 } else {
                     logger.fine("No more child tasks to execute after the current task");
-                    logger.info(String.format("Job %s for workflow %s %s",
-                                                job.getId(), job.getWorkflowId(), job.getExecutionStatus().name()));
+                    WorkflowDescriptor workflow = persistenceManager.getWorkflowDescriptor(job.getWorkflowId());
+                    Duration time = null;
+                    if (job.getStartTime() != null && job.getEndTime() != null) {
+                        time = Duration.between(job.getStartTime(), job.getEndTime());
+                    }
+                    String msg = String.format("Job [%s] for workflow [%s]" +
+                                    (job.getExecutionStatus() == ExecutionStatus.DONE ?
+                                            " completed in %ss" :
+                                            " failed after %ss"),
+                            job.getId(), workflow.getName(), time != null ? time.getSeconds() : "<unknown>");
+                    Messaging.send(SystemPrincipal.instance(), Topics.INFORMATION, this, msg);
                 }
             }
             logger.fine("Job status: " + job.getExecutionStatus().name());
@@ -271,6 +289,7 @@ public class Orchestrator extends Notifiable {
                     /*List<ExecutionTask> tasks = job.orderTasks();
                     if (tasks.get(tasks.size() - 1).getId().equals(changedTask.getId())) {*/
                         job.setExecutionStatus(ExecutionStatus.DONE);
+                        job.setEndTime(LocalDateTime.now());
                         persistenceManager.updateExecutionJob(job);
                     }
                     break;
