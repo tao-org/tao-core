@@ -119,8 +119,8 @@ ALTER TABLE tao.graph_node ADD CONSTRAINT PK_graph_node PRIMARY KEY (id);
 ALTER TABLE tao.graph_node ADD CONSTRAINT FK_graph_node_workflow_graph
 	FOREIGN KEY (workflow_id) REFERENCES tao.workflow_graph (id) ON DELETE No Action ON UPDATE No Action;
 
-ALTER TABLE tao.graph_node ADD CONSTRAINT FK_graph_node_processing_component
-	FOREIGN KEY (processing_component_id) REFERENCES tao.processing_component (id) ON DELETE No Action ON UPDATE No Action;
+--ALTER TABLE tao.graph_node ADD CONSTRAINT FK_graph_node_processing_component
+--	FOREIGN KEY (processing_component_id) REFERENCES tao.processing_component (id) ON DELETE No Action ON UPDATE No Action;
 
 
 -------------------------------------------------------------------------------
@@ -303,7 +303,7 @@ CREATE TABLE tao.task_inputs
 (
 	task_id bigint NOT NULL,
 	key varchar(512) NOT NULL,
-	value varchar(512) NULL
+	value varchar NULL
 );
 
 ALTER TABLE tao.task_inputs ADD CONSTRAINT PK_task_inputs PRIMARY KEY (task_id, key);
@@ -320,7 +320,7 @@ CREATE TABLE tao.task_output
 (
 	task_id bigint NOT NULL,
 	key varchar(512) NOT NULL,
-    value varchar(512) NULL
+    value varchar NULL
 );
 
 ALTER TABLE tao.task_output ADD CONSTRAINT PK_task_output PRIMARY KEY (task_id, key);

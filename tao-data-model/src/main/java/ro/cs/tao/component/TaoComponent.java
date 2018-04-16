@@ -125,11 +125,11 @@ public abstract class TaoComponent extends Identifiable {
         if (this.sources == null) {
             this.sources = new ArrayList<>(sourceCardinality);
         } else {
-            if (this.sources.size() < sourceCardinality) {
+            if (sourceCardinality > 0 && this.sources.size() > sourceCardinality) {
                 int toRemove = sourceCardinality - this.sources.size();
                 while (toRemove > 0) {
                     this.sources.remove(this.sources.size() - 1);
-                    toRemove++;
+                    toRemove--;
                 }
             }
         }
@@ -146,11 +146,11 @@ public abstract class TaoComponent extends Identifiable {
         if (this.targets == null) {
             this.targets = new ArrayList<>(targetCardinality);
         } else {
-            if (this.targets.size() < targetCardinality) {
+            if (targetCardinality > 0 && this.targets.size() > targetCardinality) {
                 int toRemove = targetCardinality - this.targets.size();
                 while (toRemove > 0) {
                     this.targets.remove(this.targets.size() - 1);
-                    toRemove++;
+                    toRemove--;
                 }
             }
         }

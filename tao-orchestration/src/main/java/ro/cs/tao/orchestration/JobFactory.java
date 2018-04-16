@@ -86,12 +86,14 @@ public class JobFactory {
         if (workflowNode instanceof WorkflowNodeGroupDescriptor) {
             task = createTaskGroup((WorkflowNodeGroupDescriptor) workflowNode);
         } else {
-            TaoComponent component;
+            TaoComponent component = null;
             List<ParameterValue> customValues = workflowNode.getCustomValues();
             List<ComponentLink> links = workflowNode.getIncomingLinks();
-            if (links != null) {
-                task = new ProcessingExecutionTask();
+            try {
                 component = persistenceManager.getProcessingComponentById(workflowNode.getComponentId());
+            } catch (PersistenceException ignored) { }
+            if (component != null) {
+                task = new ProcessingExecutionTask();
                 ((ProcessingExecutionTask) task).setComponent((ProcessingComponent) component);
                 // Placeholders for inputs of previous tasks
                 links.forEach(link -> {

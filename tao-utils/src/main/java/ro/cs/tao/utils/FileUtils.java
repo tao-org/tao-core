@@ -26,6 +26,8 @@ import java.nio.file.attribute.*;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 /**
  * This class provides additional functionality in handling with files. All methods in this class dealing with
@@ -620,6 +622,66 @@ public class FileUtils {
                         .map(File::toPath)
                         .collect(Collectors.toList()) :
                 null;
+    }
+
+    public static void copyFile(URL sourceURL, Path destinationFile) throws IOException {
+        if (sourceURL == null || destinationFile == null) {
+            throw new IllegalArgumentException("One of the arguments is null");
+        }
+        InputStream inputStream = sourceURL.openStream();
+        try {
+            File dest = destinationFile.toFile();
+            dest.getParentFile().mkdirs();
+            BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(dest));
+            try {
+                byte[] buffer = new byte[4096];
+                int read;
+                while ((read = inputStream.read(buffer)) > 0) {
+                    bos.write(buffer, 0, read);
+                }
+            } finally {
+                bos.close();
+            }
+        } finally {
+            inputStream.close();
+        }
+    }
+
+    public static void unzip(Path sourceFile, Path destination, boolean keepFolderStructure) throws IOException {
+        if (sourceFile == null || destination == null) {
+            throw new IllegalArgumentException("One of the arguments is null");
+        }
+        if (!Files.exists(destination)) {
+            Files.createDirectory(destination);
+        }
+        byte[] buffer;
+        try (ZipFile zipFile = new ZipFile(sourceFile.toFile())) {
+            ZipEntry entry;
+            Enumeration<? extends ZipEntry> entries = zipFile.entries();
+            while (entries.hasMoreElements()) {
+                entry = entries.nextElement();
+                if (entry.isDirectory() && !keepFolderStructure)
+                    continue;
+                Path filePath = destination.resolve(entry.getName());
+                Path strippedFilePath = destination.resolve(filePath.getFileName());
+                if (!Files.exists(filePath)) {
+                    if (entry.isDirectory()) {
+                        Files.createDirectories(filePath);
+                    } else {
+                        try (InputStream inputStream = zipFile.getInputStream(entry)) {
+                            try (BufferedOutputStream bos = new BufferedOutputStream(
+                                    new FileOutputStream(keepFolderStructure ? filePath.toFile() : strippedFilePath.toFile()))) {
+                                buffer = new byte[4096];
+                                int read;
+                                while ((read = inputStream.read(buffer)) > 0) {
+                                    bos.write(buffer, 0, read);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private static Boolean supportsPosix;

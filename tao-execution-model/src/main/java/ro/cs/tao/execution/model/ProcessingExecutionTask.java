@@ -17,7 +17,16 @@ package ro.cs.tao.execution.model;
 
 import ro.cs.tao.component.*;
 import ro.cs.tao.component.validation.ValidationException;
+import ro.cs.tao.serialization.MediaType;
+import ro.cs.tao.serialization.SerializationException;
+import ro.cs.tao.serialization.Serializer;
+import ro.cs.tao.serialization.SerializerFactory;
 
+import javax.xml.transform.stream.StreamSource;
+import java.io.StringReader;
+import java.net.URI;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -69,9 +78,37 @@ public class ProcessingExecutionTask extends ExecutionTask {
         }
         Variable variable = this.inputParameterValues.stream().filter(v -> v.getKey().equals(parameterId)).findFirst().orElse(null);
         if (variable != null) {
-            variable.setValue(value);
+            if (this.component.getSourceCardinality() == 1) {
+                variable.setValue(value);
+            } else {
+                String existing = variable.getValue();
+                try {
+                    Serializer<String, String> serializer = SerializerFactory.create(String.class, MediaType.JSON);
+                    List<String> strings = serializer.deserializeList(String.class, new StreamSource(new StringReader(existing)));
+                    strings.add(value);
+                    String newValue = serializer.serialize(strings, "values");
+                    variable.setValue(newValue);
+                } catch (SerializationException e) {
+                    e.printStackTrace();
+                }
+            }
         } else {
-            this.inputParameterValues.add(new Variable(parameterId, value));
+            Variable var;
+            if (this.component.getSourceCardinality() == 1) {
+                var = new Variable(parameterId, value);
+            } else {
+                String newValue = null;
+                try {
+                    Serializer<String, String> serializer = SerializerFactory.create(String.class, MediaType.JSON);
+                    List<String> strings = new ArrayList<>();
+                    strings.add(value);
+                    newValue = serializer.serialize(strings, "values");
+                } catch (SerializationException e) {
+                    e.printStackTrace();
+                }
+                var = new Variable(parameterId, newValue);
+            }
+            this.inputParameterValues.add(var);
         }
     }
 
@@ -110,6 +147,26 @@ public class ProcessingExecutionTask extends ExecutionTask {
             inputParams.putAll(inputParameterValues.stream()
                     .collect(Collectors.toMap(Variable::getKey, Variable::getValue)));
         }
+        for (TargetDescriptor descriptor : this.component.getTargets()) {
+            String location = descriptor.getDataDescriptor().getLocation();
+            if (location != null) {
+                inputParams.put(descriptor.getName(), getInstanceTargetOuptut(descriptor));
+            }
+        }
         return this.component.buildExecutionCommand(inputParams);
+    }
+
+    public String getInstanceTargetOuptut(TargetDescriptor descriptor) {
+        String location = descriptor.getDataDescriptor().getLocation();
+        if (location != null) {
+            Path path;
+            try {
+                path = Paths.get(URI.create(location));
+            } catch (Exception e) {
+                path = Paths.get(location);
+            }
+            location = path.getParent().resolve(String.valueOf(this.getId()) + "-" + path.getFileName()).toString();
+        }
+        return location;
     }
 }

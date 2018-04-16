@@ -30,7 +30,6 @@ import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.Executor;
 import ro.cs.tao.execution.model.DataSourceExecutionTask;
 import ro.cs.tao.execution.model.ExecutionStatus;
-import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.serialization.GenericAdapter;
 import ro.cs.tao.serialization.MapAdapter;
 
@@ -39,6 +38,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -54,6 +54,8 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> {
     @Override
     public void execute(DataSourceExecutionTask task) throws ExecutionException {
         try {
+            task.setResourceId(UUID.randomUUID().toString());
+            changeTaskStatus(task, ExecutionStatus.RUNNING);
             dataSourceComponent = task.getComponent();
             final Map<String, ParameterDescriptor> parameterDescriptorMap =
                     DataSourceManager.getInstance()
@@ -74,7 +76,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> {
                 final Class type = descriptor.getType();
                 String value = entry.getValue();
                 final QueryParameter queryParameter;
-                if (value != null && isArray(value)) {
+                if (isArray(value)) {
                     String[] elements = value.substring(0, value.length() - 1).split(",");
                     if (Date.class.isAssignableFrom(type)) {
                         queryParameter = dataQuery.createParameter(paramName,
@@ -154,7 +156,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> {
         for (EOProduct product : results) {
             try {
                 persistenceManager.saveEOProduct(product);
-            } catch (PersistenceException e) {
+            } catch (Exception e) {
                 logger.severe(String.format("Product %s could not be written to database: %s",
                                             product.getName(), e.getMessage()));
             }
