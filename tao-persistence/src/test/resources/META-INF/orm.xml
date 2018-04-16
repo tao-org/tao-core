@@ -34,7 +34,7 @@
                 <column name="coordinate_reference_system" nullable="true" column-definition="text"/>
             </basic>
             <basic name="location">
-                <column name="location" nullable="false" column-definition="varchar(512) not null"/>
+                <column name="location" nullable="false" column-definition="varchar not null"/>
             </basic>
             <basic name="entryPoint">
                 <column name="entry_point" nullable="true" column-definition="varchar(1000) null"/>
@@ -860,7 +860,7 @@
             </basic>
 
             <basic name="location">
-                <column name="location" nullable="true" column-definition="varchar(512) NULL"/>
+                <column name="location" nullable="true" column-definition="varchar NULL"/>
             </basic>
         </attributes>
     </embeddable>
@@ -868,6 +868,9 @@
 
     <embeddable class="ro.cs.tao.component.ComponentLink" access="PROPERTY">
         <attributes>
+            <basic name="sourceNodeId" fetch="LAZY">
+                <column name="source_graph_node_id" nullable="false"/>
+            </basic>
             <many-to-one name="output" fetch="LAZY">
                 <join-column name="source_descriptor_id" nullable="false"/>
                 <cascade>
@@ -880,6 +883,12 @@
                     <cascade-all/>
                 </cascade>
             </many-to-one>
+            <!--<many-to-one name="sourceNodeId" fetch="LAZY">-->
+            <!--<join-column name="source_graph_node_id" nullable="false"/>-->
+            <!--<cascade>-->
+            <!--<cascade-all/>-->
+            <!--</cascade>-->
+            <!--</many-to-one>-->
         </attributes>
     </embeddable>
 
