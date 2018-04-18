@@ -21,12 +21,13 @@ import ro.cs.tao.execution.model.ExecutionJob;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.execution.model.TaskSelector;
-import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -35,11 +36,31 @@ import java.util.stream.Collectors;
  */
 public class DefaultJobTaskSelector implements TaskSelector<ExecutionJob> {
 
-    private final PersistenceManager persistenceManager;
+    private Function<Long, WorkflowNodeDescriptor> workflowProvider;
+    private BiFunction<Long, Long, ExecutionTask> taskByNodeProvider;
+    private BiFunction<Long, String, List<WorkflowNodeDescriptor>> nodesByComponentProvider;
     private final Logger logger = Logger.getLogger(DefaultJobTaskSelector.class.getName());
 
-    DefaultJobTaskSelector(PersistenceManager persistenceManager) {
-        this.persistenceManager = persistenceManager;
+    public DefaultJobTaskSelector() { }
+
+    @Override
+    public void setWorkflowProvider(Function<Long, WorkflowNodeDescriptor> workflowProvider) {
+        this.workflowProvider = workflowProvider;
+    }
+
+    @Override
+    public void setTaskByNodeProvider(BiFunction<Long, Long, ExecutionTask> taskByNodeProvider) {
+        this.taskByNodeProvider = taskByNodeProvider;
+    }
+
+    @Override
+    public void setNodesByComponentProvider(BiFunction<Long, String, List<WorkflowNodeDescriptor>> nodesByComponentProvider) {
+        this.nodesByComponentProvider = nodesByComponentProvider;
+    }
+
+    @Override
+    public Class<ExecutionJob> getTaskContainerClass() {
+        return ExecutionJob.class;
     }
 
     @Override
@@ -88,7 +109,7 @@ public class DefaultJobTaskSelector implements TaskSelector<ExecutionJob> {
         if (task == null || task.getExecutionStatus() != ExecutionStatus.DONE) {
             return null;
         }
-        WorkflowNodeDescriptor workflowNode = persistenceManager.getWorkflowNodeById(task.getWorkflowNodeId());
+        WorkflowNodeDescriptor workflowNode = this.workflowProvider.apply(task.getWorkflowNodeId());
         if (workflowNode == null) {
             logger.severe(String.format("No workflow node with id %s was found in the database", task.getWorkflowNodeId()));
             return null;
@@ -101,14 +122,14 @@ public class DefaultJobTaskSelector implements TaskSelector<ExecutionJob> {
         return childNodes.stream().filter(n ->
             n.getIncomingLinks().stream().allMatch(link -> {
                 List<WorkflowNodeDescriptor> parents =
-                        persistenceManager.getWorkflowNodesByComponentId(workflow.getId(),link.getInput().getParentId());
+                            this.nodesByComponentProvider.apply(workflow.getId(),link.getInput().getParentId());
                 return parents.stream().allMatch(p -> {
-                    ExecutionTask taskByNode = persistenceManager.getTaskByJobAndNode(job.getId(), p.getId());
+                    ExecutionTask taskByNode = this.taskByNodeProvider.apply(job.getId(), p.getId());
                     return taskByNode != null && taskByNode.getExecutionStatus() == ExecutionStatus.DONE;
                 });
             }))
             .map(n -> {
-                ExecutionTask next = persistenceManager.getTaskByJobAndNode(job.getId(), n.getId());
+                ExecutionTask next = this.taskByNodeProvider.apply(job.getId(), n.getId());
                 List<Variable> outputs = task.getOutputParameterValues();
                 n.getIncomingLinks().forEach(link -> {
                     for (Variable variable : outputs) {

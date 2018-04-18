@@ -16,13 +16,21 @@
 
 package ro.cs.tao.execution.model;
 
+import ro.cs.tao.workflow.WorkflowNodeDescriptor;
+
 import java.util.List;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 /**
- * Interface for implementors of task choosing algorithms
+ * Interface for implementors of task choosing algorithms for a job
  *
  * @author Cosmin Cara
  */
 public interface TaskSelector<T> {
-    List<ExecutionTask> chooseNext(T taskHolder, ExecutionTask currentTask);
+    void setWorkflowProvider(Function<Long, WorkflowNodeDescriptor> workflowProvider);
+    void setTaskByNodeProvider(BiFunction<Long, Long, ExecutionTask> taskByNodeProvider);
+    void setNodesByComponentProvider(BiFunction<Long, String, List<WorkflowNodeDescriptor>> nodesByComponentProvider);
+    Class<T> getTaskContainerClass();
+    List<ExecutionTask> chooseNext(T job, ExecutionTask currentTask);
 }
