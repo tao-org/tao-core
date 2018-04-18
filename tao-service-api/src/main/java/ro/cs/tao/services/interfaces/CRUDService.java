@@ -45,14 +45,14 @@ public interface CRUDService<T> {
      *
      * @param object    The entity to be persisted.
      */
-    void save(T object);
+    T save(T object);
 
     /**
      * Updates an existing entity.
      *
      * @param object    The modified entity.
      */
-    void update(T object);
+    T update(T object);
 
     /**
      * Removes the entity with the given identifier from the underlying persistent storage.

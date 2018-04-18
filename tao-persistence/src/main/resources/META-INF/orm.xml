@@ -312,6 +312,39 @@
         </attributes>
     </entity>
 
+    <entity class="ro.cs.tao.component.GroupComponent" access="PROPERTY">
+        <table name="tao.group_component"/>
+
+        <association-override name="sources">
+            <join-table name="tao.group_component_sources">
+                <join-column name="group_component_id" referenced-column-name="id"/>
+                <inverse-join-column name="source_descriptor_id" referenced-column-name="id"/>
+            </join-table>
+        </association-override>
+
+        <association-override name="targets">
+            <join-table name="tao.group_component_targets">
+                <join-column name="group_component_id" referenced-column-name="id"/>
+                <inverse-join-column name="target_descriptor_id" referenced-column-name="id"/>
+            </join-table>
+        </association-override>
+
+        <convert converter="ro.cs.tao.persistence.convert.ProcessingComponentVisibilityConverter" attribute-name="visibility" />
+
+        <attributes>
+            <basic name="visibility">
+                <column name="visibility_id" nullable="false" column-definition="integer not null"/>
+            </basic>
+            <basic name="parallelism">
+                <column name="parallelism" nullable="false" column-definition="integer NULL DEFAULT 1"/>
+            </basic>
+
+            <basic name="active">
+                <column name="active" nullable="true" column-definition="boolean NULL DEFAULT true"/>
+            </basic>
+
+        </attributes>
+    </entity>
 
     <entity class="ro.cs.tao.component.ParameterDescriptor" access="PROPERTY">
         <table name="tao.processing_parameter"/>
@@ -502,7 +535,9 @@
                     <join-column name="task_id" referenced-column-name="id" />
                 </collection-table>
             </element-collection>
-
+    
+            <transient name="stateHandler" />
+            
         </attributes>
     </entity>
 

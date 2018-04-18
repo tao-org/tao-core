@@ -297,8 +297,8 @@ CREATE TABLE tao.source_descriptor
 
 ALTER TABLE tao.source_descriptor ADD CONSTRAINT PK_source_descriptor PRIMARY KEY (id);
 
-ALTER TABLE tao.source_descriptor ADD CONSTRAINT FK_source_descriptor_processing_component
-	FOREIGN KEY (parent_id) REFERENCES tao.processing_component (id) ON DELETE No Action ON UPDATE No Action;
+--ALTER TABLE tao.source_descriptor ADD CONSTRAINT FK_source_descriptor_processing_component
+--	FOREIGN KEY (parent_id) REFERENCES tao.processing_component (id) ON DELETE No Action ON UPDATE No Action;
 
 ALTER TABLE tao.source_descriptor ADD CONSTRAINT FK_data_descriptor_data_format
 	FOREIGN KEY (data_format_id) REFERENCES tao.data_format (id) ON DELETE No Action ON UPDATE No Action;
@@ -404,7 +404,44 @@ ALTER TABLE tao.processing_component_targets ADD CONSTRAINT FK_processing_compon
 ALTER TABLE tao.processing_component_targets ADD CONSTRAINT FK_processing_component_targets_target_descriptor
 	FOREIGN KEY (target_descriptor_id) REFERENCES tao.target_descriptor (id) ON DELETE No Action ON UPDATE No Action;
 
+-------------------------------------------------------------------------------
+-- table: group_component_sources
+DROP TABLE IF EXISTS tao.group_component_sources CASCADE;
 
+CREATE TABLE tao.group_component_sources
+(
+	group_component_id varchar(512) NOT NULL,
+	source_descriptor_id varchar(512) NOT NULL
+);
+
+ALTER TABLE tao.group_component_sources ADD CONSTRAINT PK_group_component_sources
+	PRIMARY KEY (group_component_id, source_descriptor_id);
+
+ALTER TABLE tao.group_component_sources ADD CONSTRAINT FK_group_component_sources_group_component
+	FOREIGN KEY (group_component_id) REFERENCES tao.group_component (id) ON DELETE No Action ON UPDATE No Action;
+
+ALTER TABLE tao.group_component_sources ADD CONSTRAINT FK_group_component_sources_source_descriptor
+	FOREIGN KEY (source_descriptor_id) REFERENCES tao.source_descriptor (id) ON DELETE No Action ON UPDATE No Action;
+
+
+-------------------------------------------------------------------------------
+-- table: group_component_targets
+DROP TABLE IF EXISTS tao.group_component_targets CASCADE;
+
+CREATE TABLE tao.group_component_targets
+(
+	group_component_id varchar(512) NOT NULL,
+	target_descriptor_id varchar(512) NOT NULL
+);
+
+ALTER TABLE tao.group_component_targets ADD CONSTRAINT PK_group_component_targets
+	PRIMARY KEY (group_component_id, target_descriptor_id);
+
+ALTER TABLE tao.group_component_targets ADD CONSTRAINT FK_group_component_targets_group_component
+	FOREIGN KEY (group_component_id) REFERENCES tao.group_component (id) ON DELETE No Action ON UPDATE No Action;
+
+ALTER TABLE tao.group_component_targets ADD CONSTRAINT FK_group_component_targets_target_descriptor
+	FOREIGN KEY (target_descriptor_id) REFERENCES tao.target_descriptor (id) ON DELETE No Action ON UPDATE No Action;
 
 -------------------------------------------------------------------------------
 -- table: fetch_mode

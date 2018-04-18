@@ -18,17 +18,11 @@ package ro.cs.tao.orchestration;
 
 import ro.cs.tao.component.Variable;
 import ro.cs.tao.execution.model.*;
-import ro.cs.tao.serialization.BaseSerializer;
-import ro.cs.tao.serialization.MapAdapter;
-import ro.cs.tao.serialization.MediaType;
-import ro.cs.tao.serialization.SerializerFactory;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 
-import javax.xml.transform.stream.StreamSource;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.logging.Logger;
@@ -73,18 +67,18 @@ public class DefaultGroupTaskSelector implements TaskSelector<ExecutionGroup> {
                 // If the group is not started, we return the first task in line
                 case UNDETERMINED:
                     ExecutionTask task = tasks.get(0);
-                    try {
-                        BaseSerializer<LoopState> serializer = SerializerFactory.create(LoopState.class, MediaType.JSON);
-                        LoopState current = serializer.deserialize(new StreamSource(taskHolder.getInternalState()));
-                        MapAdapter mapAdapter = new MapAdapter();
-                        Map<String, String> map = mapAdapter.marshal(taskHolder.getInputParameterValues().get(0).getValue());
-                        Variable nextInput = null;
-                        if (map != null) {
-                            nextInput = map.entrySet().stream().map(e -> new Variable(e.getKey(), e.getValue())).collect(Collectors.toList()).get(current.getCurrent());
-                            task.setInputParameterValue(nextInput.getKey(), nextInput.getValue());
+                    if (task instanceof ExecutionGroup) {
+                        ExecutionGroup groupTask = (ExecutionGroup) task;
+                        int cardinality = ((ProcessingExecutionTask) currentTask).getComponent().getTargetCardinality();
+                        groupTask.setStateHandler(
+                                new LoopStateHandler(
+                                        new LoopState(1, cardinality)));
+                    }
+                    List<Variable> values = currentTask.getOutputParameterValues();
+                    if (values != null && values.size() > 0) {
+                        for (Variable variable : values) {
+                            task.setInputParameterValue(variable.getKey(), variable.getValue());
                         }
-                    } catch (Exception e) {
-                        e.printStackTrace();
                     }
                     next.add(task);
                     break;
@@ -139,6 +133,15 @@ public class DefaultGroupTaskSelector implements TaskSelector<ExecutionGroup> {
                 .map(n -> {
                     ExecutionTask next = this.taskByNodeProvider.apply(group.getJob().getId(), n.getId());
                     List<Variable> outputs = task.getOutputParameterValues();
+                    if (next instanceof ExecutionGroup) {
+                        ExecutionGroup groupTask = (ExecutionGroup) next;
+                        int cardinality = task instanceof ExecutionGroup ?
+                                ((LoopState) ((ExecutionGroup) task).getStateHandler().currentState()).getLimit() :
+                                ((ProcessingExecutionTask) task).getComponent().getTargetCardinality();
+                        groupTask.setStateHandler(
+                                new LoopStateHandler(
+                                        new LoopState(1, cardinality)));
+                    }
                     n.getIncomingLinks().forEach(link -> {
                         for (Variable variable : outputs) {
                             if (variable.getKey().equals(link.getInput().getName())) {

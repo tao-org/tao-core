@@ -17,6 +17,7 @@ package ro.cs.tao.orchestration.commands;
 
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.ExecutionsManager;
+import ro.cs.tao.execution.model.ExecutionGroup;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.persistence.PersistenceManager;
@@ -104,7 +105,11 @@ public abstract class TaskCommand {
         @Override
         protected void doAction(ExecutionTask task) {
             ExecutionsManager executionsManager = ExecutionsManager.getInstance();
-            executionsManager.execute(task);
+            if (task instanceof ExecutionGroup) {
+                executionsManager.execute(((ExecutionGroup) task).getTasks().get(0));
+            } else {
+                executionsManager.execute(task);
+            }
         }
     }
     /**

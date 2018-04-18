@@ -12,6 +12,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
+import ro.cs.tao.component.GroupComponent;
 import ro.cs.tao.component.ParameterDescriptor;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.TaoComponent;
@@ -100,6 +101,10 @@ public class PersistenceManager implements MessagePersister {
     @Autowired
     private ProcessingComponentRepository processingComponentRepository;
 
+    /** CRUD Repository for GroupComponent entities */
+    @Autowired
+    private GroupComponentRepository groupComponentRepository;
+
     /** CRUD Repository for DataSourceComponent entities */
     @Autowired
     private DataSourceComponentRepository dataSourceComponentRepository;
@@ -136,170 +141,16 @@ public class PersistenceManager implements MessagePersister {
     @Autowired
     private QueryRepository queryRepository;
 
-//    /** CRUD Repository for DataSource entities */
-//    @Autowired
-//    private DataSourceRepository dataSourceRepository;
-//
-//    /** CRUD Repository for DataSourceType entities */
-//    @Autowired
-//    private DataSourceTypeRepository dataSourceTypeRepository;
-
-//    @Transactional
-//    public Integer saveDataSourceType(String type) throws PersistenceException
-//    {
-//        // check method parameters
-//        if(type == null || type.length() == 0)
-//        {
-//            throw new PersistenceException("Invalid parameters were provided for adding new data source type (empty type)!");
-//        }
-//
-//        // check if there is already an identical type persisted
-//        DataSourceType existingType = dataSourceTypeRepository.findByType(type);
-//        if (existingType != null)
-//        {
-//            throw new PersistenceException("Invalid parameters were provided for adding new data source type (type already exists)!");
-//        }
-//
-//        DataSourceType dataSourceTypeEnt = new DataSourceType();
-//        dataSourceTypeEnt.setType(type);
-//
-//        // save the DataSourceType entity
-//        dataSourceTypeEnt = dataSourceTypeRepository.save(dataSourceTypeEnt);
-//
-//        if(dataSourceTypeEnt.getId() == null)
-//        {
-//            throw new PersistenceException("Error saving data source type: " + dataSourceTypeEnt.getType());
-//        }
-//
-//        return dataSourceTypeEnt.getId();
-//    }
-//
-//    @Transactional(readOnly = true)
-//    public DataSourceType getDataSourceTypeById(final Integer dataSourceTypeId) throws PersistenceException
-//    {
-//        // check method parameters
-//        if (dataSourceTypeId == null || dataSourceTypeId <= 0)
-//        {
-//            throw new PersistenceException("Invalid parameters were provided for retrieving data source type by its identifier (" + String.valueOf(dataSourceTypeId) + ")");
-//        }
-//
-//        // retrieve the DataSourceType entity based on its id
-//        final DataSourceType dataSourceType = dataSourceTypeRepository.findById(dataSourceTypeId);
-//        if (dataSourceType == null)
-//        {
-//            throw new PersistenceException("There is no data source type with the specified identfier (" + dataSourceTypeId.toString() + ")");
-//        }
-//
-//        return dataSourceType;
-//    }
-//
-//
-//    /**
-//     * Retrieve the list of data source types
-//     * @return the list of data source types
-//     */
-//    @Transactional(readOnly = true)
-//    public List<DataSourceType> getDataSourceTypes()
-//    {
-//        // retrieve all entities DataSourceType
-//        return (List<DataSourceType>) dataSourceTypeRepository.findAll();
-//    }
-//
-//    @Transactional
-//    public <Q extends DataQuery, S extends AbstractDataSource<Q>> Integer saveDataSource(S dataSource, DataSourceType dataSourceType, String name, String description) throws PersistenceException
-//    {
-//        if(dataSource == null || dataSource.getCredentials() == null || dataSource.getConnectionString() == null ||
-//          dataSourceType == null || name == null)
-//        {
-//            throw new PersistenceException("Invalid parameters were provided for adding new data source!");
-//        }
-//
-//        ro.cs.tao.persistence.data.DataSource dataSourceEnt = new ro.cs.tao.persistence.data.DataSource();
-//        dataSourceEnt.setName(name);
-//        dataSourceEnt.setDataSourceType(dataSourceType);
-//        dataSourceEnt.setUsername(dataSource.getCredentials().getUserName());
-//        dataSourceEnt.setPassword(dataSource.getCredentials().getPassword());
-//        dataSourceEnt.setConnectionString(dataSource.getConnectionString());
-//        if(description != null)
-//        {
-//            dataSourceEnt.setDescription(description);
-//        }
-//        dataSourceEnt.setCreatedDate(LocalDateTime.now());
-//
-//        // save the DataSource entity
-//        dataSourceEnt = dataSourceRepository.save(dataSourceEnt);
-//
-//        if(dataSourceEnt.getId() == null)
-//        {
-//            throw new PersistenceException("Error saving data source with name: " + dataSourceEnt.getName());
-//        }
-//
-//        return dataSourceEnt.getId();
-//
-//    }
-
-    private boolean checkEOProduct(EOProduct eoProduct)
-    {
-        if(eoProduct == null)
-        {
-            return false;
-        }
-        if(eoProduct.getId() == null || eoProduct.getId().isEmpty())
-        {
-            return false;
-        }
-        if(eoProduct.getName() == null)
-        {
-            return false;
-        }
-        if(eoProduct.getGeometry() == null)
-        {
-            return false;
-        }
-        if(eoProduct.getProductType() == null)
-        {
-            return false;
-        }
-        if(eoProduct.getLocation() == null)
-        {
-            return false;
-        }
-        if(eoProduct.getSensorType() == null)
-        {
-            return false;
-        }
-        if(eoProduct.getPixelType() == null)
-        {
-            return false;
-        }
-
-        return true;
+    private boolean checkEOProduct(EOProduct eoProduct) {
+        return eoProduct != null && eoProduct.getId() != null && !eoProduct.getId().isEmpty() &&
+            eoProduct.getName() != null && eoProduct.getGeometry() != null && eoProduct.getProductType() != null &&
+            eoProduct.getLocation() != null && eoProduct.getSensorType() == null && eoProduct.getPixelType() != null;
     }
 
-    private boolean checkVectorData(VectorData vectorDataProduct)
-    {
-        if(vectorDataProduct == null)
-        {
-            return false;
-        }
-        if(vectorDataProduct.getId() == null || vectorDataProduct.getId().isEmpty())
-        {
-            return false;
-        }
-        if(vectorDataProduct.getName() == null)
-        {
-            return false;
-        }
-        if(vectorDataProduct.getGeometry() == null)
-        {
-            return false;
-        }
-        if(vectorDataProduct.getLocation() == null)
-        {
-            return false;
-        }
-
-        return true;
+    private boolean checkVectorData(VectorData vectorDataProduct) {
+        return vectorDataProduct != null && vectorDataProduct.getId() != null && !vectorDataProduct.getId().isEmpty() &&
+                vectorDataProduct.getName() != null && vectorDataProduct.getGeometry() != null &&
+                vectorDataProduct.getLocation() != null;
     }
 
     @Transactional
@@ -324,8 +175,7 @@ public class PersistenceManager implements MessagePersister {
      * @return
      */
     @Transactional(readOnly = true)
-    public List<EOProduct> getEOProducts()
-    {
+    public List<EOProduct> getEOProducts() {
         final List<EOProduct> products = new ArrayList<>();
         // retrieve products
         products.addAll(((List<EOProduct>) eoProductRepository.findAll(new Sort(Sort.Direction.ASC, DATA_PRODUCT_IDENTIFIER_PROPERTY_NAME))));
@@ -354,45 +204,27 @@ public class PersistenceManager implements MessagePersister {
      * @return
      */
     @Transactional(readOnly = true)
-    public List<VectorData> getVectorDataProducts()
-    {
-        final List<VectorData> products = new ArrayList<>();
+    public List<VectorData> getVectorDataProducts() {
         // retrieve products
-        products.addAll(((List<VectorData>) vectorDataRepository.findAll(new Sort(Sort.Direction.ASC, DATA_PRODUCT_IDENTIFIER_PROPERTY_NAME))));
-        return products;
+        return new ArrayList<>(((List<VectorData>) vectorDataRepository.findAll(new Sort(Sort.Direction.ASC,
+                                                                                         DATA_PRODUCT_IDENTIFIER_PROPERTY_NAME))));
     }
 
-    private boolean checkServiceDescription(ServiceDescription service)
-    {
-        if(service == null)
-        {
-            return false;
-        }
-        if(service.getName() == null || service.getName().isEmpty())
-        {
-            return false;
-        }
-        if(service.getVersion() == null || service.getVersion().isEmpty())
-        {
-            return false;
-        }
-
-        return true;
+    private boolean checkServiceDescription(ServiceDescription service) {
+        return service != null && service.getName() != null && !service.getName().isEmpty() &&
+                service.getVersion() != null && !service.getVersion().isEmpty();
     }
 
     @Transactional
-    public ServiceDescription saveServiceDescription(ServiceDescription service) throws PersistenceException
-    {
+    public ServiceDescription saveServiceDescription(ServiceDescription service) throws PersistenceException {
         // check method parameters
-        if(!checkServiceDescription(service))
-        {
+        if(!checkServiceDescription(service)) {
             throw new PersistenceException("Invalid parameters were provided for adding new service!");
         }
 
         // check if there is already another service with the same name and version
         final ServiceDescription serviceWithSameName = serviceRepository.findByNameAndVersion(service.getName(), service.getVersion());
-        if (serviceWithSameName != null)
-        {
+        if (serviceWithSameName != null) {
             throw new PersistenceException("There is already another service with the name: " + service.getName());
         }
 
@@ -401,16 +233,12 @@ public class PersistenceManager implements MessagePersister {
     }
 
     @Transactional(readOnly = true)
-    public boolean checkIfExistsServiceByNameAndVersion(final String serviceName, final String serviceVersion)
-    {
+    private boolean checkIfExistsServiceByNameAndVersion(final String serviceName, final String serviceVersion) {
         boolean result = false;
-
-        if (serviceName != null && !serviceName.isEmpty())
-        {
+        if (serviceName != null && !serviceName.isEmpty()) {
             // try to retrieve ServiceDescription after its name
             final ServiceDescription serviceEnt = serviceRepository.findByNameAndVersion(serviceName, serviceVersion);
-            if (serviceEnt != null)
-            {
+            if (serviceEnt != null) {
                 result = true;
             }
         }
@@ -418,67 +246,36 @@ public class PersistenceManager implements MessagePersister {
         return result;
     }
 
-    private boolean checkExecutionNode(NodeDescription node)
-    {
-        if(node == null)
-        {
-            return false;
-        }
-        if(node.getHostName() == null)
-        {
-            return false;
-        }
-        if(node.getUserName() == null)
-        {
-            return false;
-        }
-        if(node.getUserPass() == null)
-        {
-            return false;
-        }
-        if(node.getProcessorCount() < 0)
-        {
-            return false;
-        }
-        if(node.getDiskSpaceSizeGB() < 0)
-        {
-            return false;
-        }
-        if(node.getMemorySizeGB() < 0)
-        {
-            return false;
-        }
-
-        return true;
+    private boolean checkExecutionNode(NodeDescription node) {
+        return node != null && node.getHostName() != null &&
+                node.getUserName() != null && node.getUserPass() != null &&
+                node.getProcessorCount() > 0 && node.getDiskSpaceSizeGB() > 0 && node.getMemorySizeGB() > 0;
     }
 
     @Transactional
-    public NodeDescription saveExecutionNode(NodeDescription node) throws PersistenceException
-    {
+    public NodeDescription saveExecutionNode(NodeDescription node) throws PersistenceException {
         // check method parameters
-        if(!checkExecutionNode(node))
-        {
+        if(!checkExecutionNode(node)) {
             throw new PersistenceException("Invalid parameters were provided for adding new execution node!");
         }
 
         // check if there is already another node with the same host name
         final NodeDescription nodeWithSameHostName = nodeRepository.findByHostName(node.getHostName());
-        if (nodeWithSameHostName != null)
-        {
+        if (nodeWithSameHostName != null) {
             throw new PersistenceException("There is already another node with the host name: " + node.getHostName());
         }
 
         // save the services first
-        for(NodeServiceStatus serviceStatus: node.getServicesStatus())
-        {
-            if (!checkIfExistsServiceByNameAndVersion(serviceStatus.getServiceDescription().getName(), serviceStatus.getServiceDescription().getVersion()))
-            {
-                serviceRepository.save(serviceStatus.getServiceDescription());
-            }
-            else
-            {
+        for(NodeServiceStatus serviceStatus: node.getServicesStatus()) {
+            ServiceDescription serviceDescription = serviceStatus.getServiceDescription();
+            if (!checkIfExistsServiceByNameAndVersion(serviceDescription.getName(),
+                                                      serviceDescription.getVersion())) {
+                serviceRepository.save(serviceDescription);
+            } else {
                 // retrieve the existent entities and associate them on the node
-                ServiceDescription existingService = serviceRepository.findByNameAndVersion(serviceStatus.getServiceDescription().getName(), serviceStatus.getServiceDescription().getVersion());
+                ServiceDescription existingService =
+                        serviceRepository.findByNameAndVersion(serviceDescription.getName(),
+                                                               serviceDescription.getVersion());
                 serviceStatus.setServiceDescription(existingService);
             }
         }
@@ -488,18 +285,16 @@ public class PersistenceManager implements MessagePersister {
     }
 
     @Transactional
-    public NodeDescription updateExecutionNode(NodeDescription node) throws PersistenceException
-    {
+    public NodeDescription updateExecutionNode(NodeDescription node) throws PersistenceException {
         // check method parameters
-        if(!checkExecutionNode(node))
-        {
-            throw new PersistenceException("Invalid parameters were provided for updating the execution node " + (node != null && node.getHostName() != null ? "(host name " + node.getHostName() + ")" : "") + "!");
+        if(!checkExecutionNode(node)) {
+            throw new PersistenceException("Invalid parameters were provided for updating the execution node "
+                                                   + (node != null && node.getHostName() != null ? "(host name " + node.getHostName() + ")" : "") + "!");
         }
 
         // check if there is such node (to update) with the given host name
         final NodeDescription existingNode = nodeRepository.findByHostName(node.getHostName());
-        if (existingNode == null)
-        {
+        if (existingNode == null) {
             throw new PersistenceException("There is no node with the given host name: " + node.getHostName());
         }
 
@@ -508,27 +303,23 @@ public class PersistenceManager implements MessagePersister {
 
 
     @Transactional(readOnly = true)
-    public List<NodeDescription> getNodes()
-    {
-        final List<NodeDescription> nodes = new ArrayList<>();
+    public List<NodeDescription> getNodes() {
         // retrieve nodes and filter them by active flag
-        nodes.addAll(((List<NodeDescription>) nodeRepository.findAll(new Sort(Sort.Direction.ASC, NODE_IDENTIFIER_PROPERTY_NAME))).stream()
-          .filter(node -> node.getActive())
-          .collect(Collectors.toList()));
-        return nodes;
+        return ((List<NodeDescription>) nodeRepository.findAll(new Sort(Sort.Direction.ASC,
+                                                                        NODE_IDENTIFIER_PROPERTY_NAME)))
+                .stream()
+                .filter(NodeDescription::getActive)
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
-    public boolean checkIfExistsNodeByHostName(final String hostName)
-    {
+    public boolean checkIfExistsNodeByHostName(final String hostName) {
         boolean result = false;
 
-        if (hostName != null && !hostName.isEmpty())
-        {
+        if (hostName != null && !hostName.isEmpty()) {
             // try to retrieve NodeDescription after its host name
             final NodeDescription nodeEnt = nodeRepository.findByHostName(hostName);
-            if (nodeEnt != null)
-            {
+            if (nodeEnt != null) {
                 result = true;
             }
         }
@@ -537,18 +328,15 @@ public class PersistenceManager implements MessagePersister {
     }
 
     @Transactional(readOnly = true)
-    public NodeDescription getNodeByHostName(final String hostName) throws PersistenceException
-    {
+    public NodeDescription getNodeByHostName(final String hostName) throws PersistenceException {
         // check method parameters
-        if (hostName == null || hostName.isEmpty())
-        {
+        if (hostName == null || hostName.isEmpty()) {
             throw new PersistenceException("Invalid parameters were provided for searching execution node by host name ("+ String.valueOf(hostName) +") !");
         }
 
         // retrieve NodeDescription after its host name
         final NodeDescription nodeEnt = nodeRepository.findByHostName(hostName);
-        if (nodeEnt == null)
-        {
+        if (nodeEnt == null) {
             throw new PersistenceException("There is no execution node with the specified host name: " + hostName);
         }
 
@@ -556,165 +344,56 @@ public class PersistenceManager implements MessagePersister {
     }
 
     @Transactional
-    public NodeDescription deleteExecutionNode(final String hostName) throws PersistenceException
-    {
+    public NodeDescription deleteExecutionNode(final String hostName) throws PersistenceException {
         // check method parameters
-        if (hostName == null || hostName.isEmpty())
-        {
+        if (hostName == null || hostName.isEmpty()) {
             throw new PersistenceException("Invalid parameters were provided for deleting execution node (host name \""+ String.valueOf(hostName) +"\") !");
         }
 
         // retrieve NodeDescription after its host name
         final NodeDescription nodeEnt = nodeRepository.findByHostName(hostName);
-        if (nodeEnt == null)
-        {
+        if (nodeEnt == null) {
             throw new PersistenceException("There is no execution node with the specified host name: " + hostName);
         }
-
         // deactivate the node
         nodeEnt.setActive(false);
-
         // save it
         return nodeRepository.save(nodeEnt);
     }
 
-    private boolean checkParameterDescriptor(ParameterDescriptor parameterDesc)
-    {
-        if(parameterDesc == null)
-        {
-            return false;
-        }
-        if(parameterDesc.getId() == null || parameterDesc.getId().isEmpty())
-        {
-            return false;
-        }
-        if(parameterDesc.getType() == null)
-        {
-            return false;
-        }
-        if(parameterDesc.getDataType() == null)
-        {
-            return false;
-        }
-        if(parameterDesc.getLabel() == null || parameterDesc.getLabel().isEmpty())
-        {
-            return false;
-        }
-
-        return true;
+    private boolean checkParameterDescriptor(ParameterDescriptor parameterDesc) {
+        return parameterDesc != null && (parameterDesc.getId() != null && !parameterDesc.getId().isEmpty()) &&
+                parameterDesc.getType() != null && parameterDesc.getDataType() != null &&
+                parameterDesc.getLabel() != null && !parameterDesc.getLabel().isEmpty();
     }
 
-    /*@Transactional
-    public ParameterDescriptor saveParameterDescriptor(ParameterDescriptor parameter, ProcessingComponent component) throws PersistenceException
-    {
-        // check method parameters
-        if(!checkParameterDescriptor(parameter) || !checkProcessingComponent(component))
-        {
-            throw new PersistenceException("Invalid parameters were provided for adding new processing component parameter!");
-        }
-
-        // check if there is already another parameter with the same identifier
-        final ParameterDescriptor parameterWithSameId = parameterDescriptorRepository.findById(parameter.getId());
-        if (parameterWithSameId != null)
-        {
-            throw new PersistenceException("There is already another processing parameter with the identifier: " + parameter.getId());
-        }
-
-        parameter.setComponent(component);
-
-        // save the new ParameterDescriptor entity and return it
-        return parameterDescriptorRepository.save(parameter);
-    }*/
-
-    /*public ParameterDescriptor saveParameterDescriptorWithinExistingTransaction(ParameterDescriptor parameter, ProcessingComponent component) throws PersistenceException
-    {
-        // check method parameters
-        if(!checkParameterDescriptor(parameter) || !checkProcessingComponent(component))
-        {
-            throw new PersistenceException("Invalid parameters were provided for adding new processing component parameter!");
-        }
-
-        // check if there is already another parameter with the same identifier
-        final ParameterDescriptor parameterWithSameId = parameterDescriptorRepository.findById(parameter.getId());
-        if (parameterWithSameId != null)
-        {
-            throw new PersistenceException("There is already another processing parameter with the identifier: " + parameter.getId());
-        }
-
-        parameter.setComponent(component);
-
-        // save the new ParameterDescriptor entity and return it
-        return parameterDescriptorRepository.save(parameter);
-    }*/
-
-    private boolean checkComponent(TaoComponent component)
-    {
-        if(component == null){
-            return false;
-        }
-        if(component.getId() == null || component.getId().isEmpty()) {
-            return false;
-        }
-        if(component.getLabel() == null) {
-            return false;
-        }
-        if(component.getVersion() == null) {
-            return false;
-        }
-        if(component.getDescription() == null) {
-            return false;
-        }
-        if(component.getAuthors() == null) {
-            return false;
-        }
-
-        if(component.getCopyright() == null) {
-            return false;
-        }
-
-        return true;
+    private boolean checkComponent(TaoComponent component) {
+        return component != null && (component.getId() != null && !component.getId().isEmpty()) &&
+                component.getLabel() != null && component.getVersion() != null &&
+                component.getDescription() != null && component.getAuthors() != null &&
+                component.getCopyright() != null;
     }
 
-    private boolean checkProcessingComponent(ProcessingComponent component)
-    {
-        if(!checkComponent(component)){
-            return false;
-        }
+    private boolean checkProcessingComponent(ProcessingComponent component) {
+        return checkComponent(component) && component.getFileLocation() != null &&
+                component.getTemplateType() != null && component.getVisibility() != null &&
+                component.getParameterDescriptors().stream().allMatch(this::checkParameterDescriptor);
+    }
 
-        if(component.getFileLocation() == null) {
-            return false;
-        }
-
-        if(component.getTemplateType() == null) {
-            return false;
-        }
-
-        if(component.getVisibility() == null) {
-            return false;
-        }
-
-        for(ParameterDescriptor parameter: component.getParameterDescriptors()) {
-            if(!checkParameterDescriptor(parameter)) {
-                return false;
-            }
-        }
-
-        return true;
+    private boolean checkGroupComponent(GroupComponent component) {
+        return checkComponent(component) && component.getVisibility() != null;
     }
 
     @Transactional
-    public ProcessingComponent saveProcessingComponent(ProcessingComponent component) throws PersistenceException
-    {
+    public ProcessingComponent saveProcessingComponent(ProcessingComponent component) throws PersistenceException {
         // check method parameters
-        if(!checkProcessingComponent(component))
-        {
+        if (!checkProcessingComponent(component)) {
             throw new PersistenceException("Invalid parameters were provided for adding new processing component !");
         }
 
         // check if there is already another component with the same identifier
         final ProcessingComponent componentWithSameId = processingComponentRepository.findById(component.getId());
-        if (componentWithSameId != null)
-        {
+        if (componentWithSameId != null) {
             throw new PersistenceException("There is already another component with the identifier: " + component.getId());
         }
 
@@ -723,18 +402,16 @@ public class PersistenceManager implements MessagePersister {
     }
 
     @Transactional
-    public ProcessingComponent updateProcessingComponent(ProcessingComponent component) throws PersistenceException
-    {
+    public ProcessingComponent updateProcessingComponent(ProcessingComponent component) throws PersistenceException {
         // check method parameters
-        if(!checkProcessingComponent(component))
-        {
-            throw new PersistenceException("Invalid parameters were provided for updating the processing component " + (component != null && component.getId() != null ? "(identifier " + component.getId() + ")" : "") + "!");
+        if (!checkProcessingComponent(component)) {
+            throw new PersistenceException("Invalid parameters were provided for updating the processing component "
+                                                   + (component != null && component.getId() != null ? "(identifier " + component.getId() + ")" : "") + "!");
         }
 
         // check if there is such component (to update) with the given identifier
         final ProcessingComponent existingComponent = processingComponentRepository.findById(component.getId());
-        if (existingComponent == null)
-        {
+        if (existingComponent == null) {
             throw new PersistenceException("There is no processing component with the given identifier: " + component.getId());
         }
 
@@ -743,31 +420,114 @@ public class PersistenceManager implements MessagePersister {
 
     /**
      * Retrieve active processing components with SYSTEM and CONTRIBUTOR visibility
-     * @return
      */
     @Transactional(readOnly = true)
     public List<ProcessingComponent> getProcessingComponents()
     {
-        final List<ProcessingComponent> components = new ArrayList<>();
         // retrieve components and filter them
-        components.addAll(((List<ProcessingComponent>) processingComponentRepository.findAll(new Sort(Sort.Direction.ASC, COMPONENT_IDENTIFIER_PROPERTY_NAME))).stream()
-          .filter(c -> (c.getVisibility().getValue() == ProcessingComponentVisibility.SYSTEM.getValue() || c.getVisibility().getValue() == ProcessingComponentVisibility.CONTRIBUTOR.getValue()) && c.getActive())
-            .collect(Collectors.toList()));
-        return components;
+        return ((List<ProcessingComponent>) processingComponentRepository.findAll(new Sort(Sort.Direction.ASC,
+                                                                                           COMPONENT_IDENTIFIER_PROPERTY_NAME)))
+                .stream()
+                .filter(c -> (c.getVisibility().getValue() == ProcessingComponentVisibility.SYSTEM.getValue() ||
+                              c.getVisibility().getValue() == ProcessingComponentVisibility.CONTRIBUTOR.getValue()) &&
+                              c.getActive())
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public GroupComponent getGroupComponentById(final String id) throws PersistenceException {
+        // check method parameters
+        if (id == null || id.isEmpty()) {
+            throw new PersistenceException("Invalid parameters were provided for searching group component by identifier ("+ String.valueOf(id) +") !");
+        }
+
+        // retrieve ProcessingComponent after its identifier
+        final GroupComponent componentEnt = groupComponentRepository.findById(id);
+        if (componentEnt == null) {
+            throw new PersistenceException("There is no group component with the specified identifier: " + id);
+        }
+
+        return componentEnt;
+    }
+
+    @Transactional
+    public GroupComponent deleteGroupComponent(final String id) throws PersistenceException {
+        // check method parameters
+        if (id == null || id.isEmpty()) {
+            throw new PersistenceException("Invalid parameters were provided for deleting group component (id\""+ String.valueOf(id) +"\") !");
+        }
+
+        // retrieve GroupComponent after its id
+        final GroupComponent componentEnt = groupComponentRepository.findById(id);
+        if (componentEnt == null) {
+            throw new PersistenceException("There is no group component with the specified id: " + id);
+        }
+
+        // deactivate the processing component
+        componentEnt.setActive(false);
+
+        // save it
+        return groupComponentRepository.save(componentEnt);
+    }
+
+    @Transactional
+    public GroupComponent saveGroupComponent(GroupComponent component) throws PersistenceException {
+        // check method parameters
+        if (!checkGroupComponent(component)) {
+            throw new PersistenceException("Invalid parameters were provided for adding new group component !");
+        }
+
+        // check if there is already another component with the same identifier
+        final GroupComponent componentWithSameId = groupComponentRepository.findById(component.getId());
+        if (componentWithSameId != null) {
+            throw new PersistenceException("There is already another group component with the identifier: " + component.getId());
+        }
+
+        // save the new GroupComponent entity and return it
+        return groupComponentRepository.save(component);
+    }
+
+    @Transactional
+    public GroupComponent updateGroupComponent(GroupComponent component) throws PersistenceException {
+        // check method parameters
+        if (!checkGroupComponent(component)) {
+            throw new PersistenceException("Invalid parameters were provided for updating the group component "
+                                                   + (component != null && component.getId() != null ? "(identifier " + component.getId() + ")" : "") + "!");
+        }
+
+        // check if there is such component (to update) with the given identifier
+        final GroupComponent existingComponent = groupComponentRepository.findById(component.getId());
+        if (existingComponent == null) {
+            throw new PersistenceException("There is no group component with the given identifier: " + component.getId());
+        }
+
+        return groupComponentRepository.save(component);
+    }
+
+    /**
+     * Retrieve active group components with SYSTEM and CONTRIBUTOR visibility
+     */
+    @Transactional(readOnly = true)
+    public List<GroupComponent> getGroupComponents() {
+        // retrieve components and filter them
+        return ((List<GroupComponent>) groupComponentRepository.findAll(new Sort(Sort.Direction.ASC,
+                                                                                 COMPONENT_IDENTIFIER_PROPERTY_NAME)))
+                .stream()
+                .filter(c -> (c.getVisibility().getValue() == ProcessingComponentVisibility.SYSTEM.getValue() ||
+                              c.getVisibility().getValue() == ProcessingComponentVisibility.CONTRIBUTOR.getValue()) &&
+                              c.getActive())
+                .collect(Collectors.toList());
     }
 
     /**
      * Retrieve data sources components
-     * @return
      */
     @Transactional(readOnly = true)
-    public List<DataSourceComponent> getDataSourceComponents()
-    {
-        final List<DataSourceComponent> components = new ArrayList<>();
+    public List<DataSourceComponent> getDataSourceComponents() {
         // retrieve components and filter them
-        components.addAll(((List<DataSourceComponent>) dataSourceComponentRepository.findAll(new Sort(Sort.Direction.ASC, COMPONENT_IDENTIFIER_PROPERTY_NAME))).stream()
-          .collect(Collectors.toList()));
-        return components;
+        return new ArrayList<>(
+                (List<DataSourceComponent>) dataSourceComponentRepository.findAll(new Sort(Sort.Direction.ASC,
+                                                                                           COMPONENT_IDENTIFIER_PROPERTY_NAME)));
     }
 
     /**
@@ -788,16 +548,12 @@ public class PersistenceManager implements MessagePersister {
     }*/
 
     @Transactional(readOnly = true)
-    public boolean checkIfExistsComponentById(final String id)
-    {
+    public boolean checkIfExistsComponentById(final String id) {
         boolean result = false;
-
-        if (id != null && !id.isEmpty())
-        {
+        if (id != null && !id.isEmpty()) {
             // try to retrieve ProcessingComponent after its identifier
             final ProcessingComponent componentEnt = processingComponentRepository.findById(id);
-            if (componentEnt != null)
-            {
+            if (componentEnt != null) {
                 result = true;
             }
         }
@@ -806,18 +562,15 @@ public class PersistenceManager implements MessagePersister {
     }
 
     @Transactional
-    public ProcessingComponent getProcessingComponentById(final String id) throws PersistenceException
-    {
+    public ProcessingComponent getProcessingComponentById(final String id) throws PersistenceException {
         // check method parameters
-        if (id == null || id.isEmpty())
-        {
+        if (id == null || id.isEmpty()) {
             throw new PersistenceException("Invalid parameters were provided for searching processing component by identifier ("+ String.valueOf(id) +") !");
         }
 
         // retrieve ProcessingComponent after its identifier
         final ProcessingComponent componentEnt = processingComponentRepository.findById(id);
-        if (componentEnt == null)
-        {
+        if (componentEnt == null) {
             throw new PersistenceException("There is no processing component with the specified identifier: " + id);
         }
 
@@ -825,18 +578,15 @@ public class PersistenceManager implements MessagePersister {
     }
 
     @Transactional
-    public ProcessingComponent deleteProcessingComponent(final String id) throws PersistenceException
-    {
+    public ProcessingComponent deleteProcessingComponent(final String id) throws PersistenceException {
         // check method parameters
-        if (id == null || id.isEmpty())
-        {
+        if (id == null || id.isEmpty()) {
             throw new PersistenceException("Invalid parameters were provided for deleting processing component (id\""+ String.valueOf(id) +"\") !");
         }
 
         // retrieve ProcessingComponent after its id
         final ProcessingComponent componentEnt = processingComponentRepository.findById(id);
-        if (componentEnt == null)
-        {
+        if (componentEnt == null) {
             throw new PersistenceException("There is no processing component with the specified id: " + id);
         }
 
@@ -847,25 +597,9 @@ public class PersistenceManager implements MessagePersister {
         return processingComponentRepository.save(componentEnt);
     }
 
-    private boolean checkDataSourceComponent(DataSourceComponent component)
-    {
-        if(!checkComponent(component)){
-            return false;
-        }
-
-        if(component.getSensorName() == null) {
-            return false;
-        }
-
-        if(component.getDataSourceName() == null) {
-            return false;
-        }
-
-        if(component.getFetchMode() == null) {
-            return false;
-        }
-
-        return true;
+    private boolean checkDataSourceComponent(DataSourceComponent component) {
+        return checkComponent(component) && component.getSensorName() != null &&
+                component.getDataSourceName() != null && component.getFetchMode() != null;
     }
 
     @Transactional
@@ -901,7 +635,7 @@ public class PersistenceManager implements MessagePersister {
     }
 
     @Transactional(readOnly = true)
-    public boolean checkIfExistsExecutionJobById(final Long jobId) {
+    private boolean checkIfExistsExecutionJobById(final Long jobId) {
         boolean result = false;
 
         if (jobId != null && jobId > 0) {
@@ -916,7 +650,7 @@ public class PersistenceManager implements MessagePersister {
     }
 
     @Transactional(readOnly = true)
-    public boolean checkIfExistsExecutionTaskById(final Long taskId) {
+    private boolean checkIfExistsExecutionTaskById(final Long taskId) {
         boolean result = false;
 
         if (taskId != null && taskId > 0) {
@@ -951,11 +685,8 @@ public class PersistenceManager implements MessagePersister {
     @Transactional(readOnly = true)
     public List<ExecutionJob> getAllJobs() {
         // retrieve jobs and filter them
-        final List<ExecutionJob> jobs = new ArrayList<>(((List<ExecutionJob>)
-                executionJobRepository.findAll(new Sort(Sort.Direction.ASC, JOB_IDENTIFIER_PROPERTY_NAME)))
-                                .stream()
-                                .collect(Collectors.toList()));
-        return jobs;
+        return new ArrayList<>(((List<ExecutionJob>)
+                executionJobRepository.findAll(new Sort(Sort.Direction.ASC, JOB_IDENTIFIER_PROPERTY_NAME))));
     }
 
     public List<ExecutionJob> getJobs(long workflowId) {
@@ -972,12 +703,14 @@ public class PersistenceManager implements MessagePersister {
 
     private boolean checkExecutionTask(ExecutionTask task, ExecutionJob job, boolean existingEntity) {
         // check first the job (that should already be persisted)
-        return !(!checkExecutionJob(job, true) || !checkIfExistsExecutionJobById(job.getId())) && checkExecutionTask(task, existingEntity);
+        return !(!checkExecutionJob(job, true) || !checkIfExistsExecutionJobById(job.getId())) &&
+                checkExecutionTask(task, existingEntity);
     }
 
     private boolean checkExecutionGroupTask(ExecutionTask task, ExecutionGroup taskGroup, boolean existingEntity) {
         // check first the task group (that should already be persisted)
-        return !(!checkExecutionTask(taskGroup, true) || !checkIfExistsExecutionTaskById(taskGroup.getId())) && checkExecutionTask(task, existingEntity);
+        return !(!checkExecutionTask(taskGroup, true) || !checkIfExistsExecutionTaskById(taskGroup.getId())) &&
+                checkExecutionTask(task, existingEntity);
     }
 
     private boolean checkExecutionTask(ExecutionTask task, boolean existingEntity) {
@@ -997,7 +730,8 @@ public class PersistenceManager implements MessagePersister {
     @Transactional
     public ExecutionTask saveExecutionTask(ExecutionTask task, ExecutionJob job) throws PersistenceException {
 
-        logger.info("saveExecutionTask() of type " + task.getClass().getCanonicalName() + " having resource id: " + task.getResourceId());
+        logger.debug(String.format("saveExecutionTask() of type %s having resource id: %s",
+                                   task.getClass().getCanonicalName(), task.getResourceId()));
 
         // check method parameters
         if (!checkExecutionTask(task, job, false)) {
@@ -1021,13 +755,13 @@ public class PersistenceManager implements MessagePersister {
             // save the new ExecutionTask entity
             final ExecutionTask savedExecutionTask =  executionTaskRepository.save(task);
 
-        // add the task to job tasks collection
-        List<ExecutionTask> jobTasks = job.getTasks();
-        if (jobTasks.stream().noneMatch(t -> t.getId().equals(task.getId()))) {
-            jobTasks.add(task);
-            job.setTasks(jobTasks);
-            executionJobRepository.save(job);
-        }
+            // add the task to job tasks collection
+            List<ExecutionTask> jobTasks = job.getTasks();
+            if (jobTasks.stream().noneMatch(t -> t.getId().equals(task.getId()))) {
+                jobTasks.add(task);
+                job.setTasks(jobTasks);
+                executionJobRepository.save(job);
+            }
 
             return savedExecutionTask;
         }
@@ -1171,63 +905,26 @@ public class PersistenceManager implements MessagePersister {
         return messageRepository.findByUser(user, pageRequest);
     }
 
-    private boolean checkContainer(Container container)
-    {
-        if(container == null)
-        {
-            return false;
-        }
-        if(container.getId() == null || container.getId().isEmpty())
-        {
-            return false;
-        }
-        if(container.getName() == null)
-        {
-            return false;
-        }
-        if(container.getTag() == null)
-        {
-            return false;
-        }
-
-        for(Application application: container.getApplications())
-        {
-            if(!checkApplication(application))
-            {
-                return false;
-            }
-        }
-
-        return true;
+    private boolean checkContainer(Container container) {
+        return container != null && container.getId() != null && !container.getId().isEmpty() &&
+                container.getName() != null && container.getTag() != null &&
+                container.getApplications() != null && container.getApplications().stream().allMatch(this::checkApplication);
     }
 
-    private boolean checkApplication(Application application)
-    {
-        if(application == null)
-        {
-            return false;
-        }
-        if(application.getName() == null || application.getName().isEmpty())
-        {
-            return false;
-        }
-
-        return true;
+    private boolean checkApplication(Application application) {
+        return application != null && application.getName() != null && !application.getName().isEmpty();
     }
 
     @Transactional
-    public Container saveContainer(Container container) throws PersistenceException
-    {
+    public Container saveContainer(Container container) throws PersistenceException {
         // check method parameters
-        if(!checkContainer(container))
-        {
+        if (!checkContainer(container)) {
             throw new PersistenceException("Invalid parameters were provided for adding new container !");
         }
 
         // check if there is already another container with the same identifier
         final Container containerWithSameId = containerRepository.findById(container.getId());
-        if (containerWithSameId != null)
-        {
+        if (containerWithSameId != null) {
             throw new PersistenceException("There is already another container with the identifier: " + container.getId());
         }
 
@@ -1236,18 +933,16 @@ public class PersistenceManager implements MessagePersister {
     }
 
     @Transactional
-    public Container updateContainer(Container container) throws PersistenceException
-    {
+    public Container updateContainer(Container container) throws PersistenceException {
         // check method parameters
-        if(!checkContainer(container))
-        {
-            throw new PersistenceException("Invalid parameters were provided for updating the container " + (container != null && container.getId() != null ? "(identifier " + container.getId() + ")" : "") + "!");
+        if (!checkContainer(container)) {
+            throw new PersistenceException("Invalid parameters were provided for updating the container "
+                                                   + (container != null && container.getId() != null ? "(identifier " + container.getId() + ")" : "") + "!");
         }
 
         // check if there is such container (to update) with the given identifier
         final Container existingContainer = containerRepository.findById(container.getId());
-        if (existingContainer == null)
-        {
+        if (existingContainer == null) {
             throw new PersistenceException("There is no container with the given identifier: " + container.getId());
         }
 
@@ -1256,35 +951,27 @@ public class PersistenceManager implements MessagePersister {
 
     /**
      * Retrieve existing containers
-     * @return
      */
     @Transactional(readOnly = true)
-    public List<Container> getContainers()
-    {
-        final List<Container> containers = new ArrayList<>();
+    public List<Container> getContainers() {
         // retrieve containers and filter them
-        containers.addAll(((List<Container>) containerRepository.findAll(new Sort(Sort.Direction.ASC, CONTAINER_IDENTIFIER_PROPERTY_NAME))).stream()
-          .collect(Collectors.toList()));
-        return containers;
+        return new ArrayList<>((List<Container>) containerRepository.findAll(new Sort(Sort.Direction.ASC,
+                                                                                      CONTAINER_IDENTIFIER_PROPERTY_NAME)));
     }
 
     /**
      * Retrieve container by its identifier
-     * @return
      */
     //@Transactional(readOnly = true)
-    public Container getContainerById(String id) throws PersistenceException
-    {
+    public Container getContainerById(String id) throws PersistenceException {
         // check method parameters
-        if(id == null || StringUtils.isEmpty(id))
-        {
+        if (id == null || StringUtils.isEmpty(id)) {
             throw new PersistenceException("Invalid parameter was provided for retrieving a container (empty identifier)");
         }
 
         // check if there is such container (to retrieve) with the given identifier
         final Container existingContainer = containerRepository.findById(id);
-        if (existingContainer == null)
-        {
+        if (existingContainer == null) {
             throw new PersistenceException("There is no container with the given identifier: " + id);
         }
 
@@ -1296,20 +983,16 @@ public class PersistenceManager implements MessagePersister {
      * @return
      */
     @Transactional(readOnly = true)
-    public boolean checkIfExistsContainerById(String id) throws PersistenceException
-    {
+    public boolean checkIfExistsContainerById(String id) throws PersistenceException {
         boolean result = false;
-
         // check method parameters
-        if(id == null || StringUtils.isEmpty(id))
-        {
+        if(id == null || StringUtils.isEmpty(id)) {
             throw new PersistenceException("Invalid parameter was provided for verifying a container existence (empty identifier)");
         }
 
         // check if there is such container (to retrieve) with the given identifier
         final Container existingContainer = containerRepository.findById(id);
-        if (existingContainer != null)
-        {
+        if (existingContainer != null) {
             result = true;
         }
 
@@ -1319,52 +1002,41 @@ public class PersistenceManager implements MessagePersister {
     /**
      * Delete container
      * @param id - container identifier
-     * @return
-     * @throws PersistenceException
      */
     @Transactional
-    public void deleteContainer(String id) throws PersistenceException
-    {
+    public void deleteContainer(String id) throws PersistenceException {
         // check method parameters
-        if(id == null || StringUtils.isEmpty(id))
-        {
+        if (id == null || StringUtils.isEmpty(id)) {
             throw new PersistenceException("Invalid parameter was provided for deleting a container (empty identifier)");
         }
 
         // check if there is such container (to delete) with the given identifier
         final Container existingContainer = containerRepository.findById(id);
-        if (existingContainer == null)
-        {
+        if (existingContainer == null) {
             throw new PersistenceException("There is no container with the given identifier: " + id);
         }
 
         containerRepository.delete(existingContainer);
     }
 
-    private boolean checkWorkflowNodeDescriptor(WorkflowNodeDescriptor nodeDescriptor, WorkflowDescriptor workflowDescriptor, boolean existingEntity)
+    private boolean checkWorkflowNodeDescriptor(WorkflowNodeDescriptor nodeDescriptor,
+                                                WorkflowDescriptor workflowDescriptor, boolean existingEntity)
     {
         // check first the workflow (that should already be persisted)
         return !(!checkWorkflowDescriptor(workflowDescriptor, true) ||
-          !checkIfExistsWorkflowDescriptorById(workflowDescriptor.getId())) && checkWorkflowNodeDescriptor(nodeDescriptor, existingEntity);
+                !checkIfExistsWorkflowDescriptorById(workflowDescriptor.getId())) &&
+                checkWorkflowNodeDescriptor(nodeDescriptor, existingEntity);
     }
 
     private boolean checkWorkflowNodeDescriptor(WorkflowNodeDescriptor nodeDescriptor, boolean existingEntity) {
         return nodeDescriptor != null && !(existingEntity && nodeDescriptor.getId() == null) &&
-          !(!existingEntity && nodeDescriptor.getId() != null) &&
-          !(existingEntity && (nodeDescriptor.getComponentId() == null || nodeDescriptor.getComponentId().isEmpty()));
+                !(!existingEntity && nodeDescriptor.getId() != null) &&
+                !(existingEntity && (nodeDescriptor.getComponentId() == null || nodeDescriptor.getComponentId().isEmpty()));
     }
 
-    private boolean checkWorkflowNodesDescriptors(List<WorkflowNodeDescriptor> nodesDescriptors , boolean existingEntity)
-    {
-        for (WorkflowNodeDescriptor nodeDescriptor : nodesDescriptors)
-        {
-            if (!checkWorkflowNodeDescriptor(nodeDescriptor, existingEntity))
-            {
-                return false;
-            }
-        }
-
-        return true;
+    private boolean checkWorkflowNodesDescriptors(List<WorkflowNodeDescriptor> nodesDescriptors , boolean existingEntity) {
+        return nodesDescriptors != null &&
+                nodesDescriptors.stream().allMatch(n -> checkWorkflowNodeDescriptor(n, existingEntity));
     }
 
      private boolean checkWorkflowDescriptor(WorkflowDescriptor workflow, boolean existingEntity) {
@@ -1377,7 +1049,7 @@ public class PersistenceManager implements MessagePersister {
      }
 
      public WorkflowDescriptor getWorkflowDescriptor(long identifier) {
-        return workflowDescriptorRepository.findById(identifier);
+         return workflowDescriptorRepository.findById(identifier);
      }
 
     @Transactional
@@ -1395,9 +1067,8 @@ public class PersistenceManager implements MessagePersister {
     }
 
     @Transactional(readOnly = true)
-    public boolean checkIfExistsWorkflowDescriptorById(final Long workflowId) {
+    private boolean checkIfExistsWorkflowDescriptorById(final Long workflowId) {
         boolean result = false;
-
         if (workflowId != null && workflowId > 0) {
             // try to retrieve WorkflowDescriptor after its identifier
             final WorkflowDescriptor workflowEnt = workflowDescriptorRepository.findById(workflowId);
@@ -1413,7 +1084,8 @@ public class PersistenceManager implements MessagePersister {
     public WorkflowDescriptor updateWorkflowDescriptor(WorkflowDescriptor workflow) throws PersistenceException {
         // check method parameters
         if(!checkWorkflowDescriptor(workflow, true)) {
-            throw new PersistenceException("Invalid parameters were provided for updating the workflow " + (workflow != null && workflow.getId() != null ? "(identifier " + workflow.getId() + ")" : "") + "!");
+            throw new PersistenceException("Invalid parameters were provided for updating the workflow "
+                                                   + (workflow != null && workflow.getId() != null ? "(identifier " + workflow.getId() + ")" : "") + "!");
         }
 
         // check if there is such workflow (to update) with the given identifier
@@ -1428,27 +1100,24 @@ public class PersistenceManager implements MessagePersister {
 
     @Transactional(readOnly = true)
     public List<WorkflowDescriptor> getAllWorkflows() {
-        final List<WorkflowDescriptor> workflows = new ArrayList<>();
         // retrieve workflows and filter them
-        workflows.addAll(((List<WorkflowDescriptor>) workflowDescriptorRepository.findAll(new Sort(Sort.Direction.ASC, WORKFLOW_IDENTIFIER_PROPERTY_NAME))).stream()
-          .filter(workflow -> workflow.isActive())
-          .collect(Collectors.toList()));
-        return workflows;
+        return ((List<WorkflowDescriptor>) workflowDescriptorRepository.findAll(new Sort(Sort.Direction.ASC,
+                                                                                         WORKFLOW_IDENTIFIER_PROPERTY_NAME)))
+                .stream()
+                .filter(WorkflowDescriptor::isActive)
+                .collect(Collectors.toList());
     }
 
     @Transactional
-    public WorkflowDescriptor deleteWorkflowDescriptor(final Long workflowId) throws PersistenceException
-    {
+    public WorkflowDescriptor deleteWorkflowDescriptor(final Long workflowId) throws PersistenceException {
         // check method parameters
-        if (workflowId == null)
-        {
-            throw new PersistenceException("Invalid parameters were provided for deleting workflow (identifier \""+ String.valueOf(workflowId) +"\") !");
+        if (workflowId == null) {
+            throw new PersistenceException("Invalid identifier provided for deleting workflow");
         }
 
         // retrieve WorkflowDescriptor after its identifier
         final WorkflowDescriptor workflowEnt = workflowDescriptorRepository.findById(workflowId);
-        if (workflowEnt == null)
-        {
+        if (workflowEnt == null) {
             throw new PersistenceException("There is no workflow with the specified identifier: " + workflowId);
         }
 
@@ -1460,10 +1129,7 @@ public class PersistenceManager implements MessagePersister {
     }
 
     public WorkflowNodeDescriptor getWorkflowNodeById(Long id) {
-        if (id == null) {
-            return null;
-        }
-        return workflowNodeDescriptorRepository.findById(id);
+        return id != null ? workflowNodeDescriptorRepository.findById(id) : null;
     }
 
     public List<WorkflowNodeDescriptor> getWorkflowNodesByComponentId(long workflowId, String componentId) {
@@ -1471,11 +1137,10 @@ public class PersistenceManager implements MessagePersister {
     }
 
     @Transactional
-    public WorkflowNodeDescriptor saveWorkflowNodeDescriptor(WorkflowNodeDescriptor node, WorkflowDescriptor workflow) throws PersistenceException
-    {
+    public WorkflowNodeDescriptor saveWorkflowNodeDescriptor(WorkflowNodeDescriptor node,
+                                                             WorkflowDescriptor workflow) throws PersistenceException {
         // check method parameters
-        if(!checkWorkflowNodeDescriptor(node, workflow, false))
-        {
+        if(!checkWorkflowNodeDescriptor(node, workflow, false)) {
             throw new PersistenceException("Invalid parameters were provided for adding new workflow node !");
         }
 
@@ -1486,25 +1151,23 @@ public class PersistenceManager implements MessagePersister {
 
         // add the node to workflow nodes collection
         workflow.addNode(savedWorkflowNodeDescriptor);
-        workflow = workflowDescriptorRepository.save(workflow);
+        workflowDescriptorRepository.save(workflow);
 
         return savedWorkflowNodeDescriptor;
 
     }
 
     @Transactional
-    public WorkflowNodeDescriptor updateWorkflowNodeDescriptor(WorkflowNodeDescriptor node) throws PersistenceException
-    {
+    public WorkflowNodeDescriptor updateWorkflowNodeDescriptor(WorkflowNodeDescriptor node) throws PersistenceException {
         // check method parameters
-        if(!checkWorkflowNodeDescriptor(node, true))
-        {
-            throw new PersistenceException("Invalid parameters were provided for updating the workflow node " + (node != null && node.getId() != 0 ? "(identifier " + node.getId() + ")" : "") + "!");
+        if(!checkWorkflowNodeDescriptor(node, true)) {
+            throw new PersistenceException("Invalid parameters were provided for updating the workflow node "
+                                                   + (node != null && node.getId() != 0 ? "(identifier " + node.getId() + ")" : "") + "!");
         }
 
         // check if there is such node (to update) with the given identifier
         final WorkflowNodeDescriptor existingNode = workflowNodeDescriptorRepository.findById(node.getId());
-        if (existingNode == null)
-        {
+        if (existingNode == null) {
             throw new PersistenceException("There is no workflow node with the given identifier: " + node.getId());
         }
 
@@ -1512,32 +1175,14 @@ public class PersistenceManager implements MessagePersister {
         return workflowNodeDescriptorRepository.save(node);
     }
 
-    public DataSourceComponent getDataSourceInstance(String id) throws PersistenceException {
+    public DataSourceComponent getDataSourceInstance(String id) {
         return dataSourceRepository.findOne(id);
     }
 
     private boolean checkQuery(Query query, boolean existingEntity) {
-        if(query == null){
-            return false;
-        }
-
-        if (!existingEntity && query.getId() != null) {
-            return false;
-        }
-
-        if (existingEntity && query.getId() == null) {
-            return false;
-        }
-
-        if(query.getSensor() == null) {
-            return false;
-        }
-
-        if(query.getDataSource() == null) {
-            return false;
-        }
-
-        return true;
+        return query != null &&
+                ((!existingEntity && query.getId() != null) || (existingEntity && query.getId() == null)) &&
+                query.getSensor() != null && query.getDataSource() != null;
     }
 
     @Transactional

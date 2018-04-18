@@ -86,9 +86,6 @@ public class DefaultJobTaskSelector implements TaskSelector<ExecutionJob> {
                     break;
                 // If the job is running, return the first task that is not started
                 case RUNNING:
-                    /*next = tasks.stream()
-                            .filter(t -> t.getExecutionStatus() == ExecutionStatus.UNDETERMINED)
-                            .findFirst().orElse(null);*/
                     List<ExecutionTask> candidates = getCandidatesForExecution(job, currentTask);
                     if (candidates != null) {
                         next.addAll(candidates);

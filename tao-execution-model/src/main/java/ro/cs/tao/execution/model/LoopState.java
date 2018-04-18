@@ -20,6 +20,13 @@ public class LoopState {
     private int limit;
     private int current;
 
+    public LoopState() { }
+
+    public LoopState(int limit, int current) {
+        this.limit = limit;
+        this.current = current;
+    }
+
     public int getLimit() { return limit; }
     public void setLimit(int limit) { this.limit = limit; }
 

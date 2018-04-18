@@ -16,8 +16,16 @@
 package ro.cs.tao.execution.model;
 
 import ro.cs.tao.component.Variable;
+import ro.cs.tao.serialization.MediaType;
+import ro.cs.tao.serialization.SerializationException;
+import ro.cs.tao.serialization.Serializer;
+import ro.cs.tao.serialization.SerializerFactory;
 
+import javax.xml.transform.stream.StreamSource;
+import java.beans.Transient;
+import java.io.StringReader;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -32,11 +40,12 @@ public abstract class ExecutionTask implements StatusChangeListener {
     private String executionNodeHostName;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
-    protected List<Variable> inputParameterValues;
-    protected List<Variable> outputParameterValues;
     private String internalState;
     private ExecutionJob job;
     private ExecutionStatus executionStatus = ExecutionStatus.UNDETERMINED;
+    List<Variable> inputParameterValues;
+    List<Variable> outputParameterValues;
+    InternalStateHandler stateHandler;
 
     public ExecutionTask() { }
 
@@ -67,28 +76,37 @@ public abstract class ExecutionTask implements StatusChangeListener {
         return executionStatus;
     }
 
-    /**
-     * Changes the status of this task and signals this to the parent group, if available.
-     *
-    public void changeStatus(ExecutionStatus status) {
-        ExecutionStatus previous = this.executionStatus;
-        this.executionStatus = status;
-        if (groupTask != null && previous != null && previous != status) {
-            groupTask.statusChanged(this);
-        } else {
-            this.job.statusChanged(this);
+    public void setStateHandler(InternalStateHandler handler) {
+        this.stateHandler = handler;
+        if (this.internalState == null) {
+            try {
+                this.internalState = this.stateHandler.serializeState();
+            } catch (SerializationException e) {
+                e.printStackTrace();
+            }
         }
-    }*/
+    }
+
+    public InternalStateHandler getStateHandler() { return this.stateHandler; }
 
     public String getInternalState() { return internalState; }
-    public void setInternalState(String internalState) { this.internalState = internalState; }
+    public void setInternalState(String internalState) {
+        this.internalState = internalState;
+        if (this.internalState != null && this.stateHandler != null) {
+            try {
+                this.stateHandler.setCurrentState(this.internalState);
+            } catch (SerializationException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
     /**
      * Generic method to handle the advancement to the next internal state.
-     * It returns <code>null</code> if there is no internal state or the current state was the last one.
-     * @param <S>   The type of the state data
+     * It should return <code>null</code> if either there is no internal state or the current state was the last one.
      */
-    public <S> S nextInternalState() { return null; }
+    public Object nextInternalState() { return this.stateHandler != null ?
+        this.stateHandler.nextState() : null; }
 
     public void setResourceId(String resourceId) {
         this.resourceId = resourceId;
@@ -140,4 +158,29 @@ public abstract class ExecutionTask implements StatusChangeListener {
     }
 
     public abstract String buildExecutionCommand();
+
+    @Transient
+    protected List<String> getListParameterValues(String valuesAsString) throws SerializationException {
+        Serializer<String, String> serializer = SerializerFactory.create(String.class, MediaType.JSON);
+        return serializer.deserializeList(String.class, new StreamSource(new StringReader(valuesAsString)));
+    }
+
+    protected String convertListToSingleValue(List<String> values) throws SerializationException {
+        Serializer<String, String> serializer = SerializerFactory.create(String.class, MediaType.JSON);
+        return serializer.serialize(values, "values");
+    }
+
+    @Transient
+    protected String getListValue(String valuesAsString, int index) throws SerializationException {
+        List<String> values = getListParameterValues(valuesAsString);
+        return values.get(index);
+    }
+
+    protected String appendValueToList(String valuesAsString, String newValue) throws SerializationException {
+        List<String> values = (valuesAsString == null || valuesAsString.isEmpty()) ?
+                new ArrayList<>() :
+                getListParameterValues(valuesAsString);
+        values.add(newValue);
+        return convertListToSingleValue(values);
+    }
 }
