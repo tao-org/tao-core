@@ -18,7 +18,6 @@ package ro.cs.tao.orchestration;
 
 import ro.cs.tao.component.Variable;
 import ro.cs.tao.execution.model.*;
-import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.serialization.BaseSerializer;
 import ro.cs.tao.serialization.MapAdapter;
 import ro.cs.tao.serialization.MediaType;
@@ -30,16 +29,38 @@ import javax.xml.transform.stream.StreamSource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class DefaultGroupTaskSelector implements TaskSelector<ExecutionGroup> {
 
-    private final PersistenceManager persistenceManager;
+    private Function<Long, WorkflowNodeDescriptor> workflowProvider;
+    private BiFunction<Long, Long, ExecutionTask> taskByNodeProvider;
+    private BiFunction<Long, String, List<WorkflowNodeDescriptor>> nodesByComponentProvider;
     private final Logger logger = Logger.getLogger(DefaultJobTaskSelector.class.getName());
 
-    DefaultGroupTaskSelector(PersistenceManager persistenceManager) {
-        this.persistenceManager = persistenceManager;
+    public DefaultGroupTaskSelector() { }
+
+    @Override
+    public void setWorkflowProvider(Function<Long, WorkflowNodeDescriptor> workflowProvider) {
+        this.workflowProvider = workflowProvider;
+    }
+
+    @Override
+    public void setTaskByNodeProvider(BiFunction<Long, Long, ExecutionTask> taskByNodeProvider) {
+        this.taskByNodeProvider = taskByNodeProvider;
+    }
+
+    @Override
+    public void setNodesByComponentProvider(BiFunction<Long, String, List<WorkflowNodeDescriptor>> nodesByComponentProvider) {
+        this.nodesByComponentProvider = nodesByComponentProvider;
+    }
+
+    @Override
+    public Class<ExecutionGroup> getTaskContainerClass() {
+        return ExecutionGroup.class;
     }
 
     @Override
@@ -96,7 +117,7 @@ public class DefaultGroupTaskSelector implements TaskSelector<ExecutionGroup> {
         if (task == null || task.getExecutionStatus() != ExecutionStatus.DONE) {
             return null;
         }
-        WorkflowNodeDescriptor workflowNode = persistenceManager.getWorkflowNodeById(task.getWorkflowNodeId());
+        WorkflowNodeDescriptor workflowNode = this.workflowProvider.apply(task.getWorkflowNodeId());
         if (workflowNode == null) {
             logger.severe(String.format("No workflow node with id %s was found in the database", task.getWorkflowNodeId()));
             return null;
@@ -109,14 +130,14 @@ public class DefaultGroupTaskSelector implements TaskSelector<ExecutionGroup> {
         return childNodes.stream().filter(n ->
                 n.getIncomingLinks().stream().allMatch(link -> {
                     List<WorkflowNodeDescriptor> parents =
-                            persistenceManager.getWorkflowNodesByComponentId(workflow.getId(),link.getInput().getParentId());
+                            this.nodesByComponentProvider.apply(workflow.getId(),link.getInput().getParentId());
                     return parents.stream().allMatch(p -> {
-                        ExecutionTask taskByNode = persistenceManager.getTaskByJobAndNode(group.getJob().getId(), p.getId());
+                        ExecutionTask taskByNode = this.taskByNodeProvider.apply(group.getJob().getId(), p.getId());
                         return taskByNode != null && taskByNode.getExecutionStatus() == ExecutionStatus.DONE;
                     });
                 }))
                 .map(n -> {
-                    ExecutionTask next = persistenceManager.getTaskByJobAndNode(group.getJob().getId(), n.getId());
+                    ExecutionTask next = this.taskByNodeProvider.apply(group.getJob().getId(), n.getId());
                     List<Variable> outputs = task.getOutputParameterValues();
                     n.getIncomingLinks().forEach(link -> {
                         for (Variable variable : outputs) {

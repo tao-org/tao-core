@@ -28,15 +28,20 @@ import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.security.SystemPrincipal;
 import ro.cs.tao.serialization.*;
+import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.workflow.WorkflowDescriptor;
+import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 
 import javax.xml.transform.stream.StreamSource;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -56,8 +61,8 @@ public class Orchestrator extends Notifiable {
 
     private final Logger logger = Logger.getLogger(Orchestrator.class.getSimpleName());
     private PersistenceManager persistenceManager;
-    private TaskSelector<ExecutionGroup> groupTaskSelector;
-    private TaskSelector<ExecutionJob> jobTaskSelector;
+    private TaskSelector groupTaskSelector;
+    private TaskSelector jobTaskSelector;
     private JobFactory jobFactory;
     private final LoopStateHandler groupInternalStateHandler;
 
@@ -71,8 +76,23 @@ public class Orchestrator extends Notifiable {
         this.persistenceManager = persistenceManager;
         JobCommand.setPersistenceManager(persistenceManager);
         TaskCommand.setPersistenceManager(persistenceManager);
-        this.groupTaskSelector = new DefaultGroupTaskSelector(this.persistenceManager);
-        this.jobTaskSelector = new DefaultJobTaskSelector(this.persistenceManager);
+        Set<TaskSelector> selectors = ServiceRegistryManager.getInstance().getServiceRegistry(TaskSelector.class).getServices();
+        final Function<Long, WorkflowNodeDescriptor> workflowProvider = this.persistenceManager::getWorkflowNodeById;
+        final BiFunction<Long, Long, ExecutionTask> taskByGroupNodeProvider = this.persistenceManager::getTaskByGroupAndNode;
+        final BiFunction<Long, Long, ExecutionTask> taskByJobNodeProvider = this.persistenceManager::getTaskByJobAndNode;
+        final BiFunction<Long, String, List<WorkflowNodeDescriptor>> nodesByComponentProvider = this.persistenceManager::getWorkflowNodesByComponentId;
+        this.groupTaskSelector = selectors.stream()
+                .filter(s -> ExecutionGroup.class.equals(s.getTaskContainerClass())).findFirst()
+                .orElse(new DefaultGroupTaskSelector());
+        this.groupTaskSelector.setWorkflowProvider(workflowProvider);
+        this.groupTaskSelector.setTaskByNodeProvider(taskByGroupNodeProvider);
+        this.groupTaskSelector.setNodesByComponentProvider(nodesByComponentProvider);
+        this.jobTaskSelector = selectors.stream()
+                .filter(s -> ExecutionJob.class.equals(s.getTaskContainerClass())).findFirst()
+                .orElse(new DefaultJobTaskSelector());
+        this.jobTaskSelector.setWorkflowProvider(workflowProvider);
+        this.jobTaskSelector.setTaskByNodeProvider(taskByJobNodeProvider);
+        this.jobTaskSelector.setNodesByComponentProvider(nodesByComponentProvider);
         this.jobFactory = new JobFactory(this.persistenceManager);
     }
 
@@ -86,16 +106,16 @@ public class Orchestrator extends Notifiable {
     public long startWorkflow(long workflowId, Map<String, String> inputs) throws ExecutionException {
         try {
             List<ExecutionJob> jobs = persistenceManager.getJobs(workflowId);
-            //ExecutionJob executionJob = null;
-            /*if (jobs == null || jobs.isEmpty()
-                    || jobs.stream().allMatch(job -> job.getExecutionStatus() == ExecutionStatus.DONE ||
-                                                        job.getExecutionStatus() == ExecutionStatus.FAILED ||
-                                                        job.getExecutionStatus() == ExecutionStatus.CANCELLED)) {*/
-            WorkflowDescriptor descriptor = persistenceManager.getWorkflowDescriptor(workflowId);
-            final ExecutionJob executionJob = this.jobFactory.createJob(descriptor, inputs);
-            //}
-            backgroundWorker.submit(() -> JobCommand.START.applyTo(executionJob));
-            return executionJob.getId();
+            if (jobs == null || jobs.size() == 0 || jobs.stream().noneMatch(j -> checkExistingJob(j, inputs))) {
+                WorkflowDescriptor descriptor = persistenceManager.getWorkflowDescriptor(workflowId);
+                final ExecutionJob executionJob = this.jobFactory.createJob(descriptor, inputs);
+                backgroundWorker.submit(() -> JobCommand.START.applyTo(executionJob));
+                return executionJob.getId();
+            } else {
+                throw new ExecutionException(
+                        String.format("A job for the workflow [%s] with the same input values is already running",
+                                      workflowId));
+            }
         } catch (PersistenceException e) {
             logger.severe(e.getMessage());
             throw new ExecutionException(e.getMessage());
@@ -215,6 +235,35 @@ public class Orchestrator extends Notifiable {
         } catch (PersistenceException e) {
             logger.severe(e.getMessage());
         }
+    }
+
+    /**
+     * An execution job is considered duplicate if:
+     * 1) it is created for the same workflow and
+     * 2) it has the same inputs and
+     * 3) the previously created job is in one of the following states: UNDETERMINED, QUEUED_ACTIVE, RUNNING
+     *
+     * @param job       An existing job to check
+     * @param inputs    The inputs to be checked against
+     * @return          <code>true</code> if the given job doesn't match the inputs, <code>false</code> otherwise
+     */
+    private boolean checkExistingJob(ExecutionJob job, Map<String, String> inputs) {
+        boolean existing = false;
+        switch (job.getExecutionStatus()) {
+            case UNDETERMINED:
+            case QUEUED_ACTIVE:
+            case RUNNING:
+                List<ExecutionTask> tasks = job.getTasks();
+                if (tasks != null) {
+                    ExecutionTask first = tasks.get(0);
+                    existing = first.getInputParameterValues().stream()
+                            .allMatch(i -> inputs.containsKey(i.getKey()) && inputs.get(i.getKey()).equals(i.getValue()));
+                }
+                break;
+            default:
+                break;
+        }
+        return existing;
     }
 
     private void statusChanged(ExecutionTask task) {

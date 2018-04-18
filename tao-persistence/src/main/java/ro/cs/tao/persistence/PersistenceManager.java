@@ -1376,7 +1376,7 @@ public class PersistenceManager implements MessagePersister {
 
      }
 
-     public WorkflowDescriptor getWorkflowDescriptor(long identifier) throws PersistenceException {
+     public WorkflowDescriptor getWorkflowDescriptor(long identifier) {
         return workflowDescriptorRepository.findById(identifier);
      }
 
