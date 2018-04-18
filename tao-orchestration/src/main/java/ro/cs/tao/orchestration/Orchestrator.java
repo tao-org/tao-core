@@ -27,12 +27,12 @@ import ro.cs.tao.orchestration.commands.TaskCommand;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.security.SystemPrincipal;
-import ro.cs.tao.serialization.*;
+import ro.cs.tao.serialization.MapAdapter;
+import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 
-import javax.xml.transform.stream.StreamSource;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -64,10 +64,8 @@ public class Orchestrator extends Notifiable {
     private TaskSelector groupTaskSelector;
     private TaskSelector jobTaskSelector;
     private JobFactory jobFactory;
-    private final LoopStateHandler groupInternalStateHandler;
 
     private Orchestrator() {
-        this.groupInternalStateHandler = new LoopStateHandler();
         this.backgroundWorker = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         subscribe(Topics.TASK_STATUS_CHANGED);
     }
@@ -185,28 +183,22 @@ public class Orchestrator extends Notifiable {
                     });
                     persistenceManager.updateExecutionTask(task);
                 }
-                List<ExecutionTask> nextTasks = getNext(task);
+                List<ExecutionTask> nextTasks = findNextTasks(task);
                 if (nextTasks != null && nextTasks.size() > 0) {
                     logger.fine(String.format("Has %s next tasks", nextTasks.size()));
                     for (ExecutionTask nextTask : nextTasks) {
                         if (nextTask != null) {
                             if (task instanceof DataSourceExecutionTask && nextTask instanceof ExecutionGroup) {
                                 ExecutionGroup groupTask = (ExecutionGroup) nextTask;
+                                int cardinality = ((DataSourceExecutionTask) task).getComponent().getTargetCardinality();
+                                groupTask.setStateHandler(
+                                        new LoopStateHandler(
+                                                new LoopState(1, cardinality)));
                                 // A DataSourceExecutionTask outputs the list of results as a JSON
                                 List<Variable> values = task.getOutputParameterValues();
                                 if (values != null && values.size() > 0) {
                                     Variable theOnlyValue = values.get(0);
-                                    List<Variable> results = deserializeResults(theOnlyValue.getValue());
-                                    try {
-                                        BaseSerializer<LoopState> serializer = SerializerFactory.create(LoopState.class, MediaType.JSON);
-                                        LoopState loopState = new LoopState();
-                                        loopState.setCurrent(1);
-                                        loopState.setLimit(results.size());
-                                        groupTask.setInternalState(serializer.serialize(loopState));
-                                        groupTask.setInputParameterValue(theOnlyValue.getKey(), theOnlyValue.getValue());
-                                    } catch (SerializationException e) {
-                                        e.printStackTrace();
-                                    }
+                                    groupTask.setInputParameterValue(theOnlyValue.getKey(), theOnlyValue.getValue());
                                 }
                             }
                             logger.fine(String.format("Task %s about to start.", nextTask.getId()));
@@ -290,15 +282,15 @@ public class Orchestrator extends Notifiable {
                 // If the task is the last one executing of this group
                 if (tasks.stream().allMatch(t -> t.getExecutionStatus() == ExecutionStatus.DONE)) {
                 //if (tasks.get(tasks.size() - 1).getId().equals(task.getId())) {
-                    Integer nextState = this.groupInternalStateHandler.apply(groupTask.getInternalState());
+                    Integer nextState = (Integer) groupTask.nextInternalState();
                     if (nextState != null) {
                         bulkSetStatus(groupTask, null, ExecutionStatus.UNDETERMINED);
                         groupTask.setExecutionStatus(ExecutionStatus.UNDETERMINED);
                         try {
-                            BaseSerializer<LoopState> serializer = SerializerFactory.create(LoopState.class, MediaType.JSON);
-                            LoopState current = serializer.deserialize(new StreamSource(groupTask.getInternalState()));
-                            current.setCurrent(nextState);
-                            groupTask.setInternalState(serializer.serialize(current));
+                            InternalStateHandler handler = groupTask.getStateHandler();
+                            if (handler != null) {
+                                groupTask.setInternalState(handler.serializeState());
+                            }
                         } catch (SerializationException e) {
                             e.printStackTrace();
                         }
@@ -405,9 +397,9 @@ public class Orchestrator extends Notifiable {
         }
     }
 
-    private List<ExecutionTask> getNext(ExecutionTask task) {
+    private List<ExecutionTask> findNextTasks(ExecutionTask task) {
         ExecutionGroup groupTask = (ExecutionGroup) task.getGroupTask();
-        return groupTask != null ? this.groupTaskSelector.chooseNext(groupTask, task) :
+        return (groupTask != null) ? this.groupTaskSelector.chooseNext(groupTask, task) :
                 this.jobTaskSelector.chooseNext(task.getJob(), task);
     }
 

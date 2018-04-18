@@ -16,20 +16,11 @@
 
 package ro.cs.tao.execution.model;
 
-public class LoopState {
-    private int limit;
-    private int current;
+import ro.cs.tao.serialization.SerializationException;
 
-    public LoopState() { }
-
-    public LoopState(int limit, int current) {
-        this.limit = limit;
-        this.current = current;
-    }
-
-    public int getLimit() { return limit; }
-    public void setLimit(int limit) { this.limit = limit; }
-
-    public int getCurrent() { return current; }
-    public void setCurrent(int current) { this.current = current; }
+public interface InternalStateHandler<S> {
+    void setCurrentState(String serializedState) throws SerializationException;
+    S currentState();
+    S nextState();
+    String serializeState() throws SerializationException;
 }

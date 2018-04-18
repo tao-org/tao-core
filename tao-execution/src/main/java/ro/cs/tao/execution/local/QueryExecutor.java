@@ -110,6 +110,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> {
                         ConfigurationManager.getInstance().getValue(String.format("local.%s.path", sensorName)));
                 if (products != null) {
                     backgroundWorker.submit(() -> persistResults(results));
+                    task.getComponent().setTargetCardinality(results.size());
                     task.setOutputParameterValue(dataSourceComponent.getTargets().get(0).getName(),
                                                  serializeResults(results));
                 }

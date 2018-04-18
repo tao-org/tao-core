@@ -28,7 +28,6 @@ import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.messaging.ProgressNotifier;
 import ro.cs.tao.serialization.GenericAdapter;
 import ro.cs.tao.utils.Crypto;
-import ro.cs.tao.utils.FileUtils;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
@@ -88,7 +87,7 @@ public class DataSourceComponent extends TaoComponent {
         this.sensorName = sensorName;
         this.dataSourceName = dataSourceName;
         this.id = sensorName + "-" + dataSourceName;
-        this.targetCardinality = -1;
+        this.targetCardinality = 0;
         this.logger = Logger.getLogger(DataSourceComponent.class.getSimpleName());
         TargetDescriptor targetDescriptor = new TargetDescriptor();
         targetDescriptor.setParentId(this.id);
@@ -177,6 +176,21 @@ public class DataSourceComponent extends TaoComponent {
 
     @Override
     public void removeSource(SourceDescriptor source) {
+        throw new RuntimeException("Not allowed on " + getClass().getName());
+    }
+
+    @Override
+    public void setTargetCardinality(int targetCardinality) {
+        this.targetCardinality = targetCardinality;
+    }
+
+    /*@Override
+    public void addTarget(TargetDescriptor target) {
+        throw new RuntimeException("Not allowed on " + getClass().getName());
+    }*/
+
+    @Override
+    public void removeTarget(TargetDescriptor target) {
         throw new RuntimeException("Not allowed on " + getClass().getName());
     }
 

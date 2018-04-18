@@ -17,13 +17,8 @@ package ro.cs.tao.execution.model;
 
 import ro.cs.tao.component.*;
 import ro.cs.tao.component.validation.ValidationException;
-import ro.cs.tao.serialization.MediaType;
 import ro.cs.tao.serialization.SerializationException;
-import ro.cs.tao.serialization.Serializer;
-import ro.cs.tao.serialization.SerializerFactory;
 
-import javax.xml.transform.stream.StreamSource;
-import java.io.StringReader;
 import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -31,6 +26,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
@@ -81,15 +77,10 @@ public class ProcessingExecutionTask extends ExecutionTask {
             if (this.component.getSourceCardinality() == 1) {
                 variable.setValue(value);
             } else {
-                String existing = variable.getValue();
                 try {
-                    Serializer<String, String> serializer = SerializerFactory.create(String.class, MediaType.JSON);
-                    List<String> strings = serializer.deserializeList(String.class, new StreamSource(new StringReader(existing)));
-                    strings.add(value);
-                    String newValue = serializer.serialize(strings, "values");
-                    variable.setValue(newValue);
+                    variable.setValue(appendValueToList(variable.getValue(), value));
                 } catch (SerializationException e) {
-                    e.printStackTrace();
+                    Logger.getLogger(ProcessingExecutionTask.class.getName()).severe(e.getMessage());
                 }
             }
         } else {
@@ -99,12 +90,9 @@ public class ProcessingExecutionTask extends ExecutionTask {
             } else {
                 String newValue = null;
                 try {
-                    Serializer<String, String> serializer = SerializerFactory.create(String.class, MediaType.JSON);
-                    List<String> strings = new ArrayList<>();
-                    strings.add(value);
-                    newValue = serializer.serialize(strings, "values");
+                    newValue = appendValueToList(null, value);
                 } catch (SerializationException e) {
-                    e.printStackTrace();
+                    Logger.getLogger(ProcessingExecutionTask.class.getName()).severe(e.getMessage());
                 }
                 var = new Variable(parameterId, newValue);
             }
@@ -131,9 +119,29 @@ public class ProcessingExecutionTask extends ExecutionTask {
         }
         Variable variable = this.outputParameterValues.stream().filter(v -> v.getKey().equals(parameterId)).findFirst().orElse(null);
         if (variable != null) {
-            variable.setValue(value);
+            if (this.component.getTargetCardinality() == 1) {
+                variable.setValue(value);
+            } else {
+                try {
+                    variable.setValue(appendValueToList(variable.getValue(), value));
+                } catch (SerializationException e) {
+                    Logger.getLogger(ProcessingExecutionTask.class.getName()).severe(e.getMessage());
+                }
+            }
         } else {
-            this.outputParameterValues.add(new Variable(parameterId, value));
+            Variable var;
+            if (this.component.getTargetCardinality() == 1) {
+                var = new Variable(parameterId, value);
+            } else {
+                String newValue = null;
+                try {
+                    newValue = appendValueToList(null, value);
+                } catch (SerializationException e) {
+                    Logger.getLogger(ProcessingExecutionTask.class.getName()).severe(e.getMessage());
+                }
+                var = new Variable(parameterId, newValue);
+            }
+            this.outputParameterValues.add(var);
         }
     }
 

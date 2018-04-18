@@ -211,6 +211,9 @@ public class ProcessingComponent extends TaoComponent {
                 newDescriptor.parameters.add(p.clone());
             }
         }
+        newDescriptor.multiThread = this.multiThread;
+        newDescriptor.active = this.active;
+        newDescriptor.visibility = this.visibility;
         return newDescriptor;
     }
 

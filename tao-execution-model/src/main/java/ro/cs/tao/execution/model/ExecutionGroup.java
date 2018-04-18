@@ -16,6 +16,7 @@
 package ro.cs.tao.execution.model;
 
 import ro.cs.tao.component.Variable;
+import ro.cs.tao.serialization.SerializationException;
 
 import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
@@ -41,32 +42,37 @@ public class ExecutionGroup extends ExecutionTask {
             this.inputParameterValues = new ArrayList<>();
         }
         this.inputParameterValues.add(new Variable(parameterId, value));
-        /*if (this.tasks != null && this.tasks.size() > 0) {
-            this.tasks.get(0).setInputParameterValue(parameterId, value);
-        }*/
-    }
-
-    @Override
-    public void setInputParameterValues(List<Variable> inputParameterValues) {
-        //super.setInputParameterValues(inputParameterValues);
         if (this.tasks != null && this.tasks.size() > 0) {
-            this.tasks.get(0).setInputParameterValues(inputParameterValues);
+            this.tasks.get(0).setInputParameterValues(mapInput(this.inputParameterValues));
         }
     }
 
     @Override
+    public void setInputParameterValues(List<Variable> inputParameterValues) {
+        super.setInputParameterValues(inputParameterValues);
+    }
+
+    @Override
     public void setOutputParameterValue(String parameterId, String value) {
-        if (this.tasks != null && this.tasks.size() > 0) {
-            this.tasks.get(this.tasks.size() - 1).setOutputParameterValue(parameterId, value);
+        if (this.outputParameterValues == null) {
+            this.outputParameterValues = new ArrayList<>();
+        }
+        Variable variable = this.outputParameterValues.stream()
+                                .filter(o -> o.getKey().equals(parameterId)).findFirst().orElse(null);
+        try {
+            if (variable != null) {
+                variable.setValue(appendValueToList(variable.getValue(), value));
+            } else {
+                this.outputParameterValues.add(new Variable(parameterId, appendValueToList(null, value)));
+            }
+        } catch (SerializationException e) {
+            e.printStackTrace();
         }
     }
 
     @Override
     public void setOutputParameterValues(List<Variable> parameterValues) {
         super.setOutputParameterValues(parameterValues);
-        if (this.tasks != null && this.tasks.size() > 0) {
-            this.tasks.get(this.tasks.size() - 1).setOutputParameterValues(parameterValues);
-        }
     }
 
     @Override
@@ -104,6 +110,41 @@ public class ExecutionGroup extends ExecutionTask {
                     .findFirst().orElse(null);
         }
         return task;
+    }
+
+    /**
+     * Returns a list of mapped variables for the first task in group.
+     * If the <code>inputParameterValues</code> collection contains multiple variables, the mapping is done as follows:
+     * - if the variable value is a single value, it is transferred as-is
+     * - if no state handler is attached to this group, the variable value is transferred as-is
+     * - if the variable value is a serialized list, the item of the list corresponding to the internal state index is transferred
+     */
+    public List<Variable> mapInput(List<Variable> inputs) {
+        setInputParameterValues(inputs);
+        if (this.inputParameterValues == null) {
+            this.inputParameterValues = new ArrayList<>();
+        }
+        List<Variable> mappedInput = new ArrayList<>();
+        Integer index = null;
+        if (this.stateHandler != null) {
+            index = ((LoopState) this.stateHandler.currentState()).getCurrent();
+        }
+        for (Variable inputParameterValue : this.inputParameterValues) {
+            Variable newVar = new Variable();
+            newVar.setKey(inputParameterValue.getKey());
+            if (index != null) {
+                try {
+                    newVar.setValue(getListValue(inputParameterValue.getKey(), index));
+                } catch (SerializationException e) {
+                    // if we got here, maybe the value is a single value
+                    newVar.setValue(inputParameterValue.getValue());
+                }
+            } else {
+                newVar.setValue(inputParameterValue.getValue());
+            }
+            mappedInput.add(newVar);
+        }
+        return mappedInput;
     }
 
     /**

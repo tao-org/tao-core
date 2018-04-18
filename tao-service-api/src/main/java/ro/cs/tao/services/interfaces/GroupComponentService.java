@@ -14,22 +14,9 @@
  * with this program; if not, see http://www.gnu.org/licenses/
  */
 
-package ro.cs.tao.execution.model;
+package ro.cs.tao.services.interfaces;
 
-public class LoopState {
-    private int limit;
-    private int current;
+import ro.cs.tao.component.GroupComponent;
 
-    public LoopState() { }
-
-    public LoopState(int limit, int current) {
-        this.limit = limit;
-        this.current = current;
-    }
-
-    public int getLimit() { return limit; }
-    public void setLimit(int limit) { this.limit = limit; }
-
-    public int getCurrent() { return current; }
-    public void setCurrent(int current) { this.current = current; }
+public interface GroupComponentService extends CRUDService<GroupComponent> {
 }

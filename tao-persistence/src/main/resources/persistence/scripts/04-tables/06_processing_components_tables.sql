@@ -224,4 +224,34 @@ ALTER TABLE tao.component_variables ADD CONSTRAINT PK_component_variables
 ALTER TABLE tao.component_variables ADD CONSTRAINT FK_component_variables_processing_component
 	FOREIGN KEY (processing_component_id) REFERENCES tao.processing_component (id) ON DELETE No Action ON UPDATE No Action;
 	
+-------------------------------------------------------------------------------
+-- table: group_component
+DROP TABLE IF EXISTS tao.group_component CASCADE;
 
+CREATE TABLE tao.group_component
+(
+	id varchar(512) NOT NULL,
+	label varchar(250) NOT NULL,
+	version varchar(50) NOT NULL,
+	description text NOT NULL,
+	authors varchar(1024) NOT NULL,
+	copyright text NOT NULL,
+	node_affinity varchar(250) NULL,
+	source_cardinality integer NOT NULL,
+    target_cardinality integer NOT NULL,
+	owner_user_id integer NULL,
+	visibility_id integer NOT NULL,
+	parallelism integer NULL DEFAULT 1,
+	created timestamp NULL DEFAULT now(),
+    modified timestamp NULL,
+	active boolean NULL DEFAULT true
+);
+
+ALTER TABLE tao.group_component ADD CONSTRAINT PK_group_component
+	PRIMARY KEY (id);
+
+ALTER TABLE tao.group_component ADD CONSTRAINT FK_group_component_user
+	FOREIGN KEY (owner_user_id) REFERENCES tao.user (id) ON DELETE No Action ON UPDATE No Action;
+
+ALTER TABLE tao.group_component ADD CONSTRAINT FK_group_component_component_visibility
+	FOREIGN KEY (visibility_id) REFERENCES tao.component_visibility (id) ON DELETE No Action ON UPDATE No Action;
