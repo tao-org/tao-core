@@ -49,24 +49,21 @@ public class WorkflowNodeGroupDescriptor
         if (this.nodes == null) {
             this.nodes = new ArrayList<>();
         }
-        if (!this.nodes.contains(node)) {
+        if (this.nodes.stream().noneMatch(n -> (n.getId() != null && n.getId().equals(node.getId())) ||
+                (n.getComponentId() != null && n.getComponentId().equals(node.getComponentId())))) {
             this.nodes.add(node);
         }
     }
 
     public void removeNode(WorkflowNodeDescriptor node) {
-        if(this.nodes.contains(node)) {
+        if (this.nodes.stream().noneMatch(n -> (n.getId() != null && n.getId().equals(node.getId())) ||
+                (n.getComponentId() != null && n.getComponentId().equals(node.getComponentId())))) {
             node.setWorkflow(null);
             this.nodes.remove(node);
         }
     }
 
     public void setNodes(List<WorkflowNodeDescriptor> nodes) {
-        if (this.nodes != null) {
-            this.nodes.clear();
-        }
-        for (WorkflowNodeDescriptor node : nodes) {
-            addNode(node);
-        }
+        this.nodes = nodes;
     }
 }
