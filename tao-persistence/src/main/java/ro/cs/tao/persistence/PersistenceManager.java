@@ -144,7 +144,7 @@ public class PersistenceManager implements MessagePersister {
     private boolean checkEOProduct(EOProduct eoProduct) {
         return eoProduct != null && eoProduct.getId() != null && !eoProduct.getId().isEmpty() &&
             eoProduct.getName() != null && eoProduct.getGeometry() != null && eoProduct.getProductType() != null &&
-            eoProduct.getLocation() != null && eoProduct.getSensorType() == null && eoProduct.getPixelType() != null;
+            eoProduct.getLocation() != null && eoProduct.getSensorType() != null && eoProduct.getPixelType() != null;
     }
 
     private boolean checkVectorData(VectorData vectorDataProduct) {
@@ -1181,7 +1181,7 @@ public class PersistenceManager implements MessagePersister {
 
     private boolean checkQuery(Query query, boolean existingEntity) {
         return query != null &&
-                ((!existingEntity && query.getId() != null) || (existingEntity && query.getId() == null)) &&
+                ((!existingEntity && query.getId() == null) || (existingEntity && query.getId() != null)) &&
                 query.getSensor() != null && query.getDataSource() != null;
     }
 
