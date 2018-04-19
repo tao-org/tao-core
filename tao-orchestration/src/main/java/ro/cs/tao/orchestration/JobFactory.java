@@ -56,7 +56,7 @@ public class JobFactory {
             List<WorkflowNodeDescriptor> nodes = workflow.getOrderedNodes();
             for (int i = 0; i < nodes.size(); i++) {
                 WorkflowNodeDescriptor node = nodes.get(i);
-                ExecutionTask task = createTask(node);
+                ExecutionTask task = createTask(workflow, node);
                 if (i == 0 && inputs != null) {
                     for (Map.Entry<String, String> entry : inputs.entrySet()) {
                         task.setInputParameterValue(entry.getKey(), entry.getValue());
@@ -70,21 +70,24 @@ public class JobFactory {
         return job;
     }
 
-    public ExecutionTask createTaskGroup(WorkflowNodeGroupDescriptor groupNode) throws PersistenceException {
+    public ExecutionTask createTaskGroup(WorkflowDescriptor workflow, WorkflowNodeGroupDescriptor groupNode) throws PersistenceException {
         ExecutionGroup group = new ExecutionGroup();
         List<WorkflowNodeDescriptor> nodes = groupNode.getOrderedNodes();
         for (WorkflowNodeDescriptor node : nodes) {
-            ExecutionTask task = createTask(node);
+            ExecutionTask task = createTask(workflow, node);
             group.addTask(task);
+            // A workflow contains also the nodes of a node group.
+            // Hence, in order not to duplicate the tasks, the nodes from group are temporary removed from workflow.
+            workflow.removeNode(node);
         }
         group.setExecutionStatus(ExecutionStatus.UNDETERMINED);
         return group;
     }
 
-    public ExecutionTask createTask(WorkflowNodeDescriptor workflowNode) throws PersistenceException {
+    public ExecutionTask createTask(WorkflowDescriptor workflow, WorkflowNodeDescriptor workflowNode) throws PersistenceException {
         ExecutionTask task;
         if (workflowNode instanceof WorkflowNodeGroupDescriptor) {
-            task = createTaskGroup((WorkflowNodeGroupDescriptor) workflowNode);
+            task = createTaskGroup(workflow, (WorkflowNodeGroupDescriptor) workflowNode);
         } else {
             TaoComponent component = null;
             List<ParameterValue> customValues = workflowNode.getCustomValues();
