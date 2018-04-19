@@ -57,14 +57,17 @@ public class ExecutionManager {
                 executionJobRepository.findAll(new Sort(Sort.Direction.ASC, Constants.JOB_IDENTIFIER_PROPERTY_NAME))));
     }
 
+    @Transactional(readOnly = true)
     public List<ExecutionJob> getJobs(long workflowId) {
         return executionJobRepository.findByWorkflowId(workflowId);
     }
 
+    @Transactional(readOnly = true)
     public ExecutionJob getJobById(long jobId) {
         return executionJobRepository.findById(jobId);
     }
 
+    @Transactional(readOnly = true)
     public List<ExecutionJob> getJobs(ExecutionStatus status) {
         return executionJobRepository.findByExecutionStatus(status);
     }
@@ -111,6 +114,7 @@ public class ExecutionManager {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public ExecutionTask getTaskById(Long id) throws PersistenceException {
         final ExecutionTask existingTask = executionTaskRepository.findById(id);
         if (existingTask == null) {
@@ -119,10 +123,12 @@ public class ExecutionManager {
         return existingTask;
     }
 
+    @Transactional(readOnly = true)
     public ExecutionTask getTaskByJobAndNode(long jobId, long nodeId) {
         return executionTaskRepository.findByJobAndWorkflowNode(jobId, nodeId);
     }
 
+    @Transactional(readOnly = true)
     public ExecutionTask getTaskByGroupAndNode(long groupId, long nodeId) {
         return executionTaskRepository.findByGroupAndWorkflowNode(groupId, nodeId);
     }

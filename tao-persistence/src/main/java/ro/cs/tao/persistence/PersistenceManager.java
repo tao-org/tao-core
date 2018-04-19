@@ -33,8 +33,8 @@ import java.util.List;
  */
 
 @Configuration
-@EnableTransactionManagement
-@EnableJpaRepositories(basePackages = { "ro.cs.tao.persistence.repository" })
+//@EnableTransactionManagement
+//@EnableJpaRepositories(basePackages = { "ro.cs.tao.persistence.repository" })
 @Scope("singleton")
 public class PersistenceManager implements MessagePersister {
 
@@ -62,66 +62,54 @@ public class PersistenceManager implements MessagePersister {
     private NotificationManager notificationManager;
 
     //region EOProduct and VectorData
-    @Transactional(readOnly = true)
     public List<EOProduct> getEOProducts() {
         return productManager.getEOProducts();
     }
 
-    @Transactional(readOnly = true)
     public List<VectorData> getVectorDataProducts() {
         return productManager.getVectorDataProducts();
     }
 
-    @Transactional
     public EOProduct saveEOProduct(EOProduct eoProduct) throws PersistenceException {
         return productManager.saveEOProduct(eoProduct);
     }
 
-    @Transactional
     public VectorData saveVectorDataProduct(VectorData vectorDataProduct) throws PersistenceException {
         return productManager.saveVectorDataProduct(vectorDataProduct);
     }
     //endregion
 
     //region NodeDescription and ServiceDescription
-    @Transactional(readOnly = true)
     public List<NodeDescription> getNodes() {
         return nodeManager.getNodes();
     }
 
-    @Transactional(readOnly = true)
     public NodeDescription getNodeByHostName(String hostName) throws PersistenceException {
         return nodeManager.getNodeByHostName(hostName);
     }
 
-    @Transactional
     public NodeDescription saveExecutionNode(NodeDescription node) throws PersistenceException {
         return nodeManager.saveExecutionNode(node);
     }
 
-    @Transactional
     public NodeDescription updateExecutionNode(NodeDescription node) throws PersistenceException {
         return nodeManager.updateExecutionNode(node);
     }
 
-    @Transactional
     public NodeDescription deleteExecutionNode(String hostName) throws PersistenceException {
         return nodeManager.deleteExecutionNode(hostName);
     }
 
-    @Transactional
     public ServiceDescription saveServiceDescription(ServiceDescription service) throws PersistenceException {
         return nodeManager.saveServiceDescription(service);
     }
 
-    @Transactional(readOnly = true)
     public boolean checkIfExistsNodeByHostName(String hostName) {
         return nodeManager.checkIfExistsNodeByHostName(hostName);
     }
     //endregion
 
     //region Container
-    @Transactional(readOnly = true)
     public List<Container> getContainers() {
         return componentManager.getContainers();
     }
@@ -130,88 +118,72 @@ public class PersistenceManager implements MessagePersister {
         return componentManager.getContainerById(id);
     }
 
-    @Transactional
     public Container saveContainer(Container container) throws PersistenceException {
         return componentManager.saveContainer(container);
     }
 
-    @Transactional
     public Container updateContainer(Container container) throws PersistenceException {
         return componentManager.updateContainer(container);
     }
 
-    @Transactional(readOnly = true)
     public boolean checkIfExistsContainerById(String id) throws PersistenceException {
         return componentManager.checkIfExistsContainerById(id);
     }
 
-    @Transactional
     public void deleteContainer(String id) throws PersistenceException {
         componentManager.deleteContainer(id);
     }
     //endregion
 
     //region ProcessingComponent
-    @Transactional(readOnly = true)
     public List<ProcessingComponent> getProcessingComponents() {
         return componentManager.getProcessingComponents();
     }
 
-    @Transactional
     public ProcessingComponent getProcessingComponentById(String id) throws PersistenceException {
         return componentManager.getProcessingComponentById(id);
     }
 
-    @Transactional
     public ProcessingComponent saveProcessingComponent(ProcessingComponent component) throws PersistenceException {
         return componentManager.saveProcessingComponent(component);
     }
 
-    @Transactional
     public ProcessingComponent updateProcessingComponent(ProcessingComponent component) throws PersistenceException {
         return componentManager.updateProcessingComponent(component);
     }
 
-    @Transactional(readOnly = true)
     public boolean checkIfExistsComponentById(String id) {
         return componentManager.checkIfExistsComponentById(id);
     }
 
-    @Transactional
     public ProcessingComponent deleteProcessingComponent(String id) throws PersistenceException {
         return componentManager.deleteProcessingComponent(id);
     }
     //endregion
 
     //region GroupComponent
-    @Transactional(readOnly = true)
     public List<GroupComponent> getGroupComponents() {
         return componentManager.getGroupComponents();
     }
 
-    @Transactional
     public GroupComponent getGroupComponentById(String id) throws PersistenceException {
         return componentManager.getGroupComponentById(id);
     }
 
-    @Transactional
     public GroupComponent deleteGroupComponent(String id) throws PersistenceException {
         return componentManager.deleteGroupComponent(id);
     }
 
-    @Transactional
     public GroupComponent saveGroupComponent(GroupComponent component) throws PersistenceException {
         return componentManager.saveGroupComponent(component);
     }
 
-    @Transactional
     public GroupComponent updateGroupComponent(GroupComponent component) throws PersistenceException {
         return componentManager.updateGroupComponent(component);
     }
     //endregion
 
     //region DataSourceComponent
-    @Transactional(readOnly = true)
     public List<DataSourceComponent> getDataSourceComponents() {
         return componentManager.getDataSourceComponents();
     }
@@ -220,14 +192,12 @@ public class PersistenceManager implements MessagePersister {
         return componentManager.getDataSourceInstance(id);
     }
 
-    @Transactional
     public DataSourceComponent saveDataSourceComponent(DataSourceComponent component) throws PersistenceException {
         return componentManager.saveDataSourceComponent(component);
     }
     //endregion
 
     //region WorkflowDescriptor
-    @Transactional(readOnly = true)
     public List<WorkflowDescriptor> getAllWorkflows() {
         return workflowManager.getAllWorkflows();
     }
@@ -236,17 +206,14 @@ public class PersistenceManager implements MessagePersister {
         return workflowManager.getWorkflowDescriptor(identifier);
     }
 
-    @Transactional
     public WorkflowDescriptor saveWorkflowDescriptor(WorkflowDescriptor workflow) throws PersistenceException {
         return workflowManager.saveWorkflowDescriptor(workflow);
     }
 
-    @Transactional
     public WorkflowDescriptor updateWorkflowDescriptor(WorkflowDescriptor workflow) throws PersistenceException {
         return workflowManager.updateWorkflowDescriptor(workflow);
     }
 
-    @Transactional
     public WorkflowDescriptor deleteWorkflowDescriptor(Long workflowId) throws PersistenceException {
         return workflowManager.deleteWorkflowDescriptor(workflowId);
     }
@@ -261,19 +228,16 @@ public class PersistenceManager implements MessagePersister {
         return workflowManager.getWorkflowNodesByComponentId(workflowId, componentId);
     }
 
-    @Transactional
     public WorkflowNodeDescriptor saveWorkflowNodeDescriptor(WorkflowNodeDescriptor node, WorkflowDescriptor workflow) throws PersistenceException {
         return workflowManager.saveWorkflowNodeDescriptor(node, workflow);
     }
 
-    @Transactional
     public WorkflowNodeDescriptor updateWorkflowNodeDescriptor(WorkflowNodeDescriptor node) throws PersistenceException {
         return workflowManager.updateWorkflowNodeDescriptor(node);
     }
     //endregion
 
     //region ExecutionJob, ExecutionTask and ExecutionGroup
-    @Transactional(readOnly = true)
     public List<ExecutionJob> getAllJobs() {
         return executionManager.getAllJobs();
     }
@@ -290,17 +254,14 @@ public class PersistenceManager implements MessagePersister {
         return executionManager.getJobs(status);
     }
 
-    @Transactional
     public ExecutionJob saveExecutionJob(ExecutionJob job) throws PersistenceException {
         return executionManager.saveExecutionJob(job);
     }
 
-    @Transactional
     public ExecutionJob updateExecutionJob(ExecutionJob job) throws PersistenceException {
         return executionManager.updateExecutionJob(job);
     }
 
-    @Transactional
     public List<ExecutionTask> getRunningTasks() {
         return executionManager.getRunningTasks();
     }
@@ -317,27 +278,22 @@ public class PersistenceManager implements MessagePersister {
         return executionManager.getTaskByGroupAndNode(groupId, nodeId);
     }
 
-    @Transactional(readOnly = true)
     public ExecutionTask getTaskByResourceId(String id) throws PersistenceException {
         return executionManager.getTaskByResourceId(id);
     }
 
-    @Transactional
     public ExecutionTask saveExecutionTask(ExecutionTask task, ExecutionJob job) throws PersistenceException {
         return executionManager.saveExecutionTask(task, job);
     }
 
-    @Transactional
     public ExecutionTask updateExecutionTask(ExecutionTask task) throws PersistenceException {
         return executionManager.updateExecutionTask(task);
     }
 
-    @Transactional
     public ExecutionTask saveExecutionGroupSubTask(ExecutionTask task, ExecutionGroup taskGroup) throws PersistenceException {
         return executionManager.saveExecutionGroupSubTask(task, taskGroup);
     }
 
-    @Transactional
     public ExecutionTask saveExecutionGroupWithSubTasks(ExecutionGroup taskGroup, ExecutionJob job) throws PersistenceException {
         return executionManager.saveExecutionGroupWithSubTasks(taskGroup, job);
     }
@@ -345,20 +301,17 @@ public class PersistenceManager implements MessagePersister {
     //endregion
 
     //region Query
-    @Transactional
     public Query saveQuery(Query query) throws PersistenceException {
         return queryManager.saveQuery(query);
     }
     //endregion
 
     //region Message
-    @Transactional(readOnly = true)
     public Page<Message> getUserMessages(String user, Integer pageNumber) {
         return notificationManager.getUserMessages(user, pageNumber);
     }
 
     @Override
-    @Transactional
     public Message saveMessage(Message message) throws PersistenceException {
         return notificationManager.saveMessage(message);
     }

@@ -53,7 +53,7 @@ public class QueryManager {
 
     private boolean checkQuery(Query query, boolean existingEntity) {
         return query != null &&
-                ((!existingEntity && query.getId() != null) || (existingEntity && query.getId() != null)) &&
+                ((!existingEntity && query.getId() == null) || (existingEntity && query.getId() != null)) &&
                 query.getSensor() != null && query.getDataSource() != null;
     }
 }
