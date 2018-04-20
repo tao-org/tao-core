@@ -17,10 +17,7 @@
 package ro.cs.tao.orchestration;
 
 import ro.cs.tao.component.Variable;
-import ro.cs.tao.execution.model.ExecutionJob;
-import ro.cs.tao.execution.model.ExecutionStatus;
-import ro.cs.tao.execution.model.ExecutionTask;
-import ro.cs.tao.execution.model.TaskSelector;
+import ro.cs.tao.execution.model.*;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 
@@ -69,7 +66,8 @@ public class DefaultJobTaskSelector implements TaskSelector<ExecutionJob> {
         List<ExecutionTask> tasks = job.orderTasks();
         if (tasks != null && tasks.size() > 0) {
             next = new ArrayList<>();
-            switch (job.getExecutionStatus()) {
+            ExecutionStatus status = job.getExecutionStatus();
+            switch (status) {
                 // If the job is not started, we return the first task in line
                 case UNDETERMINED:
                     next.add(tasks.get(0));
@@ -116,27 +114,47 @@ public class DefaultJobTaskSelector implements TaskSelector<ExecutionJob> {
         if (childNodes == null || childNodes.size() == 0) {
             return null;
         }
-        return childNodes.stream().filter(n ->
-            n.getIncomingLinks().stream().allMatch(link -> {
-                List<WorkflowNodeDescriptor> parents =
-                            this.nodesByComponentProvider.apply(workflow.getId(),link.getInput().getParentId());
-                return parents.stream().allMatch(p -> {
-                    ExecutionTask taskByNode = this.taskByNodeProvider.apply(job.getId(), p.getId());
-                    return taskByNode != null && taskByNode.getExecutionStatus() == ExecutionStatus.DONE;
-                });
-            }))
-            .map(n -> {
+        if (childNodes.size() == 1) {
+            return childNodes.stream().map(n -> {
                 ExecutionTask next = this.taskByNodeProvider.apply(job.getId(), n.getId());
-                List<Variable> outputs = task.getOutputParameterValues();
-                n.getIncomingLinks().forEach(link -> {
-                    for (Variable variable : outputs) {
-                        if (variable.getKey().equals(link.getInput().getName())) {
-                            next.setInputParameterValue(link.getOutput().getName(), variable.getValue());
+                if (!(task instanceof DataSourceExecutionTask && next instanceof ExecutionGroup)) {
+                    List<Variable> outputs = task.getOutputParameterValues();
+                    n.getIncomingLinks().forEach(link -> {
+                        for (Variable variable : outputs) {
+                            if (variable.getKey().equals(link.getInput().getName())) {
+                                next.setInputParameterValue(link.getOutput().getName(), variable.getValue());
+                            }
                         }
-                    }
-                });
+                    });
+                }
                 return next;
             })
             .collect(Collectors.toList());
+        } else {
+            return childNodes.stream().filter(n ->
+                n.getIncomingLinks().stream().allMatch(link -> {
+                  List<WorkflowNodeDescriptor> parents =
+                          this.nodesByComponentProvider.apply(workflow.getId(), link.getInput().getParentId());
+                  return parents.stream().allMatch(p -> {
+                      ExecutionTask taskByNode = this.taskByNodeProvider.apply(job.getId(), p.getId());
+                      return taskByNode != null && taskByNode.getExecutionStatus() == ExecutionStatus.DONE;
+                  });
+                }))
+                .map(n -> {
+                    ExecutionTask next = this.taskByNodeProvider.apply(job.getId(), n.getId());
+                    if (!(task instanceof DataSourceExecutionTask && next instanceof ExecutionGroup)) {
+                        List<Variable> outputs = task.getOutputParameterValues();
+                        n.getIncomingLinks().forEach(link -> {
+                            for (Variable variable : outputs) {
+                                if (variable.getKey().equals(link.getInput().getName())) {
+                                    next.setInputParameterValue(link.getOutput().getName(), variable.getValue());
+                                }
+                            }
+                        });
+                    }
+                    return next;
+                })
+                .collect(Collectors.toList());
+        }
     }
 }

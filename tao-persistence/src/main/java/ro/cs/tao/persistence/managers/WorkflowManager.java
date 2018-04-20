@@ -88,10 +88,10 @@ public class WorkflowManager {
         }
 
         // check if there is such workflow (to update) with the given identifier
-        final WorkflowDescriptor existingWorkflow = workflowDescriptorRepository.findById(workflow.getId());
+        /*final WorkflowDescriptor existingWorkflow = workflowDescriptorRepository.findById(workflow.getId());
         if (existingWorkflow == null) {
             throw new PersistenceException("There is no workflow with the given identifier: " + workflow.getId());
-        }
+        }*/
 
         // save the updated entity
         return workflowDescriptorRepository.save(workflow);
@@ -135,17 +135,18 @@ public class WorkflowManager {
             throw new PersistenceException("Invalid parameters were provided for adding new workflow node !");
         }
 
-        node.setWorkflow(workflow);
+        //node.setWorkflow(workflow);
 
         // save the new WorkflowNodeDescriptor entity
-        final WorkflowNodeDescriptor savedWorkflowNodeDescriptor =  workflowNodeDescriptorRepository.save(node);
+        //final WorkflowNodeDescriptor savedWorkflowNodeDescriptor =  workflowNodeDescriptorRepository.save(node);
 
         // add the node to workflow nodes collection
-        workflow.addNode(savedWorkflowNodeDescriptor);
+        //workflow.addNode(savedWorkflowNodeDescriptor);
+        workflow.addNode(node);
         workflowDescriptorRepository.save(workflow);
 
-        return savedWorkflowNodeDescriptor;
-
+        //return savedWorkflowNodeDescriptor;
+        return node;
     }
 
     @Transactional
@@ -157,10 +158,10 @@ public class WorkflowManager {
         }
 
         // check if there is such node (to update) with the given identifier
-        final WorkflowNodeDescriptor existingNode = workflowNodeDescriptorRepository.findById(node.getId());
+        /*final WorkflowNodeDescriptor existingNode = workflowNodeDescriptorRepository.findById(node.getId());
         if (existingNode == null) {
             throw new PersistenceException("There is no workflow node with the given identifier: " + node.getId());
-        }
+        }*/
 
         // save the updated entity
         return workflowNodeDescriptorRepository.save(node);

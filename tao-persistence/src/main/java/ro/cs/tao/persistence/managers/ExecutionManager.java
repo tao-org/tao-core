@@ -106,11 +106,11 @@ public class ExecutionManager {
                 executionTaskRepository.findAll(new Sort(Sort.Direction.ASC,
                                                          Constants.TASK_IDENTIFIER_PROPERTY_NAME)))
                 .stream()
-                .filter(t -> (t.getExecutionStatus() == ExecutionStatus.RUNNING ||
-                              t.getExecutionStatus() == ExecutionStatus.QUEUED_ACTIVE))
+                .filter(t -> (t.getExecutionStatus() == ExecutionStatus.RUNNING))
                 .collect(Collectors.toList());
     }
 
+    @Transactional
     public ExecutionTask getTaskById(Long id) throws PersistenceException {
         final ExecutionTask existingTask = executionTaskRepository.findById(id);
         if (existingTask == null) {
@@ -119,15 +119,17 @@ public class ExecutionManager {
         return existingTask;
     }
 
+    @Transactional
     public ExecutionTask getTaskByJobAndNode(long jobId, long nodeId) {
         return executionTaskRepository.findByJobAndWorkflowNode(jobId, nodeId);
     }
 
+    @Transactional
     public ExecutionTask getTaskByGroupAndNode(long groupId, long nodeId) {
         return executionTaskRepository.findByGroupAndWorkflowNode(groupId, nodeId);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public ExecutionTask getTaskByResourceId(String id) throws PersistenceException {
         final ExecutionTask existingTask = executionTaskRepository.findByResourceId(id);
         if (existingTask == null) {
@@ -151,7 +153,7 @@ public class ExecutionManager {
                                    task.getClass().getCanonicalName(), task.getResourceId()));
 
         // check method parameters
-        if (!checkExecutionTask(task, job, false)) {
+        if (!checkExecutionTask(task, job, task.getId() != null)) {
             throw new PersistenceException("Invalid parameters were provided for adding new execution task !");
         }
 
@@ -195,10 +197,10 @@ public class ExecutionManager {
         }
 
         // check if there is such task (to update) with the given identifier
-        final ExecutionTask existingTask = executionTaskRepository.findById(task.getId());
+        /*final ExecutionTask existingTask = executionTaskRepository.findById(task.getId());
         if (existingTask == null) {
             throw new PersistenceException("There is no execution task with the given identifier: " + task.getId());
-        }
+        }*/
 
         // save the updated entity
         return executionTaskRepository.save(task);
@@ -285,12 +287,12 @@ public class ExecutionManager {
     }
 
     private boolean checkExecutionTask(ExecutionTask task, boolean existingEntity) {
-        return task != null && !(existingEntity && task.getId() == null) &&
-                !(!existingEntity && task.getId() != null) &&
+        return task != null &&
+                ((existingEntity && task.getId() != null) || (!existingEntity && task.getId() == null)) &&
                 !(existingEntity && (task.getResourceId() == null || task.getResourceId().isEmpty()));
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     private boolean checkIfExistsExecutionJobById(final Long jobId) {
         boolean result = false;
 
@@ -305,7 +307,7 @@ public class ExecutionManager {
         return result;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     private boolean checkIfExistsExecutionTaskById(final Long taskId) {
         boolean result = false;
 

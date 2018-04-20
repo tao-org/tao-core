@@ -16,23 +16,23 @@
 
 package ro.cs.tao.orchestration;
 
-import ro.cs.tao.component.ComponentLink;
-import ro.cs.tao.component.ProcessingComponent;
-import ro.cs.tao.component.TaoComponent;
-import ro.cs.tao.component.TargetDescriptor;
+import ro.cs.tao.component.*;
 import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.security.SystemPrincipal;
 import ro.cs.tao.workflow.ParameterValue;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class JobFactory {
 
@@ -56,38 +56,69 @@ public class JobFactory {
             List<WorkflowNodeDescriptor> nodes = workflow.getOrderedNodes();
             for (int i = 0; i < nodes.size(); i++) {
                 WorkflowNodeDescriptor node = nodes.get(i);
-                ExecutionTask task = createTask(workflow, node);
-                if (i == 0 && inputs != null) {
-                    for (Map.Entry<String, String> entry : inputs.entrySet()) {
-                        task.setInputParameterValue(entry.getKey(), entry.getValue());
+                // A workflow contains also the nodes of a node group.
+                // Hence, in order not to duplicate the tasks, the nodes from group are temporary removed from workflow.
+                if (nodes.stream().anyMatch(n -> (n instanceof WorkflowNodeGroupDescriptor) &&
+                                                    ((WorkflowNodeGroupDescriptor)n).getNodes().stream()
+                                                            .noneMatch(c -> c.getId().equals(node.getId())))) {
+                    ExecutionTask task = createTask(job, workflow, node, inputs);
+                    if (i == 0 && inputs != null && !(task instanceof DataSourceExecutionTask)) {
+                        for (Map.Entry<String, String> entry : inputs.entrySet()) {
+                            task.setInputParameterValue(entry.getKey(), entry.getValue());
+                        }
                     }
+                    task.setLevel(node.getLevel());
+                    if (task.getId() == null) {
+                        persistenceManager.saveExecutionTask(task, job);
+                    } else {
+                        persistenceManager.updateExecutionTask(task);
+                    }
+                    logger.fine(String.format("Created task for node %s [level %s]", node.getId(), task.getLevel()));
                 }
-                task.setLevel(node.getLevel());
-                persistenceManager.saveExecutionTask(task, job);
-                logger.fine(String.format("Created task for node %s [level %s]", node.getId(), task.getLevel()));
             }
         }
         return job;
     }
 
-    public ExecutionTask createTaskGroup(WorkflowDescriptor workflow, WorkflowNodeGroupDescriptor groupNode) throws PersistenceException {
+    public ExecutionTask createTaskGroup(ExecutionJob job,
+                                         WorkflowDescriptor workflow,
+                                         WorkflowNodeGroupDescriptor groupNode,
+                                         Map<String, String> inputs) throws PersistenceException {
         ExecutionGroup group = new ExecutionGroup();
+        group.setWorkflowNodeId(groupNode.getId());
+        group.setExecutionStatus(ExecutionStatus.UNDETERMINED);
+        group.setResourceId("group-" + groupNode.getId() + "-" + job.getId());
+        persistenceManager.saveExecutionTask(group, job);
         List<WorkflowNodeDescriptor> nodes = groupNode.getOrderedNodes();
         for (WorkflowNodeDescriptor node : nodes) {
-            ExecutionTask task = createTask(workflow, node);
+            ExecutionTask task = createTask(job, workflow, node, inputs);
+            persistenceManager.saveExecutionTask(task, job);
             group.addTask(task);
-            // A workflow contains also the nodes of a node group.
-            // Hence, in order not to duplicate the tasks, the nodes from group are temporary removed from workflow.
-            workflow.removeNode(node);
         }
-        group.setExecutionStatus(ExecutionStatus.UNDETERMINED);
+        List<ExecutionTask> tasks = group.getTasks();
+        if (tasks != null && tasks.size() > 0) {
+            List<ComponentLink> links = groupNode.getIncomingLinks();
+            links.forEach(link -> {
+                String name = link.getOutput().getName();
+                group.setInputParameterValue(name, null);
+            });
+            GroupComponent component = persistenceManager.getGroupComponentById(groupNode.getComponentId());
+            if (component != null) {
+                // Placeholders for outputs of this task
+                List<TargetDescriptor> targets = component.getTargets();
+                targets.forEach(t -> group.setOutputParameterValue(t.getName(), null));
+            }
+        }
         return group;
     }
 
-    public ExecutionTask createTask(WorkflowDescriptor workflow, WorkflowNodeDescriptor workflowNode) throws PersistenceException {
+    public ExecutionTask createTask(ExecutionJob job,
+                                    WorkflowDescriptor workflow,
+                                    WorkflowNodeDescriptor workflowNode,
+                                    Map<String, String> inputs) throws PersistenceException {
         ExecutionTask task;
         if (workflowNode instanceof WorkflowNodeGroupDescriptor) {
-            task = createTaskGroup(workflow, (WorkflowNodeGroupDescriptor) workflowNode);
+            task = createTaskGroup(job, workflow, (WorkflowNodeGroupDescriptor) workflowNode, inputs);
         } else {
             TaoComponent component = null;
             List<ParameterValue> customValues = workflowNode.getCustomValues();
@@ -101,23 +132,72 @@ public class JobFactory {
                 // Placeholders for inputs of previous tasks
                 links.forEach(link -> {
                     String name = link.getOutput().getName();
-                    //String value = link.getInput().getDataDescriptor().getLocation();
                     task.setInputParameterValue(name, null);
                 });
                 // Placeholders for outputs of this task
                 List<TargetDescriptor> targets = component.getTargets();
                 targets.forEach(t -> task.setOutputParameterValue(t.getName(), null));
+                if (customValues != null) {
+                    for (ParameterValue param : customValues) {
+                        task.setInputParameterValue(param.getParameterName(), param.getParameterValue());
+                    }
+                }
             } else {
                 task = new DataSourceExecutionTask();
+                final Map<String, String> taskInputs;
+                if (customValues != null) {
+                    taskInputs = new HashMap<>(customValues.stream()
+                                                       .collect(Collectors.toMap(ParameterValue::getParameterName,
+                                                                                 ParameterValue::getParameterValue)));
+                } else {
+                    taskInputs = new HashMap<>();
+                }
+                if (inputs != null) {
+                    taskInputs.putAll(inputs);
+                }
                 component = persistenceManager.getDataSourceInstance(workflowNode.getComponentId());
+                Query query = persistenceManager.getQuery(SystemPrincipal.instance().getName(),
+                                                          ((DataSourceComponent) component).getSensorName(),
+                                                          ((DataSourceComponent) component).getDataSourceName(),
+                                                          workflowNode.getId());
+                if (query == null) {
+                    query = new Query();
+                    query.setUser(SystemPrincipal.instance().getName());
+                    query.setSensor(((DataSourceComponent) component).getSensorName());
+                    query.setDataSource(((DataSourceComponent) component).getDataSourceName());
+                    query.setWorkflowNodeId(workflowNode.getId());
+                }
+                int val;
+                String value = taskInputs.get("pageNumber");
+                if (value != null) {
+                    val = Integer.parseInt(value);
+                    taskInputs.remove("pageNumber");
+                } else {
+                    val = 1;
+                }
+                query.setPageNumber(val);
+                value = taskInputs.get("pageSize");
+                if (value != null) {
+                    val = Integer.parseInt(value);
+                    taskInputs.remove("pageSize");
+                } else {
+                    val = 1;
+                }
+                query.setPageSize(val);
+                value = taskInputs.get("limit");
+                if (value != null) {
+                    val = Integer.parseInt(value);
+                    taskInputs.remove("limit");
+                } else {
+                    val = 1;
+                }
+                query.setLimit(val);
+                query.setValues(taskInputs);
+                persistenceManager.saveQuery(query);
                 ((DataSourceExecutionTask) task).setComponent((DataSourceComponent) component);
+                task.setInputParameterValue("query", query.toString());
             }
             task.setWorkflowNodeId(workflowNode.getId());
-            if (customValues != null) {
-                for (ParameterValue customValue : customValues) {
-                    task.setInputParameterValue(customValue.getParameterName(), customValue.getParameterValue());
-                }
-            }
             String nodeAffinity = component.getNodeAffinity();
             if (nodeAffinity != null && !"Any".equals(nodeAffinity)) {
                 task.setExecutionNodeHostName(nodeAffinity);

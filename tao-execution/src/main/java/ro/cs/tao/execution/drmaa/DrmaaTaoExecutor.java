@@ -22,6 +22,7 @@ import org.ggf.drmaa.Session;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.Executor;
+import ro.cs.tao.execution.local.DefaultSession;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.execution.model.ProcessingExecutionTask;
@@ -96,7 +97,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
 
             task.setResourceId(id);
             task.setStartTime(LocalDateTime.now());
-            changeTaskStatus(task, ExecutionStatus.QUEUED_ACTIVE);
+            changeTaskStatus(task, session instanceof DefaultSession ? ExecutionStatus.RUNNING : ExecutionStatus.QUEUED_ACTIVE);
             //persistenceManager.updateExecutionTask(task);
             logger.info(String.format("Succesfully submitted task with id %s", id));
         } catch (DrmaaException | InternalException | PersistenceException e) {
@@ -144,44 +145,47 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         }
         // check for the finished
         List<ExecutionTask> tasks = persistenceManager.getRunningTasks();
-        // For each job, get its status from DRMAA
-        for (ExecutionTask task: tasks) {
-            try {
-                if(task.getResourceId() == null) {
-                    // ignore tasks having resourceId null
-                    continue;
-                }
-                int jobStatus = session.getJobProgramStatus(task.getResourceId());
+        if (tasks != null) {
+            tasks.removeIf(t -> !(t instanceof ProcessingExecutionTask));
+            // For each job, get its status from DRMAA
+            for (ExecutionTask task : tasks) {
+                try {
+                    if (task.getResourceId() == null) {
+                        // ignore tasks having resourceId null
+                        continue;
+                    }
+                    int jobStatus = session.getJobProgramStatus(task.getResourceId());
 
-                switch (jobStatus) {
-                    case Session.SYSTEM_ON_HOLD:
-                    case Session.USER_ON_HOLD:
-                    case Session.USER_SYSTEM_ON_HOLD:
-                    case Session.SYSTEM_SUSPENDED:
-                    case Session.USER_SUSPENDED:
-                    case Session.USER_SYSTEM_SUSPENDED:
-                    case Session.UNDETERMINED:
-                    case Session.QUEUED_ACTIVE:
-                        // nothing to do
-                        break;
-                    case Session.RUNNING:
-                        changeTaskStatus(task, ExecutionStatus.RUNNING);
-                        break;
-                    case Session.DONE:
-                        // Just mark the job as finished with success status
-                        markTaskFinished(task, ExecutionStatus.DONE);
-                        logger.info(String.format("Task %s DONE", task.getResourceId()));
-                        break;
-                    case Session.FAILED:
-                        // Just mark the job as finished with failed status
-                        markTaskFinished(task, ExecutionStatus.FAILED);
-                        logger.info(String.format("Task %s FAILED", task.getResourceId()));
-                        break;
+                    switch (jobStatus) {
+                        case Session.SYSTEM_ON_HOLD:
+                        case Session.USER_ON_HOLD:
+                        case Session.USER_SYSTEM_ON_HOLD:
+                        case Session.SYSTEM_SUSPENDED:
+                        case Session.USER_SUSPENDED:
+                        case Session.USER_SYSTEM_SUSPENDED:
+                        case Session.UNDETERMINED:
+                        case Session.QUEUED_ACTIVE:
+                            // nothing to do
+                            break;
+                        case Session.RUNNING:
+                            changeTaskStatus(task, ExecutionStatus.RUNNING);
+                            break;
+                        case Session.DONE:
+                            // Just mark the job as finished with success status
+                            markTaskFinished(task, ExecutionStatus.DONE);
+                            logger.info(String.format("Task %s DONE", task.getResourceId()));
+                            break;
+                        case Session.FAILED:
+                            // Just mark the job as finished with failed status
+                            markTaskFinished(task, ExecutionStatus.FAILED);
+                            logger.info(String.format("Task %s FAILED", task.getResourceId()));
+                            break;
+                    }
+                } catch (DrmaaException | InternalException e) {
+                    logger.severe(String.format("%s: Cannot get the status for the task %s [%s]",
+                                                e.getClass().getName(), task.getResourceId(), e.getMessage()));
+                    markTaskFinished(task, ExecutionStatus.FAILED);
                 }
-            } catch (DrmaaException | InternalException e) {
-                logger.severe(String.format("%s: Cannot get the status for the task %s [%s]",
-                                            e.getClass().getName(), task.getResourceId(), e.getMessage()));
-                markTaskFinished(task, ExecutionStatus.FAILED);
             }
         }
     }

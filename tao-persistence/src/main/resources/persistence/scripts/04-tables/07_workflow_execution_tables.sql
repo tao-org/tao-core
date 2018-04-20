@@ -4,10 +4,12 @@ DROP TABLE IF EXISTS tao.query CASCADE;
 
 CREATE TABLE tao.query
 (
-	id varchar(512) NOT NULL,
-	sensor_name varchar(1024) NOT NULL,
-    data_source_name  varchar(512) NOT NULL,
-	username varchar(512) NULL,
+    id bigserial NOT NULL,
+	user_id varchar(50) NOT NULL,
+	graph_node_id bigserial NOT NULL,
+	sensor_name varchar(512) NOT NULL,
+	data_source varchar(512) NOT NULL,
+	username varchar NULL,
 	password bytea NULL,
 	page_size integer NULL,
 	page_number integer NULL,
@@ -20,7 +22,13 @@ CREATE TABLE tao.query
 ALTER TABLE tao.query ADD CONSTRAINT PK_query
 	PRIMARY KEY (id);
 
+ALTER TABLE tao.query ADD CONSTRAINT U_query UNIQUE (user_id, graph_node_id, sensor_name, data_source_name);
 
+ALTER TABLE tao.query ADD CONSTRAINT FK_query_user
+	FOREIGN KEY (user_id) REFERENCES tao."user"(username) ON DELETE No Action ON UPDATE No Action;
+
+ALTER TABLE tao.query ADD CONSTRAINT FK_query_graph_node
+	FOREIGN KEY (graph_node_id) REFERENCES tao.graph_node(id) ON DELETE No Action ON UPDATE No Action;
 
 -------------------------------------------------------------------------------
 -- table: workflow_graph_status

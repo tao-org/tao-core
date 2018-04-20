@@ -18,8 +18,8 @@ package ro.cs.tao.orchestration;
 
 import ro.cs.tao.component.Variable;
 import ro.cs.tao.execution.model.*;
-import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
+import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -74,10 +74,20 @@ public class DefaultGroupTaskSelector implements TaskSelector<ExecutionGroup> {
                                 new LoopStateHandler(
                                         new LoopState(1, cardinality)));
                     }
-                    List<Variable> values = currentTask.getOutputParameterValues();
-                    if (values != null && values.size() > 0) {
-                        for (Variable variable : values) {
-                            task.setInputParameterValue(variable.getKey(), variable.getValue());
+                    if (tasks.get(tasks.size() - 1).getId().equals(currentTask.getId())) {
+                        // force remapping of inputs
+                        List<Variable> groupInput = taskHolder.getInputParameterValues();
+                        if (groupInput != null) {
+                            for (Variable var : groupInput) {
+                                taskHolder.setInputParameterValue(var.getKey(), var.getValue());
+                            }
+                        }
+                    } else{
+                        List<Variable> values = currentTask.getOutputParameterValues();
+                        if (values != null && values.size() > 0) {
+                            for (Variable variable : values) {
+                                task.setInputParameterValue(variable.getKey(), variable.getValue());
+                            }
                         }
                     }
                     next.add(task);
@@ -113,35 +123,21 @@ public class DefaultGroupTaskSelector implements TaskSelector<ExecutionGroup> {
         }
         WorkflowNodeDescriptor workflowNode = this.workflowProvider.apply(task.getWorkflowNodeId());
         if (workflowNode == null) {
-            logger.severe(String.format("No workflow node with id %s was found in the database", task.getWorkflowNodeId()));
+            logger.severe(String.format("No workflow node group with id %s was found in the database",
+                                        group.getWorkflowNodeId()));
             return null;
         }
-        WorkflowDescriptor workflow = workflowNode.getWorkflow();
-        List<WorkflowNodeDescriptor> childNodes = workflow.findChildren(workflow.getNodes(), workflowNode);
+        WorkflowNodeGroupDescriptor nodeGroup =
+                (WorkflowNodeGroupDescriptor) this.workflowProvider.apply(group.getWorkflowNodeId());
+        List<WorkflowNodeDescriptor> childNodes = nodeGroup.findChildren(nodeGroup.getNodes(), workflowNode);
         if (childNodes == null || childNodes.size() == 0) {
             return null;
         }
-        return childNodes.stream().filter(n ->
-                n.getIncomingLinks().stream().allMatch(link -> {
-                    List<WorkflowNodeDescriptor> parents =
-                            this.nodesByComponentProvider.apply(workflow.getId(),link.getInput().getParentId());
-                    return parents.stream().allMatch(p -> {
-                        ExecutionTask taskByNode = this.taskByNodeProvider.apply(group.getJob().getId(), p.getId());
-                        return taskByNode != null && taskByNode.getExecutionStatus() == ExecutionStatus.DONE;
-                    });
-                }))
-                .map(n -> {
-                    ExecutionTask next = this.taskByNodeProvider.apply(group.getJob().getId(), n.getId());
+        if (childNodes.size() == 1) {
+            return childNodes.stream().map(n -> {
+                ExecutionTask next = this.taskByNodeProvider.apply(group.getId(), n.getId());
+                if (!(task instanceof DataSourceExecutionTask && next instanceof ExecutionGroup)) {
                     List<Variable> outputs = task.getOutputParameterValues();
-                    if (next instanceof ExecutionGroup) {
-                        ExecutionGroup groupTask = (ExecutionGroup) next;
-                        int cardinality = task instanceof ExecutionGroup ?
-                                ((LoopState) ((ExecutionGroup) task).getStateHandler().currentState()).getLimit() :
-                                ((ProcessingExecutionTask) task).getComponent().getTargetCardinality();
-                        groupTask.setStateHandler(
-                                new LoopStateHandler(
-                                        new LoopState(1, cardinality)));
-                    }
                     n.getIncomingLinks().forEach(link -> {
                         for (Variable variable : outputs) {
                             if (variable.getKey().equals(link.getInput().getName())) {
@@ -149,8 +145,35 @@ public class DefaultGroupTaskSelector implements TaskSelector<ExecutionGroup> {
                             }
                         }
                     });
+                }
+                return next;
+            }).collect(Collectors.toList());
+        } else {
+            return childNodes.stream().filter(n ->
+                n.getIncomingLinks().stream().allMatch(link -> {
+                  List<WorkflowNodeDescriptor> parents =
+                          this.nodesByComponentProvider.apply(workflowNode.getWorkflow().getId(),
+                                                              link.getInput().getParentId());
+                  return parents.stream().allMatch(p -> {
+                      ExecutionTask taskByNode = this.taskByNodeProvider.apply(group.getId(), p.getId());
+                      return taskByNode != null && taskByNode.getExecutionStatus() == ExecutionStatus.DONE;
+                  });
+                }))
+                .map(n -> {
+                    ExecutionTask next = this.taskByNodeProvider.apply(group.getId(), n.getId());
+                    if (!(task instanceof DataSourceExecutionTask && next instanceof ExecutionGroup)) {
+                        List<Variable> outputs = task.getOutputParameterValues();
+                        n.getIncomingLinks().forEach(link -> {
+                            for (Variable variable : outputs) {
+                                if (variable.getKey().equals(link.getInput().getName())) {
+                                    next.setInputParameterValue(link.getOutput().getName(), variable.getValue());
+                                }
+                            }
+                        });
+                    }
                     return next;
                 })
                 .collect(Collectors.toList());
+        }
     }
 }

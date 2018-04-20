@@ -89,12 +89,22 @@ public class DataSourceComponent extends TaoComponent {
         this.id = sensorName + "-" + dataSourceName;
         this.targetCardinality = 0;
         this.logger = Logger.getLogger(DataSourceComponent.class.getSimpleName());
+        SourceDescriptor sourceDescriptor = new SourceDescriptor();
+        sourceDescriptor.setParentId(this.id);
+        sourceDescriptor.setName("query");
+        DataDescriptor srcData = new DataDescriptor();
+        srcData.setFormatType(DataFormat.OTHER);
+        sourceDescriptor.setDataDescriptor(srcData);
+        this.sourceCardinality = 1;
+        addSource(sourceDescriptor);
+
         TargetDescriptor targetDescriptor = new TargetDescriptor();
         targetDescriptor.setParentId(this.id);
         targetDescriptor.setName("results");
-        DataDescriptor dataDescriptor = new DataDescriptor();
-        dataDescriptor.setFormatType(DataFormat.RASTER);
-        targetDescriptor.setDataDescriptor(dataDescriptor);
+        DataDescriptor destData = new DataDescriptor();
+        destData.setFormatType(DataFormat.RASTER);
+        targetDescriptor.setDataDescriptor(destData);
+        this.targetCardinality = 1;
         addTarget(targetDescriptor);
     }
 
@@ -148,30 +158,14 @@ public class DataSourceComponent extends TaoComponent {
     }
 
     @Override
-    public List<SourceDescriptor> getSources() {
-        //throw new RuntimeException("Not allowed on " + getClass().getName());
-        return null;
-    }
-
-    @Override
-    public void setSources(List<SourceDescriptor> sources) {
-        //throw new RuntimeException("Not allowed on " + getClass().getName());
-    }
-
-    @Override
-    public int getSourceCardinality() {
-        //throw new RuntimeException("Not allowed on " + getClass().getName());
-        return -1;
-    }
-
-    @Override
-    public void setSourceCardinality(int sourceCardinality) {
-        //throw new RuntimeException("Not allowed on " + getClass().getName());
-    }
+    public void setSourceCardinality(int sourceCardinality) { this.sourceCardinality = 1; }
 
     @Override
     public void addSource(SourceDescriptor source) {
-        throw new RuntimeException("Not allowed on " + getClass().getName());
+        if (this.sources != null && this.sources.size() == 1) {
+            throw new RuntimeException("A data source component should have only one source descriptor");
+        }
+        super.addSource(source);
     }
 
     @Override
@@ -184,10 +178,13 @@ public class DataSourceComponent extends TaoComponent {
         this.targetCardinality = targetCardinality;
     }
 
-    /*@Override
+    @Override
     public void addTarget(TargetDescriptor target) {
-        throw new RuntimeException("Not allowed on " + getClass().getName());
-    }*/
+        if (this.targets != null && this.targets.size() == 1) {
+            throw new RuntimeException("A data source component should have only one target descriptor");
+        }
+        super.addTarget(target);
+    }
 
     @Override
     public void removeTarget(TargetDescriptor target) {

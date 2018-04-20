@@ -15,22 +15,27 @@
  */
 package ro.cs.tao.execution.model;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import ro.cs.tao.datasource.DataQuery;
 import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.datasource.DataSourceManager;
 import ro.cs.tao.datasource.param.ParameterDescriptor;
 import ro.cs.tao.eodata.Polygon2D;
+import ro.cs.tao.serialization.GenericAdapter;
 import ro.cs.tao.serialization.SerializationException;
 
-import java.text.ParseException;
+import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.logging.Logger;
 
 /**
  * @author Cosmin Cara
  */
 public class Query {
-    private String id;
+    private Long id;
+    private String userId;
+    private long workflowNodeId;
     private String sensor;
     private String dataSource;
     private String user;
@@ -42,21 +47,23 @@ public class Query {
 
     public Query() { }
 
-    public String getId() {
-        return id;
-    }
-    public void setId(String id) {
-        this.id = id;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getUserId() { return userId; }
+    public void setUserId(String userId) { this.userId = userId; }
+
+    public long getWorkflowNodeId() { return workflowNodeId; }
+    public void setWorkflowNodeId(long workflowNodeId) { this.workflowNodeId = workflowNodeId; }
 
     public Map<String, String> getValues() { return values; }
     public void setValues(Map<String, String> values) { this.values = values; }
 
-    public String getDataSource() { return dataSource; }
-    public void setDataSource(String dataSource) { this.dataSource = dataSource; }
-
     public String getSensor() { return sensor; }
     public void setSensor(String sensor) { this.sensor = sensor; }
+
+    public String getDataSource() { return dataSource; }
+    public void setDataSource(String dataSource) { this.dataSource = dataSource; }
 
     public String getUser() { return user; }
     public void setUser(String user) { this.user = user; }
@@ -101,18 +108,37 @@ public class Query {
                 query.setPageSize(webQuery.getPageSize());
                 Map<String, String> paramValues = webQuery.getValues();
                 for (Map.Entry<String, String> entry : paramValues.entrySet()) {
-                    final ParameterDescriptor descriptor = parameterDescriptorMap.get(entry.getKey());
+                    String paramName = entry.getKey();
+                    final ParameterDescriptor descriptor = parameterDescriptorMap.get(paramName);
                     final Class type = descriptor.getType();
-                    if (Date.class.isAssignableFrom(type)) {
-                        query.addParameter(entry.getKey(), type,
-                                           new SimpleDateFormat("yyyy-MM-dd").parse(String.valueOf(entry.getValue())));
-                    } else if (Polygon2D.class.isAssignableFrom(type)) {
-                        query.addParameter(entry.getKey(), type, Polygon2D.fromWKT(String.valueOf(entry.getValue())));
+                    String value = entry.getValue();
+                    if (value != null && value.startsWith("[") & value.endsWith("]")) {
+                        String[] elements = value.substring(0, value.length() - 1).split(",");
+                        if (Date.class.isAssignableFrom(type)) {
+                            query.addParameter(query.createParameter(paramName,
+                                                                     type,
+                                                                     new SimpleDateFormat("yyyy-MM-dd").parse(elements[0]),
+                                                                     new SimpleDateFormat("yyyy-MM-dd").parse(elements[1])));
+                        } else {
+                            Object array = Array.newInstance(type, elements.length);
+                            GenericAdapter adapter = new GenericAdapter(type.getName());
+                            for (int i = 0; i < elements.length; i++) {
+                                Array.set(array, i, adapter.marshal(elements[i]));
+                            }
+                            query.addParameter(query.createParameter(paramName, type, array));
+                        }
                     } else {
-                        query.addParameter(entry.getKey(), entry.getValue());
+                        if (Date.class.isAssignableFrom(type)) {
+                            query.addParameter(paramName, type,
+                                               new SimpleDateFormat("yyyy-MM-dd").parse(String.valueOf(value)));
+                        } else if (Polygon2D.class.isAssignableFrom(type)) {
+                            query.addParameter(paramName, type, Polygon2D.fromWKT(String.valueOf(value)));
+                        } else {
+                            query.addParameter(paramName, entry.getValue());
+                        }
                     }
                 }
-            } catch (ParseException pex) {
+            } catch (Exception pex) {
                 throw new SerializationException(pex);
             }
         }
@@ -125,11 +151,11 @@ public class Query {
             String value = this.values.get(parameterName);
             if (value.startsWith("[") && value.endsWith("]")) {
                 String[] vals = value.substring(1, value.length() - 1).split(",");
-                for (int i = 0; i < vals.length; i++) {
+                for (String val : vals) {
                     Query subQuery = new Query();
-                    subQuery.id = this.id + "-" + String.valueOf(i);
-                    subQuery.sensor = this.sensor;
+                    subQuery.userId = this.userId;
                     subQuery.dataSource = this.dataSource;
+                    subQuery.sensor = this.sensor;
                     subQuery.user = this.user;
                     subQuery.password = this.password;
                     subQuery.pageSize = this.pageSize;
@@ -143,7 +169,7 @@ public class Query {
                             }
                         }
                     }
-                    subQuery.values.put(parameterName, vals[i]);
+                    subQuery.values.put(parameterName, val);
                     subQueries.add(subQuery);
                 }
             } else {
@@ -153,5 +179,26 @@ public class Query {
             subQueries.add(this);
         }
         return subQueries;
+    }
+
+    @Override
+    public String toString() {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.writeValueAsString(this);
+        } catch (Exception ex) {
+            Logger.getLogger(Query.class.getName()).severe(ex.getMessage());
+            return super.toString();
+        }
+    }
+
+    public static Query fromString(String jsonValue) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.readValue(jsonValue, Query.class);
+        } catch (Exception ex) {
+            Logger.getLogger(Query.class.getName()).severe(ex.getMessage());
+            return null;
+        }
     }
 }
