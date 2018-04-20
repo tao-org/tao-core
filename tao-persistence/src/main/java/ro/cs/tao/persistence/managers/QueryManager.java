@@ -18,6 +18,8 @@ package ro.cs.tao.persistence.managers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -26,6 +28,7 @@ import ro.cs.tao.execution.model.Query;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.persistence.repository.QueryRepository;
 
+import java.util.List;
 import java.util.logging.Logger;
 
 @Configuration
@@ -40,10 +43,34 @@ public class QueryManager {
     @Autowired
     private QueryRepository queryRepository;
 
+    public Query findByUserIdAndSensorAndDataSourceAndWorkflowNodeId(String userId, String sensor, String dataSource, long nodeId) {
+        return queryRepository.findByUserIdAndSensorAndDataSourceAndWorkflowNodeId(userId, sensor, dataSource, nodeId);
+    }
+
+    public List<Query> findByUserIdAndSensorAndDataSource(String userId, String sensor, String dataSource) {
+        return queryRepository.findByUserIdAndSensorAndDataSource(userId, sensor, dataSource);
+    }
+
+    public List<Query> findByUserId(String userId) {
+        return queryRepository.findByUserId(userId);
+    }
+
+    public List<Query> findByUserIdAndSensor(String userId, String sensor) {
+        return queryRepository.findByUserIdAndSensor(userId, sensor);
+    }
+
+    public List<Query> findByUserIdAndDataSource(String userId, String dataSource) {
+        return queryRepository.findByUserIdAndDataSource(userId, dataSource);
+    }
+
+    public Page<Query> findAll(Pageable pageable) {
+        return queryRepository.findAll(pageable);
+    }
+
     @Transactional
     public Query saveQuery(Query query) throws PersistenceException {
         // check method parameters
-        if(!checkQuery(query, false)) {
+        if(!checkQuery(query)) {
             throw new PersistenceException("Invalid parameters were provided for adding new query !");
         }
 
@@ -51,9 +78,8 @@ public class QueryManager {
         return queryRepository.save(query);
     }
 
-    private boolean checkQuery(Query query, boolean existingEntity) {
-        return query != null &&
-                ((!existingEntity && query.getId() != null) || (existingEntity && query.getId() != null)) &&
+    private boolean checkQuery(Query query) {
+        return query != null && query.getUserId() != null && query.getWorkflowNodeId() > 0 &&
                 query.getSensor() != null && query.getDataSource() != null;
     }
 }

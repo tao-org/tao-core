@@ -29,12 +29,14 @@ import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.security.SystemPrincipal;
 import ro.cs.tao.serialization.MapAdapter;
 import ro.cs.tao.serialization.SerializationException;
+import ro.cs.tao.serialization.StringListAdapter;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -52,6 +54,7 @@ public class Orchestrator extends Notifiable {
 
     private static final Orchestrator instance;
     private final ExecutorService backgroundWorker;
+    private final Map<Long, InternalStateHandler> groupStateHandlers;
 
     static {
         instance = new Orchestrator();
@@ -67,6 +70,7 @@ public class Orchestrator extends Notifiable {
 
     private Orchestrator() {
         this.backgroundWorker = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        this.groupStateHandlers = new HashMap<>();
         subscribe(Topics.TASK_STATUS_CHANGED);
     }
 
@@ -106,6 +110,9 @@ public class Orchestrator extends Notifiable {
             List<ExecutionJob> jobs = persistenceManager.getJobs(workflowId);
             if (jobs == null || jobs.size() == 0 || jobs.stream().noneMatch(j -> checkExistingJob(j, inputs))) {
                 WorkflowDescriptor descriptor = persistenceManager.getWorkflowDescriptor(workflowId);
+                if (descriptor == null) {
+                    throw new ExecutionException(String.format("Non-existent workflow [%s]", workflowId));
+                }
                 final ExecutionJob executionJob = this.jobFactory.createJob(descriptor, inputs);
                 backgroundWorker.submit(() -> JobCommand.START.applyTo(executionJob));
                 return executionJob.getId();
@@ -168,8 +175,6 @@ public class Orchestrator extends Notifiable {
                                              task.getWorkflowNodeId(),
                                              status.name()));
             statusChanged(task);
-            ExecutionJob job = task.getJob();
-            persistenceManager.updateExecutionJob(job);
             if (status == ExecutionStatus.DONE) {
                 // For DataSourceExecutionTask, it is the executor that sets the outputs,
                 // hence we need to "confirm" here the outputs of a processing task.
@@ -190,16 +195,22 @@ public class Orchestrator extends Notifiable {
                         if (nextTask != null) {
                             if (task instanceof DataSourceExecutionTask && nextTask instanceof ExecutionGroup) {
                                 ExecutionGroup groupTask = (ExecutionGroup) nextTask;
-                                int cardinality = ((DataSourceExecutionTask) task).getComponent().getTargetCardinality();
-                                groupTask.setStateHandler(
-                                        new LoopStateHandler(
-                                                new LoopState(1, cardinality)));
                                 // A DataSourceExecutionTask outputs the list of results as a JSON
                                 List<Variable> values = task.getOutputParameterValues();
+                                int cardinality = 0;
+                                if (values != null && values.size() > 0) {
+                                    cardinality = new StringListAdapter().marshal(values.get(0).getValue()).size();
+                                }
+                                InternalStateHandler handler = new LoopStateHandler(new LoopState(cardinality, 1));
+                                groupTask.setStateHandler(handler);
+                                // we need to keep this mapping because ExecutionTask.stateHandler is transient
+                                this.groupStateHandlers.put(groupTask.getId(), handler);
                                 if (values != null && values.size() > 0) {
                                     Variable theOnlyValue = values.get(0);
-                                    groupTask.setInputParameterValue(theOnlyValue.getKey(), theOnlyValue.getValue());
+                                    groupTask.setInputParameterValue(groupTask.getInputParameterValues().get(0).getKey(),
+                                                                     theOnlyValue.getValue());
                                 }
+                                persistenceManager.updateExecutionTask(groupTask);
                             }
                             logger.fine(String.format("Task %s about to start.", nextTask.getId()));
                             nextTask.getInputParameterValues().forEach(
@@ -210,6 +221,9 @@ public class Orchestrator extends Notifiable {
                     }
                 } else {
                     logger.fine("No more child tasks to execute after the current task");
+                    ExecutionJob job = task.getJob();
+                    job.setExecutionStatus(ExecutionStatus.DONE);
+                    persistenceManager.updateExecutionJob(job);
                     WorkflowDescriptor workflow = persistenceManager.getWorkflowDescriptor(job.getWorkflowId());
                     Duration time = null;
                     if (job.getStartTime() != null && job.getEndTime() != null) {
@@ -223,7 +237,6 @@ public class Orchestrator extends Notifiable {
                     Messaging.send(SystemPrincipal.instance(), Topics.INFORMATION, this, msg);
                 }
             }
-            logger.fine("Job status: " + job.getExecutionStatus().name());
         } catch (PersistenceException e) {
             logger.severe(e.getMessage());
         }
@@ -246,7 +259,7 @@ public class Orchestrator extends Notifiable {
             case QUEUED_ACTIVE:
             case RUNNING:
                 List<ExecutionTask> tasks = job.getTasks();
-                if (tasks != null) {
+                if (tasks != null && tasks.size() > 0) {
                     ExecutionTask first = tasks.get(0);
                     existing = first.getInputParameterValues().stream()
                             .allMatch(i -> inputs.containsKey(i.getKey()) && inputs.get(i.getKey()).equals(i.getValue()));
@@ -259,11 +272,12 @@ public class Orchestrator extends Notifiable {
     }
 
     private void statusChanged(ExecutionTask task) {
-        ExecutionGroup groupTask = (ExecutionGroup) task.getGroupTask();
+        ExecutionGroup groupTask = task.getGroupTask();
         if (groupTask != null) {
             notifyTaskGroup(groupTask, task);
         } else {
-            notifyJob(persistenceManager.getJobById(task.getJob().getId()), task);
+            ExecutionJob job = task.getJob();
+            notifyJob(job, task);
         }
     }
 
@@ -271,40 +285,53 @@ public class Orchestrator extends Notifiable {
         ExecutionStatus groupStatus = groupTask.getExecutionStatus();
         List<ExecutionTask> tasks = groupTask.getTasks();
         ExecutionStatus taskStatus = task.getExecutionStatus();
-        switch (taskStatus) {
-            case SUSPENDED:
-            case CANCELLED:
-            case FAILED:
-                bulkSetStatus(groupTask, task, taskStatus);
-                groupTask.setExecutionStatus(taskStatus);
-                break;
-            case DONE:
-                // If the task is the last one executing of this group
-                if (tasks.stream().allMatch(t -> t.getExecutionStatus() == ExecutionStatus.DONE)) {
-                //if (tasks.get(tasks.size() - 1).getId().equals(task.getId())) {
-                    Integer nextState = (Integer) groupTask.nextInternalState();
-                    if (nextState != null) {
-                        bulkSetStatus(groupTask, null, ExecutionStatus.UNDETERMINED);
-                        groupTask.setExecutionStatus(ExecutionStatus.UNDETERMINED);
-                        try {
-                            InternalStateHandler handler = groupTask.getStateHandler();
-                            if (handler != null) {
-                                groupTask.setInternalState(handler.serializeState());
-                            }
-                        } catch (SerializationException e) {
-                            e.printStackTrace();
+        try {
+            switch (taskStatus) {
+                case QUEUED_ACTIVE:
+                case RUNNING:
+                    groupTask.setExecutionStatus(taskStatus);
+                    break;
+                case SUSPENDED:
+                case CANCELLED:
+                case FAILED:
+                    bulkSetStatus(groupTask, task, taskStatus);
+                    groupTask.setExecutionStatus(taskStatus);
+                    break;
+                case DONE:
+                    // If the task is the last one executing of this group
+                    if (tasks.stream().allMatch(t -> t.getExecutionStatus() == ExecutionStatus.DONE)) {
+                        if (groupTask.getStateHandler() == null) {
+                            groupTask.setStateHandler(groupStateHandlers.get(groupTask.getId()));
                         }
-                    } else {
-                        groupTask.setExecutionStatus(ExecutionStatus.DONE);
+                        LoopState nextState = (LoopState) groupTask.nextInternalState();
+                        if (nextState != null) {
+                            bulkSetStatus(groupTask, null, ExecutionStatus.UNDETERMINED);
+                            groupTask.setExecutionStatus(ExecutionStatus.UNDETERMINED);
+                            try {
+                                InternalStateHandler handler = groupTask.getStateHandler();
+                                if (handler != null) {
+                                    groupTask.setInternalState(handler.serializeState());
+                                }
+                            } catch (SerializationException e) {
+                                e.printStackTrace();
+                            }
+                        } else {
+                            groupTask.setExecutionStatus(ExecutionStatus.DONE);
+                        }
                     }
-                }
-                break;
-            default:
-                // do nothing for other states
-                break;
-        }
-        if (groupStatus != null && groupStatus != groupTask.getExecutionStatus()) {
-            notifyJob(groupTask.getJob(), groupTask);
+                    break;
+                default:
+                    // do nothing for other states
+                    break;
+            }
+            ExecutionStatus currenStatus = groupTask.getExecutionStatus();
+            if (groupStatus != null && groupStatus != currenStatus) {
+                persistenceManager.updateExecutionTask(groupTask);
+                ExecutionJob job = groupTask.getJob();
+                notifyJob(job, groupTask);
+            }
+        } catch (PersistenceException pex) {
+            logger.severe(pex.getMessage());
         }
     }
 
@@ -325,6 +352,7 @@ public class Orchestrator extends Notifiable {
                         job.setExecutionStatus(ExecutionStatus.RUNNING);
                         persistenceManager.updateExecutionJob(job);
                     }
+                    break;
                 case DONE:
                     if (job.getTasks().stream().allMatch(t -> t.getExecutionStatus() == ExecutionStatus.DONE)) {
                     /*List<ExecutionTask> tasks = job.orderTasks();
@@ -398,9 +426,10 @@ public class Orchestrator extends Notifiable {
     }
 
     private List<ExecutionTask> findNextTasks(ExecutionTask task) {
-        ExecutionGroup groupTask = (ExecutionGroup) task.getGroupTask();
+        ExecutionGroup groupTask = task instanceof ExecutionGroup ? (ExecutionGroup) task : task.getGroupTask();
+        ExecutionJob job = task.getJob();
         return (groupTask != null) ? this.groupTaskSelector.chooseNext(groupTask, task) :
-                this.jobTaskSelector.chooseNext(task.getJob(), task);
+                this.jobTaskSelector.chooseNext(job, task);
     }
 
     private List<Variable> deserializeResults(String jsonValue) {

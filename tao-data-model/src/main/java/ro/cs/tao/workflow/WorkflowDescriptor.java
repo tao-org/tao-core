@@ -81,14 +81,16 @@ public class WorkflowDescriptor
         if (this.nodes == null) {
             this.nodes = new ArrayList<>();
         }
-        if (!this.nodes.contains(node)) {
+        if (this.nodes.stream().noneMatch(n -> (n.getId() != null && n.getId().equals(node.getId())) ||
+                                               (n.equals(node)))) {
             this.nodes.add(node);
             node.setWorkflow(this);
         }
     }
 
     public void removeNode(WorkflowNodeDescriptor node) {
-        if(this.nodes.contains(node)) {
+        if(this.nodes.stream().anyMatch(n -> (n.getId() != null && n.getId().equals(node.getId())) ||
+                                             (n.equals(node)))) {
             node.setWorkflow(null);
             this.nodes.remove(node);
         }

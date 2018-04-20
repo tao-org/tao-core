@@ -27,8 +27,13 @@ public interface NodeListOrderer {
     default WorkflowNodeDescriptor findRoot(List<WorkflowNodeDescriptor> nodes) {
         WorkflowNodeDescriptor root = null;
         if (nodes != null) {
+            List<WorkflowNodeGroupDescriptor> groups =
+                    nodes.stream()
+                            .filter(n -> n instanceof WorkflowNodeGroupDescriptor)
+                            .map(n -> (WorkflowNodeGroupDescriptor)n).collect(Collectors.toList());
             root = nodes.stream()
-                    .filter(n -> n.getIncomingLinks() == null || n.getIncomingLinks().isEmpty())
+                    .filter(n -> (n.getIncomingLinks() == null || n.getIncomingLinks().isEmpty()) &&
+                                  groups.stream().noneMatch(g -> g.getNodes() != null && g.getNodes().contains(n)))
                     .findFirst().orElse(null);
             if (root == null) {
                 throw new IllegalArgumentException("The collection must have exactly one node without incoming links");
@@ -68,11 +73,16 @@ public interface NodeListOrderer {
         if (masterList == null || masterList.size() == 0 || node == null) {
             return null;
         }
-        List<WorkflowNodeDescriptor> children = masterList.stream().filter(n -> {
-            List<ComponentLink> links = n.getIncomingLinks();
-            return links != null &&
-                    links.stream().anyMatch(l -> node.getComponentId().equals(l.getInput().getParentId()));
-        }).collect(Collectors.toList());
+        List<WorkflowNodeDescriptor> children;
+        if (node instanceof WorkflowNodeGroupDescriptor) {
+            children = ((WorkflowNodeGroupDescriptor) node).getNodes().stream().distinct().collect(Collectors.toList());
+        } else {
+            children = masterList.stream().filter(n -> {
+                List<ComponentLink> links = n.getIncomingLinks();
+                return links != null && links.stream().anyMatch(l -> node.getId().equals(l.getSourceNodeId()));
+                //links.stream().anyMatch(l -> node.getComponentId().equals(l.getInput().getParentId()));
+            }).distinct().collect(Collectors.toList());
+        }
         children.forEach(c -> c.setLevel(node.getLevel() + 1));
         return children;
     }

@@ -27,6 +27,13 @@ public class ParameterValue implements Serializable {
     private String parameterName;
     private String parameterValue;
 
+    public ParameterValue() { }
+
+    public ParameterValue(String parameterName, String parameterValue) {
+        this.parameterName = parameterName;
+        this.parameterValue = parameterValue;
+    }
+
     @XmlElement(name = "name")
     public String getParameterName() { return parameterName; }
     public void setParameterName(String parameterName) { this.parameterName = parameterName; }

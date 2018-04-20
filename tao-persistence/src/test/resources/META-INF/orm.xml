@@ -458,6 +458,34 @@
         </attributes>
     </entity>
 
+    <entity class="ro.cs.tao.execution.model.DataSourceConnection" access="PROPERTY">
+        <table name="tao.user_data_source_connection"/>
+        
+        <attributes>
+            <id name="id">
+                <column name="id" nullable="false" column-definition="bigint NOT NULL"/>
+                <generated-value strategy="IDENTITY" />
+            </id>
+            <basic name="userId">
+                <column name="user_id" nullable="false" column-definition="varchar(50) NOT NULL"/>
+            </basic>
+            <basic name="dataSource">
+                <column name="data_source_id" nullable="false" column-definition="varchar(512) NOT NULL"/>
+            </basic>
+            <basic name="userName">
+                <column name="username" nullable="true" column-definition="varchar(50) NOT NULL"/>
+            </basic>
+            <basic name="password">
+                <column name="password" nullable="true" column-definition="text NOT NULL"/>
+            </basic>
+            <basic name="created">
+                <column name="created" nullable="true" column-definition="timestamp without time zone DEFAULT now()"/>
+            </basic>
+            <basic name="modified">
+                <column name="modified" nullable="true" column-definition="timestamp without time zone DEFAULT now()"/>
+            </basic>
+        </attributes>
+    </entity>
 
     <entity class="ro.cs.tao.execution.model.ExecutionTask" access="PROPERTY">
         <table name="tao.task"/>
@@ -588,7 +616,7 @@
             <basic name="endTime">
                 <column name="end_time" nullable="true" column-definition="timestamp NULL"/>
             </basic>
-            <basic name="workflowId">
+            <basic name="workflowNodeId">
                 <column name="workflow_id" nullable="false" column-definition="bigint NOT NULL"/>
             </basic>
             <basic name="queryId">
@@ -768,7 +796,7 @@
         <convert converter="ro.cs.tao.persistence.convert.QueryValuesMapConverter" attribute-name="values"/>
         <attributes>
             <id name="id">
-                <column name="id" nullable="false" column-definition="varchar(512) NOT NULL"/>
+                <column name="id" nullable="false" column-definition="bigint NOT NULL"/>
                 <generated-value strategy="IDENTITY" />
             </id>
             <basic name="sensor">
@@ -894,13 +922,13 @@
             <many-to-one name="output" fetch="LAZY">
                 <join-column name="source_descriptor_id" nullable="false"/>
                 <cascade>
-                    <cascade-all/>
+                    <cascade-merge/>
                 </cascade>
             </many-to-one>
             <many-to-one name="input" fetch="LAZY">
                 <join-column name="target_descriptor_id" nullable="false"/>
                 <cascade>
-                    <cascade-all/>
+                    <cascade-merge/>
                 </cascade>
             </many-to-one>
             <!--<many-to-one name="sourceNodeId" fetch="LAZY">-->

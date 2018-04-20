@@ -32,6 +32,7 @@ import ro.cs.tao.component.enums.ProcessingComponentVisibility;
 import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.docker.Application;
 import ro.cs.tao.docker.Container;
+import ro.cs.tao.execution.model.DataSourceConnection;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.persistence.repository.*;
 
@@ -67,6 +68,9 @@ public class ComponentManager {
     /** CRUD Repository for ParameterDescriptor entities */
     @Autowired
     private ParameterDescriptorRepository parameterDescriptorRepository;
+
+    @Autowired
+    private DataSourceConnectionRepository dataSourceConnectionRepository;
 
     //region Container and Applications
     /**
@@ -414,6 +418,31 @@ public class ComponentManager {
         // save the new DataSourceComponent entity and return it
         return dataSourceComponentRepository.save(component);
     }
+    //endregion
+
+    //region DataSourceConnection
+    public List<DataSourceConnection> getUserConnections(int userId) {
+        return dataSourceConnectionRepository.findByUserId(userId);
+    }
+
+    public DataSourceConnection getConnection(int userId, String dataSource) {
+        return dataSourceConnectionRepository.findByUserIdAndDataSource(userId, dataSource);
+    }
+
+    public DataSourceConnection saveDataSourceConnection(DataSourceConnection connection) {
+        if (connection != null) {
+            connection = dataSourceConnectionRepository.save(connection);
+        }
+        return connection;
+    }
+
+    public DataSourceConnection updateDataSourceConnection(DataSourceConnection connection) {
+        if (connection != null) {
+            connection = dataSourceConnectionRepository.save(connection);
+        }
+        return connection;
+    }
+
     //endregion
 
     private boolean checkContainer(Container container) {

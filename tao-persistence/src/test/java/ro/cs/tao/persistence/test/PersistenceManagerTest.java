@@ -1421,7 +1421,7 @@ public class PersistenceManagerTest {
 
             query = persistenceManager.saveQuery(query);
             // check persisted query
-            Assert.assertTrue(query != null && query.getId() != null);
+            Assert.assertNotNull(query);
         }
         catch (PersistenceException e)
         {

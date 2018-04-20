@@ -18,11 +18,8 @@ package ro.cs.tao.execution.model;
 import ro.cs.tao.component.Variable;
 import ro.cs.tao.component.validation.ValidationException;
 import ro.cs.tao.datasource.DataSourceComponent;
-import ro.cs.tao.datasource.DataSourceManager;
-import ro.cs.tao.datasource.param.ParameterDescriptor;
 
 import java.util.ArrayList;
-import java.util.Collection;
 
 /**
  * @author Oana H.
@@ -45,7 +42,7 @@ public class DataSourceExecutionTask extends ExecutionTask {
 
     @Override
     public void setInputParameterValue(String parameterId, String value) {
-        boolean descriptorExists = false;
+        /*boolean descriptorExists = false;
         Collection<ParameterDescriptor> descriptors =
                 DataSourceManager.getInstance().getSupportedParameters(component.getSensorName(),
                         component.getDataSourceName()).values();
@@ -54,8 +51,8 @@ public class DataSourceExecutionTask extends ExecutionTask {
                 descriptorExists = true;
                 break;
             }
-        }
-        if (!descriptorExists) {
+        }*/
+        if (!"query".equals(parameterId)) {
             throw new ValidationException(String.format("The parameter ID [%s] does not exists in the component '%s'",
                     parameterId, component.getLabel()));
         }

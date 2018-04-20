@@ -21,23 +21,16 @@ import ro.cs.tao.component.Variable;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.datasource.DataQuery;
 import ro.cs.tao.datasource.DataSourceComponent;
-import ro.cs.tao.datasource.DataSourceManager;
-import ro.cs.tao.datasource.QueryException;
-import ro.cs.tao.datasource.param.ParameterDescriptor;
-import ro.cs.tao.datasource.param.QueryParameter;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.Executor;
 import ro.cs.tao.execution.model.DataSourceExecutionTask;
 import ro.cs.tao.execution.model.ExecutionStatus;
-import ro.cs.tao.serialization.GenericAdapter;
-import ro.cs.tao.serialization.MapAdapter;
+import ro.cs.tao.execution.model.Query;
+import ro.cs.tao.serialization.StringListAdapter;
 
-import java.lang.reflect.Array;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -55,51 +48,18 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> {
     public void execute(DataSourceExecutionTask task) throws ExecutionException {
         try {
             task.setResourceId(UUID.randomUUID().toString());
+            task.setStartTime(LocalDateTime.now());
             changeTaskStatus(task, ExecutionStatus.RUNNING);
             dataSourceComponent = task.getComponent();
-            final Map<String, ParameterDescriptor> parameterDescriptorMap =
-                    DataSourceManager.getInstance()
-                            .getSupportedParameters(dataSourceComponent.getSensorName(),
-                                    dataSourceComponent.getDataSourceName());
-            DataQuery dataQuery = dataSourceComponent.createQuery();
-            //List<Parameter> parameters = dataSourceComponent.getOverriddenParameters();
             List<Variable> values = task.getInputParameterValues();
-            for (Variable entry : values) {
-                final String paramName = entry.getKey();
-                final ParameterDescriptor descriptor = parameterDescriptorMap.get(paramName);
-                if (descriptor == null) {
-                    throw new QueryException(String.format("Parameter [%s] not supported by data source '%s' for sensor '%s'",
-                            paramName,
-                            dataSourceComponent.getDataSourceName(),
-                            dataSourceComponent.getSensorName()));
-                }
-                final Class type = descriptor.getType();
-                String value = entry.getValue();
-                final QueryParameter queryParameter;
-                if (isArray(value)) {
-                    String[] elements = value.substring(0, value.length() - 1).split(",");
-                    if (Date.class.isAssignableFrom(type)) {
-                        queryParameter = dataQuery.createParameter(paramName,
-                                type,
-                                new SimpleDateFormat("yyyy-MM-dd").parse(elements[0]),
-                                new SimpleDateFormat("yyyy-MM-dd").parse(elements[1]));
-                    } else {
-                        Object array = Array.newInstance(type, elements.length);
-                        GenericAdapter adapter = new GenericAdapter(type.getName());
-                        for (int i = 0; i < elements.length; i++) {
-                            Array.set(array, i, adapter.marshal(elements[i]));
-                        }
-                        queryParameter = dataQuery.createParameter(paramName, type, array);
-                    }
-                } else {
-                    queryParameter = dataQuery.createParameter(paramName,
-                            type,
-                            Date.class.isAssignableFrom(type) ?
-                                    new SimpleDateFormat("yyyy-MM-dd").parse(value)
-                                    : value);
-                }
-                dataQuery.addParameter(queryParameter);
+            if (values == null || values.size() == 0) {
+                throw new ExecutionException("No input data for the task");
             }
+            Query query = Query.fromString(values.get(0).getValue());
+            if (query == null) {
+                throw new ExecutionException("Invalid input data for the task");
+            }
+            DataQuery dataQuery = Query.toDataQuery(query);
             final Future<List<EOProduct>> future = backgroundWorker.submit(dataQuery::execute);
             List<EOProduct> results = future.get();
             if (results != null && results.size() > 0) {
@@ -167,9 +127,9 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> {
     private String serializeResults(List<EOProduct> results) {
         String json = null;
         try {
-            MapAdapter mapAdapter = new MapAdapter();
-            json = mapAdapter.unmarshal(results.stream()
-                            .collect(Collectors.toMap(EOProduct::getName, EOProduct::getLocation)));
+            StringListAdapter adapter = new StringListAdapter();
+            json = adapter.unmarshal(results.stream().map(EOProduct::getLocation)
+                            .collect(Collectors.toList()));
         } catch (Exception e) {
             logger.severe("Serialization of results failed: " + e.getMessage());
         }

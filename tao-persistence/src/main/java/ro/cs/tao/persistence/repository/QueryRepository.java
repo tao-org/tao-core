@@ -6,6 +6,8 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.execution.model.Query;
 
+import java.util.List;
+
 /**
  * CRUD repository for Query entities
  *
@@ -17,18 +19,13 @@ import ro.cs.tao.execution.model.Query;
 @Transactional
 public interface QueryRepository extends PagingAndSortingRepository<Query, String> {
 
-    /**
-     * Find Query entity by its identifier
-     * @param id - the given query identifier
-     * @return the corresponding Query entity
-     */
-    Query findById(String id);
+    Query findByUserIdAndSensorAndDataSourceAndWorkflowNodeId(String userId, String sensor, String dataSource, long nodeId);
 
-    /**
-     * Find Query entity by its label
-     * @param sensor - the given sensor name
-     * @param dataSource - the given data source name
-     * @return the corresponding Query entity
-     */
-    Query findBySensorAndDataSource(String sensor, String dataSource);
+    List<Query> findByUserIdAndSensorAndDataSource(String userId, String sensor, String dataSource);
+
+    List<Query> findByUserId(String userId);
+
+    List<Query> findByUserIdAndSensor(String userId, String sensor);
+
+    List<Query> findByUserIdAndDataSource(String userId, String dataSource);
 }

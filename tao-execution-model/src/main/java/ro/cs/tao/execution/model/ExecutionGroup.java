@@ -41,7 +41,13 @@ public class ExecutionGroup extends ExecutionTask {
         if (this.inputParameterValues == null) {
             this.inputParameterValues = new ArrayList<>();
         }
-        this.inputParameterValues.add(new Variable(parameterId, value));
+        Variable existing = this.inputParameterValues.stream()
+                .filter(v -> v.getKey().equals(parameterId)).findFirst().orElse(null);
+        if (existing != null) {
+            existing.setValue(value);
+        } else {
+            this.inputParameterValues.add(new Variable(parameterId, value));
+        }
         if (this.tasks != null && this.tasks.size() > 0) {
             this.tasks.get(0).setInputParameterValues(mapInput(this.inputParameterValues));
         }
@@ -119,7 +125,7 @@ public class ExecutionGroup extends ExecutionTask {
      * - if no state handler is attached to this group, the variable value is transferred as-is
      * - if the variable value is a serialized list, the item of the list corresponding to the internal state index is transferred
      */
-    public List<Variable> mapInput(List<Variable> inputs) {
+    private List<Variable> mapInput(List<Variable> inputs) {
         setInputParameterValues(inputs);
         if (this.inputParameterValues == null) {
             this.inputParameterValues = new ArrayList<>();
@@ -134,7 +140,7 @@ public class ExecutionGroup extends ExecutionTask {
             newVar.setKey(inputParameterValue.getKey());
             if (index != null) {
                 try {
-                    newVar.setValue(getListValue(inputParameterValue.getKey(), index));
+                    newVar.setValue(getListValue(inputParameterValue.getValue(), index));
                 } catch (SerializationException e) {
                     // if we got here, maybe the value is a single value
                     newVar.setValue(inputParameterValue.getValue());

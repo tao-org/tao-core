@@ -208,25 +208,25 @@ DROP TABLE IF EXISTS tao.user_data_source_connection CASCADE;
 
 CREATE TABLE tao.user_data_source_connection
 (
-	user_id integer NOT NULL,
---	data_source_id integer NOT NULL,
+    id bigserial NOT NULL,
+	user_id varchar(50) NOT NULL,
+    data_source_id varchar(512) NOT NULL,
 	username varchar(50) NULL,
 	password text NULL,
 	created timestamp NULL DEFAULT now(),
 	modified timestamp NULL
 );
 
---ALTER TABLE tao.user_data_source_connection ADD CONSTRAINT PK_user_data_source_connection
---	PRIMARY KEY (user_id, data_source_id);
-
 ALTER TABLE tao.user_data_source_connection ADD CONSTRAINT PK_user_data_source_connection
-	PRIMARY KEY (user_id);
+	PRIMARY KEY (id);
+
+ALTER TABLE tao.user_data_source_connection ADD CONSTRAINT U_user_data_source_connection UNIQUE (user_id, data_source_id);
 
 ALTER TABLE tao.user_data_source_connection ADD CONSTRAINT FK_user_data_source_connection_user
-	FOREIGN KEY (user_id) REFERENCES tao."user" (id) ON DELETE No Action ON UPDATE No Action;
+	FOREIGN KEY (user_id) REFERENCES tao."user" (username) ON DELETE No Action ON UPDATE No Action;
 
---ALTER TABLE tao.user_data_source_connection ADD CONSTRAINT FK_user_data_source_connection_data_source
---	FOREIGN KEY (data_source_id) REFERENCES tao.data_source (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE tao.user_data_source_connection ADD CONSTRAINT FK_user_data_source_connection_data_source
+	FOREIGN KEY (data_source_id) REFERENCES tao.data_source_component(id) ON DELETE No Action ON UPDATE No Action;
 	
 
 -------------------------------------------------------------------------------
@@ -235,28 +235,19 @@ DROP TABLE IF EXISTS tao.user_data_query CASCADE;
 
 CREATE TABLE tao.user_data_query
 (
-	user_id integer NOT NULL,
---	data_source_id integer NOT NULL,
-	job_id bigint NOT NULL,
-	query_parameter_id integer NOT NULL,
-	query_parameter_value varchar(500)
+    id bigint NOT NULL,
+    job_id bigint NOT NULL,
+	query_id integer NOT NULL
 );
 
 ALTER TABLE tao.user_data_query ADD CONSTRAINT PK_user_data_query
-	PRIMARY KEY (job_id, query_parameter_id);
+	PRIMARY KEY (job_id, query_id);
 
-ALTER TABLE tao.user_data_query ADD CONSTRAINT FK_user_data_query_user
-	FOREIGN KEY (user_id) REFERENCES tao."user" (id) ON DELETE No Action ON UPDATE No Action;
-
---ALTER TABLE tao.user_data_query ADD CONSTRAINT FK_user_data_query_data_source
---	FOREIGN KEY (data_source_id) REFERENCES tao.data_source (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE tao.user_data_query ADD CONSTRAINT FK_user_data_query_query
+	FOREIGN KEY (query_id) REFERENCES tao.query (id) ON DELETE No Action ON UPDATE No Action;
 
 ALTER TABLE tao.user_data_query ADD CONSTRAINT FK_user_data_query_job
 	FOREIGN KEY (job_id) REFERENCES tao.job (id) ON DELETE No Action ON UPDATE No Action;
-
-ALTER TABLE tao.user_data_query ADD CONSTRAINT FK_user_data_query_query_parameter
-	FOREIGN KEY (query_parameter_id) REFERENCES tao.query_parameter (id) ON DELETE No Action ON UPDATE No Action;
-
 
 -------------------------------------------------------------------------------
 -- table: notification
