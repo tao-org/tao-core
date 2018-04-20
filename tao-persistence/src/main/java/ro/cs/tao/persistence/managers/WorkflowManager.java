@@ -61,6 +61,7 @@ public class WorkflowManager {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public WorkflowDescriptor getWorkflowDescriptor(long identifier) {
         return workflowDescriptorRepository.findById(identifier);
     }
@@ -119,10 +120,12 @@ public class WorkflowManager {
     //endregion
 
     //region WorkflowNodeDescriptor
+    @Transactional(readOnly = true)
     public WorkflowNodeDescriptor getWorkflowNodeById(Long id) {
         return id != null ? workflowNodeDescriptorRepository.findById(id) : null;
     }
 
+    @Transactional(readOnly = true)
     public List<WorkflowNodeDescriptor> getWorkflowNodesByComponentId(long workflowId, String componentId) {
         return workflowNodeDescriptorRepository.findByComponentId(workflowId, componentId);
     }
