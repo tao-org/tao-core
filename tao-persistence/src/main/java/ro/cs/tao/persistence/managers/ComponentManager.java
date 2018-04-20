@@ -398,6 +398,7 @@ public class ComponentManager {
                                                                        Constants.COMPONENT_IDENTIFIER_PROPERTY_NAME)));
     }
 
+    @Transactional(readOnly = true)
     public DataSourceComponent getDataSourceInstance(String id) {
         return dataSourceComponentRepository.findOne(id);
     }
