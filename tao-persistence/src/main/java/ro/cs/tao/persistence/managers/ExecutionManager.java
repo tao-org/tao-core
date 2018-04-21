@@ -50,7 +50,7 @@ public class ExecutionManager {
     private ExecutionTaskRepository executionTaskRepository;
 
     //region ExecutionJob
-    @Transactional(readOnly = true)
+    @Transactional
     public List<ExecutionJob> getAllJobs() {
         // retrieve jobs and filter them
         return new ArrayList<>(((List<ExecutionJob>)

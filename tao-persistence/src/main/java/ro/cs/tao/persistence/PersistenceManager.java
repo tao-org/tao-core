@@ -7,8 +7,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.transaction.annotation.EnableTransactionManagement;
 import ro.cs.tao.component.GroupComponent;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.datasource.DataSourceComponent;
@@ -33,8 +31,8 @@ import java.util.List;
  */
 
 @Configuration
-@EnableTransactionManagement
-@EnableJpaRepositories(basePackages = { "ro.cs.tao.persistence.repository" })
+//@EnableTransactionManagement
+//@EnableJpaRepositories(basePackages = { "ro.cs.tao.persistence.repository" })
 @Scope("singleton")
 public class PersistenceManager implements MessagePersister {
 

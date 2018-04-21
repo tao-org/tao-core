@@ -51,7 +51,7 @@ public class ProductManager {
     /**
      * Retrieve all EOProduct
      */
-    @Transactional(readOnly = true)
+    @Transactional
     public List<EOProduct> getEOProducts() {
         // retrieve products
         return new ArrayList<>(((List<EOProduct>)
@@ -62,7 +62,7 @@ public class ProductManager {
     /**
      * Retrieve all VectorData
      */
-    @Transactional(readOnly = true)
+    @Transactional
     public List<VectorData> getVectorDataProducts() {
         // retrieve products
         return new ArrayList<>(((List<VectorData>)
