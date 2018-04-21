@@ -76,7 +76,7 @@ public class ComponentManager {
     /**
      * Retrieve existing containers
      */
-    @Transactional(readOnly = true)
+    @Transactional
     public List<Container> getContainers() {
         // retrieve containers and filter them
         return new ArrayList<>((List<Container>) containerRepository.findAll(new Sort(Sort.Direction.ASC,
@@ -86,7 +86,7 @@ public class ComponentManager {
     /**
      * Retrieve container by its identifier
      */
-    //@Transactional(readOnly = true)
+    @Transactional
     public Container getContainerById(String id) throws PersistenceException {
         // check method parameters
         if (id == null || StringUtils.isEmpty(id)) {
@@ -139,7 +139,7 @@ public class ComponentManager {
     /**
      * Retrieve container by its identifier
      */
-    @Transactional(readOnly = true)
+    @Transactional
     public boolean checkIfExistsContainerById(String id) throws PersistenceException {
         boolean result = false;
         // check method parameters
@@ -181,9 +181,8 @@ public class ComponentManager {
     /**
      * Retrieve active processing components with SYSTEM and CONTRIBUTOR visibility
      */
-    @Transactional(readOnly = true)
-    public List<ProcessingComponent> getProcessingComponents()
-    {
+    @Transactional
+    public List<ProcessingComponent> getProcessingComponents() {
         // retrieve components and filter them
         return ((List<ProcessingComponent>)
                 processingComponentRepository.findAll(new Sort(Sort.Direction.ASC,
@@ -245,7 +244,7 @@ public class ComponentManager {
         return processingComponentRepository.save(component);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public boolean checkIfExistsComponentById(final String id) {
         boolean result = false;
         if (id != null && !id.isEmpty()) {
@@ -301,7 +300,7 @@ public class ComponentManager {
     /**
      * Retrieve active group components with SYSTEM and CONTRIBUTOR visibility
      */
-    @Transactional(readOnly = true)
+    @Transactional
     public List<GroupComponent> getGroupComponents() {
         // retrieve components and filter them
         return ((List<GroupComponent>)
@@ -389,7 +388,7 @@ public class ComponentManager {
     /**
      * Retrieve data sources components
      */
-    @Transactional(readOnly = true)
+    @Transactional
     public List<DataSourceComponent> getDataSourceComponents() {
         // retrieve components and filter them
         return new ArrayList<>(
@@ -398,7 +397,7 @@ public class ComponentManager {
                                                                        Constants.COMPONENT_IDENTIFIER_PROPERTY_NAME)));
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public DataSourceComponent getDataSourceInstance(String id) {
         return dataSourceComponentRepository.findOne(id);
     }

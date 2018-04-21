@@ -289,6 +289,9 @@ public class Orchestrator extends Notifiable {
             switch (taskStatus) {
                 case QUEUED_ACTIVE:
                 case RUNNING:
+                    if (groupTask.getStartTime() == null) {
+                        groupTask.setStartTime(task.getStartTime() != null ? task.getStartTime() : LocalDateTime.now());
+                    }
                     groupTask.setExecutionStatus(taskStatus);
                     break;
                 case SUSPENDED:
@@ -317,6 +320,7 @@ public class Orchestrator extends Notifiable {
                             }
                         } else {
                             groupTask.setExecutionStatus(ExecutionStatus.DONE);
+                            groupTask.setEndTime(LocalDateTime.now());
                         }
                     }
                     break;
@@ -381,7 +385,7 @@ public class Orchestrator extends Notifiable {
                 && j.getExecutionStatus() != ExecutionStatus.FAILED).findFirst().orElse(null);
     }
 
-    private void bulkSetStatus(ExecutionGroup group, ExecutionTask firstExculde, ExecutionStatus status) {
+    private void bulkSetStatus(ExecutionGroup group, ExecutionTask firstExculde, ExecutionStatus status) throws PersistenceException {
         List<ExecutionTask> tasks = group.getTasks();
         if (tasks == null) {
             return;
@@ -391,12 +395,15 @@ public class Orchestrator extends Notifiable {
         if (firstExculde == null) {
             firstExculde = tasks.get(0);
             firstExculde.setExecutionStatus(status);
+            persistenceManager.updateExecutionTask(firstExculde);
         }
         while (idx < tasks.size()) {
+            ExecutionTask task = tasks.get(idx);
             if (!found) {
-                found = tasks.get(idx).getId().equals(firstExculde.getId());
+                found = task.getId().equals(firstExculde.getId());
             } else {
-                tasks.get(idx).setExecutionStatus(status);
+                task.setExecutionStatus(status);
+                persistenceManager.updateExecutionTask(task);
             }
             idx++;
         }

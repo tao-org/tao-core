@@ -16,13 +16,8 @@
 
 package ro.cs.tao.execution.model;
 
-import ro.cs.tao.serialization.BaseSerializer;
-import ro.cs.tao.serialization.MediaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import ro.cs.tao.serialization.SerializationException;
-import ro.cs.tao.serialization.SerializerFactory;
-
-import javax.xml.transform.stream.StreamSource;
-import java.io.StringReader;
 
 public class LoopStateHandler implements InternalStateHandler<LoopState> {
     private LoopState loopState;
@@ -33,9 +28,12 @@ public class LoopStateHandler implements InternalStateHandler<LoopState> {
 
     @Override
     public void setCurrentState(String serializedState) throws SerializationException {
-        if (serializedState != null) {
-            BaseSerializer<LoopState> serializer = SerializerFactory.create(LoopState.class, MediaType.JSON);
-            this.loopState = serializer.deserialize(new StreamSource(new StringReader(serializedState)));
+        try {
+            if (serializedState != null) {
+                this.loopState = new ObjectMapper().readValue(serializedState, LoopState.class);
+            }
+        } catch (Exception ex) {
+            throw new SerializationException(ex);
         }
     }
 
@@ -44,7 +42,7 @@ public class LoopStateHandler implements InternalStateHandler<LoopState> {
 
     @Override
     public LoopState nextState() {
-        if (this.loopState != null && this.loopState.getCurrent() <= this.loopState.getLimit()) {
+        if (this.loopState != null && this.loopState.getCurrent() + 1 <= this.loopState.getLimit()) {
             this.loopState.setCurrent(this.loopState.getCurrent() + 1);
             return this.loopState;
         } else {
@@ -54,11 +52,14 @@ public class LoopStateHandler implements InternalStateHandler<LoopState> {
 
     @Override
     public String serializeState() throws SerializationException {
-        if (this.loopState != null) {
-            BaseSerializer<LoopState> serializer = SerializerFactory.create(LoopState.class, MediaType.JSON);
-            return serializer.serialize(this.loopState);
-        } else {
-            return null;
+        try {
+            if (this.loopState != null) {
+                return new ObjectMapper().writeValueAsString(this.loopState);
+            } else {
+                return null;
+            }
+        } catch (Exception ex) {
+            throw new SerializationException(ex);
         }
     }
 }

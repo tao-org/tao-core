@@ -54,7 +54,7 @@ public class NotificationManager {
         return messageRepository.save(message);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public Page<Message> getUserMessages(String user, Integer pageNumber)
     {
         PageRequest pageRequest = new PageRequest(pageNumber - 1, Constants.MESSAGES_PAGE_SIZE,

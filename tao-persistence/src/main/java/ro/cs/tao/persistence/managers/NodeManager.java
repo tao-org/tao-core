@@ -49,7 +49,7 @@ public class NodeManager {
     @Autowired
     private ServiceRepository serviceRepository;
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<NodeDescription> getNodes() {
         // retrieve nodes and filter them by active flag
         return ((List<NodeDescription>) nodeRepository.findAll(new Sort(Sort.Direction.ASC,
@@ -59,7 +59,7 @@ public class NodeManager {
                 .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public NodeDescription getNodeByHostName(final String hostName) throws PersistenceException {
         // check method parameters
         if (hostName == null || hostName.isEmpty()) {
@@ -159,7 +159,7 @@ public class NodeManager {
         return serviceRepository.save(service);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public boolean checkIfExistsNodeByHostName(final String hostName) {
         boolean result = false;
 
@@ -185,7 +185,7 @@ public class NodeManager {
                 service.getVersion() != null && !service.getVersion().isEmpty();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     private boolean checkIfExistsServiceByNameAndVersion(final String serviceName, final String serviceVersion) {
         boolean result = false;
         if (serviceName != null && !serviceName.isEmpty()) {
