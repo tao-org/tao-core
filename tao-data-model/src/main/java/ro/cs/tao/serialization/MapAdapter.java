@@ -46,7 +46,7 @@ public class MapAdapter extends XmlAdapter<Map<String, String>, String> {
     public Map<String, String> marshal(String v) throws Exception {
         if (v == null) return null;
         Map<String, String> map = new HashMap<>();
-        String[] entries = v.substring(1, v.length() - 1).split(",");
+        String[] entries = v.substring(1, v.length() - 1).split("\",\"");
         int idx;
         for (String entry : entries) {
             idx = entry.indexOf(":");
