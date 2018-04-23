@@ -27,6 +27,7 @@ import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.execution.model.ProcessingExecutionTask;
 import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.topology.NodeDescription;
 
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -97,7 +98,13 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
 
             task.setResourceId(id);
             task.setStartTime(LocalDateTime.now());
-            changeTaskStatus(task, session instanceof DefaultSession ? ExecutionStatus.RUNNING : ExecutionStatus.QUEUED_ACTIVE);
+            List<NodeDescription> hosts = persistenceManager.getNodes();
+            if (hosts.size() == 1) {
+                task.setExecutionNodeHostName(hosts.get(0).getHostName());
+                changeTaskStatus(task, ExecutionStatus.RUNNING);
+            } else {
+                changeTaskStatus(task, session instanceof DefaultSession ? ExecutionStatus.RUNNING : ExecutionStatus.QUEUED_ACTIVE);
+            }
             //persistenceManager.updateExecutionTask(task);
             logger.info(String.format("Succesfully submitted task with id %s", id));
         } catch (DrmaaException | InternalException | PersistenceException e) {

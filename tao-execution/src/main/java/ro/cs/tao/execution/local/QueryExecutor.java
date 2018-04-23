@@ -29,6 +29,7 @@ import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.Query;
 import ro.cs.tao.serialization.StringListAdapter;
 
+import java.net.InetAddress;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -48,6 +49,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> {
     public void execute(DataSourceExecutionTask task) throws ExecutionException {
         try {
             task.setResourceId(UUID.randomUUID().toString());
+            task.setExecutionNodeHostName(InetAddress.getLocalHost().getHostName());
             task.setStartTime(LocalDateTime.now());
             changeTaskStatus(task, ExecutionStatus.RUNNING);
             dataSourceComponent = task.getComponent();
