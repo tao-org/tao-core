@@ -49,7 +49,7 @@ public class JobFactory {
         ExecutionJob job = null;
         if (workflow != null && workflow.isActive()) {
             job = new ExecutionJob();
-            job.setUserName("admin");
+            job.setUserName(SystemPrincipal.instance().getName());
             job.setStartTime(LocalDateTime.now());
             job.setWorkflowId(workflow.getId());
             job.setExecutionStatus(ExecutionStatus.UNDETERMINED);
@@ -97,6 +97,7 @@ public class JobFactory {
         List<WorkflowNodeDescriptor> nodes = groupNode.getOrderedNodes();
         for (WorkflowNodeDescriptor node : nodes) {
             ExecutionTask task = createTask(job, workflow, node, inputs);
+            task.setLevel(groupNode.getLevel() + 1);
             persistenceManager.saveExecutionTask(task, job);
             group.addTask(task);
         }

@@ -24,6 +24,7 @@ import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * DAO
@@ -254,6 +255,10 @@ public class PersistenceManager implements MessagePersister {
         return executionManager.getJobs(status);
     }
 
+    public List<ExecutionJob> getJobs(String userName, Set<ExecutionStatus> statuses) {
+        return executionManager.getJobs(userName, statuses);
+    }
+
     public ExecutionJob saveExecutionJob(ExecutionJob job) throws PersistenceException {
         return executionManager.saveExecutionJob(job);
     }
@@ -264,6 +269,10 @@ public class PersistenceManager implements MessagePersister {
 
     public List<ExecutionTask> getRunningTasks() {
         return executionManager.getRunningTasks();
+    }
+
+    public List<ExecutionTaskSummary> getTasksStatus(long jobId) {
+        return executionManager.getTasksStatus(jobId);
     }
 
     public ExecutionTask getTaskById(Long id) throws PersistenceException {

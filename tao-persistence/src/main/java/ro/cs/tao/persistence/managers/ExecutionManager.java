@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,9 +29,15 @@ import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.persistence.repository.ExecutionJobRepository;
 import ro.cs.tao.persistence.repository.ExecutionTaskRepository;
 
+import javax.sql.DataSource;
+import java.sql.PreparedStatement;
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @Configuration
 @EnableTransactionManagement
@@ -47,6 +54,9 @@ public class ExecutionManager {
     /** CRUD Repository for ExecutionTask entities */
     @Autowired
     private ExecutionTaskRepository executionTaskRepository;
+
+    @Autowired
+    private DataSource dataSource;
 
     //region ExecutionJob
     @Transactional
@@ -66,6 +76,16 @@ public class ExecutionManager {
 
     public List<ExecutionJob> getJobs(ExecutionStatus status) {
         return executionJobRepository.findByExecutionStatus(status);
+    }
+
+    public List<ExecutionJob> getJobs(String userName, Set<ExecutionStatus> statuses) {
+        Set<Integer> statusIds;
+        if (statuses == null) {
+            statusIds = Arrays.stream(ExecutionStatus.values()).map(ExecutionStatus::value).collect(Collectors.toSet());
+        } else {
+            statusIds = statuses.stream().map(ExecutionStatus::value).collect(Collectors.toSet());
+        }
+        return executionJobRepository.findByStatusAndUser(statusIds, userName);
     }
 
     @Transactional
@@ -108,6 +128,35 @@ public class ExecutionManager {
                 .filter(t -> (t.getExecutionStatus() == ExecutionStatus.RUNNING))
                 .collect(Collectors.toList());*/
         return executionTaskRepository.getRunningTasks();
+    }
+
+    @Transactional
+    public List<ExecutionTaskSummary> getTasksStatus(long jobId) {
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+        return jdbcTemplate.query(con -> {
+            PreparedStatement statement =
+                    con.prepareStatement("SELECT t.id, CASE WHEN d.id IS NULL THEN CASE WHEN p.id IS NULL THEN 'group' ELSE p.id END ELSE d.id END \"componentName\", " +
+                                                 "t.start_time, t.end_time, t.execution_node_host_name, t.execution_status_id FROM tao.task t " +
+                                                 "LEFT OUTER JOIN tao.data_source_component d ON d.id = t.component_id " +
+                                                 "LEFT OUTER JOIN tao.processing_component p ON p.id = t.component_id where job_id = ?");
+            statement.setLong(1, jobId);
+            return statement;
+        }, (rs, rowNum) -> {
+            ExecutionTaskSummary result = new ExecutionTaskSummary();
+            result.setTaskId(rs.getLong(1));
+            result.setComponentName(rs.getString(2));
+            Timestamp timestamp = rs.getTimestamp(3);
+            if (timestamp != null) {
+                result.setTaskStart(timestamp.toLocalDateTime());
+            }
+            timestamp = rs.getTimestamp(4);
+            if (timestamp != null) {
+                result.setTaskEnd(timestamp.toLocalDateTime());
+            }
+            result.setHost(rs.getString(5));
+            result.setTaskStatus(ExecutionStatus.getEnumConstantByValue(rs.getInt(6)));
+            return result;
+        });
     }
 
     @Transactional
