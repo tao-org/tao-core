@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.orchestration;
 
+import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.component.Variable;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.model.*;
@@ -36,16 +37,14 @@ import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * @author Cosmin Cara
@@ -180,13 +179,25 @@ public class Orchestrator extends Notifiable {
                 // hence we need to "confirm" here the outputs of a processing task.
                 if (task instanceof ProcessingExecutionTask) {
                     ProcessingExecutionTask pcTask = (ProcessingExecutionTask) task;
-                    pcTask.getComponent().getTargets().forEach(t -> {
-                        pcTask.setOutputParameterValue(t.getName(), pcTask.getInstanceTargetOuptut(t));
+                    List<TargetDescriptor> targets = pcTask.getComponent().getTargets();
+                    ExecutionGroup groupTask = pcTask.getGroupTask();
+                    boolean lastFromGroup = groupTask != null &&
+                            groupTask.getOutputParameterValues().stream()
+                                    .allMatch(o -> targets.stream().anyMatch(t -> t.getName().equals(o.getKey())));
+                    targets.forEach(t -> {
+                        String targetOuptut = pcTask.getInstanceTargetOuptut(t);
+                        pcTask.setOutputParameterValue(t.getName(), targetOuptut);
+                        if (lastFromGroup) {
+                            groupTask.setOutputParameterValue(t.getName(), targetOuptut);
+                        }
                         logger.fine(String.format("Task %s output: %s=%s",
                                                   task.getId(), t.getName(),
                                                   t.getDataDescriptor().getLocation()));
                     });
                     persistenceManager.updateExecutionTask(task);
+                    if (lastFromGroup) {
+                        persistenceManager.updateExecutionTask(groupTask);
+                    }
                 }
                 List<ExecutionTask> nextTasks = findNextTasks(task);
                 if (nextTasks != null && nextTasks.size() > 0) {
@@ -201,10 +212,10 @@ public class Orchestrator extends Notifiable {
                                 if (values != null && values.size() > 0) {
                                     cardinality = new StringListAdapter().marshal(values.get(0).getValue()).size();
                                 }
-                                InternalStateHandler handler = new LoopStateHandler(new LoopState(cardinality, 1));
-                                groupTask.setStateHandler(handler);
+                                groupTask.setStateHandler(new LoopStateHandler(new LoopState(cardinality, 1)));
+                                this.groupStateHandlers.put(groupTask.getId(), groupTask.getStateHandler());
                                 // we need to keep this mapping because ExecutionTask.stateHandler is transient
-                                this.groupStateHandlers.put(groupTask.getId(), handler);
+                                //this.groupStateHandlers.put(groupTask.getId(), handler);
                                 if (values != null && values.size() > 0) {
                                     Variable theOnlyValue = values.get(0);
                                     groupTask.setInputParameterValue(groupTask.getInputParameterValues().get(0).getKey(),
@@ -216,6 +227,15 @@ public class Orchestrator extends Notifiable {
                             nextTask.getInputParameterValues().forEach(
                                     v -> logger.fine(String.format("Input: %s=%s", v.getKey(), v.getValue()))
                             );
+                            ExecutionGroup parentGroupTask = nextTask.getGroupTask();
+                            if (parentGroupTask != null) {
+                                String state = parentGroupTask.getInternalState();
+                                if (state != null) {
+                                    InternalStateHandler handler = this.groupStateHandlers.get(parentGroupTask.getId());
+                                    parentGroupTask.setStateHandler(handler);
+                                    nextTask.setInternalState(String.valueOf(((LoopState) handler.currentState()).getCurrent()));
+                                }
+                            }
                             TaskCommand.START.applyTo(nextTask);
                         }
                     }
@@ -282,7 +302,7 @@ public class Orchestrator extends Notifiable {
     }
 
     private void notifyTaskGroup(ExecutionGroup groupTask, ExecutionTask task) {
-        ExecutionStatus groupStatus = groupTask.getExecutionStatus();
+        ExecutionStatus previousStatus = groupTask.getExecutionStatus();
         List<ExecutionTask> tasks = groupTask.getTasks();
         ExecutionStatus taskStatus = task.getExecutionStatus();
         try {
@@ -297,7 +317,10 @@ public class Orchestrator extends Notifiable {
                 case SUSPENDED:
                 case CANCELLED:
                 case FAILED:
-                    bulkSetStatus(groupTask, task, taskStatus);
+                    int startIndex = IntStream.range(0, tasks.size())
+                                              .filter(i -> task.getId().equals(tasks.get(i).getId()))
+                                              .findFirst().orElse(0);
+                    bulkSetStatus(tasks.subList(startIndex, tasks.size()), taskStatus);
                     groupTask.setExecutionStatus(taskStatus);
                     break;
                 case DONE:
@@ -308,7 +331,8 @@ public class Orchestrator extends Notifiable {
                         }
                         LoopState nextState = (LoopState) groupTask.nextInternalState();
                         if (nextState != null) {
-                            bulkSetStatus(groupTask, null, ExecutionStatus.UNDETERMINED);
+                            task.setExecutionStatus(ExecutionStatus.UNDETERMINED);
+                            bulkSetStatus(tasks, ExecutionStatus.UNDETERMINED);
                             groupTask.setExecutionStatus(ExecutionStatus.UNDETERMINED);
                             try {
                                 InternalStateHandler handler = groupTask.getStateHandler();
@@ -329,7 +353,7 @@ public class Orchestrator extends Notifiable {
                     break;
             }
             ExecutionStatus currenStatus = groupTask.getExecutionStatus();
-            if (groupStatus != null && groupStatus != currenStatus) {
+            if (previousStatus != null && previousStatus != currenStatus) {
                 persistenceManager.updateExecutionTask(groupTask);
                 ExecutionJob job = groupTask.getJob();
                 notifyJob(job, groupTask);
@@ -346,7 +370,8 @@ public class Orchestrator extends Notifiable {
                 case SUSPENDED:
                 case CANCELLED:
                 case FAILED:
-                    bulkSetStatus(job, changedTask, taskStatus);
+                    List<ExecutionTask> tasks = job.getTasks();
+                    bulkSetStatus(tasks, taskStatus);
                     job.setExecutionStatus(taskStatus);
                     persistenceManager.updateExecutionJob(job);
                     break;
@@ -359,8 +384,6 @@ public class Orchestrator extends Notifiable {
                     break;
                 case DONE:
                     if (job.getTasks().stream().allMatch(t -> t.getExecutionStatus() == ExecutionStatus.DONE)) {
-                    /*List<ExecutionTask> tasks = job.orderTasks();
-                    if (tasks.get(tasks.size() - 1).getId().equals(changedTask.getId())) {*/
                         job.setExecutionStatus(ExecutionStatus.DONE);
                         job.setEndTime(LocalDateTime.now());
                         persistenceManager.updateExecutionJob(job);
@@ -385,51 +408,18 @@ public class Orchestrator extends Notifiable {
                 && j.getExecutionStatus() != ExecutionStatus.FAILED).findFirst().orElse(null);
     }
 
-    private void bulkSetStatus(ExecutionGroup group, ExecutionTask firstExculde, ExecutionStatus status) throws PersistenceException {
-        List<ExecutionTask> tasks = group.getTasks();
+    private void bulkSetStatus(Collection<ExecutionTask> tasks, ExecutionStatus status) throws PersistenceException {
         if (tasks == null) {
             return;
         }
-        int idx = 0;
-        boolean found = false;
-        if (firstExculde == null) {
-            firstExculde = tasks.get(0);
-            firstExculde.setExecutionStatus(status);
-            persistenceManager.updateExecutionTask(firstExculde);
-        }
-        while (idx < tasks.size()) {
-            ExecutionTask task = tasks.get(idx);
-            if (!found) {
-                found = task.getId().equals(firstExculde.getId());
-            } else {
-                task.setExecutionStatus(status);
-                persistenceManager.updateExecutionTask(task);
+        tasks.forEach(t -> {
+            t.setExecutionStatus(status);
+            try {
+                persistenceManager.updateExecutionTask(t);
+            } catch (PersistenceException e) {
+                logger.severe(e.getMessage());
             }
-            idx++;
-        }
-        if (!found) {
-            throw new IllegalArgumentException("Task not found");
-        }
-    }
-
-    private void bulkSetStatus(ExecutionJob job, ExecutionTask firstExculde, ExecutionStatus status) {
-        List<ExecutionTask> tasks = job.orderTasks();
-        if (tasks == null) {
-            return;
-        }
-        int idx = 0;
-        boolean found = false;
-        while (idx < tasks.size()) {
-            if (!found) {
-                found = tasks.get(idx).getId().equals(firstExculde.getId());
-            } else {
-                tasks.get(idx).setExecutionStatus(status);
-            }
-            idx++;
-        }
-        if (!found) {
-            throw new IllegalArgumentException("Task not found");
-        }
+        });
     }
 
     private List<ExecutionTask> findNextTasks(ExecutionTask task) {

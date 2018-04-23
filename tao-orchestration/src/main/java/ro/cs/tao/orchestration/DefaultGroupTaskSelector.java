@@ -72,7 +72,7 @@ public class DefaultGroupTaskSelector implements TaskSelector<ExecutionGroup> {
                         int cardinality = ((ProcessingExecutionTask) currentTask).getComponent().getTargetCardinality();
                         groupTask.setStateHandler(
                                 new LoopStateHandler(
-                                        new LoopState(1, cardinality)));
+                                        new LoopState(cardinality, 1)));
                     }
                     if (tasks.get(tasks.size() - 1).getId().equals(currentTask.getId())) {
                         // force remapping of inputs

@@ -8,6 +8,8 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.execution.model.ExecutionTask;
 
+import java.util.List;
+
 /**
  * CRUD repository for ExecutionTask entities
  *
@@ -41,4 +43,7 @@ public interface ExecutionTaskRepository extends PagingAndSortingRepository<Exec
         @Query(value = "SELECT * from tao.task where task_group_id = :groupId and graph_node_id = :nodeId", nativeQuery = true)
         ExecutionTask findByGroupAndWorkflowNode(@Param("groupId") long groupId,
                                                  @Param("nodeId") long nodeId);
+
+        @Query(value = "SELECT * from tao.task where execution_status_id = 2", nativeQuery = true)
+        List<ExecutionTask> getRunningTasks();
 }

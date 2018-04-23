@@ -173,7 +173,9 @@ public class ProcessingExecutionTask extends ExecutionTask {
             } catch (Exception e) {
                 path = Paths.get(location);
             }
-            location = path.getParent().resolve(String.valueOf(this.getId()) + "-" + path.getFileName()).toString();
+            location = path.getParent().resolve(String.valueOf(this.getId()) + "-" +
+                                                        (this.internalState == null ? "" : this.internalState + "-") +
+                                                        path.getFileName()).toString();
         }
         return location;
     }
