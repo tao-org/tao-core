@@ -115,6 +115,7 @@ public class DefaultMessageBus implements ro.cs.tao.messaging.EventBus<Event<Mes
     @Override
     public void send(Principal principal, String topic, Event<Message> event) {
         checkPatternConsumers(topic);
+        event.getData().setTopic(topic);
         this.messageBus.notify(topic, event);
         if (this.messagePersister != null) {
             this.executorService.submit(() -> {

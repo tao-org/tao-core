@@ -31,6 +31,7 @@ public class Message {
     public static final String PRINCIPAL_KEY = "Principal";
     public static final String PAYLOAD_KEY = "Payload";
     public static final String SOURCE_KEY = "Source";
+    public static final String TOPIC_KEY = "Topic";
     private static Serializer<Message, String> serializer;
     private static MapAdapter mapAdapter;
     private long timestamp;
@@ -62,6 +63,14 @@ public class Message {
         this.timestamp = timestamp;
         this.data = data;
         this.read = false;
+    }
+
+    public String getTopic() { return this.data != null ? this.data.get(TOPIC_KEY) : null; }
+    public void setTopic(String value) {
+        if (this.data == null) {
+            this.data = new HashMap<>();
+        }
+        this.data.put(TOPIC_KEY, value);
     }
 
     @XmlElement(name = "user")
