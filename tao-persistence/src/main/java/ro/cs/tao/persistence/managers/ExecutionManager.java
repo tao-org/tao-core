@@ -31,7 +31,6 @@ import ro.cs.tao.persistence.repository.ExecutionTaskRepository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 @Configuration
 @EnableTransactionManagement
@@ -102,12 +101,13 @@ public class ExecutionManager {
     @Transactional
     public List<ExecutionTask> getRunningTasks() {
         // retrieve tasks and filter them
-        return ((List<ExecutionTask>)
+        /*return ((List<ExecutionTask>)
                 executionTaskRepository.findAll(new Sort(Sort.Direction.ASC,
                                                          Constants.TASK_IDENTIFIER_PROPERTY_NAME)))
                 .stream()
                 .filter(t -> (t.getExecutionStatus() == ExecutionStatus.RUNNING))
-                .collect(Collectors.toList());
+                .collect(Collectors.toList());*/
+        return executionTaskRepository.getRunningTasks();
     }
 
     @Transactional
@@ -193,7 +193,7 @@ public class ExecutionManager {
         // check method parameters
         if(!checkExecutionTask(task, true)) {
             throw new PersistenceException(String.format("Invalid parameters for updating the execution task %s!",
-                                                         (task != null && task.getId() != 0 ? task.getId() : "")));
+                                                         task.getId() != 0 ? task.getId() : ""));
         }
 
         // check if there is such task (to update) with the given identifier

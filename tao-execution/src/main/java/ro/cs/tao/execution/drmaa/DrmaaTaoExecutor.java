@@ -168,11 +168,16 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                             // nothing to do
                             break;
                         case Session.RUNNING:
-                            changeTaskStatus(task, ExecutionStatus.RUNNING);
+                            if (task.getExecutionStatus() != ExecutionStatus.RUNNING) {
+                                changeTaskStatus(task, ExecutionStatus.RUNNING);
+                            }
                             break;
                         case Session.DONE:
                             // Just mark the job as finished with success status
-                            markTaskFinished(task, ExecutionStatus.DONE);
+                            if (task.getExecutionStatus() == ExecutionStatus.RUNNING) {
+                                // Only a running task can complete
+                                markTaskFinished(task, ExecutionStatus.DONE);
+                            }
                             logger.info(String.format("Task %s DONE", task.getResourceId()));
                             break;
                         case Session.FAILED:

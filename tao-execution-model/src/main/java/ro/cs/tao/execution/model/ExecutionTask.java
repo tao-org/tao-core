@@ -36,7 +36,7 @@ public abstract class ExecutionTask implements StatusChangeListener {
     private String executionNodeHostName;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
-    private String internalState;
+    protected String internalState;
     private ExecutionJob job;
     private ExecutionStatus executionStatus = ExecutionStatus.UNDETERMINED;
     List<Variable> inputParameterValues;
@@ -67,7 +67,9 @@ public abstract class ExecutionTask implements StatusChangeListener {
      * If the caller wants to change the status of the task,
      * the <code>changeStatus(ExecutionStatus)</code> should be used instead.
      */
-    public void setExecutionStatus(ExecutionStatus executionStatus) { this.executionStatus = executionStatus; }
+    public void setExecutionStatus(ExecutionStatus executionStatus) {
+        this.executionStatus = executionStatus;
+    }
     public ExecutionStatus getExecutionStatus() {
         return executionStatus;
     }
@@ -92,16 +94,7 @@ public abstract class ExecutionTask implements StatusChangeListener {
     public InternalStateHandler getStateHandler() { return this.stateHandler; }
 
     public String getInternalState() { return internalState; }
-    public void setInternalState(String internalState) {
-        this.internalState = internalState;
-        if (this.internalState != null && this.stateHandler != null) {
-            try {
-                this.stateHandler.setCurrentState(this.internalState);
-            } catch (SerializationException e) {
-                e.printStackTrace();
-            }
-        }
-    }
+    public void setInternalState(String internalState) { this.internalState = internalState; }
 
     /**
      * Generic method to handle the advancement to the next internal state.
@@ -183,6 +176,7 @@ public abstract class ExecutionTask implements StatusChangeListener {
         List<String> values = (valuesAsString == null || valuesAsString.isEmpty()) ?
                 new ArrayList<>() :
                 getListParameterValues(valuesAsString);
+        values.removeIf("null"::equals);
         values.add(newValue);
         return convertListToSingleValue(values);
     }

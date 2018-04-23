@@ -82,6 +82,18 @@ public class ExecutionGroup extends ExecutionTask {
     }
 
     @Override
+    public void setInternalState(String internalState) {
+        super.setInternalState(internalState);
+        if (this.internalState != null && this.stateHandler != null) {
+            try {
+                this.stateHandler.setCurrentState(this.internalState);
+            } catch (SerializationException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Override
     public String buildExecutionCommand() {
         throw new java.lang.UnsupportedOperationException("Operation not permitted on a task group");
     }
