@@ -31,6 +31,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -54,13 +55,17 @@ public class JobFactory {
             job.setExecutionStatus(ExecutionStatus.UNDETERMINED);
             job = persistenceManager.saveExecutionJob(job);
             List<WorkflowNodeDescriptor> nodes = workflow.getOrderedNodes();
+            Set<WorkflowNodeGroupDescriptor> groups = nodes.stream()
+                                                            .filter(n -> n instanceof WorkflowNodeGroupDescriptor)
+                                                            .map(n -> (WorkflowNodeGroupDescriptor)n)
+                                                            .collect(Collectors.toSet());
             for (int i = 0; i < nodes.size(); i++) {
                 WorkflowNodeDescriptor node = nodes.get(i);
                 // A workflow contains also the nodes of a node group.
                 // Hence, in order not to duplicate the tasks, the nodes from group are temporary removed from workflow.
-                if (nodes.stream().anyMatch(n -> (n instanceof WorkflowNodeGroupDescriptor) &&
-                                                    ((WorkflowNodeGroupDescriptor)n).getNodes().stream()
-                                                            .noneMatch(c -> c.getId().equals(node.getId())))) {
+                if (groups == null ||
+                        groups.stream().noneMatch(g -> g.getNodes().stream()
+                                                                    .anyMatch(c -> c.getId().equals(node.getId())))) {
                     ExecutionTask task = createTask(job, workflow, node, inputs);
                     if (i == 0 && inputs != null && !(task instanceof DataSourceExecutionTask)) {
                         for (Map.Entry<String, String> entry : inputs.entrySet()) {

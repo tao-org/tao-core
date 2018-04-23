@@ -652,6 +652,9 @@
             <id name="timestamp">
                 <column name="timestamp" nullable="false" column-definition="bigint NOT NULL"/>
             </id>
+            <basic name="topic">
+                <column name="topic" nullable="false" column-definition="character varying NOT NULL"/>
+            </basic>
             <basic name="user">
                 <column name="username" nullable="false" column-definition="character varying NOT NULL"/>
             </basic>

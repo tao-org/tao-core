@@ -18,6 +18,7 @@ package ro.cs.tao.serialization;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * @author Cosmin Cara
@@ -46,11 +47,15 @@ public class MapAdapter extends XmlAdapter<Map<String, String>, String> {
         if (v == null) return null;
         Map<String, String> map = new HashMap<>();
         String[] entries = v.substring(1, v.length() - 1).split(",");
-        String[] tokens;
+        int idx;
         for (String entry : entries) {
-            tokens = entry.split(":");
-            map.put(tokens[0].replace("\"", ""),
-                    tokens[1].replace("\"", ""));
+            idx = entry.indexOf(":");
+            if (idx > 0) {
+                map.put(entry.substring(0, idx).replace("\"", ""),
+                        entry.substring(idx + 1, entry.length()).replace("\"", ""));
+            } else {
+                Logger.getLogger(MapAdapter.class.getName()).warning(String.format("Cannot map input: %s", v));
+            }
         }
         return map;
     }

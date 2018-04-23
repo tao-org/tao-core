@@ -256,12 +256,16 @@ DROP TABLE IF EXISTS tao.notification CASCADE;
 CREATE TABLE tao.notification
 (
     timestamp bigint NOT NULL,
+    topic character varying NOT NULL,
 	username character varying NOT NULL,
 	read boolean NULL,
 	data character varying NOT NULL
 );
 
 ALTER TABLE tao.notification ADD CONSTRAINT PK_notification PRIMARY KEY (timestamp, username);
+
+CREATE INDEX IX_notification ON tao.notification
+    USING btree (topic COLLATE pg_catalog."default", username COLLATE pg_catalog."default");
 
 --ALTER TABLE tao.notification ADD CONSTRAINT FK_notification_user
 --	FOREIGN KEY (user_id) REFERENCES tao."user" (id) ON DELETE No Action ON UPDATE No Action;
