@@ -114,17 +114,6 @@ ALTER TABLE tao.service ALTER COLUMN id SET DEFAULT nextval('tao.service_id_seq'
 -- assign column to sequence
 ALTER SEQUENCE tao.service_id_seq OWNED BY tao.service.id;
 
------ table: tao.query -----------------------------------------------------------------------
-DROP SEQUENCE IF EXISTS tao.query_seq CASCADE;
--- create sequence
-CREATE SEQUENCE tao.query_seq
-	INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
-
--- assign sequence to column
-ALTER TABLE tao.query ALTER COLUMN id SET DEFAULT nextval('tao.query_seq');
-
--- assign column to sequence
-ALTER SEQUENCE tao.query_seq OWNED BY tao.query.id;
 
 ----- table: tao.user_data_source_connection---------------------------------------------------
 DROP SEQUENCE IF EXISTS tao.user_data_source_connection_seq CASCADE;

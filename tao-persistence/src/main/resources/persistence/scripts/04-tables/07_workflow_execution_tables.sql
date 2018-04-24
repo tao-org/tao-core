@@ -22,13 +22,14 @@ CREATE TABLE tao.query
 ALTER TABLE tao.query ADD CONSTRAINT PK_query
 	PRIMARY KEY (id);
 
-ALTER TABLE tao.query ADD CONSTRAINT U_query UNIQUE (user_id, graph_node_id, sensor_name, data_source_name);
+ALTER TABLE tao.query ADD CONSTRAINT U_query UNIQUE (user_id, graph_node_id, sensor_name, data_source);
 
 ALTER TABLE tao.query ADD CONSTRAINT FK_query_user
 	FOREIGN KEY (user_id) REFERENCES tao."user"(username) ON DELETE No Action ON UPDATE No Action;
 
-ALTER TABLE tao.query ADD CONSTRAINT FK_query_graph_node
-	FOREIGN KEY (graph_node_id) REFERENCES tao.graph_node(id) ON DELETE No Action ON UPDATE No Action;
+-- move this after tao.graph_node creation
+--ALTER TABLE tao.query ADD CONSTRAINT FK_query_graph_node
+--	FOREIGN KEY (graph_node_id) REFERENCES tao.graph_node(id) ON DELETE No Action ON UPDATE No Action;
 
 -------------------------------------------------------------------------------
 -- table: workflow_graph_status
@@ -130,6 +131,10 @@ ALTER TABLE tao.graph_node ADD CONSTRAINT FK_graph_node_workflow_graph
 --ALTER TABLE tao.graph_node ADD CONSTRAINT FK_graph_node_processing_component
 --	FOREIGN KEY (processing_component_id) REFERENCES tao.processing_component (id) ON DELETE No Action ON UPDATE No Action;
 
+-- now add the FK from tao.query
+ALTER TABLE tao.query ADD CONSTRAINT FK_query_graph_node
+	FOREIGN KEY (graph_node_id) REFERENCES tao.graph_node(id) ON DELETE No Action ON UPDATE No Action;
+
 
 -------------------------------------------------------------------------------
 -- table: graph_node_processing_custom_values
@@ -193,7 +198,7 @@ CREATE TABLE tao.job
 	end_time timestamp without time zone NULL,
 	workflow_id bigint NOT NULL,
 	username varchar(50) NOT NULL,
-	query_id varchar(512) NULL,
+	query_id bigint NULL,
 	execution_status_id integer NOT NULL
 );
 

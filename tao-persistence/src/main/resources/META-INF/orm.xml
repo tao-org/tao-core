@@ -817,7 +817,7 @@
             <id name="id">
                 <column name="id" nullable="false" column-definition="bigserial NOT NULL"/>
                 <generated-value strategy="SEQUENCE" generator="query_identifier"/>
-                <sequence-generator name="query_identifier" sequence-name="tao.query_seq" allocation-size="1" />
+                <sequence-generator name="query_identifier" sequence-name="tao.query_id_seq" allocation-size="1" />
             </id>
             <basic name="userId">
                 <column name="user_id" nullable="false" column-definition="integer NOT NULL"/>

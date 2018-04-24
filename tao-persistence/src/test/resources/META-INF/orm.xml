@@ -315,6 +315,20 @@
     <entity class="ro.cs.tao.component.GroupComponent" access="PROPERTY">
         <table name="tao.group_component"/>
 
+        <association-override name="sources">
+            <join-table name="tao.group_component_sources">
+                <join-column name="group_component_id" referenced-column-name="id"/>
+                <inverse-join-column name="source_descriptor_id" referenced-column-name="id"/>
+            </join-table>
+        </association-override>
+
+        <association-override name="targets">
+            <join-table name="tao.group_component_targets">
+                <join-column name="group_component_id" referenced-column-name="id"/>
+                <inverse-join-column name="target_descriptor_id" referenced-column-name="id"/>
+            </join-table>
+        </association-override>
+
         <convert converter="ro.cs.tao.persistence.convert.ProcessingComponentVisibilityConverter" attribute-name="visibility" />
 
         <attributes>
@@ -328,6 +342,7 @@
             <basic name="active">
                 <column name="active" nullable="true" column-definition="boolean NULL DEFAULT true"/>
             </basic>
+
         </attributes>
     </entity>
 
@@ -460,11 +475,12 @@
 
     <entity class="ro.cs.tao.execution.model.DataSourceConnection" access="PROPERTY">
         <table name="tao.user_data_source_connection"/>
-        
+
         <attributes>
             <id name="id">
-                <column name="id" nullable="false" column-definition="bigint NOT NULL"/>
-                <generated-value strategy="IDENTITY" />
+                <column name="id" nullable="false" column-definition="bigserial NOT NULL"/>
+                <generated-value strategy="SEQUENCE" generator="dsc_identifier"/>
+                <sequence-generator name="dsc_identifier" sequence-name="tao.data_source_connection_seq" allocation-size="1" />
             </id>
             <basic name="userId">
                 <column name="user_id" nullable="false" column-definition="varchar(50) NOT NULL"/>
@@ -616,7 +632,7 @@
             <basic name="endTime">
                 <column name="end_time" nullable="true" column-definition="timestamp NULL"/>
             </basic>
-            <basic name="workflowNodeId">
+            <basic name="workflowId">
                 <column name="workflow_id" nullable="false" column-definition="bigint NOT NULL"/>
             </basic>
             <basic name="queryId">
@@ -636,6 +652,9 @@
             <id name="timestamp">
                 <column name="timestamp" nullable="false" column-definition="bigint NOT NULL"/>
             </id>
+            <basic name="topic">
+                <column name="topic" nullable="false" column-definition="character varying NOT NULL"/>
+            </basic>
             <basic name="user">
                 <column name="username" nullable="false" column-definition="character varying NOT NULL"/>
             </basic>
@@ -796,14 +815,21 @@
         <convert converter="ro.cs.tao.persistence.convert.QueryValuesMapConverter" attribute-name="values"/>
         <attributes>
             <id name="id">
-                <column name="id" nullable="false" column-definition="bigint NOT NULL"/>
-                <generated-value strategy="IDENTITY" />
+                <column name="id" nullable="false" column-definition="bigserial NOT NULL"/>
+                <generated-value strategy="SEQUENCE" generator="query_identifier"/>
+                <sequence-generator name="query_identifier" sequence-name="tao.query_id_seq" allocation-size="1" />
             </id>
+            <basic name="userId">
+                <column name="user_id" nullable="false" column-definition="integer NOT NULL"/>
+            </basic>
+            <basic name="workflowNodeId">
+                <column name="graph_node_id" nullable="false" column-definition="bigint NOT NULL"/>
+            </basic>
             <basic name="sensor">
                 <column name="sensor_name" nullable="false" column-definition="varchar(1024) NOT NULL"/>
             </basic>
             <basic name="dataSource">
-                <column name="data_source_name" nullable="false" column-definition="varchar(512) NOT NULL"/>
+                <column name="data_source" nullable="false" column-definition="varchar(512) NOT NULL"/>
             </basic>
             <basic name="user">
                 <column name="username" nullable="true" column-definition="character varying(512) NULL"/>
@@ -826,6 +852,26 @@
         </attributes>
     </entity>
 
+    <!--<entity class="ro.cs.tao.execution.model.ExecutionQuery" access="PROPERTY">
+        <attributes>
+            <id name="id">
+                <column name="id" nullable="false" column-definition="bigint NOT NULL"/>
+                <generated-value strategy="IDENTITY" />
+            </id>
+            <many-to-one name="job" fetch="LAZY">
+                <join-column name="job_id" nullable="false" table="tao.job" referenced-column-name="id"/>
+                <cascade>
+                    <cascade-all/>
+                </cascade>
+            </many-to-one>
+            <many-to-one name="workflow" fetch="LAZY">
+                <join-column name="workflow_id" nullable="false" table="tao.workflow_graph" referenced-column-name="id"/>
+                <cascade>
+                    <cascade-all/>
+                </cascade>
+            </many-to-one>
+        </attributes>
+    </entity>-->
 
     <embeddable class="ro.cs.tao.eodata.Attribute" access="PROPERTY">
         <attributes>
@@ -922,13 +968,13 @@
             <many-to-one name="output" fetch="LAZY">
                 <join-column name="source_descriptor_id" nullable="false"/>
                 <cascade>
-                    <cascade-merge/>
+                    <cascade-all/>
                 </cascade>
             </many-to-one>
             <many-to-one name="input" fetch="LAZY">
                 <join-column name="target_descriptor_id" nullable="false"/>
                 <cascade>
-                    <cascade-merge/>
+                    <cascade-all/>
                 </cascade>
             </many-to-one>
             <!--<many-to-one name="sourceNodeId" fetch="LAZY">-->

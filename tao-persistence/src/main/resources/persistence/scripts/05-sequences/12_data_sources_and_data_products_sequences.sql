@@ -123,7 +123,7 @@ CREATE SEQUENCE tao.query_id_seq
 	INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
 
 -- assign sequence to column
-ALTER TABLE tao.query ALTER COLUMN id SET DEFAULT 'query' || nextval('tao.query_id_seq');
+ALTER TABLE tao.query ALTER COLUMN id SET DEFAULT nextval('tao.query_id_seq');
 
 -- assign column to sequence
 ALTER SEQUENCE tao.query_id_seq OWNED BY tao.query.id;
