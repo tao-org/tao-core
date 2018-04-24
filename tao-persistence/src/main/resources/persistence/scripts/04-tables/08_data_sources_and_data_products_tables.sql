@@ -198,35 +198,6 @@ ALTER TABLE tao.query_parameter ADD CONSTRAINT PK_query_parameter
 
 ALTER TABLE tao.query_parameter ADD CONSTRAINT FK_query_parameter_data_type
 	FOREIGN KEY (data_type_id) REFERENCES tao.data_type (id) ON DELETE No Action ON UPDATE No Action;
-
-
-
-
--------------------------------------------------------------------------------
--- table: user_data_source_connection
-DROP TABLE IF EXISTS tao.user_data_source_connection CASCADE;
-
-CREATE TABLE tao.user_data_source_connection
-(
-    id bigserial NOT NULL,
-	user_id varchar(50) NOT NULL,
-    data_source_id varchar(512) NOT NULL,
-	username varchar(50) NULL,
-	password text NULL,
-	created timestamp NULL DEFAULT now(),
-	modified timestamp NULL
-);
-
-ALTER TABLE tao.user_data_source_connection ADD CONSTRAINT PK_user_data_source_connection
-	PRIMARY KEY (id);
-
-ALTER TABLE tao.user_data_source_connection ADD CONSTRAINT U_user_data_source_connection UNIQUE (user_id, data_source_id);
-
-ALTER TABLE tao.user_data_source_connection ADD CONSTRAINT FK_user_data_source_connection_user
-	FOREIGN KEY (user_id) REFERENCES tao."user" (username) ON DELETE No Action ON UPDATE No Action;
-
-ALTER TABLE tao.user_data_source_connection ADD CONSTRAINT FK_user_data_source_connection_data_source
-	FOREIGN KEY (data_source_id) REFERENCES tao.data_source_component(id) ON DELETE No Action ON UPDATE No Action;
 	
 
 -------------------------------------------------------------------------------
@@ -248,6 +219,8 @@ ALTER TABLE tao.user_data_query ADD CONSTRAINT FK_user_data_query_query
 
 ALTER TABLE tao.user_data_query ADD CONSTRAINT FK_user_data_query_job
 	FOREIGN KEY (job_id) REFERENCES tao.job (id) ON DELETE No Action ON UPDATE No Action;
+
+
 
 -------------------------------------------------------------------------------
 -- table: notification
@@ -527,4 +500,33 @@ ALTER TABLE tao.data_source_component_targets ADD CONSTRAINT FK_data_source_comp
 
 ALTER TABLE tao.data_source_component_targets ADD CONSTRAINT FK_data_source_component_targets_target_descriptor
 	FOREIGN KEY (target_descriptor_id) REFERENCES tao.target_descriptor (id) ON DELETE No Action ON UPDATE No Action;
+
+
+
+-------------------------------------------------------------------------------
+-- table: user_data_source_connection
+DROP TABLE IF EXISTS tao.user_data_source_connection CASCADE;
+
+CREATE TABLE tao.user_data_source_connection
+(
+    id bigserial NOT NULL,
+	user_id varchar(50) NOT NULL,
+    data_source_id varchar(512) NOT NULL,
+	username varchar(50) NULL,
+	password text NULL,
+	created timestamp NULL DEFAULT now(),
+	modified timestamp NULL
+);
+
+ALTER TABLE tao.user_data_source_connection ADD CONSTRAINT PK_user_data_source_connection
+	PRIMARY KEY (id);
+
+ALTER TABLE tao.user_data_source_connection ADD CONSTRAINT U_user_data_source_connection UNIQUE (user_id, data_source_id);
+
+ALTER TABLE tao.user_data_source_connection ADD CONSTRAINT FK_user_data_source_connection_user
+	FOREIGN KEY (user_id) REFERENCES tao."user" (username) ON DELETE No Action ON UPDATE No Action;
+
+ALTER TABLE tao.user_data_source_connection ADD CONSTRAINT FK_user_data_source_connection_data_source
+	FOREIGN KEY (data_source_id) REFERENCES tao.data_source_component(id) ON DELETE No Action ON UPDATE No Action;
+
 
