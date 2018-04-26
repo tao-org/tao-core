@@ -38,6 +38,7 @@ public class WorkflowNodeDescriptor extends GraphObject {
     private float yCoord;
     private int level;
     private List<ComponentLink> incomingLinks;
+    private boolean preserveOutput;
 
     private WorkflowDescriptor workflow;
 
@@ -59,6 +60,9 @@ public class WorkflowNodeDescriptor extends GraphObject {
 
     public int getLevel() { return level; }
     public void setLevel(int level) { this.level = level; }
+
+    public boolean getPreserveOutput() { return preserveOutput; }
+    public void setPreserveOutput(boolean preserveOutput) { this.preserveOutput = preserveOutput; }
 
     @XmlElementWrapper(name = "incomingNodes")
     public List<ComponentLink> getIncomingLinks() { return incomingLinks; }

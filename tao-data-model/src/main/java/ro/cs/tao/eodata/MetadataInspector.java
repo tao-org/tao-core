@@ -16,11 +16,19 @@
 
 package ro.cs.tao.eodata;
 
+import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.eodata.enums.PixelType;
+import ro.cs.tao.eodata.enums.SensorType;
+import ro.cs.tao.utils.FileUtils;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 
 public interface MetadataInspector {
     Metadata getMetadata(Path productPath) throws IOException;
@@ -54,5 +62,28 @@ public interface MetadataInspector {
 
         public int getHeight() { return height; }
         public void setHeight(int height) { this.height = height; }
+
+        public EOProduct toProductDescriptor(Path productPath) throws URISyntaxException, IOException {
+            EOProduct product = new EOProduct();
+            String name = FileUtils.getFilenameWithoutExtension(productPath.toFile());
+            product.setAcquisitionDate(Date.from(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant()));
+            product.setId(name);
+            product.setName(name);
+            product.setProductType(this.productType);
+            product.setSensorType(SensorType.UNKNOWN);
+            product.setFormatType(DataFormat.RASTER);
+            product.setPixelType(this.pixelType);
+            product.setGeometry(this.footprint);
+            product.setCrs(this.crs);
+            product.setWidth(this.width);
+            product.setHeight(this.height);
+            URI productUri = productPath.toUri();
+            product.setLocation(productUri.toString());
+            product.setApproximateSize(Files.size(productPath));
+            if (this.entryPoint != null && !this.entryPoint.equals(productUri)) {
+                product.setEntryPoint(this.entryPoint.toString());
+            }
+            return product;
+        }
     }
 }

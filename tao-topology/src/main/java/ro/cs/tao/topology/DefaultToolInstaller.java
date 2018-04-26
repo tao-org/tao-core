@@ -273,7 +273,7 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
     private String getTaoWorkingDir() {
         Platform platform = Platform.getCurrentPlatform();
         String workingDirectory;
-        if(platform.getId() == Platform.ID.win) {
+        if(platform != null && platform.getId() == Platform.ID.win) {
             workingDirectory = System.getenv("AppData");
         } else {
             try {
@@ -287,7 +287,7 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
         File taoUserDirFile = new File(taoUserDir);
         if (!taoUserDirFile.exists()) {
             if (taoUserDirFile.mkdir()) {
-                System.out.println("TAO user working directory created :: " + taoUserDir);
+                logger.fine("TAO user working directory created :: " + taoUserDir);
             } else {
                 logger.severe("TAO user working directory cannot be created in " + taoUserDir);
             }
@@ -295,17 +295,14 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
         return taoUserDir;
     }
 
-    private static void copyFolder(File sourceFolder, File destinationFolder) throws IOException
-    {
+    private static void copyFolder(File sourceFolder, File destinationFolder) throws IOException {
         //Check if sourceFolder is a directory or file
         //If sourceFolder is file; then copy the file directly to new location
-        if (sourceFolder.isDirectory())
-        {
+        if (sourceFolder.isDirectory()) {
             //Verify if destinationFolder is already present; If not then create it
-            if (!destinationFolder.exists())
-            {
+            if (!destinationFolder.exists()) {
                 if (destinationFolder.mkdir()) {
-                    System.out.println("Destination directory created :: " + destinationFolder);
+                    logger.fine("Destination directory created :: " + destinationFolder);
                 } else {
                     logger.severe("TAO destination directory cannot be created in " + destinationFolder);
                 }
@@ -313,22 +310,17 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
 
             //Get all files from source directory
             String files[] = sourceFolder.list();
-
             //Iterate over all files and copy them to destinationFolder one by one
-            for (String file : files)
-            {
+            for (String file : files) {
                 File srcFile = new File(sourceFolder, file);
                 File destFile = new File(destinationFolder, file);
-
                 //Recursive function call
                 copyFolder(srcFile, destFile);
             }
-        }
-        else
-        {
+        } else {
             //Copy the file content from one place to another
             Files.copy(sourceFolder.toPath(), destinationFolder.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            System.out.println("File copied :: " + destinationFolder);
+            logger.fine("File copied :: " + destinationFolder);
         }
     }
 

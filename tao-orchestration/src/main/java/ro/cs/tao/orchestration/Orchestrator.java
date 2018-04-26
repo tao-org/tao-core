@@ -21,7 +21,6 @@ import ro.cs.tao.component.Variable;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.MetadataInspector;
 import ro.cs.tao.eodata.enums.DataFormat;
-import ro.cs.tao.eodata.enums.SensorType;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.messaging.Message;
@@ -33,21 +32,17 @@ import ro.cs.tao.orchestration.commands.TaskCommand;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.security.SystemPrincipal;
-import ro.cs.tao.serialization.MapAdapter;
 import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.serialization.StringListAdapter;
 import ro.cs.tao.spi.ServiceRegistryManager;
-import ro.cs.tao.utils.FileUtils;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
 
-import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -56,7 +51,6 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
@@ -77,8 +71,8 @@ public class Orchestrator extends Notifiable {
 
     private final Logger logger = Logger.getLogger(Orchestrator.class.getSimpleName());
     private PersistenceManager persistenceManager;
-    private TaskSelector groupTaskSelector;
-    private TaskSelector jobTaskSelector;
+    private TaskSelector<ExecutionGroup> groupTaskSelector;
+    private TaskSelector<ExecutionJob> jobTaskSelector;
     private JobFactory jobFactory;
     private MetadataInspector metadataInspector;
 
@@ -99,14 +93,18 @@ public class Orchestrator extends Notifiable {
         final BiFunction<Long, Long, ExecutionTask> taskByJobNodeProvider = this.persistenceManager::getTaskByJobAndNode;
         final BiFunction<Long, String, List<WorkflowNodeDescriptor>> nodesByComponentProvider = this.persistenceManager::getWorkflowNodesByComponentId;
         this.groupTaskSelector = selectors.stream()
-                .filter(s -> ExecutionGroup.class.equals(s.getTaskContainerClass())).findFirst()
-                .orElse(new DefaultGroupTaskSelector());
+                                          .filter(s -> ExecutionGroup.class.equals(s.getTaskContainerClass()))
+                                          .map(s -> (TaskSelector<ExecutionGroup>)s)
+                                          .findFirst()
+                                          .orElse(new DefaultGroupTaskSelector());
         this.groupTaskSelector.setWorkflowProvider(workflowProvider);
         this.groupTaskSelector.setTaskByNodeProvider(taskByGroupNodeProvider);
         this.groupTaskSelector.setNodesByComponentProvider(nodesByComponentProvider);
         this.jobTaskSelector = selectors.stream()
-                .filter(s -> ExecutionJob.class.equals(s.getTaskContainerClass())).findFirst()
-                .orElse(new DefaultJobTaskSelector());
+                                        .filter(s -> ExecutionJob.class.equals(s.getTaskContainerClass()))
+                                        .map(s -> (TaskSelector<ExecutionJob>)s)
+                                        .findFirst()
+                                        .orElse(new DefaultJobTaskSelector());
         this.jobTaskSelector.setWorkflowProvider(workflowProvider);
         this.jobTaskSelector.setTaskByNodeProvider(taskByJobNodeProvider);
         this.jobTaskSelector.setNodesByComponentProvider(nodesByComponentProvider);
@@ -117,7 +115,9 @@ public class Orchestrator extends Notifiable {
         if (services != null) {
             this.metadataInspector = services.stream().findFirst().get();
         }
-        new QueueMonitor().start();
+        QueueMonitor monitor = new QueueMonitor();
+        monitor.setName("orchestrator");
+        monitor.start();
     }
 
     /**
@@ -206,6 +206,7 @@ public class Orchestrator extends Notifiable {
                                       status.name()));
             statusChanged(task);
             if (status == ExecutionStatus.DONE) {
+                WorkflowNodeDescriptor taskNode = persistenceManager.getWorkflowNodeById(task.getWorkflowNodeId());
                 // For DataSourceExecutionTask, it is the executor that sets the outputs,
                 // hence we need to "confirm" here the outputs of a processing task.
                 if (task instanceof ProcessingExecutionTask) {
@@ -218,6 +219,13 @@ public class Orchestrator extends Notifiable {
                     targets.forEach(t -> {
                         String targetOuptut = pcTask.getInstanceTargetOuptut(t);
                         pcTask.setOutputParameterValue(t.getName(), targetOuptut);
+                        if (taskNode.getPreserveOutput()) {
+                            try {
+                                persistOutputProducts(pcTask);
+                            } catch (PersistenceException e) {
+                                logger.warning(e.getMessage());
+                            }
+                        }
                         if (lastFromGroup) {
                             groupTask.setOutputParameterValue(t.getName(), targetOuptut);
                         }
@@ -244,9 +252,8 @@ public class Orchestrator extends Notifiable {
                                     cardinality = new StringListAdapter().marshal(values.get(0).getValue()).size();
                                 }
                                 groupTask.setStateHandler(new LoopStateHandler(new LoopState(cardinality, 1)));
-                                this.groupStateHandlers.put(groupTask.getId(), groupTask.getStateHandler());
                                 // we need to keep this mapping because ExecutionTask.stateHandler is transient
-                                //this.groupStateHandlers.put(groupTask.getId(), handler);
+                                this.groupStateHandlers.put(groupTask.getId(), groupTask.getStateHandler());
                                 if (values != null && values.size() > 0) {
                                     Variable theOnlyValue = values.get(0);
                                     groupTask.setInputParameterValue(groupTask.getInputParameterValues().get(0).getKey(),
@@ -275,26 +282,8 @@ public class Orchestrator extends Notifiable {
                     ExecutionJob job = task.getJob();
                     job.setExecutionStatus(ExecutionStatus.DONE);
                     persistenceManager.updateExecutionJob(job);
-                    if (metadataInspector != null) {
-                        List<Variable> values = task.getOutputParameterValues();
-                        WorkflowNodeDescriptor node = persistenceManager.getWorkflowNodeById(task.getWorkflowNodeId());
-                        TaoComponent component;
-                        if (node instanceof WorkflowNodeGroupDescriptor) {
-                            component = persistenceManager.getGroupComponentById(node.getComponentId());
-                        } else {
-                            component = persistenceManager.getProcessingComponentById(node.getComponentId());
-                        }
-                        List<EOProduct> products = new ArrayList<>();
-                        for (Variable value : values) {
-                            products.addAll(createProducts(component, value));
-                        }
-                        products.forEach(p -> {
-                            try {
-                                persistenceManager.saveEOProduct(p);
-                            } catch (PersistenceException e) {
-                                logger.severe(e.getMessage());
-                            }
-                        });
+                    if (taskNode.getPreserveOutput()) {
+                        persistOutputProducts(task);
                     }
                     WorkflowDescriptor workflow = persistenceManager.getWorkflowDescriptor(job.getWorkflowId());
                     Duration time = null;
@@ -477,110 +466,81 @@ public class Orchestrator extends Notifiable {
     private List<ExecutionTask> findNextTasks(ExecutionTask task) {
         ExecutionGroup groupTask = task instanceof ExecutionGroup ? (ExecutionGroup) task : task.getGroupTask();
         ExecutionJob job = task.getJob();
-        return (groupTask != null) ? this.groupTaskSelector.chooseNext(groupTask, task) :
+        return groupTask != null ? this.groupTaskSelector.chooseNext(groupTask, task) :
                 this.jobTaskSelector.chooseNext(job, task);
+    }
+
+    private void persistOutputProducts(ExecutionTask task) throws PersistenceException {
+        if (metadataInspector != null) {
+            List<Variable> values = task.getOutputParameterValues();
+            WorkflowNodeDescriptor node = persistenceManager.getWorkflowNodeById(task.getWorkflowNodeId());
+            TaoComponent component;
+            if (node instanceof WorkflowNodeGroupDescriptor) {
+                component = persistenceManager.getGroupComponentById(node.getComponentId());
+            } else {
+                component = persistenceManager.getProcessingComponentById(node.getComponentId());
+            }
+            List<EOProduct> products = new ArrayList<>();
+            for (Variable value : values) {
+                products.addAll(createProducts(component, value));
+            }
+            products.forEach(p -> {
+                try {
+                    p.setUserName(SystemPrincipal.instance().getName());
+                    persistenceManager.saveEOProduct(p);
+                } catch (PersistenceException e) {
+                    logger.severe(e.getMessage());
+                }
+            });
+        }
     }
 
     private List<EOProduct> createProducts(TaoComponent component, Variable outParam) {
         List<EOProduct> products = new ArrayList<>();
         List<TargetDescriptor> targets = component.getTargets();
         String value = outParam.getValue();
+        TargetDescriptor descriptor = targets.stream()
+                .filter(t -> t.getName().equals(outParam.getKey()))
+                .findFirst()
+                .get();
         if (value != null) {
             try {
                 // first try to see if it's a list
                 List<String> list = new StringListAdapter().marshal(value);
                 for (String v : list) {
-                    TargetDescriptor descriptor = targets.stream()
-                                                         .filter(t -> t.getName().equals(outParam.getKey()))
-                                                         .findFirst()
-                                                         .get();
-                    if (descriptor.getDataDescriptor().getFormatType() == DataFormat.RASTER) {
-                        Path path = Paths.get(v);
-                        MetadataInspector.Metadata metadata = metadataInspector.getMetadata(path);
-                        if (metadata != null) {
-                            EOProduct product = new EOProduct();
-                            String name = FileUtils.getFilenameWithoutExtension(path.toFile());
-                            product.setAcquisitionDate(Date.from(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant()));
-                            product.setId(name);
-                            product.setName(name);
-                            product.setProductType(metadata.getProductType());
-                            product.setSensorType(SensorType.UNKNOWN);
-                            product.setFormatType(DataFormat.RASTER);
-                            product.setPixelType(metadata.getPixelType());
-                            product.setGeometry(metadata.getFootprint());
-                            product.setCrs(metadata.getCrs());
-                            product.setWidth(metadata.getWidth());
-                            product.setHeight(metadata.getHeight());
-                            product.setLocation(path.toUri().toString());
-                            URI entry = metadata.getEntryPoint();
-                            if (entry != null) {
-                                product.setEntryPoint(entry.toString());
-                            }
-                            products.add(product);
-                        }
-                    }
+                    products.add(createProduct(descriptor, v));
                 }
             } catch (Exception e) {
-                TargetDescriptor descriptor = targets.stream()
-                        .filter(t -> t.getName().equals(outParam.getKey()))
-                        .findFirst()
-                        .get();
-                try {
-                    if (descriptor.getDataDescriptor().getFormatType() == DataFormat.RASTER) {
-                        Path path = Paths.get(value);
-                        MetadataInspector.Metadata metadata = metadataInspector.getMetadata(path);
-                        if (metadata != null) {
-                            EOProduct product = new EOProduct();
-                            String name = FileUtils.getFilenameWithoutExtension(path.toFile());
-                            product.setAcquisitionDate(Date.from(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant()));
-                            product.setId(name);
-                            product.setName(name);
-                            product.setProductType(metadata.getProductType());
-                            product.setSensorType(SensorType.UNKNOWN);
-                            product.setFormatType(DataFormat.RASTER);
-                            product.setPixelType(metadata.getPixelType());
-                            product.setGeometry(metadata.getFootprint());
-                            product.setCrs(metadata.getCrs());
-                            product.setWidth(metadata.getWidth());
-                            product.setHeight(metadata.getHeight());
-                            product.setLocation(path.toUri().toString());
-                            URI entry = metadata.getEntryPoint();
-                            if (entry != null) {
-                                product.setEntryPoint(entry.toString());
-                            }
-                            products.add(product);
-                        }
-                    }
-                } catch (Exception e2) {
-                    logger.severe(e2.getMessage());
-                }
+                products.add(createProduct(descriptor, value));
             }
         }
         return products;
     }
 
-    private List<Variable> deserializeResults(String jsonValue) {
-        List<Variable> pairs = null;
+    private EOProduct createProduct(TargetDescriptor descriptor, String outValue) {
+        EOProduct product = null;
         try {
-            MapAdapter mapAdapter = new MapAdapter();
-            Map<String, String> map = mapAdapter.marshal(jsonValue);
-            if (map != null) {
-                pairs = map.entrySet().stream().map(e -> new Variable(e.getKey(), e.getValue())).collect(Collectors.toList());
+            if (descriptor.getDataDescriptor().getFormatType() == DataFormat.RASTER) {
+                Path path = Paths.get(outValue);
+                MetadataInspector.Metadata metadata = metadataInspector.getMetadata(path);
+                if (metadata != null) {
+                    product = metadata.toProductDescriptor(path);
+                }
             }
-        } catch (Exception e) {
-            logger.severe("Serialization of results failed: " + e.getMessage());
+        } catch (Exception e2) {
+            logger.severe(e2.getMessage());
         }
-        return pairs;
+        return product;
     }
 
     private class QueueMonitor extends Thread {
-
         @Override
         public void run() {
+            //noinspection InfiniteLoopStatement
             while (true) {
                 try {
                     processMessage(queue.take());
-                } catch (Exception e) {
+                } catch (InterruptedException e) {
                     logger.severe(e.getMessage());
                 }
             }

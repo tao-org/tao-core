@@ -42,6 +42,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Properties;
 import java.util.Set;
+import java.util.logging.Logger;
 
 
 /**
@@ -171,7 +172,7 @@ public abstract class SessionFactory {
         try {
             if (className != null && ! className.equals("")) {
                 factory = (SessionFactory)Class.forName(className).newInstance();
-                System.out.println("Class "+className+" is loaded");
+                Logger.getLogger(SessionFactory.class.getName()).info("Class " + className + " is loaded");
             } else {
                 final ServiceRegistry<SessionFactory> registry =
                         ServiceRegistryManager.getInstance().getServiceRegistry(SessionFactory.class);
