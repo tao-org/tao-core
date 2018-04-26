@@ -30,7 +30,9 @@ public enum SensorType {
     @XmlEnumValue("3")
     ALTIMETRIC(3),
     @XmlEnumValue("4")
-    ATMOSPHERIC(4);
+    ATMOSPHERIC(4),
+    @XmlEnumValue("5")
+    UNKNOWN(5);
 
     /**
      * Numerical value for enum constants

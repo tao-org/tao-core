@@ -111,6 +111,8 @@ INSERT INTO tao.sensor_type (type) VALUES ('ALTIMETRIC');
 
 INSERT INTO tao.sensor_type (type) VALUES ('ATMOSPHERIC');
 
+INSERT INTO tao.sensor_type (type) VALUES ('UNKNOWN');
+
 
 -- Service status
 
