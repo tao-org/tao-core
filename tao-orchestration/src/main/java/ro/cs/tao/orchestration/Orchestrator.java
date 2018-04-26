@@ -15,8 +15,13 @@
  */
 package ro.cs.tao.orchestration;
 
+import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.component.Variable;
+import ro.cs.tao.eodata.EOProduct;
+import ro.cs.tao.eodata.MetadataInspector;
+import ro.cs.tao.eodata.enums.DataFormat;
+import ro.cs.tao.eodata.enums.SensorType;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.messaging.Message;
@@ -32,14 +37,22 @@ import ro.cs.tao.serialization.MapAdapter;
 import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.serialization.StringListAdapter;
 import ro.cs.tao.spi.ServiceRegistryManager;
+import ro.cs.tao.utils.FileUtils;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
+import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
 
+import java.net.URI;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.logging.Logger;
@@ -54,6 +67,7 @@ public class Orchestrator extends Notifiable {
     private static final Orchestrator instance;
     private final ExecutorService backgroundWorker;
     private final Map<Long, InternalStateHandler> groupStateHandlers;
+    private final BlockingQueue<Message> queue;
 
     static {
         instance = new Orchestrator();
@@ -66,10 +80,12 @@ public class Orchestrator extends Notifiable {
     private TaskSelector groupTaskSelector;
     private TaskSelector jobTaskSelector;
     private JobFactory jobFactory;
+    private MetadataInspector metadataInspector;
 
     private Orchestrator() {
         this.backgroundWorker = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         this.groupStateHandlers = new HashMap<>();
+        this.queue = new LinkedBlockingDeque<>();
         subscribe(Topics.TASK_STATUS_CHANGED);
     }
 
@@ -95,6 +111,13 @@ public class Orchestrator extends Notifiable {
         this.jobTaskSelector.setTaskByNodeProvider(taskByJobNodeProvider);
         this.jobTaskSelector.setNodesByComponentProvider(nodesByComponentProvider);
         this.jobFactory = new JobFactory(this.persistenceManager);
+        Set<MetadataInspector> services = ServiceRegistryManager.getInstance()
+                                                                .getServiceRegistry(MetadataInspector.class)
+                                                                .getServices();
+        if (services != null) {
+            this.metadataInspector = services.stream().findFirst().get();
+        }
+        new QueueMonitor().start();
     }
 
     /**
@@ -162,6 +185,14 @@ public class Orchestrator extends Notifiable {
     @Override
     protected void onMessageReceived(Message message) {
         try {
+            queue.put(message);
+        } catch (InterruptedException e) {
+            logger.severe(e.getMessage());
+        }
+    }
+
+    private void processMessage(Message message) {
+        try {
             String taskId = message.getItem(Message.SOURCE_KEY);
             ExecutionStatus status = ExecutionStatus.getEnumConstantByValue(Integer.parseInt(message.getItem(Message.PAYLOAD_KEY)));
             if (status == null) {
@@ -170,9 +201,9 @@ public class Orchestrator extends Notifiable {
             }
             ExecutionTask task = persistenceManager.getTaskById(Long.parseLong(taskId));
             logger.fine(String.format("Status change for task %s [node %s]: %s",
-                                             taskId,
-                                             task.getWorkflowNodeId(),
-                                             status.name()));
+                                      taskId,
+                                      task.getWorkflowNodeId(),
+                                      status.name()));
             statusChanged(task);
             if (status == ExecutionStatus.DONE) {
                 // For DataSourceExecutionTask, it is the executor that sets the outputs,
@@ -226,7 +257,7 @@ public class Orchestrator extends Notifiable {
                             logger.fine(String.format("Task %s about to start.", nextTask.getId()));
                             nextTask.getInputParameterValues().forEach(
                                     v -> logger.fine(String.format("Input: %s=%s", v.getKey(), v.getValue()))
-                            );
+                                                                      );
                             ExecutionGroup parentGroupTask = nextTask.getGroupTask();
                             if (parentGroupTask != null) {
                                 String state = parentGroupTask.getInternalState();
@@ -244,16 +275,37 @@ public class Orchestrator extends Notifiable {
                     ExecutionJob job = task.getJob();
                     job.setExecutionStatus(ExecutionStatus.DONE);
                     persistenceManager.updateExecutionJob(job);
+                    if (metadataInspector != null) {
+                        List<Variable> values = task.getOutputParameterValues();
+                        WorkflowNodeDescriptor node = persistenceManager.getWorkflowNodeById(task.getWorkflowNodeId());
+                        TaoComponent component;
+                        if (node instanceof WorkflowNodeGroupDescriptor) {
+                            component = persistenceManager.getGroupComponentById(node.getComponentId());
+                        } else {
+                            component = persistenceManager.getProcessingComponentById(node.getComponentId());
+                        }
+                        List<EOProduct> products = new ArrayList<>();
+                        for (Variable value : values) {
+                            products.addAll(createProducts(component, value));
+                        }
+                        products.forEach(p -> {
+                            try {
+                                persistenceManager.saveEOProduct(p);
+                            } catch (PersistenceException e) {
+                                logger.severe(e.getMessage());
+                            }
+                        });
+                    }
                     WorkflowDescriptor workflow = persistenceManager.getWorkflowDescriptor(job.getWorkflowId());
                     Duration time = null;
                     if (job.getStartTime() != null && job.getEndTime() != null) {
                         time = Duration.between(job.getStartTime(), job.getEndTime());
                     }
                     String msg = String.format("Job [%s] for workflow [%s]" +
-                                    (job.getExecutionStatus() == ExecutionStatus.DONE ?
-                                            " completed in %ss" :
-                                            " failed after %ss"),
-                            job.getId(), workflow.getName(), time != null ? time.getSeconds() : "<unknown>");
+                                                       (job.getExecutionStatus() == ExecutionStatus.DONE ?
+                                                               " completed in %ss" :
+                                                               " failed after %ss"),
+                                               job.getId(), workflow.getName(), time != null ? time.getSeconds() : "<unknown>");
                     Messaging.send(SystemPrincipal.instance(), Topics.INFORMATION, this, msg);
                 }
             }
@@ -429,6 +481,84 @@ public class Orchestrator extends Notifiable {
                 this.jobTaskSelector.chooseNext(job, task);
     }
 
+    private List<EOProduct> createProducts(TaoComponent component, Variable outParam) {
+        List<EOProduct> products = new ArrayList<>();
+        List<TargetDescriptor> targets = component.getTargets();
+        String value = outParam.getValue();
+        if (value != null) {
+            try {
+                // first try to see if it's a list
+                List<String> list = new StringListAdapter().marshal(value);
+                for (String v : list) {
+                    TargetDescriptor descriptor = targets.stream()
+                                                         .filter(t -> t.getName().equals(outParam.getKey()))
+                                                         .findFirst()
+                                                         .get();
+                    if (descriptor.getDataDescriptor().getFormatType() == DataFormat.RASTER) {
+                        Path path = Paths.get(v);
+                        MetadataInspector.Metadata metadata = metadataInspector.getMetadata(path);
+                        if (metadata != null) {
+                            EOProduct product = new EOProduct();
+                            String name = FileUtils.getFilenameWithoutExtension(path.toFile());
+                            product.setAcquisitionDate(Date.from(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant()));
+                            product.setId(name);
+                            product.setName(name);
+                            product.setProductType(metadata.getProductType());
+                            product.setSensorType(SensorType.UNKNOWN);
+                            product.setFormatType(DataFormat.RASTER);
+                            product.setPixelType(metadata.getPixelType());
+                            product.setGeometry(metadata.getFootprint());
+                            product.setCrs(metadata.getCrs());
+                            product.setWidth(metadata.getWidth());
+                            product.setHeight(metadata.getHeight());
+                            product.setLocation(path.toUri().toString());
+                            URI entry = metadata.getEntryPoint();
+                            if (entry != null) {
+                                product.setEntryPoint(entry.toString());
+                            }
+                            products.add(product);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                TargetDescriptor descriptor = targets.stream()
+                        .filter(t -> t.getName().equals(outParam.getKey()))
+                        .findFirst()
+                        .get();
+                try {
+                    if (descriptor.getDataDescriptor().getFormatType() == DataFormat.RASTER) {
+                        Path path = Paths.get(value);
+                        MetadataInspector.Metadata metadata = metadataInspector.getMetadata(path);
+                        if (metadata != null) {
+                            EOProduct product = new EOProduct();
+                            String name = FileUtils.getFilenameWithoutExtension(path.toFile());
+                            product.setAcquisitionDate(Date.from(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant()));
+                            product.setId(name);
+                            product.setName(name);
+                            product.setProductType(metadata.getProductType());
+                            product.setSensorType(SensorType.UNKNOWN);
+                            product.setFormatType(DataFormat.RASTER);
+                            product.setPixelType(metadata.getPixelType());
+                            product.setGeometry(metadata.getFootprint());
+                            product.setCrs(metadata.getCrs());
+                            product.setWidth(metadata.getWidth());
+                            product.setHeight(metadata.getHeight());
+                            product.setLocation(path.toUri().toString());
+                            URI entry = metadata.getEntryPoint();
+                            if (entry != null) {
+                                product.setEntryPoint(entry.toString());
+                            }
+                            products.add(product);
+                        }
+                    }
+                } catch (Exception e2) {
+                    logger.severe(e2.getMessage());
+                }
+            }
+        }
+        return products;
+    }
+
     private List<Variable> deserializeResults(String jsonValue) {
         List<Variable> pairs = null;
         try {
@@ -441,5 +571,19 @@ public class Orchestrator extends Notifiable {
             logger.severe("Serialization of results failed: " + e.getMessage());
         }
         return pairs;
+    }
+
+    private class QueueMonitor extends Thread {
+
+        @Override
+        public void run() {
+            while (true) {
+                try {
+                    processMessage(queue.take());
+                } catch (Exception e) {
+                    logger.severe(e.getMessage());
+                }
+            }
+        }
     }
 }
