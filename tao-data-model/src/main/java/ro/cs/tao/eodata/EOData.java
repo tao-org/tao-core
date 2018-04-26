@@ -35,6 +35,7 @@ public abstract class EOData implements Serializable {
 
     private String id;
     private String name;
+    private String userName;
     private DataFormat formatType;
     private Geometry geometry;
     private List<Attribute> attributes;
@@ -45,7 +46,6 @@ public abstract class EOData implements Serializable {
     public String getId() {
         return id;
     }
-
     public void setId(String id) {
         this.id = id;
     }
@@ -53,13 +53,14 @@ public abstract class EOData implements Serializable {
     public String getName() {
         return name;
     }
-
     public void setName(String name) {
         this.name = name;
     }
 
-    public DataFormat getFormatType() { return formatType; }
+    public String getUserName() { return userName; }
+    public void setUserName(String userName) { this.userName = userName; }
 
+    public DataFormat getFormatType() { return formatType; }
     public void setFormatType(DataFormat type) { this.formatType = type; }
 
     public String getGeometry() {
@@ -69,7 +70,6 @@ public abstract class EOData implements Serializable {
             return null;
         }
     }
-
     public void setGeometry(String geometryAsText) {
         try {
             this.geometry = new GeometryAdapter().marshal(geometryAsText);

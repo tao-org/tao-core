@@ -28,19 +28,19 @@ import ro.cs.tao.execution.model.DataSourceExecutionTask;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.Query;
 import ro.cs.tao.serialization.StringListAdapter;
+import ro.cs.tao.utils.executors.NamedThreadPoolExecutor;
 
 import java.net.InetAddress;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 public class QueryExecutor extends Executor<DataSourceExecutionTask> {
 
-    private ExecutorService backgroundWorker = Executors.newSingleThreadExecutor();
+    private ExecutorService backgroundWorker = new NamedThreadPoolExecutor("query-thread", 1);//Executors.newSingleThreadExecutor();
     private DataSourceComponent dataSourceComponent;
     @Override
     public boolean supports(TaoComponent component) { return component instanceof DataSourceComponent; }

@@ -41,7 +41,7 @@ public abstract class Executor<T extends ExecutionTask> extends Identifiable {
     protected Boolean isInitialized = false;
     protected final PersistenceManager persistenceManager = SpringContextBridge.services().getPersistenceManager();
     protected final Logger logger = Logger.getLogger(getClass().getName());
-    private final Timer executionsCheckTimer = new Timer();
+    private final Timer executionsCheckTimer = new Timer("exec-monitor");
 
     public Executor() {
         super();

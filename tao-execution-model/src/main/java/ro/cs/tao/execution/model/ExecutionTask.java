@@ -37,6 +37,7 @@ public abstract class ExecutionTask implements StatusChangeListener {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     protected String internalState;
+    private String log;
     private ExecutionJob job;
     private ExecutionStatus executionStatus = ExecutionStatus.UNDETERMINED;
     List<Variable> inputParameterValues;
@@ -73,6 +74,9 @@ public abstract class ExecutionTask implements StatusChangeListener {
     public ExecutionStatus getExecutionStatus() {
         return executionStatus;
     }
+
+    public String getLog() { return log; }
+    public void setLog(String log) { this.log = log; }
 
     public void setStateHandler(InternalStateHandler handler) {
         this.stateHandler = handler;

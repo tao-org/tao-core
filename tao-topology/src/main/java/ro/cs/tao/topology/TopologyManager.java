@@ -38,7 +38,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
@@ -63,7 +62,7 @@ public class TopologyManager implements ITopologyManager {
     private TopologyManager() {
         this.logger = Logger.getLogger(TopologyManager.class.getName());
         this.persistenceManager = LazyInitialize.using(() -> SpringContextBridge.services().getPersistenceManager());
-        this.executorService = Executors.newSingleThreadExecutor();
+        this.executorService = new NamedThreadPoolExecutor("topology-thread", 1);//Executors.newSingleThreadExecutor();
         // initialize the hostname and ip address in the master node description
         initMasterNodeDescription();
 

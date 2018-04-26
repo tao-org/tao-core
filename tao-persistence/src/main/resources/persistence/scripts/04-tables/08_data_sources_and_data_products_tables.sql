@@ -102,7 +102,7 @@ CREATE TABLE tao.raster_data_product
 	width integer NOT NULL,
 	height integer NOT NULL,
 	approximate_size bigint NOT NULL,
-	user_id integer NULL,
+	username varchar NULL,
 --	data_source_id integer NULL,
 	created timestamp NULL DEFAULT now(),
 	modified timestamp NULL
@@ -137,7 +137,7 @@ CREATE TABLE tao.vector_data_product
 	coordinate_reference_system text NULL,
 	location varchar NOT NULL,
 	entry_point varchar NULL,
-	user_id integer NULL,
+	username varchar NULL,
 --	data_source_id integer NULL,
 	created timestamp NULL DEFAULT now(),
 	modified timestamp NULL

@@ -20,9 +20,6 @@ import ro.cs.tao.security.SystemPrincipal;
 
 import java.security.Principal;
 
-//import java.util.concurrent.ExecutorService;
-//import java.util.concurrent.Executors;
-
 /**
  * @author Cosmin Cara
  */
@@ -34,7 +31,6 @@ public class ProgressNotifier implements ProgressListener {
     private static final String TASK_PROGRESS = "%s: %s";
     private static final String SUBTASK_PROGRESS = "[%s: %s] - %s: %s";
 
-//    private final ExecutorService worker;
     private final String topic;
     private final Object owner;
     private final Principal principal;
@@ -50,7 +46,6 @@ public class ProgressNotifier implements ProgressListener {
         this.owner = source;
         this.topic = topic;
         this.principal = principal;
-//        this.worker = Executors.newSingleThreadExecutor();
     }
 
     @Override
@@ -121,7 +116,6 @@ public class ProgressNotifier implements ProgressListener {
     }
 
     private void sendMessage(String messageTemplate, Object...args) {
-        //this.worker.submit(() -> DefaultMessageBus.send(1, this.topic, this.owner, String.format(messageTemplate, args)));
         Messaging.send(this.principal, this.topic, this.owner, String.format(messageTemplate, args));
     }
 }

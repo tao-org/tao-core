@@ -23,6 +23,9 @@
             <basic name="name">
                 <column name="name" nullable="false" column-definition="varchar(250) not null"/>
             </basic>
+            <basic name="userName">
+                <column name="username" nullable="true" column-definition="varchar NULL"/>
+            </basic>
             <basic name="formatType">
                 <column name="type_id" nullable="false" column-definition="integer not null"/>
                 <convert converter="ro.cs.tao.persistence.convert.DataFormatConverter" attribute-name="formatType" />
@@ -544,6 +547,9 @@
             <basic name="level">
                 <column name="execution_level" nullable="false" column-definition="integer NOT NULL"/>
             </basic>
+            <basic name="log">
+                <column name="execution_log" nullable="true" column-definition="varchar NULL"/>
+            </basic>
 
             <many-to-one name="job" fetch="LAZY">
                 <join-column name="job_id" nullable="true"/>
@@ -564,9 +570,9 @@
                     <join-column name="task_id" referenced-column-name="id" />
                 </collection-table>
             </element-collection>
-
+    
             <transient name="stateHandler" />
-
+            
         </attributes>
     </entity>
 
@@ -733,6 +739,9 @@
             <basic name="level">
                 <column name="node_level" nullable="false" column-definition="integer NOT NULL"/>
             </basic>
+            <basic name="preserveOutput">
+                <column name="preserve_output" nullable="true" column-definition="boolean NULL DEFAULT true"/>
+            </basic>
             <many-to-one name="workflow" fetch="LAZY">
                 <join-column name="workflow_id" referenced-column-name="id" nullable="false"/>
             </many-to-one>
@@ -809,7 +818,7 @@
 
         </attributes>
     </entity>
-
+    
     <entity class="ro.cs.tao.execution.model.Query" access="PROPERTY">
         <table name="tao.query"/>
         <convert converter="ro.cs.tao.persistence.convert.QueryValuesMapConverter" attribute-name="values"/>
@@ -959,7 +968,7 @@
         </attributes>
     </embeddable>
 
-
+    
     <embeddable class="ro.cs.tao.component.ComponentLink" access="PROPERTY">
         <attributes>
             <basic name="sourceNodeId" fetch="LAZY">
@@ -978,10 +987,10 @@
                 </cascade>
             </many-to-one>
             <!--<many-to-one name="sourceNodeId" fetch="LAZY">-->
-            <!--<join-column name="source_graph_node_id" nullable="false"/>-->
-            <!--<cascade>-->
-            <!--<cascade-all/>-->
-            <!--</cascade>-->
+                <!--<join-column name="source_graph_node_id" nullable="false"/>-->
+                <!--<cascade>-->
+                    <!--<cascade-all/>-->
+                <!--</cascade>-->
             <!--</many-to-one>-->
         </attributes>
     </embeddable>

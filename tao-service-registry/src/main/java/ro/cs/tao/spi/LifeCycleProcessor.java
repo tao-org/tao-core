@@ -16,11 +16,11 @@
 package ro.cs.tao.spi;
 
 import ro.cs.tao.lifecycle.ComponentLifeCycle;
+import ro.cs.tao.utils.executors.NamedThreadPoolExecutor;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * This class is responsible with the invocation of (possible) component activator invocations.
@@ -34,7 +34,7 @@ public class LifeCycleProcessor {
 
     static {
         detectedComponents = new ArrayList<>();
-        executor = Executors.newSingleThreadExecutor();
+        executor = new NamedThreadPoolExecutor("lifecycle-thread", 1);//Executors.newSingleThreadExecutor();
         Runtime.getRuntime().addShutdownHook(new Thread(LifeCycleProcessor::onShutdown));
     }
 

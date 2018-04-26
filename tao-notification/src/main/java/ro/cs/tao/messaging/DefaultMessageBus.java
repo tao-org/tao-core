@@ -19,11 +19,11 @@ import reactor.Environment;
 import reactor.bus.Event;
 import reactor.bus.EventBus;
 import reactor.core.config.DispatcherType;
+import ro.cs.tao.utils.executors.NamedThreadPoolExecutor;
 
 import java.security.Principal;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -54,7 +54,7 @@ public class DefaultMessageBus implements ro.cs.tao.messaging.EventBus<Event<Mes
         this.topics = new HashSet<>();
         this.patternSubscribers = new HashMap<>();
         this.matchedTopics = new HashSet<>();
-        this.executorService = Executors.newSingleThreadExecutor();
+        this.executorService = new NamedThreadPoolExecutor("messaging-thread", 1);//Executors.newSingleThreadExecutor();
         this.logger = Logger.getLogger(DefaultMessageBus.class.getName());
     }
 
