@@ -17,11 +17,14 @@ package ro.cs.tao.services.interfaces;
 
 import ro.cs.tao.docker.Container;
 
+import java.util.List;
+
 /**
  * @author Cosmin Cara
  */
 public interface ContainerService extends CRUDService<Container> {
 
-    Container initOTB(String path);
-    Container initSNAP(String path);
+    Container initOTB(String name, String path);
+    Container initSNAP(String name, String path);
+    Container initializeContainer(String name, String path, List<String> applicationNames);
 }
