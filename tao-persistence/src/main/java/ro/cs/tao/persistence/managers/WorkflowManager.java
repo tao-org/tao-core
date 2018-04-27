@@ -138,18 +138,16 @@ public class WorkflowManager {
             throw new PersistenceException("Invalid parameters were provided for adding new workflow node !");
         }
 
-        //node.setWorkflow(workflow);
+        node.setWorkflow(workflow);
 
         // save the new WorkflowNodeDescriptor entity
-        //final WorkflowNodeDescriptor savedWorkflowNodeDescriptor =  workflowNodeDescriptorRepository.save(node);
+        final WorkflowNodeDescriptor savedWorkflowNodeDescriptor =  workflowNodeDescriptorRepository.save(node);
 
         // add the node to workflow nodes collection
-        //workflow.addNode(savedWorkflowNodeDescriptor);
-        workflow.addNode(node);
+        workflow.addNode(savedWorkflowNodeDescriptor);
+        //workflow.addNode(node);
         workflowDescriptorRepository.save(workflow);
-
-        //return savedWorkflowNodeDescriptor;
-        return node;
+        return savedWorkflowNodeDescriptor;
     }
 
     @Transactional
@@ -169,7 +167,13 @@ public class WorkflowManager {
         // save the updated entity
         return workflowNodeDescriptorRepository.save(node);
     }
-    //endregion
+
+    @Transactional
+    public void delete(WorkflowNodeDescriptor nodeDescriptor) {
+        workflowNodeDescriptorRepository.delete(nodeDescriptor);
+    }
+
+//endregion
 
 
 
@@ -182,20 +186,19 @@ public class WorkflowManager {
     }
 
     private boolean checkWorkflowNodeDescriptor(WorkflowNodeDescriptor nodeDescriptor, boolean existingEntity) {
-        return nodeDescriptor != null && !(existingEntity && nodeDescriptor.getId() == null) &&
-                !(!existingEntity && nodeDescriptor.getId() != null) &&
-                !(existingEntity && (nodeDescriptor.getComponentId() == null || nodeDescriptor.getComponentId().isEmpty()));
+        return nodeDescriptor != null &&
+                ((existingEntity && nodeDescriptor.getId() != null) || (!existingEntity && nodeDescriptor.getId() == null)) &&
+                nodeDescriptor.getComponentId() != null && !nodeDescriptor.getComponentId().isEmpty();
     }
 
     private boolean checkWorkflowNodesDescriptors(List<WorkflowNodeDescriptor> nodesDescriptors , boolean existingEntity) {
         return nodesDescriptors != null &&
-                nodesDescriptors.stream().allMatch(n -> checkWorkflowNodeDescriptor(n, existingEntity));
+                nodesDescriptors.stream().allMatch(n -> checkWorkflowNodeDescriptor(n, n.getId() != null));
     }
 
     private boolean checkWorkflowDescriptor(WorkflowDescriptor workflow, boolean existingEntity) {
         return workflow != null &&
-                (existingEntity || workflow.getId() == null) &&
-                (!existingEntity || workflow.getId() != null) &&
+                ((!existingEntity && workflow.getId() == null) || (existingEntity && workflow.getId() != null)) &&
                 workflow.getName() != null && workflow.getStatus() != null && workflow.getVisibility() != null &&
                 (workflow.getNodes() == null || checkWorkflowNodesDescriptors(workflow.getNodes(), existingEntity));
 

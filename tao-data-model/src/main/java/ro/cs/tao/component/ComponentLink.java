@@ -59,7 +59,6 @@ public class ComponentLink {
     public SourceDescriptor getOutput() {
         return this.output;
     }
-
     public void setOutput(SourceDescriptor output) {
         this.output = output;
     }
@@ -70,7 +69,6 @@ public class ComponentLink {
     public TargetDescriptor getInput() {
         return this.input;
     }
-
     public void setInput(TargetDescriptor input) {
         this.input = input;
     }
@@ -78,8 +76,27 @@ public class ComponentLink {
     public Long getSourceNodeId() {
         return sourceNodeId;
     }
-
     public void setSourceNodeId(Long sourceNodeId) {
         this.sourceNodeId = sourceNodeId;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof ComponentLink)) {
+            return false;
+        }
+        ComponentLink other = (ComponentLink) obj;
+        if (this == other) {
+            return true;
+        }
+        if ((this.input != null && other.input == null) || (this.input == null && other.input != null) ||
+                (this.output != null && other.output == null) || (this.output == null && other.output != null) ||
+                (this.sourceNodeId != null && other.sourceNodeId == null) ||
+                (this.sourceNodeId == null && other.sourceNodeId != null)) {
+            return false;
+        }
+        return this.sourceNodeId.equals(other.sourceNodeId) &&
+                (this.input.getId() != null && this.input.getId().equals(other.input.getId())) &&
+                (this.output.getId() != null && this.output.getId().equals(other.output.getId()));
     }
 }

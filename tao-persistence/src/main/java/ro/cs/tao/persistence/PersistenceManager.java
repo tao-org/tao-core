@@ -236,7 +236,12 @@ public class PersistenceManager implements MessagePersister {
     public WorkflowNodeDescriptor updateWorkflowNodeDescriptor(WorkflowNodeDescriptor node) throws PersistenceException {
         return workflowManager.updateWorkflowNodeDescriptor(node);
     }
-    //endregion
+
+    public void delete(WorkflowNodeDescriptor nodeDescriptor) {
+        workflowManager.delete(nodeDescriptor);
+    }
+
+//endregion
 
     //region ExecutionJob, ExecutionTask and ExecutionGroup
     public List<ExecutionJob> getAllJobs() {
