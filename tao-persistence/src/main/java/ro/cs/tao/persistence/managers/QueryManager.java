@@ -43,6 +43,10 @@ public class QueryManager {
     @Autowired
     private QueryRepository queryRepository;
 
+    public Query findById(long id) {
+        return queryRepository.findById(id);
+    }
+
     public Query findByUserIdAndSensorAndDataSourceAndWorkflowNodeId(String userId, String sensor, String dataSource, long nodeId) {
         return queryRepository.findByUserIdAndSensorAndDataSourceAndWorkflowNodeId(userId, sensor, dataSource, nodeId);
     }
