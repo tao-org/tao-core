@@ -314,6 +314,10 @@ public class PersistenceManager implements MessagePersister {
     //endregion
 
     //region Query
+    public Query findQueryById(long id) {
+        return queryManager.findById(id);
+    }
+
     public Query getQuery(String userId, String sensor, String dataSource, long workflowNodeId) {
         return queryManager.findByUserIdAndSensorAndDataSourceAndWorkflowNodeId(userId, sensor, dataSource, workflowNodeId);
     }

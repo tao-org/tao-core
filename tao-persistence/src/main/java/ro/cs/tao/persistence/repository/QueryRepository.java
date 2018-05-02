@@ -19,6 +19,8 @@ import java.util.List;
 @Transactional
 public interface QueryRepository extends PagingAndSortingRepository<Query, String> {
 
+    Query findById(long id);
+
     Query findByUserIdAndSensorAndDataSourceAndWorkflowNodeId(String userId, String sensor, String dataSource, long nodeId);
 
     List<Query> findByUserIdAndSensorAndDataSource(String userId, String sensor, String dataSource);
