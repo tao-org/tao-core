@@ -21,6 +21,7 @@ import ro.cs.tao.component.Variable;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.MetadataInspector;
 import ro.cs.tao.eodata.enums.DataFormat;
+import ro.cs.tao.execution.EODataHandlerManager;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.messaging.Message;
@@ -484,14 +485,15 @@ public class Orchestrator extends Notifiable {
             for (Variable value : values) {
                 products.addAll(createProducts(component, value));
             }
-            products.forEach(p -> {
+            /*products.forEach(p -> {
                 try {
                     p.setUserName(SystemPrincipal.instance().getName());
                     persistenceManager.saveEOProduct(p);
                 } catch (PersistenceException e) {
                     logger.severe(e.getMessage());
                 }
-            });
+            });*/
+            EODataHandlerManager.getInstance().applyHandlers(products);
         }
     }
 
@@ -525,6 +527,7 @@ public class Orchestrator extends Notifiable {
                 MetadataInspector.Metadata metadata = metadataInspector.getMetadata(path);
                 if (metadata != null) {
                     product = metadata.toProductDescriptor(path);
+                    product.setUserName(SystemPrincipal.instance().getName());
                 }
             }
         } catch (Exception e2) {

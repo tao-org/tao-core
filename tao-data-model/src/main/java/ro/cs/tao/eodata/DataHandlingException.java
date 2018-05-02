@@ -13,21 +13,24 @@
  * You should have received a copy of the GNU General Public License along
  * with this program; if not, see http://www.gnu.org/licenses/
  */
-package ro.cs.tao.services.interfaces;
 
-import ro.cs.tao.services.model.geostormcatalog.Resource;
+package ro.cs.tao.eodata;
 
-/**
- * Client for managing Geostorm services requests
- *
- * @author Oana H.
- */
-public interface GeostormService {
+import ro.cs.tao.BaseException;
 
-    /**
-     * Add a EO product resource into Geostorm database
-     * @param resource - the EO product to be saved into Geostorm
-     * @return
-     */
-    String addResource(Resource resource);
+public class DataHandlingException extends BaseException {
+    public DataHandlingException() {
+    }
+
+    public DataHandlingException(String message) {
+        super(message);
+    }
+
+    public DataHandlingException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public DataHandlingException(Throwable cause) {
+        super(cause);
+    }
 }
