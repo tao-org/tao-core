@@ -22,6 +22,7 @@ import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.datasource.DataQuery;
 import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.eodata.EOProduct;
+import ro.cs.tao.execution.EODataHandlerManager;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.Executor;
 import ro.cs.tao.execution.model.DataSourceExecutionTask;
@@ -116,14 +117,15 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> {
     }
 
     private void persistResults(List<EOProduct> results) {
-        for (EOProduct product : results) {
+        /*for (EOProduct product : results) {
             try {
                 persistenceManager.saveEOProduct(product);
             } catch (Exception e) {
                 logger.severe(String.format("Product %s could not be written to database: %s",
                                             product.getName(), e.getMessage()));
             }
-        }
+        }*/
+        EODataHandlerManager.getInstance().applyHandlers(results);
     }
 
     private String serializeResults(List<EOProduct> results) {

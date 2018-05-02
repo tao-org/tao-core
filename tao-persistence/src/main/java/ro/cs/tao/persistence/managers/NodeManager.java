@@ -68,9 +68,9 @@ public class NodeManager {
 
         // retrieve NodeDescription after its host name
         final NodeDescription nodeEnt = nodeRepository.findByHostName(hostName);
-        if (nodeEnt == null) {
+        /*if (nodeEnt == null) {
             throw new PersistenceException("There is no execution node with the specified host name: " + hostName);
-        }
+        }*/
 
         return nodeEnt;
     }
