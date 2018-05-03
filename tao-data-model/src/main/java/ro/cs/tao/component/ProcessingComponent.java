@@ -15,6 +15,9 @@
  */
 package ro.cs.tao.component;
 
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import ro.cs.tao.component.enums.ProcessingComponentVisibility;
 import ro.cs.tao.component.template.BasicTemplate;
 import ro.cs.tao.component.template.Template;
@@ -68,6 +71,7 @@ public class ProcessingComponent extends TaoComponent {
         this.fileLocation = fileLocation;
     }
 
+    @JsonIgnore
     public String getExpandedFileLocation() {
         return expandedFileLocation;
     }
@@ -84,10 +88,12 @@ public class ProcessingComponent extends TaoComponent {
         this.workingDirectory = workingDirectory;
     }
 
+    @JsonIgnore
     public Template getTemplate() {
         return template;
     }
 
+    @JsonIgnore
     public void setTemplate(Template template) throws TemplateException {
         if (template != null) {
             if (!getTemplateType().equals(template.getTemplateType())) {
@@ -152,10 +158,11 @@ public class ProcessingComponent extends TaoComponent {
         this.templateType = templateType;
     }
 
+    @JsonGetter(value = "templatecontents")
     public String getTemplateContents(){
         return template != null ? template.getContents() : null;
     }
-
+    @JsonSetter(value = "templatecontents")
     public void setTemplateContents(String contents) {
         this.template = new BasicTemplate();
         template.setTemplateType(getTemplateType());
@@ -163,6 +170,7 @@ public class ProcessingComponent extends TaoComponent {
         template.associateWith(getTemplateEngine());
     }
 
+    @JsonIgnore
     public TemplateEngine getTemplateEngine() {
         if (this.templateEngine == null) {
             this.templateEngine = EngineFactory.createInstance(getTemplateType());
