@@ -30,6 +30,7 @@ import ro.cs.tao.messaging.Notifiable;
 import ro.cs.tao.messaging.Topics;
 import ro.cs.tao.orchestration.commands.JobCommand;
 import ro.cs.tao.orchestration.commands.TaskCommand;
+import ro.cs.tao.orchestration.util.TaskUtilities;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.security.SystemPrincipal;
@@ -244,23 +245,58 @@ public class Orchestrator extends Notifiable {
                     logger.fine(String.format("Has %s next tasks", nextTasks.size()));
                     for (ExecutionTask nextTask : nextTasks) {
                         if (nextTask != null) {
-                            if (task instanceof DataSourceExecutionTask && nextTask instanceof ExecutionGroup) {
-                                ExecutionGroup groupTask = (ExecutionGroup) nextTask;
+                            if (task instanceof DataSourceExecutionTask) {
                                 // A DataSourceExecutionTask outputs the list of results as a JSON
                                 List<Variable> values = task.getOutputParameterValues();
                                 int cardinality = 0;
+                                Variable theOnlyValue = null;
+                                List<String> valuesList = null;
                                 if (values != null && values.size() > 0) {
-                                    cardinality = new StringListAdapter().marshal(values.get(0).getValue()).size();
+                                    theOnlyValue = values.get(0);
+                                    valuesList = new StringListAdapter().marshal(theOnlyValue.getValue());
+                                    cardinality = valuesList.size();
                                 }
-                                groupTask.setStateHandler(new LoopStateHandler(new LoopState(cardinality, 1)));
-                                // we need to keep this mapping because ExecutionTask.stateHandler is transient
-                                this.groupStateHandlers.put(groupTask.getId(), groupTask.getStateHandler());
-                                if (values != null && values.size() > 0) {
-                                    Variable theOnlyValue = values.get(0);
-                                    groupTask.setInputParameterValue(groupTask.getInputParameterValues().get(0).getKey(),
-                                                                     theOnlyValue.getValue());
+                                if (cardinality == 0) { // no point to continue since we have nothing to do
+                                    logger.severe(String.format("Task %s produced no results", task.getId()));
+                                    nextTask.setExecutionStatus(ExecutionStatus.CANCELLED);
+                                    statusChanged(nextTask);
                                 }
-                                persistenceManager.updateExecutionTask(groupTask);
+                                if (nextTask instanceof ExecutionGroup) {
+                                    ExecutionGroup groupTask = (ExecutionGroup) nextTask;
+                                    groupTask.setStateHandler(new LoopStateHandler(new LoopState(cardinality, 1)));
+                                    // we need to keep this mapping because ExecutionTask.stateHandler is transient
+                                    this.groupStateHandlers.put(groupTask.getId(), groupTask.getStateHandler());
+                                    if (theOnlyValue != null) {
+                                        groupTask.setInputParameterValue(groupTask.getInputParameterValues().get(0).getKey(),
+                                                                         theOnlyValue.getValue());
+                                    }
+                                    persistenceManager.updateExecutionTask(groupTask);
+                                } else {
+                                    // if next to a DataSourceExecutionTask is a simple ExecutionTask, we feed it with as many
+                                    // values as sources
+                                    int expectedCardinality = TaskUtilities.getSourceCardinality(nextTask);
+                                    if (expectedCardinality != 0) {
+                                        if (cardinality < expectedCardinality) {
+                                            logger.severe(String.format("Insufficient inputs for task %s [expected %s, received %s]",
+                                                                        nextTask.getId(),
+                                                                        expectedCardinality, cardinality));
+                                            nextTask.setExecutionStatus(ExecutionStatus.CANCELLED);
+                                            statusChanged(nextTask);
+                                        }
+                                        int idx = 0;
+                                        for (Variable var : nextTask.getInputParameterValues()) {
+                                            nextTask.setInputParameterValue(var.getKey(), valuesList.get(idx++));
+                                        }
+                                    } else { // nextTask accepts a list
+                                        Map<String, String> connectedInputs = TaskUtilities.getConnectedInputs(task, nextTask);
+                                        for (Variable var : nextTask.getInputParameterValues()) {
+                                            if (theOnlyValue.getKey().equals(connectedInputs.get(var.getKey()))) {
+                                                nextTask.setInputParameterValue(var.getKey(), theOnlyValue.getValue());
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
                             }
                             logger.fine(String.format("Task %s about to start.", nextTask.getId()));
                             nextTask.getInputParameterValues().forEach(
