@@ -99,6 +99,10 @@ public class PersistenceManager implements MessagePersister {
         return nodeManager.deleteExecutionNode(hostName);
     }
 
+    public void removeExecutionNode(String hostName) {
+        nodeManager.removeExecutionNode(hostName);
+    }
+
     public ServiceDescription saveServiceDescription(ServiceDescription service) throws PersistenceException {
         return nodeManager.saveServiceDescription(service);
     }

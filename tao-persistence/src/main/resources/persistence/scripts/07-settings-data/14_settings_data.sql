@@ -206,5 +206,5 @@ VALUES ('System Account', md5('system'), 'kraftek@c-s.ro', 'Cosmin', 'Cara', 100
 
 -- localhost execution node
 INSERT INTO tao.execution_node (host_name, username, password, total_cpu, total_ram, total_hdd, description)
-VALUES ('localhost', 'admin', 'admin', 8, 32, 1024, 'Master Node');
+VALUES ('localhost', '', '', 8, 32, 1024, 'Master Node');
 
