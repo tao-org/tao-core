@@ -29,6 +29,7 @@ import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.execution.model.ProcessingExecutionTask;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.topology.NodeDescription;
+import ro.cs.tao.utils.Platform;
 
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -43,7 +44,7 @@ import java.util.regex.Pattern;
 public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
     private static final String DOCKER_BIND_MOUNT_CONFIG_KEY  = "tao.docker.bind_mount";
     private Session session;
-    private boolean useDockerForExecution = true;
+    private boolean useDockerForExecution;
 
     @Override
     public void initialize() throws ExecutionException {
@@ -52,6 +53,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             session.init(null);
             super.initialize();
             //useDockerForExecution = !(session instanceof DefaultSession);
+            useDockerForExecution = !Platform.getCurrentPlatform().getId().equals(Platform.ID.win);
         } catch (DrmaaException e) {
             isInitialized = false;
             throw new ExecutionException("Error initiating DRMAA session", e);
