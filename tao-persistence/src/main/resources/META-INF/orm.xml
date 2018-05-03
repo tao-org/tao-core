@@ -483,7 +483,7 @@
             <id name="id">
                 <column name="id" nullable="false" column-definition="bigserial NOT NULL"/>
                 <generated-value strategy="SEQUENCE" generator="dsc_identifier"/>
-                <sequence-generator name="dsc_identifier" sequence-name="tao.data_source_connection_seq" allocation-size="1" />
+                <sequence-generator name="dsc_identifier" sequence-name="tao.user_data_source_connection_id_seq" allocation-size="1" />
             </id>
             <basic name="userId">
                 <column name="user_id" nullable="false" column-definition="varchar(50) NOT NULL"/>
@@ -882,6 +882,75 @@
         </attributes>
     </entity>-->
 
+
+    <entity class="ro.cs.tao.user.User" access="PROPERTY">
+        <table name="tao.user"/>
+        <attributes>
+            <id name="id">
+                <column name="id" nullable="false" column-definition="serial NOT NULL"/>
+                <generated-value strategy="SEQUENCE" generator="user_identifier"/>
+                <sequence-generator name="user_identifier" sequence-name="tao.user_id_seq" allocation-size="1" />
+            </id>
+            <basic name="username">
+                <column name="username" nullable="false" column-definition="character varying(50) NOT NULL"/>
+            </basic>
+            <basic name="password">
+                <column name="password" nullable="false" column-definition="text NOT NULL"/>
+            </basic>
+            <basic name="email">
+                <column name="email" nullable="false" column-definition="character varying(100) NOT NULL"/>
+            </basic>
+            <basic name="alternativeEmail">
+                <column name="alternative_email" nullable="true" column-definition="character varying(100)"/>
+            </basic>
+            <basic name="lastName">
+                <column name="last_name" nullable="false" column-definition="character varying(50) NOT NULL"/>
+            </basic>
+            <basic name="firstName">
+                <column name="first_name" nullable="false" column-definition="character varying(50) NOT NULL"/>
+            </basic>
+            <basic name="phone">
+                <column name="phone" nullable="true" column-definition="character varying(50)"/>
+            </basic>
+            <basic name="lastLoginDate">
+                <column name="last_login_date" nullable="true" column-definition="timestamp without time zone"/>
+            </basic>
+            <basic name="quota">
+                <column name="quota" nullable="false" column-definition="real NOT NULL"/>
+            </basic>
+            <basic name="active">
+                <column name="active" nullable="true" column-definition="boolean DEFAULT true"/>
+            </basic>
+
+            <many-to-one name="group" fetch="LAZY">
+                <join-column name="group_id" nullable="false"/>
+            </many-to-one>
+
+            <element-collection name="preferences" target-class="ro.cs.tao.user.UserPreference" access="PROPERTY" fetch="EAGER">
+                <collection-table name="tao.user_prefs">
+                    <join-column name="user_id" referenced-column-name="id" updatable="true" />
+                </collection-table>
+            </element-collection>
+
+        </attributes>
+    </entity>
+
+
+    <entity class="ro.cs.tao.user.Group" access="PROPERTY">
+        <table name="tao.group"/>
+        <attributes>
+            <id name="id">
+                <column name="id" nullable="false" column-definition="serial NOT NULL"/>
+                <generated-value strategy="SEQUENCE" generator="group_identifier"/>
+                <sequence-generator name="group_identifier" sequence-name="tao.group_id_seq" allocation-size="1" />
+            </id>
+            <basic name="name">
+                <column name="name" nullable="false" column-definition="character varying(50) NOT NULL"/>
+            </basic>
+        </attributes>
+    </entity>
+
+
     <embeddable class="ro.cs.tao.eodata.Attribute" access="PROPERTY">
         <attributes>
             <basic name="name">
@@ -992,6 +1061,18 @@
                     <!--<cascade-all/>-->
                 <!--</cascade>-->
             <!--</many-to-one>-->
+        </attributes>
+    </embeddable>
+
+
+    <embeddable class="ro.cs.tao.user.UserPreference" access="PROPERTY">
+        <attributes>
+            <basic name="key">
+                <column name="pref_key" nullable="false" column-definition="varchar(50) NOT NULL"/>
+            </basic>
+            <basic name="value">
+                <column name="pref_value" nullable="false" column-definition="varchar(250) NOT NULL"/>
+            </basic>
         </attributes>
     </embeddable>
 
