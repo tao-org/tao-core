@@ -218,7 +218,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
 
         if (container != null) {
             cmd = "docker";
-            String dockerBindMount = ConfigurationManager.getInstance().getValue(DOCKER_BIND_MOUNT_CONFIG_KEY);
+            String dockerBindMount = ConfigurationManager.getInstance().getValue(DOCKER_BIND_MOUNT_CONFIG_KEY).trim();
             List<String> dockerArgsList = new ArrayList<String>() {{
                 add("run");
                 add("-i");      // Keep STDIN open even if not attached
