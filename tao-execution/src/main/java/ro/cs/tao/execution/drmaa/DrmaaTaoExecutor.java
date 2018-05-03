@@ -19,6 +19,7 @@ import org.ggf.drmaa.DrmaaException;
 import org.ggf.drmaa.InternalException;
 import org.ggf.drmaa.JobTemplate;
 import org.ggf.drmaa.Session;
+import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.Executor;
@@ -40,7 +41,9 @@ import java.util.regex.Pattern;
  * @author Cosmin Cara
  */
 public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
+    private static final String DOCKER_BIND_MOUNT_CONFIG_KEY  = "tao.docker.bind_mount";
     private Session session;
+    private boolean useDockerForExecution = true;
 
     @Override
     public void initialize() throws ExecutionException {
@@ -48,6 +51,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         try {
             session.init(null);
             super.initialize();
+            //useDockerForExecution = !(session instanceof DefaultSession);
         } catch (DrmaaException e) {
             isInitialized = false;
             throw new ExecutionException("Error initiating DRMAA session", e);
@@ -67,28 +71,8 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
     @Override
     public void execute(ProcessingExecutionTask task) throws ExecutionException  {
         try {
-            // Get from the component the execution command
-            Container container = persistenceManager.getContainerById(task.getComponent().getContainerId());
-            String location = task.getComponent().getFileLocation();
-            if (!Paths.get(location).isAbsolute()) {
-                task.getComponent().setExpandedFileLocation(Paths.get(container.getApplicationPath(), location).toString());
-            }
-            String executionCmd = task.buildExecutionCommand();
-            List<String> argsList = new ArrayList<>();
-            // split the execution command but preserving the entities between double quotes
-            Matcher m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(executionCmd);
-            while (m.find()) {
-                argsList.add(m.group(1)); // Add .replace("\"", "") to remove surrounding quotes.
-            }
-            //logger.info(String.format("Task %s : %s", task.getId(), String.join(" ", argsList)));
-            String cmd = argsList.remove(0);
-            JobTemplate jt = session.createJobTemplate();
-            if (jt == null) {
-                throw new ExecutionException("Error creating job template from the session!");
-            }
+            JobTemplate jt = createJobTemplate(task);
 
-            jt.setRemoteCommand(cmd);
-            jt.setArgs(argsList);
             String id = session.runJob(jt);
             if(id == null) {
                 throw new ExecutionException(String.format("Unable to run job (id null) for task %s", task.getId()));
@@ -204,4 +188,52 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
 
     @Override
     public String defaultName() { return "DRMAAExecutor"; }
+
+    private JobTemplate createJobTemplate(ProcessingExecutionTask task) throws DrmaaException, PersistenceException {
+        // Get from the component the execution command
+        Container container = null;
+        if (useDockerForExecution) {
+            container = persistenceManager.getContainerById(task.getComponent().getContainerId());
+            String location = task.getComponent().getFileLocation();
+            if (!Paths.get(location).isAbsolute()) {
+                task.getComponent().setExpandedFileLocation("\"" + Paths.get(container.getApplicationPath(), location).toString() + "\"");
+            }
+        }
+        String executionCmd = task.buildExecutionCommand();
+        JobTemplate jt = session.createJobTemplate();
+        if (jt == null) {
+            throw new ExecutionException("Error creating job template from the session!");
+        }
+
+        List<String> argsList = new ArrayList<>();
+        String cmd;
+
+        // split the execution command but preserving the entities between double quotes
+        Matcher m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(executionCmd);
+        while (m.find()) {
+            argsList.add(m.group(1)); // Add .replace("\"", "") to remove surrounding quotes.
+        }
+
+        if (container != null) {
+            cmd = "docker";
+            String dockerBindMount = ConfigurationManager.getInstance().getValue(DOCKER_BIND_MOUNT_CONFIG_KEY);
+            List<String> dockerArgsList = new ArrayList<String>() {{
+                add("run");
+                add("-i");      // Keep STDIN open even if not attached
+                //add("-t");      // Allocate a pseudo-TTY
+                add("--rm");    // Automatically remove the container when it exits
+                add("-v");      // Bind mount a volume
+                add(dockerBindMount);
+            }};
+            dockerArgsList.add(container.getId());
+            dockerArgsList.addAll(argsList);
+            argsList = dockerArgsList;
+        } else {
+            //logger.info(String.format("Task %s : %s", task.getId(), String.join(" ", argsList)));
+            cmd = argsList.remove(0);
+        }
+        jt.setRemoteCommand(cmd);
+        jt.setArgs(argsList);
+        return jt;
+    }
 }
