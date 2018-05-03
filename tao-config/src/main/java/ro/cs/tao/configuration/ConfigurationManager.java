@@ -52,7 +52,11 @@ public class ConfigurationManager {
     }
 
     public String getValue(String name) {
-        return this.settings.getProperty(name);
+        return this.settings.getProperty(name, null);
+    }
+
+    public String getValue(String name, String defaultValue) {
+        return this.settings.getProperty(name, defaultValue);
     }
 
     public boolean getBooleanValue(String name) {
