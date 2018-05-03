@@ -55,6 +55,16 @@ public class ConfigurationManager {
         return this.settings.getProperty(name);
     }
 
+    public boolean getBooleanValue(String name) {
+        String strValue = this.settings.getProperty(name);
+        boolean returnValue = false;
+        if ("1".equalsIgnoreCase(strValue) || "yes".equalsIgnoreCase(strValue) ||
+                "true".equalsIgnoreCase(strValue) || "on".equalsIgnoreCase(strValue)) {
+            returnValue = true;
+        }
+        return returnValue;
+    }
+
     public Map<String, String> getValues(String filter) {
         return this.settings.entrySet().stream()
                 .filter(e -> ((String) e.getKey()).contains(filter)).collect(
