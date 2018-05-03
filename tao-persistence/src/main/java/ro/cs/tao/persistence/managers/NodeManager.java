@@ -125,6 +125,11 @@ public class NodeManager {
     }
 
     @Transactional
+    public void removeExecutionNode(String hostName) {
+        nodeRepository.delete(hostName);
+    }
+
+    @Transactional
     public NodeDescription deleteExecutionNode(final String hostName) throws PersistenceException {
         // check method parameters
         if (hostName == null || hostName.isEmpty()) {
