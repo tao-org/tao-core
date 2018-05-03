@@ -483,7 +483,7 @@
             <id name="id">
                 <column name="id" nullable="false" column-definition="bigserial NOT NULL"/>
                 <generated-value strategy="SEQUENCE" generator="dsc_identifier"/>
-                <sequence-generator name="dsc_identifier" sequence-name="tao.data_source_connection_seq" allocation-size="1" />
+                <sequence-generator name="dsc_identifier" sequence-name="tao.user_data_source_connection_id_seq" allocation-size="1" />
             </id>
             <basic name="userId">
                 <column name="user_id" nullable="false" column-definition="varchar(50) NOT NULL"/>
