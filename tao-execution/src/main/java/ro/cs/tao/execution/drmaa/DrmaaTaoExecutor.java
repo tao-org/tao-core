@@ -196,7 +196,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             container = persistenceManager.getContainerById(task.getComponent().getContainerId());
             String location = task.getComponent().getFileLocation();
             if (!Paths.get(location).isAbsolute()) {
-                task.getComponent().setExpandedFileLocation("\"" + Paths.get(container.getApplicationPath(), location).toString() + "\"");
+                task.getComponent().setExpandedFileLocation(Paths.get(container.getApplicationPath(), location).toString());
             }
         }
         String executionCmd = task.buildExecutionCommand();
