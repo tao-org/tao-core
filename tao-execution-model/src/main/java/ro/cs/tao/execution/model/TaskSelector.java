@@ -28,9 +28,30 @@ import java.util.function.Function;
  * @author Cosmin Cara
  */
 public interface TaskSelector<T> {
+    /**
+     * Setter for the functor providing workflow nodes
+     */
     void setWorkflowProvider(Function<Long, WorkflowNodeDescriptor> workflowProvider);
+
+    /**
+     * Setter for the functor providing execution tasks
+     */
     void setTaskByNodeProvider(BiFunction<Long, Long, ExecutionTask> taskByNodeProvider);
+
+    /**
+     * Setter for the functor providing a list of workflow nodes given a (processing) component
+     */
     void setNodesByComponentProvider(BiFunction<Long, String, List<WorkflowNodeDescriptor>> nodesByComponentProvider);
+
+    /**
+     * Returns the class for the task container (i.e. either an ExecutionJob or an ExecutionGroup)
+     */
     Class<T> getTaskContainerClass();
+
+    /**
+     * Given a task, it returns the tasks that would have to be executed next.
+     * @param job           The parent job
+     * @param currentTask   The task that has been executed
+     */
     List<ExecutionTask> chooseNext(T job, ExecutionTask currentTask);
 }

@@ -56,6 +56,8 @@ import java.util.logging.Logger;
 import java.util.stream.IntStream;
 
 /**
+ * The singleton orchestrator of task executions.
+ *
  * @author Cosmin Cara
  */
 public class Orchestrator extends Notifiable {
@@ -528,14 +530,6 @@ public class Orchestrator extends Notifiable {
             for (Variable value : values) {
                 products.addAll(createProducts(component, value));
             }
-            /*products.forEach(p -> {
-                try {
-                    p.setUserName(SystemPrincipal.instance().getName());
-                    persistenceManager.saveEOProduct(p);
-                } catch (PersistenceException e) {
-                    logger.severe(e.getMessage());
-                }
-            });*/
             EODataHandlerManager.getInstance().applyHandlers(products);
         }
     }
