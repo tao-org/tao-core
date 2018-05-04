@@ -922,9 +922,15 @@
                 <column name="active" nullable="true" column-definition="boolean DEFAULT true"/>
             </basic>
 
-            <many-to-one name="group" fetch="LAZY">
-                <join-column name="group_id" nullable="false"/>
-            </many-to-one>
+            <many-to-many name="groups" fetch="LAZY">
+                <join-table name="tao.user_group">
+                    <join-column name="user_id" referenced-column-name="id"/>
+                    <inverse-join-column name="group_id" referenced-column-name="id"/>
+                </join-table>
+                <cascade>
+                    <cascade-all/>
+                </cascade>
+            </many-to-many>
 
             <element-collection name="preferences" target-class="ro.cs.tao.user.UserPreference" access="PROPERTY" fetch="EAGER">
                 <collection-table name="tao.user_prefs">
