@@ -196,7 +196,7 @@ VALUES ('admin');
 -- Users
 -- admin user
 INSERT INTO tao."user" (username, password, email, last_name, first_name, quota, created, active)
-VALUES ('admin', md5('admin'), '***REMOVED***', 'Cosmin', 'Cara', 1000, CURRENT_TIMESTAMP, true);
+VALUES ('admin', 'admin', '***REMOVED***', 'Cosmin', 'Cara', 1000, CURRENT_TIMESTAMP, true);
 
 -- System Account
 INSERT INTO tao."user" (username, password, email, last_name, first_name, quota, created, active)
