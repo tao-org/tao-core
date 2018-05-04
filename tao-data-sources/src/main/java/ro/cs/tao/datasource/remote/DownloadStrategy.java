@@ -65,9 +65,9 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     protected UsernamePasswordCredentials credentials;
     protected Set<String> filteredTiles;
     protected Pattern tileIdPattern;
+    protected FetchMode fetchMode;
     protected Logger logger = Logger.getLogger(DownloadStrategy.class.getSimpleName());
     private String localArchiveRoot;
-    private FetchMode fetchMode;
     private ProgressListener progressListener;
     private volatile boolean cancelled;
     private Timer timer;
@@ -186,6 +186,16 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
                         logger.warning("Product link failed");
                     }
                     break;
+                case CHECK:
+                    if (this.filteredTiles != null) {
+                        file = check(product);
+                    } else {
+                        file = check(product, Paths.get(localArchiveRoot));
+                    }
+                    if (file == null) {
+                        logger.warning("Product check failed");
+                    }
+                    break;
                 case OVERWRITE:
                 case RESUME:
                 default:
@@ -204,10 +214,6 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     public abstract DownloadStrategy clone();
 
     protected abstract Path fetchImpl(EOProduct product) throws IOException;
-
-    protected Path link(EOProduct product) throws IOException {
-        return link(product, Paths.get(localArchiveRoot), Paths.get(destination));
-    }
 
     protected abstract String getMetadataUrl(EOProduct descriptor);
 
@@ -262,6 +268,10 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         return destinationPath;
     }
 
+    protected Path copyFile(Path sourcePath, Path file) throws IOException {
+        return Files.exists(file) ? file : Files.copy(sourcePath, file);
+    }
+
     protected Path downloadFile(String remoteUrl, Path file) throws IOException, InterruptedException {
         return downloadFile(remoteUrl, file, null);
     }
@@ -303,6 +313,10 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
 
     protected boolean isCancelled() { return this.cancelled; }
 
+    protected Path link(EOProduct product) throws IOException {
+        return link(product, Paths.get(localArchiveRoot), Paths.get(destination));
+    }
+
     protected Path link(EOProduct product, Path sourceRoot, Path targetRoot) throws IOException {
         Path sourcePath = findProductPath(sourceRoot, product);
         if (sourcePath == null) {
@@ -316,15 +330,27 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         }
     }
 
-    protected Path copyFile(Path sourcePath, Path file) throws IOException {
-        return Files.exists(file) ? file : Files.copy(sourcePath, file);
-    }
-
     protected Path linkFile(Path sourcePath, Path file) throws IOException {
         return Files.exists(file) ? file : Files.createSymbolicLink(file, sourcePath);
     }
 
-    protected void activityStart(String activity) {
+    protected Path check(EOProduct product) throws IOException {
+        return check(product, Paths.get(localArchiveRoot));
+    }
+
+    protected Path check(EOProduct product, Path sourceRoot) throws IOException {
+        Path sourcePath = findProductPath(sourceRoot, product);
+        if (sourcePath == null) {
+            logger.warning(String.format("Product %s not found in the local archive", product.getName()));
+        }
+        return sourcePath;
+    }
+
+    protected boolean checkFile(Path file) {
+        return Files.exists(file);
+    }
+
+    private void activityStart(String activity) {
         if (this.progressListener != null) {
             this.progressListener.started(activity);
         }
@@ -346,7 +372,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         }
     }
 
-    protected void activityEnd() {
+    private void activityEnd() {
         currentProductProgress = 1.0;
         if (this.progressEnabled && timer != null) {
             this.timer.cancel();

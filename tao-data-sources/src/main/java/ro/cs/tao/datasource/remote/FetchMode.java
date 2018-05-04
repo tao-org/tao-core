@@ -40,17 +40,21 @@ public enum FetchMode {
     /**
      * The product will be copied from a local (or shared) folder into the output folder.
      * No remote download will be performed.
-     * This works only in conjunction with the --input command line parameter.
      */
     @XmlEnumValue("3")
     COPY(3),
     /**
      * Only a symlink to the product file system location, into the output folder, will be created.
      * No remote download will be performed.
-     * This works only in conjunction with the --input command line parameter.
      */
     @XmlEnumValue("4")
-    SYMLINK(4);
+    SYMLINK(4),
+    /**
+     * No remote download will be performed. This mode behaves like the SYMLINK one, except no symlink
+     * is created. Instead, only an existence check of the remote file(s) is performed.
+     */
+    @XmlEnumValue("5")
+    CHECK(5);
 
     private final int value;
     FetchMode(int value) { this.value = value; }
