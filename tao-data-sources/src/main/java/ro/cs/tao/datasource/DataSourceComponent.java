@@ -95,7 +95,7 @@ public class DataSourceComponent extends TaoComponent {
         DataDescriptor srcData = new DataDescriptor();
         srcData.setFormatType(DataFormat.OTHER);
         sourceDescriptor.setDataDescriptor(srcData);
-        this.sourceCardinality = 1;
+        this.sourceCardinality = 0;
         addSource(sourceDescriptor);
 
         TargetDescriptor targetDescriptor = new TargetDescriptor();
@@ -104,7 +104,7 @@ public class DataSourceComponent extends TaoComponent {
         DataDescriptor destData = new DataDescriptor();
         destData.setFormatType(DataFormat.RASTER);
         targetDescriptor.setDataDescriptor(destData);
-        this.targetCardinality = 1;
+        this.targetCardinality = 0;
         addTarget(targetDescriptor);
     }
 

@@ -16,7 +16,6 @@
 
 package ro.cs.tao.orchestration.util;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ro.cs.tao.component.ComponentLink;
 import ro.cs.tao.component.GroupComponent;
@@ -44,8 +43,11 @@ import java.util.logging.Logger;
 @Component
 public class TaskUtilities {
 
-    @Autowired
     private static PersistenceManager persistenceManager;
+
+    public static void setPersistenceManager(PersistenceManager manager) {
+        persistenceManager = manager;
+    }
 
     public static TaoComponent getComponentFor(ExecutionTask task) {
         TaoComponent component = null;
@@ -66,28 +68,37 @@ public class TaskUtilities {
     }
 
     public static ProcessingComponent getComponentFor(ProcessingExecutionTask task) throws PersistenceException {
+        if (persistenceManager == null) {
+            return null;
+        }
         WorkflowNodeDescriptor node = persistenceManager.getWorkflowNodeById(task.getWorkflowNodeId());
         return persistenceManager.getProcessingComponentById(node.getComponentId());
     }
 
     public static GroupComponent getComponentFor(ExecutionGroup task) throws PersistenceException {
+        if (persistenceManager == null) {
+            return null;
+        }
         WorkflowNodeDescriptor node = persistenceManager.getWorkflowNodeById(task.getWorkflowNodeId());
         return persistenceManager.getGroupComponentById(node.getComponentId());
     }
 
     public static DataSourceComponent getComponentFor(DataSourceExecutionTask task) {
+        if (persistenceManager == null) {
+            return null;
+        }
         WorkflowNodeDescriptor node = persistenceManager.getWorkflowNodeById(task.getWorkflowNodeId());
         return persistenceManager.getDataSourceInstance(node.getComponentId());
     }
 
     public static int getSourceCardinality(ExecutionTask task) {
         TaoComponent component = getComponentFor(task);
-        return component.getSourceCardinality();
+        return component != null ? component.getSourceCardinality() : -1;
     }
 
     public static int getTargetCardinality(ExecutionTask task) {
         TaoComponent component = getComponentFor(task);
-        return component.getTargetCardinality();
+        return component != null ? component.getTargetCardinality() : -1;
     }
 
     /**
@@ -95,6 +106,9 @@ public class TaskUtilities {
      * are the sourceTask's outputs.
      */
     public static Map<String, String> getConnectedInputs(ExecutionTask sourceTask, ExecutionTask targetTask) {
+        if (persistenceManager == null) {
+            return null;
+        }
         Map<String, String> connections = new LinkedHashMap<>();
         WorkflowNodeDescriptor targetNode = persistenceManager.getWorkflowNodeById(targetTask.getWorkflowNodeId());
         WorkflowNodeDescriptor sourceNode = persistenceManager.getWorkflowNodeById(sourceTask.getWorkflowNodeId());
