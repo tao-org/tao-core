@@ -32,7 +32,7 @@ public class User {
     private Double quota;
     private boolean active;
 
-    private Group group;
+    private Set<Group> groups;
     private Set<UserPreference> preferences;
 
 
@@ -124,12 +124,12 @@ public class User {
         this.active = active;
     }
 
-    public Group getGroup() {
-        return group;
+    public Set<Group> getGroups() {
+        return groups;
     }
 
-    public void setGroup(Group group) {
-        this.group = group;
+    public void setGroups(Set<Group> groups) {
+        this.groups = groups;
     }
 
     public Set<UserPreference> getPreferences() {
