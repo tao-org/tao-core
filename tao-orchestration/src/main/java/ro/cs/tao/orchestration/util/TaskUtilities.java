@@ -45,10 +45,16 @@ public class TaskUtilities {
 
     private static PersistenceManager persistenceManager;
 
+    /**
+     * Setter for the persistence manager
+     */
     public static void setPersistenceManager(PersistenceManager manager) {
         persistenceManager = manager;
     }
-
+    /**
+     * Returns the component associated with an execution task
+     * @param task  The execution task
+     */
     public static TaoComponent getComponentFor(ExecutionTask task) {
         TaoComponent component = null;
         if (task != null) {
@@ -66,7 +72,10 @@ public class TaskUtilities {
         }
         return component;
     }
-
+    /**
+     * Returns the processing component associated with a processing execution task
+     * @param task      The task
+     */
     public static ProcessingComponent getComponentFor(ProcessingExecutionTask task) throws PersistenceException {
         if (persistenceManager == null) {
             return null;
@@ -74,7 +83,10 @@ public class TaskUtilities {
         WorkflowNodeDescriptor node = persistenceManager.getWorkflowNodeById(task.getWorkflowNodeId());
         return persistenceManager.getProcessingComponentById(node.getComponentId());
     }
-
+    /**
+     * Returns the group component associated with an execution group
+     * @param task      The group task
+     */
     public static GroupComponent getComponentFor(ExecutionGroup task) throws PersistenceException {
         if (persistenceManager == null) {
             return null;
@@ -82,7 +94,10 @@ public class TaskUtilities {
         WorkflowNodeDescriptor node = persistenceManager.getWorkflowNodeById(task.getWorkflowNodeId());
         return persistenceManager.getGroupComponentById(node.getComponentId());
     }
-
+    /**
+     * Returns the data source component associated with a data source execution task
+     * @param task      The task
+     */
     public static DataSourceComponent getComponentFor(DataSourceExecutionTask task) {
         if (persistenceManager == null) {
             return null;
@@ -90,17 +105,22 @@ public class TaskUtilities {
         WorkflowNodeDescriptor node = persistenceManager.getWorkflowNodeById(task.getWorkflowNodeId());
         return persistenceManager.getDataSourceInstance(node.getComponentId());
     }
-
+    /**
+     * Returns the cardinality of inputs for a given execution task
+     * @param task      The task
+     */
     public static int getSourceCardinality(ExecutionTask task) {
         TaoComponent component = getComponentFor(task);
         return component != null ? component.getSourceCardinality() : -1;
     }
-
+    /**
+     * Returns the cardinality of outputs for a given execution task
+     * @param task      The task
+     */
     public static int getTargetCardinality(ExecutionTask task) {
         TaoComponent component = getComponentFor(task);
         return component != null ? component.getTargetCardinality() : -1;
     }
-
     /**
      * Returns the mapping between two tasks. The map keys are the targetTask's inputs, while the map values
      * are the sourceTask's outputs.
