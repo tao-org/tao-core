@@ -26,6 +26,7 @@
         <module>tao-orchestration</module>
         <module>tao-core-kit</module>
         <module>tao-execution-model</module>
+        <module>tao-scheduling</module>
     </modules>
 
     <properties>
