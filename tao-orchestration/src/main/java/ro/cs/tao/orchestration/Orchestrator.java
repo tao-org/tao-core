@@ -89,6 +89,7 @@ public class Orchestrator extends Notifiable {
         this.persistenceManager = persistenceManager;
         JobCommand.setPersistenceManager(persistenceManager);
         TaskCommand.setPersistenceManager(persistenceManager);
+        TaskUtilities.setPersistenceManager(persistenceManager);
         Set<TaskSelector> selectors = ServiceRegistryManager.getInstance().getServiceRegistry(TaskSelector.class).getServices();
         final Function<Long, WorkflowNodeDescriptor> workflowProvider = this.persistenceManager::getWorkflowNodeById;
         final BiFunction<Long, Long, ExecutionTask> taskByGroupNodeProvider = this.persistenceManager::getTaskByGroupAndNode;
@@ -275,6 +276,12 @@ public class Orchestrator extends Notifiable {
                                     // if next to a DataSourceExecutionTask is a simple ExecutionTask, we feed it with as many
                                     // values as sources
                                     int expectedCardinality = TaskUtilities.getSourceCardinality(nextTask);
+                                    if (expectedCardinality == -1) {
+                                        logger.severe(String.format("Cannot determine input cardinality for task %s",
+                                                                    nextTask.getId()));
+                                        nextTask.setExecutionStatus(ExecutionStatus.CANCELLED);
+                                        statusChanged(nextTask);
+                                    }
                                     if (expectedCardinality != 0) {
                                         if (cardinality < expectedCardinality) {
                                             logger.severe(String.format("Insufficient inputs for task %s [expected %s, received %s]",
