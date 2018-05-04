@@ -621,7 +621,7 @@ public class FileUtils {
                         .filter(File::isFile)
                         .map(File::toPath)
                         .collect(Collectors.toList()) :
-                null;
+                new ArrayList<>();
     }
 
     public static void copyFile(URL sourceURL, Path destinationFile) throws IOException {
