@@ -195,13 +195,20 @@ VALUES ('admin');
 
 -- Users
 -- admin user
-INSERT INTO tao."user" (username, password, email, last_name, first_name, quota, group_id, created, active)
-VALUES ('admin', md5('admin'), 'kraftek@c-s.ro', 'Cosmin', 'Cara', 1000, 1, CURRENT_TIMESTAMP, true);
+INSERT INTO tao."user" (username, password, email, last_name, first_name, quota, created, active)
+VALUES ('admin', 'admin', 'kraftek@c-s.ro', 'Cosmin', 'Cara', 1000, CURRENT_TIMESTAMP, true);
 
 -- System Account
-INSERT INTO tao."user" (username, password, email, last_name, first_name, quota, group_id, created, active)
-VALUES ('System Account', md5('system'), 'kraftek@c-s.ro', 'Cosmin', 'Cara', 1000, 1, CURRENT_TIMESTAMP, true);
+INSERT INTO tao."user" (username, password, email, last_name, first_name, quota, created, active)
+VALUES ('System Account', md5('system'), 'kraftek@c-s.ro', 'Cosmin', 'Cara', 1000, CURRENT_TIMESTAMP, true);
 
+
+-- User groups
+INSERT INTO tao.user_group (user_id, group_id)
+VALUES (1, 1);
+
+INSERT INTO tao.user_group (user_id, group_id)
+VALUES (2, 1);
 
 
 -- localhost execution node

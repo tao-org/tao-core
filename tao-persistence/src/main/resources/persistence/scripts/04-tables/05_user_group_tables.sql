@@ -27,7 +27,6 @@ CREATE TABLE tao."user"
 	phone varchar(50) NULL,
 	last_login_date timestamp NULL,
 	quota real NOT NULL,
-	group_id integer NULL,
 	created timestamp NULL DEFAULT now(),
 	modified timestamp NULL,
 	active boolean NULL DEFAULT true
@@ -37,7 +36,23 @@ ALTER TABLE tao."user" ADD CONSTRAINT PK_user PRIMARY KEY (id);
 
 ALTER TABLE tao."user" ADD CONSTRAINT UQ_user UNIQUE (username);
 
-ALTER TABLE tao."user" ADD CONSTRAINT FK_user_group
+
+-------------------------------------------------------------------------------
+-- table: user_group
+DROP TABLE IF EXISTS tao.user_group CASCADE;
+
+CREATE TABLE tao.user_group
+(
+	user_id integer NOT NULL,
+	group_id integer NOT NULL
+);
+
+ALTER TABLE tao.user_group ADD CONSTRAINT PK_user_group PRIMARY KEY (user_id, group_id);
+
+ALTER TABLE tao.user_group ADD CONSTRAINT FK_user_group_user
+	FOREIGN KEY (user_id) REFERENCES tao."user" (id) ON DELETE No Action ON UPDATE No Action;
+
+ALTER TABLE tao.user_group ADD CONSTRAINT FK_user_group_group
 	FOREIGN KEY (group_id) REFERENCES tao."group" (id) ON DELETE No Action ON UPDATE No Action;
 
 
