@@ -20,6 +20,7 @@ import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.persistence.managers.*;
 import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.topology.ServiceDescription;
+import ro.cs.tao.user.User;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 
@@ -59,6 +60,9 @@ public class PersistenceManager implements MessagePersister {
 
     @Autowired
     private NotificationManager notificationManager;
+
+    @Autowired
+    private UserManager userManager;
 
     //region EOProduct and VectorData
     public List<EOProduct> getEOProducts() {
@@ -361,4 +365,10 @@ public class PersistenceManager implements MessagePersister {
         return notificationManager.saveMessage(message);
     }
     //endregion
+
+    // region User
+    public User findUserByUsername(final String username) {
+        return userManager.findUserByUsername(username);
+    }
+    // endregion
 }

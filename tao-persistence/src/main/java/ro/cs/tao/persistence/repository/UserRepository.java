@@ -32,11 +32,4 @@ public interface UserRepository extends PagingAndSortingRepository<User, Long> {
      * @return the corresponding User entity
      */
     User findByUsername(final String username);
-
-    /**
-     * Find users withing a group
-     * @param group - the users group
-     * @return the corresponding User entities
-     */
-    List<User> findByGroup(Group group);
 }
