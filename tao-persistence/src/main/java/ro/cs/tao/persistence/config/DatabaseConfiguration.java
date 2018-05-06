@@ -137,6 +137,8 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
 	 */
 	private static final String PROPERTY_NAME_HIBERNATE_SHOW_SQL = "hibernate.show_sql";
 
+	private static final String PROPERTY_NAME_HIBERNATE_MERGE_ENTITIES = "hibernate.event.merge.entity_copy_observer";
+
 	/**
 	 * Constant for the Entity Manager packages to scan property name (within
 	 * .properties file)
@@ -242,6 +244,8 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
 				environment.getRequiredProperty(PROPERTY_NAME_HIBERNATE_NAMING_STRATEGY));
 		jpaProperties.put(PROPERTY_NAME_HIBERNATE_SHOW_SQL,
 				environment.getRequiredProperty(PROPERTY_NAME_HIBERNATE_SHOW_SQL));
+		jpaProperties.put(PROPERTY_NAME_HIBERNATE_MERGE_ENTITIES,
+						  environment.getRequiredProperty(PROPERTY_NAME_HIBERNATE_MERGE_ENTITIES));
 		jpaProperties.put(PROPERTY_NAME_HIBERNATE_CONNECTION_HANDLING_MODE,
 				environment.getRequiredProperty(PROPERTY_NAME_HIBERNATE_CONNECTION_HANDLING_MODE));
 		jpaProperties.put(PROPERTY_NAME_HIBERNATE_CONNECTION_RELEASE_MODE,
