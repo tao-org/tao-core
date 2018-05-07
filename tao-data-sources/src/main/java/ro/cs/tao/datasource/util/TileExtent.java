@@ -15,6 +15,9 @@
  */
 package ro.cs.tao.datasource.util;
 
+import ro.cs.tao.eodata.Polygon2D;
+
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -157,6 +160,25 @@ public abstract class TileExtent {
                             .filter(entry -> entry.getValue().intersects(aoi))
                             .map(Map.Entry::getKey)
                             .collect(Collectors.toSet()));
+        }
+        return tileCodes;
+    }
+    /**
+     * Computes the list of tiles that intersect the given area of interest (polygon).
+     *
+     * @param aoi   The area of interest polygon
+     */
+    public Set<String> intersectingTiles(Polygon2D aoi) {
+        Set<String> tileCodes = new HashSet<>();
+        if (aoi != null && aoi.getNumPoints() > 0) {
+            synchronized (tiles) {
+                List<Point2D> points = aoi.getPoints();
+                tileCodes.addAll(
+                        tiles.entrySet().stream()
+                                .filter(entry -> points.stream().anyMatch(p -> entry.getValue().contains(p)))
+                                .map(Map.Entry::getKey)
+                                .collect(Collectors.toSet()));
+            }
         }
         return tileCodes;
     }
