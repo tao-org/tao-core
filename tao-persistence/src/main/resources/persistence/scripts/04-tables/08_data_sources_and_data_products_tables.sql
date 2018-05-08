@@ -320,6 +320,7 @@ CREATE TABLE tao.component_link
 
 ALTER TABLE tao.component_link ADD CONSTRAINT PK_component_link PRIMARY KEY (source_graph_node_id, target_graph_node_id, source_descriptor_id, target_descriptor_id);
 
+
 ALTER TABLE tao.component_link ADD CONSTRAINT FK_component_link_graph_node_1
 	FOREIGN KEY (source_graph_node_id) REFERENCES tao.graph_node (id) ON DELETE No Action ON UPDATE No Action;
 

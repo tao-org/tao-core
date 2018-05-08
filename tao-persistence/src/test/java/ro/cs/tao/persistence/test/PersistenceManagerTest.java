@@ -1025,16 +1025,19 @@ public class PersistenceManagerTest {
             WorkflowNodeDescriptor node1 = new WorkflowNodeDescriptor();
             node1.setName("node1");
             node1.setComponentId("component01");
+            node1.setComponentType(ComponentType.PROCESSING);
             //node1.setCreated(LocalDateTime.now());
 
             WorkflowNodeDescriptor node2 = new WorkflowNodeDescriptor();
             node2.setName("node2");
             node2.setComponentId("component01");
+            node2.setComponentType(ComponentType.PROCESSING);
             //node2.setCreated(LocalDateTime.now());
 
             WorkflowNodeDescriptor node3 = new WorkflowNodeDescriptor();
             node3.setName("node3");
             node3.setComponentId("component01");
+            node3.setComponentType(ComponentType.PROCESSING);
             //node3.setCreated(LocalDateTime.now());
 
             workflow.addNode(node1);
@@ -1076,6 +1079,7 @@ public class PersistenceManagerTest {
             WorkflowNodeDescriptor node1 = new WorkflowNodeDescriptor();
             node1.setName("node1");
             node1.setComponentId("component01");
+            node1.setComponentType(ComponentType.PROCESSING);
             //node1.setCreated(LocalDateTime.now());
 
             node1.addCustomValue("customName1", "customValue1");
@@ -1121,16 +1125,19 @@ public class PersistenceManagerTest {
             WorkflowNodeDescriptor node1 = new WorkflowNodeDescriptor();
             node1.setName("node1");
             node1.setComponentId("component01");
+            node1.setComponentType(ComponentType.PROCESSING);
             //node1.setCreated(LocalDateTime.now());
 
             WorkflowNodeDescriptor node2 = new WorkflowNodeDescriptor();
             node2.setName("node2");
             node2.setComponentId("component01");
+            node2.setComponentType(ComponentType.PROCESSING);
             //node2.setCreated(LocalDateTime.now());
 
             WorkflowNodeDescriptor node3 = new WorkflowNodeDescriptor();
             node3.setName("node3");
             node3.setComponentId("component01");
+            node3.setComponentType(ComponentType.PROCESSING);
             //node3.setCreated(LocalDateTime.now());
 
             workflow.addNode(node1);
@@ -1180,21 +1187,25 @@ public class PersistenceManagerTest {
             WorkflowNodeDescriptor node1 = new WorkflowNodeDescriptor();
             node1.setName("node1");
             node1.setComponentId("component01");
+            node1.setComponentType(ComponentType.PROCESSING);
             //node1.setCreated(LocalDateTime.now());
 
             WorkflowNodeDescriptor node2 = new WorkflowNodeDescriptor();
             node2.setName("node2");
             node2.setComponentId("component01");
+            node2.setComponentType(ComponentType.PROCESSING);
             //node2.setCreated(LocalDateTime.now());
 
             WorkflowNodeDescriptor node3 = new WorkflowNodeDescriptor();
             node3.setName("node3");
             node3.setComponentId("component01");
+            node3.setComponentType(ComponentType.PROCESSING);
             //node3.setCreated(LocalDateTime.now());
 
             WorkflowNodeDescriptor node4 = new WorkflowNodeDescriptor();
             node4.setName("node4");
             node4.setComponentId("component01");
+            node4.setComponentType(ComponentType.PROCESSING);
             //node4.setCreated(LocalDateTime.now());
 
             workflow.addNode(node1);
@@ -1242,6 +1253,7 @@ public class PersistenceManagerTest {
             WorkflowNodeDescriptor node1 = new WorkflowNodeDescriptor();
             node1.setName("node1");
             node1.setComponentId("component01");
+            node1.setComponentType(ComponentType.PROCESSING);
             //node1.setCreated(LocalDateTime.now());
 
             // add processing custom values for the node
@@ -1336,6 +1348,7 @@ public class PersistenceManagerTest {
             WorkflowNodeDescriptor node1 = new WorkflowNodeDescriptor();
             node1.setName("node1");
             node1.setComponentId("component01");
+            node1.setComponentType(ComponentType.PROCESSING);
             //node1.setCreated(LocalDateTime.now());
 
             // add processing custom values for the node
@@ -1379,6 +1392,7 @@ public class PersistenceManagerTest {
             WorkflowNodeGroupDescriptor nodeGroup = new WorkflowNodeGroupDescriptor();
             nodeGroup.setName("groupNode01");
             nodeGroup.setComponentId("component01");
+            nodeGroup.setComponentType(ComponentType.GROUP);
             //nodeGroup.setCreated(LocalDateTime.now());
 
             nodeGroup.addNode(node1);
