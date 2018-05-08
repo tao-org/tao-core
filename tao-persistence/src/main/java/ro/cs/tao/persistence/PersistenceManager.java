@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.component.GroupComponent;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.datasource.DataSourceComponent;
@@ -24,6 +25,7 @@ import ro.cs.tao.user.User;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 
+import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Set;
 
@@ -48,9 +50,11 @@ public class PersistenceManager implements MessagePersister {
 
     @Autowired
     private ComponentManager componentManager;
+    private SimpleCache.Cache<String, ProcessingComponent> componentCache;
 
     @Autowired
     private WorkflowManager workflowManager;
+    private SimpleCache.Cache<Long, WorkflowNodeDescriptor> workflowNodeCache;
 
     @Autowired
     private ExecutionManager executionManager;
@@ -63,6 +67,20 @@ public class PersistenceManager implements MessagePersister {
 
     @Autowired
     private UserManager userManager;
+
+    @PostConstruct
+    public void initialize() {
+        componentCache = SimpleCache.create(String.class, ProcessingComponent.class,
+                                            id -> {
+                                                try {
+                                                    return componentManager.getProcessingComponentById(id);
+                                                } catch (PersistenceException e) {
+                                                    return null;
+                                                }
+                                            });
+        workflowNodeCache = SimpleCache.create(Long.class, WorkflowNodeDescriptor.class,
+                                               workflowManager::getWorkflowNodeById);
+    }
 
     //region EOProduct and VectorData
     public List<EOProduct> getEOProducts() {
@@ -147,8 +165,8 @@ public class PersistenceManager implements MessagePersister {
         return componentManager.getProcessingComponents();
     }
 
-    public ProcessingComponent getProcessingComponentById(String id) throws PersistenceException {
-        return componentManager.getProcessingComponentById(id);
+    public ProcessingComponent getProcessingComponentById(String id) {//throws PersistenceException {
+        return componentCache.get(id); //componentManager.getProcessingComponentById(id);
     }
 
 
@@ -231,6 +249,11 @@ public class PersistenceManager implements MessagePersister {
     //region WorkflowNodeDescriptor
     public WorkflowNodeDescriptor getWorkflowNodeById(Long id) {
         return workflowManager.getWorkflowNodeById(id);
+    }
+
+    @Transactional
+    public List<WorkflowNodeDescriptor> getWorkflowNodesById(Long... ids) {
+        return workflowManager.getWorkflowNodesById(ids);
     }
 
     public List<WorkflowNodeDescriptor> getWorkflowNodesByComponentId(long workflowId, String componentId) {

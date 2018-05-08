@@ -679,8 +679,8 @@ public class PersistenceManagerTest {
     public void TC_17_retrieve_processing_component_by_id()
     {
         logger.info("TC_17_retrieve_processing_component_by_id");
-        try
-        {
+//        try
+//        {
             List<ProcessingComponent> components  = persistenceManager.getProcessingComponents();;
             if(components.size() > 0)
             {
@@ -689,12 +689,12 @@ public class PersistenceManagerTest {
                 ProcessingComponent searchedComponent  = persistenceManager.getProcessingComponentById(identifier);
                 Assert.assertTrue(searchedComponent != null && searchedComponent.getId().equals(identifier));
             }
-        }
-        catch (PersistenceException e)
-        {
-            logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
-        }
+//        }
+//        catch (PersistenceException e)
+//        {
+//            logger.error(ExceptionUtils.getStackTrace(e));
+//            Assert.fail(e.getMessage());
+//        }
     }
 
     @Test

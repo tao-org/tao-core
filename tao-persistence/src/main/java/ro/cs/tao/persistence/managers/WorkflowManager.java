@@ -29,7 +29,10 @@ import ro.cs.tao.persistence.repository.WorkflowNodeDescriptorRepository;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -123,6 +126,16 @@ public class WorkflowManager {
     @Transactional
     public WorkflowNodeDescriptor getWorkflowNodeById(Long id) {
         return id != null ? workflowNodeDescriptorRepository.findById(id) : null;
+    }
+
+    @Transactional
+    public List<WorkflowNodeDescriptor> getWorkflowNodesById(Long... ids) {
+        if (ids != null && ids.length > 0) {
+            Set<Long> nodeIds = new HashSet<>();
+            Collections.addAll(nodeIds, ids);
+            return workflowNodeDescriptorRepository.getWorkflowsById(nodeIds);
+        }
+        return null;
     }
 
     @Transactional
