@@ -34,6 +34,7 @@ import java.util.List;
 public class WorkflowNodeDescriptor extends GraphObject {
     protected Long id;
     private String componentId;
+    private ComponentType componentType;
     private float xCoord;
     private float yCoord;
     private int level;
@@ -49,6 +50,9 @@ public class WorkflowNodeDescriptor extends GraphObject {
     @XmlElement(name = "componentId")
     public String getComponentId() { return componentId; }
     public void setComponentId(String componentId) { this.componentId = componentId; }
+
+    public ComponentType getComponentType() { return componentType; }
+    public void setComponentType(ComponentType componentType) { this.componentType = componentType; }
 
     @XmlTransient
     public float getxCoord() { return xCoord; }
@@ -70,31 +74,6 @@ public class WorkflowNodeDescriptor extends GraphObject {
     public void setIncomingLinks(List<ComponentLink> incomingLinks) {
         this.incomingLinks = incomingLinks;
     }
-
-    /*public void setIncomingLinks(List<ComponentLink> links) {
-            if (this.incomingLinks != null) {
-                this.incomingLinks.clear();
-            }
-            if (links != null) {
-                for (ComponentLink link : links) {
-                    addLink(link);
-                }
-            }
-        }*/
-    /*public void addLink (ComponentLink link) {
-        if (this.incomingLinks == null) {
-            this.incomingLinks = new ArrayList<>();
-        }
-        if (!this.incomingLinks.contains(link)) {
-            this.incomingLinks.add(link);
-        }
-    }
-
-    public void removeLink(ComponentLink link) {
-        if (this.incomingLinks.contains(link)) {
-            this.incomingLinks.remove(link);
-        }
-    }*/
 
     @XmlTransient
     @JsonBackReference

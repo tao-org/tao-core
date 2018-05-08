@@ -135,7 +135,7 @@ public class TaskUtilities {
         List<ComponentLink> links = targetNode.getIncomingLinks();
         if (links != null) {
             links.stream()
-                    .filter(l -> l.getSourceNodeId().equals(sourceNode.getId()))
+                    .filter(l -> l.getSourceNodeId() == sourceNode.getId())
                     .forEach(l -> connections.put(l.getOutput().getName(), l.getInput().getName()));
         }
         return connections;
