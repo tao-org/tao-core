@@ -312,21 +312,20 @@ DROP TABLE IF EXISTS tao.component_link CASCADE;
 
 CREATE TABLE tao.component_link
 (
-    --target_graph_node_id bigint NOT NULL,
+    target_graph_node_id bigint NOT NULL,
     source_descriptor_id varchar(512) NOT NULL,
     source_graph_node_id bigint NOT NULL,
     target_descriptor_id varchar(512) NOT NULL
 );
 
---ALTER TABLE tao.component_link ADD CONSTRAINT PK_component_link PRIMARY KEY (source_graph_node_id, target_graph_node_id, source_descriptor_id, target_descriptor_id);
-ALTER TABLE tao.component_link ADD CONSTRAINT PK_component_link PRIMARY KEY (source_graph_node_id, source_descriptor_id, target_descriptor_id);
+ALTER TABLE tao.component_link ADD CONSTRAINT PK_component_link PRIMARY KEY (source_graph_node_id, target_graph_node_id, source_descriptor_id, target_descriptor_id);
 
 
 ALTER TABLE tao.component_link ADD CONSTRAINT FK_component_link_graph_node_1
 	FOREIGN KEY (source_graph_node_id) REFERENCES tao.graph_node (id) ON DELETE No Action ON UPDATE No Action;
 
---ALTER TABLE tao.component_link ADD CONSTRAINT FK_component_link_graph_node_2
---	FOREIGN KEY (target_graph_node_id) REFERENCES tao.graph_node (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE tao.component_link ADD CONSTRAINT FK_component_link_graph_node_2
+	FOREIGN KEY (target_graph_node_id) REFERENCES tao.graph_node (id) ON DELETE No Action ON UPDATE No Action;
 
 ALTER TABLE tao.component_link ADD CONSTRAINT FK_component_link_source_descriptor
 	FOREIGN KEY (source_descriptor_id) REFERENCES tao.source_descriptor (id) ON DELETE No Action ON UPDATE No Action;
