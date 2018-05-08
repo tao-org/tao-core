@@ -18,6 +18,7 @@ package ro.cs.tao.component;
 import ro.cs.tao.component.constraints.ConstraintException;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.Objects;
 
 /**
  * Models a link between an output of a component and an input of another component.
@@ -30,7 +31,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class ComponentLink {
     private SourceDescriptor output;
     private TargetDescriptor input;
-    private Long sourceNodeId;
+    private long sourceNodeId;
+    //private long targetNodeId;
 
     // default constructor needed for hibernate entity instantiation
     public ComponentLink(){}
@@ -45,11 +47,13 @@ public class ComponentLink {
         return input != null && output != null && output.isCompatibleWith(input);
     }
 
-    public ComponentLink(long sourceNodeId, TargetDescriptor input, SourceDescriptor output) throws ConstraintException {
+    public ComponentLink(long sourceNodeId, TargetDescriptor input,
+                         SourceDescriptor output) throws ConstraintException {
         if (!canConnect(input, output)) {
             throw new ConstraintException("Source and target are not compatible");
         }
         this.sourceNodeId = sourceNodeId;
+        //this.targetNodeId = targetNodeId;
         this.input = input;
         this.output = output;
     }
@@ -73,12 +77,15 @@ public class ComponentLink {
         this.input = input;
     }
 
-    public Long getSourceNodeId() {
+    public long getSourceNodeId() {
         return sourceNodeId;
     }
-    public void setSourceNodeId(Long sourceNodeId) {
+    public void setSourceNodeId(long sourceNodeId) {
         this.sourceNodeId = sourceNodeId;
     }
+
+    /*public long getTargetNodeId() { return targetNodeId; }
+    public void setTargetNodeId(long targetNodeId) { this.targetNodeId = targetNodeId; }*/
 
     @Override
     public boolean equals(Object obj) {
@@ -90,13 +97,16 @@ public class ComponentLink {
             return true;
         }
         if ((this.input != null && other.input == null) || (this.input == null && other.input != null) ||
-                (this.output != null && other.output == null) || (this.output == null && other.output != null) ||
-                (this.sourceNodeId != null && other.sourceNodeId == null) ||
-                (this.sourceNodeId == null && other.sourceNodeId != null)) {
+                (this.output != null && other.output == null) || (this.output == null && other.output != null)) {
             return false;
         }
-        return this.sourceNodeId.equals(other.sourceNodeId) &&
+        return this.sourceNodeId == other.sourceNodeId &&
                 (this.input.getId() != null && this.input.getId().equals(other.input.getId())) &&
                 (this.output.getId() != null && this.output.getId().equals(other.output.getId()));
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(output, input, sourceNodeId);
     }
 }

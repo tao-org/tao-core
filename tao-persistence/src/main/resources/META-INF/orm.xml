@@ -720,7 +720,7 @@
 
         <!-- avoid default DTYPE -->
         <discriminator-column name="discriminator" column-definition="integer NOT NULL" discriminator-type="INTEGER"/>
-
+        <convert converter="ro.cs.tao.persistence.convert.ComponentTypeConverter" attribute-name="componentType"/>
         <attributes>
             <id name="id">
                 <column name="id" nullable="false" column-definition="bigserial NOT NULL"/>
@@ -728,7 +728,10 @@
                 <sequence-generator name="graph_node_identifier" sequence-name="tao.graph_node_id_seq" allocation-size="1" />
             </id>
             <basic name="componentId">
-                <column name="processing_component_id" nullable="false" column-definition="integer NOT NULL"/>
+                <column name="component_id" nullable="false" column-definition="integer NOT NULL"/>
+            </basic>
+            <basic name="componentType">
+                <column name="component_type_id" nullable="false" column-definition="smallint NOT NULL"/>
             </basic>
             <basic name="xCoord">
                 <column name="xCoord" nullable="true" column-definition="real NULL"/>
@@ -748,10 +751,9 @@
 
             <element-collection name="incomingLinks" target-class="ro.cs.tao.component.ComponentLink" access="PROPERTY" fetch="LAZY">
                 <collection-table name="tao.component_link">
-                    <join-column name="target_graph_node_id" referenced-column-name="id" />
+                    <join-column name="target_graph_node_id" referenced-column-name="id"/>
                 </collection-table>
             </element-collection>
-
         </attributes>
     </entity>
 
@@ -1049,6 +1051,9 @@
             <basic name="sourceNodeId" fetch="LAZY">
                 <column name="source_graph_node_id" nullable="false"/>
             </basic>
+            <!--<basic name="targetNodeId" fetch="LAZY">
+                <column name="target_graph_node_id" nullable="false" />
+            </basic>-->
             <many-to-one name="output" fetch="LAZY">
                 <join-column name="source_descriptor_id" nullable="false"/>
                 <cascade>
@@ -1061,12 +1066,6 @@
                     <cascade-all/>
                 </cascade>
             </many-to-one>
-            <!--<many-to-one name="sourceNodeId" fetch="LAZY">-->
-                <!--<join-column name="source_graph_node_id" nullable="false"/>-->
-                <!--<cascade>-->
-                    <!--<cascade-all/>-->
-                <!--</cascade>-->
-            <!--</many-to-one>-->
         </attributes>
     </embeddable>
 
