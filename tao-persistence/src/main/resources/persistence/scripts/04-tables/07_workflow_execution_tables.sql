@@ -112,7 +112,7 @@ CREATE TABLE tao.component_type
 	description varchar(50) NOT NULL
 );
 
-ALTER TABLE tao.component_type ADD CONSTRAINT PK_service_status PRIMARY KEY (id);
+ALTER TABLE tao.component_type ADD CONSTRAINT PK_component_type PRIMARY KEY (id);
 
 
 -------------------------------------------------------------------------------
