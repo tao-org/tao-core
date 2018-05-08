@@ -194,13 +194,13 @@ VALUES ('admin');
 
 
 -- Users
--- admin user
+-- admin user (password "admin")
 INSERT INTO tao."user" (username, password, email, last_name, first_name, quota, created, active)
-VALUES ('admin', 'admin', 'kraftek@c-s.ro', 'Cosmin', 'Cara', 1000, CURRENT_TIMESTAMP, true);
+VALUES ('admin', '$2a$08$wU07f1hSVkTO7321eVi0quF8If7d23Ly66dkwGAOzbb6xrZFeo69m', 'kraftek@c-s.ro', 'Cosmin', 'Cara', 1000, CURRENT_TIMESTAMP, true);
 
--- System Account
+-- System Account (password "system")
 INSERT INTO tao."user" (username, password, email, last_name, first_name, quota, created, active)
-VALUES ('System Account', md5('system'), 'kraftek@c-s.ro', 'Cosmin', 'Cara', 1000, CURRENT_TIMESTAMP, true);
+VALUES ('System Account', '$2a$12$mXbtZweZmmFjcKIA0/NmF.uxcHik8rTKGdkkyrelKiZWe3bhgR.aC', 'kraftek@c-s.ro', 'Cosmin', 'Cara', 1000, CURRENT_TIMESTAMP, true);
 
 
 -- User groups
