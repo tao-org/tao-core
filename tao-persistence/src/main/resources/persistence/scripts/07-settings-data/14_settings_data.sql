@@ -168,6 +168,10 @@ INSERT INTO tao.template_type (type) VALUES ('JAVASCRIPT');
 INSERT INTO tao.template_type (type) VALUES ('XSLT');
 
 
+-- Component type
+INSERT INTO tao.component_type (id, description) VALUES (1, 'DATASOURCE');
+INSERT INTO tao.component_type (id, description) VALUES (2, 'PROCESSING');
+INSERT INTO tao.component_type (id, description) VALUES (3, 'GROUP');
 
 -- Workflow graph status
 

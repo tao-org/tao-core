@@ -37,7 +37,7 @@ public enum Status {
     /**
      * The workflow was published and hence cannot be edited
      */
-    @XmlEnumValue("2")
+    @XmlEnumValue("3")
     PUBLISHED(3);
 
     /**

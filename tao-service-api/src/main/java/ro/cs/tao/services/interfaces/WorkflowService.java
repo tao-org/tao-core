@@ -55,7 +55,7 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor> {
      * @param link    The link to remove
      * @return  The updated workflow
      */
-    WorkflowDescriptor removeLink(ComponentLink link) throws PersistenceException;
+    WorkflowDescriptor removeLink(long nodeId, ComponentLink link) throws PersistenceException;
     /**
      * Adds a group node to a workflow.
      * @param workflowId         The workflow identifier

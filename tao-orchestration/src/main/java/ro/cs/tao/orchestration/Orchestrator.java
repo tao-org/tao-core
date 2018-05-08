@@ -327,6 +327,9 @@ public class Orchestrator extends Notifiable {
                     logger.fine("No more child tasks to execute after the current task");
                     ExecutionJob job = task.getJob();
                     job.setExecutionStatus(ExecutionStatus.DONE);
+                    if (job.getEndTime() == null) {
+                        job.setEndTime(LocalDateTime.now());
+                    }
                     persistenceManager.updateExecutionJob(job);
                     if (taskNode.getPreserveOutput()) {
                         persistOutputProducts(task);

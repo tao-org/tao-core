@@ -1286,14 +1286,15 @@ public class PersistenceManagerTest {
             logger.info("Workflow " + workflow.getName() + " saved, ID = " + workflow.getId().toString());
 
             // check persisted workflow
-            Assert.assertTrue(workflow != null && workflow.getNodes() != null && workflow.getNodes().size() == 1);
+            Assert.assertTrue(workflow.getNodes() != null && workflow.getNodes().size() == 1);
 
+            /* TODO: Add a second node if testing links
             ComponentLink componentLink1 = new ComponentLink(node1.getId(), targetDescriptor, sourceDescriptor);
             List<ComponentLink> links = new ArrayList<>();
             links.add(componentLink1);
             node1.setIncomingLinks(links);
 
-            persistenceManager.updateWorkflowNodeDescriptor(node1);
+            persistenceManager.updateWorkflowNodeDescriptor(node1);*/
 
             // check persisted node custom values
             final List<ParameterValue> customValues = workflow.getNodes().get(0).getCustomValues();
@@ -1392,17 +1393,18 @@ public class PersistenceManagerTest {
             logger.info("Workflow " + workflow.getName() + " saved, ID = " + workflow.getId().toString());
 
             // check persisted workflow
-            Assert.assertTrue(workflow != null && workflow.getNodes() != null && workflow.getNodes().size() == 2);
+            Assert.assertTrue(workflow.getNodes() != null && workflow.getNodes().size() == 2);
 
+            /* TODO: Add a second node if testing links
             ComponentLink componentLink1 = new ComponentLink(node1.getId(), targetDescriptor, sourceDescriptor);
             List<ComponentLink> links = new ArrayList<>();
             links.add(componentLink1);
             node1.setIncomingLinks(links);
 
-            persistenceManager.updateWorkflowNodeDescriptor(node1);
+            persistenceManager.updateWorkflowNodeDescriptor(node1);*/
 
             // check persisted node custom values
-            Assert.assertTrue(workflow.getNodes().get(0).getCustomValues().size() == 3);
+            Assert.assertEquals(3, workflow.getNodes().get(0).getCustomValues().size());
         }
         catch (Exception e)
         {

@@ -103,6 +103,17 @@ ALTER TABLE tao.workflow_graph ADD CONSTRAINT FK_workflow_user
 --ALTER TABLE tao.workflow_graph_processing_custom_values ADD CONSTRAINT FK_workflow_graph_processing_custom_values_workflow_graph
 --	FOREIGN KEY (workflow_graph_id) REFERENCES tao.workflow_graph (id) ON DELETE No Action ON UPDATE No Action;
 
+-- component_type
+DROP TABLE IF EXISTS tao.component_type CASCADE;
+
+CREATE TABLE tao.component_type
+(
+	id smallint NOT NULL,
+	description varchar(50) NOT NULL
+);
+
+ALTER TABLE tao.component_type ADD CONSTRAINT PK_service_status PRIMARY KEY (id);
+
 
 -------------------------------------------------------------------------------
 -- table: graph_node
@@ -115,7 +126,8 @@ CREATE TABLE tao.graph_node
 	created timestamp NULL DEFAULT now(),
 	workflow_id bigint NOT NULL,
 	node_level integer NOT NULL,
-	processing_component_id varchar(512) NOT NULL,
+	component_id varchar(512) NOT NULL,
+    component_type_id smallint NOT NULL,
 	xCoord real NULL,
 	yCoord real NULL,
 	preserve_output boolean NULL DEFAULT true,
@@ -129,8 +141,8 @@ ALTER TABLE tao.graph_node ADD CONSTRAINT PK_graph_node PRIMARY KEY (id);
 ALTER TABLE tao.graph_node ADD CONSTRAINT FK_graph_node_workflow_graph
 	FOREIGN KEY (workflow_id) REFERENCES tao.workflow_graph (id) ON DELETE No Action ON UPDATE No Action;
 
---ALTER TABLE tao.graph_node ADD CONSTRAINT FK_graph_node_processing_component
---	FOREIGN KEY (processing_component_id) REFERENCES tao.processing_component (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE tao.graph_node ADD CONSTRAINT FK_graph_node_component_type
+	FOREIGN KEY (component_type_id) REFERENCES tao.component_type (id) ON DELETE No Action ON UPDATE No Action;
 
 -- now add the FK from tao.query
 ALTER TABLE tao.query ADD CONSTRAINT FK_query_graph_node
