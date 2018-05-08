@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 import java.beans.Transient;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +41,9 @@ public class WorkflowDescriptor
     private String path;
     private boolean active;
     private List<WorkflowNodeDescriptor> nodes = new ArrayList<>();
+    private float xCoord;
+    private float yCoord;
+    private float zoom;
 
     @XmlElement(name = "id")
     public Long getId() { return id; }
@@ -64,6 +68,18 @@ public class WorkflowDescriptor
     @XmlElement(name = "active")
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
+
+    @XmlTransient
+    public float getxCoord() { return xCoord; }
+    public void setxCoord(float xCoord) { this.xCoord = xCoord; }
+
+    @XmlTransient
+    public float getyCoord() { return yCoord; }
+    public void setyCoord(float yCoord) { this.yCoord = yCoord; }
+
+    @XmlTransient
+    public float getZoom() { return zoom; }
+    public void setZoom(float zoom) { this.zoom = zoom; }
 
     @XmlElementWrapper(name = "nodes")
     @JsonManagedReference

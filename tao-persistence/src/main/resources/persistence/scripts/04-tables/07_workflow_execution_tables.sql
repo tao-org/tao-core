@@ -70,6 +70,9 @@ CREATE TABLE tao.workflow_graph
 	definition_path varchar(512) NULL,
 	status_id integer NOT NULL,
 	visibility_id integer NOT NULL,
+	xCoord real NULL,
+    yCoord real NULL,
+    zoom real NULL,
 	custom_values json NULL,
 	active boolean NULL DEFAULT true
 );

@@ -129,9 +129,9 @@ public class JobFactory {
             TaoComponent component = null;
             List<ParameterValue> customValues = workflowNode.getCustomValues();
             List<ComponentLink> links = workflowNode.getIncomingLinks();
-            try {
+            //try {
                 component = persistenceManager.getProcessingComponentById(workflowNode.getComponentId());
-            } catch (PersistenceException ignored) { }
+            //} catch (PersistenceException ignored) { }
             if (component != null) {
                 task = new ProcessingExecutionTask();
                 ((ProcessingExecutionTask) task).setComponent((ProcessingComponent) component);
