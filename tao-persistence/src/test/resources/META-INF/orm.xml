@@ -574,9 +574,9 @@
                     <join-column name="task_id" referenced-column-name="id" />
                 </collection-table>
             </element-collection>
-    
+
             <transient name="stateHandler" />
-            
+
         </attributes>
     </entity>
 
@@ -836,7 +836,7 @@
 
         </attributes>
     </entity>
-    
+
     <entity class="ro.cs.tao.execution.model.Query" access="PROPERTY">
         <table name="tao.query"/>
         <convert converter="ro.cs.tao.persistence.convert.QueryValuesMapConverter" attribute-name="values"/>
@@ -1061,7 +1061,7 @@
         </attributes>
     </embeddable>
 
-    
+
     <embeddable class="ro.cs.tao.component.ComponentLink" access="PROPERTY">
         <attributes>
             <basic name="sourceNodeId" fetch="LAZY">
