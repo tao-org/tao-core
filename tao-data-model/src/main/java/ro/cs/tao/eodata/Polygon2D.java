@@ -17,7 +17,9 @@ package ro.cs.tao.eodata;
 
 import java.awt.geom.Path2D;
 import java.awt.geom.PathIterator;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -111,6 +113,21 @@ public class Polygon2D {
      */
     public int getNumPoints() {
         return numPoints;
+    }
+
+    public List<Point2D> getPoints() {
+        List<Point2D> points = null;
+        if (polygon != null) {
+            points = new ArrayList<>();
+            PathIterator pathIterator = polygon.getPathIterator(null);
+            while (!pathIterator.isDone()) {
+                double[] segment = new double[6];
+                pathIterator.currentSegment(segment);
+                points.add(new Point2D.Double(segment[0], segment[1]));
+                pathIterator.next();
+            }
+        }
+        return points;
     }
 
     /**
