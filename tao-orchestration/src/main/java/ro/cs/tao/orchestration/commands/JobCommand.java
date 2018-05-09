@@ -78,9 +78,9 @@ public abstract class JobCommand {
                 throw new ExecutionException("Invalid job state");
             }
             try {
-                doAction(job);
                 job.setExecutionStatus(this.requestedStatus);
-                persistenceManager.updateExecutionJob(job);
+                job = persistenceManager.updateExecutionJob(job);
+                doAction(job);
             } catch (Exception ex) {
                 job.setExecutionStatus(ExecutionStatus.FAILED);
                 throw new ExecutionException(ex);

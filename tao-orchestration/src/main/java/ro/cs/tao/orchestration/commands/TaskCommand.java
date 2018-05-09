@@ -20,7 +20,6 @@ import ro.cs.tao.execution.ExecutionsManager;
 import ro.cs.tao.execution.model.ExecutionGroup;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
-import ro.cs.tao.persistence.PersistenceManager;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -36,7 +35,7 @@ public abstract class TaskCommand {
     public static final TaskCommand SUSPEND = new TaskSuspend();
     public static final TaskCommand RESUME = new TaskResume();
 
-    private static PersistenceManager persistenceManager;
+    //private static PersistenceManager persistenceManager;
 
     private final ExecutionStatus requestedStatus;
     private final Set<ExecutionStatus> allowedStates;
@@ -44,9 +43,9 @@ public abstract class TaskCommand {
     /**
      * Sets the persistence manager for all subclasses
      */
-    public static void setPersistenceManager(PersistenceManager persister) {
+    /*public static void setPersistenceManager(PersistenceManager persister) {
         persistenceManager = persister;
-    }
+    }*/
 
     private TaskCommand(ExecutionStatus requestedStatus) {
         this.requestedStatus = requestedStatus;
