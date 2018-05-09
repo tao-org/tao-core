@@ -38,6 +38,8 @@ import ro.cs.tao.topology.NodeServiceStatus;
 import ro.cs.tao.topology.ServiceDescription;
 import ro.cs.tao.topology.ServiceStatus;
 import ro.cs.tao.workflow.*;
+import ro.cs.tao.workflow.enums.Status;
+import ro.cs.tao.workflow.enums.Visibility;
 
 import java.awt.*;
 import java.sql.SQLException;
@@ -679,8 +681,8 @@ public class PersistenceManagerTest {
     public void TC_17_retrieve_processing_component_by_id()
     {
         logger.info("TC_17_retrieve_processing_component_by_id");
-        try
-        {
+//        try
+//        {
             List<ProcessingComponent> components  = persistenceManager.getProcessingComponents();;
             if(components.size() > 0)
             {
@@ -689,12 +691,12 @@ public class PersistenceManagerTest {
                 ProcessingComponent searchedComponent  = persistenceManager.getProcessingComponentById(identifier);
                 Assert.assertTrue(searchedComponent != null && searchedComponent.getId().equals(identifier));
             }
-        }
-        catch (PersistenceException e)
-        {
-            logger.error(ExceptionUtils.getStackTrace(e));
-            Assert.fail(e.getMessage());
-        }
+//        }
+//        catch (PersistenceException e)
+//        {
+//            logger.error(ExceptionUtils.getStackTrace(e));
+//            Assert.fail(e.getMessage());
+//        }
     }
 
     @Test

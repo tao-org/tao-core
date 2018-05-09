@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.core.env.Environment;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.orm.jpa.JpaDialect;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
@@ -32,6 +33,7 @@ import java.util.logging.Logger;
 
 @Configuration
 @EnableTransactionManagement
+@EnableJpaAuditing
 @PropertySource("classpath:persistence/persistence.properties")
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 public class DatabaseConfiguration implements ApplicationListener<ContextClosedEvent> {

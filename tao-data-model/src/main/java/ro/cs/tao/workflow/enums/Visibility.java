@@ -13,32 +13,27 @@
  * You should have received a copy of the GNU General Public License along
  * with this program; if not, see http://www.gnu.org/licenses/
  */
-package ro.cs.tao.workflow;
+package ro.cs.tao.workflow.enums;
 
 import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlEnumValue;
 
 /**
- * Workflow (editing) status enumeration
+ * Workflow visibility enumeration
  * @author Cosmin Cara
  */
 @XmlEnum(Integer.class)
-public enum Status {
+public enum Visibility {
     /**
-     * The workflow is draft (still in editing mode)
+     * The workflow is public
      */
     @XmlEnumValue("1")
-    DRAFT(1),
+    PUBLIC(1),
     /**
-     * The workflow is validated and ready to be executed, and may still be edited
+     * The workflow is private (visible only to the author)
      */
     @XmlEnumValue("2")
-    READY(2),
-    /**
-     * The workflow was published and hence cannot be edited
-     */
-    @XmlEnumValue("3")
-    PUBLISHED(3);
+    PRIVATE(2);
 
     /**
      * Numerical value for enum constants
@@ -49,7 +44,7 @@ public enum Status {
      * Constructor
      * @param s - the integer value identifier
      */
-    Status(final int s)
+    Visibility(final int s)
     {
         value = s;
     }
@@ -67,7 +62,7 @@ public enum Status {
      */
     public static String getEnumConstantNameByValue(final int value)
     {
-        for (Status type : values())
+        for (Visibility type : values())
         {
             if ((String.valueOf(value)).equals(type.toString()))
             {
