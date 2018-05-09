@@ -118,6 +118,17 @@ CREATE TABLE tao.component_type
 ALTER TABLE tao.component_type ADD CONSTRAINT PK_component_type PRIMARY KEY (id);
 
 
+-- node_behavior
+DROP TABLE IF EXISTS tao.node_behavior CASCADE;
+
+CREATE TABLE tao.node_behavior
+(
+	id smallint NOT NULL,
+	description varchar(50) NOT NULL
+);
+
+ALTER TABLE tao.node_behavior ADD CONSTRAINT PK_node_behavior PRIMARY KEY (id);
+
 -------------------------------------------------------------------------------
 -- table: graph_node
 DROP TABLE IF EXISTS tao.graph_node CASCADE;
@@ -133,6 +144,7 @@ CREATE TABLE tao.graph_node
     component_type_id smallint NOT NULL,
 	xCoord real NULL,
 	yCoord real NULL,
+	behavior_id smallint NULL DEFAULT 1,
 	preserve_output boolean NULL DEFAULT true,
 	custom_values json NULL,
     -- special column used by JPA to distinguish which type of object is stored in one row (since this table holds 2 types of entities)
@@ -146,6 +158,9 @@ ALTER TABLE tao.graph_node ADD CONSTRAINT FK_graph_node_workflow_graph
 
 ALTER TABLE tao.graph_node ADD CONSTRAINT FK_graph_node_component_type
 	FOREIGN KEY (component_type_id) REFERENCES tao.component_type (id) ON DELETE No Action ON UPDATE No Action;
+
+ALTER TABLE tao.graph_node ADD CONSTRAINT FK_graph_node_node_behavior
+	FOREIGN KEY (behavior_id) REFERENCES tao.node_behavior (id) ON DELETE No Action ON UPDATE No Action;
 
 -- now add the FK from tao.query
 ALTER TABLE tao.query ADD CONSTRAINT FK_query_graph_node

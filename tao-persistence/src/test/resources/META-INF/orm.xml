@@ -574,9 +574,9 @@
                     <join-column name="task_id" referenced-column-name="id" />
                 </collection-table>
             </element-collection>
-
+    
             <transient name="stateHandler" />
-
+            
         </attributes>
     </entity>
 
@@ -737,6 +737,7 @@
         </entity-listeners>
 
         <convert converter="ro.cs.tao.persistence.convert.ComponentTypeConverter" attribute-name="componentType"/>
+        <convert converter="ro.cs.tao.persistence.convert.TransitionBehaviorConverter" attribute-name="behavior"/>
         <attributes>
             <id name="id">
                 <column name="id" nullable="false" column-definition="bigserial NOT NULL"/>
@@ -757,6 +758,9 @@
             </basic>
             <basic name="level">
                 <column name="node_level" nullable="false" column-definition="integer NOT NULL"/>
+            </basic>
+            <basic name="behavior">
+                <column name="behavior_id" nullable="true" column-definition="integer NULL DEFAULT 1"/>
             </basic>
             <basic name="preserveOutput">
                 <column name="preserve_output" nullable="true" column-definition="boolean NULL DEFAULT true"/>
@@ -836,7 +840,7 @@
 
         </attributes>
     </entity>
-
+    
     <entity class="ro.cs.tao.execution.model.Query" access="PROPERTY">
         <table name="tao.query"/>
         <convert converter="ro.cs.tao.persistence.convert.QueryValuesMapConverter" attribute-name="values"/>
@@ -1061,7 +1065,7 @@
         </attributes>
     </embeddable>
 
-
+    
     <embeddable class="ro.cs.tao.component.ComponentLink" access="PROPERTY">
         <attributes>
             <basic name="sourceNodeId" fetch="LAZY">
