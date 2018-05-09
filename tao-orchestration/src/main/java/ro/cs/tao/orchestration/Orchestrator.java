@@ -40,6 +40,7 @@ import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
+import ro.cs.tao.workflow.enums.TransitionBehavior;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -411,7 +412,30 @@ public class Orchestrator extends Notifiable {
                                               .filter(i -> task.getId().equals(tasks.get(i).getId()))
                                               .findFirst().orElse(0);
                     bulkSetStatus(tasks.subList(startIndex, tasks.size()), taskStatus);
-                    groupTask.setExecutionStatus(taskStatus);
+                    if (TransitionBehavior.FAIL_ON_ERROR == persistenceManager.getWorkflowNodeById(task.getWorkflowNodeId()).getBehavior()) {
+                        groupTask.setExecutionStatus(taskStatus);
+                    } else {
+                        if (groupTask.getStateHandler() == null) {
+                            groupTask.setStateHandler(groupStateHandlers.get(groupTask.getId()));
+                        }
+                        LoopState nextState = (LoopState) groupTask.nextInternalState();
+                        if (nextState != null) {
+                            task.setExecutionStatus(ExecutionStatus.UNDETERMINED);
+                            bulkSetStatus(tasks, ExecutionStatus.UNDETERMINED);
+                            groupTask.setExecutionStatus(ExecutionStatus.UNDETERMINED);
+                            try {
+                                InternalStateHandler handler = groupTask.getStateHandler();
+                                if (handler != null) {
+                                    groupTask.setInternalState(handler.serializeState());
+                                }
+                            } catch (SerializationException e) {
+                                e.printStackTrace();
+                            }
+                        } else {
+                            groupTask.setExecutionStatus(ExecutionStatus.DONE);
+                            groupTask.setEndTime(LocalDateTime.now());
+                        }
+                    }
                     break;
                 case DONE:
                     // If the task is the last one executing of this group

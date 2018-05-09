@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import ro.cs.tao.component.ComponentLink;
+import ro.cs.tao.workflow.enums.TransitionBehavior;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
@@ -40,6 +41,7 @@ public class WorkflowNodeDescriptor extends GraphObject {
     private int level;
     private List<ComponentLink> incomingLinks;
     private boolean preserveOutput;
+    private TransitionBehavior behavior = TransitionBehavior.FAIL_ON_ERROR;
 
     private WorkflowDescriptor workflow;
 
@@ -64,6 +66,9 @@ public class WorkflowNodeDescriptor extends GraphObject {
 
     public int getLevel() { return level; }
     public void setLevel(int level) { this.level = level; }
+
+    public TransitionBehavior getBehavior() { return behavior; }
+    public void setBehavior(TransitionBehavior behavior) { this.behavior = behavior; }
 
     public boolean getPreserveOutput() { return preserveOutput; }
     public void setPreserveOutput(boolean preserveOutput) { this.preserveOutput = preserveOutput; }

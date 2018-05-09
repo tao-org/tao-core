@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * CRUD repository for WorkflowDescriptor entities
@@ -26,6 +27,9 @@ public interface WorkflowNodeDescriptorRepository extends PagingAndSortingReposi
      * @return the corresponding WorkflowNodeDescriptor entity
      */
     WorkflowNodeDescriptor findById(Long id);
+
+    @Query(value = "SELECT * from tao.graph_node where id in (:ids) order by node_level", nativeQuery = true)
+    List<WorkflowNodeDescriptor> getWorkflowsById(@Param("ids") Set<Long> ids);
 
     @Query(value = "SELECT * from tao.graph_node where workflow_id = :workflowId and processing_component_id = :componentId " +
                     "order by node_level", nativeQuery = true)

@@ -5,14 +5,14 @@
                  http://xmlns.jcp.org/xml/ns/persistence/orm/orm_2_2.xsd"
                  version="2.1">
 
-    <persistence-unit-metadata>
+    <!--<persistence-unit-metadata>
         <persistence-unit-defaults>
             <entity-listeners>
                 <entity-listener class="org.springframework.data.jpa.domain.support.AuditingEntityListener" />
             </entity-listeners>
         </persistence-unit-defaults>
-    </persistence-unit-metadata>
-
+    </persistence-unit-metadata>-->
+    
     <!-- Mapped superclasses are only seen for entities (not for embeddables too) -->
 
     <mapped-superclass class="ro.cs.tao.eodata.EOData" access="PROPERTY">
@@ -260,6 +260,10 @@
 
     <entity class="ro.cs.tao.component.ProcessingComponent" access="PROPERTY">
         <table name="tao.processing_component"/>
+
+        <entity-listeners>
+            <entity-listener class="ro.cs.tao.persistence.audit.ProcessingComponentListener"/>
+        </entity-listeners>
 
         <convert converter="ro.cs.tao.persistence.convert.TemplateTypeConverter" attribute-name="templateType" />
         <convert converter="ro.cs.tao.persistence.convert.ProcessingComponentVisibilityConverter" attribute-name="visibility" />
@@ -698,7 +702,15 @@
             <basic name="active">
                 <column name="active" nullable="true" column-definition="boolean NULL DEFAULT true"/>
             </basic>
-
+            <basic name="xCoord">
+                <column name="xCoord" nullable="true" column-definition="real NULL"/>
+            </basic>
+            <basic name="yCoord">
+                <column name="yCoord" nullable="true" column-definition="real NULL"/>
+            </basic>
+            <basic name="zoom">
+                <column name="zoom" nullable="true" column-definition="real NULL"/>
+            </basic>
             <one-to-many name="nodes" target-entity="ro.cs.tao.workflow.WorkflowNodeDescriptor"
                          fetch="EAGER" access="FIELD" orphan-removal="true"
                          mapped-by="workflow">
@@ -717,10 +729,15 @@
         <table name="tao.graph_node"/>
         <!-- set inheritance to single table, since WorkflowNodeGroupDescriptor inherits from WorkflowNodeDescriptor -->
         <inheritance strategy="SINGLE_TABLE"/>
-
         <!-- avoid default DTYPE -->
         <discriminator-column name="discriminator" column-definition="integer NOT NULL" discriminator-type="INTEGER"/>
+
+        <entity-listeners>
+            <entity-listener class="ro.cs.tao.persistence.audit.WorkflowNodeListener"/>
+        </entity-listeners>
+
         <convert converter="ro.cs.tao.persistence.convert.ComponentTypeConverter" attribute-name="componentType"/>
+        <convert converter="ro.cs.tao.persistence.convert.TransitionBehaviorConverter" attribute-name="behavior"/>
         <attributes>
             <id name="id">
                 <column name="id" nullable="false" column-definition="bigserial NOT NULL"/>
@@ -741,6 +758,9 @@
             </basic>
             <basic name="level">
                 <column name="node_level" nullable="false" column-definition="integer NOT NULL"/>
+            </basic>
+            <basic name="behavior">
+                <column name="behavior_id" nullable="true" column-definition="integer NULL DEFAULT 1"/>
             </basic>
             <basic name="preserveOutput">
                 <column name="preserve_output" nullable="true" column-definition="boolean NULL DEFAULT true"/>
