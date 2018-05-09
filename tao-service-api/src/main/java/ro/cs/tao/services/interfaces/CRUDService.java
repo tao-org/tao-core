@@ -52,7 +52,7 @@ public interface CRUDService<T> {
      *
      * @param object    The modified entity.
      */
-    T update(T object);
+    T update(T object) throws PersistenceException;
 
     /**
      * Removes the entity with the given identifier from the underlying persistent storage.
