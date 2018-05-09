@@ -1261,6 +1261,11 @@ public class PersistenceManagerTest {
             node1.addCustomValue("customName2", "customValue2");
             node1.addCustomValue("customName3", "customValue3");
 
+            WorkflowNodeDescriptor node2 = new WorkflowNodeDescriptor();
+            node2.setName("node2");
+            node2.setComponentId("component01");
+            node2.setComponentType(ComponentType.PROCESSING);
+
             // add incoming links for the node
             DataDescriptor dataDescriptor = new DataDescriptor();
             dataDescriptor.setFormatType(DataFormat.RASTER);
@@ -1289,8 +1294,9 @@ public class PersistenceManagerTest {
             sourceConstraints.add("source_constraint03");
             //sourceDescriptor.setConstraints(sourceConstraints);
 
-            // add the node within the workflow
+            // add the nodes within the workflow
             workflow.addNode(node1);
+            workflow.addNode(node2);
 
             // save the parent workflow entity
             workflow = persistenceManager.saveWorkflowDescriptor(workflow);
@@ -1300,13 +1306,12 @@ public class PersistenceManagerTest {
             // check persisted workflow
             Assert.assertTrue(workflow.getNodes() != null && workflow.getNodes().size() == 1);
 
-            /* TODO: Add a second node if testing links
             ComponentLink componentLink1 = new ComponentLink(node1.getId(), targetDescriptor, sourceDescriptor);
             List<ComponentLink> links = new ArrayList<>();
             links.add(componentLink1);
-            node1.setIncomingLinks(links);
+            node2.setIncomingLinks(links);
 
-            persistenceManager.updateWorkflowNodeDescriptor(node1);*/
+            persistenceManager.updateWorkflowNodeDescriptor(node2);
 
             // check persisted node custom values
             final List<ParameterValue> customValues = workflow.getNodes().get(0).getCustomValues();
