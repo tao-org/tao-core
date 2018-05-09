@@ -1,6 +1,6 @@
 package ro.cs.tao.persistence.convert;
 
-import ro.cs.tao.workflow.Status;
+import ro.cs.tao.workflow.enums.Status;
 
 import javax.persistence.AttributeConverter;
 

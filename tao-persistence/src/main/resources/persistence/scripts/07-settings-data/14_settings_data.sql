@@ -173,6 +173,10 @@ INSERT INTO tao.component_type (id, description) VALUES (1, 'DATASOURCE');
 INSERT INTO tao.component_type (id, description) VALUES (2, 'PROCESSING');
 INSERT INTO tao.component_type (id, description) VALUES (3, 'GROUP');
 
+-- Behavior
+INSERT INTO tao.node_behavior (id, description) VALUES (1, 'FAIL_ON_ERROR');
+INSERT INTO tao.node_behavior (id, description) VALUES (2, 'CONTINUE_ON_ERROR');
+
 -- Workflow graph status
 
 INSERT INTO tao.workflow_graph_status (status) VALUES ('DRAFT');

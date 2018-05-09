@@ -38,6 +38,8 @@ import ro.cs.tao.topology.NodeServiceStatus;
 import ro.cs.tao.topology.ServiceDescription;
 import ro.cs.tao.topology.ServiceStatus;
 import ro.cs.tao.workflow.*;
+import ro.cs.tao.workflow.enums.Status;
+import ro.cs.tao.workflow.enums.Visibility;
 
 import java.awt.*;
 import java.sql.SQLException;

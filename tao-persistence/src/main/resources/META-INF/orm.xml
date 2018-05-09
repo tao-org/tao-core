@@ -737,6 +737,7 @@
         </entity-listeners>
 
         <convert converter="ro.cs.tao.persistence.convert.ComponentTypeConverter" attribute-name="componentType"/>
+        <convert converter="ro.cs.tao.persistence.convert.TransitionBehaviorConverter" attribute-name="behavior"/>
         <attributes>
             <id name="id">
                 <column name="id" nullable="false" column-definition="bigserial NOT NULL"/>
@@ -757,6 +758,9 @@
             </basic>
             <basic name="level">
                 <column name="node_level" nullable="false" column-definition="integer NOT NULL"/>
+            </basic>
+            <basic name="behavior">
+                <column name="behavior_id" nullable="true" column-definition="integer NULL DEFAULT 1"/>
             </basic>
             <basic name="preserveOutput">
                 <column name="preserve_output" nullable="true" column-definition="boolean NULL DEFAULT true"/>
