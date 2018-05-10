@@ -233,6 +233,18 @@ public class PersistenceManager implements MessagePersister {
         return workflowManager.getWorkflowDescriptor(identifier);
     }
 
+    public List<WorkflowDescriptor> getUserWorkflowsByStatus(String user, int statusId) {
+        return workflowManager.getUserWorkflowsByStatus(user, statusId);
+    }
+
+    public List<WorkflowDescriptor> getUserPublishedWorkflowsByVisibility(String user, int visibilityId) {
+        return workflowManager.getUserPublishedWorkflowsByVisibility(user, visibilityId);
+    }
+
+    public List<WorkflowDescriptor> getOtherPublicWorkflows(String user) {
+        return workflowManager.getOtherPublicWorkflows(user);
+    }
+
     public WorkflowDescriptor saveWorkflowDescriptor(WorkflowDescriptor workflow) throws PersistenceException {
         return workflowManager.saveWorkflowDescriptor(workflow);
     }
