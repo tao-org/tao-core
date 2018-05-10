@@ -67,6 +67,7 @@ public class DefaultJobTaskSelector implements TaskSelector<ExecutionJob> {
         if (tasks != null && tasks.size() > 0) {
             next = new ArrayList<>();
             ExecutionStatus status = job.getExecutionStatus();
+            System.out.println("Job status is " + status);
             switch (status) {
                 // If the job is not started, we return the first task in line
                 case UNDETERMINED:
@@ -112,6 +113,7 @@ public class DefaultJobTaskSelector implements TaskSelector<ExecutionJob> {
         WorkflowDescriptor workflow = workflowNode.getWorkflow();
         List<WorkflowNodeDescriptor> childNodes = workflow.findChildren(workflow.getNodes(), workflowNode);
         if (childNodes == null || childNodes.size() == 0) {
+            System.out.println("No children for current node " + workflowNode.getComponentId());
             return null;
         }
         if (childNodes.size() == 1) {
