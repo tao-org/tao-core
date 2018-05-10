@@ -16,6 +16,7 @@
 package ro.cs.tao.execution.local;
 
 import org.ggf.drmaa.*;
+import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.topology.NodeDescription;
@@ -44,6 +45,8 @@ public class DefaultSession implements Session {
     private Map<String, JobTemplate> jobTemplates;
     private Map<String, Executor> runningJobs;
     private AtomicInteger nodeCounter;
+    // TODO: This should be configurable - add it to tao.properties or in a specific file?
+    private Set<String> cmdsToRunAsSu = new HashSet<String>() {{add("docker");}};
     private Logger logger = Logger.getLogger(DefaultSession.class.getName());
 
     public void setNodes(NodeDescription[] nodes) { this.nodes = nodes; }
@@ -62,6 +65,8 @@ public class DefaultSession implements Session {
                 if (Arrays.stream(nodes).noneMatch(n -> hostName.equalsIgnoreCase(n.getHostName()) || hostName.equals(ipAddress))) {
                     NodeDescription localNode = new NodeDescription();
                     localNode.setHostName(hostName);
+                    localNode.setUserName(ConfigurationManager.getInstance().getValue("topology.master.user"));
+                    localNode.setUserPass(ConfigurationManager.getInstance().getValue("topology.master.password"));
                     localNode.setProcessorCount(Runtime.getRuntime().availableProcessors());
                     localNode.setMemorySizeGB((int) (Runtime.getRuntime().maxMemory() / 0x40000000));
                     localNode.setDescription("Master node (localhost)");
@@ -133,9 +138,9 @@ public class DefaultSession implements Session {
             args.addAll(jt.getArgs());
             final ExecutionUnit unit = isLocalHost(node.getHostName()) ?
                     new ExecutionUnit(ExecutorType.PROCESS, node.getHostName(), node.getUserName(), node.getUserPass(),
-                                      args, false, null) :
+                                      args, cmdsToRunAsSu.contains(jt.getRemoteCommand()), null) :
                     new ExecutionUnit(ExecutorType.SSH2, node.getHostName(), node.getUserName(), node.getUserPass(),
-                                      args, false, SSHMode.EXEC);
+                                      args, cmdsToRunAsSu.contains(jt.getRemoteCommand()), SSHMode.EXEC);
             String jobId = jt.getJobName() + ":" + System.nanoTime();
             this.runningJobs.put(jobId, Executor.execute(null, unit));
             return jobId;

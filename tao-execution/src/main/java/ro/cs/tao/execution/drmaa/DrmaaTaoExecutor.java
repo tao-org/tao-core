@@ -52,7 +52,6 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         try {
             session.init(null);
             super.initialize();
-            //useDockerForExecution = !(session instanceof DefaultSession);
             useDockerForExecution = !Platform.getCurrentPlatform().getId().equals(Platform.ID.win);
         } catch (DrmaaException e) {
             isInitialized = false;
@@ -224,6 +223,8 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                 add("-i");      // Keep STDIN open even if not attached
                 //add("-t");      // Allocate a pseudo-TTY
                 add("--rm");    // Automatically remove the container when it exits
+                add("--volume-driver");    // Automatically remove the container when it exits
+                add("cifs");    // Automatically remove the container when it exits
                 add("-v");      // Bind mount a volume
                 add(dockerBindMount);
             }};
@@ -231,11 +232,11 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             dockerArgsList.addAll(argsList);
             argsList = dockerArgsList;
         } else {
-            //logger.info(String.format("Task %s : %s", task.getId(), String.join(" ", argsList)));
             cmd = argsList.remove(0);
         }
         jt.setRemoteCommand(cmd);
         jt.setArgs(argsList);
+        logger.info(String.format("[Task %s ]: %s %s", String.valueOf(task.getId()), cmd, String.join(" ", argsList)));
         return jt;
     }
 }
