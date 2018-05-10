@@ -20,11 +20,21 @@ import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
+import ro.cs.tao.workflow.enums.Status;
+import ro.cs.tao.workflow.enums.Visibility;
+
+import java.util.List;
 
 /**
  * @author Cosmin Cara
  */
 public interface WorkflowService extends CRUDService<WorkflowDescriptor> {
+
+    List<WorkflowDescriptor> getUserWorkflowsByStatus(String user, Status status);
+
+    List<WorkflowDescriptor> getUserPublishedWorkflowsByVisibility(String user, Visibility visibility);
+
+    List<WorkflowDescriptor> getOtherPublicWorkflows(String user);
 
     /**
      * Adds a node to a workflow.

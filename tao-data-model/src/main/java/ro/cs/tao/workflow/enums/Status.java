@@ -54,6 +54,8 @@ public enum Status {
         value = s;
     }
 
+    public int value() { return value; }
+
     @Override
     public String toString()
     {
@@ -65,14 +67,21 @@ public enum Status {
      * @param value the integer value identifier
      * @return the string token corresponding to the integer identifier
      */
-    public static String getEnumConstantNameByValue(final int value)
-    {
-        for (Status type : values())
-        {
-            if ((String.valueOf(value)).equals(type.toString()))
-            {
+    public static String getEnumConstantNameByValue(final int value) {
+        for (Status type : values()) {
+            if ((String.valueOf(value)).equals(type.toString())) {
                 // return the name of the enum constant having the given value
                 return type.name();
+            }
+        }
+        return null;
+    }
+
+    public static Status getEnumConstantByValue(final int value) {
+        for (Status type : values()) {
+            if (value == type.value()) {
+                // return the name of the enum constant having the given value
+                return type;
             }
         }
         return null;
