@@ -91,7 +91,7 @@ public class Orchestrator extends Notifiable {
     public void setPersistenceManager(PersistenceManager persistenceManager) {
         this.persistenceManager = persistenceManager;
         JobCommand.setPersistenceManager(persistenceManager);
-        TaskCommand.setPersistenceManager(persistenceManager);
+        //TaskCommand.setPersistenceManager(persistenceManager);
         TaskUtilities.setPersistenceManager(persistenceManager);
         Set<TaskSelector> selectors = ServiceRegistryManager.getInstance().getServiceRegistry(TaskSelector.class).getServices();
         final Function<Long, WorkflowNodeDescriptor> workflowProvider = this.persistenceManager::getWorkflowNodeById;
@@ -135,8 +135,8 @@ public class Orchestrator extends Notifiable {
      */
     public long startWorkflow(long workflowId, Map<String, String> inputs) throws ExecutionException {
         try {
-            List<ExecutionJob> jobs = persistenceManager.getJobs(workflowId);
-            if (jobs == null || jobs.size() == 0 || jobs.stream().noneMatch(j -> checkExistingJob(j, inputs))) {
+//            List<ExecutionJob> jobs = persistenceManager.getJobs(workflowId);
+//            if (jobs == null || jobs.size() == 0 || jobs.stream().noneMatch(j -> checkExistingJob(j, inputs))) {
                 WorkflowDescriptor descriptor = persistenceManager.getWorkflowDescriptor(workflowId);
                 if (descriptor == null) {
                     throw new ExecutionException(String.format("Non-existent workflow [%s]", workflowId));
@@ -144,11 +144,11 @@ public class Orchestrator extends Notifiable {
                 final ExecutionJob executionJob = this.jobFactory.createJob(descriptor, inputs);
                 backgroundWorker.submit(() -> JobCommand.START.applyTo(executionJob));
                 return executionJob.getId();
-            } else {
-                throw new ExecutionException(
-                        String.format("A job for the workflow [%s] with the same input values is already running",
-                                      workflowId));
-            }
+//            } else {
+//                throw new ExecutionException(
+//                        String.format("A job for the workflow [%s] with the same input values is already running",
+//                                      workflowId));
+//            }
         } catch (PersistenceException e) {
             logger.severe(e.getMessage());
             throw new ExecutionException(e.getMessage());
@@ -206,7 +206,7 @@ public class Orchestrator extends Notifiable {
                                                              message.getItem(Message.PAYLOAD_KEY)));
             }
             ExecutionTask task = persistenceManager.getTaskById(Long.parseLong(taskId));
-            logger.fine(String.format("Status change for task %s [node %s]: %s",
+            logger.finest(String.format("Status change for task %s [node %s]: %s",
                                       taskId,
                                       task.getWorkflowNodeId(),
                                       status.name()));
@@ -235,20 +235,20 @@ public class Orchestrator extends Notifiable {
                         if (lastFromGroup) {
                             groupTask.setOutputParameterValue(t.getName(), targetOuptut);
                         }
-                        logger.fine(String.format("Task %s output: %s=%s",
+                        logger.finest(String.format("Task %s output: %s=%s",
                                                   task.getId(), t.getName(),
                                                   t.getDataDescriptor().getLocation()));
                     });
-                    persistenceManager.updateExecutionTask(task);
+                    //persistenceManager.updateExecutionTask(task);
                     if (lastFromGroup) {
                         persistenceManager.updateExecutionTask(groupTask);
                     }
                 }
                 List<ExecutionTask> nextTasks = findNextTasks(task);
                 if (nextTasks != null && nextTasks.size() > 0) {
-                    logger.fine(String.format("Has %s next tasks", nextTasks.size()));
+                    logger.finest(String.format("Has %s next tasks", nextTasks.size()));
                     for (ExecutionTask nextTask : nextTasks) {
-                        if (nextTask != null) {
+                        //if (nextTask != null) {
                             if (task instanceof DataSourceExecutionTask) {
                                 // A DataSourceExecutionTask outputs the list of results as a JSON
                                 List<Variable> values = task.getOutputParameterValues();
@@ -308,10 +308,9 @@ public class Orchestrator extends Notifiable {
                                     }
                                 }
                             }
-                            logger.fine(String.format("Task %s about to start.", nextTask.getId()));
+                            logger.finest(String.format("Task %s about to start.", nextTask.getId()));
                             nextTask.getInputParameterValues().forEach(
-                                    v -> logger.fine(String.format("Input: %s=%s", v.getKey(), v.getValue()))
-                                                                      );
+                                    v -> logger.finest(String.format("Input: %s=%s", v.getKey(), v.getValue())));
                             ExecutionGroup parentGroupTask = nextTask.getGroupTask();
                             if (parentGroupTask != null) {
                                 String state = parentGroupTask.getInternalState();
@@ -322,10 +321,10 @@ public class Orchestrator extends Notifiable {
                                 }
                             }
                             TaskCommand.START.applyTo(nextTask);
-                        }
+                        //}
                     }
                 } else {
-                    logger.fine("No more child tasks to execute after the current task");
+                    logger.finest("No more child tasks to execute after the current task");
                     ExecutionJob job = task.getJob();
                     job.setExecutionStatus(ExecutionStatus.DONE);
                     if (job.getEndTime() == null) {
@@ -487,20 +486,20 @@ public class Orchestrator extends Notifiable {
                     List<ExecutionTask> tasks = job.getTasks();
                     bulkSetStatus(tasks, taskStatus);
                     job.setExecutionStatus(taskStatus);
-                    persistenceManager.updateExecutionJob(job);
+                    job = persistenceManager.updateExecutionJob(job);
                     break;
                 case RUNNING:
                     ExecutionStatus jobStatus = job.getExecutionStatus();
                     if (jobStatus == ExecutionStatus.QUEUED_ACTIVE || jobStatus == ExecutionStatus.UNDETERMINED) {
                         job.setExecutionStatus(ExecutionStatus.RUNNING);
-                        persistenceManager.updateExecutionJob(job);
+                        job = persistenceManager.updateExecutionJob(job);
                     }
                     break;
                 case DONE:
                     if (job.getTasks().stream().allMatch(t -> t.getExecutionStatus() == ExecutionStatus.DONE)) {
                         job.setExecutionStatus(ExecutionStatus.DONE);
                         job.setEndTime(LocalDateTime.now());
-                        persistenceManager.updateExecutionJob(job);
+                        job = persistenceManager.updateExecutionJob(job);
                     }
                     break;
                 default:
