@@ -200,6 +200,10 @@ INSERT INTO tao.workflow_graph_visibility (visibility) VALUES ('PRIVATE');
 INSERT INTO tao."group" (name)
 VALUES ('admin');
 
+-- operator group
+INSERT INTO tao."group" (name)
+VALUES ('operator');
+
 
 -- Users
 -- admin user (password "admin")
@@ -210,6 +214,10 @@ VALUES ('admin', '$2a$08$wU07f1hSVkTO7321eVi0quF8If7d23Ly66dkwGAOzbb6xrZFeo69m',
 INSERT INTO tao."user" (username, password, email, last_name, first_name, quota, created, active)
 VALUES ('System Account', '$2a$12$mXbtZweZmmFjcKIA0/NmF.uxcHik8rTKGdkkyrelKiZWe3bhgR.aC', 'kraftek@c-s.ro', 'Cosmin', 'Cara', 1000, CURRENT_TIMESTAMP, true);
 
+-- operator user (password "operator")
+INSERT INTO tao."user" (username, password, email, last_name, first_name, quota, created, active)
+VALUES ('operator', '$2a$09$AvkhkrwRHqQIdEfslOLB8ulHzKo89AUIuuANhHmrE5RxzGUsMFGs.', 'kraftek@c-s.ro', 'Cosmin', 'Cara', 1000, CURRENT_TIMESTAMP, true);
+
 
 -- User groups
 INSERT INTO tao.user_group (user_id, group_id)
@@ -217,6 +225,9 @@ VALUES (1, 1);
 
 INSERT INTO tao.user_group (user_id, group_id)
 VALUES (2, 1);
+
+INSERT INTO tao.user_group (user_id, group_id)
+VALUES (3, 2);
 
 
 -- localhost execution node
