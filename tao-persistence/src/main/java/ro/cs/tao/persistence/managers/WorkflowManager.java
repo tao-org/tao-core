@@ -19,6 +19,7 @@ package ro.cs.tao.persistence.managers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -53,7 +54,6 @@ public class WorkflowManager {
     private WorkflowNodeDescriptorRepository workflowNodeDescriptorRepository;
 
     //region WorkflowDescriptor
-    @Transactional
     public List<WorkflowDescriptor> getAllWorkflows() {
         // retrieve workflows and filter them
         return ((List<WorkflowDescriptor>)
@@ -64,9 +64,26 @@ public class WorkflowManager {
                 .collect(Collectors.toList());
     }
 
-    @Transactional
     public WorkflowDescriptor getWorkflowDescriptor(long identifier) {
         return workflowDescriptorRepository.findById(identifier);
+    }
+
+    @Query(value = "SELECT * from tao.workflow_graph WHERE username = :user AND status_id = :statusId " +
+            "ORDER BY created DESC", nativeQuery = true)
+    public List<WorkflowDescriptor> getUserWorkflowsByStatus(String user, int statusId) {
+        return workflowDescriptorRepository.getUserWorkflowsByStatus(user, statusId);
+    }
+
+    @Query(value = "SELECT * from tao.workflow_graph WHERE username = :user AND visibility_id = :visibilityId" +
+            "ORDER BY created DESC", nativeQuery = true)
+    public List<WorkflowDescriptor> getUserPublishedWorkflowsByVisibility(String user, int visibilityId) {
+        return workflowDescriptorRepository.getUserPublishedWorkflowsByVisibility(user, visibilityId);
+    }
+
+    @Query(value = "SELECT * from tao.workflow_graph WHERE username != :user AND visibility_id = 1 " +
+            "AND status_id = 3 ORDER BY created DESC", nativeQuery = true)
+    public List<WorkflowDescriptor> getOtherPublicWorkflows(String user) {
+        return workflowDescriptorRepository.getOtherPublicWorkflows(user);
     }
 
     @Transactional
