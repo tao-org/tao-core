@@ -13,13 +13,26 @@
  * You should have received a copy of the GNU General Public License along
  * with this program; if not, see http://www.gnu.org/licenses/
  */
+
 package ro.cs.tao.security;
 
-import java.security.Principal;
+public final class SessionStore {
+    private static final SessionStore instance = new SessionStore();
+    private ExternalSessionContextProvider sessionContextProvider;
 
-/**
- * @author Cosmin Cara
- */
-public interface SecurityContext {
-    Principal getPrincipal();
+    private SessionStore() { }
+
+    public static void setSessionContextProvider(ExternalSessionContextProvider provider) {
+        instance.sessionContextProvider = provider;
+    }
+
+    public static SessionContext currentContext() {
+        SessionContext context;
+        if (instance.sessionContextProvider != null) {
+            context = instance.sessionContextProvider.currentContext();
+        } else {
+            context = SystemSessionContext.instance();
+        }
+        return context;
+    }
 }

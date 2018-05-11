@@ -13,22 +13,11 @@
  * You should have received a copy of the GNU General Public License along
  * with this program; if not, see http://www.gnu.org/licenses/
  */
+
 package ro.cs.tao.security;
 
-import java.security.Principal;
+public interface ExternalSessionContextProvider {
 
-/**
- * @author Cosmin Cara
- */
-public class SystemSecurityContext implements SecurityContext {
-    private static final SecurityContext instance = new SystemSecurityContext();
+    SessionContext currentContext();
 
-    public static SecurityContext instance() { return instance; }
-
-    private SystemSecurityContext() { }
-
-    @Override
-    public Principal getPrincipal() {
-        return SystemPrincipal.instance();
-    }
 }

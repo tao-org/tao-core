@@ -21,7 +21,7 @@ import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
-import ro.cs.tao.security.SystemPrincipal;
+import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.workflow.ParameterValue;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
@@ -49,7 +49,7 @@ public class JobFactory {
         ExecutionJob job = null;
         if (workflow != null && workflow.isActive()) {
             job = new ExecutionJob();
-            job.setUserName(SystemPrincipal.instance().getName());
+            job.setUserName(SessionStore.currentContext().getPrincipal().getName());
             job.setStartTime(LocalDateTime.now());
             job.setWorkflowId(workflow.getId());
             job.setExecutionStatus(ExecutionStatus.UNDETERMINED);
@@ -162,13 +162,13 @@ public class JobFactory {
                     taskInputs.putAll(inputs);
                 }
                 component = persistenceManager.getDataSourceInstance(workflowNode.getComponentId());
-                Query query = persistenceManager.getQuery(SystemPrincipal.instance().getName(),
+                Query query = persistenceManager.getQuery(SessionStore.currentContext().getPrincipal().getName(),
                                                           ((DataSourceComponent) component).getSensorName(),
                                                           ((DataSourceComponent) component).getDataSourceName(),
                                                           workflowNode.getId());
                 if (query == null) {
                     query = new Query();
-                    query.setUser(SystemPrincipal.instance().getName());
+                    query.setUser(SessionStore.currentContext().getPrincipal().getName());
                     query.setSensor(((DataSourceComponent) component).getSensorName());
                     query.setDataSource(((DataSourceComponent) component).getDataSourceName());
                     query.setWorkflowNodeId(workflowNode.getId());
