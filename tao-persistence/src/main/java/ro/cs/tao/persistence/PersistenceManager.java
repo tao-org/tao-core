@@ -22,6 +22,7 @@ import ro.cs.tao.persistence.managers.*;
 import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.topology.ServiceDescription;
 import ro.cs.tao.user.User;
+import ro.cs.tao.user.UserPreference;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 
@@ -407,7 +408,7 @@ public class PersistenceManager implements MessagePersister {
         return userManager.findUserByUsername(username);
     }
 
-    public Map<String, String> getUserPreferences(String userName) {
+    public List<UserPreference> getUserPreferences(String userName) throws PersistenceException {
         return userManager.getUserPreferences(userName);
     }
 
