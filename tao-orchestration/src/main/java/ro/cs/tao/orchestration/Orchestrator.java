@@ -33,7 +33,7 @@ import ro.cs.tao.orchestration.commands.TaskCommand;
 import ro.cs.tao.orchestration.util.TaskUtilities;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
-import ro.cs.tao.security.SystemPrincipal;
+import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.serialization.StringListAdapter;
 import ro.cs.tao.spi.ServiceRegistryManager;
@@ -344,7 +344,7 @@ public class Orchestrator extends Notifiable {
                                                                " completed in %ss" :
                                                                " failed after %ss"),
                                                job.getId(), workflow.getName(), time != null ? time.getSeconds() : "<unknown>");
-                    Messaging.send(SystemPrincipal.instance(), Topics.INFORMATION, this, msg);
+                    Messaging.send(SessionStore.currentContext().getPrincipal(), Topics.INFORMATION, this, msg);
                 }
             }
         } catch (PersistenceException e) {
@@ -590,7 +590,7 @@ public class Orchestrator extends Notifiable {
                 MetadataInspector.Metadata metadata = metadataInspector.getMetadata(path);
                 if (metadata != null) {
                     product = metadata.toProductDescriptor(path);
-                    product.setUserName(SystemPrincipal.instance().getName());
+                    product.setUserName(SessionStore.currentContext().getPrincipal().getName());
                 }
             }
         } catch (Exception e2) {

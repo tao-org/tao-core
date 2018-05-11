@@ -18,20 +18,19 @@ package ro.cs.tao.persistence.managers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
-import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.persistence.repository.UserRepository;
-import ro.cs.tao.persistence.repository.WorkflowDescriptorRepository;
-import ro.cs.tao.persistence.repository.WorkflowNodeDescriptorRepository;
 import ro.cs.tao.user.User;
-import ro.cs.tao.workflow.WorkflowDescriptor;
-import ro.cs.tao.workflow.WorkflowNodeDescriptor;
+import ro.cs.tao.user.UserPreference;
 
-import java.util.List;
+import javax.sql.DataSource;
+import java.sql.PreparedStatement;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -47,10 +46,27 @@ public class UserManager {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private DataSource dataSource;
+
     //region User
     @Transactional
     public User findUserByUsername(final String username) {
         return userRepository.findByUsername(username);
+    }
+
+    public Map<String, String> getUserPreferences(String userName) {
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+        return new HashMap<>(jdbcTemplate.query(con -> {
+            PreparedStatement statement =
+                    con.prepareStatement("SELECT up.pref_key, up.pref_value FROM tao.user_prefs up " +
+                                                 "JOIN tao.user u ON up.user_id = u.id " +
+                                                 "WHERE u.username = ?");
+            statement.setString(1, userName);
+            return statement;
+        }, (rs, rowNum) -> {
+            return new UserPreference(rs.getString(1), rs.getString(2));
+        }).stream().collect(Collectors.toMap(UserPreference::getKey, UserPreference::getValue)));
     }
 
     //endregion

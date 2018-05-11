@@ -27,6 +27,7 @@ import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 
 import javax.annotation.PostConstruct;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -405,5 +406,10 @@ public class PersistenceManager implements MessagePersister {
     public User findUserByUsername(final String username) {
         return userManager.findUserByUsername(username);
     }
-    // endregion
+
+    public Map<String, String> getUserPreferences(String userName) {
+        return userManager.getUserPreferences(userName);
+    }
+
+// endregion
 }

@@ -26,6 +26,7 @@ import ro.cs.tao.datasource.remote.FetchMode;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.messaging.ProgressNotifier;
+import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.serialization.GenericAdapter;
 import ro.cs.tao.utils.Crypto;
 
@@ -273,7 +274,7 @@ public class DataSourceComponent extends TaoComponent {
                         }
                     }
                     currentProduct = product;
-                    ProgressNotifier notifier = new ProgressNotifier(securityContext().getPrincipal(),
+                    ProgressNotifier notifier = new ProgressNotifier(SessionStore.currentContext().getPrincipal(),
                             this,
                             DataSourceTopics.PRODUCT_PROGRESS);
                     ProductFetchStrategy templateFetcher = dataSource.getProductFetchStrategy(product.getProductType());

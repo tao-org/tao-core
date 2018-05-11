@@ -17,8 +17,7 @@ package ro.cs.tao.component;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
-import ro.cs.tao.security.SecurityContext;
-import ro.cs.tao.security.SystemSecurityContext;
+import ro.cs.tao.security.SessionContext;
 
 import javax.xml.bind.annotation.XmlElementWrapper;
 import java.util.ArrayList;
@@ -45,7 +44,7 @@ public abstract class TaoComponent extends Identifiable {
     protected List<SourceDescriptor> sources;
     protected List<TargetDescriptor> targets;
 
-    private SecurityContext securityContext;
+    private SessionContext sessionContext;
 
     /**
      * Returns the display friendly name of this component
@@ -239,13 +238,6 @@ public abstract class TaoComponent extends Identifiable {
         }
     }
     /**
-     * Returns the security context of this component
-     */
-    //@XmlTransient
-    public SecurityContext securityContext() { return this.securityContext == null ?
-            SystemSecurityContext.instance() : this.securityContext; }
-    public void attachSecurityContext(SecurityContext context) { this.securityContext = context; }
-    /**
      * Returns a copy (clone) of this component
      */
     @Override
@@ -257,7 +249,6 @@ public abstract class TaoComponent extends Identifiable {
         if (this.targets != null) {
             clone.setTargets(this.targets);
         }
-        clone.attachSecurityContext(this.securityContext);
         return clone;
     }
 }
