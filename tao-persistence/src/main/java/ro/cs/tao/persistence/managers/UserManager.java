@@ -23,6 +23,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
+import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.persistence.repository.UserRepository;
 import ro.cs.tao.user.User;
 import ro.cs.tao.user.UserPreference;
@@ -30,7 +31,7 @@ import ro.cs.tao.user.UserPreference;
 import javax.sql.DataSource;
 import java.sql.PreparedStatement;
 import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -55,7 +56,7 @@ public class UserManager {
         return userRepository.findByUsername(username);
     }
 
-    public Map<String, String> getUserPreferences(String userName) {
+    /*public Map<String, String> getUserPreferences(String userName) {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         return new HashMap<>(jdbcTemplate.query(con -> {
             PreparedStatement statement =
@@ -67,6 +68,15 @@ public class UserManager {
         }, (rs, rowNum) -> {
             return new UserPreference(rs.getString(1), rs.getString(2));
         }).stream().collect(Collectors.toMap(UserPreference::getKey, UserPreference::getValue)));
+    }*/
+
+    public List<UserPreference> getUserPreferences(String userName) throws PersistenceException {
+        final User user = userRepository.findByUsername(userName);
+        if (user == null)
+        {
+            throw new PersistenceException("There is no user with the given username: " + String.valueOf(userName));
+        }
+        return user.getPreferences();
     }
 
     //endregion
