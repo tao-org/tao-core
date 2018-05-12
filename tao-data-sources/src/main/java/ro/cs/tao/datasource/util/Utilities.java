@@ -16,8 +16,12 @@
 package ro.cs.tao.datasource.util;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Utility class for various operations.
@@ -27,27 +31,30 @@ import java.util.concurrent.TimeUnit;
 public class Utilities {
 
     public static String join(Iterable collection, String separator) {
-        String result = "";
+        StringBuilder result = new StringBuilder();
         if (collection != null) {
             boolean hasElements = false;
             for (Object aCollection : collection) {
                 hasElements = true;
-                result += (aCollection != null ? aCollection.toString() : "null") + separator;
+                result.append(aCollection != null ? aCollection.toString() : "null").append(separator);
             }
             if (hasElements) {
-                result = result.substring(0, result.length() - separator.length());
+                result = new StringBuilder(result.substring(0, result.length() - separator.length()));
             }
         }
-        return result;
+        return result.toString();
     }
 
     public static List<String> filter(List<String> input, String filter) {
         List<String> result = new ArrayList<>();
         if (input != null) {
-            for (String item : input) {
-                if (item.contains(filter)) {
-                    result.add(item);
-                }
+            if (filter != null && filter.contains("|")) {
+                final Set<String> filters = Arrays.stream(filter.split(Pattern.quote("|"))).collect(Collectors.toSet());
+                result.addAll(input.stream()
+                        .filter(i -> filters.stream().anyMatch(i::contains))
+                        .collect(Collectors.toList()));
+            } else {
+                result.addAll(input.stream().filter(i -> filter == null || i.contains(filter)).collect(Collectors.toList()));
             }
         }
         return result;
