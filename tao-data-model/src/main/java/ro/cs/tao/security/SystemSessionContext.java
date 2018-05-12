@@ -15,8 +15,10 @@
  */
 package ro.cs.tao.security;
 
+import ro.cs.tao.user.UserPreference;
+
 import java.security.Principal;
-import java.util.Map;
+import java.util.List;
 
 /**
  * @author Cosmin Cara
@@ -32,5 +34,5 @@ class SystemSessionContext extends SessionContext {
     protected Principal setPrincipal() { return SystemPrincipal.instance(); }
 
     @Override
-    protected Map<String, String> setPreferences() { return null; }
+    protected List<UserPreference> setPreferences() { return null; }
 }
