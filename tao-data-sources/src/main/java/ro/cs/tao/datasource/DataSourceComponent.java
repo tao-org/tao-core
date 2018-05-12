@@ -262,6 +262,9 @@ public class DataSourceComponent extends TaoComponent {
         if (this.userName != null) {
             dataSource.setCredentials(this.userName, this.password);
         }
+        ProgressNotifier notifier = new ProgressNotifier(SessionStore.currentContext().getPrincipal(),
+                                                         this,
+                                                         DataSourceTopics.PRODUCT_PROGRESS);
         for (EOProduct product : products) {
             // add the attribute for max retries such that if the maxRetries is exceeded
             // to be set, on failure, to aborted state
@@ -274,9 +277,6 @@ public class DataSourceComponent extends TaoComponent {
                         }
                     }
                     currentProduct = product;
-                    ProgressNotifier notifier = new ProgressNotifier(SessionStore.currentContext().getPrincipal(),
-                            this,
-                            DataSourceTopics.PRODUCT_PROGRESS);
                     ProductFetchStrategy templateFetcher = dataSource.getProductFetchStrategy(product.getProductType());
                     if (templateFetcher instanceof DownloadStrategy) {
                         DownloadStrategy downloadStrategy = ((DownloadStrategy) templateFetcher).clone();
@@ -304,7 +304,6 @@ public class DataSourceComponent extends TaoComponent {
                     if (productPath != null) {
                         product.setLocation(productPath.toUri().toString());
                     }
-                    notifier.ended();
                     if (this.productStatusListener != null) {
                         // if the path is null, it means that either the product failed downloading or the
                         // tiles filter did not passed
@@ -335,9 +334,13 @@ public class DataSourceComponent extends TaoComponent {
                 }
             } catch (NoSuchElementException e) {
                 logger.warning(String.format("Fetching product '%s' ignored: %s",
-                        product.getName(), e.getMessage()));
+                                             product.getName(), e.getMessage()));
                 if (this.productStatusListener != null) {
                     this.productStatusListener.downloadIgnored(product, e.getMessage());
+                }
+            } catch (Exception e) {
+                if (this.productStatusListener != null) {
+                    this.productStatusListener.downloadFailed(product, e.getMessage());
                 }
             } finally {
                 //notifier.notifyProgress(counter++ / products.size());
@@ -345,6 +348,7 @@ public class DataSourceComponent extends TaoComponent {
                     currentFetcher.resume();
                 }
                 currentFetcher = null;
+                notifier.ended();
             }
         }
         return products;
