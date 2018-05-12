@@ -16,11 +16,12 @@
 package ro.cs.tao.security;
 
 import ro.cs.tao.configuration.ConfigurationManager;
+import ro.cs.tao.user.UserPreference;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.Principal;
-import java.util.Map;
+import java.util.List;
 
 /**
  * @author Cosmin Cara
@@ -28,7 +29,7 @@ import java.util.Map;
 public abstract class SessionContext {
     private final Principal principal;
     private final Path workspaceRoot;
-    private final Map<String, String> preferences;
+    private final List<UserPreference> preferences;
 
     protected SessionContext() {
         this.principal = setPrincipal();
@@ -37,9 +38,9 @@ public abstract class SessionContext {
     }
 
     protected abstract Principal setPrincipal();
-    protected abstract Map<String, String> setPreferences();
+    protected abstract List<UserPreference> setPreferences();
 
     public Principal getPrincipal() { return principal; }
     public Path getWorkspace() { return workspaceRoot.resolve(principal.getName()); }
-    public String getPreference(String key) { return preferences != null ? preferences.get(key) : null; }
+    public String getPreference(String key) { return (preferences != null && preferences.stream().filter(p -> p.getKey().equals(key)).findAny().isPresent()) ? preferences.stream().filter(p -> p.getKey().equals(key)).findAny().get().getValue() : null; }
 }

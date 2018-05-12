@@ -16,7 +16,7 @@
 package ro.cs.tao.user;
 
 import java.time.LocalDateTime;
-import java.util.Set;
+import java.util.List;
 
 public class User {
 
@@ -32,8 +32,8 @@ public class User {
     private Double quota;
     private boolean active;
 
-    private Set<Group> groups;
-    private Set<UserPreference> preferences;
+    private List<Group> groups;
+    private List<UserPreference> preferences;
 
 
     public Long getId() {
@@ -124,19 +124,19 @@ public class User {
         this.active = active;
     }
 
-    public Set<Group> getGroups() {
+    public List<Group> getGroups() {
         return groups;
     }
 
-    public void setGroups(Set<Group> groups) {
+    public void setGroups(List<Group> groups) {
         this.groups = groups;
     }
 
-    public Set<UserPreference> getPreferences() {
+    public List<UserPreference> getPreferences() {
         return preferences;
     }
 
-    public void setPreferences(Set<UserPreference> preferences) {
+    public void setPreferences(List<UserPreference> preferences) {
         this.preferences = preferences;
     }
 }
