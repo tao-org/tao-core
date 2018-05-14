@@ -19,6 +19,9 @@ public class UserPreference {
     private String key;
     private String value;
 
+    public UserPreference() {
+    }
+
     public UserPreference(final String key, final String value){
         this.key = key;
         this.value = value;
