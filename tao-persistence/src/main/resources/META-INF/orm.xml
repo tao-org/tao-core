@@ -1071,9 +1071,6 @@
             <basic name="sourceNodeId" fetch="LAZY">
                 <column name="source_graph_node_id" nullable="false"/>
             </basic>
-            <!--<basic name="targetNodeId" fetch="LAZY">
-                <column name="target_graph_node_id" nullable="false" />
-            </basic>-->
             <many-to-one name="output" fetch="LAZY">
                 <join-column name="source_descriptor_id" nullable="false"/>
                 <cascade>
