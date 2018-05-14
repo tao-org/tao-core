@@ -1,7 +1,6 @@
 package ro.cs.tao.persistence.convert;
 
 import javax.persistence.AttributeConverter;
-import javax.persistence.Converter;
 
 /**
  * Converter for Class<?>  stored values
@@ -20,7 +19,25 @@ public class DataTypeConverter implements AttributeConverter<Class<?>, String> {
         Class<?> clasz = null;
         try {
             if (dbData != null) {
-                clasz = ClassLoader.getSystemClassLoader().loadClass(dbData);
+                if (!dbData.endsWith("[]")) {
+                    clasz = ClassLoader.getSystemClassLoader().loadClass(dbData);
+                } else {
+                    switch (dbData) {
+                        case "java.lang.Integer[]":
+                            clasz = Integer[].class;
+                            break;
+                        case "java.lang.Float[]":
+                            clasz = Float[].class;
+                            break;
+                        case "java.lang.Boolean[]":
+                            clasz = Boolean[].class;
+                            break;
+                        case "java.lang.String[]":
+                        default:
+                            clasz = String[].class;
+                            break;
+                    }
+                }
             }
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
