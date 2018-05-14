@@ -1252,21 +1252,20 @@ public class PersistenceManagerTest {
             //workflow.setCreated(LocalDateTime.now());
 
             // add nodes within this workflow
-            WorkflowNodeDescriptor node1 = new WorkflowNodeDescriptor();
-            node1.setName("node1");
-            node1.setComponentId("component01");
-            node1.setComponentType(ComponentType.PROCESSING);
-            //node1.setCreated(LocalDateTime.now());
+            WorkflowNodeDescriptor sourceNode = new WorkflowNodeDescriptor();
+            sourceNode.setName("sourcenode1");
+            sourceNode.setComponentId("component01");
+            sourceNode.setComponentType(ComponentType.PROCESSING);
 
             // add processing custom values for the node
-            node1.addCustomValue("customName1", "customValue1");
-            node1.addCustomValue("customName2", "customValue2");
-            node1.addCustomValue("customName3", "customValue3");
+            sourceNode.addCustomValue("customName1", "customValue1");
+            sourceNode.addCustomValue("customName2", "customValue2");
+            sourceNode.addCustomValue("customName3", "customValue3");
 
-            WorkflowNodeDescriptor node2 = new WorkflowNodeDescriptor();
-            node2.setName("node2");
-            node2.setComponentId("component01");
-            node2.setComponentType(ComponentType.PROCESSING);
+            WorkflowNodeDescriptor targetNode = new WorkflowNodeDescriptor();
+            targetNode.setName("targetnode1");
+            targetNode.setComponentId("component01");
+            targetNode.setComponentType(ComponentType.PROCESSING);
 
             // add incoming links for the node
             DataDescriptor dataDescriptor = new DataDescriptor();
@@ -1276,29 +1275,17 @@ public class PersistenceManagerTest {
             dataDescriptor.setSensorType(SensorType.OPTICAL);
             dataDescriptor.setDimension(new Dimension(100, 200));
 
-            TargetDescriptor targetDescriptor = new TargetDescriptor("targetDescriptor01");
-            targetDescriptor.setParentId("component01");
-            targetDescriptor.setDataDescriptor(dataDescriptor);
-            List<String> targetConstraints = new ArrayList<>();
-            // TODO put correct constraints
-            targetConstraints.add("target_constraint01");
-            targetConstraints.add("target_constraint02");
-            targetConstraints.add("target_constraint03");
-            //targetDescriptor.setConstraints(targetConstraints);
+            TargetDescriptor linkInput = new TargetDescriptor("linkInput01");
+            linkInput.setParentId("component01");
+            linkInput.setDataDescriptor(dataDescriptor);
 
-            SourceDescriptor sourceDescriptor = new SourceDescriptor("sourceDescriptor01");
-            sourceDescriptor.setParentId("component01");
-            sourceDescriptor.setDataDescriptor(dataDescriptor);
-            List<String> sourceConstraints = new ArrayList<>();
-            // TODO put correct constraints
-            sourceConstraints.add("source_constraint01");
-            sourceConstraints.add("source_constraint02");
-            sourceConstraints.add("source_constraint03");
-            //sourceDescriptor.setConstraints(sourceConstraints);
+            SourceDescriptor linkOutput = new SourceDescriptor("linkOutput01");
+            linkOutput.setParentId("component01");
+            linkOutput.setDataDescriptor(dataDescriptor);
 
             // add the nodes within the workflow
-            workflow.addNode(node1);
-            workflow.addNode(node2);
+            workflow.addNode(sourceNode);
+            workflow.addNode(targetNode);
 
             // save the parent workflow entity
             workflow = persistenceManager.saveWorkflowDescriptor(workflow);
@@ -1306,14 +1293,14 @@ public class PersistenceManagerTest {
             logger.info("Workflow " + workflow.getName() + " saved, ID = " + workflow.getId().toString());
 
             // check persisted workflow
-            Assert.assertTrue(workflow.getNodes() != null && workflow.getNodes().size() == 1);
+            Assert.assertTrue(workflow.getNodes() != null && workflow.getNodes().size() == 2);
 
-            ComponentLink componentLink1 = new ComponentLink(node1.getId(), targetDescriptor, sourceDescriptor);
+            ComponentLink componentLink1 = new ComponentLink(sourceNode.getId(), linkInput, linkOutput);
             List<ComponentLink> links = new ArrayList<>();
             links.add(componentLink1);
-            node2.setIncomingLinks(links);
+            targetNode.setIncomingLinks(links);
 
-            persistenceManager.updateWorkflowNodeDescriptor(node2);
+            persistenceManager.updateWorkflowNodeDescriptor(targetNode);
 
             // check persisted node custom values
             final List<ParameterValue> customValues = workflow.getNodes().get(0).getCustomValues();
@@ -1328,7 +1315,8 @@ public class PersistenceManagerTest {
             }
 
             // check persisted incoming links
-            Assert.assertTrue(workflow.getNodes().get(0).getIncomingLinks() != null && workflow.getNodes().get(0).getIncomingLinks().size() > 0);
+            Assert.assertTrue(workflow.getNodes().get(0).getIncomingLinks() == null || workflow.getNodes().get(0).getIncomingLinks().size() == 0);
+            Assert.assertTrue(workflow.getNodes().get(1).getIncomingLinks() != null && workflow.getNodes().get(1).getIncomingLinks().size() == 1);
         }
         catch (Exception e)
         {
