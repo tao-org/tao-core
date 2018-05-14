@@ -32,7 +32,6 @@ public class ComponentLink {
     private SourceDescriptor output;
     private TargetDescriptor input;
     private long sourceNodeId;
-    //private long targetNodeId;
 
     // default constructor needed for hibernate entity instantiation
     public ComponentLink(){}
@@ -53,7 +52,6 @@ public class ComponentLink {
             throw new ConstraintException("Source and target are not compatible");
         }
         this.sourceNodeId = sourceNodeId;
-        //this.targetNodeId = targetNodeId;
         this.input = input;
         this.output = output;
     }
@@ -83,9 +81,6 @@ public class ComponentLink {
     public void setSourceNodeId(long sourceNodeId) {
         this.sourceNodeId = sourceNodeId;
     }
-
-    /*public long getTargetNodeId() { return targetNodeId; }
-    public void setTargetNodeId(long targetNodeId) { this.targetNodeId = targetNodeId; }*/
 
     @Override
     public boolean equals(Object obj) {
