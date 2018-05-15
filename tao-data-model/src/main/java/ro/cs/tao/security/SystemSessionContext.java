@@ -23,7 +23,7 @@ import java.util.List;
 /**
  * @author Cosmin Cara
  */
-class SystemSessionContext extends SessionContext {
+public class SystemSessionContext extends SessionContext {
     private static final SessionContext instance = new SystemSessionContext();
 
     public static SessionContext instance() { return instance; }

@@ -576,6 +576,7 @@
             </element-collection>
     
             <transient name="stateHandler" />
+            <transient name="context" />
             
         </attributes>
     </entity>

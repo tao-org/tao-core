@@ -16,6 +16,8 @@
 package ro.cs.tao.execution.model;
 
 import ro.cs.tao.component.Variable;
+import ro.cs.tao.security.SessionContext;
+import ro.cs.tao.security.SystemSessionContext;
 import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.serialization.StringListAdapter;
 
@@ -43,6 +45,7 @@ public abstract class ExecutionTask implements StatusChangeListener {
     List<Variable> inputParameterValues;
     List<Variable> outputParameterValues;
     InternalStateHandler stateHandler;
+    private SessionContext context;
 
     public ExecutionTask() { }
 
@@ -157,6 +160,9 @@ public abstract class ExecutionTask implements StatusChangeListener {
     public void setJob(ExecutionJob job) {
         this.job = job;
     }
+
+    public SessionContext getContext() { return context != null ? context : SystemSessionContext.instance(); }
+    public void setContext(SessionContext context) { this.context = context; }
 
     public abstract String buildExecutionCommand();
 

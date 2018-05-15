@@ -33,6 +33,7 @@ import ro.cs.tao.orchestration.commands.TaskCommand;
 import ro.cs.tao.orchestration.util.TaskUtilities;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.security.SessionContext;
 import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.serialization.StringListAdapter;
@@ -49,7 +50,6 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -64,9 +64,9 @@ import java.util.stream.IntStream;
 public class Orchestrator extends Notifiable {
 
     private static final Orchestrator instance;
-    private final ExecutorService backgroundWorker;
+    //private final ExecutorService backgroundWorker;
     private final Map<Long, InternalStateHandler> groupStateHandlers;
-    private final BlockingQueue<Message> queue;
+    private final BlockingQueue<AbstractMap.SimpleEntry<Message, SessionContext>> queue;
 
     static {
         instance = new Orchestrator();
@@ -80,11 +80,13 @@ public class Orchestrator extends Notifiable {
     private TaskSelector<ExecutionJob> jobTaskSelector;
     private JobFactory jobFactory;
     private MetadataInspector metadataInspector;
+    private final Map<SessionContext, ExecutorService> executors;
 
     private Orchestrator() {
-        this.backgroundWorker = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        //this.backgroundWorker = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         this.groupStateHandlers = new HashMap<>();
         this.queue = new LinkedBlockingDeque<>();
+        this.executors = Collections.synchronizedMap(new HashMap<>());
         subscribe(Topics.TASK_STATUS_CHANGED);
     }
 
@@ -133,22 +135,16 @@ public class Orchestrator extends Notifiable {
      *
      * @throws ExecutionException   In case anything goes wrong or a job for this workflow was already created
      */
-    public long startWorkflow(long workflowId, Map<String, String> inputs) throws ExecutionException {
+    public long startWorkflow(long workflowId, Map<String, String> inputs, ExecutorService executorService) throws ExecutionException {
         try {
-//            List<ExecutionJob> jobs = persistenceManager.getJobs(workflowId);
-//            if (jobs == null || jobs.size() == 0 || jobs.stream().noneMatch(j -> checkExistingJob(j, inputs))) {
-                WorkflowDescriptor descriptor = persistenceManager.getWorkflowDescriptor(workflowId);
-                if (descriptor == null) {
-                    throw new ExecutionException(String.format("Non-existent workflow [%s]", workflowId));
-                }
-                final ExecutionJob executionJob = this.jobFactory.createJob(descriptor, inputs);
-                backgroundWorker.submit(() -> JobCommand.START.applyTo(executionJob));
-                return executionJob.getId();
-//            } else {
-//                throw new ExecutionException(
-//                        String.format("A job for the workflow [%s] with the same input values is already running",
-//                                      workflowId));
-//            }
+            WorkflowDescriptor descriptor = persistenceManager.getWorkflowDescriptor(workflowId);
+            if (descriptor == null) {
+                throw new ExecutionException(String.format("Non-existent workflow [%s]", workflowId));
+            }
+            final ExecutionJob executionJob = this.jobFactory.createJob(descriptor, inputs);
+            this.executors.put(SessionStore.currentContext(), executorService);
+            executorService.submit(() -> JobCommand.START.applyTo(executionJob));
+            return executionJob.getId();
         } catch (PersistenceException e) {
             logger.severe(e.getMessage());
             throw new ExecutionException(e.getMessage());
@@ -191,13 +187,13 @@ public class Orchestrator extends Notifiable {
     @Override
     protected void onMessageReceived(Message message) {
         try {
-            queue.put(message);
+            queue.put(new AbstractMap.SimpleEntry<>(message, SessionStore.currentContext()));
         } catch (InterruptedException e) {
             logger.severe(e.getMessage());
         }
     }
 
-    private void processMessage(Message message) {
+    private void processMessage(Message message, SessionContext currentContext) {
         try {
             String taskId = message.getItem(Message.SOURCE_KEY);
             ExecutionStatus status = ExecutionStatus.getEnumConstantByValue(Integer.parseInt(message.getItem(Message.PAYLOAD_KEY)));
@@ -206,6 +202,7 @@ public class Orchestrator extends Notifiable {
                                                              message.getItem(Message.PAYLOAD_KEY)));
             }
             ExecutionTask task = persistenceManager.getTaskById(Long.parseLong(taskId));
+            task.setContext(currentContext);
             logger.finest(String.format("Status change for task %s [node %s]: %s",
                                       taskId,
                                       task.getWorkflowNodeId(),
@@ -320,6 +317,7 @@ public class Orchestrator extends Notifiable {
                                     nextTask.setInternalState(String.valueOf(((LoopState) handler.currentState()).getCurrent()));
                                 }
                             }
+                            nextTask.setContext(currentContext);
                             TaskCommand.START.applyTo(nextTask);
                         //}
                     }
@@ -344,7 +342,9 @@ public class Orchestrator extends Notifiable {
                                                                " completed in %ss" :
                                                                " failed after %ss"),
                                                job.getId(), workflow.getName(), time != null ? time.getSeconds() : "<unknown>");
-                    Messaging.send(SessionStore.currentContext().getPrincipal(), Topics.INFORMATION, this, msg);
+                    Messaging.send(currentContext.getPrincipal(), Topics.INFORMATION, this, msg);
+                    executors.get(currentContext).shutdown();
+                    executors.remove(currentContext);
                 }
             }
         } catch (PersistenceException e) {
@@ -554,13 +554,13 @@ public class Orchestrator extends Notifiable {
             }
             List<EOProduct> products = new ArrayList<>();
             for (Variable value : values) {
-                products.addAll(createProducts(component, value));
+                products.addAll(createProducts(component, value, task.getContext()));
             }
             EODataHandlerManager.getInstance().applyHandlers(products);
         }
     }
 
-    private List<EOProduct> createProducts(TaoComponent component, Variable outParam) {
+    private List<EOProduct> createProducts(TaoComponent component, Variable outParam, SessionContext context) {
         List<EOProduct> products = new ArrayList<>();
         List<TargetDescriptor> targets = component.getTargets();
         String value = outParam.getValue();
@@ -573,16 +573,16 @@ public class Orchestrator extends Notifiable {
                 // first try to see if it's a list
                 List<String> list = new StringListAdapter().marshal(value);
                 for (String v : list) {
-                    products.add(createProduct(descriptor, v));
+                    products.add(createProduct(descriptor, v, context));
                 }
             } catch (Exception e) {
-                products.add(createProduct(descriptor, value));
+                products.add(createProduct(descriptor, value, context));
             }
         }
         return products;
     }
 
-    private EOProduct createProduct(TargetDescriptor descriptor, String outValue) {
+    private EOProduct createProduct(TargetDescriptor descriptor, String outValue, SessionContext context) {
         EOProduct product = null;
         try {
             if (descriptor.getDataDescriptor().getFormatType() == DataFormat.RASTER) {
@@ -590,7 +590,7 @@ public class Orchestrator extends Notifiable {
                 MetadataInspector.Metadata metadata = metadataInspector.getMetadata(path);
                 if (metadata != null) {
                     product = metadata.toProductDescriptor(path);
-                    product.setUserName(SessionStore.currentContext().getPrincipal().getName());
+                    product.setUserName(context.getPrincipal().getName());
                 }
             }
         } catch (Exception e2) {
@@ -605,7 +605,10 @@ public class Orchestrator extends Notifiable {
             //noinspection InfiniteLoopStatement
             while (true) {
                 try {
-                    processMessage(queue.take());
+                    AbstractMap.SimpleEntry<Message, SessionContext> entry = queue.take();
+                    //backgroundWorker.submit(RunnableContextFactory.wrap(() -> processMessage(message)));
+                    Orchestrator.this.executors.get(entry.getValue()).submit(() -> processMessage(entry.getKey(),
+                                                                                                  entry.getValue()));
                 } catch (InterruptedException e) {
                     logger.severe(e.getMessage());
                 }
