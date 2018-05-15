@@ -40,7 +40,23 @@ public abstract class SessionContext {
     protected abstract Principal setPrincipal();
     protected abstract List<UserPreference> setPreferences();
 
+    /**
+     * Returns the current principal
+     */
     public Principal getPrincipal() { return principal; }
+
+    /**
+     * Returns the root path in the shared file system for the current principal
+     */
     public Path getWorkspace() { return workspaceRoot.resolve(principal.getName()); }
-    public String getPreference(String key) { return (preferences != null && preferences.stream().filter(p -> p.getKey().equals(key)).findAny().isPresent()) ? preferences.stream().filter(p -> p.getKey().equals(key)).findAny().get().getValue() : null; }
+
+    /**
+     * Returns the value of the requested preference key
+     *
+     * @param key   The preference key
+     */
+    public String getPreference(String key) {
+        return (preferences != null && preferences.stream().anyMatch(p -> p.getKey().equals(key))) ?
+                preferences.stream().filter(p -> p.getKey().equals(key)).findAny().get().getValue() : null;
+    }
 }

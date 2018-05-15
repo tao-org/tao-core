@@ -25,6 +25,7 @@ import ro.cs.tao.serialization.GeometryAdapter;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.awt.*;
 import java.net.URI;
+import java.nio.file.Paths;
 
 /**
  * @author Cosmin Cara
@@ -76,9 +77,16 @@ public class DataDescriptor {
 
     public String getLocation() { return this.location; }
     public void setLocation(String value) {
-        //noinspection ResultOfMethodCallIgnored
         if (value != null) {
-            URI.create(value);
+            try {
+                // if the value is a URL
+                URI.create(value);
+            } catch (Exception e) {
+                // else it should be a relative path
+                if (Paths.get(value).isAbsolute()) {
+                    throw new IllegalArgumentException(DataDescriptor.class.getSimpleName() + ": location must be relative");
+                }
+            }
         }
         this.location = value;
     }
