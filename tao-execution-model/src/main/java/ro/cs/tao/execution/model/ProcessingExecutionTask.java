@@ -19,7 +19,6 @@ import ro.cs.tao.component.*;
 import ro.cs.tao.component.validation.ValidationException;
 import ro.cs.tao.serialization.SerializationException;
 
-import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -167,11 +166,9 @@ public class ProcessingExecutionTask extends ExecutionTask {
     public String getInstanceTargetOuptut(TargetDescriptor descriptor) {
         String location = descriptor.getDataDescriptor().getLocation();
         if (location != null) {
-            Path path;
-            try {
-                path = Paths.get(URI.create(location));
-            } catch (Exception e) {
-                path = Paths.get(location);
+            Path path = Paths.get(location);
+            if (!path.isAbsolute()) {
+                path = Paths.get(SystemVariable.USER_WORKSPACE.value()).resolve(path);
             }
             location = path.getParent().resolve(String.valueOf(this.getId()) + "-" +
                                                         (this.internalState == null ? "" : this.internalState + "-") +
