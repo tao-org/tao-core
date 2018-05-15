@@ -225,7 +225,7 @@ public class ProcessingComponent extends TaoComponent {
         return newDescriptor;
     }
 
-    public String buildExecutionCommand(Map<String, String> parameterValues) throws TemplateException {
+    public String buildExecutionCommand(Map<String, String> parameterValues, Map<String, String> variables) throws TemplateException {
         TemplateEngine templateEngine = getTemplateEngine();
         Map<String, Object> clonedMap = new HashMap<>();
         for (Map.Entry<String, String> entry : parameterValues.entrySet()) {
@@ -242,8 +242,10 @@ public class ProcessingComponent extends TaoComponent {
                 clonedMap.put(parameterDescriptor.getId(), parameterDescriptor.getDefaultValue());
             }
         }
-        for (SystemVariable variable : SystemVariable.all()) {
-            clonedMap.put(variable.key(), variable.value());
+        if (variables != null) {
+            for (Map.Entry<String, String> variable : variables.entrySet()) {
+                clonedMap.put(variable.getKey(), variable.getValue());
+            }
         }
         StringBuilder cmdBuilder = new StringBuilder();
         if (this.expandedFileLocation != null) {

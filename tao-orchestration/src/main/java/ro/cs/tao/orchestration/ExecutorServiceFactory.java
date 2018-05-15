@@ -13,26 +13,21 @@
  * You should have received a copy of the GNU General Public License along
  * with this program; if not, see http://www.gnu.org/licenses/
  */
-package ro.cs.tao.security;
 
-import ro.cs.tao.user.UserPreference;
+package ro.cs.tao.orchestration;
 
-import java.security.Principal;
-import java.util.List;
+import java.util.concurrent.ExecutorService;
 
-/**
- * @author Cosmin Cara
- */
-public class SystemSessionContext extends SessionContext {
-    private static final SessionContext instance = new SystemSessionContext();
+public class ExecutorServiceFactory {
+    private static ExecutorServiceDelegateProvider delegateProvider;
+    private static final ExecutorServiceDelegateProvider defaultProvider = new ExecutorServiceDelegateProvider() { };
 
-    public static SessionContext instance() { return instance; }
+    public static void setDelegateProvider(ExecutorServiceDelegateProvider delegateProvider) {
+        ExecutorServiceFactory.delegateProvider = delegateProvider;
+    }
 
-    private SystemSessionContext() { super(); }
-
-    @Override
-    protected Principal setPrincipal() { return SystemPrincipal.instance(); }
-
-    @Override
-    protected List<UserPreference> setPreferences() { return null; }
+    public static ExecutorService createExecutor(int threads) {
+        return delegateProvider != null ?
+                delegateProvider.createExecutor(threads) : defaultProvider.createExecutor(threads);
+    }
 }

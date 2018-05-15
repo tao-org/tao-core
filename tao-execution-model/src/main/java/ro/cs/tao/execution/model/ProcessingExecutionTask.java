@@ -17,6 +17,7 @@ package ro.cs.tao.execution.model;
 
 import ro.cs.tao.component.*;
 import ro.cs.tao.component.validation.ValidationException;
+import ro.cs.tao.security.SessionContext;
 import ro.cs.tao.serialization.SerializationException;
 
 import java.nio.file.Path;
@@ -160,15 +161,19 @@ public class ProcessingExecutionTask extends ExecutionTask {
                 inputParams.put(descriptor.getName(), getInstanceTargetOuptut(descriptor));
             }
         }
-        return this.component.buildExecutionCommand(inputParams);
+        Map<String, String> variables = new HashMap<>();
+        variables.put(SystemVariable.USER_WORKSPACE.key(), getContext().getWorkspace().toString());
+        variables.put(SystemVariable.SHARED_WORKSPACE.key(), SystemVariable.SHARED_WORKSPACE.value());
+        return this.component.buildExecutionCommand(inputParams, variables);
     }
 
     public String getInstanceTargetOuptut(TargetDescriptor descriptor) {
         String location = descriptor.getDataDescriptor().getLocation();
         if (location != null) {
             Path path = Paths.get(location);
+            SessionContext context = getContext();
             if (!path.isAbsolute()) {
-                path = Paths.get(SystemVariable.USER_WORKSPACE.value()).resolve(path);
+                path = context.getWorkspace().resolve(path);
             }
             location = path.getParent().resolve(String.valueOf(this.getId()) + "-" +
                                                         (this.internalState == null ? "" : this.internalState + "-") +

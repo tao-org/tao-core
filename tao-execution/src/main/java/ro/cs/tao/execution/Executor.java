@@ -24,7 +24,6 @@ import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.Topics;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
-import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 
 import java.time.LocalDateTime;
@@ -145,7 +144,7 @@ public abstract class Executor<T extends ExecutionTask> extends Identifiable {
             } catch (PersistenceException e) {
                 logger.severe(e.getMessage());
             }
-            Messaging.send(SessionStore.currentContext().getPrincipal(),
+            Messaging.send(task.getContext().getPrincipal(),
                            Topics.TASK_STATUS_CHANGED,
                            task.getId(), status.toString());
         }

@@ -13,26 +13,18 @@
  * You should have received a copy of the GNU General Public License along
  * with this program; if not, see http://www.gnu.org/licenses/
  */
-package ro.cs.tao.security;
 
-import ro.cs.tao.user.UserPreference;
+package ro.cs.tao.orchestration;
 
-import java.security.Principal;
-import java.util.List;
+public class RunnableContextFactory {
+    private static RunnableDelegateProvider delegateProvider;
 
-/**
- * @author Cosmin Cara
- */
-public class SystemSessionContext extends SessionContext {
-    private static final SessionContext instance = new SystemSessionContext();
+    public static void setDelegateProvider(RunnableDelegateProvider delegateProvider) {
+        RunnableContextFactory.delegateProvider = delegateProvider;
+    }
 
-    public static SessionContext instance() { return instance; }
+    public static Runnable wrap(Runnable runnable) {
+        return delegateProvider != null ? delegateProvider.wrap(runnable) : runnable;
+    }
 
-    private SystemSessionContext() { super(); }
-
-    @Override
-    protected Principal setPrincipal() { return SystemPrincipal.instance(); }
-
-    @Override
-    protected List<UserPreference> setPreferences() { return null; }
 }
