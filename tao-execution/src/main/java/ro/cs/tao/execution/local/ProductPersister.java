@@ -50,8 +50,8 @@ public class ProductPersister implements EODataHandler<EOProduct> {
                         Polygon2D footprintUTM = new Polygon2D();
                         List<Point2D> points = footprint.getPoints();
                         for (Point2D point : points) {
-                            double[] values = Conversions.utmToDegress(utmCode, point.getX(), point.getY());
-                            footprintUTM.append(values[1], values[0]);
+                            double[] values = Conversions.utmToDegrees(product.getCrs(), point.getX(), point.getY());
+                            footprintUTM.append(values[0], values[1]);
                         }
                         product.setGeometry(footprintUTM.toWKT());
                     }
