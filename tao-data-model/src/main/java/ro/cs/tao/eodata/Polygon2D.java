@@ -30,8 +30,8 @@ import java.util.regex.Pattern;
  * @author Cosmin Cara
  */
 public class Polygon2D {
-    private static final Pattern polyPattern = Pattern.compile("POLYGON\\(\\(.*\\)\\)");
-    private static final Pattern coordPattern = Pattern.compile("((?:-?(?:\\d+\\.\\d+)) (?:-?(?:\\d+\\.\\d+)))");
+    private static final Pattern polyPattern = Pattern.compile("POLYGON\\s?\\(\\(.*\\)\\)");
+    private static final Pattern coordPattern = Pattern.compile("((?:-?(?:\\d+(?:\\.\\d+)?)) (?:-?(?:\\d+(?:\\.\\d+)?)))");
 
     private Path2D.Double polygon;
     private int numPoints;
