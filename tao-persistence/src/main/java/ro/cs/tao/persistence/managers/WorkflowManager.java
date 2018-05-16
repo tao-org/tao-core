@@ -195,7 +195,12 @@ public class WorkflowManager {
         }*/
 
         // save the updated entity
-        return workflowNodeDescriptorRepository.save(node);
+        try {
+            return workflowNodeDescriptorRepository.save(node);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     @Transactional
