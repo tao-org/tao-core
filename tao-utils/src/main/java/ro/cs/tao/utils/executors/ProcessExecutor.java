@@ -40,7 +40,7 @@ public class ProcessExecutor extends Executor<Process> {
         BufferedReader outReader = null;
         int ret = 0x80000000;
         try {
-            this.logger.info("[" + this.host + "] " + String.join(" ", arguments));
+            this.logger.finest("[" + this.host + "] " + String.join(" ", arguments));
             resetProcess();
             ProcessBuilder pb = new ProcessBuilder(arguments);
             //redirect the error of the tool to the standard output
@@ -66,7 +66,7 @@ public class ProcessExecutor extends Executor<Process> {
                             this.outputConsumer.consume(line);
                         }
                         if (logMessages) {
-                            this.logger.info(line);
+                            this.logger.finest(line);
                         }
                     }
                 }

@@ -53,19 +53,19 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor> {
      * @param nodeDescriptor    The node to remove
      * @return  The updated workflow
      */
-    WorkflowDescriptor removeNode(long workflowId, WorkflowNodeDescriptor nodeDescriptor) throws PersistenceException;
+    void removeNode(long workflowId, WorkflowNodeDescriptor nodeDescriptor) throws PersistenceException;
     /**
      * Adds a link between nodes of a workflow.
-     * @return  The updated workflow
+     * @return  The updated target node
      */
-    WorkflowDescriptor addLink(long sourceNodeId, String sourceTargetId,
-                               long targetNodeId, String targetSourceId) throws PersistenceException;
+    WorkflowNodeDescriptor addLink(long sourceNodeId, String sourceTargetId,
+                                   long targetNodeId, String targetSourceId) throws PersistenceException;
     /**
      * Removes a link between nodes of a workflow.
      * @param link    The link to remove
-     * @return  The updated workflow
+     * @return  The updated target node
      */
-    WorkflowDescriptor removeLink(long nodeId, ComponentLink link) throws PersistenceException;
+    WorkflowNodeDescriptor removeLink(long nodeId, ComponentLink link) throws PersistenceException;
     /**
      * Adds a group node to a workflow.
      * @param workflowId         The workflow identifier
@@ -73,7 +73,7 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor> {
      * @param nodes              The nodes to be grouped
      * @return  The updated workflow
      */
-    WorkflowDescriptor addGroup(long workflowId, WorkflowNodeGroupDescriptor groupDescriptor,
+    WorkflowNodeDescriptor addGroup(long workflowId, WorkflowNodeGroupDescriptor groupDescriptor,
                                 long nodeBeforeId,
                                 WorkflowNodeDescriptor[] nodes) throws PersistenceException;
     /**
@@ -81,11 +81,18 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor> {
      * @param groupDescriptor    The group node to update
      * @return  The updated workflow
      */
-    WorkflowDescriptor updateGroup(WorkflowNodeGroupDescriptor groupDescriptor) throws PersistenceException;
+    WorkflowNodeDescriptor updateGroup(WorkflowNodeGroupDescriptor groupDescriptor) throws PersistenceException;
     /**
      * Removes a group node from a workflow.
      * @param groupDescriptor    The group node to remove
      * @return  The updated workflow
      */
-    WorkflowDescriptor removeGroup(WorkflowNodeGroupDescriptor groupDescriptor) throws PersistenceException;
+    void removeGroup(WorkflowNodeGroupDescriptor groupDescriptor, boolean removeChildren) throws PersistenceException;
+
+    /**
+     * Creates a duplicate of the given workflow
+     *
+     * @param workflow  The workflow to clone
+     */
+    WorkflowDescriptor clone(WorkflowDescriptor workflow) throws PersistenceException;
 }
