@@ -19,9 +19,12 @@ package ro.cs.tao.execution.local;
 import ro.cs.tao.eodata.DataHandlingException;
 import ro.cs.tao.eodata.EODataHandler;
 import ro.cs.tao.eodata.EOProduct;
+import ro.cs.tao.eodata.Polygon2D;
+import ro.cs.tao.eodata.util.Conversions;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 
+import java.awt.geom.Point2D;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -37,8 +40,22 @@ public class ProductPersister implements EODataHandler<EOProduct> {
 
     @Override
     public List<EOProduct> handle(List<EOProduct> list) throws DataHandlingException {
+        String utmCode = null;
         for (EOProduct product : list) {
             try {
+                utmCode = product.getAttributeValue("utmCode");
+                if (utmCode != null) {
+                    Polygon2D footprint = Polygon2D.fromWKT(product.getGeometry());
+                    if (footprint != null) {
+                        Polygon2D footprintUTM = new Polygon2D();
+                        List<Point2D> points = footprint.getPoints();
+                        for (Point2D point : points) {
+                            double[] values = Conversions.utmToDegress(utmCode, point.getX(), point.getY());
+                            footprintUTM.append(values[1], values[0]);
+                        }
+                        product.setGeometry(footprintUTM.toWKT());
+                    }
+                }
                 product = persistenceManager.saveEOProduct(product);
             } catch (Exception e) {
                 logger.severe(String.format("Product %s could not be written to database: %s",

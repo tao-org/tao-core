@@ -102,7 +102,6 @@ public class Conversions {
     public static double[] utmToDegress(String utmZone, double easting, double northing) {
         double latitude;
         double longitude;
-            String[] parts = utmZone.split(" ");
             int zone = Integer.parseInt(utmZone.substring(0, 2));
             char letter = utmZone.substring(2, 3).toUpperCase().charAt(0);
             char hem;
