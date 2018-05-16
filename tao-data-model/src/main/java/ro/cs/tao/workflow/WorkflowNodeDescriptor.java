@@ -25,6 +25,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -78,6 +79,23 @@ public class WorkflowNodeDescriptor extends GraphObject {
 
     public void setIncomingLinks(List<ComponentLink> incomingLinks) {
         this.incomingLinks = incomingLinks;
+    }
+
+    public void addLink(ComponentLink link) {
+        if (this.incomingLinks == null) {
+            this.incomingLinks = new ArrayList<>();
+        }
+        if (this.incomingLinks.stream().noneMatch(l -> l.equals(link))) {
+            this.incomingLinks.add(link);
+        }
+    }
+
+    public void removeLink(ComponentLink link) {
+        if (this.incomingLinks != null) {
+            if (this.incomingLinks.stream().anyMatch(l -> l.equals(link))) {
+                this.incomingLinks.remove(link);
+            }
+        }
     }
 
     @XmlTransient
