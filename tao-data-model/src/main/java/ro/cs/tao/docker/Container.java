@@ -33,6 +33,7 @@ public class Container {
     private String name;
     private String tag;
     private String applicationPath;
+    private String logo;
     private List<Application> applications;
 
     @XmlElement(name = "id")
@@ -62,4 +63,7 @@ public class Container {
     public void addApplication(Application application) {
         getApplications().add(application);
     }
+
+    public String getLogo() { return logo; }
+    public void setLogo(String logo) { this.logo = logo; }
 }
