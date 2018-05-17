@@ -248,7 +248,10 @@
             <basic name="applicationPath">
                 <column name="application_path" nullable="true" column-definition="character varying(1024) NULL"/>
             </basic>
-
+            <basic name="logo">
+                <column name="logo_image" nullable="true" column-definition="character varying NULL"/>
+            </basic>
+            
             <element-collection name="applications" target-class="ro.cs.tao.docker.Application" access="PROPERTY" fetch="EAGER">
                 <collection-table name="tao.container_applications" >
                     <join-column name="container_id" referenced-column-name="id" />
