@@ -16,6 +16,7 @@
 package ro.cs.tao.serialization;
 
 import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.io.WKBReader;
 import com.vividsolutions.jts.io.WKTReader;
 
 import javax.xml.bind.annotation.adapters.XmlAdapter;
@@ -34,8 +35,14 @@ public class GeometryAdapter extends XmlAdapter<Geometry, String> {
     public Geometry marshal(String v) throws Exception {
         Geometry result = null;
         if (v != null && !v.isEmpty()) {
-            WKTReader reader = new WKTReader();
-            result = reader.read(v);
+            try {
+                Integer.parseInt(v.substring(0, 1));
+                WKBReader reader = new WKBReader();
+                result = reader.read(WKBReader.hexToBytes(v));
+            } catch (NumberFormatException nfe) {
+                WKTReader reader = new WKTReader();
+                result = reader.read(v);
+            }
         }
         return result;
     }
