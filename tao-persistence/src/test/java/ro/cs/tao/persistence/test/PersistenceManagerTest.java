@@ -833,7 +833,7 @@ public class PersistenceManagerTest {
             product.setWidth(7601);
             product.setHeight(7761);
             product.setFormatType(DataFormat.RASTER);
-            product.setGeometry("POLYGON ((24.16023 -9.60737, 24.15266 -7.36319, 22.05055 -7.38847, 22.05739 -9.59798, 24.16023 -9.60737))");
+            product.setGeometry("POLYGON((24.16023 -9.60737, 24.15266 -7.36319, 22.05055 -7.38847, 22.05739 -9.59798, 24.16023 -9.60737))");
             product.setLocation("https://landsat-pds.s3.amazonaws.com/c1/L8/201/044/LC08_L1TP_201044_20170930_20171013_01_T1");
 
             persistenceManager.saveEOProduct(product);
@@ -843,7 +843,7 @@ public class PersistenceManagerTest {
         }
     }
 
-    /*@Test
+    @Test
     public void TC_24_retrieve_raster_data_products()
     {
         logger.info("TC_24_retrieve_raster_data_products");
@@ -864,7 +864,7 @@ public class PersistenceManagerTest {
             logger.error(ExceptionUtils.getStackTrace(e));
             Assert.fail(e.getMessage());
         }
-    }*/
+    }
 
     @Test
     public void TC_25_save_new_vector_data_product()
@@ -903,7 +903,7 @@ public class PersistenceManagerTest {
         }
     }
 
-    /*@Test
+    @Test
     public void TC_26_retrieve_vector_data_products()
     {
         logger.info("TC_26_retrieve_vector_data_products");
@@ -924,7 +924,7 @@ public class PersistenceManagerTest {
             logger.error(ExceptionUtils.getStackTrace(e));
             Assert.fail(e.getMessage());
         }
-    }*/
+    }
 
     @Test
     public void TC_27_save_new_notification()
