@@ -945,7 +945,7 @@
                 <column name="quota" nullable="false" column-definition="real NOT NULL"/>
             </basic>
             <basic name="organization">
-                <column name="organization" nullable="false" column-definition="character varying(100) NOT NULL"/>
+                <column name="organization" nullable="true" column-definition="character varying(255) NULL"/>
             </basic>
             <basic name="active">
                 <column name="active" nullable="true" column-definition="boolean DEFAULT true"/>
