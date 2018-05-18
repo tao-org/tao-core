@@ -50,6 +50,7 @@ CREATE TABLE tao.container
 	name varchar(1024) NOT NULL,
 	tag varchar(1024) NOT NULL,
 	application_path varchar(1024) NULL,
+	logo_image varchar NULL,
 	created timestamp NULL DEFAULT now(),
     modified timestamp NULL
 );
