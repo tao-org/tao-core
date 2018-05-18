@@ -412,5 +412,9 @@ public class PersistenceManager implements MessagePersister {
         return userManager.getUserPreferences(userName);
     }
 
+    public String getUserOrganization(String userName) throws PersistenceException {
+        return userManager.getUserOrganization(userName);
+    }
+
 // endregion
 }

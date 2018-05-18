@@ -27,6 +27,7 @@ CREATE TABLE tao."user"
 	phone varchar(50) NULL,
 	last_login_date timestamp NULL,
 	quota real NOT NULL,
+	organization varchar(255) NULL,
 	created timestamp NULL DEFAULT now(),
 	modified timestamp NULL,
 	active boolean NULL DEFAULT true

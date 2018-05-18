@@ -30,6 +30,7 @@ public class User {
     private String phone;
     private LocalDateTime lastLoginDate;
     private Double quota;
+    private String organization;
     private boolean active;
 
     private List<Group> groups;
@@ -114,6 +115,14 @@ public class User {
 
     public void setQuota(Double quota) {
         this.quota = quota;
+    }
+
+    public String getOrganization() {
+        return organization;
+    }
+
+    public void setOrganization(String organization) {
+        this.organization = organization;
     }
 
     public boolean isActive() {
