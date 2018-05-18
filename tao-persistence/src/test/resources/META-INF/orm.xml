@@ -12,7 +12,7 @@
             </entity-listeners>
         </persistence-unit-defaults>
     </persistence-unit-metadata>-->
-    
+
     <!-- Mapped superclasses are only seen for entities (not for embeddables too) -->
 
     <mapped-superclass class="ro.cs.tao.eodata.EOData" access="PROPERTY">
@@ -574,10 +574,10 @@
                     <join-column name="task_id" referenced-column-name="id" />
                 </collection-table>
             </element-collection>
-    
+
             <transient name="stateHandler" />
             <transient name="context" />
-            
+
         </attributes>
     </entity>
 
@@ -841,7 +841,7 @@
 
         </attributes>
     </entity>
-    
+
     <entity class="ro.cs.tao.execution.model.Query" access="PROPERTY">
         <table name="tao.query"/>
         <convert converter="ro.cs.tao.persistence.convert.QueryValuesMapConverter" attribute-name="values"/>
@@ -940,6 +940,9 @@
             </basic>
             <basic name="quota">
                 <column name="quota" nullable="false" column-definition="real NOT NULL"/>
+            </basic>
+            <basic name="organization">
+                <column name="organization" nullable="false" column-definition="character varying(100) NOT NULL"/>
             </basic>
             <basic name="active">
                 <column name="active" nullable="true" column-definition="boolean DEFAULT true"/>
@@ -1066,7 +1069,7 @@
         </attributes>
     </embeddable>
 
-    
+
     <embeddable class="ro.cs.tao.component.ComponentLink" access="PROPERTY">
         <attributes>
             <basic name="sourceNodeId" fetch="LAZY">

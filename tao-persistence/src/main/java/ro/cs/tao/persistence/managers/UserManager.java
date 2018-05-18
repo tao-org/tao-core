@@ -70,6 +70,7 @@ public class UserManager {
         }).stream().collect(Collectors.toMap(UserPreference::getKey, UserPreference::getValue)));
     }*/
 
+    @Transactional
     public List<UserPreference> getUserPreferences(String userName) throws PersistenceException {
         final User user = userRepository.findByUsername(userName);
         if (user == null)
@@ -77,6 +78,16 @@ public class UserManager {
             throw new PersistenceException("There is no user with the given username: " + String.valueOf(userName));
         }
         return user.getPreferences();
+    }
+
+    @Transactional
+    public String getUserOrganization(String userName) throws PersistenceException {
+        final User user = userRepository.findByUsername(userName);
+        if (user == null)
+        {
+            throw new PersistenceException("There is no user with the given username: " + String.valueOf(userName));
+        }
+        return user.getOrganization();
     }
 
     //endregion
