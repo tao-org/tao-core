@@ -251,7 +251,7 @@
             <basic name="logo">
                 <column name="logo_image" nullable="true" column-definition="character varying NULL"/>
             </basic>
-            
+
             <element-collection name="applications" target-class="ro.cs.tao.docker.Application" access="PROPERTY" fetch="EAGER">
                 <collection-table name="tao.container_applications" >
                     <join-column name="container_id" referenced-column-name="id" />
@@ -945,7 +945,7 @@
                 <column name="quota" nullable="false" column-definition="real NOT NULL"/>
             </basic>
             <basic name="organization">
-                <column name="organization" nullable="false" column-definition="character varying(100) NOT NULL"/>
+                <column name="organization" nullable="true" column-definition="character varying(255) NULL"/>
             </basic>
             <basic name="active">
                 <column name="active" nullable="true" column-definition="boolean DEFAULT true"/>
