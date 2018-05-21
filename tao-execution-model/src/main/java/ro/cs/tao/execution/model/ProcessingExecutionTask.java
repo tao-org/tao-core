@@ -80,8 +80,9 @@ public class ProcessingExecutionTask extends ExecutionTask {
             this.inputParameterValues = new ArrayList<>();
         }
         Variable variable = this.inputParameterValues.stream().filter(v -> v.getKey().equals(parameterId)).findFirst().orElse(null);
+        int sourceCardinality = this.component.getSourceCardinality();
         if (variable != null) {
-            if (this.component.getSourceCardinality() == 1) {
+            if (sourceCardinality == 1) {
                 variable.setValue(value);
             } else {
                 try {
@@ -92,7 +93,7 @@ public class ProcessingExecutionTask extends ExecutionTask {
             }
         } else {
             Variable var;
-            if (this.component.getSourceCardinality() == 1) {
+            if (sourceCardinality == 1) {
                 var = new Variable(parameterId, value);
             } else {
                 String newValue = null;
