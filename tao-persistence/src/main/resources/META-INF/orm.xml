@@ -593,6 +593,7 @@
             <many-to-one name="component" fetch="LAZY" target-entity="ro.cs.tao.component.ProcessingComponent">
                 <join-column name="component_id" nullable="false"/>
             </many-to-one>
+            <transient name="instanceTargetOutput"/>
         </attributes>
     </entity>
 
