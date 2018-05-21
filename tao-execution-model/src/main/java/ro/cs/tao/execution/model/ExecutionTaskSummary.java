@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
 public class ExecutionTaskSummary {
 
     private long taskId;
+    private String workflowName;
     private String componentName;
     private LocalDateTime taskStart;
     private LocalDateTime taskEnd;
@@ -30,15 +31,16 @@ public class ExecutionTaskSummary {
     public long getTaskId() {
         return taskId;
     }
-
     public void setTaskId(long taskId) {
         this.taskId = taskId;
     }
 
+    public String getWorkflowName() { return workflowName; }
+    public void setWorkflowName(String workflowName) { this.workflowName = workflowName; }
+
     public String getComponentName() {
         return componentName;
     }
-
     public void setComponentName(String componentName) {
         this.componentName = componentName;
     }
@@ -46,7 +48,6 @@ public class ExecutionTaskSummary {
     public LocalDateTime getTaskStart() {
         return taskStart;
     }
-
     public void setTaskStart(LocalDateTime taskStart) {
         this.taskStart = taskStart;
     }
@@ -54,7 +55,6 @@ public class ExecutionTaskSummary {
     public LocalDateTime getTaskEnd() {
         return taskEnd;
     }
-
     public void setTaskEnd(LocalDateTime taskEnd) {
         this.taskEnd = taskEnd;
     }
@@ -62,7 +62,6 @@ public class ExecutionTaskSummary {
     public String getHost() {
         return host;
     }
-
     public void setHost(String host) {
         this.host = host;
     }
@@ -70,8 +69,8 @@ public class ExecutionTaskSummary {
     public ExecutionStatus getTaskStatus() {
         return taskStatus;
     }
-
     public void setTaskStatus(ExecutionStatus taskStatus) {
         this.taskStatus = taskStatus;
     }
+
 }
