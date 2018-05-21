@@ -78,10 +78,19 @@ public interface MetadataInspector {
             product.setWidth(this.width);
             product.setHeight(this.height);
             URI productUri = productPath.toUri();
-            product.setLocation(productUri.toString());
+            if (Files.isDirectory(productPath)) {
+                product.setLocation(productUri.toString());
+            } else {
+                product.setLocation(productPath.getParent().toUri().toString());
+            }
+            //product.setLocation(productUri.toString());
             product.setApproximateSize(Files.size(productPath));
-            if (this.entryPoint != null && !this.entryPoint.equals(productUri)) {
-                product.setEntryPoint(this.entryPoint.toString());
+            if (this.entryPoint != null) {
+                if (this.entryPoint.equals(productUri)) {
+                    product.setEntryPoint(productPath.getFileName().toString());
+                } else {
+                    product.setEntryPoint(this.entryPoint.toString());
+                }
             }
             return product;
         }
