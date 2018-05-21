@@ -221,6 +221,9 @@ public class Orchestrator extends Notifiable {
                                     .allMatch(o -> targets.stream().anyMatch(t -> t.getName().equals(o.getKey())));
                     targets.forEach(t -> {
                         String targetOuptut = pcTask.getInstanceTargetOuptut(t);
+                        if (targetOuptut == null) {
+                            logger.severe(String.format("NULL TARGET [task %s, parameter %s]", pcTask.getId(), t.getName()));
+                        }
                         pcTask.setOutputParameterValue(t.getName(), targetOuptut);
                         if (taskNode.getPreserveOutput()) {
                             try {
@@ -232,13 +235,13 @@ public class Orchestrator extends Notifiable {
                         if (lastFromGroup) {
                             groupTask.setOutputParameterValue(t.getName(), targetOuptut);
                         }
-                        logger.finest(String.format("Task %s output: %s=%s",
-                                                  task.getId(), t.getName(),
-                                                  t.getDataDescriptor().getLocation()));
                     });
                     //persistenceManager.updateExecutionTask(task);
                     if (lastFromGroup) {
                         persistenceManager.updateExecutionTask(groupTask);
+                    } else {
+                        task = persistenceManager.updateExecutionTask(pcTask);
+                        logger.info(String.format("Task %s should be updated", task.getId()));
                     }
                 }
                 List<ExecutionTask> nextTasks = findNextTasks(task);
@@ -324,6 +327,11 @@ public class Orchestrator extends Notifiable {
                 } else {
                     logger.finest("No more child tasks to execute after the current task");
                     ExecutionJob job = task.getJob();
+                    if (job.getTasks().stream()
+                            .anyMatch(t -> t.getExecutionStatus() == ExecutionStatus.RUNNING ||
+                                     t.getExecutionStatus() == ExecutionStatus.QUEUED_ACTIVE)) {
+                        return;
+                    }
                     job.setExecutionStatus(ExecutionStatus.DONE);
                     if (job.getEndTime() == null) {
                         job.setEndTime(LocalDateTime.now());

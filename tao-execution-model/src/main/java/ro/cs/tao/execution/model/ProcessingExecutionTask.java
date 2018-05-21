@@ -29,7 +29,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 /**
  * @author Oana H.
@@ -160,8 +159,13 @@ public class ProcessingExecutionTask extends ExecutionTask {
         }
         Map<String, String> inputParams = new HashMap<>();
         if (inputParameterValues != null) {
-            inputParams.putAll(inputParameterValues.stream()
-                    .collect(Collectors.toMap(Variable::getKey, Variable::getValue)));
+            for (Variable input : inputParameterValues) {
+                String value = input.getValue();
+                if (value.startsWith("[") && value.endsWith("]")) {
+                    value = value.substring(1, value.length() - 1).replace(",", " ");
+                }
+                inputParams.put(input.getKey(), value);
+            }
         }
         for (TargetDescriptor descriptor : this.component.getTargets()) {
             String location = descriptor.getDataDescriptor().getLocation();
