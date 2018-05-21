@@ -12,7 +12,7 @@
             </entity-listeners>
         </persistence-unit-defaults>
     </persistence-unit-metadata>-->
-
+    
     <!-- Mapped superclasses are only seen for entities (not for embeddables too) -->
 
     <mapped-superclass class="ro.cs.tao.eodata.EOData" access="PROPERTY">
@@ -251,7 +251,7 @@
             <basic name="logo">
                 <column name="logo_image" nullable="true" column-definition="character varying NULL"/>
             </basic>
-
+            
             <element-collection name="applications" target-class="ro.cs.tao.docker.Application" access="PROPERTY" fetch="EAGER">
                 <collection-table name="tao.container_applications" >
                     <join-column name="container_id" referenced-column-name="id" />
@@ -577,10 +577,10 @@
                     <join-column name="task_id" referenced-column-name="id" />
                 </collection-table>
             </element-collection>
-
+    
             <transient name="stateHandler" />
             <transient name="context" />
-
+            
         </attributes>
     </entity>
 
@@ -593,6 +593,7 @@
             <many-to-one name="component" fetch="LAZY" target-entity="ro.cs.tao.component.ProcessingComponent">
                 <join-column name="component_id" nullable="false"/>
             </many-to-one>
+            <transient name="instanceTargetOutput"/>
         </attributes>
     </entity>
 
@@ -844,7 +845,7 @@
 
         </attributes>
     </entity>
-
+    
     <entity class="ro.cs.tao.execution.model.Query" access="PROPERTY">
         <table name="tao.query"/>
         <convert converter="ro.cs.tao.persistence.convert.QueryValuesMapConverter" attribute-name="values"/>
@@ -1072,7 +1073,7 @@
         </attributes>
     </embeddable>
 
-
+    
     <embeddable class="ro.cs.tao.component.ComponentLink" access="PROPERTY">
         <attributes>
             <basic name="sourceNodeId" fetch="LAZY">
