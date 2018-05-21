@@ -19,7 +19,9 @@ import ro.cs.tao.component.*;
 import ro.cs.tao.component.validation.ValidationException;
 import ro.cs.tao.security.SessionContext;
 import ro.cs.tao.serialization.SerializationException;
+import ro.cs.tao.utils.FileUtils;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -34,7 +36,12 @@ import java.util.stream.Collectors;
  */
 public class ProcessingExecutionTask extends ExecutionTask {
 
+    // format is: jobId-taskId-[internalState-]fileName
+    private static final String nameTemplate = "%s-%s-%s%s";
+
     private ProcessingComponent component;
+
+    private String instanceTargetOutput;
 
     public ProcessingExecutionTask() {
         super();
@@ -168,17 +175,29 @@ public class ProcessingExecutionTask extends ExecutionTask {
     }
 
     public String getInstanceTargetOuptut(TargetDescriptor descriptor) {
-        String location = descriptor.getDataDescriptor().getLocation();
-        if (location != null) {
-            Path path = Paths.get(location);
-            SessionContext context = getContext();
-            if (!path.isAbsolute()) {
-                path = context.getWorkspace().resolve(path);
+        if (this.instanceTargetOutput == null) {
+            this.instanceTargetOutput = descriptor.getDataDescriptor().getLocation();
+            if (this.instanceTargetOutput != null) {
+                Path path = Paths.get(this.instanceTargetOutput);
+                SessionContext context = getContext();
+                if (!path.isAbsolute()) {
+                    path = context.getWorkspace().resolve(path);
+                }
+                String fileName = path.getFileName().toString();
+                String folderName = String.format(nameTemplate,
+                                                  this.getJob().getId(),
+                                                  this.getId(),
+                                                  this.internalState == null ? "" : this.internalState + "-",
+                                                  FileUtils.getFilenameWithoutExtension(fileName));
+                fileName = folderName + FileUtils.getExtension(fileName);
+                try {
+                    FileUtils.ensureExists(path.getParent().resolve(folderName));
+                } catch (IOException e) {
+                    Logger.getLogger(ProcessingExecutionTask.class.getName()).severe(e.getMessage());
+                }
+                this.instanceTargetOutput = path.getParent().resolve(folderName).resolve(fileName).toString();
             }
-            location = path.getParent().resolve(String.valueOf(this.getId()) + "-" +
-                                                        (this.internalState == null ? "" : this.internalState + "-") +
-                                                        path.getFileName()).toString();
         }
-        return location;
+        return this.instanceTargetOutput;
     }
 }
