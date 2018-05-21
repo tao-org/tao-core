@@ -67,7 +67,6 @@ public class DefaultJobTaskSelector implements TaskSelector<ExecutionJob> {
         if (tasks != null && tasks.size() > 0) {
             next = new ArrayList<>();
             ExecutionStatus status = job.getExecutionStatus();
-            System.out.println("Job status is " + status);
             switch (status) {
                 // If the job is not started, we return the first task in line
                 case UNDETERMINED:

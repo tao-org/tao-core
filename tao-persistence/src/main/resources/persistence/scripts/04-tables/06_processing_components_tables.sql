@@ -83,7 +83,7 @@ DROP TABLE IF EXISTS tao.processing_component CASCADE;
 CREATE TABLE tao.processing_component
 (
 	id varchar(512) NOT NULL,
-	label varchar(250) NOT NULL,
+	label varchar NOT NULL,
 	version varchar(50) NOT NULL,
 	description text NOT NULL,
 	authors varchar(1024) NOT NULL,
@@ -232,7 +232,7 @@ DROP TABLE IF EXISTS tao.group_component CASCADE;
 CREATE TABLE tao.group_component
 (
 	id varchar(512) NOT NULL,
-	label varchar(250) NOT NULL,
+	label varchar NOT NULL,
 	version varchar(50) NOT NULL,
 	description text NOT NULL,
 	authors varchar(1024) NOT NULL,

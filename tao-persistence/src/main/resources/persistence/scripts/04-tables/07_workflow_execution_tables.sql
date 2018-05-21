@@ -304,8 +304,9 @@ CREATE TABLE tao.task
 
 ALTER TABLE tao.task ADD CONSTRAINT PK_task PRIMARY KEY (id);
 
-ALTER TABLE tao.task ADD CONSTRAINT FK_task_graph_node
-	FOREIGN KEY (graph_node_id) REFERENCES tao.graph_node (id) ON DELETE No Action ON UPDATE No Action;
+-- This prevents deleting a node if previously executed
+--ALTER TABLE tao.task ADD CONSTRAINT FK_task_graph_node
+--	FOREIGN KEY (graph_node_id) REFERENCES tao.graph_node (id) ON DELETE No Action ON UPDATE No Action;
 
 ALTER TABLE tao.task ADD CONSTRAINT FK_task_job
 	FOREIGN KEY (job_id) REFERENCES tao.job (id) ON DELETE No Action ON UPDATE No Action;
