@@ -168,7 +168,7 @@ public abstract class TaoComponent extends Identifiable {
      */
     public void setSources(List<SourceDescriptor> sources) {
         this.sources = sources;
-        if (this.sources != null) {
+        if (this.sources != null && this.sourceCardinality != 0) {
             this.sourceCardinality = this.sources.size();
         }
     }
@@ -208,7 +208,7 @@ public abstract class TaoComponent extends Identifiable {
      */
     public void setTargets(List<TargetDescriptor> targets) {
         this.targets = targets;
-        if(this.targets != null) {
+        if (this.targets != null && this.targetCardinality != 0) {
             this.targetCardinality = this.targets.size();
         }
     }

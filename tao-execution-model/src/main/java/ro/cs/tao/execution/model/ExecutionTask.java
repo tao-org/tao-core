@@ -187,7 +187,9 @@ public abstract class ExecutionTask implements StatusChangeListener {
                 new ArrayList<>() :
                 getListParameterValues(valuesAsString);
         values.removeIf("null"::equals);
-        values.add(newValue);
+        if (!values.contains(newValue)) {
+            values.add(newValue);
+        }
         return convertListToSingleValue(values);
     }
 }

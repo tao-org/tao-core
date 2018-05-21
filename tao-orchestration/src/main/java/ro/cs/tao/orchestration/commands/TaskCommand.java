@@ -105,7 +105,9 @@ public abstract class TaskCommand {
         protected void doAction(ExecutionTask task) {
             ExecutionsManager executionsManager = ExecutionsManager.getInstance();
             if (task instanceof ExecutionGroup) {
-                executionsManager.execute(((ExecutionGroup) task).getTasks().get(0));
+                ExecutionTask first = ((ExecutionGroup) task).getTasks().get(0);
+                first.setContext(task.getContext());
+                executionsManager.execute(first);
             } else {
                 executionsManager.execute(task);
             }
