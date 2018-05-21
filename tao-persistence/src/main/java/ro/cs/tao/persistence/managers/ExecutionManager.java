@@ -135,26 +135,30 @@ public class ExecutionManager {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         return jdbcTemplate.query(con -> {
             PreparedStatement statement =
-                    con.prepareStatement("SELECT t.id, CASE WHEN d.id IS NULL THEN CASE WHEN p.id IS NULL THEN 'group' ELSE p.id END ELSE d.id END \"componentName\", " +
+                    con.prepareStatement("SELECT t.id, w.name \"workflow\", CASE WHEN d.id IS NULL THEN CASE WHEN p.id IS NULL THEN 'group' ELSE p.id END ELSE d.id END \"componentName\", " +
                                                  "t.start_time, t.end_time, t.execution_node_host_name, t.execution_status_id FROM tao.task t " +
+                                                 "INNER JOIN tao.job j ON j.id = t.job_id " +
+                                                 "INNER JOIN tao.workflow_graph w ON w.id = j.workflow_id " +
                                                  "LEFT OUTER JOIN tao.data_source_component d ON d.id = t.component_id " +
-                                                 "LEFT OUTER JOIN tao.processing_component p ON p.id = t.component_id where job_id = ?");
+                                                 "LEFT OUTER JOIN tao.processing_component p ON p.id = t.component_id where job_id = ? " +
+                                                 "ORDER BY t.start_time, t.id");
             statement.setLong(1, jobId);
             return statement;
         }, (rs, rowNum) -> {
             ExecutionTaskSummary result = new ExecutionTaskSummary();
             result.setTaskId(rs.getLong(1));
-            result.setComponentName(rs.getString(2));
-            Timestamp timestamp = rs.getTimestamp(3);
+            result.setWorkflowName(rs.getString(2));
+            result.setComponentName(rs.getString(3));
+            Timestamp timestamp = rs.getTimestamp(4);
             if (timestamp != null) {
                 result.setTaskStart(timestamp.toLocalDateTime());
             }
-            timestamp = rs.getTimestamp(4);
+            timestamp = rs.getTimestamp(5);
             if (timestamp != null) {
                 result.setTaskEnd(timestamp.toLocalDateTime());
             }
-            result.setHost(rs.getString(5));
-            result.setTaskStatus(ExecutionStatus.getEnumConstantByValue(rs.getInt(6)));
+            result.setHost(rs.getString(6));
+            result.setTaskStatus(ExecutionStatus.getEnumConstantByValue(rs.getInt(7)));
             return result;
         });
     }
