@@ -1,0 +1,77 @@
+/*
+ * Copyright (C) 2017 CS ROMANIA
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation; either version 3 of the License, or (at your option)
+ * any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, see http://www.gnu.org/licenses/
+ */
+
+package ro.cs.tao.execution.model;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+public class ExecutionJobSummary {
+    private String workflowName;
+    private LocalDateTime jobStart;
+    private LocalDateTime jobEnd;
+    private String user;
+    private ExecutionStatus jobStatus;
+    private List<ExecutionTaskSummary> taskSummaries;
+
+    public String getWorkflowName() {
+        return workflowName;
+    }
+
+    public void setWorkflowName(String workflowName) {
+        this.workflowName = workflowName;
+    }
+
+    public LocalDateTime getJobStart() {
+        return jobStart;
+    }
+
+    public void setJobStart(LocalDateTime jobStart) {
+        this.jobStart = jobStart;
+    }
+
+    public LocalDateTime getJobEnd() {
+        return jobEnd;
+    }
+
+    public void setJobEnd(LocalDateTime jobEnd) {
+        this.jobEnd = jobEnd;
+    }
+
+    public String getUser() {
+        return user;
+    }
+
+    public void setUser(String user) {
+        this.user = user;
+    }
+
+    public ExecutionStatus getJobStatus() {
+        return jobStatus;
+    }
+
+    public void setJobStatus(ExecutionStatus status) {
+        this.jobStatus = status;
+    }
+
+    public List<ExecutionTaskSummary> getTaskSummaries() {
+        return taskSummaries;
+    }
+
+    public void setTaskSummaries(List<ExecutionTaskSummary> taskSummaries) {
+        this.taskSummaries = taskSummaries;
+    }
+}

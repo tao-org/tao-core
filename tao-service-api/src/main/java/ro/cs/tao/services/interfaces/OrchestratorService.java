@@ -17,7 +17,7 @@
 package ro.cs.tao.services.interfaces;
 
 import ro.cs.tao.execution.ExecutionException;
-import ro.cs.tao.execution.model.ExecutionTask;
+import ro.cs.tao.execution.model.ExecutionJobSummary;
 import ro.cs.tao.execution.model.ExecutionTaskSummary;
 
 import java.util.List;
@@ -62,11 +62,13 @@ public interface OrchestratorService {
     /**
      * Returns (from the database) the list of tasks that are marked as being executed.
      */
-    List<ExecutionTask> getRunningTasks();
+    List<ExecutionTaskSummary> getRunningTasks();
     /**
      * Returns (from the database) the status of the tasks of the given job.
      */
     List<ExecutionTaskSummary> getTasksStatus(long jobId);
 
-    List<ExecutionTaskSummary> getCompletedJobs();
+    List<ExecutionJobSummary> getRunningJobs();
+
+    List<ExecutionJobSummary> getCompletedJobs();
 }
