@@ -31,7 +31,7 @@ public interface WorkflowNodeDescriptorRepository extends PagingAndSortingReposi
     @Query(value = "SELECT * from tao.graph_node where id in (:ids) order by node_level", nativeQuery = true)
     List<WorkflowNodeDescriptor> getWorkflowsById(@Param("ids") Set<Long> ids);
 
-    @Query(value = "SELECT * from tao.graph_node where workflow_id = :workflowId and processing_component_id = :componentId " +
+    @Query(value = "SELECT * from tao.graph_node where workflow_id = :workflowId and component_id = :componentId " +
                     "order by node_level", nativeQuery = true)
     List<WorkflowNodeDescriptor> findByComponentId(@Param("workflowId") long workflowId,
                                                    @Param("componentId") String componentId);
