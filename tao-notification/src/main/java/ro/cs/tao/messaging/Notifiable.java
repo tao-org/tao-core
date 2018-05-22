@@ -34,7 +34,7 @@ public abstract class Notifiable implements Consumer<Event<Message>> {
     @Override
     public void accept(Event<Message> messageEvent) {
         final Message payload = messageEvent.getData();
-        logger.finest("Notification received: " + payload.toString());
+        //logger.finest("Notification received: " + payload.toString());
         onMessageReceived(payload);
     }
 
