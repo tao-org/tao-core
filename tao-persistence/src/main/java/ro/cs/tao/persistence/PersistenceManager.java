@@ -194,7 +194,7 @@ public class PersistenceManager implements MessagePersister {
         return componentManager.getGroupComponents();
     }
 
-    public GroupComponent getGroupComponentById(String id) throws PersistenceException {
+    public GroupComponent getGroupComponentById(String id) {
         return componentManager.getGroupComponentById(id);
     }
 

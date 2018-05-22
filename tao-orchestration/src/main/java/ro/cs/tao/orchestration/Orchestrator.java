@@ -110,7 +110,6 @@ public class Orchestrator extends Notifiable {
                                           .orElse(new DefaultGroupTaskSelector());
         this.groupTaskSelector.setWorkflowProvider(workflowProvider);
         this.groupTaskSelector.setTaskByNodeProvider(taskByGroupNodeProvider);
-        this.groupTaskSelector.setNodesByComponentProvider(nodesByComponentProvider);
         this.jobTaskSelector = selectors.stream()
                                         .filter(s -> ExecutionJob.class.equals(s.getTaskContainerClass()))
                                         .map(s -> (TaskSelector<ExecutionJob>)s)
@@ -118,7 +117,6 @@ public class Orchestrator extends Notifiable {
                                         .orElse(new DefaultJobTaskSelector());
         this.jobTaskSelector.setWorkflowProvider(workflowProvider);
         this.jobTaskSelector.setTaskByNodeProvider(taskByJobNodeProvider);
-        this.jobTaskSelector.setNodesByComponentProvider(nodesByComponentProvider);
         this.jobFactory = new JobFactory(this.persistenceManager);
         Set<MetadataInspector> services = ServiceRegistryManager.getInstance()
                                                                 .getServiceRegistry(MetadataInspector.class)

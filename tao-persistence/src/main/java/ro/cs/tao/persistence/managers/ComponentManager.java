@@ -314,19 +314,12 @@ public class ComponentManager {
     }
 
     @Transactional
-    public GroupComponent getGroupComponentById(final String id) throws PersistenceException {
-        // check method parameters
-        if (id == null || id.isEmpty()) {
-            throw new PersistenceException("Invalid parameters were provided for searching group component by identifier ("+ String.valueOf(id) +") !");
+    public GroupComponent getGroupComponentById(final String id) {
+        GroupComponent component = null;
+        if (id != null && !id.isEmpty()) {
+            component = groupComponentRepository.findById(id);
         }
-
-        // retrieve ProcessingComponent after its identifier
-        final GroupComponent componentEnt = groupComponentRepository.findById(id);
-        if (componentEnt == null) {
-            throw new PersistenceException("There is no group component with the specified identifier: " + id);
-        }
-
-        return componentEnt;
+        return component;
     }
 
     @Transactional

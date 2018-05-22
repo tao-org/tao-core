@@ -39,11 +39,6 @@ public interface TaskSelector<T> {
     void setTaskByNodeProvider(BiFunction<Long, Long, ExecutionTask> taskByNodeProvider);
 
     /**
-     * Setter for the functor providing a list of workflow nodes given a (processing) component
-     */
-    void setNodesByComponentProvider(BiFunction<Long, String, List<WorkflowNodeDescriptor>> nodesByComponentProvider);
-
-    /**
      * Returns the class for the task container (i.e. either an ExecutionJob or an ExecutionGroup)
      */
     Class<T> getTaskContainerClass();
