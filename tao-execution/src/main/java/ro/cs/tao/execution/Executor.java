@@ -24,9 +24,12 @@ import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.Topics;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.security.SessionContext;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Logger;
@@ -41,6 +44,7 @@ public abstract class Executor<T extends ExecutionTask> extends Identifiable {
     protected final PersistenceManager persistenceManager = SpringContextBridge.services().getPersistenceManager();
     protected final Logger logger = Logger.getLogger(getClass().getName());
     private final Timer executionsCheckTimer = new Timer("exec-monitor");
+    private final Map<Long, SessionContext> contextMap = new HashMap<>();
 
     public Executor() {
         super();
@@ -134,17 +138,21 @@ public abstract class Executor<T extends ExecutionTask> extends Identifiable {
     protected void markTaskFinished(ExecutionTask task, ExecutionStatus status) {
         task.setEndTime(LocalDateTime.now());
         changeTaskStatus(task, status);
+        this.contextMap.remove(task.getId());
     }
 
     protected void changeTaskStatus(ExecutionTask task, ExecutionStatus status) {
         if(status != task.getExecutionStatus()) {
             try {
+                if (!this.contextMap.containsKey(task.getId())) {
+                    this.contextMap.put(task.getId(), task.getContext());
+                }
                 task.setExecutionStatus(status);
                 persistenceManager.updateExecutionTask(task);
             } catch (PersistenceException e) {
                 logger.severe(e.getMessage());
             }
-            Messaging.send(task.getContext().getPrincipal(),
+            Messaging.send(this.contextMap.get(task.getId()).getPrincipal(),
                            Topics.TASK_STATUS_CHANGED,
                            task.getId(), status.toString());
         }

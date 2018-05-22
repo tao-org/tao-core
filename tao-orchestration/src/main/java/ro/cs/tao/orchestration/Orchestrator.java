@@ -38,6 +38,7 @@ import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.serialization.StringListAdapter;
 import ro.cs.tao.spi.ServiceRegistryManager;
+import ro.cs.tao.user.UserPreference;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
@@ -45,6 +46,8 @@ import ro.cs.tao.workflow.enums.TransitionBehavior;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.UserPrincipal;
+import java.security.Principal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -187,7 +190,39 @@ public class Orchestrator extends Notifiable {
     @Override
     protected void onMessageReceived(Message message) {
         try {
-            queue.put(new AbstractMap.SimpleEntry<>(message, SessionStore.currentContext()));
+            SessionContext context = new SessionContext() {
+                @Override
+                protected Principal setPrincipal() {
+                    return (UserPrincipal) message::getUser;
+                }
+
+                @Override
+                protected List<UserPreference> setPreferences() {
+                    try {
+                        return persistenceManager != null ?
+                                persistenceManager.getUserPreferences(getPrincipal().getName()) : null;
+                    } catch (PersistenceException e) {
+                        logger.severe(e.getMessage());
+                    }
+                    return null;
+                }
+
+                @Override
+                public int hashCode() {
+                    return getPrincipal() != null ? getPrincipal().getName().hashCode() : super.hashCode();
+                }
+
+                @Override
+                public boolean equals(Object obj) {
+                    if (!(obj instanceof SessionContext)) {
+                        return false;
+                    }
+                    SessionContext other = (SessionContext) obj;
+                    return (this.getPrincipal() == null && other.getPrincipal() == null) ||
+                            (this.getPrincipal().getName().equals(other.getPrincipal().getName()));
+                }
+            };
+            queue.put(new AbstractMap.SimpleEntry<>(message, context));
         } catch (InterruptedException e) {
             logger.severe(e.getMessage());
         }
@@ -337,7 +372,7 @@ public class Orchestrator extends Notifiable {
                         job.setEndTime(LocalDateTime.now());
                     }
                     persistenceManager.updateExecutionJob(job);
-                    if (taskNode.getPreserveOutput()) {
+                    if (taskNode instanceof WorkflowNodeGroupDescriptor && taskNode.getPreserveOutput()) {
                         persistOutputProducts(task);
                     }
                     WorkflowDescriptor workflow = persistenceManager.getWorkflowDescriptor(job.getWorkflowId());
