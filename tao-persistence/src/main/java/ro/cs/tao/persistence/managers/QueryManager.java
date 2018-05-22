@@ -51,6 +51,10 @@ public class QueryManager {
         return queryRepository.findByUserIdAndSensorAndDataSourceAndWorkflowNodeId(userId, sensor, dataSource, nodeId);
     }
 
+    public List<Query> findByUserIdAndWorkflowNodeId(String userId, long nodeId) {
+        return queryRepository.findByUserIdAndWorkflowNodeId(userId, nodeId);
+    }
+
     public List<Query> findByUserIdAndSensorAndDataSource(String userId, String sensor, String dataSource) {
         return queryRepository.findByUserIdAndSensorAndDataSource(userId, sensor, dataSource);
     }

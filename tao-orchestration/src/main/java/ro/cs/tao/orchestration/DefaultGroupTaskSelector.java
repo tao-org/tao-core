@@ -133,47 +133,31 @@ public class DefaultGroupTaskSelector implements TaskSelector<ExecutionGroup> {
         if (childNodes == null || childNodes.size() == 0) {
             return null;
         }
-        if (childNodes.size() == 1) {
-            return childNodes.stream().map(n -> {
+
+        return childNodes.stream().filter(n ->{
+            ExecutionTask t = this.taskByNodeProvider.apply(group.getId(), n.getId());
+            return t.getExecutionStatus() != ExecutionStatus.QUEUED_ACTIVE &&
+                    t.getExecutionStatus() != ExecutionStatus.RUNNING &&
+                    n.getIncomingLinks().stream().allMatch(link -> {
+                        ExecutionTask taskByNode = this.taskByNodeProvider.apply(group.getId(), link.getSourceNodeId());
+                        return taskByNode != null && taskByNode.getExecutionStatus() == ExecutionStatus.DONE;
+                    });
+        })
+            .map(n -> {
                 ExecutionTask next = this.taskByNodeProvider.apply(group.getId(), n.getId());
                 if (!(task instanceof DataSourceExecutionTask && next instanceof ExecutionGroup)) {
-                    List<Variable> outputs = task.getOutputParameterValues();
                     n.getIncomingLinks().forEach(link -> {
-                        for (Variable variable : outputs) {
-                            if (variable.getKey().equals(link.getInput().getName())) {
-                                next.setInputParameterValue(link.getOutput().getName(), variable.getValue());
-                            }
+                        ExecutionTask parent = this.taskByNodeProvider.apply(group.getId(), link.getSourceNodeId());
+                        Variable out = parent.getOutputParameterValues()
+                                .stream().filter(o -> o.getKey().equals(link.getInput().getName()))
+                                .findFirst().get();
+                        if (out.getValue() != null) {
+                            next.setInputParameterValue(link.getOutput().getName(), out.getValue());
                         }
                     });
                 }
                 return next;
-            }).collect(Collectors.toList());
-        } else {
-            return childNodes.stream().filter(n ->
-                n.getIncomingLinks().stream().allMatch(link -> {
-                  List<WorkflowNodeDescriptor> parents =
-                          this.nodesByComponentProvider.apply(workflowNode.getWorkflow().getId(),
-                                                              link.getInput().getParentId());
-                  return parents.stream().allMatch(p -> {
-                      ExecutionTask taskByNode = this.taskByNodeProvider.apply(group.getId(), p.getId());
-                      return taskByNode != null && taskByNode.getExecutionStatus() == ExecutionStatus.DONE;
-                  });
-                }))
-                .map(n -> {
-                    ExecutionTask next = this.taskByNodeProvider.apply(group.getId(), n.getId());
-                    if (!(task instanceof DataSourceExecutionTask && next instanceof ExecutionGroup)) {
-                        List<Variable> outputs = task.getOutputParameterValues();
-                        n.getIncomingLinks().forEach(link -> {
-                            for (Variable variable : outputs) {
-                                if (variable.getKey().equals(link.getInput().getName())) {
-                                    next.setInputParameterValue(link.getOutput().getName(), variable.getValue());
-                                }
-                            }
-                        });
-                    }
-                    return next;
-                })
-                .collect(Collectors.toList());
-        }
+            })
+            .collect(Collectors.toList());
     }
 }

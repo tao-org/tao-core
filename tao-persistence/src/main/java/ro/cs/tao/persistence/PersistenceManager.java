@@ -28,7 +28,6 @@ import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 
 import javax.annotation.PostConstruct;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -363,11 +362,15 @@ public class PersistenceManager implements MessagePersister {
         return queryManager.findById(id);
     }
 
-    public Query getQuery(String userId, String sensor, String dataSource, long workflowNodeId) {
+    public Query getQueries(String userId, String sensor, String dataSource, long workflowNodeId) {
         return queryManager.findByUserIdAndSensorAndDataSourceAndWorkflowNodeId(userId, sensor, dataSource, workflowNodeId);
     }
 
-    public List<Query> getQuery(String userId, String sensor, String dataSource) {
+    public List<Query> getQueries(String userId, long nodeId) {
+        return queryManager.findByUserIdAndWorkflowNodeId(userId, nodeId);
+    }
+
+    public List<Query> getQueries(String userId, String sensor, String dataSource) {
         return queryManager.findByUserIdAndSensorAndDataSource(userId, sensor, dataSource);
     }
 
