@@ -16,6 +16,7 @@
 
 package ro.cs.tao.orchestration;
 
+import ro.cs.tao.component.ComponentLink;
 import ro.cs.tao.component.Variable;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.workflow.WorkflowDescriptor;
@@ -26,7 +27,6 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 /**
  * Default implementation for choosing the next task to be executed from a job.
@@ -115,13 +115,53 @@ public class DefaultJobTaskSelector implements TaskSelector<ExecutionJob> {
             System.out.println("No children for current node " + workflowNode.getComponentId());
             return null;
         }
-        return childNodes.stream().filter(n -> {
+        List<ExecutionTask> nextOnes = new ArrayList<>();
+        for (WorkflowNodeDescriptor node : childNodes) {
+            ExecutionTask t = this.taskByNodeProvider.apply(job.getId(), node.getId());
+            if (t.getExecutionStatus() != ExecutionStatus.QUEUED_ACTIVE && t.getExecutionStatus() != ExecutionStatus.RUNNING) {
+                List<ComponentLink> links = node.getIncomingLinks();
+                boolean canProceed = true;
+                for (ComponentLink link : links) {
+                    ExecutionTask taskByNode = this.taskByNodeProvider.apply(job.getId(), link.getSourceNodeId());
+                    if (taskByNode != null && taskByNode.getExecutionStatus() == ExecutionStatus.DONE) {
+                        List<Variable> outputParameterValues = taskByNode.getOutputParameterValues();
+                        for (Variable out : outputParameterValues) {
+                            if (out.getKey().equals(link.getInput().getName()) && out.getValue() == null) {
+                                canProceed = false;
+                                break;
+                            }
+                        }
+                    } else {
+                        canProceed = false;
+                        break;
+                    }
+                }
+                if (canProceed) {
+                    ExecutionTask next = this.taskByNodeProvider.apply(job.getId(), node.getId());
+                    if (!(task instanceof DataSourceExecutionTask && next instanceof ExecutionGroup)) {
+                        node.getIncomingLinks().forEach(link -> {
+                            ExecutionTask parent = this.taskByNodeProvider.apply(job.getId(), link.getSourceNodeId());
+                            Variable out = parent.getOutputParameterValues()
+                                    .stream().filter(o -> o.getKey().equals(link.getInput().getName()))
+                                    .findFirst().get();
+                            if (out.getValue() != null) {
+                                next.setInputParameterValue(link.getOutput().getName(), out.getValue());
+                            }
+                        });
+                    }
+                    nextOnes.add(next);
+                }
+            }
+        }
+        return nextOnes;
+        /*return childNodes.stream().filter(n -> {
                                               ExecutionTask t = this.taskByNodeProvider.apply(job.getId(), n.getId());
                                               return t.getExecutionStatus() != ExecutionStatus.QUEUED_ACTIVE &&
                                                       t.getExecutionStatus() != ExecutionStatus.RUNNING &&
             n.getIncomingLinks().stream().allMatch(link -> {
                   ExecutionTask taskByNode = this.taskByNodeProvider.apply(job.getId(), link.getSourceNodeId());
-                  return taskByNode != null && taskByNode.getExecutionStatus() == ExecutionStatus.DONE;
+                  return link.getSourceNodeId() == task.getWorkflowNodeId() || (taskByNode != null && taskByNode.getExecutionStatus() == ExecutionStatus.DONE
+                          *//*&& taskByNode.getOutputParameterValues().stream().allMatch(o -> o.getValue() != null)*//*);
                 });
             })
             .map(n -> {
@@ -139,6 +179,6 @@ public class DefaultJobTaskSelector implements TaskSelector<ExecutionJob> {
                 }
                 return next;
             })
-            .collect(Collectors.toList());
+            .collect(Collectors.toList());*/
     }
 }
