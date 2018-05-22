@@ -26,8 +26,9 @@ public interface QueryService extends CRUDService<Query> {
 
     Query getQueryById(long id);
     Query getQuery(String userId, String sensor, String dataSource, long workflowNodeId);
-    List<Query> getQuery(String userId, String sensor, String dataSource);
+    List<Query> getQueries(String userId, String sensor, String dataSource);
     List<Query> getQueries(String userId);
+    List<Query> getQueries(String userId, long nodeid);
     List<Query> getQueriesBySensor(String userId, String sensor);
     List<Query> getQueriesByDataSource(String userId, String dataSource);
     Page<Query> getAllQueries(Pageable pageable);
