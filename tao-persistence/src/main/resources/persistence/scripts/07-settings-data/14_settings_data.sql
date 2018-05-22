@@ -212,7 +212,7 @@ VALUES ('admin', '$2a$08$wU07f1hSVkTO7321eVi0quF8If7d23Ly66dkwGAOzbb6xrZFeo69m',
 
 -- System Account (password "system")
 INSERT INTO tao."user" (username, password, email, last_name, first_name, quota, organization, created, active)
-VALUES ('System Account', '$2a$12$mXbtZweZmmFjcKIA0/NmF.uxcHik8rTKGdkkyrelKiZWe3bhgR.aC', 'kraftek@c-s.ro', 'Cosmin', 'Cara', 1000, 'CSRO', CURRENT_TIMESTAMP, true);
+VALUES ('SystemAccount', '$2a$12$mXbtZweZmmFjcKIA0/NmF.uxcHik8rTKGdkkyrelKiZWe3bhgR.aC', 'kraftek@c-s.ro', 'Cosmin', 'Cara', 1000, 'CSRO', CURRENT_TIMESTAMP, true);
 
 -- operator user (password "operator")
 INSERT INTO tao."user" (username, password, email, last_name, first_name, quota, organization, created, active)
