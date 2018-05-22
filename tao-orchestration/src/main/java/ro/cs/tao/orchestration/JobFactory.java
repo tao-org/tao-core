@@ -162,10 +162,10 @@ public class JobFactory {
                     taskInputs.putAll(inputs);
                 }
                 component = persistenceManager.getDataSourceInstance(workflowNode.getComponentId());
-                Query query = persistenceManager.getQuery(SessionStore.currentContext().getPrincipal().getName(),
-                                                          ((DataSourceComponent) component).getSensorName(),
-                                                          ((DataSourceComponent) component).getDataSourceName(),
-                                                          workflowNode.getId());
+                Query query = persistenceManager.getQueries(SessionStore.currentContext().getPrincipal().getName(),
+                                                            ((DataSourceComponent) component).getSensorName(),
+                                                            ((DataSourceComponent) component).getDataSourceName(),
+                                                            workflowNode.getId());
                 if (query == null) {
                     query = new Query();
                     query.setUser(SessionStore.currentContext().getPrincipal().getName());
