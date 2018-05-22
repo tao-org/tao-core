@@ -20,6 +20,7 @@ import ro.cs.tao.execution.model.ExecutionJob;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.persistence.PersistenceManager;
+import ro.cs.tao.security.SessionStore;
 
 import java.util.HashSet;
 import java.util.List;
@@ -111,6 +112,7 @@ public abstract class JobCommand {
                 throw new ExecutionException(String.format("Job %s doesn't contain any tasks", job.getId()));
             }
             ExecutionTask firstTask = tasks.get(0);
+            firstTask.setContext(SessionStore.currentContext());
             TaskCommand.START.applyTo(firstTask);
         }
     }
