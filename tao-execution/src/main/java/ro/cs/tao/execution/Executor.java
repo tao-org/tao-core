@@ -147,8 +147,9 @@ public abstract class Executor<T extends ExecutionTask> extends Identifiable {
                 if (!this.contextMap.containsKey(task.getId())) {
                     this.contextMap.put(task.getId(), task.getContext());
                 }
-                task.setExecutionStatus(status);
-                persistenceManager.updateExecutionTask(task);
+                //task.setExecutionStatus(status);
+                //persistenceManager.updateExecutionTask(task);
+                persistenceManager.updateTaskStatus(task, status);
             } catch (PersistenceException e) {
                 logger.severe(e.getMessage());
             }
