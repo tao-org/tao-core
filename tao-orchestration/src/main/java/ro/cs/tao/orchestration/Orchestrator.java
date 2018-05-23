@@ -358,7 +358,7 @@ public class Orchestrator extends Notifiable {
                         //}
                     }
                 } else {
-                    logger.finest("No more child tasks to execute after the current task");
+                    logger.fine("No more child tasks to execute after the current task");
                     ExecutionJob job = task.getJob();
                     if (job.getTasks().stream()
                             .anyMatch(t -> t.getExecutionStatus() == ExecutionStatus.RUNNING ||
@@ -381,6 +381,28 @@ public class Orchestrator extends Notifiable {
                     String msg = String.format("Job [%s] for workflow [%s]" +
                                                        (job.getExecutionStatus() == ExecutionStatus.DONE ?
                                                                " completed in %ss" :
+                                                               " failed after %ss"),
+                                               job.getId(), workflow.getName(), time != null ? time.getSeconds() : "<unknown>");
+                    Messaging.send(currentContext.getPrincipal(), Topics.INFORMATION, this, msg);
+                    executors.get(currentContext).shutdown();
+                    executors.remove(currentContext);
+                }
+            } else {
+                ExecutionJob job = task.getJob();
+                ExecutionStatus jobStatus = job.getExecutionStatus();
+                if (jobStatus == ExecutionStatus.CANCELLED || jobStatus == ExecutionStatus.FAILED) {
+
+                    if (job.getEndTime() == null) {
+                        job.setEndTime(LocalDateTime.now());
+                    }
+                    WorkflowDescriptor workflow = persistenceManager.getWorkflowDescriptor(job.getWorkflowId());
+                    Duration time = null;
+                    if (job.getStartTime() != null && job.getEndTime() != null) {
+                        time = Duration.between(job.getStartTime(), job.getEndTime());
+                    }
+                    String msg = String.format("Job [%s] for workflow [%s]" +
+                                                       (jobStatus == ExecutionStatus.CANCELLED ?
+                                                               " cancelled after %ss" :
                                                                " failed after %ss"),
                                                job.getId(), workflow.getName(), time != null ? time.getSeconds() : "<unknown>");
                     Messaging.send(currentContext.getPrincipal(), Topics.INFORMATION, this, msg);
@@ -523,8 +545,14 @@ public class Orchestrator extends Notifiable {
             switch (taskStatus) {
                 case SUSPENDED:
                 case CANCELLED:
-                case FAILED:
                     List<ExecutionTask> tasks = job.getTasks();
+                    bulkSetStatus(tasks, taskStatus);
+                    job.setExecutionStatus(taskStatus);
+                    job = persistenceManager.updateExecutionJob(job);
+                    break;
+                case FAILED:
+                    // TODO: based on defined behaviour
+                    tasks = job.getTasks();
                     bulkSetStatus(tasks, taskStatus);
                     job.setExecutionStatus(taskStatus);
                     job = persistenceManager.updateExecutionJob(job);
@@ -569,7 +597,8 @@ public class Orchestrator extends Notifiable {
         tasks.forEach(t -> {
             t.setExecutionStatus(status);
             try {
-                persistenceManager.updateExecutionTask(t);
+                //persistenceManager.updateExecutionTask(t);
+                persistenceManager.updateTaskStatus(t, status);
             } catch (PersistenceException e) {
                 logger.severe(e.getMessage());
             }

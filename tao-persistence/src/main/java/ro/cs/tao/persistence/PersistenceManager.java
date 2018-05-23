@@ -348,6 +348,10 @@ public class PersistenceManager implements MessagePersister {
         return executionManager.updateExecutionTask(task);
     }
 
+    public ExecutionTask updateTaskStatus(ExecutionTask task, ExecutionStatus newStatus) throws PersistenceException {
+        return executionManager.updateTaskStatus(task, newStatus);
+    }
+
     public ExecutionTask saveExecutionGroupSubTask(ExecutionTask task, ExecutionGroup taskGroup) throws PersistenceException {
         return executionManager.saveExecutionGroupSubTask(task, taskGroup);
     }
