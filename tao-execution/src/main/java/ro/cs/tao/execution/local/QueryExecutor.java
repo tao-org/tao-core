@@ -66,6 +66,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> {
             DataQuery dataQuery = Query.toDataQuery(query);
             final Future<List<EOProduct>> future = backgroundWorker.submit(dataQuery::execute);
             List<EOProduct> results = future.get();
+            ExecutionStatus status;
             if (results != null && results.size() > 0) {
                 String sensorName = dataSourceComponent.getSensorName().toLowerCase().replace(" ", "-");
                 final List<EOProduct> products = dataSourceComponent.doFetch(results,
@@ -78,8 +79,12 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> {
                     task.setOutputParameterValue(dataSourceComponent.getTargets().get(0).getName(),
                                                  serializeResults(results));
                 }
+                status = ExecutionStatus.DONE;
+            } else {
+                logger.info("Query returned no results");
+                status = ExecutionStatus.CANCELLED;
             }
-            markTaskFinished(task, ExecutionStatus.DONE);
+            markTaskFinished(task, status);
         } catch (Exception ex) {
             logger.severe(ex.getMessage());
             markTaskFinished(task, ExecutionStatus.FAILED);

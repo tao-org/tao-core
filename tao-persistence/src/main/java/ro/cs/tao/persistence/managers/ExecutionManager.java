@@ -118,6 +118,13 @@ public class ExecutionManager {
     //endregion
 
     //region ExecutionTask
+    public ExecutionTask updateTaskStatus(ExecutionTask task, ExecutionStatus newStatus) throws PersistenceException {
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+        jdbcTemplate.update("UPDATE tao.task SET execution_status_id = ? WHERE id = ?",
+                            newStatus.value(), task.getId());
+        return getTaskById(task.getId());
+    }
+
     @Transactional
     public List<ExecutionTask> getRunningTasks() {
         // retrieve tasks and filter them

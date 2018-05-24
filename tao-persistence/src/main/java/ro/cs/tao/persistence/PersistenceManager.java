@@ -194,7 +194,7 @@ public class PersistenceManager implements MessagePersister {
         return componentManager.getGroupComponents();
     }
 
-    public GroupComponent getGroupComponentById(String id) throws PersistenceException {
+    public GroupComponent getGroupComponentById(String id) {
         return componentManager.getGroupComponentById(id);
     }
 
@@ -346,6 +346,10 @@ public class PersistenceManager implements MessagePersister {
 
     public ExecutionTask updateExecutionTask(ExecutionTask task) throws PersistenceException {
         return executionManager.updateExecutionTask(task);
+    }
+
+    public ExecutionTask updateTaskStatus(ExecutionTask task, ExecutionStatus newStatus) throws PersistenceException {
+        return executionManager.updateTaskStatus(task, newStatus);
     }
 
     public ExecutionTask saveExecutionGroupSubTask(ExecutionTask task, ExecutionGroup taskGroup) throws PersistenceException {

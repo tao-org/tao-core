@@ -18,6 +18,7 @@ package ro.cs.tao.orchestration;
 
 import ro.cs.tao.component.Variable;
 import ro.cs.tao.execution.model.*;
+import ro.cs.tao.orchestration.util.TaskUtilities;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
 
@@ -26,13 +27,16 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
+/**
+ * Default implementation for choosing the next task to be executed from a group of tasks.
+ *
+ * @author Cosmin Cara
+ */
 public class DefaultGroupTaskSelector implements TaskSelector<ExecutionGroup> {
 
     private Function<Long, WorkflowNodeDescriptor> workflowProvider;
     private BiFunction<Long, Long, ExecutionTask> taskByNodeProvider;
-    private BiFunction<Long, String, List<WorkflowNodeDescriptor>> nodesByComponentProvider;
     private final Logger logger = Logger.getLogger(DefaultJobTaskSelector.class.getName());
 
     public DefaultGroupTaskSelector() { }
@@ -45,11 +49,6 @@ public class DefaultGroupTaskSelector implements TaskSelector<ExecutionGroup> {
     @Override
     public void setTaskByNodeProvider(BiFunction<Long, Long, ExecutionTask> taskByNodeProvider) {
         this.taskByNodeProvider = taskByNodeProvider;
-    }
-
-    @Override
-    public void setNodesByComponentProvider(BiFunction<Long, String, List<WorkflowNodeDescriptor>> nodesByComponentProvider) {
-        this.nodesByComponentProvider = nodesByComponentProvider;
     }
 
     @Override
@@ -134,30 +133,15 @@ public class DefaultGroupTaskSelector implements TaskSelector<ExecutionGroup> {
             return null;
         }
 
-        return childNodes.stream().filter(n ->{
-            ExecutionTask t = this.taskByNodeProvider.apply(group.getId(), n.getId());
-            return t.getExecutionStatus() != ExecutionStatus.QUEUED_ACTIVE &&
-                    t.getExecutionStatus() != ExecutionStatus.RUNNING &&
-                    n.getIncomingLinks().stream().allMatch(link -> {
-                        ExecutionTask taskByNode = this.taskByNodeProvider.apply(group.getId(), link.getSourceNodeId());
-                        return taskByNode != null && taskByNode.getExecutionStatus() == ExecutionStatus.DONE;
-                    });
-        })
-            .map(n -> {
-                ExecutionTask next = this.taskByNodeProvider.apply(group.getId(), n.getId());
-                if (!(task instanceof DataSourceExecutionTask && next instanceof ExecutionGroup)) {
-                    n.getIncomingLinks().forEach(link -> {
-                        ExecutionTask parent = this.taskByNodeProvider.apply(group.getId(), link.getSourceNodeId());
-                        Variable out = parent.getOutputParameterValues()
-                                .stream().filter(o -> o.getKey().equals(link.getInput().getName()))
-                                .findFirst().get();
-                        if (out.getValue() != null) {
-                            next.setInputParameterValue(link.getOutput().getName(), out.getValue());
-                        }
-                    });
+        List<ExecutionTask> nextOnes = new ArrayList<>();
+        for (WorkflowNodeDescriptor node : childNodes) {
+            ExecutionTask t = this.taskByNodeProvider.apply(group.getId(), node.getId());
+            if (t.getExecutionStatus() != ExecutionStatus.QUEUED_ACTIVE && t.getExecutionStatus() != ExecutionStatus.RUNNING) {
+                if (TaskUtilities.haveParentsCompleted(t)) {
+                    nextOnes.add(TaskUtilities.transferParentOutputs(t));
                 }
-                return next;
-            })
-            .collect(Collectors.toList());
+            }
+        }
+        return nextOnes;
     }
 }
