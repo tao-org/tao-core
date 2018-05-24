@@ -227,6 +227,7 @@ public class Orchestrator extends Notifiable {
     }
 
     private void processMessage(Message message, SessionContext currentContext) {
+        ExecutionTask task = null;
         try {
             String taskId = message.getItem(Message.SOURCE_KEY);
             ExecutionStatus status = ExecutionStatus.getEnumConstantByValue(Integer.parseInt(message.getItem(Message.PAYLOAD_KEY)));
@@ -234,7 +235,7 @@ public class Orchestrator extends Notifiable {
                 throw new PersistenceException(String.format("Invalid status received: %s",
                                                              message.getItem(Message.PAYLOAD_KEY)));
             }
-            ExecutionTask task = persistenceManager.getTaskById(Long.parseLong(taskId));
+            task = persistenceManager.getTaskById(Long.parseLong(taskId));
             task.setContext(currentContext);
             logger.finest(String.format("Status change for task %s [node %s]: %s",
                                       taskId,
@@ -411,7 +412,16 @@ public class Orchestrator extends Notifiable {
                 }
             }
         } catch (PersistenceException e) {
-            logger.severe(e.getMessage());
+            logger.severe(String.format("Abnormal termination: %s", e.getMessage()));
+            if (task != null) {
+                ExecutionJob job = task.getJob();
+                job.setExecutionStatus(ExecutionStatus.FAILED);
+                try {
+                    persistenceManager.updateExecutionJob(job);
+                } catch (PersistenceException e1) {
+                    logger.severe(String.format("Abnormal termination: %s", e1.getMessage()));
+                }
+            }
         }
     }
 

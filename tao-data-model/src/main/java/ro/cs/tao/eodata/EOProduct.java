@@ -22,6 +22,7 @@ import ro.cs.tao.eodata.enums.SensorType;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.Objects;
 
 /**
  * @author Cosmin Cara
@@ -90,5 +91,19 @@ public class EOProduct extends EOData implements Serializable {
 
     public void setApproximateSize(long approximateSize) {
         this.approximateSize = approximateSize;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        EOProduct product = (EOProduct) o;
+        return Objects.equals(getId(), product.getId()) &&
+                Objects.equals(getName(), product.getName());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getId(), getName());
     }
 }
