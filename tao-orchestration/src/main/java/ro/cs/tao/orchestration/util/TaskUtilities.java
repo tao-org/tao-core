@@ -155,9 +155,11 @@ public class TaskUtilities {
                 ExecutionTask parentTask = persistenceManager.getTaskByJobAndNode(job.getId(), link.getSourceNodeId());
                 Variable out = parentTask.getOutputParameterValues()
                         .stream().filter(o -> o.getKey().equals(link.getInput().getName()))
-                        .findFirst().get();
-                if (out.getValue() != null) {
+                        .findFirst().orElse(null);
+                if (out != null && out.getValue() != null) {
                     toTask.setInputParameterValue(link.getOutput().getName(), out.getValue());
+                } else {
+                    logger.severe(String.format("No output was set for task %s", parentTask.getId()));
                 }
             }
         }
