@@ -199,6 +199,7 @@ public class JobFactory {
                 }
                 query.setLimit(val);
                 query.setValues(taskInputs);
+                query.setUserId(job.getUserName());
                 persistenceManager.saveQuery(query);
                 ((DataSourceExecutionTask) task).setComponent((DataSourceComponent) component);
                 task.setInputParameterValue("query", query.toString());

@@ -110,7 +110,6 @@ public class Orchestrator extends Notifiable {
                                           .orElse(new DefaultGroupTaskSelector());
         this.groupTaskSelector.setWorkflowProvider(workflowProvider);
         this.groupTaskSelector.setTaskByNodeProvider(taskByGroupNodeProvider);
-        this.groupTaskSelector.setNodesByComponentProvider(nodesByComponentProvider);
         this.jobTaskSelector = selectors.stream()
                                         .filter(s -> ExecutionJob.class.equals(s.getTaskContainerClass()))
                                         .map(s -> (TaskSelector<ExecutionJob>)s)
@@ -118,7 +117,6 @@ public class Orchestrator extends Notifiable {
                                         .orElse(new DefaultJobTaskSelector());
         this.jobTaskSelector.setWorkflowProvider(workflowProvider);
         this.jobTaskSelector.setTaskByNodeProvider(taskByJobNodeProvider);
-        this.jobTaskSelector.setNodesByComponentProvider(nodesByComponentProvider);
         this.jobFactory = new JobFactory(this.persistenceManager);
         Set<MetadataInspector> services = ServiceRegistryManager.getInstance()
                                                                 .getServiceRegistry(MetadataInspector.class)
@@ -229,6 +227,7 @@ public class Orchestrator extends Notifiable {
     }
 
     private void processMessage(Message message, SessionContext currentContext) {
+        ExecutionTask task = null;
         try {
             String taskId = message.getItem(Message.SOURCE_KEY);
             ExecutionStatus status = ExecutionStatus.getEnumConstantByValue(Integer.parseInt(message.getItem(Message.PAYLOAD_KEY)));
@@ -236,7 +235,7 @@ public class Orchestrator extends Notifiable {
                 throw new PersistenceException(String.format("Invalid status received: %s",
                                                              message.getItem(Message.PAYLOAD_KEY)));
             }
-            ExecutionTask task = persistenceManager.getTaskById(Long.parseLong(taskId));
+            task = persistenceManager.getTaskById(Long.parseLong(taskId));
             task.setContext(currentContext);
             logger.finest(String.format("Status change for task %s [node %s]: %s",
                                       taskId,
@@ -360,7 +359,7 @@ public class Orchestrator extends Notifiable {
                         //}
                     }
                 } else {
-                    logger.finest("No more child tasks to execute after the current task");
+                    logger.fine("No more child tasks to execute after the current task");
                     ExecutionJob job = task.getJob();
                     if (job.getTasks().stream()
                             .anyMatch(t -> t.getExecutionStatus() == ExecutionStatus.RUNNING ||
@@ -389,9 +388,40 @@ public class Orchestrator extends Notifiable {
                     executors.get(currentContext).shutdown();
                     executors.remove(currentContext);
                 }
+            } else {
+                ExecutionJob job = task.getJob();
+                ExecutionStatus jobStatus = job.getExecutionStatus();
+                if (jobStatus == ExecutionStatus.CANCELLED || jobStatus == ExecutionStatus.FAILED) {
+
+                    if (job.getEndTime() == null) {
+                        job.setEndTime(LocalDateTime.now());
+                    }
+                    WorkflowDescriptor workflow = persistenceManager.getWorkflowDescriptor(job.getWorkflowId());
+                    Duration time = null;
+                    if (job.getStartTime() != null && job.getEndTime() != null) {
+                        time = Duration.between(job.getStartTime(), job.getEndTime());
+                    }
+                    String msg = String.format("Job [%s] for workflow [%s]" +
+                                                       (jobStatus == ExecutionStatus.CANCELLED ?
+                                                               " cancelled after %ss" :
+                                                               " failed after %ss"),
+                                               job.getId(), workflow.getName(), time != null ? time.getSeconds() : "<unknown>");
+                    Messaging.send(currentContext.getPrincipal(), Topics.INFORMATION, this, msg);
+                    executors.get(currentContext).shutdown();
+                    executors.remove(currentContext);
+                }
             }
         } catch (PersistenceException e) {
-            logger.severe(e.getMessage());
+            logger.severe(String.format("Abnormal termination: %s", e.getMessage()));
+            if (task != null) {
+                ExecutionJob job = task.getJob();
+                job.setExecutionStatus(ExecutionStatus.FAILED);
+                try {
+                    persistenceManager.updateExecutionJob(job);
+                } catch (PersistenceException e1) {
+                    logger.severe(String.format("Abnormal termination: %s", e1.getMessage()));
+                }
+            }
         }
     }
 
@@ -525,8 +555,14 @@ public class Orchestrator extends Notifiable {
             switch (taskStatus) {
                 case SUSPENDED:
                 case CANCELLED:
-                case FAILED:
                     List<ExecutionTask> tasks = job.getTasks();
+                    bulkSetStatus(tasks, taskStatus);
+                    job.setExecutionStatus(taskStatus);
+                    job = persistenceManager.updateExecutionJob(job);
+                    break;
+                case FAILED:
+                    // TODO: based on defined behaviour
+                    tasks = job.getTasks();
                     bulkSetStatus(tasks, taskStatus);
                     job.setExecutionStatus(taskStatus);
                     job = persistenceManager.updateExecutionJob(job);
@@ -571,7 +607,8 @@ public class Orchestrator extends Notifiable {
         tasks.forEach(t -> {
             t.setExecutionStatus(status);
             try {
-                persistenceManager.updateExecutionTask(t);
+                //persistenceManager.updateExecutionTask(t);
+                persistenceManager.updateTaskStatus(t, status);
             } catch (PersistenceException e) {
                 logger.severe(e.getMessage());
             }

@@ -18,17 +18,15 @@ package ro.cs.tao.orchestration.util;
 
 import org.springframework.stereotype.Component;
 import ro.cs.tao.component.ComponentLink;
-import ro.cs.tao.component.GroupComponent;
-import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.TaoComponent;
-import ro.cs.tao.datasource.DataSourceComponent;
+import ro.cs.tao.component.Variable;
 import ro.cs.tao.execution.model.DataSourceExecutionTask;
-import ro.cs.tao.execution.model.ExecutionGroup;
+import ro.cs.tao.execution.model.ExecutionJob;
+import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
-import ro.cs.tao.execution.model.ProcessingExecutionTask;
 import ro.cs.tao.persistence.PersistenceManager;
-import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
+import ro.cs.tao.workflow.enums.TransitionBehavior;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -44,6 +42,7 @@ import java.util.logging.Logger;
 public class TaskUtilities {
 
     private static PersistenceManager persistenceManager;
+    private static final Logger logger = Logger.getLogger(TaskUtilities.class.getName());
 
     /**
      * Setter for the persistence manager
@@ -56,55 +55,27 @@ public class TaskUtilities {
      * @param task  The execution task
      */
     public static TaoComponent getComponentFor(ExecutionTask task) {
+        if (persistenceManager == null) {
+            return null;
+        }
         TaoComponent component = null;
         if (task != null) {
-            try {
-                if (task instanceof ProcessingExecutionTask) {
-                    component = getComponentFor((ProcessingExecutionTask) task);
-                } else if (task instanceof ExecutionGroup) {
-                    component = getComponentFor((ExecutionGroup) task);
-                } else if (task instanceof DataSourceExecutionTask) {
-                    component = getComponentFor((DataSourceExecutionTask) task);
-                }
-            } catch (PersistenceException pex) {
-                Logger.getLogger(TaskUtilities.class.getName()).severe(pex.getMessage());
+            WorkflowNodeDescriptor node = persistenceManager.getWorkflowNodeById(task.getWorkflowNodeId());
+            switch (node.getComponentType()) {
+                case PROCESSING:
+                    component = persistenceManager.getProcessingComponentById(node.getComponentId());
+                    break;
+                case DATASOURCE:
+                    component = persistenceManager.getDataSourceInstance(node.getComponentId());
+                    break;
+                case GROUP:
+                    component = persistenceManager.getGroupComponentById(node.getComponentId());
+                    break;
             }
         }
         return component;
     }
-    /**
-     * Returns the processing component associated with a processing execution task
-     * @param task      The task
-     */
-    public static ProcessingComponent getComponentFor(ProcessingExecutionTask task) throws PersistenceException {
-        if (persistenceManager == null) {
-            return null;
-        }
-        WorkflowNodeDescriptor node = persistenceManager.getWorkflowNodeById(task.getWorkflowNodeId());
-        return persistenceManager.getProcessingComponentById(node.getComponentId());
-    }
-    /**
-     * Returns the group component associated with an execution group
-     * @param task      The group task
-     */
-    public static GroupComponent getComponentFor(ExecutionGroup task) throws PersistenceException {
-        if (persistenceManager == null) {
-            return null;
-        }
-        WorkflowNodeDescriptor node = persistenceManager.getWorkflowNodeById(task.getWorkflowNodeId());
-        return persistenceManager.getGroupComponentById(node.getComponentId());
-    }
-    /**
-     * Returns the data source component associated with a data source execution task
-     * @param task      The task
-     */
-    public static DataSourceComponent getComponentFor(DataSourceExecutionTask task) {
-        if (persistenceManager == null) {
-            return null;
-        }
-        WorkflowNodeDescriptor node = persistenceManager.getWorkflowNodeById(task.getWorkflowNodeId());
-        return persistenceManager.getDataSourceInstance(node.getComponentId());
-    }
+
     /**
      * Returns the cardinality of inputs for a given execution task
      * @param task      The task
@@ -139,5 +110,59 @@ public class TaskUtilities {
                     .forEach(l -> connections.put(l.getOutput().getName(), l.getInput().getName()));
         }
         return connections;
+    }
+
+    /**
+     * Checks if all the parent tasks of this task have completed.
+     *
+     * @param task  The task whose parents are to be checked
+     */
+    public static boolean haveParentsCompleted(ExecutionTask task) {
+        boolean completed = true;
+        WorkflowNodeDescriptor node = persistenceManager.getWorkflowNodeById(task.getWorkflowNodeId());
+        ExecutionJob job = task.getJob();
+        List<ComponentLink> links = node.getIncomingLinks();
+        if (links != null) {
+            for (ComponentLink link : links) {
+                ExecutionTask parentTask = persistenceManager.getTaskByJobAndNode(job.getId(), link.getSourceNodeId());
+                WorkflowNodeDescriptor parentNode = persistenceManager.getWorkflowNodeById(link.getSourceNodeId());
+                completed = (parentNode.getBehavior() == TransitionBehavior.FAIL_ON_ERROR ?
+                        parentTask.getExecutionStatus() == ExecutionStatus.DONE :
+                        parentTask.getExecutionStatus() == ExecutionStatus.DONE || parentTask.getExecutionStatus() == ExecutionStatus.FAILED);
+                if (!completed) {
+                    logger.info(String.format("Task %s appears not to be completed", parentTask.getId()));
+                    break;
+                }
+            }
+        }
+        return completed;
+    }
+
+    /**
+     * Transfers the parent outputs to this task, following the defined links on the task.
+     *
+     * @param toTask    The current task.
+     */
+    public static ExecutionTask transferParentOutputs(ExecutionTask toTask) {
+        if (toTask instanceof DataSourceExecutionTask) {
+            throw new IllegalArgumentException("DataSourceExecutionTask cannot accept incoming links");
+        }
+        WorkflowNodeDescriptor node = persistenceManager.getWorkflowNodeById(toTask.getWorkflowNodeId());
+        ExecutionJob job = toTask.getJob();
+        List<ComponentLink> links = node.getIncomingLinks();
+        if (links != null) {
+            for (ComponentLink link : links) {
+                ExecutionTask parentTask = persistenceManager.getTaskByJobAndNode(job.getId(), link.getSourceNodeId());
+                Variable out = parentTask.getOutputParameterValues()
+                        .stream().filter(o -> o.getKey().equals(link.getInput().getName()))
+                        .findFirst().orElse(null);
+                if (out != null && out.getValue() != null) {
+                    toTask.setInputParameterValue(link.getOutput().getName(), out.getValue());
+                } else {
+                    logger.severe(String.format("No output was set for task %s", parentTask.getId()));
+                }
+            }
+        }
+        return toTask;
     }
 }
