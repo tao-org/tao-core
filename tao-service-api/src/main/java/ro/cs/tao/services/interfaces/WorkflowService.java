@@ -16,9 +16,9 @@
 package ro.cs.tao.services.interfaces;
 
 import ro.cs.tao.component.ComponentLink;
-import ro.cs.tao.execution.model.ExecutionJob;
-import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.services.model.execution.ExecutionJobInfo;
+import ro.cs.tao.services.model.execution.ExecutionTaskInfo;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
@@ -104,7 +104,7 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor> {
      * @return  The list of workflow executions
      * @throws PersistenceException
      */
-    List<ExecutionJob> getWorkflowExecutions(long workflowId) throws PersistenceException;
+    List<ExecutionJobInfo> getWorkflowExecutions(long workflowId) throws PersistenceException;
 
     /**
      * Retrieve workflow nodes execution details from a workflow execution
@@ -112,5 +112,5 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor> {
      * @return The list of nodes executions within a workflow execution
      * @throws PersistenceException
      */
-    List<ExecutionTask> getWorkflowExecutionTasks(long executionJobId) throws PersistenceException;
+    List<ExecutionTaskInfo> getWorkflowExecutionTasks(long executionJobId) throws PersistenceException;
 }
