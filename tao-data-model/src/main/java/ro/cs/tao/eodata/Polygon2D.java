@@ -19,6 +19,7 @@ import java.awt.geom.Path2D;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -134,13 +135,21 @@ public class Polygon2D {
      * Produces a WKT representation of this polygon.
      */
     public String toWKT() {
+        return toWKT(4);
+    }
+
+    public String toWKT(int precision) {
         StringBuilder buffer = new StringBuilder();
         buffer.append("POLYGON((");
         PathIterator pathIterator = polygon.getPathIterator(null);
+        String format = ".";
+        int i = 0;
+        while (i++ < precision) format += "#";
+        DecimalFormat dfFormat = new DecimalFormat(format);
         while (!pathIterator.isDone()) {
             double[] segment = new double[6];
             pathIterator.currentSegment(segment);
-            buffer.append(String.valueOf(segment[0])).append(" ").append(String.valueOf(segment[1])).append(",");
+            buffer.append(dfFormat.format(segment[0])).append(" ").append(dfFormat.format(segment[1])).append(",");
             pathIterator.next();
         }
         buffer.setLength(buffer.length() - 1);
