@@ -10,7 +10,7 @@ CREATE TABLE tao.query
 	sensor_name varchar(512) NOT NULL,
 	data_source varchar(512) NOT NULL,
 	username varchar NULL,
-	password bytea NULL,
+	password varchar NULL,
 	page_size integer NULL,
 	page_number integer NULL,
 	_limit integer NULL,  -- reserved word
