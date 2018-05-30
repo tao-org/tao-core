@@ -871,7 +871,7 @@
                 <column name="username" nullable="true" column-definition="character varying(512) NULL"/>
             </basic>
             <basic name="password">
-                <column name="password" nullable="true" column-definition="bytea NULL"/>
+                <column name="password" nullable="true" column-definition="varchar NULL"/>
             </basic>
             <basic name="pageSize">
                 <column name="page_size" nullable="true" column-definition="integer NULL"/>
