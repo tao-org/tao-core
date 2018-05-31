@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.topology;
 
+import org.apache.commons.lang3.StringUtils;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.messaging.Messaging;
@@ -33,10 +34,7 @@ import ro.cs.tao.utils.executors.*;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -217,7 +215,7 @@ public class TopologyManager implements ITopologyManager {
            add("images");
            add("--format");
             //noinspection ConstantConditions
-            add(Platform.ID.win != Platform.getCurrentPlatform().getId() ? "'table " : "'" + "{{.ID}}\\t{{.Tag}}\\t{{.Repository}}'");
+            add(Platform.ID.win != Platform.getCurrentPlatform().getId() ? "table" : "'" + "{{.ID}}\\t{{.Tag}}\\t{{.Repository}}'");
         }};
         ExecutionUnit job = new ExecutionUnit(ExecutorType.PROCESS,
                                               masterNodeInfo.getHostName(),
@@ -238,22 +236,29 @@ public class TopologyManager implements ITopologyManager {
         }
         if (executor.getReturnCode() == 0) {
             for (int i = 0; i < lines.size(); i++) {
-                String[] tokens = lines.get(i).split("\t");
-                if (!"IMAGE_ID".equals(tokens[0])) {
-                    Container container = new Container();
-                    container.setId(tokens[0]);
-                    container.setName(tokens[2].contains("/") ?
-                                              tokens[2].substring(tokens[2].indexOf("/") + 1) :
-                                              tokens[2]);
-                    container.setTag(tokens[1]);
-                    containers.add(container);
-                    try {
-                        final Container existing = getPersistenceManager().getContainerById(tokens[0]);
-                        if (existing == null) {
-                            getPersistenceManager().saveContainer(container);
+                String[] tokens = lines.get(i).split(" |\t");
+                List<String> list = Arrays.asList(tokens).stream().filter(item-> !item.trim().isEmpty()).
+                        map(item -> StringUtils.strip(item, "'")).
+                        collect(Collectors.toList());
+                if (list.size() > 2){
+                    // we might have two formats for the response
+                    String containerId = list.get(0);
+                    if (!"IMAGE_ID".equals(containerId) && !"REPOSITORY".equals(containerId)) {
+                        Container container = new Container();
+                        container.setId(containerId);
+                        container.setName(containerId.contains("/") ?
+                                containerId.substring(containerId.indexOf("/") + 1) :
+                                containerId);
+                        container.setTag(list.get(1));
+                        containers.add(container);
+                        try {
+                            final Container existing = getPersistenceManager().getContainerById(containerId);
+                            if (existing == null) {
+                                getPersistenceManager().saveContainer(container);
+                            }
+                        } catch (PersistenceException e) {
+                            logger.warning(e.getMessage());
                         }
-                    } catch (PersistenceException e) {
-                        logger.warning(e.getMessage());
                     }
                 }
             }
