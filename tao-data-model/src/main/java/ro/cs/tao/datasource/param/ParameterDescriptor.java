@@ -23,6 +23,7 @@ public class ParameterDescriptor {
     private final Class type;
     private final Object defaultValue;
     private final boolean required;
+    private Object[] valueSet;
 
     public ParameterDescriptor(String name, Class type) {
         this(name, type, null, false);
@@ -43,17 +44,21 @@ public class ParameterDescriptor {
         this.required = required;
     }
 
-    public String getName() {
-        return name;
+    public ParameterDescriptor(String name, Class type, Object defaultValue, boolean required, Object... valueSet) {
+        this.name = name;
+        this.type = type;
+        this.defaultValue = defaultValue;
+        this.required = required;
+        this.valueSet = valueSet;
     }
 
-    public Class getType() {
-        return type;
-    }
+    public String getName() { return name; }
 
-    public boolean isRequired() {
-        return required;
-    }
+    public Class getType() { return type; }
+
+    public boolean isRequired() { return required; }
 
     public Object getDefaultValue() { return defaultValue; }
+
+    public Object[] getValueSet() { return valueSet; }
 }
