@@ -475,9 +475,6 @@
             <basic name="maxRetries">
                 <column name="max_retries" nullable="true" column-definition="integer NULL DEFAULT 3"/>
             </basic>
-            <basic name="retryInterval">
-                <column name="retry_interval" nullable="true" column-definition="integer NULL DEFAULT 1440"/>
-            </basic>
 
             <transient name="userName"/>
             <transient name="password"/>
