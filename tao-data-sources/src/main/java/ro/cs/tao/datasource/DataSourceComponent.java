@@ -73,8 +73,6 @@ public class DataSourceComponent extends TaoComponent {
     @XmlTransient
     private int maxRetries;
     @XmlTransient
-    private int retryInterval;
-    @XmlTransient
     private List<Parameter> overriddenParameters;
 
     @XmlTransient
@@ -214,8 +212,6 @@ public class DataSourceComponent extends TaoComponent {
     public void setFetchMode(FetchMode mode) { this.fetchMode = mode; }
     public void setMaxRetries(int maxRetries) { this.maxRetries = maxRetries; }
     public int getMaxRetries() { return maxRetries; }
-    public void setRetryInterval(int retryInterval) { this.retryInterval = retryInterval; }
-    public int getRetryInterval() { return retryInterval; }
 
     public void setProductStatusListener(ProductStatusListener listener) {
         this.productStatusListener = listener;
@@ -273,7 +269,6 @@ public class DataSourceComponent extends TaoComponent {
             // add the attribute for max retries such that if the maxRetries is exceeded
             // to be set, on failure, to aborted state
             product.addAttribute("maxRetries", String.valueOf(this.maxRetries));
-            product.addAttribute("retryInterval", String.valueOf(this.retryInterval));
             try {
                 if (!cancelled) {
                     if (this.productStatusListener != null) {
