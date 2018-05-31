@@ -449,6 +449,7 @@ CREATE TABLE tao.data_source_component
 	fetch_mode_id integer NOT NULL,
 --	overridden_parameters json NULL,
 	max_retries integer NULL DEFAULT 3,
+    retry_interval integer NULL DEFAULT 1440,
 	created timestamp NULL DEFAULT now(),
     modified timestamp NULL
 );
