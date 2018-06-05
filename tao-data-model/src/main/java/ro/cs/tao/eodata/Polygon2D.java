@@ -21,6 +21,7 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,10 +32,10 @@ import java.util.regex.Pattern;
  * @author Cosmin Cara
  */
 public class Polygon2D {
-    private static final Pattern polyPattern = Pattern.compile("POLYGON\\s?\\(\\(.*\\)\\)");
+    //private static final Pattern polyPattern = Pattern.compile("POLYGON\\s?\\(\\(.*\\)\\)");
     private static final Pattern coordPattern = Pattern.compile("((?:-?(?:\\d+(?:\\.\\d+)?)) (?:-?(?:\\d+(?:\\.\\d+)?)))");
 
-    private Path2D.Double polygon;
+    private Path2D.Double[] polygons;
     private int numPoints;
 
     /**
@@ -47,26 +48,34 @@ public class Polygon2D {
      */
     public static Polygon2D fromWKT(String wkt) {
         Polygon2D polygon = new Polygon2D();
-        Matcher matcher = polyPattern.matcher(wkt);
-        if (matcher.matches()) {
-            String polyText = matcher.toMatchResult().group(0);
-            if (polyText != null) {
-                Matcher coordMatcher = coordPattern.matcher(polyText);
-                while (coordMatcher.find()) {
-                    //for (int i = 0; i < coordMatcher.groupCount(); i++) {
+        //Matcher matcher = polyPattern.matcher(wkt);
+        if (wkt.startsWith("MULTIPOLYGON")) {
+            wkt = wkt.replace("MULTIPOLYGON(", "");
+            wkt = wkt.substring(0, wkt.length() - 1);
+            String[] texts = wkt.split("\\)\\),\\(\\(");
+            for (int i = 0; i < texts.length; i++) {
+                String polyText = texts[i];
+                if (polyText != null) {
+                    Matcher coordMatcher = coordPattern.matcher(polyText);
+                    while (coordMatcher.find()) {
                         String[] coords = coordMatcher.group().split(" ");
-                        polygon.append(Double.parseDouble(coords[0]), Double.parseDouble(coords[1]));
-                    //}
+                        polygon.append(i, Double.parseDouble(coords[0]), Double.parseDouble(coords[1]));
+                    }
                 }
+            }
+        } else if (wkt.startsWith("POLYGON")){
+            String polyText = wkt.replace("POLYGON", "");
+            Matcher coordMatcher = coordPattern.matcher(polyText);
+            while (coordMatcher.find()) {
+                String[] coords = coordMatcher.group().split(" ");
+                polygon.append(Double.parseDouble(coords[0]), Double.parseDouble(coords[1]));
             }
         } else {
             // maybe we have only a list of coordinates, without being wrapped in a POLYGON((..))
             Matcher coordMatcher = coordPattern.matcher(wkt);
             while (coordMatcher.find()) {
-                //for (int i = 0; i < coordMatcher.groupCount(); i++) {
                 String[] coords = coordMatcher.group().split(" ");
                 polygon.append(Double.parseDouble(coords[0]), Double.parseDouble(coords[1]));
-                //}
             }
         }
         return polygon;
@@ -83,11 +92,31 @@ public class Polygon2D {
      * @param y     The y coordinate
      */
     public void append(double x, double y) {
-        if (polygon == null) {
-            polygon = new Path2D.Double();
-            polygon.moveTo(x, y);
+        if (polygons == null) {
+            polygons = new Path2D.Double[1];
+            polygons[0] = new Path2D.Double();
+            polygons[0].moveTo(x, y);
         } else {
-            polygon.lineTo(x, y);
+            polygons[0].lineTo(x, y);
+        }
+        numPoints++;
+    }
+
+    public void append(int index, double x, double y) {
+        if (polygons == null) {
+            polygons = new Path2D.Double[index + 1];
+            polygons[index] = new Path2D.Double();
+            polygons[index].moveTo(x, y);
+        } else {
+            if (index >= polygons.length) {
+                polygons = Arrays.copyOf(polygons, index + 1);
+            }
+            if (polygons[index] == null) {
+                polygons[index] = new Path2D.Double();
+                polygons[index].moveTo(x, y);
+            } else {
+                polygons[index].lineTo(x, y);
+            }
         }
         numPoints++;
     }
@@ -118,14 +147,16 @@ public class Polygon2D {
 
     public List<Point2D> getPoints() {
         List<Point2D> points = null;
-        if (polygon != null) {
+        if (polygons != null) {
             points = new ArrayList<>();
-            PathIterator pathIterator = polygon.getPathIterator(null);
-            while (!pathIterator.isDone()) {
-                double[] segment = new double[6];
-                pathIterator.currentSegment(segment);
-                points.add(new Point2D.Double(segment[0], segment[1]));
-                pathIterator.next();
+            for (Path2D.Double polygon : polygons) {
+                PathIterator pathIterator = polygon.getPathIterator(null);
+                while (!pathIterator.isDone()) {
+                    double[] segment = new double[6];
+                    pathIterator.currentSegment(segment);
+                    points.add(new Point2D.Double(segment[0], segment[1]));
+                    pathIterator.next();
+                }
             }
         }
         return points;
@@ -140,29 +171,49 @@ public class Polygon2D {
 
     public String toWKT(int precision) {
         StringBuilder buffer = new StringBuilder();
-        buffer.append("POLYGON((");
-        PathIterator pathIterator = polygon.getPathIterator(null);
-        String format = ".";
-        int i = 0;
-        while (i++ < precision) format += "#";
-        DecimalFormat dfFormat = new DecimalFormat(format);
-        while (!pathIterator.isDone()) {
-            double[] segment = new double[6];
-            pathIterator.currentSegment(segment);
-            buffer.append(dfFormat.format(segment[0])).append(" ").append(dfFormat.format(segment[1])).append(",");
-            pathIterator.next();
+        boolean isMulti = this.polygons.length > 1;
+        buffer.append(isMulti ? "MULTIPOLYGON(((" : "POLYGON((");
+        for (int j = 0; j < this.polygons.length; j++) {
+            if (j > 0) {
+                buffer.append("((");
+            }
+            PathIterator pathIterator = polygons[j].getPathIterator(null);
+            String format = ".";
+            int i = 0;
+            while (i++ < precision) format += "#";
+            DecimalFormat dfFormat = new DecimalFormat(format);
+            while (!pathIterator.isDone()) {
+                double[] segment = new double[6];
+                pathIterator.currentSegment(segment);
+                buffer.append(dfFormat.format(segment[0])).append(" ").append(dfFormat.format(segment[1])).append(",");
+                pathIterator.next();
+            }
+            buffer.setLength(buffer.length() - 1);
+            buffer.append("))");
+            if (isMulti) {
+                buffer.append(",");
+            }
         }
-        buffer.setLength(buffer.length() - 1);
-        buffer.append("))");
+        if (isMulti) {
+            buffer.setLength(buffer.length() - 1);
+            buffer.append(")");
+        }
         return buffer.toString();
     }
 
     public Rectangle2D getBounds2D() {
-        return polygon.getBounds2D();
+        if (polygons != null) {
+            Rectangle2D rectangle = polygons[0].getBounds2D();
+            for (int i = 1; i < polygons.length; i++) {
+                rectangle = rectangle.createUnion(polygons[i].getBounds2D());
+            }
+            return rectangle;
+        }
+        return null;
     }
 
     public String toWKTBounds() {
-        Rectangle2D bounds2D = polygon.getBounds2D();
+        Rectangle2D bounds2D = getBounds2D();
         return  "POLYGON((" +
                 bounds2D.getMinX() + " " + bounds2D.getMinY() + "," +
                 bounds2D.getMaxX() + " " + bounds2D.getMinY() + "," +
