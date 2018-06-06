@@ -139,11 +139,11 @@ public class NetUtils {
         return connection;
     }
 
-    public static CloseableHttpResponse openConnection(HttpMethod method, String url, Credentials credentials) {
+    public static CloseableHttpResponse openConnection(HttpMethod method, String url, Credentials credentials) throws IOException {
         return openConnection(method, url, credentials, null);
     }
 
-    public static CloseableHttpResponse openConnection(HttpMethod method, String url, Credentials credentials, List<NameValuePair> parameters) {
+    public static CloseableHttpResponse openConnection(HttpMethod method, String url, Credentials credentials, List<NameValuePair> parameters) throws IOException {
         CloseableHttpResponse response = null;
         try {
             URI uri = new URI(url);
@@ -200,6 +200,7 @@ public class NetUtils {
             Logger.getRootLogger().debug("HTTP %s %s returned %s", method.toString(), url, response.getStatusLine().getStatusCode());
         } catch (URISyntaxException | IOException e) {
             Logger.getRootLogger().debug("Could not create connection to %s : %s", url, e.getMessage());
+            throw new IOException(e);
         }
         return response;
     }
