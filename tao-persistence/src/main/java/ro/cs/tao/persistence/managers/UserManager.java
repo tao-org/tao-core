@@ -90,5 +90,16 @@ public class UserManager {
         return user.getOrganization();
     }
 
+    @Transactional
+    public boolean checkLoginCredentials(String userName, String password){
+        final User user = userRepository.findByUsername(userName);
+        if (user == null)
+        {
+            // no such user exists
+            return false;
+        }
+        return user.getPassword().equals(password);
+    }
+
     //endregion
 }

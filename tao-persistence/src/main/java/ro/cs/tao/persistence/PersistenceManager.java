@@ -423,5 +423,9 @@ public class PersistenceManager implements MessagePersister {
         return userManager.getUserOrganization(userName);
     }
 
+    public boolean checkLoginCredentials(String userName, String password) {
+        return userManager.checkLoginCredentials(userName, password);
+    }
+
 // endregion
 }

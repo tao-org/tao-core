@@ -206,17 +206,17 @@ VALUES ('operator');
 
 
 -- Users
--- admin user (password "admin")
+-- admin user (password "admin" - "$2a$08$wU07f1hSVkTO7321eVi0quF8If7d23Ly66dkwGAOzbb6xrZFeo69m")
 INSERT INTO tao."user" (username, password, email, last_name, first_name, quota, organization, created, active)
-VALUES ('admin', '$2a$08$wU07f1hSVkTO7321eVi0quF8If7d23Ly66dkwGAOzbb6xrZFeo69m', 'kraftek@c-s.ro', 'Cosmin', 'Cara', 1000, 'CSRO', CURRENT_TIMESTAMP, true);
+VALUES ('admin', 'admin', 'kraftek@c-s.ro', 'Cosmin', 'Cara', 1000, 'CSRO', CURRENT_TIMESTAMP, true);
 
--- System Account (password "system")
+-- System Account (password "system" - "$2a$12$mXbtZweZmmFjcKIA0/NmF.uxcHik8rTKGdkkyrelKiZWe3bhgR.aC")
 INSERT INTO tao."user" (username, password, email, last_name, first_name, quota, organization, created, active)
-VALUES ('SystemAccount', '$2a$12$mXbtZweZmmFjcKIA0/NmF.uxcHik8rTKGdkkyrelKiZWe3bhgR.aC', 'kraftek@c-s.ro', 'Cosmin', 'Cara', 1000, 'CSRO', CURRENT_TIMESTAMP, true);
+VALUES ('SystemAccount', 'system', 'kraftek@c-s.ro', 'Cosmin', 'Cara', 1000, 'CSRO', CURRENT_TIMESTAMP, true);
 
--- operator user (password "operator")
+-- operator user (password "operator" - "$2a$09$AvkhkrwRHqQIdEfslOLB8ulHzKo89AUIuuANhHmrE5RxzGUsMFGs.")
 INSERT INTO tao."user" (username, password, email, last_name, first_name, quota, organization, created, active)
-VALUES ('operator', '$2a$09$AvkhkrwRHqQIdEfslOLB8ulHzKo89AUIuuANhHmrE5RxzGUsMFGs.', 'kraftek@c-s.ro', 'Cosmin', 'Cara', 1000, 'CSRO', CURRENT_TIMESTAMP, true);
+VALUES ('operator', 'operator', 'kraftek@c-s.ro', 'Cosmin', 'Cara', 1000, 'CSRO', CURRENT_TIMESTAMP, true);
 
 
 -- User groups
