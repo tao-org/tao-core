@@ -51,6 +51,11 @@ public abstract class SessionContext {
     public Path getWorkspace() { return workspaceRoot.resolve(principal.getName()); }
 
     /**
+     * Returns the location where the current principal can upload files
+     */
+    public Path getUploadPath() { return getWorkspace().resolve("files"); }
+
+    /**
      * Returns the value of the requested preference key
      *
      * @param key   The preference key
