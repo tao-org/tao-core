@@ -15,6 +15,8 @@
  */
 package ro.cs.tao.datasource.param;
 
+import java.util.Objects;
+
 /**
  * @author Cosmin Cara
  */
@@ -61,4 +63,19 @@ public class ParameterDescriptor {
     public Object getDefaultValue() { return defaultValue; }
 
     public Object[] getValueSet() { return valueSet; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ParameterDescriptor that = (ParameterDescriptor) o;
+        return Objects.equals(name, that.name) &&
+                Objects.equals(type, that.type);
+    }
+
+    @Override
+    public int hashCode() {
+
+        return Objects.hash(name, type);
+    }
 }
