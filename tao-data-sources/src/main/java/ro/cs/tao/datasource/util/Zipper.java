@@ -30,6 +30,7 @@ import java.util.Iterator;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 /**
@@ -65,6 +66,38 @@ public class Zipper {
         if (deleteFolder) {
             delete(sourceFolder);
         }
+    }
+
+    public static Path decompressZip(Path source, Path target, boolean deleteAfterDecompress) {
+        if (source == null || !source.toString().endsWith(".zip")) {
+            return null;
+        }
+        try {
+            Files.createDirectories(target);
+            byte buffer[] = new byte[65536];
+            try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(source))) {
+                ZipEntry entry = zis.getNextEntry();
+                while (entry != null) {
+                    Path newFile = target.resolve(entry.getName());
+                    if (entry.isDirectory()) {
+                        Files.createDirectories(newFile);
+                    } else {
+                        OutputStream outputStream = Files.newOutputStream(newFile);
+                        int read;
+                        while ((read = zis.read(buffer)) > 0) {
+                            outputStream.write(buffer, 0, read);
+                        }
+                        outputStream.close();
+                    }
+                    entry = zis.getNextEntry();
+                }
+                zis.closeEntry();
+            }
+        } catch (IOException e) {
+            Logger.getLogger(Zipper.class.getSimpleName()).warning(e.getMessage());
+            return null;
+        }
+        return target;
     }
 
     public static Path decompressTarGz(Path source, Path target, boolean deleteAfterDecompress) {

@@ -23,12 +23,11 @@ import org.xml.sax.helpers.DefaultHandler;
 import ro.cs.tao.datasource.param.ParameterDescriptor;
 import ro.cs.tao.datasource.remote.result.ParseException;
 
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
-import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class DescriptionParser {
@@ -42,7 +41,7 @@ public class DescriptionParser {
             SAXParser parser = factory.newSAXParser();
             parser.parse(inputSource, handler);
             result = handler.getResult();
-        } catch (ParserConfigurationException | IOException | SAXException e) {
+        } catch (Exception e) {
             throw new ParseException(e.getMessage());
         }
         return result;
@@ -74,11 +73,22 @@ public class DescriptionParser {
                     this.currentEndpoint = new OpenSearchEndpoint();
                     this.currentEndpoint.setType(attributes.getValue("type"));
                     String url = attributes.getValue("template");
-                    url = url.substring(0, url.indexOf("?"));
+                    if (url.indexOf("?") > 0) {
+                        url = url.substring(0, url.indexOf("?"));
+                    }
                     this.currentEndpoint.setUrl(url);
                     break;
                 case "Parameter":
                     this.currentParameter = attributes.getValue("name");
+                    Class paramClass = attributes.getValue("pattern") != null && attributes.getValue("pattern").equals("[0-9]+") ?
+                            Integer.class :
+                            attributes.getValue("minInclusive") != null || attributes.getValue("minExclusive") != null ?
+                                    Float.class :
+                                    attributes.getValue("value") != null &&
+                                            (attributes.getValue("value").startsWith("{time:") ||
+                                                    attributes.getValue("value").startsWith("{date:")) ?
+                                            Date.class : String.class;
+                    this.currentEndpoint.addParameter(new ParameterDescriptor(this.currentParameter, paramClass, null, false));
                     break;
                 case "Option":
                     if (this.currentOptions == null) {

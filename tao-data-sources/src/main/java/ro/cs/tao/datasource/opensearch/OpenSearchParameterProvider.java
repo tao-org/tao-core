@@ -71,11 +71,13 @@ public abstract class OpenSearchParameterProvider implements ParameterProvider {
             ParameterDescriptor sensorParam = parameters.get(sensorParameterName());
             this.parameters = new HashMap<>();
             Object[] values = sensorParam.getValueSet();
+            Map<String, ParameterDescriptor> params = new HashMap<>(parameters);
+            params.remove(sensorParameterName());
             if (values != null) {
                 this.sensors = new String[values.length];
                 for (int i = 0; i < this.sensors.length; i++) {
                     this.sensors[i] = String.valueOf(values[i]);
-                    this.parameters.put(this.sensors[i], parameters);
+                    this.parameters.put(this.sensors[i], params);
                 }
             }
         }
