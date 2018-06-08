@@ -113,7 +113,7 @@ public class Query {
                     final Class type = descriptor.getType();
                     String value = entry.getValue();
                     if (value != null && value.startsWith("[") & value.endsWith("]")) {
-                        String[] elements = value.substring(0, value.length() - 1).split(",");
+                        String[] elements = value.substring(1, value.length() - 1).split(",");
                         if (Date.class.isAssignableFrom(type)) {
                             query.addParameter(query.createParameter(paramName,
                                                                      type,
