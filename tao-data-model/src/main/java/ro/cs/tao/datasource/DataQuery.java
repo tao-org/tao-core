@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
  */
 @XmlTransient
 public abstract class DataQuery extends Identifiable {
-    protected static final int DEFAULT_LIMIT = 20;
+    protected static final int DEFAULT_LIMIT = 100;
     protected DataSource source;
     protected String sensorName;
     protected String queryText;
