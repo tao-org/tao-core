@@ -48,28 +48,33 @@ public class Polygon2D {
      */
     public static Polygon2D fromWKT(String wkt) {
         Polygon2D polygon = new Polygon2D();
-        //Matcher matcher = polyPattern.matcher(wkt);
         if (wkt.startsWith("MULTIPOLYGON")) {
-            wkt = wkt.replace("MULTIPOLYGON(", "");
-            wkt = wkt.substring(0, wkt.length() - 1);
-            String[] texts = wkt.split("\\)\\),\\(\\(");
+            wkt = wkt.substring(13, wkt.length() - 1);
+            String[] texts = wkt.split("\\),\\(");
             for (int i = 0; i < texts.length; i++) {
-                String polyText = texts[i];
-                if (polyText != null) {
-                    Matcher coordMatcher = coordPattern.matcher(polyText);
-                    while (coordMatcher.find()) {
-                        String[] coords = coordMatcher.group().split(" ");
-                        polygon.append(i, Double.parseDouble(coords[0]), Double.parseDouble(coords[1]));
-                    }
+                String polyText = texts[i].replace("(", "").replace(")", "");
+                Matcher coordMatcher = coordPattern.matcher(polyText);
+                while (coordMatcher.find()) {
+                    String[] coords = coordMatcher.group().split(" ");
+                    polygon.append(i, Double.parseDouble(coords[0]), Double.parseDouble(coords[1]));
                 }
             }
         } else if (wkt.startsWith("POLYGON")){
-            String polyText = wkt.replace("POLYGON", "");
-            Matcher coordMatcher = coordPattern.matcher(polyText);
+            wkt = wkt.substring(7);//wkt.replace("POLYGON", "");
+            String[] texts = wkt.split("\\),\\(");
+            for (int i = 0; i < texts.length; i++) {
+                String polyText = texts[i].replace("(", "").replace(")", "");
+                Matcher coordMatcher = coordPattern.matcher(polyText);
+                while (coordMatcher.find()) {
+                    String[] coords = coordMatcher.group().split(" ");
+                    polygon.append(i, Double.parseDouble(coords[0]), Double.parseDouble(coords[1]));
+                }
+            }
+            /*Matcher coordMatcher = coordPattern.matcher(polyText);
             while (coordMatcher.find()) {
                 String[] coords = coordMatcher.group().split(" ");
                 polygon.append(Double.parseDouble(coords[0]), Double.parseDouble(coords[1]));
-            }
+            }*/
         } else {
             // maybe we have only a list of coordinates, without being wrapped in a POLYGON((..))
             Matcher coordMatcher = coordPattern.matcher(wkt);
@@ -92,31 +97,21 @@ public class Polygon2D {
      * @param y     The y coordinate
      */
     public void append(double x, double y) {
-        if (polygons == null) {
-            polygons = new Path2D.Double[1];
-            polygons[0] = new Path2D.Double();
-            polygons[0].moveTo(x, y);
-        } else {
-            polygons[0].lineTo(x, y);
-        }
-        numPoints++;
+        append(0, x, y);
     }
 
     public void append(int index, double x, double y) {
         if (polygons == null) {
             polygons = new Path2D.Double[index + 1];
+        }
+        if (index >= polygons.length) {
+            polygons = Arrays.copyOf(polygons, index + 1);
+        }
+        if (polygons[index] == null) {
             polygons[index] = new Path2D.Double();
             polygons[index].moveTo(x, y);
         } else {
-            if (index >= polygons.length) {
-                polygons = Arrays.copyOf(polygons, index + 1);
-            }
-            if (polygons[index] == null) {
-                polygons[index] = new Path2D.Double();
-                polygons[index].moveTo(x, y);
-            } else {
-                polygons[index].lineTo(x, y);
-            }
+            polygons[index].lineTo(x, y);
         }
         numPoints++;
     }
