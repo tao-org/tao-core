@@ -21,6 +21,7 @@ import ro.cs.tao.eodata.EOProduct;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Properties;
 
 /**
  * Implementation strategy for how to retrieve the products.
@@ -28,6 +29,11 @@ import java.nio.file.Path;
  * @author Cosmin Cara
  */
 public interface ProductFetchStrategy {
+
+    /**
+     * Allows callers to add externally defined properties for this fetch strategy
+     */
+    void addProperties(Properties properties);
 
     void setCredentials(UsernamePasswordCredentials credentials);
 

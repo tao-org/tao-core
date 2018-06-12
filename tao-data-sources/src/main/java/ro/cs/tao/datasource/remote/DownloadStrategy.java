@@ -56,6 +56,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
     private static final String PROGRESS_KEY = "progress.enabled";
     private static final String PROGRESS_INTERVAL = "progress.interval";
+    private static final String USE_PADDING_KEY = "usePadding";
     private final boolean progressEnabled;
     protected Properties props;
     protected String destination;
@@ -111,6 +112,15 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
             }
             text.append(")(?:.+)");
             tileIdPattern = Pattern.compile(text.toString());
+        }
+    }
+
+    @Override
+    public void addProperties(Properties properties) {
+        if (properties != null) {
+            if (this.props != null) {
+                this.props.putAll(properties);
+            }
         }
     }
 
@@ -284,11 +294,12 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         // Products are assumed to be organized by year (yyyy), month (MM) and day (dd)
         // If it's not the case, this method should be overridden
         String date = dateFormat.format(product.getAcquisitionDate());
-        Path productPath = root.resolve(date.substring(0, 4));
+        boolean usePadding = Boolean.parseBoolean(this.props.getProperty(USE_PADDING_KEY, "true"));
+        Path productPath = root.resolve(usePadding ? date.substring(0, 4) : String.valueOf(Integer.parseInt(date.substring(0, 4))));
         if (Files.exists(productPath)) {
-            productPath = productPath.resolve(date.substring(4, 6));
+            productPath = productPath.resolve(usePadding ? date.substring(4, 6) : String.valueOf(Integer.parseInt(date.substring(4, 6))));
             productPath = Files.exists(productPath) ?
-                    productPath.resolve(date.substring(6, 8)) :
+                    productPath.resolve(usePadding ? date.substring(6, 8) : String.valueOf(Integer.parseInt(date.substring(6, 8)))) :
                     null;
             if (productPath != null && Files.exists(productPath)) {
                 Path fullProductPath = productPath.resolve(product.getName());

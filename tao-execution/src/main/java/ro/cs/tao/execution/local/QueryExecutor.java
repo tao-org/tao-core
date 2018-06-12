@@ -72,7 +72,8 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> {
                 final List<EOProduct> products = dataSourceComponent.doFetch(results,
                         null,
                         ConfigurationManager.getInstance().getValue("product.location"),
-                        ConfigurationManager.getInstance().getValue(String.format("local.%s.path", sensorName)));
+                        ConfigurationManager.getInstance().getValue(String.format("local.%s.path", sensorName)),
+                                                                             null);
                 if (products != null) {
                     backgroundWorker.submit(() -> persistResults(results));
                     task.getComponent().setTargetCardinality(results.size());
