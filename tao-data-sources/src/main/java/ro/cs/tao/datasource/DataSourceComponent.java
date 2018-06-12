@@ -40,10 +40,7 @@ import java.net.URISyntaxException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
@@ -252,10 +249,10 @@ public class DataSourceComponent extends TaoComponent {
     }
 
     public List<EOProduct> doFetch(List<EOProduct> products, Set<String> tiles, String destinationPath) {
-        return doFetch(products, tiles, destinationPath, null);
+        return doFetch(products, tiles, destinationPath, null, null);
     }
 
-    public List<EOProduct> doFetch(List<EOProduct> products, Set<String> tiles, String destinationPath, String localRootPath) {
+    public List<EOProduct> doFetch(List<EOProduct> products, Set<String> tiles, String destinationPath, String localRootPath, Properties additionalProperties) {
         DataSourceManager dsManager = DataSourceManager.getInstance();
         DataSource dataSource = this.dataSourceName != null ?
                 dsManager.get(this.sensorName, this.dataSourceName) : dsManager.get(this.sensorName);
@@ -295,6 +292,9 @@ public class DataSourceComponent extends TaoComponent {
                         currentFetcher = downloadStrategy;
                     } else {
                         currentFetcher = templateFetcher.clone();
+                    }
+                    if (additionalProperties != null) {
+                        currentFetcher.addProperties(additionalProperties);
                     }
                     if (tiles != null && !tryApplyFilter(currentFetcher, tiles)) {
                         logger.warning(String.format("Fetch strategy for data source [%s] doesn't support tiles filter",
