@@ -51,7 +51,7 @@ public class NetUtils {
     private static HttpHost apacheHttpProxy;
     private static CredentialsProvider proxyCredentials;
     private static int timeout = 30000;
-    private static Map<String, CloseableHttpClient> httpClients = new HashMap<>();
+    private static final Map<String, CloseableHttpClient> httpClients = new HashMap<>();
 
     public static String getAuthToken() {
         return authToken;
@@ -152,26 +152,28 @@ public class NetUtils {
                 String[] tokens = domain.split("\\.");
                 domain = tokens[tokens.length - 2] + "." + tokens[tokens.length - 1];
             }
-            if (!httpClients.containsKey(domain)) {
-                //ThreadLocal<CloseableHttpClient> local = new ThreadLocal<>();
-                CredentialsProvider credentialsProvider = null;
-                if (credentials != null) {
-                    credentialsProvider = proxyCredentials != null ? proxyCredentials : new BasicCredentialsProvider();
-                    credentialsProvider.setCredentials(new AuthScope(uri.getHost(), uri.getPort()), credentials);
+            synchronized (httpClients) {
+                if (!httpClients.containsKey(domain)) {
+                    //ThreadLocal<CloseableHttpClient> local = new ThreadLocal<>();
+                    CredentialsProvider credentialsProvider = null;
+                    if (credentials != null) {
+                        credentialsProvider = proxyCredentials != null ? proxyCredentials : new BasicCredentialsProvider();
+                        credentialsProvider.setCredentials(new AuthScope(uri.getHost(), uri.getPort()), credentials);
+                    }
+                    CloseableHttpClient httpClient;
+                    if (credentialsProvider != null) {
+                        httpClient = HttpClients.custom().setDefaultCookieStore(new BasicCookieStore())
+                                .setDefaultCredentialsProvider(credentialsProvider)
+                                .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
+                                .build();
+                    } else {
+                        httpClient = HttpClients.custom()
+                                .setDefaultCookieStore(new BasicCookieStore())
+                                .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
+                                .build();
+                    }
+                    httpClients.put(domain, httpClient);
                 }
-                CloseableHttpClient httpClient;
-                if (credentialsProvider != null) {
-                    httpClient = HttpClients.custom().setDefaultCookieStore(new BasicCookieStore())
-                            .setDefaultCredentialsProvider(credentialsProvider)
-                            .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
-                            .build();
-                } else {
-                    httpClient = HttpClients.custom()
-                            .setDefaultCookieStore(new BasicCookieStore())
-                            .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
-                            .build();
-                }
-                httpClients.put(domain, httpClient);
             }
             CloseableHttpClient httpClient = httpClients.get(domain);
             HttpRequestBase requestBase;
