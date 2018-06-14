@@ -25,13 +25,12 @@ import ro.cs.tao.services.model.auth.AuthInfo;
 public interface AuthenticationService {
 
     /**
-     * Login user using username and password as credentials
+     * Login user using its username
      *
      * @param username      Username credential
-     * @param password      Password credential
      * @return              authentication result
      */
-    AuthInfo login(String username, String password);
+    AuthInfo login(String username);
 
     /**
      * Logout user
