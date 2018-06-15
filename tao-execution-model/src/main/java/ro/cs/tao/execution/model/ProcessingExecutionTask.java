@@ -176,6 +176,8 @@ public class ProcessingExecutionTask extends ExecutionTask {
         Map<String, String> variables = new HashMap<>();
         variables.put(SystemVariable.USER_WORKSPACE.key(), getContext().getWorkspace().toString());
         variables.put(SystemVariable.SHARED_WORKSPACE.key(), SystemVariable.SHARED_WORKSPACE.value());
+        variables.put(SystemVariable.USER_FILES.key(), getContext().getWorkspace().resolve("files").toString());
+        variables.put(SystemVariable.SHARED_FILES.key(), SystemVariable.SHARED_FILES.value());
         return this.component.buildExecutionCommand(inputParams, variables);
     }
 

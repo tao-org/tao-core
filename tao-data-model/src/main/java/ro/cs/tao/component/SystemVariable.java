@@ -26,12 +26,16 @@ import java.util.Set;
 public abstract class SystemVariable {
     public static final SystemVariable USER_WORKSPACE = new UserWorkspace();
     public static final SystemVariable SHARED_WORKSPACE = new SharedWorkspace();
+    public static final SystemVariable USER_FILES = new UserFiles();
+    public static final SystemVariable SHARED_FILES = new SharedFiles();
     private static final Set<SystemVariable> allVariables;
 
     static {
         allVariables = new HashSet<>();
         allVariables.add(USER_WORKSPACE);
         allVariables.add(SHARED_WORKSPACE);
+        allVariables.add(USER_FILES);
+        allVariables.add(SHARED_FILES);
     }
 
     public static Set<SystemVariable> all() { return allVariables; }
@@ -62,6 +66,28 @@ public abstract class SystemVariable {
         public String value() {
             return Paths.get(ConfigurationManager.getInstance().getValue("product.location"))
                         .resolve("public").toString();
+        }
+    }
+
+    private static final class UserFiles extends SystemVariable {
+
+        @Override
+        public String key() { return "$USER_FILES"; }
+
+        @Override
+        public String value() {
+            return Paths.get(USER_WORKSPACE.value()).resolve("files").toString();
+        }
+    }
+
+    private static final class SharedFiles extends SystemVariable {
+
+        @Override
+        public String key() { return "$PUBLIC_FILES"; }
+
+        @Override
+        public String value() {
+            return Paths.get(SHARED_WORKSPACE.value()).resolve("files").toString();
         }
     }
 }
