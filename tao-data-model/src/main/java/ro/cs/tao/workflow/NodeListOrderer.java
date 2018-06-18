@@ -24,43 +24,48 @@ import java.util.stream.Collectors;
 
 public interface NodeListOrderer {
 
-    default WorkflowNodeDescriptor findRoot(List<WorkflowNodeDescriptor> nodes) {
-        WorkflowNodeDescriptor root = null;
+    default List<WorkflowNodeDescriptor> findRoots(List<WorkflowNodeDescriptor> nodes) {
+        List<WorkflowNodeDescriptor> roots = null;
         if (nodes != null) {
             List<WorkflowNodeGroupDescriptor> groups =
                     nodes.stream()
                             .filter(n -> n instanceof WorkflowNodeGroupDescriptor)
                             .map(n -> (WorkflowNodeGroupDescriptor)n).collect(Collectors.toList());
-            root = nodes.stream()
+            roots = nodes.stream()
                     .filter(n -> (n.getIncomingLinks() == null || n.getIncomingLinks().isEmpty()) &&
                                   groups.stream().noneMatch(g -> g.getNodes() != null && g.getNodes().contains(n)))
-                    .findFirst().orElse(null);
-            if (root == null) {
-                throw new IllegalArgumentException("The collection must have exactly one node without incoming links");
+                    .collect(Collectors.toList());
+            if (roots == null || roots.size() == 0) {
+                throw new IllegalArgumentException("The collection must have at least one root node (without incoming links)");
             }
         }
-        return root;
+        return roots;
     }
 
     default List<WorkflowNodeDescriptor> orderNodes(List<WorkflowNodeDescriptor> nodes) {
         if (nodes != null) {
             List<WorkflowNodeDescriptor> newList = new ArrayList<>();
-            WorkflowNodeDescriptor root = findRoot(nodes);
-            int level = 1;
-            root.setLevel(level);
-            newList.add(root);
+            List<WorkflowNodeDescriptor> roots = findRoots(nodes);
             Stack<WorkflowNodeDescriptor> stack = new Stack<>();
-            stack.push(root);
-            while (!stack.isEmpty()) {
-                List<WorkflowNodeDescriptor> children = findChildren(nodes, stack.pop());
-                if (children != null && children.size() > 0) {
-                    children.forEach(n -> {
-                        if (!newList.contains(n)) {
-                            newList.add(n);
-                            stack.push(n);
-                        }
-                    });
+            for (WorkflowNodeDescriptor root : roots) {
+                int level = 1;
+                root.setLevel(level);
+                newList.add(root);
+            }
+            for (WorkflowNodeDescriptor root : roots) {
+                stack.push(root);
+                while (!stack.isEmpty()) {
+                    List<WorkflowNodeDescriptor> children = findChildren(nodes, stack.pop());
+                    if (children != null && children.size() > 0) {
+                        children.forEach(n -> {
+                            if (!newList.contains(n)) {
+                                newList.add(n);
+                                stack.push(n);
+                            }
+                        });
+                    }
                 }
+                stack.clear();
             }
             nodes.clear();
             nodes.addAll(newList);

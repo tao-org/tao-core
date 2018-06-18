@@ -89,6 +89,10 @@ public class ExecutionJob implements StatusChangeListener {
                     .collect(Collectors.toList());
     }
 
+    public List<ExecutionTask> rootTasks() {
+        return orderTasks().stream().filter(t -> t.getLevel() == 1).collect(Collectors.toList());
+    }
+
     public void addTask(ExecutionTask task) {
         if (this.tasks == null) {
             this.tasks = new ArrayList<>();

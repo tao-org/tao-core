@@ -111,9 +111,12 @@ public abstract class JobCommand {
             if (tasks == null || tasks.size() == 0) {
                 throw new ExecutionException(String.format("Job %s doesn't contain any tasks", job.getId()));
             }
-            ExecutionTask firstTask = tasks.get(0);
-            firstTask.setContext(SessionStore.currentContext());
-            TaskCommand.START.applyTo(firstTask);
+            //ExecutionTask firstTask = tasks.get(0);
+            List<ExecutionTask> rootTasks = job.rootTasks();
+            for (ExecutionTask firstTask : rootTasks) {
+                firstTask.setContext(SessionStore.currentContext());
+                TaskCommand.START.applyTo(firstTask);
+            }
         }
     }
 
