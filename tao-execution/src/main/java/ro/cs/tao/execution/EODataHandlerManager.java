@@ -57,6 +57,9 @@ public class EODataHandlerManager {
         }
         if (list.size() > 0) {
             T element = list.get(0);
+            if (element == null) {
+                throw new DataHandlingException("Unhandled null value");
+            }
             if (!(element instanceof EOProduct) && !(element instanceof VectorData)) {
                 throw new DataHandlingException(String.format("Unhandled type: %s", element.getClass().getName()));
             }

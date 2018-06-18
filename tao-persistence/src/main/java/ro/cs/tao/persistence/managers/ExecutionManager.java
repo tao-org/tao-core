@@ -30,8 +30,10 @@ import ro.cs.tao.persistence.repository.ExecutionJobRepository;
 import ro.cs.tao.persistence.repository.ExecutionTaskRepository;
 
 import javax.sql.DataSource;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.Timestamp;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -120,8 +122,15 @@ public class ExecutionManager {
     //region ExecutionTask
     public ExecutionTask updateTaskStatus(ExecutionTask task, ExecutionStatus newStatus) throws PersistenceException {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        jdbcTemplate.update("UPDATE tao.task SET execution_status_id = ? WHERE id = ?",
-                            newStatus.value(), task.getId());
+        if (newStatus == ExecutionStatus.RUNNING) {
+            jdbcTemplate.update("UPDATE tao.task SET execution_status_id = ?, resource_id = ?, start_time = ? WHERE id = ?",
+                                newStatus.value(), task.getResourceId(),
+                                new Date(task.getStartTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()),
+                                task.getId());
+        } else {
+            jdbcTemplate.update("UPDATE tao.task SET execution_status_id = ?, resource_id = ? WHERE id = ?",
+                                newStatus.value(), task.getResourceId(), task.getId());
+        }
         return getTaskById(task.getId());
     }
 

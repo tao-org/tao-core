@@ -407,8 +407,11 @@ public class Orchestrator extends Notifiable {
                                                                " failed after %ss"),
                                                job.getId(), workflow.getName(), time != null ? time.getSeconds() : "<unknown>");
                     Messaging.send(currentContext.getPrincipal(), Topics.INFORMATION, this, msg);
-                    executors.get(currentContext).shutdown();
-                    executors.remove(currentContext);
+                    ExecutorService service = executors.get(currentContext);
+                    if (service != null) {
+                        executors.get(currentContext).shutdown();
+                        executors.remove(currentContext);
+                    }
                 }
             }
         } catch (PersistenceException e) {
@@ -687,8 +690,12 @@ public class Orchestrator extends Notifiable {
                 try {
                     AbstractMap.SimpleEntry<Message, SessionContext> entry = queue.take();
                     //backgroundWorker.submit(RunnableContextFactory.wrap(() -> processMessage(message)));
-                    Orchestrator.this.executors.get(entry.getValue()).submit(() -> processMessage(entry.getKey(),
-                                                                                                  entry.getValue()));
+                    ExecutorService service = Orchestrator.this.executors.get(entry.getValue());
+                    if (service != null) {
+                        service.submit(() -> processMessage(entry.getKey(), entry.getValue()));
+                    } else {
+                        logger.severe("No executor found for " + entry.getKey());
+                    }
                 } catch (InterruptedException e) {
                     logger.severe(e.getMessage());
                 }
