@@ -12,6 +12,19 @@ ALTER TABLE tao."group" ADD CONSTRAINT PK_group PRIMARY KEY (id);
 
 
 -------------------------------------------------------------------------------
+-- table: user_status
+DROP TABLE IF EXISTS tao.user_status CASCADE;
+
+CREATE TABLE tao.user_status
+(
+	id integer NOT NULL,
+	status varchar(250) NOT NULL
+);
+
+ALTER TABLE tao.user_status ADD CONSTRAINT PK_user_status PRIMARY KEY (id);
+
+
+-------------------------------------------------------------------------------
 -- table: user
 DROP TABLE IF EXISTS tao."user" CASCADE;
 
@@ -28,14 +41,17 @@ CREATE TABLE tao."user"
 	last_login_date timestamp NULL,
 	quota real NOT NULL,
 	organization varchar(255) NULL,
+	status_id integer NOT NULL,
 	created timestamp NULL DEFAULT now(),
-	modified timestamp NULL,
-	active boolean NULL DEFAULT true
+	modified timestamp NULL
 );
 
 ALTER TABLE tao."user" ADD CONSTRAINT PK_user PRIMARY KEY (id);
 
 ALTER TABLE tao."user" ADD CONSTRAINT UQ_user UNIQUE (username);
+
+ALTER TABLE tao."user" ADD CONSTRAINT FK_user_status
+	FOREIGN KEY (status_id) REFERENCES tao.user_status (id) ON DELETE No Action ON UPDATE No Action;
 
 
 -------------------------------------------------------------------------------
