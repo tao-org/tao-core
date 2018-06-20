@@ -912,6 +912,7 @@
 
     <entity class="ro.cs.tao.user.User" access="PROPERTY">
         <table name="tao.user"/>
+        <convert converter="ro.cs.tao.persistence.convert.UserStatusConverter" attribute-name="status" />
         <attributes>
             <id name="id">
                 <column name="id" nullable="false" column-definition="serial NOT NULL"/>
@@ -948,8 +949,8 @@
             <basic name="organization">
                 <column name="organization" nullable="true" column-definition="character varying(255) NULL"/>
             </basic>
-            <basic name="active">
-                <column name="active" nullable="true" column-definition="boolean DEFAULT true"/>
+            <basic name="status">
+                <column name="status_id" nullable="false" column-definition="integer NOT NULL"/>
             </basic>
 
             <many-to-many name="groups" fetch="LAZY">
@@ -1123,6 +1124,7 @@
     <converter class="ro.cs.tao.persistence.convert.DimensionConverter" />
     <converter class="ro.cs.tao.persistence.convert.ParameterValueListConverter"/>
     <converter class="ro.cs.tao.persistence.convert.QueryValuesMapConverter"/>
+    <converter class="ro.cs.tao.persistence.convert.UserStatusConverter"/>
 
 
 </entity-mappings>

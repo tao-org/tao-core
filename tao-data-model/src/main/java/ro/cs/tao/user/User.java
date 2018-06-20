@@ -31,7 +31,7 @@ public class User {
     private LocalDateTime lastLoginDate;
     private Double quota;
     private String organization;
-    private boolean active;
+    private UserStatus status;
 
     private List<Group> groups;
     private List<UserPreference> preferences;
@@ -125,12 +125,12 @@ public class User {
         this.organization = organization;
     }
 
-    public boolean isActive() {
-        return active;
+    public UserStatus getStatus() {
+        return status;
     }
 
-    public void setActive(boolean active) {
-        this.active = active;
+    public void setStatus(UserStatus status) {
+        this.status = status;
     }
 
     public List<Group> getGroups() {
