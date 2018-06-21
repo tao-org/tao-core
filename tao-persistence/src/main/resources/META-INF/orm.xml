@@ -172,6 +172,27 @@
         <attributes/>
     </entity>
 
+    <entity class="ro.cs.tao.eodata.AuxiliaryData" access="PROPERTY">
+        <table name="tao.auxiliary_data"/>
+        <attributes>
+            <id name="location">
+                <column name="location" nullable="false" column-definition="character varying NOT NULL"/>
+            </id>
+            <basic name="description">
+                <column name="description" nullable="false" column-definition="character varying NOT NULL"/>
+            </basic>
+            <basic name="userName">
+                <column name="username" nullable="false" column-definition="character varying NOT NULL"/>
+            </basic>
+            <basic name="created">
+                <column name="created" nullable="true" column-definition="timestamp without time zone"/>
+            </basic>
+            <basic name="modified">
+                <column name="modified" nullable="true" column-definition="timestamp without time zone"/>
+            </basic>
+        </attributes>
+    </entity>
+
 
     <entity class="ro.cs.tao.topology.NodeDescription" access="PROPERTY">
         <table name="tao.execution_node"/>

@@ -27,6 +27,7 @@ import ro.cs.tao.component.GroupComponent;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.docker.Container;
+import ro.cs.tao.eodata.AuxiliaryData;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.VectorData;
 import ro.cs.tao.execution.model.*;
@@ -129,12 +130,38 @@ public class PersistenceManager implements MessagePersister {
         }
     }
 
+    public List<AuxiliaryData> getAuxiliaryData(String userName) {
+        return productManager.getAuxiliaryData(userName);
+    }
+
+    public List<AuxiliaryData> getAuxiliaryData(String userName, String...locations) {
+        if (locations == null || locations.length == 0) {
+            return getAuxiliaryData(userName);
+        } else {
+            Set<String> set = new HashSet<>();
+            Collections.addAll(set, locations);
+            return productManager.getAuxiliaryData(userName, set);
+        }
+    }
+
     public EOProduct saveEOProduct(EOProduct eoProduct) throws PersistenceException {
         return productManager.saveEOProduct(eoProduct);
     }
 
     public VectorData saveVectorDataProduct(VectorData vectorDataProduct) throws PersistenceException {
         return productManager.saveVectorDataProduct(vectorDataProduct);
+    }
+
+    public AuxiliaryData saveAuxiliaryData(AuxiliaryData auxiliaryData) throws PersistenceException {
+        return productManager.saveAuxiliaryData(auxiliaryData);
+    }
+
+    public void removeAuxiliaryData(String location) {
+        productManager.removeAuxiliaryData(location);
+    }
+
+    public void removeAuxiliaryData(AuxiliaryData auxiliaryData) {
+        productManager.removeAuxiliaryData(auxiliaryData);
     }
     //endregion
 

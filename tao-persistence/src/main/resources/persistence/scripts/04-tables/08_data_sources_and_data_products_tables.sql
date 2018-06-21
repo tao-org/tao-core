@@ -152,6 +152,20 @@ ALTER TABLE tao.vector_data_product ADD CONSTRAINT FK_vector_data_product_data_f
 --ALTER TABLE tao.vector_data_product ADD CONSTRAINT FK_vector_data_product_data_source
 --	FOREIGN KEY (data_source_id) REFERENCES tao.data_source (id) ON DELETE No Action ON UPDATE No Action;
 
+-------------------------------------------------------------------------------
+-- table: auxiliary_data
+CREATE TABLE tao.auxiliary_data
+(
+	location character varying NOT NULL,
+	description character varying NOT NULL,
+	username character varying NOT NULL,
+	created timestamp NULL DEFAULT now(),
+	modified timestamp NULL
+);
+
+ALTER TABLE tao.auxiliary_data ADD CONSTRAINT PK_auxiliary_data
+	PRIMARY KEY (location);
+
 
 -------------------------------------------------------------------------------
 -- table: data_product_attributes

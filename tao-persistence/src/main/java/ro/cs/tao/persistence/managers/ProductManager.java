@@ -23,9 +23,11 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
+import ro.cs.tao.eodata.AuxiliaryData;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.VectorData;
 import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.persistence.repository.AuxDataRepository;
 import ro.cs.tao.persistence.repository.EOProductRepository;
 import ro.cs.tao.persistence.repository.VectorDataRepository;
 
@@ -48,6 +50,9 @@ public class ProductManager {
     /** CRUD Repository for VectorData entities */
     @Autowired
     private VectorDataRepository vectorDataRepository;
+
+    @Autowired
+    private AuxDataRepository auxDataRepository;
 
     /**
      * Retrieve all EOProduct
@@ -82,6 +87,16 @@ public class ProductManager {
     }
 
     @Transactional
+    public List<AuxiliaryData> getAuxiliaryData(String userName) {
+        return auxDataRepository.getAuxiliaryDataByUser(userName);
+    }
+
+    @Transactional
+    public List<AuxiliaryData> getAuxiliaryData(String userName, Set<String> locations) {
+        return auxDataRepository.getAuxiliaryDataByLocation(userName, locations);
+    }
+
+    @Transactional
     public EOProduct saveEOProduct(EOProduct eoProduct) throws PersistenceException {
         // check method parameters
         if (!checkEOProduct(eoProduct)) {
@@ -109,6 +124,25 @@ public class ProductManager {
         return savedVectorData;
     }
 
+    @Transactional
+    public AuxiliaryData saveAuxiliaryData(AuxiliaryData data) throws PersistenceException {
+        // check method parameters
+        if (!checkAuxData(data)) {
+            throw new PersistenceException("Invalid parameters were provided for adding new auxiliary data!");
+        }
+        return auxDataRepository.save(data);
+    }
+
+    @Transactional
+    public void removeAuxiliaryData(String location) {
+        auxDataRepository.delete(location);
+    }
+
+    @Transactional
+    public void removeAuxiliaryData(AuxiliaryData data) {
+        auxDataRepository.delete(data);
+    }
+
     private boolean checkEOProduct(EOProduct eoProduct) {
         return eoProduct != null && eoProduct.getId() != null && !eoProduct.getId().isEmpty() &&
                 eoProduct.getName() != null && eoProduct.getGeometry() != null && eoProduct.getProductType() != null &&
@@ -119,5 +153,11 @@ public class ProductManager {
         return vectorDataProduct != null && vectorDataProduct.getId() != null && !vectorDataProduct.getId().isEmpty() &&
                 vectorDataProduct.getName() != null && vectorDataProduct.getGeometry() != null &&
                 vectorDataProduct.getLocation() != null;
+    }
+
+    private boolean checkAuxData(AuxiliaryData auxiliaryData) {
+        return auxiliaryData != null && auxiliaryData.getLocation() != null && !auxiliaryData.getLocation().isEmpty() &&
+                auxiliaryData.getDescription() != null && !auxiliaryData.getDescription().isEmpty() &&
+                auxiliaryData.getUserName() != null && !auxiliaryData.getUserName().isEmpty();
     }
 }
