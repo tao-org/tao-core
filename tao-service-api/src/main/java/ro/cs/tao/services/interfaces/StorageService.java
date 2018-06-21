@@ -24,7 +24,7 @@ import java.util.stream.Stream;
 
 @Service
 public interface StorageService<T> {
-    void store(T object) throws IOException;
+    void store(T object, String description) throws Exception;
     void remove(String name) throws IOException;
     Stream<Path> listFiles(boolean userOnly) throws IOException;
     Stream<Path> listWorkspace(boolean userOnly) throws IOException;
