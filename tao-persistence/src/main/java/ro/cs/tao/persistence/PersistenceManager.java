@@ -42,6 +42,8 @@ import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 
 import javax.annotation.PostConstruct;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -103,8 +105,28 @@ public class PersistenceManager implements MessagePersister {
         return productManager.getEOProducts();
     }
 
+    public List<EOProduct> getEOProducts(String...locations) {
+        if (locations == null || locations.length == 0) {
+            return getEOProducts();
+        } else {
+            Set<String> set = new HashSet<>();
+            Collections.addAll(set, locations);
+            return productManager.getEOProducts(set);
+        }
+    }
+
     public List<VectorData> getVectorDataProducts() {
         return productManager.getVectorDataProducts();
+    }
+
+    public List<VectorData> getVectorDataProducts(String...locations) {
+        if (locations == null || locations.length == 0) {
+            return getVectorDataProducts();
+        } else {
+            Set<String> set = new HashSet<>();
+            Collections.addAll(set, locations);
+            return productManager.getVectorDataProducts(set);
+        }
     }
 
     public EOProduct saveEOProduct(EOProduct eoProduct) throws PersistenceException {

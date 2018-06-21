@@ -22,6 +22,7 @@ import ro.cs.tao.eodata.enums.SensorType;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -37,6 +38,7 @@ public class EOProduct extends EOData implements Serializable {
     private int height;
     private long approximateSize;
 
+    //region Getters and setters
     public SensorType getSensorType() {
         return sensorType;
     }
@@ -92,7 +94,8 @@ public class EOProduct extends EOData implements Serializable {
     public void setApproximateSize(long approximateSize) {
         this.approximateSize = approximateSize;
     }
-
+    //endregion
+    //region equals and hashCode
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -105,5 +108,16 @@ public class EOProduct extends EOData implements Serializable {
     @Override
     public int hashCode() {
         return Objects.hash(getId(), getName());
+    }
+    //endregion
+    public Map<String, String> toAttributeMap() {
+        Map<String, String> attributes = super.toAttributeMap();
+        attributes.put("sensorType", sensorType != null ? sensorType.name() : "n/a");
+        attributes.put("pixelType", pixelType != null ? pixelType.name() : "n/a");
+        attributes.put("productType", safeValue(productType));
+        attributes.put("acquisitionDate", safeValue(acquisitionDate));
+        attributes.put("width", safeValue(width));
+        attributes.put("height", safeValue(height));
+        return attributes;
     }
 }

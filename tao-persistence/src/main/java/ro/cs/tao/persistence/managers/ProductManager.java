@@ -31,6 +31,7 @@ import ro.cs.tao.persistence.repository.VectorDataRepository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 
 @Configuration
@@ -59,6 +60,11 @@ public class ProductManager {
                                                      Constants.DATA_PRODUCT_IDENTIFIER_PROPERTY_NAME))));
     }
 
+    @Transactional
+    public List<EOProduct> getEOProducts(Set<String> locations) {
+        return eoProductRepository.getProductsByLocation(locations);
+    }
+
     /**
      * Retrieve all VectorData
      */
@@ -68,6 +74,11 @@ public class ProductManager {
         return new ArrayList<>(((List<VectorData>)
                 vectorDataRepository.findAll(new Sort(Sort.Direction.ASC,
                                                       Constants.DATA_PRODUCT_IDENTIFIER_PROPERTY_NAME))));
+    }
+
+    @Transactional
+    public List<VectorData> getVectorDataProducts(Set<String> locations) {
+        return vectorDataRepository.getProductsByLocation(locations);
     }
 
     @Transactional

@@ -26,7 +26,9 @@ import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Cosmin Cara
@@ -43,6 +45,7 @@ public abstract class EOData implements Serializable {
     private URI location;
     private URI entryPoint;
 
+    //region Getters and Setters
     public String getId() {
         return id;
     }
@@ -149,5 +152,22 @@ public abstract class EOData implements Serializable {
     public String getEntryPoint() { return entryPoint != null ? entryPoint.toString() : null; }
 
     public void setEntryPoint(String entryPoint) throws URISyntaxException { this.entryPoint = entryPoint != null ? new URI(entryPoint) : null; }
+    //endregion
+    public Map<String, String> toAttributeMap() {
+        Map<String, String> attributes = new HashMap<>();
+        attributes.put("id", safeValue(id));
+        attributes.put("formatType", formatType != null ? formatType.name() : "n/a");
+        attributes.put("geometry", safeValue(geometry));
+        attributes.put("crs", crs != null ? crs.getName().getCodeSpace() + ":" + crs.getName().getCode() : "n/a");
+        if (this.attributes != null) {
+            for (Attribute attribute : this.attributes) {
+                attributes.put(attribute.getName(), attribute.getValue());
+            }
+        }
+        return attributes;
+    }
 
+    String safeValue(Object value) {
+        return value != null ? value.toString() : "n/a";
+    }
 }
