@@ -949,9 +949,9 @@
             <basic name="organization">
                 <column name="organization" nullable="true" column-definition="character varying(255) NULL"/>
             </basic>
-            <basic name="status">
+            <!--<basic name="status">
                 <column name="status_id" nullable="false" column-definition="integer NOT NULL"/>
-            </basic>
+            </basic>-->
 
             <many-to-many name="groups" fetch="LAZY">
                 <join-table name="tao.user_group">
@@ -968,7 +968,7 @@
                     <join-column name="user_id" referenced-column-name="id" updatable="true" />
                 </collection-table>
             </element-collection>
-
+            <transient name="status"/>
         </attributes>
     </entity>
 
