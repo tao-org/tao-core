@@ -55,7 +55,11 @@ public class ConverterFactory {
 
     public ParameterConverter create(ParameterDescriptor parameter) {
         Class parameterType = parameter.getDataType();
-        Class<? extends ParameterConverter> converterClass = converters.get(parameterType);
+        return create(parameterType);
+    }
+
+    public ParameterConverter create(Class forClass) {
+        Class<? extends ParameterConverter> converterClass = converters.get(forClass);
         if (converterClass == null) {
             converterClass = DefaultConverter.class;
         }
