@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.services.interfaces;
 
+import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.user.User;
 import ro.cs.tao.user.UserPreference;
 
@@ -27,13 +28,13 @@ import java.util.List;
  */
 public interface UserService {
 
-    boolean activateUser(String username);
+    void activateUser(String username) throws PersistenceException;
 
     User getUserInfo(String username);
 
-    User updateUserInfo(User updatedInfo);
+    User updateUserInfo(User updatedInfo) throws PersistenceException;
 
-    List<UserPreference> saveOrUpdateUserPreferences(List<UserPreference> userPreferences);
+    List<UserPreference> saveOrUpdateUserPreferences(String username, List<UserPreference> userPreferences) throws PersistenceException;
 
-    List<UserPreference> removeUserPreferences(List<UserPreference> userPreferencesToDelete);
+    List<UserPreference> removeUserPreferences(String username, List<String> userPrefsKeysToDelete) throws PersistenceException;
 }

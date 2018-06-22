@@ -4,10 +4,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
-import ro.cs.tao.user.Group;
 import ro.cs.tao.user.User;
-
-import java.util.List;
 
 /**
  * CRUD repository for User entities
@@ -32,4 +29,18 @@ public interface UserRepository extends PagingAndSortingRepository<User, Long> {
      * @return the corresponding User entity
      */
     User findByUsername(final String username);
+
+    /**
+     * Find User entity by its email
+     * @param email - the user's email
+     * @return the corresponding User entity
+     */
+    User findByEmail(final String email);
+
+    /**
+     * Find User entity by its alternative email
+     * @param alternativeEmail - the user's alternative email
+     * @return the corresponding User entity
+     */
+    User findByAlternativeEmail(final String alternativeEmail);
 }

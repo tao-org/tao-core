@@ -491,5 +491,21 @@ public class PersistenceManager implements MessagePersister {
         return userManager.checkLoginCredentials(userName, password);
     }
 
+    public User updateUser(User updatedInfo) throws PersistenceException {
+        return userManager.updateUser(updatedInfo);
+    }
+
+    public void activateUser(String userName) throws PersistenceException {
+        userManager.activateUser(userName);
+    }
+
+    public List<UserPreference> saveOrUpdateUserPreferences(String username, List<UserPreference> newUserPreferences) throws PersistenceException {
+        return userManager.saveOrUpdateUserPreferences(username, newUserPreferences);
+    }
+
+    public List<UserPreference> removeUserPreferences(String username, List<String> userPrefsKeysToDelete) throws PersistenceException {
+        return userManager.removeUserPreferences(username, userPrefsKeysToDelete);
+    }
+
 // endregion
 }
