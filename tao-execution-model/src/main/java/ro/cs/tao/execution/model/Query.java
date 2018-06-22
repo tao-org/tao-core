@@ -162,11 +162,9 @@ public class Query {
                     subQuery.pageNumber = this.pageNumber;
                     subQuery.limit = this.limit;
                     subQuery.values = new HashMap<>();
-                    if (this.values != null) {
-                        for (Map.Entry<String, String> entry : this.values.entrySet()) {
-                            if (!parameterName.equals(entry.getKey())) {
-                                subQuery.values.put(entry.getKey(), entry.getValue());
-                            }
+                    for (Map.Entry<String, String> entry : this.values.entrySet()) {
+                        if (!parameterName.equals(entry.getKey())) {
+                            subQuery.values.put(entry.getKey(), entry.getValue());
                         }
                     }
                     subQuery.values.put(parameterName, val);

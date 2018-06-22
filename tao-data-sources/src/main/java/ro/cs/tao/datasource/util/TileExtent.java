@@ -111,6 +111,10 @@ public abstract class TileExtent {
         return tiles.size();
     }
 
+    public Rectangle2D getTileExtent(String tileCode) {
+        return tiles.get(tileCode);
+    }
+
     /**
      * Computes the bounding box for the given list of tile identifiers
      * @param tileCodes     List of tile identifiers
