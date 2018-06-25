@@ -48,10 +48,11 @@ public class UserManager {
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private DataSource dataSource;
+    /*@Autowired
+    private DataSource dataSource;*/
 
     //region User
+
     @Transactional
     public User findUserByUsername(final String username) {
         return userRepository.findByUsername(username);
@@ -71,7 +72,7 @@ public class UserManager {
         }).stream().collect(Collectors.toMap(UserPreference::getKey, UserPreference::getValue)));
     }*/
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<UserPreference> getUserPreferences(String userName) throws PersistenceException {
         final User user = userRepository.findByUsername(userName);
         if (user == null)
@@ -81,7 +82,7 @@ public class UserManager {
         return user.getPreferences();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public String getUserOrganization(String userName) throws PersistenceException {
         final User user = userRepository.findByUsername(userName);
         if (user == null)
@@ -91,7 +92,7 @@ public class UserManager {
         return user.getOrganization();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public boolean checkLoginCredentials(String userName, String password) {
         final User user = userRepository.findByUsername(userName);
         if (user == null)

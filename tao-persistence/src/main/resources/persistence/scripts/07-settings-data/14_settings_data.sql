@@ -226,6 +226,10 @@ VALUES ('SystemAccount', 'system', '***REMOVED***', 'Cosmin', 'Cara', 1000, 'CSR
 INSERT INTO tao."user" (username, password, email, last_name, first_name, quota, organization, status_id, created)
 VALUES ('operator', 'operator', '***REMOVED***', 'Cosmin', 'Cara', 1000, 'CSRO', 2, CURRENT_TIMESTAMP);
 
+-- operator anonymousUser
+INSERT INTO tao."user" (username, password, email, last_name, first_name, quota, organization, status_id, created)
+VALUES ('anonymousUser', '123', '***REMOVED***', 'Anonymous', 'Anonymous', 1000, 'CSRO', 2, CURRENT_TIMESTAMP);
+
 
 -- User groups
 INSERT INTO tao.user_group (user_id, group_id)
