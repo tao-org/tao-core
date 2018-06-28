@@ -32,6 +32,8 @@ public class User {
     private Double quota;
     private String organization;
     private UserStatus status;
+    // flag that indicates if the user is external (it uses an external auth method)
+    private boolean external;
 
     private List<Group> groups;
     private List<UserPreference> preferences;
@@ -131,6 +133,14 @@ public class User {
 
     public void setStatus(UserStatus status) {
         this.status = status;
+    }
+
+    public boolean isExternal() {
+        return external;
+    }
+
+    public void setExternal(boolean external) {
+        this.external = external;
     }
 
     public List<Group> getGroups() {

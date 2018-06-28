@@ -5,6 +5,9 @@ import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.user.User;
+import ro.cs.tao.user.UserStatus;
+
+import java.util.List;
 
 /**
  * CRUD repository for User entities
@@ -43,4 +46,11 @@ public interface UserRepository extends PagingAndSortingRepository<User, Long> {
      * @return the corresponding User entity
      */
     User findByAlternativeEmail(final String alternativeEmail);
+
+    /**
+     * Find User entities by their activation status
+     * @param status - the user's status
+     * @return the corresponding User entities
+     */
+    List<User> findByStatus(final UserStatus status);
 }

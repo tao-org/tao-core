@@ -37,16 +37,15 @@ import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.persistence.managers.*;
 import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.topology.ServiceDescription;
+import ro.cs.tao.user.Group;
 import ro.cs.tao.user.User;
 import ro.cs.tao.user.UserPreference;
+import ro.cs.tao.user.UserStatus;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 
 import javax.annotation.PostConstruct;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * DAO
@@ -475,6 +474,18 @@ public class PersistenceManager implements MessagePersister {
     //endregion
 
     // region User
+    public User addNewUser(final User newUserInfo) throws PersistenceException {
+        return userManager.addNewUser(newUserInfo);
+    }
+
+    public List<User> findUsersByStatus(UserStatus userStatus) {
+        return userManager.findUsersByStatus(userStatus);
+    }
+
+    public Map<String, String[]> getAllUsersUnicityInfo() {
+        return userManager.getAllUsersUnicityInfo();
+    }
+
     public User findUserByUsername(final String username) {
         return userManager.findUserByUsername(username);
     }
@@ -485,6 +496,10 @@ public class PersistenceManager implements MessagePersister {
 
     public String getUserOrganization(String userName) throws PersistenceException {
         return userManager.getUserOrganization(userName);
+    }
+
+    public List<Group> getUserGroups(String userName) {
+        return userManager.getUserGroups(userName);
     }
 
     public boolean checkLoginCredentials(String userName, String password) {
@@ -499,12 +514,24 @@ public class PersistenceManager implements MessagePersister {
         userManager.activateUser(userName);
     }
 
+    public void disableUser(String userName) throws PersistenceException {
+        userManager.disableUser(userName);
+    }
+
+    public void deleteUser(String userName) throws PersistenceException {
+        userManager.deleteUser(userName);
+    }
+
     public List<UserPreference> saveOrUpdateUserPreferences(String username, List<UserPreference> newUserPreferences) throws PersistenceException {
         return userManager.saveOrUpdateUserPreferences(username, newUserPreferences);
     }
 
     public List<UserPreference> removeUserPreferences(String username, List<String> userPrefsKeysToDelete) throws PersistenceException {
         return userManager.removeUserPreferences(username, userPrefsKeysToDelete);
+    }
+
+    public List<Group> getGroups() {
+        return userManager.getGroups();
     }
 
 // endregion
