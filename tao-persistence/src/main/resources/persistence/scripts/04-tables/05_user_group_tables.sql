@@ -32,7 +32,8 @@ CREATE TABLE tao."user"
 (
 	id integer NOT NULL,
 	username varchar(50) NOT NULL,
-	password text NOT NULL,
+	-- password nullable for external users
+	password text NULL,
 	email varchar(100) NOT NULL,
 	alternative_email varchar(100) NULL,
 	last_name varchar(50) NOT NULL,
@@ -40,8 +41,9 @@ CREATE TABLE tao."user"
 	phone varchar(50) NULL,
 	last_login_date timestamp NULL,
 	quota real NOT NULL,
-	organization varchar(255) NULL,
+	organization varchar(255) NOT NULL,
 	status_id integer NOT NULL,
+	external boolean NULL DEFAULT false,
 	created timestamp NULL DEFAULT now(),
 	modified timestamp NULL
 );
