@@ -94,4 +94,6 @@ public abstract class ProductHelper {
     }
 
     protected abstract boolean verifyProductName(String name);
+
+    public abstract String getOrbit();
 }
