@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.services.interfaces;
 
+import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.services.model.user.UserUnicityInfo;
 import ro.cs.tao.user.Group;
 import ro.cs.tao.user.User;
@@ -29,7 +30,7 @@ import java.util.List;
  */
 public interface AdministrationService {
 
-    boolean addNewUser(User userInfo);
+    User addNewUser(User userInfo) throws PersistenceException;
 
     List<UserUnicityInfo> getAllUsersUnicityInfo();
 
@@ -39,9 +40,9 @@ public interface AdministrationService {
 
     User getUserInfo(String username);
 
-    User updateUserInfo(User updatedInfo);
+    User updateUserInfo(User updatedInfo) throws PersistenceException;
 
-    boolean disableUser(String username, boolean deletePrivateResources);
+    void disableUser(String username) throws PersistenceException;
 
-    boolean deleteUser(String username);
+    void deleteUser(String username) throws PersistenceException;
 }

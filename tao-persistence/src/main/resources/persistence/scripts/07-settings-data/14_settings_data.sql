@@ -198,11 +198,11 @@ INSERT INTO tao.workflow_graph_visibility (visibility) VALUES ('PRIVATE');
 -- Groups
 -- admin group
 INSERT INTO tao."group" (name)
-VALUES ('admin');
+VALUES ('ADMIN');
 
 -- operator group
 INSERT INTO tao."group" (name)
-VALUES ('operator');
+VALUES ('PUBLIC_USER');
 
 
 -- User status
@@ -215,20 +215,20 @@ INSERT INTO tao.user_status (status) VALUES ('DISABLED');
 
 -- Users
 -- admin user (password "admin" - "$2a$08$wU07f1hSVkTO7321eVi0quF8If7d23Ly66dkwGAOzbb6xrZFeo69m")
-INSERT INTO tao."user" (username, password, email, last_name, first_name, quota, organization, status_id, created)
-VALUES ('admin', 'admin', 'kraftek@c-s.ro', 'Cosmin', 'Cara', 1000, 'CSRO', 2, CURRENT_TIMESTAMP);
+INSERT INTO tao."user" (username, password, email, alternative_email, last_name, first_name, quota, organization, status_id, created)
+VALUES ('admin', 'admin', 'kraftek@c-s.ro', 'oana.hogoiu@c-s.ro', 'Cosmin', 'Cara', 1000, 'CSRO', 2, CURRENT_TIMESTAMP);
 
 -- System Account (password "system" - "$2a$12$mXbtZweZmmFjcKIA0/NmF.uxcHik8rTKGdkkyrelKiZWe3bhgR.aC")
-INSERT INTO tao."user" (username, password, email, last_name, first_name, quota, organization, status_id, created)
-VALUES ('SystemAccount', 'system', 'kraftek@c-s.ro', 'Cosmin', 'Cara', 1000, 'CSRO', 2, CURRENT_TIMESTAMP);
+INSERT INTO tao."user" (username, password, email, alternative_email, last_name, first_name, quota, organization, status_id, created)
+VALUES ('SystemAccount', 'system', 'kraftek@c-s.ro', 'oana.hogoiu@c-s.ro', 'Cosmin', 'Cara', 1000, 'CSRO', 2, CURRENT_TIMESTAMP);
 
 -- operator user (password "operator" - "$2a$09$AvkhkrwRHqQIdEfslOLB8ulHzKo89AUIuuANhHmrE5RxzGUsMFGs.")
-INSERT INTO tao."user" (username, password, email, last_name, first_name, quota, organization, status_id, created)
-VALUES ('operator', 'operator', 'kraftek@c-s.ro', 'Cosmin', 'Cara', 1000, 'CSRO', 2, CURRENT_TIMESTAMP);
+INSERT INTO tao."user" (username, password, email, alternative_email, last_name, first_name, quota, organization, status_id, created)
+VALUES ('operator', 'operator', 'kraftek@c-s.ro', 'oana.hogoiu@c-s.ro', 'Cosmin', 'Cara', 1000, 'CSRO', 2, CURRENT_TIMESTAMP);
 
 -- operator anonymousUser
-INSERT INTO tao."user" (username, password, email, last_name, first_name, quota, organization, status_id, created)
-VALUES ('anonymousUser', '123', 'kraftek@c-s.ro', 'Anonymous', 'Anonymous', 1000, 'CSRO', 2, CURRENT_TIMESTAMP);
+INSERT INTO tao."user" (username, password, email, alternative_email, last_name, first_name, quota, organization, status_id, created)
+VALUES ('anonymousUser', '123', 'kraftek@c-s.ro', 'oana.hogoiu@c-s.ro', 'Anonymous', 'Anonymous', 1000, 'CSRO', 2, CURRENT_TIMESTAMP);
 
 
 -- User groups
@@ -240,6 +240,9 @@ VALUES (2, 1);
 
 INSERT INTO tao.user_group (user_id, group_id)
 VALUES (3, 2);
+
+INSERT INTO tao.user_group (user_id, group_id)
+VALUES (4, 2);
 
 
 -- localhost execution node
