@@ -127,8 +127,13 @@ public class TaskUtilities {
                 ExecutionTask parentTask = persistenceManager.getTaskByJobAndNode(job.getId(), link.getSourceNodeId());
                 WorkflowNodeDescriptor parentNode = persistenceManager.getWorkflowNodeById(link.getSourceNodeId());
                 completed = (parentNode.getBehavior() == TransitionBehavior.FAIL_ON_ERROR ?
-                        parentTask.getExecutionStatus() == ExecutionStatus.DONE :
-                        parentTask.getExecutionStatus() == ExecutionStatus.DONE || parentTask.getExecutionStatus() == ExecutionStatus.FAILED);
+                        parentTask.getExecutionStatus() == ExecutionStatus.DONE &&
+                                parentTask.getOutputParameterValues() != null &&
+                                parentTask.getOutputParameterValues().stream().anyMatch(o -> o.getValue() != null) :
+                        (parentTask.getExecutionStatus() == ExecutionStatus.DONE &&
+                                parentTask.getOutputParameterValues() != null &&
+                                parentTask.getOutputParameterValues().stream().anyMatch(o -> o.getValue() != null)) ||
+                                parentTask.getExecutionStatus() == ExecutionStatus.FAILED);
                 if (!completed) {
                     logger.info(String.format("Task %s appears not to be completed", parentTask.getId()));
                     break;
@@ -136,6 +141,14 @@ public class TaskUtilities {
             }
         }
         return completed;
+    }
+
+    public static boolean haveAllTasksCompleted(ExecutionJob job) {
+        List<ExecutionTask> tasks = job.getTasks();
+        return tasks != null &&
+                tasks.stream().allMatch(t -> t.getExecutionStatus() == ExecutionStatus.DONE ||
+                                             t.getExecutionStatus() == ExecutionStatus.FAILED ||
+                                             t.getExecutionStatus() == ExecutionStatus.CANCELLED);
     }
 
     /**

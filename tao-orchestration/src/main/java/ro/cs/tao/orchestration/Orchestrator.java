@@ -360,34 +360,39 @@ public class Orchestrator extends Notifiable {
                         //}
                     }
                 } else {
-                    logger.fine("No more child tasks to execute after the current task");
                     ExecutionJob job = task.getJob();
-                    if (job.getTasks().stream()
-                            .anyMatch(t -> t.getExecutionStatus() == ExecutionStatus.RUNNING ||
-                                     t.getExecutionStatus() == ExecutionStatus.QUEUED_ACTIVE)) {
-                        return;
+                    if (TaskUtilities.haveAllTasksCompleted(job)) {
+                        logger.fine("No more child tasks to execute after the current task");
+
+                        if (job.getTasks().stream()
+                                .anyMatch(t -> t.getExecutionStatus() == ExecutionStatus.RUNNING ||
+                                        t.getExecutionStatus() == ExecutionStatus.QUEUED_ACTIVE)) {
+                            return;
+                        }
+                        job.setExecutionStatus(ExecutionStatus.DONE);
+                        if (job.getEndTime() == null) {
+                            job.setEndTime(LocalDateTime.now());
+                        }
+                        persistenceManager.updateExecutionJob(job);
+                        if (taskNode instanceof WorkflowNodeGroupDescriptor && taskNode.getPreserveOutput()) {
+                            persistOutputProducts(task);
+                        }
+                        WorkflowDescriptor workflow = persistenceManager.getWorkflowDescriptor(job.getWorkflowId());
+                        Duration time = null;
+                        if (job.getStartTime() != null && job.getEndTime() != null) {
+                            time = Duration.between(job.getStartTime(), job.getEndTime());
+                        }
+                        String msg = String.format("Job [%s] for workflow [%s]" +
+                                                           (job.getExecutionStatus() == ExecutionStatus.DONE ?
+                                                                   " completed in %ss" :
+                                                                   " failed after %ss"),
+                                                   job.getId(), workflow.getName(), time != null ? time.getSeconds() : "<unknown>");
+                        Messaging.send(currentContext.getPrincipal(), Topics.INFORMATION, this, msg);
+                        executors.get(currentContext).shutdown();
+                        executors.remove(currentContext);
+                    } else {
+                        logger.info("Job has still tasks to complete");
                     }
-                    job.setExecutionStatus(ExecutionStatus.DONE);
-                    if (job.getEndTime() == null) {
-                        job.setEndTime(LocalDateTime.now());
-                    }
-                    persistenceManager.updateExecutionJob(job);
-                    if (taskNode instanceof WorkflowNodeGroupDescriptor && taskNode.getPreserveOutput()) {
-                        persistOutputProducts(task);
-                    }
-                    WorkflowDescriptor workflow = persistenceManager.getWorkflowDescriptor(job.getWorkflowId());
-                    Duration time = null;
-                    if (job.getStartTime() != null && job.getEndTime() != null) {
-                        time = Duration.between(job.getStartTime(), job.getEndTime());
-                    }
-                    String msg = String.format("Job [%s] for workflow [%s]" +
-                                                       (job.getExecutionStatus() == ExecutionStatus.DONE ?
-                                                               " completed in %ss" :
-                                                               " failed after %ss"),
-                                               job.getId(), workflow.getName(), time != null ? time.getSeconds() : "<unknown>");
-                    Messaging.send(currentContext.getPrincipal(), Topics.INFORMATION, this, msg);
-                    executors.get(currentContext).shutdown();
-                    executors.remove(currentContext);
                 }
             } else {
                 ExecutionJob job = task.getJob();
