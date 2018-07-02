@@ -944,7 +944,7 @@
                 <column name="username" nullable="false" column-definition="character varying(50) NOT NULL"/>
             </basic>
             <basic name="password">
-                <column name="password" nullable="false" column-definition="text NOT NULL"/>
+                <column name="password" nullable="true" column-definition="text NULL"/>
             </basic>
             <basic name="email">
                 <column name="email" nullable="false" column-definition="character varying(100) NOT NULL"/>
@@ -968,10 +968,13 @@
                 <column name="quota" nullable="false" column-definition="real NOT NULL"/>
             </basic>
             <basic name="organization">
-                <column name="organization" nullable="true" column-definition="character varying(255) NULL"/>
+                <column name="organization" nullable="false" column-definition="character varying(255) NOT NULL"/>
             </basic>
             <basic name="status">
                 <column name="status_id" nullable="false" column-definition="integer NOT NULL"/>
+            </basic>
+            <basic name="external">
+                <column name="external" nullable="true" column-definition="boolean NULL DEFAULT false"/>
             </basic>
 
             <many-to-many name="groups" fetch="LAZY">

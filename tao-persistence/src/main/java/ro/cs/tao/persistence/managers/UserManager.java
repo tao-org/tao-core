@@ -24,15 +24,17 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.persistence.repository.GroupRepository;
 import ro.cs.tao.persistence.repository.UserRepository;
+import ro.cs.tao.user.Group;
 import ro.cs.tao.user.User;
 import ro.cs.tao.user.UserPreference;
 import ro.cs.tao.user.UserStatus;
+import ro.cs.tao.utils.StringUtils;
 
 import javax.sql.DataSource;
 import java.sql.PreparedStatement;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -48,10 +50,86 @@ public class UserManager {
     @Autowired
     private UserRepository userRepository;
 
+    /** CRUD Repository for Group entities */
+    @Autowired
+    private GroupRepository groupRepository;
+
     /*@Autowired
     private DataSource dataSource;*/
 
     //region User
+
+    @Transactional
+    public User addNewUser(final User newUserInfo) throws PersistenceException {
+        if (newUserInfo == null) {
+            throw new PersistenceException("Invalid new user info received!");
+        }
+        if (StringUtils.isNullOrEmpty(newUserInfo.getUsername()) ||
+          StringUtils.isNullOrEmpty(newUserInfo.getEmail()) ||
+          StringUtils.isNullOrEmpty(newUserInfo.getLastName()) ||
+          StringUtils.isNullOrEmpty(newUserInfo.getFirstName()) ||
+          StringUtils.isNullOrEmpty(newUserInfo.getOrganization()) ||
+          newUserInfo.getQuota() == null) {
+            throw new PersistenceException("Invalid new user info received!");
+        }
+
+        // check username and email uniqueness
+        if (userRepository.findByUsername(newUserInfo.getUsername()) != null) {
+            throw new PersistenceException("Username " + newUserInfo.getUsername() + " already taken!");
+        }
+
+        // check email in alternative email addresses too
+        if (userRepository.findByEmail(newUserInfo.getEmail()) != null ||
+          userRepository.findByAlternativeEmail(newUserInfo.getEmail()) != null) {
+            throw new PersistenceException("Email " + newUserInfo.getEmail() + " already taken!");
+        }
+
+        // check also alternative email
+        if (!StringUtils.isNullOrEmpty(newUserInfo.getAlternativeEmail())) {
+            if (userRepository.findByEmail(newUserInfo.getAlternativeEmail()) != null ||
+              userRepository.findByAlternativeEmail(newUserInfo.getAlternativeEmail()) != null) {
+                throw new PersistenceException("Email " + newUserInfo.getEmail() + " already taken!");
+            }
+        }
+
+        // create new User entity
+        final User user = new User();
+        user.setUsername(newUserInfo.getUsername());
+        user.setEmail(newUserInfo.getEmail());
+        if (!StringUtils.isNullOrEmpty(newUserInfo.getAlternativeEmail())) {
+            user.setAlternativeEmail(newUserInfo.getAlternativeEmail());
+        }
+        user.setLastName(newUserInfo.getLastName());
+        user.setFirstName(newUserInfo.getFirstName());
+        if (!StringUtils.isNullOrEmpty(newUserInfo.getPhone())) {
+            user.setPhone(newUserInfo.getPhone());
+        }
+        user.setQuota(newUserInfo.getQuota());
+        user.setOrganization(newUserInfo.getOrganization());
+        user.setExternal(newUserInfo.isExternal());
+        if (user.isExternal()) {
+            // external users don't need pending activation
+            user.setStatus(UserStatus.ACTIVE);
+        }
+        else {
+            user.setStatus(UserStatus.PENDING);
+        }
+
+        // save the new user and return it
+        return userRepository.save(user);
+    }
+
+    @Transactional
+    public List<User> findUsersByStatus(UserStatus userStatus) {
+        return userRepository.findByStatus(userStatus);
+    }
+
+    @Transactional
+    public Map<String, String[]> getAllUsersUnicityInfo() {
+        Map<String, String[]> results = new HashMap<>();
+        userRepository.findAll().forEach(user -> results.put(user.getUsername(), new String[] {user.getEmail(), user.getAlternativeEmail()}));
+        return results;
+    }
 
     @Transactional
     public User findUserByUsername(final String username) {
@@ -90,6 +168,16 @@ public class UserManager {
             throw new PersistenceException("There is no user with the given username: " + String.valueOf(userName));
         }
         return user.getOrganization();
+    }
+
+    @Transactional
+    public List<Group> getUserGroups(String userName) {
+        final User user = userRepository.findByUsername(userName);
+        if (user != null)
+        {
+            return user.getGroups();
+        }
+        return null;
     }
 
     @Transactional
@@ -187,6 +275,33 @@ public class UserManager {
     }
 
     @Transactional
+    public void disableUser(String userName) throws PersistenceException {
+        final User user = userRepository.findByUsername(userName);
+        if (user == null)
+        {
+            throw new PersistenceException("There is no user with the given username: " + String.valueOf(userName));
+        }
+        // only a pending activation or an active user can be disabled
+        if (user.getStatus().value() != UserStatus.PENDING.value() && user.getStatus().value() != UserStatus.ACTIVE.value()) {
+            throw new PersistenceException("Cannot disable user: " + String.valueOf(userName));
+        }
+        // activate user
+        user.setStatus(UserStatus.DISABLED);
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void deleteUser(String userName) throws PersistenceException {
+        final User user = userRepository.findByUsername(userName);
+        if (user == null)
+        {
+            throw new PersistenceException("There is no user with the given username: " + String.valueOf(userName));
+        }
+        // check if cascade delete or not (?)
+        userRepository.delete(user);
+    }
+
+    @Transactional
     public List<UserPreference> saveOrUpdateUserPreferences(String username, List<UserPreference> newUserPreferences) throws PersistenceException {
         User user = userRepository.findByUsername(username);
         if (user == null)
@@ -231,6 +346,13 @@ public class UserManager {
 
         user  = userRepository.save(user);
         return user.getPreferences();
+    }
+
+    @Transactional
+    public List<Group> getGroups() {
+        final List<Group> results = new ArrayList<>();
+        groupRepository.findAll().forEach(group -> results.add(group));
+        return results;
     }
 
     //endregion
