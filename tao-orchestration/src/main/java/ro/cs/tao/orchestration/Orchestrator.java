@@ -133,10 +133,11 @@ public class Orchestrator extends Notifiable {
      * Creates a job from a workflow definition and starts its execution.
      *
      * @param workflowId    The workflow identifier
+     * @param inputs        The overridden parameter values for workflow nodes
      *
      * @throws ExecutionException   In case anything goes wrong or a job for this workflow was already created
      */
-    public long startWorkflow(long workflowId, Map<String, String> inputs, ExecutorService executorService) throws ExecutionException {
+    public long startWorkflow(long workflowId, Map<String, Map<String, String>> inputs, ExecutorService executorService) throws ExecutionException {
         try {
             WorkflowDescriptor descriptor = persistenceManager.getWorkflowDescriptor(workflowId);
             if (descriptor == null) {

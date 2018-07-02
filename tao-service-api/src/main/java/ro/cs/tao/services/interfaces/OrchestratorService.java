@@ -33,10 +33,11 @@ public interface OrchestratorService {
      * Creates a job from a workflow definition and starts its execution.
      *
      * @param workflowId    The workflow identifier
+     * @param inputs        The overridden parameter values for components
      *
      * @throws ExecutionException   In case anything goes wrong or a job for this workflow was already created
      */
-    long startWorkflow(long workflowId, Map<String, String> inputs) throws ExecutionException;
+    long startWorkflow(long workflowId, Map<String, Map<String, String>> inputs) throws ExecutionException;
     /**
      * Stops the execution of the job corresponding to this workflow.
      *
