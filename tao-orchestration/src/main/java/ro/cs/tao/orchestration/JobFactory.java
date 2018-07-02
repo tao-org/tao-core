@@ -45,7 +45,7 @@ public class JobFactory {
         this.logger = Logger.getLogger(JobFactory.class.getName());
     }
 
-    public ExecutionJob createJob(WorkflowDescriptor workflow, Map<String, String> inputs) throws PersistenceException {
+    public ExecutionJob createJob(WorkflowDescriptor workflow, Map<String, Map<String, String>> inputs) throws PersistenceException {
         ExecutionJob job = null;
         if (workflow != null && workflow.isActive()) {
             job = new ExecutionJob();
@@ -66,9 +66,10 @@ public class JobFactory {
                 if (groups == null ||
                         groups.stream().noneMatch(g -> g.getNodes().stream()
                                                                     .anyMatch(c -> c.getId().equals(node.getId())))) {
-                    ExecutionTask task = createTask(job, workflow, node, inputs);
-                    if (i == 0 && inputs != null && !(task instanceof DataSourceExecutionTask)) {
-                        for (Map.Entry<String, String> entry : inputs.entrySet()) {
+                    Map<String, String> taskInputs = inputs != null ? inputs.get(node.getName()) : null;
+                    ExecutionTask task = createTask(job, workflow, node, taskInputs);
+                    if (i == 0 && taskInputs != null && !(task instanceof DataSourceExecutionTask)) {
+                        for (Map.Entry<String, String> entry : taskInputs.entrySet()) {
                             task.setInputParameterValue(entry.getKey(), entry.getValue());
                         }
                     }
