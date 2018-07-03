@@ -19,7 +19,9 @@ import org.ggf.drmaa.DrmaaException;
 import org.ggf.drmaa.InternalException;
 import org.ggf.drmaa.JobTemplate;
 import org.ggf.drmaa.Session;
+import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.configuration.ConfigurationManager;
+import ro.cs.tao.docker.Application;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.Executor;
@@ -193,14 +195,39 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
     private JobTemplate createJobTemplate(ProcessingExecutionTask task) throws DrmaaException, PersistenceException {
         // Get from the component the execution command
         Container container = null;
+        String[] pArgs = null;
         if (useDockerForExecution) {
             container = persistenceManager.getContainerById(task.getComponent().getContainerId());
             String location = task.getComponent().getFileLocation();
             if (!Paths.get(location).isAbsolute()) {
                 task.getComponent().setExpandedFileLocation(Paths.get(container.getApplicationPath(), location).toString());
             }
+        } else {
+            ProcessingComponent component = task.getComponent();
+            container = persistenceManager.getContainerById(component.getContainerId());
+            Application app = container.getApplications()
+                    .stream()
+                    .filter(a -> component.getId().endsWith(a.getName().toLowerCase()))
+                    .findFirst().orElse(null);
+
+            if (app != null && app.hasParallelFlag()) {
+                Class<?> type = app.parallelArgumentType();
+                if (type.isAssignableFrom(Integer.class)) {
+                    pArgs = app.parallelArguments(Integer.class, Runtime.getRuntime().availableProcessors() / 2);
+                } else if (type.isAssignableFrom(Long.class)) {
+                    pArgs = app.parallelArguments(Integer.class, Runtime.getRuntime().availableProcessors() / 2);
+                } else {
+                    pArgs = app.parallelArguments(Boolean.class, true);
+                }
+            }
+            container = null;
         }
         String executionCmd = task.buildExecutionCommand();
+        if (pArgs != null) {
+            int idx = executionCmd.indexOf('\n');
+            executionCmd = executionCmd.substring(0, idx) + "\n" + String.join("\n", pArgs) +
+                    executionCmd.substring(idx);
+        }
         JobTemplate jt = session.createJobTemplate();
         if (jt == null) {
             throw new ExecutionException("Error creating job template from the session!");

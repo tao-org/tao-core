@@ -28,6 +28,7 @@ public class Application {
 
     private String path;
     private String name;
+    private String parallelFlagTemplate;
 
     @XmlElement(name = "path")
     public String getPath() { return path; }
@@ -36,4 +37,51 @@ public class Application {
     @XmlElement(name = "name")
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
+
+    @XmlElement(name = "parallelFlagTemplate")
+    public String getParallelFlagTemplate() { return parallelFlagTemplate; }
+    public void setParallelFlagTemplate(String parallelFlagTemplate) { this.parallelFlagTemplate = parallelFlagTemplate; }
+
+    public boolean hasParallelFlag() {
+        return this.parallelFlagTemplate != null;
+    }
+
+    public Class<?> parallelArgumentType() {
+        if (hasParallelFlag()) {
+            String typeStr = this.parallelFlagTemplate.substring(this.parallelFlagTemplate.indexOf("<") + 1,
+                                                                 this.parallelFlagTemplate.length() - 1).toLowerCase();
+            switch (typeStr) {
+                case "int":
+                case "integer":
+                    return Integer.class;
+                case "long":
+                    return Long.class;
+                case "bool":
+                case "boolean":
+                    return Boolean.class;
+                default:
+                    throw new UnsupportedOperationException("Invalid argument type");
+            }
+        }
+        return null;
+    }
+
+    public <T> String[] parallelArguments(Class<T> argType, T value) {
+        if (hasParallelFlag()) {
+            if (!argType.equals(parallelArgumentType())) {
+                throw new UnsupportedOperationException("Invalid argument type");
+            }
+            String[] args = this.parallelFlagTemplate.split(" ");
+            if (args.length > 2) {
+                throw new UnsupportedOperationException("Invalid argument template");
+            }
+            if (args.length == 2) {
+                args[1] = String.valueOf(value);
+            } else {
+                args[0] = args[0].substring(0, args[0].indexOf("<")) + String.valueOf(value);
+            }
+            return args;
+        }
+        return null;
+    }
 }
