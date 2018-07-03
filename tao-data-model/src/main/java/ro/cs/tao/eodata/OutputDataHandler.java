@@ -18,8 +18,31 @@ package ro.cs.tao.eodata;
 
 import java.util.List;
 
-public interface EODataHandler<T extends EOData> {
+/**
+ * Interface to be implemented by classes that are supposed to handle (do something with) a collection of items.
+ *
+ * @param <T>   The type of the item to be handled
+ *
+ * @author Cosmin Cara
+ */
+public interface OutputDataHandler<T> {
+    /**
+     * Returns the type for which this handler is intended for.
+     */
     Class<T> isIntendedFor();
+
+    /**
+     * Returns the priority of this handler among the handlers for the intended type.
+     * The highest priority is zero.
+     */
     int getPriority();
+
+    /**
+     * Performs the operation for which this handler is intended on the given list of items.
+     *
+     * @param list  The items to be handled
+     * @return  The list of updated items.
+     *
+     */
     List<T> handle(List<T> list) throws DataHandlingException;
 }

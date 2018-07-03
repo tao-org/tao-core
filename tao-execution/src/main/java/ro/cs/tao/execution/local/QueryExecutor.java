@@ -22,9 +22,9 @@ import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.datasource.DataQuery;
 import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.eodata.EOProduct;
-import ro.cs.tao.execution.EODataHandlerManager;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.Executor;
+import ro.cs.tao.execution.OutputDataHandlerManager;
 import ro.cs.tao.execution.model.DataSourceExecutionTask;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.Query;
@@ -132,7 +132,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> {
                                             product.getName(), e.getMessage()));
             }
         }*/
-        EODataHandlerManager.getInstance().applyHandlers(results);
+        OutputDataHandlerManager.getInstance().applyHandlers(results);
     }
 
     private String serializeResults(List<EOProduct> results) {

@@ -17,8 +17,8 @@
 package ro.cs.tao.execution.local;
 
 import ro.cs.tao.eodata.DataHandlingException;
-import ro.cs.tao.eodata.EODataHandler;
 import ro.cs.tao.eodata.EOProduct;
+import ro.cs.tao.eodata.OutputDataHandler;
 import ro.cs.tao.eodata.Polygon2D;
 import ro.cs.tao.eodata.util.Conversions;
 import ro.cs.tao.persistence.PersistenceManager;
@@ -28,7 +28,12 @@ import java.awt.geom.Point2D;
 import java.util.List;
 import java.util.logging.Logger;
 
-public class ProductPersister implements EODataHandler<EOProduct> {
+/**
+ * Specialization of an output data handler that persists EOProducts to the database.
+ *
+ * @author Cosmin Cara
+ */
+public class ProductPersister implements OutputDataHandler<EOProduct> {
     private final PersistenceManager persistenceManager = SpringContextBridge.services().getPersistenceManager();
     private final Logger logger = Logger.getLogger(getClass().getName());
 
