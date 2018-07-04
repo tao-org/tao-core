@@ -127,7 +127,7 @@ public class JobFactory {
         if (workflowNode instanceof WorkflowNodeGroupDescriptor) {
             task = createTaskGroup(job, workflow, (WorkflowNodeGroupDescriptor) workflowNode, inputs);
         } else {
-            TaoComponent component = null;
+            TaoComponent component;
             List<ParameterValue> customValues = workflowNode.getCustomValues();
             List<ComponentLink> links = workflowNode.getIncomingLinks();
             //try {

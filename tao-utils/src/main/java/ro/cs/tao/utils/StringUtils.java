@@ -304,6 +304,41 @@ public class StringUtils {
     }
 
     /**
+     * Converts a string array to a json representation
+     * @param array The array to be converted
+     * @return  The json array
+     */
+    public static String toJson(String[] array) {
+        if (array == null) {
+            return null;
+        }
+        StringBuilder buffer = new StringBuilder();
+        buffer.append("[");
+        for (String item : array) {
+            buffer.append("\"").append(item).append("\"").append(",");
+        }
+        buffer.setLength(buffer.length() - 1);
+        buffer.append("]");
+        return buffer.toString();
+    }
+
+    /**
+     * Converts a json array to a string array
+     * @param json  The json to be converted
+     * @return  The string array
+     */
+    public static String[] fromJsonArray(String json) {
+        if (json == null) {
+            return null;
+        }
+        if (json.startsWith("[") && json.endsWith("]")) {
+            return json.substring(1, json.length() - 1).split(",");
+        } else {
+            return new String[] { json };
+        }
+    }
+
+    /**
      * Tests whether or not the given string is null or empty.
      *
      * @param str the string to be tested

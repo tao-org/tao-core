@@ -35,9 +35,6 @@ public abstract class TaskCommand {
     public static final TaskCommand SUSPEND = new TaskSuspend();
     public static final TaskCommand RESUME = new TaskResume();
 
-    //private static PersistenceManager persistenceManager;
-
-    private final ExecutionStatus requestedStatus;
     private final Set<ExecutionStatus> allowedStates;
 
     /**
@@ -47,8 +44,7 @@ public abstract class TaskCommand {
         persistenceManager = persister;
     }*/
 
-    private TaskCommand(ExecutionStatus requestedStatus) {
-        this.requestedStatus = requestedStatus;
+    private TaskCommand() {
         this.allowedStates = getAllowedStates();
     }
 
@@ -93,7 +89,7 @@ public abstract class TaskCommand {
      */
     private static class TaskStart extends TaskCommand {
         private TaskStart() {
-            super(ExecutionStatus.QUEUED_ACTIVE);
+            super();
         }
         @Override
         protected Set<ExecutionStatus> getAllowedStates() {
@@ -118,7 +114,7 @@ public abstract class TaskCommand {
      */
     private static class TaskStop extends TaskCommand {
         private TaskStop() {
-            super(ExecutionStatus.CANCELLED);
+            super();
         }
         @Override
         protected Set<ExecutionStatus> getAllowedStates() {
@@ -139,7 +135,7 @@ public abstract class TaskCommand {
      */
     private static class TaskSuspend extends TaskCommand {
         private TaskSuspend() {
-            super(ExecutionStatus.SUSPENDED);
+            super();
         }
         @Override
         protected Set<ExecutionStatus> getAllowedStates() {
@@ -159,7 +155,7 @@ public abstract class TaskCommand {
      */
     private static class TaskResume extends TaskCommand {
         private TaskResume() {
-            super(ExecutionStatus.QUEUED_ACTIVE);
+            super();
         }
         @Override
         protected Set<ExecutionStatus> getAllowedStates() {

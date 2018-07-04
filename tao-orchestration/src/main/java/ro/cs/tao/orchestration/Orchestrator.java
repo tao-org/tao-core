@@ -103,7 +103,7 @@ public class Orchestrator extends Notifiable {
         final Function<Long, WorkflowNodeDescriptor> workflowProvider = this.persistenceManager::getWorkflowNodeById;
         final BiFunction<Long, Long, ExecutionTask> taskByGroupNodeProvider = this.persistenceManager::getTaskByGroupAndNode;
         final BiFunction<Long, Long, ExecutionTask> taskByJobNodeProvider = this.persistenceManager::getTaskByJobAndNode;
-        final BiFunction<Long, String, List<WorkflowNodeDescriptor>> nodesByComponentProvider = this.persistenceManager::getWorkflowNodesByComponentId;
+        //noinspection unchecked
         this.groupTaskSelector = selectors.stream()
                                           .filter(s -> ExecutionGroup.class.equals(s.getTaskContainerClass()))
                                           .map(s -> (TaskSelector<ExecutionGroup>)s)
@@ -111,6 +111,7 @@ public class Orchestrator extends Notifiable {
                                           .orElse(new DefaultGroupTaskSelector());
         this.groupTaskSelector.setWorkflowProvider(workflowProvider);
         this.groupTaskSelector.setTaskByNodeProvider(taskByGroupNodeProvider);
+        //noinspection unchecked
         this.jobTaskSelector = selectors.stream()
                                         .filter(s -> ExecutionJob.class.equals(s.getTaskContainerClass()))
                                         .map(s -> (TaskSelector<ExecutionJob>)s)
@@ -281,14 +282,16 @@ public class Orchestrator extends Notifiable {
                     for (ExecutionTask nextTask : nextTasks) {
                         if (task instanceof DataSourceExecutionTask) {
                             // A DataSourceExecutionTask outputs the list of results as a JSON
-                            List<Variable> values = task.getOutputParameterValues();
+                            final List<Variable> values = task.getOutputParameterValues();
                             int cardinality = 0;
                             Variable theOnlyValue = null;
-                            List<String> valuesList = null;
+                            final List<String> valuesList;
                             if (values != null && values.size() > 0) {
                                 theOnlyValue = values.get(0);
                                 valuesList = new StringListAdapter().marshal(theOnlyValue.getValue());
                                 cardinality = valuesList.size();
+                            } else {
+                                valuesList = new ArrayList<>();
                             }
                             if (cardinality == 0) { // no point to continue since we have nothing to do
                                 logger.severe(String.format("Task %s produced no results", task.getId()));
@@ -329,10 +332,12 @@ public class Orchestrator extends Notifiable {
                                     }
                                 } else { // nextTask accepts a list
                                     Map<String, String> connectedInputs = TaskUtilities.getConnectedInputs(task, nextTask);
-                                    for (Variable var : nextTask.getInputParameterValues()) {
-                                        if (theOnlyValue.getKey().equals(connectedInputs.get(var.getKey()))) {
-                                            nextTask.setInputParameterValue(var.getKey(), theOnlyValue.getValue());
-                                            break;
+                                    if (theOnlyValue != null && connectedInputs != null) {
+                                        for (Variable var : nextTask.getInputParameterValues()) {
+                                            if (theOnlyValue.getKey().equals(connectedInputs.get(var.getKey()))) {
+                                                nextTask.setInputParameterValue(var.getKey(), theOnlyValue.getValue());
+                                                break;
+                                            }
                                         }
                                     }
                                 }
@@ -603,7 +608,7 @@ public class Orchestrator extends Notifiable {
                 && j.getExecutionStatus() != ExecutionStatus.FAILED).findFirst().orElse(null);
     }
 
-    private void bulkSetStatus(Collection<ExecutionTask> tasks, ExecutionStatus status) throws PersistenceException {
+    private void bulkSetStatus(Collection<ExecutionTask> tasks, ExecutionStatus status) {
         if (tasks == null) {
             return;
         }
