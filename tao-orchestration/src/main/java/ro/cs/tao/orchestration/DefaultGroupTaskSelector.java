@@ -39,7 +39,7 @@ public class DefaultGroupTaskSelector implements TaskSelector<ExecutionGroup> {
     private BiFunction<Long, Long, ExecutionTask> taskByNodeProvider;
     private final Logger logger = Logger.getLogger(DefaultJobTaskSelector.class.getName());
 
-    public DefaultGroupTaskSelector() { }
+    DefaultGroupTaskSelector() { }
 
     @Override
     public void setWorkflowProvider(Function<Long, WorkflowNodeDescriptor> workflowProvider) {
