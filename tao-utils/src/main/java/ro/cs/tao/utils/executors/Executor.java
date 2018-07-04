@@ -141,22 +141,29 @@ public abstract class Executor<T> implements Runnable {
     public static int[] execute(OutputConsumer outputConsumer, long timeout, ExecutionUnit... jobs) {
         Executor[] executors = execute(outputConsumer, jobs);
         int[] retCodes = new int[executors.length];
-        long duration, remaining;
-        remaining = timeout * 1000;
-        for (Executor executor : executors) {
-            if (remaining > 0) {
-                duration = System.nanoTime();
-                try {
-                    executor.getWaitObject().await(timeout, TimeUnit.SECONDS);
-                } catch (InterruptedException ignored) {
-                    executor.stop();
-                }
-                duration = System.nanoTime() - duration;
-                remaining -= duration;
-            }
-        }
-        Arrays.stream(executors).filter(Executor::isRunning).forEach(Executor::stop);
+        final CountDownLatch aggregateLatch = new CountDownLatch(jobs.length);
+        final Thread[] waitThreads = new Thread[jobs.length];
         for (int i = 0; i < executors.length; i++) {
+            final int finalI = i;
+            waitThreads[i] = new Thread(() -> {
+                try {
+                    executors[finalI].getWaitObject().await(timeout, TimeUnit.SECONDS);
+                } catch (InterruptedException iex) {
+                    executors[finalI].stop();
+                } finally {
+                    aggregateLatch.countDown();
+                }
+            });
+            waitThreads[i].start();
+        }
+        try {
+            aggregateLatch.await(timeout, TimeUnit.SECONDS);
+        } catch (InterruptedException ignored) { }
+        for (int i = 0; i < executors.length; i++) {
+            if (executors[i].isRunning()) {
+                executors[i].stop();
+            }
+            waitThreads[i] = null;
             retCodes[i] = executors[i].getReturnCode();
         }
         return retCodes;
