@@ -1055,6 +1055,9 @@
             <basic name="path">
                 <column name="path" nullable="true" column-definition="varchar(1024) NULL"/>
             </basic>
+            <basic name="parallelFlagTemplate">
+                <column name="parallel_flag" nullable="true" column-definition="varchar(50) NULL" />
+            </basic>
         </attributes>
     </embeddable>
 
