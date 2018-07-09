@@ -44,6 +44,7 @@
             </basic>
             <basic name="visibility">
                 <column name="visibility_id" nullable="true" column-definition="integer null DEFAULT 2"/>
+                <convert converter="ro.cs.tao.persistence.convert.WorkflowGraphVisibilityConverter" attribute-name="visibility" />
             </basic>
 
             <element-collection name="attributes" target-class="ro.cs.tao.eodata.Attribute" access="PROPERTY" fetch="EAGER">

@@ -28,4 +28,5 @@ public interface StorageService<T> {
     void remove(String name) throws IOException;
     Stream<Path> listFiles(boolean userOnly) throws IOException;
     Stream<Path> listWorkspace(boolean userOnly) throws IOException;
+    Stream<Path> listFiles(String fromPath) throws IOException;
 }
