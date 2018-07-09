@@ -117,6 +117,8 @@ public class PersistenceManager implements MessagePersister {
         }
     }
 
+    public List<EOProduct> getPublicProducts() { return productManager.getPublicEOProducts(); }
+
     public List<VectorData> getVectorDataProducts() {
         return productManager.getVectorDataProducts();
     }

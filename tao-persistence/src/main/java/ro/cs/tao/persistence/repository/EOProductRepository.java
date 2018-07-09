@@ -34,4 +34,7 @@ public interface EOProductRepository extends PagingAndSortingRepository<EOProduc
 
     @Query(value = "SELECT * FROM tao.raster_data_product WHERE location = :location", nativeQuery = true)
     List<EOProduct> getProductsByLocation(@Param("location") String location);
+
+    @Query(value = "SELECT * FROM tao.raster_data_product WHERE visibility_id = 1", nativeQuery = true)
+    List<EOProduct> getPublicProducts();
 }
