@@ -12,7 +12,7 @@
             </entity-listeners>
         </persistence-unit-defaults>
     </persistence-unit-metadata>-->
-
+    
     <!-- Mapped superclasses are only seen for entities (not for embeddables too) -->
 
     <mapped-superclass class="ro.cs.tao.eodata.EOData" access="PROPERTY">
@@ -41,6 +41,9 @@
             </basic>
             <basic name="entryPoint">
                 <column name="entry_point" nullable="true" column-definition="varchar(1000) null"/>
+            </basic>
+            <basic name="visibility">
+                <column name="visibility_id" nullable="true" column-definition="integer null DEFAULT 2"/>
             </basic>
 
             <element-collection name="attributes" target-class="ro.cs.tao.eodata.Attribute" access="PROPERTY" fetch="EAGER">
@@ -272,7 +275,7 @@
             <basic name="logo">
                 <column name="logo_image" nullable="true" column-definition="character varying NULL"/>
             </basic>
-
+            
             <element-collection name="applications" target-class="ro.cs.tao.docker.Application" access="PROPERTY" fetch="EAGER">
                 <collection-table name="tao.container_applications" >
                     <join-column name="container_id" referenced-column-name="id" />
@@ -598,10 +601,10 @@
                     <join-column name="task_id" referenced-column-name="id" />
                 </collection-table>
             </element-collection>
-
+    
             <transient name="stateHandler" />
             <transient name="context" />
-
+            
         </attributes>
     </entity>
 
@@ -866,7 +869,7 @@
 
         </attributes>
     </entity>
-
+    
     <entity class="ro.cs.tao.execution.model.Query" access="PROPERTY">
         <table name="tao.query"/>
         <convert converter="ro.cs.tao.persistence.convert.QueryValuesMapConverter" attribute-name="values"/>
@@ -1055,6 +1058,9 @@
             <basic name="path">
                 <column name="path" nullable="true" column-definition="varchar(1024) NULL"/>
             </basic>
+            <basic name="parallelFlagTemplate">
+                <column name="parallel_flag" nullable="true" column-definition="varchar(50) NULL" />
+            </basic>
         </attributes>
     </embeddable>
 
@@ -1097,7 +1103,7 @@
         </attributes>
     </embeddable>
 
-
+    
     <embeddable class="ro.cs.tao.component.ComponentLink" access="PROPERTY">
         <attributes>
             <basic name="sourceNodeId" fetch="LAZY">

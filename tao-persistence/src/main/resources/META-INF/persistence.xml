@@ -6,7 +6,7 @@
 
     <persistence-unit name="tao" transaction-type="RESOURCE_LOCAL">
 
-        <mapping-file>META-INF/orm.xml</mapping-file>
+        <mapping-file>META-INF/tao_orm.xml</mapping-file>
 
         <class>ro.cs.tao.eodata.Attribute</class>
         <class>ro.cs.tao.eodata.EOProduct</class>

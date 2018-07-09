@@ -18,6 +18,7 @@ package ro.cs.tao.eodata;
 import org.apache.commons.lang.StringUtils;
 import ro.cs.tao.eodata.enums.PixelType;
 import ro.cs.tao.eodata.enums.SensorType;
+import ro.cs.tao.eodata.enums.Visibility;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
@@ -118,6 +119,7 @@ public class EOProduct extends EOData implements Serializable {
         attributes.put("acquisitionDate", safeValue(acquisitionDate));
         attributes.put("width", safeValue(width));
         attributes.put("height", safeValue(height));
+        attributes.put("visibility", (getVisibility() != null ? getVisibility() : Visibility.PRIVATE).name());
         return attributes;
     }
 }

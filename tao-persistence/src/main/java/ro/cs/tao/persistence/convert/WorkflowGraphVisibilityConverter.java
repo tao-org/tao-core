@@ -15,7 +15,7 @@
  */
 package ro.cs.tao.persistence.convert;
 
-import ro.cs.tao.workflow.enums.Visibility;
+import ro.cs.tao.eodata.enums.Visibility;
 
 import javax.persistence.AttributeConverter;
 

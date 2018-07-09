@@ -42,6 +42,9 @@
             <basic name="entryPoint">
                 <column name="entry_point" nullable="true" column-definition="varchar(1000) null"/>
             </basic>
+            <basic name="visibility">
+                <column name="visibility_id" nullable="true" column-definition="integer null DEFAULT 2"/>
+            </basic>
 
             <element-collection name="attributes" target-class="ro.cs.tao.eodata.Attribute" access="PROPERTY" fetch="EAGER">
                 <collection-table name="tao.data_product_attributes" >
