@@ -189,9 +189,9 @@ INSERT INTO tao.workflow_graph_status (status) VALUES ('PUBLISHED');
 
 -- Workflow graph visibility
 
-INSERT INTO tao.workflow_graph_visibility (visibility) VALUES ('PUBLIC');
+INSERT INTO tao.visibility (visibility) VALUES ('PUBLIC');
 
-INSERT INTO tao.workflow_graph_visibility (visibility) VALUES ('PRIVATE');
+INSERT INTO tao.visibility (visibility) VALUES ('PRIVATE');
 
 
 

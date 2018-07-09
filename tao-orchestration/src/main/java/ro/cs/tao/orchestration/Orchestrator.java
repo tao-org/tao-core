@@ -22,6 +22,7 @@ import ro.cs.tao.eodata.DataHandlingException;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.MetadataInspector;
 import ro.cs.tao.eodata.enums.DataFormat;
+import ro.cs.tao.eodata.enums.Visibility;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.OutputDataHandlerManager;
 import ro.cs.tao.execution.model.*;
@@ -683,6 +684,7 @@ public class Orchestrator extends Notifiable {
                 if (metadata != null) {
                     product = metadata.toProductDescriptor(path);
                     product.setUserName(context.getPrincipal().getName());
+                    product.setVisibility(Visibility.PRIVATE);
                 }
             }
         } catch (Exception e2) {

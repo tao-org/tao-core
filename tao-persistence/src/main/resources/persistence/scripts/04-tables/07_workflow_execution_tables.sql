@@ -46,15 +46,15 @@ ALTER TABLE tao.workflow_graph_status ADD CONSTRAINT PK_workflow_graph_status PR
 
 -------------------------------------------------------------------------------
 -- table: workflow_graph_visibility
-DROP TABLE IF EXISTS tao.workflow_graph_visibility CASCADE;
+DROP TABLE IF EXISTS tao.visibility CASCADE;
 
-CREATE TABLE tao.workflow_graph_visibility
+CREATE TABLE tao.visibility
 (
 	id integer NOT NULL,
 	visibility varchar(250) NOT NULL
 );
 
-ALTER TABLE tao.workflow_graph_visibility ADD CONSTRAINT PK_workflow_graph_visibility PRIMARY KEY (id);
+ALTER TABLE tao.visibility ADD CONSTRAINT PK_visibility PRIMARY KEY (id);
 
 
 -------------------------------------------------------------------------------
@@ -83,7 +83,7 @@ ALTER TABLE tao.workflow_graph ADD CONSTRAINT FK_workflow_graph_status
 	FOREIGN KEY (status_id) REFERENCES tao.workflow_graph_status (id) ON DELETE No Action ON UPDATE No Action;
 
 ALTER TABLE tao.workflow_graph ADD CONSTRAINT FK_workflow_graph_visibility
-	FOREIGN KEY (visibility_id) REFERENCES tao.workflow_graph_visibility (id) ON DELETE No Action ON UPDATE No Action;
+	FOREIGN KEY (visibility_id) REFERENCES tao.visibility (id) ON DELETE No Action ON UPDATE No Action;
 
 ALTER TABLE tao.workflow_graph ADD CONSTRAINT FK_workflow_user
 	FOREIGN KEY (username) REFERENCES tao."user" (username) ON DELETE No Action ON UPDATE No Action;

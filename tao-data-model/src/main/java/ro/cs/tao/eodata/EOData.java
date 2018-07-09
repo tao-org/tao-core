@@ -18,6 +18,7 @@ package ro.cs.tao.eodata;
 import com.vividsolutions.jts.geom.Geometry;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import ro.cs.tao.eodata.enums.DataFormat;
+import ro.cs.tao.eodata.enums.Visibility;
 import ro.cs.tao.serialization.CRSAdapter;
 import ro.cs.tao.serialization.GeometryAdapter;
 
@@ -44,6 +45,7 @@ public abstract class EOData implements Serializable {
     private CoordinateReferenceSystem crs;
     private URI location;
     private URI entryPoint;
+    private Visibility visibility;
 
     //region Getters and Setters
     public String getId() {
@@ -83,7 +85,6 @@ public abstract class EOData implements Serializable {
     public List<Attribute> getAttributes() {
         return this.attributes;
     }
-
     public void setAttributes(List<Attribute> attributes) {
         this.attributes = attributes;
     }
@@ -138,7 +139,6 @@ public abstract class EOData implements Serializable {
             return null;
         }
     }
-
     public void setCrs(String crsCode) {
         try {
             this.crs = new CRSAdapter().marshal(crsCode);
@@ -146,12 +146,14 @@ public abstract class EOData implements Serializable {
     }
 
     public String getLocation() { return location != null ? location.toString() : null; }
-
     public void setLocation(String value) throws URISyntaxException { this.location = new URI(value); }
 
     public String getEntryPoint() { return entryPoint != null ? entryPoint.toString() : null; }
-
     public void setEntryPoint(String entryPoint) throws URISyntaxException { this.entryPoint = entryPoint != null ? new URI(entryPoint) : null; }
+
+    public Visibility getVisibility() { return visibility; }
+    public void setVisibility(Visibility visibility) { this.visibility = visibility; }
+
     //endregion
     public Map<String, String> toAttributeMap() {
         Map<String, String> attributes = new HashMap<>();

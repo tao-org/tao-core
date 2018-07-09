@@ -12,16 +12,16 @@ ALTER SEQUENCE tao.workflow_graph_status_id_seq OWNED BY tao.workflow_graph_stat
 
 
 ----- table: tao.workflow_graph_visibility -------------------------------------------------------------------
-DROP SEQUENCE IF EXISTS tao.workflow_graph_visibility_id_seq CASCADE;
+DROP SEQUENCE IF EXISTS tao.visibility_id_seq CASCADE;
 -- create sequence
-CREATE SEQUENCE tao.workflow_graph_visibility_id_seq 
+CREATE SEQUENCE tao.visibility_id_seq
 	INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
 
 -- assign sequence to column
-ALTER TABLE tao.workflow_graph_visibility ALTER COLUMN id SET DEFAULT nextval('tao.workflow_graph_visibility_id_seq');
+ALTER TABLE tao.visibility ALTER COLUMN id SET DEFAULT nextval('tao.visibility_id_seq');
 
 -- assign column to sequence
-ALTER SEQUENCE tao.workflow_graph_visibility_id_seq OWNED BY tao.workflow_graph_visibility.id;
+ALTER SEQUENCE tao.visibility_id_seq OWNED BY tao.visibility.id;
 
 
 -- table: tao.workflow_graph ----------------------------------------------------------------------
