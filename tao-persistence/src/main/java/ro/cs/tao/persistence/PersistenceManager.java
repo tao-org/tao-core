@@ -108,6 +108,8 @@ public class PersistenceManager implements MessagePersister {
     public List<EOProduct> getEOProducts(String...locations) {
         if (locations == null || locations.length == 0) {
             return getEOProducts();
+        } else if (locations.length == 1) {
+            return productManager.getEOProducts(locations[0]);
         } else {
             Set<String> set = new HashSet<>();
             Collections.addAll(set, locations);
