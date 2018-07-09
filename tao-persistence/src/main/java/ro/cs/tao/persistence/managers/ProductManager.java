@@ -70,6 +70,11 @@ public class ProductManager {
         return eoProductRepository.getProductsByLocation(locations);
     }
 
+    @Transactional
+    public List<EOProduct> getEOProducts(String location) {
+        return eoProductRepository.getProductsByLocation(location);
+    }
+
     /**
      * Retrieve all VectorData
      */
