@@ -93,6 +93,9 @@ public class Zipper {
                 }
                 zis.closeEntry();
             }
+            if (deleteAfterDecompress) {
+                Files.delete(source);
+            }
         } catch (IOException e) {
             Logger.getLogger(Zipper.class.getSimpleName()).warning(e.getMessage());
             return null;
