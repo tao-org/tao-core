@@ -471,7 +471,11 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
                     logger.fine("Begin reading from input stream");
                     while (!cancelled && (read = inputStream.read(buffer)) != -1) {
                         outputStream.write(ByteBuffer.wrap(buffer, 0, read));
-                        currentProductProgress = Math.min(currentProductProgress + (double) read * factor, 1.0);
+                        //currentProductProgress = Math.min(currentProductProgress + (double) read * factor, 1.0);
+                        currentProductProgress = currentProductProgress + (double) read * factor;
+                        if (currentProductProgress > 1.0) {
+                            currentProductProgress = 1.0;
+                        }
                     }
                     logger.fine("End reading from input stream");
                     checkCancelled();
