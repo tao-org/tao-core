@@ -151,8 +151,16 @@ public class PersistenceManager implements MessagePersister {
         return productManager.saveEOProduct(eoProduct);
     }
 
+    public void remove(EOProduct product) throws PersistenceException {
+        productManager.removeProduct(product);
+    }
+
     public VectorData saveVectorDataProduct(VectorData vectorDataProduct) throws PersistenceException {
         return productManager.saveVectorDataProduct(vectorDataProduct);
+    }
+
+    public void remove(VectorData product) throws PersistenceException {
+        productManager.removeProduct(product);
     }
 
     public AuxiliaryData saveAuxiliaryData(AuxiliaryData auxiliaryData) throws PersistenceException {

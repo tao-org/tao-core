@@ -135,6 +135,16 @@ public class ProductManager {
     }
 
     @Transactional
+    public void removeProduct(EOProduct eoProduct) throws PersistenceException {
+        eoProductRepository.delete(eoProduct);
+    }
+
+    @Transactional
+    public void removeProduct(VectorData vectorProduct) throws PersistenceException {
+        vectorDataRepository.delete(vectorProduct);
+    }
+
+    @Transactional
     public AuxiliaryData saveAuxiliaryData(AuxiliaryData data) throws PersistenceException {
         // check method parameters
         if (!checkAuxData(data)) {
