@@ -94,5 +94,18 @@ public interface MetadataInspector {
             }
             return product;
         }
+
+        @Override
+        public String toString() {
+            return "Metadata{" +
+                    "footprint='" + footprint + '\'' +
+                    ", crs='" + crs + '\'' +
+                    ", entryPoint=" + entryPoint +
+                    ", pixelType=" + pixelType +
+                    ", productType='" + productType + '\'' +
+                    ", width=" + width +
+                    ", height=" + height +
+                    '}';
+        }
     }
 }
