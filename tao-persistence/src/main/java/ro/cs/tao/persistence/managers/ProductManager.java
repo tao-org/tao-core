@@ -112,8 +112,13 @@ public class ProductManager {
         if (!checkEOProduct(eoProduct)) {
             throw new PersistenceException("Invalid parameters were provided for adding new EO data product!");
         }
-        // save the EOProduct entity
-        EOProduct savedEOProduct = eoProductRepository.save(eoProduct);
+        EOProduct savedEOProduct;
+        if (eoProduct.getId() != null) {
+            eoProductRepository.save(eoProduct);
+            savedEOProduct = eoProduct;
+        } else {
+            savedEOProduct = eoProductRepository.save(eoProduct);
+        }
         if (savedEOProduct.getId() == null) {
             throw new PersistenceException("Error saving EO data product with name: " + eoProduct.getName());
         }
@@ -166,7 +171,8 @@ public class ProductManager {
     private boolean checkEOProduct(EOProduct eoProduct) {
         return eoProduct != null && eoProduct.getId() != null && !eoProduct.getId().isEmpty() &&
                 eoProduct.getName() != null && eoProduct.getGeometry() != null && eoProduct.getProductType() != null &&
-                eoProduct.getLocation() != null && eoProduct.getSensorType() != null && eoProduct.getPixelType() != null;
+                eoProduct.getLocation() != null && eoProduct.getSensorType() != null && eoProduct.getPixelType() != null &&
+                eoProduct.getVisibility() != null;
     }
 
     private boolean checkVectorData(VectorData vectorDataProduct) {
