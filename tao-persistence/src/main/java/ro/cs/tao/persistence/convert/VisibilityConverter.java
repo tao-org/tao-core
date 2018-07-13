@@ -24,7 +24,7 @@ import javax.persistence.AttributeConverter;
  *
  * @author Oana H.
  */
-public class WorkflowGraphVisibilityConverter implements AttributeConverter<Visibility, Integer> {
+public class VisibilityConverter implements AttributeConverter<Visibility, Integer> {
 
     @Override
     public Integer convertToDatabaseColumn(Visibility attribute) {
