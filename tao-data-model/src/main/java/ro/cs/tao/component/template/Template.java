@@ -20,6 +20,9 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import ro.cs.tao.component.template.engine.TemplateEngine;
 
 /**
+ * Base class for processing component templates.
+ * The implementation is an abstract class instead of an interface due to limitation in serialization libraries.
+ *
  * @author Cosmin Cara
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS,

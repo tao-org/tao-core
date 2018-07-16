@@ -25,6 +25,9 @@ import java.util.Map;
 import java.util.Properties;
 
 /**
+ * Base class for data sources.
+ * The implementation is an abstract class instead of an interface due to limitations in serialization libraries.
+ *
  * @author Cosmin Cara
  */
 @XmlRootElement(name = "dataSource")
@@ -35,11 +38,19 @@ public abstract class DataSource<Q extends DataQuery> extends Identifiable {
         this.properties = new Properties();
     }
 
+    /**
+     * Returns the given property value.
+     * @param name  The property name
+     */
     public String getProperty(String name) {
         return this.properties.getProperty(name);
     }
 
     @XmlTransient
+    /**
+     * Returns the capabilities flag of this data source.
+     * See {@link DataSourceCapability} enumeration for more details
+     */
     public int getCapabilities() { return DataSourceCapability.QUERY | DataSourceCapability.DOWNLOAD; }
 
     /**

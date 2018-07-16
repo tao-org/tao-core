@@ -27,7 +27,7 @@ import javax.xml.bind.annotation.adapters.XmlAdapter;
 public class GeometryAdapter extends XmlAdapter<Geometry, String> {
 
     @Override
-    public String unmarshal(Geometry v) throws Exception {
+    public String unmarshal(Geometry v) {
         return v != null ? v.toText() : null;
     }
 

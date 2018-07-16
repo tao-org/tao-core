@@ -36,7 +36,7 @@ public class ProcessExecutor extends Executor<Process> {
     }
 
     @Override
-    public int execute(boolean logMessages) throws IOException, InterruptedException {
+    public int execute(boolean logMessages) throws IOException {
         BufferedReader outReader = null;
         int ret = 0x80000000;
         try {

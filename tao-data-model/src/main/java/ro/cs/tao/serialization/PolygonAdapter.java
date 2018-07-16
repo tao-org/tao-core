@@ -20,16 +20,18 @@ import ro.cs.tao.eodata.Polygon2D;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 
 /**
+ * Adapter for {@link Polygon2D} objects.
+ *
  * @author Cosmin Cara
  */
 public class PolygonAdapter extends XmlAdapter<String, Polygon2D> {
     @Override
-    public Polygon2D unmarshal(String v) throws Exception {
-        return Polygon2D.fromWKT(v);
+    public Polygon2D unmarshal(String v) {
+        return v != null ? Polygon2D.fromWKT(v) : null;
     }
 
     @Override
-    public String marshal(Polygon2D v) throws Exception {
-        return v.toWKT();
+    public String marshal(Polygon2D v) {
+        return v != null ? v.toWKT() : null;
     }
 }

@@ -49,7 +49,7 @@ public interface Win32Api extends StdCallLibrary, Win32Errors {
 
     Map DEFAULT_OPTIONS = Boolean.getBoolean("w32.ascii") ? ASCII_OPTIONS : UNICODE_OPTIONS;
 
-    public class HANDLE extends PointerType {
+    class HANDLE extends PointerType {
         @Override
         public Object fromNative(Object nativeValue, FromNativeContext context) {
             Object o = super.fromNative(nativeValue, context);

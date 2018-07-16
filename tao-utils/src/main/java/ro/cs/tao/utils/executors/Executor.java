@@ -237,7 +237,7 @@ public abstract class Executor<T> implements Runnable {
 
     public void resume() { this.isSuspended = false; }
 
-    public boolean isSuspended() { return this.isSuspended; };
+    public boolean isSuspended() { return this.isSuspended; }
 
     public boolean isRunning() { return !this.isStopped && !this.isSuspended; }
 
@@ -320,7 +320,7 @@ public abstract class Executor<T> implements Runnable {
             curArg = arguments.get(idx);
             if (SHELL_COMMAND_SEPARATOR.equals(curArg) || SHELL_COMMAND_SEPARATOR_AMP.equals(curArg) ||
                     SHELL_COMMAND_SEPARATOR_BAR.equals(curArg)) {
-                arguments.addAll(idx + 1, sudoArgs);;
+                arguments.addAll(idx + 1, sudoArgs);
             }
             idx++;
         }

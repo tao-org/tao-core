@@ -15,9 +15,9 @@
  */
 package ro.cs.tao.component.converters;
 
-import ro.cs.tao.datasource.converters.ConversionException;
-
 /**
+ * Converter for string objects (for consistency use only).
+ *
  * @author Cosmin Cara
  */
 public class StringConverter extends DefaultConverter<String> {
@@ -25,12 +25,12 @@ public class StringConverter extends DefaultConverter<String> {
     public StringConverter() { }
 
     @Override
-    public String stringValue(String value) throws ConversionException {
+    public String stringValue(String value) {
         return value;
     }
 
     @Override
-    public String fromString(String value) throws ConversionException {
+    public String fromString(String value) {
         return value;
     }
 }

@@ -33,7 +33,7 @@ public enum SSHMode {
 
     private final String text;
 
-    private SSHMode(final String text) { this.text = text; }
+    SSHMode(final String text) { this.text = text; }
 
     @Override
     public String toString() { return this.text; }

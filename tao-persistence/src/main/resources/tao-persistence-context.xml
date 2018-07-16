@@ -14,6 +14,6 @@
 	<!-- Sets annotation-configured context -->
 	<context:annotation-config />
 	<!-- Sets annotation-driven transactions -->
-	<tx:annotation-driven transaction-manager="transactionManager" proxy-target-class="false"/>
+	<tx:annotation-driven/>
 
 </beans>

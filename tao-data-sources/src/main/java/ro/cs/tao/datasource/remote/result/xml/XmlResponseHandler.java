@@ -58,11 +58,6 @@ public abstract class XmlResponseHandler<T extends EOData> extends DefaultHandle
     }
 
     @Override
-    public void endDocument() throws SAXException {
-        super.endDocument();
-    }
-
-    @Override
     public void characters(char[] ch, int start, int length) throws SAXException {
         buffer.append(new String(ch, start, length).replace("\n", ""));
     }

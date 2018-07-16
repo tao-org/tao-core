@@ -145,7 +145,7 @@ public class Zipper {
             if (Files.isDirectory(path)) {
                 Files.walkFileTree(path, new FileVisitor<Path>() {
                     @Override
-                    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
                         return FileVisitResult.CONTINUE;
                     }
 
@@ -156,7 +156,7 @@ public class Zipper {
                     }
 
                     @Override
-                    public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+                    public FileVisitResult visitFileFailed(Path file, IOException exc) {
                         return FileVisitResult.CONTINUE;
                     }
 

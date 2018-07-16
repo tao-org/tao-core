@@ -107,7 +107,7 @@ public class StringUtils {
 
         List tokens = split(text, separators, trimTokens, null);
 
-        return (String[]) tokens.toArray(new String[tokens.size()]);
+        return (String[]) tokens.toArray(new String[0]);
     }
 
     /**
@@ -628,7 +628,7 @@ public class StringUtils {
         while (tokenizer.hasMoreTokens()) {
             strList.add(tokenizer.nextToken());
         }
-        return strList.toArray(new String[strList.size()]);
+        return strList.toArray(new String[0]);
     }
 
 //    /**

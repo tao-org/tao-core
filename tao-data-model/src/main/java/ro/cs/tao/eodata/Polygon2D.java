@@ -173,10 +173,10 @@ public class Polygon2D {
                 buffer.append("((");
             }
             PathIterator pathIterator = polygons[j].getPathIterator(null);
-            String format = ".";
+            StringBuilder format = new StringBuilder(".");
             int i = 0;
-            while (i++ < precision) format += "#";
-            DecimalFormat dfFormat = new DecimalFormat(format);
+            while (i++ < precision) format.append("#");
+            DecimalFormat dfFormat = new DecimalFormat(format.toString());
             while (!pathIterator.isDone()) {
                 double[] segment = new double[6];
                 pathIterator.currentSegment(segment);
