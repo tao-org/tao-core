@@ -16,6 +16,7 @@
 
 package ro.cs.tao.services.interfaces;
 
+import ro.cs.tao.datasource.beans.Parameter;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.model.ExecutionJobSummary;
 import ro.cs.tao.execution.model.ExecutionTaskSummary;
@@ -29,6 +30,13 @@ import java.util.Map;
  * @author Cosmin Cara
  */
 public interface OrchestratorService {
+
+    /**
+     * Returns all the settable parameters of the components of a workflow.
+     * The parameters are grouped by the component identifier
+     * @param workflowId    The workflow identifier
+     */
+    Map<String, List<Parameter>> getWorkflowParameters(long workflowId);
     /**
      * Creates a job from a workflow definition and starts its execution.
      *
