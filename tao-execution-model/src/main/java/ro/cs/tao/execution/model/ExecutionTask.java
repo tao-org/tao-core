@@ -177,12 +177,12 @@ public abstract class ExecutionTask implements StatusChangeListener {
 
     // ATTENTION: index is 1-based, while the list is 0-based
     @Transient
-    protected String getListValue(String valuesAsString, int index) throws SerializationException {
+    protected String getListValue(String valuesAsString, int index) {
         List<String> values = getListParameterValues(valuesAsString);
         return values.get(index - 1);
     }
 
-    protected String appendValueToList(String valuesAsString, String newValue) throws SerializationException {
+    protected String appendValueToList(String valuesAsString, String newValue) {
         List<String> values = (valuesAsString == null || valuesAsString.isEmpty()) ?
                 new ArrayList<>() :
                 getListParameterValues(valuesAsString);

@@ -32,14 +32,7 @@
 package org.ggf.drmaa;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * This class is a trivial implementation of the JobTemplate interface.  This
@@ -432,7 +425,7 @@ public class SimpleJobTemplate implements JobTemplate, Serializable {
         return Collections.EMPTY_SET;
     }
 
-    private static final void addRequiredNames(Set names) {
+    private static void addRequiredNames(Set names) {
         names.add("args");
         names.add("blockEmail");
         names.add("email");

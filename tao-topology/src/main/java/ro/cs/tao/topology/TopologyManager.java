@@ -235,20 +235,20 @@ public class TopologyManager implements ITopologyManager {
             logger.warning("Process timed out: " + e.getMessage());
         }
         if (executor.getReturnCode() == 0) {
-            for (int i = 0; i < lines.size(); i++) {
-                String[] tokens = lines.get(i).split(" |\t");
-                List<String> list = Arrays.asList(tokens).stream().filter(item-> !item.trim().isEmpty()).
+            for (String line : lines) {
+                String[] tokens = line.split(" |\t");
+                List<String> list = Arrays.stream(tokens).filter(item -> !item.trim().isEmpty()).
                         map(item -> StringUtils.strip(item, "'")).
                         collect(Collectors.toList());
-                if (list.size() > 2){
+                if (list.size() > 2) {
                     // we might have two formats for the response
                     String containerId = list.get(0);
                     if (!"IMAGE_ID".equals(containerId) && !"REPOSITORY".equals(containerId)) {
                         Container container = new Container();
                         container.setId(containerId);
                         container.setName(containerId.contains("/") ?
-                                containerId.substring(containerId.indexOf("/") + 1) :
-                                containerId);
+                                                  containerId.substring(containerId.indexOf("/") + 1) :
+                                                  containerId);
                         container.setTag(list.get(1));
                         containers.add(container);
                         try {

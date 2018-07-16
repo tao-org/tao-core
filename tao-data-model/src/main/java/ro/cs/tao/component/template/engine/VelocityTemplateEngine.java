@@ -25,7 +25,10 @@ import ro.cs.tao.component.template.Template;
 import ro.cs.tao.component.template.TemplateException;
 import ro.cs.tao.component.template.TemplateType;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.Map;
 
 /**
@@ -95,7 +98,7 @@ public class VelocityTemplateEngine extends TemplateEngine {
         }
     }
 
-    private org.apache.velocity.Template createTemplate(org.apache.velocity.app.VelocityEngine engine, Template internalTemplate) throws ParseException, IOException {
+    private org.apache.velocity.Template createTemplate(org.apache.velocity.app.VelocityEngine engine, Template internalTemplate) throws ParseException {
         org.apache.velocity.Template template;
         if (this.macroTemplateContents != null && !this.macroTemplateContents.isEmpty()) {
             RuntimeServices runtimeServices = RuntimeSingleton.getRuntimeServices();

@@ -68,7 +68,7 @@ public class SSHExecutor extends Executor<Channel> {
     }
 
     @Override
-    public int execute(boolean logMessages) throws IOException, InterruptedException, JSchException, SftpException {
+    public int execute(boolean logMessages) throws IOException, JSchException, SftpException {
         if (!SSHMode.EXEC.equals(this.mode) && asSuperUser) {
             throw new UnsupportedOperationException("Mode not permitted");
         }

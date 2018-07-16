@@ -26,7 +26,7 @@ public enum ReturnCode {
     ERROR(4);
 
     private int value;
-    private ReturnCode(int value) { this.value = value; }
+    ReturnCode(int value) { this.value = value; }
 
     public int value() { return value; }
 }

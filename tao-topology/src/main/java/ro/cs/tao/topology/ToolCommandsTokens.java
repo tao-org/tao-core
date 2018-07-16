@@ -23,21 +23,21 @@ import java.util.List;
  * @author Cosmin Udroiu
  */
 public class ToolCommandsTokens {
-    public static final String MASTER_HOSTNAME = "#master_hostname#";
-    public static final String MASTER_USER = "#master_user#";
-    public static final String MASTER_PASS = "#master_pass#";
-    public static final String NODE_HOSTNAME = "#node_hostname#";
-    public static final String NODE_USER = "#node_user#";
-    public static final String NODE_PASSWORD = "#node_pass#";
-    public static final String NODE_PROCESSORS_CNT = "#procs_cnt#";
-    public static final String INSTALL_SCRIPTS_ROOT_PATH = "#scripts_root_path#";
-    public static final String STEP_OUTPUT = "#step_output#";
+    static final String MASTER_HOSTNAME = "#master_hostname#";
+    static final String MASTER_USER = "#master_user#";
+    static final String MASTER_PASS = "#master_pass#";
+    static final String NODE_HOSTNAME = "#node_hostname#";
+    static final String NODE_USER = "#node_user#";
+    static final String NODE_PASSWORD = "#node_pass#";
+    static final String NODE_PROCESSORS_CNT = "#procs_cnt#";
+    static final String INSTALL_SCRIPTS_ROOT_PATH = "#scripts_root_path#";
+    static final String STEP_OUTPUT = "#step_output#";
 
     private static List<String> tokensList = new ArrayList<>();
 
     static {
         initAllTokensList();
-    };
+    }
 
     public static List<String> getDefinedTokensList() {
         return tokensList;

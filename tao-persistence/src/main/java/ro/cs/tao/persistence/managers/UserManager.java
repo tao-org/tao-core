@@ -19,7 +19,6 @@ package ro.cs.tao.persistence.managers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,11 +31,11 @@ import ro.cs.tao.user.UserPreference;
 import ro.cs.tao.user.UserStatus;
 import ro.cs.tao.utils.StringUtils;
 
-import javax.sql.DataSource;
-import java.sql.PreparedStatement;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 @Configuration
 @EnableTransactionManagement
@@ -325,7 +324,7 @@ public class UserManager {
     }
 
     private boolean contains(List<UserPreference> prefs, String key) {
-        return prefs.stream().filter(p -> p.getKey().equals(key)).findAny().isPresent();
+        return prefs.stream().anyMatch(p -> p.getKey().equals(key));
     }
 
     private void updatePreference(List<UserPreference> prefs, String key, String newValue) {

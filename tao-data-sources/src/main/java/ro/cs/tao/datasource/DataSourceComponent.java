@@ -262,10 +262,12 @@ public class DataSourceComponent extends TaoComponent {
         ProgressNotifier notifier = new ProgressNotifier(SessionStore.currentContext().getPrincipal(),
                                                          this,
                                                          DataSourceTopics.PRODUCT_PROGRESS);
+        String errorMessage;
         for (EOProduct product : products) {
             // add the attribute for max retries such that if the maxRetries is exceeded
             // to be set, on failure, to aborted state
             product.addAttribute("maxRetries", String.valueOf(this.maxRetries));
+            errorMessage = null;
             try {
                 if (!cancelled) {
                     if (this.productStatusListener != null) {
@@ -317,33 +319,27 @@ public class DataSourceComponent extends TaoComponent {
             } catch (InterruptedException iex) {
                 logger.info(String.format("Fetching product '%s' cancelled",
                                           product.getName()));
-                if (this.productStatusListener != null) {
-                    this.productStatusListener.downloadFailed(product, "Cancelled");
-                }
+                errorMessage = "Cancelled";
             } catch (IOException ex) {
                 logger.warning(String.format("Fetching product '%s' failed: %s",
                                              product.getName(), ex.getMessage()));
-                if (this.productStatusListener != null) {
-                    this.productStatusListener.downloadFailed(product, ex.getMessage());
-                }
+                errorMessage = ex.getMessage();
             } catch (URISyntaxException e) {
                 logger.warning(String.format("Updating product location for '%s' failed: %s",
                                              product.getName(), e.getMessage()));
-                if (this.productStatusListener != null) {
-                    this.productStatusListener.downloadFailed(product, e.getMessage());
-                }
+                errorMessage = e.getMessage();
             } catch (NoSuchElementException e) {
                 logger.warning(String.format("Fetching product '%s' ignored: %s",
                                              product.getName(), e.getMessage()));
-                if (this.productStatusListener != null) {
-                    this.productStatusListener.downloadIgnored(product, e.getMessage());
-                }
+                errorMessage = e.getMessage();
             } catch (Exception e) {
-                if (this.productStatusListener != null) {
-                    this.productStatusListener.downloadFailed(product, e.getMessage());
-                }
+                errorMessage = e.getMessage();
             } finally {
-                //notifier.notifyProgress(counter++ / products.size());
+                if (errorMessage != null) {
+                    if (this.productStatusListener != null) {
+                        this.productStatusListener.downloadFailed(product, errorMessage);
+                    }
+                }
                 if (currentFetcher != null) {
                     currentFetcher.resume();
                 }

@@ -18,7 +18,6 @@ package ro.cs.tao.execution.model;
 import ro.cs.tao.component.*;
 import ro.cs.tao.component.validation.ValidationException;
 import ro.cs.tao.security.SessionContext;
-import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.utils.FileUtils;
 
 import java.io.IOException;
@@ -84,23 +83,14 @@ public class ProcessingExecutionTask extends ExecutionTask {
             if (sourceCardinality == 1) {
                 variable.setValue(value);
             } else {
-                try {
-                    variable.setValue(appendValueToList(variable.getValue(), value));
-                } catch (SerializationException e) {
-                    Logger.getLogger(ProcessingExecutionTask.class.getName()).severe(e.getMessage());
-                }
+                variable.setValue(appendValueToList(variable.getValue(), value));
             }
         } else {
             Variable var;
             if (sourceCardinality == 1) {
                 var = new Variable(parameterId, value);
             } else {
-                String newValue = null;
-                try {
-                    newValue = appendValueToList(null, value);
-                } catch (SerializationException e) {
-                    Logger.getLogger(ProcessingExecutionTask.class.getName()).severe(e.getMessage());
-                }
+                String newValue = appendValueToList(null, value);
                 var = new Variable(parameterId, newValue);
             }
             this.inputParameterValues.add(var);
@@ -129,23 +119,14 @@ public class ProcessingExecutionTask extends ExecutionTask {
             if (this.component.getTargetCardinality() == 1) {
                 variable.setValue(value);
             } else {
-                try {
-                    variable.setValue(appendValueToList(variable.getValue(), value));
-                } catch (SerializationException e) {
-                    Logger.getLogger(ProcessingExecutionTask.class.getName()).severe(e.getMessage());
-                }
+                variable.setValue(appendValueToList(variable.getValue(), value));
             }
         } else {
             Variable var;
             if (this.component.getTargetCardinality() == 1) {
                 var = new Variable(parameterId, value);
             } else {
-                String newValue = null;
-                try {
-                    newValue = appendValueToList(null, value);
-                } catch (SerializationException e) {
-                    Logger.getLogger(ProcessingExecutionTask.class.getName()).severe(e.getMessage());
-                }
+                String newValue = appendValueToList(null, value);
                 var = new Variable(parameterId, newValue);
             }
             this.outputParameterValues.add(var);
