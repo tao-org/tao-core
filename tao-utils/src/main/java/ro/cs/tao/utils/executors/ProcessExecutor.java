@@ -52,7 +52,7 @@ public class ProcessExecutor extends Executor<Process> {
                 pb.directory(this.workingDirectory);
             }
             //redirect the error of the tool to the standard output
-            pb.redirectErrorStream(true);
+            pb.redirectErrorStream(logMessages);
             pb.environment().putAll(System.getenv());
             if (asSuperUser) {
                 insertSudoParams();
