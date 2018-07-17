@@ -18,6 +18,7 @@ package ro.cs.tao.utils.executors;
 import com.jcraft.jsch.Channel;
 import ro.cs.tao.utils.Platform;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -53,6 +54,7 @@ public abstract class Executor<T> implements Runnable {
     Logger logger;
     boolean asSuperUser;
     OutputConsumer outputConsumer;
+    File workingDirectory;
 
     private volatile int retCode = Integer.MAX_VALUE;
     private final CountDownLatch counter;
@@ -75,6 +77,33 @@ public abstract class Executor<T> implements Runnable {
                                    job.getArguments(),
                                    job.asSuperUser(),
                                    job.getSshMode());
+        executor.setUser(job.getUser());
+        executor.setPassword(job.getPassword());
+        executor.setOutputConsumer(outputConsumer);
+        executorService.submit(executor);
+        return executor;
+    }
+
+    /**
+     * Submits for execution the given command and returns the executor object.
+     * The caller is responsible of waiting for the completion of the execution by waiting on
+     * Executor.getWaitObject() latch.
+     *
+     * @param outputConsumer    The counsumer of the process output
+     * @param workingDirectory  The context directory
+     * @param job               The command (job) to be executed
+     * @return                  The Executor object that is responsible of execution
+     */
+    public static Executor execute(OutputConsumer outputConsumer, File workingDirectory, ExecutionUnit job) {
+        if (job == null) {
+            throw new IllegalArgumentException("ExecutionUnit must not be null");
+        }
+        Executor executor = create(job.getType(),
+                                   job.getHost(),
+                                   job.getArguments(),
+                                   job.asSuperUser(),
+                                   job.getSshMode(),
+                                   workingDirectory);
         executor.setUser(job.getUser());
         executor.setPassword(job.getPassword());
         executor.setOutputConsumer(outputConsumer);
@@ -170,11 +199,11 @@ public abstract class Executor<T> implements Runnable {
     }
 
     public static Executor create(ExecutorType type, String host, List<String> arguments) {
-        return create(type, host, arguments, false, SSHMode.EXEC);
+        return create(type, host, arguments, false, SSHMode.EXEC, null);
     }
 
     public static Executor create(ExecutorType type, String host, List<String> arguments, boolean asSuperUser) {
-        return create(type, host, arguments, asSuperUser, SSHMode.EXEC);
+        return create(type, host, arguments, asSuperUser, SSHMode.EXEC, null);
     }
 
     public static Executor create(ExecutorType type, String host, List<String> arguments, boolean asSuperUser, SSHMode mode) {
@@ -182,6 +211,19 @@ public abstract class Executor<T> implements Runnable {
         switch (type) {
             case PROCESS:
                 executor = new ProcessExecutor(host, arguments, asSuperUser);
+                break;
+            case SSH2:
+                executor = new SSHExecutor(host, arguments, asSuperUser, mode);
+                break;
+        }
+        return executor;
+    }
+
+    public static Executor create(ExecutorType type, String host, List<String> arguments, boolean asSuperUser, SSHMode mode, File workingDir) {
+        Executor executor = null;
+        switch (type) {
+            case PROCESS:
+                executor = new ProcessExecutor(host, arguments, asSuperUser, workingDir);
                 break;
             case SSH2:
                 executor = new SSHExecutor(host, arguments, asSuperUser, mode);

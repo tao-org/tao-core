@@ -30,6 +30,11 @@ public class ProcessExecutor extends Executor<Process> {
         super(nodeName, args, asSU);
     }
 
+    ProcessExecutor(String nodeName, List<String> args, boolean asSU, File workingDir) {
+        super(nodeName, args, asSU);
+        this.workingDirectory = workingDir;
+    }
+
     @Override
     public boolean canConnect() {
         return true;
@@ -43,6 +48,9 @@ public class ProcessExecutor extends Executor<Process> {
             this.logger.finest("[" + this.host + "] " + String.join(" ", arguments));
             resetProcess();
             ProcessBuilder pb = new ProcessBuilder(arguments);
+            if (this.workingDirectory != null) {
+                pb.directory(this.workingDirectory);
+            }
             //redirect the error of the tool to the standard output
             pb.redirectErrorStream(true);
             pb.environment().putAll(System.getenv());
