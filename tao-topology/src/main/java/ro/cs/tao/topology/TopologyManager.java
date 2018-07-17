@@ -234,6 +234,7 @@ public class TopologyManager implements ITopologyManager {
                                               args, true, SSHMode.EXEC);
         OutputAccumulator consumer = new OutputAccumulator();
         Executor executor = Executor.execute(consumer, job);
+        waitFor(executor, 2, TimeUnit.MINUTES);
         if (executor.getReturnCode() == 0) {
             Container image = getDockerImage(correctedName);
             String localRegistry = ConfigurationManager.getInstance().getValue("docker.registry");
@@ -247,6 +248,7 @@ public class TopologyManager implements ITopologyManager {
                                     args, true, SSHMode.EXEC);
             consumer.reset();
             executor = Executor.execute(consumer, job);
+            waitFor(executor, 2, TimeUnit.MINUTES);
             if (executor.getReturnCode() == 0) {
                 args.clear();
                 args.add("docker");
@@ -257,6 +259,7 @@ public class TopologyManager implements ITopologyManager {
                                         args, true, SSHMode.EXEC);
                 consumer.reset();
                 executor = Executor.execute(consumer, job);
+                waitFor(executor, 2, TimeUnit.MINUTES);
                 if (executor.getReturnCode() == 0) {
                     Messaging.send(principal, Topics.INFORMATION,
                                    String.format("Docker image '%s' successfully registered", correctedName));
@@ -303,11 +306,7 @@ public class TopologyManager implements ITopologyManager {
                 lines.add(message);
             }
         }, job);
-        try {
-            executor.getWaitObject().await(3, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            logger.warning("Process timed out: " + e.getMessage());
-        }
+        waitFor(executor, 3, TimeUnit.SECONDS);
         if (executor.getReturnCode() == 0) {
             for (String line : lines) {
                 String[] tokens = line.split(" |\t");
@@ -327,6 +326,14 @@ public class TopologyManager implements ITopologyManager {
             }
         }
         return container;
+    }
+
+    private void waitFor(Executor executor, long amount, TimeUnit unit) {
+        try {
+            executor.getWaitObject().await(amount, unit);
+        } catch (InterruptedException e) {
+            logger.warning("Process timed out: " + e.getMessage());
+        }
     }
 
     private List<Container> getDockerImages() {
@@ -351,11 +358,7 @@ public class TopologyManager implements ITopologyManager {
                 lines.add(message);
             }
         }, job);
-        try {
-            executor.getWaitObject().await(3, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            logger.warning("Process timed out: " + e.getMessage());
-        }
+        waitFor(executor, 3, TimeUnit.SECONDS);
         if (executor.getReturnCode() == 0) {
             for (String line : lines) {
                 String[] tokens = line.split(" |\t");
