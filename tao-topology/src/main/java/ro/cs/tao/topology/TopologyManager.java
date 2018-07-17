@@ -293,7 +293,7 @@ public class TopologyManager implements ITopologyManager {
             add("images");
             add(name);
             add("--format");
-            add("'{{.ID}}\\t{{.Tag}}\\t{{.Repository}}'");
+            add("{{.ID}}\\t{{.Tag}}\\t{{.Repository}}");
         }};
         ExecutionUnit job = new ExecutionUnit(ExecutorType.PROCESS,
                                               masterNodeInfo.getHostName(),
@@ -372,19 +372,18 @@ public class TopologyManager implements ITopologyManager {
                     if (!"IMAGE_ID".equals(containerId) && !"REPOSITORY".equals(containerId)) {
                         Container container = new Container();
                         container.setId(containerId);
-                        /*container.setName(containerId.contains("/") ?
-                                                  containerId.substring(containerId.indexOf("/") + 1) :
-                                                  containerId);*/
                         container.setName(list.get(2));
                         container.setTag(list.get(1));
                         containers.add(container);
                         try {
-                            final Container existing = getPersistenceManager().getContainerById(containerId);
-                            if (existing == null) {
-                                getPersistenceManager().saveContainer(container);
-                            }
+                            getPersistenceManager().getContainerById(containerId);
                         } catch (PersistenceException e) {
                             logger.warning(e.getMessage());
+                            try {
+                                getPersistenceManager().saveContainer(container);
+                            } catch (PersistenceException e1) {
+                                logger.warning(e1.getMessage());
+                            }
                         }
                     }
                 }

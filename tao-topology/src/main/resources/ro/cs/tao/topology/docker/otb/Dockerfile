@@ -13,8 +13,8 @@ RUN yum -y install epel-release && \
      yum -y install curl bzip2 file which gd libxslt libxml2 python-devel python-pip gcc gcc-c++ git && \
      yum -y clean all
 
-RUN pip install -U pip && \
-     pip install lxml matplotlib numpy scipy scikit-image numexpr
+
+RUN     pip install lxml matplotlib numpy scipy scikit-image numexpr
 
 RUN curl -L https://www.orfeo-toolbox.org/packages/archives/OTB-${OTB_VERSION}-Linux64.run -o OTB-${OTB_VERSION}-Linux64.run && \
      chmod +x OTB-${OTB_VERSION}-Linux64.run && \
@@ -23,11 +23,5 @@ RUN curl -L https://www.orfeo-toolbox.org/packages/archives/OTB-${OTB_VERSION}-L
      chmod a+rx /opt/OTB-${OTB_VERSION}-Linux64/otbenv.profile && \
      ln -s /opt/OTB-${OTB_VERSION}-Linux64/otbenv.profile /etc/profile.d/OTB.sh
 
-COPY dist/gdal-config /usr/bin/
-RUN export C_INCLUDE_PATH=/opt/OTB-${OTB_VERSION}-Linux64/include && \
-     export CPLUS_INCLUDE_PATH=/opt/OTB-${OTB_VERSION}-Linux64/include && \
-     pip install gdal==2.2.1
- 
+
 ENV LD_LIBRARY_PATH=/opt/OTB-${OTB_VERSION}-Linux64/lib/
-
-

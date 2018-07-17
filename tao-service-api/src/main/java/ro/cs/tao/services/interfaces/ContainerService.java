@@ -26,8 +26,8 @@ import java.util.List;
  */
 public interface ContainerService<T> extends CRUDService<Container> {
 
-    Container initOTB(String name, String path);
-    Container initSNAP(String name, String path);
-    Container initializeContainer(String name, String path, List<Application> applications);
+    Container initOTB(String id, String name, String path);
+    Container initSNAP(String id, String name, String path);
+    Container initializeContainer(String id, String name, String path, List<Application> applications);
     void registerContainer(T dockerFile, String shortName, String description) throws IOException;
 }
