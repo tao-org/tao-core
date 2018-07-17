@@ -234,7 +234,7 @@ public class TopologyManager implements ITopologyManager {
                                               args, true, SSHMode.EXEC);
         OutputAccumulator consumer = new OutputAccumulator();
         Executor executor = Executor.execute(consumer, job);
-        waitFor(executor, 2, TimeUnit.MINUTES);
+        waitFor(executor, 3, TimeUnit.MINUTES);
         if (executor.getReturnCode() == 0) {
             Container image = getDockerImage(correctedName);
             String localRegistry = ConfigurationManager.getInstance().getValue("docker.registry");
@@ -248,7 +248,7 @@ public class TopologyManager implements ITopologyManager {
                                     args, true, SSHMode.EXEC);
             consumer.reset();
             executor = Executor.execute(consumer, job);
-            waitFor(executor, 2, TimeUnit.MINUTES);
+            waitFor(executor, 5, TimeUnit.SECONDS);
             if (executor.getReturnCode() == 0) {
                 args.clear();
                 args.add("docker");
@@ -259,7 +259,7 @@ public class TopologyManager implements ITopologyManager {
                                         args, true, SSHMode.EXEC);
                 consumer.reset();
                 executor = Executor.execute(consumer, job);
-                waitFor(executor, 2, TimeUnit.MINUTES);
+                waitFor(executor, 5, TimeUnit.SECONDS);
                 if (executor.getReturnCode() == 0) {
                     Messaging.send(principal, Topics.INFORMATION,
                                    String.format("Docker image '%s' successfully registered", correctedName));
@@ -267,9 +267,10 @@ public class TopologyManager implements ITopologyManager {
                 }
             }
         }
-        Messaging.send(principal, Topics.ERROR,
-                       String.format("Docker image '%s' failed to register. Details: \n%s",
-                                     correctedName, consumer.getOutput()));
+        String message = String.format("Docker image '%s' failed to register. Details: '%s'",
+                                       correctedName, consumer.getOutput());
+        logger.severe(message);
+        Messaging.send(principal, Topics.ERROR, message);
     }
 
     @Override
