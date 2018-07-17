@@ -27,7 +27,6 @@ import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.spi.ServiceLoader;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
-import ro.cs.tao.utils.Platform;
 import ro.cs.tao.utils.async.BinaryTask;
 import ro.cs.tao.utils.async.LazyInitialize;
 import ro.cs.tao.utils.executors.*;
@@ -215,7 +214,8 @@ public class TopologyManager implements ITopologyManager {
            add("images");
            add("--format");
             //noinspection ConstantConditions
-            add(Platform.ID.win != Platform.getCurrentPlatform().getId() ? "table" : "'" + "{{.ID}}\\t{{.Tag}}\\t{{.Repository}}'");
+            //add(Platform.ID.win != Platform.getCurrentPlatform().getId() ? "table" : "'{{.ID}}\\t{{.Tag}}\\t{{.Repository}}'");
+            add("'{{.ID}}\\t{{.Tag}}\\t{{.Repository}}'");
         }};
         ExecutionUnit job = new ExecutionUnit(ExecutorType.PROCESS,
                                               masterNodeInfo.getHostName(),
@@ -246,9 +246,10 @@ public class TopologyManager implements ITopologyManager {
                     if (!"IMAGE_ID".equals(containerId) && !"REPOSITORY".equals(containerId)) {
                         Container container = new Container();
                         container.setId(containerId);
-                        container.setName(containerId.contains("/") ?
+                        /*container.setName(containerId.contains("/") ?
                                                   containerId.substring(containerId.indexOf("/") + 1) :
-                                                  containerId);
+                                                  containerId);*/
+                        container.setName(list.get(2));
                         container.setTag(list.get(1));
                         containers.add(container);
                         try {
@@ -262,6 +263,8 @@ public class TopologyManager implements ITopologyManager {
                     }
                 }
             }
+            List<Container> dbContainers = getPersistenceManager().getContainers();
+            containers.retainAll(dbContainers);
         } else {
             logger.warning("Docker execution failed. Check that Docker is installed and the sudo credentials are valid");
             containers.addAll(getPersistenceManager().getContainers());
