@@ -36,6 +36,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.Principal;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -214,6 +215,8 @@ public class TopologyManager implements ITopologyManager {
         if (imagePath == null || !Files.exists(imagePath)) {
             throw new TopologyException("Invalid image path");
         }
+        Principal principal = SessionStore.currentContext() != null ?
+                SessionStore.currentContext().getPrincipal() : SystemPrincipal.instance();
         //Path imagesPath = Paths.get(ConfigurationManager.getInstance().getValue("tao.docker.images"));
         String correctedName = shortName.replace(" ", "-");
         //Path relativePath = imagesPath.relativize(imagePath);
@@ -255,13 +258,13 @@ public class TopologyManager implements ITopologyManager {
                 consumer.reset();
                 executor = Executor.execute(consumer, job);
                 if (executor.getReturnCode() == 0) {
-                    Messaging.send(SessionStore.currentContext().getPrincipal(), Topics.INFORMATION,
+                    Messaging.send(principal, Topics.INFORMATION,
                                    String.format("Docker image '%s' successfully registered", correctedName));
                     return;
                 }
             }
         }
-        Messaging.send(SessionStore.currentContext().getPrincipal(), Topics.ERROR,
+        Messaging.send(principal, Topics.ERROR,
                        String.format("Docker image '%s' failed to register. Details: \n%s",
                                      correctedName, consumer.getOutput()));
     }
