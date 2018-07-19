@@ -272,6 +272,7 @@ public class PersistenceManager implements MessagePersister {
     }
 
     public ProcessingComponent deleteProcessingComponent(String id) throws PersistenceException {
+        componentCache.remove(id);
         return componentManager.deleteProcessingComponent(id);
     }
     //endregion
