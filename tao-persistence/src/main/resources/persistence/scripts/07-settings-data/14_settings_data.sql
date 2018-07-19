@@ -9,6 +9,12 @@ INSERT INTO tao.component_visibility (visibility) VALUES ('USER');
 INSERT INTO tao.component_visibility (visibility) VALUES ('CONTRIBUTOR');
 
 
+-- Processing components type
+
+INSERT INTO tao.processing_component_type (id, type) VALUES (1, 'EXECUTABLE');
+
+INSERT INTO tao.processing_component_type (id, type) VALUES (2, 'SCRIPT');
+
 
 -- Data formats
 

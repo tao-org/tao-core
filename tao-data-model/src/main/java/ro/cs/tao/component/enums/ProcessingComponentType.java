@@ -13,42 +13,25 @@
  * You should have received a copy of the GNU General Public License along
  * with this program; if not, see http://www.gnu.org/licenses/
  */
-package ro.cs.tao.component;
+
+package ro.cs.tao.component.enums;
 
 import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlEnumValue;
 
-/**
- * Possible types of parameters
- *
- * @author Cosmin Cara
- */
 @XmlEnum(Integer.class)
-public enum ParameterType {
-    /**
-     * The parameter is a regular parameter
-     */
+public enum ProcessingComponentType {
     @XmlEnumValue("1")
-    REGULAR(1),
-    /**
-     * The parameter is a template parameter (describing the invocation of the component, for example)
-     */
+    EXECUTABLE(1),
     @XmlEnumValue("2")
-    TEMPLATE(2);
+    SCRIPT(2);
 
     /**
      * Numerical value for enum constants
      */
     private final int value;
 
-    /**
-     * Constructor
-     * @param s - the integer value identifier
-     */
-    ParameterType(final int s)
-    {
-        value = s;
-    }
+    ProcessingComponentType(int value) { this.value = value; }
 
     @Override
     public String toString()
@@ -61,16 +44,27 @@ public enum ParameterType {
      * @param value the integer value identifier
      * @return the string token corresponding to the integer identifier
      */
-    public static String getEnumConstantNameByValue(final int value)
-    {
-        for (ParameterType type : values())
-        {
-            if ((String.valueOf(value)).equals(type.toString()))
-            {
+    public static String getEnumConstantNameByValue(final int value) {
+        for (ProcessingComponentType type : values()) {
+            if ((String.valueOf(value)).equals(type.toString())) {
                 // return the name of the enum constant having the given value
                 return type.name();
             }
         }
         return null;
+    }
+
+    public static ProcessingComponentType getEnumConstantByValue(final int value) {
+        for (ProcessingComponentType type : values()) {
+            if ((String.valueOf(value)).equals(type.toString())) {
+                // return the name of the enum constant having the given value
+                return type;
+            }
+        }
+        return null;
+    }
+
+    public int getValue() {
+        return value;
     }
 }

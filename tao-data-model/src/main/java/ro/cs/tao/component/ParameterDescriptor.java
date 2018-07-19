@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.component;
 
+import ro.cs.tao.component.enums.ParameterType;
 import ro.cs.tao.component.validation.*;
 
 import javax.xml.bind.annotation.XmlRootElement;

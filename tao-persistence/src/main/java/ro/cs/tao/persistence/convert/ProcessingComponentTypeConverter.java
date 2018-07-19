@@ -13,26 +13,21 @@
  * You should have received a copy of the GNU General Public License along
  * with this program; if not, see http://www.gnu.org/licenses/
  */
+
 package ro.cs.tao.persistence.convert;
 
-import ro.cs.tao.component.enums.ParameterType;
+import ro.cs.tao.component.enums.ProcessingComponentType;
 
 import javax.persistence.AttributeConverter;
 
-/**
- * Converter for ParameterType enum stored values
- *
- * @author Oana H.
- */
-public class ParameterTypeConverter implements AttributeConverter<ParameterType, Integer> {
-
+public class ProcessingComponentTypeConverter implements AttributeConverter<ProcessingComponentType, Integer> {
     @Override
-    public Integer convertToDatabaseColumn(ParameterType attribute) {
-        return attribute != null ? Integer.parseInt(attribute.toString()) : null;
+    public Integer convertToDatabaseColumn(ProcessingComponentType attribute) {
+        return attribute != null ? attribute.getValue() : null;
     }
 
     @Override
-    public ParameterType convertToEntityAttribute(Integer dbData) {
-        return dbData != null ? ParameterType.valueOf(ParameterType.getEnumConstantNameByValue(dbData)) : null;
+    public ProcessingComponentType convertToEntityAttribute(Integer dbData) {
+        return dbData != null ? ProcessingComponentType.getEnumConstantByValue(dbData) : null;
     }
 }
