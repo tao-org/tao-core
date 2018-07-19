@@ -61,6 +61,7 @@ public class ProcessingComponent extends TaoComponent {
     private ProcessingComponentVisibility visibility;
     private boolean active;
     private ProcessingComponentType componentType;
+    private String owner;
 
 
     public ProcessingComponent() {
@@ -270,6 +271,9 @@ public class ProcessingComponent extends TaoComponent {
 
     public ProcessingComponentType getComponentType() { return componentType; }
     public void setComponentType(ProcessingComponentType componentType) { this.componentType = componentType; }
+
+    public String getOwner() { return owner; }
+    public void setOwner(String owner) { this.owner = owner; }
 
     @Override
     public String defaultName() {

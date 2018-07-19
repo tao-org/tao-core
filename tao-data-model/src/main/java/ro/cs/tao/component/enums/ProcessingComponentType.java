@@ -64,7 +64,7 @@ public enum ProcessingComponentType {
         return null;
     }
 
-    public int getValue() {
+    public int value() {
         return value;
     }
 }

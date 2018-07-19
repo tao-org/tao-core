@@ -28,6 +28,7 @@ import ro.cs.tao.component.GroupComponent;
 import ro.cs.tao.component.ParameterDescriptor;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.TaoComponent;
+import ro.cs.tao.component.enums.ProcessingComponentType;
 import ro.cs.tao.component.enums.ProcessingComponentVisibility;
 import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.docker.Application;
@@ -192,6 +193,16 @@ public class ComponentManager {
                         c.getVisibility().getValue() == ProcessingComponentVisibility.CONTRIBUTOR.getValue()) &&
                         c.getActive())
                 .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public List<ProcessingComponent> getUserProcessingComponents(String userName) {
+        return processingComponentRepository.getUserComponentsByType(userName, ProcessingComponentType.EXECUTABLE.value());
+    }
+
+    @Transactional
+    public List<ProcessingComponent> getUserScriptComponents(String userName) {
+        return processingComponentRepository.getUserComponentsByType(userName, ProcessingComponentType.SCRIPT.value());
     }
 
     @Transactional

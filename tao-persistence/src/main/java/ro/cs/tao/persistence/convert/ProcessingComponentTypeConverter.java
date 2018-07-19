@@ -23,7 +23,7 @@ import javax.persistence.AttributeConverter;
 public class ProcessingComponentTypeConverter implements AttributeConverter<ProcessingComponentType, Integer> {
     @Override
     public Integer convertToDatabaseColumn(ProcessingComponentType attribute) {
-        return attribute != null ? attribute.getValue() : null;
+        return attribute != null ? attribute.value() : null;
     }
 
     @Override

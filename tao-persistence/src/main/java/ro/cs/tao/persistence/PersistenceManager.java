@@ -241,6 +241,14 @@ public class PersistenceManager implements MessagePersister {
         return componentManager.getProcessingComponents();
     }
 
+    public List<ProcessingComponent> getUserProcessingComponents(String userName) {
+        return componentManager.getUserProcessingComponents(userName);
+    }
+
+    public List<ProcessingComponent> getUserScriptComponents(String userName) {
+        return componentManager.getUserScriptComponents(userName);
+    }
+
     public ProcessingComponent getProcessingComponentById(String id) {//throws PersistenceException {
         return componentCache.get(id); //componentManager.getProcessingComponentById(id);
     }
