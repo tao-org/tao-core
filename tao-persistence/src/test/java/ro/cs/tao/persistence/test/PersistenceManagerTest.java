@@ -836,6 +836,7 @@ public class PersistenceManagerTest {
             product.setFormatType(DataFormat.RASTER);
             product.setGeometry("POLYGON((24.16023 -9.60737, 24.15266 -7.36319, 22.05055 -7.38847, 22.05739 -9.59798, 24.16023 -9.60737))");
             product.setLocation("https://landsat-pds.s3.amazonaws.com/c1/L8/201/044/LC08_L1TP_201044_20170930_20171013_01_T1");
+            product.setVisibility(Visibility.PRIVATE);
 
             persistenceManager.saveEOProduct(product);
         } catch (Exception e) {
