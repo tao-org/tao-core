@@ -330,6 +330,10 @@
             <basic name="templateContents">
                 <column name="template_contents" nullable="true" column-definition="text NULL"/>
             </basic>
+            
+            <basic name="owner">
+                <column name="owner_user" nullable="true" column-definition="varchar NULL"/>
+            </basic>
 
             <many-to-many name="parameterDescriptors" fetch="EAGER">
                 <join-table name="tao.component_parameters">
