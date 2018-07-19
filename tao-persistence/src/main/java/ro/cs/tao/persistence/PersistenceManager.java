@@ -255,12 +255,16 @@ public class PersistenceManager implements MessagePersister {
 
 
     public ProcessingComponent saveProcessingComponent(ProcessingComponent component) throws PersistenceException {
-        return componentManager.saveProcessingComponent(component);
+        ProcessingComponent c = componentManager.saveProcessingComponent(component);
+        componentCache.put(c.getId(), c);
+        return c;
     }
 
 
     public ProcessingComponent updateProcessingComponent(ProcessingComponent component) throws PersistenceException {
-        return componentManager.updateProcessingComponent(component);
+        ProcessingComponent c = componentManager.updateProcessingComponent(component);
+        componentCache.put(c.getId(), c);
+        return c;
     }
 
     public boolean checkIfExistsComponentById(String id) {
