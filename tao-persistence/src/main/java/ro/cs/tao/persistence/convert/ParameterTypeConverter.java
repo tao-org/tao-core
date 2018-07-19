@@ -15,10 +15,9 @@
  */
 package ro.cs.tao.persistence.convert;
 
-import ro.cs.tao.component.ParameterType;
+import ro.cs.tao.component.enums.ParameterType;
 
 import javax.persistence.AttributeConverter;
-import javax.persistence.Converter;
 
 /**
  * Converter for ParameterType enum stored values
