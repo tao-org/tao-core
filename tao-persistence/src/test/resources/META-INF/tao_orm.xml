@@ -88,12 +88,12 @@
             <basic name="nodeAffinity">
                 <column name="node_affinity" nullable="true" column-definition="varchar(250) NULL"/>
             </basic>
-            <basic name="sourceCardinality">
+            <!--<basic name="sourceCardinality">
                 <column name="source_cardinality" nullable="true" column-definition="integer NOT NULL"/>
             </basic>
             <basic name="targetCardinality">
                 <column name="target_cardinality" nullable="true" column-definition="integer NOT NULL"/>
-            </basic>
+            </basic>-->
 
             <many-to-many name="sources" fetch="LAZY">
                 <join-table name="tao.processing_component_sources">
@@ -322,13 +322,17 @@
             <basic name="componentType">
                 <column name="component_type_id" nullable="true" column-definition="integer NULL DEFAULT 1"/>
             </basic>
-            
+
             <basic name="containerId">
                 <column name="container_id" nullable="false" column-definition="varchar(1024) NOT NULL"/>
             </basic>
 
             <basic name="templateContents">
                 <column name="template_contents" nullable="true" column-definition="text NULL"/>
+            </basic>
+            
+            <basic name="owner">
+                <column name="owner_user" nullable="true" column-definition="varchar NULL"/>
             </basic>
 
             <many-to-many name="parameterDescriptors" fetch="EAGER">
@@ -848,6 +852,9 @@
             <basic name="name">
                 <column name="name" nullable="false" column-definition="varchar(512) NOT NULL"/>
             </basic>
+            <basic name="cardinality">
+                <column name="cardinality" nullable="false" column-definition="integer NOT NULL"/>
+            </basic>
             <basic name="constraints">
                 <column name="constraints" nullable="true" column-definition="text NULL"/>
             </basic>
@@ -856,7 +863,6 @@
 
         </attributes>
     </entity>
-
 
     <entity class="ro.cs.tao.component.TargetDescriptor" access="PROPERTY">
         <table name="tao.target_descriptor"/>
@@ -867,6 +873,9 @@
             </basic>
             <basic name="name">
                 <column name="name" nullable="false" column-definition="varchar(512) NOT NULL"/>
+            </basic>
+            <basic name="cardinality">
+                <column name="cardinality" nullable="false" column-definition="integer NOT NULL"/>
             </basic>
             <basic name="constraints">
                 <column name="constraints" nullable="true" column-definition="text NULL"/>

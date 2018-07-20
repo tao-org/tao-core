@@ -277,6 +277,7 @@ CREATE TABLE tao.source_descriptor
     id varchar(512) NOT NULL DEFAULT(uuid_generate_v4()),
 	parent_id varchar(512) NOT NULL,
 	name varchar(512) NOT NULL,
+	cardinality integer NOT NULL,
 	constraints text NULL,
 
 	data_format_id integer NOT NULL,
@@ -308,6 +309,7 @@ CREATE TABLE tao.target_descriptor
     id varchar(512) NOT NULL DEFAULT(uuid_generate_v4()),
     parent_id varchar(512) NOT NULL,
     name varchar(512) NOT NULL,
+    cardinality integer NOT NULL,
 	constraints text NULL,
 
 	data_format_id integer NOT NULL,

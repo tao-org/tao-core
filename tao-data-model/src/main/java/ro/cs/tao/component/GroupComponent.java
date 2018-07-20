@@ -28,8 +28,7 @@ public class GroupComponent extends TaoComponent {
     private ProcessingComponentVisibility visibility;
     private boolean active;
 
-    public static GroupComponent create(List<SourceDescriptor> sources, int sourceCardinality,
-                                        List<TargetDescriptor> targets, int targetCardinality) {
+    public static GroupComponent create(List<SourceDescriptor> sources, List<TargetDescriptor> targets) {
 
         GroupComponent component = new GroupComponent();
         component.setId(UUID.randomUUID().toString());
@@ -60,10 +59,10 @@ public class GroupComponent extends TaoComponent {
                 data.setSensorType(srcData.getSensorType());
                 data.setCrs(srcData.getCrs());
                 sourceDescriptor.setDataDescriptor(data);
+                sourceDescriptor.setCardinality(source.getCardinality());
                 component.addSource(sourceDescriptor);
             }
         }
-        component.setSourceCardinality(sourceCardinality);
         if (targets != null) {
             for (TargetDescriptor target: targets) {
                 TargetDescriptor targetDescriptor = new TargetDescriptor();
@@ -84,10 +83,10 @@ public class GroupComponent extends TaoComponent {
                 data.setSensorType(srcData.getSensorType());
                 data.setCrs(srcData.getCrs());
                 targetDescriptor.setDataDescriptor(data);
+                targetDescriptor.setCardinality(target.getCardinality());
                 component.addTarget(targetDescriptor);
             }
         }
-        component.setTargetCardinality(targetCardinality);
         component.setActive(true);
         return component;
     }

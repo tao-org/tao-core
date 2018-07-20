@@ -77,17 +77,24 @@ public class ProcessingExecutionTask extends ExecutionTask {
         if (this.inputParameterValues == null) {
             this.inputParameterValues = new ArrayList<>();
         }
-        Variable variable = this.inputParameterValues.stream().filter(v -> v.getKey().equals(parameterId)).findFirst().orElse(null);
-        int sourceCardinality = this.component.getSourceCardinality();
+        Variable variable = this.inputParameterValues.stream()
+                                                     .filter(v -> v.getKey().equals(parameterId))
+                                                     .findFirst()
+                                                     .orElse(null);
+        SourceDescriptor sourceDescriptor = this.component.getSources().stream()
+                                                                       .filter(s -> s.getName().equals(parameterId))
+                                                                       .findFirst()
+                                                                       .orElse(null);
+        final int cardinality = sourceDescriptor != null ? sourceDescriptor.getCardinality() : 1;
         if (variable != null) {
-            if (sourceCardinality == 1) {
+            if (cardinality == 1) {
                 variable.setValue(value);
             } else {
                 variable.setValue(appendValueToList(variable.getValue(), value));
             }
         } else {
             Variable var;
-            if (sourceCardinality == 1) {
+            if (cardinality == 1) {
                 var = new Variable(parameterId, value);
             } else {
                 String newValue = appendValueToList(null, value);
@@ -114,16 +121,24 @@ public class ProcessingExecutionTask extends ExecutionTask {
         if (this.outputParameterValues == null) {
             this.outputParameterValues = new ArrayList<>();
         }
-        Variable variable = this.outputParameterValues.stream().filter(v -> v.getKey().equals(parameterId)).findFirst().orElse(null);
+        Variable variable = this.outputParameterValues.stream()
+                                                      .filter(v -> v.getKey().equals(parameterId))
+                                                      .findFirst()
+                                                      .orElse(null);
+        TargetDescriptor targetDescriptor = this.component.getTargets().stream()
+                                                                       .filter(t -> t.getName().equals(parameterId))
+                                                                       .findFirst()
+                                                                       .orElse(null);
+        final int cardinality = targetDescriptor != null ? targetDescriptor.getCardinality() : 1;
         if (variable != null) {
-            if (this.component.getTargetCardinality() == 1) {
+            if (cardinality == 1) {
                 variable.setValue(value);
             } else {
                 variable.setValue(appendValueToList(variable.getValue(), value));
             }
         } else {
             Variable var;
-            if (this.component.getTargetCardinality() == 1) {
+            if (cardinality == 1) {
                 var = new Variable(parameterId, value);
             } else {
                 String newValue = appendValueToList(null, value);

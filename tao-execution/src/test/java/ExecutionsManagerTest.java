@@ -196,8 +196,8 @@ public class ExecutionsManagerTest {
         processingComponent.setCopyright("");
         processingComponent.setActive(true);
         processingComponent.setVisibility(ProcessingComponentVisibility.USER);
-        processingComponent.setSourceCardinality(0);
-        processingComponent.setTargetCardinality(0);
+        /*processingComponent.setSourceCardinality(0);
+        processingComponent.setTargetCardinality(0);*/
         processingComponent.setContainerId("container01");
 
         return processingComponent;
