@@ -15,10 +15,10 @@
  */
 package ro.cs.tao.persistence.convert;
 
+import ro.cs.tao.EnumUtils;
 import ro.cs.tao.component.enums.ProcessingComponentVisibility;
 
 import javax.persistence.AttributeConverter;
-import javax.persistence.Converter;
 
 /**
  * Converter for ProcessingComponentVisibility enum stored values
@@ -29,11 +29,11 @@ public class ProcessingComponentVisibilityConverter implements AttributeConverte
 
     @Override
     public Integer convertToDatabaseColumn(ProcessingComponentVisibility attribute) {
-        return attribute != null ? Integer.parseInt(attribute.toString()) : null;
+        return attribute != null ? attribute.value() : null;
     }
 
     @Override
     public ProcessingComponentVisibility convertToEntityAttribute(Integer dbData) {
-        return dbData != null ? ProcessingComponentVisibility.valueOf(ProcessingComponentVisibility.getEnumConstantNameByValue(dbData)) : null;
+        return dbData != null ? EnumUtils.getEnumConstantByValue(ProcessingComponentVisibility.class, dbData) : null;
     }
 }

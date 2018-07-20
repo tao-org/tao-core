@@ -39,7 +39,11 @@ import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.topology.NodeServiceStatus;
 import ro.cs.tao.topology.ServiceDescription;
 import ro.cs.tao.topology.ServiceStatus;
-import ro.cs.tao.workflow.*;
+import ro.cs.tao.workflow.ParameterValue;
+import ro.cs.tao.workflow.WorkflowDescriptor;
+import ro.cs.tao.workflow.WorkflowNodeDescriptor;
+import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
+import ro.cs.tao.workflow.enums.ComponentType;
 import ro.cs.tao.workflow.enums.Status;
 
 import java.awt.*;

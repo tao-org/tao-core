@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import ro.cs.tao.component.ComponentLink;
+import ro.cs.tao.workflow.enums.ComponentType;
 import ro.cs.tao.workflow.enums.TransitionBehavior;
 
 import javax.xml.bind.annotation.XmlElement;

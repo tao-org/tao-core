@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.persistence.convert;
 
+import ro.cs.tao.EnumUtils;
 import ro.cs.tao.user.UserStatus;
 
 import javax.persistence.AttributeConverter;
@@ -28,11 +29,11 @@ public class UserStatusConverter implements AttributeConverter<UserStatus, Integ
 
     @Override
     public Integer convertToDatabaseColumn(UserStatus attribute) {
-        return attribute != null ? Integer.parseInt(attribute.toString()) : null;
+        return attribute != null ? attribute.value() : null;
     }
 
     @Override
     public UserStatus convertToEntityAttribute(Integer dbData) {
-        return dbData != null ? UserStatus.valueOf(UserStatus.getEnumConstantNameByValue(dbData)) : null;
+        return dbData != null ? EnumUtils.getEnumConstantByValue(UserStatus.class, dbData) : null;
     }
 }

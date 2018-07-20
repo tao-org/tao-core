@@ -189,8 +189,8 @@ public class ComponentManager {
                 processingComponentRepository.findAll(new Sort(Sort.Direction.ASC,
                                                                Constants.COMPONENT_IDENTIFIER_PROPERTY_NAME)))
                 .stream()
-                .filter(c -> (c.getVisibility().getValue() == ProcessingComponentVisibility.SYSTEM.getValue() ||
-                        c.getVisibility().getValue() == ProcessingComponentVisibility.CONTRIBUTOR.getValue()) &&
+                .filter(c -> (ProcessingComponentVisibility.SYSTEM.value().equals(c.getVisibility().value())  ||
+                        ProcessingComponentVisibility.CONTRIBUTOR.value().equals(c.getVisibility().value())) &&
                         c.getActive())
                 .collect(Collectors.toList());
     }
@@ -318,8 +318,8 @@ public class ComponentManager {
                 groupComponentRepository.findAll(new Sort(Sort.Direction.ASC,
                                                           Constants.COMPONENT_IDENTIFIER_PROPERTY_NAME)))
                 .stream()
-                .filter(c -> (c.getVisibility().getValue() == ProcessingComponentVisibility.SYSTEM.getValue() ||
-                        c.getVisibility().getValue() == ProcessingComponentVisibility.CONTRIBUTOR.getValue()) &&
+                .filter(c -> (ProcessingComponentVisibility.SYSTEM.value().equals(c.getVisibility().value()) ||
+                        ProcessingComponentVisibility.CONTRIBUTOR.value().equals(c.getVisibility().value())) &&
                         c.getActive())
                 .collect(Collectors.toList());
     }

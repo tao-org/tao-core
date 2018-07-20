@@ -15,6 +15,8 @@
  */
 package ro.cs.tao.workflow.enums;
 
+import ro.cs.tao.TaoEnum;
+
 import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlEnumValue;
 
@@ -23,67 +25,34 @@ import javax.xml.bind.annotation.XmlEnumValue;
  * @author Cosmin Cara
  */
 @XmlEnum(Integer.class)
-public enum Status {
+public enum Status implements TaoEnum<Integer> {
     /**
      * The workflow is draft (still in editing mode)
      */
     @XmlEnumValue("1")
-    DRAFT(1),
+    DRAFT(1, "Draft"),
     /**
      * The workflow is validated and ready to be executed, and may still be edited
      */
     @XmlEnumValue("2")
-    READY(2),
+    READY(2, "Ready for Publication"),
     /**
      * The workflow was published and hence cannot be edited
      */
     @XmlEnumValue("3")
-    PUBLISHED(3);
+    PUBLISHED(3, "Published");
 
-    /**
-     * Numerical value for enum constants
-     */
     private final int value;
+    private final String description;
 
-    /**
-     * Constructor
-     * @param s - the integer value identifier
-     */
-    Status(final int s)
-    {
-        value = s;
+    Status(int value, String description) {
+        this.value = value;
+        this.description = description;
     }
-
-    public int value() { return value; }
 
     @Override
-    public String toString()
-    {
-        return String.valueOf(this.value);
-    }
+    public String friendlyName() { return this.description; }
 
-    /**
-     * Retrieve string enum token corresponding to the integer identifier
-     * @param value the integer value identifier
-     * @return the string token corresponding to the integer identifier
-     */
-    public static String getEnumConstantNameByValue(final int value) {
-        for (Status type : values()) {
-            if ((String.valueOf(value)).equals(type.toString())) {
-                // return the name of the enum constant having the given value
-                return type.name();
-            }
-        }
-        return null;
-    }
-
-    public static Status getEnumConstantByValue(final int value) {
-        for (Status type : values()) {
-            if (value == type.value()) {
-                // return the name of the enum constant having the given value
-                return type;
-            }
-        }
-        return null;
-    }
+    @Override
+    public Integer value() { return this.value; }
 }

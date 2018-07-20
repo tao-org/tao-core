@@ -15,16 +15,39 @@
  */
 package ro.cs.tao.eodata.enums;
 
+import ro.cs.tao.TaoEnum;
+
 import javax.xml.bind.annotation.XmlEnum;
+import javax.xml.bind.annotation.XmlEnumValue;
 
 /**
  * @author Cosmin Cara
  */
-@XmlEnum
-public enum PolarisationChannel {
-    HH,
-    HV,
-    VH,
-    VV,
-    UNDEFINED
+@XmlEnum(Integer.class)
+public enum PolarisationChannel implements TaoEnum<Integer> {
+    @XmlEnumValue("1")
+    HH(1, "HH"),
+    @XmlEnumValue("2")
+    HV(2, "HV"),
+    @XmlEnumValue("3")
+    VH(3, "VH"),
+    @XmlEnumValue("4")
+    VV(4, "VV"),
+    @XmlEnumValue("5")
+    UNDEFINED(5, "Undefined");
+
+    private final int value;
+    private final String description;
+
+    PolarisationChannel(int value, String description) {
+        this.value = value;
+        this.description = description;
+    }
+
+    @Override
+    public String friendlyName() { return this.description; }
+
+    @Override
+    public Integer value() { return this.value; }
+
 }

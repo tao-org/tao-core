@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.persistence.convert;
 
+import ro.cs.tao.EnumUtils;
 import ro.cs.tao.eodata.enums.DataFormat;
 
 import javax.persistence.AttributeConverter;
@@ -29,11 +30,11 @@ public class DataFormatConverter implements AttributeConverter<DataFormat, Integ
 
     @Override
     public Integer convertToDatabaseColumn(DataFormat attribute) {
-        return attribute != null ? Integer.parseInt(attribute.toString()) : null;
+        return attribute != null ? attribute.value() : null;
     }
 
     @Override
     public DataFormat convertToEntityAttribute(Integer dbData) {
-        return dbData != null ? DataFormat.valueOf(DataFormat.getEnumConstantNameByValue(dbData)) : null;
+        return dbData != null ? EnumUtils.getEnumConstantByValue(DataFormat.class, dbData) : null;
     }
 }

@@ -16,6 +16,7 @@
 
 package ro.cs.tao.persistence.convert;
 
+import ro.cs.tao.EnumUtils;
 import ro.cs.tao.component.enums.ProcessingComponentType;
 
 import javax.persistence.AttributeConverter;
@@ -28,6 +29,6 @@ public class ProcessingComponentTypeConverter implements AttributeConverter<Proc
 
     @Override
     public ProcessingComponentType convertToEntityAttribute(Integer dbData) {
-        return dbData != null ? ProcessingComponentType.getEnumConstantByValue(dbData) : null;
+        return dbData != null ? EnumUtils.getEnumConstantByValue(ProcessingComponentType.class, dbData) : null;
     }
 }

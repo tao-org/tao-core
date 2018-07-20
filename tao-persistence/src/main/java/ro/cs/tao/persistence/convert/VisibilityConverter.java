@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.persistence.convert;
 
+import ro.cs.tao.EnumUtils;
 import ro.cs.tao.eodata.enums.Visibility;
 
 import javax.persistence.AttributeConverter;
@@ -28,11 +29,11 @@ public class VisibilityConverter implements AttributeConverter<Visibility, Integ
 
     @Override
     public Integer convertToDatabaseColumn(Visibility attribute) {
-        return attribute != null ? Integer.parseInt(attribute.toString()) : null;
+        return attribute != null ? attribute.value() : null;
     }
 
     @Override
     public Visibility convertToEntityAttribute(Integer dbData) {
-        return dbData != null ? Visibility.valueOf(Visibility.getEnumConstantNameByValue(dbData)) : null;
+        return dbData != null ? EnumUtils.getEnumConstantByValue(Visibility.class, dbData) : null;
     }
 }

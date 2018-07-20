@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.persistence.convert;
 
+import ro.cs.tao.EnumUtils;
 import ro.cs.tao.execution.model.ExecutionStatus;
 
 import javax.persistence.AttributeConverter;
@@ -29,11 +30,11 @@ public class ExecutionStatusConverter implements AttributeConverter<ExecutionSta
     @Override
     public Integer convertToDatabaseColumn(ExecutionStatus attribute) {
 
-        return attribute != null ? Integer.parseInt(attribute.toString()) : null;
+        return attribute != null ? attribute.value() : null;
     }
 
     @Override
     public ExecutionStatus convertToEntityAttribute(Integer dbData) {
-        return dbData != null ? ExecutionStatus.valueOf(ExecutionStatus.getEnumConstantNameByValue(dbData)) : null;
+        return dbData != null ? EnumUtils.getEnumConstantByValue(ExecutionStatus.class, dbData) : null;
     }
 }

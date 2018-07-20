@@ -16,6 +16,7 @@
 
 package ro.cs.tao.persistence.convert;
 
+import ro.cs.tao.EnumUtils;
 import ro.cs.tao.workflow.enums.TransitionBehavior;
 
 import javax.persistence.AttributeConverter;
@@ -28,6 +29,6 @@ public class TransitionBehaviorConverter implements AttributeConverter<Transitio
 
     @Override
     public TransitionBehavior convertToEntityAttribute(Integer dbData) {
-        return dbData != null ? TransitionBehavior.getEnumConstantByValue(dbData) : null;
+        return dbData != null ? EnumUtils.getEnumConstantByValue(TransitionBehavior.class, dbData) : null;
     }
 }
