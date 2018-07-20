@@ -15,6 +15,8 @@
  */
 package ro.cs.tao.datasource.remote;
 
+import ro.cs.tao.TaoEnum;
+
 import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlEnumValue;
 
@@ -24,64 +26,49 @@ import javax.xml.bind.annotation.XmlEnumValue;
  * @author Cosmin Cara
  */
 @XmlEnum(Integer.class)
-public enum FetchMode {
+public enum FetchMode implements TaoEnum<Integer> {
     /**
      * Product will be downloaded from the remote site and the corresponding local product,
      * if exists, it will be overwritten
      */
     @XmlEnumValue("1")
-    OVERWRITE(1),
+    OVERWRITE(1, "Overwrite"),
     /**
      * Product will be downloaded from the remote site and, if a corresponding local product exists,
      * the download will be resumed from the current length of the local product
      */
     @XmlEnumValue("2")
-    RESUME(2),
+    RESUME(2, "Resume"),
     /**
      * The product will be copied from a local (or shared) folder into the output folder.
      * No remote download will be performed.
      */
     @XmlEnumValue("3")
-    COPY(3),
+    COPY(3, "Copy"),
     /**
      * Only a symlink to the product file system location, into the output folder, will be created.
      * No remote download will be performed.
      */
     @XmlEnumValue("4")
-    SYMLINK(4),
+    SYMLINK(4, "Symlink"),
     /**
      * No remote download will be performed. This mode behaves like the SYMLINK one, except no symlink
      * is created. Instead, only an existence check of the remote file(s) is performed.
      */
     @XmlEnumValue("5")
-    CHECK(5);
+    CHECK(5, "Existence check only");
 
     private final int value;
-    FetchMode(int value) { this.value = value; }
+    private final String description;
+
+    FetchMode(int value, String description) {
+        this.value = value;
+        this.description = description;
+    }
 
     @Override
-    public String toString()
-    {
-        return String.valueOf(this.value);
-    }
+    public String friendlyName() { return this.description; }
 
-    public int value() { return this.value; }
-
-    /**
-     * Retrieve string enum token corresponding to the integer identifier
-     * @param value the integer value identifier
-     * @return the string token corresponding to the integer identifier
-     */
-    public static String getEnumConstantNameByValue(final int value)
-    {
-        for (FetchMode type : values())
-        {
-            if ((String.valueOf(value)).equals(type.toString()))
-            {
-                // return the name of the enum constant having the given value
-                return type.name();
-            }
-        }
-        return null;
-    }
+    @Override
+    public Integer value() { return this.value; }
 }

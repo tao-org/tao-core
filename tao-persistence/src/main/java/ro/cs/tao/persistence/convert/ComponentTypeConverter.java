@@ -16,7 +16,8 @@
 
 package ro.cs.tao.persistence.convert;
 
-import ro.cs.tao.workflow.ComponentType;
+import ro.cs.tao.EnumUtils;
+import ro.cs.tao.workflow.enums.ComponentType;
 
 import javax.persistence.AttributeConverter;
 
@@ -28,6 +29,6 @@ public class ComponentTypeConverter implements AttributeConverter<ComponentType,
 
     @Override
     public ComponentType convertToEntityAttribute(Integer integer) {
-        return ComponentType.getEnumConstantByValue(integer);
+        return EnumUtils.getEnumConstantByValue(ComponentType.class, integer);
     }
 }

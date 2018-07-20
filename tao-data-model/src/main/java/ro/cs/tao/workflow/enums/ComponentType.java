@@ -13,28 +13,34 @@
  * You should have received a copy of the GNU General Public License along
  * with this program; if not, see http://www.gnu.org/licenses/
  */
-package ro.cs.tao.topology;
+
+package ro.cs.tao.workflow.enums;
 
 import ro.cs.tao.TaoEnum;
 
 import javax.xml.bind.annotation.XmlEnum;
+import javax.xml.bind.annotation.XmlEnumValue;
 
-/**
- * Possible statuses of a service.
- *
- * @author Cosmin Cara
- */
 @XmlEnum(Integer.class)
-public enum ServiceStatus implements TaoEnum<Integer> {
-    NOT_FOUND(1, "Not Found"),
-    INSTALLED(2, "Installed"),
-    UNINSTALLED(3, "Uninstalled"),
-    ERROR(4, "Error");
+public enum ComponentType implements TaoEnum<Integer> {
+
+    @XmlEnumValue("1")
+    DATASOURCE(1, "Data Source"),
+    /**
+     * The workflow is validated and ready to be executed, and may still be edited
+     */
+    @XmlEnumValue("2")
+    PROCESSING(2, "Processing Component"),
+    /**
+     * The workflow was published and hence cannot be edited
+     */
+    @XmlEnumValue("3")
+    GROUP(3, "Group Component");
 
     private final int value;
     private final String description;
 
-    ServiceStatus(int value, String description) {
+    ComponentType(int value, String description) {
         this.value = value;
         this.description = description;
     }

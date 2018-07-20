@@ -15,6 +15,8 @@
  */
 package ro.cs.tao.component.enums;
 
+import ro.cs.tao.TaoEnum;
+
 import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlEnumValue;
 
@@ -24,53 +26,29 @@ import javax.xml.bind.annotation.XmlEnumValue;
  * @author Cosmin Cara
  */
 @XmlEnum(Integer.class)
-public enum ParameterType {
+public enum ParameterType implements TaoEnum<Integer> {
     /**
      * The parameter is a regular parameter
      */
     @XmlEnumValue("1")
-    REGULAR(1),
+    REGULAR(1, "Regular"),
     /**
      * The parameter is a template parameter (describing the invocation of the component, for example)
      */
     @XmlEnumValue("2")
-    TEMPLATE(2);
+    TEMPLATE(2, "Template");
 
-    /**
-     * Numerical value for enum constants
-     */
     private final int value;
+    private final String description;
 
-    /**
-     * Constructor
-     * @param s - the integer value identifier
-     */
-    ParameterType(final int s)
-    {
-        value = s;
+    ParameterType(int value, String description) {
+        this.value = value;
+        this.description = description;
     }
 
     @Override
-    public String toString()
-    {
-        return String.valueOf(this.value);
-    }
+    public String friendlyName() { return this.description; }
 
-    /**
-     * Retrieve string enum token corresponding to the integer identifier
-     * @param value the integer value identifier
-     * @return the string token corresponding to the integer identifier
-     */
-    public static String getEnumConstantNameByValue(final int value)
-    {
-        for (ParameterType type : values())
-        {
-            if ((String.valueOf(value)).equals(type.toString()))
-            {
-                // return the name of the enum constant having the given value
-                return type.name();
-            }
-        }
-        return null;
-    }
+    @Override
+    public Integer value() { return this.value; }
 }

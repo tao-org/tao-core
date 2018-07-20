@@ -13,35 +13,22 @@
  * You should have received a copy of the GNU General Public License along
  * with this program; if not, see http://www.gnu.org/licenses/
  */
-package ro.cs.tao.topology;
 
-import ro.cs.tao.TaoEnum;
-
-import javax.xml.bind.annotation.XmlEnum;
+package ro.cs.tao;
 
 /**
- * Possible statuses of a service.
+ * Interface for decorating enumerations with additional properties.
  *
- * @author Cosmin Cara
+ * @param <T>   The value type of the actual enum.
  */
-@XmlEnum(Integer.class)
-public enum ServiceStatus implements TaoEnum<Integer> {
-    NOT_FOUND(1, "Not Found"),
-    INSTALLED(2, "Installed"),
-    UNINSTALLED(3, "Uninstalled"),
-    ERROR(4, "Error");
+public interface TaoEnum<T> {
+    /**
+     * Returns the friendly name of the enumeration constant.
+     */
+    String friendlyName();
 
-    private final int value;
-    private final String description;
-
-    ServiceStatus(int value, String description) {
-        this.value = value;
-        this.description = description;
-    }
-
-    @Override
-    public String friendlyName() { return this.description; }
-
-    @Override
-    public Integer value() { return this.value; }
+    /**
+     * Returns the value associated to the enumeration constant.
+     */
+    T value();
 }

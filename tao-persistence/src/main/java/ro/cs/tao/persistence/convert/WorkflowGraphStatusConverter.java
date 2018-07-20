@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.persistence.convert;
 
+import ro.cs.tao.EnumUtils;
 import ro.cs.tao.workflow.enums.Status;
 
 import javax.persistence.AttributeConverter;
@@ -28,11 +29,11 @@ public class WorkflowGraphStatusConverter implements AttributeConverter<Status, 
 
     @Override
     public Integer convertToDatabaseColumn(Status attribute) {
-        return attribute != null ? Integer.parseInt(attribute.toString()) : null;
+        return attribute != null ? attribute.value() : null;
     }
 
     @Override
     public Status convertToEntityAttribute(Integer dbData) {
-        return dbData != null ? Status.valueOf(Status.getEnumConstantNameByValue(dbData)) : null;
+        return dbData != null ? EnumUtils.getEnumConstantByValue(Status.class, dbData) : null;
     }
 }

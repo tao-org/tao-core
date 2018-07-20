@@ -15,92 +15,64 @@
  */
 package ro.cs.tao.execution.model;
 
+import ro.cs.tao.TaoEnum;
+
+import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlEnumValue;
 
 /**
  * @author Cosmin Udroiu
  */
-public enum ExecutionStatus {
+@XmlEnum(Integer.class)
+public enum ExecutionStatus implements TaoEnum<Integer> {
     /**
      * Job status cannot be determined.
      */
     @XmlEnumValue("0")
-    UNDETERMINED(0),
+    UNDETERMINED(0, "Not started"),
     /**
      *  Job is queued and active.
      */
     @XmlEnumValue("1")
-    QUEUED_ACTIVE(1),
+    QUEUED_ACTIVE(1, "Queued"),
     /**
      * Job is running.
      */
     @XmlEnumValue("2")
-    RUNNING(2),
+    RUNNING(2, "Running"),
     /**
      * Job is suspended.
      */
     @XmlEnumValue("3")
-    SUSPENDED(3),
+    SUSPENDED(3, "Suspended"),
     /**
      * Job has finished normally.
      */
     @XmlEnumValue("4")
-    DONE(4),
+    DONE(4, "Done"),
     /**
      * Job finished, but terminated abnormally.
      */
     @XmlEnumValue("5")
-    FAILED(5),
+    FAILED(5, "Failed"),
     /**
      * Job cancelled.
      */
     @XmlEnumValue("6")
-    CANCELLED(6);
+    CANCELLED(6, "Cancelled");
 
-    /**
-     * Numerical value for enum constants
-     */
     private final int value;
+    private final String description;
 
-    /**
-     * Constructor
-     * @param s - the integer value identifier
-     */
-    ExecutionStatus(final int s)
-    {
-        value = s;
+    ExecutionStatus(int value, String description) {
+        this.value = value;
+        this.description = description;
     }
 
     @Override
-    public String toString()
-    {
-        return String.valueOf(this.value);
-    }
+    public String friendlyName() { return this.description; }
 
-    public int value() { return this.value; }
+    @Override
+    public Integer value() { return this.value; }
 
-    /**
-     * Retrieve string enum token corresponding to the integer identifier
-     * @param value the integer value identifier
-     * @return the string token corresponding to the integer identifier
-     */
-    public static String getEnumConstantNameByValue(final int value) {
-        for (ExecutionStatus type : values()) {
-            if ((String.valueOf(value)).equals(type.toString())) {
-                // return the name of the enum constant having the given value
-                return type.name();
-            }
-        }
-        return null;
-    }
-
-    public static ExecutionStatus getEnumConstantByValue(final int value) {
-        for (ExecutionStatus type : values()) {
-            if ((String.valueOf(value)).equals(type.toString())) {
-                // return the name of the enum constant having the given value
-                return type;
-            }
-        }
-        return null;
-    }
 }

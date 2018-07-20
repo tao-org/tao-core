@@ -15,16 +15,33 @@
  */
 package ro.cs.tao.eodata.enums;
 
+import ro.cs.tao.TaoEnum;
+
 import javax.xml.bind.annotation.XmlEnum;
 
 /**
  * @author Cosmin Cara
  */
-@XmlEnum
-public enum PolarisationMode {
-    D,
-    Q,
-    S,
-    T,
-    UNDEFINED
+@XmlEnum(Integer.class)
+public enum PolarisationMode implements TaoEnum<Integer> {
+    D(1, "D"),
+    Q(2, "Q"),
+    S(3, "S"),
+    T(4, "T"),
+    UNDEFINED(5, "Undefined");
+
+    private final int value;
+    private final String description;
+
+    PolarisationMode(int value, String description) {
+        this.value = value;
+        this.description = description;
+    }
+
+
+    @Override
+    public String friendlyName() { return this.description; }
+
+    @Override
+    public Integer value() { return this.value; }
 }

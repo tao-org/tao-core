@@ -16,55 +16,29 @@
 
 package ro.cs.tao.component.enums;
 
+import ro.cs.tao.TaoEnum;
+
 import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlEnumValue;
 
 @XmlEnum(Integer.class)
-public enum ProcessingComponentType {
+public enum ProcessingComponentType implements TaoEnum<Integer> {
     @XmlEnumValue("1")
-    EXECUTABLE(1),
+    EXECUTABLE(1, "Executable"),
     @XmlEnumValue("2")
-    SCRIPT(2);
+    SCRIPT(2, "Script");
 
-    /**
-     * Numerical value for enum constants
-     */
     private final int value;
+    private final String description;
 
-    ProcessingComponentType(int value) { this.value = value; }
+    ProcessingComponentType(int value, String description) {
+        this.value = value;
+        this.description = description;
+    }
 
     @Override
-    public String toString()
-    {
-        return String.valueOf(this.value);
-    }
+    public String friendlyName() { return this.description; }
 
-    /**
-     * Retrieve string enum token corresponding to the integer identifier
-     * @param value the integer value identifier
-     * @return the string token corresponding to the integer identifier
-     */
-    public static String getEnumConstantNameByValue(final int value) {
-        for (ProcessingComponentType type : values()) {
-            if ((String.valueOf(value)).equals(type.toString())) {
-                // return the name of the enum constant having the given value
-                return type.name();
-            }
-        }
-        return null;
-    }
-
-    public static ProcessingComponentType getEnumConstantByValue(final int value) {
-        for (ProcessingComponentType type : values()) {
-            if ((String.valueOf(value)).equals(type.toString())) {
-                // return the name of the enum constant having the given value
-                return type;
-            }
-        }
-        return null;
-    }
-
-    public int value() {
-        return value;
-    }
+    @Override
+    public Integer value() { return this.value; }
 }

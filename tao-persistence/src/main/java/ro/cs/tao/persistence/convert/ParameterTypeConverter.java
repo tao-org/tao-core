@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.persistence.convert;
 
+import ro.cs.tao.EnumUtils;
 import ro.cs.tao.component.enums.ParameterType;
 
 import javax.persistence.AttributeConverter;
@@ -28,11 +29,11 @@ public class ParameterTypeConverter implements AttributeConverter<ParameterType,
 
     @Override
     public Integer convertToDatabaseColumn(ParameterType attribute) {
-        return attribute != null ? Integer.parseInt(attribute.toString()) : null;
+        return attribute != null ? attribute.value() : null;
     }
 
     @Override
     public ParameterType convertToEntityAttribute(Integer dbData) {
-        return dbData != null ? ParameterType.valueOf(ParameterType.getEnumConstantNameByValue(dbData)) : null;
+        return dbData != null ? EnumUtils.getEnumConstantByValue(ParameterType.class, dbData) : null;
     }
 }

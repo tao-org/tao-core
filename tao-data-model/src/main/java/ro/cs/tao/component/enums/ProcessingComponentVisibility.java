@@ -15,6 +15,8 @@
  */
 package ro.cs.tao.component.enums;
 
+import ro.cs.tao.TaoEnum;
+
 import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlEnumValue;
 
@@ -22,62 +24,34 @@ import javax.xml.bind.annotation.XmlEnumValue;
  * @author Oana H.
  */
 @XmlEnum(Integer.class)
-public enum ProcessingComponentVisibility {
+public enum ProcessingComponentVisibility implements TaoEnum<Integer> {
     /**
      * TAO system build-in component
      */
     @XmlEnumValue("1")
-    SYSTEM(1),
+    SYSTEM(1, "System"),
     /**
      * User defined component
      */
     @XmlEnumValue("2")
-    USER(2),
+    USER(2, "User"),
     /**
      * Contributor defined component
      */
     @XmlEnumValue("3")
-    CONTRIBUTOR(3);
+    CONTRIBUTOR(3, "Contributor");
 
-    /**
-     * Numerical value for enum constants
-     */
     private final int value;
+    private final String description;
 
-    /**
-     * Constructor
-     * @param s - the integer value identifier
-     */
-    ProcessingComponentVisibility(final int s)
-    {
-        value = s;
+    ProcessingComponentVisibility(int value, String description) {
+        this.value = value;
+        this.description = description;
     }
 
     @Override
-    public String toString()
-    {
-        return String.valueOf(this.value);
-    }
+    public String friendlyName() { return this.description; }
 
-    /**
-     * Retrieve string enum token corresponding to the integer identifier
-     * @param value the integer value identifier
-     * @return the string token corresponding to the integer identifier
-     */
-    public static String getEnumConstantNameByValue(final int value)
-    {
-        for (ProcessingComponentVisibility type : values())
-        {
-            if ((String.valueOf(value)).equals(type.toString()))
-            {
-                // return the name of the enum constant having the given value
-                return type.name();
-            }
-        }
-        return null;
-    }
-
-    public int getValue() {
-        return value;
-    }
+    @Override
+    public Integer value() { return this.value; }
 }

@@ -15,6 +15,8 @@
  */
 package ro.cs.tao.eodata.enums;
 
+import ro.cs.tao.TaoEnum;
+
 import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlEnumValue;
 
@@ -23,62 +25,30 @@ import javax.xml.bind.annotation.XmlEnumValue;
  * @author Cosmin Cara
  */
 @XmlEnum(Integer.class)
-public enum Visibility {
+public enum Visibility implements TaoEnum<Integer> {
     /**
      * The workflow is public
      */
     @XmlEnumValue("1")
-    PUBLIC(1),
+    PUBLIC(1, "Public"),
     /**
      * The workflow is private (visible only to the author)
      */
     @XmlEnumValue("2")
-    PRIVATE(2);
+    PRIVATE(2, "Private");
 
-    /**
-     * Numerical value for enum constants
-     */
     private final int value;
+    private final String description;
 
-    /**
-     * Constructor
-     * @param s - the integer value identifier
-     */
-    Visibility(final int s)
-    {
-        value = s;
+    Visibility(int value, String description) {
+        this.value = value;
+        this.description = description;
     }
-
-    public int value() { return value; }
 
     @Override
-    public String toString()
-    {
-        return String.valueOf(this.value);
-    }
+    public String friendlyName() { return this.description; }
 
-    /**
-     * Retrieve string enum token corresponding to the integer identifier
-     * @param value the integer value identifier
-     * @return the string token corresponding to the integer identifier
-     */
-    public static String getEnumConstantNameByValue(final int value) {
-        for (Visibility type : values()) {
-            if ((String.valueOf(value)).equals(type.toString())) {
-                // return the name of the enum constant having the given value
-                return type.name();
-            }
-        }
-        return null;
-    }
+    @Override
+    public Integer value() { return this.value; }
 
-    public static Visibility getEnumConstantByValue(final int value) {
-        for (Visibility type : values()) {
-            if (value == type.value()) {
-                // return the name of the enum constant having the given value
-                return type;
-            }
-        }
-        return null;
-    }
 }
