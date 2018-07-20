@@ -85,7 +85,6 @@ public class DataSourceComponent extends TaoComponent {
         this.sensorName = sensorName;
         this.dataSourceName = dataSourceName;
         this.id = sensorName + "-" + dataSourceName;
-        this.targetCardinality = 0;
         this.logger = Logger.getLogger(DataSourceComponent.class.getSimpleName());
         SourceDescriptor sourceDescriptor = new SourceDescriptor();
         sourceDescriptor.setParentId(this.id);
@@ -93,7 +92,7 @@ public class DataSourceComponent extends TaoComponent {
         DataDescriptor srcData = new DataDescriptor();
         srcData.setFormatType(DataFormat.OTHER);
         sourceDescriptor.setDataDescriptor(srcData);
-        this.sourceCardinality = 0;
+        sourceDescriptor.setCardinality(0);
         addSource(sourceDescriptor);
 
         TargetDescriptor targetDescriptor = new TargetDescriptor();
@@ -102,7 +101,7 @@ public class DataSourceComponent extends TaoComponent {
         DataDescriptor destData = new DataDescriptor();
         destData.setFormatType(DataFormat.RASTER);
         targetDescriptor.setDataDescriptor(destData);
-        this.targetCardinality = 0;
+        targetDescriptor.setCardinality(0);
         addTarget(targetDescriptor);
     }
 
@@ -155,8 +154,11 @@ public class DataSourceComponent extends TaoComponent {
         }
     }
 
-    @Override
-    public void setSourceCardinality(int sourceCardinality) { this.sourceCardinality = 1; }
+    public void setSourceCardinality(int sourceCardinality) {
+        if (this.sources != null && this.sources.size() == 1) {
+            this.sources.get(0).setCardinality(1);
+        }
+    }
 
     @Override
     public void addSource(SourceDescriptor source) {
@@ -171,9 +173,10 @@ public class DataSourceComponent extends TaoComponent {
         throw new RuntimeException("Not allowed on " + getClass().getName());
     }
 
-    @Override
     public void setTargetCardinality(int targetCardinality) {
-        this.targetCardinality = targetCardinality;
+        if (this.targets != null && this.targets.size() == 1) {
+            this.targets.get(0).setCardinality(1);
+        }
     }
 
     @Override

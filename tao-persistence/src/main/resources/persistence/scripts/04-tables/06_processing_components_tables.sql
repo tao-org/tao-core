@@ -102,8 +102,6 @@ CREATE TABLE tao.processing_component
 	authors varchar(1024) NOT NULL,
 	copyright text NOT NULL,
 	node_affinity varchar(250) NULL,
-	source_cardinality integer NOT NULL,
-    target_cardinality integer NOT NULL,
     container_id varchar(1024) NULL,
 	main_tool_file_location varchar(512) NOT NULL,
 	working_directory varchar(512) NULL,

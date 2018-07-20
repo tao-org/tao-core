@@ -17,9 +17,7 @@
 package ro.cs.tao.orchestration.util;
 
 import org.springframework.stereotype.Component;
-import ro.cs.tao.component.ComponentLink;
-import ro.cs.tao.component.TaoComponent;
-import ro.cs.tao.component.Variable;
+import ro.cs.tao.component.*;
 import ro.cs.tao.execution.model.DataSourceExecutionTask;
 import ro.cs.tao.execution.model.ExecutionJob;
 import ro.cs.tao.execution.model.ExecutionStatus;
@@ -28,6 +26,7 @@ import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.enums.TransitionBehavior;
 
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -82,15 +81,50 @@ public class TaskUtilities {
      */
     public static int getSourceCardinality(ExecutionTask task) {
         TaoComponent component = getComponentFor(task);
-        return component != null ? component.getSourceCardinality() : -1;
+        return getSourceCardinality(component);
     }
+
+    public static int getSourceCardinality(TaoComponent component) {
+        int cardinality = -1;
+        if (component != null) {
+            List<SourceDescriptor> sources = component.getSources();
+            if (sources != null && sources.size() > 0) {
+                if (sources.size() == 1) {
+                    cardinality = sources.get(0).getCardinality();
+                } else {
+                    cardinality = sources.stream()
+                            .max(Comparator.comparingInt(SourceDescriptor::getCardinality))
+                            .get().getCardinality();
+                }
+            }
+        }
+        return cardinality;
+    }
+
     /**
      * Returns the cardinality of outputs for a given execution task
      * @param task      The task
      */
     public static int getTargetCardinality(ExecutionTask task) {
         TaoComponent component = getComponentFor(task);
-        return component != null ? component.getTargetCardinality() : -1;
+        return getSourceCardinality(component);
+    }
+
+    public static int getTargetCardinality(TaoComponent component) {
+        int cardinality = -1;
+        if (component != null) {
+            List<TargetDescriptor> targets = component.getTargets();
+            if (targets != null && targets.size() > 0) {
+                if (targets.size() == 1) {
+                    cardinality = targets.get(0).getCardinality();
+                } else {
+                    cardinality = targets.stream()
+                            .max(Comparator.comparingInt(TargetDescriptor::getCardinality))
+                            .get().getCardinality();
+                }
+            }
+        }
+        return cardinality;
     }
     /**
      * Returns the mapping between two tasks. The map keys are the targetTask's inputs, while the map values

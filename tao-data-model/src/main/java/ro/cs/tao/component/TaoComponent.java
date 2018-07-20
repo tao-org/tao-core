@@ -39,8 +39,8 @@ public abstract class TaoComponent extends Identifiable {
     protected String copyright;
     protected String nodeAffinity;
 
-    protected int sourceCardinality;
-    protected int targetCardinality = 1;
+    /*protected int cardinality;
+    protected int targetCardinality = 1;*/
     protected List<SourceDescriptor> sources;
     protected List<TargetDescriptor> targets;
 
@@ -115,47 +115,6 @@ public abstract class TaoComponent extends Identifiable {
     public void setNodeAffinity(String nodeAffinity) { this.nodeAffinity = nodeAffinity; }
 
     /**
-     * Returns the cardinality of inputs.
-     * If the value is -1, the inputs represent a list of data objects.
-     */
-    public int getSourceCardinality() { return sourceCardinality; }
-    public void setSourceCardinality(int sourceCardinality) {
-        this.sourceCardinality = sourceCardinality;
-        if (this.sources == null) {
-            this.sources = new ArrayList<>(sourceCardinality);
-        } else {
-            if (sourceCardinality > 0 && this.sources.size() > sourceCardinality) {
-                int toRemove = sourceCardinality - this.sources.size();
-                while (toRemove > 0) {
-                    this.sources.remove(this.sources.size() - 1);
-                    toRemove--;
-                }
-            }
-        }
-    }
-
-    /**
-     * Returns the cardinality of outputs.
-     * If the value is -1, the outputs represent a list of data objects.
-     * By default, the cardinality of the outputs is 1.
-     */
-    public int getTargetCardinality() { return targetCardinality; }
-    public void setTargetCardinality(int targetCardinality) {
-        this.targetCardinality = targetCardinality;
-        if (this.targets == null) {
-            this.targets = new ArrayList<>(targetCardinality);
-        } else {
-            if (targetCardinality > 0 && this.targets.size() > targetCardinality) {
-                int toRemove = targetCardinality - this.targets.size();
-                while (toRemove > 0) {
-                    this.targets.remove(this.targets.size() - 1);
-                    toRemove--;
-                }
-            }
-        }
-    }
-
-    /**
      * Returns the inputs of this component
      */
     @XmlElementWrapper(name = "inputs")
@@ -168,9 +127,6 @@ public abstract class TaoComponent extends Identifiable {
      */
     public void setSources(List<SourceDescriptor> sources) {
         this.sources = sources;
-        if (this.sources != null && this.sourceCardinality != 0) {
-            this.sourceCardinality = this.sources.size();
-        }
     }
 
     /**
@@ -182,7 +138,6 @@ public abstract class TaoComponent extends Identifiable {
         }
         source.setParentId(this.id);
         this.sources.add(source);
-        this.sourceCardinality = this.sources.size();
     }
     /**
      * Removes an input of this component
@@ -191,7 +146,6 @@ public abstract class TaoComponent extends Identifiable {
         source.setParentId(null);
         if (this.sources != null) {
             this.sources.remove(source);
-            this.sourceCardinality = this.sources.size();
         }
     }
     /**
@@ -208,9 +162,6 @@ public abstract class TaoComponent extends Identifiable {
      */
     public void setTargets(List<TargetDescriptor> targets) {
         this.targets = targets;
-        if (this.targets != null && this.targetCardinality != 0) {
-            this.targetCardinality = this.targets.size();
-        }
     }
     /**
      * Adds an output to this component.
@@ -223,7 +174,6 @@ public abstract class TaoComponent extends Identifiable {
         }
         target.setParentId(this.id);
         this.targets.add(target);
-        this.targetCardinality = this.targets.size();
     }
     /**
      * Removes an output of this component
@@ -234,7 +184,6 @@ public abstract class TaoComponent extends Identifiable {
         target.setParentId(null);
         if (this.targets != null) {
             this.targets.remove(target);
-            this.targetCardinality = this.targets.size();
         }
     }
     /**
@@ -244,10 +193,22 @@ public abstract class TaoComponent extends Identifiable {
     public TaoComponent clone() throws CloneNotSupportedException {
         TaoComponent clone = (TaoComponent) super.clone();
         if (this.sources != null) {
-            clone.setSources(this.sources);
+            List<SourceDescriptor> clonedSources = new ArrayList<>(this.sources.size());
+            for (SourceDescriptor sourceDescriptor : this.sources) {
+                SourceDescriptor dClone = sourceDescriptor.clone();
+                dClone.setParentId(clone.getId());
+                clonedSources.add(dClone);
+            }
+            clone.setSources(clonedSources);
         }
         if (this.targets != null) {
-            clone.setTargets(this.targets);
+            List<TargetDescriptor> clonedTargets = new ArrayList<>(this.targets.size());
+            for (TargetDescriptor targetDescriptor : this.targets) {
+                TargetDescriptor dClone = targetDescriptor.clone();
+                dClone.setParentId(clone.getId());
+                clonedTargets.add(dClone);
+            }
+            clone.setTargets(clonedTargets);
         }
         return clone;
     }

@@ -550,8 +550,8 @@ public class PersistenceManagerTest {
         component.setActive(true); // TODO
 
         component.setContainerId(containerId);
-        component.setSourceCardinality(0);
-        component.setTargetCardinality(0);
+        /*component.setSourceCardinality(0);
+        component.setTargetCardinality(0);*/
 
         // list of component variables
         Set<Variable> variables = new HashSet<>();
