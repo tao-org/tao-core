@@ -42,6 +42,7 @@ import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.serialization.StringListAdapter;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.user.UserPreference;
+import ro.cs.tao.utils.FileUtils;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
@@ -264,6 +265,13 @@ public class Orchestrator extends Notifiable {
                         String targetOutput = pcTask.getInstanceTargetOuptut(t);
                         if (targetOutput == null) {
                             logger.severe(String.format("NULL TARGET [task %s, parameter %s]", pcTask.getId(), t.getName()));
+                        } else {
+                            try {
+                                FileUtils.ensurePermissions(Paths.get(targetOutput));
+                            } catch (Exception e) {
+                                logger.warning(String.format("Cannot set permissions [task %s, output %s=%s]",
+                                                             pcTask.getId(), t.getName(), targetOutput));
+                            }
                         }
                         pcTask.setOutputParameterValue(t.getName(), targetOutput);
                         if (taskNode.getPreserveOutput()) {
