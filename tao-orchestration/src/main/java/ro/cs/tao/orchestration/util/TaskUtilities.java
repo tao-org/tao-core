@@ -118,9 +118,7 @@ public class TaskUtilities {
                 if (targets.size() == 1) {
                     cardinality = targets.get(0).getCardinality();
                 } else {
-                    cardinality = targets.stream()
-                            .max(Comparator.comparingInt(TargetDescriptor::getCardinality))
-                            .get().getCardinality();
+                    cardinality = targets.stream().mapToInt(TargetDescriptor::getCardinality).sum();
                 }
             }
         }
