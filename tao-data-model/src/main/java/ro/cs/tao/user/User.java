@@ -32,8 +32,10 @@ public class User {
     private Double quota;
     private String organization;
     private UserStatus status;
-    // flag that indicates if the user is external (it uses an external auth method)
+    // flag that indicates if the user is external (it uses an external auth method); for external users, TAO does'nt store passwords
     private boolean external;
+    // key used for 1st time password set for TAO internal users, or for future password resets requested by TAO internal users
+    private String passwordResetKey;
 
     private List<Group> groups;
     private List<UserPreference> preferences;
@@ -141,6 +143,14 @@ public class User {
 
     public void setExternal(boolean external) {
         this.external = external;
+    }
+
+    public String getPasswordResetKey() {
+        return passwordResetKey;
+    }
+
+    public void setPasswordResetKey(String passwordResetKey) {
+        this.passwordResetKey = passwordResetKey;
     }
 
     public List<Group> getGroups() {
