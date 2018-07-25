@@ -23,6 +23,7 @@ import ro.cs.tao.datasource.param.ParameterDescriptor;
 import ro.cs.tao.eodata.Polygon2D;
 import ro.cs.tao.serialization.GenericAdapter;
 import ro.cs.tao.serialization.SerializationException;
+import ro.cs.tao.utils.CompositeKey;
 
 import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
@@ -34,6 +35,7 @@ import java.util.logging.Logger;
  */
 public class Query {
     private static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
+    private static final Map<CompositeKey, DataSourceComponent> componentPool = Collections.synchronizedMap(new HashMap<>());
     private Long id;
     private String userId;
     private long workflowNodeId;
@@ -97,7 +99,13 @@ public class Query {
         DataQuery query = null;
         if (webQuery != null) {
             try {
-                DataSourceComponent dsComponent = new DataSourceComponent(webQuery.getSensor(), webQuery.getDataSource());
+                CompositeKey key = new CompositeKey(webQuery.getSensor(),
+                                                    webQuery.getDataSource(),
+                                                    webQuery.getUser());
+                if (!componentPool.containsKey(key)) {
+                    componentPool.put(key, new DataSourceComponent(webQuery.getSensor(), webQuery.getDataSource()));
+                }
+                DataSourceComponent dsComponent = componentPool.get(key);
                 if (webQuery.getUser() != null && webQuery.getPassword() != null) {
                     dsComponent.setUserCredentials(webQuery.getUser(), webQuery.getPassword());
                 }
