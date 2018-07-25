@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.orchestration;
 
+import ro.cs.tao.EnumUtils;
 import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.component.Variable;
@@ -22,6 +23,7 @@ import ro.cs.tao.eodata.DataHandlingException;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.MetadataInspector;
 import ro.cs.tao.eodata.enums.DataFormat;
+import ro.cs.tao.eodata.enums.Visibility;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.OutputDataHandlerManager;
 import ro.cs.tao.execution.model.*;
@@ -40,6 +42,7 @@ import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.serialization.StringListAdapter;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.user.UserPreference;
+import ro.cs.tao.utils.FileUtils;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
@@ -78,6 +81,7 @@ public class Orchestrator extends Notifiable {
 
     public static Orchestrator getInstance() { return instance; }
 
+    private final StringListAdapter listAdapter;
     private final Logger logger = Logger.getLogger(Orchestrator.class.getSimpleName());
     private PersistenceManager persistenceManager;
     private TaskSelector<ExecutionGroup> groupTaskSelector;
@@ -91,6 +95,7 @@ public class Orchestrator extends Notifiable {
         this.groupStateHandlers = new HashMap<>();
         this.queue = new LinkedBlockingDeque<>();
         this.executors = Collections.synchronizedMap(new HashMap<>());
+        this.listAdapter =  new StringListAdapter();
         subscribe(Topics.TASK_STATUS_CHANGED);
     }
 
@@ -233,7 +238,7 @@ public class Orchestrator extends Notifiable {
         ExecutionTask task = null;
         try {
             String taskId = message.getItem(Message.SOURCE_KEY);
-            ExecutionStatus status = ExecutionStatus.getEnumConstantByValue(Integer.parseInt(message.getItem(Message.PAYLOAD_KEY)));
+            ExecutionStatus status = EnumUtils.getEnumConstantByValue(ExecutionStatus.class, Integer.parseInt(message.getItem(Message.PAYLOAD_KEY)));
             if (status == null) {
                 throw new PersistenceException(String.format("Invalid status received: %s",
                                                              message.getItem(Message.PAYLOAD_KEY)));
@@ -260,6 +265,13 @@ public class Orchestrator extends Notifiable {
                         String targetOutput = pcTask.getInstanceTargetOuptut(t);
                         if (targetOutput == null) {
                             logger.severe(String.format("NULL TARGET [task %s, parameter %s]", pcTask.getId(), t.getName()));
+                        } else {
+                            try {
+                                FileUtils.ensurePermissions(Paths.get(targetOutput));
+                            } catch (Exception e) {
+                                logger.warning(String.format("Cannot set permissions [task %s, output %s=%s]",
+                                                             pcTask.getId(), t.getName(), targetOutput));
+                            }
                         }
                         pcTask.setOutputParameterValue(t.getName(), targetOutput);
                         if (taskNode.getPreserveOutput()) {
@@ -288,7 +300,7 @@ public class Orchestrator extends Notifiable {
                             final List<String> valuesList;
                             if (values != null && values.size() > 0) {
                                 theOnlyValue = values.get(0);
-                                valuesList = new StringListAdapter().marshal(theOnlyValue.getValue());
+                                valuesList = this.listAdapter.marshal(theOnlyValue.getValue());
                                 cardinality = valuesList.size();
                             } else {
                                 valuesList = new ArrayList<>();
@@ -663,7 +675,7 @@ public class Orchestrator extends Notifiable {
         if (value != null) {
             try {
                 // first try to see if it's a list
-                List<String> list = new StringListAdapter().marshal(value);
+                List<String> list = this.listAdapter.marshal(value);
                 for (String v : list) {
                     products.add(createProduct(descriptor, v, context));
                 }
@@ -677,12 +689,14 @@ public class Orchestrator extends Notifiable {
     private EOProduct createProduct(TargetDescriptor descriptor, String outValue, SessionContext context) {
         EOProduct product = null;
         try {
-            if (descriptor.getDataDescriptor().getFormatType() == DataFormat.RASTER) {
+            if (descriptor.getDataDescriptor().getFormatType() == DataFormat.RASTER &&
+                    metadataInspector != null) {
                 Path path = Paths.get(outValue);
                 MetadataInspector.Metadata metadata = metadataInspector.getMetadata(path);
                 if (metadata != null) {
                     product = metadata.toProductDescriptor(path);
                     product.setUserName(context.getPrincipal().getName());
+                    product.setVisibility(Visibility.PRIVATE);
                 }
             }
         } catch (Exception e2) {

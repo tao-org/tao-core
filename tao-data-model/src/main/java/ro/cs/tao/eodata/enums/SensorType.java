@@ -15,6 +15,8 @@
  */
 package ro.cs.tao.eodata.enums;
 
+import ro.cs.tao.TaoEnum;
+
 import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlEnumValue;
 
@@ -22,59 +24,29 @@ import javax.xml.bind.annotation.XmlEnumValue;
  * @author Cosmin Cara
  */
 @XmlEnum(Integer.class)
-public enum SensorType {
+public enum SensorType implements TaoEnum<Integer> {
     @XmlEnumValue("1")
-    OPTICAL(1),
+    OPTICAL(1, "Optical"),
     @XmlEnumValue("2")
-    RADAR(2),
+    RADAR(2, "Radar"),
     @XmlEnumValue("3")
-    ALTIMETRIC(3),
+    ALTIMETRIC(3, "Altimetric"),
     @XmlEnumValue("4")
-    ATMOSPHERIC(4),
+    ATMOSPHERIC(4, "Atmospheric"),
     @XmlEnumValue("5")
-    UNKNOWN(5);
+    UNKNOWN(5, "Unknown");
 
-    /**
-     * Numerical value for enum constants
-     */
     private final int value;
+    private final String description;
 
-    /**
-     * Constructor
-     * @param s - the integer value identifier
-     */
-    SensorType(final int s)
-    {
-        value = s;
+    SensorType(int value, String description) {
+        this.value = value;
+        this.description = description;
     }
 
     @Override
-    public String toString()
-    {
-        return String.valueOf(this.value);
-    }
+    public String friendlyName() { return this.description; }
 
-    /**
-     * Retrieve string enum token corresponding to the integer identifier
-     * @param value the integer value identifier
-     * @return the string token corresponding to the integer identifier
-     */
-    public static String getEnumConstantNameByValue(final int value) {
-        for (SensorType type : values()) {
-            if ((String.valueOf(value)).equals(type.toString())) {
-                // return the name of the enum constant having the given value
-                return type.name();
-            }
-        }
-        return null;
-    }
-
-    public static SensorType getEnumConstantByValue(final int value) {
-        for (SensorType type : values()) {
-            if ((String.valueOf(value)).equals(type.toString())) {
-                return type;
-            }
-        }
-        return null;
-    }
+    @Override
+    public Integer value() { return this.value; }
 }

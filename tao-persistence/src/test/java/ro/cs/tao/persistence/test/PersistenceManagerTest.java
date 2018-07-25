@@ -13,6 +13,7 @@ import org.springframework.context.annotation.ImportResource;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import ro.cs.tao.component.*;
+import ro.cs.tao.component.enums.ParameterType;
 import ro.cs.tao.component.enums.ProcessingComponentVisibility;
 import ro.cs.tao.component.template.BasicTemplate;
 import ro.cs.tao.component.template.Template;
@@ -27,6 +28,7 @@ import ro.cs.tao.eodata.VectorData;
 import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.eodata.enums.PixelType;
 import ro.cs.tao.eodata.enums.SensorType;
+import ro.cs.tao.eodata.enums.Visibility;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.messaging.Message;
 import ro.cs.tao.persistence.PersistenceManager;
@@ -37,9 +39,12 @@ import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.topology.NodeServiceStatus;
 import ro.cs.tao.topology.ServiceDescription;
 import ro.cs.tao.topology.ServiceStatus;
-import ro.cs.tao.workflow.*;
+import ro.cs.tao.workflow.ParameterValue;
+import ro.cs.tao.workflow.WorkflowDescriptor;
+import ro.cs.tao.workflow.WorkflowNodeDescriptor;
+import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
+import ro.cs.tao.workflow.enums.ComponentType;
 import ro.cs.tao.workflow.enums.Status;
-import ro.cs.tao.workflow.enums.Visibility;
 
 import java.awt.*;
 import java.sql.SQLException;
@@ -545,8 +550,8 @@ public class PersistenceManagerTest {
         component.setActive(true); // TODO
 
         component.setContainerId(containerId);
-        component.setSourceCardinality(0);
-        component.setTargetCardinality(0);
+        /*component.setSourceCardinality(0);
+        component.setTargetCardinality(0);*/
 
         // list of component variables
         Set<Variable> variables = new HashSet<>();
@@ -835,6 +840,7 @@ public class PersistenceManagerTest {
             product.setFormatType(DataFormat.RASTER);
             product.setGeometry("POLYGON((24.16023 -9.60737, 24.15266 -7.36319, 22.05055 -7.38847, 22.05739 -9.59798, 24.16023 -9.60737))");
             product.setLocation("https://landsat-pds.s3.amazonaws.com/c1/L8/201/044/LC08_L1TP_201044_20170930_20171013_01_T1");
+            product.setVisibility(Visibility.PRIVATE);
 
             persistenceManager.saveEOProduct(product);
         } catch (Exception e) {

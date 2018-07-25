@@ -31,23 +31,9 @@
 /*___INFO__MARK_END__*/
 package ro.cs.tao.execution.drmaa;
 
-import org.ggf.drmaa.DrmaaException;
-import org.ggf.drmaa.FileTransferMode;
-import org.ggf.drmaa.InternalException;
-import org.ggf.drmaa.InvalidAttributeValueException;
-import org.ggf.drmaa.JobTemplate;
-import org.ggf.drmaa.PartialTimestamp;
-import org.ggf.drmaa.PartialTimestampFormat;
-import org.ggf.drmaa.UnsupportedAttributeException;
+import org.ggf.drmaa.*;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * This class represents a remote job and its attributes.  It is used to
@@ -1018,7 +1004,7 @@ public class DrmaaJobTemplate implements JobTemplate {
      * template asssociated with this DrmaaJobTemplate instance.
      */
     private void setAttribute(String name, Collection value) throws DrmaaException {
-        session.nativeSetAttributeValues(id, name, (String[])value.toArray(new String[value.size()]));
+        session.nativeSetAttributeValues(id, name, (String[])value.toArray(new String[0]));
     }
     
     /**

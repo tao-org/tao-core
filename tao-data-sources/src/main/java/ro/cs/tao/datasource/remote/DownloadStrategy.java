@@ -349,7 +349,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         return check(product, Paths.get(localArchiveRoot));
     }
 
-    protected Path check(EOProduct product, Path sourceRoot) throws IOException {
+    protected Path check(EOProduct product, Path sourceRoot) {
         Path sourcePath = findProductPath(sourceRoot, product);
         if (sourcePath == null) {
             logger.warning(String.format("Product %s not found in the local archive", product.getName()));
@@ -455,15 +455,12 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
             if (localFileLength != remoteFileLength) {
                 int kBytes = (int) (remoteFileLength / 1024);
                 logger.fine(String.format(startMessage, currentProduct.getName(), currentStep, file.getFileName(), kBytes));
-                InputStream inputStream = null;
-                SeekableByteChannel outputStream = null;
-                try {
-                    logger.fine(String.format("Local temporary file %s created", file.toString()));
-                    long start = System.currentTimeMillis();
-                    inputStream = connection.getInputStream();
-                    outputStream = Files.newByteChannel(file, EnumSet.of(StandardOpenOption.CREATE,
-                                                                         StandardOpenOption.APPEND,
-                                                                         StandardOpenOption.WRITE));
+                long start = System.currentTimeMillis();
+                logger.fine(String.format("Local temporary file %s created", file.toString()));
+                try (InputStream inputStream = connection.getInputStream();
+                     SeekableByteChannel outputStream = Files.newByteChannel(file, EnumSet.of(StandardOpenOption.CREATE,
+                                                                                              StandardOpenOption.APPEND,
+                                                                                              StandardOpenOption.WRITE))) {
                     outputStream.position(localFileLength);
                     byte[] buffer = new byte[BUFFER_SIZE];
                     int read;
@@ -471,36 +468,40 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
                     logger.fine("Begin reading from input stream");
                     while (!cancelled && (read = inputStream.read(buffer)) != -1) {
                         outputStream.write(ByteBuffer.wrap(buffer, 0, read));
-                        currentProductProgress = Math.min(currentProductProgress + (double) read * factor, 1.0);
+                        //currentProductProgress = Math.min(currentProductProgress + (double) read * factor, 1.0);
+                        currentProductProgress = currentProductProgress + (double) read * factor;
+                        if (currentProductProgress > 1.0) {
+                            currentProductProgress = 1.0;
+                        }
                     }
                     logger.fine("End reading from input stream");
                     checkCancelled();
                     logger.fine(String.format(completeMessage, currentProduct.getName(), currentStep, file.getFileName(), (System.currentTimeMillis() - start) / 1000));
-                } finally {
-                    if (outputStream != null) outputStream.close();
-                    if (inputStream != null) inputStream.close();
                 }
                 logger.fine(String.format("End download for %s", remoteUrl));
             } else {
                 logger.fine("File already downloaded");
                 logger.fine(String.format(completeMessage, currentProduct.getName(), currentStep, file.getFileName(), 0));
-                currentProductProgress = Math.min(1.0, currentProductProgress + (double) remoteFileLength * factor);
+                currentProductProgress = currentProductProgress + (double) remoteFileLength * factor;
+                if (currentProductProgress > 1.0) {
+                    currentProductProgress = 1.0;
+                }
+                //currentProductProgress = Math.min(1.0, currentProductProgress + (double) remoteFileLength * factor);
             }
         } catch (FileNotFoundException fnex) {
             logger.warning(String.format(errorMessage, remoteUrl, "No such file"));
-            file = null;
         } catch (InterruptedIOException iioe) {
             logger.severe("Operation timed out");
             throw new IOException("Operation timed out");
         } catch (Exception ex) {
             ex.printStackTrace();
             logger.severe(String.format(errorMessage, remoteUrl, ex.getMessage()));
-            file = null;
         } finally {
             if (connection != null) {
                 connection.disconnect();
             }
             subActivityEnd(subActivity);
+            file = null;
         }
         return FileUtils.ensurePermissions(file);
     }

@@ -157,13 +157,11 @@ public abstract class TileExtent {
      * @param aoi   The area of interest bounding box
      */
     public Set<String> intersectingTiles(Rectangle2D aoi) {
-        Set<String> tileCodes = new HashSet<>();
+        Set<String> tileCodes;
         synchronized (tiles) {
-            tileCodes.addAll(
-                    tiles.entrySet().stream()
-                            .filter(entry -> entry.getValue().intersects(aoi))
-                            .map(Map.Entry::getKey)
-                            .collect(Collectors.toSet()));
+            tileCodes = tiles.entrySet().stream()
+                    .filter(entry -> entry.getValue().intersects(aoi))
+                    .map(Map.Entry::getKey).distinct().collect(Collectors.toSet());
         }
         return tileCodes;
     }

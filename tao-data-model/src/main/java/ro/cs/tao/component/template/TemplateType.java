@@ -15,6 +15,8 @@
  */
 package ro.cs.tao.component.template;
 
+import ro.cs.tao.TaoEnum;
+
 import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlEnumValue;
 
@@ -22,58 +24,34 @@ import javax.xml.bind.annotation.XmlEnumValue;
  * @author Cosmin Cara
  */
 @XmlEnum(Integer.class)
-public enum TemplateType {
+public enum TemplateType implements TaoEnum<Integer> {
     /**
      * Apache Velocity template
      */
     @XmlEnumValue("1")
-    VELOCITY(1),
+    VELOCITY(1, "Apache Velocity"),
     /**
      * Javascript template
      */
     @XmlEnumValue("2")
-    JAVASCRIPT(2),
+    JAVASCRIPT(2, "Javascript"),
     /**
      * XSLT template
      */
     @XmlEnumValue("3")
-    XSLT(3);
+    XSLT(3, "XSL Template");
 
-    /**
-     * Numerical value for enum constants
-     */
     private final int value;
+    private final String description;
 
-    /**
-     * Constructor
-     * @param s - the integer value identifier
-     */
-    TemplateType(final int s)
-    {
-        value = s;
+    TemplateType(int value, String description) {
+        this.value = value;
+        this.description = description;
     }
 
     @Override
-    public String toString()
-    {
-        return String.valueOf(this.value);
-    }
+    public String friendlyName() { return this.description; }
 
-    /**
-     * Retrieve string enum token corresponding to the integer identifier
-     * @param value the integer value identifier
-     * @return the string token corresponding to the integer identifier
-     */
-    public static String getEnumConstantNameByValue(final int value)
-    {
-        for (TemplateType type : values())
-        {
-            if ((String.valueOf(value)).equals(type.toString()))
-            {
-                // return the id of the enum constant having the given value
-                return type.name();
-            }
-        }
-        return null;
-    }
+    @Override
+    public Integer value() { return this.value; }
 }

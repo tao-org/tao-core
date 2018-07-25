@@ -66,8 +66,18 @@ public class ProductManager {
     }
 
     @Transactional
+    public List<EOProduct> getPublicEOProducts() {
+        return eoProductRepository.getPublicProducts();
+    }
+
+    @Transactional
     public List<EOProduct> getEOProducts(Set<String> locations) {
         return eoProductRepository.getProductsByLocation(locations);
+    }
+
+    @Transactional
+    public List<EOProduct> getEOProducts(String location) {
+        return eoProductRepository.getProductsByLocation(location);
     }
 
     /**
@@ -102,8 +112,13 @@ public class ProductManager {
         if (!checkEOProduct(eoProduct)) {
             throw new PersistenceException("Invalid parameters were provided for adding new EO data product!");
         }
-        // save the EOProduct entity
-        EOProduct savedEOProduct = eoProductRepository.save(eoProduct);
+        EOProduct savedEOProduct;
+        if (eoProduct.getId() != null) {
+            eoProductRepository.save(eoProduct);
+            savedEOProduct = eoProduct;
+        } else {
+            savedEOProduct = eoProductRepository.save(eoProduct);
+        }
         if (savedEOProduct.getId() == null) {
             throw new PersistenceException("Error saving EO data product with name: " + eoProduct.getName());
         }
@@ -122,6 +137,16 @@ public class ProductManager {
             throw new PersistenceException("Error saving vector data product with name: " + vectorDataProduct.getName());
         }
         return savedVectorData;
+    }
+
+    @Transactional
+    public void removeProduct(EOProduct eoProduct) throws PersistenceException {
+        eoProductRepository.delete(eoProduct);
+    }
+
+    @Transactional
+    public void removeProduct(VectorData vectorProduct) throws PersistenceException {
+        vectorDataRepository.delete(vectorProduct);
     }
 
     @Transactional
@@ -146,7 +171,8 @@ public class ProductManager {
     private boolean checkEOProduct(EOProduct eoProduct) {
         return eoProduct != null && eoProduct.getId() != null && !eoProduct.getId().isEmpty() &&
                 eoProduct.getName() != null && eoProduct.getGeometry() != null && eoProduct.getProductType() != null &&
-                eoProduct.getLocation() != null && eoProduct.getSensorType() != null && eoProduct.getPixelType() != null;
+                eoProduct.getLocation() != null && eoProduct.getSensorType() != null && eoProduct.getPixelType() != null &&
+                eoProduct.getVisibility() != null;
     }
 
     private boolean checkVectorData(VectorData vectorDataProduct) {

@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.persistence.convert;
 
+import ro.cs.tao.EnumUtils;
 import ro.cs.tao.datasource.remote.FetchMode;
 
 import javax.persistence.AttributeConverter;
@@ -25,11 +26,11 @@ import javax.persistence.AttributeConverter;
 public class FetchModeConverter implements AttributeConverter<FetchMode, Integer> {
     @Override
     public Integer convertToDatabaseColumn(FetchMode fetchMode) {
-        return fetchMode != null ? Integer.parseInt(fetchMode.toString()) : null;
+        return fetchMode != null ? fetchMode.value() : null;
     }
 
     @Override
     public FetchMode convertToEntityAttribute(Integer dbData) {
-        return dbData != null ? FetchMode.valueOf(FetchMode.getEnumConstantNameByValue(dbData)) : null;
+        return dbData != null ? EnumUtils.getEnumConstantByValue(FetchMode.class, dbData) : null;
     }
 }

@@ -15,7 +15,8 @@
  */
 package ro.cs.tao.persistence.convert;
 
-import ro.cs.tao.workflow.enums.Visibility;
+import ro.cs.tao.EnumUtils;
+import ro.cs.tao.eodata.enums.Visibility;
 
 import javax.persistence.AttributeConverter;
 
@@ -24,15 +25,15 @@ import javax.persistence.AttributeConverter;
  *
  * @author Oana H.
  */
-public class WorkflowGraphVisibilityConverter implements AttributeConverter<Visibility, Integer> {
+public class VisibilityConverter implements AttributeConverter<Visibility, Integer> {
 
     @Override
     public Integer convertToDatabaseColumn(Visibility attribute) {
-        return attribute != null ? Integer.parseInt(attribute.toString()) : null;
+        return attribute != null ? attribute.value() : null;
     }
 
     @Override
     public Visibility convertToEntityAttribute(Integer dbData) {
-        return dbData != null ? Visibility.valueOf(Visibility.getEnumConstantNameByValue(dbData)) : null;
+        return dbData != null ? EnumUtils.getEnumConstantByValue(Visibility.class, dbData) : null;
     }
 }

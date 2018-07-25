@@ -15,6 +15,8 @@
  */
 package ro.cs.tao.user;
 
+import ro.cs.tao.TaoEnum;
+
 import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlEnumValue;
 
@@ -23,68 +25,35 @@ import javax.xml.bind.annotation.XmlEnumValue;
  * @author Oana H.
  */
 @XmlEnum(Integer.class)
-public enum UserStatus {
+public enum UserStatus implements TaoEnum<Integer> {
 
     /**
      * The user is pending activation
      */
     @XmlEnumValue("1")
-    PENDING(1),
+    PENDING(1, "Pending activation"),
     /**
      * The user is active
      */
     @XmlEnumValue("2")
-    ACTIVE(2),
+    ACTIVE(2, "Active"),
     /**
      * The user is disabled (no longer active)
      */
     @XmlEnumValue("3")
-    DISABLED(3);
+    DISABLED(3, "Account disabled");
 
-    /**
-     * Numerical value for enum constants
-     */
     private final int value;
+    private final String description;
 
-    /**
-     * Constructor
-     * @param s - the integer value identifier
-     */
-    UserStatus(final int s)
-    {
-        value = s;
+    UserStatus(int value, String description) {
+        this.value = value;
+        this.description = description;
     }
-
-    public int value() { return value; }
 
     @Override
-    public String toString()
-    {
-        return String.valueOf(this.value);
-    }
+    public String friendlyName() { return this.description; }
 
-    /**
-     * Retrieve string enum token corresponding to the integer identifier
-     * @param value the integer value identifier
-     * @return the string token corresponding to the integer identifier
-     */
-    public static String getEnumConstantNameByValue(final int value) {
-        for (UserStatus type : values()) {
-            if ((String.valueOf(value)).equals(type.toString())) {
-                // return the name of the enum constant having the given value
-                return type.name();
-            }
-        }
-        return null;
-    }
-
-    public static UserStatus getEnumConstantByValue(final int value) {
-        for (UserStatus type : values()) {
-            if (value == type.value()) {
-                // return the name of the enum constant having the given value
-                return type;
-            }
-        }
-        return null;
-    }
+    @Override
+    public Integer value() { return this.value; }
 }

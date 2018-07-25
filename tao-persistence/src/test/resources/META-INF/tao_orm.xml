@@ -12,7 +12,7 @@
             </entity-listeners>
         </persistence-unit-defaults>
     </persistence-unit-metadata>-->
-
+    
     <!-- Mapped superclasses are only seen for entities (not for embeddables too) -->
 
     <mapped-superclass class="ro.cs.tao.eodata.EOData" access="PROPERTY">
@@ -42,6 +42,10 @@
             <basic name="entryPoint">
                 <column name="entry_point" nullable="true" column-definition="varchar(1000) null"/>
             </basic>
+            <basic name="visibility">
+                <column name="visibility_id" nullable="true" column-definition="integer null DEFAULT 2"/>
+                <convert converter="ro.cs.tao.persistence.convert.VisibilityConverter" attribute-name="visibility" />
+            </basic>
 
             <element-collection name="attributes" target-class="ro.cs.tao.eodata.Attribute" access="PROPERTY" fetch="EAGER">
                 <collection-table name="tao.data_product_attributes" >
@@ -50,7 +54,6 @@
             </element-collection>
 
         </attributes>
-
     </mapped-superclass>
 
     <mapped-superclass class="ro.cs.tao.component.Identifiable" access="PROPERTY">
@@ -85,12 +88,12 @@
             <basic name="nodeAffinity">
                 <column name="node_affinity" nullable="true" column-definition="varchar(250) NULL"/>
             </basic>
-            <basic name="sourceCardinality">
+            <!--<basic name="sourceCardinality">
                 <column name="source_cardinality" nullable="true" column-definition="integer NOT NULL"/>
             </basic>
             <basic name="targetCardinality">
                 <column name="target_cardinality" nullable="true" column-definition="integer NOT NULL"/>
-            </basic>
+            </basic>-->
 
             <many-to-many name="sources" fetch="LAZY">
                 <join-table name="tao.processing_component_sources">
@@ -139,6 +142,7 @@
         <convert converter="ro.cs.tao.persistence.convert.DataFormatConverter" attribute-name="formatType" />
         <convert converter="ro.cs.tao.persistence.convert.SensorTypeConverter" attribute-name="sensorType" />
         <convert converter="ro.cs.tao.persistence.convert.PixelTypeConverter" attribute-name="pixelType" />
+        <convert converter="ro.cs.tao.persistence.convert.VisibilityConverter" attribute-name="visibility" />
         <attributes>
             <basic name="sensorType">
                 <column name="sensor_type_id" nullable="false" column-definition="integer not null"/>
@@ -169,6 +173,7 @@
         <table name="tao.vector_data_product"/>
         <!-- Converter DataFormatConverter not seen in mapped superclass, therefore declared here -->
         <convert converter="ro.cs.tao.persistence.convert.DataFormatConverter" attribute-name="formatType" />
+        <convert converter="ro.cs.tao.persistence.convert.VisibilityConverter" attribute-name="visibility" />
         <attributes/>
     </entity>
 
@@ -272,7 +277,7 @@
             <basic name="logo">
                 <column name="logo_image" nullable="true" column-definition="character varying NULL"/>
             </basic>
-
+            
             <element-collection name="applications" target-class="ro.cs.tao.docker.Application" access="PROPERTY" fetch="EAGER">
                 <collection-table name="tao.container_applications" >
                     <join-column name="container_id" referenced-column-name="id" />
@@ -291,6 +296,7 @@
 
         <convert converter="ro.cs.tao.persistence.convert.TemplateTypeConverter" attribute-name="templateType" />
         <convert converter="ro.cs.tao.persistence.convert.ProcessingComponentVisibilityConverter" attribute-name="visibility" />
+        <convert converter="ro.cs.tao.persistence.convert.ProcessingComponentTypeConverter" attribute-name="componentType" />
 
         <attributes>
             <basic name="fileLocation">
@@ -313,12 +319,20 @@
                 <column name="active" nullable="true" column-definition="boolean NULL DEFAULT true"/>
             </basic>
 
+            <basic name="componentType">
+                <column name="component_type_id" nullable="true" column-definition="integer NULL DEFAULT 1"/>
+            </basic>
+
             <basic name="containerId">
                 <column name="container_id" nullable="false" column-definition="varchar(1024) NOT NULL"/>
             </basic>
 
             <basic name="templateContents">
                 <column name="template_contents" nullable="true" column-definition="text NULL"/>
+            </basic>
+            
+            <basic name="owner">
+                <column name="owner_user" nullable="true" column-definition="varchar NULL"/>
             </basic>
 
             <many-to-many name="parameterDescriptors" fetch="EAGER">
@@ -598,10 +612,10 @@
                     <join-column name="task_id" referenced-column-name="id" />
                 </collection-table>
             </element-collection>
-
+    
             <transient name="stateHandler" />
             <transient name="context" />
-
+            
         </attributes>
     </entity>
 
@@ -706,7 +720,7 @@
     <entity class="ro.cs.tao.workflow.WorkflowDescriptor" access="PROPERTY">
         <table name="tao.workflow_graph"/>
         <convert converter="ro.cs.tao.persistence.convert.WorkflowGraphStatusConverter" attribute-name="status" />
-        <convert converter="ro.cs.tao.persistence.convert.WorkflowGraphVisibilityConverter" attribute-name="visibility" />
+        <convert converter="ro.cs.tao.persistence.convert.VisibilityConverter" attribute-name="visibility" />
         <attributes>
             <id name="id">
                 <column name="id" nullable="false" column-definition="bigserial NOT NULL"/>
@@ -838,6 +852,9 @@
             <basic name="name">
                 <column name="name" nullable="false" column-definition="varchar(512) NOT NULL"/>
             </basic>
+            <basic name="cardinality">
+                <column name="cardinality" nullable="false" column-definition="integer NOT NULL"/>
+            </basic>
             <basic name="constraints">
                 <column name="constraints" nullable="true" column-definition="text NULL"/>
             </basic>
@@ -846,7 +863,6 @@
 
         </attributes>
     </entity>
-
 
     <entity class="ro.cs.tao.component.TargetDescriptor" access="PROPERTY">
         <table name="tao.target_descriptor"/>
@@ -858,6 +874,9 @@
             <basic name="name">
                 <column name="name" nullable="false" column-definition="varchar(512) NOT NULL"/>
             </basic>
+            <basic name="cardinality">
+                <column name="cardinality" nullable="false" column-definition="integer NOT NULL"/>
+            </basic>
             <basic name="constraints">
                 <column name="constraints" nullable="true" column-definition="text NULL"/>
             </basic>
@@ -866,7 +885,7 @@
 
         </attributes>
     </entity>
-
+    
     <entity class="ro.cs.tao.execution.model.Query" access="PROPERTY">
         <table name="tao.query"/>
         <convert converter="ro.cs.tao.persistence.convert.QueryValuesMapConverter" attribute-name="values"/>
@@ -1100,7 +1119,7 @@
         </attributes>
     </embeddable>
 
-
+    
     <embeddable class="ro.cs.tao.component.ComponentLink" access="PROPERTY">
         <attributes>
             <basic name="sourceNodeId" fetch="LAZY">
@@ -1136,6 +1155,7 @@
 
     <converter class="ro.cs.tao.persistence.convert.TemplateTypeConverter" />
     <converter class="ro.cs.tao.persistence.convert.ProcessingComponentVisibilityConverter" />
+    <converter class="ro.cs.tao.persistence.convert.ProcessingComponentTypeConverter" />
     <converter class="ro.cs.tao.persistence.convert.ExecutionStatusConverter" />
     <converter class="ro.cs.tao.persistence.convert.ParameterTypeConverter" />
     <converter class="ro.cs.tao.persistence.convert.PixelTypeConverter" />
@@ -1145,7 +1165,7 @@
     <converter class="ro.cs.tao.persistence.convert.DataFormatConverter" />
     <converter class="ro.cs.tao.persistence.convert.ServiceStatusConverter" />
     <converter class="ro.cs.tao.persistence.convert.WorkflowGraphStatusConverter" />
-    <converter class="ro.cs.tao.persistence.convert.WorkflowGraphVisibilityConverter" />
+    <converter class="ro.cs.tao.persistence.convert.VisibilityConverter" />
     <converter class="ro.cs.tao.persistence.convert.ConstraintsConverter" />
     <converter class="ro.cs.tao.persistence.convert.DimensionConverter" />
     <converter class="ro.cs.tao.persistence.convert.ParameterValueListConverter"/>

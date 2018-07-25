@@ -17,13 +17,25 @@ package ro.cs.tao.workflow;
 
 import ro.cs.tao.component.ComponentLink;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Stack;
+import java.util.Queue;
 import java.util.stream.Collectors;
 
+/**
+ * Interface defining common (default) implementation for all graph nodes containers
+ * (such as {@link WorkflowDescriptor} and {@link WorkflowNodeGroupDescriptor}.
+ *
+ * @author Cosmin Cara
+ */
 public interface NodeListOrderer {
 
+    /**
+     * Returns the root nodes of from a collection of nodes.
+     * A node is root if it has no incoming links from other nodes.
+     * @param nodes     The node list.
+     */
     default List<WorkflowNodeDescriptor> findRoots(List<WorkflowNodeDescriptor> nodes) {
         List<WorkflowNodeDescriptor> roots = null;
         if (nodes != null) {
@@ -42,30 +54,41 @@ public interface NodeListOrderer {
         return roots;
     }
 
+    /**
+     * Returns an ordered list of nodes from an initial list of nodes.
+     * The output nodes are obtaining by breadth-first traversal of the graph represented by the input nodes.
+     * @param nodes     The nodes to be ordered.
+     */
     default List<WorkflowNodeDescriptor> orderNodes(List<WorkflowNodeDescriptor> nodes) {
         if (nodes != null) {
             List<WorkflowNodeDescriptor> newList = new ArrayList<>();
             List<WorkflowNodeDescriptor> roots = findRoots(nodes);
-            Stack<WorkflowNodeDescriptor> stack = new Stack<>();
+            //Stack<WorkflowNodeDescriptor> stack = new Stack<>();
+            Queue<WorkflowNodeDescriptor> queue = new ArrayDeque<>(nodes.size());
             for (WorkflowNodeDescriptor root : roots) {
                 int level = 1;
                 root.setLevel(level);
                 newList.add(root);
             }
             for (WorkflowNodeDescriptor root : roots) {
-                stack.push(root);
-                while (!stack.isEmpty()) {
-                    List<WorkflowNodeDescriptor> children = findChildren(nodes, stack.pop());
+                //stack.push(root);
+                queue.add(root);
+                //while (!stack.isEmpty()) {
+                while (!queue.isEmpty()) {
+                    //List<WorkflowNodeDescriptor> children = findChildren(nodes, stack.pop());
+                    List<WorkflowNodeDescriptor> children = findChildren(nodes, queue.remove());
                     if (children != null && children.size() > 0) {
                         children.forEach(n -> {
                             if (!newList.contains(n)) {
                                 newList.add(n);
-                                stack.push(n);
+                                //stack.push(n);
+                                queue.add(n);
                             }
                         });
                     }
                 }
-                stack.clear();
+                //stack.clear();
+                queue.clear();
             }
             nodes.clear();
             nodes.addAll(newList);
@@ -73,6 +96,13 @@ public interface NodeListOrderer {
         return nodes;
     }
 
+    /**
+     * Returns the children of the given node, among the collection of nodes given as input.
+     * If the node has no children, an empty list is returned.
+     *
+     * @param masterList    The collection of nodes to be searched.
+     * @param node          The node whose children must be returned.
+     */
     default List<WorkflowNodeDescriptor> findChildren(List<WorkflowNodeDescriptor> masterList,
                                                       WorkflowNodeDescriptor node) {
         if (masterList == null || masterList.size() == 0 || node == null) {

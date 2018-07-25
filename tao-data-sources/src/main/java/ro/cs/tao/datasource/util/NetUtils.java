@@ -100,7 +100,7 @@ public class NetUtils {
     }
 
     public static HttpURLConnection openConnection(String url) {
-        return openConnection(url, (String) null);
+        return openConnection(url, null);
     }
 
     public static HttpURLConnection openConnection(String url, String authToken) {
@@ -209,7 +209,7 @@ public class NetUtils {
 
     public static String getResponseAsString(String url) throws IOException {
         String result = null;
-        try (CloseableHttpResponse yearResponse = NetUtils.openConnection(HttpMethod.GET, url, (Credentials) null)) {
+        try (CloseableHttpResponse yearResponse = NetUtils.openConnection(HttpMethod.GET, url, null)) {
             if (yearResponse != null) {
                 switch (yearResponse.getStatusLine().getStatusCode()) {
                     case 200:

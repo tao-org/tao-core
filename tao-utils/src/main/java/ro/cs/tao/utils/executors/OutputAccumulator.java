@@ -24,4 +24,5 @@ public class OutputAccumulator implements OutputConsumer {
             buffer.append(message);
         }
     public String getOutput() { return this.buffer.toString(); }
+    public void reset() { this.buffer.setLength(0); }
 }

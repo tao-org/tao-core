@@ -39,6 +39,7 @@ public class SourceDescriptor extends Identifiable {
     private String name;
     private DataDescriptor dataDescriptor;
     private List<String> constraints;
+    private int cardinality;
 
     public SourceDescriptor() { }
 
@@ -67,6 +68,13 @@ public class SourceDescriptor extends Identifiable {
         return name;
     }
     public void setName(String name) { this.name = name; }
+
+    /**
+     * Returns the cardinality of inputs.
+     * If the value is 0, the inputs represent a list of data objects.
+     */
+    public int getCardinality() { return this.cardinality; }
+    public void setCardinality(int value) { this.cardinality = value;}
 
     /**
      * Returns the data descriptor associated to this instance.
@@ -130,5 +138,20 @@ public class SourceDescriptor extends Identifiable {
     @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(), parentId, name);
+    }
+
+    @Override
+    protected SourceDescriptor clone() throws CloneNotSupportedException {
+        SourceDescriptor clone = new SourceDescriptor();
+        clone.name = this.name;
+        clone.dataDescriptor = new DataDescriptor();
+        clone.dataDescriptor.setSensorType(this.dataDescriptor.getSensorType());
+        clone.dataDescriptor.setLocation(this.dataDescriptor.getLocation());
+        clone.dataDescriptor.setCrs(this.dataDescriptor.getCrs());
+        clone.dataDescriptor.setFormatType(this.dataDescriptor.getFormatType());
+        clone.dataDescriptor.setDimension(this.dataDescriptor.getDimension());
+        clone.constraints = new ArrayList<>(this.constraints);
+        clone.cardinality = this.cardinality;
+        return clone;
     }
 }

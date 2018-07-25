@@ -16,6 +16,8 @@
 package ro.cs.tao.services.interfaces;
 
 import ro.cs.tao.component.ComponentLink;
+import ro.cs.tao.datasource.beans.Parameter;
+import ro.cs.tao.eodata.enums.Visibility;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.services.model.execution.ExecutionJobInfo;
 import ro.cs.tao.services.model.execution.ExecutionTaskInfo;
@@ -23,21 +25,32 @@ import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
 import ro.cs.tao.workflow.enums.Status;
-import ro.cs.tao.workflow.enums.Visibility;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Cosmin Cara
  */
 public interface WorkflowService extends CRUDService<WorkflowDescriptor> {
 
+    /**
+     * Returns the workflows of a given user that have a specific status.
+     * @param user      The user name (login)
+     * @param status    The desired workflow status
+     */
     List<WorkflowDescriptor> getUserWorkflowsByStatus(String user, Status status);
-
+    /**
+     * Returns the published (i.e. final) workflows of an user by their visibility.
+     * @param user          The user name (login)
+     * @param visibility    The workflow visibility
+     */
     List<WorkflowDescriptor> getUserPublishedWorkflowsByVisibility(String user, Visibility visibility);
-
+    /**
+     * Returns the public workflows that are not belonging to a specific user.
+     * @param user      The user name (login)
+     */
     List<WorkflowDescriptor> getOtherPublicWorkflows(String user);
-
     /**
      * Adds a node to a workflow.
      * @param nodeDescriptor    The node to add
@@ -90,14 +103,12 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor> {
      * @return  The updated workflow
      */
     void removeGroup(WorkflowNodeGroupDescriptor groupDescriptor, boolean removeChildren) throws PersistenceException;
-
     /**
      * Creates a duplicate of the given workflow
      *
      * @param workflow  The workflow to clone
      */
     WorkflowDescriptor clone(WorkflowDescriptor workflow) throws PersistenceException;
-
     /**
      * Retrieve the execution history of a workflow
      * @param workflowId         The workflow identifier
@@ -105,7 +116,6 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor> {
      * @throws PersistenceException
      */
     List<ExecutionJobInfo> getWorkflowExecutions(long workflowId) throws PersistenceException;
-
     /**
      * Retrieve workflow nodes execution details from a workflow execution
      * @param executionJobId         The workflow execution identifier
@@ -113,4 +123,11 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor> {
      * @throws PersistenceException
      */
     List<ExecutionTaskInfo> getWorkflowExecutionTasks(long executionJobId) throws PersistenceException;
+
+    /**
+     * Returns all the settable parameters of the components of a workflow.
+     * The parameters are grouped by the component identifier
+     * @param workflowId    The workflow identifier
+     */
+    Map<String, List<Parameter>> getWorkflowParameters(long workflowId);
 }

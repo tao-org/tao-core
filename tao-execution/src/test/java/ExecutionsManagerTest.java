@@ -1,8 +1,8 @@
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import ro.cs.tao.component.ParameterDescriptor;
-import ro.cs.tao.component.ParameterType;
 import ro.cs.tao.component.ProcessingComponent;
+import ro.cs.tao.component.enums.ParameterType;
 import ro.cs.tao.component.enums.ProcessingComponentVisibility;
 import ro.cs.tao.component.template.BasicTemplate;
 import ro.cs.tao.component.template.Template;
@@ -196,8 +196,8 @@ public class ExecutionsManagerTest {
         processingComponent.setCopyright("");
         processingComponent.setActive(true);
         processingComponent.setVisibility(ProcessingComponentVisibility.USER);
-        processingComponent.setSourceCardinality(0);
-        processingComponent.setTargetCardinality(0);
+        /*processingComponent.setSourceCardinality(0);
+        processingComponent.setTargetCardinality(0);*/
         processingComponent.setContainerId("container01");
 
         return processingComponent;

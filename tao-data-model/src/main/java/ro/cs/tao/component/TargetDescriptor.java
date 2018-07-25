@@ -36,6 +36,7 @@ public class TargetDescriptor extends Identifiable {
     private String name;
     private DataDescriptor dataDescriptor;
     private List<String> constraints;
+    private int cardinality = 1;
 
     public TargetDescriptor() { }
 
@@ -64,6 +65,14 @@ public class TargetDescriptor extends Identifiable {
         return name;
     }
     public void setName(String name) { this.name = name; }
+
+    /**
+     * Returns the cardinality of outputs.
+     * If the value is 0, the outputs represent a list of data objects.
+     * By default, the cardinality of the outputs is 1.
+     */
+    public int getCardinality() { return this.cardinality; }
+    public void setCardinality(int value) { this.cardinality = value;}
     /**
      * Returns the data associated to this instance.
      */
@@ -113,5 +122,20 @@ public class TargetDescriptor extends Identifiable {
     @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(), parentId, name);
+    }
+
+    @Override
+    protected TargetDescriptor clone() throws CloneNotSupportedException {
+        TargetDescriptor clone = new TargetDescriptor();
+        clone.name = this.name;
+        clone.dataDescriptor = new DataDescriptor();
+        clone.dataDescriptor.setSensorType(this.dataDescriptor.getSensorType());
+        clone.dataDescriptor.setLocation(this.dataDescriptor.getLocation());
+        clone.dataDescriptor.setCrs(this.dataDescriptor.getCrs());
+        clone.dataDescriptor.setFormatType(this.dataDescriptor.getFormatType());
+        clone.dataDescriptor.setDimension(this.dataDescriptor.getDimension());
+        clone.constraints = new ArrayList<>(this.constraints);
+        clone.cardinality = this.cardinality;
+        return clone;
     }
 }
