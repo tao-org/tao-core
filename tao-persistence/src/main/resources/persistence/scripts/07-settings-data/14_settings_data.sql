@@ -9,6 +9,12 @@ INSERT INTO tao.component_visibility (visibility) VALUES ('USER');
 INSERT INTO tao.component_visibility (visibility) VALUES ('CONTRIBUTOR');
 
 
+-- Processing components type
+
+INSERT INTO tao.processing_component_type (id, type) VALUES (1, 'EXECUTABLE');
+
+INSERT INTO tao.processing_component_type (id, type) VALUES (2, 'SCRIPT');
+
 
 -- Data formats
 
@@ -189,9 +195,9 @@ INSERT INTO tao.workflow_graph_status (status) VALUES ('PUBLISHED');
 
 -- Workflow graph visibility
 
-INSERT INTO tao.workflow_graph_visibility (visibility) VALUES ('PUBLIC');
+INSERT INTO tao.visibility (visibility) VALUES ('PUBLIC');
 
-INSERT INTO tao.workflow_graph_visibility (visibility) VALUES ('PRIVATE');
+INSERT INTO tao.visibility (visibility) VALUES ('PRIVATE');
 
 
 

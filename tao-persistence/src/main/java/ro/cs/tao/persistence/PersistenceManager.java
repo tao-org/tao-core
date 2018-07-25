@@ -108,12 +108,16 @@ public class PersistenceManager implements MessagePersister {
     public List<EOProduct> getEOProducts(String...locations) {
         if (locations == null || locations.length == 0) {
             return getEOProducts();
+        } else if (locations.length == 1) {
+            return productManager.getEOProducts(locations[0]);
         } else {
             Set<String> set = new HashSet<>();
             Collections.addAll(set, locations);
             return productManager.getEOProducts(set);
         }
     }
+
+    public List<EOProduct> getPublicProducts() { return productManager.getPublicEOProducts(); }
 
     public List<VectorData> getVectorDataProducts() {
         return productManager.getVectorDataProducts();
@@ -147,8 +151,16 @@ public class PersistenceManager implements MessagePersister {
         return productManager.saveEOProduct(eoProduct);
     }
 
+    public void remove(EOProduct product) throws PersistenceException {
+        productManager.removeProduct(product);
+    }
+
     public VectorData saveVectorDataProduct(VectorData vectorDataProduct) throws PersistenceException {
         return productManager.saveVectorDataProduct(vectorDataProduct);
+    }
+
+    public void remove(VectorData product) throws PersistenceException {
+        productManager.removeProduct(product);
     }
 
     public AuxiliaryData saveAuxiliaryData(AuxiliaryData auxiliaryData) throws PersistenceException {
@@ -229,18 +241,30 @@ public class PersistenceManager implements MessagePersister {
         return componentManager.getProcessingComponents();
     }
 
+    public List<ProcessingComponent> getUserProcessingComponents(String userName) {
+        return componentManager.getUserProcessingComponents(userName);
+    }
+
+    public List<ProcessingComponent> getUserScriptComponents(String userName) {
+        return componentManager.getUserScriptComponents(userName);
+    }
+
     public ProcessingComponent getProcessingComponentById(String id) {//throws PersistenceException {
         return componentCache.get(id); //componentManager.getProcessingComponentById(id);
     }
 
 
     public ProcessingComponent saveProcessingComponent(ProcessingComponent component) throws PersistenceException {
-        return componentManager.saveProcessingComponent(component);
+        ProcessingComponent c = componentManager.saveProcessingComponent(component);
+        componentCache.put(c.getId(), c);
+        return c;
     }
 
 
     public ProcessingComponent updateProcessingComponent(ProcessingComponent component) throws PersistenceException {
-        return componentManager.updateProcessingComponent(component);
+        ProcessingComponent c = componentManager.updateProcessingComponent(component);
+        componentCache.put(c.getId(), c);
+        return c;
     }
 
     public boolean checkIfExistsComponentById(String id) {
@@ -248,6 +272,7 @@ public class PersistenceManager implements MessagePersister {
     }
 
     public ProcessingComponent deleteProcessingComponent(String id) throws PersistenceException {
+        componentCache.remove(id);
         return componentManager.deleteProcessingComponent(id);
     }
     //endregion

@@ -15,6 +15,8 @@
  */
 package ro.cs.tao.eodata.enums;
 
+import ro.cs.tao.TaoEnum;
+
 import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlEnumValue;
 
@@ -22,64 +24,42 @@ import javax.xml.bind.annotation.XmlEnumValue;
  * Image data formats
  */
 @XmlEnum(Integer.class)
-public enum DataFormat {
+public enum DataFormat implements TaoEnum<Integer> {
     /**
      * RASTER image data format
      */
     @XmlEnumValue("1")
-    RASTER(1),
+    RASTER(1, "Raster"),
     /**
      * VECTOR image data format
      */
     @XmlEnumValue("2")
-    VECTOR(2),
+    VECTOR(2, "Vector"),
     /**
      * Other image data format
      */
     @XmlEnumValue("3")
-    OTHER(3);
+    OTHER(3, "Unknown");
 
     /**
      * Numerical value for enum constants
      */
     private final int value;
+    private final String description;
 
     /**
      * Constructor
      * @param s - the integer value identifier
      */
-    DataFormat(final int s)
-    {
-        value = s;
+    DataFormat(final int s, final String desc) {
+        this.value = s;
+        this.description = desc;
     }
+
 
     @Override
-    public String toString()
-    {
-        return String.valueOf(this.value);
-    }
+    public String friendlyName() { return this.description; }
 
-    /**
-     * Retrieve string enum token corresponding to the integer identifier
-     * @param value the integer value identifier
-     * @return the string token corresponding to the integer identifier
-     */
-    public static String getEnumConstantNameByValue(final int value) {
-        for (DataFormat type : values()) {
-            if ((String.valueOf(value)).equals(type.toString())) {
-                // return the name of the enum constant having the given value
-                return type.name();
-            }
-        }
-        return null;
-    }
-
-    public static DataFormat getEnumConstantByValue(final int value) {
-        for (DataFormat type : values()) {
-            if ((String.valueOf(value)).equals(type.toString())) {
-                return type;
-            }
-        }
-        return null;
-    }
+    @Override
+    public Integer value() { return this.value; }
 }

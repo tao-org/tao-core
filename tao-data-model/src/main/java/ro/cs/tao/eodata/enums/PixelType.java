@@ -15,6 +15,8 @@
  */
 package ro.cs.tao.eodata.enums;
 
+import ro.cs.tao.TaoEnum;
+
 import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlEnumValue;
 
@@ -22,65 +24,39 @@ import javax.xml.bind.annotation.XmlEnumValue;
  * @author Cosmin Cara
  */
 @XmlEnum(Integer.class)
-public enum PixelType {
+public enum PixelType implements TaoEnum<Integer> {
     @XmlEnumValue("1")
-    UINT8(1),
+    UINT8(1, "Unsigned byte"),
     @XmlEnumValue("2")
-    INT8(2),
+    INT8(2, "Signed byte"),
     @XmlEnumValue("3")
-    UINT16(3),
+    UINT16(3, "Unsigned short"),
     @XmlEnumValue("4")
-    INT16(4),
+    INT16(4, "Signed short"),
     @XmlEnumValue("5")
-    UINT32(5),
+    UINT32(5, "Unsigned integer"),
     @XmlEnumValue("6")
-    INT32(6),
+    INT32(6, "Signed integer"),
     @XmlEnumValue("7")
-    FLOAT32(7),
+    FLOAT32(7, "Float"),
     @XmlEnumValue("8")
-    FLOAT64(8);
+    FLOAT64(8, "Double");
 
     /**
      * Numerical value for enum constants
      */
     private final int value;
+    private final String description;
 
-    /**
-     * Constructor
-     * @param s - the integer value identifier
-     */
-    PixelType(final int s)
-    {
-        value = s;
+    PixelType(int value, String description) {
+        this.value = value;
+        this.description = description;
     }
+
 
     @Override
-    public String toString()
-    {
-        return String.valueOf(this.value);
-    }
+    public String friendlyName() { return this.description; }
 
-    /**
-     * Retrieve string enum token corresponding to the integer identifier
-     * @param value the integer value identifier
-     * @return the string token corresponding to the integer identifier
-     */
-    public static String getEnumConstantNameByValue(final int value) {
-        for (PixelType type : values()) {
-            if ((String.valueOf(value)).equals(type.toString())) {
-                // return the name of the enum constant having the given value
-                return type.name();
-            }
-        }
-        return null;
-    }
-
-    public static PixelType getEnumConstantByValue(final int value) {
-        for (PixelType type : values()) {
-            if ((String.valueOf(value)).equals(type.toString())) {
-                return type;
-            }
-        }
-        return null;
-    }
+    @Override
+    public Integer value() { return this.value; }
 }

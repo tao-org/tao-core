@@ -15,10 +15,10 @@
  */
 package ro.cs.tao.persistence.convert;
 
+import ro.cs.tao.EnumUtils;
 import ro.cs.tao.eodata.enums.PixelType;
 
 import javax.persistence.AttributeConverter;
-import javax.persistence.Converter;
 
 /**
  * Converter for PixelType enum stored values
@@ -29,11 +29,11 @@ public class PixelTypeConverter implements AttributeConverter<PixelType, Integer
 
     @Override
     public Integer convertToDatabaseColumn(PixelType attribute) {
-        return attribute != null ? Integer.parseInt(attribute.toString()) : null;
+        return attribute != null ? attribute.value() : null;
     }
 
     @Override
     public PixelType convertToEntityAttribute(Integer dbData) {
-        return dbData != null ? PixelType.valueOf(PixelType.getEnumConstantNameByValue(dbData)) : null;
+        return dbData != null ? EnumUtils.getEnumConstantByValue(PixelType.class, dbData) : null;
     }
 }

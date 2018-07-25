@@ -15,6 +15,8 @@
  */
 package ro.cs.tao.topology;
 
+import ro.cs.tao.TaoEnum;
+
 import javax.xml.bind.annotation.XmlEnum;
 
 /**
@@ -22,48 +24,24 @@ import javax.xml.bind.annotation.XmlEnum;
  *
  * @author Cosmin Cara
  */
-@XmlEnum
-public enum ServiceStatus {
-    NOT_FOUND(1),
-    INSTALLED(2),
-    UNINSTALLED(3),
-    ERROR(4);
+@XmlEnum(Integer.class)
+public enum ServiceStatus implements TaoEnum<Integer> {
+    NOT_FOUND(1, "Not Found"),
+    INSTALLED(2, "Installed"),
+    UNINSTALLED(3, "Uninstalled"),
+    ERROR(4, "Error");
 
-    /**
-     * Numerical value for enum constants
-     */
     private final int value;
+    private final String description;
 
-    /**
-     * Constructor
-     * @param s - the integer value identifier
-     */
-    ServiceStatus(final int s)
-    {
-        value = s;
+    ServiceStatus(int value, String description) {
+        this.value = value;
+        this.description = description;
     }
 
     @Override
-    public String toString()
-    {
-        return String.valueOf(this.value);
-    }
+    public String friendlyName() { return this.description; }
 
-    /**
-     * Retrieve string enum token corresponding to the integer identifier
-     * @param value the integer value identifier
-     * @return the string token corresponding to the integer identifier
-     */
-    public static String getEnumConstantNameByValue(final int value)
-    {
-        for (ServiceStatus type : values())
-        {
-            if ((String.valueOf(value)).equals(type.toString()))
-            {
-                // return the name of the enum constant having the given value
-                return type.name();
-            }
-        }
-        return null;
-    }
+    @Override
+    public Integer value() { return this.value; }
 }

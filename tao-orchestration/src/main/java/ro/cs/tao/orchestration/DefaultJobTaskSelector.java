@@ -41,7 +41,7 @@ public class DefaultJobTaskSelector implements TaskSelector<ExecutionJob> {
     private BiFunction<Long, Long, ExecutionTask> taskByNodeProvider;
     private final Logger logger = Logger.getLogger(DefaultJobTaskSelector.class.getName());
 
-    DefaultJobTaskSelector() { }
+    public DefaultJobTaskSelector() { }
 
     @Override
     public void setWorkflowProvider(Function<Long, WorkflowNodeDescriptor> workflowProvider) {

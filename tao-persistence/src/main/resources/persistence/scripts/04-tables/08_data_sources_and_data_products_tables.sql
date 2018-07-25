@@ -103,6 +103,7 @@ CREATE TABLE tao.raster_data_product
 	height integer NOT NULL,
 	approximate_size bigint NOT NULL,
 	username varchar NULL,
+	visibility_id integer NULL DEFAULT 2,
 --	data_source_id integer NULL,
 	created timestamp NULL DEFAULT now(),
 	modified timestamp NULL
@@ -119,7 +120,10 @@ ALTER TABLE tao.raster_data_product ADD CONSTRAINT FK_raster_data_product_sensor
 	
 ALTER TABLE tao.raster_data_product ADD CONSTRAINT FK_raster_data_product_pixel_type
 	FOREIGN KEY (pixel_type_id) REFERENCES tao.pixel_type (id) ON DELETE No Action ON UPDATE No Action;
-	
+
+ALTER TABLE tao.raster_data_product ADD CONSTRAINT FK_raster_data_product_visibility
+	FOREIGN KEY (visibility_id) REFERENCES tao.visibility (id) ON DELETE No Action ON UPDATE No Action;
+
 --ALTER TABLE tao.raster_data_product ADD CONSTRAINT FK_raster_data_product_data_source
 --	FOREIGN KEY (data_source_id) REFERENCES tao.data_source (id) ON DELETE No Action ON UPDATE No Action;
 
@@ -138,6 +142,7 @@ CREATE TABLE tao.vector_data_product
 	location varchar NOT NULL,
 	entry_point varchar NULL,
 	username varchar NULL,
+	visibility_id integer NULL DEFAULT 2,
 --	data_source_id integer NULL,
 	created timestamp NULL DEFAULT now(),
 	modified timestamp NULL
@@ -149,6 +154,9 @@ ALTER TABLE tao.vector_data_product ADD CONSTRAINT PK_vector_data_product
 ALTER TABLE tao.vector_data_product ADD CONSTRAINT FK_vector_data_product_data_format
 	FOREIGN KEY (type_id) REFERENCES tao.data_format (id) ON DELETE No Action ON UPDATE No Action;
 
+ALTER TABLE tao.vector_data_product ADD CONSTRAINT FK_vector_data_product_visibility
+	FOREIGN KEY (visibility_id) REFERENCES tao.visibility (id) ON DELETE No Action ON UPDATE No Action;
+
 --ALTER TABLE tao.vector_data_product ADD CONSTRAINT FK_vector_data_product_data_source
 --	FOREIGN KEY (data_source_id) REFERENCES tao.data_source (id) ON DELETE No Action ON UPDATE No Action;
 
@@ -159,6 +167,7 @@ CREATE TABLE tao.auxiliary_data
 	location character varying NOT NULL,
 	description character varying NOT NULL,
 	username character varying NOT NULL,
+	visibility_id integer NULL DEFAULT 2,
 	created timestamp NULL DEFAULT now(),
 	modified timestamp NULL
 );
@@ -166,7 +175,8 @@ CREATE TABLE tao.auxiliary_data
 ALTER TABLE tao.auxiliary_data ADD CONSTRAINT PK_auxiliary_data
 	PRIMARY KEY (location);
 
-
+ALTER TABLE tao.auxiliary_data_product ADD CONSTRAINT FK_auxiliary_data_product_visibility
+	FOREIGN KEY (visibility_id) REFERENCES tao.visibility (id) ON DELETE No Action ON UPDATE No Action;
 -------------------------------------------------------------------------------
 -- table: data_product_attributes
 DROP TABLE IF EXISTS tao.data_product_attributes CASCADE;
@@ -267,6 +277,7 @@ CREATE TABLE tao.source_descriptor
     id varchar(512) NOT NULL DEFAULT(uuid_generate_v4()),
 	parent_id varchar(512) NOT NULL,
 	name varchar(512) NOT NULL,
+	cardinality integer NOT NULL,
 	constraints text NULL,
 
 	data_format_id integer NOT NULL,
@@ -298,6 +309,7 @@ CREATE TABLE tao.target_descriptor
     id varchar(512) NOT NULL DEFAULT(uuid_generate_v4()),
     parent_id varchar(512) NOT NULL,
     name varchar(512) NOT NULL,
+    cardinality integer NOT NULL,
 	constraints text NULL,
 
 	data_format_id integer NOT NULL,

@@ -1,10 +1,14 @@
 package ro.cs.tao.persistence.repository;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.component.ProcessingComponent;
+
+import java.util.List;
 
 /**
  * CRUD repository for ProcessingComponent entities
@@ -30,4 +34,9 @@ public interface ProcessingComponentRepository extends PagingAndSortingRepositor
      * @return the corresponding ProcessingComponent entity
      */
     ProcessingComponent findByLabel(String label);
+
+    @Query(value = "SELECT * FROM tao.processing_component WHERE owner_user = :userName AND component_type_id = :typeId",
+            nativeQuery = true)
+    List<ProcessingComponent> getUserComponentsByType(@Param("userName") String userName,
+                                                      @Param("typeId") int typeId);
 }

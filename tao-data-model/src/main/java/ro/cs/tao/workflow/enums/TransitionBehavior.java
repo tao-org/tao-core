@@ -16,71 +16,39 @@
 
 package ro.cs.tao.workflow.enums;
 
+import ro.cs.tao.TaoEnum;
+
 import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlEnumValue;
 
 @XmlEnum(Integer.class)
-public enum TransitionBehavior {
+public enum TransitionBehavior implements TaoEnum<Integer> {
     /**
      * The execution flow should not continue if the current node fails.
      * This is the default (and only) value for regular nodes.
      * For group nodes, if a sub-task fails -> the group fails.
      */
     @XmlEnumValue("1")
-    FAIL_ON_ERROR(1),
+    FAIL_ON_ERROR(1, "Fail on error"),
     /**
      * The execution flow should continue if the current node fails.
      * This is intended for group nodes, such that if a sub-task fails -> the current sub-flow fails,
      * but the group continues with the next sub-flow.
      */
     @XmlEnumValue("2")
-    CONTINUE_ON_ERROR(2);
+    CONTINUE_ON_ERROR(2, "Continue on error");
 
-    /**
-     * Numerical value for enum constants
-     */
     private final int value;
+    private final String description;
 
-    /**
-     * Constructor
-     * @param s - the integer value identifier
-     */
-    TransitionBehavior(final int s)
-    {
-        value = s;
+    TransitionBehavior(int value, String description) {
+        this.value = value;
+        this.description = description;
     }
 
     @Override
-    public String toString()
-    {
-        return String.valueOf(this.value);
-    }
+    public String friendlyName() { return this.description; }
 
-    public int value() { return this.value; }
-
-    /**
-     * Retrieve string enum token corresponding to the integer identifier
-     * @param value the integer value identifier
-     * @return the string token corresponding to the integer identifier
-     */
-    public static String getEnumConstantNameByValue(final int value) {
-        for (TransitionBehavior type : values()) {
-            if ((String.valueOf(value)).equals(type.toString())) {
-                // return the name of the enum constant having the given value
-                return type.name();
-            }
-        }
-        return null;
-    }
-
-    public static TransitionBehavior getEnumConstantByValue(final int value) {
-        for (TransitionBehavior type : values()) {
-            if (value == type.value) {
-                // return the name of the enum constant having the given value
-                return type;
-            }
-        }
-        return null;
-    }
-
+    @Override
+    public Integer value() { return this.value; }
 }

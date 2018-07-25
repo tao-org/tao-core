@@ -31,12 +31,7 @@
 /*___INFO__MARK_END__*/
 package ro.cs.tao.execution.drmaa;
 
-import org.ggf.drmaa.DrmaaException;
-import org.ggf.drmaa.InvalidJobTemplateException;
-import org.ggf.drmaa.JobInfo;
-import org.ggf.drmaa.JobTemplate;
-import org.ggf.drmaa.Session;
-import org.ggf.drmaa.Version;
+import org.ggf.drmaa.*;
 
 import java.util.Arrays;
 import java.util.List;
@@ -359,7 +354,7 @@ public class AbstractSession implements Session {
      * @throws DrmaaException {@inheritDoc}
      */
     public void synchronize(List jobIds, long timeout, boolean dispose) throws DrmaaException {
-        this.nativeSynchronize((String[])jobIds.toArray(new String[jobIds.size()]), timeout, dispose);
+        this.nativeSynchronize((String[])jobIds.toArray(new String[0]), timeout, dispose);
     }
 
     /**

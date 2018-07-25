@@ -25,6 +25,18 @@ CREATE TABLE tao.component_visibility
 ALTER TABLE tao.component_visibility ADD CONSTRAINT PK_component_visibility
 	PRIMARY KEY (id);
 
+-------------------------------------------------------------------------------
+-- table: processing_component_type
+DROP TABLE IF EXISTS tao.processing_component_type CASCADE;
+
+CREATE TABLE tao.processing_component_type
+(
+	id integer NOT NULL,
+	type varchar(50) NOT NULL
+);
+
+ALTER TABLE tao.processing_component_type ADD CONSTRAINT PK_processing_component_type
+	PRIMARY KEY (id);
 
 -------------------------------------------------------------------------------
 -- table: template_type
@@ -90,16 +102,15 @@ CREATE TABLE tao.processing_component
 	authors varchar(1024) NOT NULL,
 	copyright text NOT NULL,
 	node_affinity varchar(250) NULL,
-	source_cardinality integer NOT NULL,
-    target_cardinality integer NOT NULL,
     container_id varchar(1024) NULL,
 	main_tool_file_location varchar(512) NOT NULL,
 	working_directory varchar(512) NULL,
 	template_type_id integer NOT NULL,
-	owner_user_id integer NULL,
+	owner_user varchar NULL,
 	visibility_id integer NOT NULL,
 	multi_thread boolean NULL DEFAULT false,
 	template_contents text NULL,
+	component_type_id integer NULL DEFAULT 1,
 	created timestamp NULL DEFAULT now(),
     modified timestamp NULL,
 	active boolean NULL DEFAULT true
@@ -116,6 +127,9 @@ ALTER TABLE tao.processing_component ADD CONSTRAINT FK_processing_component_user
 
 ALTER TABLE tao.processing_component ADD CONSTRAINT FK_processing_component_component_visibility
 	FOREIGN KEY (visibility_id) REFERENCES tao.component_visibility (id) ON DELETE No Action ON UPDATE No Action;
+
+ALTER TABLE tao.processing_component ADD CONSTRAINT FK_processing_component_processing_component_type
+	FOREIGN KEY (component_type_id) REFERENCES tao.processing_component_type (id) ON DELETE No Action ON UPDATE No Action;
 
 ALTER TABLE tao.processing_component ADD CONSTRAINT FK_processing_component_container
 	FOREIGN KEY (container_id) REFERENCES tao.container (id) ON DELETE No Action ON UPDATE No Action;

@@ -93,6 +93,9 @@ public class Zipper {
                 }
                 zis.closeEntry();
             }
+            if (deleteAfterDecompress) {
+                Files.delete(source);
+            }
         } catch (IOException e) {
             Logger.getLogger(Zipper.class.getSimpleName()).warning(e.getMessage());
             return null;
@@ -142,7 +145,7 @@ public class Zipper {
             if (Files.isDirectory(path)) {
                 Files.walkFileTree(path, new FileVisitor<Path>() {
                     @Override
-                    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
                         return FileVisitResult.CONTINUE;
                     }
 
@@ -153,7 +156,7 @@ public class Zipper {
                     }
 
                     @Override
-                    public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+                    public FileVisitResult visitFileFailed(Path file, IOException exc) {
                         return FileVisitResult.CONTINUE;
                     }
 

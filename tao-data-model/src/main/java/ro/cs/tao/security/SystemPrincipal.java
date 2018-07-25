@@ -31,7 +31,7 @@ public final class SystemPrincipal implements Principal {
 
     @Override
     public String getName() {
-        return "System Account";
+        return "SystemAccount";
     }
 
     @Override

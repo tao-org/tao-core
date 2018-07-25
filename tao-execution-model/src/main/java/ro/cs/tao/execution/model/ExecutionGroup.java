@@ -65,14 +65,10 @@ public class ExecutionGroup extends ExecutionTask {
         }
         Variable variable = this.outputParameterValues.stream()
                                 .filter(o -> o.getKey().equals(parameterId)).findFirst().orElse(null);
-        try {
-            if (variable != null) {
-                variable.setValue(appendValueToList(variable.getValue(), value));
-            } else {
-                this.outputParameterValues.add(new Variable(parameterId, appendValueToList(null, value)));
-            }
-        } catch (SerializationException e) {
-            e.printStackTrace();
+        if (variable != null) {
+            variable.setValue(appendValueToList(variable.getValue(), value));
+        } else {
+            this.outputParameterValues.add(new Variable(parameterId, appendValueToList(null, value)));
         }
     }
 
@@ -151,12 +147,7 @@ public class ExecutionGroup extends ExecutionTask {
             Variable newVar = new Variable();
             newVar.setKey(inputParameterValue.getKey());
             if (index != null) {
-                try {
-                    newVar.setValue(getListValue(inputParameterValue.getValue(), index));
-                } catch (SerializationException e) {
-                    // if we got here, maybe the value is a single value
-                    newVar.setValue(inputParameterValue.getValue());
-                }
+                newVar.setValue(getListValue(inputParameterValue.getValue(), index));
             } else {
                 newVar.setValue(inputParameterValue.getValue());
             }

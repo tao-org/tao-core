@@ -34,6 +34,18 @@ public interface ComponentService extends CRUDService<ProcessingComponent> {
     List<String> getAvailableConstraints();
 
     /**
+     * Retrieves the list of processing components belonging to a user.
+     * @param userName  The user name
+     */
+    List<ProcessingComponent> getUserProcessingComponents(String userName);
+
+    /**
+     * Retrieves the list of script components belonging to a user.
+     * @param userName  The user name
+     */
+    List<ProcessingComponent> getUserScriptComponents(String userName);
+
+    /**
      * Imports the definition of a processing component from the given data.
      *
      * @param mediaType     The type of the data. Can be one of JSON or XML.

@@ -18,6 +18,7 @@ package ro.cs.tao.component;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
+import ro.cs.tao.component.enums.ProcessingComponentType;
 import ro.cs.tao.component.enums.ProcessingComponentVisibility;
 import ro.cs.tao.component.template.BasicTemplate;
 import ro.cs.tao.component.template.Template;
@@ -26,13 +27,18 @@ import ro.cs.tao.component.template.TemplateType;
 import ro.cs.tao.component.template.engine.EngineFactory;
 import ro.cs.tao.component.template.engine.TemplateEngine;
 import ro.cs.tao.component.validation.ValidationException;
+import ro.cs.tao.security.SessionStore;
 
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
+import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
@@ -54,45 +60,68 @@ public class ProcessingComponent extends TaoComponent {
     private boolean multiThread;
     private ProcessingComponentVisibility visibility;
     private boolean active;
+    private ProcessingComponentType componentType;
+    private String owner;
+
 
     public ProcessingComponent() {
         super();
     }
     /**
-     * Returns the location of the tool (where the tool binaries should be found inside its container)
+     * Returns the binary/executable of the tool
      */
     public String getFileLocation() {
         return fileLocation;
     }
     /**
-     * Sets the location of the tool (where the tool binaries should be found on any machine)
+     * Sets the binary/executable of the tool
      */
     public void setFileLocation(String fileLocation) {
         this.fileLocation = fileLocation;
     }
 
+    /**
+     * Returns the full path (inside the container) of the tool binary/executable.
+     * This path is computed at execution time.
+     */
     @JsonIgnore
     public String getExpandedFileLocation() {
         return expandedFileLocation;
     }
-
+    /**
+     * Sets the full path (inside the container) of the tool binary/executable.
+     * This path is computed at execution time.
+     */
     public void setExpandedFileLocation(String expandedFileLocation) {
         this.expandedFileLocation = expandedFileLocation;
     }
 
+    /**
+     * Returns the working directory for the tool.
+     */
     public String getWorkingDirectory() {
         return workingDirectory;
     }
 
+    /**
+     * Sets the working directory for the tool.
+     */
     public void setWorkingDirectory(String workingDirectory) {
         this.workingDirectory = workingDirectory;
     }
 
+    /**
+     * Returns the template of this component.
+     */
     @JsonIgnore
     public Template getTemplate() {
         return template;
     }
 
+    /**
+     * Sets the template of this component.
+     * If the template is not of the type supported by this component, an exception is thrown.
+     */
     @JsonIgnore
     public void setTemplate(Template template) throws TemplateException {
         if (template != null) {
@@ -104,15 +133,24 @@ public class ProcessingComponent extends TaoComponent {
         }
     }
 
+    /**
+     * Returns the variables of this component.
+     */
     @XmlElementWrapper(name = "variables")
     public Set<Variable> getVariables() {
         return variables;
     }
 
+    /**
+     * Sets the variables of this component.
+     */
     public void setVariables(Set<Variable> variables) {
         this.variables = variables;
     }
 
+    /**
+     * Returns the parameter descriptors of this component.
+     */
     @XmlElementWrapper(name = "parameters")
     public List<ParameterDescriptor> getParameterDescriptors() {
         if (this.parameters == null) {
@@ -121,47 +159,79 @@ public class ProcessingComponent extends TaoComponent {
         return this.parameters;
     }
 
+    /**
+     * Sets the parameter descriptors of this component.
+     */
     public void setParameterDescriptors(List<ParameterDescriptor> parameters) {
         this.parameters = parameters;
     }
 
+    /**
+     * Check if the current component can run on multiple threads.
+     */
     public boolean getMultiThread() {
         return multiThread;
     }
-
+    /**
+     * Instructs the current component to run on multiple threads.
+     */
     public void setMultiThread(boolean multiThread) {
         this.multiThread = multiThread;
     }
 
+    /**
+     * Returns the visibility of the component.
+     */
     public ProcessingComponentVisibility getVisibility() {
         return visibility;
     }
 
+    /**
+     * Sets the visibility of the component.
+     */
     public void setVisibility(ProcessingComponentVisibility visibility) {
         this.visibility = visibility;
     }
 
+    /**
+     * Checks if the component is active (i.e. not deleted).
+     */
     public boolean getActive() {
         return active;
     }
 
+    /**
+     * Sets the active status of the component.
+     */
     public void setActive(boolean active) {
         this.active = active;
     }
 
+    /**
+     * Returns the template type supported by this component.
+     */
     @XmlTransient
     public TemplateType getTemplateType() {
         return templateType != null ? templateType : TemplateType.VELOCITY;
     }
 
+    /**
+     * Sets the template type supported by this component.
+     */
     public void setTemplateType(TemplateType templateType) {
         this.templateType = templateType;
     }
 
+    /**
+     * Returns the template contents of the component.
+     */
     @JsonGetter(value = "templatecontents")
     public String getTemplateContents(){
         return template != null ? template.getContents() : null;
     }
+    /**
+     * Sets the template contents of the component.
+     */
     @JsonSetter(value = "templatecontents")
     public void setTemplateContents(String contents) {
         this.template = new BasicTemplate();
@@ -170,6 +240,9 @@ public class ProcessingComponent extends TaoComponent {
         template.associateWith(getTemplateEngine());
     }
 
+    /**
+     * Returns the template engine associated with the component.
+     */
     @JsonIgnore
     public TemplateEngine getTemplateEngine() {
         if (this.templateEngine == null) {
@@ -178,6 +251,9 @@ public class ProcessingComponent extends TaoComponent {
         return this.templateEngine;
     }
 
+    /**
+     * Validates the parameter values agains the parameter descriptors.
+     */
     public void validate(Map<String, Object> parameterValues) throws ValidationException {
         if (parameterValues != null) {
             final List<ParameterDescriptor> parameterDescriptors =
@@ -192,6 +268,12 @@ public class ProcessingComponent extends TaoComponent {
 
     public String getContainerId() { return containerId; }
     public void setContainerId(String containerId) { this.containerId = containerId; }
+
+    public ProcessingComponentType getComponentType() { return componentType; }
+    public void setComponentType(ProcessingComponentType componentType) { this.componentType = componentType; }
+
+    public String getOwner() { return owner; }
+    public void setOwner(String owner) { this.owner = owner; }
 
     @Override
     public String defaultName() {
@@ -253,9 +335,37 @@ public class ProcessingComponent extends TaoComponent {
         } else {
             cmdBuilder.append(this.fileLocation).append("\n");
         }
-        String cmdLine = templateEngine.transform(this.template, clonedMap);
-        cmdBuilder.append(cmdLine == null || "null".equals(cmdLine) ? "" : cmdLine);
-        cmdBuilder.append("\"");
+        String transformedTemplate = templateEngine.transform(this.template, clonedMap);
+        if (transformedTemplate == null || "null".equals(transformedTemplate)) {
+            Logger.getLogger(ProcessingComponent.class.getName())
+                    .warning(String.format("Component %s produced an empty invocation template", this.id));
+            transformedTemplate = "";
+        }
+        if (this.componentType == null) {
+            this.componentType = ProcessingComponentType.EXECUTABLE;
+        }
+        switch (this.componentType) {
+            case SCRIPT:
+                try {
+                    Path scriptPath = SessionStore.currentContext().getWorkspace().resolve("scripts");
+                    Files.createDirectories(scriptPath);
+                    Path scriptFile = scriptPath.resolve(this.id + "-script");
+                    Files.write(scriptFile, transformedTemplate.getBytes());
+                    cmdBuilder.append(scriptFile.toString()).append("\n");
+                    clonedMap.keySet().retainAll(this.parameters.stream().map(Identifiable::getId).collect(Collectors.toSet()));
+                    for (Map.Entry<String, Object> entry : clonedMap.entrySet()) {
+                        cmdBuilder.append("--").append(entry.getKey()).append("=").append(entry.getValue()).append("\n");
+                    }
+                } catch (IOException e) {
+                    Logger.getLogger(ProcessingComponent.class.getName()).severe("Cannot persist script file");
+                    throw new TemplateException(e);
+                }
+                break;
+            case EXECUTABLE:
+            default:
+                cmdBuilder.append(transformedTemplate).append("\n");
+                break;
+        }
         return cmdBuilder.toString();
     }
 

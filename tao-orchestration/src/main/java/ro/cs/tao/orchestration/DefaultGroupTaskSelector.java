@@ -16,6 +16,8 @@
 
 package ro.cs.tao.orchestration;
 
+import ro.cs.tao.component.ProcessingComponent;
+import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.component.Variable;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.orchestration.util.TaskUtilities;
@@ -39,7 +41,7 @@ public class DefaultGroupTaskSelector implements TaskSelector<ExecutionGroup> {
     private BiFunction<Long, Long, ExecutionTask> taskByNodeProvider;
     private final Logger logger = Logger.getLogger(DefaultJobTaskSelector.class.getName());
 
-    DefaultGroupTaskSelector() { }
+    public DefaultGroupTaskSelector() { }
 
     @Override
     public void setWorkflowProvider(Function<Long, WorkflowNodeDescriptor> workflowProvider) {
@@ -68,7 +70,9 @@ public class DefaultGroupTaskSelector implements TaskSelector<ExecutionGroup> {
                     ExecutionTask task = tasks.get(0);
                     if (task instanceof ExecutionGroup) {
                         ExecutionGroup groupTask = (ExecutionGroup) task;
-                        int cardinality = ((ProcessingExecutionTask) currentTask).getComponent().getTargetCardinality();
+                        ProcessingComponent component = ((ProcessingExecutionTask) currentTask).getComponent();
+                        List<TargetDescriptor> targets = component.getTargets();
+                        int cardinality = (targets != null && targets.size() > 0) ? targets.get(0).getCardinality() : 1;
                         groupTask.setStateHandler(
                                 new LoopStateHandler(
                                         new LoopState(cardinality, 1)));

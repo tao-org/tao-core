@@ -24,6 +24,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
+import ro.cs.tao.EnumUtils;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.persistence.repository.ExecutionJobRepository;
@@ -174,7 +175,7 @@ public class ExecutionManager {
                 result.setTaskEnd(timestamp.toLocalDateTime());
             }
             result.setHost(rs.getString(6));
-            result.setTaskStatus(ExecutionStatus.getEnumConstantByValue(rs.getInt(7)));
+            result.setTaskStatus(EnumUtils.getEnumConstantByValue(ExecutionStatus.class, rs.getInt(7)));
             return result;
         });
     }

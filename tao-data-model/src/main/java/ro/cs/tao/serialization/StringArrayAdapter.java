@@ -18,16 +18,18 @@ package ro.cs.tao.serialization;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 
 /**
+ * Serialization adapter for string array objects.
+ *
  * @author Cosmin Cara
  */
 public class StringArrayAdapter extends XmlAdapter<String[], String> {
     @Override
-    public String unmarshal(String[] v) throws Exception {
+    public String unmarshal(String[] v) {
         return v == null ? null : "[" + String.join(",", v) + "]";
     }
 
     @Override
-    public String[] marshal(String v) throws Exception {
+    public String[] marshal(String v) {
         if (v == null || v.isEmpty()) {
             return null;
         }

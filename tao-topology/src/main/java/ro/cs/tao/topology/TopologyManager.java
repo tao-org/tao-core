@@ -22,18 +22,21 @@ import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.Topics;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.security.SystemPrincipal;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.spi.ServiceLoader;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
-import ro.cs.tao.utils.Platform;
 import ro.cs.tao.utils.async.BinaryTask;
 import ro.cs.tao.utils.async.LazyInitialize;
 import ro.cs.tao.utils.executors.*;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.Principal;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -45,6 +48,13 @@ import java.util.stream.Collectors;
  * @author Cosmin Udroiu
  */
 public class TopologyManager implements ITopologyManager {
+
+    private static final List<String> dockerBuildCmdTemplate;
+    private static final List<String> dockerTagCmdTemplate;
+    private static final List<String> dockerPushCmdTemplate;
+    private static final List<String> dockerListCmdTemplate;
+    private static final List<String> dockerListAllCmd;
+    private static final OutputAccumulator sharedAccumulator;
     private static final TopologyManager instance;
 
     private final Logger logger;
@@ -54,6 +64,39 @@ public class TopologyManager implements ITopologyManager {
     private final ExecutorService executorService;
 
     static {
+        dockerBuildCmdTemplate = new ArrayList<>(5);
+        dockerBuildCmdTemplate.add("docker");
+        dockerBuildCmdTemplate.add("build");
+        dockerBuildCmdTemplate.add("-t");
+        dockerBuildCmdTemplate.add("#NAME");
+        dockerBuildCmdTemplate.add("#PATH");
+
+        dockerTagCmdTemplate = new ArrayList<>(4);
+        dockerTagCmdTemplate.add("docker");
+        dockerTagCmdTemplate.add("tag");
+        dockerTagCmdTemplate.add("#ID");
+        dockerTagCmdTemplate.add("#TAG");
+
+        dockerPushCmdTemplate = new ArrayList<>(3);
+        dockerPushCmdTemplate.add("docker");
+        dockerPushCmdTemplate.add("push");
+        dockerPushCmdTemplate.add("#TAG");
+
+        dockerListAllCmd = new ArrayList<>(4);
+        dockerListAllCmd.add("docker");
+        dockerListAllCmd.add("images");
+        dockerListAllCmd.add("--format");
+        dockerListAllCmd.add("{{.ID}}\\t{{.Tag}}\\t{{.Repository}}");
+
+        dockerListCmdTemplate = new ArrayList<String>(5);
+        dockerListCmdTemplate.add("docker");
+        dockerListCmdTemplate.add("images");
+        dockerListCmdTemplate.add("#NAME");
+        dockerListCmdTemplate.add("--format");
+        dockerListCmdTemplate.add("{{.ID}}\\t{{.Tag}}\\t{{.Repository}}");
+
+        sharedAccumulator = new OutputAccumulator();
+
         instance = new TopologyManager();
     }
 
@@ -101,7 +144,7 @@ public class TopologyManager implements ITopologyManager {
     @Override
     public List<NodeDescription> list() {
         return getPersistenceManager().getNodes().stream()
-                .filter(node -> node.getActive())     // we take only active node but not the deleted ones
+                .filter(NodeDescription::getActive)     // we take only active node but not the deleted ones
                 .collect(Collectors.toList());
     }
 
@@ -208,63 +251,159 @@ public class TopologyManager implements ITopologyManager {
     }
 
     @Override
-    public List<Container> getAvailableDockerImages() {
-        List<Container> containers = new ArrayList<>();
-        List<String> args = new ArrayList<String>() {{
-           add("docker");
-           add("images");
-           add("--format");
-            //noinspection ConstantConditions
-            add(Platform.ID.win != Platform.getCurrentPlatform().getId() ? "table" : "'" + "{{.ID}}\\t{{.Tag}}\\t{{.Repository}}'");
-        }};
+    public void registerImage(Path imagePath, String shortName, String description) throws TopologyException {
+        if (imagePath == null || !Files.exists(imagePath)) {
+            throw new TopologyException("Invalid image path");
+        }
+        Principal principal = SessionStore.currentContext() != null ?
+                SessionStore.currentContext().getPrincipal() : SystemPrincipal.instance();
+        String correctedName = shortName.replace(" ", "-");
+        dockerBuildCmdTemplate.set(3, correctedName);
+        dockerBuildCmdTemplate.set(4, imagePath.getParent().toString());
         ExecutionUnit job = new ExecutionUnit(ExecutorType.PROCESS,
                                               masterNodeInfo.getHostName(),
                                               masterNodeInfo.getUserName(),
                                               masterNodeInfo.getUserPass(),
-                                              args, true, SSHMode.EXEC);
-        List<String> lines = new ArrayList<>();
-        final Executor executor = Executor.execute(new OutputConsumer() {
-            @Override
-            public void consume(String message) {
-                lines.add(message);
+                                              dockerBuildCmdTemplate, true, SSHMode.EXEC);
+        sharedAccumulator.reset();
+        Executor executor = Executor.execute(sharedAccumulator, job);
+        waitFor(executor, 3, TimeUnit.MINUTES);
+        if (executor.getReturnCode() == 0) {
+            Container image = getDockerImage(correctedName);
+            String localRegistry = ConfigurationManager.getInstance().getValue("docker.registry");
+            String tag = localRegistry + "/" + correctedName;
+            dockerTagCmdTemplate.set(2, image.getId());
+            dockerTagCmdTemplate.set(3, tag);
+            job = new ExecutionUnit(ExecutorType.PROCESS, masterNodeInfo.getHostName(),
+                                    masterNodeInfo.getUserName(), masterNodeInfo.getUserPass(),
+                                    dockerTagCmdTemplate, true, SSHMode.EXEC);
+            sharedAccumulator.reset();
+            executor = Executor.execute(sharedAccumulator, job);
+            waitFor(executor, 5, TimeUnit.SECONDS);
+            if (executor.getReturnCode() == 0) {
+                dockerPushCmdTemplate.set(2, tag);
+                job = new ExecutionUnit(ExecutorType.PROCESS, masterNodeInfo.getHostName(),
+                                        masterNodeInfo.getUserName(), masterNodeInfo.getUserPass(),
+                                        dockerPushCmdTemplate, true, SSHMode.EXEC);
+                sharedAccumulator.reset();
+                executor = Executor.execute(sharedAccumulator, job);
+                waitFor(executor, 5, TimeUnit.SECONDS);
+                if (executor.getReturnCode() == 0) {
+                    Messaging.send(principal, Topics.INFORMATION,
+                                   String.format("Docker image '%s' successfully registered", correctedName));
+                    return;
+                }
             }
-        }, job);
+        }
+        String message = String.format("Docker image '%s' failed to register. Details: '%s'",
+                                       correctedName, sharedAccumulator.getOutput());
+        sharedAccumulator.reset();
+        logger.severe(message);
+        Messaging.send(principal, Topics.ERROR, message);
+    }
+
+    @Override
+    public List<Container> getAvailableDockerImages() {
+        List<Container> containers = getDockerImages();
+        List<Container> dbContainers = getPersistenceManager().getContainers();
+        if (containers.size() == 0) {
+            logger.warning("Docker execution failed. Check that Docker is installed and the sudo credentials are valid");
+            containers.addAll(dbContainers);
+        } else {
+            containers.retainAll(dbContainers);
+        }
+        return containers;
+    }
+
+    public Container getDockerImage(String name) {
+        Container container = null;
+        dockerListCmdTemplate.set(2, name);
+        ExecutionUnit job = new ExecutionUnit(ExecutorType.PROCESS,
+                                              masterNodeInfo.getHostName(),
+                                              masterNodeInfo.getUserName(),
+                                              masterNodeInfo.getUserPass(),
+                                              dockerListCmdTemplate, true, SSHMode.EXEC);
+        sharedAccumulator.reset();
+        final Executor executor = Executor.execute(sharedAccumulator, job);
+        waitFor(executor, 3, TimeUnit.SECONDS);
+        if (executor.getReturnCode() == 0) {
+            String[] lines = sharedAccumulator.getOutput().split("\n");
+            for (String line : lines) {
+                String[] tokens = line.split(" |\t");
+                List<String> list = Arrays.stream(tokens).filter(item -> !item.trim().isEmpty()).
+                        map(item -> StringUtils.strip(item, "'")).
+                        collect(Collectors.toList());
+                if (list.size() > 2) {
+                    // we might have two formats for the response
+                    String containerId = list.get(0);
+                    if (!"IMAGE_ID".equals(containerId) && !"REPOSITORY".equals(containerId)) {
+                        container = new Container();
+                        container.setId(containerId);
+                        container.setName(list.get(2));
+                        container.setTag(list.get(1));
+                    }
+                }
+            }
+        } else {
+            String message = String.format("Docker command failed. Details: '%s'", sharedAccumulator.getOutput());
+            sharedAccumulator.reset();
+            logger.severe(message);
+        }
+
+        return container;
+    }
+
+    private void waitFor(Executor executor, long amount, TimeUnit unit) {
         try {
-            executor.getWaitObject().await(3, TimeUnit.SECONDS);
+            executor.getWaitObject().await(amount, unit);
         } catch (InterruptedException e) {
             logger.warning("Process timed out: " + e.getMessage());
         }
+    }
+
+    private List<Container> getDockerImages() {
+        List<Container> containers = new ArrayList<>();
+        ExecutionUnit job = new ExecutionUnit(ExecutorType.PROCESS,
+                                              masterNodeInfo.getHostName(),
+                                              masterNodeInfo.getUserName(),
+                                              masterNodeInfo.getUserPass(),
+                                              dockerListAllCmd, true, SSHMode.EXEC);
+        sharedAccumulator.reset();
+        final Executor executor = Executor.execute(sharedAccumulator, job);
+        waitFor(executor, 3, TimeUnit.SECONDS);
         if (executor.getReturnCode() == 0) {
-            for (int i = 0; i < lines.size(); i++) {
-                String[] tokens = lines.get(i).split(" |\t");
-                List<String> list = Arrays.asList(tokens).stream().filter(item-> !item.trim().isEmpty()).
+            String[] lines = sharedAccumulator.getOutput().split("\n");
+            for (String line : lines) {
+                String[] tokens = line.split(" |\t");
+                List<String> list = Arrays.stream(tokens).filter(item -> !item.trim().isEmpty()).
                         map(item -> StringUtils.strip(item, "'")).
                         collect(Collectors.toList());
-                if (list.size() > 2){
+                if (list.size() > 2) {
                     // we might have two formats for the response
                     String containerId = list.get(0);
                     if (!"IMAGE_ID".equals(containerId) && !"REPOSITORY".equals(containerId)) {
                         Container container = new Container();
                         container.setId(containerId);
-                        container.setName(containerId.contains("/") ?
-                                containerId.substring(containerId.indexOf("/") + 1) :
-                                containerId);
+                        container.setName(list.get(2));
                         container.setTag(list.get(1));
                         containers.add(container);
                         try {
-                            final Container existing = getPersistenceManager().getContainerById(containerId);
-                            if (existing == null) {
-                                getPersistenceManager().saveContainer(container);
-                            }
+                            getPersistenceManager().getContainerById(containerId);
                         } catch (PersistenceException e) {
                             logger.warning(e.getMessage());
+                            try {
+                                getPersistenceManager().saveContainer(container);
+                            } catch (PersistenceException e1) {
+                                logger.warning(e1.getMessage());
+                            }
                         }
                     }
                 }
             }
         } else {
-            logger.warning("Docker execution failed. Check that Docker is installed and the sudo credentials are valid");
-            containers.addAll(getPersistenceManager().getContainers());
+            String message = String.format("Docker command failed. Details: '%s'", sharedAccumulator.getOutput());
+            sharedAccumulator.reset();
+            logger.severe(message);
         }
         return containers;
     }

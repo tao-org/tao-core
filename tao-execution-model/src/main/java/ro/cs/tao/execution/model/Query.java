@@ -33,6 +33,7 @@ import java.util.logging.Logger;
  * @author Cosmin Cara
  */
 public class Query {
+    private static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
     private Long id;
     private String userId;
     private long workflowNodeId;
@@ -117,8 +118,8 @@ public class Query {
                         if (Date.class.isAssignableFrom(type)) {
                             query.addParameter(query.createParameter(paramName,
                                                                      type,
-                                                                     new SimpleDateFormat("yyyy-MM-dd").parse(elements[0]),
-                                                                     new SimpleDateFormat("yyyy-MM-dd").parse(elements[1])));
+                                                                     SIMPLE_DATE_FORMAT.parse(elements[0]),
+                                                                     SIMPLE_DATE_FORMAT.parse(elements[1])));
                         } else {
                             Object array = Array.newInstance(type, elements.length);
                             GenericAdapter adapter = new GenericAdapter(type.getName());
@@ -130,7 +131,7 @@ public class Query {
                     } else {
                         if (Date.class.isAssignableFrom(type)) {
                             query.addParameter(paramName, type,
-                                               new SimpleDateFormat("yyyy-MM-dd").parse(String.valueOf(value)));
+                                               SIMPLE_DATE_FORMAT.parse(String.valueOf(value)));
                         } else if (Polygon2D.class.isAssignableFrom(type)) {
                             query.addParameter(paramName, type, Polygon2D.fromWKT(String.valueOf(value)));
                         } else {

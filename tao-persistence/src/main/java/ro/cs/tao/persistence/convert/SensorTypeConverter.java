@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.persistence.convert;
 
+import ro.cs.tao.EnumUtils;
 import ro.cs.tao.eodata.enums.SensorType;
 
 import javax.persistence.AttributeConverter;
@@ -28,11 +29,11 @@ public class SensorTypeConverter implements AttributeConverter<SensorType, Integ
 
     @Override
     public Integer convertToDatabaseColumn(SensorType attribute) {
-        return attribute != null ? Integer.parseInt(attribute.toString()) : null;
+        return attribute != null ? attribute.value() : null;
     }
 
     @Override
     public SensorType convertToEntityAttribute(Integer dbData) {
-        return dbData != null ? SensorType.valueOf(SensorType.getEnumConstantNameByValue(dbData)) : null;
+        return dbData != null ? EnumUtils.getEnumConstantByValue(SensorType.class, dbData) : null;
     }
 }
