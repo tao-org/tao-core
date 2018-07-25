@@ -995,6 +995,9 @@
             <basic name="external">
                 <column name="external" nullable="true" column-definition="boolean NULL DEFAULT false"/>
             </basic>
+            <basic name="passwordResetKey">
+                <column name="password_reset_key" nullable="true" column-definition="character varying(255) NULL"/>
+            </basic>
 
             <many-to-many name="groups" fetch="LAZY">
                 <join-table name="tao.user_group">

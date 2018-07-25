@@ -44,6 +44,7 @@ CREATE TABLE tao."user"
 	organization varchar(255) NOT NULL,
 	status_id integer NOT NULL,
 	external boolean NULL DEFAULT false,
+	password_reset_key varchar(255) NULL,
 	created timestamp NULL DEFAULT now(),
 	modified timestamp NULL
 );
