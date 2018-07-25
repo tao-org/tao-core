@@ -539,6 +539,10 @@ public class PersistenceManager implements MessagePersister {
         userManager.activateUser(userName);
     }
 
+    public void resetUserPassword(String userName, String resetKey, String newPassword) throws PersistenceException {
+        userManager.resetUserPassword(userName, resetKey, newPassword);
+    }
+
     public void disableUser(String userName) throws PersistenceException {
         userManager.disableUser(userName);
     }

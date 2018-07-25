@@ -255,6 +255,11 @@ public class UserManager {
         if (!original.getPhone().equalsIgnoreCase(updated.getPhone())) {
             original.setPhone(updated.getPhone());
         }
+
+        // password reset key
+        if (!original.getPasswordResetKey().equalsIgnoreCase(updated.getPasswordResetKey())) {
+            original.setPasswordResetKey(updated.getPasswordResetKey());
+        }
     }
 
     @Transactional
@@ -270,6 +275,36 @@ public class UserManager {
         }
         // activate user
         user.setStatus(UserStatus.ACTIVE);
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void resetUserPassword(String userName, String resetKey, String newPassword) throws PersistenceException {
+        final User user = userRepository.findByUsername(userName);
+        if (user == null)
+        {
+            throw new PersistenceException("There is no user with the given username: " + String.valueOf(userName));
+        }
+        // only for an internal user the password can be reset
+        if (!user.isExternal()) {
+            throw new PersistenceException("Cannot handle password for external user: " + String.valueOf(userName));
+        }
+
+        // check if reset key matches
+        if (!user.getPasswordResetKey().equalsIgnoreCase(resetKey)) {
+            throw new PersistenceException("Unauthorized password reset for user: " + String.valueOf(userName));
+        }
+
+        // check if new password different
+        if (user.getPassword().equalsIgnoreCase(newPassword)) {
+            throw new PersistenceException("Unauthorized password reset for user: " + String.valueOf(userName));
+        }
+
+        // set the new password
+        user.setPassword(newPassword);
+        // cancel the reset key
+        user.setPasswordResetKey(null);
+        // save the changes
         userRepository.save(user);
     }
 
