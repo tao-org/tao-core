@@ -465,8 +465,8 @@ CREATE TABLE tao.data_source_component
 	authors varchar(1024) NOT NULL,
 	copyright text NOT NULL,
 	node_affinity varchar(250) NULL,
-	source_cardinality integer NOT NULL,
-    target_cardinality integer NOT NULL,
+--	source_cardinality integer NOT NULL,
+--  target_cardinality integer NOT NULL,
 
     sensor_name varchar(1024) NOT NULL,
 	data_source_name  varchar(512) NOT NULL,
