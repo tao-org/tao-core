@@ -57,6 +57,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     private static final String PROGRESS_KEY = "progress.enabled";
     private static final String PROGRESS_INTERVAL = "progress.interval";
     private static final String USE_PADDING_KEY = "usePadding";
+    private static final String LOCAL_PATH_FORMAT = "local.archive.path.format";
     private final boolean progressEnabled;
     protected Properties props;
     protected String destination;
@@ -187,7 +188,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
                     }
                     break;
                 case SYMLINK:
-                    if (this.filteredTiles != null) {
+                    if (this.filteredTiles != null || product.getAttributeValue("tileid") != null) {
                         file = link(product);
                     } else {
                         file = link(product, Paths.get(localArchiveRoot), destPath);
@@ -291,16 +292,20 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     }
 
     protected Path findProductPath(Path root, EOProduct product) {
-        // Products are assumed to be organized by year (yyyy), month (MM) and day (dd)
-        // If it's not the case, this method should be overridden
-        String date = dateFormat.format(product.getAcquisitionDate());
-        boolean usePadding = Boolean.parseBoolean(this.props.getProperty(USE_PADDING_KEY, "true"));
-        Path productPath = root.resolve(usePadding ? date.substring(0, 4) : String.valueOf(Integer.parseInt(date.substring(0, 4))));
+        // Products are assumed to be organized according to the pattern defined in tao.properties
+        //String date = dateFormat.format(product.getAcquisitionDate());
+        final Date date = product.getAcquisitionDate();
+        final DateFormatTokenizer tokenizer = new DateFormatTokenizer(this.props.getProperty(LOCAL_PATH_FORMAT, "yyyy/MM/dd"));
+        //boolean usePadding = Boolean.parseBoolean(this.props.getProperty(USE_PADDING_KEY, "true"));
+        //Path productPath = root.resolve(usePadding ? date.substring(0, 4) : String.valueOf(Integer.parseInt(date.substring(0, 4))));
+        Path productPath = root.resolve(tokenizer.getYearPart(date));
         if (Files.exists(productPath)) {
-            productPath = productPath.resolve(usePadding ? date.substring(4, 6) : String.valueOf(Integer.parseInt(date.substring(4, 6))));
-            productPath = Files.exists(productPath) ?
+            //productPath = productPath.resolve(usePadding ? date.substring(4, 6) : String.valueOf(Integer.parseInt(date.substring(4, 6))));
+            productPath = productPath.resolve(tokenizer.getMonthPart(date));
+            /*productPath = Files.exists(productPath) ?
                     productPath.resolve(usePadding ? date.substring(6, 8) : String.valueOf(Integer.parseInt(date.substring(6, 8)))) :
-                    null;
+                    null;*/
+            productPath = Files.exists(productPath) ? productPath.resolve(tokenizer.getDayPart(date)) : null;
             if (productPath != null && Files.exists(productPath)) {
                 Path fullProductPath = productPath.resolve(product.getName());
                 // first check if we have the product name
@@ -511,6 +516,82 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         public void run() {
             if (progressListener != null) {
                 progressListener.notifyProgress(currentProductProgress);
+            }
+        }
+    }
+
+    private class DateFormatTokenizer {
+        private String yearPart;
+        private String monthPart;
+        private String dayPart;
+        private String hourPart;
+        private String minutePart;
+        private String secondPart;
+
+        public DateFormatTokenizer(String format) {
+            yearPart = "";
+            monthPart = "";
+            dayPart = "";
+            hourPart = "";
+            minutePart = "";
+            secondPart = "";
+            parse(format);
+        }
+
+        public String getYearPart(Date date) {
+            return new SimpleDateFormat(yearPart).format(date);
+        }
+
+        public String getMonthPart(Date date) {
+            return new SimpleDateFormat(monthPart).format(date);
+        }
+
+        public String getDayPart(Date date) {
+            return new SimpleDateFormat(dayPart).format(date);
+        }
+
+        public String getHourPart(Date date) {
+            return new SimpleDateFormat(hourPart).format(date);
+        }
+
+        public String getMinutePart(Date date) {
+            return new SimpleDateFormat(minutePart).format(date);
+        }
+
+        public String getSecondPart(Date date) {
+            return new SimpleDateFormat(secondPart).format(date);
+        }
+
+        private void parse(String format) {
+            Scanner scanner = new Scanner(format);
+            scanner.useDelimiter("");
+            while (scanner.hasNext()) {
+                String ch = scanner.next();
+                switch (ch) {
+                    case "y":
+                    case "Y":
+                        yearPart += ch;
+                        break;
+                    case "M":
+                        monthPart += ch;
+                        break;
+                    case "d":
+                    case "D":
+                        dayPart += ch;
+                        break;
+                    case "h":
+                    case "H":
+                        hourPart += ch;
+                        break;
+                    case "m":
+                        minutePart += ch;
+                        break;
+                    case "s":
+                        secondPart += ch;
+                        break;
+                    default:
+                        break;
+                }
             }
         }
     }
