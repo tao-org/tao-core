@@ -25,6 +25,9 @@ public class ResetPasswordInfo {
     private String resetKey;
     private String newPassword;
 
+    public ResetPasswordInfo() {
+    }
+
     public ResetPasswordInfo(String resetKey, String newPassword) {
         this.resetKey = resetKey;
         this.newPassword = newPassword;

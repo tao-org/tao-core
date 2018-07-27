@@ -229,8 +229,9 @@ public class UserManager {
             }
         }
 
-        // check if alternative email changed
-        if (!original.getAlternativeEmail().equalsIgnoreCase(updated.getAlternativeEmail())) {
+        // check if alternative email changed (with another address)
+        if (!StringUtils.isNullOrEmpty(updated.getAlternativeEmail()) &&
+            (StringUtils.isNullOrEmpty(original.getAlternativeEmail()) || !original.getAlternativeEmail().equalsIgnoreCase(updated.getAlternativeEmail()))) {
             // there should not be another user with the same email address
             if (userRepository.findByEmail(updated.getAlternativeEmail()) != null ||
                 userRepository.findByAlternativeEmail(updated.getAlternativeEmail()) != null) {
@@ -239,6 +240,10 @@ public class UserManager {
             else {
                 original.setAlternativeEmail(updated.getAlternativeEmail());
             }
+        }
+        // check if alternative email erased
+        if (StringUtils.isNullOrEmpty(updated.getAlternativeEmail()) && !StringUtils.isNullOrEmpty(original.getAlternativeEmail())) {
+            original.setAlternativeEmail(null);
         }
 
         // check if last name changed
@@ -251,13 +256,12 @@ public class UserManager {
             original.setFirstName(updated.getFirstName());
         }
 
-        // check if phone changed
-        if (!original.getPhone().equalsIgnoreCase(updated.getPhone())) {
-            original.setPhone(updated.getPhone());
-        }
+        // update phone
+        original.setPhone(updated.getPhone());
 
         // password reset key
-        if (!original.getPasswordResetKey().equalsIgnoreCase(updated.getPasswordResetKey())) {
+        if (StringUtils.isNullOrEmpty(original.getPasswordResetKey()) ||
+            !original.getPasswordResetKey().equalsIgnoreCase(updated.getPasswordResetKey())) {
             original.setPasswordResetKey(updated.getPasswordResetKey());
         }
     }
@@ -286,7 +290,7 @@ public class UserManager {
             throw new PersistenceException("There is no user with the given username: " + String.valueOf(userName));
         }
         // only for an internal user the password can be reset
-        if (!user.isExternal()) {
+        if (user.isExternal()) {
             throw new PersistenceException("Cannot handle password for external user: " + String.valueOf(userName));
         }
 
@@ -296,7 +300,7 @@ public class UserManager {
         }
 
         // check if new password different
-        if (user.getPassword().equalsIgnoreCase(newPassword)) {
+        if (!StringUtils.isNullOrEmpty(user.getPassword()) && user.getPassword().equalsIgnoreCase(newPassword)) {
             throw new PersistenceException("Unauthorized password reset for user: " + String.valueOf(userName));
         }
 

@@ -25,6 +25,9 @@ public class UserUnicityInfo {
     private String email;
     private String alternativeEmail;
 
+    public UserUnicityInfo() {
+    }
+
     public UserUnicityInfo(String username, String email, String alternativeEmail) {
         this.username = username;
         this.email = email;
