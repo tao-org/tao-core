@@ -16,6 +16,7 @@
 package ro.cs.tao.services.interfaces;
 
 import ro.cs.tao.datasource.param.ParameterDescriptor;
+import ro.cs.tao.datasource.remote.FetchMode;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.execution.model.Query;
 import ro.cs.tao.serialization.SerializationException;
@@ -41,6 +42,6 @@ public interface DataSourceService {
 
     List<EOProduct> query(Query queryObject) throws SerializationException;
 
-    List<EOProduct> fetch(Query queryObject, List<EOProduct> products);
+    List<EOProduct> fetch(Query queryObject, List<EOProduct> products, FetchMode mode, String localPath, String pathFormat);
 
 }
