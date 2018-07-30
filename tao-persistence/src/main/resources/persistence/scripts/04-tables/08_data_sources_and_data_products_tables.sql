@@ -175,7 +175,7 @@ CREATE TABLE tao.auxiliary_data
 ALTER TABLE tao.auxiliary_data ADD CONSTRAINT PK_auxiliary_data
 	PRIMARY KEY (location);
 
-ALTER TABLE tao.auxiliary_data_product ADD CONSTRAINT FK_auxiliary_data_product_visibility
+ALTER TABLE tao.auxiliary_data ADD CONSTRAINT FK_auxiliary_data_visibility
 	FOREIGN KEY (visibility_id) REFERENCES tao.visibility (id) ON DELETE No Action ON UPDATE No Action;
 -------------------------------------------------------------------------------
 -- table: data_product_attributes
