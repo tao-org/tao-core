@@ -123,7 +123,7 @@ ALTER TABLE tao.processing_component ADD CONSTRAINT FK_processing_component_temp
 	FOREIGN KEY (template_type_id) REFERENCES tao.template_type (id) ON DELETE No Action ON UPDATE No Action;
 
 ALTER TABLE tao.processing_component ADD CONSTRAINT FK_processing_component_user
-	FOREIGN KEY (owner_user_id) REFERENCES tao.user (id) ON DELETE No Action ON UPDATE No Action;
+	FOREIGN KEY (owner_user) REFERENCES tao.user (username) ON DELETE No Action ON UPDATE No Action;
 
 ALTER TABLE tao.processing_component ADD CONSTRAINT FK_processing_component_component_visibility
 	FOREIGN KEY (visibility_id) REFERENCES tao.component_visibility (id) ON DELETE No Action ON UPDATE No Action;
