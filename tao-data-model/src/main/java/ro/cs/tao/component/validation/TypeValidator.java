@@ -35,7 +35,7 @@ public class TypeValidator extends Validator {
         final Class<?> dataType = parameter.getDataType();
         if (!isAssignableFrom(dataType, value)) {
             throw new ValidationException(String.format("Value for [%s] must be of type %s",
-                                                        parameter.getId(),
+                                                        parameter.getName(),
                                                         dataType.getSimpleName()));
         }
     }

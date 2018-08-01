@@ -404,6 +404,9 @@
         <convert converter="ro.cs.tao.persistence.convert.StringArrayToStringConverter" attribute-name="valueSet" />
 
         <attributes>
+            <basic name="name">
+                <column name="name" nullable="false" column-definition="varchar(512 NOT NULL"/>
+            </basic>
             <basic name="type">
                 <column name="type_id" nullable="false" column-definition="integer NOT NULL"/>
             </basic>

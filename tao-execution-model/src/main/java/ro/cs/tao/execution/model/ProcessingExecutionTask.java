@@ -54,35 +54,35 @@ public class ProcessingExecutionTask extends ExecutionTask {
     }
 
     @Override
-    public void setInputParameterValue(String parameterId, String value) {
+    public void setInputParameterValue(String parameterName, String value) {
         boolean descriptorExists = false;
         List<ParameterDescriptor> descriptorList = this.component.getParameterDescriptors();
         for (ParameterDescriptor descriptor : descriptorList) {
-            if (descriptor.getId().equals(parameterId)) {
+            if (descriptor.getName().equals(parameterName)) {
                 descriptorExists = true;
                 break;
             }
         }
         List<SourceDescriptor> sources = this.component.getSources();
         for (SourceDescriptor source : sources) {
-            if (source.getName().equals(parameterId)) {
+            if (source.getName().equals(parameterName)) {
                 descriptorExists = true;
                 break;
             }
         }
         if (!descriptorExists) {
             throw new ValidationException(String.format("The parameter ID [%s] does not exists in the component '%s'",
-                    parameterId, component.getLabel()));
+                    parameterName, component.getLabel()));
         }
         if (this.inputParameterValues == null) {
             this.inputParameterValues = new ArrayList<>();
         }
         Variable variable = this.inputParameterValues.stream()
-                                                     .filter(v -> v.getKey().equals(parameterId))
+                                                     .filter(v -> v.getKey().equals(parameterName))
                                                      .findFirst()
                                                      .orElse(null);
         SourceDescriptor sourceDescriptor = this.component.getSources().stream()
-                                                                       .filter(s -> s.getName().equals(parameterId))
+                                                                       .filter(s -> s.getName().equals(parameterName))
                                                                        .findFirst()
                                                                        .orElse(null);
         final int cardinality = sourceDescriptor != null ? sourceDescriptor.getCardinality() : 1;
@@ -95,10 +95,10 @@ public class ProcessingExecutionTask extends ExecutionTask {
         } else {
             Variable var;
             if (cardinality == 1) {
-                var = new Variable(parameterId, value);
+                var = new Variable(parameterName, value);
             } else {
                 String newValue = appendValueToList(null, value);
-                var = new Variable(parameterId, newValue);
+                var = new Variable(parameterName, newValue);
             }
             this.inputParameterValues.add(var);
         }

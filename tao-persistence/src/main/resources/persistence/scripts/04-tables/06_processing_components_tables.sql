@@ -142,6 +142,7 @@ DROP TABLE IF EXISTS tao.processing_parameter CASCADE;
 CREATE TABLE tao.processing_parameter
 (
 	id varchar(512) NOT NULL,
+	name varchar(512) NOT NULL,
     type_id integer NOT NULL,
     label varchar(512) NOT NULL,
     data_type varchar(512) NOT NULL,
@@ -180,7 +181,6 @@ ALTER TABLE tao.component_parameters ADD CONSTRAINT FK_component_parameters_proc
 
 ALTER TABLE tao.component_parameters ADD CONSTRAINT FK_component_parameters_processing_parameter
 	FOREIGN KEY (processing_parameter_id) REFERENCES tao.processing_parameter (id) ON DELETE No Action ON UPDATE No Action;
-
 
 -------------------------------------------------------------------------------
 -- table: template_parameter_parameters

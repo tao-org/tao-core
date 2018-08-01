@@ -36,7 +36,7 @@ public class ValueSetValidator extends Validator {
         if (value != null && parameter.isNotNull()) {
             final String[] valueSet = parameter.getValueSet();
             if (valueSet != null && Arrays.stream(valueSet).noneMatch(v -> v.equals(value))) {
-                throw new ValidationException(String.format("Value for [%s] is invalid.", parameter.getId()));
+                throw new ValidationException(String.format("Value for [%s] is invalid.", parameter.getName()));
             }
         }
     }

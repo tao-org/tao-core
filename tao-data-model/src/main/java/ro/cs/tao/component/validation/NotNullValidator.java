@@ -33,7 +33,7 @@ public class NotNullValidator extends Validator {
             throw new ValidationException("Cannot validate a null reference");
         }
         if (parameter.isNotNull() && value == null) {
-            throw new ValidationException(String.format("Value for [%s] must be not null.", parameter.getId()));
+            throw new ValidationException(String.format("Value for [%s] must be not null.", parameter.getName()));
         }
     }
 }

@@ -33,7 +33,7 @@ public class NotEmptyValidator extends Validator {
             throw new ValidationException("Cannot validate a null reference");
         }
         if (value.toString().trim().isEmpty()) {
-            throw new ValidationException(String.format("Value for [%s] must not be empty.", parameter.getId()));
+            throw new ValidationException(String.format("Value for [%s] must not be empty.", parameter.getName()));
         }
     }
 }

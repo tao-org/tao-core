@@ -108,8 +108,10 @@ public class TemplateParameterDescriptor extends ParameterDescriptor {
             params = new HashMap<>();
         }
         for (ParameterDescriptor parameter : this.parameters) {
-            if (!params.containsKey(parameter.getId())) {
-                params.put(parameter.getId(), parameter.getDefaultValue());
+            if (!params.containsKey(parameter.getName())) {
+                params.put(parameter.getName(), parameter.getDefaultValue());
+            } else {
+                removeEmptyParameter(parameter);
             }
         }
         return this.templateEngine.transform(this.template, params);
@@ -128,7 +130,7 @@ public class TemplateParameterDescriptor extends ParameterDescriptor {
                 ParameterDescriptor copy = null;
                 try {
                     copy = p.clone();
-                    copy.setId(p.getId());
+                    copy.setName(p.getName());
                 } catch (CloneNotSupportedException ignored) {}
                 return copy;
             }).collect(Collectors.toList());
@@ -138,5 +140,15 @@ public class TemplateParameterDescriptor extends ParameterDescriptor {
         }
         newParameter.templateEngine = this.templateEngine;
         return newParameter;
+    }
+
+    private void removeEmptyParameter(ParameterDescriptor descriptor) {
+        if (this.template != null) {
+            String templateContents = this.template.getContents();
+            int idx = templateContents.indexOf(descriptor.getLabel());
+            int beforeSeparator = templateContents.lastIndexOf('\n', idx);
+            int afterSeparator = templateContents.indexOf('\n', idx);
+            this.template.setContents(templateContents.substring(0, beforeSeparator) + templateContents.substring(afterSeparator), false);
+        }
     }
 }
