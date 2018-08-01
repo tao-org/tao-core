@@ -23,12 +23,14 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * @author Cosmin Cara
  */
 @XmlRootElement(name = "parameter")
 public class ParameterDescriptor extends Identifiable implements Serializable {
+    private String name;
     private ParameterType type;
     private Class<?> dataType;
     private String defaultValue;
@@ -61,6 +63,9 @@ public class ParameterDescriptor extends Identifiable implements Serializable {
     public ParameterDescriptor(String id) {
         super(id);
     }
+
+    public String getName() { return name; }
+    public void setName(String value) { this.name = value; }
 
     public ParameterType getType() {
         return type;
@@ -151,7 +156,7 @@ public class ParameterDescriptor extends Identifiable implements Serializable {
     @Override
     public ParameterDescriptor clone() throws CloneNotSupportedException {
         ParameterDescriptor clone = (ParameterDescriptor) super.clone();
-        clone.id = defaultName();
+        clone.id = UUID.randomUUID().toString();
         clone.valueSet = Arrays.copyOf(this.valueSet, this.valueSet.length);
         return clone;
     }

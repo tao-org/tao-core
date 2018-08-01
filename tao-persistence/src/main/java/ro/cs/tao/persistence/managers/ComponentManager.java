@@ -39,6 +39,7 @@ import ro.cs.tao.persistence.repository.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -482,7 +483,13 @@ public class ComponentManager {
     }
 
     private boolean checkParameterDescriptor(ParameterDescriptor parameterDesc) {
+        if (parameterDesc != null) {
+            if (parameterDesc.getId() == null) {
+                parameterDesc.setId(UUID.randomUUID().toString());
+            }
+        }
         return parameterDesc != null && (parameterDesc.getId() != null && !parameterDesc.getId().isEmpty()) &&
+                (parameterDesc.getName() != null && !parameterDesc.getName().isEmpty()) &&
                 parameterDesc.getType() != null && parameterDesc.getDataType() != null &&
                 parameterDesc.getLabel() != null && !parameterDesc.getLabel().isEmpty();
     }

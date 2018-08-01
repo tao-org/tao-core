@@ -12,7 +12,7 @@
             </entity-listeners>
         </persistence-unit-defaults>
     </persistence-unit-metadata>-->
-
+    
     <!-- Mapped superclasses are only seen for entities (not for embeddables too) -->
 
     <mapped-superclass class="ro.cs.tao.eodata.EOData" access="PROPERTY">
@@ -277,7 +277,7 @@
             <basic name="logo">
                 <column name="logo_image" nullable="true" column-definition="character varying NULL"/>
             </basic>
-
+            
             <element-collection name="applications" target-class="ro.cs.tao.docker.Application" access="PROPERTY" fetch="EAGER">
                 <collection-table name="tao.container_applications" >
                     <join-column name="container_id" referenced-column-name="id" />
@@ -330,7 +330,7 @@
             <basic name="templateContents">
                 <column name="template_contents" nullable="true" column-definition="text NULL"/>
             </basic>
-
+            
             <basic name="owner">
                 <column name="owner_user" nullable="true" column-definition="varchar NULL"/>
             </basic>
@@ -404,6 +404,9 @@
         <convert converter="ro.cs.tao.persistence.convert.StringArrayToStringConverter" attribute-name="valueSet" />
 
         <attributes>
+            <basic name="name">
+                <column name="name" nullable="false" column-definition="varchar(512 NOT NULL"/>
+            </basic>
             <basic name="type">
                 <column name="type_id" nullable="false" column-definition="integer NOT NULL"/>
             </basic>
@@ -612,10 +615,10 @@
                     <join-column name="task_id" referenced-column-name="id" />
                 </collection-table>
             </element-collection>
-
+    
             <transient name="stateHandler" />
             <transient name="context" />
-
+            
         </attributes>
     </entity>
 
@@ -885,7 +888,7 @@
 
         </attributes>
     </entity>
-
+    
     <entity class="ro.cs.tao.execution.model.Query" access="PROPERTY">
         <table name="tao.query"/>
         <convert converter="ro.cs.tao.persistence.convert.QueryValuesMapConverter" attribute-name="values"/>
@@ -1122,7 +1125,7 @@
         </attributes>
     </embeddable>
 
-
+    
     <embeddable class="ro.cs.tao.component.ComponentLink" access="PROPERTY">
         <attributes>
             <basic name="sourceNodeId" fetch="LAZY">
