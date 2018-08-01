@@ -20,6 +20,7 @@ import ro.cs.tao.eodata.DataHandlingException;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.OutputDataHandler;
 import ro.cs.tao.eodata.Polygon2D;
+import ro.cs.tao.eodata.enums.Visibility;
 import ro.cs.tao.eodata.util.Conversions;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
@@ -61,6 +62,7 @@ public class ProductPersister implements OutputDataHandler<EOProduct> {
                         product.setGeometry(footprintUTM.toWKT());
                     }
                 }
+                product.setVisibility(Visibility.PRIVATE);
                 product = persistenceManager.saveEOProduct(product);
             } catch (Exception e) {
                 logger.severe(String.format("Product %s could not be written to database: %s",

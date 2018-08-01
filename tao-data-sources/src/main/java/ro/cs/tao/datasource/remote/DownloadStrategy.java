@@ -458,7 +458,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
             double factor = currentProduct.getApproximateSize() > 0 ?
                     (double) 1 / (double) currentProduct.getApproximateSize() : 0;
             if (localFileLength != remoteFileLength) {
-                int kBytes = (int) (remoteFileLength / 1024);
+                int kBytes = (int) (remoteFileLength >> 10);
                 logger.fine(String.format(startMessage, currentProduct.getName(), currentStep, file.getFileName(), kBytes));
                 long start = System.currentTimeMillis();
                 logger.fine(String.format("Local temporary file %s created", file.toString()));
@@ -495,18 +495,19 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
             }
         } catch (FileNotFoundException fnex) {
             logger.warning(String.format(errorMessage, remoteUrl, "No such file"));
+            file = null;
         } catch (InterruptedIOException iioe) {
             logger.severe("Operation timed out");
             throw new IOException("Operation timed out");
         } catch (Exception ex) {
             ex.printStackTrace();
             logger.severe(String.format(errorMessage, remoteUrl, ex.getMessage()));
+            file = null;
         } finally {
             if (connection != null) {
                 connection.disconnect();
             }
             subActivityEnd(subActivity);
-            file = null;
         }
         return FileUtils.ensurePermissions(file);
     }

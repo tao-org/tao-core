@@ -319,9 +319,12 @@ public class ProcessingComponent extends TaoComponent {
             }
         }
         for (ParameterDescriptor parameterDescriptor : this.parameters) {
-            if (!clonedMap.containsKey(parameterDescriptor.getId()) &&
-                    parameterDescriptor.getDefaultValue() != null) {
-                clonedMap.put(parameterDescriptor.getId(), parameterDescriptor.getDefaultValue());
+            if (!clonedMap.containsKey(parameterDescriptor.getId())) {
+                if (parameterDescriptor.getDefaultValue() != null) {
+                    clonedMap.put(parameterDescriptor.getId(), parameterDescriptor.getDefaultValue());
+                } else {
+                    removeEmptyParameter(parameterDescriptor);
+                }
             }
         }
         if (variables != null) {
@@ -369,4 +372,13 @@ public class ProcessingComponent extends TaoComponent {
         return cmdBuilder.toString();
     }
 
+    private void removeEmptyParameter(ParameterDescriptor descriptor) {
+        if (this.template != null) {
+            String templateContents = this.template.getContents();
+            int idx = templateContents.indexOf(descriptor.getLabel());
+            int beforeSeparator = templateContents.lastIndexOf('\n', idx);
+            int afterSeparator = templateContents.indexOf('\n', idx);
+            this.template.setContents(templateContents.substring(0, beforeSeparator) + templateContents.substring(afterSeparator), false);
+        }
+    }
 }

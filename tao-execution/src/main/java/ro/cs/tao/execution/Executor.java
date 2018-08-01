@@ -160,7 +160,7 @@ public abstract class Executor<T extends ExecutionTask> extends Identifiable {
             }
             Messaging.send(this.contextMap.get(task.getId()).getPrincipal(),
                            Topics.TASK_STATUS_CHANGED,
-                           task.getId(), status.toString());
+                           task.getId(), status.name());
         }
     }
 

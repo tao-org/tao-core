@@ -238,7 +238,7 @@ public class Orchestrator extends Notifiable {
         ExecutionTask task = null;
         try {
             String taskId = message.getItem(Message.SOURCE_KEY);
-            ExecutionStatus status = EnumUtils.getEnumConstantByValue(ExecutionStatus.class, Integer.parseInt(message.getItem(Message.PAYLOAD_KEY)));
+            ExecutionStatus status = EnumUtils.getEnumConstantByName(ExecutionStatus.class, message.getItem(Message.PAYLOAD_KEY));
             if (status == null) {
                 throw new PersistenceException(String.format("Invalid status received: %s",
                                                              message.getItem(Message.PAYLOAD_KEY)));
