@@ -77,7 +77,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             JobTemplate jt = createJobTemplate(task);
 
             String id = session.runJob(jt);
-            if(id == null) {
+            if (id == null) {
                 throw new ExecutionException(String.format("Unable to run job (id null) for task %s", task.getId()));
             }
 
@@ -93,7 +93,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                 changeTaskStatus(task, session instanceof DefaultSession ? ExecutionStatus.RUNNING : ExecutionStatus.QUEUED_ACTIVE);
             }
             //persistenceManager.updateExecutionTask(task);
-            logger.info(String.format("Succesfully submitted task with id %s", id));
+            logger.info(String.format("Succesfully submitted task with id %s [session %s]", task.getId(), id));
         } catch (DrmaaException | InternalException | PersistenceException e) {
             logger.severe(String.format("Error submitting task with id %s: %s", task.getId(), e.getMessage()));
             throw new ExecutionException("Error executing DRMAA session operation", e);
@@ -108,7 +108,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             session.control(task.getResourceId(), Session.TERMINATE);
             markTaskFinished(task, ExecutionStatus.CANCELLED);
         } catch (DrmaaException e) {
-            throw new ExecutionException("Error executing DRMAA session terminate for task with id " + task.getResourceId(), e);
+            throw new ExecutionException("Error executing DRMAA session terminate for task with id " + task.getId(), e);
         }
     }
 
@@ -118,7 +118,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             session.control(task.getResourceId(), Session.SUSPEND);
             changeTaskStatus(task, ExecutionStatus.SUSPENDED);
         } catch (DrmaaException e) {
-            throw new ExecutionException("Error executing DRMAA session suspend for task with id " + task.getResourceId(), e);
+            throw new ExecutionException("Error executing DRMAA session suspend for task with id " + task.getId(), e);
         }
     }
 
@@ -128,7 +128,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             session.control(task.getResourceId(), Session.RESUME);
             changeTaskStatus(task, ExecutionStatus.QUEUED_ACTIVE);
         } catch (DrmaaException e) {
-            throw new ExecutionException("Error executing DRMAA session resume for task with id " + task.getResourceId(), e);
+            throw new ExecutionException("Error executing DRMAA session resume for task with id " + task.getId(), e);
         }
     }
 
@@ -172,17 +172,17 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                                 // Only a running task can complete
                                 markTaskFinished(task, ExecutionStatus.DONE);
                             }
-                            logger.info(String.format("Task %s DONE", task.getResourceId()));
+                            logger.info(String.format("Task %s DONE", task.getId()));
                             break;
                         case Session.FAILED:
                             // Just mark the job as finished with failed status
                             markTaskFinished(task, ExecutionStatus.FAILED);
-                            logger.info(String.format("Task %s FAILED", task.getResourceId()));
+                            logger.info(String.format("Task %s FAILED", task.getId()));
                             break;
                     }
                 } catch (DrmaaException | InternalException e) {
                     logger.severe(String.format("%s: Cannot get the status for the task %s [%s]",
-                                                e.getClass().getName(), task.getResourceId(), e.getMessage()));
+                                                e.getClass().getName(), task.getId(), e.getMessage()));
                     markTaskFinished(task, ExecutionStatus.FAILED);
                 }
             }
@@ -194,7 +194,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
 
     private JobTemplate createJobTemplate(ProcessingExecutionTask task) throws DrmaaException, PersistenceException {
         // Get from the component the execution command
-        Container container = null;
+        Container container;
         String[] pArgs = null;
         if (useDockerForExecution) {
             container = persistenceManager.getContainerById(task.getComponent().getContainerId());
