@@ -40,4 +40,8 @@ public class EnumUtils {
         }
         return null;
     }
+
+    public static <T extends Enum<T> & TaoEnum> T getEnumConstantByName(Class<T> enumType, final String name) {
+        return Enum.valueOf(enumType, name);
+    }
 }
