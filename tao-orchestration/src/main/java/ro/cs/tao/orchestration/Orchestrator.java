@@ -423,6 +423,7 @@ public class Orchestrator extends Notifiable {
                                                                " cancelled after %ss" :
                                                                " failed after %ss"),
                                                job.getId(), workflow.getName(), time != null ? time.getSeconds() : "<unknown>");
+                    logger.warning(msg);
                     persistenceManager.updateExecutionJob(job);
                     Messaging.send(currentContext.getPrincipal(), Topics.INFORMATION, this, msg);
                     ExecutorService service = executors.get(currentContext);
