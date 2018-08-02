@@ -18,6 +18,12 @@ package ro.cs.tao.utils;
 
 import java.time.Duration;
 
+/**
+ * Utility class for various operations (such as formatting) on date types.
+ *
+ * @author Cosmin Cara
+ * @since 1.0
+ */
 public class DateUtils {
 
     public static String formatDuration(Duration duration) {
