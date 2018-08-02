@@ -65,8 +65,17 @@ public class JobFactory {
                 // Hence, in order not to duplicate the tasks, the nodes from group are temporary removed from workflow.
                 if (groups == null ||
                         groups.stream().noneMatch(g -> g.getNodes().stream()
-                                                                    .anyMatch(c -> c.getId().equals(node.getId())))) {
-                    Map<String, String> taskInputs = inputs != null ? inputs.get(node.getName()) : null;
+                                .anyMatch(c -> c.getId().equals(node.getId())))) {
+                    Map<String, String> taskInputs = null;
+                    if (inputs != null) {
+                        String key = node.getName();
+                        if (inputs.containsKey(key)) {
+                            taskInputs = inputs.get(node.getName());
+                        } else {
+                            key = String.valueOf(node.getId()) + ":" + node.getName();
+                            taskInputs = inputs.get(key);
+                        }
+                    }
                     ExecutionTask task = createTask(job, workflow, node, taskInputs);
                     if (i == 0 && taskInputs != null && !(task instanceof DataSourceExecutionTask)) {
                         for (Map.Entry<String, String> entry : taskInputs.entrySet()) {
