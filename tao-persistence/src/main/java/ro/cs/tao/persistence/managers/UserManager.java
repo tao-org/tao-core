@@ -68,7 +68,8 @@ public class UserManager {
           StringUtils.isNullOrEmpty(newUserInfo.getLastName()) ||
           StringUtils.isNullOrEmpty(newUserInfo.getFirstName()) ||
           StringUtils.isNullOrEmpty(newUserInfo.getOrganization()) ||
-          newUserInfo.getQuota() == null) {
+          newUserInfo.getQuota() == null ||
+          newUserInfo.getGroups() == null || newUserInfo.getGroups().isEmpty()) {
             throw new PersistenceException("Invalid new user info received!");
         }
 
@@ -105,6 +106,7 @@ public class UserManager {
         }
         user.setQuota(newUserInfo.getQuota());
         user.setOrganization(newUserInfo.getOrganization());
+        user.setGroups(newUserInfo.getGroups());
         user.setExternal(newUserInfo.isExternal());
         if (user.isExternal()) {
             // external users don't need pending activation
