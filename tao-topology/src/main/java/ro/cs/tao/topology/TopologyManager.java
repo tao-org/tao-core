@@ -28,6 +28,7 @@ import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.spi.ServiceLoader;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
+import ro.cs.tao.topology.docker.DockerImageInstaller;
 import ro.cs.tao.utils.async.BinaryTask;
 import ro.cs.tao.utils.async.LazyInitialize;
 import ro.cs.tao.utils.executors.*;
@@ -313,6 +314,13 @@ public class TopologyManager implements ITopologyManager {
             containers.retainAll(dbContainers);
         }
         return containers;
+    }
+
+    @Override
+    public List<DockerImageInstaller> getInstallers() {
+        ServiceRegistry<DockerImageInstaller> serviceRegistry =
+                ServiceRegistryManager.getInstance().getServiceRegistry(DockerImageInstaller.class);
+        return new ArrayList<>(serviceRegistry.getServices());
     }
 
     public Container getDockerImage(String name) {

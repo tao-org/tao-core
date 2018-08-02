@@ -13,19 +13,11 @@
  * You should have received a copy of the GNU General Public License along
  * with this program; if not, see http://www.gnu.org/licenses/
  */
-package ro.cs.tao.services.interfaces;
 
-import ro.cs.tao.docker.Application;
-import ro.cs.tao.docker.Container;
+package ro.cs.tao.topology.docker;
 
 import java.io.IOException;
-import java.util.List;
 
-/**
- * @author Cosmin Cara
- */
-public interface ContainerService<T> extends CRUDService<Container> {
-
-    Container initializeContainer(String id, String name, String path, List<Application> applications);
-    void registerContainer(T dockerFile, String shortName, String description) throws IOException;
+public interface DockerImageInstaller {
+    void installImage() throws IOException;
 }
