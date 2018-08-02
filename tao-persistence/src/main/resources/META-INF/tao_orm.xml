@@ -1008,7 +1008,7 @@
                     <inverse-join-column name="group_id" referenced-column-name="id"/>
                 </join-table>
                 <cascade>
-                    <cascade-all/>
+                    <cascade-merge/>
                 </cascade>
             </many-to-many>
 
