@@ -16,6 +16,7 @@
 package ro.cs.tao.topology;
 
 import ro.cs.tao.docker.Container;
+import ro.cs.tao.topology.docker.DockerImageInstaller;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -31,4 +32,5 @@ public interface ITopologyManager {
     void remove(String hostName) throws TopologyException;
     List<Container> getAvailableDockerImages();
     void registerImage(Path imagePath, String shortName, String description) throws TopologyException;
+    List<DockerImageInstaller> getInstallers();
 }
