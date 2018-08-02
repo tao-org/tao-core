@@ -19,6 +19,8 @@ import ro.cs.tao.serialization.GenericAdapter;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Cosmin Cara
@@ -28,6 +30,7 @@ public class Parameter {
     private String name;
     private String type;
     private String value;
+    private String[] valueSet;
 
     public Parameter() { }
 
@@ -35,6 +38,13 @@ public class Parameter {
         this.name = name;
         this.type = type;
         this.value = value;
+    }
+
+    public Parameter(String name, String type, String value, String[] valueSet) {
+        this.name = name;
+        this.type = type;
+        this.value = value;
+        this.valueSet = valueSet;
     }
 
     @XmlElement(name = "name")
@@ -49,8 +59,25 @@ public class Parameter {
     public String getValue() { return value; }
     public void setValue(String value) { this.value = value; }
 
+    @XmlElement(name = "valueSet")
+    public String[] getValueSet() { return valueSet; }
+    public void setValueSet(String[] values) { this.valueSet = values; }
+
     public Object typedValue() throws Exception {
         return String.class.getName().equals(type) ? value :
                 new GenericAdapter(type).marshal(value);
+    }
+
+    public static String[] stringValueSet(Object[] values) {
+        if (values == null || values.length == 0) {
+            return null;
+        }
+        List<String> stringValues = new ArrayList<>();
+        for (Object value : values) {
+            if (!"null".equals(value.toString())) {
+                stringValues.add(value.toString());
+            }
+        }
+        return stringValues.size() > 0 ? stringValues.toArray(new String[0]) : null;
     }
 }
