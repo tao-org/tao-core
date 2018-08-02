@@ -87,14 +87,14 @@ public class TopologyManager implements ITopologyManager {
         dockerListAllCmd.add("docker");
         dockerListAllCmd.add("images");
         dockerListAllCmd.add("--format");
-        dockerListAllCmd.add("{{.ID}}\\t{{.Tag}}\\t{{.Repository}}");
+        dockerListAllCmd.add("{{.ID}}\\t{{.Tag}}\\t{{.Repository}};");
 
         dockerListCmdTemplate = new ArrayList<String>(5);
         dockerListCmdTemplate.add("docker");
         dockerListCmdTemplate.add("images");
         dockerListCmdTemplate.add("#NAME");
         dockerListCmdTemplate.add("--format");
-        dockerListCmdTemplate.add("{{.ID}}\\t{{.Tag}}\\t{{.Repository}}");
+        dockerListCmdTemplate.add("{{.ID}}\\t{{.Tag}}\\t{{.Repository}};");
 
         sharedAccumulator = new OutputAccumulator();
 
@@ -380,7 +380,7 @@ public class TopologyManager implements ITopologyManager {
         final Executor executor = Executor.execute(sharedAccumulator, job);
         waitFor(executor, 3, TimeUnit.SECONDS);
         if (executor.getReturnCode() == 0) {
-            String[] lines = sharedAccumulator.getOutput().split("\n");
+            String[] lines = sharedAccumulator.getOutput().replace("\n", "").split(";");
             for (String line : lines) {
                 String[] tokens = line.split(" |\t");
                 List<String> list = Arrays.stream(tokens).filter(item -> !item.trim().isEmpty()).
@@ -399,11 +399,11 @@ public class TopologyManager implements ITopologyManager {
                             getPersistenceManager().getContainerById(containerId);
                         } catch (PersistenceException e) {
                             logger.warning(e.getMessage());
-                            try {
+                            /*try {
                                 getPersistenceManager().saveContainer(container);
                             } catch (PersistenceException e1) {
                                 logger.warning(e1.getMessage());
-                            }
+                            }*/
                         }
                     }
                 }
