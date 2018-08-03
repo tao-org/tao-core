@@ -16,30 +16,40 @@
 
 package ro.cs.tao.utils;
 
-import java.util.Arrays;
-
 /**
- * Helper class for using multiple objects as a key in a map.
+ * Holder class for two objects that can be used as a key in a map.
  *
  * @author Cosmin Cara
  */
-public class CompositeKey {
-    private Object[] composites;
+public class Tuple<T,V> {
+    private final T keyOne;
+    private final V keyTwo;
 
-    public CompositeKey(Object...composites) {
-        this.composites = composites;
+    public Tuple(T keyOne, V keyTwo) {
+        if (keyOne == null || keyTwo == null) {
+            throw new IllegalArgumentException("Keys cannot be null");
+        }
+        this.keyOne = keyOne;
+        this.keyTwo = keyTwo;
     }
+
+    public T getKeyOne() { return keyOne; }
+    public V getKeyTwo() { return keyTwo; }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        CompositeKey that = (CompositeKey) o;
-        return Arrays.equals(composites, that.composites);
+
+        Tuple<?, ?> key = (Tuple<?, ?>) o;
+
+        return keyOne.equals(key.keyOne) && keyTwo.equals(key.keyTwo);
     }
 
     @Override
     public int hashCode() {
-        return Arrays.hashCode(composites);
+        int result = keyOne.hashCode();
+        result = 31 * result + keyTwo.hashCode();
+        return result;
     }
 }
