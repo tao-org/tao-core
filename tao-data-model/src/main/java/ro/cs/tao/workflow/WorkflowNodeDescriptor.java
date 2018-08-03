@@ -92,10 +92,8 @@ public class WorkflowNodeDescriptor extends GraphObject {
     }
 
     public void removeLink(ComponentLink link) {
-        if (this.incomingLinks != null) {
-            if (this.incomingLinks.stream().anyMatch(l -> l.equals(link))) {
-                this.incomingLinks.remove(link);
-            }
+        if (this.incomingLinks != null && link != null) {
+            this.incomingLinks.removeIf(l -> l.equals(link));
         }
     }
 
