@@ -15,6 +15,8 @@
  */
 package ro.cs.tao.utils.executors;
 
+import org.apache.commons.lang.exception.ExceptionUtils;
+
 import java.io.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -94,9 +96,8 @@ public class ProcessExecutor extends Executor<Process> {
             }
             ret = this.channel.exitValue();
         } catch (Exception e) {
-            this.logger.severe(String.format("[%s] failed: %s", host, e.getMessage()));
             this.isStopped = true;
-            throw e;
+            throw new IOException(String.format("[%s] failed: %s", host, ExceptionUtils.getStackTrace(e)));
         } finally {
             closeStream(outReader);
             resetProcess();
