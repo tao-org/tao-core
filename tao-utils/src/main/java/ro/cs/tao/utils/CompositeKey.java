@@ -18,6 +18,11 @@ package ro.cs.tao.utils;
 
 import java.util.Arrays;
 
+/**
+ * Helper class for using multiple objects as a key in a map.
+ *
+ * @author Cosmin Cara
+ */
 public class CompositeKey {
     private Object[] composites;
 
