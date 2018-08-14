@@ -130,6 +130,27 @@ public abstract class Executor<T> implements Runnable {
         return executor.getReturnCode();
     }
 
+    public static Executor[] prepare(OutputConsumer outputConsumer, ExecutionUnit... jobs) {
+        if (jobs == null || jobs.length == 0) {
+            throw new IllegalArgumentException("At least one ExecutionUnit expected");
+        }
+        Executor[] executors = new Executor[jobs.length];
+        for (int i = 0; i < jobs.length; i++) {
+            ExecutionUnit job = jobs[i];
+            Executor executor = create(job.getType(),
+                                       job.getHost(),
+                                       job.getArguments(),
+                                       job.asSuperUser(),
+                                       job.getSshMode());
+            executor.setUser(job.getUser());
+            executor.setPassword(job.getPassword());
+            executor.setOutputConsumer(outputConsumer);
+            //executorService.submit(executor);
+            executors[i] = executor;
+        }
+        return executors;
+    }
+
     /**
      * Submits for execution the given commands and returns the executor objects.
      * The caller is responsible of waiting for the completion of the execution by waiting on each
@@ -168,21 +189,48 @@ public abstract class Executor<T> implements Runnable {
      * @param jobs      One or more command descriptors
      */
     public static int[] execute(OutputConsumer outputConsumer, long timeout, ExecutionUnit... jobs) {
-        Executor[] executors = execute(outputConsumer, jobs);
+        Executor[] executors = prepare(outputConsumer, jobs);
         int[] retCodes = new int[executors.length];
         final CountDownLatch aggregateLatch = new CountDownLatch(jobs.length);
         final Thread[] waitThreads = new Thread[jobs.length];
+        final long[] memory = new long[1];
+        memory[0] = 0;
         for (int i = 0; i < executors.length; i++) {
             final int finalI = i;
             waitThreads[i] = new Thread(() -> {
                 try {
+                    executorService.submit(executors[finalI]);
                     executors[finalI].getWaitObject().await(timeout, TimeUnit.SECONDS);
                 } catch (InterruptedException iex) {
                     executors[finalI].stop();
                 } finally {
                     aggregateLatch.countDown();
+                    memory[0] -= jobs[finalI].getMinMemory() != null ? jobs[finalI].getMinMemory() : 0;
                 }
             });
+            boolean canExecute = false;
+            while (!canExecute) {
+                if (jobs[i].getMinMemory() != null) {
+                    try {
+                        RuntimeInfo runtimeInfo = RuntimeInfo.createInspector(jobs[i].getHost(),
+                                                                              jobs[i].getUser(), jobs[i].getPassword());
+                        long availMem = runtimeInfo.getAvailableMemoryMB();
+                        canExecute = availMem >= jobs[i].getMinMemory();
+                        Logger.getLogger(Executor.class.getName())
+                                .fine(String.format("Job %s requires %sMB of RAM, system has %sMB available",
+                                                    jobs[i].hashCode(), jobs[i].getMinMemory(), availMem));
+                        if (!canExecute) {
+                            Thread.sleep(10000);
+                        }
+                    } catch (Exception e) {
+                        Logger.getLogger(Executor.class.getName()).warning(e.getMessage());
+                        canExecute = true;
+                    }
+                } else {
+                    canExecute = true;
+                }
+            }
+            memory[0] += jobs[i].getMinMemory() != null ? jobs[i].getMinMemory() : 0;
             waitThreads[i].start();
         }
         try {

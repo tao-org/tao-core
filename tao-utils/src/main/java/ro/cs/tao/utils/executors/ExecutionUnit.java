@@ -30,6 +30,7 @@ public final class ExecutionUnit {
     private final List<String> arguments;
     private final boolean asSuperUser;
     private final SSHMode sshMode;
+    private Long minMemory;
 
     public ExecutionUnit(ExecutorType type, String host, String user, String password, List<String> arguments, boolean asSuperUser, SSHMode sshMode) {
         this.type = type;
@@ -57,5 +58,13 @@ public final class ExecutionUnit {
 
     public String getPassword() {
         return password;
+    }
+
+    public Long getMinMemory() {
+        return minMemory;
+    }
+
+    public void setMinMemory(Long minMemory) {
+        this.minMemory = minMemory;
     }
 }
