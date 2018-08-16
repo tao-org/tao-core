@@ -15,7 +15,8 @@
  */
 package ro.cs.tao.spi;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.ServiceConfigurationError;
 import java.util.logging.Logger;
 
 /**
@@ -26,7 +27,6 @@ import java.util.logging.Logger;
  * @author Marco Peters
  */
 public class ServiceLoader {
-    private static final Set<Object> faultyServices = Collections.synchronizedSet(new HashSet<>());
 
     public static <T> void loadServices(ServiceRegistry<T> registry) {
         Iterable<T> iterable = loadServices(registry.getServiceType());
@@ -34,13 +34,10 @@ public class ServiceLoader {
 
         //noinspection WhileLoopReplaceableByForEach
         while (iterator.hasNext()) {
-            T next = iterator.next();
             try {
-                if (!faultyServices.contains(next)) {
-                    registry.addService(next);
-                }
+                T next = iterator.next();
+                registry.addService(next);
             } catch (ServiceConfigurationError e) {
-                faultyServices.add(next);
                 Logger.getLogger(ServiceLoader.class.getName()).severe(e.getMessage());
             }
         }
