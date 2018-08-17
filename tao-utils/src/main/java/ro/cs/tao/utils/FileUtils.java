@@ -624,6 +624,13 @@ public class FileUtils {
                 new ArrayList<>();
     }
 
+    public static long folderSize(Path folder) throws IOException {
+        return Files.walk(folder)
+                .filter(p -> p.toFile().isFile())
+                .mapToLong(p -> p.toFile().length())
+                .sum();
+    }
+
     public static void copyFile(URL sourceURL, Path destinationFile) throws IOException {
         if (sourceURL == null || destinationFile == null) {
             throw new IllegalArgumentException("One of the arguments is null");
