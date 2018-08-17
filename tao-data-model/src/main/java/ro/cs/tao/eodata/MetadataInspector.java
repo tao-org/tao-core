@@ -34,13 +34,19 @@ public interface MetadataInspector {
     Metadata getMetadata(Path productPath) throws IOException;
 
     class Metadata {
+        private String productId;
         private String footprint;
         private String crs;
         private URI entryPoint;
         private PixelType pixelType;
         private String productType;
+        private LocalDateTime aquisitionDate;
+        private Long size;
         private int width;
         private int height;
+
+        public String getProductId() { return productId; }
+        public void setProductId(String productId) { this.productId = productId; }
 
         public String getFootprint() { return footprint; }
         public void setFootprint(String footprint) { this.footprint = footprint; }
@@ -56,6 +62,12 @@ public interface MetadataInspector {
 
         public String getProductType() { return productType; }
         public void setProductType(String productType) { this.productType = productType; }
+
+        public LocalDateTime getAquisitionDate() { return aquisitionDate; }
+        public void setAquisitionDate(LocalDateTime aquisitionDate) { this.aquisitionDate = aquisitionDate; }
+
+        public Long getSize() { return size; }
+        public void setSize(Long size) { this.size = size; }
 
         public int getWidth() { return width; }
         public void setWidth(int width) { this.width = width; }
