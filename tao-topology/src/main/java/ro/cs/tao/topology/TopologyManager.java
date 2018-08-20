@@ -340,7 +340,7 @@ public class TopologyManager implements ITopologyManager {
                                               masterNodeInfo.getHostName(),
                                               masterNodeInfo.getUserName(),
                                               masterNodeInfo.getUserPass(),
-                                              dockerListCmdTemplate, true, SSHMode.EXEC);
+                                              dockerListCmdTemplate, false, SSHMode.EXEC);
         sharedAccumulator.reset();
         final Executor executor = Executor.execute(sharedAccumulator, job);
         waitFor(executor, 3, TimeUnit.SECONDS);
@@ -385,7 +385,7 @@ public class TopologyManager implements ITopologyManager {
                                               masterNodeInfo.getHostName(),
                                               masterNodeInfo.getUserName(),
                                               masterNodeInfo.getUserPass(),
-                                              dockerListAllCmd, true, SSHMode.EXEC);
+                                              dockerListAllCmd, false, SSHMode.EXEC);
         sharedAccumulator.reset();
         final Executor executor = Executor.execute(sharedAccumulator, job);
         waitFor(executor, 3, TimeUnit.SECONDS);
