@@ -134,6 +134,11 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
     protected Path findInPath(String executableName) {
         String systemPath = System.getenv("Path");
         logger.fine("System path: " + String.valueOf(systemPath));
+        if (systemPath == null) {
+            for (String s : System.getenv().keySet()) {
+                logger.fine(String.format("Variable %s = %s", s, System.getenv(s)));
+            }
+        }
         String[] paths = systemPath.split(File.pathSeparator);
         Path currentPath = null;
         for (String path : paths) {
