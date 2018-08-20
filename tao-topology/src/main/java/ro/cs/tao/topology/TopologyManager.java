@@ -265,7 +265,7 @@ public class TopologyManager implements ITopologyManager {
                                               masterNodeInfo.getHostName(),
                                               masterNodeInfo.getUserName(),
                                               masterNodeInfo.getUserPass(),
-                                              dockerBuildCmdTemplate, true, SSHMode.EXEC);
+                                              dockerBuildCmdTemplate, false, SSHMode.EXEC);
         sharedAccumulator.reset();
         Executor executor = Executor.execute(sharedAccumulator, job);
         logger.fine("Executing " + String.join(" ", dockerBuildCmdTemplate));
@@ -279,7 +279,7 @@ public class TopologyManager implements ITopologyManager {
             dockerTagCmdTemplate.set(3, tag);
             job = new ExecutionUnit(ExecutorType.PROCESS, masterNodeInfo.getHostName(),
                                     masterNodeInfo.getUserName(), masterNodeInfo.getUserPass(),
-                                    dockerTagCmdTemplate, true, SSHMode.EXEC);
+                                    dockerTagCmdTemplate, false, SSHMode.EXEC);
             sharedAccumulator.reset();
             executor = Executor.execute(sharedAccumulator, job);
             logger.fine("Executing " + String.join(" ", dockerTagCmdTemplate));
@@ -289,7 +289,7 @@ public class TopologyManager implements ITopologyManager {
                 dockerPushCmdTemplate.set(2, tag);
                 job = new ExecutionUnit(ExecutorType.PROCESS, masterNodeInfo.getHostName(),
                                         masterNodeInfo.getUserName(), masterNodeInfo.getUserPass(),
-                                        dockerPushCmdTemplate, true, SSHMode.EXEC);
+                                        dockerPushCmdTemplate, false, SSHMode.EXEC);
                 sharedAccumulator.reset();
                 executor = Executor.execute(sharedAccumulator, job);
                 logger.fine("Executing " + String.join(" ", dockerPushCmdTemplate));
