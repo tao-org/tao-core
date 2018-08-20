@@ -16,7 +16,7 @@
 
 package ro.cs.tao.utils.executors;
 
-import ro.cs.tao.utils.Platform;
+import org.apache.commons.lang.SystemUtils;
 
 import java.net.InetAddress;
 import java.util.ArrayList;
@@ -42,14 +42,8 @@ public abstract class RuntimeInfo {
                                               String user, String password) throws Exception {
         String localhost = InetAddress.getLocalHost().getHostName();
         if (localhost.equals(hostName)) {
-            Platform currentPlatform = Platform.getCurrentPlatform();
-            assert currentPlatform != null;
-            switch (currentPlatform.getId()) {
-                case win:
-                    return new Windows(hostName, user, password, false);
-                default:
-                    return new Linux(hostName, user, password, false);
-            }
+            return SystemUtils.IS_OS_WINDOWS ? new Windows(hostName, user, password, false) :
+                    new Linux(hostName, user, password, false);
         } else {
             return new Linux(hostName, user, password, true);
         }

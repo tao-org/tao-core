@@ -16,10 +16,10 @@
 package ro.cs.tao.topology;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.SystemUtils;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.topology.xml.ToolInstallersConfigHandler;
 import ro.cs.tao.topology.xml.ToolInstallersConfigParser;
-import ro.cs.tao.utils.Platform;
 import ro.cs.tao.utils.executors.*;
 
 import java.io.File;
@@ -271,9 +271,8 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
     }
 
     private String getTaoWorkingDir() {
-        Platform platform = Platform.getCurrentPlatform();
         String workingDirectory;
-        if(platform != null && platform.getId() == Platform.ID.win) {
+        if (SystemUtils.IS_OS_WINDOWS) {
             workingDirectory = System.getenv("AppData");
         } else {
             try {

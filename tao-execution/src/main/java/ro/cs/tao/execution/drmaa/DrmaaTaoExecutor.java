@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.execution.drmaa;
 
+import org.apache.commons.lang3.SystemUtils;
 import org.ggf.drmaa.DrmaaException;
 import org.ggf.drmaa.InternalException;
 import org.ggf.drmaa.JobTemplate;
@@ -31,7 +32,6 @@ import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.execution.model.ProcessingExecutionTask;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.topology.NodeDescription;
-import ro.cs.tao.utils.Platform;
 
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -54,7 +54,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         try {
             session.init(null);
             super.initialize();
-            useDockerForExecution = !Platform.getCurrentPlatform().getId().equals(Platform.ID.win);
+            useDockerForExecution = !SystemUtils.IS_OS_WINDOWS;
         } catch (DrmaaException e) {
             isInitialized = false;
             throw new ExecutionException("Error initiating DRMAA session", e);

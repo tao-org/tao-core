@@ -16,6 +16,7 @@
 
 package ro.cs.tao.topology.docker;
 
+import org.apache.commons.lang3.SystemUtils;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.docker.Container;
@@ -24,7 +25,6 @@ import ro.cs.tao.persistence.data.jsonutil.JacksonUtil;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.topology.TopologyManager;
-import ro.cs.tao.utils.Platform;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -50,7 +50,7 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
 
     @Override
     public void installImage() {
-        Path dockerPath = findInPath("docker" + (Platform.ID.win.equals(Platform.getCurrentPlatform().getId()) ? ".exe" : ""));
+        Path dockerPath = findInPath("docker" + (SystemUtils.IS_OS_WINDOWS ? ".exe" : ""));
         Container container = null;
         if (dockerPath != null) {
             try {
