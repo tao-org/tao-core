@@ -26,7 +26,7 @@ public interface WorkflowNodeDescriptorRepository extends PagingAndSortingReposi
      * @param id - the given workflow node identifier
      * @return the corresponding WorkflowNodeDescriptor entity
      */
-    WorkflowNodeDescriptor findById(Long id);
+    //WorkflowNodeDescriptor findById(Long id);
 
     @Query(value = "SELECT * from tao.graph_node where id in (:ids) order by node_level", nativeQuery = true)
     List<WorkflowNodeDescriptor> getWorkflowsById(@Param("ids") Set<Long> ids);

@@ -26,7 +26,7 @@ public interface EOProductRepository extends PagingAndSortingRepository<EOProduc
      * @param id - the given data product identifier
      * @return the corresponding EOProduct entity
      */
-    EOProduct findById(String id);
+    //EOProduct findById(String id);
 
     @Query(value = "SELECT * FROM tao.raster_data_product WHERE CONCAT(location, entry_point) IN (:locations)",
             nativeQuery = true)

@@ -26,7 +26,7 @@ public interface VectorDataRepository extends PagingAndSortingRepository<VectorD
      * @param id - the given vector data product identifier
      * @return the corresponding VectorData entity
      */
-    VectorData findById(String id);
+    //VectorData findById(String id);
 
     @Query(value = "SELECT * FROM tao.vector_data_product WHERE CONCAT(location, entry_point) IN (:locations)",
             nativeQuery = true)

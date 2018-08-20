@@ -65,7 +65,7 @@ public class WorkflowManager {
     }
 
     public WorkflowDescriptor getWorkflowDescriptor(long identifier) {
-        return workflowDescriptorRepository.findById(identifier);
+        return workflowDescriptorRepository.findById(identifier).orElse(null);
     }
 
     @Query(value = "SELECT * from tao.workflow_graph WHERE username = :user AND status_id = :statusId " +
@@ -126,7 +126,7 @@ public class WorkflowManager {
         }
 
         // retrieve WorkflowDescriptor after its identifier
-        final WorkflowDescriptor workflowEnt = workflowDescriptorRepository.findById(workflowId);
+        final WorkflowDescriptor workflowEnt = workflowDescriptorRepository.findById(workflowId).orElse(null);
         if (workflowEnt == null) {
             throw new PersistenceException("There is no workflow with the specified identifier: " + workflowId);
         }
@@ -142,7 +142,7 @@ public class WorkflowManager {
     //region WorkflowNodeDescriptor
     @Transactional
     public WorkflowNodeDescriptor getWorkflowNodeById(Long id) {
-        return id != null ? workflowNodeDescriptorRepository.findById(id) : null;
+        return id != null ? workflowNodeDescriptorRepository.findById(id).orElse(null) : null;
     }
 
     @Transactional
@@ -244,7 +244,7 @@ public class WorkflowManager {
         boolean result = false;
         if (workflowId != null && workflowId > 0) {
             // try to retrieve WorkflowDescriptor after its identifier
-            final WorkflowDescriptor workflowEnt = workflowDescriptorRepository.findById(workflowId);
+            final WorkflowDescriptor workflowEnt = workflowDescriptorRepository.findById(workflowId).orElse(null);
             if (workflowEnt != null) {
                 result = true;
             }

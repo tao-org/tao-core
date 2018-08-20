@@ -22,7 +22,7 @@ public interface GroupComponentRepository extends PagingAndSortingRepository<Gro
      * @param id - the given processing component identifier
      * @return the corresponding ProcessingComponent entity
      */
-    GroupComponent findById(String id);
+    //GroupComponent findById(String id);
 
     /**
      * Find ProcessingComponent entity by its label

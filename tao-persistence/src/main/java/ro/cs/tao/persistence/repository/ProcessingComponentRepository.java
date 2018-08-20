@@ -26,7 +26,7 @@ public interface ProcessingComponentRepository extends PagingAndSortingRepositor
      * @param id - the given processing component identifier
      * @return the corresponding ProcessingComponent entity
      */
-    ProcessingComponent findById(String id);
+    //ProcessingComponent findById(String id);
 
     /**
      * Find ProcessingComponent entity by its label

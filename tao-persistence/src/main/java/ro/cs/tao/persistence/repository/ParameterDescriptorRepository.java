@@ -22,7 +22,7 @@ public interface ParameterDescriptorRepository extends PagingAndSortingRepositor
      * @param id - the given parameter descriptor identifier
      * @return the corresponding ParameterDescriptor entity
      */
-    ParameterDescriptor findById(String id);
+    //ParameterDescriptor findById(String id);
 
     /**
      * Find ParameterDescriptor entity by its label

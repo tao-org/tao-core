@@ -24,7 +24,7 @@ public interface UserRepository extends PagingAndSortingRepository<User, Long> {
      * @param id - the given user identifier
      * @return the corresponding User entity
      */
-    User findById(final Long id);
+    //User findById(final Long id);
 
     /**
      * Find User entity by its username

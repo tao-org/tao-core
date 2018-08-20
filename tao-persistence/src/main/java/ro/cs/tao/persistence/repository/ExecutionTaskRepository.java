@@ -27,7 +27,7 @@ public interface ExecutionTaskRepository extends PagingAndSortingRepository<Exec
          * @param id - the given task identifier
          * @return the corresponding ExecutionTask entity
          */
-        ExecutionTask findById(Long id);
+        //ExecutionTask findById(Long id);
 
         /**
          * Find ExecutionTask entity by its resource identifier
