@@ -296,7 +296,7 @@ public class TopologyManager implements ITopologyManager {
                 waitFor(executor, 5, TimeUnit.SECONDS);
                 logger.fine("Execution of " + String.join(" ", dockerPushCmdTemplate) + " returned code " + executor.getReturnCode());
                 if (executor.getReturnCode() == 0) {
-                    Messaging.send(principal, Topics.INFORMATION,
+                    Messaging.send(principal, Topics.INFORMATION, this,
                                    String.format("Docker image '%s' successfully registered", correctedName));
                     return;
                 } else {
@@ -310,7 +310,7 @@ public class TopologyManager implements ITopologyManager {
                                        correctedName, sharedAccumulator.getOutput());
         sharedAccumulator.reset();
         logger.severe(message);
-        Messaging.send(principal, Topics.ERROR, message);
+        Messaging.send(principal, Topics.ERROR, this, message);
     }
 
     @Override
