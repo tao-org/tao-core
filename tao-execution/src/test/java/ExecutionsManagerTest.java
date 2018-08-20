@@ -1,3 +1,4 @@
+import org.apache.commons.lang3.SystemUtils;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import ro.cs.tao.component.ParameterDescriptor;
@@ -16,7 +17,6 @@ import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.topology.NodeDescription;
-import ro.cs.tao.utils.Platform;
 
 import java.util.*;
 import java.util.logging.Logger;
@@ -90,7 +90,7 @@ public class ExecutionsManagerTest {
         // Add an execution node if it does not exist
         createNode("test_hostname");
 
-        Template template = createTemplate((Platform.getCurrentPlatform().getId() == Platform.ID.win) ?
+        Template template = createTemplate(SystemUtils.IS_OS_WINDOWS ?
                 PING_WIN_CMD : PING_LIN_CMD);
         ProcessingComponent processingComponent = createProcessingComponent(template);
         //addDescriptorToProcessingComponent(processingComponent, "id", new String[]{"1", "2"}, "2");

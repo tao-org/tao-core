@@ -16,8 +16,8 @@
 
 package ro.cs.tao.services.model.monitoring;
 
+import org.apache.commons.lang3.SystemUtils;
 import ro.cs.tao.topology.NodeDescription;
-import ro.cs.tao.utils.Platform;
 import ro.cs.tao.utils.executors.Executor;
 import ro.cs.tao.utils.executors.ExecutorType;
 import ro.cs.tao.utils.executors.OutputConsumer;
@@ -41,14 +41,7 @@ public abstract class OSRuntimeInfo {
     public static OSRuntimeInfo createInspector(NodeDescription host) throws Exception {
         String localhost = InetAddress.getLocalHost().getHostName();
         if (localhost.equals(host.getHostName())) {
-            Platform currentPlatform = Platform.getCurrentPlatform();
-            assert currentPlatform != null;
-            switch (currentPlatform.getId()) {
-                case win:
-                    return new Windows(host, false);
-                default:
-                    return new Linux(host, false);
-            }
+            return SystemUtils.IS_OS_WINDOWS ? new Windows(host, false) : new Linux(host, false);
         } else {
             return new Linux(host, true);
         }

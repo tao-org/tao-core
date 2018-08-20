@@ -16,7 +16,7 @@
 package ro.cs.tao.utils.executors;
 
 import com.jcraft.jsch.Channel;
-import ro.cs.tao.utils.Platform;
+import org.apache.commons.lang.SystemUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -395,11 +395,7 @@ public abstract class Executor<T> implements Runnable {
         String curArg;
         List<String> sudoArgs = new ArrayList<String>() {{
             //noinspection ConstantConditions
-            if (Platform.ID.win != Platform.getCurrentPlatform().getId()) {
-               /*add("runas");
-               add("/user:");
-               add(Executor.this.user);
-           } else {*/
+            if (!SystemUtils.IS_OS_WINDOWS) {
                add("sudo");
                add("-S");
                add("-p");
@@ -418,7 +414,7 @@ public abstract class Executor<T> implements Runnable {
     }
 
     protected void writeSudoPassword() throws IOException {
-        if (Platform.ID.win != Platform.getCurrentPlatform().getId()) {
+        if (!SystemUtils.IS_OS_WINDOWS) {
             OutputStream outputStream = null;
             if (this.channel instanceof Channel) {
                 outputStream = ((Channel) this.channel).getOutputStream();
