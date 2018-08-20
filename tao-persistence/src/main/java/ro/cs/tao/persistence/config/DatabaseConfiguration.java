@@ -123,6 +123,8 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
      */
     private static final String PROPERTY_NAME_SPRING_JPA_HIBERNATE_DIALECT = "spring.jpa.properties.hibernate.dialect";
 
+    private static final String PROPERTY_NAME_SPRING_JPA_HIBERNATE_LOB_CREATION = "spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation";
+
     /**
      * Constant for the hibernate format sql flag property name (within
      * .properties file)
@@ -256,6 +258,8 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
           environment.getRequiredProperty(PROPERTY_NAME_HIBERNATE_DIALECT));
         jpaProperties.put(PROPERTY_NAME_SPRING_JPA_HIBERNATE_DIALECT,
           environment.getRequiredProperty(PROPERTY_NAME_SPRING_JPA_HIBERNATE_DIALECT));
+        jpaProperties.put(PROPERTY_NAME_SPRING_JPA_HIBERNATE_LOB_CREATION,
+                          environment.getRequiredProperty(PROPERTY_NAME_SPRING_JPA_HIBERNATE_LOB_CREATION));
         jpaProperties.put(PROPERTY_NAME_HIBERNATE_FORMAT_SQL,
           environment.getRequiredProperty(PROPERTY_NAME_HIBERNATE_FORMAT_SQL));
         jpaProperties.put(PROPERTY_NAME_HIBERNATE_NAMING_STRATEGY,

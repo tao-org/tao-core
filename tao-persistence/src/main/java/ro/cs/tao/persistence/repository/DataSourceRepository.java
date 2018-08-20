@@ -38,6 +38,6 @@ public interface DataSourceRepository extends PagingAndSortingRepository<DataSou
      * @param id - the given data source component identifier
      * @return the corresponding DataSourceComponent entity
      */
-    DataSourceComponent findById(String id);
+    //DataSourceComponent findById(String id);
 
 }

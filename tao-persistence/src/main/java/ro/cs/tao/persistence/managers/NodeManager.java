@@ -126,7 +126,7 @@ public class NodeManager {
 
     @Transactional
     public void removeExecutionNode(String hostName) {
-        nodeRepository.delete(hostName);
+        nodeRepository.deleteById(hostName);
     }
 
     @Transactional

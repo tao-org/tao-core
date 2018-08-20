@@ -160,7 +160,7 @@ public class ProductManager {
 
     @Transactional
     public void removeAuxiliaryData(String location) {
-        auxDataRepository.delete(location);
+        auxDataRepository.deleteById(location);
     }
 
     @Transactional

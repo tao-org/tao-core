@@ -74,7 +74,7 @@ public class ExecutionManager {
     }
 
     public ExecutionJob getJobById(long jobId) {
-        return executionJobRepository.findById(jobId);
+        return executionJobRepository.findById(jobId).orElse(null);
     }
 
     public List<ExecutionJob> getJobs(ExecutionStatus status) {
@@ -110,7 +110,7 @@ public class ExecutionManager {
         }
 
         // check if there is such job (to update) with the given identifier
-        final ExecutionJob existingJob = executionJobRepository.findById(job.getId());
+        final ExecutionJob existingJob = executionJobRepository.findById(job.getId()).orElse(null);
         if (existingJob == null) {
             throw new PersistenceException("There is no execution job with the given identifier: " + job.getId());
         }
@@ -182,7 +182,7 @@ public class ExecutionManager {
 
     @Transactional
     public ExecutionTask getTaskById(Long id) throws PersistenceException {
-        final ExecutionTask existingTask = executionTaskRepository.findById(id);
+        final ExecutionTask existingTask = executionTaskRepository.findById(id).orElse(null);
         if (existingTask == null) {
             throw new PersistenceException("There is no execution task with the given identifier: " + id);
         }
@@ -368,7 +368,7 @@ public class ExecutionManager {
 
         if (jobId != null && jobId > 0) {
             // try to retrieve ExecutionJob after its identifier
-            final ExecutionJob jobEnt = executionJobRepository.findById(jobId);
+            final ExecutionJob jobEnt = executionJobRepository.findById(jobId).orElse(null);
             if (jobEnt != null) {
                 result = true;
             }
@@ -383,7 +383,7 @@ public class ExecutionManager {
 
         if (taskId != null && taskId > 0) {
             // try to retrieve ExecutionTask after its identifier
-            final ExecutionTask taskEnt = executionTaskRepository.findById(taskId);
+            final ExecutionTask taskEnt = executionTaskRepository.findById(taskId).orElse(null);
             if (taskEnt != null) {
                 result = true;
             }

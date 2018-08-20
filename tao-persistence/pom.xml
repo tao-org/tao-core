@@ -14,8 +14,9 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <postgresql.version>9.4.1212.jre7</postgresql.version>
-		<spring.version>4.3.11.RELEASE</spring.version>
+        <!--<postgresql.version>9.4.1212.jre7</postgresql.version>-->
+		<postgresql.version>42.2.4</postgresql.version>
+		<spring.version>5.0.8.RELEASE</spring.version>
 		<hibernate.version>5.2.15.Final</hibernate.version>
 	</properties>
 
@@ -54,7 +55,7 @@
 		<dependency>
 			<groupId>org.springframework.data</groupId>
 			<artifactId>spring-data-jpa</artifactId>
-			<version>1.11.7.RELEASE</version>
+			<version>2.0.9.RELEASE</version>
 		</dependency>
 
 		<dependency>
@@ -70,11 +71,11 @@
 			<scope>test</scope>
 		</dependency>
 
-		<dependency>
+		<!--<dependency>
 			<groupId>javax.validation</groupId>
 			<artifactId>validation-api</artifactId>
 			<version>2.0.0.Final</version>
-		</dependency>
+		</dependency>-->
 
 		<dependency>
 			<groupId>org.hibernate</groupId>
@@ -94,6 +95,12 @@
             <version>${hibernate.version}</version>
     	</dependency>
 
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-validator</artifactId>
+			<version>5.3.5.Final</version>
+		</dependency>
+
 		<!--<dependency>
 			<groupId>com.vladmihalcea</groupId>
 			<artifactId>hibernate-types-52</artifactId>
@@ -111,7 +118,7 @@
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
-			<version>9.4.1212.jre7</version>
+			<version>${postgresql.version}</version>
 		</dependency>
 
 		<dependency>
@@ -159,7 +166,7 @@
                                 <property name="postgresql_jar" value="postgresql-${postgresql.version}.jar" />
                                 <property name="execDbCleanupDir" value="${basedir}/src/main/resources/build_scripts/" />
                                 <!-- reinstall_db will be commented for production, it's just for development purposes -->
-								<ant antfile="${execDbCleanupDir}/reinstall_db.xml" />
+								<!--<ant antfile="${execDbCleanupDir}/reinstall_db.xml" />-->
 							</target>
 						</configuration>
 					</execution>

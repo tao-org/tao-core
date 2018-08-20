@@ -39,6 +39,7 @@ import ro.cs.tao.persistence.repository.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -96,12 +97,12 @@ public class ComponentManager {
         }
 
         // check if there is such container (to retrieve) with the given identifier
-        final Container existingContainer = containerRepository.findById(id);
-        if (existingContainer == null) {
+        final Optional<Container> existingContainer = containerRepository.findById(id);
+        if (!existingContainer.isPresent()) {
             throw new PersistenceException("There is no container with the given identifier: " + id);
         }
 
-        return existingContainer;
+        return existingContainer.get();
     }
 
     @Transactional
@@ -112,8 +113,8 @@ public class ComponentManager {
         }
 
         // check if there is already another container with the same identifier
-        final Container containerWithSameId = containerRepository.findById(container.getId());
-        if (containerWithSameId != null) {
+        final Optional<Container> containerWithSameId = containerRepository.findById(container.getId());
+        if (containerWithSameId.isPresent()) {
             throw new PersistenceException("There is already another container with the identifier: " + container.getId());
         }
 
@@ -130,7 +131,7 @@ public class ComponentManager {
         }
 
         // check if there is such container (to update) with the given identifier
-        final Container existingContainer = containerRepository.findById(container.getId());
+        final Optional<Container> existingContainer = containerRepository.findById(container.getId());
         if (existingContainer == null) {
             throw new PersistenceException("There is no container with the given identifier: " + container.getId());
         }
@@ -143,19 +144,14 @@ public class ComponentManager {
      */
     @Transactional
     public boolean checkIfExistsContainerById(String id) throws PersistenceException {
-        boolean result = false;
         // check method parameters
         if(id == null || StringUtils.isEmpty(id)) {
             throw new PersistenceException("Invalid parameter was provided for verifying a container existence (empty identifier)");
         }
 
         // check if there is such container (to retrieve) with the given identifier
-        final Container existingContainer = containerRepository.findById(id);
-        if (existingContainer != null) {
-            result = true;
-        }
-
-        return result;
+        final Optional<Container> existingContainer = containerRepository.findById(id);
+        return existingContainer.isPresent();
     }
 
     /**
@@ -170,12 +166,12 @@ public class ComponentManager {
         }
 
         // check if there is such container (to delete) with the given identifier
-        final Container existingContainer = containerRepository.findById(id);
-        if (existingContainer == null) {
+        final Optional<Container> existingContainer = containerRepository.findById(id);
+        if (!existingContainer.isPresent()) {
             throw new PersistenceException("There is no container with the given identifier: " + id);
         }
 
-        containerRepository.delete(existingContainer);
+        containerRepository.delete(existingContainer.get());
     }
     //endregion
 
@@ -214,12 +210,12 @@ public class ComponentManager {
         }
 
         // retrieve ProcessingComponent after its identifier
-        final ProcessingComponent componentEnt = processingComponentRepository.findById(id);
-        if (componentEnt == null) {
+        final Optional<ProcessingComponent> componentEnt = processingComponentRepository.findById(id);
+        if (!componentEnt.isPresent()) {
             throw new PersistenceException("There is no processing component with the specified identifier: " + id);
         }
 
-        return componentEnt;
+        return componentEnt.get();
     }
 
     @Transactional
@@ -230,8 +226,8 @@ public class ComponentManager {
         }
 
         // check if there is already another component with the same identifier
-        final ProcessingComponent componentWithSameId = processingComponentRepository.findById(component.getId());
-        if (componentWithSameId != null) {
+        final Optional<ProcessingComponent> componentWithSameId = processingComponentRepository.findById(component.getId());
+        if (componentWithSameId.isPresent()) {
             throw new PersistenceException("There is already another component with the identifier: " + component.getId());
         }
 
@@ -248,8 +244,8 @@ public class ComponentManager {
         }
 
         // check if there is such component (to update) with the given identifier
-        final ProcessingComponent existingComponent = processingComponentRepository.findById(component.getId());
-        if (existingComponent == null) {
+        final Optional<ProcessingComponent> existingComponent = processingComponentRepository.findById(component.getId());
+        if (!existingComponent.isPresent()) {
             throw new PersistenceException("There is no processing component with the given identifier: " + component.getId());
         }
 
@@ -261,10 +257,8 @@ public class ComponentManager {
         boolean result = false;
         if (id != null && !id.isEmpty()) {
             // try to retrieve ProcessingComponent after its identifier
-            final ProcessingComponent componentEnt = processingComponentRepository.findById(id);
-            if (componentEnt != null) {
-                result = true;
-            }
+            final Optional<ProcessingComponent> componentEnt = processingComponentRepository.findById(id);
+            result = componentEnt.isPresent();
         }
 
         return result;
@@ -278,16 +272,16 @@ public class ComponentManager {
         }
 
         // retrieve ProcessingComponent after its id
-        final ProcessingComponent componentEnt = processingComponentRepository.findById(id);
-        if (componentEnt == null) {
+        final Optional<ProcessingComponent> componentEnt = processingComponentRepository.findById(id);
+        if (!componentEnt.isPresent()) {
             throw new PersistenceException("There is no processing component with the specified id: " + id);
         }
 
         // deactivate the processing component
-        componentEnt.setActive(false);
+        componentEnt.get().setActive(false);
 
         // save it
-        return processingComponentRepository.save(componentEnt);
+        return processingComponentRepository.save(componentEnt.get());
     }
 
     /**
@@ -329,7 +323,7 @@ public class ComponentManager {
     public GroupComponent getGroupComponentById(final String id) {
         GroupComponent component = null;
         if (id != null && !id.isEmpty()) {
-            component = groupComponentRepository.findById(id);
+            component = groupComponentRepository.findById(id).orElse(null);
         }
         return component;
     }
@@ -342,7 +336,7 @@ public class ComponentManager {
         }
 
         // retrieve GroupComponent after its id
-        final GroupComponent componentEnt = groupComponentRepository.findById(id);
+        final GroupComponent componentEnt = groupComponentRepository.findById(id).orElse(null);
         if (componentEnt == null) {
             throw new PersistenceException("There is no group component with the specified id: " + id);
         }
@@ -362,7 +356,7 @@ public class ComponentManager {
         }
 
         // check if there is already another component with the same identifier
-        final GroupComponent componentWithSameId = groupComponentRepository.findById(component.getId());
+        final GroupComponent componentWithSameId = groupComponentRepository.findById(component.getId()).orElse(null);
         if (componentWithSameId != null) {
             throw new PersistenceException("There is already another group component with the identifier: " + component.getId());
         }
@@ -380,7 +374,7 @@ public class ComponentManager {
         }
 
         // check if there is such component (to update) with the given identifier
-        final GroupComponent existingComponent = groupComponentRepository.findById(component.getId());
+        final GroupComponent existingComponent = groupComponentRepository.findById(component.getId()).orElse(null);
         if (existingComponent == null) {
             throw new PersistenceException("There is no group component with the given identifier: " + component.getId());
         }
@@ -404,7 +398,7 @@ public class ComponentManager {
 
     @Transactional
     public DataSourceComponent getDataSourceInstance(String id) {
-        return dataSourceComponentRepository.findOne(id);
+        return dataSourceComponentRepository.findById(id).orElse(null);
     }
 
     @Transactional
@@ -415,7 +409,7 @@ public class ComponentManager {
         }
 
         // check if there is already another component with the same identifier
-        final DataSourceComponent componentWithSameId = dataSourceComponentRepository.findById(component.getId());
+        final DataSourceComponent componentWithSameId = dataSourceComponentRepository.findById(component.getId()).orElse(null);
         if (componentWithSameId != null) {
             throw new PersistenceException("There is already another component with the identifier: " + component.getId());
         }

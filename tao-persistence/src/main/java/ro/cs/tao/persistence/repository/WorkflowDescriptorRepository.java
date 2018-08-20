@@ -25,7 +25,7 @@ public interface WorkflowDescriptorRepository extends PagingAndSortingRepository
      * @param id - the given workflow identifier
      * @return the corresponding WorkflowDescriptor entity
      */
-    WorkflowDescriptor findById(Long id);
+    //WorkflowDescriptor findById(Long id);
 
     @Query(value = "SELECT * from tao.workflow_graph WHERE username = :user AND status_id = :statusId " +
             "ORDER BY created DESC", nativeQuery = true)
