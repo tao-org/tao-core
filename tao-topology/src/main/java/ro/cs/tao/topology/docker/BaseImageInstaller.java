@@ -70,15 +70,20 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
                     }
                 }
                 TopologyManager topologyManager = TopologyManager.getInstance();
-                if (topologyManager.getDockerImage(getContainerName()) == null) {
-                    this.logger.info(String.format("Begin registering docker image %s", getContainerName()));
-                    topologyManager.registerImage(dockerfilePath.toRealPath(), getContainerName(), getDescription());
-                    this.logger.info(String.format("Docker image %s registration completed", getContainerName()));
-                }
                 container = topologyManager.getDockerImage(getContainerName());
+                if (container == null) {
+                    this.logger.fine(String.format("Begin registering docker image %s", getContainerName()));
+                    topologyManager.registerImage(dockerfilePath.toRealPath(), getContainerName(), getDescription());
+                    this.logger.fine(String.format("Docker image %s registration completed", getContainerName()));
+                } else {
+                    logger.fine(String.format("Image %s was found in Docker registry", getContainerName()));
+                }
             } catch (IOException e) {
-                e.printStackTrace();
+                logger.warning(String.format("Error occurred while registering %s: %s",
+                                             getContainerName(), e.getMessage()));
             }
+        } else {
+            logger.fine("'docker' was not found in system path");
         }
         try {
             container = persistenceManager.getContainerById(getContainerName());
@@ -90,7 +95,6 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
             container.setName(getContainerName());
         }
         container = initializeContainer(container.getId(), dockerPath != null ? getPathInContainer() : getPathInSystem());
-        logger.info(String.format("Registered TAO container %s", getContainerName()));
     }
 
     protected Container readContainerDescriptor(String fileName) throws IOException {

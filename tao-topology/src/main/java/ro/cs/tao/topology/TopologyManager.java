@@ -268,7 +268,9 @@ public class TopologyManager implements ITopologyManager {
                                               dockerBuildCmdTemplate, true, SSHMode.EXEC);
         sharedAccumulator.reset();
         Executor executor = Executor.execute(sharedAccumulator, job);
-        waitFor(executor, 3, TimeUnit.MINUTES);
+        logger.fine("Executing " + String.join(" ", dockerBuildCmdTemplate));
+        waitFor(executor, 5, TimeUnit.MINUTES);
+        logger.fine("Execution of " + String.join(" ", dockerBuildCmdTemplate) + " returned code " + executor.getReturnCode());
         if (executor.getReturnCode() == 0) {
             Container image = getDockerImage(correctedName);
             String localRegistry = ConfigurationManager.getInstance().getValue("docker.registry");
@@ -280,7 +282,9 @@ public class TopologyManager implements ITopologyManager {
                                     dockerTagCmdTemplate, true, SSHMode.EXEC);
             sharedAccumulator.reset();
             executor = Executor.execute(sharedAccumulator, job);
+            logger.fine("Executing " + String.join(" ", dockerTagCmdTemplate));
             waitFor(executor, 5, TimeUnit.SECONDS);
+            logger.fine("Execution of " + String.join(" ", dockerTagCmdTemplate) + " returned code " + executor.getReturnCode());
             if (executor.getReturnCode() == 0) {
                 dockerPushCmdTemplate.set(2, tag);
                 job = new ExecutionUnit(ExecutorType.PROCESS, masterNodeInfo.getHostName(),
@@ -288,12 +292,18 @@ public class TopologyManager implements ITopologyManager {
                                         dockerPushCmdTemplate, true, SSHMode.EXEC);
                 sharedAccumulator.reset();
                 executor = Executor.execute(sharedAccumulator, job);
+                logger.fine("Executing " + String.join(" ", dockerPushCmdTemplate));
                 waitFor(executor, 5, TimeUnit.SECONDS);
+                logger.fine("Execution of " + String.join(" ", dockerPushCmdTemplate) + " returned code " + executor.getReturnCode());
                 if (executor.getReturnCode() == 0) {
                     Messaging.send(principal, Topics.INFORMATION,
                                    String.format("Docker image '%s' successfully registered", correctedName));
                     return;
+                } else {
+                    logger.severe("Command output: " + sharedAccumulator.getOutput());
                 }
+            } else {
+                logger.severe("Command output: " + sharedAccumulator.getOutput());
             }
         }
         String message = String.format("Docker image '%s' failed to register. Details: '%s'",
