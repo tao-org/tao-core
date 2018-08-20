@@ -53,11 +53,17 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
         Path dockerPath = findInPath("docker" + (SystemUtils.IS_OS_WINDOWS ? ".exe" : ""));
         Container container = null;
         if (dockerPath != null) {
+            logger.fine("'docker' found in path");
             try {
                 Path dockerImagesPath = Paths.get(ConfigurationManager.getInstance().getValue("tao.docker.images"));
+                if (dockerImagesPath == null) {
+                    logger.warning("Invalid path for docker images");
+                    return;
+                }
                 Files.createDirectories(dockerImagesPath);
                 Path dockerfilePath = dockerImagesPath.resolve(getContainerName()).resolve("Dockerfile");
                 if (!Files.exists(dockerfilePath)) {
+                    logger.fine(String.format("Extracting Dockerfile for image %s", getContainerName()));
                     Files.createDirectories(dockerfilePath.getParent());
                     byte[] buffer = new byte[1024];
                     try (BufferedInputStream is = new BufferedInputStream(getClass().getResourceAsStream("Dockerfile"));
@@ -90,6 +96,7 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
         } catch (PersistenceException ignored) {
         }
         if (container == null) {
+            logger.fine("Creating placeholder database container");
             container = new Container();
             container.setId(getContainerName());
             container.setName(getContainerName());
