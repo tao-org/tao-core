@@ -172,6 +172,12 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
 
     @Override
     public Path fetch(EOProduct product) throws IOException {
+        if (product == null) {
+            throw new IOException("Invalid product reference [null]");
+        }
+        if (product.getName() == null) {
+            throw new IOException("Invalid product name [null]");
+        }
         activityStart(product.getName());
         try {
             currentProductProgress = 0;

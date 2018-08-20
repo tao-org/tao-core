@@ -283,7 +283,7 @@ public class TopologyManager implements ITopologyManager {
             sharedAccumulator.reset();
             executor = Executor.execute(sharedAccumulator, job);
             logger.fine("Executing " + String.join(" ", dockerTagCmdTemplate));
-            waitFor(executor, 5, TimeUnit.SECONDS);
+            waitFor(executor, 30, TimeUnit.SECONDS);
             logger.fine("Execution of " + String.join(" ", dockerTagCmdTemplate) + " returned code " + executor.getReturnCode());
             if (executor.getReturnCode() == 0) {
                 dockerPushCmdTemplate.set(2, tag);
@@ -293,7 +293,7 @@ public class TopologyManager implements ITopologyManager {
                 sharedAccumulator.reset();
                 executor = Executor.execute(sharedAccumulator, job);
                 logger.fine("Executing " + String.join(" ", dockerPushCmdTemplate));
-                waitFor(executor, 5, TimeUnit.SECONDS);
+                waitFor(executor, 30, TimeUnit.SECONDS);
                 logger.fine("Execution of " + String.join(" ", dockerPushCmdTemplate) + " returned code " + executor.getReturnCode());
                 if (executor.getReturnCode() == 0) {
                     Messaging.send(principal, Topics.INFORMATION, this,
