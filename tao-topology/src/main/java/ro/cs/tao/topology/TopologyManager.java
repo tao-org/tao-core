@@ -273,7 +273,7 @@ public class TopologyManager implements ITopologyManager {
         logger.fine("Execution of " + String.join(" ", dockerBuildCmdTemplate) + " returned code " + executor.getReturnCode());
         if (executor.getReturnCode() == 0) {
             Container image = getDockerImage(correctedName);
-            String localRegistry = ConfigurationManager.getInstance().getValue("docker.registry");
+            String localRegistry = ConfigurationManager.getInstance().getValue("tao.docker.registry");
             String tag = localRegistry + "/" + correctedName;
             dockerTagCmdTemplate.set(2, image.getId());
             dockerTagCmdTemplate.set(3, tag);
