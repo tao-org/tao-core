@@ -18,13 +18,6 @@ import ro.cs.tao.docker.Container;
 public interface ContainerRepository extends PagingAndSortingRepository<Container, String> {
 
     /**
-     * Find Container entity by its identifier
-     * @param id - the given container identifier
-     * @return the corresponding Container entity
-     */
-    //Container findById(String id);
-
-    /**
      * Find Container entity by its name
      * @param name - the given container name
      * @return the corresponding Container entity

@@ -22,12 +22,6 @@ import java.util.Set;
 @Qualifier(value = "executionJobRepository")
 @Transactional
 public interface ExecutionJobRepository extends PagingAndSortingRepository<ExecutionJob, Long> {
-    /**
-     * Finds ExecutionJob entity by its given identifier
-     * @param id - the given job identifier
-     * @return the corresponding ExecutionJob entity
-     */
-    //ExecutionJob findById(Long id);
 
     List<ExecutionJob> findByWorkflowId(long workflowId);
 

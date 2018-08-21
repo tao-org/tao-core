@@ -19,12 +19,6 @@ import java.util.List;
 @Qualifier(value = "userRepository")
 @Transactional
 public interface UserRepository extends PagingAndSortingRepository<User, Long> {
-    /**
-     * Find User entity by its given identifier
-     * @param id - the given user identifier
-     * @return the corresponding User entity
-     */
-    //User findById(final Long id);
 
     /**
      * Find User entity by its username

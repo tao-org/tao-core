@@ -22,13 +22,6 @@ import java.util.List;
 public interface ProcessingComponentRepository extends PagingAndSortingRepository<ProcessingComponent, String> {
 
     /**
-     * Find ProcessingComponent entity by its identifier
-     * @param id - the given processing component identifier
-     * @return the corresponding ProcessingComponent entity
-     */
-    //ProcessingComponent findById(String id);
-
-    /**
      * Find ProcessingComponent entity by its label
      * @param label - the given label
      * @return the corresponding ProcessingComponent entity

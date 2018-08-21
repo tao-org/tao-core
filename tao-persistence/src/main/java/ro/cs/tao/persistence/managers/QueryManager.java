@@ -44,7 +44,7 @@ public class QueryManager {
     private QueryRepository queryRepository;
 
     public Query findById(long id) {
-        return queryRepository.findById(id);
+        return queryRepository.findById(id).orElse(null);
     }
 
     public Query findByUserIdAndSensorAndDataSourceAndWorkflowNodeId(String userId, String sensor, String dataSource, long nodeId) {

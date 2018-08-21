@@ -17,13 +17,6 @@ import ro.cs.tao.user.Group;
 @Transactional
 public interface GroupRepository extends PagingAndSortingRepository<Group, Integer> {
     /**
-     * Find Group entity by its given identifier
-     * @param id - the given user identifier
-     * @return the corresponding Group entity
-     */
-    Group findById(final Long id);
-
-    /**
      * Find Group entity by its name
      * @param name - the group name
      * @return the corresponding Group entity
