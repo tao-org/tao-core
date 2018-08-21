@@ -148,10 +148,8 @@ public class ComponentManager {
         if(id == null || StringUtils.isEmpty(id)) {
             throw new PersistenceException("Invalid parameter was provided for verifying a container existence (empty identifier)");
         }
-
-        // check if there is such container (to retrieve) with the given identifier
-        final Optional<Container> existingContainer = containerRepository.findById(id);
-        return existingContainer.isPresent();
+        // check if there is such container (with the given identifier)
+        return containerRepository.existsById(id);
     }
 
     /**
@@ -254,14 +252,11 @@ public class ComponentManager {
 
     @Transactional
     public boolean checkIfExistsComponentById(final String id) {
-        boolean result = false;
         if (id != null && !id.isEmpty()) {
-            // try to retrieve ProcessingComponent after its identifier
-            final Optional<ProcessingComponent> componentEnt = processingComponentRepository.findById(id);
-            result = componentEnt.isPresent();
+            // verify if such ProcessingComponent with given identifier exists
+            return processingComponentRepository.existsById(id);
         }
-
-        return result;
+        return false;
     }
 
     @Transactional
@@ -321,11 +316,13 @@ public class ComponentManager {
 
     @Transactional
     public GroupComponent getGroupComponentById(final String id) {
-        GroupComponent component = null;
         if (id != null && !id.isEmpty()) {
-            component = groupComponentRepository.findById(id).orElse(null);
+            final Optional<GroupComponent> component = groupComponentRepository.findById(id);
+            if (component.isPresent()) {
+                return component.get();
+            }
         }
-        return component;
+        return null;
     }
 
     @Transactional
@@ -336,14 +333,14 @@ public class ComponentManager {
         }
 
         // retrieve GroupComponent after its id
-        final GroupComponent componentEnt = groupComponentRepository.findById(id).orElse(null);
-        if (componentEnt == null) {
+        final Optional<GroupComponent> component = groupComponentRepository.findById(id);
+        if (!component.isPresent()) {
             throw new PersistenceException("There is no group component with the specified id: " + id);
         }
 
+        GroupComponent componentEnt = component.get();
         // deactivate the processing component
         componentEnt.setActive(false);
-
         // save it
         return groupComponentRepository.save(componentEnt);
     }
@@ -356,8 +353,8 @@ public class ComponentManager {
         }
 
         // check if there is already another component with the same identifier
-        final GroupComponent componentWithSameId = groupComponentRepository.findById(component.getId()).orElse(null);
-        if (componentWithSameId != null) {
+        final boolean componentExistsWithSameId = groupComponentRepository.existsById(component.getId());
+        if (componentExistsWithSameId) {
             throw new PersistenceException("There is already another group component with the identifier: " + component.getId());
         }
 
@@ -374,8 +371,8 @@ public class ComponentManager {
         }
 
         // check if there is such component (to update) with the given identifier
-        final GroupComponent existingComponent = groupComponentRepository.findById(component.getId()).orElse(null);
-        if (existingComponent == null) {
+        final boolean componentExists = groupComponentRepository.existsById(component.getId());
+        if (!componentExists) {
             throw new PersistenceException("There is no group component with the given identifier: " + component.getId());
         }
 
@@ -398,7 +395,11 @@ public class ComponentManager {
 
     @Transactional
     public DataSourceComponent getDataSourceInstance(String id) {
-        return dataSourceComponentRepository.findById(id).orElse(null);
+        final Optional<DataSourceComponent> component = dataSourceComponentRepository.findById(id);
+        if (component.isPresent()){
+            return component.get();
+        }
+        return null;
     }
 
     @Transactional
@@ -409,8 +410,8 @@ public class ComponentManager {
         }
 
         // check if there is already another component with the same identifier
-        final DataSourceComponent componentWithSameId = dataSourceComponentRepository.findById(component.getId()).orElse(null);
-        if (componentWithSameId != null) {
+        final boolean componentExistsWithSameId = dataSourceComponentRepository.existsById(component.getId());
+        if (componentExistsWithSameId) {
             throw new PersistenceException("There is already another component with the identifier: " + component.getId());
         }
 
