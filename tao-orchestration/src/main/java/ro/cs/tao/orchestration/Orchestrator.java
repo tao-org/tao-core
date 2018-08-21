@@ -19,11 +19,13 @@ import ro.cs.tao.EnumUtils;
 import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.component.Variable;
+import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.eodata.DataHandlingException;
 import ro.cs.tao.eodata.EOProduct;
-import ro.cs.tao.eodata.MetadataInspector;
 import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.eodata.enums.Visibility;
+import ro.cs.tao.eodata.metadata.DecodeStatus;
+import ro.cs.tao.eodata.metadata.MetadataInspector;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.OutputDataHandlerManager;
 import ro.cs.tao.execution.model.*;
@@ -129,7 +131,9 @@ public class Orchestrator extends Notifiable {
                                                                 .getServiceRegistry(MetadataInspector.class)
                                                                 .getServices();
         if (services != null) {
-            this.metadataInspector = services.stream().findFirst().get();
+            this.metadataInspector = services.stream()
+                                             .filter(s -> s.decodeQualification(Paths.get(ConfigurationManager.getInstance().getValue("products.location"))) == DecodeStatus.SUITABLE)
+                                             .findFirst().get();
         }
         QueueMonitor monitor = new QueueMonitor();
         monitor.setName("orchestrator");
