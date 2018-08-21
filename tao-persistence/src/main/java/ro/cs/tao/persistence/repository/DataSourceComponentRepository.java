@@ -18,13 +18,6 @@ import ro.cs.tao.datasource.DataSourceComponent;
 public interface DataSourceComponentRepository extends PagingAndSortingRepository<DataSourceComponent, String> {
 
     /**
-     * Find DataSourceComponent entity by its identifier
-     * @param id - the given data source component identifier
-     * @return the corresponding DataSourceComponent entity
-     */
-    //DataSourceComponent findById(String id);
-
-    /**
      * Find DataSourceComponent entity by its label
      * @param label - the given label
      * @return the corresponding DataSourceComponent entity

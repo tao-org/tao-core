@@ -17,9 +17,7 @@ import java.util.List;
 @Repository
 @Qualifier(value = "queryRepository")
 @Transactional
-public interface QueryRepository extends PagingAndSortingRepository<Query, String> {
-
-    Query findById(long id);
+public interface QueryRepository extends PagingAndSortingRepository<Query, Long> {
 
     Query findByUserIdAndSensorAndDataSourceAndWorkflowNodeId(String userId, String sensor, String dataSource, long nodeId);
 

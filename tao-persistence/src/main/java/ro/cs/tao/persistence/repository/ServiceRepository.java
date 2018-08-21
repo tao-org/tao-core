@@ -16,12 +16,6 @@ import ro.cs.tao.topology.ServiceDescription;
 @Qualifier(value = "serviceRepository")
 @Transactional
 public interface ServiceRepository extends PagingAndSortingRepository<ServiceDescription, Integer> {
-    /**
-     * Find ServiceDescription entity by its identifier
-     * @param id - the given service id
-     * @return the corresponding ServiceDescription entity
-     */
-    //ServiceDescription findById(Integer id);
 
     /**
      * Find ServiceDescription entity by its name and version (unique)

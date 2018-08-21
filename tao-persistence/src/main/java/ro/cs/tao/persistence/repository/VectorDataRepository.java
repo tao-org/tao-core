@@ -21,12 +21,6 @@ import java.util.Set;
 @Qualifier(value = "vectorDataRepository")
 @Transactional
 public interface VectorDataRepository extends PagingAndSortingRepository<VectorData, String> {
-    /**
-     * Find VectorData entity by its alphanumeric given identifier
-     * @param id - the given vector data product identifier
-     * @return the corresponding VectorData entity
-     */
-    //VectorData findById(String id);
 
     @Query(value = "SELECT * FROM tao.vector_data_product WHERE CONCAT(location, entry_point) IN (:locations)",
             nativeQuery = true)

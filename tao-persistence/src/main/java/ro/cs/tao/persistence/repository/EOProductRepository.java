@@ -21,12 +21,6 @@ import java.util.Set;
 @Qualifier(value = "eoProductRepository")
 @Transactional
 public interface EOProductRepository extends PagingAndSortingRepository<EOProduct, String> {
-    /**
-     * Find EOProduct entity by its alphanumeric given identifier
-     * @param id - the given data product identifier
-     * @return the corresponding EOProduct entity
-     */
-    //EOProduct findById(String id);
 
     @Query(value = "SELECT * FROM tao.raster_data_product WHERE CONCAT(location, entry_point) IN (:locations)",
             nativeQuery = true)

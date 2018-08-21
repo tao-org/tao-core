@@ -18,13 +18,6 @@ import ro.cs.tao.component.ParameterDescriptor;
 public interface ParameterDescriptorRepository extends PagingAndSortingRepository<ParameterDescriptor, String> {
 
     /**
-     * Find ParameterDescriptor entity by its identifier
-     * @param id - the given parameter descriptor identifier
-     * @return the corresponding ParameterDescriptor entity
-     */
-    //ParameterDescriptor findById(String id);
-
-    /**
      * Find ParameterDescriptor entity by its label
      * @param label - the given label
      * @return the corresponding ParameterDescriptor entity
