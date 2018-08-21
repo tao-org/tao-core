@@ -14,8 +14,9 @@
  * with this program; if not, see http://www.gnu.org/licenses/
  */
 
-package ro.cs.tao.eodata;
+package ro.cs.tao.eodata.metadata;
 
+import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.eodata.enums.PixelType;
 import ro.cs.tao.eodata.enums.SensorType;
@@ -30,14 +31,34 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
 
+/**
+ * Interface to be implemented by all simple metadata inspectors.
+ *
+ * @author Cosmin Cara
+ */
 public interface MetadataInspector {
+
+    /**
+     * Returns the "suitability" qualification of this inspector for the given product path.
+     * @param productPath   The product path. If the product is complex, it is the wrapping folder
+     * @return  <code>DecodeStatus.INTENDED</code> if this inspector is made specially for the kind of product;
+     *          <code>DecodeStatus.SUITABLE</code> if this inspector is not made specially for this kind of product,
+     *          but may extract some information from it;
+     *          <code>DecodeStatus.UNABLE</code> if this inspector cannot extract any information for this kind of product.
+     */
+    DecodeStatus decodeQualification(Path productPath);
+
+    /**
+     * Parses the metadata for the given product path
+     * @param productPath   The path of the product. If the product is complex, it is the wrapping folder.
+     */
     Metadata getMetadata(Path productPath) throws IOException;
 
     class Metadata {
         private String productId;
         private String footprint;
         private String crs;
-        private URI entryPoint;
+        private String entryPoint;
         private PixelType pixelType;
         private String productType;
         private LocalDateTime aquisitionDate;
@@ -54,8 +75,8 @@ public interface MetadataInspector {
         public String getCrs() { return crs; }
         public void setCrs(String crs) { this.crs = crs; }
 
-        public URI getEntryPoint() { return entryPoint; }
-        public void setEntryPoint(URI entryPoint) { this.entryPoint = entryPoint; }
+        public String getEntryPoint() { return entryPoint; }
+        public void setEntryPoint(String entryPoint) { this.entryPoint = entryPoint; }
 
         public PixelType getPixelType() { return pixelType; }
         public void setPixelType(PixelType pixelType) { this.pixelType = pixelType; }
@@ -98,10 +119,10 @@ public interface MetadataInspector {
             //product.setLocation(productUri.toString());
             product.setApproximateSize(Files.size(productPath));
             if (this.entryPoint != null) {
-                if (this.entryPoint.equals(productUri)) {
+                if (this.entryPoint.equals(productPath.toString())) {
                     product.setEntryPoint(productPath.getFileName().toString());
                 } else {
-                    product.setEntryPoint(this.entryPoint.toString());
+                    product.setEntryPoint(this.entryPoint);
                 }
             }
             return product;
