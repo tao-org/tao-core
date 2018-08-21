@@ -16,6 +16,7 @@
 package ro.cs.tao.services.interfaces;
 
 import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.services.model.user.DisableUserInfo;
 import ro.cs.tao.services.model.user.UserUnicityInfo;
 import ro.cs.tao.user.Group;
 import ro.cs.tao.user.User;
@@ -42,7 +43,7 @@ public interface AdministrationService {
 
     User updateUserInfo(User updatedInfo) throws PersistenceException;
 
-    void disableUser(String username) throws PersistenceException;
+    void disableUser(String username, DisableUserInfo additionalDisableActions) throws PersistenceException;
 
     void deleteUser(String username) throws PersistenceException;
 }
