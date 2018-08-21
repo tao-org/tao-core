@@ -30,10 +30,7 @@ import ro.cs.tao.persistence.repository.WorkflowNodeDescriptorRepository;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -64,8 +61,14 @@ public class WorkflowManager {
                 .collect(Collectors.toList());
     }
 
-    public WorkflowDescriptor getWorkflowDescriptor(long identifier) {
-        return workflowDescriptorRepository.findById(identifier).orElse(null);
+    public WorkflowDescriptor getWorkflowDescriptor(Long identifier) {
+        if (identifier != null){
+            final Optional<WorkflowDescriptor> workflow = workflowDescriptorRepository.findById(identifier);
+            if (workflow.isPresent()){
+                return workflow.get();
+            }
+        }
+        return null;
     }
 
     @Query(value = "SELECT * from tao.workflow_graph WHERE username = :user AND status_id = :statusId " +
@@ -126,14 +129,14 @@ public class WorkflowManager {
         }
 
         // retrieve WorkflowDescriptor after its identifier
-        final WorkflowDescriptor workflowEnt = workflowDescriptorRepository.findById(workflowId).orElse(null);
-        if (workflowEnt == null) {
+        final Optional<WorkflowDescriptor> workflow = workflowDescriptorRepository.findById(workflowId);
+        if (!workflow.isPresent()) {
             throw new PersistenceException("There is no workflow with the specified identifier: " + workflowId);
         }
 
+        final WorkflowDescriptor workflowEnt = workflow.get();
         // deactivate the workflow
         workflowEnt.setActive(false);
-
         // save it
         return workflowDescriptorRepository.save(workflowEnt);
     }
@@ -142,7 +145,13 @@ public class WorkflowManager {
     //region WorkflowNodeDescriptor
     @Transactional
     public WorkflowNodeDescriptor getWorkflowNodeById(Long id) {
-        return id != null ? workflowNodeDescriptorRepository.findById(id).orElse(null) : null;
+        if (id != null) {
+            final Optional<WorkflowNodeDescriptor> workflowNode = workflowNodeDescriptorRepository.findById(id);
+            if (workflowNode.isPresent()) {
+                return workflowNode.get();
+            }
+        }
+        return null;
     }
 
     @Transactional
@@ -175,7 +184,7 @@ public class WorkflowManager {
 
         // add the node to workflow nodes collection
         workflow.addNode(savedWorkflowNodeDescriptor);
-        //workflow.addNode(node);
+
         workflowDescriptorRepository.save(workflow);
         return savedWorkflowNodeDescriptor;
     }
@@ -241,15 +250,10 @@ public class WorkflowManager {
 
     @Transactional
     private boolean checkIfExistsWorkflowDescriptorById(final Long workflowId) {
-        boolean result = false;
         if (workflowId != null && workflowId > 0) {
-            // try to retrieve WorkflowDescriptor after its identifier
-            final WorkflowDescriptor workflowEnt = workflowDescriptorRepository.findById(workflowId).orElse(null);
-            if (workflowEnt != null) {
-                result = true;
-            }
+            // verify if such WorkflowDescriptor exists
+            return workflowDescriptorRepository.existsById(workflowId);
         }
-
-        return result;
+        return false;
     }
 }
