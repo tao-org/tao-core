@@ -35,10 +35,7 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.Timestamp;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -74,7 +71,11 @@ public class ExecutionManager {
     }
 
     public ExecutionJob getJobById(long jobId) {
-        return executionJobRepository.findById(jobId).orElse(null);
+        final Optional<ExecutionJob> executionJob = executionJobRepository.findById(jobId);
+        if (executionJob.isPresent()){
+            return executionJob.get();
+        }
+        return null;
     }
 
     public List<ExecutionJob> getJobs(ExecutionStatus status) {
@@ -110,8 +111,8 @@ public class ExecutionManager {
         }
 
         // check if there is such job (to update) with the given identifier
-        final ExecutionJob existingJob = executionJobRepository.findById(job.getId()).orElse(null);
-        if (existingJob == null) {
+        final boolean jobExists = executionJobRepository.existsById(job.getId());
+        if (!jobExists) {
             throw new PersistenceException("There is no execution job with the given identifier: " + job.getId());
         }
 
@@ -137,13 +138,6 @@ public class ExecutionManager {
 
     @Transactional
     public List<ExecutionTask> getRunningTasks() {
-        // retrieve tasks and filter them
-        /*return ((List<ExecutionTask>)
-                executionTaskRepository.findAll(new Sort(Sort.Direction.ASC,
-                                                         Constants.TASK_IDENTIFIER_PROPERTY_NAME)))
-                .stream()
-                .filter(t -> (t.getExecutionStatus() == ExecutionStatus.RUNNING))
-                .collect(Collectors.toList());*/
         return executionTaskRepository.getRunningTasks();
     }
 
@@ -182,11 +176,11 @@ public class ExecutionManager {
 
     @Transactional
     public ExecutionTask getTaskById(Long id) throws PersistenceException {
-        final ExecutionTask existingTask = executionTaskRepository.findById(id).orElse(null);
-        if (existingTask == null) {
+        final Optional<ExecutionTask> executionTask = executionTaskRepository.findById(id);
+        if (!executionTask.isPresent()) {
             throw new PersistenceException("There is no execution task with the given identifier: " + id);
         }
-        return existingTask;
+        return executionTask.get();
     }
 
     @Transactional
@@ -364,31 +358,19 @@ public class ExecutionManager {
 
     @Transactional
     private boolean checkIfExistsExecutionJobById(final Long jobId) {
-        boolean result = false;
-
         if (jobId != null && jobId > 0) {
-            // try to retrieve ExecutionJob after its identifier
-            final ExecutionJob jobEnt = executionJobRepository.findById(jobId).orElse(null);
-            if (jobEnt != null) {
-                result = true;
-            }
+            // verify if such ExecutionJob exists
+            return executionJobRepository.existsById(jobId);
         }
-
-        return result;
+        return false;
     }
 
     @Transactional
     private boolean checkIfExistsExecutionTaskById(final Long taskId) {
-        boolean result = false;
-
         if (taskId != null && taskId > 0) {
-            // try to retrieve ExecutionTask after its identifier
-            final ExecutionTask taskEnt = executionTaskRepository.findById(taskId).orElse(null);
-            if (taskEnt != null) {
-                result = true;
-            }
+            // verify if such ExecutionTask exists
+            return executionTaskRepository.existsById(taskId);
         }
-
-        return result;
+        return false;
     }
 }
