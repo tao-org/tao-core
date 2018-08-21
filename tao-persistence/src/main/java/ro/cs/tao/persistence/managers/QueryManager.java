@@ -29,6 +29,7 @@ import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.persistence.repository.QueryRepository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Logger;
 
 @Configuration
@@ -44,7 +45,11 @@ public class QueryManager {
     private QueryRepository queryRepository;
 
     public Query findById(long id) {
-        return queryRepository.findById(id).orElse(null);
+        final Optional<Query> query = queryRepository.findById(id);
+        if (query.isPresent()){
+            return query.get();
+        }
+        return null;
     }
 
     public Query findByUserIdAndSensorAndDataSourceAndWorkflowNodeId(String userId, String sensor, String dataSource, long nodeId) {
