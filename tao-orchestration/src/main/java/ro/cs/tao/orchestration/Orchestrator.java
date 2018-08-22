@@ -73,7 +73,6 @@ import java.util.stream.IntStream;
 public class Orchestrator extends Notifiable {
 
     private static final Orchestrator instance;
-    //private final ExecutorService backgroundWorker;
     private final Map<Long, InternalStateHandler> groupStateHandlers;
     private final BlockingQueue<AbstractMap.SimpleEntry<Message, SessionContext>> queue;
 
@@ -93,7 +92,6 @@ public class Orchestrator extends Notifiable {
     private final Map<SessionContext, ExecutorService> executors;
 
     private Orchestrator() {
-        //this.backgroundWorker = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         this.groupStateHandlers = new HashMap<>();
         this.queue = new LinkedBlockingDeque<>();
         this.executors = Collections.synchronizedMap(new HashMap<>());
@@ -132,7 +130,7 @@ public class Orchestrator extends Notifiable {
                                                                 .getServices();
         if (services != null) {
             this.metadataInspector = services.stream()
-                                             .filter(s -> s.decodeQualification(Paths.get(ConfigurationManager.getInstance().getValue("products.location"))) == DecodeStatus.SUITABLE)
+                                             .filter(s -> s.decodeQualification(Paths.get(ConfigurationManager.getInstance().getValue("product.location"))) == DecodeStatus.SUITABLE)
                                              .findFirst().get();
         }
         QueueMonitor monitor = new QueueMonitor();
@@ -243,10 +241,6 @@ public class Orchestrator extends Notifiable {
         try {
             String taskId = message.getItem(Message.SOURCE_KEY);
             ExecutionStatus status = EnumUtils.getEnumConstantByName(ExecutionStatus.class, message.getItem(Message.PAYLOAD_KEY));
-            if (status == null) {
-                throw new PersistenceException(String.format("Invalid status received: %s",
-                                                             message.getItem(Message.PAYLOAD_KEY)));
-            }
             task = persistenceManager.getTaskById(Long.parseLong(taskId));
             task.setContext(currentContext);
             logger.finest(String.format("Status change for task %s [node %s]: %s",
@@ -718,7 +712,6 @@ public class Orchestrator extends Notifiable {
             while (true) {
                 try {
                     AbstractMap.SimpleEntry<Message, SessionContext> entry = queue.take();
-                    //backgroundWorker.submit(RunnableContextFactory.wrap(() -> processMessage(message)));
                     ExecutorService service = Orchestrator.this.executors.get(entry.getValue());
                     if (service != null) {
                         service.submit(() -> processMessage(entry.getKey(), entry.getValue()));

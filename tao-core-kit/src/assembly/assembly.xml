@@ -9,6 +9,20 @@
             <directory>src/assembly/bin</directory>
             <outputDirectory>bin</outputDirectory>
         </fileSet>
+        <fileSet>
+            <directory>../../tao-services/services-startup/src/main/resources/config</directory>
+            <outputDirectory>config</outputDirectory>
+            <includes>
+                <include>*.properties</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>../tao-config/src/main/resources/ro/cs/tao/configuration</directory>
+            <outputDirectory>config</outputDirectory>
+            <includes>
+                <include>*.properties</include>
+            </includes>
+        </fileSet>
     </fileSets>
 
     <dependencySets>
