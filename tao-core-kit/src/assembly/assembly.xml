@@ -10,13 +10,6 @@
             <outputDirectory>bin</outputDirectory>
         </fileSet>
         <fileSet>
-            <directory>../../tao-services/services-startup/src/main/resources/config</directory>
-            <outputDirectory>config</outputDirectory>
-            <includes>
-                <include>*.properties</include>
-            </includes>
-        </fileSet>
-        <fileSet>
             <directory>../tao-config/src/main/resources/ro/cs/tao/configuration</directory>
             <outputDirectory>config</outputDirectory>
             <includes>
@@ -24,7 +17,13 @@
             </includes>
         </fileSet>
     </fileSets>
-
+    <files>
+        <file>
+            <source>../../tao-services/services-startup/src/main/resources/config/spring.properties</source>
+            <outputDirectory>config</outputDirectory>
+            <destName>application.properties</destName>
+        </file>
+    </files>
     <dependencySets>
         <dependencySet>
             <outputDirectory>lib</outputDirectory>
