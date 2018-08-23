@@ -21,9 +21,6 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,16 +30,6 @@ import java.util.List;
  * @author Cosmin Cara
  */
 public abstract class XmlMetadataInspector implements MetadataInspector {
-
-    protected static DocumentBuilder builder;
-
-    static {
-        try {
-            builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-        } catch (ParserConfigurationException e) {
-            e.printStackTrace();
-        }
-    }
 
     public XmlMetadataInspector() { }
 
