@@ -15,9 +15,12 @@
  */
 package ro.cs.tao.user;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
+@JsonIgnoreProperties( { "password" })
 public class User {
 
     private Long id;
