@@ -31,6 +31,7 @@ import org.springframework.orm.jpa.JpaDialect;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaDialect;
+import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.persistence.data.jsonutil.JsonStringType;
@@ -250,6 +251,7 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
         entityManagerFactoryBean
           .setPackagesToScan(environment.getRequiredProperty(PROPERTY_NAME_ENTITYMANAGER_PACKAGES_TO_SCAN));
         entityManagerFactoryBean.setPersistenceProviderClass(HibernatePersistenceProvider.class);
+        entityManagerFactoryBean.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
         entityManagerFactoryBean.setPersistenceXmlLocation("classpath:META-INF/persistence.xml");
         entityManagerFactoryBean.setPersistenceUnitName("tao");
 
