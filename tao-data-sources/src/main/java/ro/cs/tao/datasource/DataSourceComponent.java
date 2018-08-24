@@ -85,7 +85,7 @@ public class DataSourceComponent extends TaoComponent {
         this.sensorName = sensorName;
         this.dataSourceName = dataSourceName;
         this.id = sensorName + "-" + dataSourceName;
-        this.logger = Logger.getLogger(DataSourceComponent.class.getSimpleName());
+        this.logger = Logger.getLogger(DataSourceComponent.class.getName());
         SourceDescriptor sourceDescriptor = new SourceDescriptor();
         sourceDescriptor.setParentId(this.id);
         sourceDescriptor.setName("query");
@@ -105,7 +105,7 @@ public class DataSourceComponent extends TaoComponent {
         addTarget(targetDescriptor);
     }
 
-    public DataSourceComponent() { this.logger = Logger.getLogger(DataSourceComponent.class.getSimpleName()); }
+    public DataSourceComponent() { this.logger = Logger.getLogger(DataSourceComponent.class.getName()); }
 
     public String getSensorName() { return sensorName; }
 
@@ -280,9 +280,9 @@ public class DataSourceComponent extends TaoComponent {
                     }
                     currentProduct = product;
                     ProductFetchStrategy templateFetcher = dataSource.getProductFetchStrategy(product.getProductType());
+                    templateFetcher.setProgressListener(notifier);
                     if (templateFetcher instanceof DownloadStrategy) {
                         DownloadStrategy downloadStrategy = ((DownloadStrategy) templateFetcher).clone();
-                        downloadStrategy.setProgressListener(notifier);
                         downloadStrategy.setDestination(destinationPath);
                         downloadStrategy.setFetchMode(this.fetchMode);
                         if (localRootPath != null) {

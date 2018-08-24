@@ -44,7 +44,7 @@ public abstract class EOData implements Serializable {
     private List<Attribute> attributes;
     private CoordinateReferenceSystem crs;
     private URI location;
-    private URI entryPoint;
+    private String entryPoint;
     private Visibility visibility;
 
     //region Getters and Setters
@@ -148,8 +148,8 @@ public abstract class EOData implements Serializable {
     public String getLocation() { return location != null ? location.toString() : null; }
     public void setLocation(String value) throws URISyntaxException { this.location = new URI(value); }
 
-    public String getEntryPoint() { return entryPoint != null ? entryPoint.toString() : null; }
-    public void setEntryPoint(String entryPoint) throws URISyntaxException { this.entryPoint = entryPoint != null ? new URI(entryPoint) : null; }
+    public String getEntryPoint() { return entryPoint; }
+    public void setEntryPoint(String entryPoint) { this.entryPoint = entryPoint; }
 
     public Visibility getVisibility() { return visibility; }
     public void setVisibility(Visibility visibility) { this.visibility = visibility; }

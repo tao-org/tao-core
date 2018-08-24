@@ -28,6 +28,7 @@ import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.transform.stream.StreamSource;
 import java.io.StringReader;
 import java.util.*;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
@@ -48,6 +49,7 @@ public abstract class DataQuery extends Identifiable {
     protected long timeout;
     protected Map<String, ParameterDescriptor> supportedParams;
     protected Set<String> mandatoryParams;
+    protected Logger logger = Logger.getLogger(getClass().getName());
 
     protected DataQuery() { }
 
