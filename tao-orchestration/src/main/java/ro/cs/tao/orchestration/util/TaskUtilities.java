@@ -167,7 +167,7 @@ public class TaskUtilities {
                                 parentTask.getOutputParameterValues().stream().anyMatch(o -> o.getValue() != null)) ||
                                 parentTask.getExecutionStatus() == ExecutionStatus.FAILED);
                 if (!completed) {
-                    logger.info(String.format("Task %s appears not to be completed", parentTask.getId()));
+                    logger.fine(String.format("Task %s appears not to be completed", parentTask.getId()));
                     break;
                 }
             }

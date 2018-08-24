@@ -40,6 +40,8 @@ import java.util.zip.ZipOutputStream;
  */
 public class Zipper {
 
+    private static Logger logger = Logger.getLogger(Zipper.class.getName());
+
     public static void compress(Path sourceFolder, String archiveName, boolean deleteFolder) throws IOException {
         Path zipFile = sourceFolder.getParent().resolve(archiveName + ".zip");
         Files.deleteIfExists(zipFile);
@@ -58,7 +60,7 @@ public class Zipper {
                         }
                         outputStream.closeEntry();
                     } catch (Exception e) {
-                        Logger.getLogger(Zipper.class.getName()).severe(e.getMessage());
+                        logger.severe(e.getMessage());
                     }
                 }
             }
@@ -97,7 +99,7 @@ public class Zipper {
                 Files.delete(source);
             }
         } catch (IOException e) {
-            Logger.getLogger(Zipper.class.getSimpleName()).warning(e.getMessage());
+            logger.warning(e.getMessage());
             return null;
         }
         return target;
@@ -130,7 +132,7 @@ public class Zipper {
                 Files.delete(source);
             }
         } catch (IOException ex) {
-            Logger.getLogger(Zipper.class.getSimpleName()).warning(ex.getMessage());
+            logger.warning(ex.getMessage());
             return null;
         }
         return target;
@@ -170,8 +172,7 @@ public class Zipper {
                 retVal = Files.deleteIfExists(path);
             }
         } catch (IOException e) {
-            Logger.getLogger(Zipper.class.getName()).severe(e.getMessage());
-            retVal = false;
+            logger.severe(e.getMessage());
         }
         return retVal;
     }

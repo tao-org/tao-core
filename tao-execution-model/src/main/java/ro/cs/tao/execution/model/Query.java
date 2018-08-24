@@ -119,6 +119,10 @@ public class Query {
                 for (Map.Entry<String, String> entry : paramValues.entrySet()) {
                     String paramName = entry.getKey();
                     final ParameterDescriptor descriptor = parameterDescriptorMap.get(paramName);
+                    if (descriptor == null) {
+                        throw new SerializationException(String.format("Parameter %s does not exist for the datasource %s",
+                                                                       paramName, webQuery.getDataSource()));
+                    }
                     final Class type = descriptor.getType();
                     String value = entry.getValue();
                     if (value != null && value.startsWith("[") & value.endsWith("]")) {
