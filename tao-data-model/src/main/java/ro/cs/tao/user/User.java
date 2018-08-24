@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@JsonIgnoreProperties( { "password" })
+@JsonIgnoreProperties( { "password", "created", "modified" })
 public class User {
 
     private Long id;
@@ -39,6 +39,9 @@ public class User {
     private boolean external;
     // key used for 1st time password set for TAO internal users, or for future password resets requested by TAO internal users
     private String passwordResetKey;
+
+    private LocalDateTime created;
+    private LocalDateTime modified;
 
     private List<Group> groups;
     private List<UserPreference> preferences;
@@ -154,6 +157,22 @@ public class User {
 
     public void setPasswordResetKey(String passwordResetKey) {
         this.passwordResetKey = passwordResetKey;
+    }
+
+    public LocalDateTime getCreated() {
+        return created;
+    }
+
+    public void setCreated(LocalDateTime created) {
+        this.created = created;
+    }
+
+    public LocalDateTime getModified() {
+        return modified;
+    }
+
+    public void setModified(LocalDateTime modified) {
+        this.modified = modified;
     }
 
     public List<Group> getGroups() {
