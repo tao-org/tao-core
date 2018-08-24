@@ -45,6 +45,7 @@ import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 
 import javax.annotation.PostConstruct;
+import java.time.LocalDateTime;
 import java.util.*;
 
 /**
@@ -533,6 +534,10 @@ public class PersistenceManager implements MessagePersister {
 
     public User updateUser(User updatedInfo, boolean fromAdmin) throws PersistenceException {
         return userManager.updateUser(updatedInfo, fromAdmin);
+    }
+
+    public void updateUserLastLoginDate(Long userId, LocalDateTime lastLoginDate) {
+        userManager.updateUserLastLoginDate(userId, lastLoginDate);
     }
 
     public void activateUser(String userName) throws PersistenceException {
