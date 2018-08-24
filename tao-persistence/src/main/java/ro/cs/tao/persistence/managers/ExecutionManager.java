@@ -174,7 +174,6 @@ public class ExecutionManager {
         });
     }
 
-    @Transactional
     public ExecutionTask getTaskById(Long id) throws PersistenceException {
         final Optional<ExecutionTask> executionTask = executionTaskRepository.findById(id);
         if (!executionTask.isPresent()) {
@@ -212,10 +211,6 @@ public class ExecutionManager {
      */
     @Transactional
     public ExecutionTask saveExecutionTask(ExecutionTask task, ExecutionJob job) throws PersistenceException {
-
-        logger.fine(String.format("saveExecutionTask() of type %s having resource id: %s",
-                                   task.getClass().getCanonicalName(), task.getResourceId()));
-
         // check method parameters
         if (!checkExecutionTask(task, job, task.getId() != null)) {
             throw new PersistenceException("Invalid parameters were provided for adding new execution task !");

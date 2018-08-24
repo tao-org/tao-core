@@ -69,6 +69,20 @@ public abstract class Executor<T> implements Runnable {
      * @return                  The Executor object that is responsible of execution
      */
     public static Executor execute(OutputConsumer outputConsumer, ExecutionUnit job) {
+        Executor executor = prepare(outputConsumer, job);
+        awaitForConditions(job);
+        executorService.submit(executor);
+        return executor;
+    }
+    /**
+     * Creates an executor for the given command and returns the executor object.
+     * The caller is responsible of actually invoking the execution on the returned executor.
+     *
+     * @param outputConsumer    The counsumer of the process output
+     * @param job               The command (job) to be executed
+     * @return                  The Executor object that is responsible of execution
+     */
+    public static Executor prepare(OutputConsumer outputConsumer, ExecutionUnit job) {
         if (job == null) {
             throw new IllegalArgumentException("ExecutionUnit must not be null");
         }
@@ -80,7 +94,6 @@ public abstract class Executor<T> implements Runnable {
         executor.setUser(job.getUser());
         executor.setPassword(job.getPassword());
         executor.setOutputConsumer(outputConsumer);
-        executorService.submit(executor);
         return executor;
     }
 
@@ -95,6 +108,13 @@ public abstract class Executor<T> implements Runnable {
      * @return                  The Executor object that is responsible of execution
      */
     public static Executor execute(OutputConsumer outputConsumer, File workingDirectory, ExecutionUnit job) {
+        Executor executor = prepare(outputConsumer, workingDirectory, job);
+        awaitForConditions(job);
+        executorService.submit(executor);
+        return executor;
+    }
+
+    public static Executor prepare(OutputConsumer outputConsumer, File workingDirectory, ExecutionUnit job) {
         if (job == null) {
             throw new IllegalArgumentException("ExecutionUnit must not be null");
         }
@@ -107,7 +127,6 @@ public abstract class Executor<T> implements Runnable {
         executor.setUser(job.getUser());
         executor.setPassword(job.getPassword());
         executor.setOutputConsumer(outputConsumer);
-        executorService.submit(executor);
         return executor;
     }
 
@@ -145,7 +164,6 @@ public abstract class Executor<T> implements Runnable {
             executor.setUser(job.getUser());
             executor.setPassword(job.getPassword());
             executor.setOutputConsumer(outputConsumer);
-            //executorService.submit(executor);
             executors[i] = executor;
         }
         return executors;
@@ -160,22 +178,10 @@ public abstract class Executor<T> implements Runnable {
      * @param jobs              One or more command descriptors
      */
     public static Executor[] execute(OutputConsumer outputConsumer, ExecutionUnit... jobs) {
-        if (jobs == null || jobs.length == 0) {
-            throw new IllegalArgumentException("At least one ExecutionUnit expected");
-        }
-        Executor[] executors = new Executor[jobs.length];
+        Executor[] executors = prepare(outputConsumer, jobs);
         for (int i = 0; i < jobs.length; i++) {
-            ExecutionUnit job = jobs[i];
-            Executor executor = create(job.getType(),
-                                       job.getHost(),
-                                       job.getArguments(),
-                                       job.asSuperUser(),
-                                       job.getSshMode());
-            executor.setUser(job.getUser());
-            executor.setPassword(job.getPassword());
-            executor.setOutputConsumer(outputConsumer);
-            executorService.submit(executor);
-            executors[i] = executor;
+            //awaitForConditions(jobs[i]);
+            executorService.submit(executors[i]);
         }
         return executors;
     }
@@ -193,8 +199,6 @@ public abstract class Executor<T> implements Runnable {
         int[] retCodes = new int[executors.length];
         final CountDownLatch aggregateLatch = new CountDownLatch(jobs.length);
         final Thread[] waitThreads = new Thread[jobs.length];
-        final long[] memory = new long[1];
-        memory[0] = 0;
         for (int i = 0; i < executors.length; i++) {
             final int finalI = i;
             waitThreads[i] = new Thread(() -> {
@@ -205,32 +209,18 @@ public abstract class Executor<T> implements Runnable {
                     executors[finalI].stop();
                 } finally {
                     aggregateLatch.countDown();
-                    memory[0] -= jobs[finalI].getMinMemory() != null ? jobs[finalI].getMinMemory() : 0;
                 }
             });
-            boolean canExecute = false;
+            boolean canExecute = canExecute(jobs[i]);
             while (!canExecute) {
-                if (jobs[i].getMinMemory() != null) {
-                    try {
-                        RuntimeInfo runtimeInfo = RuntimeInfo.createInspector(jobs[i].getHost(),
-                                                                              jobs[i].getUser(), jobs[i].getPassword());
-                        long availMem = runtimeInfo.getAvailableMemoryMB();
-                        canExecute = availMem >= jobs[i].getMinMemory();
-                        Logger.getLogger(Executor.class.getName())
-                                .fine(String.format("Job %s requires %sMB of RAM, system has %sMB available",
-                                                    jobs[i].hashCode(), jobs[i].getMinMemory(), availMem));
-                        if (!canExecute) {
-                            Thread.sleep(10000);
-                        }
-                    } catch (Exception e) {
-                        Logger.getLogger(Executor.class.getName()).warning(e.getMessage());
-                        canExecute = true;
-                    }
-                } else {
+                try {
+                    Thread.sleep(10000);
+                    canExecute = canExecute(jobs[i]);
+                } catch (Exception e) {
+                    Logger.getLogger(Executor.class.getName()).warning(e.getMessage());
                     canExecute = true;
                 }
             }
-            memory[0] += jobs[i].getMinMemory() != null ? jobs[i].getMinMemory() : 0;
             waitThreads[i].start();
         }
         try {
@@ -278,6 +268,40 @@ public abstract class Executor<T> implements Runnable {
                 break;
         }
         return executor;
+    }
+
+    private static void awaitForConditions(ExecutionUnit job) {
+        boolean canExecute = canExecute(job);
+        while (!canExecute) {
+            try {
+                Thread.sleep(10000);
+                canExecute = canExecute(job);
+            } catch (Exception e) {
+                Logger.getLogger(Executor.class.getName()).warning(e.getMessage());
+                canExecute = true;
+            }
+        }
+    }
+
+    private static boolean canExecute(ExecutionUnit executionUnit) {
+        boolean retVal;
+        if (executionUnit.getMinMemory() != null) {
+            try {
+                RuntimeInfo runtimeInfo = RuntimeInfo.createInspector(executionUnit.getHost(),
+                                                                      executionUnit.getUser(), executionUnit.getPassword());
+                long availMem = runtimeInfo.getAvailableMemoryMB();
+                retVal = availMem >= executionUnit.getMinMemory();
+                Logger.getLogger(Executor.class.getName())
+                        .fine(String.format("Job %s requires %sMB of RAM, system has %sMB available",
+                                            executionUnit.hashCode(), executionUnit.getMinMemory(), availMem));
+            } catch (Exception e) {
+                Logger.getLogger(Executor.class.getName()).warning(e.getMessage());
+                retVal = true;
+            }
+        } else {
+            retVal = true;
+        }
+        return retVal;
     }
 
     /**
