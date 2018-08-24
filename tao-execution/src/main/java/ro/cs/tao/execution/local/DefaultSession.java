@@ -141,6 +141,7 @@ public class DefaultSession implements Session {
                                       args, cmdsToRunAsSu.contains(jt.getRemoteCommand()), null) :
                     new ExecutionUnit(ExecutorType.SSH2, node.getHostName(), node.getUserName(), node.getUserPass(),
                                       args, cmdsToRunAsSu.contains(jt.getRemoteCommand()), SSHMode.EXEC);
+            unit.setMinMemory(8192L);
             String jobId = jt.getJobName() + ":" + System.nanoTime();
             this.runningJobs.put(jobId, Executor.execute(null, unit));
             return jobId;

@@ -90,11 +90,13 @@ public class Orchestrator extends Notifiable {
     private JobFactory jobFactory;
     private MetadataInspector metadataInspector;
     private final Map<SessionContext, ExecutorService> executors;
+    private final Set<Long> runningTasks;
 
     private Orchestrator() {
         this.groupStateHandlers = new HashMap<>();
         this.queue = new LinkedBlockingDeque<>();
         this.executors = Collections.synchronizedMap(new HashMap<>());
+        this.runningTasks = new HashSet<>();
         this.listAdapter =  new StringListAdapter();
         subscribe(Topics.TASK_STATUS_CHANGED);
     }
@@ -248,6 +250,12 @@ public class Orchestrator extends Notifiable {
                                       task.getWorkflowNodeId(),
                                       status.name()));
             statusChanged(task);
+            if (status == ExecutionStatus.DONE || status == ExecutionStatus.CANCELLED ||
+                    status == ExecutionStatus.FAILED) {
+                synchronized (this.runningTasks) {
+                    this.runningTasks.remove(task.getId());
+                }
+            }
             if (status == ExecutionStatus.DONE) {
                 WorkflowNodeDescriptor taskNode = persistenceManager.getWorkflowNodeById(task.getWorkflowNodeId());
                 // For DataSourceExecutionTask, it is the executor that sets the outputs,
@@ -365,7 +373,12 @@ public class Orchestrator extends Notifiable {
                             }
                         }
                         nextTask.setContext(currentContext);
-                        TaskCommand.START.applyTo(nextTask);
+                        synchronized (this.runningTasks) {
+                            if (!this.runningTasks.contains(nextTask.getId())) {
+                                this.runningTasks.add(nextTask.getId());
+                                TaskCommand.START.applyTo(nextTask);
+                            }
+                        }
                     }
                 } else {
                     ExecutionJob job = task.getJob();
