@@ -531,8 +531,8 @@ public class PersistenceManager implements MessagePersister {
         return userManager.checkLoginCredentials(userName, password);
     }
 
-    public User updateUser(User updatedInfo) throws PersistenceException {
-        return userManager.updateUser(updatedInfo);
+    public User updateUser(User updatedInfo, boolean fromAdmin) throws PersistenceException {
+        return userManager.updateUser(updatedInfo, fromAdmin);
     }
 
     public void activateUser(String userName) throws PersistenceException {

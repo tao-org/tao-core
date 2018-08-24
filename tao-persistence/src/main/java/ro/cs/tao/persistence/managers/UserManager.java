@@ -193,13 +193,13 @@ public class UserManager {
     }
 
     @Transactional
-    public User updateUser(User updatedInfo) throws PersistenceException {
+    public User updateUser(User updatedInfo, boolean fromAdmin) throws PersistenceException {
         User user = userRepository.findByUsername(updatedInfo.getUsername());
         if (user != null && user.getUsername().equalsIgnoreCase(updatedInfo.getUsername()) &&
           user.getId() == updatedInfo.getId())
         {
             // copy updated info (it's dangerous to save whatever received)
-            transferUpdates(user, updatedInfo);
+            transferUpdates(user, updatedInfo, fromAdmin);
             user = userRepository.save(user);
         }
         else {
@@ -208,7 +208,7 @@ public class UserManager {
         return user;
     }
 
-    private void transferUpdates(User original, User updated) throws PersistenceException {
+    private void transferUpdates(User original, User updated, boolean fromAdmin) throws PersistenceException {
         if (original == null || updated == null) {
             return;
         }
@@ -265,6 +265,24 @@ public class UserManager {
         if (StringUtils.isNullOrEmpty(original.getPasswordResetKey()) ||
             !original.getPasswordResetKey().equalsIgnoreCase(updated.getPasswordResetKey())) {
             original.setPasswordResetKey(updated.getPasswordResetKey());
+        }
+
+        if (fromAdmin) {
+            // check quota
+            if (Double.compare(original.getQuota(), updated.getQuota()) != 0) {
+                original.setQuota(updated.getQuota());
+            }
+            // check organisation
+            if (!original.getOrganization().equalsIgnoreCase(updated.getOrganization())) {
+                original.setOrganization(updated.getOrganization());
+            }
+            // check groups
+            final boolean oldGroupsIncludedInNewGroups = original.getGroups().stream().allMatch(group -> updated.getGroups().contains(group));
+            final boolean newGroupsIncludedInOldGroups = updated.getGroups().stream().allMatch(group -> original.getGroups().contains(group));
+            if (!oldGroupsIncludedInNewGroups || !newGroupsIncludedInOldGroups) {
+                // groups differ
+                original.setGroups(updated.getGroups());
+            }
         }
     }
 
