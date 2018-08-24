@@ -110,6 +110,7 @@ public abstract class SampleWorkflowBase implements SampleWorkflow {
                 node.addCustomValue(entry.getKey(), entry.getValue());
             }
         }
+        node.setPreserveOutput(true);
         node.setCreated(LocalDateTime.now());
         node = workflowService.addNode(parent.getId(), node);
         if (parentNode != null) {
