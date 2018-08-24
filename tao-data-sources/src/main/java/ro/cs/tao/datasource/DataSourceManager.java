@@ -45,7 +45,7 @@ public class DataSourceManager {
     public static DataSourceManager getInstance() { return instance; }
 
     private DataSourceManager() {
-        this.logger = Logger.getLogger(DataSourceManager.class.getSimpleName());
+        this.logger = Logger.getLogger(DataSourceManager.class.getName());
         Map<String, String> proxySettings = ConfigurationManager.getInstance().getValues("proxy");
         if (proxySettings != null && proxySettings.size() > 0) {
             String port = proxySettings.get("proxy.port");

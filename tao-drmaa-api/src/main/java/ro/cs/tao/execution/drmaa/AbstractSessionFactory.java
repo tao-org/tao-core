@@ -42,7 +42,6 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.PosixFilePermission;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -67,7 +66,7 @@ import java.util.stream.Stream;
 public abstract class AbstractSessionFactory extends SessionFactory {
 
     protected Session thisSession;
-    private Logger logger = Logger.getLogger(getClass().getSimpleName());
+    private Logger logger = Logger.getLogger(getClass().getName());
 
     protected AbstractSessionFactory() {
         initLibrary();
@@ -149,14 +148,12 @@ public abstract class AbstractSessionFactory extends SessionFactory {
                     try {
                         fixUpPermissions(path);
                     } catch (IOException e) {
-                        Logger.getLogger(AbstractSessionFactory.class.getSimpleName())
-                                .severe(String.format("Failed to fix permissions on '%s'", path));
+                        logger.severe(String.format("Failed to fix permissions on '%s'", path));
                     }
                 });
             }
         } catch (IOException e) {
-            Logger.getLogger(AbstractSessionFactory.class.getSimpleName())
-                    .severe(String.format("Failed to fix permissions on '%s'", destPath));
+            logger.severe(String.format("Failed to fix permissions on '%s'", destPath));
         }
     }
 }

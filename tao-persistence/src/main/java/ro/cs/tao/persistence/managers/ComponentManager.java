@@ -396,10 +396,7 @@ public class ComponentManager {
     @Transactional
     public DataSourceComponent getDataSourceInstance(String id) {
         final Optional<DataSourceComponent> component = dataSourceComponentRepository.findById(id);
-        if (component.isPresent()){
-            return component.get();
-        }
-        return null;
+        return component.orElse(null);
     }
 
     @Transactional

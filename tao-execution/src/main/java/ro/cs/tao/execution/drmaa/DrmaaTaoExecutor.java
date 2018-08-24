@@ -92,14 +92,11 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             } else {
                 changeTaskStatus(task, session instanceof DefaultSession ? ExecutionStatus.RUNNING : ExecutionStatus.QUEUED_ACTIVE);
             }
-            //persistenceManager.updateExecutionTask(task);
-            logger.info(String.format("Succesfully submitted task with id %s [session %s]", task.getId(), id));
+            logger.fine(String.format("Succesfully submitted task with id %s [session %s]", task.getId(), id));
         } catch (DrmaaException | InternalException | PersistenceException e) {
             logger.severe(String.format("Error submitting task with id %s: %s", task.getId(), e.getMessage()));
             throw new ExecutionException("Error executing DRMAA session operation", e);
-        }/* catch (PersistenceException e) {
-            throw new ExecutionException("Unable to save execution state in the database", e);
-        }*/
+        }
     }
 
     @Override
@@ -177,7 +174,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                         case Session.FAILED:
                             // Just mark the job as finished with failed status
                             markTaskFinished(task, ExecutionStatus.FAILED);
-                            logger.info(String.format("Task %s FAILED", task.getId()));
+                            logger.warning(String.format("Task %s FAILED", task.getId()));
                             break;
                     }
                 } catch (DrmaaException | InternalException e) {
