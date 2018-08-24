@@ -50,7 +50,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> {
     public void execute(DataSourceExecutionTask task) throws ExecutionException {
         try {
             task.setResourceId(UUID.randomUUID().toString());
-            logger.info(String.format("Succesfully submitted task with id %s", task.getResourceId()));
+            logger.fine(String.format("Succesfully submitted task with id %s", task.getResourceId()));
             task.setExecutionNodeHostName(InetAddress.getLocalHost().getHostName());
             task.setStartTime(LocalDateTime.now());
             changeTaskStatus(task, ExecutionStatus.RUNNING);

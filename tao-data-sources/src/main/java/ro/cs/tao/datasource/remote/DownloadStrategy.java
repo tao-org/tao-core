@@ -68,7 +68,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     protected Set<String> filteredTiles;
     protected Pattern tileIdPattern;
     protected FetchMode fetchMode;
-    protected Logger logger = Logger.getLogger(DownloadStrategy.class.getSimpleName());
+    protected Logger logger = Logger.getLogger(getClass().getName());
     private String localArchiveRoot;
     private ProgressListener progressListener;
     private volatile boolean cancelled;

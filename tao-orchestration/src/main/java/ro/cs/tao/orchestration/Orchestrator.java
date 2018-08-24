@@ -83,7 +83,7 @@ public class Orchestrator extends Notifiable {
     public static Orchestrator getInstance() { return instance; }
 
     private final StringListAdapter listAdapter;
-    private final Logger logger = Logger.getLogger(Orchestrator.class.getSimpleName());
+    private final Logger logger = Logger.getLogger(Orchestrator.class.getName());
     private PersistenceManager persistenceManager;
     private TaskSelector<ExecutionGroup> groupTaskSelector;
     private TaskSelector<ExecutionJob> jobTaskSelector;
@@ -283,7 +283,6 @@ public class Orchestrator extends Notifiable {
                         persistenceManager.updateExecutionTask(groupTask);
                     } else {
                         task = persistenceManager.updateExecutionTask(pcTask);
-                        logger.info(String.format("Task %s should be updated", task.getId()));
                     }
                 }
                 List<ExecutionTask> nextTasks = findNextTasks(task);
@@ -396,11 +395,12 @@ public class Orchestrator extends Notifiable {
                                                                    " completed in %ss" :
                                                                    " failed after %ss"),
                                                    job.getId(), workflow.getName(), time != null ? time.getSeconds() : "<unknown>");
+                        logger.info(msg);
                         Messaging.send(currentContext.getPrincipal(), Topics.INFORMATION, this, msg);
                         executors.get(currentContext).shutdown();
                         executors.remove(currentContext);
                     } else {
-                        logger.info("Job has still tasks to complete");
+                        logger.fine("Job has still tasks to complete");
                     }
                 }
             } else {
