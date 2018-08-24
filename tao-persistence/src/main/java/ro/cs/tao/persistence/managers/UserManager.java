@@ -31,10 +31,9 @@ import ro.cs.tao.user.UserPreference;
 import ro.cs.tao.user.UserStatus;
 import ro.cs.tao.utils.StringUtils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.logging.Logger;
 
 @Configuration
@@ -200,6 +199,8 @@ public class UserManager {
         {
             // copy updated info (it's dangerous to save whatever received)
             transferUpdates(user, updatedInfo, fromAdmin);
+            // update the modified date on user
+            user.setModified(LocalDateTime.now(Clock.systemUTC()));
             user = userRepository.save(user);
         }
         else {
@@ -283,6 +284,16 @@ public class UserManager {
                 // groups differ
                 original.setGroups(updated.getGroups());
             }
+        }
+    }
+
+    @Transactional
+    public void updateUserLastLoginDate(Long userId, LocalDateTime lastLoginDate) {
+        final Optional<User> user = userRepository.findById(userId);
+        if (user.isPresent()) {
+            final User userEnt = user.get();
+            userEnt.setLastLoginDate(lastLoginDate);
+            userRepository.save(userEnt);
         }
     }
 
