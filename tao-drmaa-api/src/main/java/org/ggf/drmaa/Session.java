@@ -349,7 +349,7 @@ public interface Session {
      * underlying DRM system
      * @param start the starting value for the loop index
      * @param end the terminating value for the loop index
-     * @param incr the value by which to increment the loop index each iteration
+     * @param increment the value by which to increment the loop index each iteration
      * @param jt the job template to be used to create the job
      * @throws DrmaaException May be one of the following:
      * <UL>
@@ -489,8 +489,8 @@ public interface Session {
      *
      * <p>The <i>timeout</i> value is used to specify the desired behavior when
      * a result is not immediately available.  The value,
-     * <code>TIMEOUT_WAIT_FOREVER<code>, may be specified to wait indefinitely
-     * for a result.  The value, <code>TIMEOUT_NO_WAIT<code>, may be specified
+     * <code>TIMEOUT_WAIT_FOREVER</code>, may be specified to wait indefinitely
+     * for a result.  The value, <code>TIMEOUT_NO_WAIT</code>, may be specified
      * to return immediately if no result is available.  Alternatively, a number
      * of seconds may be specified to indicate how long to wait for a result to
      * become available.</p>
@@ -597,15 +597,6 @@ public interface Session {
      * dependent.
      * @return current contact information for DRM system or a comma delimited
      * list of possible contact Strings
-     * @throws DrmaaException May be one of the following:
-     * <UL>
-     * <LI>DrmCommunicationException -- the DRMAA implementation was unable to
-     * contact the DRM</LI>
-     * <LI>AuthorizationException -- the executing user does not have
-     * sufficient permissions to execute the desired action</LI>
-     * <LI>InternalException -- an error has occured in the DRMAA
-     * implementation</LI>
-     * </UL>
      */
     String getContact();
     
@@ -614,17 +605,7 @@ public interface Session {
      * of the DRMAA library.  For DRMAA 0.5, major is 0 and minor is 5.
      * @return the version number as a Version instance
      * @see Version
-     * @throws DrmaaException May be one of the following:
-     * <UL>
-     * <LI>NoActiveSessionException -- the session has not yet been initialized
-     * or has already been exited</LI>
-     * <LI>DrmCommunicationException -- the DRMAA implementation was unable to
-     * contact the DRM</LI>
-     * <LI>AuthorizationException -- the executing user does not have
-     * sufficient permissions to execute the desired action</LI>
-     * <LI>InternalException -- an error has occured in the DRMAA
-     * implementation</LI>
-     * </UL>
+     *
      */
     Version getVersion();
     
@@ -634,15 +615,7 @@ public interface Session {
      * provided. If called after init(), this method returns the selected DRM
      * system. The returned String is implementation dependent.
      * @return DRM system implementation information
-     * @throws DrmaaException May be one of the following:
-     * <UL>
-     * <LI>DrmCommunicationException -- the DRMAA implementation was unable to
-     * contact the DRM</LI>
-     * <LI>AuthorizationException -- the executing user does not have
-     * sufficient permissions to execute the desired action</LI>
-     * <LI>InternalException -- an error has occured in the DRMAA
-     * implementation</LI>
-     * </UL>
+     *
      */
     String getDrmSystem();
     
@@ -653,15 +626,7 @@ public interface Session {
      * selected DRMAA implementation.  The returned String is implementation
      * dependent and may contain the DRM system as a component.
      * @return DRMAA implementation information
-     * @throws DrmaaException May be one of the following:
-     * <UL>
-     * <LI>DrmCommunicationException -- the DRMAA implementation was unable to
-     * contact the DRM</LI>
-     * <LI>AuthorizationException -- the executing user does not have
-     * sufficient permissions to execute the desired action</LI>
-     * <LI>InternalException -- an error has occured in the DRMAA
-     * implementation</LI>
-     * </UL>
+     *
      */
     String getDrmaaImplementation();
 }

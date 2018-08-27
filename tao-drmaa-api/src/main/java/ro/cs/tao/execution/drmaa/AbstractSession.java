@@ -68,7 +68,7 @@ public class AbstractSession implements Session {
      * {@inheritDoc}
      *
      * <p>The DRMAA suspend/resume operations are equivalent to the use of the
-     * `-s <jobid>' and `-us <jobid>' options with qmod.  (See the qmod(1) man
+     * `-s jobid' and `-us jobid' options with qmod.  (See the qmod(1) man
      * page.)</p>
      *
      * <p>The DRMAA hold/release operations are equivalent to the use of

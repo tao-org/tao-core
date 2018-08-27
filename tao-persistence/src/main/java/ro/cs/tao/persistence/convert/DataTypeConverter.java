@@ -18,7 +18,7 @@ package ro.cs.tao.persistence.convert;
 import javax.persistence.AttributeConverter;
 
 /**
- * Converter for Class<?>  stored values
+ * Converter for <code>Class<?></code> stored values
  *
  */
 public class DataTypeConverter implements AttributeConverter<Class<?>, String> {

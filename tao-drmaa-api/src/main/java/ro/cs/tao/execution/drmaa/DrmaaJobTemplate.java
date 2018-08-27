@@ -59,7 +59,7 @@ import java.util.*;
  * contain options to be applied to all jobs.  The .sge_request file found in
  * the user's home directory or the current working directory may also contain
  * options to be applied to certain jobs.  See the sge_request(5) man page
- * for more information.</p>
+ * for more information.
  *
  * <p>If the sge_request file contains &quot;-b no&quot; or if the
  * nativeSpecification property is set and contains &quot;-b no&quot;, the
@@ -95,22 +95,22 @@ import java.util.*;
  *
  * <table>
  *  <tr><th>DRMAA Attribute</th><th>qsub Option</th></tr>
- *  <tr><td>remoteCommand</td><td>script file</td>
- *  <tr><td>args</td><td>script file arguments</td>
- *  <tr><td>jobSubmissionState = HOLD_STATE</td><td>-h</td>
- *  <tr><td>jobEnvironment</td><td>-v</td>
- *  <tr><td>workingDirectory = $PWD</td><td>-cwd</td>
- *  <tr><td>jobCategory</td><td>(qtsch qtask)<sup>*</sup></td>
- *  <tr><td>nativeSpecification</td><td>ALL<sup>*</sup></td>
- *  <tr><td>emailAddresses</td><td>-M</td>
- *  <tr><td>blockEmail = true</td><td>-m n</td>
- *  <tr><td>startTime</td><td>-a</td>
- *  <tr><td>jobName</td><td>-N</td>
- *  <tr><td>inputPath</td><td>-i</td>
- *  <tr><td>outputPath</td><td>-o</td>
- *  <tr><td>errorPath</td><td>-e</td>
- *  <tr><td>joinFiles</td><td>-j</td>
- *  <tr><td>transferFiles</td><td>(prolog and epilog)<sup>*</sup></td>
+ *  <tr><td>remoteCommand</td><td>script file</td></tr>
+ *  <tr><td>args</td><td>script file arguments</td></tr>
+ *  <tr><td>jobSubmissionState = HOLD_STATE</td><td>-h</td></tr>
+ *  <tr><td>jobEnvironment</td><td>-v</td></tr>
+ *  <tr><td>workingDirectory = $PWD</td><td>-cwd</td></tr>
+ *  <tr><td>jobCategory</td><td>(qtsch qtask)<sup>*</sup></td></tr>
+ *  <tr><td>nativeSpecification</td><td>ALL<sup>*</sup></td></tr>
+ *  <tr><td>emailAddresses</td><td>-M</td></tr>
+ *  <tr><td>blockEmail = true</td><td>-m n</td></tr>
+ *  <tr><td>startTime</td><td>-a</td></tr>
+ *  <tr><td>jobName</td><td>-N</td></tr>
+ *  <tr><td>inputPath</td><td>-i</td></tr>
+ *  <tr><td>outputPath</td><td>-o</td></tr>
+ *  <tr><td>errorPath</td><td>-e</td></tr>
+ *  <tr><td>joinFiles</td><td>-j</td></tr>
+ *  <tr><td>transferFiles</td><td>(prolog and epilog)<sup>*</sup></td></tr>
  * </table>
  *
  * <p><sup>*</sup> See the individual attribute setter description below</p>
@@ -667,7 +667,7 @@ public class DrmaaJobTemplate implements JobTemplate {
      * not explicitly set in the job template, the whereabouts of the job's
      * output stream is not defined.  If the standard output is set, it
      * specifies the network path of the job's output stream file in the form of
-     * <code>[hostname]:file_path<code>
+     * <code>[hostname]:file_path</code>
      *
      * <p>When the transferFiles property is supported and the set
      * TranferFileMode instance's outputStream property is set to
@@ -680,13 +680,13 @@ public class DrmaaJobTemplate implements JobTemplate {
      *
      * <p>When the DRMAA job template is used for bulk job submission (see also
      * {@link org.ggf.drmaa.Session#runBulkJobs(org.ggf.drmaa.JobTemplate,int,int,int)}
-     * the <CODE>PARAMETRIC_INDEX</CODE> placeholder can be used at any position
+     * the <code>PARAMETRIC_INDEX</code> placeholder can be used at any position
      * within the file name to cause a substitution with the parametric
-     * job's index.  A <CODE>HOME_DIRECTORY</CODE> placeholder at the beginning
+     * job's index.  A <code>HOME_DIRECTORY</code> placeholder at the beginning
      * of the file path denotes the remaining portion of the file path as a
      * relative file specification to be resolved relative to the job user's
      * home directory at the host where the file is located.  A
-     * <CODE>WORKING_DIRECTORY</CODE> placeholder at the beginning of file path
+     * <code>WORKING_DIRECTORY</code> placeholder at the beginning of file path
      * denotes the remaining portion of the file path as a relative file
      * specification to be resolved relative to the job's working directory at
      * the host where the file is located.  The file name must be specified in a
@@ -1019,7 +1019,7 @@ public class DrmaaJobTemplate implements JobTemplate {
      * Returns the list of supported properties names.  With the execd param,
      * delegated_file_staging, set to false, this list includes only the list of
      * DRMAA required properties.  With delegated_file_staging set to true, the
-     * list also includes the transferFiles property.</p>
+     * list also includes the transferFiles property.
      * @return {@inheritDoc}
      */
     public Set getAttributeNames() throws DrmaaException {
