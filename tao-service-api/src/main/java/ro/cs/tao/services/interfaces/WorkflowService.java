@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * Service for Workflow entity manipulation.
+ *
  * @author Cosmin Cara
  */
 public interface WorkflowService extends CRUDService<WorkflowDescriptor> {
@@ -109,6 +111,17 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor> {
      * @param workflow  The workflow to clone
      */
     WorkflowDescriptor clone(WorkflowDescriptor workflow) throws PersistenceException;
+
+    /**
+     * Imports the nodes of a workflow into the given workflow
+     * @param master        The workflow into which the nodes shall be imported
+     * @param subWorkflow   The workflow whose nodes shall be imported
+     * @param keepDataSources Flag indicating if to keep (true) or exclude (false) DataSource nodes from the subWorkflow
+     * @throws PersistenceException
+     */
+    WorkflowDescriptor importWorkflowNodes(WorkflowDescriptor master,
+                                           WorkflowDescriptor subWorkflow,
+                                           boolean keepDataSources) throws PersistenceException;
     /**
      * Retrieve the execution history of a workflow
      * @param workflowId         The workflow identifier
