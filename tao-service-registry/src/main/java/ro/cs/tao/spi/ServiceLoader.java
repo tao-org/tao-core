@@ -20,7 +20,7 @@ import java.util.ServiceConfigurationError;
 import java.util.logging.Logger;
 
 /**
- * <p><i><b>IMPORTANT NOTE:</b>
+ * <b>IMPORTANT NOTE:</b>
  * This class does not belong to the public API.
  * It is not intended to be used by clients.
  *

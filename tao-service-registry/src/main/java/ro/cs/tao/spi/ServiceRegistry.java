@@ -101,7 +101,7 @@ public interface ServiceRegistry<T> {
      */
     void removeListener(ServiceRegistryListener<T> listener);
     
-    /** {@collect.stats}
+    /**
      * A simple filter interface used by 
      * <code>ServiceRegistry.getServiceProviders</code> to select 
      * providers matching an arbitrary criterion.  Classes that 
@@ -109,11 +109,11 @@ public interface ServiceRegistry<T> {
      * of the <code>getServiceProviders</code> method of 
      * <code>ServiceRegistry</code> that takes a <code>Filter</code>. 
      * 
-     * @see ServiceRegistry#getServiceProviders(Class, ServiceRegistry.Filter, boolean) 
+     * @see ServiceRegistry#getServices(Filter)
      */ 
     interface Filter { 
  
-        /** {@collect.stats}
+        /**
          * Returns <code>true</code> if the given 
          * <code>provider</code> object matches the criterion defined 
          * by this <code>Filter</code>. 

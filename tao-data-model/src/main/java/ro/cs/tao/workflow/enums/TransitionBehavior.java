@@ -26,13 +26,13 @@ public enum TransitionBehavior implements TaoEnum<Integer> {
     /**
      * The execution flow should not continue if the current node fails.
      * This is the default (and only) value for regular nodes.
-     * For group nodes, if a sub-task fails -> the group fails.
+     * For group nodes, if a sub-task fails then the group fails.
      */
     @XmlEnumValue("1")
     FAIL_ON_ERROR(1, "Fail on error"),
     /**
      * The execution flow should continue if the current node fails.
-     * This is intended for group nodes, such that if a sub-task fails -> the current sub-flow fails,
+     * This is intended for group nodes, such that if a sub-task fails then the current sub-flow fails,
      * but the group continues with the next sub-flow.
      */
     @XmlEnumValue("2")

@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 /**
- * Converter for List<String> stored values
+ * Converter for <code>List<String></code> stored values
  *
  * @author Oana H.
  */
