@@ -455,7 +455,7 @@ public class PersistenceManager implements MessagePersister {
         return queryManager.findById(id);
     }
 
-    public Query getQueries(String userId, String sensor, String dataSource, long workflowNodeId) {
+    public Query getQuery(String userId, String sensor, String dataSource, long workflowNodeId) {
         return queryManager.findByUserIdAndSensorAndDataSourceAndWorkflowNodeId(userId, sensor, dataSource, workflowNodeId);
     }
 
@@ -486,6 +486,11 @@ public class PersistenceManager implements MessagePersister {
     public Query saveQuery(Query query) throws PersistenceException {
         return queryManager.saveQuery(query);
     }
+
+    public void removeQuery(Query query) {
+        queryManager.removeQuery(query);
+    }
+
     //endregion
 
     //region Message

@@ -38,8 +38,16 @@ import java.util.stream.Collectors;
 
 public abstract class BaseImageInstaller implements DockerImageInstaller {
     protected static final Set<String> winExtensions = new HashSet<String>() {{ add(".bat"); add(".exe"); }};
+    private static final Path dockerPath;
     protected final Logger logger;
     private final PersistenceManager persistenceManager;
+
+    static {
+        dockerPath = findInPath("docker" + (SystemUtils.IS_OS_WINDOWS ? ".exe" : ""));
+        if (dockerPath == null) {
+            Logger.getLogger(BaseImageInstaller.class.getName()).warning("[docker] was not found in system path");
+        }
+    }
 
     public BaseImageInstaller() {
         this.persistenceManager = SpringContextBridge.services().getPersistenceManager();
@@ -50,10 +58,8 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
 
     @Override
     public void installImage() {
-        Path dockerPath = findInPath("docker" + (SystemUtils.IS_OS_WINDOWS ? ".exe" : ""));
         Container container = null;
         if (dockerPath != null) {
-            logger.fine("'docker' found in path");
             try {
                 Path dockerImagesPath = Paths.get(ConfigurationManager.getInstance().getValue("tao.docker.images"));
                 if (dockerImagesPath == null) {
@@ -63,7 +69,7 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
                 Files.createDirectories(dockerImagesPath);
                 Path dockerfilePath = dockerImagesPath.resolve(getContainerName()).resolve("Dockerfile");
                 if (!Files.exists(dockerfilePath)) {
-                    logger.fine(String.format("Extracting Dockerfile for image %s", getContainerName()));
+                    logger.finest(String.format("Extracting Dockerfile for image %s", getContainerName()));
                     Files.createDirectories(dockerfilePath.getParent());
                     byte[] buffer = new byte[1024];
                     try (BufferedInputStream is = new BufferedInputStream(getClass().getResourceAsStream("Dockerfile"));
@@ -78,9 +84,9 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
                 TopologyManager topologyManager = TopologyManager.getInstance();
                 container = topologyManager.getDockerImage(getContainerName());
                 if (container == null) {
-                    this.logger.fine(String.format("Begin registering docker image %s", getContainerName()));
+                    this.logger.finest(String.format("Begin registering docker image %s", getContainerName()));
                     topologyManager.registerImage(dockerfilePath.toRealPath(), getContainerName(), getDescription());
-                    this.logger.fine(String.format("Docker image %s registration completed", getContainerName()));
+                    this.logger.finest(String.format("Docker image %s registration completed", getContainerName()));
                 } else {
                     logger.fine(String.format("Image %s was found in Docker registry", getContainerName()));
                 }
@@ -88,15 +94,13 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
                 logger.warning(String.format("Error occurred while registering %s: %s",
                                              getContainerName(), e.getMessage()));
             }
-        } else {
-            logger.fine("'docker' was not found in system path");
         }
         try {
             container = persistenceManager.getContainerById(getContainerName());
         } catch (PersistenceException ignored) {
         }
         if (container == null) {
-            logger.fine("Creating placeholder database container");
+            logger.finest("Creating placeholder database container");
             container = new Container();
             container.setId(getContainerName());
             container.setName(getContainerName());
@@ -131,7 +135,7 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
         }
     }
 
-    protected Path findInPath(String executableName) {
+    protected static Path findInPath(String executableName) {
         String systemPath = System.getenv("Path");
         if (systemPath == null) {
             systemPath = System.getenv("PATH");
