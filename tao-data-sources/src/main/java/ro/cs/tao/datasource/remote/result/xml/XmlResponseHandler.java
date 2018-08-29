@@ -22,6 +22,7 @@ import org.xml.sax.helpers.DefaultHandler;
 import ro.cs.tao.eodata.EOData;
 import ro.cs.tao.eodata.enums.DataFormat;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -29,7 +30,7 @@ import java.util.logging.Logger;
 /**
  * @author Cosmin Cara
  */
-public abstract class XmlResponseHandler<T extends EOData> extends DefaultHandler {
+public abstract class XmlResponseHandler<T> extends DefaultHandler {
     private Class<T> resultClass;
     private List<T> results;
     protected StringBuilder buffer;
@@ -69,11 +70,17 @@ public abstract class XmlResponseHandler<T extends EOData> extends DefaultHandle
         buffer.setLength(0);
         if (this.recordElement.equals(qName)) {
             try {
-                this.current = this.resultClass.newInstance();
-            } catch (InstantiationException | IllegalAccessException e) {
+                if (!Number.class.isAssignableFrom(this.resultClass)) {
+                    this.current = this.resultClass.newInstance();
+                } else {
+                    this.current = this.resultClass.getConstructor(String.class).newInstance("0");
+                }
+            } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
                 throw new SAXException(e.getMessage());
             }
-            this.current.setFormatType(DataFormat.RASTER);
+            if (EOData.class.isAssignableFrom(this.current.getClass())) {
+                ((EOData) this.current).setFormatType(DataFormat.RASTER);
+            }
         }
         handleStartElement(qName, attributes);
     }
