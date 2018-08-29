@@ -347,7 +347,7 @@ public class DataSourceComponent extends TaoComponent {
                     currentFetcher.resume();
                 }
                 currentFetcher = null;
-                notifier.ended();
+                //notifier.ended();
             }
         }
         return products;
