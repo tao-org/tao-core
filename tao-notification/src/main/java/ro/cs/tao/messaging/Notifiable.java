@@ -24,7 +24,6 @@ import java.util.logging.Logger;
  * @author Cosmin Cara
  */
 public abstract class Notifiable implements Consumer<Event<Message>> {
-    private String[] topics;
     protected final Logger logger;
 
     public Notifiable() {
@@ -34,7 +33,6 @@ public abstract class Notifiable implements Consumer<Event<Message>> {
     @Override
     public void accept(Event<Message> messageEvent) {
         final Message payload = messageEvent.getData();
-        //logger.finest("Notification received: " + payload.toString());
         onMessageReceived(payload);
     }
 
