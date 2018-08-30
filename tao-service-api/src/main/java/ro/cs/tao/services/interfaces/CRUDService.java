@@ -15,10 +15,10 @@
  */
 package ro.cs.tao.services.interfaces;
 
+import ro.cs.tao.Sort;
+import ro.cs.tao.SortDirection;
 import ro.cs.tao.component.validation.ValidationException;
 import ro.cs.tao.persistence.exception.PersistenceException;
-import ro.cs.tao.services.model.Sort;
-import ro.cs.tao.services.model.SortDirection;
 import ro.cs.tao.utils.GenericComparator;
 
 import java.util.*;
