@@ -89,8 +89,6 @@ public abstract class SampleWorkflowBase implements SampleWorkflow {
         return descriptor;
     }
 
-    protected abstract String getName();
-
     protected abstract void addNodes(WorkflowDescriptor workflow) throws PersistenceException;
 
     protected WorkflowNodeDescriptor addNode(WorkflowDescriptor parent, String name, String componentId,
