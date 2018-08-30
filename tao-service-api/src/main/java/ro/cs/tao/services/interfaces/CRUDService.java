@@ -17,8 +17,11 @@ package ro.cs.tao.services.interfaces;
 
 import ro.cs.tao.component.validation.ValidationException;
 import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.services.model.Sort;
+import ro.cs.tao.services.model.SortDirection;
+import ro.cs.tao.utils.GenericComparator;
 
-import java.util.List;
+import java.util.*;
 
 /**
  * Interface defining a CRUD entity service
@@ -39,6 +42,43 @@ public interface CRUDService<T> {
      * Retrieves all the entities of this type.
      */
     List<T> list();
+
+    /**
+     * Retrieves a subset of the entities of this type, according to the <code>Sort</code> order provided.
+     * The default implementation of this method uses the @see CRUDService.list() implementation.
+     *
+     * @param pageNumber The page number (starting with 1) of the paged query
+     * @param pageSize  The size of a page
+     * @param sort      The sort collection of fields and orders.
+     */
+    default List<T> list(int pageNumber, int pageSize, Sort sort) {
+        if (pageNumber < 0) {
+            return null;
+        }
+        List<T> results = list();
+        if (results == null || results.size() == 0 || pageNumber * pageSize > results.size()) {
+            return new ArrayList<>();
+        }
+        int idx = 0;
+        T obj = results.get(idx++);
+        while (obj == null) {
+            obj = results.get(idx++);
+        }
+        if (obj == null) {
+            return new ArrayList<>();
+        }
+        Map<String, Boolean> sorts;
+        if (sort != null && sort.getFieldsForSort() != null) {
+            sorts = new LinkedHashMap<>();
+            for (Map.Entry<String, SortDirection> entry : sort.getFieldsForSort().entrySet()) {
+                sorts.put(entry.getKey(), SortDirection.ASC.equals(entry.getValue()));
+            }
+        } else {
+            sorts = new HashMap<>();
+        }
+        results.sort(new GenericComparator(obj.getClass(), sorts));
+        return results.subList((pageNumber - 1) * pageSize, pageNumber * pageSize);
+    }
 
     /**
      * Persists a new entity.

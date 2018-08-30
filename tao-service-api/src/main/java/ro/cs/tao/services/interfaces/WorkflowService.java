@@ -21,6 +21,7 @@ import ro.cs.tao.eodata.enums.Visibility;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.services.model.execution.ExecutionJobInfo;
 import ro.cs.tao.services.model.execution.ExecutionTaskInfo;
+import ro.cs.tao.services.model.workflow.WorkflowInfo;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
@@ -36,23 +37,28 @@ import java.util.Map;
  */
 public interface WorkflowService extends CRUDService<WorkflowDescriptor> {
 
+
+    /**
+     * Returns information for all the existing workflows.
+     */
+    List<WorkflowInfo> getWorkflows();
     /**
      * Returns the workflows of a given user that have a specific status.
      * @param user      The user name (login)
      * @param status    The desired workflow status
      */
-    List<WorkflowDescriptor> getUserWorkflowsByStatus(String user, Status status);
+    List<WorkflowInfo> getUserWorkflowsByStatus(String user, Status status);
     /**
      * Returns the published (i.e. final) workflows of an user by their visibility.
      * @param user          The user name (login)
      * @param visibility    The workflow visibility
      */
-    List<WorkflowDescriptor> getUserPublishedWorkflowsByVisibility(String user, Visibility visibility);
+    List<WorkflowInfo> getUserPublishedWorkflowsByVisibility(String user, Visibility visibility);
     /**
      * Returns the public workflows that are not belonging to a specific user.
      * @param user      The user name (login)
      */
-    List<WorkflowDescriptor> getOtherPublicWorkflows(String user);
+    List<WorkflowInfo> getOtherPublicWorkflows(String user);
     /**
      * Adds a node to a workflow.
      * @param nodeDescriptor    The node to add
@@ -91,8 +97,7 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor> {
      * @return  The updated workflow
      */
     WorkflowNodeDescriptor addGroup(long workflowId, WorkflowNodeGroupDescriptor groupDescriptor,
-                                long nodeBeforeId,
-                                WorkflowNodeDescriptor[] nodes) throws PersistenceException;
+                                    long nodeBeforeId, WorkflowNodeDescriptor[] nodes) throws PersistenceException;
     /**
      * Updates a group node of a workflow.
      * @param groupDescriptor    The group node to update
