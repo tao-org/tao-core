@@ -77,10 +77,8 @@ public class RuntimeInfo {
     }
 
     public MemoryUnit getDiskUnit() {
-        return diskUnit;
+        return this.diskUnit != null ? this.diskUnit : MemoryUnit.GIGABYTE;
     }
 
-    public void setDiskUnit(MemoryUnit diskUnit) {
-        this.diskUnit = diskUnit;
-    }
+    public void setDiskUnit(MemoryUnit diskUnit) { this.diskUnit = diskUnit; }
 }
