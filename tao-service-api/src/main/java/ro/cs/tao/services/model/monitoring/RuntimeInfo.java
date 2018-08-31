@@ -53,7 +53,7 @@ public class RuntimeInfo {
     }
 
     public MemoryUnit getMemoryUnit() {
-        return memoryUnit != null ? memoryUnit : MemoryUnit.BYTE;
+        return memoryUnit != null ? memoryUnit : MemoryUnit.MEGABYTE;
     }
 
     public void setMemoryUnit(MemoryUnit memoryUnit) {
