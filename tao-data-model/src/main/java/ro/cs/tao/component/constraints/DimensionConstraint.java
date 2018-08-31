@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -22,7 +22,10 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.util.Arrays;
 
 /**
+ * Constraint that indicates that several data descriptors should have the same dimension.
+ *
  * @author Cosmin Cara
+ * @see DataDescriptor for dimension representation.
  */
 @Constraint(name = "Same dimensions")
 @XmlJavaTypeAdapter(ConstraintAdapter.class)

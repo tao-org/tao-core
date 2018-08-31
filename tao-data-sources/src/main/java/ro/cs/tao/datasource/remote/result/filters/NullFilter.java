@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -16,6 +16,8 @@
 package ro.cs.tao.datasource.remote.result.filters;
 
 /**
+ * JSON filter that allows only attributes that have non-null values.
+ *
  * @author Cosmin Cara
  */
 public class NullFilter implements AttributeFilter {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -35,7 +35,9 @@ import java.util.TimerTask;
 import java.util.logging.Logger;
 
 /**
- * @author Cosmin Udroi
+ * Base class for executors.
+ *
+ * @author Cosmin Udroiu
  */
 public abstract class Executor<T extends ExecutionTask> extends StringIdentifiable {
     private static final int TIMER_PERIOD = 3000;

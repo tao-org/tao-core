@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -18,6 +18,8 @@ package ro.cs.tao.component.converters;
 import ro.cs.tao.datasource.converters.ConversionException;
 
 /**
+ * Convenience (fallback> convertor between an object of the given type and {@link String} objects.
+ *
  * @author Cosmin Cara
  */
 public class DefaultConverter<T> implements ParameterConverter<T> {

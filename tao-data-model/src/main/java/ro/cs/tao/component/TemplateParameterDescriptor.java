@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -30,6 +30,10 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
+ * Descriptor of a template parameter. A template parameter is a special type of parameter that, in turn, can have its
+ * own parameters. Usually, template parameters model a configuration collection (such as a GIPP file) and produce, when
+ * compiled, a physical file.
+ *
  * @author Cosmin Cara
  */
 @XmlRootElement(name = "templateParameter")

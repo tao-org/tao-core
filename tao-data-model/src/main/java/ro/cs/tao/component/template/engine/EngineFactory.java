@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -18,10 +18,16 @@ package ro.cs.tao.component.template.engine;
 import ro.cs.tao.component.template.TemplateType;
 
 /**
+ * Factory for creating template engines.
+ *
  * @author Cosmin Cara
  */
 public class EngineFactory {
 
+    /**
+     * Creates an instance of a template engine for the given template type.
+     * @param templateType  The template type.
+     */
     public static TemplateEngine createInstance(TemplateType templateType) {
         switch (templateType) {
             case JAVASCRIPT:

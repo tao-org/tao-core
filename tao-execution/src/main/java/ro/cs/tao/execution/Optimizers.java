@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -23,6 +23,12 @@ import ro.cs.tao.spi.ServiceRegistryManager;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Manager class for execution optimization plugins.
+ *
+ * @see RuntimeOptimizer interface
+ * @author Cosmin Cara
+ */
 public class Optimizers {
     private static final Optimizers instance;
     private final List<RuntimeOptimizer> optimizers;
@@ -37,6 +43,11 @@ public class Optimizers {
         this.optimizers = new ArrayList<>(registry.getServices());
     }
 
+    /**
+     * Returns an execution optimization plugin, if any, for the given container.
+     *
+     * @param container The container identifier.
+     */
     public static RuntimeOptimizer findOptimizer(String container) {
         return instance.optimizers.stream().filter(o -> o.isIntendedFor(container)).findFirst().orElse(null);
     }

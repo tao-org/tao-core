@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.logging.Logger;
 
 /**
+ * Base class for XML handlers.
+ *
  * @author Cosmin Cara
  */
 public abstract class XmlResponseHandler<T> extends DefaultHandler {
@@ -38,12 +40,21 @@ public abstract class XmlResponseHandler<T> extends DefaultHandler {
     protected T current;
     protected Logger logger = Logger.getLogger(XmlResponseHandler.class.getName());
 
+    /**
+     * Creates a new XML handler that can produce records of the given class.
+     *
+     * @param resultClass   The type of the result rows (or records).
+     * @param recordElementName     The XML element that delimits records in the source XML.
+     */
     public XmlResponseHandler(Class<T> resultClass, String recordElementName) {
         super();
         this.resultClass = resultClass;
         this.recordElement = recordElementName;
     }
 
+    /**
+     * Returns the list of results of the parsing operation.
+     */
     List<T> getResults() {
         return results;
     }
@@ -107,7 +118,16 @@ public abstract class XmlResponseHandler<T> extends DefaultHandler {
         }
     }
 
+    /**
+     * Handles the start of an element.
+     * @param qName     The element name, without any namespace.
+     * @param attributes    The attributes collection of the element.
+     */
     protected abstract void handleStartElement(String qName, Attributes attributes);
 
+    /**
+     * Handles the end of an element.
+     * @param qName     The element name, without any namespace.
+     */
     protected abstract void handleEndElement(String qName);
 }

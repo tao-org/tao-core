@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -22,6 +22,8 @@ import ro.cs.tao.utils.executors.Executor;
 import java.util.Map;
 
 /**
+ * Implementation of the DRMAA {@link JobInfo} interface for local invocations.
+ *
  * @author Cosmin Cara
  */
 public class DefaultJobInfo implements JobInfo {

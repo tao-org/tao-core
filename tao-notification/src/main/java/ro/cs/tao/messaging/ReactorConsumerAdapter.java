@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -20,6 +20,8 @@ import reactor.bus.Event;
 import java.util.function.Consumer;
 
 /**
+ * Adapter between {@link reactor.fn.Consumer} and {@link Consumer}.
+ *
  * @author Cosmin Cara
  */
 public class ReactorConsumerAdapter implements reactor.fn.Consumer<Event<Message>> {

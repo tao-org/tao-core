@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -16,6 +16,10 @@
 
 package ro.cs.tao.execution.model;
 
+/**
+ * Entity modelling the internal state of a TAO group component that represents a loop (i.e. the child components are
+ * executed for each input of the group).
+ */
 public class LoopState {
     private int limit;
     private int current;
@@ -27,9 +31,15 @@ public class LoopState {
         this.current = current;
     }
 
+    /**
+     * The maximum value of the loop iterations.
+     */
     public int getLimit() { return limit; }
     public void setLimit(int limit) { this.limit = limit; }
 
+    /**
+     * The current loop counter
+     */
     public int getCurrent() { return current; }
     public void setCurrent(int current) { this.current = current; }
 }

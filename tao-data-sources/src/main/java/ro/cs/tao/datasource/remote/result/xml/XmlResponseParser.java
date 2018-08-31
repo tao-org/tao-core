@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -28,12 +28,18 @@ import java.io.StringReader;
 import java.util.List;
 
 /**
+ * Generic (base) parser for XML responses.
+ *
  * @author Cosmin Cara
  */
 public class XmlResponseParser<T> implements ResponseParser<T> {
 
     private XmlResponseHandler handler;
 
+    /**
+     * Assigns to this parser a specialized handler for the actual parsing operation.
+     * @param handler   The XML handler
+     */
     public void setHandler(XmlResponseHandler handler) { this.handler = handler; }
 
     @Override

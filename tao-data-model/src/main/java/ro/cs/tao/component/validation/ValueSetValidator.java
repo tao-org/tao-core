@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -21,6 +21,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 import java.util.Arrays;
 
 /**
+ * Validator that checks if the given value belongs to the valueSet defined in the parameter descriptor.
+ *
  * @author Cosmin Cara
  */
 @XmlRootElement

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -28,6 +28,8 @@ import java.net.URI;
 import java.nio.file.Paths;
 
 /**
+ * Models the data of a component port (either source or target).
+ *
  * @author Cosmin Cara
  */
 @XmlRootElement(name = "dataDescriptor")
@@ -39,9 +41,22 @@ public class DataDescriptor {
     private Dimension dimension;
     private String location;
 
+    /**
+     * Returns the format type of the component port.
+     * @see DataFormat for possible values.
+     */
     public DataFormat getFormatType() { return formatType; }
+
+    /**
+     * Sets the format type of the component port.
+     * @param formatType    The format type.
+     * @see DataFormat for possible values.
+     */
     public void setFormatType(DataFormat formatType) { this.formatType = formatType; }
 
+    /**
+     * Returns the geometry (WKT) of the component port, if specified.
+     */
     public String getGeometry() {
         try {
             return new GeometryAdapter().unmarshal(geometry);
@@ -49,12 +64,21 @@ public class DataDescriptor {
             return null;
         }
     }
+
+    /**
+     * Sets the geometry for the component port.
+     * @param geometryAsText    The WKT geometry.
+     */
     public void setGeometry(String geometryAsText) {
         try {
             this.geometry = new GeometryAdapter().marshal(geometryAsText);
         } catch (Exception ignored) { }
     }
 
+    /**
+     * Returns the CRS (coordinate reference system) of the component port, if defined.
+     * The CRS is returned as <code>EPSG:nnnnn</code>.
+     */
     public String getCrs() {
         try {
             return new CRSAdapter().unmarshal(this.crs);
@@ -63,19 +87,49 @@ public class DataDescriptor {
         }
     }
 
+    /**
+     * Sets the CRS (coordinate reference system) of the component port
+     * @param crsCode   The CRS code (in the form <code>EPSG:nnnn</code>).
+     */
     public void setCrs(String crsCode) {
         try {
             this.crs = new CRSAdapter().marshal(crsCode);
         } catch (Exception ignored) { }
     }
 
+    /**
+     * Returns the sensor type of the component port.
+     * @see SensorType for possible values.
+     */
     public SensorType getSensorType() { return sensorType; }
+
+    /**
+     * Sets the sensor type of the component port.
+     * @param sensorType    The sensor type.
+     * @see SensorType for possible values.
+     */
     public void setSensorType(SensorType sensorType) { this.sensorType = sensorType; }
 
+    /**
+     * Returns the dimensions (width, height) of the component port.
+     */
     public Dimension getDimension() { return dimension; }
+
+    /**
+     * Sets the dimensions (width, height) of the component port.
+     * @param dimension The dimension object.
+     */
     public void setDimension(Dimension dimension) { this.dimension = dimension; }
 
+    /**
+     * Returns the location of the product described by the component port.
+     */
     public String getLocation() { return this.location; }
+
+    /**
+     * Sets the location of the product described by the component port.
+     * @param value The location, either as an URL or as a relative file system path. Absolute paths are not supported.
+     */
     public void setLocation(String value) {
         if (value != null) {
             try {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -24,6 +24,8 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
+ * Specialization of an execution task to encapsulate the execution of a group of tasks.
+ *
  * @author Cosmin Cara
  */
 public class ExecutionGroup extends ExecutionTask {

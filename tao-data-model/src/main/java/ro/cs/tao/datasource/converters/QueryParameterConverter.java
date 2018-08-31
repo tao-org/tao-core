@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -16,8 +16,14 @@
 package ro.cs.tao.datasource.converters;
 
 /**
+ * A query parameter converter translates the value of a query parameter (typed) into a string that can be
+ * understood by a data source.
+ *
  * @author Cosmin Cara
  */
 public interface QueryParameterConverter {
+    /**
+     * The string representation of a parameter, as expected by the data source.
+     */
     String stringValue() throws ConversionException;
 }

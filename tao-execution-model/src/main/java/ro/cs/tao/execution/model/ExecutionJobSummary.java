@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -19,6 +19,11 @@ package ro.cs.tao.execution.model;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Trimmed down version of {@link ExecutionJob} that can be used for brief information by upper layers.
+ *
+ * @author Cosmin Cara
+ */
 public class ExecutionJobSummary {
     private String workflowName;
     private LocalDateTime jobStart;

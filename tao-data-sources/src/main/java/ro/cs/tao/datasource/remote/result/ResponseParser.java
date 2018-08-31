@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -18,12 +18,26 @@ package ro.cs.tao.datasource.remote.result;
 import java.util.List;
 
 /**
+ * Generic interface to be implemented by parsers that handle the response of a remote data source.
+ *
+ * @param <T>   The type of a result record.
+ *
  * @author Cosmin Cara
  */
 public interface ResponseParser<T> {
 
+    /**
+     * Parses the response of a data source query and, if successful, returns a list of results.
+     * @param content   The data source query response
+     *
+     * @throws ParseException   If the parser was unable to parse the content.
+     */
     List<T> parse(String content) throws ParseException;
 
+    /**
+     * Returns a list of attribute names to be excluded from the parsing operation.
+     * Implementors should overwrite this method.
+     */
     default String[] getExcludedAttributes() { return null; }
 
 }

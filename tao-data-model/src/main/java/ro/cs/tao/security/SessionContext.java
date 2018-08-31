@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -24,6 +24,8 @@ import java.security.Principal;
 import java.util.List;
 
 /**
+ * Holder class for the session of an user.
+ *
  * @author Cosmin Cara
  */
 public abstract class SessionContext {

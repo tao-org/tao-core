@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -24,7 +24,7 @@ import java.nio.file.Path;
 import java.util.Properties;
 
 /**
- * Implementation strategy for how to retrieve the products.
+ * Implementation strategy for how to retrieve (or fetch) the products.
  *
  * @author Cosmin Cara
  */
@@ -35,6 +35,12 @@ public interface ProductFetchStrategy {
      */
     void addProperties(Properties properties);
 
+    /**
+     * Passes to the strategy the credentials necessary to connect to the data source, as username and password
+     * credentials
+     *
+     * @param credentials   The credentials
+     */
     void setCredentials(UsernamePasswordCredentials credentials);
 
     /**
@@ -74,5 +80,8 @@ public interface ProductFetchStrategy {
      */
     default void setProgressListener(ProgressListener progressListener) { }
 
+    /**
+     * Produces a deep copy of this strategy.
+     */
     ProductFetchStrategy clone();
 }

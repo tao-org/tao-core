@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -16,6 +16,11 @@
 
 package ro.cs.tao.component;
 
+/**
+ * Specialized marker for identifiable objects that have the ID of long type.
+ *
+ * @author Cosmin Cara
+ */
 public abstract class LongIdentifiable implements Identifiable<Long> {
 
     protected Long id;

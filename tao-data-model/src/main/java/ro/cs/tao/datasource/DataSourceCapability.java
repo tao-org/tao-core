@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -16,10 +16,22 @@
 package ro.cs.tao.datasource;
 
 /**
+ * Flag class for describing the data source object intention (capability).
+ * A data source can present any combination of these flags.
+ *
  * @author Cosmin Cara
  */
 public final class DataSourceCapability {
+    /**
+     * Flag indicating that the data source is intended for querying.
+     */
     public static final int QUERY = 0x01;
+    /**
+     * Flag indicating that the data source is intended for downloads.
+     */
     public static final int DOWNLOAD = 0x02;
+    /**
+     * Flag indicating that the data source is intended for uploads.
+     */
     public static final int UPLOAD = 0x04;
 }

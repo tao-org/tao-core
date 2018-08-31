@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -27,6 +27,11 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Debug implementation of an executor.
+ *
+ * @author Cosmin Cara
+ */
 public class NullExecutor extends Executor {
     private static final int MAX = 3;
     private final Map<ExecutionTask, Integer> counters = new HashMap<>();

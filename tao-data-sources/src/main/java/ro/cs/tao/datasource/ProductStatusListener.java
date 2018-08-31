@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -18,6 +18,8 @@ package ro.cs.tao.datasource;
 import ro.cs.tao.eodata.EOProduct;
 
 /**
+ * Interface defining methods to be called on the various product download lifecycle.
+ *
  * @author Cosmin Cara
  */
 public interface ProductStatusListener {

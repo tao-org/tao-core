@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -21,6 +21,8 @@ import ro.cs.tao.security.SessionStore;
 import java.security.Principal;
 
 /**
+ * Default implementation for a progress listener that sends progress information on the message bus.
+ *
  * @author Cosmin Cara
  */
 public class ProgressNotifier implements ProgressListener {
