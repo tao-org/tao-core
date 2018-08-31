@@ -15,12 +15,15 @@
  */
 package ro.cs.tao.topology;
 
-import ro.cs.tao.component.Identifiable;
+import ro.cs.tao.component.StringIdentifiable;
 
 /**
  * @author Cosmin Udroiu
  */
-public abstract class TopologyToolInstaller extends Identifiable {
+public abstract class TopologyToolInstaller extends StringIdentifiable {
+    @Override
+    public String defaultId() { return "NewToolInstaller"; }
+
     public abstract void setMasterNodeDescription(NodeDescription masterNodeInfo);
     public abstract ToolInstallStatus installNewNode(NodeDescription info) throws TopologyException;
     public abstract ToolInstallStatus uninstallNode(NodeDescription info)throws TopologyException;

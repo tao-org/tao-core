@@ -46,10 +46,7 @@ public class QueryManager {
 
     public Query findById(long id) {
         final Optional<Query> query = queryRepository.findById(id);
-        if (query.isPresent()){
-            return query.get();
-        }
-        return null;
+        return query.orElse(null);
     }
 
     public Query findByUserIdAndSensorAndDataSourceAndWorkflowNodeId(String userId, String sensor, String dataSource, long nodeId) {

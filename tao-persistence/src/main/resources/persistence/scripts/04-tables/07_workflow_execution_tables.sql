@@ -254,7 +254,7 @@ DROP TABLE IF EXISTS tao.execution_node CASCADE;
 
 CREATE TABLE tao.execution_node
 (
-	host_name varchar(250) NOT NULL,
+	id varchar(250) NOT NULL,
 	username varchar(50) NOT NULL,
 	password text NOT NULL,
 	total_CPU integer NOT NULL,
@@ -315,7 +315,7 @@ ALTER TABLE tao.task ADD CONSTRAINT FK_task_group
 	FOREIGN KEY (task_group_id) REFERENCES tao.task (id) ON DELETE No Action ON UPDATE No Action;
 
 ALTER TABLE tao.task ADD CONSTRAINT FK_task_execution_node
-	FOREIGN KEY (execution_node_host_name) REFERENCES tao.execution_node (host_name) ON DELETE No Action ON UPDATE No Action;
+	FOREIGN KEY (execution_node_host_name) REFERENCES tao.execution_node (id) ON DELETE No Action ON UPDATE No Action;
 
 ALTER TABLE tao.task ADD CONSTRAINT FK_task_execution_status
 	FOREIGN KEY (execution_status_id) REFERENCES tao.execution_status (id) ON DELETE No Action ON UPDATE No Action;

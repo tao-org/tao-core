@@ -103,5 +103,5 @@ public class NullExecutor extends Executor {
     }
 
     @Override
-    public String defaultName() { return "NullExecutor"; }
+    public String defaultId() { return "NullExecutor"; }
 }

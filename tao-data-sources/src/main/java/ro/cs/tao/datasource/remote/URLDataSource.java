@@ -71,5 +71,5 @@ public abstract class URLDataSource<Q extends DataQuery>
     }
 
     @Override
-    public String defaultName() { return "NewURLDataSource"; }
+    public String defaultId() { return "NewURLDataSource"; }
 }

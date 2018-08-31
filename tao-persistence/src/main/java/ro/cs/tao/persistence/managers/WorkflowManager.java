@@ -19,18 +19,17 @@ package ro.cs.tao.persistence.managers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.persistence.repository.WorkflowDescriptorRepository;
-import ro.cs.tao.persistence.repository.WorkflowNodeDescriptorRepository;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -45,10 +44,6 @@ public class WorkflowManager {
     /** CRUD Repository for WorkflowDescriptor entities */
     @Autowired
     private WorkflowDescriptorRepository workflowDescriptorRepository;
-
-    /** CRUD Repository for WorkflowDescriptor entities */
-    @Autowired
-    private WorkflowNodeDescriptorRepository workflowNodeDescriptorRepository;
 
     //region WorkflowDescriptor
     public List<WorkflowDescriptor> getAllWorkflows() {
@@ -71,20 +66,14 @@ public class WorkflowManager {
         return null;
     }
 
-    @Query(value = "SELECT * from tao.workflow_graph WHERE username = :user AND status_id = :statusId " +
-            "ORDER BY created DESC", nativeQuery = true)
     public List<WorkflowDescriptor> getUserWorkflowsByStatus(String user, int statusId) {
         return workflowDescriptorRepository.getUserWorkflowsByStatus(user, statusId);
     }
 
-    @Query(value = "SELECT * from tao.workflow_graph WHERE username = :user AND visibility_id = :visibilityId" +
-            "ORDER BY created DESC", nativeQuery = true)
     public List<WorkflowDescriptor> getUserPublishedWorkflowsByVisibility(String user, int visibilityId) {
         return workflowDescriptorRepository.getUserPublishedWorkflowsByVisibility(user, visibilityId);
     }
 
-    @Query(value = "SELECT * from tao.workflow_graph WHERE username != :user AND visibility_id = 1 " +
-            "AND status_id = 3 ORDER BY created DESC", nativeQuery = true)
     public List<WorkflowDescriptor> getOtherPublicWorkflows(String user) {
         return workflowDescriptorRepository.getOtherPublicWorkflows(user);
     }
@@ -142,84 +131,6 @@ public class WorkflowManager {
     }
     //endregion
 
-    //region WorkflowNodeDescriptor
-    @Transactional
-    public WorkflowNodeDescriptor getWorkflowNodeById(Long id) {
-        if (id != null) {
-            final Optional<WorkflowNodeDescriptor> workflowNode = workflowNodeDescriptorRepository.findById(id);
-            if (workflowNode.isPresent()) {
-                return workflowNode.get();
-            }
-        }
-        return null;
-    }
-
-    @Transactional
-    public List<WorkflowNodeDescriptor> getWorkflowNodesById(Long... ids) {
-        if (ids != null && ids.length > 0) {
-            Set<Long> nodeIds = new HashSet<>();
-            Collections.addAll(nodeIds, ids);
-            return workflowNodeDescriptorRepository.getWorkflowsById(nodeIds);
-        }
-        return null;
-    }
-
-    @Transactional
-    public List<WorkflowNodeDescriptor> getWorkflowNodesByComponentId(long workflowId, String componentId) {
-        return workflowNodeDescriptorRepository.findByComponentId(workflowId, componentId);
-    }
-
-    @Transactional
-    public WorkflowNodeDescriptor saveWorkflowNodeDescriptor(WorkflowNodeDescriptor node,
-                                                             WorkflowDescriptor workflow) throws PersistenceException {
-        // check method parameters
-        if(!checkWorkflowNodeDescriptor(node, workflow, false)) {
-            throw new PersistenceException("Invalid parameters were provided for adding new workflow node !");
-        }
-
-        node.setWorkflow(workflow);
-
-        // save the new WorkflowNodeDescriptor entity
-        final WorkflowNodeDescriptor savedWorkflowNodeDescriptor =  workflowNodeDescriptorRepository.save(node);
-
-        // add the node to workflow nodes collection
-        workflow.addNode(savedWorkflowNodeDescriptor);
-
-        workflowDescriptorRepository.save(workflow);
-        return savedWorkflowNodeDescriptor;
-    }
-
-    @Transactional
-    public WorkflowNodeDescriptor updateWorkflowNodeDescriptor(WorkflowNodeDescriptor node) throws PersistenceException {
-        // check method parameters
-        if(!checkWorkflowNodeDescriptor(node, true)) {
-            throw new PersistenceException("Invalid parameters were provided for updating the workflow node "
-                                                   + (node != null && node.getId() != 0 ? "(identifier " + node.getId() + ")" : "") + "!");
-        }
-
-        // check if there is such node (to update) with the given identifier
-        /*final WorkflowNodeDescriptor existingNode = workflowNodeDescriptorRepository.findById(node.getId());
-        if (existingNode == null) {
-            throw new PersistenceException("There is no workflow node with the given identifier: " + node.getId());
-        }*/
-
-        // save the updated entity
-        try {
-            return workflowNodeDescriptorRepository.save(node);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    @Transactional
-    public void delete(WorkflowNodeDescriptor nodeDescriptor) {
-        workflowNodeDescriptorRepository.delete(nodeDescriptor);
-    }
-
-//endregion
-
-
 
     private boolean checkWorkflowNodeDescriptor(WorkflowNodeDescriptor nodeDescriptor,
                                                 WorkflowDescriptor workflowDescriptor, boolean existingEntity) {
@@ -241,11 +152,15 @@ public class WorkflowManager {
     }
 
     private boolean checkWorkflowDescriptor(WorkflowDescriptor workflow, boolean existingEntity) {
-        return workflow != null &&
-                ((!existingEntity && workflow.getId() == null) || (existingEntity && workflow.getId() != null)) &&
+        return workflow != null && checkId(workflow, existingEntity) &&
                 workflow.getName() != null && workflow.getStatus() != null && workflow.getVisibility() != null &&
                 (workflow.getNodes() == null || checkWorkflowNodesDescriptors(workflow.getNodes(), existingEntity));
 
+    }
+
+    private boolean checkId(WorkflowDescriptor descriptor, boolean existingEntity) {
+        return (!existingEntity && (descriptor.getId() == null || descriptor.getId() == 0)) ||
+                (existingEntity && descriptor.getId() != null && descriptor.getId() > 0);
     }
 
     @Transactional

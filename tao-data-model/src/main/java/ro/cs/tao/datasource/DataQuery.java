@@ -15,7 +15,7 @@
  */
 package ro.cs.tao.datasource;
 
-import ro.cs.tao.component.Identifiable;
+import ro.cs.tao.component.StringIdentifiable;
 import ro.cs.tao.datasource.param.ParameterDescriptor;
 import ro.cs.tao.datasource.param.QueryParameter;
 import ro.cs.tao.eodata.EOProduct;
@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
  * @author Cosmin Cara
  */
 @XmlTransient
-public abstract class DataQuery extends Identifiable {
+public abstract class DataQuery extends StringIdentifiable {
     protected static final int DEFAULT_LIMIT = 100;
     protected DataSource source;
     protected String sensorName;

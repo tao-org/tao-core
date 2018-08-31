@@ -20,7 +20,7 @@ public class NodeDescriptionTest extends BaseSerializationTest<NodeDescription> 
                 "   \"node\" : {\n" +
                 "      \"active\" : true,\n" +
                 "      \"diskSpace\" : 500,\n" +
-                "      \"hostName\" : \"host_sample\",\n" +
+                "      \"id\" : \"host_sample\",\n" +
                 "      \"memory\" : 16,\n" +
                 "      \"processors\" : 4,\n" +
                 "      \"services\" : {\n" +
@@ -50,7 +50,7 @@ public class NodeDescriptionTest extends BaseSerializationTest<NodeDescription> 
     protected String referenceXML() {
         return "<node>\n" +
                 "   <diskSpace>500</diskSpace>\n" +
-                "   <hostName>host_sample</hostName>\n" +
+                "   <id>host_sample</id>\n" +
                 "   <ipAddress>10.0.0.1</ipAddress>\n" +
                 "   <memory>16</memory>\n" +
                 "   <processors>4</processors>\n" +
@@ -82,7 +82,7 @@ public class NodeDescriptionTest extends BaseSerializationTest<NodeDescription> 
     public void setUp() throws Exception {
         super.setUp();
         entity = new NodeDescription();
-        entity.setHostName("host_sample");
+        entity.setId("host_sample");
         entity.setUserName("user");
         entity.setUserPass("drowssap");
         entity.setProcessorCount(4);
@@ -97,13 +97,13 @@ public class NodeDescriptionTest extends BaseSerializationTest<NodeDescription> 
     @Test
     public void deserializeFromJSON() throws Exception {
         NodeDescription object = deserializeJson();
-        Assert.assertEquals("host_sample", object.getHostName());
+        Assert.assertEquals("host_sample", object.getId());
     }
 
     @Test
     public void deserializeFromXML() throws Exception {
         NodeDescription object = deserializeXml();
-        Assert.assertEquals("host_sample", object.getHostName());
+        Assert.assertEquals("host_sample", object.getId());
     }
 
 }

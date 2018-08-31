@@ -15,14 +15,13 @@
  */
 package ro.cs.tao.persistence;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
+import ro.cs.tao.Sort;
 import ro.cs.tao.component.GroupComponent;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.datasource.DataSourceComponent;
@@ -59,8 +58,6 @@ import java.util.*;
 @Scope("singleton")
 public class PersistenceManager implements MessagePersister {
 
-    private Log logger = LogFactory.getLog(PersistenceManager.class);
-
     @Autowired
     private ProductManager productManager;
 
@@ -68,15 +65,31 @@ public class PersistenceManager implements MessagePersister {
     private NodeManager nodeManager;
 
     @Autowired
-    private ComponentManager componentManager;
+    private ContainerManager containerManager;
+
+    @Autowired
+    private ProcessingComponentManager processingComponentManager;
+
+    @Autowired
+    private GroupComponentManager groupComponentManager;
+
+    @Autowired
+    private DataSourceComponentManager dataSourceComponentManager;
+
     private SimpleCache.Cache<String, ProcessingComponent> componentCache;
 
     @Autowired
-    private WorkflowManager workflowManager;
-    private SimpleCache.Cache<Long, WorkflowNodeDescriptor> workflowNodeCache;
+    private WorkflowNodeDescriptorManager workflowNodeDescriptorManager;
 
     @Autowired
-    private ExecutionManager executionManager;
+    private WorkflowManager workflowManager;
+    //private SimpleCache.Cache<Long, WorkflowNodeDescriptor> workflowNodeCache;
+
+    @Autowired
+    private ExecutionJobManager executionJobManager;
+
+    @Autowired
+    private ExecutionTaskManager executionTaskManager;
 
     @Autowired
     private QueryManager queryManager;
@@ -90,15 +103,9 @@ public class PersistenceManager implements MessagePersister {
     @PostConstruct
     public void initialize() {
         componentCache = SimpleCache.create(String.class, ProcessingComponent.class,
-                                            id -> {
-                                                try {
-                                                    return componentManager.getProcessingComponentById(id);
-                                                } catch (PersistenceException e) {
-                                                    return null;
-                                                }
-                                            });
-        workflowNodeCache = SimpleCache.create(Long.class, WorkflowNodeDescriptor.class,
-                                               workflowManager::getWorkflowNodeById);
+                                            id -> processingComponentManager.get(id));
+        /*workflowNodeCache = SimpleCache.create(Long.class, WorkflowNodeDescriptor.class,
+                                               id -> workflowNodeDescriptorManager.get(id));*/
     }
 
     //region EOProduct and VectorData
@@ -179,7 +186,7 @@ public class PersistenceManager implements MessagePersister {
 
     //region NodeDescription and ServiceDescription
     public List<NodeDescription> getNodes() {
-        return nodeManager.getNodes();
+        return nodeManager.list();
     }
 
     public NodeDescription getNodeByHostName(String hostName) throws PersistenceException {
@@ -191,15 +198,15 @@ public class PersistenceManager implements MessagePersister {
     }
 
     public NodeDescription updateExecutionNode(NodeDescription node) throws PersistenceException {
-        return nodeManager.updateExecutionNode(node);
+        return nodeManager.update(node);
     }
 
     public NodeDescription deleteExecutionNode(String hostName) throws PersistenceException {
-        return nodeManager.deleteExecutionNode(hostName);
+        return nodeManager.delete(hostName);
     }
 
-    public void removeExecutionNode(String hostName) {
-        nodeManager.removeExecutionNode(hostName);
+    public void removeExecutionNode(String hostName) throws PersistenceException {
+        nodeManager.deleteExecutionNode(hostName);
     }
 
     public ServiceDescription saveServiceDescription(ServiceDescription service) throws PersistenceException {
@@ -207,110 +214,120 @@ public class PersistenceManager implements MessagePersister {
     }
 
     public boolean checkIfExistsNodeByHostName(String hostName) {
-        return nodeManager.checkIfExistsNodeByHostName(hostName);
+        return nodeManager.exists(hostName);
     }
     //endregion
 
     //region Container
     public List<Container> getContainers() {
-        return componentManager.getContainers();
+        return containerManager.list();
     }
 
-    public Container getContainerById(String id) throws PersistenceException {
-        return componentManager.getContainerById(id);
+    public Container getContainerById(String id) {
+        return containerManager.get(id);
     }
 
     public Container saveContainer(Container container) throws PersistenceException {
-        return componentManager.saveContainer(container);
+        return containerManager.save(container);
     }
 
     public Container updateContainer(Container container) throws PersistenceException {
-        return componentManager.updateContainer(container);
+        return containerManager.update(container);
     }
 
-    public boolean checkIfExistsContainerById(String id) throws PersistenceException {
-        return componentManager.checkIfExistsContainerById(id);
+    public boolean existsContainer(String id) {
+        return containerManager.exists(id);
     }
 
     public void deleteContainer(String id) throws PersistenceException {
-        componentManager.deleteContainer(id);
+        containerManager.delete(id);
     }
     //endregion
 
     //region ProcessingComponent
     public List<ProcessingComponent> getProcessingComponents() {
-        return componentManager.getProcessingComponents();
+        return processingComponentManager.list();
+    }
+
+    public List<ProcessingComponent> getProcessingComponents(int pageNumber, int pageSize) {
+        return processingComponentManager.list(pageNumber, pageSize, null);
     }
 
     public List<ProcessingComponent> getUserProcessingComponents(String userName) {
-        return componentManager.getUserProcessingComponents(userName);
+        return processingComponentManager.getUserProcessingComponents(userName);
     }
 
     public List<ProcessingComponent> getUserScriptComponents(String userName) {
-        return componentManager.getUserScriptComponents(userName);
+        return processingComponentManager.getUserScriptComponents(userName);
     }
 
-    public ProcessingComponent getProcessingComponentById(String id) {//throws PersistenceException {
+    public ProcessingComponent getProcessingComponentById(String id) {
         return componentCache.get(id); //componentManager.getProcessingComponentById(id);
     }
 
 
     public ProcessingComponent saveProcessingComponent(ProcessingComponent component) throws PersistenceException {
-        ProcessingComponent c = componentManager.saveProcessingComponent(component);
+        ProcessingComponent c = processingComponentManager.save(component);
         componentCache.put(c.getId(), c);
         return c;
     }
 
 
     public ProcessingComponent updateProcessingComponent(ProcessingComponent component) throws PersistenceException {
-        ProcessingComponent c = componentManager.updateProcessingComponent(component);
+        ProcessingComponent c = processingComponentManager.update(component);
         componentCache.put(c.getId(), c);
         return c;
     }
 
-    public boolean checkIfExistsComponentById(String id) {
-        return componentManager.checkIfExistsComponentById(id);
+    public boolean existsProcessingComponent(String id) {
+        return processingComponentManager.exists(id);
     }
 
     public ProcessingComponent deleteProcessingComponent(String id) throws PersistenceException {
         componentCache.remove(id);
-        return componentManager.deleteProcessingComponent(id);
+        ProcessingComponent component = processingComponentManager.get(id);
+        component.setActive(false);
+        return processingComponentManager.update(component);
     }
     //endregion
 
     //region GroupComponent
     public List<GroupComponent> getGroupComponents() {
-        return componentManager.getGroupComponents();
+        return groupComponentManager.list();
     }
 
     public GroupComponent getGroupComponentById(String id) {
-        return componentManager.getGroupComponentById(id);
+        return groupComponentManager.get(id);
     }
 
-    public GroupComponent deleteGroupComponent(String id) throws PersistenceException {
-        return componentManager.deleteGroupComponent(id);
+    public void deleteGroupComponent(String id) throws PersistenceException {
+        groupComponentManager.delete(id);
     }
 
     public GroupComponent saveGroupComponent(GroupComponent component) throws PersistenceException {
-        return componentManager.saveGroupComponent(component);
+        return groupComponentManager.save(component);
     }
 
     public GroupComponent updateGroupComponent(GroupComponent component) throws PersistenceException {
-        return componentManager.updateGroupComponent(component);
+        return groupComponentManager.update(component);
     }
     //endregion
 
     //region DataSourceComponent
     public List<DataSourceComponent> getDataSourceComponents() {
-        return componentManager.getDataSourceComponents();
+        return dataSourceComponentManager.list();
+    }
+
+    public List<DataSourceComponent> getDataSourceComponents(int pageNumber, int pageSize, Sort sort) {
+        return dataSourceComponentManager.list(pageNumber, pageSize, sort);
     }
 
     public DataSourceComponent getDataSourceInstance(String id) {
-        return componentManager.getDataSourceInstance(id);
+        return dataSourceComponentManager.get(id);
     }
 
     public DataSourceComponent saveDataSourceComponent(DataSourceComponent component) throws PersistenceException {
-        return componentManager.saveDataSourceComponent(component);
+        return dataSourceComponentManager.save(component);
     }
     //endregion
 
@@ -350,103 +367,107 @@ public class PersistenceManager implements MessagePersister {
 
     //region WorkflowNodeDescriptor
     public WorkflowNodeDescriptor getWorkflowNodeById(Long id) {
-        return workflowManager.getWorkflowNodeById(id);
+        return workflowNodeDescriptorManager.get(id);
     }
 
     @Transactional
     public List<WorkflowNodeDescriptor> getWorkflowNodesById(Long... ids) {
-        return workflowManager.getWorkflowNodesById(ids);
+        return workflowNodeDescriptorManager.list(Arrays.asList(ids));
     }
 
     public List<WorkflowNodeDescriptor> getWorkflowNodesByComponentId(long workflowId, String componentId) {
-        return workflowManager.getWorkflowNodesByComponentId(workflowId, componentId);
+        return workflowNodeDescriptorManager.getWorkflowNodesByComponentId(workflowId, componentId);
     }
 
     public WorkflowNodeDescriptor saveWorkflowNodeDescriptor(WorkflowNodeDescriptor node, WorkflowDescriptor workflow) throws PersistenceException {
-        return workflowManager.saveWorkflowNodeDescriptor(node, workflow);
+        node.setWorkflow(workflow);
+        node = workflowNodeDescriptorManager.save(node);
+        workflow.addNode(node);
+        workflowManager.updateWorkflowDescriptor(workflow);
+        return node;
     }
 
     public WorkflowNodeDescriptor updateWorkflowNodeDescriptor(WorkflowNodeDescriptor node) throws PersistenceException {
-        return workflowManager.updateWorkflowNodeDescriptor(node);
+        return workflowNodeDescriptorManager.update(node);
     }
 
-    public void delete(WorkflowNodeDescriptor nodeDescriptor) {
-        workflowManager.delete(nodeDescriptor);
+    public void delete(WorkflowNodeDescriptor nodeDescriptor) throws PersistenceException {
+        workflowNodeDescriptorManager.delete(nodeDescriptor);
     }
 
 //endregion
 
     //region ExecutionJob, ExecutionTask and ExecutionGroup
     public List<ExecutionJob> getAllJobs() {
-        return executionManager.getAllJobs();
+        return executionJobManager.list();
     }
 
     public List<ExecutionJob> getJobs(long workflowId) {
-        return executionManager.getJobs(workflowId);
+        return executionJobManager.list(workflowId);
     }
 
     public ExecutionJob getJobById(long jobId) {
-        return executionManager.getJobById(jobId);
+        return executionJobManager.get(jobId);
     }
 
     public List<ExecutionJob> getJobs(ExecutionStatus status) {
-        return executionManager.getJobs(status);
+        return executionJobManager.list(status);
     }
 
     public List<ExecutionJob> getJobs(String userName, Set<ExecutionStatus> statuses) {
-        return executionManager.getJobs(userName, statuses);
+        return executionJobManager.list(userName, statuses);
     }
 
     public ExecutionJob saveExecutionJob(ExecutionJob job) throws PersistenceException {
-        return executionManager.saveExecutionJob(job);
+        return executionJobManager.save(job);
     }
 
     public ExecutionJob updateExecutionJob(ExecutionJob job) throws PersistenceException {
-        return executionManager.updateExecutionJob(job);
+        return executionJobManager.update(job);
     }
 
     public List<ExecutionTask> getRunningTasks() {
-        return executionManager.getRunningTasks();
+        return executionTaskManager.getRunningTasks();
     }
 
     public List<ExecutionTaskSummary> getTasksStatus(long jobId) {
-        return executionManager.getTasksStatus(jobId);
+        return executionTaskManager.getStatus(jobId);
     }
 
     public ExecutionTask getTaskById(Long id) throws PersistenceException {
-        return executionManager.getTaskById(id);
+        return executionTaskManager.get(id);
     }
 
     public ExecutionTask getTaskByJobAndNode(long jobId, long nodeId) {
-        return executionManager.getTaskByJobAndNode(jobId, nodeId);
+        return executionTaskManager.getTaskByJobAndNode(jobId, nodeId);
     }
 
     public ExecutionTask getTaskByGroupAndNode(long groupId, long nodeId) {
-        return executionManager.getTaskByGroupAndNode(groupId, nodeId);
+        return executionTaskManager.getTaskByGroupAndNode(groupId, nodeId);
     }
 
     public ExecutionTask getTaskByResourceId(String id) throws PersistenceException {
-        return executionManager.getTaskByResourceId(id);
+        return executionTaskManager.getTaskByResourceId(id);
     }
 
     public ExecutionTask saveExecutionTask(ExecutionTask task, ExecutionJob job) throws PersistenceException {
-        return executionManager.saveExecutionTask(task, job);
+        return executionTaskManager.save(task, job);
     }
 
     public ExecutionTask updateExecutionTask(ExecutionTask task) throws PersistenceException {
-        return executionManager.updateExecutionTask(task);
+        return executionTaskManager.update(task);
     }
 
     public ExecutionTask updateTaskStatus(ExecutionTask task, ExecutionStatus newStatus) throws PersistenceException {
-        return executionManager.updateTaskStatus(task, newStatus);
+        return executionTaskManager.updateStatus(task, newStatus);
     }
 
     public ExecutionTask saveExecutionGroupSubTask(ExecutionTask task, ExecutionGroup taskGroup) throws PersistenceException {
-        return executionManager.saveExecutionGroupSubTask(task, taskGroup);
+        return executionTaskManager.saveExecutionGroupSubTask(task, taskGroup);
     }
 
     public ExecutionTask saveExecutionGroupWithSubTasks(ExecutionGroup taskGroup, ExecutionJob job) throws PersistenceException {
-        return executionManager.saveExecutionGroupWithSubTasks(taskGroup, job);
+        return executionTaskManager.saveExecutionGroupWithSubTasks(taskGroup, job);
     }
     //endregion
 

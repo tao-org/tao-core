@@ -15,6 +15,8 @@
  */
 package ro.cs.tao.topology;
 
+import ro.cs.tao.component.StringIdentifiable;
+
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -27,7 +29,7 @@ import java.util.List;
  * @author  Cosmin Udroiu
  */
 @XmlRootElement(name = "node")
-public class NodeDescription {
+public class NodeDescription extends StringIdentifiable {
     private String hostName;
     private String userName;
     private String userPass;
@@ -40,13 +42,13 @@ public class NodeDescription {
 
     public NodeDescription() { this.active = true;}
 
-    @XmlElement(name = "hostName")
-    public String getHostName() {
-        return hostName;
-    }
-    public void setHostName(String hostName) {
-        this.hostName = hostName;
-    }
+    @Override
+    public String defaultId() { return null; }
+
+    @Override
+    public String getId() { return hostName; }
+    @Override
+    public void setId(String id) { this.hostName = id; }
 
     @XmlElement(name = "userName")
     public String getUserName() {

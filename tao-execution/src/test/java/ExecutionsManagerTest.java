@@ -164,7 +164,7 @@ public class ExecutionsManagerTest {
         NodeDescription node = new NodeDescription();
         node.setActive(Boolean.TRUE);
         node.setDescription("");
-        node.setHostName(nodeName);
+        node.setId(nodeName);
         node.setUserName("test");
         node.setUserPass("test");
 

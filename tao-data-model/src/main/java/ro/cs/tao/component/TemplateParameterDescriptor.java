@@ -118,9 +118,7 @@ public class TemplateParameterDescriptor extends ParameterDescriptor {
     }
 
     @Override
-    public String defaultName() {
-        return "NewTemplateParameter";
-    }
+    public String defaultId() { return "NewTemplateParameter"; }
 
     @Override
     public ParameterDescriptor clone() throws CloneNotSupportedException {

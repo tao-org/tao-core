@@ -17,12 +17,9 @@
 package ro.cs.tao.persistence.managers;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
+import ro.cs.tao.SortDirection;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.persistence.repository.NodeRepository;
 import ro.cs.tao.persistence.repository.ServiceRepository;
@@ -31,29 +28,19 @@ import ro.cs.tao.topology.NodeServiceStatus;
 import ro.cs.tao.topology.ServiceDescription;
 
 import java.util.List;
-import java.util.logging.Logger;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
-@Configuration
-@EnableTransactionManagement
-@EnableJpaRepositories(basePackages = { "ro.cs.tao.persistence.repository" })
 @Component("nodeManager")
-public class NodeManager {
-    private Logger logger = Logger.getLogger(NodeManager.class.getName());
-
-    /** CRUD Repository for NodeDescription entities */
-    @Autowired
-    private NodeRepository nodeRepository;
+public class NodeManager extends EntityManager<NodeDescription, String, NodeRepository> {
 
     /** CRUD Repository for ServiceDescription entities */
     @Autowired
     private ServiceRepository serviceRepository;
 
     @Transactional
-    public List<NodeDescription> getNodes() {
-        // retrieve nodes and filter them by active flag
-        return ((List<NodeDescription>) nodeRepository.findAll(new Sort(Sort.Direction.ASC,
-                                                                        Constants.NODE_IDENTIFIER_PROPERTY_NAME)))
+    public List<NodeDescription> listActive() {
+        return list(ro.cs.tao.Sort.by(identifier(), SortDirection.ASC))
                 .stream()
                 .filter(NodeDescription::getActive)
                 .collect(Collectors.toList());
@@ -67,27 +54,26 @@ public class NodeManager {
         }
 
         // retrieve NodeDescription after its host name
-        return nodeRepository.findByHostName(hostName);
+        return repository.findById(hostName).orElse(null);
     }
 
     @Transactional
     public NodeDescription saveExecutionNode(NodeDescription node) throws PersistenceException {
         // check method parameters
-        if(!checkExecutionNode(node)) {
+        if(!checkEntity(node)) {
             throw new PersistenceException("Invalid parameters were provided for adding new execution node!");
         }
 
         // check if there is already another node with the same host name
-        final NodeDescription nodeWithSameHostName = nodeRepository.findByHostName(node.getHostName());
-        if (nodeWithSameHostName != null) {
-            throw new PersistenceException("There is already another node with the host name: " + node.getHostName());
+        final Optional<NodeDescription> nodeWithSameHostName = repository.findById(node.getId());
+        if (!nodeWithSameHostName.isPresent()) {
+            throw new PersistenceException("There is already another node with the host name: " + node.getId());
         }
 
         // save the services first
         for(NodeServiceStatus serviceStatus: node.getServicesStatus()) {
             ServiceDescription serviceDescription = serviceStatus.getServiceDescription();
-            if (!checkIfExistsServiceByNameAndVersion(serviceDescription.getName(),
-                                                      serviceDescription.getVersion())) {
+            if (!exists(serviceDescription.getName(), serviceDescription.getVersion())) {
                 serviceRepository.save(serviceDescription);
             } else {
                 // retrieve the existent entities and associate them on the node
@@ -99,29 +85,7 @@ public class NodeManager {
         }
 
         // save the new NodeDescription entity and return it
-        return nodeRepository.save(node);
-    }
-
-    @Transactional
-    public NodeDescription updateExecutionNode(NodeDescription node) throws PersistenceException {
-        // check method parameters
-        if(!checkExecutionNode(node)) {
-            throw new PersistenceException("Invalid parameters were provided for updating the execution node "
-                                                   + (node != null && node.getHostName() != null ? "(host name " + node.getHostName() + ")" : "") + "!");
-        }
-
-        // check if there is such node (to update) with the given host name
-        final NodeDescription existingNode = nodeRepository.findByHostName(node.getHostName());
-        if (existingNode == null) {
-            throw new PersistenceException("There is no node with the given host name: " + node.getHostName());
-        }
-
-        return nodeRepository.save(node);
-    }
-
-    @Transactional
-    public void removeExecutionNode(String hostName) {
-        nodeRepository.deleteById(hostName);
+        return repository.save(node);
     }
 
     @Transactional
@@ -132,14 +96,13 @@ public class NodeManager {
         }
 
         // retrieve NodeDescription after its host name
-        final NodeDescription nodeEnt = nodeRepository.findByHostName(hostName);
+        final NodeDescription nodeEnt = repository.findById(hostName).orElse(null);
         if (nodeEnt == null) {
             throw new PersistenceException("There is no execution node with the specified host name: " + hostName);
         }
-        // deactivate the node
         nodeEnt.setActive(false);
         // save it
-        return nodeRepository.save(nodeEnt);
+        return repository.save(nodeEnt);
     }
 
     @Transactional
@@ -159,25 +122,18 @@ public class NodeManager {
         return serviceRepository.save(service);
     }
 
-    @Transactional
-    public boolean checkIfExistsNodeByHostName(final String hostName) {
-        boolean result = false;
+    @Override
+    protected String identifier() { return "id"; }
 
-        if (hostName != null && !hostName.isEmpty()) {
-            // try to retrieve NodeDescription after its host name
-            final NodeDescription nodeEnt = nodeRepository.findByHostName(hostName);
-            if (nodeEnt != null) {
-                result = true;
-            }
-        }
-
-        return result;
+    @Override
+    protected boolean checkId(String entityId, boolean existingEntity) {
+        return entityId != null && !entityId.isEmpty();
     }
 
-    private boolean checkExecutionNode(NodeDescription node) {
-        return node != null && node.getHostName() != null &&
-                node.getUserName() != null && node.getUserPass() != null &&
-                node.getProcessorCount() > 0 && node.getDiskSpaceSizeGB() > 0 && node.getMemorySizeGB() > 0;
+    @Override
+    protected boolean checkEntity(NodeDescription entity) {
+        return entity.getUserName() != null && entity.getUserPass() != null &&
+               entity.getProcessorCount() > 0 && entity.getDiskSpaceSizeGB() > 0 && entity.getMemorySizeGB() > 0;
     }
 
     private boolean checkServiceDescription(ServiceDescription service) {
@@ -186,7 +142,7 @@ public class NodeManager {
     }
 
     @Transactional
-    private boolean checkIfExistsServiceByNameAndVersion(final String serviceName, final String serviceVersion) {
+    private boolean exists(final String serviceName, final String serviceVersion) {
         boolean result = false;
         if (serviceName != null && !serviceName.isEmpty()) {
             // try to retrieve ServiceDescription after its name

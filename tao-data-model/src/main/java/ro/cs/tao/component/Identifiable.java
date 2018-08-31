@@ -20,39 +20,11 @@ import java.io.Serializable;
 /**
  * @author Cosmin Cara
  */
-public abstract class Identifiable implements Cloneable, Serializable {
+public interface Identifiable<T> extends Cloneable, Serializable {
 
-    //@XmlAttribute(name = "id")
-    protected String id;
+    T getId();
 
-    public Identifiable() { this.id = defaultName(); }
+    void setId(T id);
 
-    public Identifiable(String id) {
-        this.id = id;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public abstract String defaultName();
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        Identifiable that = (Identifiable) o;
-
-        return id != null ? id.equals(that.id) : that.id == null;
-    }
-
-    @Override
-    public int hashCode() {
-        return id != null ? id.hashCode() : 0;
-    }
+    T defaultId();
 }

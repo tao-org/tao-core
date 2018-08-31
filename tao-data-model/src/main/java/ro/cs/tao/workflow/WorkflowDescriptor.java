@@ -36,7 +36,7 @@ import java.util.List;
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id", scope = WorkflowDescriptor.class)
 public class WorkflowDescriptor
         extends GraphObject implements NodeListOrderer {
-    protected Long id;
+
     private String userName;
     private Visibility visibility;
     protected Status status;
@@ -46,10 +46,6 @@ public class WorkflowDescriptor
     private float xCoord;
     private float yCoord;
     private float zoom;
-
-    @XmlElement(name = "id")
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
 
     @XmlElement(name = "userName")
     public String getUserName() { return userName; }

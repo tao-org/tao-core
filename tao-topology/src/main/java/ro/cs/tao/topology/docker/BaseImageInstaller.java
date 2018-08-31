@@ -22,7 +22,6 @@ import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.data.jsonutil.JacksonUtil;
-import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.topology.TopologyManager;
 
@@ -88,24 +87,22 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
                     topologyManager.registerImage(dockerfilePath.toRealPath(), getContainerName(), getDescription());
                     this.logger.finest(String.format("Docker image %s registration completed", getContainerName()));
                 } else {
-                    logger.fine(String.format("Image %s was found in Docker registry", getContainerName()));
+                    logger.finest(String.format("Image %s was found in Docker registry", getContainerName()));
                 }
             } catch (IOException e) {
                 logger.warning(String.format("Error occurred while registering %s: %s",
                                              getContainerName(), e.getMessage()));
             }
         }
-        try {
-            container = persistenceManager.getContainerById(getContainerName());
-        } catch (PersistenceException ignored) {
-        }
-        if (container == null) {
+        Container dbContainer = persistenceManager.getContainerById(container != null ? container.getId() : getContainerName());
+        if (dbContainer == null) {
             logger.finest("Creating placeholder database container");
-            container = new Container();
-            container.setId(getContainerName());
-            container.setName(getContainerName());
+            dbContainer = new Container();
+            dbContainer.setId(container != null ? container.getId() : getContainerName());
+            dbContainer.setName(getContainerName());
+            dbContainer.setTag(container != null ? container.getTag() : null);
+            dbContainer = initializeContainer(dbContainer, dockerPath != null ? getPathInContainer() : getPathInSystem());
         }
-        container = initializeContainer(container.getId(), dockerPath != null ? getPathInContainer() : getPathInSystem());
     }
 
     protected Container readContainerDescriptor(String fileName) throws IOException {
@@ -164,5 +161,5 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
 
     protected abstract String getPathInSystem();
 
-    protected abstract Container initializeContainer(String containerId, String path);
+    protected abstract Container initializeContainer(Container container, String path);
 }

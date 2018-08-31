@@ -15,12 +15,15 @@
  */
 package ro.cs.tao.docker;
 
+import ro.cs.tao.component.StringIdentifiable;
+
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 /**
  * Descriptor for a Docker container
@@ -28,14 +31,16 @@ import java.util.Objects;
  * @author Cosmin Cara
  */
 @XmlRootElement(name = "container")
-public class Container {
+public class Container extends StringIdentifiable {
 
-    private String id;
     private String name;
     private String tag;
     private String applicationPath;
     private String logo;
     private List<Application> applications;
+
+    @Override
+    public String defaultId() { return UUID.randomUUID().toString();}
 
     @XmlElement(name = "id")
     public String getId() { return id; }

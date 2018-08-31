@@ -105,7 +105,7 @@ public abstract class AbstractDataSource<Q extends DataQuery> extends DataSource
     @Override
     public void setCredentials(String username, String password) {
         if (username == null || username.isEmpty()) {
-            throw new IllegalArgumentException(String.format("Datasource %s requires an account", defaultName()));
+            throw new IllegalArgumentException(String.format("Datasource %s requires an account", defaultId()));
         }
         this.credentials = new UsernamePasswordCredentials(username, password);
     }

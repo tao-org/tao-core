@@ -31,7 +31,7 @@ import java.util.List;
  * @author Cosmin Cara
  */
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
-public abstract class TaoComponent extends Identifiable {
+public abstract class TaoComponent extends StringIdentifiable {
     protected String label;
     protected String version;
     protected String description;
@@ -45,6 +45,9 @@ public abstract class TaoComponent extends Identifiable {
     protected List<TargetDescriptor> targets;
 
     private SessionContext sessionContext;
+
+    @Override
+    public String defaultId() { return "NewComponent"; }
 
     /**
      * Returns the display friendly name of this component

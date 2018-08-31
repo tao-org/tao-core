@@ -62,9 +62,9 @@ public class DefaultSession implements Session {
                 if (nodes == null) {
                     nodes = new NodeDescription[0];
                 }
-                if (Arrays.stream(nodes).noneMatch(n -> hostName.equalsIgnoreCase(n.getHostName()) || hostName.equals(ipAddress))) {
+                if (Arrays.stream(nodes).noneMatch(n -> hostName.equalsIgnoreCase(n.getId()) || hostName.equals(ipAddress))) {
                     NodeDescription localNode = new NodeDescription();
-                    localNode.setHostName(hostName);
+                    localNode.setId(hostName);
                     localNode.setUserName(ConfigurationManager.getInstance().getValue("topology.master.user"));
                     localNode.setUserPass(ConfigurationManager.getInstance().getValue("topology.master.password"));
                     localNode.setProcessorCount(Runtime.getRuntime().availableProcessors());
@@ -136,10 +136,10 @@ public class DefaultSession implements Session {
             List<String> args = new ArrayList<>();
             args.add(jt.getRemoteCommand());
             args.addAll(jt.getArgs());
-            final ExecutionUnit unit = isLocalHost(node.getHostName()) ?
-                    new ExecutionUnit(ExecutorType.PROCESS, node.getHostName(), node.getUserName(), node.getUserPass(),
+            final ExecutionUnit unit = isLocalHost(node.getId()) ?
+                    new ExecutionUnit(ExecutorType.PROCESS, node.getId(), node.getUserName(), node.getUserPass(),
                                       args, cmdsToRunAsSu.contains(jt.getRemoteCommand()), null) :
-                    new ExecutionUnit(ExecutorType.SSH2, node.getHostName(), node.getUserName(), node.getUserPass(),
+                    new ExecutionUnit(ExecutorType.SSH2, node.getId(), node.getUserName(), node.getUserPass(),
                                       args, cmdsToRunAsSu.contains(jt.getRemoteCommand()), SSHMode.EXEC);
             unit.setMinMemory(8192L);
             String jobId = jt.getJobName() + ":" + System.nanoTime();

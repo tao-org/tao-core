@@ -16,10 +16,5 @@ import ro.cs.tao.topology.NodeDescription;
 @Qualifier(value = "nodeRepository")
 @Transactional
 public interface NodeRepository extends PagingAndSortingRepository<NodeDescription, String> {
-    /**
-     * Find NodeDescription entity by its host name
-     * @param hostName - the given host name
-     * @return the corresponding NodeDescription entity
-     */
-    NodeDescription findByHostName(String hostName);
+
 }

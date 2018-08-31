@@ -16,7 +16,7 @@
 package ro.cs.tao.datasource;
 
 import org.apache.http.auth.UsernamePasswordCredentials;
-import ro.cs.tao.component.Identifiable;
+import ro.cs.tao.component.StringIdentifiable;
 import ro.cs.tao.datasource.param.ParameterDescriptor;
 
 import javax.xml.bind.annotation.XmlRootElement;
@@ -31,12 +31,15 @@ import java.util.Properties;
  * @author Cosmin Cara
  */
 @XmlRootElement(name = "dataSource")
-public abstract class DataSource<Q extends DataQuery> extends Identifiable {
+public abstract class DataSource<Q extends DataQuery> extends StringIdentifiable {
     protected Properties properties;
 
     public DataSource() {
         this.properties = new Properties();
     }
+
+    @Override
+    public String defaultId() { return null; }
 
     /**
      * Returns the given property value.
