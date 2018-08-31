@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -16,8 +16,19 @@
 package ro.cs.tao.datasource.remote.result.filters;
 
 /**
+ * Interface defining a filter for JSON attributes.
+ * It instructs the parser to keep or not the respective attribute in the final result.
+ *
  * @author Cosmin Cara
  */
 public interface AttributeFilter {
+    /**
+     * Instructs the caller to accept or not the current attribute, based on its value.
+     *
+     * @param attributeName The name of the attribute
+     * @param value         The value of the attribute
+     *
+     * @return  <code>true</code> if the attribute passes this filter, <code>false</code> otherwise
+     */
     default boolean accept(String attributeName, String value) { return true; }
 }

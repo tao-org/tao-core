@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -23,10 +23,27 @@ import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Class that wraps special values that may be used by all the components.
+ *
+ * @author Cosmin Cara
+ */
 public abstract class SystemVariable {
+    /**
+     * Variable for the current user workspace.
+     */
     public static final SystemVariable USER_WORKSPACE = new UserWorkspace();
+    /**
+     * Variable for the shared (accessible by all users) workspace.
+     */
     public static final SystemVariable SHARED_WORKSPACE = new SharedWorkspace();
+    /**
+     * Variable for the current user custom files location.
+     */
     public static final SystemVariable USER_FILES = new UserFiles();
+    /**
+     * Variable for the shared (accessible by all users) files location.
+     */
     public static final SystemVariable SHARED_FILES = new SharedFiles();
     private static final Set<SystemVariable> allVariables;
 
@@ -38,14 +55,28 @@ public abstract class SystemVariable {
         allVariables.add(SHARED_FILES);
     }
 
+    /**
+     * Returns all the TAO variables.
+     */
     public static Set<SystemVariable> all() { return allVariables; }
 
+    /**
+     * Returns a TAO variable by its name.
+     * @param key   The name of the variable
+     */
     public static String get(String key) {
         SystemVariable var = allVariables.stream().filter(v -> v.key().equalsIgnoreCase(key)).findFirst().orElse(null);
         return var != null ? var.value() : null;
     }
 
+    /**
+     * The key of this variable.
+     */
     public abstract String key();
+
+    /**
+     * The value of this variable.
+     */
     public abstract String value();
 
     private static final class UserWorkspace extends SystemVariable {

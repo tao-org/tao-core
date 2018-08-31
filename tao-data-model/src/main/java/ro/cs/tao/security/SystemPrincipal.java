@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -19,6 +19,9 @@ import javax.security.auth.Subject;
 import java.security.Principal;
 
 /**
+ * A simple implementation of the {@link Principal} interface, designating the "system" account (not related to any
+ * TAO user).
+ *
  * @author Cosmin Cara
  */
 public final class SystemPrincipal implements Principal {

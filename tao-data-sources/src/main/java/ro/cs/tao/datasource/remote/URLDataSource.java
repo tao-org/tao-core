@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -25,14 +25,23 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 /**
+ * Base specialization of the {@link #AbstractDataSource} class for modelling a data source that can be accessed
+ * via an url.
+ *
  * @author Cosmin Cara
  */
 public abstract class URLDataSource<Q extends DataQuery>
         extends AbstractDataSource<Q> {
     protected URI remoteUrl;
 
-    public URLDataSource(String connectionString) throws URISyntaxException {
-        super(connectionString);
+    /**
+     * Constructs a new URLDataSource with the given url.
+     * @param url   The URL of the data source
+     *
+     * @throws URISyntaxException   If the given url is malformed.
+     */
+    public URLDataSource(String url) throws URISyntaxException {
+        super(url);
         this.remoteUrl = new URI(this.connectionString);
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -16,12 +16,28 @@
 package ro.cs.tao.messaging;
 
 /**
+ * General topics handled by the registered event bus.
  * @author Cosmin Cara
  */
 public class Topics {
+    /**
+     * Topic for informational messages / events.
+     */
     public static final String INFORMATION = "info";
+    /**
+     * Topic for warning messages / events.
+     */
     public static final String WARNING = "warn";
+    /**
+     * Topic for error messages / events.
+     */
     public static final String ERROR = "error";
+    /**
+     * Topic for signaling progress of various execution components.
+     */
     public static final String PROGRESS = "progress";
+    /**
+     * Special topic for signaling that an execution task has changed its state.
+     */
     public static final String TASK_STATUS_CHANGED = "task.changed";
 }

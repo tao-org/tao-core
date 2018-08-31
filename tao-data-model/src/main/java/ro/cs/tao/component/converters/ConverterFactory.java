@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -24,6 +24,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * Factory class for converters.
+ *
  * @author Cosmin Cara
  */
 public class ConverterFactory {
@@ -58,6 +60,12 @@ public class ConverterFactory {
         return create(parameterType);
     }
 
+    /**
+     * Returns the registered (specialized) converter for the given class, or a {@link DefaultConverter} if there is
+     * no such specialized converter.
+     *
+     * @param forClass  The object class.
+     */
     public ParameterConverter create(Class forClass) {
         Class<? extends ParameterConverter> converterClass = converters.get(forClass);
         if (converterClass == null) {

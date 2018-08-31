@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -22,6 +22,13 @@ import javax.xml.bind.annotation.XmlRootElement;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * A group component is a special type of TAO component that encapsulates (groups) several other TAO components.
+ * A group component inherits the sources of the first child component and has as targets the targets of the last
+ * child component.
+ *
+ * @author Cosmin Cara
+ */
 @XmlRootElement(name = "groupComponent")
 public class GroupComponent extends TaoComponent {
     private int parallelism;

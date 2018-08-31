@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -16,11 +16,17 @@
 package ro.cs.tao.datasource.remote.result.filters;
 
 /**
+ * JSON attribute filter that rejects attributes with the given name if they don't have a given value.
+ *
  * @author Cosmin Cara
  */
 public class ValueFilter implements AttributeFilter {
     private final String value;
 
+    /**
+     * Constructs an instance of a ValueFilter with the given value
+     * @param value The value to compare with.
+     */
     public ValueFilter(String value) {
         this.value = value;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -18,6 +18,9 @@ package ro.cs.tao.datasource.converters;
 import ro.cs.tao.datasource.param.QueryParameter;
 
 /**
+ * Converts a range parameter (i.e. a query parameter for which minumum and maximum values are set) into a string
+ * representation (of the form '[minValue,maxValue]').
+ *
  * @author Cosmin Cara
  */
 public class RangeParameterConverter extends DefaultParameterConverter {

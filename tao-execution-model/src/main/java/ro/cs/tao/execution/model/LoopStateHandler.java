@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -19,6 +19,11 @@ package ro.cs.tao.execution.model;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import ro.cs.tao.serialization.SerializationException;
 
+/**
+ * Specialization of a state handler for loop states.
+ *
+ * @author Cosmin Cara
+ */
 public class LoopStateHandler implements InternalStateHandler<LoopState> {
     private LoopState loopState;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -19,6 +19,12 @@ package ro.cs.tao;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * Container for holding a map of field names and sort direction, that is used by entity managers.
+ * It acts as a bridge between the TAO framework and JPA persistence.
+ *
+ * @author Cosmin Cara
+ */
 public class Sort {
     private final Map<String, SortDirection> fieldsToSort;
 

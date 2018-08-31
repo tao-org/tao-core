@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright (C) 2017 CS ROMANIA
+ *  * Copyright (C) 2018 CS ROMANIA
  *  *
  *  * This program is free software; you can redistribute it and/or modify it
  *  * under the terms of the GNU General Public License as published by the Free
@@ -22,6 +22,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * Base class for TAO exceptions.
+ * It adds additional information to a "standard" exception in the form of key-value pairs.
+ *
  * @author Cosmin Cara
  */
 public class BaseException extends RuntimeException {
@@ -44,10 +47,19 @@ public class BaseException extends RuntimeException {
         super(cause);
     }
 
+    /**
+     * Returns any additional information this exception may hold.
+     */
     public Map<String, Object> getAdditionalInfo() {
         return additionalInfo;
     }
 
+    /**
+     * Adds an item of additional information.
+     *
+     * @param key   The key (name)
+     * @param info  The information
+     */
     public void addAdditionalInfo(String key, Object info) {
         if (this.additionalInfo == null) {
             this.additionalInfo = new HashMap<>(2);

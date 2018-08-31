@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -22,6 +22,8 @@ import ro.cs.tao.datasource.DataSourceComponent;
 import java.util.ArrayList;
 
 /**
+ * Specialization of an execution task for a data source operation.
+ *
  * @author Oana H.
  */
 public class DataSourceExecutionTask extends ExecutionTask {

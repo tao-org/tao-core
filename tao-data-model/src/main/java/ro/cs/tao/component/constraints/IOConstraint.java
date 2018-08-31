@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -18,8 +18,15 @@ package ro.cs.tao.component.constraints;
 import ro.cs.tao.component.DataDescriptor;
 
 /**
+ * Base class for input/output constraints (restrictions to be applied to products entering or resulting from components.
+ *
  * @author Cosmin Cara
  */
 public abstract class IOConstraint {
+    /**
+     * Verifies if this constraint is satisfied.
+     * @param args  The descriptors to be checked.
+     * @return  <code>true</code> if the constraint is satisfied, <code>false</code> otherwise.
+     */
     public abstract boolean check(DataDescriptor... args);
 }

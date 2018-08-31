@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -18,11 +18,17 @@ package ro.cs.tao.datasource.remote.result.filters;
 import java.util.Set;
 
 /**
+ * JSON filter that rejects attributes that are part of an exclusion list.
+ *
  * @author Cosmin Cara
  */
 public class NameFilter implements AttributeFilter {
     private final Set<String> namesToExclude;
 
+    /**
+     * Constructs an instance of this filter with a set of names to be excluded.
+     * @param namesToExclude    The set of names
+     */
     public NameFilter(Set<String> namesToExclude) {
         this.namesToExclude = namesToExclude;
     }

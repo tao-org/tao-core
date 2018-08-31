@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -37,6 +37,8 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
+ * Implementation of the DRMAA {@link Session} interface for local invocations.
+ *
  * @author Cosmin Cara
  */
 public class DefaultSession implements Session {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -30,6 +30,8 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 /**
+ * Specialization of an execution task that holds a processing component.
+ *
  * @author Oana H.
  */
 public class ProcessingExecutionTask extends ExecutionTask {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -20,6 +20,8 @@ import ro.cs.tao.component.template.engine.TemplateEngine;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
+ * Basic (in-memory) implementation for a TAO component template.
+ *
  * @author Cosmin Cara
  */
 @XmlRootElement

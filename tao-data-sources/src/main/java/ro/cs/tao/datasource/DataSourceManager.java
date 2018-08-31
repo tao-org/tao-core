@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -15,7 +15,6 @@
  */
 package ro.cs.tao.datasource;
 
-import ro.cs.tao.component.StringIdentifiable;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.datasource.param.ParameterDescriptor;
 import ro.cs.tao.datasource.util.NetUtils;
@@ -27,6 +26,8 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
+ * Manager class for DataSource plugins.
+ *
  * @author Cosmin Cara
  */
 public class DataSourceManager {
@@ -43,6 +44,9 @@ public class DataSourceManager {
         instance = new DataSourceManager();
     }
 
+    /**
+     * Returns the only instance of this manager.
+     */
     public static DataSourceManager getInstance() { return instance; }
 
     private DataSourceManager() {
@@ -64,7 +68,7 @@ public class DataSourceManager {
         final Set<DataSource> services = this.registry.getServices();
         services.forEach(ds -> {
             final String[] sensors = ds.getSupportedSensors();
-            final String dsName = ((StringIdentifiable) ds).getId();
+            final String dsName = ds.getId();
             for (String sensor : sensors) {
                 Map.Entry<String, String> key = new AbstractMap.SimpleEntry<>(sensor, dsName);
                 if (!this.registeredSources.containsKey(key)) {
@@ -76,6 +80,9 @@ public class DataSourceManager {
         });
     }
 
+    /**
+     * Returns the list of supported (detected) sensors (satellites)
+     */
     public SortedSet<String> getSupportedSensors() {
         return this.registeredSources.keySet().stream().map(Map.Entry::getKey).collect(Collectors.toCollection(TreeSet::new));
     }
@@ -134,6 +141,11 @@ public class DataSourceManager {
         return dataSource;
     }
 
+    /**
+     * Returns the specific parameters of the given data source, for the given sensor.
+     * @param sensorName        The sensor name
+     * @param dataSourceName    The data source name
+     */
     public Map<String, ParameterDescriptor> getSupportedParameters(String sensorName, String dataSourceName) {
         return this.registeredSources.get(new AbstractMap.SimpleEntry<>(sensorName, dataSourceName));
     }

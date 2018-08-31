@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -22,7 +22,7 @@ import ro.cs.tao.datasource.param.ParameterProvider;
 import java.util.Map;
 
 /**
- * Abstraction for a product datasource source.
+ * Abstraction for a product data source.
  *
  * @author Cosmin Cara
  */

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -25,6 +25,10 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
+ * Manager class for executions. It is responsible with:
+ * 1) the creation of the proper execution for a task, depending on its type, and
+ * 2) the control of the execution of a task.
+ *
  * @author Cosmin Udroiu
  */
 public class ExecutionsManager {

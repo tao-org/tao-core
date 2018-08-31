@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -23,6 +23,12 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Base class for workflow constituents (nodes). This has been introduced because of the Java language single
+ * inheritance limitation.
+ *
+ * @author Cosmin Cara
+ */
 public abstract class GraphObject extends LongIdentifiable {
 
     protected String name;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -20,9 +20,16 @@ import ro.cs.tao.component.ParameterDescriptor;
 import javax.xml.bind.annotation.XmlTransient;
 
 /**
+ * A validator ensures that the value given to a parameter respects some rules.
+ *
  * @author Cosmin Cara
  */
 @XmlTransient
 public abstract class Validator {
+    /**
+     * Performs the validation of the given value.
+     * @param parameter The parameter descriptor
+     * @param value     The value to be validated.
+     */
     public abstract void validate(ParameterDescriptor parameter, Object value) throws ValidationException;
 }

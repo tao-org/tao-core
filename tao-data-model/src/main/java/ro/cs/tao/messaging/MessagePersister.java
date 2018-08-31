@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 CS ROMANIA
+ * Copyright (C) 2018 CS ROMANIA
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -16,10 +16,15 @@
 package ro.cs.tao.messaging;
 
 /**
+ * A message persister implementation allows messages that circulate on an event bus to be stored somewhere.
+ *
  * @author Cosmin Cara
  */
 public interface MessagePersister {
 
+    /**
+     * Stores the message in the underlying store.
+     * @param message   The message to be stored.
+     */
     Message saveMessage(Message message) throws Exception;
-
 }
