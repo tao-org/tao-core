@@ -3,15 +3,7 @@
                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                  xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence/orm
                  http://xmlns.jcp.org/xml/ns/persistence/orm/orm_2_2.xsd"
-                 version="2.1">
-
-    <!--<persistence-unit-metadata>
-        <persistence-unit-defaults>
-            <entity-listeners>
-                <entity-listener class="org.springframework.data.jpa.domain.support.AuditingEntityListener" />
-            </entity-listeners>
-        </persistence-unit-defaults>
-    </persistence-unit-metadata>-->
+                 version="2.2">
 
     <!-- Mapped superclasses are only seen for entities (not for embeddables too) -->
 
@@ -56,7 +48,7 @@
         </attributes>
     </mapped-superclass>
 
-    <mapped-superclass class="ro.cs.tao.component.Identifiable" access="PROPERTY">
+    <mapped-superclass class="ro.cs.tao.component.StringIdentifiable" access="PROPERTY">
         <attributes>
             <id name="id">
                 <!-- ! IMPORTANT NOTICE:
@@ -64,6 +56,20 @@
                 but the mapping to a column name can be only done once (here!),
                 all correspondant columns must have the same name (and definition) defined here  -->
                 <column name="id" nullable="false" column-definition="varchar(512) NOT NULL" unique="true"/>
+            </id>
+        </attributes>
+    </mapped-superclass>
+
+    <mapped-superclass class="ro.cs.tao.component.LongIdentifiable" access="PROPERTY">
+        <attributes>
+            <id name="id">
+                <!-- ! IMPORTANT NOTICE:
+                Because Identifiable class is extended by several other classes,
+                but the mapping to a column name can be only done once (here!),
+                all correspondant columns must have the same name (and definition) defined here  -->
+                <column name="id" nullable="false" column-definition="bigserial NOT NULL"/>
+                <generated-value strategy="SEQUENCE" generator="dsc_identifier"/>
+                <sequence-generator name="dsc_identifier" sequence-name="tao.user_data_source_connection_id_seq" allocation-size="1" />
             </id>
         </attributes>
     </mapped-superclass>
@@ -88,12 +94,6 @@
             <basic name="nodeAffinity">
                 <column name="node_affinity" nullable="true" column-definition="varchar(250) NULL"/>
             </basic>
-            <!--<basic name="sourceCardinality">
-                <column name="source_cardinality" nullable="true" column-definition="integer NOT NULL"/>
-            </basic>
-            <basic name="targetCardinality">
-                <column name="target_cardinality" nullable="true" column-definition="integer NOT NULL"/>
-            </basic>-->
 
             <many-to-many name="sources" fetch="LAZY">
                 <join-table name="tao.processing_component_sources">
@@ -118,11 +118,8 @@
         </attributes>
     </mapped-superclass>
 
-
     <mapped-superclass class="ro.cs.tao.workflow.GraphObject" access="PROPERTY">
-
         <attributes>
-
             <basic name="name">
                 <column name="name" nullable="false" column-definition="character varying(250) NULL"/>
             </basic>
@@ -131,10 +128,8 @@
                 <column name="custom_values" nullable="true" column-definition="json NULL"/>
                 <convert converter="ro.cs.tao.persistence.convert.ParameterValueListConverter"/>
             </basic>
-
         </attributes>
     </mapped-superclass>
-
 
     <entity class="ro.cs.tao.eodata.EOProduct" access="PROPERTY">
         <table name="tao.raster_data_product"/>
@@ -168,7 +163,6 @@
         </attributes>
     </entity>
 
-
     <entity class="ro.cs.tao.eodata.VectorData" access="PROPERTY">
         <table name="tao.vector_data_product"/>
         <!-- Converter DataFormatConverter not seen in mapped superclass, therefore declared here -->
@@ -198,13 +192,9 @@
         </attributes>
     </entity>
 
-
     <entity class="ro.cs.tao.topology.NodeDescription" access="PROPERTY">
         <table name="tao.execution_node"/>
         <attributes>
-            <id name="hostName">
-                <column name="host_name" nullable="false" column-definition="character varying(250) NOT NULL"/>
-            </id>
             <basic name="userName">
                 <column name="username" nullable="false" column-definition="character varying(50) NOT NULL"/>
             </basic>
@@ -230,13 +220,12 @@
 
             <element-collection name="servicesStatus" target-class="ro.cs.tao.topology.NodeServiceStatus" access="PROPERTY" fetch="EAGER">
                 <collection-table name="tao.execution_node_service" >
-                    <join-column name="host_name" referenced-column-name="host_name" />
+                    <join-column name="host_name" referenced-column-name="id" />
                 </collection-table>
             </element-collection>
 
         </attributes>
     </entity>
-
 
     <entity class="ro.cs.tao.topology.ServiceDescription" access="PROPERTY">
         <table name="tao.service"/>
@@ -260,11 +249,7 @@
 
     <entity class="ro.cs.tao.docker.Container" access="PROPERTY">
         <table name="tao.container"/>
-
         <attributes>
-            <id name="id">
-                <column name="id" nullable="false" column-definition="character varying(1024) NOT NULL"/>
-            </id>
             <basic name="name">
                 <column name="name" nullable="false" column-definition="character varying(1024) NOT NULL"/>
             </basic>
@@ -277,7 +262,7 @@
             <basic name="logo">
                 <column name="logo_image" nullable="true" column-definition="character varying NULL"/>
             </basic>
-
+            
             <element-collection name="applications" target-class="ro.cs.tao.docker.Application" access="PROPERTY" fetch="EAGER">
                 <collection-table name="tao.container_applications" >
                     <join-column name="container_id" referenced-column-name="id" />
@@ -285,7 +270,6 @@
             </element-collection>
         </attributes>
     </entity>
-
 
     <entity class="ro.cs.tao.component.ProcessingComponent" access="PROPERTY">
         <table name="tao.processing_component"/>
@@ -330,7 +314,7 @@
             <basic name="templateContents">
                 <column name="template_contents" nullable="true" column-definition="text NULL"/>
             </basic>
-
+            
             <basic name="owner">
                 <column name="owner_user" nullable="true" column-definition="varchar NULL"/>
             </basic>
@@ -440,7 +424,6 @@
 
     </entity>
 
-
     <entity class="ro.cs.tao.component.TemplateParameterDescriptor" access="PROPERTY">
         <!-- no need to specify the table here, since TemplateParameterDescriptor inherits ParameterDescriptor;
              TemplateParameterDescriptor is a subclass of a SINGLE_TABLE hierarchy -->
@@ -465,7 +448,6 @@
         </attributes>
 
     </entity>
-
 
     <entity class="ro.cs.tao.datasource.DataSourceComponent" access="PROPERTY">
         <table name="tao.data_source_component"/>
@@ -523,13 +505,7 @@
 
     <entity class="ro.cs.tao.execution.model.DataSourceConnection" access="PROPERTY">
         <table name="tao.user_data_source_connection"/>
-
         <attributes>
-            <id name="id">
-                <column name="id" nullable="false" column-definition="bigserial NOT NULL"/>
-                <generated-value strategy="SEQUENCE" generator="dsc_identifier"/>
-                <sequence-generator name="dsc_identifier" sequence-name="tao.user_data_source_connection_id_seq" allocation-size="1" />
-            </id>
             <basic name="userId">
                 <column name="user_id" nullable="false" column-definition="varchar(50) NOT NULL"/>
             </basic>
@@ -563,11 +539,6 @@
 
         <convert converter="ro.cs.tao.persistence.convert.ExecutionStatusConverter" attribute-name="executionStatus" />
         <attributes>
-            <id name="id">
-                <column name="id" nullable="false" column-definition="bigserial NOT NULL"/>
-                <generated-value strategy="SEQUENCE" generator="task_identifier"/>
-                <sequence-generator name="task_identifier" sequence-name="tao.task_id_seq" allocation-size="1" />
-            </id>
             <basic name="resourceId">
                 <column name="resource_id" nullable="true" column-definition="character varying(512) NULL"/>
             </basic>
@@ -615,10 +586,10 @@
                     <join-column name="task_id" referenced-column-name="id" />
                 </collection-table>
             </element-collection>
-
+    
             <transient name="stateHandler" />
             <transient name="context" />
-
+            
         </attributes>
     </entity>
 
@@ -671,11 +642,6 @@
         <table name="tao.job"/>
         <convert converter="ro.cs.tao.persistence.convert.ExecutionStatusConverter" attribute-name="executionStatus" />
         <attributes>
-            <id name="id">
-                <column name="id" nullable="false" column-definition="bigserial NOT NULL"/>
-                <generated-value strategy="SEQUENCE" generator="job_identifier"/>
-                <sequence-generator name="job_identifier" sequence-name="tao.job_id_seq" allocation-size="1" />
-            </id>
             <basic name="executionStatus">
                 <column name="execution_status_id" nullable="false" column-definition="integer not null"/>
             </basic>
@@ -725,11 +691,6 @@
         <convert converter="ro.cs.tao.persistence.convert.WorkflowGraphStatusConverter" attribute-name="status" />
         <convert converter="ro.cs.tao.persistence.convert.VisibilityConverter" attribute-name="visibility" />
         <attributes>
-            <id name="id">
-                <column name="id" nullable="false" column-definition="bigserial NOT NULL"/>
-                <generated-value strategy="SEQUENCE" generator="workflow_graph_identifier"/>
-                <sequence-generator name="workflow_graph_identifier" sequence-name="tao.workflow_graph_id_seq" allocation-size="1" />
-            </id>
             <basic name="userName">
                 <column name="username" nullable="false" column-definition="character varying(50) NOT NULL"/>
             </basic>
@@ -782,11 +743,6 @@
         <convert converter="ro.cs.tao.persistence.convert.ComponentTypeConverter" attribute-name="componentType"/>
         <convert converter="ro.cs.tao.persistence.convert.TransitionBehaviorConverter" attribute-name="behavior"/>
         <attributes>
-            <id name="id">
-                <column name="id" nullable="false" column-definition="bigserial NOT NULL"/>
-                <generated-value strategy="SEQUENCE" generator="graph_node_identifier"/>
-                <sequence-generator name="graph_node_identifier" sequence-name="tao.graph_node_id_seq" allocation-size="1" />
-            </id>
             <basic name="componentId">
                 <column name="component_id" nullable="false" column-definition="integer NOT NULL"/>
             </basic>
@@ -888,7 +844,7 @@
 
         </attributes>
     </entity>
-
+    
     <entity class="ro.cs.tao.execution.model.Query" access="PROPERTY">
         <table name="tao.query"/>
         <convert converter="ro.cs.tao.persistence.convert.QueryValuesMapConverter" attribute-name="values"/>
@@ -930,28 +886,6 @@
             </basic>
         </attributes>
     </entity>
-
-    <!--<entity class="ro.cs.tao.execution.model.ExecutionQuery" access="PROPERTY">
-        <attributes>
-            <id name="id">
-                <column name="id" nullable="false" column-definition="bigint NOT NULL"/>
-                <generated-value strategy="IDENTITY" />
-            </id>
-            <many-to-one name="job" fetch="LAZY">
-                <join-column name="job_id" nullable="false" table="tao.job" referenced-column-name="id"/>
-                <cascade>
-                    <cascade-all/>
-                </cascade>
-            </many-to-one>
-            <many-to-one name="workflow" fetch="LAZY">
-                <join-column name="workflow_id" nullable="false" table="tao.workflow_graph" referenced-column-name="id"/>
-                <cascade>
-                    <cascade-all/>
-                </cascade>
-            </many-to-one>
-        </attributes>
-    </entity>-->
-
 
     <entity class="ro.cs.tao.user.User" access="PROPERTY">
         <table name="tao.user"/>
@@ -1020,7 +954,6 @@
         </attributes>
     </entity>
 
-
     <entity class="ro.cs.tao.user.Group" access="PROPERTY">
         <table name="tao.group"/>
         <attributes>
@@ -1035,7 +968,6 @@
         </attributes>
     </entity>
 
-
     <embeddable class="ro.cs.tao.eodata.Attribute" access="PROPERTY">
         <attributes>
             <basic name="name">
@@ -1047,7 +979,6 @@
         </attributes>
     </embeddable>
 
-
     <embeddable class="ro.cs.tao.component.Variable" access="PROPERTY">
         <attributes>
             <basic name="key">
@@ -1058,7 +989,6 @@
             </basic>
         </attributes>
     </embeddable>
-
 
     <embeddable class="ro.cs.tao.topology.NodeServiceStatus" access="PROPERTY">
         <attributes>
@@ -1125,7 +1055,6 @@
         </attributes>
     </embeddable>
 
-
     <embeddable class="ro.cs.tao.component.ComponentLink" access="PROPERTY">
         <attributes>
             <basic name="sourceNodeId" fetch="LAZY">
@@ -1146,7 +1075,6 @@
         </attributes>
     </embeddable>
 
-
     <embeddable class="ro.cs.tao.user.UserPreference" access="PROPERTY">
         <attributes>
             <basic name="key">
@@ -1157,7 +1085,6 @@
             </basic>
         </attributes>
     </embeddable>
-
 
     <converter class="ro.cs.tao.persistence.convert.TemplateTypeConverter" />
     <converter class="ro.cs.tao.persistence.convert.ProcessingComponentVisibilityConverter" />
@@ -1177,6 +1104,5 @@
     <converter class="ro.cs.tao.persistence.convert.ParameterValueListConverter"/>
     <converter class="ro.cs.tao.persistence.convert.QueryValuesMapConverter"/>
     <converter class="ro.cs.tao.persistence.convert.UserStatusConverter"/>
-
 
 </entity-mappings>

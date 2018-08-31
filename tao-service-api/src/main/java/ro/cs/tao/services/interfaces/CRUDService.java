@@ -51,17 +51,20 @@ public interface CRUDService<T> {
      * @param pageSize  The size of a page
      * @param sort      The sort collection of fields and orders.
      */
-    default List<T> list(int pageNumber, int pageSize, Sort sort) {
-        if (pageNumber < 0) {
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    default List<T> list(Optional<Integer> pageNumber, Optional<Integer> pageSize, Sort sort) {
+        int pNumber = pageNumber.orElse(0);
+        int pSize = pageSize.orElse(0);
+        if (pNumber < 0 || pSize < 0) {
             return null;
         }
         List<T> results = list();
-        if (results == null || results.size() == 0 || pageNumber * pageSize > results.size()) {
+        if (results == null || results.size() == 0 || pNumber * pSize > results.size()) {
             return new ArrayList<>();
         }
         int idx = 0;
         T obj = results.get(idx++);
-        while (obj == null) {
+        while (obj == null && idx < results.size()) {
             obj = results.get(idx++);
         }
         if (obj == null) {
@@ -77,7 +80,7 @@ public interface CRUDService<T> {
             sorts = new HashMap<>();
         }
         results.sort(new GenericComparator(obj.getClass(), sorts));
-        return results.subList((pageNumber - 1) * pageSize, pageNumber * pageSize);
+        return pNumber > 0 && pSize > 0 ? results.subList((pNumber - 1) * pSize, pNumber * pSize) : results;
     }
 
     /**

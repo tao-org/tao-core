@@ -151,18 +151,18 @@ public class TopologyManager implements ITopologyManager {
 
     @Override
     public void add(NodeDescription info) throws TopologyException {
-        if (getPersistenceManager().checkIfExistsNodeByHostName(info.getHostName())) {
+        if (getPersistenceManager().checkIfExistsNodeByHostName(info.getId())) {
             try {
                 getPersistenceManager().updateExecutionNode(info);
             } catch (PersistenceException e) {
-                logger.severe("Cannot update node description to database. Rolling back installation on node " + info.getHostName() + "...");
+                logger.severe("Cannot update node description to database. Rolling back installation on node " + info.getId() + "...");
                 throw new TopologyException(e);
             }
         } else {
             try {
                 getPersistenceManager().saveExecutionNode(info);
             } catch (PersistenceException e) {
-                logger.severe("Cannot save node description to database. Rolling back installation on node " + info.getHostName() + "...");
+                logger.severe("Cannot save node description to database. Rolling back installation on node " + info.getId() + "...");
                 throw new TopologyException(e);
             }
         }
@@ -232,7 +232,7 @@ public class TopologyManager implements ITopologyManager {
         try {
             getPersistenceManager().updateExecutionNode(nodeInfo);
         } catch (PersistenceException e) {
-            logger.severe("Cannot update node description in database for the host name:" + nodeInfo.getHostName());
+            logger.severe("Cannot update node description in database for the host name:" + nodeInfo.getId());
             throw new TopologyException(e);
         }
     }
@@ -262,7 +262,7 @@ public class TopologyManager implements ITopologyManager {
         dockerBuildCmdTemplate.set(3, correctedName);
         dockerBuildCmdTemplate.set(4, imagePath.getParent().toString());
         ExecutionUnit job = new ExecutionUnit(ExecutorType.PROCESS,
-                                              masterNodeInfo.getHostName(),
+                                              masterNodeInfo.getId(),
                                               masterNodeInfo.getUserName(),
                                               masterNodeInfo.getUserPass(),
                                               dockerBuildCmdTemplate, false, SSHMode.EXEC);
@@ -277,7 +277,7 @@ public class TopologyManager implements ITopologyManager {
             String tag = localRegistry + "/" + correctedName;
             dockerTagCmdTemplate.set(2, image.getId());
             dockerTagCmdTemplate.set(3, tag);
-            job = new ExecutionUnit(ExecutorType.PROCESS, masterNodeInfo.getHostName(),
+            job = new ExecutionUnit(ExecutorType.PROCESS, masterNodeInfo.getId(),
                                     masterNodeInfo.getUserName(), masterNodeInfo.getUserPass(),
                                     dockerTagCmdTemplate, false, SSHMode.EXEC);
             sharedAccumulator.reset();
@@ -287,7 +287,7 @@ public class TopologyManager implements ITopologyManager {
             logger.fine("Execution of " + String.join(" ", dockerTagCmdTemplate) + " returned code " + executor.getReturnCode());
             if (executor.getReturnCode() == 0) {
                 dockerPushCmdTemplate.set(2, tag);
-                job = new ExecutionUnit(ExecutorType.PROCESS, masterNodeInfo.getHostName(),
+                job = new ExecutionUnit(ExecutorType.PROCESS, masterNodeInfo.getId(),
                                         masterNodeInfo.getUserName(), masterNodeInfo.getUserPass(),
                                         dockerPushCmdTemplate, false, SSHMode.EXEC);
                 sharedAccumulator.reset();
@@ -319,11 +319,10 @@ public class TopologyManager implements ITopologyManager {
         List<Container> dbContainers = getPersistenceManager().getContainers();
         if (containers.size() == 0) {
             logger.warning("Docker execution failed. Check that Docker is installed and the sudo credentials are valid");
-            containers.addAll(dbContainers);
         } else {
-            containers.retainAll(dbContainers);
+            dbContainers.retainAll(containers);
         }
-        return containers;
+        return dbContainers;
     }
 
     @Override
@@ -337,7 +336,7 @@ public class TopologyManager implements ITopologyManager {
         Container container = null;
         dockerListCmdTemplate.set(2, name);
         ExecutionUnit job = new ExecutionUnit(ExecutorType.PROCESS,
-                                              masterNodeInfo.getHostName(),
+                                              masterNodeInfo.getId(),
                                               masterNodeInfo.getUserName(),
                                               masterNodeInfo.getUserPass(),
                                               dockerListCmdTemplate, false, SSHMode.EXEC);
@@ -382,7 +381,7 @@ public class TopologyManager implements ITopologyManager {
     private List<Container> getDockerImages() {
         List<Container> containers = new ArrayList<>();
         ExecutionUnit job = new ExecutionUnit(ExecutorType.PROCESS,
-                                              masterNodeInfo.getHostName(),
+                                              masterNodeInfo.getId(),
                                               masterNodeInfo.getUserName(),
                                               masterNodeInfo.getUserPass(),
                                               dockerListAllCmd, false, SSHMode.EXEC);
@@ -405,16 +404,7 @@ public class TopologyManager implements ITopologyManager {
                         container.setName(list.get(2));
                         container.setTag(list.get(1));
                         containers.add(container);
-                        try {
-                            getPersistenceManager().getContainerById(containerId);
-                        } catch (PersistenceException e) {
-                            logger.warning(e.getMessage());
-                            /*try {
-                                getPersistenceManager().saveContainer(container);
-                            } catch (PersistenceException e1) {
-                                logger.warning(e1.getMessage());
-                            }*/
-                        }
+                        getPersistenceManager().getContainerById(containerId);
                     }
                 }
             }
@@ -433,21 +423,21 @@ public class TopologyManager implements ITopologyManager {
                                this,
                                String.format("%s installation on %s completed",
                                               status.getToolName(),
-                                              node.getHostName()));
+                                              node.getId()));
                 break;
             case UNINSTALLED:
                 Messaging.send(SystemPrincipal.instance(), Topics.INFORMATION,
                                        this,
                                        String.format("%s uninstallation on %s completed",
                                               status.getToolName(),
-                                              node.getHostName()));
+                                              node.getId()));
                 break;
             case ERROR:
                 Messaging.send(SystemPrincipal.instance(), Topics.WARNING,
                                        this,
                                        String.format("%s installation on %s failed [reason: %s]",
                                               status.getToolName(),
-                                              node.getHostName(),
+                                              node.getId(),
                                               status.getReason()));
                 break;
         }
@@ -460,7 +450,7 @@ public class TopologyManager implements ITopologyManager {
             // but this might break the portability
             masterNodeInfo = new NodeDescription();
             String hostName = InetAddress.getLocalHost().getHostName();
-            masterNodeInfo.setHostName(hostName);
+            masterNodeInfo.setId(hostName);
             Map<String, String> settings = ConfigurationManager.getInstance().getValues("topology.master");
             masterNodeInfo.setUserName(settings.get("topology.master.user"));
             masterNodeInfo.setUserPass(settings.get("topology.master.password"));

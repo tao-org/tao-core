@@ -199,7 +199,7 @@ public class PersistenceManagerTest {
         {
             // add a new execution node for test
             NodeDescription node  = new NodeDescription();
-            node.setHostName("Test1_host_name");
+            node.setId("Test1_host_name");
             node.setUserName("Test1 user name");
             node.setUserPass("Test1 user pass");
             node.setProcessorCount(2);
@@ -215,7 +215,7 @@ public class PersistenceManagerTest {
 
             node = persistenceManager.saveExecutionNode(node);
             // check persisted node
-            Assert.assertTrue(node != null && node.getHostName() != null);
+            Assert.assertTrue(node != null && node.getId() != null);
         }
         catch (PersistenceException e)
         {
@@ -232,7 +232,7 @@ public class PersistenceManagerTest {
         {
             // add a new execution node for test
             NodeDescription node  = new NodeDescription();
-            node.setHostName("Test2_host_name");
+            node.setId("Test2_host_name");
             node.setUserName("Test2 user name");
             node.setUserPass("Test2 user pass");
             node.setProcessorCount(2);
@@ -248,7 +248,7 @@ public class PersistenceManagerTest {
 
             node = persistenceManager.saveExecutionNode(node);
             // check persisted node
-            Assert.assertTrue(node != null && node.getHostName() != null);
+            Assert.assertTrue(node != null && node.getId() != null);
         }
         catch (PersistenceException e)
         {
@@ -265,7 +265,7 @@ public class PersistenceManagerTest {
         {
             // add a new execution node for test
             NodeDescription node  = new NodeDescription();
-            node.setHostName("Test3_host_name");
+            node.setId("Test3_host_name");
             node.setUserName("Test3 user name");
             node.setUserPass("Test3 user pass");
             node.setProcessorCount(2);
@@ -281,7 +281,7 @@ public class PersistenceManagerTest {
 
             node = persistenceManager.saveExecutionNode(node);
             // check persisted node
-            Assert.assertTrue(node != null && node.getHostName() != null);
+            Assert.assertTrue(node != null && node.getId() != null);
         }
         catch (PersistenceException e)
         {
@@ -300,7 +300,7 @@ public class PersistenceManagerTest {
             Assert.assertTrue(nodes != null && nodes.size() > 0);
             for (NodeDescription node : nodes)
             {
-                logger.info("Found node " + node.getHostName());
+                logger.info("Found node " + node.getId());
             }
         }
         catch (Exception e)
@@ -342,7 +342,7 @@ public class PersistenceManagerTest {
             if(nodes.size() > 0)
             {
                 NodeDescription firstNode = nodes.get(0);
-                String hostName = firstNode.getHostName();
+                String hostName = firstNode.getId();
                 Assert.assertTrue(persistenceManager.checkIfExistsNodeByHostName(hostName));
             }
         }
@@ -363,9 +363,9 @@ public class PersistenceManagerTest {
             if(nodes.size() > 0)
             {
                 NodeDescription firstNode = nodes.get(0);
-                String hostName = firstNode.getHostName();
+                String hostName = firstNode.getId();
                 NodeDescription searchedNode  = persistenceManager.getNodeByHostName(hostName);
-                Assert.assertTrue(searchedNode != null && searchedNode.getHostName().equals(hostName));
+                Assert.assertTrue(searchedNode != null && searchedNode.getId().equals(hostName));
             }
         }
         catch (PersistenceException e)
@@ -383,7 +383,7 @@ public class PersistenceManagerTest {
         {
             // add a new execution node in order to deactivate it
             NodeDescription node  = new NodeDescription();
-            node.setHostName("hostname2");
+            node.setId("hostname2");
             node.setUserName("Test user name");
             node.setUserPass("Test user pass");
             node.setProcessorCount(2);
@@ -394,12 +394,12 @@ public class PersistenceManagerTest {
 
             node = persistenceManager.saveExecutionNode(node);
             // check persisted node
-            Assert.assertTrue(node != null && node.getHostName() != null);
+            Assert.assertTrue(node != null && node.getId() != null);
 
             // deactivate node
-            node = persistenceManager.deleteExecutionNode(node.getHostName());
+            node = persistenceManager.deleteExecutionNode(node.getId());
 
-            Assert.assertTrue(node != null && node.getActive() == false);
+            Assert.assertTrue(node != null && !node.getActive());
         }
         catch (PersistenceException e)
         {
@@ -497,7 +497,7 @@ public class PersistenceManagerTest {
             persistenceManager.deleteContainer(container.getId());
 
             // check that the container was deleted
-            Assert.assertTrue(!persistenceManager.checkIfExistsContainerById("container02"));
+            Assert.assertTrue(!persistenceManager.existsContainer("container02"));
         }
         catch (PersistenceException e)
         {
@@ -672,7 +672,7 @@ public class PersistenceManagerTest {
             {
                 ProcessingComponent firstComponent = components.get(0);
                 String identifier = firstComponent.getId();
-                Assert.assertTrue(persistenceManager.checkIfExistsComponentById(identifier));
+                Assert.assertTrue(persistenceManager.existsProcessingComponent(identifier));
             }
         }
         catch (Exception e)
@@ -750,7 +750,7 @@ public class PersistenceManagerTest {
             // delete container
             persistenceManager.deleteContainer(container.getId());
             // check that the container was deleted
-            Assert.assertTrue(!persistenceManager.checkIfExistsContainerById("container03"));
+            Assert.assertTrue(!persistenceManager.existsContainer("container03"));
 
         }
         catch (PersistenceException e)
@@ -1502,7 +1502,7 @@ public class PersistenceManagerTest {
                 ProcessingExecutionTask task = new ProcessingExecutionTask();
                 task.setResourceId("ProcessingExecutionTask-resourceId01");
                 task.setExecutionStatus(ExecutionStatus.RUNNING);
-                task.setExecutionNodeHostName(node.getHostName());
+                task.setExecutionNodeHostName(node.getId());
                 task.setComponent(component);
                 task.setWorkflowNodeId(persistenceManager.getWorkflowDescriptor(job.getWorkflowId()).getNodes().get(0).getId());
 
@@ -1563,7 +1563,7 @@ public class PersistenceManagerTest {
                 DataSourceExecutionTask task = new DataSourceExecutionTask();
                 task.setResourceId("DataSourceExecutionTask-resourceId01");
                 task.setExecutionStatus(ExecutionStatus.RUNNING);
-                task.setExecutionNodeHostName(node.getHostName());
+                task.setExecutionNodeHostName(node.getId());
                 task.setComponent(component);
                 task.setWorkflowNodeId(persistenceManager.getWorkflowDescriptor(job.getWorkflowId()).getNodes().get(0).getId());
 
@@ -1628,7 +1628,7 @@ public class PersistenceManagerTest {
                 ProcessingExecutionTask processingTask = new ProcessingExecutionTask();
                 processingTask.setResourceId("ProcessingExecutionTask-resourceId02");
                 processingTask.setExecutionStatus(ExecutionStatus.RUNNING);
-                processingTask.setExecutionNodeHostName(node.getHostName());
+                processingTask.setExecutionNodeHostName(node.getId());
                 processingTask.setComponent(processingComponent);
                 processingTask.setWorkflowNodeId(persistenceManager.getWorkflowDescriptor(job.getWorkflowId()).getNodes().get(0).getId());
 
@@ -1650,7 +1650,7 @@ public class PersistenceManagerTest {
                 DataSourceExecutionTask dataSourceTask = new DataSourceExecutionTask();
                 dataSourceTask.setResourceId("DataSourceExecutionTask-resourceId02");
                 dataSourceTask.setExecutionStatus(ExecutionStatus.RUNNING);
-                dataSourceTask.setExecutionNodeHostName(node.getHostName());
+                dataSourceTask.setExecutionNodeHostName(node.getId());
                 dataSourceTask.setComponent(dataSourceComponent);
                 dataSourceTask.setWorkflowNodeId(persistenceManager.getWorkflowDescriptor(job.getWorkflowId()).getNodes().get(0).getId());
 
@@ -1661,7 +1661,7 @@ public class PersistenceManagerTest {
                 ExecutionGroup taskGroup = new ExecutionGroup();
                 taskGroup.setResourceId("ExecutionGroup-resourceId01");
                 taskGroup.setExecutionStatus(ExecutionStatus.RUNNING);
-                taskGroup.setExecutionNodeHostName(node.getHostName());
+                taskGroup.setExecutionNodeHostName(node.getId());
                 taskGroup.setWorkflowNodeId(persistenceManager.getWorkflowDescriptor(job.getWorkflowId()).getNodes().get(0).getId());
 
                 // save first the execution group and after the sub-tasks within
@@ -1728,7 +1728,7 @@ public class PersistenceManagerTest {
                 ProcessingExecutionTask processingTask = new ProcessingExecutionTask();
                 processingTask.setResourceId("ProcessingExecutionTask-resourceId03");
                 processingTask.setExecutionStatus(ExecutionStatus.RUNNING);
-                processingTask.setExecutionNodeHostName(node.getHostName());
+                processingTask.setExecutionNodeHostName(node.getId());
                 processingTask.setComponent(processingComponent);
                 processingTask.setWorkflowNodeId(persistenceManager.getWorkflowDescriptor(job.getWorkflowId()).getNodes().get(0).getId());
 
@@ -1750,7 +1750,7 @@ public class PersistenceManagerTest {
                 DataSourceExecutionTask dataSourceTask = new DataSourceExecutionTask();
                 dataSourceTask.setResourceId("DataSourceExecutionTask-resourceId03");
                 dataSourceTask.setExecutionStatus(ExecutionStatus.RUNNING);
-                dataSourceTask.setExecutionNodeHostName(node.getHostName());
+                dataSourceTask.setExecutionNodeHostName(node.getId());
                 dataSourceTask.setComponent(dataSourceComponent);
                 dataSourceTask.setWorkflowNodeId(persistenceManager.getWorkflowDescriptor(job.getWorkflowId()).getNodes().get(0).getId());
 
@@ -1761,7 +1761,7 @@ public class PersistenceManagerTest {
                 ExecutionGroup taskGroup = new ExecutionGroup();
                 taskGroup.setResourceId("ExecutionGroup-resourceId02");
                 taskGroup.setExecutionStatus(ExecutionStatus.RUNNING);
-                taskGroup.setExecutionNodeHostName(node.getHostName());
+                taskGroup.setExecutionNodeHostName(node.getId());
                 taskGroup.setWorkflowNodeId(persistenceManager.getWorkflowDescriptor(job.getWorkflowId()).getNodes().get(0).getId());
 
                 // save first the execution group and after the sub-tasks within
@@ -1828,7 +1828,7 @@ public class PersistenceManagerTest {
                 ProcessingExecutionTask processingTask = new ProcessingExecutionTask();
                 processingTask.setResourceId("ProcessingExecutionTask-resourceId04");
                 processingTask.setExecutionStatus(ExecutionStatus.RUNNING);
-                processingTask.setExecutionNodeHostName(node.getHostName());
+                processingTask.setExecutionNodeHostName(node.getId());
                 processingTask.setComponent(processingComponent);
                 processingTask.setWorkflowNodeId(persistenceManager.getWorkflowDescriptor(job.getWorkflowId()).getNodes().get(0).getId());
 
@@ -1850,7 +1850,7 @@ public class PersistenceManagerTest {
                 DataSourceExecutionTask dataSourceTask = new DataSourceExecutionTask();
                 dataSourceTask.setResourceId("DataSourceExecutionTask-resourceId04");
                 dataSourceTask.setExecutionStatus(ExecutionStatus.RUNNING);
-                dataSourceTask.setExecutionNodeHostName(node.getHostName());
+                dataSourceTask.setExecutionNodeHostName(node.getId());
                 dataSourceTask.setComponent(dataSourceComponent);
                 dataSourceTask.setWorkflowNodeId(persistenceManager.getWorkflowDescriptor(job.getWorkflowId()).getNodes().get(0).getId());
 
@@ -1861,7 +1861,7 @@ public class PersistenceManagerTest {
                 ExecutionGroup taskGroup = new ExecutionGroup();
                 taskGroup.setResourceId("ExecutionGroup-resourceId03");
                 taskGroup.setExecutionStatus(ExecutionStatus.RUNNING);
-                taskGroup.setExecutionNodeHostName(node.getHostName());
+                taskGroup.setExecutionNodeHostName(node.getId());
                 taskGroup.setWorkflowNodeId(persistenceManager.getWorkflowDescriptor(job.getWorkflowId()).getNodes().get(0).getId());
 
                 // add tasks to tasks group

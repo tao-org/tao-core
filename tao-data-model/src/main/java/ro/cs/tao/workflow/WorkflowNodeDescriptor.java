@@ -35,7 +35,7 @@ import java.util.List;
 @XmlRootElement(name = "node")
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id", scope = WorkflowNodeDescriptor.class)
 public class WorkflowNodeDescriptor extends GraphObject {
-    protected Long id;
+
     private String componentId;
     private ComponentType componentType;
     private float xCoord;

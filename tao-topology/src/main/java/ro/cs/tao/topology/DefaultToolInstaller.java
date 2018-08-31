@@ -60,7 +60,7 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
     }
 
     @Override
-    public String defaultName() { return "DefaultInstaller"; }
+    public String defaultId() { return "DefaultInstaller"; }
 
     @Override
     public void setMasterNodeDescription(NodeDescription masterNodeInfo) {
@@ -144,8 +144,8 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
         String user = curStep.getUser();
         String pass = curStep.getPass();
         if (invokeType != ExecutorType.PROCESS) {
-            if (hostName == null && nodeDescr.getHostName() != null) {
-                hostName = nodeDescr.getHostName();
+            if (hostName == null && nodeDescr.getId() != null) {
+                hostName = nodeDescr.getId();
             }
             if (user == null && nodeDescr.getUserName() != null) {
                 user = nodeDescr.getUserName();
@@ -201,7 +201,7 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
                 String replacementStr = null;
                 switch (token) {
                     case ToolCommandsTokens.MASTER_HOSTNAME:
-                        replacementStr = masterNodeInfo.getHostName();
+                        replacementStr = masterNodeInfo.getId();
                         break;
                     case ToolCommandsTokens.MASTER_USER:
                         replacementStr = masterNodeInfo.getUserName();
@@ -210,7 +210,7 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
                         replacementStr = masterNodeInfo.getUserPass();
                         break;
                     case ToolCommandsTokens.NODE_HOSTNAME:
-                        replacementStr = info.getHostName();
+                        replacementStr = info.getId();
                         break;
                     case ToolCommandsTokens.NODE_USER:
                         replacementStr = info.getUserName();

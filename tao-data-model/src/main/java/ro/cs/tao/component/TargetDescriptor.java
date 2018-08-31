@@ -30,7 +30,7 @@ import java.util.UUID;
  */
 //@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 @XmlRootElement(name = "output")
-public class TargetDescriptor extends Identifiable {
+public class TargetDescriptor extends StringIdentifiable {
     private static final String DEFAULT_NAME = "Output";
     private String parentId;
     private String name;
@@ -57,7 +57,7 @@ public class TargetDescriptor extends Identifiable {
     public void setParentId(String parent) { this.parentId = parent; }
 
     @Override
-    public String defaultName() { return UUID.randomUUID().toString(); }
+    public String defaultId() { return UUID.randomUUID().toString(); }
 
     public String getName() {
         if (name == null)

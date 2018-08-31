@@ -276,11 +276,6 @@ public class ProcessingComponent extends TaoComponent {
     public void setOwner(String owner) { this.owner = owner; }
 
     @Override
-    public String defaultName() {
-        return "NewComponent";
-    }
-
-    @Override
     public ProcessingComponent clone() throws CloneNotSupportedException {
         ProcessingComponent newDescriptor = (ProcessingComponent) super.clone();
         newDescriptor.fileLocation = this.fileLocation;

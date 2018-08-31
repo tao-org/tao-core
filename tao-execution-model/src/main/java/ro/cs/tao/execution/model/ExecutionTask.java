@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.execution.model;
 
+import ro.cs.tao.component.LongIdentifiable;
 import ro.cs.tao.component.Variable;
 import ro.cs.tao.security.SessionContext;
 import ro.cs.tao.security.SystemSessionContext;
@@ -29,8 +30,8 @@ import java.util.List;
 /**
  * @author Cosmin Udroiu
  */
-public abstract class ExecutionTask implements StatusChangeListener {
-    private Long id;
+public abstract class ExecutionTask extends LongIdentifiable implements StatusChangeListener {
+
     private ExecutionGroup groupTask;
     private Long workflowNodeId;
     private int level;
@@ -48,6 +49,9 @@ public abstract class ExecutionTask implements StatusChangeListener {
     private SessionContext context;
 
     public ExecutionTask() { }
+
+    @Override
+    public Long defaultId() { return null; }
 
     public Long getId() {
         return id;

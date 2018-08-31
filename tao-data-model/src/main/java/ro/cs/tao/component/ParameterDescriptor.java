@@ -19,7 +19,6 @@ import ro.cs.tao.component.enums.ParameterType;
 import ro.cs.tao.component.validation.*;
 
 import javax.xml.bind.annotation.XmlRootElement;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -29,7 +28,7 @@ import java.util.UUID;
  * @author Cosmin Cara
  */
 @XmlRootElement(name = "parameter")
-public class ParameterDescriptor extends Identifiable implements Serializable {
+public class ParameterDescriptor extends StringIdentifiable {
     private String name;
     private ParameterType type;
     private Class<?> dataType;
@@ -149,9 +148,7 @@ public class ParameterDescriptor extends Identifiable implements Serializable {
     }
 
     @Override
-    public String defaultName() {
-        return "NewParameter";
-    }
+    public String defaultId() { return "NewParameter"; }
 
     @Override
     public ParameterDescriptor clone() throws CloneNotSupportedException {

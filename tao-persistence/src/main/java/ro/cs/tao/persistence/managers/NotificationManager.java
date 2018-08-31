@@ -57,7 +57,7 @@ public class NotificationManager {
     @Transactional
     public Page<Message> getUserMessages(String user, Integer pageNumber)
     {
-        PageRequest pageRequest = new PageRequest(pageNumber - 1, Constants.MESSAGES_PAGE_SIZE,
+        PageRequest pageRequest = PageRequest.of(pageNumber - 1, Constants.MESSAGES_PAGE_SIZE,
                                                   Sort.Direction.DESC, Constants.MESSAGE_TIMESTAMP_PROPERTY_NAME);
         return messageRepository.findByUser(user, pageRequest);
     }

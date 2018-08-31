@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.orchestration;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.component.TargetDescriptor;
@@ -713,7 +714,8 @@ public class Orchestrator extends Notifiable {
                 }
             }
         } catch (Exception e2) {
-            logger.severe(e2.getMessage());
+            logger.severe(ExceptionUtils.getStackTrace(e2));
+            logger.severe("If this was caused by 'gdalinfo', please check that the Docker daemon is not blocked by a firewall");
         }
         return product;
     }

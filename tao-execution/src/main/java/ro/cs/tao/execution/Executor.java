@@ -15,8 +15,8 @@
  */
 package ro.cs.tao.execution;
 
-import ro.cs.tao.component.Identifiable;
 import ro.cs.tao.component.ProcessingComponent;
+import ro.cs.tao.component.StringIdentifiable;
 import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
@@ -37,7 +37,7 @@ import java.util.logging.Logger;
 /**
  * @author Cosmin Udroi
  */
-public abstract class Executor<T extends ExecutionTask> extends Identifiable {
+public abstract class Executor<T extends ExecutionTask> extends StringIdentifiable {
     private static final int TIMER_PERIOD = 3000;
     /* Flag for trying to close the monitoring thread in an elegant manner */
     protected Boolean isInitialized = false;

@@ -136,7 +136,7 @@ public class DataSourceComponent extends TaoComponent {
     }
 
     @Override
-    public String defaultName() { return this.sensorName + "-" + this.dataSourceName; }
+    public String defaultId() { return this.sensorName + "-" + this.dataSourceName; }
 
     @XmlElementWrapper(name = "specificParameters")
     @XmlElement(name = "dsParameter")

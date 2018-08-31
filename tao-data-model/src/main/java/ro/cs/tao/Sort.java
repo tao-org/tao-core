@@ -22,6 +22,10 @@ import java.util.Map;
 public class Sort {
     private final Map<String, SortDirection> fieldsToSort;
 
+    public static Sort by(String fieldName, SortDirection direction) {
+        return new Sort(fieldName, direction);
+    }
+
     public Sort() {
         this.fieldsToSort = new LinkedHashMap<>();
     }

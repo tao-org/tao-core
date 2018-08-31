@@ -116,9 +116,7 @@ public class GroupComponent extends TaoComponent {
     }
 
     @Override
-    public String defaultName() {
-        return "NewGroup";
-    }
+    public String defaultId() { return "NewGroup"; }
 
     @Override
     public GroupComponent clone() throws CloneNotSupportedException {

@@ -15,6 +15,8 @@
  */
 package ro.cs.tao.execution.model;
 
+import ro.cs.tao.component.LongIdentifiable;
+
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -22,8 +24,7 @@ import java.util.stream.Collectors;
 /**
  * @author Cosmin Udroiu
  */
-public class ExecutionJob implements StatusChangeListener {
-    private long id;
+public class ExecutionJob extends LongIdentifiable implements StatusChangeListener {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private long workflowId;
@@ -34,10 +35,13 @@ public class ExecutionJob implements StatusChangeListener {
 
     public ExecutionJob() {}
 
-    public long getId() {
+    @Override
+    public Long defaultId() { return null; }
+
+    public Long getId() {
         return id;
     }
-    public void setId(long id) {
+    public void setId(Long id) {
         this.id = id;
     }
 

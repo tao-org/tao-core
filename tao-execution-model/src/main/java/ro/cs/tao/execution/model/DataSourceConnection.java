@@ -16,11 +16,12 @@
 
 package ro.cs.tao.execution.model;
 
+import ro.cs.tao.component.LongIdentifiable;
+
 import java.time.LocalDateTime;
 
-public class DataSourceConnection {
+public class DataSourceConnection extends LongIdentifiable {
 
-    private long id;
     private String userId;
     private String dataSource;
     private String userName;
@@ -28,7 +29,10 @@ public class DataSourceConnection {
     private LocalDateTime created;
     private LocalDateTime modified;
 
-    public long getId() {
+    @Override
+    public Long defaultId() { return 0L; }
+
+    public Long getId() {
         return id;
     }
 

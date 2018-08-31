@@ -33,7 +33,7 @@ import java.util.UUID;
  */
 //@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 @XmlRootElement(name = "input")
-public class SourceDescriptor extends Identifiable {
+public class SourceDescriptor extends StringIdentifiable {
     private static final String DEFAULT_NAME = "Input";
     private String parentId;
     private String name;
@@ -49,7 +49,7 @@ public class SourceDescriptor extends Identifiable {
     }
 
     @Override
-    public String defaultName() { return UUID.randomUUID().toString(); }
+    public String defaultId() { return UUID.randomUUID().toString(); }
     /**
      * Returns the component that owns this instance
      */

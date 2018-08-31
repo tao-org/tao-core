@@ -117,7 +117,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> {
     }
 
     @Override
-    public String defaultName() { return "QueryExecutor"; }
+    public String defaultId() { return "QueryExecutor"; }
 
     private boolean isArray(String value) {
         return value != null && value.startsWith("[") & value.endsWith("]");

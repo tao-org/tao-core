@@ -40,7 +40,7 @@ public abstract class OSRuntimeInfo {
 
     public static OSRuntimeInfo createInspector(NodeDescription host) throws Exception {
         String localhost = InetAddress.getLocalHost().getHostName();
-        if (localhost.equals(host.getHostName())) {
+        if (localhost.equals(host.getId())) {
             return SystemUtils.IS_OS_WINDOWS ? new Windows(host, false) : new Linux(host, false);
         } else {
             return new Linux(host, true);
@@ -82,7 +82,7 @@ public abstract class OSRuntimeInfo {
                              "wmic os get freephysicalmemory /value && " +
                              "wmic logicaldisk get size /value && " +
                              "wmic logicaldisk get freespace /value");
-            Executor executor = Executor.create(ExecutorType.PROCESS, this.node.getHostName(), args);
+            Executor executor = Executor.create(ExecutorType.PROCESS, this.node.getId(), args);
             Consumer consumer = new Consumer();
             executor.setOutputConsumer(consumer);
             try {
@@ -126,7 +126,7 @@ public abstract class OSRuntimeInfo {
             try {
                 List<String> args = new ArrayList<>();
                 Collections.addAll(args, "wmic cpu get loadpercentage /value".split(" "));
-                Executor executor = Executor.create(ExecutorType.PROCESS, this.node.getHostName(), args);
+                Executor executor = Executor.create(ExecutorType.PROCESS, this.node.getId(), args);
                 Consumer consumer = new Consumer();
                 executor.setOutputConsumer(consumer);
                 if (executor.execute(false) == 0) {
@@ -150,7 +150,7 @@ public abstract class OSRuntimeInfo {
             try {
                 List<String> args = new ArrayList<>();
                 Collections.addAll(args, "wmic os get totalvisiblememorysize /value".split(" "));
-                Executor executor = Executor.create(ExecutorType.PROCESS, this.node.getHostName(), args);
+                Executor executor = Executor.create(ExecutorType.PROCESS, this.node.getId(), args);
                 Consumer consumer = new Consumer();
                 executor.setOutputConsumer(consumer);
                 if (executor.execute(false) == 0) {
@@ -174,7 +174,7 @@ public abstract class OSRuntimeInfo {
             try {
                 List<String> args = new ArrayList<>();
                 Collections.addAll(args, "wmic os get freephysicalmemory /value".split(" "));
-                Executor executor = Executor.create(ExecutorType.PROCESS, this.node.getHostName(), args);
+                Executor executor = Executor.create(ExecutorType.PROCESS, this.node.getId(), args);
                 Consumer consumer = new Consumer();
                 executor.setOutputConsumer(consumer);
                 if (executor.execute(false) == 0) {
@@ -199,7 +199,7 @@ public abstract class OSRuntimeInfo {
             try {
                 List<String> args = new ArrayList<>();
                 Collections.addAll(args, "wmic logicaldisk get size /value".split(" "));
-                Executor executor = Executor.create(ExecutorType.PROCESS, this.node.getHostName(), args);
+                Executor executor = Executor.create(ExecutorType.PROCESS, this.node.getId(), args);
                 Consumer consumer = new Consumer();
                 executor.setOutputConsumer(consumer);
                 if (executor.execute(false) == 0) {
@@ -227,7 +227,7 @@ public abstract class OSRuntimeInfo {
             try {
                 List<String> args = new ArrayList<>();
                 Collections.addAll(args, "wmic logicaldisk get freespace /value".split(" "));
-                Executor executor = Executor.create(ExecutorType.PROCESS, this.node.getHostName(), args);
+                Executor executor = Executor.create(ExecutorType.PROCESS, this.node.getId(), args);
                 Consumer consumer = new Consumer();
                 executor.setOutputConsumer(consumer);
                 if (executor.execute(false) == 0) {
@@ -269,7 +269,7 @@ public abstract class OSRuntimeInfo {
                 Executor executor;
                 List<String> args = new ArrayList<>();
                 Collections.addAll(args, "uptime".split(" "));
-                executor = Executor.create(this.isRemote ? ExecutorType.SSH2 : ExecutorType.PROCESS, this.node.getHostName(), args);
+                executor = Executor.create(this.isRemote ? ExecutorType.SSH2 : ExecutorType.PROCESS, this.node.getId(), args);
                 executor.setUser(this.node.getUserName());
                 executor.setPassword(this.node.getUserPass());
                 Consumer consumer = new Consumer();
@@ -298,7 +298,7 @@ public abstract class OSRuntimeInfo {
                 Executor executor;
                 List<String> args = new ArrayList<>();
                 Collections.addAll(args, "cat /proc/meminfo".split(" "));
-                executor = Executor.create(this.isRemote ? ExecutorType.SSH2 : ExecutorType.PROCESS, this.node.getHostName(), args);
+                executor = Executor.create(this.isRemote ? ExecutorType.SSH2 : ExecutorType.PROCESS, this.node.getId(), args);
                 executor.setUser(this.node.getUserName());
                 executor.setPassword(this.node.getUserPass());
                 Consumer consumer = new Consumer();
@@ -327,7 +327,7 @@ public abstract class OSRuntimeInfo {
                 Executor executor;
                 List<String> args = new ArrayList<>();
                 Collections.addAll(args, "cat /proc/meminfo".split(" "));
-                executor = Executor.create(this.isRemote ? ExecutorType.SSH2 : ExecutorType.PROCESS, this.node.getHostName(), args);
+                executor = Executor.create(this.isRemote ? ExecutorType.SSH2 : ExecutorType.PROCESS, this.node.getId(), args);
                 executor.setUser(this.node.getUserName());
                 executor.setPassword(this.node.getUserPass());
                 Consumer consumer = new Consumer();
@@ -356,7 +356,7 @@ public abstract class OSRuntimeInfo {
                 Executor executor;
                 List<String> args = new ArrayList<>();
                 Collections.addAll(args, "df -k --total".split(" "));
-                executor = Executor.create(this.isRemote ? ExecutorType.SSH2 : ExecutorType.PROCESS, this.node.getHostName(), args);
+                executor = Executor.create(this.isRemote ? ExecutorType.SSH2 : ExecutorType.PROCESS, this.node.getId(), args);
                 executor.setUser(this.node.getUserName());
                 executor.setPassword(this.node.getUserPass());
                 Consumer consumer = new Consumer();
@@ -384,7 +384,7 @@ public abstract class OSRuntimeInfo {
                 Executor executor;
                 List<String> args = new ArrayList<>();
                 Collections.addAll(args, "df -k --total".split(" "));
-                executor = Executor.create(this.isRemote ? ExecutorType.SSH2 : ExecutorType.PROCESS, this.node.getHostName(), args);
+                executor = Executor.create(this.isRemote ? ExecutorType.SSH2 : ExecutorType.PROCESS, this.node.getId(), args);
                 executor.setUser(this.node.getUserName());
                 executor.setPassword(this.node.getUserPass());
                 Consumer consumer = new Consumer();

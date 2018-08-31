@@ -87,7 +87,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             task.setStartTime(LocalDateTime.now());
             List<NodeDescription> hosts = persistenceManager.getNodes();
             if (hosts.size() == 1) {
-                task.setExecutionNodeHostName(hosts.get(0).getHostName());
+                task.setExecutionNodeHostName(hosts.get(0).getId());
                 changeTaskStatus(task, ExecutionStatus.RUNNING);
             } else {
                 changeTaskStatus(task, session instanceof DefaultSession ? ExecutionStatus.RUNNING : ExecutionStatus.QUEUED_ACTIVE);
@@ -187,7 +187,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
     }
 
     @Override
-    public String defaultName() { return "DRMAAExecutor"; }
+    public String defaultId() { return "DRMAAExecutor"; }
 
     private JobTemplate createJobTemplate(ProcessingExecutionTask task) throws DrmaaException, PersistenceException {
         // Get from the component the execution command

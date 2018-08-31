@@ -96,7 +96,7 @@ public class DefaultServiceRegistry<T> implements ServiceRegistry<T> {
             return false;
         } else {
             if (service instanceof Identifiable) {
-                serviceIds.put(((Identifiable) service).getId(), service.getClass().getName());
+                serviceIds.put(((Identifiable) service).getId().toString(), service.getClass().getName());
             }
         }
         for (ServiceRegistryListener<T> listener : listeners) {

@@ -17,7 +17,7 @@ import java.util.List;
 @Repository
 @Qualifier(value = "dataSourceConnectionRepository")
 @Transactional
-public interface DataSourceConnectionRepository extends PagingAndSortingRepository<DataSourceConnection, String> {
+public interface DataSourceConnectionRepository extends PagingAndSortingRepository<DataSourceConnection, Long> {
 
     List<DataSourceConnection> findByUserId(int userId);
 

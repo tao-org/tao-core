@@ -17,17 +17,12 @@
 package ro.cs.tao.persistence.managers;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.persistence.exception.PersistenceException;
-import ro.cs.tao.persistence.repository.ExecutionJobRepository;
 import ro.cs.tao.persistence.repository.ExecutionTaskRepository;
 
 import javax.sql.DataSource;
@@ -35,94 +30,19 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.Timestamp;
 import java.time.ZoneId;
-import java.util.*;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
 
-@Configuration
-@EnableTransactionManagement
-@EnableJpaRepositories(basePackages = { "ro.cs.tao.persistence.repository" })
 @Component("executionManager")
-public class ExecutionManager {
+public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, ExecutionTaskRepository> {
 
-    private Logger logger = Logger.getLogger(ExecutionManager.class.getName());
-
-    /** CRUD Repository for ExecutionJob entities */
     @Autowired
-    private ExecutionJobRepository executionJobRepository;
-
-    /** CRUD Repository for ExecutionTask entities */
-    @Autowired
-    private ExecutionTaskRepository executionTaskRepository;
+    private ExecutionJobManager executionJobManager;
 
     @Autowired
     private DataSource dataSource;
 
-    //region ExecutionJob
-    @Transactional
-    public List<ExecutionJob> getAllJobs() {
-        // retrieve jobs and filter them
-        return new ArrayList<>(((List<ExecutionJob>)
-                executionJobRepository.findAll(new Sort(Sort.Direction.ASC, Constants.JOB_IDENTIFIER_PROPERTY_NAME))));
-    }
-
-    public List<ExecutionJob> getJobs(long workflowId) {
-        return executionJobRepository.findByWorkflowId(workflowId);
-    }
-
-    public ExecutionJob getJobById(long jobId) {
-        final Optional<ExecutionJob> executionJob = executionJobRepository.findById(jobId);
-        if (executionJob.isPresent()){
-            return executionJob.get();
-        }
-        return null;
-    }
-
-    public List<ExecutionJob> getJobs(ExecutionStatus status) {
-        return executionJobRepository.findByExecutionStatus(status);
-    }
-
-    public List<ExecutionJob> getJobs(String userName, Set<ExecutionStatus> statuses) {
-        Set<Integer> statusIds;
-        if (statuses == null) {
-            statusIds = Arrays.stream(ExecutionStatus.values()).map(ExecutionStatus::value).collect(Collectors.toSet());
-        } else {
-            statusIds = statuses.stream().map(ExecutionStatus::value).collect(Collectors.toSet());
-        }
-        return executionJobRepository.findByStatusAndUser(statusIds, userName);
-    }
-
-    @Transactional
-    public ExecutionJob saveExecutionJob(ExecutionJob job) throws PersistenceException {
-        // check method parameters
-        if(!checkExecutionJob(job, false)) {
-            throw new PersistenceException("Invalid parameters were provided for adding new execution job !");
-        }
-
-        // save the new ExecutionJob entity and return it
-        return executionJobRepository.save(job);
-    }
-
-    @Transactional
-    public ExecutionJob updateExecutionJob(ExecutionJob job) throws PersistenceException {
-        // check method parameters
-        if(!checkExecutionJob(job, true)) {
-            throw new PersistenceException("Invalid parameters were provided for updating the execution job " + (job != null && job.getId() != 0 ? "(identifier " + job.getId() + ")" : "") + "!");
-        }
-
-        // check if there is such job (to update) with the given identifier
-        final boolean jobExists = executionJobRepository.existsById(job.getId());
-        if (!jobExists) {
-            throw new PersistenceException("There is no execution job with the given identifier: " + job.getId());
-        }
-
-        // save the updated entity
-        return executionJobRepository.save(job);
-    }
-    //endregion
-
-    //region ExecutionTask
-    public ExecutionTask updateTaskStatus(ExecutionTask task, ExecutionStatus newStatus) throws PersistenceException {
+    public ExecutionTask updateStatus(ExecutionTask task, ExecutionStatus newStatus) throws PersistenceException {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         if (newStatus == ExecutionStatus.RUNNING) {
             jdbcTemplate.update("UPDATE tao.task SET execution_status_id = ?, resource_id = ?, start_time = ? WHERE id = ?",
@@ -133,16 +53,16 @@ public class ExecutionManager {
             jdbcTemplate.update("UPDATE tao.task SET execution_status_id = ?, resource_id = ? WHERE id = ?",
                                 newStatus.value(), task.getResourceId(), task.getId());
         }
-        return getTaskById(task.getId());
+        return get(task.getId());
     }
 
     @Transactional
     public List<ExecutionTask> getRunningTasks() {
-        return executionTaskRepository.getRunningTasks();
+        return repository.getRunningTasks();
     }
 
     @Transactional
-    public List<ExecutionTaskSummary> getTasksStatus(long jobId) {
+    public List<ExecutionTaskSummary> getStatus(long jobId) {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         return jdbcTemplate.query(con -> {
             PreparedStatement statement =
@@ -174,27 +94,19 @@ public class ExecutionManager {
         });
     }
 
-    public ExecutionTask getTaskById(Long id) throws PersistenceException {
-        final Optional<ExecutionTask> executionTask = executionTaskRepository.findById(id);
-        if (!executionTask.isPresent()) {
-            throw new PersistenceException("There is no execution task with the given identifier: " + id);
-        }
-        return executionTask.get();
-    }
-
     @Transactional
     public ExecutionTask getTaskByJobAndNode(long jobId, long nodeId) {
-        return executionTaskRepository.findByJobAndWorkflowNode(jobId, nodeId);
+        return repository.findByJobAndWorkflowNode(jobId, nodeId);
     }
 
     @Transactional
     public ExecutionTask getTaskByGroupAndNode(long groupId, long nodeId) {
-        return executionTaskRepository.findByGroupAndWorkflowNode(groupId, nodeId);
+        return repository.findByGroupAndWorkflowNode(groupId, nodeId);
     }
 
     @Transactional
     public ExecutionTask getTaskByResourceId(String id) throws PersistenceException {
-        final ExecutionTask existingTask = executionTaskRepository.findByResourceId(id);
+        final ExecutionTask existingTask = repository.findByResourceId(id);
         if (existingTask == null) {
             throw new PersistenceException("There is no execution task with the given resource identifier: " + id);
         }
@@ -210,7 +122,7 @@ public class ExecutionManager {
      * @throws PersistenceException
      */
     @Transactional
-    public ExecutionTask saveExecutionTask(ExecutionTask task, ExecutionJob job) throws PersistenceException {
+    public ExecutionTask save(ExecutionTask task, ExecutionJob job) throws PersistenceException {
         // check method parameters
         if (!checkExecutionTask(task, job, task.getId() != null)) {
             throw new PersistenceException("Invalid parameters were provided for adding new execution task !");
@@ -218,7 +130,7 @@ public class ExecutionManager {
 
         // check if there is already task with the same resource identifier
         if (task.getResourceId() != null) {
-            final ExecutionTask taskWithSameResourceId = executionTaskRepository.findByResourceId(task.getResourceId());
+            final ExecutionTask taskWithSameResourceId = repository.findByResourceId(task.getResourceId());
             if (taskWithSameResourceId != null) {
                 throw new PersistenceException("There is already another task with the resource identifier: " + task.getResourceId());
             }
@@ -231,14 +143,14 @@ public class ExecutionManager {
             task.setJob(job);
 
             // save the new ExecutionTask entity
-            final ExecutionTask savedExecutionTask =  executionTaskRepository.save(task);
+            final ExecutionTask savedExecutionTask =  repository.save(task);
 
             // add the task to job tasks collection
             List<ExecutionTask> jobTasks = job.getTasks();
             if (jobTasks.stream().noneMatch(t -> t.getId().equals(task.getId()))) {
                 jobTasks.add(task);
                 job.setTasks(jobTasks);
-                executionJobRepository.save(job);
+                executionJobManager.update(job);
             }
 
             return savedExecutionTask;
@@ -248,27 +160,7 @@ public class ExecutionManager {
     }
 
     @Transactional
-    public ExecutionTask updateExecutionTask(ExecutionTask task) throws PersistenceException {
-        // check method parameters
-        if(!checkExecutionTask(task, true)) {
-            throw new PersistenceException(String.format("Invalid parameters for updating the execution task %s!",
-                                                         task.getId() != 0 ? task.getId() : ""));
-        }
-
-        // check if there is such task (to update) with the given identifier
-        /*final ExecutionTask existingTask = executionTaskRepository.findById(task.getId());
-        if (existingTask == null) {
-            throw new PersistenceException("There is no execution task with the given identifier: " + task.getId());
-        }*/
-
-        // save the updated entity
-        return executionTaskRepository.save(task);
-    }
-
-    @Transactional
     public ExecutionTask saveExecutionGroupSubTask(ExecutionTask task, ExecutionGroup taskGroup) throws PersistenceException {
-
-        logger.info("saveExecutionGroupSubTask() of type " + task.getClass().getCanonicalName() + " having resource id: " + task.getResourceId());
 
         // check method parameters
         if (!checkExecutionGroupTask(task, taskGroup, false)) {
@@ -277,7 +169,7 @@ public class ExecutionManager {
 
         // check if there is already task with the same resource identifier
         if (task.getResourceId() != null) {
-            final ExecutionTask taskWithSameResourceId = executionTaskRepository.findByResourceId(task.getResourceId());
+            final ExecutionTask taskWithSameResourceId = repository.findByResourceId(task.getResourceId());
             if (taskWithSameResourceId != null) {
                 throw new PersistenceException("There is already another task with the resource identifier: " + task.getResourceId());
             }
@@ -289,7 +181,7 @@ public class ExecutionManager {
             task.setGroupTask(taskGroup);
 
             // save the new ExecutionTask entity
-            final ExecutionTask savedExecutionTask =  executionTaskRepository.save(task);
+            final ExecutionTask savedExecutionTask =  repository.save(task);
 
             // add the task to job tasks collection
             List<ExecutionTask> groupTasks = taskGroup.getTasks();
@@ -299,7 +191,7 @@ public class ExecutionManager {
             if (groupTasks.stream().noneMatch(t -> t.getId().equals(task.getId()))) {
                 groupTasks.add(task);
                 taskGroup.setTasks(groupTasks);
-                executionTaskRepository.save(taskGroup);
+                repository.save(taskGroup);
             }
 
             return savedExecutionTask;
@@ -319,7 +211,7 @@ public class ExecutionManager {
         List<ExecutionTask> subTasks = taskGroup.getTasks() != null ? taskGroup.getTasks() : new ArrayList<>();
 
         taskGroup.setTasks(null);
-        taskGroup = (ExecutionGroup)saveExecutionTask(taskGroup, job);
+        taskGroup = (ExecutionGroup) save(taskGroup, job);
 
         for (ExecutionTask subTask : subTasks){
             saveExecutionGroupSubTask(subTask, taskGroup);
@@ -329,43 +221,39 @@ public class ExecutionManager {
     }
     //endregion
 
+
+    @Override
+    protected String identifier() { return "id"; }
+
+    @Override
+    protected boolean checkId(Long entityId, boolean existingEntity) {
+        return (!existingEntity && (entityId == null || entityId == 0)) ||
+                (existingEntity && entityId != null && entityId > 0);
+    }
+
+    @Override
+    protected boolean checkEntity(ExecutionTask entity) {
+        return !(entity.getId() != null && entity.getId() > 0 && (entity.getResourceId() == null || entity.getResourceId().isEmpty()));
+    }
+
     private boolean checkExecutionJob(ExecutionJob job, boolean existingEntity) {
         return job != null && !(existingEntity && job.getId() == 0);
     }
 
     private boolean checkExecutionTask(ExecutionTask task, ExecutionJob job, boolean existingEntity) {
         // check first the job (that should already be persisted)
-        return !(!checkExecutionJob(job, true) || !checkIfExistsExecutionJobById(job.getId())) &&
-                checkExecutionTask(task, existingEntity);
+        return !(!checkExecutionJob(job, true) || !existsJob(job.getId())) &&
+                checkEntity(task, existingEntity);
     }
 
     private boolean checkExecutionGroupTask(ExecutionTask task, ExecutionGroup taskGroup, boolean existingEntity) {
         // check first the task group (that should already be persisted)
-        return !(!checkExecutionTask(taskGroup, true) || !checkIfExistsExecutionTaskById(taskGroup.getId())) &&
-                checkExecutionTask(task, existingEntity);
-    }
-
-    private boolean checkExecutionTask(ExecutionTask task, boolean existingEntity) {
-        return task != null &&
-                ((existingEntity && task.getId() != null) || (!existingEntity && task.getId() == null)) &&
-                !(existingEntity && (task.getResourceId() == null || task.getResourceId().isEmpty()));
+        return !(!checkEntity(taskGroup, true) || !exists(taskGroup.getId())) &&
+                checkEntity(task, existingEntity);
     }
 
     @Transactional
-    private boolean checkIfExistsExecutionJobById(final Long jobId) {
-        if (jobId != null && jobId > 0) {
-            // verify if such ExecutionJob exists
-            return executionJobRepository.existsById(jobId);
-        }
-        return false;
-    }
-
-    @Transactional
-    private boolean checkIfExistsExecutionTaskById(final Long taskId) {
-        if (taskId != null && taskId > 0) {
-            // verify if such ExecutionTask exists
-            return executionTaskRepository.existsById(taskId);
-        }
-        return false;
+    private boolean existsJob(final Long jobId) {
+        return jobId != null && jobId > 0 && executionJobManager.exists(jobId);
     }
 }

@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.datasource;
 
+import ro.cs.tao.component.StringIdentifiable;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.datasource.param.ParameterDescriptor;
 import ro.cs.tao.datasource.util.NetUtils;
@@ -63,7 +64,7 @@ public class DataSourceManager {
         final Set<DataSource> services = this.registry.getServices();
         services.forEach(ds -> {
             final String[] sensors = ds.getSupportedSensors();
-            final String dsName = ds.getId();
+            final String dsName = ((StringIdentifiable) ds).getId();
             for (String sensor : sensors) {
                 Map.Entry<String, String> key = new AbstractMap.SimpleEntry<>(sensor, dsName);
                 if (!this.registeredSources.containsKey(key)) {
