@@ -20,7 +20,7 @@ import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.eodata.enums.PixelType;
 import ro.cs.tao.eodata.enums.SensorType;
-import ro.cs.tao.utils.FileUtils;
+import ro.cs.tao.utils.FileUtilities;
 
 import java.io.IOException;
 import java.net.URI;
@@ -98,7 +98,7 @@ public interface MetadataInspector {
 
         public EOProduct toProductDescriptor(Path productPath) throws URISyntaxException, IOException {
             EOProduct product = new EOProduct();
-            String name = FileUtils.getFilenameWithoutExtension(productPath.toFile());
+            String name = FileUtilities.getFilenameWithoutExtension(productPath.toFile());
             product.setAcquisitionDate(Date.from(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant()));
             product.setId(name);
             product.setName(name);

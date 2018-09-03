@@ -18,7 +18,7 @@ package ro.cs.tao.execution.model;
 import ro.cs.tao.component.*;
 import ro.cs.tao.component.validation.ValidationException;
 import ro.cs.tao.security.SessionContext;
-import ro.cs.tao.utils.FileUtils;
+import ro.cs.tao.utils.FileUtilities;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -193,10 +193,10 @@ public class ProcessingExecutionTask extends ExecutionTask {
                                                   this.getJob().getId(),
                                                   this.getId(),
                                                   this.internalState == null ? "" : this.internalState + "-",
-                                                  FileUtils.getFilenameWithoutExtension(fileName));
-                fileName = folderName + FileUtils.getExtension(fileName);
+                                                  FileUtilities.getFilenameWithoutExtension(fileName));
+                fileName = folderName + FileUtilities.getExtension(fileName);
                 try {
-                    FileUtils.ensureExists(path.getParent().resolve(folderName));
+                    FileUtilities.ensureExists(path.getParent().resolve(folderName));
                 } catch (IOException e) {
                     Logger.getLogger(ProcessingExecutionTask.class.getName()).severe(e.getMessage());
                 }

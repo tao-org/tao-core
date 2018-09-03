@@ -15,7 +15,7 @@
  */
 package ro.cs.tao.spi;
 
-import ro.cs.tao.utils.FileUtils;
+import ro.cs.tao.utils.FileUtilities;
 
 import java.io.File;
 import java.io.IOException;
@@ -156,7 +156,7 @@ public class ServiceFinder {
                 if (Files.isDirectory(entry)) {
                     parseServiceRegistry(entry.resolve(servicesPath), modules);
                 } else if (useZipFiles) {
-                    String extension = FileUtils.getExtension(entry.toString());
+                    String extension = FileUtilities.getExtension(entry.toString());
                     if (".jar".compareToIgnoreCase(extension) == 0 || ".zip".compareToIgnoreCase(extension) == 0) {
                         try {
                             try (FileSystem fs = FileSystems.newFileSystem(entry, null)) {

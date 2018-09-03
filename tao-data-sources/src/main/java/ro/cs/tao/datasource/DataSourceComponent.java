@@ -290,7 +290,6 @@ public class DataSourceComponent extends TaoComponent {
                         if (localRootPath != null) {
                             try {
                                 Path archivePath = Paths.get(localRootPath);
-//                                FileUtils.ensureExists(archivePath);
                                 downloadStrategy.setLocalArchiveRoot(archivePath.toAbsolutePath().toString());
                             } catch (InvalidPathException e) {
                                 throw new IOException(e);

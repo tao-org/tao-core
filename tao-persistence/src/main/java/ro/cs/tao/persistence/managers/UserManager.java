@@ -29,7 +29,7 @@ import ro.cs.tao.user.Group;
 import ro.cs.tao.user.User;
 import ro.cs.tao.user.UserPreference;
 import ro.cs.tao.user.UserStatus;
-import ro.cs.tao.utils.StringUtils;
+import ro.cs.tao.utils.StringUtilities;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
@@ -62,11 +62,11 @@ public class UserManager {
         if (newUserInfo == null) {
             throw new PersistenceException("Invalid new user info received!");
         }
-        if (StringUtils.isNullOrEmpty(newUserInfo.getUsername()) ||
-          StringUtils.isNullOrEmpty(newUserInfo.getEmail()) ||
-          StringUtils.isNullOrEmpty(newUserInfo.getLastName()) ||
-          StringUtils.isNullOrEmpty(newUserInfo.getFirstName()) ||
-          StringUtils.isNullOrEmpty(newUserInfo.getOrganization()) ||
+        if (StringUtilities.isNullOrEmpty(newUserInfo.getUsername()) ||
+                StringUtilities.isNullOrEmpty(newUserInfo.getEmail()) ||
+                StringUtilities.isNullOrEmpty(newUserInfo.getLastName()) ||
+                StringUtilities.isNullOrEmpty(newUserInfo.getFirstName()) ||
+                StringUtilities.isNullOrEmpty(newUserInfo.getOrganization()) ||
           newUserInfo.getQuota() == null ||
           newUserInfo.getGroups() == null || newUserInfo.getGroups().isEmpty()) {
             throw new PersistenceException("Invalid new user info received!");
@@ -84,7 +84,7 @@ public class UserManager {
         }
 
         // check also alternative email
-        if (!StringUtils.isNullOrEmpty(newUserInfo.getAlternativeEmail())) {
+        if (!StringUtilities.isNullOrEmpty(newUserInfo.getAlternativeEmail())) {
             if (userRepository.findByEmail(newUserInfo.getAlternativeEmail()) != null ||
               userRepository.findByAlternativeEmail(newUserInfo.getAlternativeEmail()) != null) {
                 throw new PersistenceException("Email " + newUserInfo.getEmail() + " already taken!");
@@ -95,12 +95,12 @@ public class UserManager {
         final User user = new User();
         user.setUsername(newUserInfo.getUsername());
         user.setEmail(newUserInfo.getEmail());
-        if (!StringUtils.isNullOrEmpty(newUserInfo.getAlternativeEmail())) {
+        if (!StringUtilities.isNullOrEmpty(newUserInfo.getAlternativeEmail())) {
             user.setAlternativeEmail(newUserInfo.getAlternativeEmail());
         }
         user.setLastName(newUserInfo.getLastName());
         user.setFirstName(newUserInfo.getFirstName());
-        if (!StringUtils.isNullOrEmpty(newUserInfo.getPhone())) {
+        if (!StringUtilities.isNullOrEmpty(newUserInfo.getPhone())) {
             user.setPhone(newUserInfo.getPhone());
         }
         user.setQuota(newUserInfo.getQuota());
@@ -195,7 +195,7 @@ public class UserManager {
     public User updateUser(User updatedInfo, boolean fromAdmin) throws PersistenceException {
         User user = userRepository.findByUsername(updatedInfo.getUsername());
         if (user != null && user.getUsername().equalsIgnoreCase(updatedInfo.getUsername()) &&
-          user.getId() == updatedInfo.getId())
+                Objects.equals(user.getId(), updatedInfo.getId()))
         {
             // copy updated info (it's dangerous to save whatever received)
             transferUpdates(user, updatedInfo, fromAdmin);
@@ -233,8 +233,8 @@ public class UserManager {
         }
 
         // check if alternative email changed (with another address)
-        if (!StringUtils.isNullOrEmpty(updated.getAlternativeEmail()) &&
-            (StringUtils.isNullOrEmpty(original.getAlternativeEmail()) || !original.getAlternativeEmail().equalsIgnoreCase(updated.getAlternativeEmail()))) {
+        if (!StringUtilities.isNullOrEmpty(updated.getAlternativeEmail()) &&
+            (StringUtilities.isNullOrEmpty(original.getAlternativeEmail()) || !original.getAlternativeEmail().equalsIgnoreCase(updated.getAlternativeEmail()))) {
             // there should not be another user with the same email address
             if (userRepository.findByEmail(updated.getAlternativeEmail()) != null ||
                 userRepository.findByAlternativeEmail(updated.getAlternativeEmail()) != null) {
@@ -245,7 +245,7 @@ public class UserManager {
             }
         }
         // check if alternative email erased
-        if (StringUtils.isNullOrEmpty(updated.getAlternativeEmail()) && !StringUtils.isNullOrEmpty(original.getAlternativeEmail())) {
+        if (StringUtilities.isNullOrEmpty(updated.getAlternativeEmail()) && !StringUtilities.isNullOrEmpty(original.getAlternativeEmail())) {
             original.setAlternativeEmail(null);
         }
 
@@ -263,7 +263,7 @@ public class UserManager {
         original.setPhone(updated.getPhone());
 
         // password reset key
-        if (StringUtils.isNullOrEmpty(original.getPasswordResetKey()) ||
+        if (StringUtilities.isNullOrEmpty(original.getPasswordResetKey()) ||
             !original.getPasswordResetKey().equalsIgnoreCase(updated.getPasswordResetKey())) {
             original.setPasswordResetKey(updated.getPasswordResetKey());
         }
@@ -278,8 +278,8 @@ public class UserManager {
                 original.setOrganization(updated.getOrganization());
             }
             // check groups
-            final boolean oldGroupsIncludedInNewGroups = original.getGroups().stream().allMatch(group -> updated.getGroups().contains(group));
-            final boolean newGroupsIncludedInOldGroups = updated.getGroups().stream().allMatch(group -> original.getGroups().contains(group));
+            final boolean oldGroupsIncludedInNewGroups = updated.getGroups().containsAll(original.getGroups());
+            final boolean newGroupsIncludedInOldGroups = original.getGroups().containsAll(updated.getGroups());
             if (!oldGroupsIncludedInNewGroups || !newGroupsIncludedInOldGroups) {
                 // groups differ
                 original.setGroups(updated.getGroups());
@@ -305,7 +305,7 @@ public class UserManager {
             throw new PersistenceException("There is no user with the given username: " + String.valueOf(userName));
         }
         // only a pending activation user can be activated
-        if (user.getStatus().value() != UserStatus.PENDING.value()) {
+        if (!Objects.equals(user.getStatus().value(), UserStatus.PENDING.value())) {
             throw new PersistenceException("Cannot activate user: " + String.valueOf(userName));
         }
         // activate user
@@ -331,7 +331,7 @@ public class UserManager {
         }
 
         // check if new password different
-        if (!StringUtils.isNullOrEmpty(user.getPassword()) && user.getPassword().equalsIgnoreCase(newPassword)) {
+        if (!StringUtilities.isNullOrEmpty(user.getPassword()) && user.getPassword().equalsIgnoreCase(newPassword)) {
             throw new PersistenceException("Unauthorized password reset for user: " + String.valueOf(userName));
         }
 
@@ -351,7 +351,8 @@ public class UserManager {
             throw new PersistenceException("There is no user with the given username: " + String.valueOf(userName));
         }
         // only a pending activation or an active user can be disabled
-        if (user.getStatus().value() != UserStatus.PENDING.value() && user.getStatus().value() != UserStatus.ACTIVE.value()) {
+        if (!Objects.equals(user.getStatus().value(), UserStatus.PENDING.value()) &&
+                !Objects.equals(user.getStatus().value(), UserStatus.ACTIVE.value())) {
             throw new PersistenceException("Cannot disable user: " + String.valueOf(userName));
         }
         // activate user
@@ -420,7 +421,7 @@ public class UserManager {
     @Transactional
     public List<Group> getGroups() {
         final List<Group> results = new ArrayList<>();
-        groupRepository.findAll().forEach(group -> results.add(group));
+        groupRepository.findAll().forEach(results::add);
         return results;
     }
 
