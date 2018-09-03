@@ -17,12 +17,12 @@
         <dependency>
             <groupId>ro.cs.tao</groupId>
             <artifactId>tao-utils</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>ro.cs.tao</groupId>
             <artifactId>tao-data-model</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
 

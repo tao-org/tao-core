@@ -17,7 +17,7 @@
         <dependency>
             <groupId>ro.cs.tao</groupId>
             <artifactId>tao-persistence</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
 
     </dependencies>
