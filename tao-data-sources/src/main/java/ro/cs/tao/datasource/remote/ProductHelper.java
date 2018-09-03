@@ -20,6 +20,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
+ * Base class for product helpers. A product helper is an utility class for retrieving common useful properties from
+ * a product, such as metadata file name, sensing date, etc.
+ *
  * @author Cosmin Cara
  */
 public abstract class ProductHelper {
@@ -34,10 +37,18 @@ public abstract class ProductHelper {
         setName(name);
     }
 
+    /**
+     * Returns the name of the product
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * Sets the name of the product. If the name of the product doesn't pass the name validation rules,
+     * it throws an exception
+     * @param name  The name of the product
+     */
     public void setName(String name) {
         if (!verifyProductName(name)) {
             throw new IllegalArgumentException(String.format("The product name %s doesn't match the expected pattern", name));
@@ -45,29 +56,67 @@ public abstract class ProductHelper {
         this.name = name;
     }
 
+    /**
+     * Returns the concrete class of this helper.
+     */
     public Class<? extends ProductHelper> getHelperClass() { return getClass(); }
 
+    /**
+     * Returns the identifier of the product.
+     */
     public String getId() {
         return id;
     }
 
+    /**
+     * Sets the identifier of the product.
+     * @param id    The product identifier
+     */
     public void setId(String id) {
         this.id = id;
     }
 
+    /**
+     * Returns the version of the product.
+     */
     public String getVersion() { return version; }
 
+    /**
+     * Sets the version of the product
+     * @param version   The product version
+     */
     public void setVersion(String version) { this.version = version; }
 
+    /**
+     * Returns the sensing date of the product.
+     */
     public String getSensingDate() { return sensingDate; }
 
+    /**
+     * Sets the sensing date of the product.
+     * @param date  The sensing date, as string.
+     */
     public void setSensingDate(String date) { this.sensingDate = date; }
 
+    /**
+     * Returns the metadata file name.
+     */
     public abstract String getMetadataFileName();
 
+    /**
+     * Returns the path of the product, relative to the product repository root.
+     */
     public abstract String getProductRelativePath();
 
+    /**
+     * Returns the tile name pattern.
+     */
     public abstract Pattern getTilePattern();
+
+    /**
+     * Returns the relative orbit of the product.
+     */
+    public abstract String getOrbit();
 
     @Override
     public String toString() {
@@ -95,5 +144,4 @@ public abstract class ProductHelper {
 
     protected abstract boolean verifyProductName(String name);
 
-    public abstract String getOrbit();
 }
