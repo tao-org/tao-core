@@ -30,7 +30,6 @@ import java.util.List;
  */
 @XmlRootElement(name = "node")
 public class NodeDescription extends StringIdentifiable {
-    private String hostName;
     private String userName;
     private String userPass;
     private int processorCount;
@@ -44,11 +43,6 @@ public class NodeDescription extends StringIdentifiable {
 
     @Override
     public String defaultId() { return null; }
-
-    @Override
-    public String getId() { return hostName; }
-    @Override
-    public void setId(String id) { this.hostName = id; }
 
     @XmlElement(name = "userName")
     public String getUserName() {
