@@ -1,1 +1,1 @@
-java -cp ../services/*;../modules/*;../plugins/*;../lib/*;../static/* ro.cs.tao.services.TaoServicesStartup
+java -Dsun.lang.ClassLoader.allowArraySyntax=true -cp ../services/*;../modules/*;../plugins/*;../lib/*;../static/* ro.cs.tao.services.TaoServicesStartup
