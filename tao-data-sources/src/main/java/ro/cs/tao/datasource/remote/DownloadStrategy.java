@@ -100,6 +100,10 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         this.progressReportInterval = other.progressReportInterval;
     }
 
+    /**
+     * Sets the tile name filter on this strategy.
+     * @param tiles The tile names to be kept.
+     */
     public void setFilteredTiles(Set<String> tiles) {
         this.filteredTiles = tiles;
         if (tiles != null && tiles.size() > 0) {
@@ -135,6 +139,9 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         this.cancelled = true;
     }
 
+    /**
+     * Returns the local arhive root (if in {@link FetchMode}.SYMLINK).
+     */
     public String getLocalArchiveRoot() {
         return localArchiveRoot;
     }
@@ -569,6 +576,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
             return new SimpleDateFormat(secondPart).format(date);
         }
 
+        @SuppressWarnings("StringConcatenationInLoop")
         private void parse(String format) {
             Scanner scanner = new Scanner(format);
             scanner.useDelimiter("");
