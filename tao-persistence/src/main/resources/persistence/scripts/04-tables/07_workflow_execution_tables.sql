@@ -270,7 +270,7 @@ CREATE TABLE tao.execution_node
 	active boolean NULL DEFAULT true
 );
 
-ALTER TABLE tao.execution_node ADD CONSTRAINT PK_execution_node PRIMARY KEY (host_name);
+ALTER TABLE tao.execution_node ADD CONSTRAINT PK_execution_node PRIMARY KEY (id);
 
 
 -------------------------------------------------------------------------------
@@ -419,7 +419,7 @@ CREATE TABLE tao.execution_node_service
 ALTER TABLE tao.execution_node_service ADD CONSTRAINT PK_execution_node_service PRIMARY KEY (host_name, service_id);
 
 ALTER TABLE tao.execution_node_service ADD CONSTRAINT FK_execution_node_service_execution_node
-	FOREIGN KEY (host_name) REFERENCES tao.execution_node (host_name) ON DELETE No Action ON UPDATE No Action;
+	FOREIGN KEY (host_name) REFERENCES tao.execution_node (id) ON DELETE No Action ON UPDATE No Action;
 
 ALTER TABLE tao.execution_node_service ADD CONSTRAINT FK_execution_node_service_service
     FOREIGN KEY (service_id) REFERENCES tao.service (id) ON DELETE No Action ON UPDATE No Action;

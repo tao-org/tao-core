@@ -6,7 +6,7 @@ CREATE OR REPLACE FUNCTION tao.execution_node_update()
 $BODY$
 BEGIN
  IF NEW IS DISTINCT FROM OLD THEN
-   UPDATE tao.execution_node SET modified = now() WHERE tao.execution_node.host_name = NEW.host_name;
+   UPDATE tao.execution_node SET modified = now() WHERE tao.execution_node.id = NEW.id;
  END IF;
  
  RETURN NEW;
