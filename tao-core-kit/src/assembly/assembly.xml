@@ -16,6 +16,13 @@
                 <include>*.properties</include>
             </includes>
         </fileSet>
+        <fileSet>
+            <directory>../../tao-web-ui/</directory>
+            <outputDirectory>static</outputDirectory>
+            <includes>
+                <include>**/*</include>
+            </includes>
+        </fileSet>
     </fileSets>
     <files>
         <file>
