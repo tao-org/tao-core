@@ -16,7 +16,7 @@
 package ro.cs.tao.scheduling;
 
 import org.quartz.*;
-import ro.cs.tao.utils.StringUtils;
+import ro.cs.tao.utils.StringUtilities;
 
 import java.sql.Date;
 import java.time.LocalDateTime;
@@ -63,7 +63,7 @@ public class JobDescriptor {
     }
 
     private String buildName() {
-        return StringUtils.isNullOrEmpty(name) ? UUID.randomUUID().toString() : name;
+        return StringUtilities.isNullOrEmpty(name) ? UUID.randomUUID().toString() : name;
     }
 
     public Trigger buildTrigger() {

@@ -21,7 +21,7 @@ import ro.cs.tao.datasource.InterruptedException;
 import ro.cs.tao.datasource.ProductFetchStrategy;
 import ro.cs.tao.datasource.util.NetUtils;
 import ro.cs.tao.eodata.EOProduct;
-import ro.cs.tao.utils.FileUtils;
+import ro.cs.tao.utils.FileUtilities;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -185,7 +185,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
             currentProduct = product;
             currentProductProgress = 0;
             final Path destPath = Paths.get(destination);
-            FileUtils.ensureExists(destPath);
+            FileUtilities.ensureExists(destPath);
             switch (this.fetchMode) {
                 case COPY:
                     file = copy(product, Paths.get(localArchiveRoot), destPath);
@@ -515,7 +515,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
             }
             subActivityEnd(subActivity);
         }
-        return FileUtils.ensurePermissions(file);
+        return FileUtilities.ensurePermissions(file);
     }
 
     private class TimedJob extends TimerTask {
