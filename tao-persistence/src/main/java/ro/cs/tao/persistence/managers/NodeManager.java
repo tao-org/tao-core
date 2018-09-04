@@ -66,7 +66,7 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
 
         // check if there is already another node with the same host name
         final Optional<NodeDescription> nodeWithSameHostName = repository.findById(node.getId());
-        if (!nodeWithSameHostName.isPresent()) {
+        if (nodeWithSameHostName.isPresent()) {
             throw new PersistenceException("There is already another node with the host name: " + node.getId());
         }
 
