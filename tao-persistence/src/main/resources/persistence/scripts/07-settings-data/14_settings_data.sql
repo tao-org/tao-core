@@ -252,6 +252,6 @@ VALUES (4, 2);
 
 
 -- localhost execution node
-INSERT INTO tao.execution_node (host_name, username, password, total_cpu, total_ram, total_hdd, description)
+INSERT INTO tao.execution_node (id, username, password, total_cpu, total_ram, total_hdd, description)
 VALUES ('localhost', '', '', 8, 32, 1024, 'Master Node');
 
