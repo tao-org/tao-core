@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.services.interfaces;
 
+import ro.cs.tao.Sort;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.serialization.MediaType;
@@ -39,6 +40,8 @@ public interface ComponentService extends CRUDService<ProcessingComponent> {
     List<String> getAvailableConstraints();
 
     List<ProcessingComponentInfo> getProcessingComponents();
+
+    List<ProcessingComponentInfo> getProcessingComponents(int pageNumber, int pageSize, Sort sort);
 
     /**
      * Retrieves the list of processing components belonging to a user.
