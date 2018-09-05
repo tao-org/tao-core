@@ -1,0 +1,64 @@
+package ro.cs.tao.services.model.component;
+
+import ro.cs.tao.datasource.DataSourceComponent;
+
+public class DataSourceInfo {
+
+    private String id;
+    private String label;
+    private String version;
+    private String description;
+    private String authors;
+    private String copyright;
+    private String nodeAffinity;
+    private String sensorName;
+    private String dataSourceName;
+
+    public DataSourceInfo(DataSourceComponent component) {
+        this.id = component.getId();
+        this.label = component.getLabel();
+        this.version = component.getVersion();
+        this.description = component.getDescription();
+        this.authors = component.getAuthors();
+        this.copyright = component.getCopyright();
+        this.nodeAffinity = component.getNodeAffinity();
+        this.sensorName = component.getSensorName();
+        this.dataSourceName = component.getDataSourceName();
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public String getLabel() {
+        return label;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public String getAuthors() {
+        return authors;
+    }
+
+    public String getCopyright() {
+        return copyright;
+    }
+
+    public String getNodeAffinity() {
+        return nodeAffinity;
+    }
+
+    public String getSensorName() {
+        return sensorName;
+    }
+
+    public String getDataSourceName() {
+        return dataSourceName;
+    }
+}
