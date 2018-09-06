@@ -242,17 +242,13 @@ public class Orchestrator extends Notifiable {
     private void processMessage(Message message, SessionContext currentContext) {
         ExecutionTask task = null;
         try {
-            String taskId = message.getItem(Message.SOURCE_KEY);
-            ExecutionStatus status = EnumUtils.getEnumConstantByName(ExecutionStatus.class, message.getItem(Message.PAYLOAD_KEY));
+            final String taskId = message.getItem(Message.SOURCE_KEY);
+            final ExecutionStatus status = EnumUtils.getEnumConstantByName(ExecutionStatus.class, message.getItem(Message.PAYLOAD_KEY));
             task = persistenceManager.getTaskById(Long.parseLong(taskId));
             task.setContext(currentContext);
-            logger.finest(String.format("Status change for task %s [node %s]: %s",
-                                      taskId,
-                                      task.getWorkflowNodeId(),
-                                      status.name()));
+            logger.finest(String.format("Status change for task %s [node %s]: %s", taskId, task.getWorkflowNodeId(), status.name()));
             statusChanged(task);
-            if (status == ExecutionStatus.DONE || status == ExecutionStatus.CANCELLED ||
-                    status == ExecutionStatus.FAILED) {
+            if (status == ExecutionStatus.DONE || status == ExecutionStatus.CANCELLED || status == ExecutionStatus.FAILED) {
                 synchronized (this.runningTasks) {
                     this.runningTasks.remove(task.getId());
                 }
@@ -262,105 +258,13 @@ public class Orchestrator extends Notifiable {
                 // For DataSourceExecutionTask, it is the executor that sets the outputs,
                 // hence we need to "confirm" here the outputs of a processing task.
                 if (task instanceof ProcessingExecutionTask) {
-                    ProcessingExecutionTask pcTask = (ProcessingExecutionTask) task;
-                    List<TargetDescriptor> targets = pcTask.getComponent().getTargets();
-                    ExecutionGroup groupTask = pcTask.getGroupTask();
-                    boolean lastFromGroup = groupTask != null &&
-                            groupTask.getOutputParameterValues().stream()
-                                    .allMatch(o -> targets.stream().anyMatch(t -> t.getName().equals(o.getKey())));
-                    targets.forEach(t -> {
-                        String targetOutput = pcTask.getInstanceTargetOuptut(t);
-                        if (targetOutput == null) {
-                            logger.severe(String.format("NULL TARGET [task %s, parameter %s]", pcTask.getId(), t.getName()));
-                        } else {
-                            try {
-                                FileUtilities.ensurePermissions(Paths.get(targetOutput));
-                            } catch (Exception e) {
-                                logger.warning(String.format("Cannot set permissions [task %s, output %s=%s]",
-                                                             pcTask.getId(), t.getName(), targetOutput));
-                            }
-                        }
-                        pcTask.setOutputParameterValue(t.getName(), targetOutput);
-                        if (taskNode.getPreserveOutput()) {
-                            persistOutputProducts(pcTask);
-                        }
-                        if (lastFromGroup) {
-                            groupTask.setOutputParameterValue(t.getName(), targetOutput);
-                        }
-                    });
-                    if (lastFromGroup) {
-                        persistenceManager.updateExecutionTask(groupTask);
-                    } else {
-                        task = persistenceManager.updateExecutionTask(pcTask);
-                    }
+                    task = handleProcessingTask((ProcessingExecutionTask) task, taskNode.getPreserveOutput());
                 }
                 List<ExecutionTask> nextTasks = findNextTasks(task);
                 if (nextTasks != null && nextTasks.size() > 0) {
                     logger.finest(String.format("Has %s next tasks", nextTasks.size()));
                     for (ExecutionTask nextTask : nextTasks) {
-                        if (task instanceof DataSourceExecutionTask) {
-                            // A DataSourceExecutionTask outputs the list of results as a JSON
-                            final List<Variable> values = task.getOutputParameterValues();
-                            int cardinality = 0;
-                            Variable theOnlyValue = null;
-                            final List<String> valuesList;
-                            if (values != null && values.size() > 0) {
-                                theOnlyValue = values.get(0);
-                                valuesList = this.listAdapter.marshal(theOnlyValue.getValue());
-                                cardinality = valuesList.size();
-                            } else {
-                                valuesList = new ArrayList<>();
-                            }
-                            if (cardinality == 0) { // no point to continue since we have nothing to do
-                                logger.severe(String.format("Task %s produced no results", task.getId()));
-                                nextTask.setExecutionStatus(ExecutionStatus.CANCELLED);
-                                statusChanged(nextTask);
-                            }
-                            if (nextTask instanceof ExecutionGroup) {
-                                ExecutionGroup groupTask = (ExecutionGroup) nextTask;
-                                groupTask.setStateHandler(new LoopStateHandler(new LoopState(cardinality, 1)));
-                                // we need to keep this mapping because ExecutionTask.stateHandler is transient
-                                this.groupStateHandlers.put(groupTask.getId(), groupTask.getStateHandler());
-                                if (theOnlyValue != null) {
-                                    groupTask.setInputParameterValue(groupTask.getInputParameterValues().get(0).getKey(),
-                                                                     theOnlyValue.getValue());
-                                }
-                                persistenceManager.updateExecutionTask(groupTask);
-                            } else {
-                                // if next to a DataSourceExecutionTask is a simple ExecutionTask, we feed it with as many
-                                // values as sources
-                                int expectedCardinality = TaskUtilities.getSourceCardinality(nextTask);
-                                if (expectedCardinality == -1) {
-                                    logger.severe(String.format("Cannot determine input cardinality for task %s",
-                                                                nextTask.getId()));
-                                    nextTask.setExecutionStatus(ExecutionStatus.CANCELLED);
-                                    statusChanged(nextTask);
-                                }
-                                if (expectedCardinality != 0) {
-                                    if (cardinality < expectedCardinality) {
-                                        logger.severe(String.format("Insufficient inputs for task %s [expected %s, received %s]",
-                                                                    nextTask.getId(),
-                                                                    expectedCardinality, cardinality));
-                                        nextTask.setExecutionStatus(ExecutionStatus.CANCELLED);
-                                        statusChanged(nextTask);
-                                    }
-                                    int idx = 0;
-                                    for (Variable var : nextTask.getInputParameterValues()) {
-                                        nextTask.setInputParameterValue(var.getKey(), valuesList.get(idx++));
-                                    }
-                                } else { // nextTask accepts a list
-                                    Map<String, String> connectedInputs = TaskUtilities.getConnectedInputs(task, nextTask);
-                                    if (theOnlyValue != null && connectedInputs != null) {
-                                        for (Variable var : nextTask.getInputParameterValues()) {
-                                            if (theOnlyValue.getKey().equals(connectedInputs.get(var.getKey()))) {
-                                                nextTask.setInputParameterValue(var.getKey(), theOnlyValue.getValue());
-                                                break;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                        flowOutputs(task, nextTask);
                         logger.finest(String.format("Task %s about to start.", nextTask.getId()));
                         nextTask.getInputParameterValues().forEach(
                                 v -> logger.finest(String.format("Input: %s=%s", v.getKey(), v.getValue())));
@@ -411,8 +315,7 @@ public class Orchestrator extends Notifiable {
                                                    job.getId(), workflow.getName(), time != null ? time.getSeconds() : "<unknown>");
                         logger.info(msg);
                         Messaging.send(currentContext.getPrincipal(), Topics.INFORMATION, this, msg);
-                        executors.get(currentContext).shutdown();
-                        executors.remove(currentContext);
+                        shutDownExecutor(currentContext);
                     } else {
                         logger.fine("Job has still tasks to complete");
                     }
@@ -438,11 +341,7 @@ public class Orchestrator extends Notifiable {
                     logger.warning(msg);
                     persistenceManager.updateExecutionJob(job);
                     Messaging.send(currentContext.getPrincipal(), Topics.INFORMATION, this, msg);
-                    ExecutorService service = executors.get(currentContext);
-                    if (service != null) {
-                        executors.get(currentContext).shutdown();
-                        executors.remove(currentContext);
-                    }
+                    shutDownExecutor(currentContext);
                 }
             }
         } catch (PersistenceException e) {
@@ -454,6 +353,117 @@ public class Orchestrator extends Notifiable {
                     persistenceManager.updateExecutionJob(job);
                 } catch (PersistenceException e1) {
                     logger.severe(String.format("Abnormal termination: %s", e1.getMessage()));
+                }
+            }
+            shutDownExecutor(currentContext);
+        }
+    }
+
+    private void shutDownExecutor(final SessionContext context) {
+        final ExecutorService service = executors.get(context);
+        if (service != null) {
+            service.shutdown();
+            executors.remove(context);
+        }
+    }
+
+    private ExecutionTask handleProcessingTask(ProcessingExecutionTask pcTask, boolean keepOutput) throws PersistenceException {
+        List<TargetDescriptor> targets = pcTask.getComponent().getTargets();
+        ExecutionGroup groupTask = pcTask.getGroupTask();
+        boolean lastFromGroup = groupTask != null &&
+                groupTask.getOutputParameterValues().stream()
+                        .allMatch(o -> targets.stream().anyMatch(t -> t.getName().equals(o.getKey())));
+        targets.forEach(t -> {
+            String targetOutput = pcTask.getInstanceTargetOuptut(t);
+            if (targetOutput == null) {
+                logger.severe(String.format("NULL TARGET [task %s, parameter %s]", pcTask.getId(), t.getName()));
+            } else {
+                try {
+                    FileUtilities.ensurePermissions(Paths.get(targetOutput));
+                } catch (Exception e) {
+                    logger.warning(String.format("Cannot set permissions [task %s, output %s=%s]",
+                                                 pcTask.getId(), t.getName(), targetOutput));
+                }
+            }
+            pcTask.setOutputParameterValue(t.getName(), targetOutput);
+            if (keepOutput) {
+                persistOutputProducts(pcTask);
+            }
+            if (lastFromGroup) {
+                groupTask.setOutputParameterValue(t.getName(), targetOutput);
+            }
+        });
+        ExecutionTask task;
+        if (lastFromGroup) {
+            persistenceManager.updateExecutionTask(groupTask);
+            task = pcTask;
+        } else {
+            task = persistenceManager.updateExecutionTask(pcTask);
+        }
+        return task;
+    }
+
+    private void flowOutputs(ExecutionTask task, ExecutionTask nextTask) throws PersistenceException {
+        if (task instanceof DataSourceExecutionTask) {
+            // A DataSourceExecutionTask outputs the list of results as a JSON
+            final List<Variable> values = task.getOutputParameterValues();
+            int cardinality = 0;
+            Variable theOnlyValue = null;
+            final List<String> valuesList;
+            if (values != null && values.size() > 0) {
+                theOnlyValue = values.get(0);
+                valuesList = this.listAdapter.marshal(theOnlyValue.getValue());
+                cardinality = valuesList.size();
+            } else {
+                valuesList = new ArrayList<>();
+            }
+            if (cardinality == 0) { // no point to continue since we have nothing to do
+                logger.severe(String.format("Task %s produced no results", task.getId()));
+                nextTask.setExecutionStatus(ExecutionStatus.CANCELLED);
+                statusChanged(nextTask);
+            }
+            if (nextTask instanceof ExecutionGroup) {
+                ExecutionGroup groupTask = (ExecutionGroup) nextTask;
+                groupTask.setStateHandler(new LoopStateHandler(new LoopState(cardinality, 1)));
+                // we need to keep this mapping because ExecutionTask.stateHandler is transient
+                this.groupStateHandlers.put(groupTask.getId(), groupTask.getStateHandler());
+                if (theOnlyValue != null) {
+                    groupTask.setInputParameterValue(groupTask.getInputParameterValues().get(0).getKey(),
+                                                     theOnlyValue.getValue());
+                }
+                persistenceManager.updateExecutionTask(groupTask);
+            } else {
+                // if next to a DataSourceExecutionTask is a simple ExecutionTask, we feed it with as many
+                // values as sources
+                int expectedCardinality = TaskUtilities.getSourceCardinality(nextTask);
+                if (expectedCardinality == -1) {
+                    logger.severe(String.format("Cannot determine input cardinality for task %s",
+                                                nextTask.getId()));
+                    nextTask.setExecutionStatus(ExecutionStatus.CANCELLED);
+                    statusChanged(nextTask);
+                }
+                if (expectedCardinality != 0) {
+                    if (cardinality < expectedCardinality) {
+                        logger.severe(String.format("Insufficient inputs for task %s [expected %s, received %s]",
+                                                    nextTask.getId(),
+                                                    expectedCardinality, cardinality));
+                        nextTask.setExecutionStatus(ExecutionStatus.CANCELLED);
+                        statusChanged(nextTask);
+                    }
+                    int idx = 0;
+                    for (Variable var : nextTask.getInputParameterValues()) {
+                        nextTask.setInputParameterValue(var.getKey(), valuesList.get(idx++));
+                    }
+                } else { // nextTask accepts a list
+                    Map<String, String> connectedInputs = TaskUtilities.getConnectedInputs(task, nextTask);
+                    if (theOnlyValue != null && connectedInputs != null) {
+                        for (Variable var : nextTask.getInputParameterValues()) {
+                            if (theOnlyValue.getKey().equals(connectedInputs.get(var.getKey()))) {
+                                nextTask.setInputParameterValue(var.getKey(), theOnlyValue.getValue());
+                                break;
+                            }
+                        }
+                    }
                 }
             }
         }
