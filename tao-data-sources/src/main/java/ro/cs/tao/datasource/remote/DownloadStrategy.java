@@ -98,6 +98,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         this.localArchiveRoot = other.localArchiveRoot;
         this.fetchMode = other.fetchMode;
         this.progressReportInterval = other.progressReportInterval;
+        this.progressListener = other.progressListener;
     }
 
     /**
@@ -517,8 +518,9 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
             throw new IOException("Operation timed out");
         } catch (Exception ex) {
             ex.printStackTrace();
-            logger.severe(String.format(errorMessage, remoteUrl, ex.getMessage()));
-            file = null;
+            String errMsg = String.format(errorMessage, remoteUrl, ex.getMessage());
+            logger.severe(errMsg);
+            throw new IOException(errMsg);
         } finally {
             if (connection != null) {
                 connection.disconnect();
