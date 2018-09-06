@@ -98,7 +98,6 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         this.localArchiveRoot = other.localArchiveRoot;
         this.fetchMode = other.fetchMode;
         this.progressReportInterval = other.progressReportInterval;
-        this.progressListener = other.progressListener;
     }
 
     /**
