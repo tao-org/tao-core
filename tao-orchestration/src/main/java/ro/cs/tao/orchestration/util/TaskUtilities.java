@@ -49,6 +49,20 @@ public class TaskUtilities {
     public static void setPersistenceManager(PersistenceManager manager) {
         persistenceManager = manager;
     }
+
+
+    public static WorkflowNodeDescriptor getWorkflowNode(ExecutionTask task) {
+        if (task == null || task.getWorkflowNodeId() == null) {
+            return null;
+        }
+        return persistenceManager.getWorkflowNodeById(task.getWorkflowNodeId());
+    }
+
+    public static TransitionBehavior getTransitionBehavior(ExecutionTask task) {
+        WorkflowNodeDescriptor node = getWorkflowNode(task);
+        return node != null ? node.getBehavior() : TransitionBehavior.FAIL_ON_ERROR;
+    }
+
     /**
      * Returns the component associated with an execution task
      * @param task  The execution task
