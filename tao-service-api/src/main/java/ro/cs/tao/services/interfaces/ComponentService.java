@@ -15,10 +15,12 @@
  */
 package ro.cs.tao.services.interfaces;
 
+import ro.cs.tao.Sort;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.serialization.MediaType;
 import ro.cs.tao.serialization.SerializationException;
+import ro.cs.tao.services.model.component.ProcessingComponentInfo;
 import ro.cs.tao.workflow.enums.ComponentType;
 
 import java.util.List;
@@ -37,17 +39,21 @@ public interface ComponentService extends CRUDService<ProcessingComponent> {
      */
     List<String> getAvailableConstraints();
 
+    List<ProcessingComponentInfo> getProcessingComponents();
+
+    List<ProcessingComponentInfo> getProcessingComponents(int pageNumber, int pageSize, Sort sort);
+
     /**
      * Retrieves the list of processing components belonging to a user.
      * @param userName  The user name
      */
-    List<ProcessingComponent> getUserProcessingComponents(String userName);
+    List<ProcessingComponentInfo> getUserProcessingComponents(String userName);
 
     /**
      * Retrieves the list of script components belonging to a user.
      * @param userName  The user name
      */
-    List<ProcessingComponent> getUserScriptComponents(String userName);
+    List<ProcessingComponentInfo> getUserScriptComponents(String userName);
 
     /**
      * Imports the definition of a processing component from the given data.

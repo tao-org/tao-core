@@ -15,7 +15,6 @@
  */
 package ro.cs.tao.services.interfaces;
 
-import ro.cs.tao.Sort;
 import ro.cs.tao.component.ComponentLink;
 import ro.cs.tao.datasource.beans.Parameter;
 import ro.cs.tao.eodata.enums.Visibility;
@@ -30,7 +29,6 @@ import ro.cs.tao.workflow.enums.Status;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * Service for Workflow entity manipulation.
@@ -39,11 +37,6 @@ import java.util.Optional;
  */
 public interface WorkflowService extends CRUDService<WorkflowDescriptor> {
 
-
-    /**
-     * Returns information for all the existing workflows.
-     */
-    List<WorkflowInfo> getWorkflows(Optional<Integer> pageNumber, Optional<Integer> pageSize, Sort sort);
     /**
      * Returns the workflows of a given user that have a specific status.
      * @param user      The user name (login)

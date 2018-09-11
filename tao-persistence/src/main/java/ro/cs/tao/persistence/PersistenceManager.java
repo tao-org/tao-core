@@ -249,8 +249,12 @@ public class PersistenceManager implements MessagePersister {
         return processingComponentManager.list();
     }
 
-    public List<ProcessingComponent> getProcessingComponents(int pageNumber, int pageSize) {
-        return processingComponentManager.list(pageNumber, pageSize, null);
+    public List<ProcessingComponent> list(int pageNumber, int pageSize, Sort sort) {
+        return processingComponentManager.list(pageNumber, pageSize, sort);
+    }
+
+    public List<ProcessingComponent> getProcessingComponents(int pageNumber, int pageSize, Sort sort) {
+        return processingComponentManager.list(pageNumber, pageSize, sort);
     }
 
     public List<ProcessingComponent> getUserProcessingComponents(String userName) {
@@ -335,6 +339,7 @@ public class PersistenceManager implements MessagePersister {
     public List<WorkflowDescriptor> getAllWorkflows() {
         return workflowManager.getAllWorkflows();
     }
+
 
     public WorkflowDescriptor getWorkflowDescriptor(long identifier) {
         return workflowManager.getWorkflowDescriptor(identifier);

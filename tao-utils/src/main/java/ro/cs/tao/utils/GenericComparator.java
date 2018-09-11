@@ -21,6 +21,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 public class GenericComparator implements Comparator<Object>  {
@@ -28,6 +29,7 @@ public class GenericComparator implements Comparator<Object>  {
     private final Class objectClass;
     private final String[] fieldNames;
     private final boolean[] ascendingOrder;
+    private final Map<String, Field> fields;
 
     public GenericComparator(Class objectClass, Map<String, Boolean> fieldsAndOrder) {
         this.objectClass = objectClass;
@@ -43,40 +45,67 @@ public class GenericComparator implements Comparator<Object>  {
             fieldNames = new String[0];
             ascendingOrder = new boolean[0];
         }
+        fields = new HashMap<>();
+        Field[] list = this.objectClass.getDeclaredFields();
+        for (Field f : list) {
+            fields.put(f.getName(), f);
+        }
+        list = this.objectClass.getSuperclass().getDeclaredFields();
+        for (Field f : list) {
+            fields.put(f.getName(), f);
+        }
+        Class superSuperClass = this.objectClass.getSuperclass().getSuperclass();
+        if (superSuperClass != null) {
+            list = superSuperClass.getDeclaredFields();
+            for (Field f : list) {
+                fields.put(f.getName(), f);
+            }
+        }
     }
 
     @Override
     public int compare(Object o1, Object o2) {
         int retValue = -1;
-        if (Byte.class.equals(this.objectClass)) {
+        if (o1 == null) {
+            return retValue;
+        }
+        if (o2 == null) {
+            return -retValue;
+        }
+        if (Byte.class.equals(o1.getClass())) {
             retValue = Byte.compare((Byte)o1, (Byte)o2);
-        } else if (Short.class.equals(this.objectClass)) {
+        } else if (Short.class.equals(o1.getClass())) {
             retValue = Short.compare((Short)o1, (Short)o2);
-        } else if (Integer.class.equals(this.objectClass)) {
+        } else if (Integer.class.equals(o1.getClass())) {
             retValue = Integer.compare((Integer)o1, (Integer)o2);
-        } else if (Long.class.equals(this.objectClass)) {
+        } else if (Long.class.equals(o1.getClass())) {
             retValue = Long.compare((Long)o1, (Long)o2);
-        } else if (Float.class.equals(this.objectClass)) {
+        } else if (Float.class.equals(o1.getClass())) {
             retValue = Float.compare((Float)o1, (Float)o2);
-        } else if (Double.class.equals(this.objectClass)) {
+        } else if (Double.class.equals(o1.getClass())) {
             retValue = Double.compare((Double)o1, (Double)o2);
-        } else if (String.class.equals(this.objectClass)) {
+        } else if (String.class.equals(o1.getClass())) {
             retValue = ((String)o1).compareTo((String)o2);
-        } else if (Date.class.equals(this.objectClass)) {
+        } else if (Date.class.equals(o1.getClass())) {
             retValue = ((Date)o1).compareTo((Date)o2);
-        } else if (LocalDate.class.equals(this.objectClass)) {
+        } else if (LocalDate.class.equals(o1.getClass())) {
             retValue = ((LocalDate)o1).compareTo((LocalDate)o2);
-        } else if (LocalDateTime.class.equals(this.objectClass)) {
+        } else if (LocalDateTime.class.equals(o1.getClass())) {
             retValue = ((LocalDateTime)o1).compareTo((LocalDateTime)o2);
         } else {
             if (fieldNames != null && fieldNames.length > 0) {
                 int index = 0;
                 retValue = 0;
-                while (retValue == 0) {
+                while (retValue == 0 && index < fieldNames.length) {
                     try {
-                        Field field = this.objectClass.getDeclaredField(fieldNames[index]);
+                        Field field = fields.get(fieldNames[index]);
+                        if (field == null) {
+                            throw new NoSuchFieldException(fieldNames[index]);
+                        }
                         field.setAccessible(true);
-                        retValue = compare(field.get(o1), field.get(o2)) * (ascendingOrder[index++] ? 1 : -1);
+                        Object value1 = field.get(o1);
+                        Object value2 = field.get(o2);
+                        retValue = compare(value1, value2) * (ascendingOrder[index++] ? 1 : -1);
                     } catch (IllegalAccessException | NoSuchFieldException e) {
                         throw new RuntimeException(String.format("Class %s doesn't define field %s",
                                                                  this.objectClass.getSimpleName(), fieldNames[index - 1]));
