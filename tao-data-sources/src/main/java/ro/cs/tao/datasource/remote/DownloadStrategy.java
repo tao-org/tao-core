@@ -441,6 +441,9 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     private Path downloadFile(String remoteUrl, Path file, FetchMode mode, String authToken) throws IOException, InterruptedException {
         checkCancelled();
         String subActivity = remoteUrl.substring(remoteUrl.lastIndexOf(URL_SEPARATOR) + 1);
+        if ("$value".equals(subActivity)) {
+            subActivity = file.getFileName().toString();
+        }
         HttpURLConnection connection = null;
         try {
             logger.fine(String.format("Begin download for %s", subActivity));
@@ -514,8 +517,9 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
             throw new IOException("Operation timed out");
         } catch (Exception ex) {
             ex.printStackTrace();
-            logger.severe(String.format(errorMessage, remoteUrl, ex.getMessage()));
-            file = null;
+            String errMsg = String.format(errorMessage, remoteUrl, ex.getMessage());
+            logger.severe(errMsg);
+            throw new IOException(errMsg);
         } finally {
             if (connection != null) {
                 connection.disconnect();

@@ -120,10 +120,8 @@ public abstract class EOData implements Serializable {
     public String getAttributeValue(String name) {
         Attribute attribute = null;
         if (this.attributes != null) {
-            for(Attribute attr : this.attributes)
-            {
-                if(attr.getName().equals(name))
-                {
+            for(Attribute attr : this.attributes) {
+                if(attr.getName().toLowerCase().equals(name.toLowerCase())) {
                     attribute = attr;
                     break;
                 }

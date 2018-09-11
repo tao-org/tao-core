@@ -1,5 +1,5 @@
 <assembly>
-    <id>1.0-SNAPSHOT</id>
+    <id>${project.version}</id>
     <formats>
         <format>dir</format>
     </formats>
@@ -14,13 +14,6 @@
             <outputDirectory>config</outputDirectory>
             <includes>
                 <include>*.properties</include>
-            </includes>
-        </fileSet>
-        <fileSet>
-            <directory>../../tao-web-ui/</directory>
-            <outputDirectory>static</outputDirectory>
-            <includes>
-                <include>**/*</include>
             </includes>
         </fileSet>
     </fileSets>

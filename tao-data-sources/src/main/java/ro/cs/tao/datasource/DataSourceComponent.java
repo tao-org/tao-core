@@ -264,9 +264,6 @@ public class DataSourceComponent extends TaoComponent {
         if (this.userName != null) {
             dataSource.setCredentials(this.userName, this.password);
         }
-        ProgressNotifier notifier = new ProgressNotifier(SessionStore.currentContext().getPrincipal(),
-                                                         this,
-                                                         DataSourceTopics.PRODUCT_PROGRESS);
         String errorMessage;
         for (EOProduct product : products) {
             // add the attribute for max retries such that if the maxRetries is exceeded
@@ -282,7 +279,7 @@ public class DataSourceComponent extends TaoComponent {
                     }
                     currentProduct = product;
                     ProductFetchStrategy templateFetcher = dataSource.getProductFetchStrategy(product.getProductType());
-                    templateFetcher.setProgressListener(notifier);
+                    //templateFetcher.setProgressListener(notifier);
                     if (templateFetcher instanceof DownloadStrategy) {
                         DownloadStrategy downloadStrategy = ((DownloadStrategy) templateFetcher).clone();
                         downloadStrategy.setDestination(destinationPath);
@@ -306,6 +303,9 @@ public class DataSourceComponent extends TaoComponent {
                         logger.warning(String.format("Fetch strategy for data source [%s] doesn't support tiles filter",
                                                      dataSourceName));
                     }
+                    currentFetcher.setProgressListener(new ProgressNotifier(SessionStore.currentContext().getPrincipal(),
+                                                                            this,
+                                                                            DataSourceTopics.PRODUCT_PROGRESS));
                     Path productPath = currentFetcher.fetch(product);
                     if (productPath != null) {
                         product.setLocation(productPath.toUri().toString());
@@ -348,6 +348,7 @@ public class DataSourceComponent extends TaoComponent {
                     currentFetcher.resume();
                 }
                 currentFetcher = null;
+                this.currentProduct = null;
                 //notifier.ended();
             }
         }
