@@ -64,6 +64,10 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
      * @throws ExecutionException
      */
     public void initialize() throws ExecutionException {
+        initialize(TIMER_PERIOD);
+    }
+
+    public void initialize(int pollingInterval) throws ExecutionException {
         synchronized (isInitialized) {
             if (isInitialized)
                 return;
@@ -71,7 +75,7 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
             isInitialized = true;
         }
         // once the session was created, start the timer
-        executionsCheckTimer.schedule(new ExecutionsCheckTimer(this), 0, TIMER_PERIOD);
+        executionsCheckTimer.schedule(new ExecutionsCheckTimer(this), 0, pollingInterval);
     }
 
     /**
