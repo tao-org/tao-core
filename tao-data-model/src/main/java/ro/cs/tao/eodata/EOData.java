@@ -15,7 +15,7 @@
  */
 package ro.cs.tao.eodata;
 
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.eodata.enums.Visibility;
@@ -120,10 +120,8 @@ public abstract class EOData implements Serializable {
     public String getAttributeValue(String name) {
         Attribute attribute = null;
         if (this.attributes != null) {
-            for(Attribute attr : this.attributes)
-            {
-                if(attr.getName().equals(name))
-                {
+            for(Attribute attr : this.attributes) {
+                if(attr.getName().toLowerCase().equals(name.toLowerCase())) {
                     attribute = attr;
                     break;
                 }

@@ -15,7 +15,7 @@
  */
 package ro.cs.tao.serialization;
 
-import com.vividsolutions.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Coordinate;
 
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 

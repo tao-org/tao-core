@@ -15,9 +15,9 @@
  */
 package ro.cs.tao.serialization;
 
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.io.WKBReader;
-import com.vividsolutions.jts.io.WKTReader;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.io.WKBReader;
+import org.locationtech.jts.io.WKTReader;
 
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 

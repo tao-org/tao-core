@@ -64,6 +64,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
@@ -599,30 +600,37 @@ public class Orchestrator extends Notifiable {
             switch (taskStatus) {
                 case SUSPENDED:
                 case CANCELLED:
-                    List<ExecutionTask> tasks = job.getTasks();
+                    List<ExecutionTask> tasks = job.getTasks().stream()
+                                                        .filter(t -> !ExecutionStatus.DONE.equals(t.getExecutionStatus()))
+                                                        .collect(Collectors.toList());
                     bulkSetStatus(tasks, taskStatus);
+                    stopTasks(tasks);
                     job.setExecutionStatus(taskStatus);
-                    job = persistenceManager.updateExecutionJob(job);
+                    persistenceManager.updateExecutionJob(job);
                     break;
                 case FAILED:
-                    // TODO: based on defined behaviour
-                    tasks = job.getTasks();
-                    bulkSetStatus(tasks, taskStatus);
-                    job.setExecutionStatus(taskStatus);
-                    job = persistenceManager.updateExecutionJob(job);
+                    if (TransitionBehavior.FAIL_ON_ERROR.equals(TaskUtilities.getTransitionBehavior(changedTask))) {
+                        tasks = job.getTasks().stream()
+                                              .filter(t -> !ExecutionStatus.DONE.equals(t.getExecutionStatus()))
+                                              .collect(Collectors.toList());
+                        bulkSetStatus(tasks, taskStatus);
+                        stopTasks(tasks);
+                        job.setExecutionStatus(taskStatus);
+                        persistenceManager.updateExecutionJob(job);
+                    }
                     break;
                 case RUNNING:
                     ExecutionStatus jobStatus = job.getExecutionStatus();
                     if (jobStatus == ExecutionStatus.QUEUED_ACTIVE || jobStatus == ExecutionStatus.UNDETERMINED) {
                         job.setExecutionStatus(ExecutionStatus.RUNNING);
-                        job = persistenceManager.updateExecutionJob(job);
+                        persistenceManager.updateExecutionJob(job);
                     }
                     break;
                 case DONE:
                     if (job.getTasks().stream().allMatch(t -> t.getExecutionStatus() == ExecutionStatus.DONE)) {
                         job.setExecutionStatus(ExecutionStatus.DONE);
                         job.setEndTime(LocalDateTime.now());
-                        job = persistenceManager.updateExecutionJob(job);
+                        persistenceManager.updateExecutionJob(job);
                     }
                     break;
                 default:
@@ -631,6 +639,16 @@ public class Orchestrator extends Notifiable {
             }
         } catch (PersistenceException pex) {
             logger.severe(pex.getMessage());
+        }
+    }
+
+    private void stopTasks(List<ExecutionTask> tasks) {
+        for (ExecutionTask task : tasks) {
+            try {
+                TaskCommand.STOP.applyTo(task);
+            } catch (ExecutionException ex) {
+                logger.severe(ExceptionUtils.getStackTrace(ex));
+            }
         }
     }
 
