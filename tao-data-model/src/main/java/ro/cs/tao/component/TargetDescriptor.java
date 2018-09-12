@@ -15,6 +15,9 @@
  */
 package ro.cs.tao.component;
 
+import ro.cs.tao.component.constraints.ConstraintFactory;
+import ro.cs.tao.component.constraints.IOConstraint;
+
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -102,11 +105,27 @@ public class TargetDescriptor extends StringIdentifiable {
      * @param constraint    The constraint class name.
      */
     public void addConstraint(String constraint) {
+        if (this.constraints == null) {
+            this.constraints = new ArrayList<>();
+        }
         this.constraints.add(constraint);
     }
 
     public void setConstraints(List<String> constraints) {
         this.constraints = constraints;
+    }
+
+    /**
+     * Verifies if all the constraints defined on this instance are satisfied by the source descriptor.
+     *
+     * @param other     The source descriptor
+     */
+    public boolean isCompatibleWith(SourceDescriptor other) {
+        return other != null &&
+                (this.constraints == null || this.constraints.size() == 0 || this.constraints.stream().allMatch(c -> {
+                    IOConstraint constraint = ConstraintFactory.create(c);
+                    return constraint == null || constraint.check(other, this);
+                }));
     }
 
     @Override
@@ -134,7 +153,9 @@ public class TargetDescriptor extends StringIdentifiable {
         clone.dataDescriptor.setCrs(this.dataDescriptor.getCrs());
         clone.dataDescriptor.setFormatType(this.dataDescriptor.getFormatType());
         clone.dataDescriptor.setDimension(this.dataDescriptor.getDimension());
-        clone.constraints = new ArrayList<>(this.constraints);
+        if (this.constraints != null) {
+            clone.constraints = new ArrayList<>(this.constraints);
+        }
         clone.cardinality = this.cardinality;
         return clone;
     }

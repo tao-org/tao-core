@@ -23,19 +23,26 @@ import javax.xml.bind.annotation.XmlEnumValue;
 
 @XmlEnum(Integer.class)
 public enum ComponentType implements TaoEnum<Integer> {
-
+    /**
+     * Designates a datasource component
+     */
     @XmlEnumValue("1")
     DATASOURCE(1, "Data Source"),
     /**
-     * The workflow is validated and ready to be executed, and may still be edited
+     * Designates a processing component
      */
     @XmlEnumValue("2")
     PROCESSING(2, "Processing Component"),
     /**
-     * The workflow was published and hence cannot be edited
+     * Designates a grouping component
      */
     @XmlEnumValue("3")
-    GROUP(3, "Group Component");
+    GROUP(3, "Group Component"),
+    /**
+     * Designates a list component
+     */
+    @XmlEnumValue("4")
+    LIST(4, "Product List Component");
 
     private final int value;
     private final String description;

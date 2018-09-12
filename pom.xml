@@ -39,7 +39,7 @@
         <!-- nexus urls -->
         <nexusUrl>http://cayman.c-s.ro:8081/nexus/</nexusUrl>
         <!--<mavenPublicUrl>http://cayman.c-s.ro:8081/nexus/repository/maven-public/</mavenPublicUrl>-->
-        <mavenPublicUrl>http://http://central.maven.org/maven2</mavenPublicUrl>
+        <mavenPublicUrl>http://central.maven.org/maven2</mavenPublicUrl>
         <taoSnapshotsUrl>http://cayman.c-s.ro:8081/nexus/repository/tao-snapshots/</taoSnapshotsUrl>
         <taoReleasesUrl>http://cayman.c-s.ro:8081/nexus/repository/tao-releases/</taoReleasesUrl>
         <osgeoUrl>http://cayman.c-s.ro:8081/nexus/repository/osgeo/</osgeoUrl>

@@ -178,6 +178,7 @@ INSERT INTO tao.template_type (type) VALUES ('XSLT');
 INSERT INTO tao.component_type (id, description) VALUES (1, 'DATASOURCE');
 INSERT INTO tao.component_type (id, description) VALUES (2, 'PROCESSING');
 INSERT INTO tao.component_type (id, description) VALUES (3, 'GROUP');
+INSERT INTO tao.component_type (id, description) VALUES (4, 'LIST');
 
 -- Behavior
 INSERT INTO tao.node_behavior (id, description) VALUES (1, 'FAIL_ON_ERROR');

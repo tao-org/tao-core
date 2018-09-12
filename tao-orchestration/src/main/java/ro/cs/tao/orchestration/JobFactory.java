@@ -177,16 +177,28 @@ public class JobFactory {
                     taskInputs.putAll(inputs);
                 }
                 component = persistenceManager.getDataSourceInstance(workflowNode.getComponentId());
+                DataSourceComponent dsComponent = (DataSourceComponent) component;
                 Query query = persistenceManager.getQuery(SessionStore.currentContext().getPrincipal().getName(),
-                                                          ((DataSourceComponent) component).getSensorName(),
-                                                          ((DataSourceComponent) component).getDataSourceName(),
+                                                          dsComponent.getSensorName(),
+                                                          dsComponent.getDataSourceName(),
                                                           workflowNode.getId());
                 if (query == null) {
                     query = new Query();
                     query.setUser(SessionStore.currentContext().getPrincipal().getName());
-                    query.setSensor(((DataSourceComponent) component).getSensorName());
-                    query.setDataSource(((DataSourceComponent) component).getDataSourceName());
+                    query.setSensor(dsComponent.getSensorName());
+                    query.setDataSource(dsComponent.getDataSourceName());
                     query.setWorkflowNodeId(workflowNode.getId());
+                    if (!dsComponent.getSystem() && dsComponent.getDataSourceName().equals("Local Database") &&
+                            dsComponent.getSources() != null && dsComponent.getSources().size() == 1) {
+                        SourceDescriptor source = dsComponent.getSources().get(0);
+                        String location = source.getDataDescriptor().getLocation();
+                        if (location != null) {
+                            taskInputs.put("name", "[" + location + "]");
+                            taskInputs.put("pageNumber", "1");
+                            taskInputs.put("pageSize", String.valueOf(source.getCardinality()));
+                            taskInputs.put("limit", String.valueOf(source.getCardinality()));
+                        }
+                    }
                 }
                 int val;
                 String value = taskInputs.get("pageNumber");
@@ -216,7 +228,7 @@ public class JobFactory {
                 query.setValues(taskInputs);
                 query.setUserId(job.getUserName());
                 persistenceManager.saveQuery(query);
-                ((DataSourceExecutionTask) task).setComponent((DataSourceComponent) component);
+                ((DataSourceExecutionTask) task).setComponent(dsComponent);
                 task.setInputParameterValue("query", query.toString());
             }
             task.setWorkflowNodeId(workflowNode.getId());

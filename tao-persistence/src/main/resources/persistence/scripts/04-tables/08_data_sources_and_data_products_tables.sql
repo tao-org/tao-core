@@ -465,16 +465,11 @@ CREATE TABLE tao.data_source_component
 	authors varchar(1024) NOT NULL,
 	copyright text NOT NULL,
 	node_affinity varchar(250) NULL,
---	source_cardinality integer NOT NULL,
---  target_cardinality integer NOT NULL,
-
     sensor_name varchar(1024) NOT NULL,
 	data_source_name  varchar(512) NOT NULL,
---	username varchar(512) NULL,
---	password bytea NULL,
 	fetch_mode_id integer NOT NULL,
---	overridden_parameters json NULL,
 	max_retries integer NULL DEFAULT 3,
+	is_system boolean NOT NULL DEFAULT false,
 	created timestamp NULL DEFAULT now(),
     modified timestamp NULL
 );
@@ -482,8 +477,8 @@ CREATE TABLE tao.data_source_component
 ALTER TABLE tao.data_source_component ADD CONSTRAINT PK_data_source_component
 	PRIMARY KEY (id);
 
-ALTER TABLE tao.data_source_component ADD CONSTRAINT UK_data_source_component
-	UNIQUE (sensor_name, data_source_name);
+--ALTER TABLE tao.data_source_component ADD CONSTRAINT UK_data_source_component
+--	UNIQUE (sensor_name, data_source_name);
 
 ALTER TABLE tao.data_source_component ADD CONSTRAINT FK_data_source_component_fetch_mode
 	FOREIGN KEY (fetch_mode_id) REFERENCES tao.fetch_mode (id) ON DELETE No Action ON UPDATE No Action;
@@ -527,7 +522,6 @@ ALTER TABLE tao.data_source_component_targets ADD CONSTRAINT FK_data_source_comp
 
 ALTER TABLE tao.data_source_component_targets ADD CONSTRAINT FK_data_source_component_targets_target_descriptor
 	FOREIGN KEY (target_descriptor_id) REFERENCES tao.target_descriptor (id) ON DELETE No Action ON UPDATE No Action;
-
 
 
 -------------------------------------------------------------------------------

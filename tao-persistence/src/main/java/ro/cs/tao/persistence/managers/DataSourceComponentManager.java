@@ -20,8 +20,15 @@ import org.springframework.stereotype.Component;
 import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.persistence.repository.DataSourceComponentRepository;
 
+import java.util.List;
+
 @Component("dataSourceComponentManager")
 public class DataSourceComponentManager extends TaoComponentManager<DataSourceComponent, DataSourceComponentRepository> {
+
+    public List<DataSourceComponent> getUserDataSourceComponents(String userName) {
+        return userName != null ? this.repository.getUserDataSourceComponents(userName) :
+                this.repository.getUserDataSourceComponents();
+    }
 
     @Override
     protected boolean checkId(String entityId, boolean existingEntity) {
