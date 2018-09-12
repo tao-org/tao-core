@@ -257,6 +257,10 @@ public class PersistenceManager implements MessagePersister {
         return processingComponentManager.list(pageNumber, pageSize, sort);
     }
 
+    public List<ProcessingComponent> getProcessingComponents(Iterable<String> ids) {
+        return processingComponentManager.list(ids);
+    }
+
     public List<ProcessingComponent> getUserProcessingComponents(String userName) {
         return processingComponentManager.getUserProcessingComponents(userName);
     }
@@ -324,6 +328,10 @@ public class PersistenceManager implements MessagePersister {
 
     public List<DataSourceComponent> getDataSourceComponents(int pageNumber, int pageSize, Sort sort) {
         return dataSourceComponentManager.list(pageNumber, pageSize, sort);
+    }
+
+    public List<DataSourceComponent> getUserDataSourceComponents(String userName) {
+        return dataSourceComponentManager.getUserDataSourceComponents(userName);
     }
 
     public DataSourceComponent getDataSourceInstance(String id) {
