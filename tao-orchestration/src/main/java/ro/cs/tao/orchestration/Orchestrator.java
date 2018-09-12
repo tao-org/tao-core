@@ -74,6 +74,9 @@ import java.util.stream.IntStream;
  */
 public class Orchestrator extends Notifiable {
 
+    private static final String GROUP_TASK_SELECTOR_KEY = "group.task.selector";
+    private static final String JOB_TASK_SELECTOR_KEY = "job.task.selector";
+
     private static final Orchestrator instance;
     private final Map<Long, InternalStateHandler> groupStateHandlers;
     private final BlockingQueue<AbstractMap.SimpleEntry<Message, SessionContext>> queue;
@@ -106,36 +109,18 @@ public class Orchestrator extends Notifiable {
     public void setPersistenceManager(PersistenceManager persistenceManager) {
         this.persistenceManager = persistenceManager;
         JobCommand.setPersistenceManager(persistenceManager);
-        //TaskCommand.setPersistenceManager(persistenceManager);
         TaskUtilities.setPersistenceManager(persistenceManager);
-        Set<TaskSelector> selectors = ServiceRegistryManager.getInstance().getServiceRegistry(TaskSelector.class).getServices();
         final Function<Long, WorkflowNodeDescriptor> workflowProvider = this.persistenceManager::getWorkflowNodeById;
-        final BiFunction<Long, Long, ExecutionTask> taskByGroupNodeProvider = this.persistenceManager::getTaskByGroupAndNode;
-        final BiFunction<Long, Long, ExecutionTask> taskByJobNodeProvider = this.persistenceManager::getTaskByJobAndNode;
-        //noinspection unchecked
-        this.groupTaskSelector = selectors.stream()
-                                          .filter(s -> ExecutionGroup.class.equals(s.getTaskContainerClass()))
-                                          .map(s -> (TaskSelector<ExecutionGroup>)s)
-                                          .findFirst()
-                                          .orElse(new DefaultGroupTaskSelector());
-        this.groupTaskSelector.setWorkflowProvider(workflowProvider);
-        this.groupTaskSelector.setTaskByNodeProvider(taskByGroupNodeProvider);
-        //noinspection unchecked
-        this.jobTaskSelector = selectors.stream()
-                                        .filter(s -> ExecutionJob.class.equals(s.getTaskContainerClass()))
-                                        .map(s -> (TaskSelector<ExecutionJob>)s)
-                                        .findFirst()
-                                        .orElse(new DefaultJobTaskSelector());
-        this.jobTaskSelector.setWorkflowProvider(workflowProvider);
-        this.jobTaskSelector.setTaskByNodeProvider(taskByJobNodeProvider);
+        initializeJobSelector(workflowProvider, this.persistenceManager::getTaskByJobAndNode);
+        initializeGroupSelector(workflowProvider, this.persistenceManager::getTaskByGroupAndNode);
         this.jobFactory = new JobFactory(this.persistenceManager);
         Set<MetadataInspector> services = ServiceRegistryManager.getInstance()
                                                                 .getServiceRegistry(MetadataInspector.class)
                                                                 .getServices();
         if (services != null) {
             this.metadataInspector = services.stream()
-                                             .filter(s -> s.decodeQualification(Paths.get(ConfigurationManager.getInstance().getValue("product.location"))) == DecodeStatus.SUITABLE)
-                                             .findFirst().get();
+                 .filter(s -> s.decodeQualification(Paths.get(ConfigurationManager.getInstance().getValue("product.location"))) == DecodeStatus.SUITABLE)
+                 .findFirst().orElse(null);
         }
         QueueMonitor monitor = new QueueMonitor();
         monitor.setName("orchestrator");
@@ -238,6 +223,52 @@ public class Orchestrator extends Notifiable {
         } catch (InterruptedException e) {
             logger.severe(e.getMessage());
         }
+    }
+
+    private void initializeGroupSelector(Function<Long, WorkflowNodeDescriptor> workflowProvider,
+                                         BiFunction<Long, Long, ExecutionTask> nodeProvider) {
+        String groupTaskSelectorClass = ConfigurationManager.getInstance().getValue(GROUP_TASK_SELECTOR_KEY,
+                                                                                    DefaultGroupTaskSelector.class.getName());
+        Set<TaskSelector> selectors = ServiceRegistryManager.getInstance()
+                .getServiceRegistry(TaskSelector.class).getServices()
+                .stream().filter(s -> ExecutionGroup.class.equals(s.getTaskContainerClass()))
+                .collect(Collectors.toSet());
+        if (selectors != null) {
+            //noinspection unchecked
+            this.groupTaskSelector = selectors.stream()
+                    .filter(s -> s.getClass().getName().equals(groupTaskSelectorClass))
+                    .map(s -> (TaskSelector<ExecutionGroup>) s)
+                    .findFirst().orElse(null);
+        }
+        if (this.groupTaskSelector == null) {
+            throw new RuntimeException(String.format("Cannot instantiate the selector class defined by %s in configuration",
+                                                     GROUP_TASK_SELECTOR_KEY));
+        }
+        this.groupTaskSelector.setWorkflowProvider(workflowProvider);
+        this.groupTaskSelector.setTaskByNodeProvider(nodeProvider);
+    }
+
+    private void initializeJobSelector(Function<Long, WorkflowNodeDescriptor> workflowProvider,
+                                       BiFunction<Long, Long, ExecutionTask> nodeProvider) {
+        String jobTaskSelectorClass = ConfigurationManager.getInstance().getValue(JOB_TASK_SELECTOR_KEY,
+                                                                                  DefaultJobTaskSelector.class.getName());
+        Set<TaskSelector> selectors = ServiceRegistryManager.getInstance()
+                .getServiceRegistry(TaskSelector.class).getServices()
+                .stream().filter(s -> ExecutionJob.class.equals(s.getTaskContainerClass()))
+                .collect(Collectors.toSet());
+        if (selectors != null) {
+            //noinspection unchecked
+            this.jobTaskSelector = selectors.stream()
+                    .filter(s -> s.getClass().getName().equals(jobTaskSelectorClass))
+                    .map(s -> (TaskSelector<ExecutionJob>) s)
+                    .findFirst().orElse(null);
+        }
+        if (this.jobTaskSelector == null) {
+            throw new RuntimeException(String.format("Cannot instantiate the selector class defined by %s in configuration",
+                                                     JOB_TASK_SELECTOR_KEY));
+        }
+        this.jobTaskSelector.setWorkflowProvider(workflowProvider);
+        this.jobTaskSelector.setTaskByNodeProvider(nodeProvider);
     }
 
     private void processMessage(Message message, SessionContext currentContext) {
