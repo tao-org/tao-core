@@ -23,5 +23,5 @@ cd $SCRIPTS_ROOT
 . common_functions.sh
 exportPGVariables
 
-executeSqlCommand "DROP DATABASE IF EXISTS taodata" ""
-executeSqlCommand "DROP ROLE IF EXISTS tao" ""
+#executeSqlCommand "DROP DATABASE IF EXISTS taodata" ""
+#executeSqlCommand "DROP ROLE IF EXISTS tao" ""
