@@ -17,6 +17,20 @@
 package ro.cs.tao.services.interfaces;
 
 import ro.cs.tao.datasource.DataSourceComponent;
+import ro.cs.tao.eodata.EOProduct;
+import ro.cs.tao.persistence.exception.PersistenceException;
+
+import java.security.Principal;
+import java.util.List;
 
 public interface DataSourceComponentService extends CRUDService<DataSourceComponent> {
+
+    List<DataSourceComponent> getUserDataSourceComponents(String userName);
+
+    /**
+     * Creates a user data source component that wraps the given list of products.
+     * @param products      The list of products
+     * @param principal     The principal to create the component for
+     */
+    DataSourceComponent createFor(List<EOProduct> products, Principal principal) throws PersistenceException;
 }

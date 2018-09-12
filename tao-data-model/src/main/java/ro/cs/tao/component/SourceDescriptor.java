@@ -104,6 +104,9 @@ public class SourceDescriptor extends StringIdentifiable {
      * @param constraint    The constraint class name.
      */
     public void addConstraint(String constraint) {
+        if (this.constraints == null) {
+            this.constraints = new ArrayList<>();
+        }
         this.constraints.add(constraint);
     }
 
@@ -150,7 +153,9 @@ public class SourceDescriptor extends StringIdentifiable {
         clone.dataDescriptor.setCrs(this.dataDescriptor.getCrs());
         clone.dataDescriptor.setFormatType(this.dataDescriptor.getFormatType());
         clone.dataDescriptor.setDimension(this.dataDescriptor.getDimension());
-        clone.constraints = new ArrayList<>(this.constraints);
+        if (this.constraints != null) {
+            clone.constraints = new ArrayList<>(this.constraints);
+        }
         clone.cardinality = this.cardinality;
         return clone;
     }

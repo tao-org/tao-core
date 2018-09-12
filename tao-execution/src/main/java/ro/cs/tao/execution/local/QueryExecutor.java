@@ -73,6 +73,13 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> {
             List<EOProduct> results = future.get();
             ExecutionStatus status;
             if (results != null && results.size() > 0) {
+                int cardinality = dataSourceComponent.getSources().get(0).getCardinality();
+                if (cardinality != results.size()) {
+                    logger.warning(String.format("Task %s expected %s inputs, but received %s. Execution is cancelled",
+                                                 task.getResourceId(), cardinality, results.size()));
+                    markTaskFinished(task, ExecutionStatus.CANCELLED);
+                    return;
+                }
                 String sensorName = dataSourceComponent.getSensorName().toLowerCase().replace(" ", "-");
                 final List<EOProduct> products = dataSourceComponent.doFetch(results,
                         null,
@@ -129,14 +136,6 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> {
     }
 
     private void persistResults(List<EOProduct> results) {
-        /*for (EOProduct product : results) {
-            try {
-                persistenceManager.saveEOProduct(product);
-            } catch (Exception e) {
-                logger.severe(String.format("Product %s could not be written to database: %s",
-                                            product.getName(), e.getMessage()));
-            }
-        }*/
         OutputDataHandlerManager.getInstance().applyHandlers(results);
     }
 

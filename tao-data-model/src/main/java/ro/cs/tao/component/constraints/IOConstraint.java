@@ -16,6 +16,8 @@
 package ro.cs.tao.component.constraints;
 
 import ro.cs.tao.component.DataDescriptor;
+import ro.cs.tao.component.SourceDescriptor;
+import ro.cs.tao.component.TargetDescriptor;
 
 /**
  * Base class for input/output constraints (restrictions to be applied to products entering or resulting from components.
@@ -29,4 +31,14 @@ public abstract class IOConstraint {
      * @return  <code>true</code> if the constraint is satisfied, <code>false</code> otherwise.
      */
     public abstract boolean check(DataDescriptor... args);
+
+    /**
+     * Verifies thath the given descriptors are compatible. The compatibility is dictated by implementors that
+     * override this method.
+     * @param source    The source descriptor
+     * @param target    The target descriptor.
+     */
+    public boolean check(SourceDescriptor source, TargetDescriptor target) {
+        return true;
+    }
 }

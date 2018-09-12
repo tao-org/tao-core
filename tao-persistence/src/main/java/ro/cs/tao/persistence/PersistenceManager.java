@@ -330,6 +330,10 @@ public class PersistenceManager implements MessagePersister {
         return dataSourceComponentManager.list(pageNumber, pageSize, sort);
     }
 
+    public List<DataSourceComponent> getUserDataSourceComponents(String userName) {
+        return dataSourceComponentManager.getUserDataSourceComponents(userName);
+    }
+
     public DataSourceComponent getDataSourceInstance(String id) {
         return dataSourceComponentManager.get(id);
     }
