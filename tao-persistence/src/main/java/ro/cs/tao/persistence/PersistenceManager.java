@@ -257,6 +257,10 @@ public class PersistenceManager implements MessagePersister {
         return processingComponentManager.list(pageNumber, pageSize, sort);
     }
 
+    public List<ProcessingComponent> getProcessingComponents(Iterable<String> ids) {
+        return processingComponentManager.list(ids);
+    }
+
     public List<ProcessingComponent> getUserProcessingComponents(String userName) {
         return processingComponentManager.getUserProcessingComponents(userName);
     }
