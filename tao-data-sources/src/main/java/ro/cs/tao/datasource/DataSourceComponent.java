@@ -55,6 +55,8 @@ public class DataSourceComponent extends TaoComponent {
     private String sensorName;
     @XmlElement
     private String dataSourceName;
+    @XmlElement
+    private boolean system;
     @XmlTransient
     private String userName;
     @XmlTransient
@@ -105,34 +107,65 @@ public class DataSourceComponent extends TaoComponent {
         targetDescriptor.setDataDescriptor(destData);
         targetDescriptor.setCardinality(0);
         addTarget(targetDescriptor);
+        this.system = false;
     }
 
     public DataSourceComponent() { this.logger = Logger.getLogger(DataSourceComponent.class.getName()); }
 
+    /**
+     * Returns the sensor name of this component
+     */
     public String getSensorName() { return sensorName; }
-
+    /**
+     * Sets the sensor name of this component
+     * @param sensorName    The sensor name
+     */
     public void setSensorName(String sensorName) {
         this.sensorName = sensorName;
     }
 
+    /**
+     * Returns the data source name of this component
+     */
     public String getDataSourceName() { return dataSourceName; }
 
+    /**
+     * Sets the data source name of this component
+     * @param dataSourceName    The data source name
+     */
     public void setDataSourceName(String dataSourceName) {
         this.dataSourceName = dataSourceName;
     }
 
+    public boolean getSystem() { return system; }
+    public void setSystem(boolean value) { this.system = value; }
+
+    /**
+     * Returns the user name used by this component to connect to the data source
+     */
     public String getUserName() {
         return userName;
     }
 
+    /**
+     * Sets the user name used by this component to connect to the data source
+     * @param userName  The user name
+     */
     public void setUserName(String userName) {
         this.userName = userName;
     }
 
+    /**
+     * Returns the password used by this component to connect to the data source
+     */
     public String getPassword() {
         return password;
     }
 
+    /**
+     * Sets the password used by this component to connect to the data source
+     * @param password  The password
+     */
     public void setPassword(String password) {
         this.password = password;
     }
@@ -140,11 +173,23 @@ public class DataSourceComponent extends TaoComponent {
     @Override
     public String defaultId() { return this.sensorName + "-" + this.dataSourceName; }
 
+    /**
+     * Returns the parameters that are overridden by this component
+     */
     @XmlElementWrapper(name = "specificParameters")
     @XmlElement(name = "dsParameter")
     public List<Parameter> getOverriddenParameters() { return overriddenParameters; }
+    /**
+     * Sets the parameters that are overridden by this component
+     * @param parameters    The list of overridden parameters
+     */
     public void setOverriddenParameters(List<Parameter> parameters) { this.overriddenParameters = parameters; }
 
+    /**
+     * Returns the value of the given parameter
+     * @param name      The parameter name
+     * @throws Exception    If the parameter value cannot be marshalled back to the parameter type
+     */
     public Object getParameterValue(String name) throws Exception {
         if (this.overriddenParameters != null) {
             Optional<Parameter> parameter = this.overriddenParameters.stream().filter(p -> p.getName().equals(name)).findFirst();
@@ -153,12 +198,6 @@ public class DataSourceComponent extends TaoComponent {
                     null;
         } else {
             return null;
-        }
-    }
-
-    public void setSourceCardinality(int sourceCardinality) {
-        if (this.sources != null && this.sources.size() == 1) {
-            this.sources.get(0).setCardinality(1);
         }
     }
 
@@ -175,9 +214,14 @@ public class DataSourceComponent extends TaoComponent {
         throw new RuntimeException("Not allowed on " + getClass().getName());
     }
 
+    /**
+     * Sets the cardinality of the outputs. Since the outputs can have their own cardinality,
+     * this is a convenience method to set the cardinality of the output if the component has only one output.
+     * @param targetCardinality The output cardinality.
+     */
     public void setTargetCardinality(int targetCardinality) {
         if (this.targets != null && this.targets.size() == 1) {
-            this.targets.get(0).setCardinality(1);
+            this.targets.get(0).setCardinality(targetCardinality);
         }
     }
 
@@ -194,6 +238,11 @@ public class DataSourceComponent extends TaoComponent {
         throw new RuntimeException("Not allowed on " + getClass().getName());
     }
 
+    /**
+     * Sets the credentials of the account to be used by this component
+     * @param userName  The user name
+     * @param password  The password (preferably encrypted)
+     */
     public void setUserCredentials(String userName, String password) {
         this.userName = userName;
         this.password = password;
@@ -210,17 +259,46 @@ public class DataSourceComponent extends TaoComponent {
         }
     }
 
+    /**
+     * Returns the fetch mode of this component.
+     * @see FetchMode for possible values
+     */
     public FetchMode getFetchMode() { return fetchMode; }
+
+    /**
+     * Sets the fetch mode of this component.
+     * @param mode  The mode.
+     * @see FetchMode for possible values
+     */
     public void setFetchMode(FetchMode mode) { this.fetchMode = mode; }
+
+    /**
+     * Sets the maximum number of retries this component should perform for an item that was not successfully fetched.
+     * @param maxRetries    The number of retries
+     */
     public void setMaxRetries(int maxRetries) { this.maxRetries = maxRetries; }
+
+    /**
+     * Returns the maximum number of retries this component should perform for an item that was not successfully fetched.
+     */
     public int getMaxRetries() { return maxRetries; }
 
+    /**
+     * Sets a listener that will react to product fetch status changes (i.e. fetch started, error, fetch completed)
+     * @param listener  The status listener
+     */
     public void setProductStatusListener(ProductStatusListener listener) {
         this.productStatusListener = listener;
     }
 
+    /**
+     * Returns the product that this component currently is trying to fetch.
+     */
     public EOProduct getCurrentProduct() { return currentProduct; }
 
+    /**
+     * Creates a query that can be submitted to (executed against) the data source of this component.
+     */
     public DataQuery createQuery() {
         DataSourceManager dsManager = DataSourceManager.getInstance();
         DataSource dataSource = this.dataSourceName != null ?
@@ -229,6 +307,10 @@ public class DataSourceComponent extends TaoComponent {
         return dataSource.createQuery(this.sensorName);
     }
 
+    /**
+     * Performs a query with the given query parameters.
+     * @param parameters    The query parameters
+     */
     public List<EOProduct> doQuery(List<QueryParameter> parameters) throws QueryException {
         DataSourceManager dsManager = DataSourceManager.getInstance();
         DataSource dataSource = this.dataSourceName != null ?
@@ -241,6 +323,11 @@ public class DataSourceComponent extends TaoComponent {
         return query.execute();
     }
 
+    /**
+     * Performs a count query with the given parameters.
+     * @param parameters    The query parameters
+     * @return  The number of results
+     */
     public long doCount(List<QueryParameter> parameters) throws QueryException {
         DataSourceManager dsManager = DataSourceManager.getInstance();
         DataSource dataSource = this.dataSourceName != null ?
@@ -253,10 +340,27 @@ public class DataSourceComponent extends TaoComponent {
         return query.getCount();
     }
 
+    /**
+     * Retrieves the given list of products, optionally filtering them by tiles, to the given path.
+     * @param products  The list of products to be retrieved
+     * @param tiles     The tile filter. Can be null.
+     * @param destinationPath   The location where the products will be placed.
+     */
     public List<EOProduct> doFetch(List<EOProduct> products, Set<String> tiles, String destinationPath) {
         return doFetch(products, tiles, destinationPath, null, null);
     }
 
+    /**
+     * Retrieves the given list of products, optionally filtering them by tiles, to the given path.
+     * If the localRootPath is set and the {@link FetchMode} of this component is set to FetchMode.SYMLINK,
+     * this component will try to create symbolic links to the given products that are physically found in the local
+     * archive.
+     * @param products  The list of products to be fetched
+     * @param tiles     The tile filter
+     * @param destinationPath   The location where the products will be placed
+     * @param localRootPath     The path to the local products archive
+     * @param additionalProperties  Additional properties that can be passed to the component
+     */
     public List<EOProduct> doFetch(List<EOProduct> products, Set<String> tiles, String destinationPath, String localRootPath, Properties additionalProperties) {
         DataSourceManager dsManager = DataSourceManager.getInstance();
         DataSource dataSource = this.dataSourceName != null ?
@@ -355,6 +459,9 @@ public class DataSourceComponent extends TaoComponent {
         return products;
     }
 
+    /**
+     * Resumes the fetch operation on the current product.
+     */
     public void resume() {
         this.cancelled = false;
         if (this.currentFetcher != null) {
@@ -362,6 +469,9 @@ public class DataSourceComponent extends TaoComponent {
         }
     }
 
+    /**
+     * Cancels the fetch operation on the current product.
+     */
     public void cancel() {
         this.cancelled = true;
         if (this.currentFetcher != null) {

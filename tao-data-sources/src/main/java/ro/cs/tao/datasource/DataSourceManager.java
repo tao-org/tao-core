@@ -74,7 +74,6 @@ public class DataSourceManager {
                 if (!this.registeredSources.containsKey(key)) {
                     final Map<String, Map<String, ParameterDescriptor>> parameters = ds.getSupportedParameters();
                     this.registeredSources.put(key, parameters.get(sensor));
-                    this.logger.finest(String.format("Registered data source %s for sensor %s", key.getValue(), key.getKey()));
                 }
             }
         });

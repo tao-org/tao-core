@@ -41,6 +41,8 @@ public interface ComponentService extends CRUDService<ProcessingComponent> {
 
     List<ProcessingComponentInfo> getProcessingComponents();
 
+    List<ProcessingComponent> getProcessingComponents(Iterable<String> ids);
+
     List<ProcessingComponentInfo> getProcessingComponents(int pageNumber, int pageSize, Sort sort);
 
     /**

@@ -15,7 +15,7 @@
  */
 package ro.cs.tao.component.constraints;
 
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 import ro.cs.tao.component.DataDescriptor;
 import ro.cs.tao.serialization.ConstraintAdapter;
 import ro.cs.tao.serialization.GeometryAdapter;
