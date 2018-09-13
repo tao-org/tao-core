@@ -306,38 +306,24 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
 
     protected Path findProductPath(Path root, EOProduct product) {
         // Products are assumed to be organized according to the pattern defined in tao.properties
-        //String date = dateFormat.format(product.getAcquisitionDate());
         final Date date = product.getAcquisitionDate();
         final DateFormatTokenizer tokenizer = new DateFormatTokenizer(this.props.getProperty(LOCAL_PATH_FORMAT, "yyyy/MM/dd"));
-        //boolean usePadding = Boolean.parseBoolean(this.props.getProperty(USE_PADDING_KEY, "true"));
-        //Path productPath = root.resolve(usePadding ? date.substring(0, 4) : String.valueOf(Integer.parseInt(date.substring(0, 4))));
-        Path productPath = root.resolve(tokenizer.getYearPart(date));
-        if (Files.exists(productPath)) {
-            //productPath = productPath.resolve(usePadding ? date.substring(4, 6) : String.valueOf(Integer.parseInt(date.substring(4, 6))));
-            productPath = productPath.resolve(tokenizer.getMonthPart(date));
-            /*productPath = Files.exists(productPath) ?
-                    productPath.resolve(usePadding ? date.substring(6, 8) : String.valueOf(Integer.parseInt(date.substring(6, 8)))) :
-                    null;*/
-            productPath = Files.exists(productPath) ? productPath.resolve(tokenizer.getDayPart(date)) : null;
-            if (productPath != null && Files.exists(productPath)) {
-                Path fullProductPath = productPath.resolve(product.getName());
-                // first check if we have the product name
-                if (!Files.exists(fullProductPath)) {
-                    // otherwise try to see if we have the filename attribute and if exists the folder with that name
-                    String fileNameAttr = product.getAttributeValue("filename");
-                    if (fileNameAttr != null) {
-                        fullProductPath = productPath.resolve(fileNameAttr);
-                    }
-                }
-                productPath = fullProductPath;
+        Path productFolderPath = root.resolve(tokenizer.getYearPart(date))
+                .resolve(tokenizer.getMonthPart(date))
+                .resolve(tokenizer.getDayPart(date));
+        Path fullProductPath = productFolderPath.resolve(product.getName());
+        // first check if we have the product name
+        if (!Files.exists(fullProductPath)) {
+            // otherwise try to see if we have the filename attribute and if exists the folder with that name
+            String fileNameAttr = product.getAttributeValue("filename");
+            if (fileNameAttr != null) {
+                fullProductPath = productFolderPath.resolve(fileNameAttr);
             }
-            if (productPath != null && !Files.exists(productPath)) {
-                productPath = null;
+            if (!Files.exists(fullProductPath)) {
+                fullProductPath = null;
             }
-        } else {
-            productPath = null;
         }
-        return productPath;
+        return fullProductPath;
     }
 
     protected boolean isCancelled() { return this.cancelled; }
