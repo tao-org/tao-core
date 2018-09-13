@@ -309,8 +309,8 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         final Date date = product.getAcquisitionDate();
         final DateFormatTokenizer tokenizer = new DateFormatTokenizer(this.props.getProperty(LOCAL_PATH_FORMAT, "yyyy/MM/dd"));
         Path productFolderPath = root.resolve(tokenizer.getYearPart(date))
-                                     .resolve(tokenizer.getMonthPart(date))
-                                     .resolve(tokenizer.getDayPart(date));
+                .resolve(tokenizer.getMonthPart(date))
+                .resolve(tokenizer.getDayPart(date));
         Path fullProductPath = productFolderPath.resolve(product.getName());
         // first check if we have the product name
         if (!Files.exists(fullProductPath)) {
