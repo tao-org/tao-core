@@ -306,24 +306,33 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
 
     protected Path findProductPath(Path root, EOProduct product) {
         // Products are assumed to be organized according to the pattern defined in tao.properties
-        final Date date = product.getAcquisitionDate();
-        final DateFormatTokenizer tokenizer = new DateFormatTokenizer(this.props.getProperty(LOCAL_PATH_FORMAT, "yyyy/MM/dd"));
-        Path productFolderPath = root.resolve(tokenizer.getYearPart(date))
-                .resolve(tokenizer.getMonthPart(date))
-                .resolve(tokenizer.getDayPart(date));
-        Path fullProductPath = productFolderPath.resolve(product.getName());
-        // first check if we have the product name
+        Date date = product.getAcquisitionDate();
+        final String format = this.props.getProperty(LOCAL_PATH_FORMAT, "yyyy/MM/dd");
+        final String productName = product.getAttributeValue("filename") != null ?
+                product.getAttributeValue("filename") : product.getName();
+        Path productFolderPath = dateToPath(root, date, format);
+        Path fullProductPath = productFolderPath.resolve(productName);
         if (!Files.exists(fullProductPath)) {
-            // otherwise try to see if we have the filename attribute and if exists the folder with that name
-            String fileNameAttr = product.getAttributeValue("filename");
-            if (fileNameAttr != null) {
-                fullProductPath = productFolderPath.resolve(fileNameAttr);
-            }
-            if (!Files.exists(fullProductPath)) {
+            // maybe products are grouped by processing date
+            date = product.getProcessingDate();
+            if (date != null) {
+                productFolderPath = dateToPath(root, date, format);
+                fullProductPath = productFolderPath.resolve(productName);
+                if (!Files.exists(fullProductPath)) {
+                    fullProductPath = null;
+                }
+            } else {
                 fullProductPath = null;
             }
         }
         return fullProductPath;
+    }
+
+    private Path dateToPath(Path root, Date date, String formatOnDisk) {
+        final DateFormatTokenizer tokenizer = new DateFormatTokenizer(formatOnDisk);
+        return root.resolve(tokenizer.getYearPart(date))
+                    .resolve(tokenizer.getMonthPart(date))
+                    .resolve(tokenizer.getDayPart(date));
     }
 
     protected boolean isCancelled() { return this.cancelled; }
