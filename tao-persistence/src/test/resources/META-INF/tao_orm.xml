@@ -160,6 +160,7 @@
             <basic name="approximateSize">
                 <column name="approximate_size" nullable="false" column-definition="bigint not null"/>
             </basic>
+            <transient name="processingDate"/>
         </attributes>
     </entity>
 
