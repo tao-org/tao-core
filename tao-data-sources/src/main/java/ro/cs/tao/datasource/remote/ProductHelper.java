@@ -29,7 +29,9 @@ public abstract class ProductHelper {
     protected String name;
     protected String id;
     protected String sensingDate;
+    protected String processingDate;
     protected String version;
+    protected String[] tokens;
 
     public ProductHelper() {}
 
@@ -98,6 +100,10 @@ public abstract class ProductHelper {
      */
     public void setSensingDate(String date) { this.sensingDate = date; }
 
+    public String getProcessingDate() { return processingDate; }
+
+    public void setProcessingDate(String processingDate) { this.processingDate = processingDate; }
+
     /**
      * Returns the metadata file name.
      */
@@ -123,8 +129,26 @@ public abstract class ProductHelper {
         return this.name;
     }
 
+    protected String[] getTokens(Pattern pattern) {
+        if (this.tokens == null && this.name != null) {
+            String[] tokens;
+            Matcher matcher = pattern.matcher(this.name);
+            if (matcher.matches()) {
+                int count = matcher.groupCount();
+                tokens = new String[count];
+                for (int i = 0; i < tokens.length; i++) {
+                    tokens[i] = matcher.group(i + 1);
+                }
+            } else {
+                throw new RuntimeException("Name doesn't match the specifications");
+            }
+            return tokens;
+        }
+        return this.tokens;
+    }
+
     protected String[] getTokens(Pattern pattern, String input, Map<Integer, String> replacements) {
-        String[] tokens = null;
+        String[] tokens;
         Matcher matcher = pattern.matcher(input);
         if (matcher.matches()) {
             int count = matcher.groupCount();
