@@ -27,6 +27,8 @@ public interface DataSourceComponentService extends CRUDService<DataSourceCompon
 
     List<DataSourceComponent> getUserDataSourceComponents(String userName);
 
+    List<DataSourceComponent> getDataSourceComponents(Iterable<String> ids);
+
     /**
      * Creates a user data source component that wraps the given list of products.
      * @param products      The list of products

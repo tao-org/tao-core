@@ -38,6 +38,7 @@ public class EOProduct extends EOData implements Serializable {
     private int width;
     private int height;
     private long approximateSize;
+    private Date processingDate;
 
     //region Getters and setters
     public SensorType getSensorType() {
@@ -48,13 +49,15 @@ public class EOProduct extends EOData implements Serializable {
         this.sensorType = sensorType;
     }
 
-    public Date getAcquisitionDate() {
-        return acquisitionDate;
-    }
+    public Date getAcquisitionDate() { return acquisitionDate; }
 
     public void setAcquisitionDate(Date acquisitionDate) {
         this.acquisitionDate = acquisitionDate;
     }
+
+    public Date getProcessingDate() { return processingDate; }
+
+    public void setProcessingDate(Date processingDate) { this.processingDate = processingDate; }
 
     public PixelType getPixelType() {
         return pixelType;
