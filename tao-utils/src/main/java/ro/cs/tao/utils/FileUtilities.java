@@ -23,6 +23,7 @@ import java.nio.file.*;
 import java.nio.file.FileSystem;
 import java.nio.file.attribute.*;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -159,6 +160,40 @@ public class FileUtilities {
                         .map(File::toPath)
                         .collect(Collectors.toList()) :
                 new ArrayList<>();
+    }
+
+    public static Path link(Path sourcePath, final Path targetPath) throws IOException {
+        return link(sourcePath, targetPath, null, null);
+    }
+
+    public static Path link(Path sourcePath, final Path targetPath,
+                            Predicate<? super Path> folderFilter,
+                            Predicate<? super Path> fileFilter) throws IOException {
+        if (sourcePath != null && Files.exists(sourcePath)) {
+            if (Files.isDirectory(sourcePath)) {
+                List<Path> folders = FileUtilities.listFolders(sourcePath);
+                if (folderFilter != null) {
+                    folders = folders.stream().filter(folderFilter).collect(Collectors.toList());
+                }
+                for (Path folder : folders) {
+                    FileUtilities.ensureExists(targetPath.resolve(sourcePath.relativize(folder)));
+                    List<Path> files = FileUtilities.listFiles(folder);
+                    if (fileFilter != null) {
+                        files = files.stream().filter(fileFilter).collect(Collectors.toList());
+                    }
+                    for (Path file : files) {
+                        linkFile(file, targetPath.resolve(sourcePath.relativize(file)));
+                    }
+                }
+            } else {
+                linkFile(sourcePath, targetPath);
+            }
+        }
+        return targetPath;
+    }
+
+    public static Path linkFile(Path sourcePath, Path file) throws IOException {
+        return Files.exists(file) ? file : Files.createSymbolicLink(file, sourcePath);
     }
 
     public static void deleteTree(Path root) throws IOException {
