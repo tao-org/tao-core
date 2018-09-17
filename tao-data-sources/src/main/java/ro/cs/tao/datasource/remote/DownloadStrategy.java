@@ -354,10 +354,6 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         }
     }
 
-    protected Path linkFile(Path sourcePath, Path file) throws IOException {
-        return Files.exists(file) ? file : Files.createSymbolicLink(file, sourcePath);
-    }
-
     protected Path check(EOProduct product) throws IOException {
         return check(product, Paths.get(localArchiveRoot));
     }
