@@ -18,6 +18,13 @@ package ro.cs.tao.services.interfaces;
 
 import ro.cs.tao.eodata.EOProduct;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.List;
+
 public interface ProductService extends CRUDService<EOProduct> {
+
+    List<EOProduct> inspect(Path sourcePath) throws IOException;
+    int importProducts(List<EOProduct> products);
 
 }
