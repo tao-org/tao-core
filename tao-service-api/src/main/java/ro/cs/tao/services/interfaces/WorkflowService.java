@@ -54,6 +54,11 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor> {
      * @param user      The user name (login)
      */
     List<WorkflowInfo> getOtherPublicWorkflows(String user);
+
+    /**
+     * Returns all the public workflows.
+     */
+    List<WorkflowInfo> getPublicWorkflows();
     /**
      * Adds a node to a workflow.
      * @param nodeDescriptor    The node to add
