@@ -18,6 +18,7 @@ package ro.cs.tao.execution;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.StringIdentifiable;
 import ro.cs.tao.component.TaoComponent;
+import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.messaging.Messaging;
@@ -40,7 +41,7 @@ import java.util.logging.Logger;
  * @author Cosmin Udroiu
  */
 public abstract class Executor<T extends ExecutionTask> extends StringIdentifiable {
-    private static final int TIMER_PERIOD = 3000;
+    private static final String TIMER_PERIOD = "5";
     /* Flag for trying to close the monitoring thread in an elegant manner */
     protected Boolean isInitialized = false;
     protected final PersistenceManager persistenceManager = SpringContextBridge.services().getPersistenceManager();
@@ -64,7 +65,9 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
      * @throws ExecutionException
      */
     public void initialize() throws ExecutionException {
-        initialize(TIMER_PERIOD);
+        int pollingInterval = 1000 *
+                Integer.parseInt(ConfigurationManager.getInstance().getValue("tao.drmaa.polling.interval", TIMER_PERIOD));
+        initialize(pollingInterval);
     }
 
     public void initialize(int pollingInterval) throws ExecutionException {

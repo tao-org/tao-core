@@ -159,37 +159,39 @@ public class DefaultSession implements Session {
     public void control(String jobId, int action) throws DrmaaException {
         checkSession();
         Executor runner = this.runningJobs.get(jobId);
-        if (runner == null) {
+        /*if (runner == null) {
             throw new InvalidJobException();
-        }
-        switch (action) {
-            case HOLD:
-                if (!runner.isRunning()) {
-                    throw new HoldInconsistentStateException();
-                }
-                runner.suspend();
-                break;
-            case SUSPEND:
-                if (!runner.isRunning()) {
-                    throw new SuspendInconsistentStateException();
-                }
-                runner.suspend();
-                break;
-            case TERMINATE:
-                runner.stop();
-                break;
-            case RELEASE:
-                if (!runner.isSuspended()) {
-                    throw new ReleaseInconsistentStateException();
-                }
-                runner.resume();
-                break;
-            case RESUME:
-                if (!runner.isSuspended()) {
-                    throw new ResumeInconsistentStateException();
-                }
-                runner.resume();
-                break;
+        }*/
+        if (runner != null) {
+            switch (action) {
+                case HOLD:
+                    if (!runner.isRunning()) {
+                        throw new HoldInconsistentStateException();
+                    }
+                    runner.suspend();
+                    break;
+                case SUSPEND:
+                    if (!runner.isRunning()) {
+                        throw new SuspendInconsistentStateException();
+                    }
+                    runner.suspend();
+                    break;
+                case TERMINATE:
+                    runner.stop();
+                    break;
+                case RELEASE:
+                    if (!runner.isSuspended()) {
+                        throw new ReleaseInconsistentStateException();
+                    }
+                    runner.resume();
+                    break;
+                case RESUME:
+                    if (!runner.isSuspended()) {
+                        throw new ResumeInconsistentStateException();
+                    }
+                    runner.resume();
+                    break;
+            }
         }
     }
 

@@ -51,7 +51,7 @@ public abstract class TaskCommand {
     /**
      * Returns the set of states a task should be into when applying this command.
      */
-    protected abstract Set<ExecutionStatus> getAllowedStates();
+    public abstract Set<ExecutionStatus> getAllowedStates();
 
     /**
      * The action to be performed in order to transition to the desired state.
@@ -92,7 +92,7 @@ public abstract class TaskCommand {
             super();
         }
         @Override
-        protected Set<ExecutionStatus> getAllowedStates() {
+        public Set<ExecutionStatus> getAllowedStates() {
             return new HashSet<ExecutionStatus>() {{
                 add(ExecutionStatus.UNDETERMINED);
             }};
@@ -117,7 +117,7 @@ public abstract class TaskCommand {
             super();
         }
         @Override
-        protected Set<ExecutionStatus> getAllowedStates() {
+        public Set<ExecutionStatus> getAllowedStates() {
             return new HashSet<ExecutionStatus>() {{
                 add(ExecutionStatus.UNDETERMINED);
                 add(ExecutionStatus.QUEUED_ACTIVE);
@@ -138,7 +138,7 @@ public abstract class TaskCommand {
             super();
         }
         @Override
-        protected Set<ExecutionStatus> getAllowedStates() {
+        public Set<ExecutionStatus> getAllowedStates() {
             return new HashSet<ExecutionStatus>() {{
                 add(ExecutionStatus.QUEUED_ACTIVE);
                 add(ExecutionStatus.RUNNING);
@@ -158,7 +158,7 @@ public abstract class TaskCommand {
             super();
         }
         @Override
-        protected Set<ExecutionStatus> getAllowedStates() {
+        public Set<ExecutionStatus> getAllowedStates() {
             return new HashSet<ExecutionStatus>() {{
                 add(ExecutionStatus.SUSPENDED);
             }};
