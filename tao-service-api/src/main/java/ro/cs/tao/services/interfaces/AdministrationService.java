@@ -29,7 +29,7 @@ import java.util.List;
  *
  * @author Oana H.
  */
-public interface AdministrationService {
+public interface AdministrationService extends TAOService {
 
     User addNewUser(User userInfo) throws PersistenceException;
 

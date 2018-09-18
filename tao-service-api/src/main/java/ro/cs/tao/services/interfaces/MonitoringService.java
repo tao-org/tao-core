@@ -23,7 +23,7 @@ import java.util.Map;
 /**
  * @author Cosmin Cara
  */
-public interface MonitoringService<T> {
+public interface MonitoringService<T> extends TAOService {
 
     RuntimeInfo getMasterSnapshot();
 
