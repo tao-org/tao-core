@@ -85,7 +85,9 @@ public class Orchestrator extends Notifiable {
         instance = new Orchestrator();
     }
 
-    public static Orchestrator getInstance() { return instance; }
+    public static Orchestrator getInstance() {
+        return instance;
+    }
 
     private final StringListAdapter listAdapter;
     private final Logger logger = Logger.getLogger(Orchestrator.class.getName());
@@ -102,7 +104,7 @@ public class Orchestrator extends Notifiable {
         this.queue = new LinkedBlockingDeque<>();
         this.executors = Collections.synchronizedMap(new HashMap<>());
         this.runningTasks = new HashSet<>();
-        this.listAdapter =  new StringListAdapter();
+        this.listAdapter = new StringListAdapter();
         subscribe(Topics.TASK_STATUS_CHANGED);
     }
 
@@ -115,12 +117,12 @@ public class Orchestrator extends Notifiable {
         initializeGroupSelector(workflowProvider, this.persistenceManager::getTaskByGroupAndNode);
         this.jobFactory = new JobFactory(this.persistenceManager);
         Set<MetadataInspector> services = ServiceRegistryManager.getInstance()
-                                                                .getServiceRegistry(MetadataInspector.class)
-                                                                .getServices();
+                .getServiceRegistry(MetadataInspector.class)
+                .getServices();
         if (services != null) {
             this.metadataInspector = services.stream()
-                 .filter(s -> s.decodeQualification(Paths.get(ConfigurationManager.getInstance().getValue("product.location"))) == DecodeStatus.SUITABLE)
-                 .findFirst().orElse(null);
+                    .filter(s -> s.decodeQualification(Paths.get(ConfigurationManager.getInstance().getValue("product.location"))) == DecodeStatus.SUITABLE)
+                    .findFirst().orElse(null);
         }
         QueueMonitor monitor = new QueueMonitor();
         monitor.setName("orchestrator");
@@ -130,10 +132,9 @@ public class Orchestrator extends Notifiable {
     /**
      * Creates a job from a workflow definition and starts its execution.
      *
-     * @param workflowId    The workflow identifier
-     * @param inputs        The overridden parameter values for workflow nodes
-     *
-     * @throws ExecutionException   In case anything goes wrong or a job for this workflow was already created
+     * @param workflowId The workflow identifier
+     * @param inputs     The overridden parameter values for workflow nodes
+     * @throws ExecutionException In case anything goes wrong or a job for this workflow was already created
      */
     public long startWorkflow(long workflowId, Map<String, Map<String, String>> inputs, ExecutorService executorService) throws ExecutionException {
         try {
@@ -154,8 +155,8 @@ public class Orchestrator extends Notifiable {
     /**
      * Stops the execution of the job corresponding to this workflow.
      *
-     * @param workflowId    The workflow identifier
-     * @throws ExecutionException   In case anything goes wrong or there was no job for this workflow
+     * @param workflowId The workflow identifier
+     * @throws ExecutionException In case anything goes wrong or there was no job for this workflow
      */
     public void stopWorkflow(long workflowId) throws ExecutionException {
         ExecutionJob job = checkWorkflow(workflowId);
@@ -165,8 +166,8 @@ public class Orchestrator extends Notifiable {
     /**
      * Pauses (suspends) the execution of the job corresponding to this workflow.
      *
-     * @param workflowId    The workflow identifier
-     * @throws ExecutionException   In case anything goes wrong or there was no job for this workflow
+     * @param workflowId The workflow identifier
+     * @throws ExecutionException In case anything goes wrong or there was no job for this workflow
      */
     public void pauseWorkflow(long workflowId) throws ExecutionException {
         ExecutionJob job = checkWorkflow(workflowId);
@@ -176,8 +177,8 @@ public class Orchestrator extends Notifiable {
     /**
      * Resumes the execution of the job corresponding to this workflow.
      *
-     * @param workflowId    The workflow identifier
-     * @throws ExecutionException   In case anything goes wrong or there was no job for this workflow
+     * @param workflowId The workflow identifier
+     * @throws ExecutionException In case anything goes wrong or there was no job for this workflow
      */
     public void resumeWorkflow(long workflowId) throws ExecutionException {
         ExecutionJob job = checkWorkflow(workflowId);
@@ -322,9 +323,9 @@ public class Orchestrator extends Notifiable {
                     if (TaskUtilities.haveAllTasksCompleted(job)) {
                         logger.fine("No more child tasks to execute after the current task");
 
-                        if (job.getTasks().stream()
+                        if (job.orderedTasks().stream()
                                 .anyMatch(t -> t.getExecutionStatus() == ExecutionStatus.RUNNING ||
-                                        t.getExecutionStatus() == ExecutionStatus.QUEUED_ACTIVE)) {
+                                               t.getExecutionStatus() == ExecutionStatus.QUEUED_ACTIVE)) {
                             return;
                         }
                         job.setExecutionStatus(ExecutionStatus.DONE);
@@ -502,14 +503,12 @@ public class Orchestrator extends Notifiable {
     }
 
     /**
-     * An execution job is considered duplicate if:
-     * 1) it is created for the same workflow and
-     * 2) it has the same inputs and
-     * 3) the previously created job is in one of the following states: UNDETERMINED, QUEUED_ACTIVE, RUNNING
+     * An execution job is considered duplicate if: 1) it is created for the same workflow and 2) it has the same inputs
+     * and 3) the previously created job is in one of the following states: UNDETERMINED, QUEUED_ACTIVE, RUNNING
      *
-     * @param job       An existing job to check
-     * @param inputs    The inputs to be checked against
-     * @return          <code>true</code> if the given job doesn't match the inputs, <code>false</code> otherwise
+     * @param job    An existing job to check
+     * @param inputs The inputs to be checked against
+     * @return <code>true</code> if the given job doesn't match the inputs, <code>false</code> otherwise
      */
     private boolean checkExistingJob(ExecutionJob job, Map<String, String> inputs) {
         boolean existing = false;
@@ -517,7 +516,7 @@ public class Orchestrator extends Notifiable {
             case UNDETERMINED:
             case QUEUED_ACTIVE:
             case RUNNING:
-                List<ExecutionTask> tasks = job.getTasks();
+                List<ExecutionTask> tasks = job.orderedTasks();
                 if (tasks != null && tasks.size() > 0) {
                     ExecutionTask first = tasks.get(0);
                     existing = first.getInputParameterValues().stream()
@@ -557,8 +556,8 @@ public class Orchestrator extends Notifiable {
                 case CANCELLED:
                 case FAILED:
                     int startIndex = IntStream.range(0, tasks.size())
-                                              .filter(i -> task.getId().equals(tasks.get(i).getId()))
-                                              .findFirst().orElse(0);
+                            .filter(i -> task.getId().equals(tasks.get(i).getId()))
+                            .findFirst().orElse(0);
                     bulkSetStatus(tasks.subList(startIndex, tasks.size()), taskStatus);
                     if (TransitionBehavior.FAIL_ON_ERROR == persistenceManager.getWorkflowNodeById(task.getWorkflowNodeId()).getBehavior()) {
                         groupTask.setExecutionStatus(taskStatus);
@@ -631,21 +630,21 @@ public class Orchestrator extends Notifiable {
             switch (taskStatus) {
                 case SUSPENDED:
                 case CANCELLED:
-                    List<ExecutionTask> tasks = job.getTasks().stream()
-                                                        .filter(t -> !ExecutionStatus.DONE.equals(t.getExecutionStatus()))
-                                                        .collect(Collectors.toList());
-                    bulkSetStatus(tasks, taskStatus);
+                    List<ExecutionTask> tasks = job.orderedTasks().stream()
+                            .filter(t -> TaskCommand.STOP.getAllowedStates().contains(t.getExecutionStatus()))
+                            .collect(Collectors.toList());
                     stopTasks(tasks);
+                    bulkSetStatus(tasks, taskStatus);
                     job.setExecutionStatus(taskStatus);
                     persistenceManager.updateExecutionJob(job);
                     break;
                 case FAILED:
                     if (TransitionBehavior.FAIL_ON_ERROR.equals(TaskUtilities.getTransitionBehavior(changedTask))) {
-                        tasks = job.getTasks().stream()
-                                              .filter(t -> !ExecutionStatus.DONE.equals(t.getExecutionStatus()))
-                                              .collect(Collectors.toList());
-                        bulkSetStatus(tasks, taskStatus);
+                        tasks = job.orderedTasks().stream()
+                                .filter(t -> TaskCommand.STOP.getAllowedStates().contains(t.getExecutionStatus()))
+                                .collect(Collectors.toList());
                         stopTasks(tasks);
+                        bulkSetStatus(tasks, taskStatus);
                         job.setExecutionStatus(taskStatus);
                         persistenceManager.updateExecutionJob(job);
                     }
@@ -658,7 +657,7 @@ public class Orchestrator extends Notifiable {
                     }
                     break;
                 case DONE:
-                    if (job.getTasks().stream().allMatch(t -> t.getExecutionStatus() == ExecutionStatus.DONE)) {
+                    if (job.orderedTasks().stream().allMatch(t -> t.getExecutionStatus() == ExecutionStatus.DONE)) {
                         job.setExecutionStatus(ExecutionStatus.DONE);
                         job.setEndTime(LocalDateTime.now());
                         persistenceManager.updateExecutionJob(job);
@@ -789,9 +788,9 @@ public class Orchestrator extends Notifiable {
                     ExecutorService service = Orchestrator.this.executors.get(entry.getValue());
                     if (service != null) {
                         service.submit(() -> processMessage(entry.getKey(), entry.getValue()));
-                    } else {
-                        logger.severe("No executor found for " + entry.getKey());
-                    }
+                    }/* else {
+                        logger.warning("No executor found for " + entry.getKey());
+                    }*/
                 } catch (InterruptedException e) {
                     logger.severe(e.getMessage());
                 }

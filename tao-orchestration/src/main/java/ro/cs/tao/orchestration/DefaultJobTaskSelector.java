@@ -61,7 +61,7 @@ public class DefaultJobTaskSelector implements TaskSelector<ExecutionJob> {
     @Override
     public List<ExecutionTask> chooseNext(ExecutionJob job, ExecutionTask currentTask) {
         List<ExecutionTask> next = null;
-        List<ExecutionTask> tasks = job.orderTasks();
+        List<ExecutionTask> tasks = job.orderedTasks();
         if (tasks != null && tasks.size() > 0) {
             next = new ArrayList<>();
             ExecutionStatus status = job.getExecutionStatus();

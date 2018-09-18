@@ -18,7 +18,9 @@ package ro.cs.tao.execution.model;
 import ro.cs.tao.component.LongIdentifiable;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -87,16 +89,15 @@ public class ExecutionJob extends LongIdentifiable implements StatusChangeListen
         return tasks;
     }
 
-    public List<ExecutionTask> orderTasks() {
-        // Until we figure out why Hibernate duplicates entries, use a HashSet
-        Set<ExecutionTask> tasks = new HashSet<>(getTasks());
-        return tasks.stream()
+    public List<ExecutionTask> orderedTasks() {
+        return getTasks().stream()
+                    .distinct()
                     .sorted(Comparator.comparing(ExecutionTask::getId))
                     .collect(Collectors.toList());
     }
 
     public List<ExecutionTask> rootTasks() {
-        return orderTasks().stream().filter(t -> t.getLevel() == 1).collect(Collectors.toList());
+        return orderedTasks().stream().filter(t -> t.getLevel() == 1).collect(Collectors.toList());
     }
 
     public void addTask(ExecutionTask task) {
