@@ -27,7 +27,7 @@ import java.util.List;
  *
  * @author Oana H.
  */
-public interface UserService {
+public interface UserService extends TAOService {
 
     void activateUser(String username) throws PersistenceException;
 

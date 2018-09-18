@@ -22,7 +22,7 @@ import ro.cs.tao.services.model.auth.AuthInfo;
  *
  * @author Oana H.
  */
-public interface AuthenticationService {
+public interface AuthenticationService extends TAOService {
 
     /**
      * Login user using its credentials

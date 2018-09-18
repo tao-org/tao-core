@@ -28,7 +28,7 @@ import java.util.SortedSet;
 /**
  * @author Cosmin Cara
  */
-public interface DataSourceService {
+public interface DataSourceService extends TAOService {
 
     SortedSet<String> getSupportedSensors();
 

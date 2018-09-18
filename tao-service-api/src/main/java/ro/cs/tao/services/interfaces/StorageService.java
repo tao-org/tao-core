@@ -23,7 +23,7 @@ import java.nio.file.Path;
 import java.util.stream.Stream;
 
 @Service
-public interface StorageService<T> {
+public interface StorageService<T> extends TAOService {
     void store(T object, String description) throws Exception;
     void remove(String name) throws IOException;
     Stream<Path> listFiles(boolean userOnly) throws IOException;

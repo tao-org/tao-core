@@ -29,7 +29,7 @@ import java.util.Map;
  *
  * @author Cosmin Cara
  */
-public interface OrchestratorService {
+public interface OrchestratorService extends TAOService {
 
     /**
      * Returns all the settable parameters of the components of a workflow.

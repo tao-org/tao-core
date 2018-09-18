@@ -78,6 +78,10 @@ public class WorkflowManager {
         return workflowDescriptorRepository.getOtherPublicWorkflows(user);
     }
 
+    public List<WorkflowDescriptor> getPublicWorkflows() {
+        return workflowDescriptorRepository.getPublicWorkflows();
+    }
+
     @Transactional
     public WorkflowDescriptor saveWorkflowDescriptor(WorkflowDescriptor workflow) throws PersistenceException {
         // check method parameters

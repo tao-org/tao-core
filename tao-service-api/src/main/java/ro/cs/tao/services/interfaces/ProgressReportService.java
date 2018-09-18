@@ -19,7 +19,7 @@ import ro.cs.tao.messaging.TaskProgress;
 
 import java.util.List;
 
-public interface ProgressReportService {
+public interface ProgressReportService extends TAOService {
 
     /**
      * Returns information about current long running tasks.

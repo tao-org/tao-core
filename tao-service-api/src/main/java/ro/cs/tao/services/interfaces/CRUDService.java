@@ -28,7 +28,7 @@ import java.util.*;
  *
  * @author Cosmin Cara
  */
-public interface CRUDService<T> {
+public interface CRUDService<T> extends TAOService {
 
     /**
      * Finds an entity by its identifier.
