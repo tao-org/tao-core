@@ -107,7 +107,7 @@ public abstract class JobCommand {
         }
         @Override
         protected void doAction(ExecutionJob job) {
-            List<ExecutionTask> tasks = job.orderTasks();
+            List<ExecutionTask> tasks = job.orderedTasks();
             if (tasks == null || tasks.size() == 0) {
                 throw new ExecutionException(String.format("Job %s doesn't contain any tasks", job.getId()));
             }
@@ -142,7 +142,7 @@ public abstract class JobCommand {
         }
         @Override
         protected void doAction(ExecutionJob job) {
-            job.orderTasks().stream()
+            job.orderedTasks().stream()
                     .filter(t -> t.getExecutionStatus() == ExecutionStatus.RUNNING ||
                             t.getExecutionStatus() == ExecutionStatus.QUEUED_ACTIVE ||
                             t.getExecutionStatus() == ExecutionStatus.UNDETERMINED)
@@ -170,7 +170,7 @@ public abstract class JobCommand {
         }
         @Override
         protected void doAction(ExecutionJob job) {
-            job.orderTasks().stream()
+            job.orderedTasks().stream()
                     .filter(t -> t.getExecutionStatus() == ExecutionStatus.RUNNING ||
                             t.getExecutionStatus() == ExecutionStatus.QUEUED_ACTIVE)
                     .forEach(TaskCommand.SUSPEND::applyTo);
@@ -195,7 +195,7 @@ public abstract class JobCommand {
         }
         @Override
         protected void doAction(ExecutionJob job) {
-            job.orderTasks().stream()
+            job.orderedTasks().stream()
                     .filter(t -> t.getExecutionStatus() == ExecutionStatus.SUSPENDED)
                     .forEach(TaskCommand.RESUME::applyTo);
         }

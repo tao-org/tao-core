@@ -190,7 +190,7 @@ public class TaskUtilities {
     }
 
     public static boolean haveAllTasksCompleted(ExecutionJob job) {
-        List<ExecutionTask> tasks = job.getTasks();
+        List<ExecutionTask> tasks = job.orderedTasks();
         return tasks != null &&
                 tasks.stream().allMatch(t -> t.getExecutionStatus() == ExecutionStatus.DONE ||
                                              t.getExecutionStatus() == ExecutionStatus.FAILED ||

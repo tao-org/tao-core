@@ -55,18 +55,18 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> {
     public void execute(DataSourceExecutionTask task) throws ExecutionException {
         try {
             task.setResourceId(UUID.randomUUID().toString());
-            logger.fine(String.format("Succesfully submitted task with id %s", task.getResourceId()));
+            logger.fine(String.format("Succesfully submitted task with id %s", task.getId()));
             task.setExecutionNodeHostName(InetAddress.getLocalHost().getHostName());
             task.setStartTime(LocalDateTime.now());
             changeTaskStatus(task, ExecutionStatus.RUNNING);
             dataSourceComponent = task.getComponent();
             List<Variable> values = task.getInputParameterValues();
             if (values == null || values.size() == 0) {
-                throw new ExecutionException("No input data for the task");
+                throw new ExecutionException(String.format("No input data for the task %s", task.getId()));
             }
             Query query = Query.fromString(values.get(0).getValue());
             if (query == null) {
-                throw new ExecutionException("Invalid input data for the task");
+                throw new ExecutionException(String.format("Invalid input data for the task %s", task.getId()));
             }
             DataQuery dataQuery = Query.toDataQuery(query);
             final Future<List<EOProduct>> future = backgroundWorker.submit(dataQuery::execute);
@@ -74,9 +74,9 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> {
             ExecutionStatus status;
             if (results != null && results.size() > 0) {
                 int cardinality = dataSourceComponent.getSources().get(0).getCardinality();
-                if (cardinality != results.size()) {
+                if (cardinality > 0 && cardinality != results.size()) {
                     logger.warning(String.format("Task %s expected %s inputs, but received %s. Execution is cancelled",
-                                                 task.getResourceId(), cardinality, results.size()));
+                                                 task.getId(), cardinality, results.size()));
                     markTaskFinished(task, ExecutionStatus.CANCELLED);
                     return;
                 }

@@ -146,7 +146,7 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
             final ExecutionTask savedExecutionTask =  repository.save(task);
 
             // add the task to job tasks collection
-            List<ExecutionTask> jobTasks = job.getTasks();
+            List<ExecutionTask> jobTasks = job.orderedTasks();
             if (jobTasks.stream().noneMatch(t -> t.getId().equals(task.getId()))) {
                 jobTasks.add(task);
                 job.setTasks(jobTasks);
