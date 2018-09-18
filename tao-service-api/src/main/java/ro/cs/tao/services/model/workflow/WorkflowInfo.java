@@ -23,6 +23,7 @@ import ro.cs.tao.workflow.enums.Status;
 public class WorkflowInfo {
 
     protected Long id;
+    private String name;
     private String userName;
     private Visibility visibility;
     protected Status status;
@@ -36,9 +37,12 @@ public class WorkflowInfo {
         this.status = workflow.getStatus();
         this.path = workflow.getPath();
         this.active = workflow.isActive();
+        this.name = workflow.getName();
     }
 
     public Long getId() { return id; }
+
+    public String getName() { return name; }
 
     public String getUserName() { return userName; }
 

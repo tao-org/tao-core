@@ -33,4 +33,8 @@ public interface WorkflowDescriptorRepository extends PagingAndSortingRepository
     @Query(value = "SELECT * from tao.workflow_graph WHERE username != :user AND visibility_id = 1 " +
             "AND status_id = 3 ORDER BY created DESC", nativeQuery = true)
     List<WorkflowDescriptor> getOtherPublicWorkflows(@Param("user") String user);
+
+    @Query(value = "SELECT * from tao.workflow_graph WHERE visibility_id = 1 AND status_id = 3 " +
+            "ORDER BY created DESC", nativeQuery = true)
+    List<WorkflowDescriptor> getPublicWorkflows();
 }
