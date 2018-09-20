@@ -44,6 +44,17 @@ public abstract class XmlMetadataInspector implements MetadataInspector {
         return null;
     }
 
+    protected String getValue(String namespace, String tagName, Element element) {
+        NodeList list = element.getElementsByTagNameNS(namespace, tagName);
+        if (list != null && list.getLength() > 0) {
+            NodeList subList = list.item(0).getChildNodes();
+            if (subList != null && subList.getLength() > 0) {
+                return subList.item(0).getNodeValue();
+            }
+        }
+        return null;
+    }
+
     protected List<String> getValues(String tagName, Element element) {
         List<String> values = null;
         NodeList list = element.getElementsByTagName(tagName);
@@ -57,9 +68,40 @@ public abstract class XmlMetadataInspector implements MetadataInspector {
         return values;
     }
 
+    protected List<String> getValues(String namespace, String tagName, Element element) {
+        List<String> values = null;
+        NodeList list = element.getElementsByTagNameNS(namespace, tagName);
+        if (list != null && list.getLength() > 0) {
+            values = new ArrayList<>();
+            final int length = list.getLength();
+            for (int i = 0; i < length; i++) {
+                values.add(list.item(i).getNodeValue());
+            }
+        }
+        return values;
+    }
+
     protected List<String> getAttributeValues(String tagName, String attrName, Element element) {
         List<String> values = null;
         NodeList list = element.getElementsByTagName(tagName);
+        if (list != null && list.getLength() > 0) {
+            values = new ArrayList<>();
+            final int length = list.getLength();
+            for (int i = 0; i < length; i++) {
+                Node node = list.item(i);
+                NamedNodeMap attributes = node.getAttributes();
+                Node item = attributes.getNamedItem(attrName);
+                if (item != null) {
+                    values.add(item.getNodeValue());
+                }
+            }
+        }
+        return values;
+    }
+
+    protected List<String> getAttributeValues(String namespace, String tagName, String attrName, Element element) {
+        List<String> values = null;
+        NodeList list = element.getElementsByTagNameNS(namespace, tagName);
         if (list != null && list.getLength() > 0) {
             values = new ArrayList<>();
             final int length = list.getLength();
