@@ -387,7 +387,6 @@
         <convert converter="ro.cs.tao.persistence.convert.ParameterTypeConverter" attribute-name="type" />
         <convert converter="ro.cs.tao.persistence.convert.DataTypeConverter" attribute-name="dataType" />
         <convert converter="ro.cs.tao.persistence.convert.StringArrayToStringConverter" attribute-name="valueSet" />
-
         <attributes>
             <basic name="name">
                 <column name="name" nullable="false" column-definition="varchar(512 NOT NULL"/>
@@ -419,6 +418,12 @@
             <basic name="notNull">
                 <column name="not_null" nullable="true" column-definition="boolean NULL"/>
             </basic>
+
+            <element-collection name="dependencies" target-class="ro.cs.tao.component.ParameterDependency" access="PROPERTY" fetch="LAZY">
+                <collection-table name="tao.processing_parameter_dependencies">
+                    <join-column name="parameter_id" referenced-column-name="id"/>
+                </collection-table>
+            </element-collection>
 
             <transient name="validator" />
         </attributes>
@@ -1066,6 +1071,21 @@
         </attributes>
     </embeddable>
 
+    <embeddable class="ro.cs.tao.component.ParameterDependency" access="PROPERTY">
+        <attributes>
+            <basic name="expectedValue">
+                <column name="dependant_parameter_value" nullable="true" column-definition="varchar(250) NULL"/>
+            </basic>
+            <basic name="condition">
+                <column name="dependency_condition_id" nullable="false" column-definition="integer NOT NULL"/>
+                <convert converter="ro.cs.tao.persistence.convert.ConditionConverter" attribute-name="condition"/>
+            </basic>
+            <basic name="referencedParameterId">
+                <column name="dependant_parameter_id" nullable="false" column-definition="varchar(512) NOT NULL" />
+            </basic>
+        </attributes>
+    </embeddable>
+
     <embeddable class="ro.cs.tao.user.UserPreference" access="PROPERTY">
         <attributes>
             <basic name="key">
@@ -1095,5 +1115,6 @@
     <converter class="ro.cs.tao.persistence.convert.ParameterValueListConverter"/>
     <converter class="ro.cs.tao.persistence.convert.QueryValuesMapConverter"/>
     <converter class="ro.cs.tao.persistence.convert.UserStatusConverter"/>
+    <converter class="ro.cs.tao.persistence.convert.ConditionConverter" />
 
 </entity-mappings>
