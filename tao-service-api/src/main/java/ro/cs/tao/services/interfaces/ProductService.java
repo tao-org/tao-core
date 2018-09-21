@@ -26,5 +26,7 @@ public interface ProductService extends CRUDService<EOProduct> {
 
     List<EOProduct> inspect(Path sourcePath) throws IOException;
     int importProducts(List<EOProduct> products);
+    int importProducts(String sourcePath, boolean linkOnly) throws IOException;
+    List<String> checkExisting(String... names);
 
 }
