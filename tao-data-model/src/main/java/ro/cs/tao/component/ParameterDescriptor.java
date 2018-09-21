@@ -155,11 +155,11 @@ public class ParameterDescriptor extends StringIdentifiable {
 
     public void setDependencies(List<ParameterDependency> dependencies) { this.dependencies = dependencies; }
 
-    public void addDependency(ParameterDescriptor descriptor, Condition condition, String... values) {
+    public void addDependency(String parameterId, Condition condition, String... values) {
         if (this.dependencies == null) {
             this.dependencies = new ArrayList<>();
         }
-        ParameterDependency dependency = new ParameterDependency(descriptor.getId(), condition, values);
+        ParameterDependency dependency = new ParameterDependency(parameterId, condition, values);
         if (!this.dependencies.contains(dependency)) {
             this.dependencies.add(dependency);
         }
