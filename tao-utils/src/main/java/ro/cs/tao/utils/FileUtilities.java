@@ -198,10 +198,23 @@ public class FileUtilities {
 
     public static void deleteTree(Path root) throws IOException {
         if (root != null && Files.isDirectory(root)) {
-            Files.walk(root)
-                    .sorted(Comparator.reverseOrder())
-                    .map(Path::toFile)
-                    .forEach(File::delete);
+            Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    Files.delete(file);
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                    if (exc == null) {
+                        Files.delete(dir);
+                        return FileVisitResult.CONTINUE;
+                    } else {
+                        throw exc;
+                    }
+                }
+            });
         }
     }
 
@@ -245,7 +258,15 @@ public class FileUtilities {
         byte[] buffer;
         try (ZipFile zipFile = new ZipFile(sourceFile.toFile())) {
             ZipEntry entry;
+            long size = 0;
+            long totalRead = 0;
+            int progress = 0;
             Enumeration<? extends ZipEntry> entries = zipFile.entries();
+            while (entries.hasMoreElements()) {
+                entry = entries.nextElement();
+                size += (entry.getSize() > 0 ? entry.getSize() : 0);
+            }
+            entries = zipFile.entries();
             while (entries.hasMoreElements()) {
                 entry = entries.nextElement();
                 if (entry.isDirectory() && !keepFolderStructure)
@@ -263,6 +284,11 @@ public class FileUtilities {
                                 int read;
                                 while ((read = inputStream.read(buffer)) > 0) {
                                     bos.write(buffer, 0, read);
+                                    totalRead += read;
+                                    progress = (int) (totalRead / size * 100);
+                                    if (progress % 10 == 0) {
+                                        logger.finest(String.format("Unzip %s: %s%%", sourceFile, progress));
+                                    }
                                 }
                             }
                         }
