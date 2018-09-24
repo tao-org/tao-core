@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.component;
 
+import ro.cs.tao.component.enums.Condition;
 import ro.cs.tao.component.enums.ParameterType;
 import ro.cs.tao.component.validation.*;
 
@@ -43,6 +44,7 @@ public class ParameterDescriptor extends StringIdentifiable {
     private boolean notNull;
     private Validator customValidator;
     private Validator validator;
+    private List<ParameterDependency> dependencies;
 
     public ParameterDescriptor() { super(); }
 
@@ -149,6 +151,20 @@ public class ParameterDescriptor extends StringIdentifiable {
         createValidator().validate(this, value);
     }
 
+    public List<ParameterDependency> getDependencies() { return dependencies; }
+
+    public void setDependencies(List<ParameterDependency> dependencies) { this.dependencies = dependencies; }
+
+    public void addDependency(String parameterId, Condition condition, String... values) {
+        if (this.dependencies == null) {
+            this.dependencies = new ArrayList<>();
+        }
+        ParameterDependency dependency = new ParameterDependency(parameterId, condition, values);
+        if (!this.dependencies.contains(dependency)) {
+            this.dependencies.add(dependency);
+        }
+    }
+
     @Override
     public String defaultId() { return "NewParameter"; }
 
@@ -157,6 +173,10 @@ public class ParameterDescriptor extends StringIdentifiable {
         ParameterDescriptor clone = (ParameterDescriptor) super.clone();
         clone.id = UUID.randomUUID().toString();
         clone.valueSet = Arrays.copyOf(this.valueSet, this.valueSet.length);
+        if (this.dependencies != null) {
+            clone.dependencies = new ArrayList<>();
+            clone.dependencies.addAll(this.dependencies);
+        }
         return clone;
     }
 

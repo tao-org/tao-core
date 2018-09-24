@@ -16,6 +16,18 @@ INSERT INTO tao.processing_component_type (id, type) VALUES (1, 'EXECUTABLE');
 INSERT INTO tao.processing_component_type (id, type) VALUES (2, 'SCRIPT');
 
 
+-- Condition
+
+INSERT INTO tao.condition (id, description) VALUES (1, 'Equals');
+INSERT INTO tao.condition (id, description) VALUES (2, 'Not equals');
+INSERT INTO tao.condition (id, description) VALUES (3, 'Less than');
+INSERT INTO tao.condition (id, description) VALUES (4, 'Less than or equal');
+INSERT INTO tao.condition (id, description) VALUES (5, 'Greater than');
+INSERT INTO tao.condition (id, description) VALUES (6, 'Greater than or equals');
+INSERT INTO tao.condition (id, description) VALUES (7, 'In');
+INSERT INTO tao.condition (id, description) VALUES (8, 'Not in');
+
+
 -- Data formats
 
 INSERT INTO tao.data_format (type) VALUES ('RASTER');

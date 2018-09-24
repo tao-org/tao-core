@@ -162,7 +162,39 @@ ALTER TABLE tao.processing_parameter ADD CONSTRAINT PK_processing_parameter
 ALTER TABLE tao.processing_parameter ADD CONSTRAINT FK_processing_parameter_parameter_type
 	FOREIGN KEY (type_id) REFERENCES tao.parameter_type (id) ON DELETE No Action ON UPDATE No Action;
 
+-------------------------------------------------------------------------------
+-- table: tao.condition
+DROP TABLE IF EXISTS tao.condition CASCADE;
 
+CREATE TABLE tao.condition
+(
+    id integer,
+    description varchar(20)
+);
+ALTER TABLE tao.condition ADD CONSTRAINT PK_condition
+    PRIMARY KEY (id);
+
+-------------------------------------------------------------------------------
+-- table: processing_parameter_dependencies
+DROP TABLE IF EXISTS tao.processing_parameter_dependencies CASCADE;
+
+CREATE TABLE tao.processing_parameter_dependencies
+(
+    parameter_id varchar(512) NOT NULL,
+    dependant_parameter_id varchar(512) NOT NULL,
+    dependency_condition_id integer NOT NULL,
+    dependant_parameter_value varchar(250) NULL
+);
+
+ALTER TABLE tao.processing_parameter_dependencies ADD CONSTRAINT PK_processing_parameter_dependencies
+    PRIMARY KEY (parameter_id, dependant_parameter_id);
+
+ALTER TABLE tao.processing_parameter_dependencies ADD CONSTRAINT FK_processing_parameter_dependencies_processing_parameter_1
+    FOREIGN KEY (parameter_id) REFERENCES tao.processing_parameter (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE tao.processing_parameter_dependencies ADD CONSTRAINT FK_processing_parameter_dependencies_processing_parameter_2
+    FOREIGN KEY (dependant_parameter_id) REFERENCES tao.processing_parameter (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE tao.processing_parameter_dependencies ADD CONSTRAINT FK_processing_parameter_dependencies_condition
+    FOREIGN KEY (dependency_condition_id) REFERENCES tao.condition (id) ON DELETE No Action ON UPDATE No Action;
 -------------------------------------------------------------------------------
 -- table: component_parameters
 DROP TABLE IF EXISTS tao.component_parameters CASCADE;
