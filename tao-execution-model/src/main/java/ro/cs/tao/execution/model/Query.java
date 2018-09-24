@@ -19,7 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import ro.cs.tao.datasource.DataQuery;
 import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.datasource.DataSourceManager;
-import ro.cs.tao.datasource.param.ParameterDescriptor;
+import ro.cs.tao.datasource.param.DataSourceParameter;
 import ro.cs.tao.eodata.Polygon2D;
 import ro.cs.tao.serialization.GenericAdapter;
 import ro.cs.tao.serialization.SerializationException;
@@ -109,7 +109,7 @@ public class Query {
                 if (webQuery.getUser() != null && webQuery.getPassword() != null) {
                     dsComponent.setUserCredentials(webQuery.getUser(), webQuery.getPassword());
                 }
-                final Map<String, ParameterDescriptor> parameterDescriptorMap =
+                final Map<String, DataSourceParameter> parameterDescriptorMap =
                         DataSourceManager.getInstance().getSupportedParameters(webQuery.getSensor(), webQuery.getDataSource());
                 query = dsComponent.createQuery();
                 query.setMaxResults(webQuery.getLimit());
@@ -118,7 +118,7 @@ public class Query {
                 Map<String, String> paramValues = webQuery.getValues();
                 for (Map.Entry<String, String> entry : paramValues.entrySet()) {
                     String paramName = entry.getKey();
-                    final ParameterDescriptor descriptor = parameterDescriptorMap.get(paramName);
+                    final DataSourceParameter descriptor = parameterDescriptorMap.get(paramName);
                     if (descriptor == null) {
                         throw new SerializationException(String.format("Parameter %s does not exist for the datasource %s",
                                                                        paramName, webQuery.getDataSource()));

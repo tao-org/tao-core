@@ -17,7 +17,7 @@ package ro.cs.tao.datasource;
 
 import org.apache.http.auth.UsernamePasswordCredentials;
 import ro.cs.tao.component.StringIdentifiable;
-import ro.cs.tao.datasource.param.ParameterDescriptor;
+import ro.cs.tao.datasource.param.DataSourceParameter;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
@@ -106,7 +106,7 @@ public abstract class DataSource<Q extends DataQuery> extends StringIdentifiable
     /**
      * Returns a the query parameters for each sensor supported by this data source
      */
-    public abstract Map<String, Map<String, ParameterDescriptor>> getSupportedParameters();
+    public abstract Map<String, Map<String, DataSourceParameter>> getSupportedParameters();
     /**
      * Creates a query object that can be used to look for products in this data source.
      * This is intended to be used on single product type data source.
