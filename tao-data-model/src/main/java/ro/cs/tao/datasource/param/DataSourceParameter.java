@@ -22,33 +22,33 @@ import java.util.Objects;
  *
  * @author Cosmin Cara
  */
-public class ParameterDescriptor {
+public class DataSourceParameter {
     private final String name;
     private final Class type;
     private final Object defaultValue;
     private final boolean required;
     private Object[] valueSet;
 
-    public ParameterDescriptor(String name, Class type) {
+    public DataSourceParameter(String name, Class type) {
         this(name, type, null, false);
     }
 
-    public ParameterDescriptor(String name, Class type, boolean required) {
+    public DataSourceParameter(String name, Class type, boolean required) {
         this(name, type, null, required);
     }
 
-    public ParameterDescriptor(String name, Class type, Object defaultValue) {
+    public DataSourceParameter(String name, Class type, Object defaultValue) {
         this(name, type, defaultValue, false);
     }
 
-    public ParameterDescriptor(String name, Class type, Object defaultValue, boolean required) {
+    public DataSourceParameter(String name, Class type, Object defaultValue, boolean required) {
         this.name = name;
         this.type = type;
         this.defaultValue = defaultValue;
         this.required = required;
     }
 
-    public ParameterDescriptor(String name, Class type, Object defaultValue, boolean required, Object... valueSet) {
+    public DataSourceParameter(String name, Class type, Object defaultValue, boolean required, Object... valueSet) {
         this.name = name;
         this.type = type;
         this.defaultValue = defaultValue;
@@ -70,7 +70,7 @@ public class ParameterDescriptor {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        ParameterDescriptor that = (ParameterDescriptor) o;
+        DataSourceParameter that = (DataSourceParameter) o;
         return Objects.equals(name, that.name) &&
                 Objects.equals(type, that.type);
     }

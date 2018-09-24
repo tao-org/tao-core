@@ -23,7 +23,7 @@ import ro.cs.tao.datasource.QueryException;
 import ro.cs.tao.datasource.opensearch.model.DescriptionParser;
 import ro.cs.tao.datasource.opensearch.model.OpenSearchEndpoint;
 import ro.cs.tao.datasource.opensearch.model.OpenSearchService;
-import ro.cs.tao.datasource.param.ParameterDescriptor;
+import ro.cs.tao.datasource.param.DataSourceParameter;
 import ro.cs.tao.datasource.param.ParameterProvider;
 import ro.cs.tao.datasource.util.HttpMethod;
 import ro.cs.tao.datasource.util.NetUtils;
@@ -35,7 +35,7 @@ import java.util.Map;
 public abstract class OpenSearchParameterProvider implements ParameterProvider {
 
     protected String[] sensors;
-    protected Map<String, Map<String, ParameterDescriptor>> parameters;
+    protected Map<String, Map<String, DataSourceParameter>> parameters;
     protected Map<String, ProductFetchStrategy> productFetchers;
 
     protected OpenSearchService searchService;
@@ -46,7 +46,7 @@ public abstract class OpenSearchParameterProvider implements ParameterProvider {
     }
 
     @Override
-    public Map<String, Map<String, ParameterDescriptor>> getSupportedParameters() {
+    public Map<String, Map<String, DataSourceParameter>> getSupportedParameters() {
         if (this.searchService == null) {
             initialize();
         }
@@ -67,11 +67,11 @@ public abstract class OpenSearchParameterProvider implements ParameterProvider {
         this.searchService = parseDescription(this.url);
         OpenSearchEndpoint endpoint = this.searchService.getEndpoint("application/atom+xml");
         if (endpoint != null) {
-            Map<String, ParameterDescriptor> parameters = endpoint.getParameters();
-            ParameterDescriptor sensorParam = parameters.get(sensorParameterName());
+            Map<String, DataSourceParameter> parameters = endpoint.getParameters();
+            DataSourceParameter sensorParam = parameters.get(sensorParameterName());
             this.parameters = new HashMap<>();
             Object[] values = sensorParam.getValueSet();
-            Map<String, ParameterDescriptor> params = new HashMap<>(parameters);
+            Map<String, DataSourceParameter> params = new HashMap<>(parameters);
             params.remove(sensorParameterName());
             if (values != null) {
                 this.sensors = new String[values.length];
