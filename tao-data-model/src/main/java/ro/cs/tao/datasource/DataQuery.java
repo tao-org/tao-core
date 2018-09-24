@@ -16,7 +16,7 @@
 package ro.cs.tao.datasource;
 
 import ro.cs.tao.component.StringIdentifiable;
-import ro.cs.tao.datasource.param.ParameterDescriptor;
+import ro.cs.tao.datasource.param.DataSourceParameter;
 import ro.cs.tao.datasource.param.QueryParameter;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.serialization.BaseSerializer;
@@ -47,7 +47,7 @@ public abstract class DataQuery extends StringIdentifiable {
     protected int pageNumber;
     protected int limit;
     protected long timeout;
-    protected Map<String, ParameterDescriptor> supportedParams;
+    protected Map<String, DataSourceParameter> supportedParams;
     protected Set<String> mandatoryParams;
     protected Logger logger = Logger.getLogger(getClass().getName());
 
@@ -159,7 +159,7 @@ public abstract class DataQuery extends StringIdentifiable {
         return getCountImpl();
     }
 
-    public Map<String, ParameterDescriptor> getSupportedParameters() { return this.supportedParams; }
+    public Map<String, DataSourceParameter> getSupportedParameters() { return this.supportedParams; }
 
     public Map<String, QueryParameter> getParameters() { return this.parameters; }
 
@@ -211,7 +211,7 @@ public abstract class DataQuery extends StringIdentifiable {
     }
 
     protected void checkSupported(String name, Class type) {
-        ParameterDescriptor descriptor = this.supportedParams.get(name);
+        DataSourceParameter descriptor = this.supportedParams.get(name);
         if (descriptor == null) {
             throw new QueryException(String.format("Parameter [%s] not supported on this data source", name));
         }
@@ -239,11 +239,11 @@ public abstract class DataQuery extends StringIdentifiable {
         this.pageSize = -1;
         this.pageNumber = -1;
         this.limit = -1;
-        Map<String, Map<String, ParameterDescriptor>> supportedParameters = source.getSupportedParameters();
+        Map<String, Map<String, DataSourceParameter>> supportedParameters = source.getSupportedParameters();
         this.supportedParams = supportedParameters.get(sensorName);
         this.mandatoryParams = this.supportedParams.values().stream()
                 .filter(p -> p.isRequired() && p.getDefaultValue() == null)
-                .map(ParameterDescriptor::getName)
+                .map(DataSourceParameter::getName)
                 .collect(Collectors.toSet());
     }
 }

@@ -16,7 +16,7 @@
 package ro.cs.tao.datasource;
 
 import ro.cs.tao.configuration.ConfigurationManager;
-import ro.cs.tao.datasource.param.ParameterDescriptor;
+import ro.cs.tao.datasource.param.DataSourceParameter;
 import ro.cs.tao.datasource.util.NetUtils;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
@@ -37,7 +37,7 @@ public class DataSourceManager {
     private static final int DEFAULT_MAX_CONNECTIONS = 1;
     private static final int DEFAULT_RETRY_INTERVAL = 60;
     private final ServiceRegistry<DataSource> registry;
-    private final Map<Map.Entry<String, String>, Map<String, ParameterDescriptor>> registeredSources;
+    private final Map<Map.Entry<String, String>, Map<String, DataSourceParameter>> registeredSources;
     private final Logger logger;
 
     static {
@@ -72,7 +72,7 @@ public class DataSourceManager {
             for (String sensor : sensors) {
                 Map.Entry<String, String> key = new AbstractMap.SimpleEntry<>(sensor, dsName);
                 if (!this.registeredSources.containsKey(key)) {
-                    final Map<String, Map<String, ParameterDescriptor>> parameters = ds.getSupportedParameters();
+                    final Map<String, Map<String, DataSourceParameter>> parameters = ds.getSupportedParameters();
                     this.registeredSources.put(key, parameters.get(sensor));
                 }
             }
@@ -145,7 +145,7 @@ public class DataSourceManager {
      * @param sensorName        The sensor name
      * @param dataSourceName    The data source name
      */
-    public Map<String, ParameterDescriptor> getSupportedParameters(String sensorName, String dataSourceName) {
+    public Map<String, DataSourceParameter> getSupportedParameters(String sensorName, String dataSourceName) {
         return this.registeredSources.get(new AbstractMap.SimpleEntry<>(sensorName, dataSourceName));
     }
 }

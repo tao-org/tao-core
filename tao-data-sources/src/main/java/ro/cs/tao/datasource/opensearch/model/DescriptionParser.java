@@ -20,7 +20,7 @@ import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
-import ro.cs.tao.datasource.param.ParameterDescriptor;
+import ro.cs.tao.datasource.param.DataSourceParameter;
 import ro.cs.tao.datasource.remote.result.ParseException;
 
 import javax.xml.parsers.SAXParser;
@@ -88,7 +88,7 @@ public class DescriptionParser {
                                             (attributes.getValue("value").startsWith("{time:") ||
                                                     attributes.getValue("value").startsWith("{date:")) ?
                                             Date.class : String.class;
-                    this.currentEndpoint.addParameter(new ParameterDescriptor(this.currentParameter, paramClass, null, false));
+                    this.currentEndpoint.addParameter(new DataSourceParameter(this.currentParameter, paramClass, null, false));
                     break;
                 case "Option":
                     if (this.currentOptions == null) {
@@ -122,7 +122,7 @@ public class DescriptionParser {
                 case "Parameter":
                     if (this.currentOptions != null) {
                         this.currentEndpoint.addParameter(
-                                new ParameterDescriptor(this.currentParameter,
+                                new DataSourceParameter(this.currentParameter,
                                                         String.class, null, false,
                                                         this.currentOptions.toArray(new Object[0])));
                         this.currentOptions = null;

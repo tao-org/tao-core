@@ -15,7 +15,7 @@
  */
 package ro.cs.tao.services.interfaces;
 
-import ro.cs.tao.datasource.param.ParameterDescriptor;
+import ro.cs.tao.datasource.param.DataSourceParameter;
 import ro.cs.tao.datasource.remote.FetchMode;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.execution.model.Query;
@@ -36,7 +36,7 @@ public interface DataSourceService extends TAOService {
 
     List<DataSourceDescriptor> getDatasourceInstances();
 
-    List<ParameterDescriptor> getSupportedParameters(String sensorName, String dataSourceName);
+    List<DataSourceParameter> getSupportedParameters(String sensorName, String dataSourceName);
 
     long count(Query queryObject) throws SerializationException;
 
