@@ -15,7 +15,7 @@
  */
 package ro.cs.tao.services.model.datasource;
 
-import ro.cs.tao.datasource.param.ParameterDescriptor;
+import ro.cs.tao.datasource.param.DataSourceParameter;
 
 import java.util.Map;
 
@@ -25,12 +25,12 @@ import java.util.Map;
 public class DataSourceDescriptor {
     private String sensor;
     private String dataSourceName;
-    private Map<String, ParameterDescriptor> parameters;
+    private Map<String, DataSourceParameter> parameters;
 
     public DataSourceDescriptor() {
     }
 
-    public DataSourceDescriptor(String sensor, String dataSourceName, Map<String, ParameterDescriptor> parameters) {
+    public DataSourceDescriptor(String sensor, String dataSourceName, Map<String, DataSourceParameter> parameters) {
         this.sensor = sensor;
         this.dataSourceName = dataSourceName;
         this.parameters = parameters;
@@ -50,10 +50,10 @@ public class DataSourceDescriptor {
         this.dataSourceName = dataSourceName;
     }
 
-    public Map<String, ParameterDescriptor> getParameters() {
+    public Map<String, DataSourceParameter> getParameters() {
         return parameters;
     }
-    public void setParameters(Map<String, ParameterDescriptor> parameters) {
+    public void setParameters(Map<String, DataSourceParameter> parameters) {
         this.parameters = parameters;
     }
 }
