@@ -57,7 +57,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     private static final String PROGRESS_KEY = "progress.enabled";
     private static final String PROGRESS_INTERVAL = "progress.interval";
     private static final String USE_PADDING_KEY = "usePadding";
-    private static final String LOCAL_PATH_FORMAT = "local.archive.path.format";
+    protected static final String LOCAL_PATH_FORMAT = "local.archive.path.format";
     private final boolean progressEnabled;
     protected Properties props;
     protected String destination;
@@ -313,6 +313,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         Path productFolderPath = dateToPath(root, date, format);
         Path fullProductPath = productFolderPath.resolve(productName);
         if (!Files.exists(fullProductPath)) {
+            // Maybe it's an archived product
             // maybe products are grouped by processing date
             date = product.getProcessingDate();
             if (date != null) {
@@ -328,7 +329,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         return fullProductPath;
     }
 
-    private Path dateToPath(Path root, Date date, String formatOnDisk) {
+    protected Path dateToPath(Path root, Date date, String formatOnDisk) {
         final DateFormatTokenizer tokenizer = new DateFormatTokenizer(formatOnDisk);
         return root.resolve(tokenizer.getYearPart(date))
                     .resolve(tokenizer.getMonthPart(date))

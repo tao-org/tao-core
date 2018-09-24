@@ -32,9 +32,11 @@ import ro.cs.tao.persistence.repository.EOProductRepository;
 import ro.cs.tao.persistence.repository.VectorDataRepository;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @Configuration
 @EnableTransactionManagement
@@ -78,6 +80,13 @@ public class ProductManager {
     @Transactional
     public List<EOProduct> getEOProducts(String location) {
         return eoProductRepository.getProductsByLocation(location);
+    }
+
+    public List<String> getExistingProductNames(String... names) {
+        if (names == null || names.length == 0) {
+            return new ArrayList<>();
+        }
+        return eoProductRepository.getExistingProductNames(Arrays.stream(names).collect(Collectors.toSet()));
     }
 
     /**

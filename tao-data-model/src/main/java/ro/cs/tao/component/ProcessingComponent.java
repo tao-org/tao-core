@@ -18,6 +18,7 @@ package ro.cs.tao.component;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
+import ro.cs.tao.component.enums.Condition;
 import ro.cs.tao.component.enums.ProcessingComponentType;
 import ro.cs.tao.component.enums.ProcessingComponentVisibility;
 import ro.cs.tao.component.template.BasicTemplate;
@@ -263,6 +264,54 @@ public class ProcessingComponent extends TaoComponent {
                             .collect(Collectors.toList());
             for (ParameterDescriptor descriptor : parameterDescriptors) {
                 descriptor.validate(parameterValues.get(descriptor.getId()));
+                List<ParameterDependency> dependencies = descriptor.getDependencies();
+                if (dependencies != null) {
+                    for (ParameterDependency dependency : dependencies) {
+                        ParameterDescriptor dependent = getParameterDescriptors().stream()
+                                .filter(p -> dependency.getReferencedParameterId().equals(p.id)).findFirst().orElse(null);
+                        if (dependent == null) {
+                            throw new ValidationException(String.format("Parameter [%s] depends on parameter with id [%s] which was not found for this component",
+                                                                        descriptor.getName(), dependency.getReferencedParameterId()));
+                        }
+                        Condition condition = dependency.getCondition();
+                        String expectedValue = dependency.getExpectedValue();
+                        Object referencedParameterValue = parameterValues.get(dependency.getReferencedParameterId());
+                        boolean isValid = true;
+                        switch (condition) {
+                            case EQ:
+                                isValid = expectedValue != null ? expectedValue.equals(String.valueOf(referencedParameterValue)) :
+                                        referencedParameterValue == null;
+                                break;
+                            case NEQ:
+                                isValid = expectedValue != null ? !expectedValue.equals(String.valueOf(referencedParameterValue)) :
+                                        referencedParameterValue != null;
+                                break;
+                            case LT:
+                                isValid = expectedValue != null && expectedValue.compareTo(String.valueOf(referencedParameterValue)) < 0;
+                                break;
+                            case LTE:
+                                isValid = expectedValue != null && expectedValue.compareTo(String.valueOf(referencedParameterValue)) <= 0;
+                                break;
+                            case GT:
+                                isValid = expectedValue != null && expectedValue.compareTo(String.valueOf(referencedParameterValue)) > 0;
+                                break;
+                            case GTE:
+                                isValid = expectedValue != null && expectedValue.compareTo(String.valueOf(referencedParameterValue)) >= 0;
+                                break;
+                            case IN:
+                                isValid = expectedValue != null && dependency.expectedValues().contains(expectedValue);
+                                break;
+                            case NOTIN:
+                                isValid = expectedValue == null || !dependency.expectedValues().contains(expectedValue);
+                                break;
+                        }
+                        if (!isValid) {
+                            throw new ValidationException(String.format("Parameter [%s] is dependent on parameter [%s]. Expected value: [%s]. Found: [%s]",
+                                                                        descriptor.getName(), dependent.getName(),
+                                                                        expectedValue, referencedParameterValue));
+                        }
+                    }
+                }
             }
         }
     }
