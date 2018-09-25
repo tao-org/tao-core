@@ -45,6 +45,8 @@ public abstract class TaoComponent extends StringIdentifiable {
     protected List<SourceDescriptor> sources;
     protected List<TargetDescriptor> targets;
 
+    protected List<String> tags;
+
     private SessionContext sessionContext;
 
     @Override
@@ -188,6 +190,20 @@ public abstract class TaoComponent extends StringIdentifiable {
         target.setParentId(null);
         if (this.targets != null) {
             this.targets.remove(target);
+        }
+    }
+    @XmlElementWrapper(name = "tags")
+    public List<String> getTags() { return tags; }
+    public void setTags(List<String> tags) { this.tags = tags; }
+    public void addTag(String tag) {
+        if (this.tags == null) {
+            this.tags = new ArrayList<>();
+        }
+        this.tags.add(tag);
+    }
+    public void removeTag(String tag) {
+        if (this.tags != null) {
+            this.tags.remove(tag);
         }
     }
     /**

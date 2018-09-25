@@ -23,6 +23,8 @@ ALTER TABLE tao.component_visibility ALTER COLUMN id SET DEFAULT nextval('tao.co
 -- assign column to sequence
 ALTER SEQUENCE tao.component_visibility_id_seq OWNED BY tao.component_visibility.id;
 
+----- table: tao.processing_component_tag -------------------------------------------------------------
+DROP SEQUENCE IF EXISTS tao.component_visibility_id_seq CASCADE;
 
 ----- table: tao.processing_component -------------------------------------------------------------
 DROP SEQUENCE IF EXISTS tao.processing_component_id_seq CASCADE;
