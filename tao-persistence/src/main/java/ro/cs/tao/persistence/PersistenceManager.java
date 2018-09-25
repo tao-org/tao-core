@@ -22,6 +22,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.Sort;
+import ro.cs.tao.Tag;
 import ro.cs.tao.component.GroupComponent;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.datasource.DataSourceComponent;
@@ -34,6 +35,7 @@ import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.MessagePersister;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.persistence.managers.*;
+import ro.cs.tao.persistence.repository.TagRepository;
 import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.topology.ServiceDescription;
 import ro.cs.tao.user.Group;
@@ -44,6 +46,7 @@ import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 
 import javax.annotation.PostConstruct;
+import javax.sql.DataSource;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -83,7 +86,6 @@ public class PersistenceManager implements MessagePersister {
 
     @Autowired
     private WorkflowManager workflowManager;
-    //private SimpleCache.Cache<Long, WorkflowNodeDescriptor> workflowNodeCache;
 
     @Autowired
     private ExecutionJobManager executionJobManager;
@@ -100,14 +102,57 @@ public class PersistenceManager implements MessagePersister {
     @Autowired
     private UserManager userManager;
 
+    @Autowired
+    private DataSource dataSource;
+
+    private TagRepository tagRepository;
+
     @PostConstruct
     public void initialize() {
         componentCache = SimpleCache.create(String.class, ProcessingComponent.class,
                                             id -> processingComponentManager.get(id));
         /*workflowNodeCache = SimpleCache.create(Long.class, WorkflowNodeDescriptor.class,
                                                id -> workflowNodeDescriptorManager.get(id));*/
+        tagRepository = new TagRepository(this);
     }
 
+    public DataSource getDataSource() { return dataSource; }
+
+    //region Tags
+
+    public List<Tag> getComponentTags() throws PersistenceException {
+        return tagRepository.getComponentTags();
+    }
+
+    public List<Tag> getNodeTags() throws PersistenceException {
+        return tagRepository.getNodeTags();
+    }
+
+    public List<Tag> getDatasourceTags() throws PersistenceException {
+        return tagRepository.getDatasourceTags();
+    }
+
+    public List<Tag> getWorkflowTags() throws PersistenceException {
+        return tagRepository.getWorkflowTags();
+    }
+
+    public Tag addComponentTag(String componentId, String tag) throws PersistenceException {
+        return tagRepository.addComponentTag(componentId, tag);
+    }
+
+    public Tag addDatasourceTag(String datasourceId, String tag) throws PersistenceException {
+        return tagRepository.addDatasourceTag(datasourceId, tag);
+    }
+
+    public Tag addWorkflowTag(long workflowId, String tag) throws PersistenceException {
+        return tagRepository.addWorkflowTag(workflowId, tag);
+    }
+
+    public Tag addTopologyNodeTag(String nodeId, String tag) throws PersistenceException {
+        return tagRepository.addTopologyNodeTag(nodeId, tag);
+    }
+
+    //endregion
     //region EOProduct and VectorData
     public List<EOProduct> getEOProducts() {
         return productManager.getEOProducts();

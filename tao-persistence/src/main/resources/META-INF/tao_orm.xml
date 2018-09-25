@@ -115,6 +115,12 @@
                 </cascade>
             </many-to-many>
 
+            <element-collection name="tags" target-class="java.lang.String" access="PROPERTY" fetch="EAGER">
+                <collection-table name="tao.component_tags">
+                    <join-column name="id" referenced-column-name="component_id"/>
+                </collection-table>
+            </element-collection>
+
         </attributes>
     </mapped-superclass>
 
@@ -222,6 +228,12 @@
             <element-collection name="servicesStatus" target-class="ro.cs.tao.topology.NodeServiceStatus" access="PROPERTY" fetch="EAGER">
                 <collection-table name="tao.execution_node_service" >
                     <join-column name="host_name" referenced-column-name="id" />
+                </collection-table>
+            </element-collection>
+
+            <element-collection name="tags" target-class="java.lang.String" access="PROPERTY" fetch="EAGER">
+                <collection-table name="tao.execution_node_tags">
+                    <join-column name="id" referenced-column-name="node_id"/>
                 </collection-table>
             </element-collection>
 
@@ -719,6 +731,12 @@
                 </cascade>
             </one-to-many>
 
+            <element-collection name="tags" target-class="java.lang.String" access="PROPERTY" fetch="EAGER">
+                <collection-table name="tao.workflow_tags">
+                    <join-column name="id" referenced-column-name="workflow_id"/>
+                </collection-table>
+            </element-collection>
+
             <transient name="orderedNodes"/>
 
         </attributes>
@@ -732,9 +750,9 @@
         <!-- avoid default DTYPE -->
         <discriminator-column name="discriminator" column-definition="integer NOT NULL" discriminator-type="INTEGER"/>
 
-        <entity-listeners>
+        <!--<entity-listeners>
             <entity-listener class="ro.cs.tao.persistence.audit.WorkflowNodeListener"/>
-        </entity-listeners>
+        </entity-listeners>-->
 
         <convert converter="ro.cs.tao.persistence.convert.ComponentTypeConverter" attribute-name="componentType"/>
         <convert converter="ro.cs.tao.persistence.convert.TransitionBehaviorConverter" attribute-name="behavior"/>
@@ -1116,5 +1134,6 @@
     <converter class="ro.cs.tao.persistence.convert.QueryValuesMapConverter"/>
     <converter class="ro.cs.tao.persistence.convert.UserStatusConverter"/>
     <converter class="ro.cs.tao.persistence.convert.ConditionConverter" />
+    <converter class="ro.cs.tao.persistence.convert.TagTypeConverter" />
 
 </entity-mappings>

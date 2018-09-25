@@ -732,9 +732,9 @@
         <!-- avoid default DTYPE -->
         <discriminator-column name="discriminator" column-definition="integer NOT NULL" discriminator-type="INTEGER"/>
 
-        <entity-listeners>
+        <!--<entity-listeners>
             <entity-listener class="ro.cs.tao.persistence.audit.WorkflowNodeListener"/>
-        </entity-listeners>
+        </entity-listeners>-->
 
         <convert converter="ro.cs.tao.persistence.convert.ComponentTypeConverter" attribute-name="componentType"/>
         <convert converter="ro.cs.tao.persistence.convert.TransitionBehaviorConverter" attribute-name="behavior"/>
