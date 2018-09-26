@@ -16,6 +16,7 @@
 package ro.cs.tao.services.interfaces;
 
 import ro.cs.tao.Sort;
+import ro.cs.tao.Tag;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.serialization.MediaType;
@@ -56,6 +57,8 @@ public interface ComponentService extends CRUDService<ProcessingComponent> {
      * @param userName  The user name
      */
     List<ProcessingComponentInfo> getUserScriptComponents(String userName);
+
+    List<Tag> getComponentTags();
 
     /**
      * Imports the definition of a processing component from the given data.

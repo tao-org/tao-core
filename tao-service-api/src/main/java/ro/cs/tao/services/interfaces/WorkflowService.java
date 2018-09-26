@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.services.interfaces;
 
+import ro.cs.tao.Tag;
 import ro.cs.tao.component.ComponentLink;
 import ro.cs.tao.datasource.beans.Parameter;
 import ro.cs.tao.eodata.enums.Visibility;
@@ -148,4 +149,6 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor> {
      * @param workflowId    The workflow identifier
      */
     Map<String, List<Parameter>> getWorkflowParameters(long workflowId);
+
+    List<Tag> getWorkflowTags();
 }

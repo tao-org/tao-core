@@ -16,6 +16,7 @@
 
 package ro.cs.tao.services.interfaces;
 
+import ro.cs.tao.Tag;
 import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.persistence.exception.PersistenceException;
@@ -35,4 +36,6 @@ public interface DataSourceComponentService extends CRUDService<DataSourceCompon
      * @param principal     The principal to create the component for
      */
     DataSourceComponent createFor(List<EOProduct> products, Principal principal) throws PersistenceException;
+
+    List<Tag> getDatasourceTags();
 }

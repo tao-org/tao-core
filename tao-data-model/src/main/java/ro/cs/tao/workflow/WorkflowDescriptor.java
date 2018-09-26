@@ -48,6 +48,7 @@ public class WorkflowDescriptor
     private float xCoord;
     private float yCoord;
     private float zoom;
+    private List<String> tags;
 
     @XmlElement(name = "userName")
     public String getUserName() { return userName; }
@@ -118,6 +119,21 @@ public class WorkflowDescriptor
         }
         for (WorkflowNodeDescriptor node : nodes) {
             addNode(node);
+        }
+    }
+
+    @XmlElementWrapper(name = "tags")
+    public List<String> getTags() { return tags; }
+    public void setTags(List<String> tags) { this.tags = tags; }
+    public void addTag(String tag) {
+        if (this.tags == null) {
+            this.tags = new ArrayList<>();
+        }
+        this.tags.add(tag);
+    }
+    public void removeTag(String tag) {
+        if (this.tags != null) {
+            this.tags.remove(tag);
         }
     }
 }

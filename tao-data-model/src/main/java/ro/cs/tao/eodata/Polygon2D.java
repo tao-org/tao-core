@@ -20,9 +20,11 @@ import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -176,7 +178,8 @@ public class Polygon2D {
             StringBuilder format = new StringBuilder(".");
             int i = 0;
             while (i++ < precision) format.append("#");
-            DecimalFormat dfFormat = new DecimalFormat(format.toString());
+            DecimalFormat dfFormat = new DecimalFormat(format.toString(),
+                                                       DecimalFormatSymbols.getInstance(Locale.ENGLISH));
             while (!pathIterator.isDone()) {
                 double[] segment = new double[6];
                 pathIterator.currentSegment(segment);
@@ -209,12 +212,13 @@ public class Polygon2D {
 
     public String toWKTBounds() {
         Rectangle2D bounds2D = getBounds2D();
+        DecimalFormat dfFormat = new DecimalFormat(".######", DecimalFormatSymbols.getInstance(Locale.ENGLISH));
         return  "POLYGON((" +
-                bounds2D.getMinX() + " " + bounds2D.getMinY() + "," +
-                bounds2D.getMaxX() + " " + bounds2D.getMinY() + "," +
-                bounds2D.getMaxX() + " " + bounds2D.getMaxY() + "," +
-                bounds2D.getMinX() + " " + bounds2D.getMaxY() + "," +
-                bounds2D.getMinX() + " " + bounds2D.getMinY() + "))";
+                dfFormat.format(bounds2D.getMinX()) + " " + dfFormat.format(bounds2D.getMinY()) + "," +
+                dfFormat.format(bounds2D.getMaxX()) + " " + dfFormat.format(bounds2D.getMinY()) + "," +
+                dfFormat.format(bounds2D.getMaxX()) + " " + dfFormat.format(bounds2D.getMaxY()) + "," +
+                dfFormat.format(bounds2D.getMinX()) + " " + dfFormat.format(bounds2D.getMaxY()) + "," +
+                dfFormat.format(bounds2D.getMinX()) + " " + dfFormat.format(bounds2D.getMinY()) + "))";
     }
 
 }

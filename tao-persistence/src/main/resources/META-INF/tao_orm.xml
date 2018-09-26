@@ -94,6 +94,10 @@
             <basic name="nodeAffinity">
                 <column name="node_affinity" nullable="true" column-definition="varchar(250) NULL"/>
             </basic>
+            <basic name="tags">
+                <column name="tags" nullable="true" column-definition="text NULL"/>
+                <convert converter="ro.cs.tao.persistence.convert.StringListConverter"/>
+            </basic>
 
             <many-to-many name="sources" fetch="LAZY">
                 <join-table name="tao.processing_component_sources">
@@ -114,7 +118,6 @@
                     <cascade-all/>
                 </cascade>
             </many-to-many>
-
         </attributes>
     </mapped-superclass>
 
@@ -211,12 +214,15 @@
             <basic name="diskSpaceSizeGB">
                 <column name="total_hdd" nullable="false" column-definition="integer not null"/>
             </basic>
-
             <basic name="description">
                 <column name="description" nullable="true" column-definition="text null"/>
             </basic>
             <basic name="active">
                 <column name="active" nullable="true" column-definition="boolean NULL DEFAULT true"/>
+            </basic>
+            <basic name="tags">
+                <column name="tags" nullable="true" column-definition="text NULL"/>
+                <convert converter="ro.cs.tao.persistence.convert.StringListConverter"/>
             </basic>
 
             <element-collection name="servicesStatus" target-class="ro.cs.tao.topology.NodeServiceStatus" access="PROPERTY" fetch="EAGER">
@@ -686,6 +692,7 @@
         <table name="tao.workflow_graph"/>
         <convert converter="ro.cs.tao.persistence.convert.WorkflowGraphStatusConverter" attribute-name="status" />
         <convert converter="ro.cs.tao.persistence.convert.VisibilityConverter" attribute-name="visibility" />
+        <convert converter="ro.cs.tao.persistence.convert.StringListConverter" attribute-name="tags"/>
         <attributes>
             <basic name="userName">
                 <column name="username" nullable="false" column-definition="character varying(50) NOT NULL"/>
@@ -711,6 +718,9 @@
             <basic name="zoom">
                 <column name="zoom" nullable="true" column-definition="real NULL"/>
             </basic>
+            <basic name="tags">
+                <column name="tags" nullable="true" column-definition="text NULL"/>
+            </basic>
             <one-to-many name="nodes" target-entity="ro.cs.tao.workflow.WorkflowNodeDescriptor"
                          fetch="EAGER" access="FIELD" orphan-removal="true"
                          mapped-by="workflow">
@@ -732,9 +742,9 @@
         <!-- avoid default DTYPE -->
         <discriminator-column name="discriminator" column-definition="integer NOT NULL" discriminator-type="INTEGER"/>
 
-        <entity-listeners>
+        <!--<entity-listeners>
             <entity-listener class="ro.cs.tao.persistence.audit.WorkflowNodeListener"/>
-        </entity-listeners>
+        </entity-listeners>-->
 
         <convert converter="ro.cs.tao.persistence.convert.ComponentTypeConverter" attribute-name="componentType"/>
         <convert converter="ro.cs.tao.persistence.convert.TransitionBehaviorConverter" attribute-name="behavior"/>
@@ -950,6 +960,24 @@
         </attributes>
     </entity>
 
+    <entity class="ro.cs.tao.Tag" access="PROPERTY">
+        <table name="tao.tag"/>
+        <convert converter="ro.cs.tao.persistence.convert.TagTypeConverter" attribute-name="tagType"/>
+        <attributes>
+            <id name="id">
+                <column name="id" nullable="false" column-definition="bigserial NOT NULL"/>
+                <generated-value strategy="SEQUENCE" generator="group_identifier"/>
+                <sequence-generator name="group_identifier" sequence-name="tao.tag_id_seq" allocation-size="1" />
+            </id>
+            <basic name="tagType">
+                <column name="tag_type_id" nullable="false" column-definition="integer NOT NULL"/>
+            </basic>
+            <basic name="text">
+                <column name="tag" nullable="false" column-definition="text NOT NULL"/>
+            </basic>
+        </attributes>
+    </entity>
+    
     <entity class="ro.cs.tao.user.Group" access="PROPERTY">
         <table name="tao.group"/>
         <attributes>
@@ -1116,5 +1144,7 @@
     <converter class="ro.cs.tao.persistence.convert.QueryValuesMapConverter"/>
     <converter class="ro.cs.tao.persistence.convert.UserStatusConverter"/>
     <converter class="ro.cs.tao.persistence.convert.ConditionConverter" />
+    <converter class="ro.cs.tao.persistence.convert.StringListConverter" />
+    <converter class="ro.cs.tao.persistence.convert.TagTypeConverter" />
 
 </entity-mappings>

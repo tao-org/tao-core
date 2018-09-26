@@ -1,3 +1,15 @@
+----- table: tao.tag -------------------------------------------------------------------
+DROP SEQUENCE IF EXISTS tao.tag_id_seq CASCADE;
+-- create sequence
+CREATE SEQUENCE tao.tag_id_seq
+	INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+
+-- assign sequence to column
+ALTER TABLE tao.tag ALTER COLUMN id SET DEFAULT nextval('tao.tag_id_seq');
+
+-- assign column to sequence
+ALTER SEQUENCE tao.tag_id_seq OWNED BY tao.tag.id;
+
 ----- table: tao.workflow_graph_status -------------------------------------------------------------------
 DROP SEQUENCE IF EXISTS tao.workflow_graph_status_id_seq CASCADE;
 -- create sequence
