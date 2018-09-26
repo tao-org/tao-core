@@ -4,6 +4,8 @@ import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.enums.ProcessingComponentType;
 import ro.cs.tao.component.enums.ProcessingComponentVisibility;
 
+import java.util.List;
+
 public class ProcessingComponentInfo {
 
     private String id;
@@ -17,6 +19,7 @@ public class ProcessingComponentInfo {
     private ProcessingComponentVisibility visibility;
     private boolean active;
     private ProcessingComponentType componentType;
+    private List<String> tags;
 
     public ProcessingComponentInfo(ProcessingComponent component) {
         this.id = component.getId();
@@ -30,6 +33,7 @@ public class ProcessingComponentInfo {
         this.visibility = component.getVisibility();
         this.active = component.getActive();
         this.componentType = component.getComponentType();
+        this.tags = component.getTags();
     }
 
     public String getId() { return id; }
@@ -53,4 +57,6 @@ public class ProcessingComponentInfo {
     public boolean isActive() { return active; }
 
     public ProcessingComponentType getComponentType() { return componentType; }
+
+    public List<String> getTags() { return tags; }
 }

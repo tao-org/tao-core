@@ -361,6 +361,7 @@ CREATE TABLE tao.data_source_component
 	fetch_mode_id integer NOT NULL,
 	max_retries integer NULL DEFAULT 3,
 	is_system boolean NOT NULL DEFAULT false,
+	tags text NULL,
 	created timestamp NULL DEFAULT now(),
     modified timestamp NULL
 );

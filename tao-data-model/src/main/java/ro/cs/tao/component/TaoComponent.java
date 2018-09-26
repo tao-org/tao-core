@@ -21,6 +21,7 @@ import ro.cs.tao.security.SessionContext;
 
 import javax.xml.bind.annotation.XmlElementWrapper;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -195,11 +196,14 @@ public abstract class TaoComponent extends StringIdentifiable {
     @XmlElementWrapper(name = "tags")
     public List<String> getTags() { return tags; }
     public void setTags(List<String> tags) { this.tags = tags; }
-    public void addTag(String tag) {
+    public void addTags(String... values) {
+        if (values == null || values.length == 0) {
+            return;
+        }
         if (this.tags == null) {
             this.tags = new ArrayList<>();
         }
-        this.tags.add(tag);
+        Collections.addAll(this.tags, values);
     }
     public void removeTag(String tag) {
         if (this.tags != null) {
