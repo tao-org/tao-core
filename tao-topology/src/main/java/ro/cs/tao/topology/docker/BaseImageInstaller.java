@@ -17,7 +17,9 @@
 package ro.cs.tao.topology.docker;
 
 import org.apache.commons.lang3.SystemUtils;
+import ro.cs.tao.Tag;
 import ro.cs.tao.component.ProcessingComponent;
+import ro.cs.tao.component.enums.TagType;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.persistence.PersistenceManager;
@@ -29,9 +31,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Base64;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -39,6 +39,7 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
     protected static final Set<String> winExtensions = new HashSet<String>() {{ add(".bat"); add(".exe"); }};
     private static final Path dockerPath;
     protected final Logger logger;
+    private List<Tag> componentTags;
     private final PersistenceManager persistenceManager;
 
     static {
@@ -51,6 +52,10 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
     public BaseImageInstaller() {
         this.persistenceManager = SpringContextBridge.services().getPersistenceManager();
         this.logger = Logger.getLogger(getClass().getName());
+        this.componentTags = this.persistenceManager.getComponentTags();
+        if (this.componentTags == null) {
+            this.componentTags = new ArrayList<>();
+        }
     }
 
     public PersistenceManager getPersistenceManager() { return persistenceManager; }
@@ -156,6 +161,15 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
             }
         }
         return currentPath;
+    }
+
+    protected Tag getOrCreateTag(String tagText) {
+        Tag tag = this.componentTags.stream().filter(t -> t.getText().equalsIgnoreCase(tagText)).findFirst().orElse(null);
+        if (tag == null) {
+            tag = this.persistenceManager.saveTag(new Tag(TagType.COMPONENT, tagText));
+            this.componentTags.add(tag);
+        }
+        return tag;
     }
 
     protected abstract String getContainerName();

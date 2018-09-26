@@ -7,6 +7,13 @@ public class Tag {
     private TagType tagType;
     private String text;
 
+    public Tag() { }
+
+    public Tag(TagType tagType, String text) {
+        this.tagType = tagType;
+        this.text = text;
+    }
+
     public long getId() { return id; }
     public void setId(long id) { this.id = id; }
 

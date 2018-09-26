@@ -2,6 +2,8 @@ package ro.cs.tao.services.model.component;
 
 import ro.cs.tao.datasource.DataSourceComponent;
 
+import java.util.List;
+
 public class DataSourceInfo {
 
     private String id;
@@ -13,6 +15,7 @@ public class DataSourceInfo {
     private String nodeAffinity;
     private String sensorName;
     private String dataSourceName;
+    private List<String> tags;
 
     public DataSourceInfo(DataSourceComponent component) {
         this.id = component.getId();
@@ -24,6 +27,7 @@ public class DataSourceInfo {
         this.nodeAffinity = component.getNodeAffinity();
         this.sensorName = component.getSensorName();
         this.dataSourceName = component.getDataSourceName();
+        this.tags = component.getTags();
     }
 
     public String getId() {
@@ -61,4 +65,6 @@ public class DataSourceInfo {
     public String getDataSourceName() {
         return dataSourceName;
     }
+
+    public List<String> getTags() { return tags; }
 }

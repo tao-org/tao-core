@@ -25,6 +25,7 @@ import ro.cs.tao.Sort;
 import ro.cs.tao.Tag;
 import ro.cs.tao.component.GroupComponent;
 import ro.cs.tao.component.ProcessingComponent;
+import ro.cs.tao.component.enums.TagType;
 import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.eodata.AuxiliaryData;
@@ -105,6 +106,7 @@ public class PersistenceManager implements MessagePersister {
     @Autowired
     private DataSource dataSource;
 
+    @Autowired
     private TagRepository tagRepository;
 
     @PostConstruct
@@ -113,43 +115,30 @@ public class PersistenceManager implements MessagePersister {
                                             id -> processingComponentManager.get(id));
         /*workflowNodeCache = SimpleCache.create(Long.class, WorkflowNodeDescriptor.class,
                                                id -> workflowNodeDescriptorManager.get(id));*/
-        tagRepository = new TagRepository(this);
     }
 
     public DataSource getDataSource() { return dataSource; }
 
     //region Tags
 
-    public List<Tag> getComponentTags() throws PersistenceException {
-        return tagRepository.getComponentTags();
+    public List<Tag> getComponentTags() {
+        return tagRepository.getTags(TagType.COMPONENT.value());
     }
 
-    public List<Tag> getNodeTags() throws PersistenceException {
-        return tagRepository.getNodeTags();
+    public List<Tag> getNodeTags(){
+        return tagRepository.getTags(TagType.TOPOLOGY_NODE.value());
     }
 
-    public List<Tag> getDatasourceTags() throws PersistenceException {
-        return tagRepository.getDatasourceTags();
+    public List<Tag> getDatasourceTags() {
+        return tagRepository.getTags(TagType.DATASOURCE.value());
     }
 
-    public List<Tag> getWorkflowTags() throws PersistenceException {
-        return tagRepository.getWorkflowTags();
+    public List<Tag> getWorkflowTags() {
+        return tagRepository.getTags(TagType.WORKFLOW.value());
     }
 
-    public Tag addComponentTag(String componentId, String tag) throws PersistenceException {
-        return tagRepository.addComponentTag(componentId, tag);
-    }
-
-    public Tag addDatasourceTag(String datasourceId, String tag) throws PersistenceException {
-        return tagRepository.addDatasourceTag(datasourceId, tag);
-    }
-
-    public Tag addWorkflowTag(long workflowId, String tag) throws PersistenceException {
-        return tagRepository.addWorkflowTag(workflowId, tag);
-    }
-
-    public Tag addTopologyNodeTag(String nodeId, String tag) throws PersistenceException {
-        return tagRepository.addTopologyNodeTag(nodeId, tag);
+    public Tag saveTag(Tag tag) {
+        return tagRepository.save(tag);
     }
 
     //endregion

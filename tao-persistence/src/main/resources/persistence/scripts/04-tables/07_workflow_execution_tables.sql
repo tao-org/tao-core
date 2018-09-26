@@ -62,6 +62,7 @@ CREATE TABLE tao.workflow_graph
     yCoord real NULL,
     zoom real NULL,
 	custom_values json NULL,
+	tags text NULL,
 	active boolean NULL DEFAULT true
 );
 ALTER TABLE tao.workflow_graph ADD CONSTRAINT PK_workflow PRIMARY KEY (id);
@@ -71,21 +72,6 @@ ALTER TABLE tao.workflow_graph ADD CONSTRAINT FK_workflow_graph_visibility
 	FOREIGN KEY (visibility_id) REFERENCES tao.visibility (id) ON DELETE No Action ON UPDATE No Action;
 ALTER TABLE tao.workflow_graph ADD CONSTRAINT FK_workflow_user
 	FOREIGN KEY (username) REFERENCES tao."user" (username) ON DELETE No Action ON UPDATE No Action;
-
--------------------------------------------------------------------------------
--- table: workflow_tags
-DROP TABLE IF EXISTS tao.workflow_tags CASCADE;
-CREATE TABLE tao.workflow_tags
-(
-    workflow_id bigint NOT NULL,
-    tag_id integer NOT NULL
-);
-ALTER TABLE tao.workflow_tags ADD CONSTRAINT PK_workflow_tags
-	PRIMARY KEY (workflow_id, tag_id);
-ALTER TABLE tao.workflow_tags ADD CONSTRAINT FK_workflow_tags_workflow
-	FOREIGN KEY (workflow_id) REFERENCES tao.workflow_graph (id) ON DELETE No Action ON UPDATE No Action;
-ALTER TABLE tao.workflow_tags ADD CONSTRAINT FK_workflow_tags_tag
-	FOREIGN KEY (tag_id) REFERENCES tao.tag (id) ON DELETE No Action ON UPDATE No Action;
 
 -------------------------------------------------------------------------------
 -- table: tao.component_type
@@ -203,24 +189,12 @@ CREATE TABLE tao.execution_node
 	used_CPU integer NULL,
 	used_RAM integer NULL,
 	used_HDD integer NULL,
+	tags text NULL,
 	created timestamp NULL DEFAULT now(),
     modified timestamp NULL,
 	active boolean NULL DEFAULT true
 );
 ALTER TABLE tao.execution_node ADD CONSTRAINT PK_execution_node PRIMARY KEY (id);
-
--------------------------------------------------------------------------------
--- table: execution_node_tags
-DROP TABLE IF EXISTS tao.execution_node_tags CASCADE;
-CREATE TABLE tao.execution_node_tags
-(
-    node_id varchar(250) NOT NULL,
-    tag_id integer NOT NULL
-);
-ALTER TABLE tao.execution_node_tags ADD CONSTRAINT PK_execution_node_tags
-	PRIMARY KEY (node_id, tag_id);
-ALTER TABLE tao.execution_node_tags ADD CONSTRAINT FK_execution_node_tags_tag
-	FOREIGN KEY (tag_id) REFERENCES tao.tag (id) ON DELETE No Action ON UPDATE No Action;
 
 -------------------------------------------------------------------------------
 -- table: tao.task

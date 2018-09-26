@@ -117,6 +117,7 @@ CREATE TABLE tao.processing_component
 	multi_thread boolean NULL DEFAULT false,
 	template_contents text NULL,
 	component_type_id integer NULL DEFAULT 1,
+	tags text NULL,
 	created timestamp NULL DEFAULT now(),
     modified timestamp NULL,
 	active boolean NULL DEFAULT true
@@ -273,16 +274,3 @@ ALTER TABLE tao.group_component ADD CONSTRAINT FK_group_component_user
 	FOREIGN KEY (owner_user_id) REFERENCES tao.user (id) ON DELETE No Action ON UPDATE No Action;
 ALTER TABLE tao.group_component ADD CONSTRAINT FK_group_component_component_visibility
 	FOREIGN KEY (visibility_id) REFERENCES tao.component_visibility (id) ON DELETE No Action ON UPDATE No Action;
-
--------------------------------------------------------------------------------
--- table: component_tags
-DROP TABLE IF EXISTS tao.component_tags CASCADE;
-CREATE TABLE tao.component_tags
-(
-    component_id varchar(512) NOT NULL,
-    tag_id integer NOT NULL
-);
-ALTER TABLE tao.component_tags ADD CONSTRAINT PK_component_tags
-	PRIMARY KEY (component_id, tag_id);
-ALTER TABLE tao.component_tags ADD CONSTRAINT FK_component_tags_tag
-	FOREIGN KEY (tag_id) REFERENCES tao.tag (id) ON DELETE No Action ON UPDATE No Action;
