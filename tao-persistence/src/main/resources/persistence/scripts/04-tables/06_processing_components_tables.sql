@@ -264,6 +264,7 @@ CREATE TABLE tao.group_component
 	owner_user_id integer NULL,
 	visibility_id integer NOT NULL,
 	parallelism integer NULL DEFAULT 1,
+	tags text NULL,
 	created timestamp NULL DEFAULT now(),
     modified timestamp NULL,
 	active boolean NULL DEFAULT true
