@@ -1,7 +1,6 @@
 -------------------------------------------------------------------------------
 -- table: query
 DROP TABLE IF EXISTS tao.query CASCADE;
-
 CREATE TABLE tao.query
 (
     id bigserial NOT NULL,
@@ -18,15 +17,11 @@ CREATE TABLE tao.query
 	created timestamp NULL DEFAULT now(),
     modified timestamp NULL
 );
-
 ALTER TABLE tao.query ADD CONSTRAINT PK_query
 	PRIMARY KEY (id);
-
 ALTER TABLE tao.query ADD CONSTRAINT U_query UNIQUE (user_id, graph_node_id, sensor_name, data_source);
-
 ALTER TABLE tao.query ADD CONSTRAINT FK_query_user
 	FOREIGN KEY (user_id) REFERENCES tao."user"(username) ON DELETE No Action ON UPDATE No Action;
-
 -- move this after tao.graph_node creation
 --ALTER TABLE tao.query ADD CONSTRAINT FK_query_graph_node
 --	FOREIGN KEY (graph_node_id) REFERENCES tao.graph_node(id) ON DELETE No Action ON UPDATE No Action;
@@ -34,33 +29,26 @@ ALTER TABLE tao.query ADD CONSTRAINT FK_query_user
 -------------------------------------------------------------------------------
 -- table: workflow_graph_status
 DROP TABLE IF EXISTS tao.workflow_graph_status CASCADE;
-
 CREATE TABLE tao.workflow_graph_status
 (
 	id integer NOT NULL,
 	status varchar(250) NOT NULL
 );
-
 ALTER TABLE tao.workflow_graph_status ADD CONSTRAINT PK_workflow_graph_status PRIMARY KEY (id);
-
 
 -------------------------------------------------------------------------------
 -- table: workflow_graph_visibility
 DROP TABLE IF EXISTS tao.visibility CASCADE;
-
 CREATE TABLE tao.visibility
 (
 	id integer NOT NULL,
 	visibility varchar(250) NOT NULL
 );
-
 ALTER TABLE tao.visibility ADD CONSTRAINT PK_visibility PRIMARY KEY (id);
-
 
 -------------------------------------------------------------------------------
 -- table: workflow_graph
 DROP TABLE IF EXISTS tao.workflow_graph CASCADE;
-
 CREATE TABLE tao.workflow_graph
 (
 	id bigint NOT NULL,
@@ -74,65 +62,41 @@ CREATE TABLE tao.workflow_graph
     yCoord real NULL,
     zoom real NULL,
 	custom_values json NULL,
+	tags text NULL,
 	active boolean NULL DEFAULT true
 );
-
 ALTER TABLE tao.workflow_graph ADD CONSTRAINT PK_workflow PRIMARY KEY (id);
-
 ALTER TABLE tao.workflow_graph ADD CONSTRAINT FK_workflow_graph_status
 	FOREIGN KEY (status_id) REFERENCES tao.workflow_graph_status (id) ON DELETE No Action ON UPDATE No Action;
-
 ALTER TABLE tao.workflow_graph ADD CONSTRAINT FK_workflow_graph_visibility
 	FOREIGN KEY (visibility_id) REFERENCES tao.visibility (id) ON DELETE No Action ON UPDATE No Action;
-
 ALTER TABLE tao.workflow_graph ADD CONSTRAINT FK_workflow_user
 	FOREIGN KEY (username) REFERENCES tao."user" (username) ON DELETE No Action ON UPDATE No Action;
 
-
 -------------------------------------------------------------------------------
--- table: workflow_graph_processing_custom_values
---DROP TABLE IF EXISTS tao.workflow_graph_processing_custom_values CASCADE;
-
---CREATE TABLE tao.workflow_graph_processing_custom_values
---(
---	workflow_graph_id bigint NOT NULL,
---	name varchar(512) NOT NULL,
---	value text NOT NULL
---);
-
---ALTER TABLE tao.workflow_graph_processing_custom_values ADD CONSTRAINT PK_workflow_graph_processing_custom_values
---	PRIMARY KEY (workflow_graph_id, name);
-
---ALTER TABLE tao.workflow_graph_processing_custom_values ADD CONSTRAINT FK_workflow_graph_processing_custom_values_workflow_graph
---	FOREIGN KEY (workflow_graph_id) REFERENCES tao.workflow_graph (id) ON DELETE No Action ON UPDATE No Action;
-
+-- table: tao.component_type
 -- component_type
 DROP TABLE IF EXISTS tao.component_type CASCADE;
-
 CREATE TABLE tao.component_type
 (
 	id smallint NOT NULL,
 	description varchar(50) NOT NULL
 );
-
 ALTER TABLE tao.component_type ADD CONSTRAINT PK_component_type PRIMARY KEY (id);
 
-
--- node_behavior
+-------------------------------------------------------------------------------
+-- table: tao.node_behavior
 DROP TABLE IF EXISTS tao.node_behavior CASCADE;
-
 CREATE TABLE tao.node_behavior
 (
 	id smallint NOT NULL,
 	description varchar(50) NOT NULL
 );
-
 ALTER TABLE tao.node_behavior ADD CONSTRAINT PK_node_behavior PRIMARY KEY (id);
 
 -------------------------------------------------------------------------------
 -- table: graph_node
 DROP TABLE IF EXISTS tao.graph_node CASCADE;
-
 CREATE TABLE tao.graph_node
 (
 	id bigint NOT NULL,
@@ -150,78 +114,45 @@ CREATE TABLE tao.graph_node
     -- special column used by JPA to distinguish which type of object is stored in one row (since this table holds 2 types of entities)
     discriminator integer NOT NULL
 );
-
 ALTER TABLE tao.graph_node ADD CONSTRAINT PK_graph_node PRIMARY KEY (id);
-
 ALTER TABLE tao.graph_node ADD CONSTRAINT FK_graph_node_workflow_graph
 	FOREIGN KEY (workflow_id) REFERENCES tao.workflow_graph (id) ON DELETE No Action ON UPDATE No Action;
-
 ALTER TABLE tao.graph_node ADD CONSTRAINT FK_graph_node_component_type
 	FOREIGN KEY (component_type_id) REFERENCES tao.component_type (id) ON DELETE No Action ON UPDATE No Action;
-
 ALTER TABLE tao.graph_node ADD CONSTRAINT FK_graph_node_node_behavior
 	FOREIGN KEY (behavior_id) REFERENCES tao.node_behavior (id) ON DELETE No Action ON UPDATE No Action;
-
 -- now add the FK from tao.query
 ALTER TABLE tao.query ADD CONSTRAINT FK_query_graph_node
 	FOREIGN KEY (graph_node_id) REFERENCES tao.graph_node(id) ON DELETE No Action ON UPDATE No Action;
 
-
--------------------------------------------------------------------------------
--- table: graph_node_processing_custom_values
---DROP TABLE IF EXISTS tao.graph_node_processing_custom_values CASCADE;
-
---CREATE TABLE tao.graph_node_processing_custom_values
---(
---	graph_node_id bigint NOT NULL,
---	name varchar(512) NOT NULL,
---	value text NOT NULL
---);
-
---ALTER TABLE tao.graph_node_processing_custom_values ADD CONSTRAINT PK_graph_node_processing_custom_values
---	PRIMARY KEY (graph_node_id, name);
-
---ALTER TABLE tao.graph_node_processing_custom_values ADD CONSTRAINT FK_graph_node_processing_custom_values_graph_node
---	FOREIGN KEY (graph_node_id) REFERENCES tao.graph_node (id) ON DELETE No Action ON UPDATE No Action;
-
-
 -------------------------------------------------------------------------------
 -- table: graph_node_group_nodes
 DROP TABLE IF EXISTS tao.graph_node_group_nodes CASCADE;
-
 CREATE TABLE tao.graph_node_group_nodes
 (
     graph_node_group_id bigint NOT NULL,
 	graph_node_id bigint NOT NULL
 );
-
 ALTER TABLE tao.graph_node_group_nodes ADD CONSTRAINT PK_graph_node_group_nodes
 	PRIMARY KEY (graph_node_group_id, graph_node_id);
-
 ALTER TABLE tao.graph_node_group_nodes ADD CONSTRAINT FK_graph_node_group_nodes_graph_node_01
 	FOREIGN KEY (graph_node_group_id) REFERENCES tao.graph_node (id) ON DELETE No Action ON UPDATE No Action;
-
 ALTER TABLE tao.graph_node_group_nodes ADD CONSTRAINT FK_graph_node_group_nodes_graph_node_02
 	FOREIGN KEY (graph_node_id) REFERENCES tao.graph_node (id) ON DELETE No Action ON UPDATE No Action;
 
-
 -------------------------------------------------------------------------------
--- execution_status
+-- table: tao.execution_status
 DROP TABLE IF EXISTS tao.execution_status CASCADE;
-
 CREATE TABLE tao.execution_status
 (
 	id integer NOT NULL,
 	status varchar(50) NOT NULL
 );
-
 ALTER TABLE tao.execution_status ADD CONSTRAINT PK_execution_status PRIMARY KEY (id);
-
 
 -------------------------------------------------------------------------------
 -- table: job
 DROP TABLE IF EXISTS tao.job CASCADE;
-
 CREATE TABLE tao.job
 (
 	id bigint NOT NULL,
@@ -232,26 +163,19 @@ CREATE TABLE tao.job
 	query_id bigint NULL,
 	execution_status_id integer NOT NULL
 );
-
 ALTER TABLE tao.job ADD CONSTRAINT PK_job PRIMARY KEY (id);
-
 ALTER TABLE tao.job ADD CONSTRAINT FK_job_workflow
 	FOREIGN KEY (workflow_id) REFERENCES tao.workflow_graph (id) ON DELETE No Action ON UPDATE No Action;
-
 ALTER TABLE tao.job ADD CONSTRAINT FK_job_user
 	FOREIGN KEY (username) REFERENCES tao."user" (username) ON DELETE No Action ON UPDATE No Action;
-
 ALTER TABLE tao.job ADD CONSTRAINT FK_job_query
 	FOREIGN KEY (query_id) REFERENCES tao.query (id) ON DELETE No Action ON UPDATE No Action;
-
 ALTER TABLE tao.job ADD CONSTRAINT FK_job_execution_status
 	FOREIGN KEY (execution_status_id) REFERENCES tao.execution_status (id) ON DELETE No Action ON UPDATE No Action;
 
-
 -------------------------------------------------------------------------------
--- table: execution_node
+-- table: tao.execution_node
 DROP TABLE IF EXISTS tao.execution_node CASCADE;
-
 CREATE TABLE tao.execution_node
 (
 	id varchar(250) NOT NULL,
@@ -265,18 +189,16 @@ CREATE TABLE tao.execution_node
 	used_CPU integer NULL,
 	used_RAM integer NULL,
 	used_HDD integer NULL,
+	tags text NULL,
 	created timestamp NULL DEFAULT now(),
     modified timestamp NULL,
 	active boolean NULL DEFAULT true
 );
-
 ALTER TABLE tao.execution_node ADD CONSTRAINT PK_execution_node PRIMARY KEY (id);
 
-
 -------------------------------------------------------------------------------
--- table: task
+-- table: tao.task
 DROP TABLE IF EXISTS tao.task CASCADE;
-
 CREATE TABLE tao.task
 (
 	id bigint NOT NULL,
@@ -301,97 +223,73 @@ CREATE TABLE tao.task
     -- special column used by JPA to distinguish which type of object is stored in one row (since this table holds 2 types of entities)
     discriminator integer NOT NULL
 );
-
 ALTER TABLE tao.task ADD CONSTRAINT PK_task PRIMARY KEY (id);
-
 -- This prevents deleting a node if previously executed
 --ALTER TABLE tao.task ADD CONSTRAINT FK_task_graph_node
 --	FOREIGN KEY (graph_node_id) REFERENCES tao.graph_node (id) ON DELETE No Action ON UPDATE No Action;
-
 ALTER TABLE tao.task ADD CONSTRAINT FK_task_job
 	FOREIGN KEY (job_id) REFERENCES tao.job (id) ON DELETE No Action ON UPDATE No Action;
-
 ALTER TABLE tao.task ADD CONSTRAINT FK_task_group
 	FOREIGN KEY (task_group_id) REFERENCES tao.task (id) ON DELETE No Action ON UPDATE No Action;
-
 ALTER TABLE tao.task ADD CONSTRAINT FK_task_execution_node
 	FOREIGN KEY (execution_node_host_name) REFERENCES tao.execution_node (id) ON DELETE No Action ON UPDATE No Action;
-
 ALTER TABLE tao.task ADD CONSTRAINT FK_task_execution_status
 	FOREIGN KEY (execution_status_id) REFERENCES tao.execution_status (id) ON DELETE No Action ON UPDATE No Action;
 
-
 -------------------------------------------------------------------------------
--- table: execution_group_tasks
+-- table: tao.execution_group_tasks
 DROP TABLE IF EXISTS tao.execution_group_tasks CASCADE;
-
 CREATE TABLE tao.execution_group_tasks
 (
     execution_group_id bigint NOT NULL,
 	execution_task_id bigint NOT NULL
 );
-
 ALTER TABLE tao.execution_group_tasks ADD CONSTRAINT PK_execution_group_tasks
 	PRIMARY KEY (execution_group_id, execution_task_id);
-
 ALTER TABLE tao.execution_group_tasks ADD CONSTRAINT FK_execution_group_tasks_execution_group
 	FOREIGN KEY (execution_group_id) REFERENCES tao.task (id) ON DELETE No Action ON UPDATE No Action;
-
 ALTER TABLE tao.execution_group_tasks ADD CONSTRAINT FK_execution_group_tasks_execution_task
 	FOREIGN KEY (execution_task_id) REFERENCES tao.task (id) ON DELETE No Action ON UPDATE No Action;
 
-
 -------------------------------------------------------------------------------
--- table: task_inputs
+-- table: tao.task_inputs
 DROP TABLE IF EXISTS tao.task_inputs CASCADE;
-
 CREATE TABLE tao.task_inputs
 (
 	task_id bigint NOT NULL,
 	key varchar(512) NOT NULL,
 	value varchar NULL
 );
-
 ALTER TABLE tao.task_inputs ADD CONSTRAINT PK_task_inputs PRIMARY KEY (task_id, key);
-
 ALTER TABLE tao.task_inputs ADD CONSTRAINT FK_task_inputs_task
 	FOREIGN KEY (task_id) REFERENCES tao.task (id) ON DELETE No Action ON UPDATE No Action;
 
-
 -------------------------------------------------------------------------------
--- table: task_output
+-- table: tao.task_output
 DROP TABLE IF EXISTS tao.task_output CASCADE;
-
 CREATE TABLE tao.task_output
 (
 	task_id bigint NOT NULL,
 	key varchar(512) NOT NULL,
     value varchar NULL
 );
-
 ALTER TABLE tao.task_output ADD CONSTRAINT PK_task_output PRIMARY KEY (task_id, key);
-
 ALTER TABLE tao.task_output ADD CONSTRAINT FK_task_output_task
 	FOREIGN KEY (task_id) REFERENCES tao.task (id) ON DELETE No Action ON UPDATE No Action;
 
-
 -------------------------------------------------------------------------------
--- service_status
+-- tao.service_status
 DROP TABLE IF EXISTS tao.service_status CASCADE;
-
 CREATE TABLE tao.service_status
 (
 	id integer NOT NULL,
 	status varchar(50) NOT NULL
 );
-
 ALTER TABLE tao.service_status ADD CONSTRAINT PK_service_status PRIMARY KEY (id);
 
-
 -------------------------------------------------------------------------------
--- table: service
+-- table: tao.service
 DROP TABLE IF EXISTS tao.service CASCADE;
-
 CREATE TABLE tao.service
 (
     id integer NOT NULL,
@@ -399,31 +297,22 @@ CREATE TABLE tao.service
 	version varchar(50) NOT NULL,
 	description text NULL
 );
-
 ALTER TABLE tao.service ADD CONSTRAINT PK_service PRIMARY KEY (id);
-
 ALTER TABLE tao.service ADD CONSTRAINT K_service UNIQUE (name, version);
 
-
 -------------------------------------------------------------------------------
--- table: execution_node_service
+-- table: tao.execution_node_service
 DROP TABLE IF EXISTS tao.execution_node_service CASCADE;
-
 CREATE TABLE tao.execution_node_service
 (
 	host_name varchar(250) NOT NULL,
 	service_id integer NOT NULL,
 	service_status_id integer NOT NULL
 );
-
 ALTER TABLE tao.execution_node_service ADD CONSTRAINT PK_execution_node_service PRIMARY KEY (host_name, service_id);
-
 ALTER TABLE tao.execution_node_service ADD CONSTRAINT FK_execution_node_service_execution_node
 	FOREIGN KEY (host_name) REFERENCES tao.execution_node (id) ON DELETE No Action ON UPDATE No Action;
-
 ALTER TABLE tao.execution_node_service ADD CONSTRAINT FK_execution_node_service_service
     FOREIGN KEY (service_id) REFERENCES tao.service (id) ON DELETE No Action ON UPDATE No Action;
-
 ALTER TABLE tao.execution_node_service ADD CONSTRAINT FK_execution_node_service_service_status
 	FOREIGN KEY (service_status_id) REFERENCES tao.service_status (id) ON DELETE No Action ON UPDATE No Action;
--------------------------------------------------------------------------------

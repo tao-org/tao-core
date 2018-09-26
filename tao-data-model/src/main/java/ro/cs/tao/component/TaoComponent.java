@@ -21,6 +21,7 @@ import ro.cs.tao.security.SessionContext;
 
 import javax.xml.bind.annotation.XmlElementWrapper;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -44,6 +45,8 @@ public abstract class TaoComponent extends StringIdentifiable {
     protected int targetCardinality = 1;*/
     protected List<SourceDescriptor> sources;
     protected List<TargetDescriptor> targets;
+
+    protected List<String> tags;
 
     private SessionContext sessionContext;
 
@@ -188,6 +191,23 @@ public abstract class TaoComponent extends StringIdentifiable {
         target.setParentId(null);
         if (this.targets != null) {
             this.targets.remove(target);
+        }
+    }
+    @XmlElementWrapper(name = "tags")
+    public List<String> getTags() { return tags; }
+    public void setTags(List<String> tags) { this.tags = tags; }
+    public void addTags(String... values) {
+        if (values == null || values.length == 0) {
+            return;
+        }
+        if (this.tags == null) {
+            this.tags = new ArrayList<>();
+        }
+        Collections.addAll(this.tags, values);
+    }
+    public void removeTag(String tag) {
+        if (this.tags != null) {
+            this.tags.remove(tag);
         }
     }
     /**

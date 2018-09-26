@@ -38,6 +38,7 @@ public class NodeDescription extends StringIdentifiable {
     private String description;
     private Boolean active;
     private List<NodeServiceStatus> servicesStatus;
+    private List<String> tags;
 
     public NodeDescription() { this.active = true;}
 
@@ -101,5 +102,20 @@ public class NodeDescription extends StringIdentifiable {
             this.servicesStatus = new ArrayList<>();
         }
         this.servicesStatus.add(serviceStatus);
+    }
+
+    @XmlElementWrapper(name = "tags")
+    public List<String> getTags() { return tags; }
+    public void setTags(List<String> tags) { this.tags = tags; }
+    public void addTag(String tag) {
+        if (this.tags == null) {
+            this.tags = new ArrayList<>();
+        }
+        this.tags.add(tag);
+    }
+    public void removeTag(String tag) {
+        if (this.tags != null) {
+            this.tags.remove(tag);
+        }
     }
 }
