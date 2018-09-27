@@ -65,7 +65,8 @@ CREATE TABLE tao.container_applications
 	container_id varchar(1024) NOT NULL,
 	name varchar(1024) NOT NULL,
 	path varchar(1024) NULL,
-	parallel_flag varchar(50) NULL
+	parallel_flag varchar(50) NULL,
+	memory integer NULL
 );
 ALTER TABLE tao.container_applications ADD CONSTRAINT PK_container_applications
 	PRIMARY KEY (container_id, name);

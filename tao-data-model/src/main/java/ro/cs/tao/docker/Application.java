@@ -29,6 +29,7 @@ public class Application {
     private String path;
     private String name;
     private String parallelFlagTemplate;
+    private int memoryRequirements;
 
     @XmlElement(name = "path")
     public String getPath() { return path; }
@@ -41,6 +42,10 @@ public class Application {
     @XmlElement(name = "parallelFlagTemplate")
     public String getParallelFlagTemplate() { return parallelFlagTemplate; }
     public void setParallelFlagTemplate(String parallelFlagTemplate) { this.parallelFlagTemplate = parallelFlagTemplate; }
+
+    @XmlElement(name = "memoryRequirements")
+    public int getMemoryRequirements() { return memoryRequirements; }
+    public void setMemoryRequirements(int memoryRequirements) { this.memoryRequirements = memoryRequirements; }
 
     public boolean hasParallelFlag() {
         return this.parallelFlagTemplate != null;

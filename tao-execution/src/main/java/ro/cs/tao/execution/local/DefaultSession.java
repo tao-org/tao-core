@@ -17,6 +17,7 @@ package ro.cs.tao.execution.local;
 
 import org.ggf.drmaa.*;
 import ro.cs.tao.configuration.ConfigurationManager;
+import ro.cs.tao.execution.Constants;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.topology.NodeDescription;
@@ -110,6 +111,13 @@ public class DefaultSession implements Session {
             public long getSoftRunDurationLimit() throws DrmaaException {
                 return this.softTimeLimit;
             }
+
+            @Override
+            protected Set getOptionalAttributeNames() {
+                Set set = new HashSet();
+                set.add("MemoryRequirements");
+                return set;
+            }
         };
         jobTemplate.setJobName(UUID.randomUUID().toString());
         this.jobTemplates.put(jobTemplate.getJobName(), jobTemplate);
@@ -143,7 +151,15 @@ public class DefaultSession implements Session {
                                       args, cmdsToRunAsSu.contains(jt.getRemoteCommand()), null) :
                     new ExecutionUnit(ExecutorType.SSH2, node.getId(), node.getUserName(), node.getUserPass(),
                                       args, cmdsToRunAsSu.contains(jt.getRemoteCommand()), SSHMode.EXEC);
-            unit.setMinMemory(8192L);
+            if (jt instanceof JobTemplateExtension) {
+                JobTemplateExtension job = (JobTemplateExtension) jt;
+                if (job.hasAttribute(Constants.MEMORY_REQUIREMENTS_ATTRIBUTE)) {
+                    Object value = job.getAttribute(Constants.MEMORY_REQUIREMENTS_ATTRIBUTE);
+                    if (value != null) {
+                        unit.setMinMemory(((Integer) value).longValue());
+                    }
+                }
+            }
             String jobId = jt.getJobName() + ":" + System.nanoTime();
             this.runningJobs.put(jobId, Executor.execute(null, unit));
             return jobId;
