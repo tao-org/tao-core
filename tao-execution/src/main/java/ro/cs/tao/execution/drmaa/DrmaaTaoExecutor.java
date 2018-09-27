@@ -16,14 +16,12 @@
 package ro.cs.tao.execution.drmaa;
 
 import org.apache.commons.lang3.SystemUtils;
-import org.ggf.drmaa.DrmaaException;
-import org.ggf.drmaa.InternalException;
-import org.ggf.drmaa.JobTemplate;
-import org.ggf.drmaa.Session;
+import org.ggf.drmaa.*;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.docker.Application;
 import ro.cs.tao.docker.Container;
+import ro.cs.tao.execution.Constants;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.Executor;
 import ro.cs.tao.execution.local.DefaultSession;
@@ -45,8 +43,10 @@ import java.util.regex.Pattern;
  */
 public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
     private static final String DOCKER_BIND_MOUNT_CONFIG_KEY  = "tao.docker.bind_mount";
+    private static final String FORCE_MEMORY_REQUIREMENTS_KEY = "tao.force.memory.requirements";
     private Session session;
     private boolean useDockerForExecution;
+    private boolean forceMemoryRequirements;
 
     @Override
     public void initialize() throws ExecutionException {
@@ -55,6 +55,8 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             session.init(null);
             super.initialize();
             useDockerForExecution = !SystemUtils.IS_OS_WINDOWS;
+            forceMemoryRequirements = Boolean.parseBoolean(ConfigurationManager.getInstance().getValue(FORCE_MEMORY_REQUIREMENTS_KEY,
+                                                                                                       "false"));
         } catch (DrmaaException e) {
             isInitialized = false;
             throw new ExecutionException("Error initiating DRMAA session", e);
@@ -193,20 +195,18 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         // Get from the component the execution command
         Container container;
         String[] pArgs = null;
+        ProcessingComponent component = task.getComponent();
+        container = persistenceManager.getContainerById(component.getContainerId());
+        Application app = container.getApplications()
+                .stream()
+                .filter(a -> component.getId().endsWith(a.getName().toLowerCase()))
+                .findFirst().orElse(null);
         if (useDockerForExecution) {
-            container = persistenceManager.getContainerById(task.getComponent().getContainerId());
             String location = task.getComponent().getFileLocation();
             if (!Paths.get(location).isAbsolute()) {
                 task.getComponent().setExpandedFileLocation(Paths.get(container.getApplicationPath(), location).toString());
             }
         } else {
-            ProcessingComponent component = task.getComponent();
-            container = persistenceManager.getContainerById(component.getContainerId());
-            Application app = container.getApplications()
-                    .stream()
-                    .filter(a -> component.getId().endsWith(a.getName().toLowerCase()))
-                    .findFirst().orElse(null);
-
             if (app != null && app.hasParallelFlag()) {
                 Class<?> type = app.parallelArgumentType();
                 if (type.isAssignableFrom(Integer.class)) {
@@ -229,7 +229,12 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         if (jt == null) {
             throw new ExecutionException("Error creating job template from the session!");
         }
-
+        if (jt instanceof JobTemplateExtension) {
+            JobTemplateExtension job = (JobTemplateExtension) jt;
+            if (job.hasAttribute(Constants.MEMORY_REQUIREMENTS_ATTRIBUTE) && app != null && forceMemoryRequirements) {
+                job.setAttribute(Constants.MEMORY_REQUIREMENTS_ATTRIBUTE, app.getMemoryRequirements());
+            }
+        }
         List<String> argsList = new ArrayList<>();
         String cmd;
 

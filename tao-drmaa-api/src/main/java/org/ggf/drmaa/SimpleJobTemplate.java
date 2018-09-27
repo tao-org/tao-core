@@ -52,8 +52,10 @@ import java.util.*;
  * @author dan.templeton@sun.com
  * @see JobTemplate
  * @since 1.0
+ *
+ * @apiNote Modified for TAO to allow extensions
  */
-public class SimpleJobTemplate implements JobTemplate, Serializable {
+public class SimpleJobTemplate implements JobTemplate, JobTemplateExtension, Serializable {
     private String toString = null;
     private Set allPropertyNames = null;
     private boolean modified = true;
@@ -134,7 +136,9 @@ public class SimpleJobTemplate implements JobTemplate, Serializable {
      * @see JobTemplate#setJoinFiles(boolean)
      */
     protected boolean joinFiles = false;
-    
+
+    protected Map<String, Object> optionalMembers;
+
     /**
      * Create a new instance of a JobTemplate.
      */
@@ -402,16 +406,48 @@ public class SimpleJobTemplate implements JobTemplate, Serializable {
                                                 "attribute is not supported.");
     }
     
-    public Set getAttributeNames() throws DrmaaException {
+    public Set getAttributeNames() {
         if (allPropertyNames == null) {
             allPropertyNames = new HashSet();
             addRequiredNames(allPropertyNames);
-            allPropertyNames.addAll(getOptionalAttributeNames());
+            Set optionalAttributeNames = getOptionalAttributeNames();
+            if (optionalAttributeNames != null && optionalAttributeNames.size() > 0) {
+                if (this.optionalMembers == null) {
+                    optionalMembers = new HashMap<>();
+                }
+                for (Object attributeName : optionalAttributeNames) {
+                    optionalMembers.put((String) attributeName, null);
+                }
+                allPropertyNames.addAll(optionalAttributeNames);
+            }
         }
         
         return allPropertyNames;
     }
-    
+
+    @Override
+    public boolean hasAttribute(String attributeName) {
+        return getAttributeNames().contains(attributeName);
+    }
+
+    @Override
+    public Object getAttribute(String attributeName) throws DrmaaException {
+        if (attributeName == null || !hasAttribute(attributeName)) {
+            throw new UnsupportedAttributeException(String.format("Attribute [%s] does not exist in this implementation",
+                                                   attributeName));
+        }
+        return this.optionalMembers.get(attributeName);
+    }
+
+    @Override
+    public void setAttribute(String attributeName, Object value) throws DrmaaException {
+        if (attributeName == null || !hasAttribute(attributeName)) {
+            throw new UnsupportedAttributeException(String.format("Attribute [%s] does not exist in this implementation",
+                                                                  attributeName));
+        }
+        this.optionalMembers.put(attributeName, value);
+    }
+
     /** This method returns the names of all optional and implementation-specific
      * properties supported by this DRMAA implementation.  Unless overridden by the
      * DRMAA implementation, this method returns an empty list.

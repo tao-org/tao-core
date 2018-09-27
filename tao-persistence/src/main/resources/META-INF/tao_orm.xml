@@ -1037,6 +1037,9 @@
             <basic name="parallelFlagTemplate">
                 <column name="parallel_flag" nullable="true" column-definition="varchar(50) NULL" />
             </basic>
+            <basic name="memoryRequirements">
+                <column name="memory" nullable="true" column-definition="integer NULL" />
+            </basic>
         </attributes>
     </embeddable>
 
