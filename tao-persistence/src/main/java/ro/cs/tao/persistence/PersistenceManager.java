@@ -465,6 +465,10 @@ public class PersistenceManager implements MessagePersister {
         return executionJobManager.list(workflowId);
     }
 
+    public List<String> getJobsOutputKeys(long workflowId) {
+        return executionJobManager.listWorkflowJobsOutputKeys(workflowId);
+    }
+
     public ExecutionJob getJobById(long jobId) {
         return executionJobManager.get(jobId);
     }

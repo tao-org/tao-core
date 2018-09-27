@@ -34,4 +34,11 @@ public interface ExecutionJobRepository extends PagingAndSortingRepository<Execu
     @Query(value = "SELECT * FROM tao.job WHERE username = :userName AND execution_status_id in (:statuses)",
             nativeQuery = true)
     List<ExecutionJob> findByStatusAndUser(@Param("statuses") Set<Integer> statuses, @Param("userName") String userName);
+
+    @Query(value = "SELECT CONCAT(CAST(t.job_id as text), '-', CAST(t.id as text)) FROM tao.task_output tk " +
+            "JOIN tao.task t ON t.id = tk.task_id " +
+            "JOIN tao.job e ON e.id = t.job_id " +
+            "WHERE e.workflow_id = :workflowId " +
+            "ORDER BY t.job_id, t.id", nativeQuery = true)
+    List<String> getWorkflowJobsOutputs(@Param("workflowId") Long workflowId);
 }
