@@ -410,7 +410,7 @@ public abstract class OSRuntimeInfo {
         private List<String> messages = new ArrayList<>();
         @Override
         public void consume(String message) {
-            messages.add(message);
+            messages.add(message.replace("\r", ""));
         }
         List<String> getMessages() { return this.messages; }
     }
