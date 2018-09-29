@@ -384,7 +384,9 @@ public class DataSourceComponent extends TaoComponent {
                     }
                     currentProduct = product;
                     ProductFetchStrategy templateFetcher = dataSource.getProductFetchStrategy(product.getProductType());
-                    //templateFetcher.setProgressListener(notifier);
+                    if (additionalProperties != null) {
+                        currentFetcher.addProperties(additionalProperties);
+                    }
                     if (templateFetcher instanceof DownloadStrategy) {
                         DownloadStrategy downloadStrategy = ((DownloadStrategy) templateFetcher).clone();
                         downloadStrategy.setDestination(destinationPath);
@@ -400,9 +402,6 @@ public class DataSourceComponent extends TaoComponent {
                         currentFetcher = downloadStrategy;
                     } else {
                         currentFetcher = templateFetcher.clone();
-                    }
-                    if (additionalProperties != null) {
-                        currentFetcher.addProperties(additionalProperties);
                     }
                     if (tiles != null && !tryApplyFilter(currentFetcher, tiles)) {
                         logger.warning(String.format("Fetch strategy for data source [%s] doesn't support tiles filter",
