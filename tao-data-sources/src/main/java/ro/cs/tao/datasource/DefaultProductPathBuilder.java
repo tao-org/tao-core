@@ -6,15 +6,18 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Properties;
 import java.util.Scanner;
 
 public class DefaultProductPathBuilder implements ProductPathBuilder {
-    protected final String localPathFormat;
+    protected String localPathFormat;
     protected final Path repositoryPath;
+    protected final Properties properties;
 
-    public DefaultProductPathBuilder(Path repositoryPath, String localPathFormat) {
+    public DefaultProductPathBuilder(Path repositoryPath, String localPathFormat, Properties properties) {
         this.localPathFormat = localPathFormat;
         this.repositoryPath = repositoryPath;
+        this.properties = properties;
     }
 
     @Override
