@@ -17,6 +17,7 @@ package ro.cs.tao.services.interfaces;
 
 import ro.cs.tao.Tag;
 import ro.cs.tao.component.ComponentLink;
+import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.datasource.beans.Parameter;
 import ro.cs.tao.eodata.enums.Visibility;
 import ro.cs.tao.persistence.exception.PersistenceException;
@@ -150,5 +151,14 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor> {
      */
     Map<String, List<Parameter>> getWorkflowParameters(long workflowId);
 
+    /**
+     * Returns the output descriptors (i.e. the ones of the terminal node) of a workflow.
+     * @param workflowId    The workflow identifier
+     */
+    List<TargetDescriptor> getWorkflowOutputs(long workflowId);
+
+    /**
+     * Returns all tags that are associated with workflows.
+     */
     List<Tag> getWorkflowTags();
 }
