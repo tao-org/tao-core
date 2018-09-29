@@ -17,8 +17,10 @@ package ro.cs.tao.datasource.remote;
 
 import org.apache.http.auth.UsernamePasswordCredentials;
 import ro.cs.tao.ProgressListener;
+import ro.cs.tao.datasource.DefaultProductPathBuilder;
 import ro.cs.tao.datasource.InterruptedException;
 import ro.cs.tao.datasource.ProductFetchStrategy;
+import ro.cs.tao.datasource.ProductPathBuilder;
 import ro.cs.tao.datasource.util.NetUtils;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.utils.FileUtilities;
@@ -34,7 +36,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -53,11 +54,12 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     private static final String startMessage = "(%s,%s) %s [size: %skB]";
     private static final String completeMessage = "(%s,%s) %s [elapsed: %ss]";
     private static final String errorMessage ="Cannot download %s: %s";
-    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
+    //private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
     private static final String PROGRESS_KEY = "progress.enabled";
     private static final String PROGRESS_INTERVAL = "progress.interval";
-    private static final String USE_PADDING_KEY = "usePadding";
+    //private static final String USE_PADDING_KEY = "usePadding";
     protected static final String LOCAL_PATH_FORMAT = "local.archive.path.format";
+    private static final String PATH_BUILDER_CLASS = "path.builder.class";
     private final boolean progressEnabled;
     protected Properties props;
     protected String destination;
@@ -70,6 +72,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     protected FetchMode fetchMode;
     protected Logger logger = Logger.getLogger(getClass().getName());
     private String localArchiveRoot;
+    private ProductPathBuilder pathBuilder;
     private ProgressListener progressListener;
     private volatile boolean cancelled;
     private Timer timer;
@@ -98,6 +101,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         this.localArchiveRoot = other.localArchiveRoot;
         this.fetchMode = other.fetchMode;
         this.progressReportInterval = other.progressReportInterval;
+        this.pathBuilder = other.pathBuilder;
     }
 
     /**
@@ -142,12 +146,26 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     /**
      * Returns the local arhive root (if in {@link FetchMode}.SYMLINK).
      */
-    public String getLocalArchiveRoot() {
+    protected String getLocalArchiveRoot() {
         return localArchiveRoot;
     }
 
     public void setLocalArchiveRoot(String localArchiveRoot) {
         this.localArchiveRoot = localArchiveRoot;
+        if (this.props != null && this.props.containsKey(PATH_BUILDER_CLASS)) {
+            String className = this.props.getProperty(PATH_BUILDER_CLASS);
+            try {
+                String format = this.props.getProperty(LOCAL_PATH_FORMAT, "yyyy/MM/dd");
+                Class<? extends ProductPathBuilder> clazz =
+                        (Class<? extends ProductPathBuilder>) Class.forName(className);
+                this.pathBuilder = clazz.getDeclaredConstructor(Path.class, String.class)
+                                        .newInstance(Paths.get(this.localArchiveRoot), format);
+            } catch (Exception e) {
+                logger.severe(String.format("Cannot instantiate class '%s'. Reason: %s", className, e.getMessage()));
+            }
+        } else {
+            this.pathBuilder = new DefaultProductPathBuilder(Paths.get(this.localArchiveRoot), "yyyy/MM/dd");
+        }
     }
 
     public String getProductUrl(EOProduct descriptor){
@@ -305,35 +323,11 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     }
 
     protected Path findProductPath(Path root, EOProduct product) {
-        // Products are assumed to be organized according to the pattern defined in tao.properties
-        Date date = product.getAcquisitionDate();
-        final String format = this.props.getProperty(LOCAL_PATH_FORMAT, "yyyy/MM/dd");
-        final String productName = product.getAttributeValue("filename") != null ?
-                product.getAttributeValue("filename") : product.getName();
-        Path productFolderPath = dateToPath(root, date, format);
-        Path fullProductPath = productFolderPath.resolve(productName);
-        if (!Files.exists(fullProductPath)) {
-            // Maybe it's an archived product
-            // maybe products are grouped by processing date
-            date = product.getProcessingDate();
-            if (date != null) {
-                productFolderPath = dateToPath(root, date, format);
-                fullProductPath = productFolderPath.resolve(productName);
-                if (!Files.exists(fullProductPath)) {
-                    fullProductPath = null;
-                }
-            } else {
-                fullProductPath = null;
-            }
+        if (this.pathBuilder == null) {
+            logger.warning("No path builder found");
+            return null;
         }
-        return fullProductPath;
-    }
-
-    protected Path dateToPath(Path root, Date date, String formatOnDisk) {
-        final DateFormatTokenizer tokenizer = new DateFormatTokenizer(formatOnDisk);
-        return root.resolve(tokenizer.getYearPart(date))
-                    .resolve(tokenizer.getMonthPart(date))
-                    .resolve(tokenizer.getDayPart(date));
+        return this.pathBuilder.getProductPath(root, product);
     }
 
     protected boolean isCancelled() { return this.cancelled; }
@@ -526,83 +520,6 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         public void run() {
             if (progressListener != null) {
                 progressListener.notifyProgress(currentProductProgress);
-            }
-        }
-    }
-
-    private class DateFormatTokenizer {
-        private String yearPart;
-        private String monthPart;
-        private String dayPart;
-        private String hourPart;
-        private String minutePart;
-        private String secondPart;
-
-        public DateFormatTokenizer(String format) {
-            yearPart = "";
-            monthPart = "";
-            dayPart = "";
-            hourPart = "";
-            minutePart = "";
-            secondPart = "";
-            parse(format);
-        }
-
-        public String getYearPart(Date date) {
-            return new SimpleDateFormat(yearPart).format(date);
-        }
-
-        public String getMonthPart(Date date) {
-            return new SimpleDateFormat(monthPart).format(date);
-        }
-
-        public String getDayPart(Date date) {
-            return new SimpleDateFormat(dayPart).format(date);
-        }
-
-        public String getHourPart(Date date) {
-            return new SimpleDateFormat(hourPart).format(date);
-        }
-
-        public String getMinutePart(Date date) {
-            return new SimpleDateFormat(minutePart).format(date);
-        }
-
-        public String getSecondPart(Date date) {
-            return new SimpleDateFormat(secondPart).format(date);
-        }
-
-        @SuppressWarnings("StringConcatenationInLoop")
-        private void parse(String format) {
-            Scanner scanner = new Scanner(format);
-            scanner.useDelimiter("");
-            while (scanner.hasNext()) {
-                String ch = scanner.next();
-                switch (ch) {
-                    case "y":
-                    case "Y":
-                        yearPart += ch;
-                        break;
-                    case "M":
-                        monthPart += ch;
-                        break;
-                    case "d":
-                    case "D":
-                        dayPart += ch;
-                        break;
-                    case "h":
-                    case "H":
-                        hourPart += ch;
-                        break;
-                    case "m":
-                        minutePart += ch;
-                        break;
-                    case "s":
-                        secondPart += ch;
-                        break;
-                    default:
-                        break;
-                }
             }
         }
     }
