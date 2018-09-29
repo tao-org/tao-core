@@ -158,13 +158,13 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
                 String format = this.props.getProperty(LOCAL_PATH_FORMAT, "yyyy/MM/dd");
                 Class<? extends ProductPathBuilder> clazz =
                         (Class<? extends ProductPathBuilder>) Class.forName(className);
-                this.pathBuilder = clazz.getDeclaredConstructor(Path.class, String.class)
-                                        .newInstance(Paths.get(this.localArchiveRoot), format);
+                this.pathBuilder = clazz.getDeclaredConstructor(Path.class, String.class, Properties.class)
+                                        .newInstance(Paths.get(this.localArchiveRoot), format, this.props);
             } catch (Exception e) {
                 logger.severe(String.format("Cannot instantiate class '%s'. Reason: %s", className, e.getMessage()));
             }
         } else {
-            this.pathBuilder = new DefaultProductPathBuilder(Paths.get(this.localArchiveRoot), "yyyy/MM/dd");
+            this.pathBuilder = new DefaultProductPathBuilder(Paths.get(this.localArchiveRoot), "yyyy/MM/dd", this.props);
         }
     }
 
