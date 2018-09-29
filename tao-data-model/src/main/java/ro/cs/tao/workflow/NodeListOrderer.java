@@ -17,10 +17,7 @@ package ro.cs.tao.workflow;
 
 import ro.cs.tao.component.ComponentLink;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -52,6 +49,18 @@ public interface NodeListOrderer {
             }
         }
         return roots;
+    }
+
+    default List<WorkflowNodeDescriptor> findLeaves(List<WorkflowNodeDescriptor> nodes) {
+        List<WorkflowNodeDescriptor> leaves = null;
+        if (nodes != null) {
+            final Set<Long> parents = new HashSet<>();
+            nodes.stream().filter(n -> n.getIncomingLinks() != null)
+                          .forEach(n -> n.getIncomingLinks()
+                                         .forEach(l -> parents.add(l.getSourceNodeId())));
+            leaves = nodes.stream().filter(n -> !parents.contains(n.getId())).collect(Collectors.toList());
+        }
+        return leaves;
     }
 
     /**
