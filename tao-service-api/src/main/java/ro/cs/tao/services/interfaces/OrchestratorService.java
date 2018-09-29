@@ -16,6 +16,7 @@
 
 package ro.cs.tao.services.interfaces;
 
+import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.datasource.beans.Parameter;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.model.ExecutionJobSummary;
@@ -37,6 +38,12 @@ public interface OrchestratorService extends TAOService {
      * @param workflowId    The workflow identifier
      */
     Map<String, List<Parameter>> getWorkflowParameters(long workflowId);
+
+    /**
+     * Returns the outputs (i.e. the target descriptors of terminal nodes) of a workflow.
+     * @param workflowId    The workflow identifier
+     */
+    List<TargetDescriptor> getWorkflowOutputs(long workflowId);
     /**
      * Creates a job from a workflow definition and starts its execution.
      *
