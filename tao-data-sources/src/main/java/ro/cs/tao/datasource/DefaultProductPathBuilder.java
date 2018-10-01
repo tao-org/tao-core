@@ -10,6 +10,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
 import java.util.Scanner;
+import java.util.logging.Logger;
 
 public class DefaultProductPathBuilder implements ProductPathBuilder {
     protected String localPathFormat;
@@ -17,8 +18,10 @@ public class DefaultProductPathBuilder implements ProductPathBuilder {
     protected final ProductFormat productFormat;
     protected final boolean appendSAFE;
     protected final Properties properties;
+    protected final Logger logger;
 
     public DefaultProductPathBuilder(Path repositoryPath, String localPathFormat, Properties properties) {
+        this.logger = Logger.getLogger(getClass().getName());
         this.localPathFormat = localPathFormat;
         this.repositoryPath = repositoryPath;
         this.properties = properties;
@@ -35,6 +38,7 @@ public class DefaultProductPathBuilder implements ProductPathBuilder {
         String productName = getProductName(product);
         Path productFolderPath = dateToPath(this.repositoryPath, date, this.localPathFormat);
         Path fullProductPath = productFolderPath.resolve(productName);
+        logger.fine(String.format("Looking for product %s into %s", product.getName(), fullProductPath));
         if (!Files.exists(fullProductPath)) {
             // Maybe it's an archived product
             // maybe products are grouped by processing date
@@ -42,6 +46,7 @@ public class DefaultProductPathBuilder implements ProductPathBuilder {
             if (date != null) {
                 productFolderPath = dateToPath(this.repositoryPath, date, this.localPathFormat);
                 fullProductPath = productFolderPath.resolve(productName);
+                logger.fine(String.format("Alternatively looking for product %s into %s", product.getName(), fullProductPath));
                 if (!Files.exists(fullProductPath)) {
                     fullProductPath = null;
                 }
