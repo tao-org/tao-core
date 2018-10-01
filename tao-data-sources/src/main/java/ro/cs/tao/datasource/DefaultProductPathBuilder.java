@@ -1,5 +1,7 @@
 package ro.cs.tao.datasource;
 
+import ro.cs.tao.EnumUtils;
+import ro.cs.tao.datasource.remote.ProductFormat;
 import ro.cs.tao.eodata.EOProduct;
 
 import java.nio.file.Files;
@@ -12,20 +14,25 @@ import java.util.Scanner;
 public class DefaultProductPathBuilder implements ProductPathBuilder {
     protected String localPathFormat;
     protected final Path repositoryPath;
+    protected final ProductFormat productFormat;
+    protected final boolean appendSAFE;
     protected final Properties properties;
 
     public DefaultProductPathBuilder(Path repositoryPath, String localPathFormat, Properties properties) {
         this.localPathFormat = localPathFormat;
         this.repositoryPath = repositoryPath;
         this.properties = properties;
+        this.productFormat = properties != null ?
+                EnumUtils.getEnumConstantByName(ProductFormat.class, properties.getProperty("product.format", "folder").toUpperCase()) :
+                ProductFormat.FOLDER;
+        this.appendSAFE = properties != null && Boolean.parseBoolean(properties.getProperty("path.append.safe", "false"));
     }
 
     @Override
     public Path getProductPath(Path repositoryPath, EOProduct product) {
         // Products are assumed to be organized according to the pattern defined in tao.properties
         Date date = product.getAcquisitionDate();
-        final String productName = product.getAttributeValue("filename") != null ?
-                product.getAttributeValue("filename") : product.getName();
+        String productName = getProductName(product);
         Path productFolderPath = dateToPath(this.repositoryPath, date, this.localPathFormat);
         Path fullProductPath = productFolderPath.resolve(productName);
         if (!Files.exists(fullProductPath)) {
@@ -43,6 +50,19 @@ public class DefaultProductPathBuilder implements ProductPathBuilder {
             }
         }
         return fullProductPath;
+    }
+
+    protected String getProductName(EOProduct product) {
+        String name = (product.getAttributeValue("filename") != null ?
+                            product.getAttributeValue("filename") : product.getName());
+        if (name.endsWith(".SAFE") && !this.appendSAFE) {
+            name = name.replace(".SAFE", "");
+        } else if (this.appendSAFE && !name.endsWith(".SAFE")) {
+            name += ".SAFE";
+        }
+        // the friendlyName of a productFormat is the extension (or '' for folders)
+        name += this.productFormat.friendlyName();
+        return name;
     }
 
     protected Path dateToPath(Path root, Date date, String formatOnDisk) {
