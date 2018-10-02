@@ -10,7 +10,7 @@ function Ensure-psql-access($port, $password) {
     # create the full path if it does not exist
     $pgPassFileFolderPath = "$env:APPDATA\postgresql\"
     if (-Not (Test-Path $pgPassFileFolderPath)) {
-        New-Item -path "$env:APPDATA\postgresql\" -type directory 
+        New-Item -path "$env:APPDATA\postgresql\" -type directory
         #-ErrorAction SilentlyContinue
     }
     $pgPassFile = "${pgPassFileFolderPath}\pgpass.conf"
@@ -27,16 +27,16 @@ function Ensure-psql-access($port, $password) {
             }
         }
     }
-    
-    Write-Host "Using port $port and password $password" -ForegroundColor Magenta    
+
+    Write-Host "Using port $port and password $password" -ForegroundColor Magenta
     if ($port -ne "" -and $password -ne "") {
         $postgresPassLine = "`nlocalhost:${port}:*:postgres:${password}"
-        $postgresPassLineEscaped = "localhost:${port}:\*:postgres:*"   
+        $postgresPassLineEscaped = "localhost:${port}:\*:postgres:*"
         if (Test-Path $pgPassFile) {
             # the file exist, check the line
             $file = Get-Content $pgPassFile
             $containsWord = $file | %{$_ -match $postgresPassLineEscaped}
-            
+
             If(-Not ($containsWord -contains $true))
             {
                 # the line does not exist
@@ -54,7 +54,7 @@ function Ensure-psql-access($port, $password) {
                 }
             } else {
                 # nothing to do ... the line already exist
-                $postgresPassLineEscaped2 = "localhost:${port}:\*:postgres:${password}"   
+                $postgresPassLineEscaped2 = "localhost:${port}:\*:postgres:${password}"
                 $file = Get-Content $pgPassFile
                 $containsWord = $file | %{$_ -match $postgresPassLineEscaped2}
                 If(-Not ($containsWord -contains $true)) {
@@ -71,11 +71,11 @@ function Ensure-psql-access($port, $password) {
     }
 }
 
-function Update-Environment {   
+function Update-Environment {
     foreach($level in "Machine","User") {
        [Environment]::GetEnvironmentVariables($level).GetEnumerator() | % {
           # For Path variables, append the new values, if they're not already in there
-          if($_.Name -match 'Path$') { 
+          if($_.Name -match 'Path$') {
              $_.Value = ($((Get-Content "Env:$($_.Name)") + ";$($_.Value)") -split ';' | Select -unique) -join ';'
           }
           $_
@@ -87,7 +87,7 @@ function Get-Scripts-To-Execute($txtFile) {
     # This line is not working on Powershell 2.0
     # $retArray = [ordered]@{}
     $retArray = New-Object System.Collections.Specialized.OrderedDictionary
-    
+
     foreach($line in Get-Content $txtFile) {
         $line = $line.Trim()
         if ($line.length -eq 0) {
@@ -142,13 +142,13 @@ function Execute-Sql-Command($sqlCmd, $port, $db) {
 
 function Get-Psql-Access {
     $PostgresInstallBinPath = "$DEFAULT_POSTGRESQL_BIN_PATH\psql.exe"
-    if (Get-Command "psql.exe" -ErrorAction SilentlyContinue) 
-    { 
+    if (Get-Command "psql.exe" -ErrorAction SilentlyContinue)
+    {
         $PostgresInstallBinPath = Get-Command "psql.exe" | Select-Object -ExpandProperty Definition
         Write-Host "PostgreSQL found installed. Path to psql.exe is $PostgresInstallBinPath" -ForegroundColor Magenta
     } else {
         if (Test-Path "$PostgresInstallBinPath") {
-            
+
             Write-Host "Found $PostgresInstallBinPath!!!"
         } else {
             Write-Host "Cannot find psql.exe in PATH or in the default folder!!!"
@@ -156,7 +156,7 @@ function Get-Psql-Access {
         }
     }
     return $PostgresInstallBinPath
-}    
+}
 
 function Get-Script-Folder {
     # If powershell greater than 2.0
@@ -172,6 +172,8 @@ $postgresqlPort = 5432
 
 $DEFAULT_POSTGRESQL_PATH="C:\Program Files\PostgreSQL\9.5"
 $DEFAULT_POSTGRESQL_BIN_PATH="C:\Program Files\PostgreSQL\9.5\bin"
+#$DEFAULT_POSTGRESQL_PATH="F:\PostgreSQL\9.6"
+#$DEFAULT_POSTGRESQL_BIN_PATH="F:\PostgreSQL\9.6\bin"
 
 Update-Environment
 
