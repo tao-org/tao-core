@@ -17,10 +17,7 @@ package ro.cs.tao.utils.executors;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -47,7 +44,7 @@ public class ProcessExecutor extends Executor<Process> {
 
     @Override
     public int execute(boolean logMessages) throws IOException {
-        InputStreamReader streamReader = null;
+        BufferedReader outReader = null;
         int ret = 0x80000000;
         try {
             this.logger.finest("[" + this.host + "] " + String.join(" ", arguments));
@@ -68,21 +65,19 @@ public class ProcessExecutor extends Executor<Process> {
                 writeSudoPassword();
             }
             //get the process output
-            streamReader = new InputStreamReader(this.channel.getInputStream());
-            StringBuilder buffer = new StringBuilder();
-            int readByte;
-            while (!this.isStopped) {
-                if (streamReader.ready()) {
-                    buffer.setLength(0);
-                    while (!this.isStopped && (readByte = streamReader.read()) > -1 && readByte != '\n') {
-                        buffer.append((char) readByte);
-                    }
-                    final String line = buffer.toString();
-                    if (this.outputConsumer != null) {
-                        this.outputConsumer.consume(line);
-                    }
-                    if (logMessages) {
-                        this.logger.finest(line);
+            InputStream inputStream = this.channel.getInputStream();
+            outReader = new BufferedReader(new InputStreamReader(inputStream));
+            while (!isStopped()) {
+                String line;
+                while (!this.isStopped && (line = outReader.readLine()) != null) {
+                    //consume the line if possible
+                    if (!"".equals(line.trim())) {
+                        if (this.outputConsumer != null) {
+                            this.outputConsumer.consume(line);
+                        }
+                        if (logMessages) {
+                            this.logger.finest(line);
+                        }
                     }
                 }
                 // check if the project finished execution
@@ -104,7 +99,7 @@ public class ProcessExecutor extends Executor<Process> {
             this.isStopped = true;
             throw new IOException(String.format("[%s] failed: %s", host, ExceptionUtils.getStackTrace(e)));
         } finally {
-            closeStream(streamReader);
+            closeStream(outReader);
             resetProcess();
         }
         return ret;

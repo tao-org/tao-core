@@ -36,6 +36,7 @@ import ro.cs.tao.messaging.Notifiable;
 import ro.cs.tao.messaging.Topics;
 import ro.cs.tao.orchestration.commands.JobCommand;
 import ro.cs.tao.orchestration.commands.TaskCommand;
+import ro.cs.tao.orchestration.status.TaskStatusHandler;
 import ro.cs.tao.orchestration.util.TaskUtilities;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
@@ -115,6 +116,7 @@ public class Orchestrator extends Notifiable {
         final Function<Long, WorkflowNodeDescriptor> workflowProvider = this.persistenceManager::getWorkflowNodeById;
         initializeJobSelector(workflowProvider, this.persistenceManager::getTaskByJobAndNode);
         initializeGroupSelector(workflowProvider, this.persistenceManager::getTaskByGroupAndNode);
+        TaskStatusHandler.registerHandlers(persistenceManager);
         this.jobFactory = new JobFactory(this.persistenceManager);
         Set<MetadataInspector> services = ServiceRegistryManager.getInstance()
                 .getServiceRegistry(MetadataInspector.class)
@@ -534,8 +536,7 @@ public class Orchestrator extends Notifiable {
         if (groupTask != null) {
             notifyTaskGroup(groupTask, task);
         } else {
-            ExecutionJob job = task.getJob();
-            notifyJob(job, task);
+            notifyJob(task);
         }
     }
 
@@ -613,60 +614,19 @@ public class Orchestrator extends Notifiable {
                     // do nothing for other states
                     break;
             }
-            ExecutionStatus currenStatus = groupTask.getExecutionStatus();
-            if (previousStatus != null && previousStatus != currenStatus) {
+            ExecutionStatus currentStatus = groupTask.getExecutionStatus();
+            if (previousStatus != null && previousStatus != currentStatus) {
                 persistenceManager.updateExecutionTask(groupTask);
-                ExecutionJob job = groupTask.getJob();
-                notifyJob(job, groupTask);
+                notifyJob(groupTask);
             }
         } catch (PersistenceException pex) {
             logger.severe(pex.getMessage());
         }
     }
 
-    private void notifyJob(ExecutionJob job, ExecutionTask changedTask) {
-        ExecutionStatus taskStatus = changedTask.getExecutionStatus();
+    private void notifyJob(ExecutionTask changedTask) {
         try {
-            switch (taskStatus) {
-                case SUSPENDED:
-                case CANCELLED:
-                    List<ExecutionTask> tasks = job.orderedTasks().stream()
-                            .filter(t -> TaskCommand.STOP.getAllowedStates().contains(t.getExecutionStatus()))
-                            .collect(Collectors.toList());
-                    stopTasks(tasks);
-                    bulkSetStatus(tasks, taskStatus);
-                    job.setExecutionStatus(taskStatus);
-                    persistenceManager.updateExecutionJob(job);
-                    break;
-                case FAILED:
-                    if (TransitionBehavior.FAIL_ON_ERROR.equals(TaskUtilities.getTransitionBehavior(changedTask))) {
-                        tasks = job.orderedTasks().stream()
-                                .filter(t -> TaskCommand.STOP.getAllowedStates().contains(t.getExecutionStatus()))
-                                .collect(Collectors.toList());
-                        stopTasks(tasks);
-                        bulkSetStatus(tasks, taskStatus);
-                        job.setExecutionStatus(taskStatus);
-                        persistenceManager.updateExecutionJob(job);
-                    }
-                    break;
-                case RUNNING:
-                    ExecutionStatus jobStatus = job.getExecutionStatus();
-                    if (jobStatus == ExecutionStatus.QUEUED_ACTIVE || jobStatus == ExecutionStatus.UNDETERMINED) {
-                        job.setExecutionStatus(ExecutionStatus.RUNNING);
-                        persistenceManager.updateExecutionJob(job);
-                    }
-                    break;
-                case DONE:
-                    if (job.orderedTasks().stream().allMatch(t -> t.getExecutionStatus() == ExecutionStatus.DONE)) {
-                        job.setExecutionStatus(ExecutionStatus.DONE);
-                        job.setEndTime(LocalDateTime.now());
-                        persistenceManager.updateExecutionJob(job);
-                    }
-                    break;
-                default:
-                    // do nothing for other states
-                    break;
-            }
+            TaskStatusHandler.handle(changedTask);
         } catch (PersistenceException pex) {
             logger.severe(pex.getMessage());
         }
