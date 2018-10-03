@@ -20,5 +20,5 @@ import ro.cs.tao.services.model.KeyValuePair;
 /**
  * @author Cosmin Cara
  */
-public interface ConfigurationService extends CRUDService<KeyValuePair> {
+public interface ConfigurationService extends CRUDService<KeyValuePair, String> {
 }
