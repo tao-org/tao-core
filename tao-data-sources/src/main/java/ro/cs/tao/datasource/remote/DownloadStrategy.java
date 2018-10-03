@@ -58,8 +58,6 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     private static final String PROGRESS_KEY = "progress.enabled";
     private static final String PROGRESS_INTERVAL = "progress.interval";
     //private static final String USE_PADDING_KEY = "usePadding";
-    protected static final String LOCAL_PATH_FORMAT = "local.archive.path.format";
-    private static final String PATH_BUILDER_CLASS = "path.builder.class";
     private final boolean progressEnabled;
     protected Properties props;
     protected String destination;
@@ -152,10 +150,10 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
 
     public void setLocalArchiveRoot(String localArchiveRoot) {
         this.localArchiveRoot = localArchiveRoot;
-        if (this.props != null && this.props.containsKey(PATH_BUILDER_CLASS)) {
-            String className = this.props.getProperty(PATH_BUILDER_CLASS);
+        if (this.props != null && this.props.containsKey(ProductPathBuilder.PATH_BUILDER_CLASS)) {
+            String className = this.props.getProperty(ProductPathBuilder.PATH_BUILDER_CLASS);
             try {
-                String format = this.props.getProperty(LOCAL_PATH_FORMAT, "yyyy/MM/dd");
+                String format = this.props.getProperty(ProductPathBuilder.LOCAL_ARCHIVE_PATH_FORMAT, "yyyy/MM/dd");
                 Class<? extends ProductPathBuilder> clazz =
                         (Class<? extends ProductPathBuilder>) Class.forName(className);
                 this.pathBuilder = clazz.getDeclaredConstructor(Path.class, String.class, Properties.class)

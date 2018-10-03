@@ -11,6 +11,11 @@ import java.nio.file.Path;
  * @author Cosmin Cara
  */
 public interface ProductPathBuilder {
+    String LOCAL_ARCHIVE_PATH_FORMAT = "local.archive.path.format";
+    String PATH_SUFFIX = "path.suffix";
+    String PRODUCT_FORMAT = "product.format";
+    String PATH_BUILDER_CLASS = "path.builder.class";
+
         /**
      * Returns the product path in the repository, or <code>null</code> if not found.
      * @param repositoryPath    The root of the repository
