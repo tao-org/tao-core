@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
  * @author Cosmin Udroiu
  */
 public class ExecutionJob extends LongIdentifiable implements StatusChangeListener {
+    private String name;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private long workflowId;
@@ -48,6 +49,9 @@ public class ExecutionJob extends LongIdentifiable implements StatusChangeListen
     public void setId(Long id) {
         this.id = id;
     }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
 
     public String getQueryId() { return queryId; }
     public void setQueryId(String queryId) { this.queryId = queryId; }

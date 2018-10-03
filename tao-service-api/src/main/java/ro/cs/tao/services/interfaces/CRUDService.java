@@ -28,7 +28,7 @@ import java.util.*;
  *
  * @author Cosmin Cara
  */
-public interface CRUDService<T> extends TAOService {
+public interface CRUDService<T, K> extends TAOService {
 
     /**
      * Finds an entity by its identifier.
@@ -36,7 +36,7 @@ public interface CRUDService<T> extends TAOService {
      * @param id    The entity identifier
      * @return      An instance of the entity or <code>null</code> if not found
      */
-    T findById(String id) throws PersistenceException;
+    T findById(K id) throws PersistenceException;
 
     /**
      * Retrieves all the entities of this type.
@@ -102,7 +102,7 @@ public interface CRUDService<T> extends TAOService {
      *
      * @param id    The entity identifier.
      */
-    void delete(String id) throws PersistenceException;
+    void delete(K id) throws PersistenceException;
 
     /**
      * Validates the entity field values before persisting it.

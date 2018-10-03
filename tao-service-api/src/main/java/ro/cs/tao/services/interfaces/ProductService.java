@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
-public interface ProductService extends CRUDService<EOProduct> {
+public interface ProductService extends CRUDService<EOProduct, String> {
 
     List<EOProduct> inspect(Path sourcePath) throws IOException;
     int importProducts(List<EOProduct> products);

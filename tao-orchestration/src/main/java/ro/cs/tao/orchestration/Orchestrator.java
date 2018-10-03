@@ -138,13 +138,14 @@ public class Orchestrator extends Notifiable {
      * @param inputs     The overridden parameter values for workflow nodes
      * @throws ExecutionException In case anything goes wrong or a job for this workflow was already created
      */
-    public long startWorkflow(long workflowId, Map<String, Map<String, String>> inputs, ExecutorService executorService) throws ExecutionException {
+    public long startWorkflow(long workflowId, String description,
+                              Map<String, Map<String, String>> inputs, ExecutorService executorService) throws ExecutionException {
         try {
             WorkflowDescriptor descriptor = persistenceManager.getWorkflowDescriptor(workflowId);
             if (descriptor == null) {
                 throw new ExecutionException(String.format("Non-existent workflow [%s]", workflowId));
             }
-            final ExecutionJob executionJob = this.jobFactory.createJob(descriptor, inputs);
+            final ExecutionJob executionJob = this.jobFactory.createJob(description, descriptor, inputs);
             this.executors.put(SessionStore.currentContext(), executorService);
             executorService.submit(() -> JobCommand.START.applyTo(executionJob));
             return executionJob.getId();

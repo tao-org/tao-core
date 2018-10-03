@@ -24,7 +24,7 @@ import ro.cs.tao.persistence.exception.PersistenceException;
 import java.security.Principal;
 import java.util.List;
 
-public interface DataSourceComponentService extends CRUDService<DataSourceComponent> {
+public interface DataSourceComponentService extends CRUDService<DataSourceComponent, String> {
 
     List<DataSourceComponent> getUserDataSourceComponents(String userName);
 

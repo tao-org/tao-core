@@ -31,7 +31,7 @@ import java.util.List;
  *
  * @author Cosmin Cara
  */
-public interface ComponentService extends CRUDService<ProcessingComponent> {
+public interface ComponentService extends CRUDService<ProcessingComponent, String> {
 
     TaoComponent findComponent(String id, ComponentType type);
 
