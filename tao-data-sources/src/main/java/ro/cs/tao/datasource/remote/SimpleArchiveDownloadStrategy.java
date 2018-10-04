@@ -58,11 +58,11 @@ public class SimpleArchiveDownloadStrategy extends DownloadStrategy {
         Path productFile;
         if (currentProduct == null) {
             currentProduct = product;
-            currentProductProgress = 0;
         }
         String productUrl = getProductUrl(product);
         String extension = productUrl.endsWith(".zip") ? ".zip" :
                 productUrl.endsWith(".tar.gz") ? ".tar.gz" : "";
+        boolean isArchive = !extension.isEmpty();
         try (CloseableHttpResponse response = NetUtils.openConnection(HttpMethod.GET, productUrl, null)) {
             int statusCode = response.getStatusLine().getStatusCode();
             logger.fine(String.format("%s returned http code %s", productUrl, statusCode));
@@ -75,6 +75,7 @@ public class SimpleArchiveDownloadStrategy extends DownloadStrategy {
                         Files.deleteIfExists(archivePath);
                         SeekableByteChannel outputStream = null;
                         currentProduct.setApproximateSize(response.getEntity().getContentLength());
+                        currentProductProgress = new ProductProgress(product.getApproximateSize(), isArchive);
                         try (InputStream inputStream = response.getEntity().getContent()) {
                             outputStream = Files.newByteChannel(archivePath, EnumSet.of(StandardOpenOption.CREATE,
                                                                                         StandardOpenOption.APPEND,
@@ -86,8 +87,7 @@ public class SimpleArchiveDownloadStrategy extends DownloadStrategy {
                             while (!isCancelled() && (read = inputStream.read(buffer)) != -1) {
                                 outputStream.write(ByteBuffer.wrap(buffer, 0, read));
                                 totalRead += read;
-                                currentProductProgress = Math.min(1.0, currentProduct.getApproximateSize() > 0 ?
-                                        (double) totalRead / (double) currentProduct.getApproximateSize() : 0);
+                                currentProductProgress.add(totalRead);
                             }
                             outputStream.close();
                             logger.fine("End reading from input stream");
