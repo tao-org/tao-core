@@ -50,10 +50,11 @@ public class JobFactory {
         this.logger = Logger.getLogger(JobFactory.class.getName());
     }
 
-    public ExecutionJob createJob(WorkflowDescriptor workflow, Map<String, Map<String, String>> inputs) throws PersistenceException {
+    public ExecutionJob createJob(String jobName, WorkflowDescriptor workflow, Map<String, Map<String, String>> inputs) throws PersistenceException {
         ExecutionJob job = null;
         if (workflow != null && workflow.isActive()) {
             job = new ExecutionJob();
+            job.setName(jobName);
             job.setUserName(SessionStore.currentContext().getPrincipal().getName());
             job.setStartTime(LocalDateTime.now());
             job.setWorkflowId(workflow.getId());

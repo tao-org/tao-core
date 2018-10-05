@@ -18,5 +18,5 @@ package ro.cs.tao.services.interfaces;
 
 import ro.cs.tao.component.GroupComponent;
 
-public interface GroupComponentService extends CRUDService<GroupComponent> {
+public interface GroupComponentService extends CRUDService<GroupComponent, String> {
 }

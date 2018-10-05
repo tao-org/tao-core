@@ -156,6 +156,7 @@ DROP TABLE IF EXISTS tao.job CASCADE;
 CREATE TABLE tao.job
 (
 	id bigint NOT NULL,
+	name text NOT NULL,
 	start_time timestamp without time zone NULL,
 	end_time timestamp without time zone NULL,
 	workflow_id bigint NOT NULL,

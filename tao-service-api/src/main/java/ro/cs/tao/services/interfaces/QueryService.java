@@ -22,7 +22,7 @@ import ro.cs.tao.execution.model.Query;
 
 import java.util.List;
 
-public interface QueryService extends CRUDService<Query> {
+public interface QueryService extends CRUDService<Query, Long> {
 
     Query getQueryById(long id);
     Query getQuery(String userId, String sensor, String dataSource, long workflowNodeId);

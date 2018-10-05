@@ -37,6 +37,7 @@ import java.nio.channels.SeekableByteChannel;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.concurrent.atomic.DoubleAdder;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -57,14 +58,11 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     //private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
     private static final String PROGRESS_KEY = "progress.enabled";
     private static final String PROGRESS_INTERVAL = "progress.interval";
-    //private static final String USE_PADDING_KEY = "usePadding";
-    protected static final String LOCAL_PATH_FORMAT = "local.archive.path.format";
-    private static final String PATH_BUILDER_CLASS = "path.builder.class";
     private final boolean progressEnabled;
     protected Properties props;
     protected String destination;
     protected EOProduct currentProduct;
-    protected volatile double currentProductProgress;
+    protected ProductProgress currentProductProgress;
     protected String currentStep;
     protected UsernamePasswordCredentials credentials;
     protected Set<String> filteredTiles;
@@ -152,10 +150,10 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
 
     public void setLocalArchiveRoot(String localArchiveRoot) {
         this.localArchiveRoot = localArchiveRoot;
-        if (this.props != null && this.props.containsKey(PATH_BUILDER_CLASS)) {
-            String className = this.props.getProperty(PATH_BUILDER_CLASS);
+        if (this.props != null && this.props.containsKey(ProductPathBuilder.PATH_BUILDER_CLASS)) {
+            String className = this.props.getProperty(ProductPathBuilder.PATH_BUILDER_CLASS);
             try {
-                String format = this.props.getProperty(LOCAL_PATH_FORMAT, "yyyy/MM/dd");
+                String format = this.props.getProperty(ProductPathBuilder.LOCAL_ARCHIVE_PATH_FORMAT, "yyyy/MM/dd");
                 Class<? extends ProductPathBuilder> clazz =
                         (Class<? extends ProductPathBuilder>) Class.forName(className);
                 this.pathBuilder = clazz.getDeclaredConstructor(Path.class, String.class, Properties.class)
@@ -205,10 +203,12 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         }
         activityStart(product.getName());
         try {
-            currentProductProgress = 0;
-            Path file;
+            String productUrl = getProductUrl(product).toLowerCase();
+            boolean isArchive = productUrl.endsWith(".zip") || productUrl.endsWith(".tar.gz")
+                    || productUrl.endsWith("$value");
             currentProduct = product;
-            currentProductProgress = 0;
+            currentProductProgress = new ProductProgress(currentProduct.getApproximateSize(), isArchive);
+            Path file;
             final Path destPath = Paths.get(destination);
             FileUtilities.ensureExists(destPath);
             switch (this.fetchMode) {
@@ -388,7 +388,6 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     }
 
     private void activityEnd() {
-        currentProductProgress = 1.0;
         if (this.progressEnabled && timer != null) {
             this.timer.cancel();
             this.timer = null;
@@ -399,10 +398,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     }
 
     protected void subActivityEnd(String subActivity) {
-        /*if (this.progressEnabled && timer != null) {
-            this.timer.cancel();
-        }*/
-        if (Double.compare(currentProductProgress, 1.0) >= 0) {
+        if (Double.compare(currentProductProgress.value(), 1.0) >= 0) {
             if (this.progressEnabled && timer != null) {
                 this.timer.cancel();
                 this.timer = null;
@@ -436,6 +432,9 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
             subActivityStart(subActivity);
             connection = NetUtils.openConnection(remoteUrl, authToken);
             long remoteFileLength = connection.getContentLengthLong();
+            if (currentProductProgress.needsAdjustment()) {
+                currentProductProgress.adjust(remoteFileLength);
+            }
             long localFileLength = 0;
             checkCancelled();
             if (Files.exists(file)) {
@@ -457,8 +456,6 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
                 }
             }
             checkCancelled();
-            double factor = currentProduct.getApproximateSize() > 0 ?
-                    (double) 1 / (double) currentProduct.getApproximateSize() : 0;
             if (localFileLength != remoteFileLength) {
                 int kBytes = (int) (remoteFileLength >> 10);
                 logger.fine(String.format(startMessage, currentProduct.getName(), currentStep, file.getFileName(), kBytes));
@@ -475,11 +472,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
                     logger.fine("Begin reading from input stream");
                     while (!cancelled && (read = inputStream.read(buffer)) != -1) {
                         outputStream.write(ByteBuffer.wrap(buffer, 0, read));
-                        //currentProductProgress = Math.min(currentProductProgress + (double) read * factor, 1.0);
-                        currentProductProgress = currentProductProgress + (double) read * factor;
-                        if (currentProductProgress > 1.0) {
-                            currentProductProgress = 1.0;
-                        }
+                        currentProductProgress.add(read);
                     }
                     logger.fine("End reading from input stream");
                     checkCancelled();
@@ -489,11 +482,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
             } else {
                 logger.fine("File already downloaded");
                 logger.fine(String.format(completeMessage, currentProduct.getName(), currentStep, file.getFileName(), 0));
-                currentProductProgress = currentProductProgress + (double) remoteFileLength * factor;
-                if (currentProductProgress > 1.0) {
-                    currentProductProgress = 1.0;
-                }
-                //currentProductProgress = Math.min(1.0, currentProductProgress + (double) remoteFileLength * factor);
+                currentProductProgress.add(remoteFileLength);
             }
         } catch (FileNotFoundException fnex) {
             logger.warning(String.format(errorMessage, remoteUrl, "No such file"));
@@ -518,9 +507,37 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     private class TimedJob extends TimerTask {
         @Override
         public void run() {
-            if (progressListener != null) {
-                progressListener.notifyProgress(currentProductProgress);
+            if (progressListener != null && currentProductProgress != null) {
+                progressListener.notifyProgress(currentProductProgress.value());
             }
         }
+    }
+
+    protected class ProductProgress {
+        private double factor;
+        private final DoubleAdder adder;
+        private boolean needsAdjustment;
+
+        public ProductProgress(long expectedSize, boolean needsAdjustment) {
+            this.factor = expectedSize > 0 ? (double) 1 / (double) expectedSize : 0.0;
+            this.adder = new DoubleAdder();
+            this.needsAdjustment = needsAdjustment;
+        }
+
+        public boolean needsAdjustment() { return this.needsAdjustment; }
+
+        public void adjust(long newSize) {
+            double oldFactor = this.factor;
+            this.factor = newSize > 0 ? (double) 1 / (double) newSize : 0.0;
+            double oldValue = this.adder.sumThenReset();
+            this.adder.add(oldValue / oldFactor * this.factor);
+            this.needsAdjustment = false;
+        }
+
+        public void add(long value) {
+            this.adder.add(this.factor * (double) value );
+        }
+
+        public double value() { return this.adder.doubleValue(); }
     }
 }
