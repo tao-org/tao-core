@@ -88,9 +88,10 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
                 TopologyManager topologyManager = TopologyManager.getInstance();
                 container = topologyManager.getDockerImage(getContainerName());
                 if (container == null) {
-                    this.logger.finest(String.format("Begin registering docker image %s", getContainerName()));
+                    this.logger.finest(String.format("Image %s was not found in Docker registry. Registration starting.\n" +
+                                                             "Until registration completes, the corresponding components will not be available.", getContainerName()));
                     topologyManager.registerImage(dockerfilePath.toRealPath(), getContainerName(), getDescription());
-                    this.logger.finest(String.format("Docker image %s registration completed", getContainerName()));
+                    this.logger.finest(String.format("Registration completed for docker image %s.", getContainerName()));
                 } else {
                     logger.finest(String.format("Image %s was found in Docker registry", getContainerName()));
                 }
