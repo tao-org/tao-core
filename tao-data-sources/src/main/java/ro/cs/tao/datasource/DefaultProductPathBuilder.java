@@ -16,19 +16,31 @@ public class DefaultProductPathBuilder implements ProductPathBuilder {
     protected String localPathFormat;
     protected final Path repositoryPath;
     protected final ProductFormat productFormat;
-    protected final boolean appendSAFE;
+    protected final String suffix;
     protected final Properties properties;
     protected final Logger logger;
+    protected final boolean testOnly;
 
     public DefaultProductPathBuilder(Path repositoryPath, String localPathFormat, Properties properties) {
+        this(repositoryPath, localPathFormat, properties, false);
+    }
+
+    public DefaultProductPathBuilder(Path repositoryPath, String localPathFormat, Properties properties, boolean testOnly) {
         this.logger = Logger.getLogger(getClass().getName());
         this.localPathFormat = localPathFormat;
         this.repositoryPath = repositoryPath;
         this.properties = properties;
         this.productFormat = properties != null ?
-                EnumUtils.getEnumConstantByName(ProductFormat.class, properties.getProperty("product.format", "folder").toUpperCase()) :
+                EnumUtils.getEnumConstantByName(ProductFormat.class,
+                                                properties.getProperty(PRODUCT_FORMAT, "folder").toUpperCase()) :
                 ProductFormat.FOLDER;
-        this.appendSAFE = properties != null && Boolean.parseBoolean(properties.getProperty("path.append.safe", "false"));
+        if (properties != null) {
+            String value = properties.getProperty(PATH_SUFFIX, "none");
+            this.suffix = "none".equals(value) ? "" : value;
+        } else {
+            this.suffix = "";
+        }
+        this.testOnly = testOnly;
     }
 
     @Override
@@ -39,7 +51,7 @@ public class DefaultProductPathBuilder implements ProductPathBuilder {
         Path productFolderPath = dateToPath(this.repositoryPath, date, this.localPathFormat);
         Path fullProductPath = productFolderPath.resolve(productName);
         logger.fine(String.format("Looking for product %s into %s", product.getName(), fullProductPath));
-        if (!Files.exists(fullProductPath)) {
+        if (!testOnly && !Files.exists(fullProductPath)) {
             // Maybe it's an archived product
             // maybe products are grouped by processing date
             date = product.getProcessingDate();
@@ -60,10 +72,13 @@ public class DefaultProductPathBuilder implements ProductPathBuilder {
     protected String getProductName(EOProduct product) {
         String name = (product.getAttributeValue("filename") != null ?
                             product.getAttributeValue("filename") : product.getName());
-        if (name.endsWith(".SAFE") && !this.appendSAFE) {
+        if (this.suffix.isEmpty() && name.endsWith(".SAFE")) {
             name = name.replace(".SAFE", "");
-        } else if (this.appendSAFE && !name.endsWith(".SAFE")) {
-            name += ".SAFE";
+        } else if (!this.suffix.isEmpty() && !name.endsWith(this.suffix)) {
+            if (name.endsWith(".SAFE")) {
+                name = name.replace(".SAFE", "");
+            }
+            name += this.suffix;
         }
         // the friendlyName of a productFormat is the extension (or '' for folders)
         name += this.productFormat.friendlyName();

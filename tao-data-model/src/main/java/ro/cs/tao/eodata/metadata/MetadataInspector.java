@@ -18,6 +18,7 @@ package ro.cs.tao.eodata.metadata;
 
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.enums.DataFormat;
+import ro.cs.tao.eodata.enums.OrbitDirection;
 import ro.cs.tao.eodata.enums.PixelType;
 import ro.cs.tao.eodata.enums.SensorType;
 import ro.cs.tao.utils.FileUtilities;
@@ -61,10 +62,12 @@ public interface MetadataInspector {
         private String entryPoint;
         private PixelType pixelType;
         private String productType;
+        private SensorType sensorType;
         private LocalDateTime aquisitionDate;
         private Long size;
         private int width;
         private int height;
+        private OrbitDirection orbitDirection;
 
         public String getProductId() { return productId; }
         public void setProductId(String productId) { this.productId = productId; }
@@ -84,6 +87,9 @@ public interface MetadataInspector {
         public String getProductType() { return productType; }
         public void setProductType(String productType) { this.productType = productType; }
 
+        public SensorType getSensorType() { return sensorType; }
+        public void setSensorType(SensorType sensorType) { this.sensorType = sensorType; }
+
         public LocalDateTime getAquisitionDate() { return aquisitionDate; }
         public void setAquisitionDate(LocalDateTime aquisitionDate) { this.aquisitionDate = aquisitionDate; }
 
@@ -96,6 +102,9 @@ public interface MetadataInspector {
         public int getHeight() { return height; }
         public void setHeight(int height) { this.height = height; }
 
+        public OrbitDirection getOrbitDirection() { return orbitDirection; }
+        public void setOrbitDirection(OrbitDirection orbitDirection) { this.orbitDirection = orbitDirection; }
+
         public EOProduct toProductDescriptor(Path productPath) throws URISyntaxException, IOException {
             EOProduct product = new EOProduct();
             String name = FileUtilities.getFilenameWithoutExtension(productPath.toFile());
@@ -103,13 +112,16 @@ public interface MetadataInspector {
             product.setId(name);
             product.setName(name);
             product.setProductType(this.productType);
-            product.setSensorType(SensorType.UNKNOWN);
+            product.setSensorType(this.sensorType != null ? this.sensorType : SensorType.UNKNOWN);
             product.setFormatType(DataFormat.RASTER);
             product.setPixelType(this.pixelType);
             product.setGeometry(this.footprint);
             product.setCrs(this.crs);
             product.setWidth(this.width);
             product.setHeight(this.height);
+            if (this.orbitDirection != null) {
+                product.addAttribute("orbitdirection", this.orbitDirection.name());
+            }
             URI productUri = productPath.toUri();
             if (Files.isDirectory(productPath)) {
                 product.setLocation(productUri.toString());

@@ -166,7 +166,7 @@ DROP TABLE IF EXISTS tao.condition CASCADE;
 CREATE TABLE tao.condition
 (
     id integer,
-    description varchar(20)
+    description varchar(250)
 );
 ALTER TABLE tao.condition ADD CONSTRAINT PK_condition
     PRIMARY KEY (id);

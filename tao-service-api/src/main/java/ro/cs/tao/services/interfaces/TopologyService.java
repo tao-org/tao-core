@@ -24,7 +24,7 @@ import java.util.List;
 /**
  * @author Cosmin Cara
  */
-public interface TopologyService extends CRUDService<NodeDescription> {
+public interface TopologyService extends CRUDService<NodeDescription, String> {
     List<Container> getDockerImages();
 
     List<Tag> getNodeTags();

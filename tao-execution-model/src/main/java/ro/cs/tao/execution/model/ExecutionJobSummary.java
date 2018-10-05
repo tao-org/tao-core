@@ -26,11 +26,16 @@ import java.util.List;
  */
 public class ExecutionJobSummary {
     private String workflowName;
+    private String jobName;
     private LocalDateTime jobStart;
     private LocalDateTime jobEnd;
     private String user;
     private ExecutionStatus jobStatus;
     private List<ExecutionTaskSummary> taskSummaries;
+
+    public String getJobName() { return jobName; }
+
+    public void setJobName(String jobName) { this.jobName = jobName; }
 
     public String getWorkflowName() {
         return workflowName;

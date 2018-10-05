@@ -335,8 +335,8 @@ public abstract class OSRuntimeInfo {
                 if (executor.execute(false) == 0) {
                     List<String> messages = consumer.getMessages();
                     for (String message : messages) {
-                        if (message.startsWith("MemFree")) {
-                            message = message.replace("MemFree:", "").trim();
+                        if (message.startsWith("MemAvailable")) {
+                            message = message.replace("MemAvailable:", "").trim();
                             String value = message.substring(0, message.indexOf(" kB"));
                             mem = Long.parseLong(value) / MemoryUnit.KILOBYTE.value();
                             break;
