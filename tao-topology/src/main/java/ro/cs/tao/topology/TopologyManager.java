@@ -268,11 +268,11 @@ public class TopologyManager implements ITopologyManager {
                                               masterNodeInfo.getUserPass(),
                                               dockerBuildCmdTemplate, false, SSHMode.EXEC);
         sharedAccumulator.reset();
+        int retCode;
         Executor executor = Executor.execute(sharedAccumulator, job);
         logger.fine("Executing " + String.join(" ", dockerBuildCmdTemplate));
-        waitFor(executor, 5, TimeUnit.MINUTES);
-        logger.fine("Execution of " + String.join(" ", dockerBuildCmdTemplate) + " returned code " + executor.getReturnCode());
-        if (executor.getReturnCode() == 0) {
+        waitFor(executor, 10, TimeUnit.MINUTES);
+        if ((retCode = executor.getReturnCode()) == 0) {
             Container image = getDockerImage(correctedName);
             String localRegistry = ConfigurationManager.getInstance().getValue("tao.docker.registry");
             String tag = localRegistry + "/" + correctedName;
@@ -284,9 +284,8 @@ public class TopologyManager implements ITopologyManager {
             sharedAccumulator.reset();
             executor = Executor.execute(sharedAccumulator, job);
             logger.fine("Executing " + String.join(" ", dockerTagCmdTemplate));
-            waitFor(executor, 3, TimeUnit.SECONDS);
-            logger.fine("Execution of " + String.join(" ", dockerTagCmdTemplate) + " returned code " + executor.getReturnCode());
-            if (executor.getReturnCode() == 0) {
+            waitFor(executor, 30, TimeUnit.SECONDS);
+            if ((retCode = executor.getReturnCode()) == 0) {
                 if (!SystemUtils.IS_OS_WINDOWS) {
                     dockerPushCmdTemplate.set(2, tag);
                     job = new ExecutionUnit(ExecutorType.PROCESS, masterNodeInfo.getId(),
@@ -296,8 +295,7 @@ public class TopologyManager implements ITopologyManager {
                     executor = Executor.execute(sharedAccumulator, job);
                     logger.fine("Executing " + String.join(" ", dockerPushCmdTemplate));
                     waitFor(executor, 30, TimeUnit.SECONDS);
-                    logger.fine("Execution of " + String.join(" ", dockerPushCmdTemplate) + " returned code " + executor.getReturnCode());
-                    if (executor.getReturnCode() == 0) {
+                    if ((retCode = executor.getReturnCode()) == 0) {
                         Messaging.send(principal, Topics.INFORMATION, this,
                                        String.format("Docker image '%s' successfully registered", correctedName));
                         return;
@@ -310,11 +308,13 @@ public class TopologyManager implements ITopologyManager {
                     return;
                 }
             } else {
-                logger.severe("Command output: " + sharedAccumulator.getOutput());
+                logger.severe(String.format("Execution failed with code %s. Command output: %s",
+                                            executor.getReturnCode(),
+                                            sharedAccumulator.getOutput()));
             }
         }
-        String message = String.format("Docker image '%s' failed to register. Details: '%s'",
-                                       correctedName, sharedAccumulator.getOutput());
+        String message = String.format("Registration for image '%s' failed with code %s. Details: '%s'",
+                                       correctedName, retCode, sharedAccumulator.getOutput());
         sharedAccumulator.reset();
         logger.severe(message);
         Messaging.send(principal, Topics.ERROR, this, message);
@@ -348,12 +348,13 @@ public class TopologyManager implements ITopologyManager {
                                               masterNodeInfo.getUserPass(),
                                               dockerListCmdTemplate, false, SSHMode.EXEC);
         sharedAccumulator.reset();
+        int retCode;
         final Executor executor = Executor.execute(sharedAccumulator, job);
         waitFor(executor, 50, TimeUnit.SECONDS);
-        if (executor.getReturnCode() == 0) {
+        if ((retCode = executor.getReturnCode()) == 0) {
             String[] lines = sharedAccumulator.getOutput().split("\n");
             for (String line : lines) {
-                String[] tokens = line.split(" |\t");
+                String[] tokens = line.split("[ \t]");
                 List<String> list = Arrays.stream(tokens).filter(item -> !item.trim().isEmpty()).
                         map(item -> StringUtils.strip(item, "'")).
                         collect(Collectors.toList());
@@ -369,7 +370,8 @@ public class TopologyManager implements ITopologyManager {
                 }
             }
         } else {
-            String message = String.format("Docker command failed. Details: '%s'", sharedAccumulator.getOutput());
+            String message = String.format("Docker command failed wit code %s. Details: '%s'",
+                                           retCode, sharedAccumulator.getOutput());
             sharedAccumulator.reset();
             logger.severe(message);
         }

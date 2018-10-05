@@ -30,6 +30,7 @@ import ro.cs.tao.datasource.util.NetUtils;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public abstract class OpenSearchParameterProvider implements ParameterProvider {
@@ -71,7 +72,7 @@ public abstract class OpenSearchParameterProvider implements ParameterProvider {
             DataSourceParameter sensorParam = parameters.get(sensorParameterName());
             this.parameters = new HashMap<>();
             Object[] values = sensorParam.getValueSet();
-            Map<String, DataSourceParameter> params = new HashMap<>(parameters);
+            Map<String, DataSourceParameter> params = new LinkedHashMap<>(parameters);
             params.remove(sensorParameterName());
             if (values != null) {
                 this.sensors = new String[values.length];
