@@ -67,7 +67,7 @@ public class ProcessExecutor extends Executor<Process> {
             //get the process output
             InputStream inputStream = this.channel.getInputStream();
             outReader = new BufferedReader(new InputStreamReader(inputStream));
-            if (!isStopped()) {
+            while (!isStopped()) {
                 String line;
                 while (!this.isStopped && (line = outReader.readLine()) != null) {
                     //consume the line if possible
