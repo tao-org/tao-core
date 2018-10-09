@@ -16,8 +16,10 @@
 
 package ro.cs.tao.topology.docker;
 
+import ro.cs.tao.docker.Container;
+
 import java.io.IOException;
 
 public interface DockerImageInstaller {
-    void installImage() throws IOException;
+    Container installImage() throws IOException;
 }

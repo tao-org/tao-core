@@ -61,14 +61,14 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
     public PersistenceManager getPersistenceManager() { return persistenceManager; }
 
     @Override
-    public void installImage() {
+    public Container installImage() {
         Container container = null;
         if (dockerPath != null) {
             try {
                 Path dockerImagesPath = Paths.get(ConfigurationManager.getInstance().getValue("tao.docker.images"));
                 if (dockerImagesPath == null) {
                     logger.warning("Invalid path for docker images");
-                    return;
+                    return null;
                 }
                 Files.createDirectories(dockerImagesPath);
                 Path dockerfilePath = dockerImagesPath.resolve(getContainerName()).resolve("Dockerfile");
@@ -115,6 +115,7 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
                 logger.fine(String.format("Container %s registered with id '%s'", getContainerName(), dbContainer.getId()));
             }
         }
+        return dbContainer;
     }
 
     protected Container readContainerDescriptor(String fileName) throws IOException {
