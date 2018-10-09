@@ -112,7 +112,7 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
             if (dbContainer == null) {
                 logger.severe(String.format("Container %s failed to register", getContainerName()));
             } else {
-                logger.info(String.format("Container %s registered with id '%s'", getContainerName(), dbContainer.getId()));
+                logger.fine(String.format("Container %s registered with id '%s'", getContainerName(), dbContainer.getId()));
             }
         }
     }

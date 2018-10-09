@@ -171,7 +171,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                                 // Only a running task can complete
                                 markTaskFinished(task, ExecutionStatus.DONE);
                             }
-                            logger.info(String.format("Task %s DONE", task.getId()));
+                            logger.fine(String.format("Task %s DONE", task.getId()));
                             break;
                         case Session.FAILED:
                             // Just mark the job as finished with failed status
@@ -265,7 +265,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         }
         jt.setRemoteCommand(cmd);
         jt.setArgs(argsList);
-        logger.info(String.format("[Task %s ]: %s %s", String.valueOf(task.getId()), cmd, String.join(" ", argsList)));
+        logger.fine(String.format("[Task %s ]: %s %s", String.valueOf(task.getId()), cmd, String.join(" ", argsList)));
         return jt;
     }
 }
