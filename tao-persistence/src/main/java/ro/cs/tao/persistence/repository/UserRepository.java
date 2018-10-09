@@ -50,6 +50,6 @@ public interface UserRepository extends PagingAndSortingRepository<User, Long> {
     List<User> findByStatus(final UserStatus status);
 
     @Query(value = "SELECT u.* FROM tao.user u JOIN tao.user_group ug ON ug.user_id = u.id " +
-            "WHERE ug.group_id = 1 AND u.status_id = 1", nativeQuery = true)
+            "WHERE ug.group_id = 1 AND u.status_id = 2", nativeQuery = true)
     List<User> getAdministrators();
 }
