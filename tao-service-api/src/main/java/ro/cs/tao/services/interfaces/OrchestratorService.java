@@ -79,13 +79,13 @@ public interface OrchestratorService extends TAOService {
     /**
      * Returns (from the database) the list of tasks that are marked as being executed.
      */
-    List<ExecutionTaskSummary> getRunningTasks();
+    List<ExecutionTaskSummary> getRunningTasks(String userName);
     /**
      * Returns (from the database) the status of the tasks of the given job.
      */
     List<ExecutionTaskSummary> getTasksStatus(long jobId);
 
-    List<ExecutionJobSummary> getRunningJobs();
+    List<ExecutionJobSummary> getRunningJobs(String userName);
 
-    List<ExecutionJobSummary> getCompletedJobs();
+    List<ExecutionJobSummary> getCompletedJobs(String userName);
 }

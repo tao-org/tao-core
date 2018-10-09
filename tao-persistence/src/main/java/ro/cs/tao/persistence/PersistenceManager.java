@@ -613,6 +613,8 @@ public class PersistenceManager implements MessagePersister {
         return userManager.getUserOrganization(userName);
     }
 
+    public List<User> getAdministrators() { return userManager.getAdministrators(); }
+
     public List<Group> getUserGroups(String userName) {
         return userManager.getUserGroups(userName);
     }
