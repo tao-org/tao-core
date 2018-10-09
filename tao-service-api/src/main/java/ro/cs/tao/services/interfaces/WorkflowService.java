@@ -68,11 +68,19 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
      */
     WorkflowNodeDescriptor addNode(long workflowId, WorkflowNodeDescriptor nodeDescriptor) throws PersistenceException;
     /**
-     * Updates a node to a workflow.
+     * Updates a node of a workflow.
+     * @param workflowId    The workflow identifier
      * @param nodeDescriptor    The node to update
      * @return  The updated workflow
      */
     WorkflowNodeDescriptor updateNode(long workflowId, WorkflowNodeDescriptor nodeDescriptor) throws PersistenceException;
+    /**
+     * Updates a list of nodes of a workflow.
+     * @param workflowId    The workflow identifier
+     * @param nodeDescriptors    The list of nodes to update
+     * @return  The updated workflow
+     */
+    List<WorkflowNodeDescriptor> updateNodes(long workflowId, List<WorkflowNodeDescriptor> nodeDescriptors) throws PersistenceException;
     /**
      * Removes a node from a workflow.
      * @param nodeDescriptor    The node to remove
