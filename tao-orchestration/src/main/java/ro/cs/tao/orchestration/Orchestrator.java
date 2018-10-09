@@ -661,7 +661,7 @@ public class Orchestrator extends Notifiable {
             t.setExecutionStatus(status);
             try {
                 persistenceManager.updateTaskStatus(t, status);
-                logger.info(String.format("Task %s was put into status %s", t.getId(), status));
+                logger.fine(String.format("Task %s was put into status %s", t.getId(), status));
             } catch (PersistenceException e) {
                 logger.severe(e.getMessage());
             }

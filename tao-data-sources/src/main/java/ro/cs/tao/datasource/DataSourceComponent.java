@@ -433,7 +433,7 @@ public class DataSourceComponent extends TaoComponent {
                     }
                 }
             } catch (InterruptedException iex) {
-                logger.info(String.format("Fetching product '%s' cancelled",
+                logger.warning(String.format("Fetching product '%s' cancelled",
                                           product.getName()));
                 errorMessage = "Cancelled";
             } catch (IOException ex) {

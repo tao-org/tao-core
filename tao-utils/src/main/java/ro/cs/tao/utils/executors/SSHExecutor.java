@@ -150,7 +150,7 @@ public class SSHExecutor extends Executor<Channel> {
             insertSudoParams();
             cmdLine = "sudo -S -p '' " + String.join(" ", arguments);
         }
-        logger.info("[[" + host + "]] " + cmdLine);
+        logger.fine("[[" + host + "]] " + cmdLine);
         ((ChannelExec) this.channel).setCommand(cmdLine);
         this.channel.setInputStream(null);
         ((ChannelExec) this.channel).setPty(asSuperUser);
@@ -159,7 +159,7 @@ public class SSHExecutor extends Executor<Channel> {
             public synchronized void write(byte[] b, int off, int len) {
                 String message = new String(b, off, len).replaceAll("\n", "");
                 if (message.length() > 0) {
-                    logger.info("[" + host + "] " + message);
+                    logger.fine("[" + host + "] " + message);
                 }
             }
         });
@@ -177,7 +177,7 @@ public class SSHExecutor extends Executor<Channel> {
                         this.outputConsumer.consume(line);
                     }
                     if (logMessages && !this.password.equals(line)) {
-                        this.logger.info(line);
+                        this.logger.fine(line);
                     }
                 }
             }
@@ -204,7 +204,7 @@ public class SSHExecutor extends Executor<Channel> {
             public synchronized void write(byte[] b, int off, int len) {
                 String message = new String(b, off, len).replaceAll("\n", "");
                 if (message.length() > 0) {
-                    SSHExecutor.this.logger.info("[" + SSHExecutor.this.host + "] " + message);
+                    SSHExecutor.this.logger.fine("[" + SSHExecutor.this.host + "] " + message);
                 }
             }
         });
@@ -218,7 +218,7 @@ public class SSHExecutor extends Executor<Channel> {
             recursiveFolderUpload(channelSftp, fileToTransfer, workingDir);
         } else {
             File f = new File(fileToTransfer);
-            this.logger.info("Uploading file " + f.getName());
+            this.logger.fine("Uploading file " + f.getName());
             channelSftp.put(new FileInputStream(f), f.getName(), ChannelSftp.OVERWRITE);
         }
         return 0;
@@ -241,7 +241,7 @@ public class SSHExecutor extends Executor<Channel> {
             // copy if it is a file
             channelSftp.cd(destinationPath);
             if (!sourceFile.getName().startsWith("."))
-                this.logger.info("Uploading file " + sourceFile);
+                this.logger.finest("Uploading file " + sourceFile);
                 channelSftp.put(new FileInputStream(sourceFile), sourceFile.getName(), ChannelSftp.OVERWRITE);
 
         } else {
@@ -258,14 +258,14 @@ public class SSHExecutor extends Executor<Channel> {
                 try {
                     attrs = channelSftp.stat(destinationPath + "/" + sourceFile.getName());
                 } catch (Exception e) {
-                    this.logger.info(destinationPath + "/" + sourceFile.getName() + " not found");
+                    this.logger.fine(destinationPath + "/" + sourceFile.getName() + " not found");
                 }
 
                 // else create a directory
                 if (attrs != null) {
-                    this.logger.info("Directory exists IsDir=" + attrs.isDir());
+                    this.logger.finest("Directory exists IsDir=" + attrs.isDir());
                 } else {
-                    this.logger.info("Creating dir " + sourceFile.getName());
+                    this.logger.fine("Creating dir " + sourceFile.getName());
                     channelSftp.mkdir(sourceFile.getName());
                 }
 

@@ -114,7 +114,7 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
             int retCode = doStepInvocation(info, steps, step);
             if (retCode != ToolInvocationCodes.OK) {
                 if (step.getIgnoreErr()) {
-                    logger.info("Step [[" + step.getName() + "]] was not successful but the failure is ignored as configured!");
+                    logger.warning("Step [[" + step.getName() + "]] was not successful but the failure is ignored as configured!");
                 } else {
                     throw new TopologyException("Tool " + toolCfg.getName() + " installation failed installation failed") {{
                         addAdditionalInfo("Node", info);
