@@ -117,6 +117,9 @@ public class DefaultGroupTaskSelector implements TaskSelector<ExecutionGroup> {
                     break;
             }
         }
+        if (next != null) {
+            next.forEach(t -> t.setContext(currentTask.getContext()));
+        }
         return next;
     }
 
