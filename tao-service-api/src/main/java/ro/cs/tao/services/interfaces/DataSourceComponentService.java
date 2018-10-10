@@ -28,6 +28,8 @@ public interface DataSourceComponentService extends CRUDService<DataSourceCompon
 
     List<DataSourceComponent> getUserDataSourceComponents(String userName);
 
+    List<DataSourceComponent> getSystemDataSourceComponents();
+
     List<DataSourceComponent> getDataSourceComponents(Iterable<String> ids);
 
     /**
