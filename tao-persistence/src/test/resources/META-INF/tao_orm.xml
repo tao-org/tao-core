@@ -547,14 +547,17 @@
             <basic name="executionStatus">
                 <column name="execution_status_id" nullable="false" column-definition="integer NOT NULL"/>
             </basic>
+            <basic name="lastUpdated">
+                <column name="last_updated" nullable="true" column-definition="timestamp without time zone NULL"/>
+            </basic>
             <basic name="executionNodeHostName">
                 <column name="execution_node_host_name" nullable="true" column-definition="character varying(250) NULL"/>
             </basic>
             <basic name="startTime">
-                <column name="start_time" nullable="true" column-definition="timestamp NULL"/>
+                <column name="start_time" nullable="true" column-definition="timestamp without time zone NULL"/>
             </basic>
             <basic name="endTime">
-                <column name="end_time" nullable="true" column-definition="timestamp NULL"/>
+                <column name="end_time" nullable="true" column-definition="timestamp without time zone NULL"/>
             </basic>
             <basic name="internalState">
                 <column name="internal_state" nullable="true" column-definition="character varying(512) NULL"/>
