@@ -30,17 +30,18 @@ import java.util.stream.Collectors;
  * @author Cosmin Cara
  */
 public class ConfigurationManager {
-    private static final ConfigurationManager instance;
+    private static ConfigurationManager instance;
     private static final String CONFIG_FILE_NAME = "tao.properties";
     // this field may be set by the launcher of the services
     private static Path configFolder;
     private Properties settings;
 
-    static {
-        instance = new ConfigurationManager();
+    public static ConfigurationManager getInstance() {
+        if (instance == null) {
+            instance = new ConfigurationManager();
+        }
+        return instance;
     }
-
-    public static ConfigurationManager getInstance() { return instance; }
 
     private ConfigurationManager() {
         if (settings == null) {
