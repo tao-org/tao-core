@@ -376,6 +376,10 @@ public class PersistenceManager implements MessagePersister {
         return dataSourceComponentManager.getUserDataSourceComponents(userName);
     }
 
+    public List<DataSourceComponent> getSystemDataSourceComponents() {
+        return dataSourceComponentManager.getSystemDataSourceComponents();
+    }
+
     public DataSourceComponent getDataSourceInstance(String id) {
         return dataSourceComponentManager.get(id);
     }
