@@ -497,6 +497,10 @@ public class PersistenceManager implements MessagePersister {
         return executionTaskManager.getRunningTasks();
     }
 
+    public List<ExecutionTask> getExecutingTasks() {
+        return executionTaskManager.getExecutingTasks();
+    }
+
     public List<ExecutionTaskSummary> getTasksStatus(long jobId) {
         return executionTaskManager.getStatus(jobId);
     }
@@ -526,6 +530,7 @@ public class PersistenceManager implements MessagePersister {
     }
 
     public ExecutionTask updateTaskStatus(ExecutionTask task, ExecutionStatus newStatus) throws PersistenceException {
+        task.setLastUpdated(LocalDateTime.now());
         return executionTaskManager.updateStatus(task, newStatus);
     }
 

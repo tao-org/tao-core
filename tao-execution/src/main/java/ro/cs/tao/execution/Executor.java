@@ -152,6 +152,10 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
     }
 
     protected void changeTaskStatus(ExecutionTask task, ExecutionStatus status) {
+        changeTaskStatus(task, status, false);
+    }
+
+    protected void changeTaskStatus(ExecutionTask task, ExecutionStatus status, boolean firstTime) {
         if(status != task.getExecutionStatus()) {
             try {
                 if (!this.contextMap.containsKey(task.getId())) {
@@ -160,9 +164,7 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
                     }
                     this.contextMap.put(task.getId(), task.getContext());
                 }
-                //task.setExecutionStatus(status);
-                //persistenceManager.updateExecutionTask(task);
-                if (status == ExecutionStatus.DONE) {
+                if (status == ExecutionStatus.DONE || firstTime) {
                     task.setExecutionStatus(status);
                     persistenceManager.updateExecutionTask(task);
                 } else {
