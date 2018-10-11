@@ -12,7 +12,7 @@ public class RunningStatusHandler extends TaskStatusHandler {
     }
 
     @Override
-    protected void handleTask(ExecutionTask task) throws PersistenceException {
+    protected void handleTask(ExecutionTask task, String reason) throws PersistenceException {
         ExecutionJob job = task.getJob();
         ExecutionStatus jobStatus = job.getExecutionStatus();
         if (jobStatus == ExecutionStatus.QUEUED_ACTIVE || jobStatus == ExecutionStatus.UNDETERMINED) {

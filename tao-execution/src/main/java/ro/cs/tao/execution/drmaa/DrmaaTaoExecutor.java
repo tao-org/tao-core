@@ -172,7 +172,13 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                         case Session.FAILED:
                             // Just mark the task as finished with failed status
                             markTaskFinished(task, ExecutionStatus.FAILED);
-                            logger.warning(String.format("Task %s FAILED", task.getId()));
+                            String error;
+                            if (session instanceof DefaultSession) {
+                                error = ((DefaultSession) session).getJobOutput(task.getResourceId());
+                            } else {
+                                error = "n/a";
+                            }
+                            logger.warning(String.format("Task %s FAILED. Process output: %s", task.getId(), error));
                             break;
                     }
                 } catch (DrmaaException | InternalException e) {
