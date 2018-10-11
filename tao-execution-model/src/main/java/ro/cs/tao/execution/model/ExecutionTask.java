@@ -41,6 +41,7 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
     private String executionNodeHostName;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
+    private LocalDateTime lastUpdated;
     protected String internalState;
     private String log;
     private ExecutionJob job;
@@ -161,6 +162,9 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
     public void setEndTime(LocalDateTime endTime) {
         this.endTime = endTime;
     }
+
+    public LocalDateTime getLastUpdated() { return lastUpdated; }
+    public void setLastUpdated(LocalDateTime lastUpdated) { this.lastUpdated = lastUpdated; }
 
     public ExecutionJob getJob() { return job; }
     public void setJob(ExecutionJob job) {

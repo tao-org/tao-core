@@ -61,14 +61,14 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
     public PersistenceManager getPersistenceManager() { return persistenceManager; }
 
     @Override
-    public void installImage() {
+    public Container installImage() {
         Container container = null;
         if (dockerPath != null) {
             try {
                 Path dockerImagesPath = Paths.get(ConfigurationManager.getInstance().getValue("tao.docker.images"));
                 if (dockerImagesPath == null) {
                     logger.warning("Invalid path for docker images");
-                    return;
+                    return null;
                 }
                 Files.createDirectories(dockerImagesPath);
                 Path dockerfilePath = dockerImagesPath.resolve(getContainerName()).resolve("Dockerfile");
@@ -92,6 +92,7 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
                                                              "Until registration completes, the corresponding components will not be available.", getContainerName()));
                     topologyManager.registerImage(dockerfilePath.toRealPath(), getContainerName(), getDescription());
                     this.logger.finest(String.format("Registration completed for docker image %s.", getContainerName()));
+                    container = topologyManager.getDockerImage(getContainerName());
                 } else {
                     logger.finest(String.format("Image %s was found in Docker registry", getContainerName()));
                 }
@@ -111,9 +112,10 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
             if (dbContainer == null) {
                 logger.severe(String.format("Container %s failed to register", getContainerName()));
             } else {
-                logger.info(String.format("Container %s registered with id '%s'", getContainerName(), dbContainer.getId()));
+                logger.fine(String.format("Container %s registered with id '%s'", getContainerName(), dbContainer.getId()));
             }
         }
+        return dbContainer;
     }
 
     protected Container readContainerDescriptor(String fileName) throws IOException {

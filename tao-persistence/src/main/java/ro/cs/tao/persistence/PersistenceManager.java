@@ -376,6 +376,10 @@ public class PersistenceManager implements MessagePersister {
         return dataSourceComponentManager.getUserDataSourceComponents(userName);
     }
 
+    public List<DataSourceComponent> getSystemDataSourceComponents() {
+        return dataSourceComponentManager.getSystemDataSourceComponents();
+    }
+
     public DataSourceComponent getDataSourceInstance(String id) {
         return dataSourceComponentManager.get(id);
     }
@@ -493,6 +497,10 @@ public class PersistenceManager implements MessagePersister {
         return executionTaskManager.getRunningTasks();
     }
 
+    public List<ExecutionTask> getExecutingTasks() {
+        return executionTaskManager.getExecutingTasks();
+    }
+
     public List<ExecutionTaskSummary> getTasksStatus(long jobId) {
         return executionTaskManager.getStatus(jobId);
     }
@@ -522,6 +530,7 @@ public class PersistenceManager implements MessagePersister {
     }
 
     public ExecutionTask updateTaskStatus(ExecutionTask task, ExecutionStatus newStatus) throws PersistenceException {
+        task.setLastUpdated(LocalDateTime.now());
         return executionTaskManager.updateStatus(task, newStatus);
     }
 
@@ -612,6 +621,8 @@ public class PersistenceManager implements MessagePersister {
     public String getUserOrganization(String userName) throws PersistenceException {
         return userManager.getUserOrganization(userName);
     }
+
+    public List<User> getAdministrators() { return userManager.getAdministrators(); }
 
     public List<Group> getUserGroups(String userName) {
         return userManager.getUserGroups(userName);

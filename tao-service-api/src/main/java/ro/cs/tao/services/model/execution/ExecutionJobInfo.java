@@ -27,6 +27,7 @@ import java.time.LocalDateTime;
 public class ExecutionJobInfo {
 
     private long id;
+    private String name;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private long workflowId;
@@ -44,6 +45,7 @@ public class ExecutionJobInfo {
         this.queryId = executionJob.getQueryId();
         this.userName = executionJob.getUserName();
         this.executionStatus = executionJob.getExecutionStatus();
+        this.name = executionJob.getName();
     }
 
     public long getId() {
@@ -53,6 +55,10 @@ public class ExecutionJobInfo {
     public void setId(long id) {
         this.id = id;
     }
+
+    public String getName() { return name; }
+
+    public void setName(String name) { this.name = name; }
 
     public LocalDateTime getStartTime() {
         return startTime;

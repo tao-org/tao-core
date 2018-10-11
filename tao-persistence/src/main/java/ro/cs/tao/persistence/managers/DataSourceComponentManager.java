@@ -30,6 +30,10 @@ public class DataSourceComponentManager extends TaoComponentManager<DataSourceCo
                 this.repository.getUserDataSourceComponents();
     }
 
+    public List<DataSourceComponent> getSystemDataSourceComponents() {
+        return this.repository.getSystemDataSourceComponents();
+    }
+
     @Override
     protected boolean checkId(String entityId, boolean existingEntity) {
         return entityId != null && !entityId.isEmpty();

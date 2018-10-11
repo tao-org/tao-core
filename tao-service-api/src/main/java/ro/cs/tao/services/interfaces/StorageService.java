@@ -24,7 +24,8 @@ import java.util.stream.Stream;
 
 @Service
 public interface StorageService<T> extends TAOService {
-    void store(T object, String description) throws Exception;
+    void storeUserFile(T object, String description) throws Exception;
+    void storePublicFile(T object, String description) throws Exception;
     void remove(String name) throws IOException;
     Stream<Path> listFiles(boolean userOnly) throws IOException;
     Stream<Path> listWorkspace(boolean userOnly) throws IOException;

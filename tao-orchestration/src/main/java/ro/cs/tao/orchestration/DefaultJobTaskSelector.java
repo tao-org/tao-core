@@ -95,6 +95,9 @@ public class DefaultJobTaskSelector implements TaskSelector<ExecutionJob> {
                     break;
             }
         }
+        if (next != null) {
+            next.forEach(t -> t.setContext(currentTask.getContext()));
+        }
         return next;
     }
 

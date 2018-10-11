@@ -150,6 +150,10 @@ public class UserManager {
         }).stream().collect(Collectors.toMap(UserPreference::getKey, UserPreference::getValue)));
     }*/
 
+    public List<User> getAdministrators() {
+        return userRepository.getAdministrators();
+    }
+
     @Transactional
     public List<UserPreference> getUserPreferences(String userName) throws PersistenceException {
         final User user = userRepository.findByUsername(userName);

@@ -48,7 +48,9 @@ public class ExecutionJobManager extends EntityManager<ExecutionJob, Long, Execu
         } else {
             statusIds = statuses.stream().map(ExecutionStatus::value).collect(Collectors.toSet());
         }
-        return repository.findByStatusAndUser(statusIds, userName);
+        return userName != null ?
+                repository.findByStatusAndUser(statusIds, userName) :
+                repository.findByStatus(statusIds);
     }
 
     @Override

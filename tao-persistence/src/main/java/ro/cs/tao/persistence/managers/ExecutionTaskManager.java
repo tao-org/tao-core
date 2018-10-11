@@ -26,10 +26,8 @@ import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.persistence.repository.ExecutionTaskRepository;
 
 import javax.sql.DataSource;
-import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.Timestamp;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,21 +42,18 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
 
     public ExecutionTask updateStatus(ExecutionTask task, ExecutionStatus newStatus) throws PersistenceException {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        if (newStatus == ExecutionStatus.RUNNING) {
-            jdbcTemplate.update("UPDATE tao.task SET execution_status_id = ?, resource_id = ?, start_time = ? WHERE id = ?",
-                                newStatus.value(), task.getResourceId(),
-                                new Date(task.getStartTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()),
-                                task.getId());
-        } else {
-            jdbcTemplate.update("UPDATE tao.task SET execution_status_id = ?, resource_id = ? WHERE id = ?",
-                                newStatus.value(), task.getResourceId(), task.getId());
-        }
+        jdbcTemplate.update("UPDATE tao.task SET execution_status_id = ?, resource_id = ?, start_time = ? WHERE id = ?",
+                            newStatus.value(), task.getResourceId(), task.getLastUpdated(), task.getId());
         return get(task.getId());
     }
 
     @Transactional
     public List<ExecutionTask> getRunningTasks() {
         return repository.getRunningTasks();
+    }
+
+    public List<ExecutionTask> getExecutingTasks() {
+        return repository.getExecutingTasks();
     }
 
     @Transactional
