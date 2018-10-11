@@ -114,6 +114,7 @@ public class EOProduct extends EOData implements Serializable {
         return Objects.hash(getId(), getName());
     }
     //endregion
+    @Override
     public Map<String, String> toAttributeMap() {
         Map<String, String> attributes = super.toAttributeMap();
         attributes.put("sensorType", sensorType != null ? sensorType.name() : "n/a");

@@ -18,7 +18,7 @@ public class FailedStatusHandler extends TaskStatusHandler {
     }
 
     @Override
-    protected void handleTask(ExecutionTask task) throws PersistenceException {
+    protected void handleTask(ExecutionTask task, String reason) throws PersistenceException {
         if (TransitionBehavior.FAIL_ON_ERROR.equals(TaskUtilities.getTransitionBehavior(task))) {
             ExecutionJob job = task.getJob();
             ExecutionStatus taskStatus = task.getExecutionStatus();

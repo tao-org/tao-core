@@ -21,10 +21,7 @@ import ro.cs.tao.execution.Constants;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.topology.NodeDescription;
-import ro.cs.tao.utils.executors.ExecutionUnit;
-import ro.cs.tao.utils.executors.Executor;
-import ro.cs.tao.utils.executors.ExecutorType;
-import ro.cs.tao.utils.executors.SSHMode;
+import ro.cs.tao.utils.executors.*;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -47,6 +44,7 @@ public class DefaultSession implements Session {
     private volatile boolean initialized;
     private Map<String, JobTemplate> jobTemplates;
     private Map<String, Executor> runningJobs;
+    private Map<String, OutputAccumulator> jobOutputs;
     private AtomicInteger nodeCounter;
     // TODO: This should be configurable - add it to tao.properties or in a specific file?
     private Set<String> cmdsToRunAsSu = new HashSet<String>() {{add("docker");}};
@@ -83,6 +81,7 @@ public class DefaultSession implements Session {
             }
             this.jobTemplates = Collections.synchronizedMap(new HashMap<>());
             this.runningJobs = Collections.synchronizedMap(new HashMap<>());
+            this.jobOutputs = Collections.synchronizedMap(new HashMap<>());
             this.nodeCounter = new AtomicInteger(0);
         }
     }
@@ -93,6 +92,7 @@ public class DefaultSession implements Session {
             checkSession();
             this.jobTemplates.clear();
             this.runningJobs.clear();
+            this.jobOutputs.clear();
             this.initialized = false;
         }
     }
@@ -131,6 +131,11 @@ public class DefaultSession implements Session {
         this.jobTemplates.remove(jt.getJobName());
     }
 
+    public String getJobOutput(String jobId) throws DrmaaException {
+        OutputAccumulator consumer = this.jobOutputs.get(jobId);
+        return consumer != null ? consumer.getOutput() : "n/a";
+    }
+
     @Override
     public String runJob(JobTemplate jt) throws DrmaaException {
         checkSession();
@@ -161,7 +166,9 @@ public class DefaultSession implements Session {
                 }
             }
             String jobId = jt.getJobName() + ":" + System.nanoTime();
-            this.runningJobs.put(jobId, Executor.execute(null, unit));
+            final OutputAccumulator consumer = new OutputAccumulator();
+            this.runningJobs.put(jobId, Executor.execute(consumer, unit));
+            this.jobOutputs.put(jobId, consumer);
             return jobId;
         }
     }
@@ -175,9 +182,6 @@ public class DefaultSession implements Session {
     public void control(String jobId, int action) throws DrmaaException {
         checkSession();
         Executor runner = this.runningJobs.get(jobId);
-        /*if (runner == null) {
-            throw new InvalidJobException();
-        }*/
         if (runner != null) {
             switch (action) {
                 case HOLD:
@@ -247,6 +251,7 @@ public class DefaultSession implements Session {
         } finally {
             for (Object obj : jobIds) {
                 this.runningJobs.remove(obj);
+                this.jobOutputs.remove(obj);
             }
         }
     }
@@ -272,6 +277,7 @@ public class DefaultSession implements Session {
             return new DefaultJobInfo(jobId, runner);
         } finally {
             this.runningJobs.remove(jobId);
+            this.jobOutputs.remove(jobId);
         }
     }
 
@@ -282,7 +288,6 @@ public class DefaultSession implements Session {
         if (runner == null) {
             throw new InvalidJobException();
         }
-        logger.fine(String.format("Job %s returned code %s", jobId, runner.getReturnCode()));
         return runner.isRunning() ? RUNNING :
                 runner.isSuspended() ? USER_SYSTEM_SUSPENDED :
                     runner.hasCompleted() ?
