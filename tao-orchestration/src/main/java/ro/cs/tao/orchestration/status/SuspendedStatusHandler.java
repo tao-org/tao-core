@@ -17,7 +17,7 @@ public class SuspendedStatusHandler extends TaskStatusHandler {
     }
 
     @Override
-    protected void handleTask(ExecutionTask task) throws PersistenceException {
+    protected void handleTask(ExecutionTask task, String reason) throws PersistenceException {
         ExecutionJob job = task.getJob();
         ExecutionStatus taskStatus = task.getExecutionStatus();
         List<ExecutionTask> tasks = job.orderedTasks().stream()
