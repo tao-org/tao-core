@@ -282,7 +282,7 @@ public class DefaultSession implements Session {
         if (runner == null) {
             throw new InvalidJobException();
         }
-        logger.fine(String.format("Job %s returned code %s", jobId, runner.getReturnCode()));
+        //logger.fine(String.format("Job %s returned code %s", jobId, runner.getReturnCode()));
         return runner.isRunning() ? RUNNING :
                 runner.isSuspended() ? USER_SYSTEM_SUSPENDED :
                     runner.hasCompleted() ?
