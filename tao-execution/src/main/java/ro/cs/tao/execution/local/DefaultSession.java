@@ -148,7 +148,7 @@ public class DefaultSession implements Session {
             args.addAll(jt.getArgs());
             final ExecutionUnit unit = isLocalHost(node.getId()) ?
                     new ExecutionUnit(ExecutorType.PROCESS, node.getId(), node.getUserName(), node.getUserPass(),
-                                      args, cmdsToRunAsSu.contains(jt.getRemoteCommand()), null) :
+                                      args, false/*cmdsToRunAsSu.contains(jt.getRemoteCommand())*/, null) :
                     new ExecutionUnit(ExecutorType.SSH2, node.getId(), node.getUserName(), node.getUserPass(),
                                       args, cmdsToRunAsSu.contains(jt.getRemoteCommand()), SSHMode.EXEC);
             if (jt instanceof JobTemplateExtension) {
@@ -282,6 +282,7 @@ public class DefaultSession implements Session {
         if (runner == null) {
             throw new InvalidJobException();
         }
+        logger.fine(String.format("Job %s returned code %s", jobId, runner.getReturnCode()));
         return runner.isRunning() ? RUNNING :
                 runner.isSuspended() ? USER_SYSTEM_SUSPENDED :
                     runner.hasCompleted() ?

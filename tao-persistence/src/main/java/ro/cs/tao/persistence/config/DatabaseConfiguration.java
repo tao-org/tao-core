@@ -285,7 +285,7 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
     @Override
     public void onApplicationEvent(final ContextClosedEvent event) {
         for (ComboPooledDataSource dataSource : createdBeans) {
-            logger.info("Closing database connexions ...");
+            logger.fine("Closing database connexions ...");
             dataSource.close();
             try {
                 DataSources.destroy(dataSource);

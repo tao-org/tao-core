@@ -90,10 +90,10 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             List<NodeDescription> hosts = persistenceManager.getNodes();
             if (hosts.size() == 1) {
                 task.setExecutionNodeHostName(hosts.get(0).getId());
-                changeTaskStatus(task, ExecutionStatus.RUNNING);
-            } else {
-                changeTaskStatus(task, session instanceof DefaultSession ? ExecutionStatus.RUNNING : ExecutionStatus.QUEUED_ACTIVE);
             }
+            changeTaskStatus(task,
+                             session instanceof DefaultSession ? ExecutionStatus.RUNNING : ExecutionStatus.QUEUED_ACTIVE,
+                             true);
             logger.fine(String.format("Succesfully submitted task with id %s [session %s]", task.getId(), id));
         } catch (DrmaaException | InternalException | PersistenceException e) {
             logger.severe(String.format("Error submitting task with id %s: %s", task.getId(), e.getMessage()));
@@ -136,19 +136,12 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         if(!isInitialized) {
             return;
         }
-        // check for the finished
-        List<ExecutionTask> tasks = persistenceManager.getRunningTasks();
+        List<ExecutionTask> tasks = persistenceManager.getExecutingTasks();
         if (tasks != null) {
-            tasks.removeIf(t -> !(t instanceof ProcessingExecutionTask));
             // For each job, get its status from DRMAA
             for (ExecutionTask task : tasks) {
                 try {
-                    if (task.getResourceId() == null) {
-                        // ignore tasks having resourceId null
-                        continue;
-                    }
                     int jobStatus = session.getJobProgramStatus(task.getResourceId());
-
                     switch (jobStatus) {
                         case Session.SYSTEM_ON_HOLD:
                         case Session.USER_ON_HOLD:
@@ -161,20 +154,23 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                             // nothing to do
                             break;
                         case Session.RUNNING:
-                            if (task.getExecutionStatus() != ExecutionStatus.RUNNING) {
-                                changeTaskStatus(task, ExecutionStatus.RUNNING);
+                            try {
+                                persistenceManager.updateTaskStatus(task, ExecutionStatus.RUNNING);
+                            } catch (PersistenceException e) {
+                                logger.severe(String.format("Status update for task %s failed. Reason: %s",
+                                                            task.getId(), e.getMessage()));
                             }
                             break;
                         case Session.DONE:
-                            // Just mark the job as finished with success status
+                            // Just mark the task as finished with success status
                             if (task.getExecutionStatus() == ExecutionStatus.RUNNING) {
                                 // Only a running task can complete
                                 markTaskFinished(task, ExecutionStatus.DONE);
                             }
-                            logger.info(String.format("Task %s DONE", task.getId()));
+                            logger.fine(String.format("Task %s DONE", task.getId()));
                             break;
                         case Session.FAILED:
-                            // Just mark the job as finished with failed status
+                            // Just mark the task as finished with failed status
                             markTaskFinished(task, ExecutionStatus.FAILED);
                             logger.warning(String.format("Task %s FAILED", task.getId()));
                             break;
@@ -265,7 +261,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         }
         jt.setRemoteCommand(cmd);
         jt.setArgs(argsList);
-        logger.info(String.format("[Task %s ]: %s %s", String.valueOf(task.getId()), cmd, String.join(" ", argsList)));
+        logger.fine(String.format("[Task %s ]: %s %s", String.valueOf(task.getId()), cmd, String.join(" ", argsList)));
         return jt;
     }
 }

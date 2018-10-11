@@ -282,7 +282,7 @@ public class Orchestrator extends Notifiable {
             final ExecutionStatus status = EnumUtils.getEnumConstantByName(ExecutionStatus.class, message.getItem(Message.PAYLOAD_KEY));
             task = persistenceManager.getTaskById(Long.parseLong(taskId));
             task.setContext(currentContext);
-            logger.finest(String.format("Status change for task %s [node %s]: %s", taskId, task.getWorkflowNodeId(), status.name()));
+            logger.fine(String.format("Status change for task %s [node %s]: %s", taskId, task.getWorkflowNodeId(), status.name()));
             statusChanged(task);
             if (status == ExecutionStatus.DONE || status == ExecutionStatus.CANCELLED || status == ExecutionStatus.FAILED) {
                 synchronized (this.runningTasks) {
@@ -661,7 +661,7 @@ public class Orchestrator extends Notifiable {
             t.setExecutionStatus(status);
             try {
                 persistenceManager.updateTaskStatus(t, status);
-                logger.info(String.format("Task %s was put into status %s", t.getId(), status));
+                logger.fine(String.format("Task %s was put into status %s", t.getId(), status));
             } catch (PersistenceException e) {
                 logger.severe(e.getMessage());
             }

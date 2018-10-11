@@ -26,6 +26,7 @@ import ro.cs.tao.messaging.Topics;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.security.SessionContext;
+import ro.cs.tao.security.SystemSessionContext;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 
 import java.time.LocalDateTime;
@@ -151,14 +152,19 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
     }
 
     protected void changeTaskStatus(ExecutionTask task, ExecutionStatus status) {
+        changeTaskStatus(task, status, false);
+    }
+
+    protected void changeTaskStatus(ExecutionTask task, ExecutionStatus status, boolean firstTime) {
         if(status != task.getExecutionStatus()) {
             try {
                 if (!this.contextMap.containsKey(task.getId())) {
+                    if (task.getContext() == null) {
+                        logger.warning(String.format("Context for task %s is null!", task.getId()));
+                    }
                     this.contextMap.put(task.getId(), task.getContext());
                 }
-                //task.setExecutionStatus(status);
-                //persistenceManager.updateExecutionTask(task);
-                if (status == ExecutionStatus.DONE) {
+                if (status == ExecutionStatus.DONE || firstTime) {
                     task.setExecutionStatus(status);
                     persistenceManager.updateExecutionTask(task);
                 } else {
@@ -167,9 +173,11 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
             } catch (PersistenceException e) {
                 logger.severe(e.getMessage());
             }
-            Messaging.send(this.contextMap.get(task.getId()).getPrincipal(),
-                           Topics.TASK_STATUS_CHANGED,
-                           task.getId(), status.name());
+            SessionContext context = this.contextMap.get(task.getId());
+            if (context == null) {
+                context = SystemSessionContext.instance();
+            }
+            Messaging.send(context.getPrincipal(), Topics.TASK_STATUS_CHANGED, task.getId(), status.name());
         }
     }
 
