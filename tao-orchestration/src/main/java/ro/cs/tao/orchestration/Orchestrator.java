@@ -46,7 +46,6 @@ import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.serialization.StringListAdapter;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.user.UserPreference;
-import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
@@ -283,7 +282,7 @@ public class Orchestrator extends Notifiable {
             task = persistenceManager.getTaskById(Long.parseLong(taskId));
             task.setContext(currentContext);
             logger.fine(String.format("Status change for task %s [node %s]: %s", taskId, task.getWorkflowNodeId(), status.name()));
-            statusChanged(task);
+            statusChanged(task, message.getMessage());
             if (status == ExecutionStatus.DONE || status == ExecutionStatus.CANCELLED || status == ExecutionStatus.FAILED) {
                 synchronized (this.runningTasks) {
                     this.runningTasks.remove(task.getId());
@@ -413,14 +412,14 @@ public class Orchestrator extends Notifiable {
             String targetOutput = pcTask.getInstanceTargetOuptut(t);
             if (targetOutput == null) {
                 logger.severe(String.format("NULL TARGET [task %s, parameter %s]", pcTask.getId(), t.getName()));
-            } else {
+            } /*else {
                 try {
                     FileUtilities.ensurePermissions(Paths.get(targetOutput));
                 } catch (Exception e) {
                     logger.warning(String.format("Cannot set permissions [task %s, output %s=%s]",
                                                  pcTask.getId(), t.getName(), targetOutput));
                 }
-            }
+            }*/
             pcTask.setOutputParameterValue(t.getName(), targetOutput);
             if (keepOutput) {
                 persistOutputProducts(pcTask);
@@ -456,7 +455,7 @@ public class Orchestrator extends Notifiable {
             if (cardinality == 0) { // no point to continue since we have nothing to do
                 logger.severe(String.format("Task %s produced no results", task.getId()));
                 nextTask.setExecutionStatus(ExecutionStatus.CANCELLED);
-                statusChanged(nextTask);
+                statusChanged(nextTask, null);
             }
             if (nextTask instanceof ExecutionGroup) {
                 ExecutionGroup groupTask = (ExecutionGroup) nextTask;
@@ -473,18 +472,20 @@ public class Orchestrator extends Notifiable {
                 // values as sources
                 int expectedCardinality = TaskUtilities.getSourceCardinality(nextTask);
                 if (expectedCardinality == -1) {
-                    logger.severe(String.format("Cannot determine input cardinality for task %s",
-                                                nextTask.getId()));
+                    String message = String.format("Cannot determine input cardinality for task %s",
+                                                   nextTask.getId());
+                    logger.severe(message);
                     nextTask.setExecutionStatus(ExecutionStatus.CANCELLED);
-                    statusChanged(nextTask);
+                    statusChanged(nextTask, message);
                 }
                 if (expectedCardinality != 0) {
                     if (cardinality < expectedCardinality) {
-                        logger.severe(String.format("Insufficient inputs for task %s [expected %s, received %s]",
-                                                    nextTask.getId(),
-                                                    expectedCardinality, cardinality));
+                        String message = String.format("Insufficient inputs for task %s [expected %s, received %s]",
+                                                       nextTask.getId(),
+                                                       expectedCardinality, cardinality);
+                        logger.severe(message);
                         nextTask.setExecutionStatus(ExecutionStatus.CANCELLED);
-                        statusChanged(nextTask);
+                        statusChanged(nextTask, message);
                     }
                     int idx = 0;
                     for (Variable var : nextTask.getInputParameterValues()) {
@@ -532,16 +533,16 @@ public class Orchestrator extends Notifiable {
         return existing;
     }
 
-    private void statusChanged(ExecutionTask task) {
+    private void statusChanged(ExecutionTask task, String reason) {
         ExecutionGroup groupTask = task.getGroupTask();
         if (groupTask != null) {
-            notifyTaskGroup(groupTask, task);
+            notifyTaskGroup(groupTask, task, reason);
         } else {
-            notifyJob(task);
+            notifyJob(task, reason);
         }
     }
 
-    private void notifyTaskGroup(ExecutionGroup groupTask, ExecutionTask task) {
+    private void notifyTaskGroup(ExecutionGroup groupTask, ExecutionTask task, String reason) {
         ExecutionStatus previousStatus = groupTask.getExecutionStatus();
         List<ExecutionTask> tasks = groupTask.getTasks();
         ExecutionStatus taskStatus = task.getExecutionStatus();
@@ -618,16 +619,16 @@ public class Orchestrator extends Notifiable {
             ExecutionStatus currentStatus = groupTask.getExecutionStatus();
             if (previousStatus != null && previousStatus != currentStatus) {
                 persistenceManager.updateExecutionTask(groupTask);
-                notifyJob(groupTask);
+                notifyJob(groupTask, reason);
             }
         } catch (PersistenceException pex) {
             logger.severe(pex.getMessage());
         }
     }
 
-    private void notifyJob(ExecutionTask changedTask) {
+    private void notifyJob(ExecutionTask changedTask, String reason) {
         try {
-            TaskStatusHandler.handle(changedTask);
+            TaskStatusHandler.handle(changedTask, reason);
         } catch (PersistenceException pex) {
             logger.severe(pex.getMessage());
         }

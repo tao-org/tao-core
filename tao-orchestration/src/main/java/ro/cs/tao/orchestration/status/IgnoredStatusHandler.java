@@ -10,7 +10,7 @@ public class IgnoredStatusHandler extends TaskStatusHandler {
     }
 
     @Override
-    protected void handleTask(ExecutionTask task) throws PersistenceException {
+    protected void handleTask(ExecutionTask task, String reason) throws PersistenceException {
         // do nothing
     }
 

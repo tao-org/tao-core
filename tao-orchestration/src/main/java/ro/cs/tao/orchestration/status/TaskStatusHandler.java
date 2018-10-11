@@ -38,16 +38,20 @@ public abstract class TaskStatusHandler {
         this.logger = Logger.getLogger(getClass().getName());
     }
 
-    public static void handle(ExecutionTask task) throws PersistenceException {
+    public static void handle(ExecutionTask task, String reason) throws PersistenceException {
         ExecutionStatus status = task.getExecutionStatus();
         TaskStatusHandler handler = handlers.get(status);
         if (handler == null) {
             throw new ExecutionException(String.format("No handler registered for state %s", status.name()));
         }
-        handler.handleTask(task);
+        handler.handleTask(task, reason);
     }
 
-    protected abstract void handleTask(ExecutionTask task) throws PersistenceException;
+    protected abstract void handleTask(ExecutionTask task, String reason) throws PersistenceException;
+
+    protected void handleTask(ExecutionTask task) throws PersistenceException {
+        handleTask(task, null);
+    }
 
     protected void bulkSetStatus(Collection<ExecutionTask> tasks, ExecutionStatus status) {
         if (tasks == null) {

@@ -31,11 +31,12 @@ public interface ExecutionJobRepository extends PagingAndSortingRepository<Execu
      */
     List<ExecutionJob> findByExecutionStatus(ExecutionStatus status);
 
-    @Query(value = "SELECT * FROM tao.job WHERE username = :userName AND execution_status_id in (:statuses)",
-            nativeQuery = true)
+    @Query(value = "SELECT * FROM tao.job WHERE username = :userName AND execution_status_id in (:statuses) " +
+            "ORDER BY end_time DESC, start_time DESC", nativeQuery = true)
     List<ExecutionJob> findByStatusAndUser(@Param("statuses") Set<Integer> statuses, @Param("userName") String userName);
 
-    @Query(value = "SELECT * FROM tao.job WHERE execution_status_id in (:statuses)", nativeQuery = true)
+    @Query(value = "SELECT * FROM tao.job WHERE execution_status_id in (:statuses) " +
+            "ORDER BY end_time DESC, start_time DESC", nativeQuery = true)
     List<ExecutionJob> findByStatus(@Param("statuses") Set<Integer> statuses);
 
     @Query(value = "SELECT CONCAT(CAST(t.job_id as text), '-', CAST(t.id as text)) FROM tao.task_output tk " +
