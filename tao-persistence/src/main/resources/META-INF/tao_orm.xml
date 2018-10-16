@@ -1087,7 +1087,7 @@
 
     <embeddable class="ro.cs.tao.component.ComponentLink" access="PROPERTY">
         <attributes>
-            <basic name="sourceNodeId">
+            <basic name="sourceNodeId" fetch="EAGER">
                 <column name="source_graph_node_id" nullable="false"/>
             </basic>
             <many-to-one name="output" fetch="EAGER">

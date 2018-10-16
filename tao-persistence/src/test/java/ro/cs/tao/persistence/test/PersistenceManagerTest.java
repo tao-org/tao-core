@@ -1302,7 +1302,7 @@ public class PersistenceManagerTest {
             Assert.assertTrue(workflow.getNodes() != null && workflow.getNodes().size() == 2);
 
             ComponentLink componentLink1 = new ComponentLink(sourceNode.getId(), linkInput, linkOutput);
-            List<ComponentLink> links = new ArrayList<>();
+            Set<ComponentLink> links = new HashSet<>();
             links.add(componentLink1);
             targetNode.setIncomingLinks(links);
 

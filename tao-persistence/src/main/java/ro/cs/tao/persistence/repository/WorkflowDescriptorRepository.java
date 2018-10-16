@@ -21,6 +21,11 @@ import java.util.List;
 @Transactional
 public interface WorkflowDescriptorRepository extends PagingAndSortingRepository<WorkflowDescriptor, Long> {
 
+    @Query(value = "SELECT w FROM WorkflowDescriptor w LEFT JOIN FETCH w.nodes n " +
+            "LEFT JOIN FETCH n.incomingLinks l " +
+            "WHERE w.id = :id")
+    WorkflowDescriptor getDetailById(@Param("id") Long id);
+
     @Query(value = "SELECT * from tao.workflow_graph WHERE username = :user AND status_id = :statusId " +
             "ORDER BY created DESC", nativeQuery = true)
     List<WorkflowDescriptor> getUserWorkflowsByStatus(@Param("user") String user, @Param("statusId") int statusId);

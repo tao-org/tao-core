@@ -26,8 +26,8 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Descriptor of an workflow node.
@@ -43,7 +43,7 @@ public class WorkflowNodeDescriptor extends GraphObject {
     private float xCoord;
     private float yCoord;
     private int level;
-    private List<ComponentLink> incomingLinks;
+    private Set<ComponentLink> incomingLinks;
     private boolean preserveOutput;
     private TransitionBehavior behavior = TransitionBehavior.FAIL_ON_ERROR;
 
@@ -78,15 +78,15 @@ public class WorkflowNodeDescriptor extends GraphObject {
     public void setPreserveOutput(boolean preserveOutput) { this.preserveOutput = preserveOutput; }
 
     @XmlElementWrapper(name = "incomingNodes")
-    public List<ComponentLink> getIncomingLinks() { return incomingLinks; }
+    public Set<ComponentLink> getIncomingLinks() { return incomingLinks; }
 
-    public void setIncomingLinks(List<ComponentLink> incomingLinks) {
+    public void setIncomingLinks(Set<ComponentLink> incomingLinks) {
         this.incomingLinks = incomingLinks;
     }
 
     public void addLink(ComponentLink link) {
         if (this.incomingLinks == null) {
-            this.incomingLinks = new ArrayList<>();
+            this.incomingLinks = new HashSet<>();
         }
         if (this.incomingLinks.stream().noneMatch(l -> l.equals(link))) {
             this.incomingLinks.add(link);
