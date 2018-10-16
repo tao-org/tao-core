@@ -39,6 +39,8 @@ import java.util.Map;
  */
 public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
 
+    WorkflowDescriptor getFullDescriptor(Long id);
+
     /**
      * Returns the workflows of a given user that have a specific status.
      * @param user      The user name (login)

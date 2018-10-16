@@ -119,7 +119,7 @@ public class JobFactory {
         }
         List<ExecutionTask> tasks = group.getTasks();
         if (tasks != null && tasks.size() > 0) {
-            List<ComponentLink> links = groupNode.getIncomingLinks();
+            Set<ComponentLink> links = groupNode.getIncomingLinks();
             links.forEach(link -> {
                 String name = link.getOutput().getName();
                 group.setInputParameterValue(name, null);
@@ -144,7 +144,7 @@ public class JobFactory {
         } else {
             TaoComponent component;
             List<ParameterValue> customValues = workflowNode.getCustomValues();
-            List<ComponentLink> links = workflowNode.getIncomingLinks();
+            Set<ComponentLink> links = workflowNode.getIncomingLinks();
             //try {
                 component = persistenceManager.getProcessingComponentById(workflowNode.getComponentId());
             //} catch (PersistenceException ignored) { }

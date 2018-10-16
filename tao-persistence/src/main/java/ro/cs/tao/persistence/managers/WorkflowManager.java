@@ -66,6 +66,10 @@ public class WorkflowManager {
         return null;
     }
 
+    public WorkflowDescriptor getFullWorkflow(Long identifier) {
+        return workflowDescriptorRepository.getDetailById(identifier);
+    }
+
     public List<WorkflowDescriptor> getUserWorkflowsByStatus(String user, int statusId) {
         return workflowDescriptorRepository.getUserWorkflowsByStatus(user, statusId);
     }

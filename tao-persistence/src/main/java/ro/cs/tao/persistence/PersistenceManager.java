@@ -399,6 +399,10 @@ public class PersistenceManager implements MessagePersister {
         return workflowManager.getWorkflowDescriptor(identifier);
     }
 
+    public WorkflowDescriptor getFullWorkflowDescriptor(long identifier) {
+        return workflowManager.getFullWorkflow(identifier);
+    }
+
     public List<WorkflowDescriptor> getUserWorkflowsByStatus(String user, int statusId) {
         return workflowManager.getUserWorkflowsByStatus(user, statusId);
     }
