@@ -38,7 +38,17 @@ public interface DataSourceComponentService extends CRUDService<DataSourceCompon
      * @param label         The label of the custom data source component
      * @param principal     The principal to create the component for
      */
-    DataSourceComponent createFor(List<EOProduct> products, String label, Principal principal) throws PersistenceException;
+    DataSourceComponent createForProducts(List<EOProduct> products,
+                                          String label, Principal principal) throws PersistenceException;
+    /**
+     * Creates a user data source component that wraps the given list of products.
+     * @param productNames      The list of names of products
+     * @param productType       The type of products (must be of the same type)
+     * @param label         The label of the custom data source component
+     * @param principal     The principal to create the component for
+     */
+    DataSourceComponent createForProductNames(List<String> productNames, String productType,
+                                              String label, Principal principal) throws PersistenceException;
 
     List<Tag> getDatasourceTags();
 }
