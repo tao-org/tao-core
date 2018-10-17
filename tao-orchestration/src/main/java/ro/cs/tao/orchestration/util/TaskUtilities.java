@@ -26,10 +26,7 @@ import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.enums.TransitionBehavior;
 
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
@@ -149,7 +146,7 @@ public class TaskUtilities {
         Map<String, String> connections = new LinkedHashMap<>();
         WorkflowNodeDescriptor targetNode = persistenceManager.getWorkflowNodeById(targetTask.getWorkflowNodeId());
         WorkflowNodeDescriptor sourceNode = persistenceManager.getWorkflowNodeById(sourceTask.getWorkflowNodeId());
-        List<ComponentLink> links = targetNode.getIncomingLinks();
+        Set<ComponentLink> links = targetNode.getIncomingLinks();
         if (links != null) {
             links.stream()
                     .filter(l -> l.getSourceNodeId() == sourceNode.getId())
@@ -167,7 +164,7 @@ public class TaskUtilities {
         boolean completed = true;
         WorkflowNodeDescriptor node = persistenceManager.getWorkflowNodeById(task.getWorkflowNodeId());
         ExecutionJob job = task.getJob();
-        List<ComponentLink> links = node.getIncomingLinks();
+        Set<ComponentLink> links = node.getIncomingLinks();
         if (links != null) {
             for (ComponentLink link : links) {
                 ExecutionTask parentTask = persistenceManager.getTaskByJobAndNode(job.getId(), link.getSourceNodeId());
@@ -208,7 +205,7 @@ public class TaskUtilities {
         }
         WorkflowNodeDescriptor node = persistenceManager.getWorkflowNodeById(toTask.getWorkflowNodeId());
         ExecutionJob job = toTask.getJob();
-        List<ComponentLink> links = node.getIncomingLinks();
+        Set<ComponentLink> links = node.getIncomingLinks();
         if (links != null) {
             for (ComponentLink link : links) {
                 ExecutionTask parentTask = persistenceManager.getTaskByJobAndNode(job.getId(), link.getSourceNodeId());

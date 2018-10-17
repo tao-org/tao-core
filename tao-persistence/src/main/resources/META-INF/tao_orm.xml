@@ -178,9 +178,9 @@
     <entity class="ro.cs.tao.eodata.AuxiliaryData" access="PROPERTY">
         <table name="tao.auxiliary_data"/>
         <attributes>
-            <id name="location">
+            <basic name="location">
                 <column name="location" nullable="false" column-definition="character varying NOT NULL"/>
-            </id>
+            </basic>
             <basic name="description">
                 <column name="description" nullable="false" column-definition="character varying NOT NULL"/>
             </basic>
@@ -598,7 +598,6 @@
         </attributes>
     </entity>
 
-
     <entity class="ro.cs.tao.execution.model.ProcessingExecutionTask" access="PROPERTY">
 
         <discriminator-value>11</discriminator-value>
@@ -611,7 +610,6 @@
         </attributes>
     </entity>
 
-
     <entity class="ro.cs.tao.execution.model.DataSourceExecutionTask" access="PROPERTY">
 
         <discriminator-value>31</discriminator-value>
@@ -622,7 +620,6 @@
             </many-to-one>
         </attributes>
     </entity>
-
 
     <entity class="ro.cs.tao.execution.model.ExecutionGroup" access="PROPERTY">
 
@@ -641,7 +638,6 @@
             </many-to-many>
         </attributes>
     </entity>
-
 
     <entity class="ro.cs.tao.execution.model.ExecutionJob" access="PROPERTY">
         <table name="tao.job"/>
@@ -1091,19 +1087,19 @@
 
     <embeddable class="ro.cs.tao.component.ComponentLink" access="PROPERTY">
         <attributes>
-            <basic name="sourceNodeId" fetch="LAZY">
+            <basic name="sourceNodeId" fetch="EAGER">
                 <column name="source_graph_node_id" nullable="false"/>
             </basic>
-            <many-to-one name="output" fetch="LAZY">
+            <many-to-one name="output" fetch="EAGER">
                 <join-column name="source_descriptor_id" nullable="false"/>
                 <cascade>
-                    <cascade-all/>
+                    <cascade-merge/>
                 </cascade>
             </many-to-one>
-            <many-to-one name="input" fetch="LAZY">
+            <many-to-one name="input" fetch="EAGER">
                 <join-column name="target_descriptor_id" nullable="false"/>
                 <cascade>
-                    <cascade-all/>
+                    <cascade-merge/>
                 </cascade>
             </many-to-one>
         </attributes>

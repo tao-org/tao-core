@@ -41,8 +41,10 @@ public class ExecutionTaskInfo {
         componentField = new HashMap<>();
         try {
             Field field = ProcessingExecutionTask.class.getDeclaredField("component");
+            field.setAccessible(true);
             componentField.put(ProcessingExecutionTask.class, field);
             field = DataSourceExecutionTask.class.getDeclaredField("component");
+            field.setAccessible(true);
             componentField.put(DataSourceExecutionTask.class, field);
         } catch (NoSuchFieldException e) {
             e.printStackTrace();
