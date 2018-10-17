@@ -16,6 +16,8 @@
 
 package ro.cs.tao.eodata;
 
+import ro.cs.tao.component.StringIdentifiable;
+
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
@@ -25,7 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @XmlRootElement(name = "auxData")
-public class AuxiliaryData {
+public class AuxiliaryData extends StringIdentifiable {
     private String location;
     private String description;
     private String userName;

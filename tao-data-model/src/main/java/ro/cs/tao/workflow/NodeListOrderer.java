@@ -122,7 +122,7 @@ public interface NodeListOrderer {
             children = ((WorkflowNodeGroupDescriptor) node).getNodes().stream().distinct().collect(Collectors.toList());
         } else {
             children = masterList.stream().filter(n -> {
-                List<ComponentLink> links = n.getIncomingLinks();
+                Set<ComponentLink> links = n.getIncomingLinks();
                 return links != null && links.stream().anyMatch(l -> node.getId().equals(l.getSourceNodeId()));
                 //links.stream().anyMatch(l -> node.getComponentId().equals(l.getInput().getParentId()));
             }).distinct().collect(Collectors.toList());

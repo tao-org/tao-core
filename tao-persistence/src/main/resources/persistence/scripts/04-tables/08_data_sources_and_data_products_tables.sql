@@ -127,6 +127,7 @@ ALTER TABLE tao.vector_data_product ADD CONSTRAINT FK_vector_data_product_visibi
 -- table: tao.auxiliary_data
 CREATE TABLE tao.auxiliary_data
 (
+    id character varying(1000) NOT NULL,
 	location character varying NOT NULL,
 	description character varying NOT NULL,
 	username character varying NOT NULL,
@@ -135,7 +136,7 @@ CREATE TABLE tao.auxiliary_data
 	modified timestamp NULL
 );
 ALTER TABLE tao.auxiliary_data ADD CONSTRAINT PK_auxiliary_data
-	PRIMARY KEY (location);
+	PRIMARY KEY (id);
 ALTER TABLE tao.auxiliary_data ADD CONSTRAINT FK_auxiliary_data_visibility
 	FOREIGN KEY (visibility_id) REFERENCES tao.visibility (id) ON DELETE No Action ON UPDATE No Action;
 
