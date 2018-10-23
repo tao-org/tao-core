@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -38,10 +37,12 @@ public abstract class Executor<T> implements Runnable {
     public static final String SHELL_COMMAND_SEPARATOR = ";";
     public static final String SHELL_COMMAND_SEPARATOR_AMP = "&&";
     public static final String SHELL_COMMAND_SEPARATOR_BAR = "||";
-    private static final ExecutorService executorService;
+    private static final NamedThreadPoolExecutor executorService;
+    private static final Logger staticLogger;
 
     static {
         executorService = new NamedThreadPoolExecutor("process-exec", Runtime.getRuntime().availableProcessors());
+        staticLogger = Logger.getLogger(Executor.class.getName());
     }
 
     T channel;
@@ -72,6 +73,9 @@ public abstract class Executor<T> implements Runnable {
         Executor executor = prepare(outputConsumer, job);
         awaitForConditions(job);
         executorService.submit(executor);
+        staticLogger.finest(String.format("%s running tasks, %s queued tasks",
+                                          executorService.getActiveCount(),
+                                          executorService.getQueue().size()));
         return executor;
     }
     /**
@@ -111,6 +115,9 @@ public abstract class Executor<T> implements Runnable {
         Executor executor = prepare(outputConsumer, workingDirectory, job);
         awaitForConditions(job);
         executorService.submit(executor);
+        staticLogger.finest(String.format("%s running tasks, %s queued tasks",
+                                          executorService.getActiveCount(),
+                                          executorService.getQueue().size()));
         return executor;
     }
 
@@ -182,6 +189,9 @@ public abstract class Executor<T> implements Runnable {
         for (int i = 0; i < jobs.length; i++) {
             //awaitForConditions(jobs[i]);
             executorService.submit(executors[i]);
+            staticLogger.finest(String.format("%s running tasks, %s queued tasks",
+                                              executorService.getActiveCount(),
+                                              executorService.getQueue().size()));
         }
         return executors;
     }
@@ -204,6 +214,9 @@ public abstract class Executor<T> implements Runnable {
             waitThreads[i] = new Thread(() -> {
                 try {
                     executorService.submit(executors[finalI]);
+                    staticLogger.finest(String.format("%s running tasks, %s queued tasks",
+                                                      executorService.getActiveCount(),
+                                                      executorService.getQueue().size()));
                     executors[finalI].getWaitObject().await(timeout, TimeUnit.SECONDS);
                 } catch (InterruptedException iex) {
                     executors[finalI].stop();
@@ -227,9 +240,7 @@ public abstract class Executor<T> implements Runnable {
             aggregateLatch.await(timeout, TimeUnit.SECONDS);
         } catch (InterruptedException ignored) { }
         for (int i = 0; i < executors.length; i++) {
-            if (executors[i].isRunning()) {
-                executors[i].stop();
-            }
+            executors[i].stop();
             waitThreads[i] = null;
             retCodes[i] = executors[i].getReturnCode();
         }
@@ -338,7 +349,12 @@ public abstract class Executor<T> implements Runnable {
     /**
      * Signals the stop of the execution.
      */
-    public void stop() { this.isStopped = true; }
+    public void stop() {
+        this.isStopped = true;
+        staticLogger.finest(String.format("%s running tasks, %s queued tasks",
+                                          executorService.getActiveCount(),
+                                          executorService.getQueue().size()));
+    }
 
     /**
      * Checks if the process is/has stopped.
