@@ -224,7 +224,7 @@ public abstract class Executor<T> implements Runnable {
                     aggregateLatch.countDown();
                 }
             });
-            boolean canExecute = canExecute(jobs[i]);
+            /*boolean canExecute = canExecute(jobs[i]);
             while (!canExecute) {
                 try {
                     Thread.sleep(10000);
@@ -233,7 +233,8 @@ public abstract class Executor<T> implements Runnable {
                     Logger.getLogger(Executor.class.getName()).warning(e.getMessage());
                     canExecute = true;
                 }
-            }
+            }*/
+            awaitForConditions(jobs[i]);
             waitThreads[i].start();
         }
         try {
