@@ -31,6 +31,7 @@ public final class ExecutionUnit {
     private final boolean asSuperUser;
     private final SSHMode sshMode;
     private Long minMemory;
+    private Long minDisk;
 
     public ExecutionUnit(ExecutorType type, String host, String user, String password, List<String> arguments, boolean asSuperUser, SSHMode sshMode) {
         this.type = type;
@@ -67,4 +68,8 @@ public final class ExecutionUnit {
     public void setMinMemory(Long minMemory) {
         this.minMemory = minMemory;
     }
+
+    public Long getMinDisk() { return minDisk; }
+
+    public void setMinDisk(Long minDisk) { this.minDisk = minDisk; }
 }
