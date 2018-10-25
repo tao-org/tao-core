@@ -196,6 +196,43 @@ public class FileUtilities {
         return Files.exists(file) ? file : Files.createSymbolicLink(file, sourcePath);
     }
 
+    public static void move(Path source, Path destination) throws IOException {
+        if (source != null && destination != null) {
+            if (Files.isRegularFile(source)) {
+                Files.move(source,destination, StandardCopyOption.REPLACE_EXISTING);
+            } else {
+                Path targetFolder = destination.resolve(source.getFileName());
+                Files.createDirectories(targetFolder);
+                Files.walkFileTree(source, new SimpleFileVisitor<Path>() {
+                    @Override
+                    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                        Path target = targetFolder.resolve(source.relativize(dir));
+                        Files.createDirectories(target);
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                        Path targetFile = targetFolder.resolve(source.relativize(file));
+                        Files.move(file, targetFile, StandardCopyOption.REPLACE_EXISTING);
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                        if (exc == null) {
+                            Files.delete(dir);
+                            return FileVisitResult.CONTINUE;
+                        } else {
+                            throw exc;
+                        }
+                    }
+                });
+                Files.delete(source);
+            }
+        }
+    }
+
     public static void deleteTree(Path root) throws IOException {
         if (root != null && Files.isDirectory(root)) {
             Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
