@@ -67,7 +67,9 @@ public class WorkflowManager {
     }
 
     public WorkflowDescriptor getFullWorkflow(Long identifier) {
-        return workflowDescriptorRepository.getDetailById(identifier);
+        WorkflowDescriptor workflow = workflowDescriptorRepository.getDetailById(identifier);
+        workflow.setNodes(workflow.getNodes().stream().distinct().collect(Collectors.toList()));
+        return workflow;
     }
 
     public List<WorkflowDescriptor> getUserWorkflowsByStatus(String user, int statusId) {
