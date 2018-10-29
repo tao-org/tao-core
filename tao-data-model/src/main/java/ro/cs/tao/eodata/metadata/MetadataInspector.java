@@ -31,6 +31,8 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Interface to be implemented by all simple metadata inspectors.
@@ -68,6 +70,7 @@ public interface MetadataInspector {
         private int width;
         private int height;
         private OrbitDirection orbitDirection;
+        private Set<String> controlSums;
 
         public String getProductId() { return productId; }
         public void setProductId(String productId) { this.productId = productId; }
@@ -105,6 +108,17 @@ public interface MetadataInspector {
         public OrbitDirection getOrbitDirection() { return orbitDirection; }
         public void setOrbitDirection(OrbitDirection orbitDirection) { this.orbitDirection = orbitDirection; }
 
+        public Set<String> getControlSums() {
+            if (controlSums == null) {
+                controlSums = new HashSet<>();
+            }
+            return controlSums;
+        }
+        public void setControlSums(Set<String> controlSums) { this.controlSums = controlSums; }
+        public void addControlSum(String sum) {
+            getControlSums().add(sum);
+        }
+
         public EOProduct toProductDescriptor(Path productPath) throws URISyntaxException, IOException {
             EOProduct product = new EOProduct();
             String name = FileUtilities.getFilenameWithoutExtension(productPath.toFile());
@@ -136,6 +150,9 @@ public interface MetadataInspector {
                 } else {
                     product.setEntryPoint(this.entryPoint);
                 }
+            }
+            if (this.controlSums != null && this.controlSums.size() > 0) {
+                product.addAttribute("controlSum", String.join(",", this.controlSums));
             }
             return product;
         }

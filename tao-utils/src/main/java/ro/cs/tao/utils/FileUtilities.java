@@ -23,6 +23,7 @@ import java.nio.file.*;
 import java.nio.file.FileSystem;
 import java.nio.file.attribute.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -194,6 +195,81 @@ public class FileUtilities {
 
     public static Path linkFile(Path sourcePath, Path file) throws IOException {
         return Files.exists(file) ? file : Files.createSymbolicLink(file, sourcePath);
+    }
+
+    public static int copy(Path source, Path destination) throws IOException {
+        final AtomicInteger copied = new AtomicInteger(0);
+        if (source != null && destination != null) {
+            if (Files.isRegularFile(source)) {
+                Files.copy(source, destination, StandardCopyOption.REPLACE_EXISTING);
+            } else {
+                Path targetFolder = destination.resolve(source.getFileName());
+                Files.createDirectories(targetFolder);
+                Files.walkFileTree(source, new SimpleFileVisitor<Path>() {
+                    @Override
+                    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                        Path target = targetFolder.resolve(source.relativize(dir));
+                        Files.createDirectories(target);
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                        Path targetFile = targetFolder.resolve(source.relativize(file));
+                        Files.copy(file, targetFile, StandardCopyOption.REPLACE_EXISTING);
+                        copied.incrementAndGet();
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                        if (exc == null) {
+                            return FileVisitResult.CONTINUE;
+                        } else {
+                            throw exc;
+                        }
+                    }
+                });
+            }
+        }
+        return copied.intValue();
+    }
+
+    public static void move(Path source, Path destination) throws IOException {
+        if (source != null && destination != null) {
+            if (Files.isRegularFile(source)) {
+                Files.move(source,destination, StandardCopyOption.REPLACE_EXISTING);
+            } else {
+                Path targetFolder = destination.resolve(source.getFileName());
+                Files.createDirectories(targetFolder);
+                Files.walkFileTree(source, new SimpleFileVisitor<Path>() {
+                    @Override
+                    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                        Path target = targetFolder.resolve(source.relativize(dir));
+                        Files.createDirectories(target);
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                        Path targetFile = targetFolder.resolve(source.relativize(file));
+                        Files.move(file, targetFile, StandardCopyOption.REPLACE_EXISTING);
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                        if (exc == null) {
+                            Files.delete(dir);
+                            return FileVisitResult.CONTINUE;
+                        } else {
+                            throw exc;
+                        }
+                    }
+                });
+                Files.delete(source);
+            }
+        }
     }
 
     public static void deleteTree(Path root) throws IOException {
