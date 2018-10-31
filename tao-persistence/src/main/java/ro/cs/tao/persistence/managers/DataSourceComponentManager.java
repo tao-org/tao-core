@@ -34,6 +34,11 @@ public class DataSourceComponentManager extends TaoComponentManager<DataSourceCo
         return this.repository.getSystemDataSourceComponents();
     }
 
+    public DataSourceComponent getDataSourceComponentByLabel(String label) {
+        List<DataSourceComponent> components = this.repository.getDataSourceComponentByLabel(label);
+        return (components == null || components.size() == 0) ? null : components.get(0);
+    }
+
     @Override
     protected boolean checkId(String entityId, boolean existingEntity) {
         return entityId != null && !entityId.isEmpty();

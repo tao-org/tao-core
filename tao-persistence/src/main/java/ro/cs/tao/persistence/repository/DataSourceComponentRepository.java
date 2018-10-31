@@ -35,4 +35,7 @@ public interface DataSourceComponentRepository extends PagingAndSortingRepositor
 
     @Query(value = "SELECT dsc FROM DataSourceComponent dsc WHERE dsc.system = true ORDER BY dsc.id")
     List<DataSourceComponent> getSystemDataSourceComponents();
+
+    @Query(value = "SELECT dsc FROM DataSourceComponent dsc WHERE dsc.label = ?1")
+    List<DataSourceComponent> getDataSourceComponentByLabel(String label);
 }
