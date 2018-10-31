@@ -73,23 +73,22 @@ public abstract class EntityManager<T extends Identifiable<K>, K, R extends Pagi
     @Transactional
     public List<T> list(int pageNumber, int pageSize, ro.cs.tao.Sort sort) {
         List<T> results = null;
-        if (pageNumber <= 0 || pageSize <= 0) {
-            results = new ArrayList<>();
-        }
-        Sort jpaSort;
-        if (sort != null && sort.getFieldsForSort() != null && sort.getFieldsForSort().size() > 0) {
-            List<Sort.Order> orders = new ArrayList<>();
-            for (Map.Entry<String, SortDirection> entry : sort.getFieldsForSort().entrySet()) {
-                orders.add(new Sort.Order(SortDirection.ASC.equals(entry.getValue()) ? Sort.Direction.ASC : Sort.Direction.DESC,
-                                          entry.getKey()));
+        if (pageNumber > 0 && pageSize > 0) {
+            Sort jpaSort;
+            if (sort != null && sort.getFieldsForSort() != null && sort.getFieldsForSort().size() > 0) {
+                List<Sort.Order> orders = new ArrayList<>();
+                for (Map.Entry<String, SortDirection> entry : sort.getFieldsForSort().entrySet()) {
+                    orders.add(new Sort.Order(SortDirection.ASC.equals(entry.getValue()) ? Sort.Direction.ASC : Sort.Direction.DESC,
+                                              entry.getKey()));
+                }
+                jpaSort = Sort.by(orders);
+            } else {
+                jpaSort = new Sort(Sort.Direction.ASC, identifier());
             }
-            jpaSort = Sort.by(orders);
-        } else {
-            jpaSort = new Sort(Sort.Direction.ASC, identifier());
-        }
-        Page<T> page = repository.findAll(PageRequest.of(pageNumber, pageSize, jpaSort));
-        if (page.hasContent()) {
-            results = page.getContent();
+            Page<T> page = repository.findAll(PageRequest.of(pageNumber, pageSize, jpaSort));
+            if (page.hasContent()) {
+                results = page.getContent();
+            }
         } else {
             results = new ArrayList<>();
         }
