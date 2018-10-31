@@ -32,6 +32,7 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import ro.cs.tao.utils.CompositeKey;
 
 import java.io.IOException;
 import java.net.*;
@@ -51,7 +52,7 @@ public class NetUtils {
     private static HttpHost apacheHttpProxy;
     private static CredentialsProvider proxyCredentials;
     private static int timeout = 30000;
-    private static final Map<String, CloseableHttpClient> httpClients = new HashMap<>();
+    private static final Map<CompositeKey, CloseableHttpClient> httpClients = new HashMap<>();
 
     public static String getAuthToken() {
         return authToken;
@@ -144,7 +145,7 @@ public class NetUtils {
     }
 
     public static CloseableHttpResponse openConnection(HttpMethod method, String url, Credentials credentials, List<NameValuePair> parameters) throws IOException {
-        CloseableHttpResponse response = null;
+        CloseableHttpResponse response;
         try {
             URI uri = new URI(url);
             String domain = uri.getHost();
@@ -152,8 +153,14 @@ public class NetUtils {
                 String[] tokens = domain.split("\\.");
                 domain = tokens[tokens.length - 2] + "." + tokens[tokens.length - 1];
             }
+            final CompositeKey key;
+            if (credentials != null) {
+                key = new CompositeKey(domain, credentials.getUserPrincipal(), credentials.getPassword());
+            } else {
+                key = new CompositeKey(domain, null);
+            }
             synchronized (httpClients) {
-                if (!httpClients.containsKey(domain)) {
+                if (!httpClients.containsKey(key)) {
                     //ThreadLocal<CloseableHttpClient> local = new ThreadLocal<>();
                     CredentialsProvider credentialsProvider = null;
                     if (credentials != null) {
@@ -172,10 +179,10 @@ public class NetUtils {
                                 .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
                                 .build();
                     }
-                    httpClients.put(domain, httpClient);
+                    httpClients.put(key, httpClient);
                 }
             }
-            CloseableHttpClient httpClient = httpClients.get(domain);
+            CloseableHttpClient httpClient = httpClients.get(key);
             HttpRequestBase requestBase;
             switch (method) {
                 case GET:
