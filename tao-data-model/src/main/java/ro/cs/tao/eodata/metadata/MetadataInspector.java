@@ -122,7 +122,9 @@ public interface MetadataInspector {
         public EOProduct toProductDescriptor(Path productPath) throws URISyntaxException, IOException {
             EOProduct product = new EOProduct();
             String name = FileUtilities.getFilenameWithoutExtension(productPath.toFile());
-            product.setAcquisitionDate(Date.from(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant()));
+            if (this.aquisitionDate != null) {
+                product.setAcquisitionDate(Date.from(this.aquisitionDate.atZone(ZoneId.systemDefault()).toInstant()));
+            }
             product.setId(name);
             product.setName(name);
             product.setProductType(this.productType);
