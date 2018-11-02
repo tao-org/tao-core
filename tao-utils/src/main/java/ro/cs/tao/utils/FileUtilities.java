@@ -267,7 +267,7 @@ public class FileUtilities {
                         }
                     }
                 });
-                Files.delete(source);
+                //Files.delete(source);
             }
         }
     }
