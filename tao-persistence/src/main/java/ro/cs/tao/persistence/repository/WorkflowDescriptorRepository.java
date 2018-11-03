@@ -21,7 +21,7 @@ import java.util.List;
 @Transactional
 public interface WorkflowDescriptorRepository extends PagingAndSortingRepository<WorkflowDescriptor, Long> {
 
-    @Query(value = "SELECT w FROM WorkflowDescriptor w LEFT JOIN FETCH w.nodes n " +
+    @Query(value = "SELECT w FROM WorkflowDescriptor w JOIN FETCH w.nodes n " +
             "LEFT JOIN FETCH n.incomingLinks l " +
             "WHERE w.id = :id")
     WorkflowDescriptor getDetailById(@Param("id") Long id);
