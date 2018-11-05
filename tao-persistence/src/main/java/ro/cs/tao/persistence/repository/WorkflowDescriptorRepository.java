@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * CRUD repository for WorkflowDescriptor entities
@@ -25,6 +26,8 @@ public interface WorkflowDescriptorRepository extends PagingAndSortingRepository
             "LEFT JOIN FETCH n.incomingLinks l " +
             "WHERE w.id = :id")
     WorkflowDescriptor getDetailById(@Param("id") Long id);
+
+    Optional<WorkflowDescriptor> findByName(String name);
 
     @Query(value = "SELECT * from tao.workflow_graph WHERE username = :user AND status_id = :statusId " +
             "ORDER BY created DESC", nativeQuery = true)
