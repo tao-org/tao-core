@@ -73,11 +73,20 @@ public class WorkflowManager {
 
     public WorkflowDescriptor getFullWorkflow(Long identifier) {
         WorkflowDescriptor workflow = workflowDescriptorRepository.getDetailById(identifier);
-        workflow.setNodes(workflow.getNodes().stream().distinct().collect(Collectors.toList()));
-        workflow.getNodes().stream()
-                           .filter(n -> n instanceof WorkflowNodeGroupDescriptor)
-                           .map(n -> (WorkflowNodeGroupDescriptor) n)
-                           .forEach(g -> g.setNodes(g.getNodes().stream().distinct().collect(Collectors.toList())));
+        if (workflow != null) {
+            List<WorkflowNodeDescriptor> nodes = workflow.getNodes();
+            if (nodes != null) {
+                workflow.setNodes(workflow.getNodes().stream().distinct().collect(Collectors.toList()));
+                workflow.getNodes().stream()
+                        .filter(n -> n instanceof WorkflowNodeGroupDescriptor)
+                        .map(n -> (WorkflowNodeGroupDescriptor) n)
+                        .forEach(g -> {
+                            if (g.getNodes() != null) {
+                                g.setNodes(g.getNodes().stream().distinct().collect(Collectors.toList()));
+                            }
+                        });
+            }
+        }
         return workflow;
     }
 
