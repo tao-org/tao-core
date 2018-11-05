@@ -90,6 +90,13 @@ public class WorkflowManager {
         return workflow;
     }
 
+    public WorkflowDescriptor getWorkflowByName(String name) {
+        if (name != null) {
+            return workflowDescriptorRepository.findByName(name).orElse(null);
+        }
+        return null;
+    }
+
     public List<WorkflowDescriptor> getUserWorkflowsByStatus(String user, int statusId) {
         return workflowDescriptorRepository.getUserWorkflowsByStatus(user, statusId);
     }
