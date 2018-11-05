@@ -391,6 +391,10 @@ public class PersistenceManager implements MessagePersister {
     public DataSourceComponent saveDataSourceComponent(DataSourceComponent component) throws PersistenceException {
         return dataSourceComponentManager.save(component);
     }
+
+    public DataSourceComponent updateDataSourceComponent(DataSourceComponent component) throws PersistenceException {
+        return dataSourceComponentManager.update(component);
+    }
     //endregion
 
     //region WorkflowDescriptor
