@@ -27,7 +27,10 @@ import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.persistence.repository.WorkflowDescriptorRepository;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
+import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
@@ -41,6 +44,8 @@ public class WorkflowManager {
 
     private Logger logger = Logger.getLogger(WorkflowManager.class.getName());
 
+    @PersistenceContext
+    private EntityManager em;
     /** CRUD Repository for WorkflowDescriptor entities */
     @Autowired
     private WorkflowDescriptorRepository workflowDescriptorRepository;
@@ -68,8 +73,28 @@ public class WorkflowManager {
 
     public WorkflowDescriptor getFullWorkflow(Long identifier) {
         WorkflowDescriptor workflow = workflowDescriptorRepository.getDetailById(identifier);
-        workflow.setNodes(workflow.getNodes().stream().distinct().collect(Collectors.toList()));
+        if (workflow != null) {
+            List<WorkflowNodeDescriptor> nodes = workflow.getNodes();
+            if (nodes != null) {
+                workflow.setNodes(workflow.getNodes().stream().distinct().collect(Collectors.toList()));
+                workflow.getNodes().stream()
+                        .filter(n -> n instanceof WorkflowNodeGroupDescriptor)
+                        .map(n -> (WorkflowNodeGroupDescriptor) n)
+                        .forEach(g -> {
+                            if (g.getNodes() != null) {
+                                g.setNodes(g.getNodes().stream().distinct().collect(Collectors.toList()));
+                            }
+                        });
+            }
+        }
         return workflow;
+    }
+
+    public WorkflowDescriptor getWorkflowByName(String name) {
+        if (name != null) {
+            return workflowDescriptorRepository.findByName(name).orElse(null);
+        }
+        return null;
     }
 
     public List<WorkflowDescriptor> getUserWorkflowsByStatus(String user, int statusId) {
