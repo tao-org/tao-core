@@ -380,12 +380,20 @@ public class PersistenceManager implements MessagePersister {
         return dataSourceComponentManager.getSystemDataSourceComponents();
     }
 
+    public DataSourceComponent getDataSourceComponentByLabel(String label) {
+        return dataSourceComponentManager.getDataSourceComponentByLabel(label);
+    }
+
     public DataSourceComponent getDataSourceInstance(String id) {
         return dataSourceComponentManager.get(id);
     }
 
     public DataSourceComponent saveDataSourceComponent(DataSourceComponent component) throws PersistenceException {
         return dataSourceComponentManager.save(component);
+    }
+
+    public DataSourceComponent updateDataSourceComponent(DataSourceComponent component) throws PersistenceException {
+        return dataSourceComponentManager.update(component);
     }
     //endregion
 
@@ -397,6 +405,10 @@ public class PersistenceManager implements MessagePersister {
 
     public WorkflowDescriptor getWorkflowDescriptor(long identifier) {
         return workflowManager.getWorkflowDescriptor(identifier);
+    }
+
+    public WorkflowDescriptor getWorkflowDescriptor(String name) {
+        return workflowManager.getWorkflowByName(name);
     }
 
     public WorkflowDescriptor getFullWorkflowDescriptor(long identifier) {

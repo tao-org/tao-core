@@ -112,4 +112,7 @@ public interface CRUDService<T, K> extends TAOService {
      * @throws ValidationException  If inconsistent values are found.
      */
     default void validate(T object) throws ValidationException { }
+
+    default T tag(K id, List<String> tags) throws PersistenceException { return null; }
+    default T untag(K id, List<String> tags) throws PersistenceException { return null; }
 }

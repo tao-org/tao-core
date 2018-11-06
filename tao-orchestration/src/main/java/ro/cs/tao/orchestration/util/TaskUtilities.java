@@ -143,16 +143,19 @@ public class TaskUtilities {
         if (persistenceManager == null) {
             return null;
         }
-        Map<String, String> connections = new LinkedHashMap<>();
+
         WorkflowNodeDescriptor targetNode = persistenceManager.getWorkflowNodeById(targetTask.getWorkflowNodeId());
-        WorkflowNodeDescriptor sourceNode = persistenceManager.getWorkflowNodeById(sourceTask.getWorkflowNodeId());
         Set<ComponentLink> links = targetNode.getIncomingLinks();
         if (links != null) {
+            final Map<String, String> connections = new LinkedHashMap<>();
+            WorkflowNodeDescriptor sourceNode = persistenceManager.getWorkflowNodeById(sourceTask.getWorkflowNodeId());
             links.stream()
                     .filter(l -> l.getSourceNodeId() == sourceNode.getId())
                     .forEach(l -> connections.put(l.getOutput().getName(), l.getInput().getName()));
+            return connections;
+        } else {
+            return null;
         }
-        return connections;
     }
 
     /**
@@ -169,14 +172,11 @@ public class TaskUtilities {
             for (ComponentLink link : links) {
                 ExecutionTask parentTask = persistenceManager.getTaskByJobAndNode(job.getId(), link.getSourceNodeId());
                 WorkflowNodeDescriptor parentNode = persistenceManager.getWorkflowNodeById(link.getSourceNodeId());
-                completed = (parentNode.getBehavior() == TransitionBehavior.FAIL_ON_ERROR ?
-                        parentTask.getExecutionStatus() == ExecutionStatus.DONE &&
-                                parentTask.getOutputParameterValues() != null &&
-                                parentTask.getOutputParameterValues().stream().anyMatch(o -> o.getValue() != null) :
-                        (parentTask.getExecutionStatus() == ExecutionStatus.DONE &&
-                                parentTask.getOutputParameterValues() != null &&
-                                parentTask.getOutputParameterValues().stream().anyMatch(o -> o.getValue() != null)) ||
-                                parentTask.getExecutionStatus() == ExecutionStatus.FAILED);
+                completed = (parentTask.getExecutionStatus() == ExecutionStatus.DONE &&
+                             parentTask.getOutputParameterValues() != null &&
+                             parentTask.getOutputParameterValues().stream().anyMatch(o -> o.getValue() != null)) ||
+                            (parentNode.getBehavior() == TransitionBehavior.FAIL_ON_ERROR &&
+                             parentTask.getExecutionStatus() == ExecutionStatus.FAILED);
                 if (!completed) {
                     logger.fine(String.format("Task %s appears not to be completed", parentTask.getId()));
                     break;

@@ -16,8 +16,6 @@
 package ro.cs.tao.workflow;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import ro.cs.tao.component.ComponentLink;
 import ro.cs.tao.workflow.enums.ComponentType;
 import ro.cs.tao.workflow.enums.TransitionBehavior;
@@ -35,7 +33,7 @@ import java.util.Set;
  * @author Cosmin Cara
  */
 @XmlRootElement(name = "node")
-@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id", scope = WorkflowNodeDescriptor.class)
+//@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id", scope = WorkflowNodeDescriptor.class)
 public class WorkflowNodeDescriptor extends GraphObject {
 
     private String componentId;
