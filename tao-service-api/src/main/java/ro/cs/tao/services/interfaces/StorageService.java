@@ -17,9 +17,11 @@
 package ro.cs.tao.services.interfaces;
 
 import org.springframework.stereotype.Service;
+import ro.cs.tao.services.model.FileObject;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.stream.Stream;
 
 @Service
@@ -30,4 +32,5 @@ public interface StorageService<T> extends TAOService {
     Stream<Path> listFiles(boolean userOnly) throws IOException;
     Stream<Path> listWorkspace(boolean userOnly) throws IOException;
     Stream<Path> listFiles(String fromPath) throws IOException;
+    List<FileObject> getWorkflowResults(long workflowId) throws IOException;
 }
