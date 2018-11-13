@@ -37,6 +37,10 @@ public class ExecutionJobManager extends EntityManager<ExecutionJob, Long, Execu
         return repository.getWorkflowJobsOutputs(workflowId);
     }
 
+    public List<String> listJobOutputKeys(long jobId) {
+        return repository.getJobOutputs(jobId);
+    }
+
     public List<ExecutionJob> list(ExecutionStatus status) {
         return repository.findByExecutionStatus(status);
     }

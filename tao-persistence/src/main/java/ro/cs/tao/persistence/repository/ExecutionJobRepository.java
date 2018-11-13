@@ -45,4 +45,10 @@ public interface ExecutionJobRepository extends PagingAndSortingRepository<Execu
             "WHERE e.workflow_id = :workflowId " +
             "ORDER BY t.job_id, t.id", nativeQuery = true)
     List<String> getWorkflowJobsOutputs(@Param("workflowId") Long workflowId);
+
+    @Query(value = "SELECT CONCAT(CAST(t.job_id as text), '-', CAST(t.id as text)) FROM tao.task_output tk " +
+            "JOIN tao.task t ON t.id = tk.task_id " +
+            "WHERE t.job_id = :jobId" +
+            "ORDER BY t.id", nativeQuery = true)
+    List<String> getJobOutputs(@Param("jobId") Long jobId);
 }
