@@ -95,6 +95,12 @@
 			<version>${hibernate.version}</version>
 		</dependency>
 
+		<dependency>
+			<groupId>javax.validation</groupId>
+			<artifactId>validation-api</artifactId>
+			<version>2.0.1.Final</version>
+		</dependency>
+
     	<!-- C3p0 -->
 		<dependency>
 			<groupId>com.mchange</groupId>
