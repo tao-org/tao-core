@@ -33,4 +33,5 @@ public interface StorageService<T> extends TAOService {
     Stream<Path> listWorkspace(boolean userOnly) throws IOException;
     Stream<Path> listFiles(String fromPath) throws IOException;
     List<FileObject> getWorkflowResults(long workflowId) throws IOException;
+    List<FileObject> getJobResults(long jobId) throws IOException;
 }
