@@ -88,12 +88,16 @@ public class QueryManager {
         return queryRepository.save(query);
     }
 
+    public void removeQuery(long id) {
+        queryRepository.deleteById(id);
+    }
+
     public void removeQuery(Query query) {
         queryRepository.delete(query);
     }
 
     private boolean checkQuery(Query query) {
-        return query != null && query.getUserId() != null && query.getWorkflowNodeId() > 0 &&
+        return query != null && query.getUserId() != null &&
                 query.getSensor() != null && query.getDataSource() != null;
     }
 }

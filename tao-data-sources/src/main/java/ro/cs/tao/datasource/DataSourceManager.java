@@ -22,7 +22,6 @@ import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
 
 import java.util.*;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
@@ -38,7 +37,6 @@ public class DataSourceManager {
     private static final int DEFAULT_RETRY_INTERVAL = 60;
     private final ServiceRegistry<DataSource> registry;
     private final Map<Map.Entry<String, String>, Map<String, DataSourceParameter>> registeredSources;
-    private final Logger logger;
 
     static {
         instance = new DataSourceManager();
@@ -50,7 +48,6 @@ public class DataSourceManager {
     public static DataSourceManager getInstance() { return instance; }
 
     private DataSourceManager() {
-        this.logger = Logger.getLogger(DataSourceManager.class.getName());
         Map<String, String> proxySettings = ConfigurationManager.getInstance().getValues("proxy");
         if (proxySettings != null && proxySettings.size() > 0) {
             String port = proxySettings.get("proxy.port");

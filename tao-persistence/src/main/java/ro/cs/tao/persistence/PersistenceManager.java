@@ -43,12 +43,14 @@ import ro.cs.tao.user.Group;
 import ro.cs.tao.user.User;
 import ro.cs.tao.user.UserPreference;
 import ro.cs.tao.user.UserStatus;
+import ro.cs.tao.utils.Crypto;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 
 import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 /**
@@ -565,39 +567,56 @@ public class PersistenceManager implements MessagePersister {
 
     //region Query
     public Query findQueryById(long id) {
-        return queryManager.findById(id);
+        return ensurePasswordDecrypted(queryManager.findById(id));
     }
 
     public Query getQuery(String userId, String sensor, String dataSource, long workflowNodeId) {
-        return queryManager.findByUserIdAndSensorAndDataSourceAndWorkflowNodeId(userId, sensor, dataSource, workflowNodeId);
+        return ensurePasswordDecrypted(queryManager.findByUserIdAndSensorAndDataSourceAndWorkflowNodeId(userId,
+                                                                                                        sensor,
+                                                                                                        dataSource,
+                                                                                                        workflowNodeId));
     }
 
     public List<Query> getQueries(String userId, long nodeId) {
-        return queryManager.findByUserIdAndWorkflowNodeId(userId, nodeId);
+        return ensurePasswordDecrypted(queryManager.findByUserIdAndWorkflowNodeId(userId, nodeId));
     }
 
     public List<Query> getQueries(String userId, String sensor, String dataSource) {
-        return queryManager.findByUserIdAndSensorAndDataSource(userId, sensor, dataSource);
+        return ensurePasswordDecrypted(queryManager.findByUserIdAndSensorAndDataSource(userId, sensor, dataSource));
     }
 
     public List<Query> getQueries(String userId) {
-        return queryManager.findByUserId(userId);
+        return ensurePasswordDecrypted(queryManager.findByUserId(userId));
     }
 
     public List<Query> getQueriesBySensor(String userId, String sensor) {
-        return queryManager.findByUserIdAndSensor(userId, sensor);
+        return ensurePasswordDecrypted(queryManager.findByUserIdAndSensor(userId, sensor));
     }
 
     public List<Query> getQueriesByDataSource(String userId, String dataSource) {
-        return queryManager.findByUserIdAndDataSource(userId, dataSource);
+        return ensurePasswordDecrypted(queryManager.findByUserIdAndDataSource(userId, dataSource));
     }
 
     public Page<Query> getAllQueries (Pageable pageable) {
-        return queryManager.findAll(pageable);
+        return ensurePasswordDecrypted(queryManager.findAll(pageable));
     }
 
     public Query saveQuery(Query query) throws PersistenceException {
-        return queryManager.saveQuery(query);
+        LocalDateTime timestamp = LocalDateTime.now();
+        if (query.getLabel() == null) {
+            query.setLabel(String.format("Query for %s on %s - %s",
+                                         query.getSensor(), query.getDataSource(),
+                                         timestamp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
+        }
+        if (query.getCreated() == null) {
+            query.setCreated(timestamp);
+        }
+        query.setModified(timestamp);
+        return ensurePasswordDecrypted(queryManager.saveQuery(ensurePasswordEncrypted(query)));
+    }
+
+    public void removeQuery(long id) {
+        queryManager.removeQuery(id);
     }
 
     public void removeQuery(Query query) {
@@ -686,6 +705,34 @@ public class PersistenceManager implements MessagePersister {
 
     public List<Group> getGroups() {
         return userManager.getGroups();
+    }
+
+    private Query ensurePasswordEncrypted(Query object) {
+        if (Crypto.decrypt(object.getPassword(), object.getUser()) == null) {
+            // we have an unencrypted password
+            object.setPassword(Crypto.encrypt(object.getPassword(), object.getUser()));
+        }
+        return object;
+    }
+
+    private Query ensurePasswordDecrypted(Query object) {
+        if (Crypto.decrypt(object.getPassword(), object.getUser()) != null) {
+            // we have an unencrypted password
+            object.setPassword(Crypto.decrypt(object.getPassword(), object.getUser()));
+        }
+        return object;
+    }
+
+    private <T extends Iterable<Query>> T ensurePasswordDecrypted(T objects) {
+        if (objects != null) {
+            objects.forEach(object -> {
+                if (Crypto.decrypt(object.getPassword(), object.getUser()) != null) {
+                    // we have an unencrypted password
+                    object.setPassword(Crypto.decrypt(object.getPassword(), object.getUser()));
+                }
+            });
+        }
+        return objects;
     }
 
 // endregion

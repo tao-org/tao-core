@@ -27,6 +27,7 @@ import ro.cs.tao.utils.CompositeKey;
 
 import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -37,8 +38,9 @@ public class Query {
     private static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
     private static final Map<CompositeKey, DataSourceComponent> componentPool = Collections.synchronizedMap(new HashMap<>());
     private Long id;
+    private String label;
     private String userId;
-    private long workflowNodeId;
+    private Long workflowNodeId;
     private String sensor;
     private String dataSource;
     private String user;
@@ -47,17 +49,22 @@ public class Query {
     private int pageNumber;
     private int limit;
     private Map<String, String> values;
+    private LocalDateTime created;
+    private LocalDateTime modified;
 
     public Query() { }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
+    public String getLabel() { return label; }
+    public void setLabel(String label) { this.label = label; }
+
     public String getUserId() { return userId; }
     public void setUserId(String userId) { this.userId = userId; }
 
-    public long getWorkflowNodeId() { return workflowNodeId; }
-    public void setWorkflowNodeId(long workflowNodeId) { this.workflowNodeId = workflowNodeId; }
+    public Long getWorkflowNodeId() { return workflowNodeId; }
+    public void setWorkflowNodeId(Long workflowNodeId) { this.workflowNodeId = workflowNodeId; }
 
     public Map<String, String> getValues() { return values; }
     public void setValues(Map<String, String> values) { this.values = values; }
@@ -94,6 +101,12 @@ public class Query {
     public void setLimit(int limit) {
         this.limit = limit;
     }
+
+    public LocalDateTime getCreated() { return created; }
+    public void setCreated(LocalDateTime created) { this.created = created; }
+
+    public LocalDateTime getModified() { return modified; }
+    public void setModified(LocalDateTime modified) { this.modified = modified; }
 
     public static DataQuery toDataQuery(Query webQuery) throws SerializationException {
         DataQuery query = null;
