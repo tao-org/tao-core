@@ -870,7 +870,7 @@
                 <column name="user_id" nullable="false" column-definition="integer NOT NULL"/>
             </basic>
             <basic name="workflowNodeId">
-                <column name="graph_node_id" nullable="false" column-definition="bigint NOT NULL"/>
+                <column name="graph_node_id" nullable="true" column-definition="bigint"/>
             </basic>
             <basic name="sensor">
                 <column name="sensor_name" nullable="false" column-definition="varchar(1024) NOT NULL"/>
@@ -895,6 +895,12 @@
             </basic>
             <basic name="values">
                 <column name="values" nullable="true" column-definition="json NULL"/>
+            </basic>
+            <basic name="created">
+                <column name="created" nullable="true" column-definition="timestamp NULL default now()"/>
+            </basic>
+            <basic name="modified">
+                <column name="modified" nullable="true" column-definition="timestamp NULL"/>
             </basic>
         </attributes>
     </entity>

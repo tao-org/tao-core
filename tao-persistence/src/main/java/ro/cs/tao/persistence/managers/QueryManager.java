@@ -97,7 +97,7 @@ public class QueryManager {
     }
 
     private boolean checkQuery(Query query) {
-        return query != null && query.getUserId() != null && query.getWorkflowNodeId() > 0 &&
+        return query != null && query.getUserId() != null &&
                 query.getSensor() != null && query.getDataSource() != null;
     }
 }
