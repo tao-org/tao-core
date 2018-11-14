@@ -88,6 +88,10 @@ public class QueryManager {
         return queryRepository.save(query);
     }
 
+    public void removeQuery(long id) {
+        queryRepository.deleteById(id);
+    }
+
     public void removeQuery(Query query) {
         queryRepository.delete(query);
     }

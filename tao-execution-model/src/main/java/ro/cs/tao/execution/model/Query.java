@@ -37,6 +37,7 @@ public class Query {
     private static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
     private static final Map<CompositeKey, DataSourceComponent> componentPool = Collections.synchronizedMap(new HashMap<>());
     private Long id;
+    private String label;
     private String userId;
     private long workflowNodeId;
     private String sensor;
@@ -52,6 +53,9 @@ public class Query {
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+
+    public String getLabel() { return label; }
+    public void setLabel(String label) { this.label = label; }
 
     public String getUserId() { return userId; }
     public void setUserId(String userId) { this.userId = userId; }

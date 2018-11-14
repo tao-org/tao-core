@@ -4,6 +4,7 @@ DROP TABLE IF EXISTS tao.query CASCADE;
 CREATE TABLE tao.query
 (
     id bigserial NOT NULL,
+    label text,
 	user_id varchar(50) NOT NULL,
 	graph_node_id bigserial NOT NULL,
 	sensor_name varchar(512) NOT NULL,

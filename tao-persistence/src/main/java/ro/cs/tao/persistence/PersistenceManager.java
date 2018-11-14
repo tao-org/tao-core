@@ -600,6 +600,10 @@ public class PersistenceManager implements MessagePersister {
         return queryManager.saveQuery(query);
     }
 
+    public void removeQuery(long id) {
+        queryManager.removeQuery(id);
+    }
+
     public void removeQuery(Query query) {
         queryManager.removeQuery(query);
     }
