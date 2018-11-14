@@ -42,25 +42,29 @@ public class Crypto {
     }
 
     public static String encrypt(String strToEncrypt, String secret) {
-        try {
-            SecretKeySpec key = createKey(secret);
-            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
-            cipher.init(Cipher.ENCRYPT_MODE, key);
-            return Base64.getEncoder().encodeToString(cipher.doFinal(strToEncrypt.getBytes("UTF-8")));
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (strToEncrypt != null && secret != null) {
+            try {
+                SecretKeySpec key = createKey(secret);
+                Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+                cipher.init(Cipher.ENCRYPT_MODE, key);
+                return Base64.getEncoder().encodeToString(cipher.doFinal(strToEncrypt.getBytes("UTF-8")));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
         return null;
     }
 
     public static String decrypt(String strToDecrypt, String secret) {
-        try {
-            SecretKeySpec key = createKey(secret);
-            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5PADDING");
-            cipher.init(Cipher.DECRYPT_MODE, key);
-            return new String(cipher.doFinal(Base64.getDecoder().decode(strToDecrypt)));
-        } catch (Exception e) {
-            //e.printStackTrace();
+        if (strToDecrypt != null && secret != null) {
+            try {
+                SecretKeySpec key = createKey(secret);
+                Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5PADDING");
+                cipher.init(Cipher.DECRYPT_MODE, key);
+                return new String(cipher.doFinal(Base64.getDecoder().decode(strToDecrypt)));
+            } catch (Exception e) {
+                //e.printStackTrace();
+            }
         }
         return null;
     }
