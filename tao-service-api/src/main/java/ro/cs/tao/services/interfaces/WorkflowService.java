@@ -58,7 +58,11 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
      * @param user      The user name (login)
      */
     List<WorkflowInfo> getOtherPublicWorkflows(String user);
-
+    /**
+     * Returns the summary information for a workflow.
+     * @param workflowId    The workflow identifier
+     */
+    WorkflowInfo getWorkflowInfo(long workflowId);
     /**
      * Returns all the public workflows.
      */
