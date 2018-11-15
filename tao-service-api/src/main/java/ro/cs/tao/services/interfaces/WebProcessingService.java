@@ -16,9 +16,13 @@
 
 package ro.cs.tao.services.interfaces;
 
+import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.datasource.beans.Parameter;
+import ro.cs.tao.execution.model.ExecutionJob;
+import ro.cs.tao.services.model.FileObject;
 import ro.cs.tao.services.model.workflow.WorkflowInfo;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -26,8 +30,18 @@ public interface WebProcessingService extends TAOService {
 
     List<WorkflowInfo> getCapabilities();
 
-    Map<String, List<Parameter>> describeProcess(long workflowId);
+    ProcessInfo describeProcess(long workflowId);
 
     long execute(long workflowId, Map<String, Map<String, String>> parameters);
 
+    ExecutionJob getStatus(long jobId);
+
+    List<FileObject> getJobResult(long jobId) throws IOException;
+
+    interface ProcessInfo {
+
+        WorkflowInfo getWorkflowInfo();
+        Map<String, List<Parameter>> getParameters();
+        List<TargetDescriptor> getOutputs();
+    }
 }
