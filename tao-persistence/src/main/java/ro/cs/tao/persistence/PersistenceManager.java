@@ -708,7 +708,7 @@ public class PersistenceManager implements MessagePersister {
     }
 
     private Query ensurePasswordEncrypted(Query object) {
-        if (Crypto.decrypt(object.getPassword(), object.getUser()) == null) {
+        if (object != null && Crypto.decrypt(object.getPassword(), object.getUser()) == null) {
             // we have an unencrypted password
             object.setPassword(Crypto.encrypt(object.getPassword(), object.getUser()));
         }
