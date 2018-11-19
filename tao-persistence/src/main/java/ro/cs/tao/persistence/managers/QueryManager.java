@@ -61,6 +61,10 @@ public class QueryManager {
         return queryRepository.findByUserIdAndSensorAndDataSource(userId, sensor, dataSource);
     }
 
+    public Query findByUserIdAndLabel(String userId, String label) {
+        return queryRepository.findByUserIdAndLabel(userId, label);
+    }
+
     public List<Query> findByUserId(String userId) {
         return queryRepository.findByUserId(userId);
     }
