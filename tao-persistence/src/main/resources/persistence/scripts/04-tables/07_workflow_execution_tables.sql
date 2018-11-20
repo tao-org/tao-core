@@ -21,6 +21,7 @@ CREATE TABLE tao.query
 ALTER TABLE tao.query ADD CONSTRAINT PK_query
 	PRIMARY KEY (id);
 ALTER TABLE tao.query ADD CONSTRAINT U_query UNIQUE (user_id, graph_node_id, sensor_name, data_source);
+ALTER TABLE tao.query ADD CONSTRAINT U_query_label UNIQUE(label, user_id);
 ALTER TABLE tao.query ADD CONSTRAINT FK_query_user
 	FOREIGN KEY (user_id) REFERENCES tao."user"(username) ON DELETE No Action ON UPDATE No Action;
 -- move this after tao.graph_node creation

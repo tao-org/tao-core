@@ -32,6 +32,11 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <geotools.version>20.0</geotools.version>
+        <spring.version>5.0.8.RELEASE</spring.version>
+        <jackson.version>2.9.7</jackson.version>
+        <postgresql.version>42.2.4</postgresql.version>
+        <hibernate.version>5.3.5.Final</hibernate.version>
+        <jts.version>1.16.0</jts.version>
         <!-- maven -->
         <maven.compiler.data>1.8</maven.compiler.data>
         <maven.compiler.target>1.8</maven.compiler.target>

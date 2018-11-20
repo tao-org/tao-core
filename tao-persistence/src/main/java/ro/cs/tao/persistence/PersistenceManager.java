@@ -608,6 +608,15 @@ public class PersistenceManager implements MessagePersister {
                                          query.getSensor(), query.getDataSource(),
                                          timestamp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
         }
+        try {
+            Query existingQuery = queryManager.findByUserIdAndLabel(query.getUserId(), query.getLabel());
+            if (existingQuery != null && !existingQuery.getId().equals(query.getId())) {
+                throw new PersistenceException(String.format("There is already a query with the same label for the user %s",
+                                                             query.getUserId()));
+            }
+        } catch (Exception e) {
+            throw new PersistenceException(e);
+        }
         if (query.getCreated() == null) {
             query.setCreated(timestamp);
         }
@@ -708,7 +717,7 @@ public class PersistenceManager implements MessagePersister {
     }
 
     private Query ensurePasswordEncrypted(Query object) {
-        if (Crypto.decrypt(object.getPassword(), object.getUser()) == null) {
+        if (object != null && Crypto.decrypt(object.getPassword(), object.getUser()) == null) {
             // we have an unencrypted password
             object.setPassword(Crypto.encrypt(object.getPassword(), object.getUser()));
         }
