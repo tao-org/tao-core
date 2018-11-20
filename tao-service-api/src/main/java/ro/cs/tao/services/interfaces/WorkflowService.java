@@ -109,21 +109,39 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
      * Adds a group node to a workflow.
      * @param workflowId         The workflow identifier
      * @param groupDescriptor    The group node to add
+     * @param nodeBeforeId       The parent node (node before the group) identifier
      * @param nodes              The nodes to be grouped
-     * @return  The updated workflow
+     * @return  The group node
      */
     WorkflowNodeDescriptor addGroup(long workflowId, WorkflowNodeGroupDescriptor groupDescriptor,
                                     long nodeBeforeId, WorkflowNodeDescriptor[] nodes) throws PersistenceException;
     /**
+     * Adds a group node to a workflow.
+     * @param workflowId         The workflow identifier
+     * @param groupDescriptor    The group node to add
+     * @param nodeBeforeId       The parent node (node before the group) identifier
+     * @param nodes              The nodes to be grouped
+     * @return  The group node
+     */
+    WorkflowNodeDescriptor addGroup(long workflowId, WorkflowNodeGroupDescriptor groupDescriptor,
+                                    long nodeBeforeId, List<WorkflowNodeDescriptor> nodes) throws PersistenceException;
+    /**
+     * Adds a group node to a workflow
+     * @param workflowId        The workflow identifier
+     * @param nodeBeforeId      The parent node (node before the group) identifier
+     * @param nodeIds           The ids of the nodes to be grouped
+     * @return  The group node
+     */
+    WorkflowNodeDescriptor addGroup(long workflowId, long nodeBeforeId, String groupName, Long[] nodeIds) throws PersistenceException;
+    /**
      * Updates a group node of a workflow.
      * @param groupDescriptor    The group node to update
-     * @return  The updated workflow
+     * @return  The updated group node
      */
     WorkflowNodeDescriptor updateGroup(WorkflowNodeGroupDescriptor groupDescriptor) throws PersistenceException;
     /**
      * Removes a group node from a workflow.
      * @param groupDescriptor    The group node to remove
-     * @return  The updated workflow
      */
     void removeGroup(WorkflowNodeGroupDescriptor groupDescriptor, boolean removeChildren) throws PersistenceException;
     /**
