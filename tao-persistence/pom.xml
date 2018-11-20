@@ -15,9 +15,6 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!--<postgresql.version>9.4.1212.jre7</postgresql.version>-->
-		<postgresql.version>42.2.4</postgresql.version>
-		<spring.version>5.0.8.RELEASE</spring.version>
-		<hibernate.version>5.3.5.Final</hibernate.version>
 	</properties>
 
 	<dependencies>
@@ -118,7 +115,7 @@
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
-			<version>3.6</version>
+			<version>3.7</version>
     	</dependency>
 
     	<!-- Junit tests -->
