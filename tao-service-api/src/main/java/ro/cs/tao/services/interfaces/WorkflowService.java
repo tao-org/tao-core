@@ -126,6 +126,16 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
     WorkflowNodeDescriptor addGroup(long workflowId, WorkflowNodeGroupDescriptor groupDescriptor,
                                     long nodeBeforeId, List<WorkflowNodeDescriptor> nodes) throws PersistenceException;
     /**
+     * Adds a group node to a workflow.
+     * @param workflowId         The workflow identifier
+     * @param groupDescriptor    The group node to add
+     * @param nodesBeforeIds     The identifier of parent nodes (from which there are links to the selected nodes)
+     * @param nodes              The nodes to be grouped
+     * @return  The group node
+     */
+    WorkflowNodeDescriptor addGroup(long workflowId, WorkflowNodeGroupDescriptor groupDescriptor,
+                                    Long[] nodesBeforeIds, List<WorkflowNodeDescriptor> nodes) throws PersistenceException;
+    /**
      * Adds a group node to a workflow
      * @param workflowId        The workflow identifier
      * @param nodeBeforeId      The parent node (node before the group) identifier
@@ -133,6 +143,14 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
      * @return  The group node
      */
     WorkflowNodeDescriptor addGroup(long workflowId, long nodeBeforeId, String groupName, Long[] nodeIds) throws PersistenceException;
+    /**
+     * Adds a group node to a workflow
+     * @param workflowId        The workflow identifier
+     * @param nodesBeforeIds    The identifier of parent nodes (from which there are links to the selected nodes)
+     * @param nodeIds           The ids of the nodes to be grouped
+     * @return  The group node
+     */
+    WorkflowNodeDescriptor addGroup(long workflowId, Long[] nodesBeforeIds, String groupName, Long[] nodeIds) throws PersistenceException;
     /**
      * Updates a group node of a workflow.
      * @param groupDescriptor    The group node to update
