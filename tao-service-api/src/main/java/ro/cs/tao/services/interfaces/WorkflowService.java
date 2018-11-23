@@ -87,6 +87,13 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
      * @return  The updated workflow
      */
     List<WorkflowNodeDescriptor> updateNodes(long workflowId, List<WorkflowNodeDescriptor> nodeDescriptors) throws PersistenceException;
+
+    /**
+     * Updates only the positions of the given nodes.
+     * @param workflowId    The workflow identifier
+     * @param positions     A map [node_id, node origin coordinates]
+     */
+    void updateNodesPositions(long workflowId, Map<Long, float[]> positions) throws PersistenceException;
     /**
      * Removes a node from a workflow.
      * @param nodeDescriptor    The node to remove
