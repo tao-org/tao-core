@@ -46,6 +46,7 @@ import ro.cs.tao.user.UserStatus;
 import ro.cs.tao.utils.Crypto;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
+import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
 
 import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
@@ -458,6 +459,10 @@ public class PersistenceManager implements MessagePersister {
 
     public List<WorkflowNodeDescriptor> getWorkflowNodesByComponentId(long workflowId, String componentId) {
         return workflowNodeDescriptorManager.getWorkflowNodesByComponentId(workflowId, componentId);
+    }
+
+    public WorkflowNodeGroupDescriptor getGroupNode(long childNodeId) {
+        return workflowNodeDescriptorManager.getGroupNode(childNodeId);
     }
 
     public WorkflowNodeDescriptor saveWorkflowNodeDescriptor(WorkflowNodeDescriptor node, WorkflowDescriptor workflow) throws PersistenceException {
