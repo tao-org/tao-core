@@ -29,15 +29,13 @@ import ro.cs.tao.messaging.Message;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.persistence.repository.MessageRepository;
 
-import java.util.logging.Logger;
+import java.util.List;
 
 @Configuration
 @EnableTransactionManagement
 @EnableJpaRepositories(basePackages = { "ro.cs.tao.persistence.repository" })
 @Component("notificationManager")
 public class NotificationManager {
-
-    private Logger logger = Logger.getLogger(NotificationManager.class.getName());
 
     /** CRUD Repository for Mesaage entities */
     @Autowired
@@ -60,6 +58,10 @@ public class NotificationManager {
         PageRequest pageRequest = PageRequest.of(pageNumber - 1, Constants.MESSAGES_PAGE_SIZE,
                                                   Sort.Direction.DESC, Constants.MESSAGE_TIMESTAMP_PROPERTY_NAME);
         return messageRepository.findByUser(user, pageRequest);
+    }
+
+    public List<Message> getUnreadMessages(String user) {
+        return messageRepository.getUnreadMessages(user);
     }
 
     private boolean checkMessage(Message message) {

@@ -644,6 +644,10 @@ public class PersistenceManager implements MessagePersister {
         return notificationManager.getUserMessages(user, pageNumber);
     }
 
+    public List<Message> getUnreadMessages(String user) {
+        return notificationManager.getUnreadMessages(user);
+    }
+
     @Override
     public Message saveMessage(Message message) throws PersistenceException {
         return notificationManager.saveMessage(message);
