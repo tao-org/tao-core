@@ -31,7 +31,7 @@ public interface WorkflowNodeDescriptorRepository extends PagingAndSortingReposi
     List<WorkflowNodeDescriptor> findByComponentId(@Param("workflowId") long workflowId,
                                                    @Param("componentId") String componentId);
 
-    @Query(value = "SELECT n.* FROM tao.graph_node n JOIN tao.graph_node_group_nodes gn ON gn.grap_node_group_id = n.id " +
+    @Query(value = "SELECT n.* FROM tao.graph_node n JOIN tao.graph_node_group_nodes gn ON gn.graph_node_group_id = n.id " +
             "WHERE gn.graph_node_id = :nodeId", nativeQuery = true)
     WorkflowNodeGroupDescriptor getGroupNode(@Param("nodeId") long nodeId);
 }
