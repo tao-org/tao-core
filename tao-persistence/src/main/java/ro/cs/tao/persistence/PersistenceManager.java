@@ -314,6 +314,9 @@ public class PersistenceManager implements MessagePersister {
         return componentCache.get(id); //componentManager.getProcessingComponentById(id);
     }
 
+    public List<ProcessingComponent> getProcessingComponentByLabel(String label) {
+        return processingComponentManager.getProcessingComponentsByLabel(label);
+    }
 
     public ProcessingComponent saveProcessingComponent(ProcessingComponent component) throws PersistenceException {
         ProcessingComponent c = processingComponentManager.save(component);
