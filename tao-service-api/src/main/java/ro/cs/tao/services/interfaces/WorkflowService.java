@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.services.interfaces;
 
+import org.xml.sax.SAXException;
 import ro.cs.tao.Tag;
 import ro.cs.tao.component.ComponentLink;
 import ro.cs.tao.component.TargetDescriptor;
@@ -218,4 +219,20 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
      * Returns all tags that are associated with workflows.
      */
     List<Tag> getWorkflowTags();
+
+    /**
+     * Attempts to convert a SNAP Graph XML into a TAO Workflow. If any of the SNAP operators is not found
+     * among the registered processing components, the conversion will fail.
+     *
+     * @param graphXml  The graph XML
+     */
+    WorkflowDescriptor snapGraphToWorkflow(String graphXml) throws SAXException;
+
+    /**
+     * Attempts to convert a TAO Workflow int a SNAP Graph XML.
+     * All the workflow nodes have to be SNAP operators, otherwise the conversion will fail.
+     *
+     * @param workflowDescriptor    The workflow descriptor
+     */
+    String workflowToSnapGraph(WorkflowDescriptor workflowDescriptor) throws Exception;
 }

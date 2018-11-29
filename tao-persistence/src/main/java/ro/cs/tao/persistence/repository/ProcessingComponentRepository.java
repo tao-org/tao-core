@@ -21,15 +21,11 @@ import java.util.List;
 @Transactional
 public interface ProcessingComponentRepository extends PagingAndSortingRepository<ProcessingComponent, String> {
 
-    /**
-     * Find ProcessingComponent entity by its label
-     * @param label - the given label
-     * @return the corresponding ProcessingComponent entity
-     */
-    ProcessingComponent findByLabel(String label);
-
     @Query(value = "SELECT * FROM tao.processing_component WHERE owner_user = :userName AND component_type_id = :typeId",
             nativeQuery = true)
     List<ProcessingComponent> getUserComponentsByType(@Param("userName") String userName,
                                                       @Param("typeId") int typeId);
+
+    @Query(value = "SELECT * FROM tao.processing_component WHERE label = :label", nativeQuery = true)
+    List<ProcessingComponent> getByLabel(@Param("label") String label);
 }
