@@ -51,6 +51,10 @@ public interface NodeListOrderer {
         return roots;
     }
 
+    /**
+     * Returns the terminal nodes (nodes that are not sources for links) from a collection of nodes.
+     * @param nodes The node collection
+     */
     default List<WorkflowNodeDescriptor> findLeaves(List<WorkflowNodeDescriptor> nodes) {
         List<WorkflowNodeDescriptor> leaves = null;
         if (nodes != null) {
