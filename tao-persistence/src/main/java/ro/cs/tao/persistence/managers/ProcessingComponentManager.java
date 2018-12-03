@@ -40,6 +40,10 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
         return repository.getUserComponentsByType(userName, ProcessingComponentType.SCRIPT.value());
     }
 
+    public List<ProcessingComponent> getProcessingComponentsByLabel(String label) {
+        return repository.getByLabel(label);
+    }
+
     @Override
     protected boolean checkEntity(ProcessingComponent entity) {
         return checkComponent(entity) && entity.getFileLocation() != null &&

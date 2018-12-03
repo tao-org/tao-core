@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.persistence.repository.WorkflowNodeDescriptorRepository;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
+import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
 
 import java.util.List;
 
@@ -29,6 +30,10 @@ public class WorkflowNodeDescriptorManager extends EntityManager<WorkflowNodeDes
     @Transactional
     public List<WorkflowNodeDescriptor> getWorkflowNodesByComponentId(long workflowId, String componentId) {
         return repository.findByComponentId(workflowId, componentId);
+    }
+
+    public WorkflowNodeGroupDescriptor getGroupNode(long nodeId) {
+        return repository.getGroupNode(nodeId);
     }
 
     @Override

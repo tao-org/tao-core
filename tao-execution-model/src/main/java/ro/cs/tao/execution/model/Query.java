@@ -16,6 +16,7 @@
 package ro.cs.tao.execution.model;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import ro.cs.tao.datasource.DataQuery;
 import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.datasource.DataSourceManager;
@@ -209,6 +210,7 @@ public class Query {
     public String toString() {
         try {
             ObjectMapper mapper = new ObjectMapper();
+            mapper.registerModule(new JavaTimeModule());
             return mapper.writeValueAsString(this);
         } catch (Exception ex) {
             Logger.getLogger(Query.class.getName()).severe(ex.getMessage());
@@ -219,6 +221,7 @@ public class Query {
     public static Query fromString(String jsonValue) {
         try {
             ObjectMapper mapper = new ObjectMapper();
+            mapper.registerModule(new JavaTimeModule());
             return mapper.readValue(jsonValue, Query.class);
         } catch (Exception ex) {
             Logger.getLogger(Query.class.getName()).severe(ex.getMessage());

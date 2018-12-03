@@ -127,7 +127,11 @@ public abstract class TaskCommand {
         @Override
         protected void doAction(ExecutionTask task) {
             ExecutionsManager executionsManager = ExecutionsManager.getInstance();
-            executionsManager.stop(task);
+            if (task instanceof ExecutionGroup) {
+                ((ExecutionGroup) task).getTasks().forEach(executionsManager::stop);
+            } else {
+                executionsManager.stop(task);
+            }
         }
     }
     /**
