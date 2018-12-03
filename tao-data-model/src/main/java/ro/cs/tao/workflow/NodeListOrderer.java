@@ -51,6 +51,10 @@ public interface NodeListOrderer {
         return roots;
     }
 
+    /**
+     * Returns the terminal nodes (nodes that are not sources for links) from a collection of nodes.
+     * @param nodes The node collection
+     */
     default List<WorkflowNodeDescriptor> findLeaves(List<WorkflowNodeDescriptor> nodes) {
         List<WorkflowNodeDescriptor> leaves = null;
         if (nodes != null) {
@@ -117,16 +121,18 @@ public interface NodeListOrderer {
         if (masterList == null || masterList.size() == 0 || node == null) {
             return null;
         }
-        List<WorkflowNodeDescriptor> children;
+        List<WorkflowNodeDescriptor> children = null;
         if (node instanceof WorkflowNodeGroupDescriptor) {
             children = ((WorkflowNodeGroupDescriptor) node).getNodes().stream().distinct().collect(Collectors.toList());
-        } else {
-            children = masterList.stream().filter(n -> {
-                Set<ComponentLink> links = n.getIncomingLinks();
-                return links != null && links.stream().anyMatch(l -> node.getId().equals(l.getSourceNodeId()));
-                //links.stream().anyMatch(l -> node.getComponentId().equals(l.getInput().getParentId()));
-            }).distinct().collect(Collectors.toList());
         }
+        if (children == null) {
+            children = new ArrayList<>();
+        }
+        children.addAll(masterList.stream().filter(n -> {
+            Set<ComponentLink> links = n.getIncomingLinks();
+            return links != null && links.stream().anyMatch(l -> node.getId().equals(l.getSourceNodeId()));
+            //links.stream().anyMatch(l -> node.getComponentId().equals(l.getInput().getParentId()));
+        }).distinct().collect(Collectors.toList()));
         children.forEach(c -> c.setLevel(node.getLevel() + 1));
         return children;
     }

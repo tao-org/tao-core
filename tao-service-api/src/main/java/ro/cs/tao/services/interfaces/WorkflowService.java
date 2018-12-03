@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.services.interfaces;
 
+import org.xml.sax.SAXException;
 import ro.cs.tao.Tag;
 import ro.cs.tao.component.ComponentLink;
 import ro.cs.tao.component.TargetDescriptor;
@@ -87,6 +88,13 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
      * @return  The updated workflow
      */
     List<WorkflowNodeDescriptor> updateNodes(long workflowId, List<WorkflowNodeDescriptor> nodeDescriptors) throws PersistenceException;
+
+    /**
+     * Updates only the positions of the given nodes.
+     * @param workflowId    The workflow identifier
+     * @param positions     A map [node_id, node origin coordinates]
+     */
+    void updateNodesPositions(long workflowId, Map<Long, float[]> positions) throws PersistenceException;
     /**
      * Removes a node from a workflow.
      * @param nodeDescriptor    The node to remove
@@ -109,21 +117,57 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
      * Adds a group node to a workflow.
      * @param workflowId         The workflow identifier
      * @param groupDescriptor    The group node to add
+     * @param nodeBeforeId       The parent node (node before the group) identifier
      * @param nodes              The nodes to be grouped
-     * @return  The updated workflow
+     * @return  The group node
      */
     WorkflowNodeDescriptor addGroup(long workflowId, WorkflowNodeGroupDescriptor groupDescriptor,
                                     long nodeBeforeId, WorkflowNodeDescriptor[] nodes) throws PersistenceException;
     /**
+     * Adds a group node to a workflow.
+     * @param workflowId         The workflow identifier
+     * @param groupDescriptor    The group node to add
+     * @param nodeBeforeId       The parent node (node before the group) identifier
+     * @param nodes              The nodes to be grouped
+     * @return  The group node
+     */
+    WorkflowNodeDescriptor addGroup(long workflowId, WorkflowNodeGroupDescriptor groupDescriptor,
+                                    long nodeBeforeId, List<WorkflowNodeDescriptor> nodes) throws PersistenceException;
+    /**
+     * Adds a group node to a workflow.
+     * @param workflowId         The workflow identifier
+     * @param groupDescriptor    The group node to add
+     * @param nodesBeforeIds     The identifier of parent nodes (from which there are links to the selected nodes)
+     * @param nodes              The nodes to be grouped
+     * @return  The group node
+     */
+    WorkflowNodeDescriptor addGroup(long workflowId, WorkflowNodeGroupDescriptor groupDescriptor,
+                                    Long[] nodesBeforeIds, List<WorkflowNodeDescriptor> nodes) throws PersistenceException;
+    /**
+     * Adds a group node to a workflow
+     * @param workflowId        The workflow identifier
+     * @param nodeBeforeId      The parent node (node before the group) identifier
+     * @param nodeIds           The ids of the nodes to be grouped
+     * @return  The group node
+     */
+    WorkflowNodeDescriptor addGroup(long workflowId, long nodeBeforeId, String groupName, Long[] nodeIds) throws PersistenceException;
+    /**
+     * Adds a group node to a workflow
+     * @param workflowId        The workflow identifier
+     * @param nodesBeforeIds    The identifier of parent nodes (from which there are links to the selected nodes)
+     * @param nodeIds           The ids of the nodes to be grouped
+     * @return  The group node
+     */
+    WorkflowNodeDescriptor addGroup(long workflowId, Long[] nodesBeforeIds, String groupName, Long[] nodeIds) throws PersistenceException;
+    /**
      * Updates a group node of a workflow.
      * @param groupDescriptor    The group node to update
-     * @return  The updated workflow
+     * @return  The updated group node
      */
     WorkflowNodeDescriptor updateGroup(WorkflowNodeGroupDescriptor groupDescriptor) throws PersistenceException;
     /**
      * Removes a group node from a workflow.
      * @param groupDescriptor    The group node to remove
-     * @return  The updated workflow
      */
     void removeGroup(WorkflowNodeGroupDescriptor groupDescriptor, boolean removeChildren) throws PersistenceException;
     /**
@@ -175,4 +219,20 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
      * Returns all tags that are associated with workflows.
      */
     List<Tag> getWorkflowTags();
+
+    /**
+     * Attempts to convert a SNAP Graph XML into a TAO Workflow. If any of the SNAP operators is not found
+     * among the registered processing components, the conversion will fail.
+     *
+     * @param graphXml  The graph XML
+     */
+    WorkflowDescriptor snapGraphToWorkflow(String graphXml) throws SAXException;
+
+    /**
+     * Attempts to convert a TAO Workflow int a SNAP Graph XML.
+     * All the workflow nodes have to be SNAP operators, otherwise the conversion will fail.
+     *
+     * @param workflowDescriptor    The workflow descriptor
+     */
+    String workflowToSnapGraph(WorkflowDescriptor workflowDescriptor) throws Exception;
 }

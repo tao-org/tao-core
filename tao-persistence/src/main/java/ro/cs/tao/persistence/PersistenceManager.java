@@ -46,6 +46,7 @@ import ro.cs.tao.user.UserStatus;
 import ro.cs.tao.utils.Crypto;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
+import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
 
 import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
@@ -313,6 +314,9 @@ public class PersistenceManager implements MessagePersister {
         return componentCache.get(id); //componentManager.getProcessingComponentById(id);
     }
 
+    public List<ProcessingComponent> getProcessingComponentByLabel(String label) {
+        return processingComponentManager.getProcessingComponentsByLabel(label);
+    }
 
     public ProcessingComponent saveProcessingComponent(ProcessingComponent component) throws PersistenceException {
         ProcessingComponent c = processingComponentManager.save(component);
@@ -458,6 +462,10 @@ public class PersistenceManager implements MessagePersister {
 
     public List<WorkflowNodeDescriptor> getWorkflowNodesByComponentId(long workflowId, String componentId) {
         return workflowNodeDescriptorManager.getWorkflowNodesByComponentId(workflowId, componentId);
+    }
+
+    public WorkflowNodeGroupDescriptor getGroupNode(long childNodeId) {
+        return workflowNodeDescriptorManager.getGroupNode(childNodeId);
     }
 
     public WorkflowNodeDescriptor saveWorkflowNodeDescriptor(WorkflowNodeDescriptor node, WorkflowDescriptor workflow) throws PersistenceException {
@@ -637,6 +645,10 @@ public class PersistenceManager implements MessagePersister {
     //region Message
     public Page<Message> getUserMessages(String user, Integer pageNumber) {
         return notificationManager.getUserMessages(user, pageNumber);
+    }
+
+    public List<Message> getUnreadMessages(String user) {
+        return notificationManager.getUnreadMessages(user);
     }
 
     @Override
