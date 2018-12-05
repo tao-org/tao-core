@@ -49,6 +49,10 @@ public class QueryManager {
         return query.orElse(null);
     }
 
+    public List<Query> findAllById(Iterable<Long> ids) {
+        return (List<Query>) queryRepository.findAllById(ids);
+    }
+
     public Query findByUserIdAndSensorAndDataSourceAndWorkflowNodeId(String userId, String sensor, String dataSource, long nodeId) {
         return queryRepository.findByUserIdAndSensorAndDataSourceAndWorkflowNodeId(userId, sensor, dataSource, nodeId);
     }

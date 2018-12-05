@@ -24,6 +24,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.eodata.AuxiliaryData;
+import ro.cs.tao.eodata.EOData;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.VectorData;
 import ro.cs.tao.persistence.exception.PersistenceException;
@@ -31,10 +32,7 @@ import ro.cs.tao.persistence.repository.AuxDataRepository;
 import ro.cs.tao.persistence.repository.EOProductRepository;
 import ro.cs.tao.persistence.repository.VectorDataRepository;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -65,6 +63,13 @@ public class ProductManager {
         return new ArrayList<>(((List<EOProduct>)
                 eoProductRepository.findAll(new Sort(Sort.Direction.ASC,
                                                      Constants.DATA_PRODUCT_IDENTIFIER_PROPERTY_NAME))));
+    }
+
+    public List<EOProduct> getEOProducts(Iterable<String> ids) {
+        // retrieve products
+        return (((List<EOProduct>) eoProductRepository.findAllById(ids))
+                .stream()
+                .sorted(Comparator.comparing(EOData::getId)).collect(Collectors.toList()));
     }
 
     @Transactional
