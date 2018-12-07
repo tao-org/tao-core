@@ -105,7 +105,7 @@ public class Orchestrator extends Notifiable {
         this.executors = Collections.synchronizedMap(new HashMap<>());
         this.runningTasks = new HashSet<>();
         this.listAdapter = new StringListAdapter();
-        subscribe(Topics.TASK_STATUS_CHANGED);
+        subscribe(Topics.EXECUTION);
     }
 
     public void setPersistenceManager(PersistenceManager persistenceManager) {
@@ -349,7 +349,7 @@ public class Orchestrator extends Notifiable {
                                                                    " failed after %ss"),
                                                    job.getId(), workflow.getName(), time != null ? time.getSeconds() : "<unknown>");
                         logger.info(msg);
-                        Messaging.send(currentContext.getPrincipal(), Topics.INFORMATION, this, msg);
+                        Messaging.send(currentContext.getPrincipal(), Topics.EXECUTION, this, msg);
                         shutDownExecutor(currentContext);
                     } else {
                         logger.fine("Job has still tasks to complete");
@@ -375,7 +375,7 @@ public class Orchestrator extends Notifiable {
                                                job.getId(), workflow.getName(), time != null ? time.getSeconds() : "<unknown>");
                     logger.warning(msg);
                     persistenceManager.updateExecutionJob(job);
-                    Messaging.send(currentContext.getPrincipal(), Topics.INFORMATION, this, msg);
+                    Messaging.send(currentContext.getPrincipal(), Topics.EXECUTION, this, msg);
                     shutDownExecutor(currentContext);
                 }
             }
