@@ -94,6 +94,8 @@ public class WorkflowManager {
                             }
                         });
             }
+        } else {
+            workflow = getWorkflowDescriptor(identifier);
         }
         return workflow;
     }
