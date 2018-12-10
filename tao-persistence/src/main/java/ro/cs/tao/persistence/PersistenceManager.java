@@ -756,7 +756,7 @@ public class PersistenceManager implements MessagePersister {
     }
 
     private Query ensurePasswordDecrypted(Query object) {
-        if (Crypto.decrypt(object.getPassword(), object.getUser()) != null) {
+        if (object != null && Crypto.decrypt(object.getPassword(), object.getUser()) != null) {
             // we have an unencrypted password
             object.setPassword(Crypto.decrypt(object.getPassword(), object.getUser()));
         }
@@ -766,7 +766,7 @@ public class PersistenceManager implements MessagePersister {
     private <T extends Iterable<Query>> T ensurePasswordDecrypted(T objects) {
         if (objects != null) {
             objects.forEach(object -> {
-                if (Crypto.decrypt(object.getPassword(), object.getUser()) != null) {
+                if (object != null && Crypto.decrypt(object.getPassword(), object.getUser()) != null) {
                     // we have an unencrypted password
                     object.setPassword(Crypto.decrypt(object.getPassword(), object.getUser()));
                 }
