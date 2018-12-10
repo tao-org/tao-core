@@ -672,8 +672,15 @@ public class Orchestrator extends Notifiable {
     private List<ExecutionTask> findNextTasks(ExecutionTask task) {
         ExecutionGroup groupTask = task instanceof ExecutionGroup ? (ExecutionGroup) task : task.getGroupTask();
         ExecutionJob job = task.getJob();
-        return groupTask != null ? this.groupTaskSelector.chooseNext(groupTask, task) :
-                this.jobTaskSelector.chooseNext(job, task);
+        if (groupTask != null) {
+            if (groupTask.getExecutionStatus() != ExecutionStatus.DONE) {
+                return this.groupTaskSelector.chooseNext(groupTask, task);
+            }
+            List<ExecutionTask> next = this.jobTaskSelector.chooseNext(job, groupTask);
+            next.removeIf(n -> groupTask.getTasks().contains(n));
+            return next;
+        }
+        return this.jobTaskSelector.chooseNext(job, task);
     }
 
     private void persistOutputProducts(ExecutionTask task) {
