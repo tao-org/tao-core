@@ -150,6 +150,10 @@ public class PersistenceManager implements MessagePersister {
         return productManager.getEOProducts();
     }
 
+    public List<EOProduct> getEOProducts(Iterable<String> ids) {
+        return productManager.getEOProducts(ids);
+    }
+
     public List<EOProduct> getEOProducts(String...locations) {
         if (locations == null || locations.length == 0) {
             return getEOProducts();
@@ -264,6 +268,10 @@ public class PersistenceManager implements MessagePersister {
         return containerManager.list();
     }
 
+    public List<Container> getContainers(Iterable<String> ids) {
+        return containerManager.list(ids);
+    }
+
     public Container getContainerById(String id) {
         return containerManager.get(id);
     }
@@ -348,6 +356,10 @@ public class PersistenceManager implements MessagePersister {
         return groupComponentManager.list();
     }
 
+    public List<GroupComponent> getGroupComponents(Iterable<String> ids) {
+        return groupComponentManager.list(ids);
+    }
+
     public GroupComponent getGroupComponentById(String id) {
         return groupComponentManager.get(id);
     }
@@ -408,6 +420,9 @@ public class PersistenceManager implements MessagePersister {
         return workflowManager.getAllWorkflows();
     }
 
+    public List<WorkflowDescriptor> getWorkflows(Iterable<Long> ids) {
+        return workflowManager.getWorkflows(ids);
+    }
 
     public WorkflowDescriptor getWorkflowDescriptor(long identifier) {
         return workflowManager.getWorkflowDescriptor(identifier);
@@ -578,6 +593,10 @@ public class PersistenceManager implements MessagePersister {
         return ensurePasswordDecrypted(queryManager.findById(id));
     }
 
+    public List<Query> getQueries(Iterable<Long> ids) {
+        return ensurePasswordDecrypted(queryManager.findAllById(ids));
+    }
+
     public Query getQuery(String userId, String sensor, String dataSource, long workflowNodeId) {
         return ensurePasswordDecrypted(queryManager.findByUserIdAndSensorAndDataSourceAndWorkflowNodeId(userId,
                                                                                                         sensor,
@@ -737,7 +756,7 @@ public class PersistenceManager implements MessagePersister {
     }
 
     private Query ensurePasswordDecrypted(Query object) {
-        if (Crypto.decrypt(object.getPassword(), object.getUser()) != null) {
+        if (object != null && Crypto.decrypt(object.getPassword(), object.getUser()) != null) {
             // we have an unencrypted password
             object.setPassword(Crypto.decrypt(object.getPassword(), object.getUser()));
         }
@@ -747,7 +766,7 @@ public class PersistenceManager implements MessagePersister {
     private <T extends Iterable<Query>> T ensurePasswordDecrypted(T objects) {
         if (objects != null) {
             objects.forEach(object -> {
-                if (Crypto.decrypt(object.getPassword(), object.getUser()) != null) {
+                if (object != null && Crypto.decrypt(object.getPassword(), object.getUser()) != null) {
                     // we have an unencrypted password
                     object.setPassword(Crypto.decrypt(object.getPassword(), object.getUser()));
                 }

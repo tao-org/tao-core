@@ -23,6 +23,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
+import ro.cs.tao.component.LongIdentifiable;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.persistence.repository.WorkflowDescriptorRepository;
 import ro.cs.tao.workflow.WorkflowDescriptor;
@@ -31,6 +32,7 @@ import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
@@ -61,6 +63,12 @@ public class WorkflowManager {
                 .collect(Collectors.toList());
     }
 
+    public List<WorkflowDescriptor> getWorkflows(Iterable<Long> ids) {
+        return ((List<WorkflowDescriptor>) workflowDescriptorRepository.findAllById(ids))
+                .stream().sorted(Comparator.comparingLong(LongIdentifiable::getId))
+                .collect(Collectors.toList());
+    }
+
     public WorkflowDescriptor getWorkflowDescriptor(Long identifier) {
         if (identifier != null){
             final Optional<WorkflowDescriptor> workflow = workflowDescriptorRepository.findById(identifier);
@@ -86,6 +94,8 @@ public class WorkflowManager {
                             }
                         });
             }
+        } else {
+            workflow = getWorkflowDescriptor(identifier);
         }
         return workflow;
     }
