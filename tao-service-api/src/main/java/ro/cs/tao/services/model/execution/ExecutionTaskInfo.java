@@ -79,7 +79,7 @@ public class ExecutionTaskInfo {
         try {
             TaoComponent component = (TaoComponent) componentField.get(executionTask.getClass()).get(executionTask);
             this.componentId = component != null ? component.getId() : "n/a";
-        } catch (IllegalAccessException e) {
+        } catch (Exception e) {
             this.componentId = "n/a";
         }
         this.executionNodeHostName = executionTask.getExecutionNodeHostName();
