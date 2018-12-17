@@ -177,7 +177,7 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
             if (context == null) {
                 context = SystemSessionContext.instance();
             }
-            Messaging.send(context.getPrincipal(), Topics.TASK_STATUS_CHANGED, task.getId(), status.name());
+            Messaging.send(context.getPrincipal(), Topics.EXECUTION, task.getId(), status.name());
         }
     }
 

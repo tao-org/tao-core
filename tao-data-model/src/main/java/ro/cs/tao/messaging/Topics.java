@@ -39,5 +39,5 @@ public class Topics {
     /**
      * Special topic for signaling that an execution task has changed its state.
      */
-    public static final String TASK_STATUS_CHANGED = "task.changed";
+    public static final String EXECUTION = "execution.status.changed";
 }

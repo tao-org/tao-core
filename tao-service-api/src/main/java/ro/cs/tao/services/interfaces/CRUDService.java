@@ -44,6 +44,12 @@ public interface CRUDService<T, K> extends TAOService {
     List<T> list();
 
     /**
+     * Retrieves the entities of this type with the ids in the given collection.
+     * @param ids   The collection of entity identifiers
+     */
+    List<T> list(Iterable<K> ids);
+
+    /**
      * Retrieves a subset of the entities of this type, according to the <code>Sort</code> order provided.
      * The default implementation of this method uses the @see CRUDService.list() implementation.
      *
