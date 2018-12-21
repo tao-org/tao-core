@@ -88,6 +88,21 @@ public class Polygon2D {
         return polygon;
     }
 
+    public static Polygon2D fromPath2D(Path2D.Double path) {
+        if (path == null) {
+            return null;
+        }
+        Polygon2D polygon2D = new Polygon2D();
+        PathIterator pathIterator = path.getPathIterator(null);
+        while (!pathIterator.isDone()) {
+            double[] segment = new double[6];
+            pathIterator.currentSegment(segment);
+            polygon2D.append(segment[0], segment[1]);
+            pathIterator.next();
+        }
+        return polygon2D;
+    }
+
     public Polygon2D() {
     }
 
@@ -135,6 +150,19 @@ public class Polygon2D {
     }
 
     /**
+     * Marks all the inner polygons as closed. Further addition of points is not possible.
+     */
+    public void ensureClosed() {
+        if (polygons != null) {
+            for (Path2D.Double polygon : polygons) {
+                if (polygon != null) {
+                    polygon.closePath();
+                }
+            }
+        }
+    }
+
+    /**
      * Returns the number of points of the current polygon.
      *
      */
@@ -157,6 +185,20 @@ public class Polygon2D {
             }
         }
         return points;
+    }
+
+    /**
+     * Converts the single inner polygon of this instance to a Path2D.Double instance
+     */
+    public Path2D.Double toPath2D() {
+        Path2D.Double path = null;
+        if (polygons != null) {
+            if (polygons.length > 1) {
+                throw new RuntimeException("Multi-polygons cannot be converted to single Path2D");
+            }
+            path = polygons[0];
+        }
+        return path;
     }
 
     /**
