@@ -22,6 +22,7 @@ import ro.cs.tao.serialization.PolygonAdapter;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -126,9 +127,22 @@ public class QueryParameter<T> {
     }
 
     public String getValueAsString() {
-        return this.value != null ?
-                String.valueOf(this.value) :
-                null;
+        String out = null;
+        if (this.value != null) {
+            if (this.value.getClass().isArray()) {
+                StringBuilder builder = new StringBuilder();
+                builder.append("[");
+                for (int i = 0; i < Array.getLength(this.value); i++) {
+                    builder.append(Array.get(this.value, i)).append(",");
+                }
+                builder.setLength(builder.length() - 1);
+                builder.append("]");
+                out = builder.toString();
+            } else {
+                out = String.valueOf(this.value);
+            }
+        }
+        return out;
     }
 
     public Integer getValueAsInt() {
