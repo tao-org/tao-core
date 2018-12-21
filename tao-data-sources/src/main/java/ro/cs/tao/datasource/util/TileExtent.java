@@ -17,16 +17,14 @@ package ro.cs.tao.datasource.util;
 
 import ro.cs.tao.eodata.Polygon2D;
 
+import java.awt.geom.Path2D;
+import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -34,7 +32,7 @@ import java.util.stream.Collectors;
  * @author Cosmin Cara
  */
 public abstract class TileExtent {
-    protected final Map<String, Rectangle2D> tiles;
+    protected final Map<String, Path2D.Double> tiles;
 
     protected TileExtent() {
         tiles = new TreeMap<>();
@@ -42,50 +40,35 @@ public abstract class TileExtent {
 
     public void read(InputStream inputStream) throws IOException {
         synchronized (tiles) {
-            try (Scanner scanner = new Scanner(inputStream)) {
-                String line, tile;
-                while (scanner.hasNextLine()) {
-                    line = scanner.nextLine();
-                    if (scanner.ioException() != null) {
-                        throw scanner.ioException();
+            byte[] buffer = new byte[tileCodeSize()];
+            try (DataInputStream dis = new DataInputStream(inputStream)) {
+                while (true) {
+                    dis.read(buffer, 0, buffer.length);
+                    Polygon2D polygon2D = new Polygon2D();
+                    for (int i = 0; i < 5; i++) {
+                        polygon2D.append(dis.readDouble(), dis.readDouble());
                     }
-                    tile = line.substring(0, line.indexOf(" "));
-                    line = line.replaceAll(tile, "").trim();
-                    //line = line.substring(0, line.length() - 1);
-                    String[] tokens = line.split(",");
-                    Rectangle2D.Double rectangle = new Rectangle2D.Double(
-                            Double.parseDouble(tokens[0].substring(2)),
-                            Double.parseDouble(tokens[1].substring(2)),
-                            Double.parseDouble(tokens[2].substring(2)),
-                            Double.parseDouble(tokens[3].substring(2)));
-                    tiles.put(tile, rectangle);
+                    tiles.put(new String(buffer), polygon2D.toPath2D());
                 }
-            } finally {
-                if (inputStream != null)
-                    inputStream.close();
-            }
+            } catch (EOFException ignored) { }
         }
     }
 
     public void write(Path file) throws IOException {
-        BufferedWriter bufferedWriter = null;
-        try {
-            bufferedWriter = Files.newBufferedWriter(file, StandardOpenOption.CREATE);
-            StringBuilder line = new StringBuilder();
-            for (Map.Entry<String, Rectangle2D> entry : tiles.entrySet()) {
-                line.append(entry.getKey()).append(" ");
-                Rectangle2D rectangle = entry.getValue();
-                line.append("x=").append(rectangle.getX()).append(",");
-                line.append("y=").append(rectangle.getY()).append(",");
-                line.append("w=").append(rectangle.getWidth()).append(",");
-                line.append("h=").append(rectangle.getHeight()).append("\n");
-                bufferedWriter.write(line.toString());
-                bufferedWriter.flush();
-                line.setLength(0);
+        try (FileOutputStream fos = new FileOutputStream(file.toFile());
+             DataOutputStream dos = new DataOutputStream(fos)) {
+            for (Map.Entry<String, Path2D.Double> entry : tiles.entrySet()) {
+                Path2D.Double rectangle = entry.getValue();
+                dos.writeBytes(entry.getKey());
+                PathIterator pathIterator = rectangle.getPathIterator(null);
+                while (!pathIterator.isDone()) {
+                    double[] segment = new double[6];
+                    pathIterator.currentSegment(segment);
+                    dos.writeDouble(segment[0]);
+                    dos.writeDouble(segment[1]);
+                    pathIterator.next();
+                }
             }
-        } finally {
-            if (bufferedWriter != null)
-                bufferedWriter.close();
         }
     }
 
@@ -111,7 +94,7 @@ public abstract class TileExtent {
         return tiles.size();
     }
 
-    public Rectangle2D getTileExtent(String tileCode) {
+    public Path2D.Double getTileExtent(String tileCode) {
         return tiles.get(tileCode);
     }
 
@@ -127,8 +110,9 @@ public abstract class TileExtent {
             }
 
             for (String code : tileCodes) {
-                Rectangle2D rectangle2D = tiles.get(code);
-                if (rectangle2D != null) {
+                Path2D.Double tilePath2D = tiles.get(code);
+                if (tilePath2D != null) {
+                    Rectangle2D rectangle2D = tilePath2D.getBounds2D();
                     if (accumulator == null) {
                         accumulator = rectangle2D;
                     } else {
@@ -199,5 +183,7 @@ public abstract class TileExtent {
             return accumulator;
         }
     }
+
+    protected abstract int tileCodeSize();
 
 }
