@@ -28,15 +28,30 @@ import java.util.List;
 public class SSHExecutor extends Executor<Channel> {
 
     private SSHMode mode;
+    private int port;
 
     public SSHExecutor(String host, List<String> args, boolean asSU) {
         super(host, args, asSU);
         this.mode = SSHMode.EXEC;
+        this.port = 22;
+    }
+
+    public SSHExecutor(String host, int port, List<String> args, boolean asSU) {
+        super(host, args, asSU);
+        this.mode = SSHMode.EXEC;
+        this.port = port;
     }
 
     public SSHExecutor(String host, List<String> args, boolean asSU, SSHMode mode) {
         super(host, args, asSU);
         this.mode = mode;
+        this.port = 22;
+    }
+
+    public SSHExecutor(String host, int port, List<String> args, boolean asSU, SSHMode mode) {
+        super(host, args, asSU);
+        this.mode = mode;
+        this.port = port;
     }
 
     @Override
@@ -49,7 +64,7 @@ public class SSHExecutor extends Executor<Channel> {
         try {
             JSch jSch = new JSch();
             //jSch.setKnownHosts("D:\\known_hosts");
-            session = jSch.getSession(this.user, this.host, 22);
+            session = jSch.getSession(this.user, this.host, this.port);
             session.setUserInfo(new UserInfo(this.password));
             session.setPassword(password.getBytes());
             session.setConfig("StrictHostKeyChecking", "no");
@@ -77,7 +92,7 @@ public class SSHExecutor extends Executor<Channel> {
         try {
             JSch jSch = new JSch();
             //jSch.setKnownHosts("D:\\known_hosts");
-            session = jSch.getSession(this.user, this.host, 22);
+            session = jSch.getSession(this.user, this.host, this.port);
             session.setUserInfo(new UserInfo(this.password));
             session.setPassword(password.getBytes());
             session.setConfig("StrictHostKeyChecking", "no");
