@@ -256,16 +256,7 @@ public abstract class Executor<T> implements Runnable {
     }
 
     public static Executor create(ExecutorType type, String host, List<String> arguments, boolean asSuperUser, SSHMode mode) {
-        Executor executor = null;
-        switch (type) {
-            case PROCESS:
-                executor = new ProcessExecutor(host, arguments, asSuperUser);
-                break;
-            case SSH2:
-                executor = new SSHExecutor(host, arguments, asSuperUser, mode);
-                break;
-        }
-        return executor;
+        return create(type, host, arguments, asSuperUser, mode, null);
     }
 
     public static Executor create(ExecutorType type, String host, List<String> arguments, boolean asSuperUser, SSHMode mode, File workingDir) {
@@ -279,6 +270,13 @@ public abstract class Executor<T> implements Runnable {
                 break;
         }
         return executor;
+    }
+
+    public static Executor create(ExecutorType type, String host, int port, List<String> arguments, boolean asSuperUser, SSHMode mode) {
+        if (type != ExecutorType.SSH2) {
+            throw new IllegalArgumentException("Wrong executor type if port specified");
+        }
+        return new SSHExecutor(host, port, arguments, asSuperUser, mode);
     }
 
     private static void awaitForConditions(ExecutionUnit job) {
