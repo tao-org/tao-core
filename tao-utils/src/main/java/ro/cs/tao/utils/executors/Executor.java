@@ -16,7 +16,6 @@
 package ro.cs.tao.utils.executors;
 
 import com.jcraft.jsch.Channel;
-import org.apache.commons.lang.SystemUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -257,16 +256,7 @@ public abstract class Executor<T> implements Runnable {
     }
 
     public static Executor create(ExecutorType type, String host, List<String> arguments, boolean asSuperUser, SSHMode mode) {
-        Executor executor = null;
-        switch (type) {
-            case PROCESS:
-                executor = new ProcessExecutor(host, arguments, asSuperUser);
-                break;
-            case SSH2:
-                executor = new SSHExecutor(host, arguments, asSuperUser, mode);
-                break;
-        }
-        return executor;
+        return create(type, host, arguments, asSuperUser, mode, null);
     }
 
     public static Executor create(ExecutorType type, String host, List<String> arguments, boolean asSuperUser, SSHMode mode, File workingDir) {
@@ -280,6 +270,13 @@ public abstract class Executor<T> implements Runnable {
                 break;
         }
         return executor;
+    }
+
+    public static Executor create(ExecutorType type, String host, int port, List<String> arguments, boolean asSuperUser, SSHMode mode) {
+        if (type != ExecutorType.SSH2) {
+            throw new IllegalArgumentException("Wrong executor type if port specified");
+        }
+        return new SSHExecutor(host, port, arguments, asSuperUser, mode);
     }
 
     private static void awaitForConditions(ExecutionUnit job) {
@@ -435,13 +432,10 @@ public abstract class Executor<T> implements Runnable {
         int idx = 0;
         String curArg;
         List<String> sudoArgs = new ArrayList<String>() {{
-            //noinspection ConstantConditions
-            if (!SystemUtils.IS_OS_WINDOWS) {
                add("sudo");
                add("-S");
                add("-p");
                add("''");
-           }
         }};
         while (idx < arguments.size()) {
             curArg = arguments.get(idx);
@@ -455,17 +449,15 @@ public abstract class Executor<T> implements Runnable {
     }
 
     protected void writeSudoPassword() throws IOException {
-        if (!SystemUtils.IS_OS_WINDOWS) {
-            OutputStream outputStream = null;
-            if (this.channel instanceof Channel) {
-                outputStream = ((Channel) this.channel).getOutputStream();
-            } else if (this.channel instanceof Process) {
-                outputStream = ((Process) this.channel).getOutputStream();
-            } else {
-                throw new IllegalArgumentException("This type of channel is not supported");
-            }
-            outputStream.write((this.password + "\n").getBytes());
-            outputStream.flush();
+        OutputStream outputStream;
+        if (this.channel instanceof Channel) {
+            outputStream = ((Channel) this.channel).getOutputStream();
+        } else if (this.channel instanceof Process) {
+            outputStream = ((Process) this.channel).getOutputStream();
+        } else {
+            throw new IllegalArgumentException("This type of channel is not supported");
         }
+        outputStream.write((this.password + "\n").getBytes());
+        outputStream.flush();
     }
 }
