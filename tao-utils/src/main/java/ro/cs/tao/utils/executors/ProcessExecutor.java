@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.utils.executors;
 
+import org.apache.commons.lang.SystemUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 
 import java.io.*;
@@ -121,6 +122,20 @@ public class ProcessExecutor extends Executor<Process> {
     public void stop() {
         super.stop();
         ProcessHelper.terminate(this.channel);
+    }
+
+    @Override
+    protected void insertSudoParams() {
+        if (!SystemUtils.IS_OS_WINDOWS) {
+            super.insertSudoParams();
+        }
+    }
+
+    @Override
+    protected void writeSudoPassword() throws IOException {
+        if (!SystemUtils.IS_OS_WINDOWS) {
+            super.writeSudoPassword();
+        }
     }
 
     private void resetProcess() {
