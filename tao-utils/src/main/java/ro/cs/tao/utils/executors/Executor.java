@@ -72,9 +72,7 @@ public abstract class Executor<T> implements Runnable {
         Executor executor = prepare(outputConsumer, job);
         awaitForConditions(job);
         executorService.submit(executor);
-        staticLogger.finest(String.format("%s running tasks, %s queued tasks",
-                                          executorService.getActiveCount(),
-                                          executorService.getQueue().size()));
+        printQueue();
         return executor;
     }
     /**
@@ -114,9 +112,7 @@ public abstract class Executor<T> implements Runnable {
         Executor executor = prepare(outputConsumer, workingDirectory, job);
         awaitForConditions(job);
         executorService.submit(executor);
-        staticLogger.finest(String.format("%s running tasks, %s queued tasks",
-                                          executorService.getActiveCount(),
-                                          executorService.getQueue().size()));
+        printQueue();
         return executor;
     }
 
@@ -151,6 +147,8 @@ public abstract class Executor<T> implements Runnable {
             executor.getWaitObject().await(timeout, TimeUnit.SECONDS);
         } catch (InterruptedException ignored) {
             executor.stop();
+        } finally {
+            printQueue();
         }
         return executor.getReturnCode();
     }
@@ -188,9 +186,7 @@ public abstract class Executor<T> implements Runnable {
         for (int i = 0; i < jobs.length; i++) {
             //awaitForConditions(jobs[i]);
             executorService.submit(executors[i]);
-            staticLogger.finest(String.format("%s running tasks, %s queued tasks",
-                                              executorService.getActiveCount(),
-                                              executorService.getQueue().size()));
+            printQueue();
         }
         return executors;
     }
@@ -213,26 +209,15 @@ public abstract class Executor<T> implements Runnable {
             waitThreads[i] = new Thread(() -> {
                 try {
                     executorService.submit(executors[finalI]);
-                    staticLogger.finest(String.format("%s running tasks, %s queued tasks",
-                                                      executorService.getActiveCount(),
-                                                      executorService.getQueue().size()));
+                    printQueue();
                     executors[finalI].getWaitObject().await(timeout, TimeUnit.SECONDS);
                 } catch (InterruptedException iex) {
                     executors[finalI].stop();
                 } finally {
+                    printQueue();
                     aggregateLatch.countDown();
                 }
             });
-            /*boolean canExecute = canExecute(jobs[i]);
-            while (!canExecute) {
-                try {
-                    Thread.sleep(10000);
-                    canExecute = canExecute(jobs[i]);
-                } catch (Exception e) {
-                    Logger.getLogger(Executor.class.getName()).warning(e.getMessage());
-                    canExecute = true;
-                }
-            }*/
             awaitForConditions(jobs[i]);
             waitThreads[i].start();
         }
@@ -241,6 +226,7 @@ public abstract class Executor<T> implements Runnable {
         } catch (InterruptedException ignored) { }
         for (int i = 0; i < executors.length; i++) {
             executors[i].stop();
+            printQueue();
             waitThreads[i] = null;
             retCodes[i] = executors[i].getReturnCode();
         }
@@ -349,9 +335,6 @@ public abstract class Executor<T> implements Runnable {
      */
     public void stop() {
         this.isStopped = true;
-        staticLogger.finest(String.format("%s running tasks, %s queued tasks",
-                                          executorService.getActiveCount(),
-                                          executorService.getQueue().size()));
     }
 
     /**
@@ -459,5 +442,11 @@ public abstract class Executor<T> implements Runnable {
         }
         outputStream.write((this.password + "\n").getBytes());
         outputStream.flush();
+    }
+
+    private static void printQueue() {
+        staticLogger.finest(String.format("%s running tasks, %s queued tasks",
+                                          executorService.getActiveCount(),
+                                          executorService.getQueue().size()));
     }
 }
