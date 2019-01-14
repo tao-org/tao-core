@@ -146,6 +146,8 @@ public abstract class Executor<T> implements Runnable {
         try {
             executor.getWaitObject().await(timeout, TimeUnit.SECONDS);
         } catch (InterruptedException ignored) {
+            staticLogger.severe(String.format("The job %s failed to complete within the allocated time [%s s] and is being terminated",
+                                              job, timeout));
             executor.stop();
         } finally {
             printQueue();
@@ -212,6 +214,8 @@ public abstract class Executor<T> implements Runnable {
                     printQueue();
                     executors[finalI].getWaitObject().await(timeout, TimeUnit.SECONDS);
                 } catch (InterruptedException iex) {
+                    staticLogger.severe(String.format("The job %s failed to complete within the allocated time [%s s] and is being terminated",
+                                                      jobs[finalI], timeout));
                     executors[finalI].stop();
                 } finally {
                     printQueue();
