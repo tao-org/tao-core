@@ -81,21 +81,25 @@ public class ProcessExecutor extends Executor<Process> {
                         }
                     }
                 }
-                // check if the project finished execution
+                // check if the process finished execution
                 if (!this.channel.isAlive()) {
-                    //isStopped the loop
-                    super.stop();
+                    this.isStopped = true;
                 } else {
                     //yield the control to other threads
                     Thread.yield();
                 }
             }
             try {
-                //wait for the project to end.
-                this.channel.waitFor(500, TimeUnit.MILLISECONDS);
+                //wait for the process to end.
+                this.channel.waitFor(2000, TimeUnit.MILLISECONDS);
             } catch (InterruptedException ignored) {
+                logger.warning(String.format("Timeout occurred while waiting for the process [pid=%d] to exit.",
+                                             ProcessHelper.getPID(this.channel)));
             }
-            ret = this.channel.exitValue();
+            try {
+                ret = this.channel.exitValue();
+            } catch (IllegalThreadStateException ignored) {
+            }
         } catch (Exception e) {
             this.isStopped = true;
             throw new IOException(String.format("[%s] failed: %s", host, ExceptionUtils.getStackTrace(e)));
