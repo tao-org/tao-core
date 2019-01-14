@@ -72,4 +72,11 @@ public final class ExecutionUnit {
     public Long getMinDisk() { return minDisk; }
 
     public void setMinDisk(Long minDisk) { this.minDisk = minDisk; }
+
+    @Override
+    public String toString() {
+        return "ExecutionUnit {" +
+                "host='" + host + '\'' +
+                ", arguments=" + (arguments != null ? "'" + String.join(",", arguments) + "'" : "none") + "}";
+    }
 }
