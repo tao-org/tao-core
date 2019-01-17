@@ -164,6 +164,7 @@
                 <column name="approximate_size" nullable="false" column-definition="bigint not null"/>
             </basic>
             <transient name="processingDate"/>
+            <transient name="quicklookLocation" />
         </attributes>
     </entity>
 
