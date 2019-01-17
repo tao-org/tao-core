@@ -90,13 +90,13 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
     }
 
     @Transactional
-    public ExecutionTask getTaskByJobAndNode(long jobId, long nodeId) {
-        return repository.findByJobAndWorkflowNode(jobId, nodeId);
+    public ExecutionTask getTaskByJobAndNode(long jobId, long nodeId, int instanceId) {
+        return repository.findByJobAndWorkflowNode(jobId, nodeId, instanceId);
     }
 
     @Transactional
-    public ExecutionTask getTaskByGroupAndNode(long groupId, long nodeId) {
-        return repository.findByGroupAndWorkflowNode(groupId, nodeId);
+    public ExecutionTask getTaskByGroupAndNode(long groupId, long nodeId, int instanceId) {
+        return repository.findByGroupAndWorkflowNode(groupId, nodeId, instanceId);
     }
 
     @Transactional

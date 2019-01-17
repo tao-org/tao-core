@@ -16,10 +16,10 @@
 
 package ro.cs.tao.execution.model;
 
+import ro.cs.tao.utils.TriFunction;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 
 import java.util.List;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
@@ -36,7 +36,7 @@ public interface TaskSelector<T> {
     /**
      * Setter for the functor providing execution tasks
      */
-    void setTaskByNodeProvider(BiFunction<Long, Long, ExecutionTask> taskByNodeProvider);
+    void setTaskByNodeProvider(TriFunction<Long, Long, Integer, ExecutionTask> taskByNodeProvider);
 
     /**
      * Returns the class for the task container (i.e. either an ExecutionJob or an ExecutionGroup)

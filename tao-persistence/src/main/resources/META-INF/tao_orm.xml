@@ -566,6 +566,9 @@
             <basic name="workflowNodeId">
                 <column name="graph_node_id" nullable="false" column-definition="bigint NOT NULL"/>
             </basic>
+            <basic name="instanceId">
+                <column name="instance_id" nullable="false" column-definition="integer NOT NULL"/>
+            </basic>
             <basic name="level">
                 <column name="execution_level" nullable="false" column-definition="integer NOT NULL"/>
             </basic>
