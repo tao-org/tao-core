@@ -170,7 +170,7 @@ public class TaskUtilities {
         Set<ComponentLink> links = node.getIncomingLinks();
         if (links != null) {
             for (ComponentLink link : links) {
-                ExecutionTask parentTask = persistenceManager.getTaskByJobAndNode(job.getId(), link.getSourceNodeId());
+                ExecutionTask parentTask = persistenceManager.getTaskByJobAndNode(job.getId(), link.getSourceNodeId(), task.getInstanceId());
                 WorkflowNodeDescriptor parentNode = persistenceManager.getWorkflowNodeById(link.getSourceNodeId());
                 completed = (parentTask.getExecutionStatus() == ExecutionStatus.DONE &&
                              parentTask.getOutputParameterValues() != null &&
@@ -208,7 +208,7 @@ public class TaskUtilities {
         Set<ComponentLink> links = node.getIncomingLinks();
         if (links != null) {
             for (ComponentLink link : links) {
-                ExecutionTask parentTask = persistenceManager.getTaskByJobAndNode(job.getId(), link.getSourceNodeId());
+                ExecutionTask parentTask = persistenceManager.getTaskByJobAndNode(job.getId(), link.getSourceNodeId(), toTask.getInstanceId());
                 Variable out = parentTask.getOutputParameterValues()
                         .stream().filter(o -> o.getKey().equals(link.getInput().getName()))
                         .findFirst().orElse(null);

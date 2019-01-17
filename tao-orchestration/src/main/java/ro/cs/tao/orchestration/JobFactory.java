@@ -42,6 +42,7 @@ import java.util.stream.Collectors;
  */
 public class JobFactory {
 
+    private static final int DEFAULT_INSTANCE = 1;
     private final PersistenceManager persistenceManager;
     private final Logger logger;
 
@@ -111,11 +112,16 @@ public class JobFactory {
         group.setResourceId("group-" + groupNode.getId() + "-" + job.getId());
         persistenceManager.saveExecutionTask(group, job);
         List<WorkflowNodeDescriptor> nodes = groupNode.getOrderedNodes();
+        GroupComponent component = persistenceManager.getGroupComponentById(groupNode.getComponentId());
+        int parallelism = component != null ? component.getParallelism() : 1;
         for (WorkflowNodeDescriptor node : nodes) {
-            ExecutionTask task = createTask(job, workflow, node, inputs);
-            task.setLevel(groupNode.getLevel() + 1);
-            persistenceManager.saveExecutionTask(task, job);
-            group.addTask(task);
+            for (int i = 1; i <= parallelism; i++) {
+                ExecutionTask task = createTask(job, workflow, node, inputs);
+                task.setLevel(groupNode.getLevel() + 1);
+                task.setInstanceId(i);
+                persistenceManager.saveExecutionTask(task, job);
+                group.addTask(task);
+            }
         }
         List<ExecutionTask> tasks = group.getTasks();
         if (tasks != null && tasks.size() > 0) {
@@ -124,7 +130,6 @@ public class JobFactory {
                 String name = link.getOutput().getName();
                 group.setInputParameterValue(name, null);
             });
-            GroupComponent component = persistenceManager.getGroupComponentById(groupNode.getComponentId());
             if (component != null) {
                 // Placeholders for outputs of this task
                 List<TargetDescriptor> targets = component.getTargets();
@@ -233,6 +238,7 @@ public class JobFactory {
                 task.setInputParameterValue("query", query.toString());
             }
             task.setWorkflowNodeId(workflowNode.getId());
+            task.setInstanceId(DEFAULT_INSTANCE);
             String nodeAffinity = component.getNodeAffinity();
             if (nodeAffinity != null && !"Any".equals(nodeAffinity)) {
                 task.setExecutionNodeHostName(nodeAffinity);

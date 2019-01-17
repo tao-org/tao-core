@@ -21,12 +21,12 @@ import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.component.Variable;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.orchestration.util.TaskUtilities;
+import ro.cs.tao.utils.TriFunction;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.logging.Logger;
 
@@ -38,7 +38,7 @@ import java.util.logging.Logger;
 public class DefaultGroupTaskSelector implements TaskSelector<ExecutionGroup> {
 
     private Function<Long, WorkflowNodeDescriptor> workflowProvider;
-    private BiFunction<Long, Long, ExecutionTask> taskByNodeProvider;
+    private TriFunction<Long, Long, Integer, ExecutionTask> taskByNodeProvider;
     private final Logger logger = Logger.getLogger(DefaultJobTaskSelector.class.getName());
 
     public DefaultGroupTaskSelector() { }
@@ -49,7 +49,7 @@ public class DefaultGroupTaskSelector implements TaskSelector<ExecutionGroup> {
     }
 
     @Override
-    public void setTaskByNodeProvider(BiFunction<Long, Long, ExecutionTask> taskByNodeProvider) {
+    public void setTaskByNodeProvider(TriFunction<Long, Long, Integer, ExecutionTask> taskByNodeProvider) {
         this.taskByNodeProvider = taskByNodeProvider;
     }
 
@@ -142,7 +142,7 @@ public class DefaultGroupTaskSelector implements TaskSelector<ExecutionGroup> {
 
         List<ExecutionTask> nextOnes = new ArrayList<>();
         for (WorkflowNodeDescriptor node : childNodes) {
-            ExecutionTask t = this.taskByNodeProvider.apply(group.getId(), node.getId());
+            ExecutionTask t = this.taskByNodeProvider.apply(group.getId(), node.getId(), task.getInstanceId());
             if (t.getExecutionStatus() != ExecutionStatus.QUEUED_ACTIVE && t.getExecutionStatus() != ExecutionStatus.RUNNING) {
                 if (TaskUtilities.haveParentsCompleted(t)) {
                     nextOnes.add(TaskUtilities.transferParentOutputs(t));
