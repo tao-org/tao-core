@@ -46,6 +46,7 @@ public class GroupComponent extends TaoComponent {
         component.setCopyright("(C)TAO Team");
         component.setNodeAffinity("Any");
         component.setVisibility(ProcessingComponentVisibility.SYSTEM);
+        component.setParallelism(1);
         if (sources != null) {
             for (SourceDescriptor source : sources) {
                 SourceDescriptor sourceDescriptor = new SourceDescriptor();
