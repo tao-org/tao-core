@@ -39,11 +39,18 @@ public abstract class OpenSearchParameterProvider implements ParameterProvider {
     protected Map<String, Map<String, DataSourceParameter>> parameters;
     protected Map<String, ProductFetchStrategy> productFetchers;
 
-    protected OpenSearchService searchService;
+    private OpenSearchService searchService;
     private String url;
+    private String endpointType;
 
     public OpenSearchParameterProvider(String url) {
         this.url = url;
+        this.endpointType = "application/atom+xml";
+    }
+
+    public OpenSearchParameterProvider(String url, String endpointType) {
+        this.url = url;
+        this.endpointType = endpointType;
     }
 
     @Override
@@ -66,7 +73,7 @@ public abstract class OpenSearchParameterProvider implements ParameterProvider {
 
     private void initialize() {
         this.searchService = parseDescription(this.url);
-        OpenSearchEndpoint endpoint = this.searchService.getEndpoint("application/atom+xml");
+        OpenSearchEndpoint endpoint = this.searchService.getEndpoint(this.endpointType);
         if (endpoint != null) {
             Map<String, DataSourceParameter> parameters = endpoint.getParameters();
             DataSourceParameter sensorParam = parameters.get(sensorParameterName());
@@ -97,8 +104,7 @@ public abstract class OpenSearchParameterProvider implements ParameterProvider {
                                                            response.getStatusLine().getReasonPhrase()));
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new QueryException(e);
         }
-        return null;
     }
 }

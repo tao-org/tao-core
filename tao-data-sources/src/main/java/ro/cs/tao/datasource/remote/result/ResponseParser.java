@@ -34,6 +34,8 @@ public interface ResponseParser<T> {
      */
     List<T> parse(String content) throws ParseException;
 
+    default long parseCount(String content) throws ParseException { return -1; }
+
     /**
      * Returns a list of attribute names to be excluded from the parsing operation.
      * Implementors should overwrite this method.
