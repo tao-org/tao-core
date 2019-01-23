@@ -230,6 +230,14 @@ public abstract class DataQuery extends StringIdentifiable {
 
     protected long getCountImpl() { return -1; }
 
+    protected String getSourceParamName(String taoName) {
+        if (this.supportedParams.containsKey(taoName)) {
+            return this.supportedParams.get(taoName).getName();
+        } else {
+            throw new QueryException(String.format("Parameter [%s] not supported on this data source", taoName));
+        }
+    }
+
     private void initialize(DataSource source, String sensorName) {
         this.source = source;
         this.sensorName = sensorName;
