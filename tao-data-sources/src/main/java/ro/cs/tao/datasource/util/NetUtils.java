@@ -15,8 +15,7 @@
  */
 package ro.cs.tao.datasource.util;
 
-import org.apache.http.HttpHost;
-import org.apache.http.NameValuePair;
+import org.apache.http.*;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -215,22 +214,55 @@ public class NetUtils {
     }
 
     public static String getResponseAsString(String url) throws IOException {
+        return getResponseAsString(url, null);
+    }
+
+    public static String getResponseAsString(String url, Credentials credentials) throws IOException {
         String result = null;
-        try (CloseableHttpResponse yearResponse = NetUtils.openConnection(HttpMethod.GET, url, null)) {
-            if (yearResponse != null) {
-                switch (yearResponse.getStatusLine().getStatusCode()) {
+        try (CloseableHttpResponse response = NetUtils.openConnection(HttpMethod.GET, url, credentials)) {
+            if (response != null) {
+                switch (response.getStatusLine().getStatusCode()) {
                     case 200:
-                        result = EntityUtils.toString(yearResponse.getEntity());
+                        result = EntityUtils.toString(response.getEntity());
                         break;
                     case 401:
                         Logger.getRootLogger().warn("The supplied credentials are invalid!");
                         break;
                     default:
-                        Logger.getRootLogger().warn("The request was not successful. Reason: %s", yearResponse.getStatusLine().getReasonPhrase());
+                        Logger.getRootLogger().warn("The request was not successful. Reason: %s", response.getStatusLine().getReasonPhrase());
                         break;
                 }
             } else {
                 Logger.getRootLogger().warn(String.format("The url %s was not reachable", url));
+            }
+        }
+        return result;
+    }
+
+    public static NetStreamResponse getResponseAsStream(String url) throws IOException {
+        return getResponseAsStream(url, null);
+    }
+
+    public static NetStreamResponse getResponseAsStream(String url, Credentials credentials) throws IOException {
+        NetStreamResponse result = null;
+        try (CloseableHttpResponse response = NetUtils.openConnection(HttpMethod.GET, url, credentials)) {
+            if (response != null) {
+                StatusLine statusLine = response.getStatusLine();
+                switch (statusLine.getStatusCode()) {
+                    case 200:
+                        HttpEntity entity = response.getEntity();
+                        Header contentType = entity.getContentType();
+                        result = new NetStreamResponse(entity.getContentLength(), contentType.getValue(),
+                                                       EntityUtils.toByteArray(entity));
+
+                        break;
+                    case 401:
+                        throw new IOException("401: Unauthorized or the supplied credentials are invalid");
+                    default:
+                        throw new IOException(String.valueOf(statusLine.getStatusCode()) + ": " + statusLine.getReasonPhrase());
+                }
+            } else {
+                throw new IOException(String.format("Null response (maybe url %s is not reachable", url));
             }
         }
         return result;

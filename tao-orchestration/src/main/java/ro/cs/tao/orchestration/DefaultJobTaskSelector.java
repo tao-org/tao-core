@@ -21,12 +21,12 @@ import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.execution.model.TaskSelector;
 import ro.cs.tao.orchestration.util.TaskUtilities;
+import ro.cs.tao.utils.TriFunction;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.logging.Logger;
 
@@ -38,7 +38,7 @@ import java.util.logging.Logger;
 public class DefaultJobTaskSelector implements TaskSelector<ExecutionJob> {
 
     private Function<Long, WorkflowNodeDescriptor> workflowProvider;
-    private BiFunction<Long, Long, ExecutionTask> taskByNodeProvider;
+    private TriFunction<Long, Long, Integer, ExecutionTask> taskByNodeProvider;
     private final Logger logger = Logger.getLogger(DefaultJobTaskSelector.class.getName());
 
     public DefaultJobTaskSelector() { }
@@ -49,7 +49,7 @@ public class DefaultJobTaskSelector implements TaskSelector<ExecutionJob> {
     }
 
     @Override
-    public void setTaskByNodeProvider(BiFunction<Long, Long, ExecutionTask> taskByNodeProvider) {
+    public void setTaskByNodeProvider(TriFunction<Long, Long, Integer, ExecutionTask> taskByNodeProvider) {
         this.taskByNodeProvider = taskByNodeProvider;
     }
 
@@ -118,7 +118,7 @@ public class DefaultJobTaskSelector implements TaskSelector<ExecutionJob> {
         }
         List<ExecutionTask> nextOnes = new ArrayList<>();
         for (WorkflowNodeDescriptor node : childNodes) {
-            ExecutionTask t = this.taskByNodeProvider.apply(job.getId(), node.getId());
+            ExecutionTask t = this.taskByNodeProvider.apply(job.getId(), node.getId(), task.getInstanceId());
             if (t.getExecutionStatus() != ExecutionStatus.QUEUED_ACTIVE && t.getExecutionStatus() != ExecutionStatus.RUNNING) {
                 if (TaskUtilities.haveParentsCompleted(t)) {
                     nextOnes.add(TaskUtilities.transferParentOutputs(t));

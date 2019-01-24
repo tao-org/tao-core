@@ -17,6 +17,7 @@ package ro.cs.tao.datasource;
 
 import ro.cs.tao.component.StringIdentifiable;
 import ro.cs.tao.datasource.param.DataSourceParameter;
+import ro.cs.tao.datasource.param.ParameterName;
 import ro.cs.tao.datasource.param.QueryParameter;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.serialization.BaseSerializer;
@@ -39,16 +40,21 @@ import java.util.stream.Collectors;
 @XmlTransient
 public abstract class DataQuery extends StringIdentifiable {
     protected static final int DEFAULT_LIMIT = 100;
+    /* Correspondence between system parameter names and remote parameter names */
+    private Map<String, String> parameterNameMap;
+    /* Set of mandatory parameter system names */
+    private Set<String> mandatoryParams;
     protected DataSource source;
     protected String sensorName;
-    protected String queryText;
-    protected Map<String, QueryParameter> parameters;
+    private String queryText;
     protected int pageSize;
     protected int pageNumber;
     protected int limit;
     protected long timeout;
-    protected Map<String, DataSourceParameter> supportedParams;
-    protected Set<String> mandatoryParams;
+    /* Maps parameter system name to a data source parameter (which has the remote name) */
+    protected Map<String, DataSourceParameter> dataSourceParameters;
+    /* Maps parameter system name to a query parameter (which has the same system name) */
+    protected Map<String, QueryParameter> parameters;
     protected Logger logger = Logger.getLogger(getClass().getName());
 
     protected DataQuery() { }
@@ -101,7 +107,7 @@ public abstract class DataQuery extends StringIdentifiable {
     }
 
     public <V> QueryParameter<V> addParameter(String name, V value) {
-        Class clazz = this.supportedParams.get(name).getType();
+        Class clazz = this.dataSourceParameters.get(name).getType();
         QueryParameter parameter = createParameter(name, clazz, value);
         this.parameters.put(name, parameter);
         return parameter;
@@ -133,10 +139,9 @@ public abstract class DataQuery extends StringIdentifiable {
             ex.addAdditionalInfo("Missing", String.join(",", missing));
             throw ex;
         }
-        this.supportedParams.entrySet().stream()
+        this.dataSourceParameters.entrySet().stream()
                 .filter(entry -> entry.getValue().getDefaultValue() != null && !actualParameters.containsKey(entry.getKey()))
-                .map(Map.Entry::getValue)
-                .forEach(p -> addParameter(p.getName(), p.getType(), p.getDefaultValue()));
+                .forEach(e -> addParameter(e.getKey(), e.getValue().getType(), e.getValue().getDefaultValue()));
         List<EOProduct> retList = executeImpl();
         retList.sort(Comparator.comparing(EOProduct::getAcquisitionDate));
         return retList;
@@ -152,14 +157,13 @@ public abstract class DataQuery extends StringIdentifiable {
             ex.addAdditionalInfo("Missing", String.join(",", missing));
             throw ex;
         }
-        this.supportedParams.entrySet().stream()
+        this.dataSourceParameters.entrySet().stream()
                 .filter(entry -> entry.getValue().getDefaultValue() != null && !parameters.containsKey(entry.getKey()))
-                .map(Map.Entry::getValue)
-                .forEach(p -> addParameter(p.getName(), p.getType(), p.getDefaultValue()));
+                .forEach(e -> addParameter(e.getKey(), e.getValue().getType(), e.getValue().getDefaultValue()));
         return getCountImpl();
     }
 
-    public Map<String, DataSourceParameter> getSupportedParameters() { return this.supportedParams; }
+    public Map<String, DataSourceParameter> getSupportedParameters() { return this.dataSourceParameters; }
 
     public Map<String, QueryParameter> getParameters() { return this.parameters; }
 
@@ -211,7 +215,7 @@ public abstract class DataQuery extends StringIdentifiable {
     }
 
     protected void checkSupported(String name, Class type) {
-        DataSourceParameter descriptor = this.supportedParams.get(name);
+        DataSourceParameter descriptor = this.dataSourceParameters.get(name);
         if (descriptor == null) {
             throw new QueryException(String.format("Parameter [%s] not supported on this data source", name));
         }
@@ -230,6 +234,14 @@ public abstract class DataQuery extends StringIdentifiable {
 
     protected long getCountImpl() { return -1; }
 
+    protected String getRemoteName(String systemName) {
+        if (this.parameterNameMap.containsKey(systemName)) {
+            return this.parameterNameMap.get(systemName);
+        } else {
+            throw new QueryException(String.format("Parameter [%s] not supported on this data source", systemName));
+        }
+    }
+
     private void initialize(DataSource source, String sensorName) {
         this.source = source;
         this.sensorName = sensorName;
@@ -239,11 +251,15 @@ public abstract class DataQuery extends StringIdentifiable {
         this.pageSize = -1;
         this.pageNumber = -1;
         this.limit = -1;
-        Map<String, Map<String, DataSourceParameter>> supportedParameters = source.getSupportedParameters();
-        this.supportedParams = supportedParameters.get(sensorName);
-        this.mandatoryParams = this.supportedParams.values().stream()
-                .filter(p -> p.isRequired() && p.getDefaultValue() == null)
-                .map(DataSourceParameter::getName)
+        Map<String, Map<ParameterName, DataSourceParameter>> supportedParameters = source.getSupportedParameters();
+        Map<ParameterName, DataSourceParameter> parameterMap = supportedParameters.get(sensorName);
+        this.parameterNameMap = parameterMap.keySet().stream()
+                .collect(Collectors.toMap(ParameterName::getSystemName, ParameterName::getRemoteName));
+        this.dataSourceParameters = parameterMap.entrySet().stream()
+                .collect(Collectors.toMap(e -> e.getKey().getSystemName(), Map.Entry::getValue));
+        this.mandatoryParams = this.dataSourceParameters.entrySet().stream()
+                .filter(e -> e.getValue().isRequired() && e.getValue().getDefaultValue() == null)
+                .map(Map.Entry::getKey)
                 .collect(Collectors.toSet());
     }
 }

@@ -221,6 +221,7 @@ CREATE TABLE tao.task
 	execution_status_id integer NOT NULL,
 	execution_level integer NOT NULL,
 	execution_log varchar NULL,
+	instance_id integer NOT NULL,
 	used_CPU integer NULL,
     used_RAM integer NULL,
     used_HDD integer NULL,

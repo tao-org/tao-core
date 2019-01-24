@@ -38,9 +38,16 @@ import java.util.stream.Collectors;
 public class JsonResponseParser<T> implements ResponseParser<T> {
     private static final Logger logger = Logger.getLogger(JsonResponseParser.class.getName());
     private final JSonResponseHandler<T> handler;
+    private final String countPropertyName;
 
     public JsonResponseParser(JSonResponseHandler<T> handler) {
         this.handler = handler;
+        this.countPropertyName = "";
+    }
+
+    public JsonResponseParser(JSonResponseHandler<T> handler, String countPropertyName) {
+        this.handler = handler;
+        this.countPropertyName = countPropertyName;
     }
 
     @Override
@@ -80,5 +87,17 @@ public class JsonResponseParser<T> implements ResponseParser<T> {
             logger.warning(e.getMessage());
         }
         return result;
+    }
+
+    @Override
+    public long parseCount(String content) throws ParseException {
+        if (this.countPropertyName != null && !this.countPropertyName.isEmpty()) {
+            try {
+                return this.handler.countValues(content);
+            } catch (IOException e) {
+                throw new ParseException(e);
+            }
+        }
+        return 0;
     }
 }

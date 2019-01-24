@@ -15,12 +15,12 @@
  */
 package ro.cs.tao.services.interfaces;
 
-import ro.cs.tao.datasource.param.DataSourceParameter;
 import ro.cs.tao.datasource.remote.FetchMode;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.execution.model.Query;
 import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.services.model.datasource.DataSourceDescriptor;
+import ro.cs.tao.services.model.datasource.ParameterDescriptor;
 
 import java.util.List;
 import java.util.SortedSet;
@@ -36,7 +36,7 @@ public interface DataSourceService extends TAOService {
 
     List<DataSourceDescriptor> getDatasourceInstances();
 
-    List<DataSourceParameter> getSupportedParameters(String sensorName, String dataSourceName);
+    List<ParameterDescriptor> getSupportedParameters(String sensorName, String dataSourceName);
 
     long count(Query queryObject) throws SerializationException;
 

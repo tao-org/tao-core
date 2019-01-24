@@ -46,6 +46,7 @@ import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.serialization.StringListAdapter;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.user.UserPreference;
+import ro.cs.tao.utils.TriFunction;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
@@ -61,7 +62,6 @@ import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -229,7 +229,7 @@ public class Orchestrator extends Notifiable {
     }
 
     private void initializeGroupSelector(Function<Long, WorkflowNodeDescriptor> workflowProvider,
-                                         BiFunction<Long, Long, ExecutionTask> nodeProvider) {
+                                         TriFunction<Long, Long, Integer, ExecutionTask> nodeProvider) {
         String groupTaskSelectorClass = ConfigurationManager.getInstance().getValue(GROUP_TASK_SELECTOR_KEY,
                                                                                     DefaultGroupTaskSelector.class.getName());
         Set<TaskSelector> selectors = ServiceRegistryManager.getInstance()
@@ -252,7 +252,7 @@ public class Orchestrator extends Notifiable {
     }
 
     private void initializeJobSelector(Function<Long, WorkflowNodeDescriptor> workflowProvider,
-                                       BiFunction<Long, Long, ExecutionTask> nodeProvider) {
+                                       TriFunction<Long, Long, Integer, ExecutionTask> nodeProvider) {
         String jobTaskSelectorClass = ConfigurationManager.getInstance().getValue(JOB_TASK_SELECTOR_KEY,
                                                                                   DefaultJobTaskSelector.class.getName());
         Set<TaskSelector> selectors = ServiceRegistryManager.getInstance()

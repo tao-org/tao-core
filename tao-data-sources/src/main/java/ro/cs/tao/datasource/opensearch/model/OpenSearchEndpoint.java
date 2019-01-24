@@ -17,6 +17,7 @@
 package ro.cs.tao.datasource.opensearch.model;
 
 import ro.cs.tao.datasource.param.DataSourceParameter;
+import ro.cs.tao.datasource.param.ParameterName;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -25,7 +26,7 @@ import java.util.Objects;
 public class OpenSearchEndpoint {
     private String type;
     private String url;
-    private Map<String, DataSourceParameter> parameters;
+    private Map<ParameterName, DataSourceParameter> parameters;
 
     public String getType() { return type; }
     public void setType(String type) { this.type = type; }
@@ -33,12 +34,12 @@ public class OpenSearchEndpoint {
     public String getUrl() { return url; }
     public void setUrl(String url) { this.url = url; }
 
-    public Map<String, DataSourceParameter> getParameters() { return parameters; }
-    public void addParameter(DataSourceParameter parameter) {
+    public Map<ParameterName, DataSourceParameter> getParameters() { return parameters; }
+    public void addParameter(ParameterName name, DataSourceParameter parameter) {
         if (this.parameters == null) {
             this.parameters = new HashMap<>();
         }
-        this.parameters.put(parameter.getName(), parameter);
+        this.parameters.put(name, parameter);
     }
 
     @Override
