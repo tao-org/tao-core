@@ -554,12 +554,12 @@ public class PersistenceManager implements MessagePersister {
         return executionTaskManager.get(id);
     }
 
-    public ExecutionTask getTaskByJobAndNode(long jobId, long nodeId) {
-        return executionTaskManager.getTaskByJobAndNode(jobId, nodeId);
+    public ExecutionTask getTaskByJobAndNode(long jobId, long nodeId, int instanceId) {
+        return executionTaskManager.getTaskByJobAndNode(jobId, nodeId, instanceId);
     }
 
-    public ExecutionTask getTaskByGroupAndNode(long groupId, long nodeId) {
-        return executionTaskManager.getTaskByGroupAndNode(groupId, nodeId);
+    public ExecutionTask getTaskByGroupAndNode(long groupId, long nodeId, int instanceId) {
+        return executionTaskManager.getTaskByGroupAndNode(groupId, nodeId, instanceId);
     }
 
     public ExecutionTask getTaskByResourceId(String id) throws PersistenceException {

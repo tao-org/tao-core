@@ -22,6 +22,8 @@ import ro.cs.tao.eodata.enums.Visibility;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.Map;
 import java.util.Objects;
@@ -39,6 +41,7 @@ public class EOProduct extends EOData implements Serializable {
     private int height;
     private long approximateSize;
     private Date processingDate;
+    private URI quicklookLocation;
 
     //region Getters and setters
     public SensorType getSensorType() {
@@ -89,6 +92,14 @@ public class EOProduct extends EOData implements Serializable {
         if (value != null) {
             this.productType = StringUtils.capitalize(value.replace("-", ""));
         }
+    }
+
+    public String getQuicklookLocation() {
+        return quicklookLocation != null ? quicklookLocation.toString() : null;
+    }
+
+    public void setQuicklookLocation(String location) throws URISyntaxException {
+        this.quicklookLocation = new URI(location);
     }
 
     public long getApproximateSize() {
