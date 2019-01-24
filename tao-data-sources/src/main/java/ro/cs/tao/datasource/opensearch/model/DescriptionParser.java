@@ -21,6 +21,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 import ro.cs.tao.datasource.param.DataSourceParameter;
+import ro.cs.tao.datasource.param.ParameterName;
 import ro.cs.tao.datasource.remote.result.ParseException;
 
 import javax.xml.parsers.SAXParser;
@@ -50,7 +51,8 @@ public class DescriptionParser {
     private class Handler extends DefaultHandler {
         private OpenSearchService service;
         private OpenSearchEndpoint currentEndpoint;
-        private String currentParameter;
+        private ParameterName currentParameter;
+        private Class currentParamClass;
         private List<String> currentOptions;
         private StringBuilder buffer;
 
@@ -79,8 +81,9 @@ public class DescriptionParser {
                     this.currentEndpoint.setUrl(url);
                     break;
                 case "Parameter":
-                    this.currentParameter = attributes.getValue("name");
-                    Class paramClass = attributes.getValue("pattern") != null && attributes.getValue("pattern").equals("[0-9]+") ?
+                    String attributeValue = attributes.getValue("name");
+                    this.currentParameter = ParameterName.create(attributeValue, attributeValue, attributes.getValue("title"));
+                    this.currentParamClass = attributes.getValue("pattern") != null && attributes.getValue("pattern").equals("[0-9]+") ?
                             Integer.class :
                             attributes.getValue("minInclusive") != null || attributes.getValue("minExclusive") != null ?
                                     Float.class :
@@ -88,7 +91,6 @@ public class DescriptionParser {
                                             (attributes.getValue("value").startsWith("{time:") ||
                                                     attributes.getValue("value").startsWith("{date:")) ?
                                             Date.class : String.class;
-                    this.currentEndpoint.addParameter(new DataSourceParameter(this.currentParameter, paramClass, null, false));
                     break;
                 case "Option":
                     if (this.currentOptions == null) {
@@ -121,11 +123,16 @@ public class DescriptionParser {
                     break;
                 case "Parameter":
                     if (this.currentOptions != null) {
-                        this.currentEndpoint.addParameter(
-                                new DataSourceParameter(this.currentParameter,
-                                                        String.class, null, false,
-                                                        this.currentOptions.toArray(new Object[0])));
+                        this.currentEndpoint.addParameter(this.currentParameter,
+                                                          new DataSourceParameter(this.currentParameter.getRemoteName(),
+                                                                                  String.class, null, false,
+                                                                                  this.currentOptions.toArray(new Object[0])));
                         this.currentOptions = null;
+                    } else {
+                        this.currentEndpoint.addParameter(this.currentParameter,
+                                                          new DataSourceParameter(this.currentParameter.getRemoteName(),
+                                                                                  this.currentParamClass, null, false));
+                        this.currentParamClass = null;
                     }
                     break;
             }

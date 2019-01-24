@@ -17,6 +17,7 @@ package ro.cs.tao.datasource;
 
 import org.apache.http.auth.UsernamePasswordCredentials;
 import ro.cs.tao.datasource.param.DataSourceParameter;
+import ro.cs.tao.datasource.param.ParameterName;
 import ro.cs.tao.datasource.param.ParameterProvider;
 
 import java.util.Map;
@@ -79,8 +80,8 @@ public abstract class AbstractDataSource<Q extends DataQuery> extends DataSource
     }
 
     @Override
-    public Map<String, Map<String, DataSourceParameter>> getSupportedParameters() {
-        Map<String, Map<String, DataSourceParameter>> descriptors = null;
+    public Map<String, Map<ParameterName, DataSourceParameter>> getSupportedParameters() {
+        Map<String, Map<ParameterName, DataSourceParameter>> descriptors = null;
         if (this.parameterProvider != null) {
             descriptors = this.parameterProvider.getSupportedParameters();
         }

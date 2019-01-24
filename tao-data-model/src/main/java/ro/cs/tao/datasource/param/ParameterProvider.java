@@ -29,7 +29,7 @@ public interface ParameterProvider {
     /**
      * Returns the query parameters for all the sensors supported by this data source
      */
-    Map<String, Map<String, DataSourceParameter>> getSupportedParameters();
+    Map<String, Map<ParameterName, DataSourceParameter>> getSupportedParameters();
 
     /**
      * Returns the sensors supported by this data source

@@ -17,6 +17,7 @@ package ro.cs.tao.datasource;
 
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.datasource.param.DataSourceParameter;
+import ro.cs.tao.datasource.param.ParameterName;
 import ro.cs.tao.datasource.util.NetUtils;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
@@ -36,7 +37,7 @@ public class DataSourceManager {
     private static final int DEFAULT_MAX_CONNECTIONS = 1;
     private static final int DEFAULT_RETRY_INTERVAL = 60;
     private final ServiceRegistry<DataSource> registry;
-    private final Map<Map.Entry<String, String>, Map<String, DataSourceParameter>> registeredSources;
+    private final Map<Map.Entry<String, String>, Map<ParameterName, DataSourceParameter>> registeredSources;
 
     static {
         instance = new DataSourceManager();
@@ -69,7 +70,7 @@ public class DataSourceManager {
             for (String sensor : sensors) {
                 Map.Entry<String, String> key = new AbstractMap.SimpleEntry<>(sensor, dsName);
                 if (!this.registeredSources.containsKey(key)) {
-                    final Map<String, Map<String, DataSourceParameter>> parameters = ds.getSupportedParameters();
+                    final Map<String, Map<ParameterName, DataSourceParameter>> parameters = ds.getSupportedParameters();
                     this.registeredSources.put(key, parameters.get(sensor));
                 }
             }
@@ -143,6 +144,11 @@ public class DataSourceManager {
      * @param dataSourceName    The data source name
      */
     public Map<String, DataSourceParameter> getSupportedParameters(String sensorName, String dataSourceName) {
-        return this.registeredSources.get(new AbstractMap.SimpleEntry<>(sensorName, dataSourceName));
+        Map<ParameterName, DataSourceParameter> map = this.registeredSources.get(new AbstractMap.SimpleEntry<>(sensorName, dataSourceName));
+        Map<String, DataSourceParameter> results = new LinkedHashMap<>();
+        for (Map.Entry<ParameterName, DataSourceParameter> entry : map.entrySet()) {
+            results.put(entry.getKey().getSystemName(), entry.getValue());
+        }
+        return results;
     }
 }
