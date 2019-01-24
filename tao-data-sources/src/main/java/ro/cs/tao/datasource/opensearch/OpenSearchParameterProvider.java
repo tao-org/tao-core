@@ -24,6 +24,7 @@ import ro.cs.tao.datasource.opensearch.model.DescriptionParser;
 import ro.cs.tao.datasource.opensearch.model.OpenSearchEndpoint;
 import ro.cs.tao.datasource.opensearch.model.OpenSearchService;
 import ro.cs.tao.datasource.param.DataSourceParameter;
+import ro.cs.tao.datasource.param.ParameterName;
 import ro.cs.tao.datasource.param.ParameterProvider;
 import ro.cs.tao.datasource.util.HttpMethod;
 import ro.cs.tao.datasource.util.NetUtils;
@@ -36,7 +37,7 @@ import java.util.Map;
 public abstract class OpenSearchParameterProvider implements ParameterProvider {
 
     protected String[] sensors;
-    protected Map<String, Map<String, DataSourceParameter>> parameters;
+    protected Map<String, Map<ParameterName, DataSourceParameter>> parameters;
     protected Map<String, ProductFetchStrategy> productFetchers;
 
     private OpenSearchService searchService;
@@ -54,7 +55,7 @@ public abstract class OpenSearchParameterProvider implements ParameterProvider {
     }
 
     @Override
-    public Map<String, Map<String, DataSourceParameter>> getSupportedParameters() {
+    public Map<String, Map<ParameterName, DataSourceParameter>> getSupportedParameters() {
         if (this.searchService == null) {
             initialize();
         }
@@ -75,12 +76,14 @@ public abstract class OpenSearchParameterProvider implements ParameterProvider {
         this.searchService = parseDescription(this.url);
         OpenSearchEndpoint endpoint = this.searchService.getEndpoint(this.endpointType);
         if (endpoint != null) {
-            Map<String, DataSourceParameter> parameters = endpoint.getParameters();
-            DataSourceParameter sensorParam = parameters.get(sensorParameterName());
+            Map<ParameterName, DataSourceParameter> parameters = endpoint.getParameters();
+            ParameterName sensorParamName = parameters.keySet().stream()
+                    .filter(k -> k.getRemoteName().equals(sensorParameterName())).findFirst().orElse(null);
+            DataSourceParameter sensorParam = parameters.get(sensorParamName);
             this.parameters = new HashMap<>();
             Object[] values = sensorParam.getValueSet();
-            Map<String, DataSourceParameter> params = new LinkedHashMap<>(parameters);
-            params.remove(sensorParameterName());
+            Map<ParameterName, DataSourceParameter> params = new LinkedHashMap<>(parameters);
+            params.remove(sensorParamName);
             if (values != null) {
                 this.sensors = new String[values.length];
                 for (int i = 0; i < this.sensors.length; i++) {
