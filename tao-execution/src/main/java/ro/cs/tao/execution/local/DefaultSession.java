@@ -53,6 +53,9 @@ public class DefaultSession implements Session {
     public void setNodes(NodeDescription[] nodes) { this.nodes = nodes; }
 
     @Override
+    public String serviceName() { return "NoCRM"; }
+
+    @Override
     public void init(String contact) throws DrmaaException {
         synchronized (this) {
             this.initialized = true;
