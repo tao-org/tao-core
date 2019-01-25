@@ -53,7 +53,7 @@ import java.util.List;
  * @version 1.0
  */
 
-public class AbstractSession implements Session {
+public abstract class AbstractSession implements Session {
 
     /**
      * Creates a new instance of AbstractSession
