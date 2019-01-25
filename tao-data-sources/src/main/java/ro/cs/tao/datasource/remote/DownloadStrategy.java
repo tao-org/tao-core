@@ -203,11 +203,9 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         }
         activityStart(product.getName());
         try {
-            String productUrl = getProductUrl(product).toLowerCase();
-            boolean isArchive = productUrl.endsWith(".zip") || productUrl.endsWith(".tar.gz")
-                    || productUrl.endsWith("$value");
             currentProduct = product;
-            currentProductProgress = new ProductProgress(currentProduct.getApproximateSize(), isArchive);
+            currentProductProgress = new ProductProgress(currentProduct.getApproximateSize(),
+                                                         adjustProductLength());
             Path file;
             final Path destPath = Paths.get(destination);
             FileUtilities.ensureExists(destPath);
@@ -266,6 +264,15 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     protected void checkCancelled() throws InterruptedException {
         if (cancelled) {
             throw new InterruptedException();
+        }
+    }
+
+    protected boolean adjustProductLength() {
+        if (this.currentProduct != null) {
+            String url = getProductUrl(this.currentProduct);
+            return url.endsWith(".zip") || url.endsWith(".tar.gz");
+        } else {
+            return false;
         }
     }
 
