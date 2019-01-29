@@ -65,6 +65,8 @@ public class ExecutionsManager {
         executor.resume(task);
     }
 
+    public Set<Executor> getRegisteredExecutors() { return this.services; }
+
     private Executor getExecutor(ExecutionTask task) {
         Optional<Executor> optional;
         if (task instanceof ProcessingExecutionTask) {
