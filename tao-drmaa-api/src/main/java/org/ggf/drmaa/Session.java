@@ -629,4 +629,6 @@ public interface Session {
      *
      */
     String getDrmaaImplementation();
+
+    String serviceName();
 }

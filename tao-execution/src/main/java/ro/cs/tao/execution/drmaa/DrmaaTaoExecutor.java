@@ -193,6 +193,10 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
     @Override
     public String defaultId() { return "DRMAAExecutor"; }
 
+    public String getDRMName() { return session != null ? session.serviceName() : "n/a"; }
+
+    public String getDRMVersion() { return session != null ? session.getVersion().toString() : "n/a"; }
+
     private JobTemplate createJobTemplate(ProcessingExecutionTask task) throws DrmaaException, PersistenceException {
         // Get from the component the execution command
         Container container;
