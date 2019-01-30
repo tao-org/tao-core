@@ -1,12 +1,12 @@
 -- trigger that updates the "modified" column value in "tao.execution_node" table when a node is updated
 
 -- the trigger function
-CREATE OR REPLACE FUNCTION tao.execution_node_update()
+CREATE OR REPLACE FUNCTION topology.execution_node_update()
   RETURNS trigger AS
 $BODY$
 BEGIN
  IF NEW IS DISTINCT FROM OLD THEN
-   UPDATE tao.execution_node SET modified = now() WHERE tao.execution_node.id = NEW.id;
+   UPDATE topology.node SET modified = now() WHERE topology.node.id = NEW.id;
  END IF;
  
  RETURN NEW;
@@ -18,5 +18,5 @@ COST 100;
 
 -- the trigger itself
 CREATE TRIGGER execution_node_update_trigger AFTER UPDATE
-ON tao.execution_node
-FOR EACH ROW EXECUTE PROCEDURE tao.execution_node_update();
+ON topology.node
+FOR EACH ROW EXECUTE PROCEDURE topology.execution_node_update();

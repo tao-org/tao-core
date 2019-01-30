@@ -57,6 +57,10 @@ public class UserManager {
 
     //region User
 
+    public boolean login(String user, String password) {
+        return userRepository.login(user, password) != null;
+    }
+
     @Transactional
     public User addNewUser(final User newUserInfo) throws PersistenceException {
         if (newUserInfo == null) {

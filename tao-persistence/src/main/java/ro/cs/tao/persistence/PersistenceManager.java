@@ -708,7 +708,8 @@ public class PersistenceManager implements MessagePersister {
     }
 
     public boolean checkLoginCredentials(String userName, String password) {
-        return userManager.checkLoginCredentials(userName, password);
+        //return userManager.checkLoginCredentials(userName, password);
+        return userManager.login(userName, Crypto.encrypt(password, userName));
     }
 
     public User updateUser(User updatedInfo, boolean fromAdmin) throws PersistenceException {

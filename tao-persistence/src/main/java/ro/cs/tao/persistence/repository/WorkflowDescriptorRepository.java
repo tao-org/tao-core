@@ -29,20 +29,20 @@ public interface WorkflowDescriptorRepository extends PagingAndSortingRepository
 
     Optional<WorkflowDescriptor> findByName(String name);
 
-    @Query(value = "SELECT * from tao.workflow_graph WHERE username = :user AND status_id = :statusId " +
+    @Query(value = "SELECT * from workflow.graph WHERE username = :user AND status_id = :statusId " +
             "ORDER BY created DESC", nativeQuery = true)
     List<WorkflowDescriptor> getUserWorkflowsByStatus(@Param("user") String user, @Param("statusId") int statusId);
 
-    @Query(value = "SELECT * from tao.workflow_graph WHERE username = :user AND visibility_id = :visibilityId " +
+    @Query(value = "SELECT * from workflow.graph WHERE username = :user AND visibility_id = :visibilityId " +
             "ORDER BY created DESC", nativeQuery = true)
     List<WorkflowDescriptor> getUserPublishedWorkflowsByVisibility(@Param("user") String user,
                                                                    @Param("visibilityId") int visibilityId);
 
-    @Query(value = "SELECT * from tao.workflow_graph WHERE username != :user AND visibility_id = 1 " +
+    @Query(value = "SELECT * from workflow.graph WHERE username != :user AND visibility_id = 1 " +
             "AND status_id = 3 ORDER BY created DESC", nativeQuery = true)
     List<WorkflowDescriptor> getOtherPublicWorkflows(@Param("user") String user);
 
-    @Query(value = "SELECT * from tao.workflow_graph WHERE visibility_id = 1 AND status_id = 3 " +
+    @Query(value = "SELECT * from workflow.graph WHERE visibility_id = 1 AND status_id = 3 " +
             "ORDER BY created DESC", nativeQuery = true)
     List<WorkflowDescriptor> getPublicWorkflows();
 }

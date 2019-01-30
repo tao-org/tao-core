@@ -21,7 +21,7 @@ public interface TagRepository extends PagingAndSortingRepository<Tag, Long> {
      */
     Tag findByText(String tag);
 
-    @Query(value = "SELECT id, tag_type_id, tag FROM tao.tag WHERE tag_type_id = :typeId ORDER BY tag",
+    @Query(value = "SELECT id, tag_type_id, tag FROM common.tag WHERE tag_type_id = :typeId ORDER BY tag",
             nativeQuery = true)
     List<Tag> getTags(@Param("typeId")int tagTypeId);
 }

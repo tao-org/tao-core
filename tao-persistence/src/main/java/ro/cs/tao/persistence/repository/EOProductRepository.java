@@ -22,16 +22,16 @@ import java.util.Set;
 @Transactional
 public interface EOProductRepository extends PagingAndSortingRepository<EOProduct, String> {
 
-    @Query(value = "SELECT * FROM tao.raster_data_product WHERE CONCAT(location, entry_point) IN (:locations)",
+    @Query(value = "SELECT * FROM product.raster_data_product WHERE CONCAT(location, entry_point) IN (:locations)",
             nativeQuery = true)
     List<EOProduct> getProductsByLocation(@Param("locations") Set<String> locations);
 
-    @Query(value = "SELECT * FROM tao.raster_data_product WHERE location = :location", nativeQuery = true)
+    @Query(value = "SELECT * FROM product.raster_data_product WHERE location = :location", nativeQuery = true)
     List<EOProduct> getProductsByLocation(@Param("location") String location);
 
-    @Query(value = "SELECT * FROM tao.raster_data_product WHERE visibility_id = 1", nativeQuery = true)
+    @Query(value = "SELECT * FROM product.raster_data_product WHERE visibility_id = 1", nativeQuery = true)
     List<EOProduct> getPublicProducts();
 
-    @Query(value = "SELECT name FROM tao.raster_data_product WHERE name IN (:names)", nativeQuery = true)
+    @Query(value = "SELECT name FROM product.raster_data_product WHERE name IN (:names)", nativeQuery = true)
     List<String> getExistingProductNames(@Param("names") Set<String> names);
 }
