@@ -34,11 +34,11 @@ public interface AuxDataRepository extends PagingAndSortingRepository<AuxiliaryD
 
     AuxiliaryData findByLocation(String location);
 
-    @Query(value = "SELECT * FROM tao.auxiliary_data WHERE username = :userName ORDER BY location",
+    @Query(value = "SELECT * FROM product.auxiliary_data WHERE username = :userName ORDER BY location",
             nativeQuery = true)
     List<AuxiliaryData> getAuxiliaryDataByUser(@Param("userName") String userName);
 
-    @Query(value = "SELECT * FROM tao.auxiliary_data WHERE username = :userName AND location IN (:locations) " +
+    @Query(value = "SELECT * FROM product.auxiliary_data WHERE username = :userName AND location IN (:locations) " +
             "ORDER BY location",
             nativeQuery = true)
     List<AuxiliaryData> getAuxiliaryDataByLocation(@Param("userName") String userName,

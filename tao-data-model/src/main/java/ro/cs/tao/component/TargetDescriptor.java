@@ -144,7 +144,7 @@ public class TargetDescriptor extends StringIdentifiable {
     }
 
     @Override
-    protected TargetDescriptor clone() throws CloneNotSupportedException {
+    public TargetDescriptor clone() {
         TargetDescriptor clone = new TargetDescriptor();
         clone.name = this.name;
         clone.dataDescriptor = new DataDescriptor();

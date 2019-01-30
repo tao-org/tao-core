@@ -40,7 +40,7 @@
             </basic>
 
             <element-collection name="attributes" target-class="ro.cs.tao.eodata.Attribute" access="PROPERTY" fetch="EAGER">
-                <collection-table name="tao.data_product_attributes" >
+                <collection-table name="product.data_product_attributes" >
                     <join-column name="data_product_id" referenced-column-name="id" />
                 </collection-table>
             </element-collection>
@@ -69,7 +69,7 @@
                 all correspondant columns must have the same name (and definition) defined here  -->
                 <column name="id" nullable="false" column-definition="bigserial NOT NULL"/>
                 <generated-value strategy="SEQUENCE" generator="dsc_identifier"/>
-                <sequence-generator name="dsc_identifier" sequence-name="tao.user_data_source_connection_id_seq" allocation-size="1" />
+                <sequence-generator name="dsc_identifier" sequence-name="execution.user_data_source_connection_id_seq" allocation-size="1" />
             </id>
         </attributes>
     </mapped-superclass>
@@ -100,7 +100,7 @@
             </basic>
 
             <many-to-many name="sources" fetch="LAZY">
-                <join-table name="tao.processing_component_sources">
+                <join-table name="component.processing_component_sources">
                     <join-column name="processing_component_id" referenced-column-name="id"/>
                     <inverse-join-column name="source_descriptor_id" referenced-column-name="id"/>
                 </join-table>
@@ -110,7 +110,7 @@
             </many-to-many>
 
             <many-to-many name="targets" fetch="LAZY">
-                <join-table name="tao.processing_component_targets">
+                <join-table name="component.processing_component_targets">
                     <join-column name="processing_component_id" referenced-column-name="id"/>
                     <inverse-join-column name="target_descriptor_id" referenced-column-name="id"/>
                 </join-table>
@@ -135,7 +135,7 @@
     </mapped-superclass>
 
     <entity class="ro.cs.tao.eodata.EOProduct" access="PROPERTY">
-        <table name="tao.raster_data_product"/>
+        <table name="product.raster_data_product"/>
         <!-- Converter DataFormatConverter not seen in mapped superclass, therefore declared here -->
         <convert converter="ro.cs.tao.persistence.convert.DataFormatConverter" attribute-name="formatType" />
         <convert converter="ro.cs.tao.persistence.convert.SensorTypeConverter" attribute-name="sensorType" />
@@ -169,7 +169,7 @@
     </entity>
 
     <entity class="ro.cs.tao.eodata.VectorData" access="PROPERTY">
-        <table name="tao.vector_data_product"/>
+        <table name="product.vector_data_product"/>
         <!-- Converter DataFormatConverter not seen in mapped superclass, therefore declared here -->
         <convert converter="ro.cs.tao.persistence.convert.DataFormatConverter" attribute-name="formatType" />
         <convert converter="ro.cs.tao.persistence.convert.VisibilityConverter" attribute-name="visibility" />
@@ -177,7 +177,7 @@
     </entity>
 
     <entity class="ro.cs.tao.eodata.AuxiliaryData" access="PROPERTY">
-        <table name="tao.auxiliary_data"/>
+        <table name="product.auxiliary_data"/>
         <attributes>
             <basic name="location">
                 <column name="location" nullable="false" column-definition="character varying NOT NULL"/>
@@ -198,7 +198,7 @@
     </entity>
 
     <entity class="ro.cs.tao.topology.NodeDescription" access="PROPERTY">
-        <table name="tao.execution_node"/>
+        <table name="topology.node"/>
         <attributes>
             <basic name="userName">
                 <column name="username" nullable="false" column-definition="character varying(50) NOT NULL"/>
@@ -227,7 +227,7 @@
             </basic>
 
             <element-collection name="servicesStatus" target-class="ro.cs.tao.topology.NodeServiceStatus" access="PROPERTY" fetch="EAGER">
-                <collection-table name="tao.execution_node_service" >
+                <collection-table name="topology.node_service" >
                     <join-column name="host_name" referenced-column-name="id" />
                 </collection-table>
             </element-collection>
@@ -236,12 +236,12 @@
     </entity>
 
     <entity class="ro.cs.tao.topology.ServiceDescription" access="PROPERTY">
-        <table name="tao.service"/>
+        <table name="topology.service"/>
         <attributes>
             <id name="id">
                 <column name="id" nullable="false" column-definition="integer NOT NULL"/>
                 <generated-value strategy="SEQUENCE" generator="service_identifier"/>
-                <sequence-generator name="service_identifier" sequence-name="tao.service_id_seq" allocation-size="1" />
+                <sequence-generator name="service_identifier" sequence-name="topology.service_id_seq" allocation-size="1" />
             </id>
             <basic name="name">
                 <column name="name" nullable="false" column-definition="character varying(250) NOT NULL"/>
@@ -256,7 +256,7 @@
     </entity>
 
     <entity class="ro.cs.tao.docker.Container" access="PROPERTY">
-        <table name="tao.container"/>
+        <table name="component.container"/>
         <attributes>
             <basic name="name">
                 <column name="name" nullable="false" column-definition="character varying(1024) NOT NULL"/>
@@ -272,7 +272,7 @@
             </basic>
             
             <element-collection name="applications" target-class="ro.cs.tao.docker.Application" access="PROPERTY" fetch="EAGER">
-                <collection-table name="tao.container_applications" >
+                <collection-table name="component.container_applications" >
                     <join-column name="container_id" referenced-column-name="id" />
                 </collection-table>
             </element-collection>
@@ -280,7 +280,7 @@
     </entity>
 
     <entity class="ro.cs.tao.component.ProcessingComponent" access="PROPERTY">
-        <table name="tao.processing_component"/>
+        <table name="component.processing_component"/>
 
         <entity-listeners>
             <entity-listener class="ro.cs.tao.persistence.audit.ProcessingComponentListener"/>
@@ -328,7 +328,7 @@
             </basic>
 
             <many-to-many name="parameterDescriptors" fetch="EAGER">
-                <join-table name="tao.component_parameters">
+                <join-table name="component.component_parameters">
                     <join-column name="processing_component_id" referenced-column-name="id"/>
                     <inverse-join-column name="processing_parameter_id" referenced-column-name="id"/>
                 </join-table>
@@ -338,7 +338,7 @@
             </many-to-many>
 
             <element-collection name="variables" target-class="ro.cs.tao.component.Variable" access="PROPERTY" fetch="EAGER">
-                <collection-table name="tao.component_variables">
+                <collection-table name="component.component_variables">
                     <join-column name="processing_component_id" referenced-column-name="id" updatable="true" />
                 </collection-table>
             </element-collection>
@@ -350,17 +350,17 @@
     </entity>
 
     <entity class="ro.cs.tao.component.GroupComponent" access="PROPERTY">
-        <table name="tao.group_component"/>
+        <table name="component.group_component"/>
 
         <association-override name="sources">
-            <join-table name="tao.group_component_sources">
+            <join-table name="component.group_component_sources">
                 <join-column name="group_component_id" referenced-column-name="id"/>
                 <inverse-join-column name="source_descriptor_id" referenced-column-name="id"/>
             </join-table>
         </association-override>
 
         <association-override name="targets">
-            <join-table name="tao.group_component_targets">
+            <join-table name="component.group_component_targets">
                 <join-column name="group_component_id" referenced-column-name="id"/>
                 <inverse-join-column name="target_descriptor_id" referenced-column-name="id"/>
             </join-table>
@@ -383,8 +383,49 @@
         </attributes>
     </entity>
 
+    <entity class="ro.cs.tao.datasource.DataSourceComponentGroup" access="PROPERTY">
+        <table name="component.data_source_component_group"/>
+
+        <association-override name="sources">
+            <join-table name="component.data_source_component_group_sources">
+                <join-column name="data_source_component_group_id" referenced-column-name="id"/>
+                <inverse-join-column name="source_descriptor_id" referenced-column-name="id"/>
+            </join-table>
+        </association-override>
+
+        <association-override name="targets">
+            <join-table name="component.data_source_component_group_targets">
+                <join-column name="data_source_component_group_id" referenced-column-name="id"/>
+                <inverse-join-column name="target_descriptor_id" referenced-column-name="id"/>
+            </join-table>
+        </association-override>
+
+        <convert converter="ro.cs.tao.persistence.convert.ProcessingComponentVisibilityConverter" attribute-name="visibility" />
+
+        <attributes>
+            <basic name="visibility">
+                <column name="visibility_id" nullable="false" column-definition="integer not null"/>
+            </basic>
+            <basic name="parallelism">
+                <column name="parallelism" nullable="false" column-definition="integer NULL DEFAULT 1"/>
+            </basic>
+            <basic name="active">
+                <column name="active" nullable="true" column-definition="boolean NULL DEFAULT true"/>
+            </basic>
+            <many-to-many name="dataSourceComponents" fetch="EAGER">
+                <join-table name="component.data_source_component_group_components">
+                    <join-column name="data_source_component_group_id" referenced-column-name="id"/>
+                    <inverse-join-column name="data_source_component_id" referenced-column-name="id"/>
+                </join-table>
+                <cascade>
+                    <cascade-all/>
+                </cascade>
+            </many-to-many>
+        </attributes>
+    </entity>
+
     <entity class="ro.cs.tao.component.ParameterDescriptor" access="PROPERTY">
-        <table name="tao.processing_parameter"/>
+        <table name="component.processing_parameter"/>
         <!-- set inheritance to single table, since TemplateParameterDescriptor inherits from ParameterDescriptor -->
         <inheritance strategy="SINGLE_TABLE"/>
 
@@ -427,7 +468,7 @@
             </basic>
 
             <element-collection name="dependencies" target-class="ro.cs.tao.component.ParameterDependency" access="PROPERTY" fetch="LAZY">
-                <collection-table name="tao.processing_parameter_dependencies">
+                <collection-table name="component.processing_parameter_dependencies">
                     <join-column name="parameter_id" referenced-column-name="id"/>
                 </collection-table>
             </element-collection>
@@ -447,7 +488,7 @@
 
         <attributes>
             <many-to-many name="parameters" fetch="EAGER">
-                <join-table name="tao.template_parameter_parameters">
+                <join-table name="component.template_parameter_parameters">
                     <join-column name="template_parameter_id" referenced-column-name="id"/>
                     <inverse-join-column name="regular_parameter_id" referenced-column-name="id"/>
                 </join-table>
@@ -463,17 +504,17 @@
     </entity>
 
     <entity class="ro.cs.tao.datasource.DataSourceComponent" access="PROPERTY">
-        <table name="tao.data_source_component"/>
+        <table name="component.data_source_component"/>
 
         <association-override name="sources">
-            <join-table name="tao.data_source_component_sources">
+            <join-table name="component.data_source_component_sources">
                 <join-column name="data_source_component_id" referenced-column-name="id"/>
                 <inverse-join-column name="source_descriptor_id" referenced-column-name="id"/>
             </join-table>
         </association-override>
 
         <association-override name="targets">
-            <join-table name="tao.data_source_component_targets">
+            <join-table name="component.data_source_component_targets">
                 <join-column name="data_source_component_id" referenced-column-name="id"/>
                 <inverse-join-column name="target_descriptor_id" referenced-column-name="id"/>
             </join-table>
@@ -507,7 +548,7 @@
     </entity>
 
     <entity class="ro.cs.tao.execution.model.DataSourceConnection" access="PROPERTY">
-        <table name="tao.user_data_source_connection"/>
+        <table name="execution.user_data_source_connection"/>
         <attributes>
             <basic name="userId">
                 <column name="user_id" nullable="false" column-definition="varchar(50) NOT NULL"/>
@@ -531,7 +572,7 @@
     </entity>
 
     <entity class="ro.cs.tao.execution.model.ExecutionTask" access="PROPERTY">
-        <table name="tao.task"/>
+        <table name="execution.task"/>
         <!-- set inheritance to single table, since ExecutionGroup           inherits from ExecutionTask,
                                                     ProcessingExecutionTask  inherits from ExecutionTask,
                                                     DataSourceExecutionTask  inherits from ExecutionTask-->
@@ -585,13 +626,13 @@
             </many-to-one>
 
             <element-collection name="inputParameterValues" target-class="ro.cs.tao.component.Variable" access="PROPERTY" fetch="EAGER">
-                <collection-table name="tao.task_inputs" >
+                <collection-table name="execution.task_input" >
                     <join-column name="task_id" referenced-column-name="id" />
                 </collection-table>
             </element-collection>
 
             <element-collection name="outputParameterValues" target-class="ro.cs.tao.component.Variable" access="PROPERTY" fetch="LAZY">
-                <collection-table name="tao.task_output" >
+                <collection-table name="execution.task_output" >
                     <join-column name="task_id" referenced-column-name="id" />
                 </collection-table>
             </element-collection>
@@ -632,9 +673,9 @@
 
         <attributes>
             <many-to-many name="tasks" fetch="LAZY"> <!-- target-entity="ro.cs.tao.execution.model.ProcessingExecutionTask">-->
-                <join-table name="tao.execution_group_tasks">
-                    <join-column name="execution_group_id" referenced-column-name="id"/>
-                    <inverse-join-column name="execution_task_id" referenced-column-name="id"/>
+                <join-table name="execution.task_group">
+                    <join-column name="group_id" referenced-column-name="id"/>
+                    <inverse-join-column name="task_id" referenced-column-name="id"/>
                 </join-table>
                 <cascade>
                     <cascade-all/>
@@ -644,7 +685,7 @@
     </entity>
 
     <entity class="ro.cs.tao.execution.model.ExecutionJob" access="PROPERTY">
-        <table name="tao.job"/>
+        <table name="execution.job"/>
         <convert converter="ro.cs.tao.persistence.convert.ExecutionStatusConverter" attribute-name="executionStatus" />
         <attributes>
             <basic name="name">
@@ -674,7 +715,7 @@
     </entity>
 
     <entity class="ro.cs.tao.messaging.Message" access="PROPERTY">
-        <table name="tao.notification"/>
+        <table name="common.notification"/>
         <attributes>
             <id name="timestamp">
                 <column name="timestamp" nullable="false" column-definition="bigint NOT NULL"/>
@@ -696,7 +737,7 @@
     </entity>
 
     <entity class="ro.cs.tao.workflow.WorkflowDescriptor" access="PROPERTY">
-        <table name="tao.workflow_graph"/>
+        <table name="workflow.graph"/>
         <convert converter="ro.cs.tao.persistence.convert.WorkflowGraphStatusConverter" attribute-name="status" />
         <convert converter="ro.cs.tao.persistence.convert.VisibilityConverter" attribute-name="visibility" />
         <convert converter="ro.cs.tao.persistence.convert.StringListConverter" attribute-name="tags"/>
@@ -743,7 +784,7 @@
 
 
     <entity class="ro.cs.tao.workflow.WorkflowNodeDescriptor" access="PROPERTY">
-        <table name="tao.graph_node"/>
+        <table name="workflow.graph_node"/>
         <!-- set inheritance to single table, since WorkflowNodeGroupDescriptor inherits from WorkflowNodeDescriptor -->
         <inheritance strategy="SINGLE_TABLE"/>
         <!-- avoid default DTYPE -->
@@ -782,7 +823,7 @@
             </many-to-one>
 
             <element-collection name="incomingLinks" target-class="ro.cs.tao.component.ComponentLink" access="PROPERTY" fetch="LAZY">
-                <collection-table name="tao.component_link">
+                <collection-table name="workflow.component_link">
                     <join-column name="target_graph_node_id" referenced-column-name="id"/>
                 </collection-table>
             </element-collection>
@@ -799,7 +840,7 @@
 
         <attributes>
             <many-to-many name="nodes" fetch="EAGER">
-                <join-table name="tao.graph_node_group_nodes">
+                <join-table name="workflow.graph_node_group_nodes">
                     <join-column name="graph_node_group_id" referenced-column-name="id"/>
                     <inverse-join-column name="graph_node_id" referenced-column-name="id"/>
                 </join-table>
@@ -815,7 +856,7 @@
 
 
     <entity class="ro.cs.tao.component.SourceDescriptor" access="PROPERTY">
-        <table name="tao.source_descriptor"/>
+        <table name="component.source_descriptor"/>
         <convert converter="ro.cs.tao.persistence.convert.ConstraintsConverter" attribute-name="constraints"/>
         <attributes>
             <basic name="parentId">
@@ -837,7 +878,7 @@
     </entity>
 
     <entity class="ro.cs.tao.component.TargetDescriptor" access="PROPERTY">
-        <table name="tao.target_descriptor"/>
+        <table name="component.target_descriptor"/>
         <convert converter="ro.cs.tao.persistence.convert.ConstraintsConverter" attribute-name="constraints"/>
         <attributes>
             <basic name="parentId">
@@ -859,13 +900,13 @@
     </entity>
     
     <entity class="ro.cs.tao.execution.model.Query" access="PROPERTY">
-        <table name="tao.query"/>
+        <table name="workflow.query"/>
         <convert converter="ro.cs.tao.persistence.convert.QueryValuesMapConverter" attribute-name="values"/>
         <attributes>
             <id name="id">
                 <column name="id" nullable="false" column-definition="bigserial NOT NULL"/>
                 <generated-value strategy="SEQUENCE" generator="query_identifier"/>
-                <sequence-generator name="query_identifier" sequence-name="tao.query_id_seq" allocation-size="1" />
+                <sequence-generator name="query_identifier" sequence-name="workflow.query_id_seq" allocation-size="1" />
             </id>
             <basic name="label">
                 <column name="label" nullable="true" column-definition="text"/>
@@ -910,13 +951,13 @@
     </entity>
 
     <entity class="ro.cs.tao.user.User" access="PROPERTY">
-        <table name="tao.user"/>
+        <table name="usr.user"/>
         <convert converter="ro.cs.tao.persistence.convert.UserStatusConverter" attribute-name="status" />
         <attributes>
             <id name="id">
                 <column name="id" nullable="false" column-definition="serial NOT NULL"/>
                 <generated-value strategy="SEQUENCE" generator="user_identifier"/>
-                <sequence-generator name="user_identifier" sequence-name="tao.user_id_seq" allocation-size="1" />
+                <sequence-generator name="user_identifier" sequence-name="usr.user_id_seq" allocation-size="1" />
             </id>
             <basic name="username">
                 <column name="username" nullable="false" column-definition="character varying(50) NOT NULL"/>
@@ -959,7 +1000,7 @@
             </basic>
 
             <many-to-many name="groups" fetch="LAZY">
-                <join-table name="tao.user_group">
+                <join-table name="usr.user_group">
                     <join-column name="user_id" referenced-column-name="id"/>
                     <inverse-join-column name="group_id" referenced-column-name="id"/>
                 </join-table>
@@ -969,7 +1010,7 @@
             </many-to-many>
 
             <element-collection name="preferences" target-class="ro.cs.tao.user.UserPreference" access="PROPERTY" fetch="EAGER">
-                <collection-table name="tao.user_prefs">
+                <collection-table name="usr.user_prefs">
                     <join-column name="user_id" referenced-column-name="id" updatable="true" />
                 </collection-table>
             </element-collection>
@@ -977,13 +1018,13 @@
     </entity>
 
     <entity class="ro.cs.tao.Tag" access="PROPERTY">
-        <table name="tao.tag"/>
+        <table name="common.tag"/>
         <convert converter="ro.cs.tao.persistence.convert.TagTypeConverter" attribute-name="tagType"/>
         <attributes>
             <id name="id">
                 <column name="id" nullable="false" column-definition="bigserial NOT NULL"/>
                 <generated-value strategy="SEQUENCE" generator="group_identifier"/>
-                <sequence-generator name="group_identifier" sequence-name="tao.tag_id_seq" allocation-size="1" />
+                <sequence-generator name="group_identifier" sequence-name="common.tag_id_seq" allocation-size="1" />
             </id>
             <basic name="tagType">
                 <column name="tag_type_id" nullable="false" column-definition="integer NOT NULL"/>
@@ -995,12 +1036,12 @@
     </entity>
     
     <entity class="ro.cs.tao.user.Group" access="PROPERTY">
-        <table name="tao.group"/>
+        <table name="usr.group"/>
         <attributes>
             <id name="id">
                 <column name="id" nullable="false" column-definition="serial NOT NULL"/>
                 <generated-value strategy="SEQUENCE" generator="group_identifier"/>
-                <sequence-generator name="group_identifier" sequence-name="tao.group_id_seq" allocation-size="1" />
+                <sequence-generator name="group_identifier" sequence-name="usr.group_id_seq" allocation-size="1" />
             </id>
             <basic name="name">
                 <column name="name" nullable="false" column-definition="character varying(50) NOT NULL"/>

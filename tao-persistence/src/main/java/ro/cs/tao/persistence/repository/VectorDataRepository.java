@@ -22,7 +22,7 @@ import java.util.Set;
 @Transactional
 public interface VectorDataRepository extends PagingAndSortingRepository<VectorData, String> {
 
-    @Query(value = "SELECT * FROM tao.vector_data_product WHERE CONCAT(location, entry_point) IN (:locations)",
+    @Query(value = "SELECT * FROM product.vector_data_product WHERE CONCAT(location, entry_point) IN (:locations)",
             nativeQuery = true)
     List<VectorData> getProductsByLocation(@Param("locations") Set<String> locations);
 }
