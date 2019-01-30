@@ -3,6 +3,7 @@ package ro.cs.tao.persistence.repository;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.user.User;
@@ -49,7 +50,10 @@ public interface UserRepository extends PagingAndSortingRepository<User, Long> {
      */
     List<User> findByStatus(final UserStatus status);
 
-    @Query(value = "SELECT u.* FROM tao.user u JOIN tao.user_group ug ON ug.user_id = u.id " +
+    @Query(value = "SELECT u.* FROM usr.user u JOIN usr.user_group ug ON ug.user_id = u.id " +
             "WHERE ug.group_id = 1 AND u.status_id = 2", nativeQuery = true)
     List<User> getAdministrators();
+
+    @Query(value = "SELECT id FROM usr.user WHERE username = :usr and password = :pwd", nativeQuery = true)
+    Integer login(@Param("usr") String user, @Param("pwd") String password);
 }

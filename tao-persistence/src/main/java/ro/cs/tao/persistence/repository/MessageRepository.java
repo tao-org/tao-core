@@ -30,6 +30,6 @@ public interface MessageRepository extends PagingAndSortingRepository<Message, S
      */
     Page<Message> findByUser(String userName, Pageable pageRequest);
 
-    @Query(value = "SELECT * FROM tao.notification WHERE username = :user AND read = false", nativeQuery = true)
+    @Query(value = "SELECT * FROM common.notification WHERE username = :user AND read = false", nativeQuery = true)
     List<Message> getUnreadMessages(@Param("user") String userName);
 }

@@ -28,19 +28,19 @@ public interface ExecutionTaskRepository extends PagingAndSortingRepository<Exec
      */
     ExecutionTask findByResourceId(String resourceId);
 
-    @Query(value = "SELECT * from tao.task where job_id = :jobId and graph_node_id = :nodeId and instance_id = :instanceId", nativeQuery = true)
+    @Query(value = "SELECT * from execution.task where job_id = :jobId and graph_node_id = :nodeId and instance_id = :instanceId", nativeQuery = true)
     ExecutionTask findByJobAndWorkflowNode(@Param("jobId") long jobId,
                                            @Param("nodeId") long nodeId,
                                            @Param("instanceId") int instanceId);
 
-    @Query(value = "SELECT * from tao.task where task_group_id = :groupId and graph_node_id = :nodeId and instance_id = :instanceId", nativeQuery = true)
+    @Query(value = "SELECT * from execution.task where task_group_id = :groupId and graph_node_id = :nodeId and instance_id = :instanceId", nativeQuery = true)
     ExecutionTask findByGroupAndWorkflowNode(@Param("groupId") long groupId,
                                              @Param("nodeId") long nodeId,
                                              @Param("instanceId") int instanceId);
 
-    @Query(value = "SELECT * from tao.task where execution_status_id = 2", nativeQuery = true)
+    @Query(value = "SELECT * from execution.task where execution_status_id = 2", nativeQuery = true)
     List<ExecutionTask> getRunningTasks();
 
-    @Query(value = "SELECT * FROM tao.task WHERE discriminator = 11 AND execution_status_id = 2 AND resource_id IS NOT NULL", nativeQuery = true)
+    @Query(value = "SELECT * FROM execution.task WHERE discriminator = 11 AND execution_status_id = 2 AND resource_id IS NOT NULL", nativeQuery = true)
     List<ExecutionTask> getExecutingTasks();
 }

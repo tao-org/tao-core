@@ -144,7 +144,7 @@ public class SourceDescriptor extends StringIdentifiable {
     }
 
     @Override
-    protected SourceDescriptor clone() throws CloneNotSupportedException {
+    public SourceDescriptor clone() {
         SourceDescriptor clone = new SourceDescriptor();
         clone.name = this.name;
         clone.dataDescriptor = new DataDescriptor();
