@@ -1,25 +1,23 @@
-../persistence/scripts/01-role-and-database/01_tao_role.sql
-../persistence/scripts/01-role-and-database/02_taodata.sql
+../persistence/scripts/01-role-and-database/01_01_tao_role.sql
+../persistence/scripts/01-role-and-database/01_02_taodata.sql
 
-../persistence/scripts/02-schema/03-tao.sql;taodata
+../persistence/scripts/02-schema/02_01_schemas.sql;taodata
 
-../persistence/scripts/03-extensions/04_extensions.sql;taodata
+../persistence/scripts/03-extensions/03_01_extensions.sql;taodata
 
-../persistence/scripts/04-tables/05_user_group_tables.sql;taodata
-../persistence/scripts/04-tables/06_processing_components_tables.sql;taodata
-../persistence/scripts/04-tables/07_workflow_execution_tables.sql;taodata
-../persistence/scripts/04-tables/08_data_sources_and_data_products_tables.sql;taodata
+../persistence/scripts/04-tables/04_01_topology_tables.sql;taodata
+../persistence/scripts/04-tables/04_02_common_tables.sql;taodata
+../persistence/scripts/04-tables/04_03_user_tables.sql;taodata
+../persistence/scripts/04-tables/04_04_product_tables.sql;taodata
+../persistence/scripts/04-tables/04_05_component_tables.sql;taodata
+../persistence/scripts/04-tables/04_06_workflow_tables.sql;taodata
+../persistence/scripts/04-tables/04_07_execution_tables.sql;taodata
 
-../persistence/scripts/05-sequences/09_user_group_sequences.sql;taodata
-../persistence/scripts/05-sequences/10_processing_components_sequences.sql;taodata
-../persistence/scripts/05-sequences/11_workflow_execution_sequences.sql;taodata
-../persistence/scripts/05-sequences/12_data_sources_and_data_products_sequences.sql;taodata
+../persistence/scripts/05-grant/05_01_grant_tao.sql;taodata
 
-../persistence/scripts/06-grant/13_grant_tao.sql;taodata
+../persistence/scripts/06-data/06_01_reference_data.sql;taodata
 
-../persistence/scripts/07-settings-data/14_settings_data.sql;taodata
-../persistence/scripts/07-settings-data/14_test_dummy_data.sql;taodata
-
-../persistence/scripts/08-functions-and-triggers/15_trigger_execution_node_update.sql;taodata
-../persistence/scripts/08-functions-and-triggers/16_trigger_processing_component_update.sql;taodata
-../persistence/scripts/08-functions-and-triggers/17_trigger_container_delete.sql;taodata
+../persistence/scripts/07-functions-and-triggers/07_01_trigger_execution_node_update.sql;taodata
+../persistence/scripts/07-functions-and-triggers/07_02_trigger_processing_component_update.sql;taodata
+../persistence/scripts/07-functions-and-triggers/07_03_trigger_container_delete.sql;taodata
+../persistence/scripts/07-functions-and-triggers/07_03_login.sql;taodata
