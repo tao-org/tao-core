@@ -461,11 +461,14 @@ CREATE TABLE component.data_source_component_group
 	copyright text NOT NULL,
 	node_affinity varchar(250) NULL,
 	tags text NULL,
+	username text NOT NULL,
 	created timestamp NULL DEFAULT now(),
     modified timestamp NULL DEFAULT now()
 );
 ALTER TABLE component.data_source_component_group ADD CONSTRAINT PK_data_source_component_group
 	PRIMARY KEY (id);
+ALTER TABLE component.data_source_component_group ADD CONSTRAINT FK_data_source_component_group_user
+	FOREIGN KEY (username) REFERENCES usr.user (username) ON DELETE No Action ON UPDATE No Action;
 
 -------------------------------------------------------------------------------
 -- table: component.data_source_component_group_sources
