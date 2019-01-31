@@ -14,7 +14,12 @@ import java.util.List;
  * @author Cosmin Cara
  */
 public class DataSourceComponentGroup extends TaoComponent {
-   private List<DataSourceComponent> dataSourceComponents;
+    private String userName;
+    private List<DataSourceComponent> dataSourceComponents;
+
+    public String getUserName() { return userName; }
+
+    public void setUserName(String userName) { this.userName = userName; }
 
     public List<DataSourceComponent> getDataSourceComponents() {
         return dataSourceComponents;
