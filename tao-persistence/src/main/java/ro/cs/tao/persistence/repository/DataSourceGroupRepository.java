@@ -14,12 +14,12 @@ import java.util.List;
 @Transactional
 public interface DataSourceGroupRepository extends PagingAndSortingRepository<DataSourceComponentGroup, String> {
 
-    @Query(value = "SELECT g FROM DataSourceComponentGroup g WHERE g.system = false AND g.userName = ?1 ORDER BY dsc.id")
+    @Query(value = "SELECT g FROM DataSourceComponentGroup g WHERE g.userName = ?1 ORDER BY g.label")
     List<DataSourceComponentGroup> getUserDataSourceComponentGroups(String userName);
 
-    @Query(value = "SELECT g FROM DataSourceComponentGroup g WHERE g.system = false ORDER BY dsc.id")
+    @Query(value = "SELECT g FROM DataSourceComponentGroup g ORDER BY g.label")
     List<DataSourceComponentGroup> getDataSourceComponentGroups();
 
-    @Query(value = "SELECT g FROM DataSourceComponentGroup g WHERE g.label = ?1")
+    @Query(value = "SELECT g FROM DataSourceComponentGroup g WHERE g.label = ?1 ORDER BY g.label")
     List<DataSourceComponentGroup> getDataSourceComponentGroupByLabel(String label);
 }
