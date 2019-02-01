@@ -6,7 +6,7 @@ import ro.cs.tao.persistence.repository.DataSourceGroupRepository;
 
 import java.util.List;
 
-@Component("dataSourceComponentManager")
+@Component("dataSourceGroupManager")
 public class DataSourceGroupManager extends TaoComponentManager<DataSourceComponentGroup, DataSourceGroupRepository> {
 
     public List<DataSourceComponentGroup> getUserDataSourceComponents(String userName) {
