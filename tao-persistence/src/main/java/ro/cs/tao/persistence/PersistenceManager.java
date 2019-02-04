@@ -27,6 +27,7 @@ import ro.cs.tao.component.GroupComponent;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.enums.TagType;
 import ro.cs.tao.datasource.DataSourceComponent;
+import ro.cs.tao.datasource.DataSourceComponentGroup;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.eodata.AuxiliaryData;
 import ro.cs.tao.eodata.EOProduct;
@@ -82,6 +83,9 @@ public class PersistenceManager implements MessagePersister {
 
     @Autowired
     private DataSourceComponentManager dataSourceComponentManager;
+
+    @Autowired
+    private DataSourceGroupManager dataSourceGroupManager;
 
     private SimpleCache.Cache<String, ProcessingComponent> componentCache;
 
@@ -412,6 +416,45 @@ public class PersistenceManager implements MessagePersister {
 
     public DataSourceComponent updateDataSourceComponent(DataSourceComponent component) throws PersistenceException {
         return dataSourceComponentManager.update(component);
+    }
+    //endregion
+
+    //region DataSourceComponentGroup
+
+    public DataSourceComponentGroup getDataSourceComponentGroup(String id) {
+        return dataSourceGroupManager.get(id);
+    }
+
+    public List<DataSourceComponentGroup> getDataSourceComponentGroups() {
+        return dataSourceGroupManager.list();
+    }
+
+    public List<DataSourceComponentGroup> getDataSourceComponentGroups(Iterable<String> ids) {
+        return dataSourceGroupManager.list(ids);
+    }
+
+    public List<DataSourceComponentGroup> getDataSourceComponentGroups(int pageNumber, int pageSize, Sort sort) {
+        return dataSourceGroupManager.list(pageNumber, pageSize, sort);
+    }
+
+    public List<DataSourceComponentGroup> getUserDataSourceComponentGroup(String userName) {
+        return dataSourceGroupManager.getUserDataSourceComponents(userName);
+    }
+
+    public DataSourceComponentGroup getDataSourceComponentGroupByLabel(String label) {
+        return dataSourceGroupManager.getDataSourceComponentByLabel(label);
+    }
+
+    public DataSourceComponentGroup saveDataSourceComponentGroup(DataSourceComponentGroup component) throws PersistenceException {
+        return dataSourceGroupManager.save(component);
+    }
+
+    public DataSourceComponentGroup updateDataSourceComponentGroup(DataSourceComponentGroup component) throws PersistenceException {
+        return dataSourceGroupManager.update(component);
+    }
+
+    public void deleteDataSourceComponentGroup(String id) throws PersistenceException {
+        dataSourceGroupManager.delete(id);
     }
     //endregion
 
