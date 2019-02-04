@@ -35,8 +35,10 @@ import java.util.logging.Logger;
 public abstract class XmlResponseHandler<T> extends DefaultHandler {
     private Class<T> resultClass;
     private List<T> results;
+    private long resultCount;
     protected StringBuilder buffer;
     protected String recordElement;
+    protected String countElement;
     protected T current;
     protected Logger logger = Logger.getLogger(XmlResponseHandler.class.getName());
 
@@ -50,6 +52,7 @@ public abstract class XmlResponseHandler<T> extends DefaultHandler {
         super();
         this.resultClass = resultClass;
         this.recordElement = recordElementName;
+        this.resultCount = -1;
     }
 
     /**
@@ -58,6 +61,8 @@ public abstract class XmlResponseHandler<T> extends DefaultHandler {
     List<T> getResults() {
         return results;
     }
+
+    long getCount() { return countElement != null ? resultCount : -1; }
 
     @Override
     public void startDocument() throws SAXException {
@@ -101,10 +106,14 @@ public abstract class XmlResponseHandler<T> extends DefaultHandler {
         if (qName.indexOf(":") > 0) {
             qName = qName.substring(qName.indexOf(":") + 1);
         }
-        handleEndElement(qName);
-        if (this.recordElement.equals(qName)) {
-            if (this.current != null) {
-                this.results.add(this.current);
+        if (this.countElement != null && this.countElement.equals(qName)) {
+            this.resultCount = Long.parseLong(buffer.toString());
+        } else {
+            handleEndElement(qName);
+            if (this.recordElement.equals(qName)) {
+                if (this.current != null) {
+                    this.results.add(this.current);
+                }
             }
         }
         buffer.setLength(0);
