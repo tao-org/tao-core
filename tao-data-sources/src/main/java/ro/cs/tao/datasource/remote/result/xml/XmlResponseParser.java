@@ -59,4 +59,22 @@ public class XmlResponseParser<T> implements ResponseParser<T> {
         }
         return result;
     }
+
+    @Override
+    public long parseCount(String content) throws ParseException {
+        if (this.handler == null) {
+            throw new ParseException("Handler not defined");
+        }
+        long result;
+        InputSource inputSource = new InputSource(new StringReader(content));
+        SAXParserFactory factory = SAXParserFactory.newInstance();
+        try {
+            SAXParser parser = factory.newSAXParser();
+            parser.parse(inputSource, this.handler);
+            result = this.handler.getCount();
+        } catch (ParserConfigurationException | IOException | SAXException e) {
+            throw new ParseException(e.getMessage());
+        }
+        return result;
+    }
 }
