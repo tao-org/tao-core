@@ -26,7 +26,6 @@ public class StepExecutionOutputConsumer implements OutputConsumer {
         this.step = step;
     }
     public void consume(String message) {
-        System.out.println(message);
         step.addExecutionMessage(message);
     }
 }
