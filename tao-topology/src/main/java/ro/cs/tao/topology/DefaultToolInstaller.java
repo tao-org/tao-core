@@ -116,7 +116,8 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
                 if (step.getIgnoreErr()) {
                     logger.warning("Step [[" + step.getName() + "]] was not successful but the failure is ignored as configured!");
                 } else {
-                    throw new TopologyException("Tool " + toolCfg.getName() + " installation failed installation failed") {{
+                    throw new TopologyException(String.format("Tool %s installation failed with code %d",
+                                                              toolCfg.getName(), retCode)) {{
                         addAdditionalInfo("Node", info);
                         addAdditionalInfo("Code", retCode);
                     }};
@@ -137,8 +138,6 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
         while (m.find()) {
             argsList.add(m.group(1)); // Add .replace("\"", "") to remove surrounding quotes.
         }
-
-        System.out.println(argsList);
 
         String hostName = curStep.getHostName();
         String user = curStep.getUser();
