@@ -482,13 +482,15 @@ public class TopologyManager implements ITopologyManager {
             // TODO: Aparently, the hostname obtained by this method might return a different value
             // than the call to "hostname" call in Linux. Maybe an invocation of hostname will solve the problem
             // but this might break the portability
-            //masterNodeInfo = new NodeDescription();
             String hostName = InetAddress.getLocalHost().getHostName();
             this.masterNodeInfo = getPersistenceManager().getNodeByHostName(hostName);
-            /*masterNodeInfo.setId(hostName);
-            Map<String, String> settings = ConfigurationManager.getInstance().getValues("topology.master");
-            masterNodeInfo.setUserName(settings.get("topology.master.user"));
-            masterNodeInfo.setUserPass(settings.get("topology.master.password"));*/
+            if (this.masterNodeInfo == null) {
+                masterNodeInfo = new NodeDescription();
+                masterNodeInfo.setId(hostName);
+                Map<String, String> settings = ConfigurationManager.getInstance().getValues("topology.master");
+                masterNodeInfo.setUserName(settings.get("topology.master.user"));
+                masterNodeInfo.setUserPass(settings.get("topology.master.password"));
+            }
         } catch (Exception e) {
             e.printStackTrace();
             throw new TopologyException("Master hostname retrieval failure", e);
