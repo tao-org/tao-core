@@ -36,14 +36,21 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.EnumSet;
 import java.util.Properties;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class SimpleArchiveDownloadStrategy extends DownloadStrategy {
+    private static final long DOWNLOAD_TIMEOUT = 30000; // 30s
+    private ExecutorService executorService = Executors.newSingleThreadExecutor();
+    private Timer timeoutTimer;
 
     public SimpleArchiveDownloadStrategy(String targetFolder, Properties properties) {
         super(targetFolder, properties);
     }
 
-    private SimpleArchiveDownloadStrategy(SimpleArchiveDownloadStrategy other) {
+    protected SimpleArchiveDownloadStrategy(SimpleArchiveDownloadStrategy other) {
         super(other);
     }
 
@@ -65,7 +72,7 @@ public class SimpleArchiveDownloadStrategy extends DownloadStrategy {
         boolean isArchive = !extension.isEmpty();
         try (CloseableHttpResponse response = NetUtils.openConnection(HttpMethod.GET, productUrl, null)) {
             int statusCode = response.getStatusLine().getStatusCode();
-            logger.fine(String.format("%s returned http code %s", productUrl, statusCode));
+            logger.finest(String.format("%s returned http code %s", productUrl, statusCode));
             switch (statusCode) {
                 case 200:
                     try {
@@ -75,43 +82,61 @@ public class SimpleArchiveDownloadStrategy extends DownloadStrategy {
                         Files.deleteIfExists(archivePath);
                         SeekableByteChannel outputStream = null;
                         currentProduct.setApproximateSize(response.getEntity().getContentLength());
-                        currentProductProgress = new ProductProgress(product.getApproximateSize(), isArchive);
+                        currentProductProgress = new ProductProgress(currentProduct.getApproximateSize(), isArchive);
                         try (InputStream inputStream = response.getEntity().getContent()) {
                             outputStream = Files.newByteChannel(archivePath, EnumSet.of(StandardOpenOption.CREATE,
                                                                                         StandardOpenOption.APPEND,
                                                                                         StandardOpenOption.WRITE));
                             byte[] buffer = new byte[BUFFER_SIZE];
                             int read;
-                            int totalRead = 0;
-                            logger.fine("Begin reading from input stream");
+                            logger.finest("Begin reading from input stream");
+                            if (this.timeoutTimer == null) {
+                                this.timeoutTimer = new Timer("Timeout");
+                            }
+                            TimerTask task;
                             while (!isCancelled() && (read = inputStream.read(buffer)) != -1) {
+                                task = new TimerTask() {
+                                    @Override
+                                    public void run() {
+                                        logger.warning(String.format("Remote host did not send anything for %d seconds, cancelling download",
+                                                                     DOWNLOAD_TIMEOUT / 1000));
+                                        SimpleArchiveDownloadStrategy.this.cancel();
+                                    }
+                                };
+                                this.timeoutTimer.schedule(task, DOWNLOAD_TIMEOUT);
                                 outputStream.write(ByteBuffer.wrap(buffer, 0, read));
-                                totalRead += read;
-                                currentProductProgress.add(totalRead);
+                                currentProductProgress.add(read);
+                                task.cancel();
+                                this.timeoutTimer.purge();
                             }
                             outputStream.close();
-                            logger.fine("End reading from input stream");
+                            logger.finest("End reading from input stream");
                             checkCancelled();
-                            if (extension.equals(".tar.gz")) {
-                                productFile = Zipper.decompressTarGz(archivePath,
-                                                                     Paths.get(archivePath.toString().replace(".tar.gz", "")),
-                                                                     true);
-                            } else {
-                                productFile = Zipper.decompressZip(archivePath,
-                                                                   Paths.get(archivePath.toString().replace(".zip", "")),
-                                                                   true);
+                            final Path target = computeTarget(archivePath);
+                            productFile = target;
+                            try {
+                                product.setLocation(productFile.toUri().toString());
+                            } catch (URISyntaxException e) {
+                                logger.severe(e.getMessage());
                             }
-                            if (productFile != null) {
-                                try {
-                                    product.setLocation(productFile.toUri().toString());
-                                } catch (URISyntaxException e) {
-                                    logger.severe(e.getMessage());
+                            executorService.submit(() -> {
+                                Path file = extract(archivePath, target);
+                                if (file != null) {
+                                    try {
+                                        product.setLocation(null);
+                                    } catch (URISyntaxException e) {
+                                        logger.severe(e.getMessage());
+                                    }
                                 }
-                            }
+                            });
                         } finally {
                             if (outputStream != null && outputStream.isOpen()) outputStream.close();
+                            if (this.timeoutTimer != null) {
+                                this.timeoutTimer.cancel();
+                                this.timeoutTimer = null;
+                            }
                         }
-                        logger.fine(String.format("End download for %s", product.getLocation()));
+                        logger.fine(String.format("End download for %s", product.getName()));
                     } finally {
                         subActivityEnd(product.getName());
                     }
@@ -124,6 +149,21 @@ public class SimpleArchiveDownloadStrategy extends DownloadStrategy {
             }
         }
         return productFile;
+    }
+
+    protected Path computeTarget(Path archivePath) {
+        return archivePath.getFileName().toString().endsWith(".tar.gz") ?
+                Paths.get(archivePath.toString().replace(".tar.gz", "")) :
+                Paths.get(archivePath.toString().replace(".zip", ""));
+    }
+
+    protected Path extract(Path archivePath, Path targetPath) {
+        logger.fine(String.format("Begin decompressing %s into %s", archivePath.getFileName(), targetPath));
+        Path result = archivePath.toString().endsWith(".tar.gz") ?
+            Zipper.decompressTarGz(archivePath, targetPath, true) :
+            Zipper.decompressZip(archivePath, targetPath, true);
+        logger.fine(String.format("Decompression of %s completed",archivePath.getFileName()));
+        return result;
     }
 
     @Override

@@ -23,6 +23,10 @@ import ro.cs.tao.utils.executors.win.Win32Api;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Cosmin Cara
@@ -33,6 +37,32 @@ public final class ProcessHelper {
     private static final String LINUX_KILL = "kill -9 %s";
     private static final String LINUX_SUSPEND = "kill -STOP %s";
     private static final String LINUX_RESUME = "kill -CONT %s";
+
+    public static List<String> tokenizeCommands(String commandString) {
+        return tokenize(commandString, "'");
+    }
+
+    public static List<String> tokenizeCommands(String commandString, Object...args) {
+        return tokenize(commandString, "'", args);
+    }
+
+    private static List<String> tokenize(String commandString, String quoteChar, Object... replacements) {
+        //'([^']*)'|(;)|([^;\s]+)
+        String regex = quoteChar + "([^']*)" + quoteChar + "|(;)|([^;\\s]+)";
+        final List<String> tokens = new ArrayList<>();
+        String cmd = replacements != null && replacements.length > 0 ? String.format(commandString, replacements) : commandString;
+        Matcher m = Pattern.compile(regex).matcher(String.format(cmd, replacements));
+        while (m.find()) {
+            if (m.group(1) != null) {
+                tokens.add(quoteChar + m.group(1) + quoteChar);
+            } else if (m.group(2) != null) {
+                tokens.add(m.group(2));
+            } else if (m.group(3) != null) {
+                tokens.add(m.group(3));
+            }
+        }
+        return tokens;
+    }
 
     public static int getPID(Process process) {
         int retVal = -1;
