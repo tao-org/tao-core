@@ -22,7 +22,7 @@ public class SimpleDateParameterConverter extends DefaultParameterConverter {
     @Override
     public String stringValue() throws ConversionException {
         StringBuilder builder = new StringBuilder();
-        Object minValue = null, maxValue = null;
+        Object minValue, maxValue = null;
         if (parameter.isInterval()) {
             minValue = parameter.getMinValue();
             maxValue = parameter.getMaxValue();

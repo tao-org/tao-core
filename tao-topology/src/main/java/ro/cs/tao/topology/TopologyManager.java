@@ -35,7 +35,6 @@ import ro.cs.tao.utils.async.LazyInitialize;
 import ro.cs.tao.utils.executors.*;
 
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.Principal;
@@ -51,11 +50,14 @@ import java.util.stream.Collectors;
  */
 public class TopologyManager implements ITopologyManager {
 
-    private static final List<String> dockerBuildCmdTemplate;
-    private static final List<String> dockerTagCmdTemplate;
-    private static final List<String> dockerPushCmdTemplate;
-    private static final List<String> dockerListCmdTemplate;
-    private static final List<String> dockerListAllCmd;
+    private static final String dockerBuildCmdTemplate;
+    private static final String dockerTagCmdTemplate;
+    private static final String dockerPushCmdTemplate;
+    private static final String dockerListCmdTemplate;
+    private static final String dockerListAllCmd;
+    private static final String createMountTemplate;
+    private static final String createLocalShareWindowsTemplate;
+    private static final String createLocalShareLinuxTemplate;
     private static final OutputAccumulator sharedAccumulator;
     private static final TopologyManager instance;
 
@@ -66,37 +68,16 @@ public class TopologyManager implements ITopologyManager {
     private final ExecutorService executorService;
 
     static {
-        dockerBuildCmdTemplate = new ArrayList<>(5);
-        dockerBuildCmdTemplate.add("docker");
-        dockerBuildCmdTemplate.add("build");
-        dockerBuildCmdTemplate.add("-t");
-        dockerBuildCmdTemplate.add("#NAME");
-        dockerBuildCmdTemplate.add("#PATH");
+        dockerBuildCmdTemplate = "docker build -t %s %s";
+        dockerTagCmdTemplate = "docker tag %s %s";
+        dockerPushCmdTemplate = "docker push %s";
+        dockerListAllCmd = "docker images --format {{.ID}}\\t{{.Tag}}\\t{{.Repository}}";
+        dockerListCmdTemplate = "docker images %s --format {{.ID}}\\t{{.Tag}}\\t{{.Repository}}";
 
-        dockerTagCmdTemplate = new ArrayList<>(4);
-        dockerTagCmdTemplate.add("docker");
-        dockerTagCmdTemplate.add("tag");
-        dockerTagCmdTemplate.add("#ID");
-        dockerTagCmdTemplate.add("#TAG");
-
-        dockerPushCmdTemplate = new ArrayList<>(3);
-        dockerPushCmdTemplate.add("docker");
-        dockerPushCmdTemplate.add("push");
-        dockerPushCmdTemplate.add("#TAG");
-
-        dockerListAllCmd = new ArrayList<>(4);
-        dockerListAllCmd.add("docker");
-        dockerListAllCmd.add("images");
-        dockerListAllCmd.add("--format");
-        dockerListAllCmd.add("{{.ID}}\\t{{.Tag}}\\t{{.Repository}};");
-
-        dockerListCmdTemplate = new ArrayList<String>(5);
-        dockerListCmdTemplate.add("docker");
-        dockerListCmdTemplate.add("images");
-        dockerListCmdTemplate.add("#NAME");
-        dockerListCmdTemplate.add("--format");
-        dockerListCmdTemplate.add("{{.ID}}\\t{{.Tag}}\\t{{.Repository}};");
-
+        //if [ ! -e /mnt/tao ]; then sed -i '$a//#MASTERHOST##SHARE# /mnt/tao cifs user=tao,password=tao123,file_mode=0777,dir_mode=0777,noperm 0 0' /etc/fstab; fi
+        createMountTemplate = "if [ ! -e %1$s ]; then mkdir %1$s; chmod 777 %1$s; sed -i '$a//%2$s%3$s %1$s cifs user=tao,password=tao123,file_mode=0777,dir_mode=0777,noperm 0 0' /etc/fstab; mount -a; fi;";
+        createLocalShareWindowsTemplate = "net share %s=%s /GRANT:Everyone,ALL";
+        createLocalShareLinuxTemplate = "if [[ $(smbclient -N -g -L localhost | grep \"%1$s\" ]]; then sed -i '$a[%1$s]\n\tpath = %2$s\n\tbrowsable = yes\n\twritable = yes\n\tguest ok = yes' /etc/samba/smb.conf; fi;";
         sharedAccumulator = new OutputAccumulator();
 
         instance = new TopologyManager();
@@ -154,50 +135,34 @@ public class TopologyManager implements ITopologyManager {
     public void add(NodeDescription info) throws TopologyException {
         if (getPersistenceManager().checkIfExistsNodeByHostName(info.getId())) {
             try {
-                getPersistenceManager().updateExecutionNode(info);
+                info = getPersistenceManager().updateExecutionNode(info);
             } catch (PersistenceException e) {
                 logger.severe("Cannot update node description to database. Rolling back installation on node " + info.getId() + "...");
                 throw new TopologyException(e);
             }
         } else {
             try {
-                getPersistenceManager().saveExecutionNode(info);
+                info = getPersistenceManager().saveExecutionNode(info);
             } catch (PersistenceException e) {
                 logger.severe("Cannot save node description to database. Rolling back installation on node " + info.getId() + "...");
                 throw new TopologyException(e);
             }
         }
-        // FOR TEST ONLY
-        /*Timer timer = new Timer();
-        timer.scheduleAtFixedRate(new TimerTask() {
-            private AtomicInteger counter = new AtomicInteger(0);
-            @Override
-            public void run() {
-                TopologyManager.this.executorService.submit(
-                        new BinaryTask<NodeDescription, ToolInstallStatus>(info, TopologyManager.this::onCompleted) {
-                    @Override
-                    public ToolInstallStatus execute(NodeDescription node) {
-                        return new ToolInstallStatus() {{
-                            setToolName("TestTool");
-                            int i = counter.getAndIncrement();
-                            if (i % 2 == 0) {
-                                setStatus(ServiceStatus.INSTALLED);
-                                setReason(String.format("%s completed ok", i));
-                            } else {
-                                setStatus(ServiceStatus.ERROR);
-                                setReason(String.format("Some failure reason %s", i));
-                            }
-                        }};
-                    }
-                });
-            }
-        }, 5000, 2000);*/
+        // make sure the common share is mounted on the node
+        onCompleted(info, checkMount(info));
         for (TopologyToolInstaller installer: installers) {
             // execute all the installers
             this.executorService.submit(new BinaryTask<NodeDescription, ToolInstallStatus>(info, this::onCompleted) {
                 @Override
                 public ToolInstallStatus execute(NodeDescription node) {
-                    return installer.installNewNode(node);
+                    ToolInstallStatus status = installer.installNewNode(node);
+                    try {
+                        node = getPersistenceManager().updateExecutionNode(node);
+                    } catch (PersistenceException e) {
+                        logger.severe(String.format("Cannot update service status for '%s' on node [%s]",
+                                                    status.getToolName(), node.getId()));
+                    }
+                    return status;
                 }
             });
         }
@@ -226,6 +191,7 @@ public class TopologyManager implements ITopologyManager {
 
     @Override
     public void update(NodeDescription nodeInfo) {
+        checkMount(nodeInfo);
         // execute all the installers
         for (TopologyToolInstaller installer: installers) {
             installer.editNode(nodeInfo);
@@ -260,40 +226,39 @@ public class TopologyManager implements ITopologyManager {
         Principal principal = SessionStore.currentContext() != null ?
                 SessionStore.currentContext().getPrincipal() : SystemPrincipal.instance();
         String correctedName = shortName.replace(" ", "-");
-        dockerBuildCmdTemplate.set(3, correctedName);
-        dockerBuildCmdTemplate.set(4, imagePath.getParent().toString());
+        List<String> commands = ProcessHelper.tokenizeCommands(dockerBuildCmdTemplate,
+                                                               correctedName, imagePath.getParent().toString());
         ExecutionUnit job = new ExecutionUnit(ExecutorType.PROCESS,
                                               masterNodeInfo.getId(),
                                               masterNodeInfo.getUserName(),
                                               masterNodeInfo.getUserPass(),
-                                              dockerBuildCmdTemplate, false, SSHMode.EXEC);
+                                              commands, false, SSHMode.EXEC);
         sharedAccumulator.reset();
         int retCode;
         Executor executor = Executor.execute(sharedAccumulator, job);
-        logger.fine("Executing " + String.join(" ", dockerBuildCmdTemplate));
+        logger.fine("Executing " + String.join(" ", commands));
         waitFor(executor, 10, TimeUnit.MINUTES);
         if ((retCode = executor.getReturnCode()) == 0) {
             Container image = getDockerImage(correctedName);
             String localRegistry = ConfigurationManager.getInstance().getValue("tao.docker.registry");
             String tag = localRegistry + "/" + correctedName;
-            dockerTagCmdTemplate.set(2, image.getId());
-            dockerTagCmdTemplate.set(3, tag);
+            commands = ProcessHelper.tokenizeCommands(dockerTagCmdTemplate, image.getId(), tag);
             job = new ExecutionUnit(ExecutorType.PROCESS, masterNodeInfo.getId(),
                                     masterNodeInfo.getUserName(), masterNodeInfo.getUserPass(),
-                                    dockerTagCmdTemplate, false, SSHMode.EXEC);
+                                    commands, false, SSHMode.EXEC);
             sharedAccumulator.reset();
             executor = Executor.execute(sharedAccumulator, job);
-            logger.fine("Executing " + String.join(" ", dockerTagCmdTemplate));
+            logger.fine("Executing " + String.join(" ", commands));
             waitFor(executor, 30, TimeUnit.SECONDS);
             if ((retCode = executor.getReturnCode()) == 0) {
                 if (!SystemUtils.IS_OS_WINDOWS) {
-                    dockerPushCmdTemplate.set(2, tag);
+                    commands = ProcessHelper.tokenizeCommands(dockerPushCmdTemplate, tag);
                     job = new ExecutionUnit(ExecutorType.PROCESS, masterNodeInfo.getId(),
                                             masterNodeInfo.getUserName(), masterNodeInfo.getUserPass(),
-                                            dockerPushCmdTemplate, false, SSHMode.EXEC);
+                                            commands, false, SSHMode.EXEC);
                     sharedAccumulator.reset();
                     executor = Executor.execute(sharedAccumulator, job);
-                    logger.fine("Executing " + String.join(" ", dockerPushCmdTemplate));
+                    logger.fine("Executing " + String.join(" ", commands));
                     waitFor(executor, 30, TimeUnit.SECONDS);
                     if ((retCode = executor.getReturnCode()) == 0) {
                         Messaging.send(principal, Topics.INFORMATION, this,
@@ -341,12 +306,12 @@ public class TopologyManager implements ITopologyManager {
 
     public Container getDockerImage(String name) {
         Container container = null;
-        dockerListCmdTemplate.set(2, name);
+        final List<String> commands = ProcessHelper.tokenizeCommands(dockerListCmdTemplate, name);
         ExecutionUnit job = new ExecutionUnit(ExecutorType.PROCESS,
                                               masterNodeInfo.getId(),
                                               masterNodeInfo.getUserName(),
                                               masterNodeInfo.getUserPass(),
-                                              dockerListCmdTemplate, false, SSHMode.EXEC);
+                                              commands, false, SSHMode.EXEC);
         sharedAccumulator.reset();
         int retCode;
         final Executor executor = Executor.execute(sharedAccumulator, job);
@@ -379,6 +344,65 @@ public class TopologyManager implements ITopologyManager {
         return container;
     }
 
+    private ToolInstallStatus checkMount(NodeDescription node) {
+        ToolInstallStatus status = new ToolInstallStatus();
+        status.setToolName("Mount");
+        String mount = ConfigurationManager.getInstance().getValue("node.mount.folder", "/mnt/tao");
+        String share = ConfigurationManager.getInstance().getValue("master.share.name", "/tao");
+        final List<String> commands = ProcessHelper.tokenizeCommands(createMountTemplate, mount, masterNodeInfo.getId(), share);
+        ExecutionUnit job = new ExecutionUnit(ExecutorType.SSH2,
+                                              node.getId(),
+                                              node.getUserName(),
+                                              node.getUserPass(),
+                                              commands, false, SSHMode.EXEC);
+        sharedAccumulator.reset();
+        Executor executor = Executor.execute(sharedAccumulator, job);
+        logger.fine("Executing " + String.join(" ", commands));
+        waitFor(executor, 5, TimeUnit.SECONDS);
+        if (executor.getReturnCode() == 0) {
+            status.setStatus(ServiceStatus.INSTALLED);
+        } else {
+            status.setStatus(ServiceStatus.ERROR);
+            status.setReason(sharedAccumulator.getOutput());
+            logger.warning("Command failed: " + status.getReason());
+        }
+        sharedAccumulator.reset();
+        return status;
+    }
+
+    public ToolInstallStatus checkShare(NodeDescription master) {
+        ToolInstallStatus status = new ToolInstallStatus();
+        status.setToolName("Local Share");
+        String path = ConfigurationManager.getInstance().getValue("product.location", "/mnt/tao/working_dir");
+        String share = ConfigurationManager.getInstance().getValue("master.share.name", "/tao");
+        status.setStatus(ServiceStatus.INSTALLED);
+        if (!(share.startsWith("\\\\") || share.startsWith("//"))) {
+            List<String> commands;
+            String shareName = share.startsWith("/") ? share.substring(1) : share;
+            if (SystemUtils.IS_OS_WINDOWS) {
+                commands = ProcessHelper.tokenizeCommands(createLocalShareWindowsTemplate, shareName, path);
+            } else {
+                commands = ProcessHelper.tokenizeCommands(createLocalShareLinuxTemplate, shareName, path);
+            }
+            ExecutionUnit job = new ExecutionUnit(ExecutorType.PROCESS,
+                                                  master.getId(),
+                                                  master.getUserName(),
+                                                  master.getUserPass(),
+                                                  commands, true, SSHMode.EXEC);
+            sharedAccumulator.reset();
+            Executor executor = Executor.execute(sharedAccumulator, job);
+            logger.fine("Executing " + String.join(" ", commands));
+            waitFor(executor, 5, TimeUnit.SECONDS);
+            if (executor.getReturnCode() != 0) {
+                status.setStatus(ServiceStatus.ERROR);
+                status.setReason(sharedAccumulator.getOutput());
+                logger.warning("Command failed: " + status.getReason());
+            }
+            sharedAccumulator.reset();
+        }
+        return status;
+    }
+
     private void waitFor(Executor executor, long amount, TimeUnit unit) {
         try {
             executor.getWaitObject().await(amount, unit);
@@ -393,7 +417,8 @@ public class TopologyManager implements ITopologyManager {
                                               masterNodeInfo.getId(),
                                               masterNodeInfo.getUserName(),
                                               masterNodeInfo.getUserPass(),
-                                              dockerListAllCmd, false, SSHMode.EXEC);
+                                              ProcessHelper.tokenizeCommands(dockerListAllCmd),
+                                              false, SSHMode.EXEC);
         sharedAccumulator.reset();
         final Executor executor = Executor.execute(sharedAccumulator, job);
         waitFor(executor, 3, TimeUnit.SECONDS);
@@ -425,7 +450,7 @@ public class TopologyManager implements ITopologyManager {
         return containers;
     }
 
-    private void onCompleted(NodeDescription node, ToolInstallStatus status) {
+    public void onCompleted(NodeDescription node, ToolInstallStatus status) {
         switch (status.getStatus()) {
             case INSTALLED:
                 Messaging.send(SystemPrincipal.instance(), Topics.INFORMATION,
@@ -457,13 +482,16 @@ public class TopologyManager implements ITopologyManager {
             // TODO: Aparently, the hostname obtained by this method might return a different value
             // than the call to "hostname" call in Linux. Maybe an invocation of hostname will solve the problem
             // but this might break the portability
-            masterNodeInfo = new NodeDescription();
             String hostName = InetAddress.getLocalHost().getHostName();
-            masterNodeInfo.setId(hostName);
-            Map<String, String> settings = ConfigurationManager.getInstance().getValues("topology.master");
-            masterNodeInfo.setUserName(settings.get("topology.master.user"));
-            masterNodeInfo.setUserPass(settings.get("topology.master.password"));
-        } catch (UnknownHostException e) {
+            this.masterNodeInfo = getPersistenceManager().getNodeByHostName(hostName);
+            if (this.masterNodeInfo == null) {
+                masterNodeInfo = new NodeDescription();
+                masterNodeInfo.setId(hostName);
+                Map<String, String> settings = ConfigurationManager.getInstance().getValues("topology.master");
+                masterNodeInfo.setUserName(settings.get("topology.master.user"));
+                masterNodeInfo.setUserPass(settings.get("topology.master.password"));
+            }
+        } catch (Exception e) {
             e.printStackTrace();
             throw new TopologyException("Master hostname retrieval failure", e);
         }

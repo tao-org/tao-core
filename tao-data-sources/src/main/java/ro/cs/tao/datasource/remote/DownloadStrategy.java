@@ -51,7 +51,7 @@ import java.util.regex.Pattern;
 public abstract class DownloadStrategy implements ProductFetchStrategy {
     public static final String URL_SEPARATOR = "/";
     protected static final String NAME_SEPARATOR = "_";
-    protected static final int BUFFER_SIZE = 65536;
+    protected static final int BUFFER_SIZE = 1024 * 1024;
     private static final String startMessage = "(%s,%s) %s [size: %skB]";
     private static final String completeMessage = "(%s,%s) %s [elapsed: %ss]";
     private static final String errorMessage ="Cannot download %s: %s";

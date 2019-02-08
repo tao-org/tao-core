@@ -26,6 +26,7 @@ import ro.cs.tao.persistence.repository.ServiceRepository;
 import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.topology.NodeServiceStatus;
 import ro.cs.tao.topology.ServiceDescription;
+import ro.cs.tao.utils.Crypto;
 
 import java.util.List;
 import java.util.Optional;
@@ -43,6 +44,10 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
         return list(ro.cs.tao.Sort.by(identifier(), SortDirection.ASC))
                 .stream()
                 .filter(NodeDescription::getActive)
+                .map(n -> {
+                    ensurePasswordDecrypted(n);
+                    return n;
+                })
                 .collect(Collectors.toList());
     }
 
@@ -52,9 +57,11 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
         if (hostName == null || hostName.isEmpty()) {
             throw new PersistenceException("Invalid parameters were provided for searching execution node by host name ("+ String.valueOf(hostName) +") !");
         }
-
-        // retrieve NodeDescription after its host name
-        return repository.findById(hostName).orElse(null);
+        NodeDescription node = repository.findById(hostName).orElse(null);
+        if (node != null) {
+            ensurePasswordDecrypted(node);
+        }
+        return node;
     }
 
     @Transactional
@@ -83,9 +90,39 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
                 serviceStatus.setServiceDescription(existingService);
             }
         }
-
+        ensurePasswordEncrypted(node);
         // save the new NodeDescription entity and return it
-        return repository.save(node);
+        node = repository.save(node);
+        ensurePasswordDecrypted(node);
+        return node;
+    }
+
+    @Override
+    public NodeDescription update(NodeDescription entity) throws PersistenceException {
+        // check if there is already another node with the same host name
+        final Optional<NodeDescription> nodeWithSameHostName = repository.findById(entity.getId());
+        if (!nodeWithSameHostName.isPresent()) {
+            throw new PersistenceException(String.format("Entity %s does not exist. use 'saveExecutionode' instead.",
+                                                         entity.getId()));
+        }
+        // save the services first
+        for(NodeServiceStatus serviceStatus: entity.getServicesStatus()) {
+            ServiceDescription serviceDescription = serviceStatus.getServiceDescription();
+            if (!exists(serviceDescription.getName(), serviceDescription.getVersion())) {
+                serviceRepository.save(serviceDescription);
+            } else {
+                // retrieve the existent entities and associate them on the node
+                ServiceDescription existingService =
+                        serviceRepository.findByNameAndVersion(serviceDescription.getName(),
+                                                               serviceDescription.getVersion());
+                serviceStatus.setServiceDescription(existingService);
+            }
+        }
+        ensurePasswordEncrypted(entity);
+        // save the new NodeDescription entity and return it
+        entity = repository.save(entity);
+        ensurePasswordDecrypted(entity);
+        return entity;
     }
 
     @Transactional
@@ -139,6 +176,18 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
     private boolean checkServiceDescription(ServiceDescription service) {
         return service != null && service.getName() != null && !service.getName().isEmpty() &&
                 service.getVersion() != null && !service.getVersion().isEmpty();
+    }
+
+    private void ensurePasswordEncrypted(final NodeDescription node) {
+        if (node.getUserName() != null && node.getUserPass() != null) {
+            node.setUserPass(Crypto.encrypt(node.getUserPass(), node.getUserName()));
+        }
+    }
+
+    private void ensurePasswordDecrypted(final NodeDescription node) {
+        if (node.getUserName() != null && node.getUserPass() != null) {
+            node.setUserPass(Crypto.decrypt(node.getUserPass(), node.getUserName()));
+        }
     }
 
     @Transactional
