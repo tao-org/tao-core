@@ -20,4 +20,4 @@
 ../persistence/scripts/07-functions-and-triggers/07_01_trigger_execution_node_update.sql;taodata
 ../persistence/scripts/07-functions-and-triggers/07_02_trigger_processing_component_update.sql;taodata
 ../persistence/scripts/07-functions-and-triggers/07_03_trigger_container_delete.sql;taodata
-../persistence/scripts/07-functions-and-triggers/07_03_login.sql;taodata
+../persistence/scripts/07-functions-and-triggers/07_04_login.sql;taodata
