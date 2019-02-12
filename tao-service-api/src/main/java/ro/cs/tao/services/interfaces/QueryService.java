@@ -18,7 +18,7 @@ package ro.cs.tao.services.interfaces;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import ro.cs.tao.execution.model.Query;
+import ro.cs.tao.datasource.beans.Query;
 
 import java.util.List;
 
