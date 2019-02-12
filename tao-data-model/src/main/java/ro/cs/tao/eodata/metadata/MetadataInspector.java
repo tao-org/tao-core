@@ -170,13 +170,20 @@ public interface MetadataInspector {
         @Override
         public String toString() {
             return "Metadata{" +
-                    "footprint='" + footprint + '\'' +
+                    "productId='" + productId + '\'' +
+                    ", footprint='" + footprint + '\'' +
                     ", crs='" + crs + '\'' +
-                    ", entryPoint=" + entryPoint +
+                    ", entryPoint='" + entryPoint + '\'' +
                     ", pixelType=" + pixelType +
                     ", productType='" + productType + '\'' +
+                    ", sensorType=" + sensorType +
+                    ", aquisitionDate=" + aquisitionDate +
+                    ", size=" + size +
                     ", width=" + width +
                     ", height=" + height +
+                    ", orbitDirection=" + orbitDirection +
+                    ", controlSums=" + controlSums +
+                    ", statistics=" + statistics +
                     '}';
         }
     }
