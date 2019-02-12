@@ -19,6 +19,7 @@ import ro.cs.tao.component.template.BasicTemplate;
 import ro.cs.tao.component.template.Template;
 import ro.cs.tao.component.template.TemplateType;
 import ro.cs.tao.datasource.DataSourceComponent;
+import ro.cs.tao.datasource.beans.Query;
 import ro.cs.tao.datasource.remote.FetchMode;
 import ro.cs.tao.docker.Application;
 import ro.cs.tao.docker.Container;
@@ -50,8 +51,8 @@ import java.awt.*;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * Created by oana on 7/18/2017.

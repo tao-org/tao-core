@@ -18,6 +18,7 @@ package ro.cs.tao.orchestration;
 
 import ro.cs.tao.component.*;
 import ro.cs.tao.datasource.DataSourceComponent;
+import ro.cs.tao.datasource.beans.Query;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;

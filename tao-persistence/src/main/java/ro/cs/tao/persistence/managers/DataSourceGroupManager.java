@@ -2,6 +2,7 @@ package ro.cs.tao.persistence.managers;
 
 import org.springframework.stereotype.Component;
 import ro.cs.tao.datasource.DataSourceComponentGroup;
+import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.persistence.repository.DataSourceGroupRepository;
 
 import java.util.List;
@@ -17,6 +18,16 @@ public class DataSourceGroupManager extends TaoComponentManager<DataSourceCompon
     public DataSourceComponentGroup getDataSourceComponentByLabel(String label) {
         List<DataSourceComponentGroup> components = this.repository.getDataSourceComponentGroupByLabel(label);
         return (components == null || components.size() == 0) ? null : components.get(0);
+    }
+
+    @Override
+    public DataSourceComponentGroup get(String id) {
+        return super.get(id);
+    }
+
+    @Override
+    public DataSourceComponentGroup delete(String id) throws PersistenceException {
+        return super.delete(id);
     }
 
     @Override

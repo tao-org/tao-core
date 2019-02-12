@@ -16,6 +16,8 @@
 
 package ro.cs.tao.execution.model;
 
+import ro.cs.tao.datasource.beans.Query;
+
 public class ExecutionQuery {
     private long id;
     private ExecutionJob job;
