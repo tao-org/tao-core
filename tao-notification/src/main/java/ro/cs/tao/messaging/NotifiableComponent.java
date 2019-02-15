@@ -26,9 +26,9 @@ import java.util.Queue;
  * @author Cosmin Cara
  */
 public abstract class NotifiableComponent extends Notifiable {
-    private static final int DEFAULT_QUEUE_SIZE = 100;
-    private final int queueSize;
-    private final Queue<Message> messageQueue;
+    protected static final int DEFAULT_QUEUE_SIZE = 100;
+    protected int queueSize;
+    protected final Queue<Message> messageQueue;
 
     /**
      * Default constructor.
@@ -54,6 +54,8 @@ public abstract class NotifiableComponent extends Notifiable {
      * Returns the topics to which this component subscribes
      */
     protected abstract String[] topics();
+
+    protected void setQueueSize(int newSize) { this.queueSize = newSize; }
 
     @Override
     protected void onMessageReceived(Message message) {
