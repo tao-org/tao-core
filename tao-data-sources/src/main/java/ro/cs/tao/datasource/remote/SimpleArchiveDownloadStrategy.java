@@ -38,12 +38,9 @@ import java.util.EnumSet;
 import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class SimpleArchiveDownloadStrategy extends DownloadStrategy {
     private static final long DOWNLOAD_TIMEOUT = 30000; // 30s
-    private ExecutorService executorService = Executors.newSingleThreadExecutor();
     private Timer timeoutTimer;
 
     public SimpleArchiveDownloadStrategy(String targetFolder, Properties properties) {
@@ -112,23 +109,14 @@ public class SimpleArchiveDownloadStrategy extends DownloadStrategy {
                             outputStream.close();
                             logger.finest("End reading from input stream");
                             checkCancelled();
-                            final Path target = computeTarget(archivePath);
-                            productFile = target;
-                            try {
-                                product.setLocation(productFile.toUri().toString());
-                            } catch (URISyntaxException e) {
-                                logger.severe(e.getMessage());
-                            }
-                            executorService.submit(() -> {
-                                Path file = extract(archivePath, target);
-                                if (file != null) {
-                                    try {
-                                        product.setLocation(null);
-                                    } catch (URISyntaxException e) {
-                                        logger.severe(e.getMessage());
-                                    }
+                            productFile = extract(archivePath, computeTarget(archivePath));
+                            if (productFile != null) {
+                                try {
+                                    product.setLocation(productFile.toUri().toString());
+                                } catch (URISyntaxException e) {
+                                    logger.severe(e.getMessage());
                                 }
-                            });
+                            }
                         } finally {
                             if (outputStream != null && outputStream.isOpen()) outputStream.close();
                             if (this.timeoutTimer != null) {
