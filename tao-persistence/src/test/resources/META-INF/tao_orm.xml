@@ -425,7 +425,7 @@
                 </cascade>
             </many-to-many>
 
-            <many-to-many name="dataSourceQueries" fetch="EAGER">
+            <many-to-many name="dataSourceQueries" fetch="LAZY">
                 <join-table name="component.data_source_component_group_queries">
                     <join-column name="data_source_component_group_id" referenced-column-name="id"/>
                     <inverse-join-column name="query_id" referenced-column-name="id"/>
