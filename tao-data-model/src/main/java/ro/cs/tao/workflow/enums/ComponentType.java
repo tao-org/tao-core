@@ -39,10 +39,10 @@ public enum ComponentType implements TaoEnum<Integer> {
     @XmlEnumValue("3")
     GROUP(3, "Group Component"),
     /**
-     * Designates a list component
+     * Designates a data source group component
      */
     @XmlEnumValue("4")
-    LIST(4, "Product List Component");
+    DATASOURCE_GROUP(4, "Data Source Group");
 
     private final int value;
     private final String description;

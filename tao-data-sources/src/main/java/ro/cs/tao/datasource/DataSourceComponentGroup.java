@@ -6,7 +6,9 @@ import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.datasource.beans.Query;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -18,7 +20,7 @@ import java.util.stream.Collectors;
 public class DataSourceComponentGroup extends TaoComponent {
     private String userName;
     private List<DataSourceComponent> dataSourceComponents;
-    private List<Query> dataSourceQueries;
+    private Set<Query> dataSourceQueries;
 
     public String getUserName() { return userName; }
 
@@ -30,11 +32,11 @@ public class DataSourceComponentGroup extends TaoComponent {
 
     public void setDataSourceComponents(List<DataSourceComponent> dataSourceComponents) {
         this.dataSourceComponents = dataSourceComponents;
-        if (this.dataSourceComponents != null) {
+        /*if (this.dataSourceComponents != null) {
             for (DataSourceComponent component : this.dataSourceComponents) {
                 transferDescriptors(component);
             }
-        }
+        }*/
     }
 
     public void addDataSourceComponent(DataSourceComponent child) {
@@ -56,12 +58,12 @@ public class DataSourceComponentGroup extends TaoComponent {
         }
     }
 
-    public List<Query> getDataSourceQueries() { return dataSourceQueries; }
-    public void setDataSourceQueries(List<Query> dataSourceQueries) { this.dataSourceQueries = dataSourceQueries; }
+    public Set<Query> getDataSourceQueries() { return dataSourceQueries; }
+    public void setDataSourceQueries(Set<Query> dataSourceQueries) { this.dataSourceQueries = dataSourceQueries; }
 
-    public void addQuery(Query query) {
+    public void addQuery(Query query, String sourceId) {
         if (this.dataSourceQueries == null) {
-            this.dataSourceQueries = new ArrayList<>();
+            this.dataSourceQueries = new LinkedHashSet<>();
         }
         if (query == null) {
             throw new NullPointerException("[query]");
@@ -69,9 +71,8 @@ public class DataSourceComponentGroup extends TaoComponent {
         if (this.dataSourceComponents == null) {
             throw new IllegalArgumentException(String.format("No data source found in this group for sensor %s", query.getSensor()));
         }
-        String pattern = String.join("-", query.getSensor(), query.getDataSource(), query.getUserId());
         List<DataSourceComponent> components = this.dataSourceComponents.stream()
-                .filter(d -> d.getId().startsWith(pattern)).collect(Collectors.toList());
+                .filter(d -> d.getSources().get(0).getId().equals(sourceId)).collect(Collectors.toList());
         if (components.size() == 1) {
             if (this.dataSourceQueries.stream().noneMatch(q -> q.getId().equals(query.getId()))) {
                 this.dataSourceQueries.add(query);
@@ -95,13 +96,17 @@ public class DataSourceComponentGroup extends TaoComponent {
         List<SourceDescriptor> childSources = fromComponent.getSources();
         if (childSources != null) {
             for (SourceDescriptor source : childSources) {
-                addSource(source.clone());
+                SourceDescriptor clone = source.clone();
+                clone.setName(source.getId());
+                addSource(clone);
             }
         }
         List<TargetDescriptor> childTargets = fromComponent.getTargets();
         if (childTargets != null) {
             for (TargetDescriptor target : childTargets) {
-                addTarget(target.clone());
+                TargetDescriptor clone = target.clone();
+                clone.setName(target.getId());
+                addTarget(clone);
             }
         }
     }
