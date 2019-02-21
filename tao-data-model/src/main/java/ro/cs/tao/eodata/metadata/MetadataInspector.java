@@ -30,9 +30,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Interface to be implemented by all simple metadata inspectors.
@@ -71,6 +69,7 @@ public interface MetadataInspector {
         private int height;
         private OrbitDirection orbitDirection;
         private Set<String> controlSums;
+        private Map<String, Double> statistics;
 
         public String getProductId() { return productId; }
         public void setProductId(String productId) { this.productId = productId; }
@@ -119,6 +118,15 @@ public interface MetadataInspector {
             getControlSums().add(sum);
         }
 
+        public Map<String, Double> getStatistics() {
+            if (statistics == null) {
+                statistics = new HashMap<>();
+            }
+            return statistics;
+        }
+        public void setStatistics(Map<String, Double> statistics) { this.statistics = statistics; }
+        public void addStatistic(String name, double value) { getStatistics().put(name, value); }
+
         public EOProduct toProductDescriptor(Path productPath) throws URISyntaxException, IOException {
             EOProduct product = new EOProduct();
             String name = FileUtilities.getFilenameWithoutExtension(productPath.toFile());
@@ -162,13 +170,20 @@ public interface MetadataInspector {
         @Override
         public String toString() {
             return "Metadata{" +
-                    "footprint='" + footprint + '\'' +
+                    "productId='" + productId + '\'' +
+                    ", footprint='" + footprint + '\'' +
                     ", crs='" + crs + '\'' +
-                    ", entryPoint=" + entryPoint +
+                    ", entryPoint='" + entryPoint + '\'' +
                     ", pixelType=" + pixelType +
                     ", productType='" + productType + '\'' +
+                    ", sensorType=" + sensorType +
+                    ", aquisitionDate=" + aquisitionDate +
+                    ", size=" + size +
                     ", width=" + width +
                     ", height=" + height +
+                    ", orbitDirection=" + orbitDirection +
+                    ", controlSums=" + controlSums +
+                    ", statistics=" + statistics +
                     '}';
         }
     }

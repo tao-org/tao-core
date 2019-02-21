@@ -107,7 +107,7 @@ INSERT INTO component.template_type (type) VALUES ('XSLT');
 INSERT INTO workflow.component_type (id, description) VALUES (1, 'DATASOURCE');
 INSERT INTO workflow.component_type (id, description) VALUES (2, 'PROCESSING');
 INSERT INTO workflow.component_type (id, description) VALUES (3, 'GROUP');
-INSERT INTO workflow.component_type (id, description) VALUES (4, 'LIST');
+INSERT INTO workflow.component_type (id, description) VALUES (4, 'DATASOURCE_GROUP');
 
 -- Behavior
 INSERT INTO workflow.node_behavior (id, description) VALUES (1, 'FAIL_ON_ERROR');

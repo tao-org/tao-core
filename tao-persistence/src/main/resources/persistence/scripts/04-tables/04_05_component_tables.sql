@@ -514,3 +514,18 @@ ALTER TABLE component.data_source_component_group_components ADD CONSTRAINT FK_d
 	FOREIGN KEY (data_source_component_group_id) REFERENCES component.data_source_component_group (id) ON DELETE No Action ON UPDATE No Action;
 ALTER TABLE component.data_source_component_group_components ADD CONSTRAINT FK_data_source_component_group_components_2
 	FOREIGN KEY (data_source_component_id) REFERENCES component.data_source_component (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: component.data_source_component_group_queries
+DROP TABLE IF EXISTS component.data_source_component_group_queries CASCADE;
+CREATE TABLE component.data_source_component_group_queries
+(
+	data_source_component_group_id varchar(512) NOT NULL,
+	query_id bigint NOT NULL
+);
+ALTER TABLE component.data_source_component_group_queries ADD CONSTRAINT PK_data_source_component_group_queries
+	PRIMARY KEY (data_source_component_group_id, query_id);
+ALTER TABLE component.data_source_component_group_queries ADD CONSTRAINT FK_data_source_component_group_queries_1
+	FOREIGN KEY (data_source_component_group_id) REFERENCES component.data_source_component_group (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE component.data_source_component_group_queries ADD CONSTRAINT FK_data_source_component_group_queries_2
+	FOREIGN KEY (query_id) REFERENCES workflow.query (id) ON DELETE No Action ON UPDATE No Action;

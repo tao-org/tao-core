@@ -42,7 +42,7 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
 
     public ExecutionTask updateStatus(ExecutionTask task, ExecutionStatus newStatus) throws PersistenceException {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        jdbcTemplate.update("UPDATE tao.task SET execution_status_id = ?, resource_id = ?, start_time = ? WHERE id = ?",
+        jdbcTemplate.update("UPDATE execution.task SET execution_status_id = ?, resource_id = ?, start_time = ? WHERE id = ?",
                             newStatus.value(), task.getResourceId(), task.getLastUpdated(), task.getId());
         return get(task.getId());
     }
@@ -62,11 +62,11 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
         return jdbcTemplate.query(con -> {
             PreparedStatement statement =
                     con.prepareStatement("SELECT t.id, w.name \"workflow\", CASE WHEN d.id IS NULL THEN CASE WHEN p.id IS NULL THEN 'group' ELSE p.id END ELSE d.id END \"componentName\", " +
-                                                 "t.start_time, t.end_time, t.execution_node_host_name, t.execution_status_id FROM tao.task t " +
-                                                 "INNER JOIN tao.job j ON j.id = t.job_id " +
-                                                 "INNER JOIN tao.workflow_graph w ON w.id = j.workflow_id " +
-                                                 "LEFT OUTER JOIN tao.data_source_component d ON d.id = t.component_id " +
-                                                 "LEFT OUTER JOIN tao.processing_component p ON p.id = t.component_id where job_id = ? " +
+                                                 "t.start_time, t.end_time, t.execution_node_host_name, t.execution_status_id FROM execution.task t " +
+                                                 "INNER JOIN execution.job j ON j.id = t.job_id " +
+                                                 "INNER JOIN workflow.graph w ON w.id = j.workflow_id " +
+                                                 "LEFT OUTER JOIN component.data_source_component d ON d.id = t.component_id " +
+                                                 "LEFT OUTER JOIN component.processing_component p ON p.id = t.component_id where job_id = ? " +
                                                  "ORDER BY t.start_time, t.id");
             statement.setLong(1, jobId);
             return statement;

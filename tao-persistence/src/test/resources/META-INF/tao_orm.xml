@@ -424,6 +424,16 @@
                     <cascade-all/>
                 </cascade>
             </many-to-many>
+
+            <many-to-many name="dataSourceQueries" fetch="LAZY">
+                <join-table name="component.data_source_component_group_queries">
+                    <join-column name="data_source_component_group_id" referenced-column-name="id"/>
+                    <inverse-join-column name="query_id" referenced-column-name="id"/>
+                </join-table>
+                <cascade>
+                    <cascade-all/>
+                </cascade>
+            </many-to-many>
         </attributes>
     </entity>
 
@@ -902,7 +912,7 @@
         </attributes>
     </entity>
     
-    <entity class="ro.cs.tao.execution.model.Query" access="PROPERTY">
+    <entity class="ro.cs.tao.datasource.beans.Query" access="PROPERTY">
         <table name="workflow.query"/>
         <convert converter="ro.cs.tao.persistence.convert.QueryValuesMapConverter" attribute-name="values"/>
         <attributes>
