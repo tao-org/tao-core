@@ -20,16 +20,15 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.FileVisitResult;
-import java.nio.file.FileVisitor;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Iterator;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
@@ -41,6 +40,12 @@ import java.util.zip.ZipOutputStream;
 public class Zipper {
 
     private static Logger logger = Logger.getLogger(Zipper.class.getName());
+
+    public static void main(String[] args) {
+        Path source = Paths.get("D:\\download\\rou_2018_s1_109\\S1B_IW_SLC__1SDV_20181103T042027_20181103T042055_013435_018DC1_2CCB.zip");
+        Path target = Paths.get("D:\\download\\rou_2018_s1_109");
+        decompressZip(source, target, false);
+    }
 
     public static void compress(Path sourceFolder, String archiveName, boolean deleteFolder) throws IOException {
         Path zipFile = sourceFolder.getParent().resolve(archiveName + ".zip");
@@ -76,7 +81,7 @@ public class Zipper {
         }
         try {
             Files.createDirectories(target);
-            byte buffer[] = new byte[65536];
+            byte[] buffer = new byte[65536];
             try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(source))) {
                 ZipEntry entry = zis.getNextEntry();
                 while (entry != null) {
@@ -100,6 +105,36 @@ public class Zipper {
             }
         } catch (IOException e) {
             logger.warning(e.getMessage());
+            return null;
+        }
+        return target;
+    }
+
+    public static Path decompressZipMT(Path source, Path target, boolean deleteAfterDecompress) {
+        if (source == null || !source.toString().endsWith(".zip")) {
+            return null;
+        }
+        try (ZipFile zipFile = new ZipFile(source.toFile())) {
+            Files.createDirectories(target);
+            zipFile.stream().parallel().forEach(entry -> {
+                try {
+                    Path newFile = target.resolve(entry.getName());
+                    if (entry.isDirectory()) {
+                        Files.createDirectories(newFile);
+                    } else {
+                        try (InputStream inputStream = zipFile.getInputStream(entry)) {
+                            Files.copy(inputStream, newFile, StandardCopyOption.REPLACE_EXISTING);
+                        }
+                    }
+                } catch (IOException inner) {
+                    logger.warning(inner.getMessage());
+                }
+            });
+            if (deleteAfterDecompress) {
+                Files.delete(source);
+            }
+        } catch (IOException ex) {
+            logger.warning(ex.getMessage());
             return null;
         }
         return target;
