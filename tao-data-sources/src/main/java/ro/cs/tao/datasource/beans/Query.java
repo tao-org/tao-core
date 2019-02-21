@@ -207,6 +207,21 @@ public class Query {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Query query = (Query) o;
+        return id.equals(query.id) &&
+                sensor.equals(query.sensor) &&
+                dataSource.equals(query.dataSource);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, sensor, dataSource);
+    }
+
+    @Override
     public String toString() {
         try {
             ObjectMapper mapper = new ObjectMapper();
