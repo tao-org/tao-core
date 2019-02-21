@@ -41,12 +41,15 @@ public abstract class TileExtent {
     public void read(InputStream inputStream) throws IOException {
         synchronized (tiles) {
             byte[] buffer = new byte[tileCodeSize()];
+            double x;
             try (DataInputStream dis = new DataInputStream(inputStream)) {
                 while (true) {
                     dis.read(buffer, 0, buffer.length);
                     Polygon2D polygon2D = new Polygon2D();
-                    for (int i = 0; i < 5; i++) {
-                        polygon2D.append(dis.readDouble(), dis.readDouble());
+                    x = dis.readDouble();
+                    while (Double.compare(Double.MAX_VALUE, x) != 0) {
+                        polygon2D.append(x, dis.readDouble());
+                        x = dis.readDouble();
                     }
                     tiles.put(new String(buffer), polygon2D.toPath2D());
                 }
@@ -68,6 +71,7 @@ public abstract class TileExtent {
                     dos.writeDouble(segment[1]);
                     pathIterator.next();
                 }
+                dos.writeDouble(Double.MAX_VALUE);
             }
         }
     }
