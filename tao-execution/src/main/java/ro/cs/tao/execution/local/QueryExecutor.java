@@ -21,13 +21,13 @@ import ro.cs.tao.component.Variable;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.datasource.DataQuery;
 import ro.cs.tao.datasource.DataSourceComponent;
+import ro.cs.tao.datasource.beans.Query;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.Executor;
 import ro.cs.tao.execution.OutputDataHandlerManager;
 import ro.cs.tao.execution.model.DataSourceExecutionTask;
 import ro.cs.tao.execution.model.ExecutionStatus;
-import ro.cs.tao.execution.model.Query;
 import ro.cs.tao.serialization.StringListAdapter;
 import ro.cs.tao.utils.executors.NamedThreadPoolExecutor;
 

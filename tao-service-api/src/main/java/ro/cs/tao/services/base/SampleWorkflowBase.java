@@ -18,12 +18,15 @@ package ro.cs.tao.services.base;
 
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.TaoComponent;
+import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.datasource.DataSourceComponent;
+import ro.cs.tao.datasource.DataSourceComponentGroup;
 import ro.cs.tao.datasource.remote.FetchMode;
 import ro.cs.tao.eodata.enums.Visibility;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.services.interfaces.ComponentService;
+import ro.cs.tao.services.interfaces.DataSourceComponentService;
 import ro.cs.tao.services.interfaces.SampleWorkflow;
 import ro.cs.tao.services.interfaces.WorkflowService;
 import ro.cs.tao.workflow.WorkflowDescriptor;
@@ -33,12 +36,14 @@ import ro.cs.tao.workflow.enums.ComponentType;
 import ro.cs.tao.workflow.enums.Status;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 public abstract class SampleWorkflowBase implements SampleWorkflow {
     protected static PersistenceManager persistenceManager;
     protected static ComponentService componentService;
     protected static WorkflowService workflowService;
+    protected static DataSourceComponentService dataSourceComponentService;
     private static final float xOrigin = 300;
     private static final float yOrigin = 150;
     private static final float xStep = 300;
@@ -50,6 +55,10 @@ public abstract class SampleWorkflowBase implements SampleWorkflow {
 
     public static void setComponentService(ComponentService componentService) {
         SampleWorkflowBase.componentService = componentService;
+    }
+
+    public static void setDataSourceComponentService(DataSourceComponentService dataSourceComponentService) {
+        SampleWorkflowBase.dataSourceComponentService = dataSourceComponentService;
     }
 
     public static void setWorkflowService(WorkflowService workflowService) {
@@ -115,6 +124,46 @@ public abstract class SampleWorkflowBase implements SampleWorkflow {
             TaoComponent component1 = componentService.findComponent(parentNode.getComponentId(), parentComponentType);
             TaoComponent component2 = componentService.findComponent(node.getComponentId(), componentType);
             workflowService.addLink(parentNode.getId(), component1.getTargets().get(0).getId(),
+                                    node.getId(), component2.getSources().get(0).getId());
+        }
+        return node;
+    }
+
+    protected WorkflowNodeDescriptor addNode(WorkflowDescriptor parent, String name, String componentId,
+                                             ComponentType componentType, Map<String, String> customValues,
+                                             WorkflowNodeDescriptor parentNode, ComponentType parentComponentType,
+                                             int parentIndex,
+                                             Direction relativeDirection) throws PersistenceException {
+        WorkflowNodeDescriptor node = new WorkflowNodeDescriptor();
+        node.setWorkflow(parent);
+        node.setName(name);
+        float[] coords = placeNode(parentNode, relativeDirection);
+        node.setxCoord(coords[0]);
+        node.setyCoord(coords[1]);
+        node.setComponentId(componentId);
+        node.setComponentType(componentType);
+        if (customValues != null) {
+            for (Map.Entry<String, String> entry : customValues.entrySet()) {
+                node.addCustomValue(entry.getKey(), entry.getValue());
+            }
+        }
+        node.setPreserveOutput(true);
+        node.setCreated(LocalDateTime.now());
+        node = workflowService.addNode(parent.getId(), node);
+        if (parentNode != null) {
+            TaoComponent component1 = componentService.findComponent(parentNode.getComponentId(), parentComponentType);
+            if (!(component1 instanceof DataSourceComponentGroup)) {
+                throw new PersistenceException("Method is intended for data source groups as parent");
+            }
+            DataSourceComponentGroup group = (DataSourceComponentGroup) component1;
+            List<TargetDescriptor> targets = group.getTargets();
+            if (targets.size() <= parentIndex) {
+                throw new PersistenceException(String.format("Invalid index %d (expected at most %d)",
+                                                             parentIndex, targets.size() - 1));
+            }
+            //DataSourceComponent parentComponent = dataSourceComponents.get(parentIndex);
+            TaoComponent component2 = componentService.findComponent(node.getComponentId(), componentType);
+            workflowService.addLink(parentNode.getId(), targets.get(parentIndex).getId(),
                                     node.getId(), component2.getSources().get(0).getId());
         }
         return node;

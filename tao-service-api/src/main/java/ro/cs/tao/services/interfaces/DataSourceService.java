@@ -15,9 +15,9 @@
  */
 package ro.cs.tao.services.interfaces;
 
+import ro.cs.tao.datasource.beans.Query;
 import ro.cs.tao.datasource.remote.FetchMode;
 import ro.cs.tao.eodata.EOProduct;
-import ro.cs.tao.execution.model.Query;
 import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.services.model.datasource.DataSourceDescriptor;
 import ro.cs.tao.services.model.datasource.ParameterDescriptor;
