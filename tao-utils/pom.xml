@@ -15,6 +15,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>ro.cs.tao</groupId>
+            <artifactId>tao-config</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.jcraft</groupId>
             <artifactId>jsch</artifactId>
             <version>0.1.53</version>
@@ -28,6 +33,11 @@
             <groupId>com.sun.jna</groupId>
             <artifactId>jna</artifactId>
             <version>3.0.9</version>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.mail</groupId>
+            <artifactId>javax.mail</artifactId>
+            <version>1.5.5</version>
         </dependency>
     </dependencies>
 
