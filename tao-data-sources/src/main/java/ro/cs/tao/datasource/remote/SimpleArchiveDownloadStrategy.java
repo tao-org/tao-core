@@ -81,11 +81,11 @@ public class SimpleArchiveDownloadStrategy extends DownloadStrategy {
                         long length = response.getEntity().getContentLength();
                         long size = currentProduct.getApproximateSize();
                         if (size > length) {
-                            Path existingProduct = computeTarget(archivePath);
+                            Path existingProduct = Paths.get(destination, product.getName() + ".SAFE");
                             if (Files.exists(existingProduct)) {
                                 long existingSize = FileUtilities.folderSize(existingProduct);
                                 logger.fine(String.format("Product %s found: %s; size: %d, expected: %s",
-                                                          product.getName(), existingSize, size));
+                                                          product.getName(), existingProduct, existingSize, size));
                                 if (existingSize == size) {
                                     logger.fine("Download will be skipped");
                                     try {
