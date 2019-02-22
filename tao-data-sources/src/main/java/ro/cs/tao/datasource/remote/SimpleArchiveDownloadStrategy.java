@@ -78,7 +78,28 @@ public class SimpleArchiveDownloadStrategy extends DownloadStrategy {
                         FileUtilities.ensureExists(Paths.get(destination));
                         Files.deleteIfExists(archivePath);
                         SeekableByteChannel outputStream = null;
-                        currentProduct.setApproximateSize(response.getEntity().getContentLength());
+                        long length = response.getEntity().getContentLength();
+                        long size = currentProduct.getApproximateSize();
+                        if (size > length) {
+                            Path existingProduct = computeTarget(archivePath);
+                            if (Files.exists(existingProduct)) {
+                                long existingSize = FileUtilities.folderSize(existingProduct);
+                                logger.fine(String.format("Product %s found: %s; size: %d, expected: %s",
+                                                          product.getName(), existingSize, size));
+                                if (existingSize == size) {
+                                    logger.fine("Download will be skipped");
+                                    try {
+                                        product.setLocation(existingProduct.toUri().toString());
+                                    } catch (URISyntaxException e) {
+                                        logger.severe(e.getMessage());
+                                    }
+                                    return existingProduct;
+                                } else {
+                                    logger.fine("Download will be attempted again");
+                                }
+                            }
+                        }
+                        currentProduct.setApproximateSize(length);
                         currentProductProgress = new ProductProgress(currentProduct.getApproximateSize(), isArchive);
                         try (InputStream inputStream = response.getEntity().getContent()) {
                             outputStream = Files.newByteChannel(archivePath, EnumSet.of(StandardOpenOption.CREATE,
