@@ -86,7 +86,7 @@ public class SimpleArchiveDownloadStrategy extends DownloadStrategy {
                                 long existingSize = FileUtilities.folderSize(existingProduct);
                                 logger.fine(String.format("Product %s found: %s; size: %d, expected: %s",
                                                           product.getName(), existingProduct, existingSize, size));
-                                if (existingSize == size) {
+                                if (existingSize >= size) {
                                     logger.fine("Download will be skipped");
                                     try {
                                         product.setLocation(existingProduct.toUri().toString());
