@@ -18,6 +18,7 @@ package ro.cs.tao.eodata;
 import org.locationtech.jts.geom.Geometry;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import ro.cs.tao.eodata.enums.DataFormat;
+import ro.cs.tao.eodata.enums.ProductStatus;
 import ro.cs.tao.eodata.enums.Visibility;
 import ro.cs.tao.serialization.CRSAdapter;
 import ro.cs.tao.serialization.GeometryAdapter;
@@ -46,6 +47,7 @@ public abstract class EOData implements Serializable {
     private URI location;
     private String entryPoint;
     private Visibility visibility;
+    private ProductStatus productStatus;
 
     //region Getters and Setters
     public String getId() {
@@ -151,6 +153,9 @@ public abstract class EOData implements Serializable {
 
     public Visibility getVisibility() { return visibility; }
     public void setVisibility(Visibility visibility) { this.visibility = visibility; }
+
+    public ProductStatus getProductStatus() { return productStatus; }
+    public void setProductStatus(ProductStatus productStatus) { this.productStatus = productStatus; }
 
     //endregion
     public Map<String, String> toAttributeMap() {

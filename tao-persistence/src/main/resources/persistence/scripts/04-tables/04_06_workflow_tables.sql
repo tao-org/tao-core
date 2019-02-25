@@ -140,6 +140,7 @@ CREATE TABLE workflow.query
     label text,
 	user_id varchar(50) NOT NULL,
 	graph_node_id bigint,
+	component_id varchar(512),
 	sensor_name varchar(512) NOT NULL,
 	data_source varchar(512) NOT NULL,
 	username varchar NULL,
@@ -159,6 +160,8 @@ ALTER TABLE workflow.query ADD CONSTRAINT FK_query_user
 	FOREIGN KEY (user_id) REFERENCES usr."user"(username) ON DELETE No Action ON UPDATE No Action;
 ALTER TABLE workflow.query ADD CONSTRAINT FK_query_graph_node
 	FOREIGN KEY (graph_node_id) REFERENCES workflow.graph_node(id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE workflow.query ADD CONSTRAINT FK_query_data_source_component
+    FOREIGN KEY (component_id) REFERENCES component.data_source_component (id) ON DELETE No Action ON UPDATE No Action;
 DROP SEQUENCE IF EXISTS workflow.query_id_seq CASCADE;
 CREATE SEQUENCE workflow.query_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
 ALTER TABLE workflow.query ALTER COLUMN id SET DEFAULT nextval('workflow.query_id_seq');
