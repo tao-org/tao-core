@@ -34,4 +34,7 @@ public interface EOProductRepository extends PagingAndSortingRepository<EOProduc
 
     @Query(value = "SELECT name FROM product.raster_data_product WHERE name IN (:names)", nativeQuery = true)
     List<String> getExistingProductNames(@Param("names") Set<String> names);
+
+    @Query(value = "SELECT * FROM product.raster_data_product WHERE name IN (:names)", nativeQuery = true)
+    List<EOProduct> getProductsByName(@Param("names") Set<String> names);
 }

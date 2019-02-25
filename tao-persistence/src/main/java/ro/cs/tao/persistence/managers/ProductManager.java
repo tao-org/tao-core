@@ -94,6 +94,13 @@ public class ProductManager {
         return eoProductRepository.getExistingProductNames(Arrays.stream(names).collect(Collectors.toSet()));
     }
 
+    public List<EOProduct> getProductsByName(String... names) {
+        if (names == null || names.length == 0) {
+            return new ArrayList<>();
+        }
+        return eoProductRepository.getProductsByName(Arrays.stream(names).collect(Collectors.toSet()));
+    }
+
     /**
      * Retrieve all VectorData
      */
