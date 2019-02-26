@@ -101,6 +101,10 @@ public class ProductManager {
         return eoProductRepository.getProductsByName(Arrays.stream(names).collect(Collectors.toSet()));
     }
 
+    public int getOtherProductReferences(String componentId, String name) {
+        return eoProductRepository.getOtherProductReferences(componentId, name);
+    }
+
     /**
      * Retrieve all VectorData
      */
@@ -163,6 +167,10 @@ public class ProductManager {
     @Transactional
     public void removeProduct(EOProduct eoProduct) throws PersistenceException {
         eoProductRepository.delete(eoProduct);
+    }
+
+    public void removeProduct(String name) {
+        eoProductRepository.deleteProduct(name);
     }
 
     @Transactional
