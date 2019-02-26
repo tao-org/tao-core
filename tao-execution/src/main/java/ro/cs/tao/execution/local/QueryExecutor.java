@@ -100,6 +100,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                     }
                 }
                 String sensorName = dataSourceComponent.getSensorName().toLowerCase().replace(" ", "-");
+                dataSourceComponent.setProductStatusListener(this);
                 final List<EOProduct> products = dataSourceComponent.doFetch(results,
                         null,
                         ConfigurationManager.getInstance().getValue("product.location"),
