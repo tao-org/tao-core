@@ -153,7 +153,7 @@ public class JobFactory {
             Query query = dscGroup.getDataSourceQueries().stream()
                     .filter(q -> component.getId().equals(q.getComponentId())).findFirst().orElse(null);
             if (query != null) {
-                ExecutionTask task = createDataSourceExecutionTask(component, query);
+                ExecutionTask task = createDataSourceExecutionTask(job, groupNode, component, query);
                 task.setLevel(groupNode.getLevel());
                 persistenceManager.saveExecutionTask(task, job);
                 group.addTask(task);
@@ -292,11 +292,73 @@ public class JobFactory {
         return task;
     }
 
-    private ExecutionTask createDataSourceExecutionTask(DataSourceComponent component,
-                                                        Query query) {
+    private ExecutionTask createDataSourceExecutionTask(ExecutionJob job,
+                                                        WorkflowNodeDescriptor workflowNode,
+                                                        DataSourceComponent component,
+                                                        Query query) throws PersistenceException {
         DataSourceExecutionTask task = new DataSourceExecutionTask();
+        final Map<String, String> taskInputs;
+        List<ParameterValue> customValues = workflowNode.getCustomValues();
+        if (customValues != null) {
+            taskInputs = new HashMap<>(customValues.stream()
+                                               .collect(Collectors.toMap(ParameterValue::getParameterName,
+                                                                         ParameterValue::getParameterValue)));
+        } else {
+            taskInputs = new HashMap<>();
+        }
+        Query localQuery = persistenceManager.getQuery(SessionStore.currentContext().getPrincipal().getName(),
+                                                       component.getSensorName(),
+                                                       component.getDataSourceName(),
+                                                       workflowNode.getId());
+        if (localQuery == null) {
+            localQuery = new Query();
+            localQuery.setUser(SessionStore.currentContext().getPrincipal().getName());
+            localQuery.setSensor(component.getSensorName());
+            localQuery.setDataSource(component.getDataSourceName());
+            localQuery.setWorkflowNodeId(workflowNode.getId());
+            if (!component.getSystem() && component.getDataSourceName().equals("Local Database") &&
+                    component.getSources() != null && component.getSources().size() == 1) {
+                SourceDescriptor source = component.getSources().get(0);
+                String location = source.getDataDescriptor().getLocation();
+                if (location != null) {
+                    taskInputs.put("name", "[" + location + "]");
+                    taskInputs.put("pageNumber", "1");
+                    taskInputs.put("pageSize", String.valueOf(source.getCardinality()));
+                    taskInputs.put("limit", String.valueOf(source.getCardinality()));
+                }
+            }
+        }
+        int val;
+        String value = taskInputs.get("pageNumber");
+        if (value != null) {
+            val = Integer.parseInt(value);
+            taskInputs.remove("pageNumber");
+        } else {
+            val = 1;
+        }
+        localQuery.setPageNumber(val);
+        value = taskInputs.get("pageSize");
+        if (value != null) {
+            val = Integer.parseInt(value);
+            taskInputs.remove("pageSize");
+        } else {
+            val = 1;
+        }
+        localQuery.setPageSize(val);
+        value = taskInputs.get("limit");
+        if (value != null) {
+            val = Integer.parseInt(value);
+            taskInputs.remove("limit");
+        } else {
+            val = 1;
+        }
+        localQuery.setLimit(val);
+        localQuery.setValues(taskInputs);
+        localQuery.setUserId(job.getUserName());
+        persistenceManager.saveQuery(localQuery);
         task.setComponent(component);
-        task.setInputParameterValue("query", query.toString());
+        task.setInputParameterValue("local.query", localQuery.toString());
+        task.setInputParameterValue("remote.query", query.toString());
         return task;
     }
 }

@@ -13,15 +13,25 @@ public enum ProductStatus implements TaoEnum<Integer> {
     @XmlEnumValue("1")
     QUERIED(1, "Queried"),
     /**
-     * The product was downloaded.
+     * Product download is in progress.
      */
     @XmlEnumValue("2")
-    DOWNLOADED(2, "Downloaded"),
+    DOWNLOADING(2, "Downloading"),
+    /**
+     * The product was downloaded.
+     */
+    @XmlEnumValue("3")
+    DOWNLOADED(3, "Downloaded"),
+    /**
+     * The product download failed.
+     */
+    @XmlEnumValue("4")
+    FAILED(4, "Downloaded"),
     /**
      * The product is an output of an execution task.
      */
-    @XmlEnumValue("3")
-    PRODUCED(3, "Produced");
+    @XmlEnumValue("5")
+    PRODUCED(5, "Produced");
 
     private final int value;
     private final String description;
