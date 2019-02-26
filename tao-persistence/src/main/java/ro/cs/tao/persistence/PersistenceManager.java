@@ -422,6 +422,10 @@ public class PersistenceManager implements MessagePersister {
     public DataSourceComponent updateDataSourceComponent(DataSourceComponent component) throws PersistenceException {
         return dataSourceComponentManager.update(component);
     }
+
+    public void deleteDataSourceComponent(String id) throws PersistenceException {
+        dataSourceComponentManager.delete(id);
+    }
     //endregion
 
     //region DataSourceComponentGroup
