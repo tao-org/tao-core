@@ -37,4 +37,12 @@ public interface EOProductRepository extends PagingAndSortingRepository<EOProduc
 
     @Query(value = "SELECT * FROM product.raster_data_product WHERE name IN (:names)", nativeQuery = true)
     List<EOProduct> getProductsByName(@Param("names") Set<String> names);
+
+    @Query(value = "SELECT COUNT(s.id) FROM component.source_descriptor s JOIN component.data_source_component c ON c.id = s.parent_id " +
+            "WHERE c.id != :componentId AND s.location LIKE '%:name%'",
+            nativeQuery = true)
+    int getOtherProductReferences(@Param("componentId") String componentId, @Param("name") String name);
+
+    @Query(value = "DELETE FROM product.raster_data_product WHERE name = :name", nativeQuery = true)
+    void deleteProduct(@Param("name") String name);
 }

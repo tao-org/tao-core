@@ -181,6 +181,10 @@ public class PersistenceManager implements MessagePersister {
         return productManager.getProductsByName(names);
     }
 
+    public int getOtherProductReferences(String componentId, String name) {
+        return productManager.getOtherProductReferences(componentId, name);
+    }
+
     public List<VectorData> getVectorDataProducts() {
         return productManager.getVectorDataProducts();
     }
@@ -215,6 +219,10 @@ public class PersistenceManager implements MessagePersister {
 
     public void remove(EOProduct product) throws PersistenceException {
         productManager.removeProduct(product);
+    }
+
+    public void removeProduct(String name) {
+        productManager.removeProduct(name);
     }
 
     public VectorData saveVectorDataProduct(VectorData vectorDataProduct) throws PersistenceException {
