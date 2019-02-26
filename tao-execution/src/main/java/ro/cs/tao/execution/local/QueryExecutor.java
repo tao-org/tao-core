@@ -21,13 +21,16 @@ import ro.cs.tao.component.Variable;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.datasource.DataQuery;
 import ro.cs.tao.datasource.DataSourceComponent;
+import ro.cs.tao.datasource.ProductStatusListener;
 import ro.cs.tao.datasource.beans.Query;
 import ro.cs.tao.eodata.EOProduct;
+import ro.cs.tao.eodata.enums.ProductStatus;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.Executor;
 import ro.cs.tao.execution.OutputDataHandlerManager;
 import ro.cs.tao.execution.model.DataSourceExecutionTask;
 import ro.cs.tao.execution.model.ExecutionStatus;
+import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.serialization.StringListAdapter;
 import ro.cs.tao.utils.executors.NamedThreadPoolExecutor;
 
@@ -44,7 +47,7 @@ import java.util.stream.Collectors;
  *
  * @author Cosmin Cara
  */
-public class QueryExecutor extends Executor<DataSourceExecutionTask> {
+public class QueryExecutor extends Executor<DataSourceExecutionTask> implements ProductStatusListener {
 
     private ExecutorService backgroundWorker = new NamedThreadPoolExecutor("query-thread", 1);//Executors.newSingleThreadExecutor();
     private DataSourceComponent dataSourceComponent;
@@ -55,7 +58,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> {
     public void execute(DataSourceExecutionTask task) throws ExecutionException {
         try {
             task.setResourceId(UUID.randomUUID().toString());
-            logger.fine(String.format("Succesfully submitted task with id %s", task.getId()));
+            logger.fine(String.format("Successfully submitted task with id %s", task.getId()));
             task.setExecutionNodeHostName(InetAddress.getLocalHost().getHostName());
             task.setStartTime(LocalDateTime.now());
             changeTaskStatus(task, ExecutionStatus.RUNNING);
@@ -64,21 +67,37 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> {
             if (values == null || values.size() == 0) {
                 throw new ExecutionException(String.format("No input data for the task %s", task.getId()));
             }
-            Query query = Query.fromString(values.get(0).getValue());
-            if (query == null) {
+            Variable variable  = values.stream().filter(v -> "query".equals(v.getKey()) ||
+                                                             "local.query".equals(v.getKey()))
+                                                .findFirst().orElse(null);
+            if (variable == null) {
+                throw new ExecutionException("Expected parameter [query] not found");
+            }
+            Query primaryQuery = Query.fromString(variable.getValue());
+            if (primaryQuery == null) {
                 throw new ExecutionException(String.format("Invalid input data for the task %s", task.getId()));
             }
-            DataQuery dataQuery = Query.toDataQuery(query);
-            final Future<List<EOProduct>> future = backgroundWorker.submit(dataQuery::execute);
+            DataQuery dataQuery = Query.toDataQuery(primaryQuery);
+            Future<List<EOProduct>> future = backgroundWorker.submit(dataQuery::execute);
             List<EOProduct> results = future.get();
             ExecutionStatus status;
             if (results != null && results.size() > 0) {
                 int cardinality = dataSourceComponent.getSources().get(0).getCardinality();
-                if (cardinality > 0 && cardinality != results.size()) {
-                    logger.warning(String.format("Task %s expected %s inputs, but received %s. Execution is cancelled",
-                                                 task.getId(), cardinality, results.size()));
-                    markTaskFinished(task, ExecutionStatus.CANCELLED);
-                    return;
+                int rSize = results.size();
+                if (cardinality > 0 && cardinality != rSize) {
+                    variable = values.stream().filter(v -> "remote.query".equals(v.getKey()))
+                                               .findFirst().orElse(null);
+                    if (variable == null) {
+                        logger.warning(String.format("Task %s expected %s inputs, but received %s. Execution is cancelled",
+                                                     task.getId(), cardinality, results.size()));
+                        markTaskFinished(task, ExecutionStatus.CANCELLED);
+                        return;
+                    } else {
+                        results.removeIf(r -> r.getProductStatus() == ProductStatus.DOWNLOADING ||
+                                              r.getProductStatus() == ProductStatus.DOWNLOADED);
+                        logger.info(String.format("Task %s expects %d inputs, but only %d are locally available. Download for the missing will start",
+                                                  task.getId(), rSize, rSize - results.size()));
+                    }
                 }
                 String sensorName = dataSourceComponent.getSensorName().toLowerCase().replace(" ", "-");
                 final List<EOProduct> products = dataSourceComponent.doFetch(results,
@@ -153,4 +172,46 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> {
         return json;
     }
 
+    @Override
+    public boolean downloadStarted(EOProduct product) {
+        product.setProductStatus(ProductStatus.DOWNLOADING);
+        try {
+            persistenceManager.saveEOProduct(product);
+            return true;
+        } catch (PersistenceException e) {
+            logger.severe(String.format("Updating product %s failed. Reason: %s", product.getName(), e.getMessage()));
+            return false;
+        }
+    }
+
+    @Override
+    public void downloadCompleted(EOProduct product) {
+        product.setProductStatus(ProductStatus.DOWNLOADED);
+        try {
+            persistenceManager.saveEOProduct(product);
+        } catch (PersistenceException e) {
+            logger.severe(String.format("Updating product %s failed. Reason: %s", product.getName(), e.getMessage()));
+        }
+    }
+
+    @Override
+    public void downloadFailed(EOProduct product, String reason) {
+        product.setProductStatus(ProductStatus.FAILED);
+        try {
+            persistenceManager.saveEOProduct(product);
+            logger.warning(String.format("Product %s not downloaded. Reason: %s", product.getName(), reason));
+        } catch (PersistenceException e) {
+            logger.severe(String.format("Updating product %s failed. Reason: %s", product.getName(), e.getMessage()));
+        }
+    }
+
+    @Override
+    public void downloadAborted(EOProduct product, String reason) {
+        downloadFailed(product, reason);
+    }
+
+    @Override
+    public void downloadIgnored(EOProduct product, String reason) {
+        //No-op
+    }
 }

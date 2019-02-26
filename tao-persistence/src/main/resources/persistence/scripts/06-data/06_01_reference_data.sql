@@ -38,7 +38,9 @@ INSERT INTO product.data_type (type) VALUES ('Polygon2D');
 
 -- Data formats
 INSERT INTO product.product_status (status) VALUES ('QUERIED');
+INSERT INTO product.product_status (status) VALUES ('DOWNLOADING');
 INSERT INTO product.product_status (status) VALUES ('DOWNLOADED');
+INSERT INTO product.product_status (status) VALUES ('FAILED');
 INSERT INTO product.product_status (status) VALUES ('PRODUCED');
 
 -- Execution status
