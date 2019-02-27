@@ -1,6 +1,7 @@
 package ro.cs.tao.persistence.repository;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
@@ -43,6 +44,7 @@ public interface EOProductRepository extends PagingAndSortingRepository<EOProduc
             nativeQuery = true)
     int getOtherProductReferences(@Param("componentId") String componentId, @Param("name") String name);
 
-    @Query(value = "DELETE FROM product.raster_data_product WHERE name = :name", nativeQuery = true)
-    void deleteProduct(@Param("name") String name);
+    @Modifying
+    @Transactional
+    void deleteByName(String name);
 }

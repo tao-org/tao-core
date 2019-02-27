@@ -24,7 +24,7 @@ public class Triple<T,U,V> {
     private final V keyThree;
 
     public Triple(T keyOne, U keyTwo, V keyThree) {
-        if (keyOne == null || keyTwo == null || keyThree == null) {
+        if (keyOne == null || keyTwo == null) {
             throw new IllegalArgumentException("Keys cannot be null");
         }
         this.keyOne = keyOne;
@@ -40,10 +40,10 @@ public class Triple<T,U,V> {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
-        Triple<?, ?,  ?> key = (Triple<?, ?, ?>) o;
-
-        return keyOne.equals(key.keyOne) && keyTwo.equals(key.keyTwo) && keyThree.equals(key.keyThree);
+        Triple<?, ?, ?> triple = (Triple<?, ?, ?>) o;
+        return keyOne.equals(triple.keyOne) &&
+                keyTwo.equals(triple.keyTwo) &&
+                Objects.equals(keyThree, triple.keyThree);
     }
 
     @Override
