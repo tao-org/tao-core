@@ -119,7 +119,8 @@ CREATE TABLE workflow.component_link
     target_graph_node_id bigint NOT NULL,
     source_descriptor_id varchar(512) NOT NULL,
     source_graph_node_id bigint NOT NULL,
-    target_descriptor_id varchar(512) NOT NULL
+    target_descriptor_id varchar(512) NOT NULL,
+    aggregator varchar(512) NULL
 );
 ALTER TABLE workflow.component_link ADD CONSTRAINT PK_component_link PRIMARY KEY (source_graph_node_id, target_graph_node_id, source_descriptor_id, target_descriptor_id);
 ALTER TABLE workflow.component_link ADD CONSTRAINT FK_component_link_graph_node_1

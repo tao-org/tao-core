@@ -39,6 +39,12 @@ public class Tuple<T,V> {
     public V getKeyTwo() { return keyTwo; }
 
     @Override
+    public String toString() {
+        return "[\""  + keyOne.toString() + "\"," +
+                (keyTwo != null ? "\"" + keyTwo.toString() + "\"" : "null") + "]";
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
