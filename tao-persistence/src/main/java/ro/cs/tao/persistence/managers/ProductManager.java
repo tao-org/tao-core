@@ -170,7 +170,8 @@ public class ProductManager {
     }
 
     public void removeProduct(String name) {
-        eoProductRepository.deleteProduct(name);
+        //eoProductRepository.deleteProduct(name);
+        eoProductRepository.deleteByName(name);
     }
 
     @Transactional
