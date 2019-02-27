@@ -13,6 +13,8 @@ public abstract class Association<T extends EOData> {
 
     public String getFriendlyName() { return friendlyName; }
 
+    public abstract String[] description();
+
     public abstract List<Tuple<T, T>> associate(List<T> source);
 
     protected abstract String friendlyName();

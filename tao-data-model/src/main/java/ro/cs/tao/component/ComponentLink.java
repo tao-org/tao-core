@@ -32,6 +32,7 @@ public class ComponentLink {
     private SourceDescriptor output;
     private TargetDescriptor input;
     private long sourceNodeId;
+    private Aggregator aggregator;
 
     // default constructor needed for hibernate entity instantiation
     public ComponentLink(){}
@@ -81,6 +82,9 @@ public class ComponentLink {
     public void setSourceNodeId(long sourceNodeId) {
         this.sourceNodeId = sourceNodeId;
     }
+
+    public Aggregator getAggregator() { return aggregator; }
+    public void setAggregator(Aggregator aggregator) { this.aggregator = aggregator; }
 
     @Override
     public boolean equals(Object obj) {

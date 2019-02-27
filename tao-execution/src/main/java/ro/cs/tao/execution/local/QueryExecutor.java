@@ -16,6 +16,8 @@
 
 package ro.cs.tao.execution.local;
 
+import ro.cs.tao.component.Aggregator;
+import ro.cs.tao.component.ComponentLink;
 import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.component.Variable;
 import ro.cs.tao.configuration.ConfigurationManager;
@@ -25,6 +27,10 @@ import ro.cs.tao.datasource.ProductStatusListener;
 import ro.cs.tao.datasource.beans.Query;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.enums.ProductStatus;
+import ro.cs.tao.eodata.sorting.Association;
+import ro.cs.tao.eodata.sorting.DataSorter;
+import ro.cs.tao.eodata.sorting.ProductAssociationFactory;
+import ro.cs.tao.eodata.sorting.ProductSortingFactory;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.Executor;
 import ro.cs.tao.execution.OutputDataHandlerManager;
@@ -32,11 +38,15 @@ import ro.cs.tao.execution.model.DataSourceExecutionTask;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.serialization.StringListAdapter;
+import ro.cs.tao.utils.Tuple;
 import ro.cs.tao.utils.executors.NamedThreadPoolExecutor;
+import ro.cs.tao.workflow.WorkflowDescriptor;
+import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 
 import java.net.InetAddress;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -108,11 +118,50 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                                                                              null);
                 if (products != null) {
                     if (!dataSourceComponent.getId().contains("Local Database")) {
-                        backgroundWorker.submit(() -> persistResults(results));
+                        backgroundWorker.submit(() -> persistResults(products));
                     }
                     task.getComponent().setTargetCardinality(results.size());
-                    task.setOutputParameterValue(dataSourceComponent.getTargets().get(0).getName(),
-                                                 serializeResults(results));
+                    Long workflowNodeId = task.getWorkflowNodeId();
+                    WorkflowDescriptor workflow = persistenceManager.getFullWorkflowDescriptor(task.getJob().getWorkflowId());
+                    List<WorkflowNodeDescriptor> linkedNodes =
+                            workflow.getNodes().stream().filter(n -> n.getIncomingLinks() != null &&
+                                                                     n.getIncomingLinks().stream().anyMatch(l -> l.getSourceNodeId() == workflowNodeId))
+                                                        .collect(Collectors.toList());
+                    Aggregator aggregator;
+                    List<Tuple<EOProduct, EOProduct>> tuples = null;
+                    for (WorkflowNodeDescriptor linkedNode : linkedNodes) {
+                        Set<ComponentLink> links = linkedNode.getIncomingLinks();
+                        for (ComponentLink link : links) {
+                            if (link.getSourceNodeId() == workflowNodeId && (aggregator = link.getAggregator()) != null) {
+                                String[] sort = aggregator.getSorter();
+                                if (sort != null) {
+                                    DataSorter<EOProduct> sorter = ProductSortingFactory.getSorter(sort[0]);
+                                    results = sorter.sort(products, sort[1] == null || sort[1].equalsIgnoreCase("asc"));
+                                }
+                                String[] group = aggregator.getAssociator();
+                                if (group != null) {
+                                    Association<EOProduct> association;
+                                    if (group.length == 1) {
+                                        association = ProductAssociationFactory.getAssociation(group[0]);
+                                    } else {
+                                        if (group[1] == null) {
+                                            group[1] = "0";
+                                        }
+                                        association = ProductAssociationFactory.getAssociation(group[0],
+                                                                                               Integer.parseInt(group[1]));
+                                    }
+                                    tuples = association.associate(results);
+                                }
+                            }
+                        }
+                    }
+                    if (tuples != null) {
+                        task.setOutputParameterValue(dataSourceComponent.getTargets().get(0).getName(),
+                                                     serializeGroups(tuples));
+                    } else {
+                        task.setOutputParameterValue(dataSourceComponent.getTargets().get(0).getName(),
+                                                     serializeResults(results));
+                    }
                 }
                 status = ExecutionStatus.DONE;
             } else {
@@ -167,6 +216,22 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
             StringListAdapter adapter = new StringListAdapter();
             json = adapter.unmarshal(results.stream().map(EOProduct::getLocation)
                             .collect(Collectors.toList()));
+        } catch (Exception e) {
+            logger.severe("Serialization of results failed: " + e.getMessage());
+        }
+        return json;
+    }
+
+    private String serializeGroups(List<Tuple<EOProduct, EOProduct>> results) {
+        String json = null;
+        try {
+            StringListAdapter adapter = new StringListAdapter();
+            json = adapter.unmarshal(results.stream()
+                                            .map(t -> new Tuple<>(t.getKeyOne().getLocation(),
+                                                                  t.getKeyTwo() != null ?
+                                                                          t.getKeyTwo().getLocation() : null)
+                                                        .toString())
+                                             .collect(Collectors.toList()));
         } catch (Exception e) {
             logger.severe("Serialization of results failed: " + e.getMessage());
         }

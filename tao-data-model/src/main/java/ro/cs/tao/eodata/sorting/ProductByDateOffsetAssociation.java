@@ -23,6 +23,9 @@ public class ProductByDateOffsetAssociation extends Association<EOProduct> {
         this.offsetDays = offset;
     }
 
+    @Override
+    public String[] description() { return new String[] { friendlyName(), Integer.class.getName() }; }
+
     public int getOffsetDays() { return offsetDays; }
     public void setOffsetDays(int offsetDays) { this.offsetDays = offsetDays; }
 

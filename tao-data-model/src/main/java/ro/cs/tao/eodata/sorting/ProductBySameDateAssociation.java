@@ -9,6 +9,9 @@ import java.util.List;
 public class ProductBySameDateAssociation extends Association<EOProduct> {
 
     @Override
+    public String[] description() { return new String[] { friendlyName() }; }
+
+    @Override
     public List<Tuple<EOProduct, EOProduct>> associate(List<EOProduct> source) {
         if (source == null) return null;
         List<Tuple<EOProduct, EOProduct>> results = new ArrayList<>();
