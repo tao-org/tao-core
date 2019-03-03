@@ -70,6 +70,7 @@ public interface MetadataInspector {
         private OrbitDirection orbitDirection;
         private Set<String> controlSums;
         private Map<String, Double> statistics;
+        private int[] histogram;
 
         public String getProductId() { return productId; }
         public void setProductId(String productId) { this.productId = productId; }
@@ -126,6 +127,9 @@ public interface MetadataInspector {
         }
         public void setStatistics(Map<String, Double> statistics) { this.statistics = statistics; }
         public void addStatistic(String name, double value) { getStatistics().put(name, value); }
+
+        public int[] getHistogram() { return histogram; }
+        public void setHistogram(int[] histogram) { this.histogram = histogram; }
 
         public EOProduct toProductDescriptor(Path productPath) throws URISyntaxException, IOException {
             EOProduct product = new EOProduct();
