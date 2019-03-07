@@ -148,8 +148,8 @@ public abstract class Executor<T> implements Runnable {
         } catch (InterruptedException ignored) {
             staticLogger.severe(String.format("The job %s failed to complete within the allocated time [%s s] and is being terminated",
                                               job, timeout));
-            executor.stop();
         } finally {
+            executor.stop();
             printQueue();
         }
         return executor.getReturnCode();
@@ -216,8 +216,8 @@ public abstract class Executor<T> implements Runnable {
                 } catch (InterruptedException iex) {
                     staticLogger.severe(String.format("The job %s failed to complete within the allocated time [%s s] and is being terminated",
                                                       jobs[finalI], timeout));
-                    executors[finalI].stop();
                 } finally {
+                    executors[finalI].stop();
                     printQueue();
                     aggregateLatch.countDown();
                 }
