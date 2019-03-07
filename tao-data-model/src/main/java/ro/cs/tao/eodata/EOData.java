@@ -16,6 +16,7 @@
 package ro.cs.tao.eodata;
 
 import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.MultiPolygon;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.eodata.enums.ProductStatus;
@@ -80,6 +81,9 @@ public abstract class EOData implements Serializable {
     public void setGeometry(String geometryAsText) {
         try {
             this.geometry = new GeometryAdapter().marshal(geometryAsText);
+            if (this.geometry instanceof MultiPolygon && this.geometry.getNumGeometries() == 1) {
+                this.geometry = this.geometry.getGeometryN(0);
+            }
         } catch (Exception ignored) { }
     }
 
