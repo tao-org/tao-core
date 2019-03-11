@@ -70,6 +70,7 @@ public interface MetadataInspector {
         private OrbitDirection orbitDirection;
         private Set<String> controlSums;
         private Map<String, Double> statistics;
+        private Map<String, String> additionalAttributes;
         private int[] histogram;
 
         public String getProductId() { return productId; }
@@ -127,6 +128,15 @@ public interface MetadataInspector {
         }
         public void setStatistics(Map<String, Double> statistics) { this.statistics = statistics; }
         public void addStatistic(String name, double value) { getStatistics().put(name, value); }
+
+        public Map<String, String> getAdditionalAttributes() {
+            if (additionalAttributes == null) {
+                additionalAttributes = new HashMap<>();
+            }
+            return additionalAttributes;
+        }
+        public void setAdditionalAttributes(Map<String, String> additionalAttributes) { this.additionalAttributes = additionalAttributes; }
+        public void addAttribute(String name, String value) { getAdditionalAttributes().put(name, value); }
 
         public int[] getHistogram() { return histogram; }
         public void setHistogram(int[] histogram) { this.histogram = histogram; }
