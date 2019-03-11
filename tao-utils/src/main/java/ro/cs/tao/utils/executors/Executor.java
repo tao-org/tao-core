@@ -16,6 +16,7 @@
 package ro.cs.tao.utils.executors;
 
 import com.jcraft.jsch.Channel;
+import ro.cs.tao.utils.executors.monitoring.ActivityListener;
 
 import java.io.File;
 import java.io.IOException;
