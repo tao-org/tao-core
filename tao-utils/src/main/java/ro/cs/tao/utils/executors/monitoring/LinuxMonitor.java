@@ -33,9 +33,9 @@ class LinuxMonitor extends ProcessActivityMonitor {
                     String message = messages.get(i);
                     if (!message.contains("PID")) {
                         String[] tokens = Arrays.stream(message.split(" ")).filter(t -> !t.isEmpty()).toArray(String[]::new);
-                        if (tokens.length > 4) {
-                            Double read = Double.parseDouble(tokens[3]);
-                            Double write = Double.parseDouble(tokens[4]);
+                        if (tokens.length > 5) {
+                            Double read = Double.parseDouble(tokens[4]);
+                            Double write = Double.parseDouble(tokens[5]);
                             // values are already in kilobytes/second
                             record = new Triple<>(LocalDateTime.now(), read.longValue(), write.longValue());
                         }
