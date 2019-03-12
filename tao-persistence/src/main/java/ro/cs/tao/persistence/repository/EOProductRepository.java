@@ -45,6 +45,12 @@ public interface EOProductRepository extends PagingAndSortingRepository<EOProduc
     int getOtherProductReferences(@Param("componentId") String componentId, @Param("name") String name);
 
     @Modifying
+    @Query(value = "WITH refs AS (SELECT COUNT(s.id) AS cnt FROM component.source_descriptor s JOIN component.data_source_component c ON c.id = s.parent_id " +
+            "WHERE c.id != :componentId AND s.location LIKE '%:name%') DELETE FROM product.raster_data_product USING refs WHERE name = :name AND refs.cnt = 0",
+            nativeQuery = true)
+    void deleteIfNotReferenced(@Param("componentId") String componentId, @Param("name") String productName);
+
+    @Modifying
     @Transactional
     void deleteByName(String name);
 }
