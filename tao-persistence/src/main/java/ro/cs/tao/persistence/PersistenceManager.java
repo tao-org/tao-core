@@ -185,6 +185,10 @@ public class PersistenceManager implements MessagePersister {
         return productManager.getOtherProductReferences(componentId, name);
     }
 
+    public void deleteIfNotReferenced(String refererComponentId, String productName) {
+        productManager.deleteIfNotReferenced(refererComponentId, productName);
+    }
+
     public List<VectorData> getVectorDataProducts() {
         return productManager.getVectorDataProducts();
     }

@@ -105,6 +105,10 @@ public class ProductManager {
         return eoProductRepository.getOtherProductReferences(componentId, name);
     }
 
+    public void deleteIfNotReferenced(String refererComponentId, String productName) {
+        eoProductRepository.deleteIfNotReferenced(refererComponentId, productName);
+    }
+
     /**
      * Retrieve all VectorData
      */
