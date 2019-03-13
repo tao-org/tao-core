@@ -177,6 +177,18 @@ public class PersistenceManager implements MessagePersister {
         return productManager.getExistingProductNames(names);
     }
 
+    public List<EOProduct> getProductsByNames(String... names) {
+        return productManager.getProductsByName(names);
+    }
+
+    public int getOtherProductReferences(String componentId, String name) {
+        return productManager.getOtherProductReferences(componentId, name);
+    }
+
+    public void deleteIfNotReferenced(String refererComponentId, String productName) {
+        productManager.deleteIfNotReferenced(refererComponentId, productName);
+    }
+
     public List<VectorData> getVectorDataProducts() {
         return productManager.getVectorDataProducts();
     }
@@ -211,6 +223,10 @@ public class PersistenceManager implements MessagePersister {
 
     public void remove(EOProduct product) throws PersistenceException {
         productManager.removeProduct(product);
+    }
+
+    public void removeProduct(String name) {
+        productManager.removeProduct(name);
     }
 
     public VectorData saveVectorDataProduct(VectorData vectorDataProduct) throws PersistenceException {
@@ -417,6 +433,10 @@ public class PersistenceManager implements MessagePersister {
 
     public DataSourceComponent updateDataSourceComponent(DataSourceComponent component) throws PersistenceException {
         return dataSourceComponentManager.update(component);
+    }
+
+    public void deleteDataSourceComponent(String id) throws PersistenceException {
+        dataSourceComponentManager.delete(id);
     }
     //endregion
 

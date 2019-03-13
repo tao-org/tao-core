@@ -99,7 +99,9 @@ public class EOProduct extends EOData implements Serializable {
     }
 
     public void setQuicklookLocation(String location) throws URISyntaxException {
-        this.quicklookLocation = new URI(location);
+        if (location != null) {
+            this.quicklookLocation = new URI(location);
+        }
     }
 
     public long getApproximateSize() {

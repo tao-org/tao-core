@@ -34,6 +34,8 @@ public class ConfigurationManager {
     private static final String CONFIG_FILE_NAME = "tao.properties";
     // this field may be set by the launcher of the services
     private static Path configFolder;
+    // this field may be set by the launcher of the services
+    private static Path scriptsFolder;
     private Properties settings;
 
     public static ConfigurationManager getInstance() {
@@ -52,6 +54,8 @@ public class ConfigurationManager {
             }
         }
     }
+
+    public Path getScriptsFolder() { return scriptsFolder; }
 
     public String getValue(String name) {
         return this.settings.getProperty(name, null);

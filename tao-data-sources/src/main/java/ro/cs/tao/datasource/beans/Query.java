@@ -52,6 +52,7 @@ public class Query {
     private Map<String, String> values;
     private LocalDateTime created;
     private LocalDateTime modified;
+    private String componentId;
 
     public Query() { }
 
@@ -108,6 +109,9 @@ public class Query {
 
     public LocalDateTime getModified() { return modified; }
     public void setModified(LocalDateTime modified) { this.modified = modified; }
+
+    public String getComponentId() { return componentId; }
+    public void setComponentId(String componentId) { this.componentId = componentId; }
 
     public static DataQuery toDataQuery(Query webQuery) throws SerializationException {
         DataQuery query = null;

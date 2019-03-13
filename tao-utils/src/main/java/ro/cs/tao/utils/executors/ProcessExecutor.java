@@ -65,6 +65,9 @@ public class ProcessExecutor extends Executor<Process> {
             if (asSuperUser) {
                 writeSudoPassword();
             }
+            if (this.monitor != null) {
+                this.monitor.attachTo(this.channel);
+            }
             //get the process output
             InputStream inputStream = this.channel.getInputStream();
             outReader = new BufferedReader(new InputStreamReader(inputStream));
@@ -107,6 +110,9 @@ public class ProcessExecutor extends Executor<Process> {
             throw new IOException(String.format("[%s] failed: %s", host, message));
         } finally {
             closeStream(outReader);
+            if (this.monitor != null) {
+                this.monitor.detachFrom(this.channel);
+            }
             resetProcess();
         }
         return ret;

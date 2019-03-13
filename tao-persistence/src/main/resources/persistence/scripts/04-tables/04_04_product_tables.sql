@@ -89,6 +89,21 @@ ALTER TABLE product.polarisation_channel ALTER COLUMN id SET DEFAULT nextval('pr
 ALTER SEQUENCE product.polarisation_channel_id_seq OWNED BY product.polarisation_channel.id;
 
 -------------------------------------------------------------------------------
+-- table: product.product_status
+DROP TABLE IF EXISTS product.product_status CASCADE;
+CREATE TABLE product.product_status
+(
+	id integer NOT NULL,
+	status varchar(50) NOT NULL
+);
+ALTER TABLE product.product_status ADD CONSTRAINT PK_product_status
+	PRIMARY KEY (id);
+DROP SEQUENCE IF EXISTS product.product_status_id_seq CASCADE;
+CREATE SEQUENCE product.product_status_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE product.product_status ALTER COLUMN id SET DEFAULT nextval('product.product_status_id_seq');
+ALTER SEQUENCE product.product_status_id_seq OWNED BY product.product_status.id;
+
+-------------------------------------------------------------------------------
 -- table: product.raster_data_product
 DROP TABLE IF EXISTS product.raster_data_product CASCADE;
 CREATE TABLE product.raster_data_product
@@ -109,6 +124,7 @@ CREATE TABLE product.raster_data_product
 	approximate_size bigint NOT NULL,
 	username varchar NULL,
 	visibility_id integer NULL DEFAULT 2,
+	status_id integer NULL,
 	created timestamp NULL DEFAULT now(),
 	modified timestamp NULL
 );
@@ -122,6 +138,8 @@ ALTER TABLE product.raster_data_product ADD CONSTRAINT FK_raster_data_product_pi
 	FOREIGN KEY (pixel_type_id) REFERENCES product.pixel_type (id) ON DELETE No Action ON UPDATE No Action;
 ALTER TABLE product.raster_data_product ADD CONSTRAINT FK_raster_data_product_visibility
 	FOREIGN KEY (visibility_id) REFERENCES common.visibility (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE product.raster_data_product ADD CONSTRAINT FK_raster_data_product_product_status
+   	FOREIGN KEY (status_id) REFERENCES product.product_status (id) ON DELETE No Action ON UPDATE No Action;
 
 -------------------------------------------------------------------------------
 -- table: product.vector_data_product
@@ -137,6 +155,7 @@ CREATE TABLE product.vector_data_product
 	entry_point varchar NULL,
 	username varchar NULL,
 	visibility_id integer NULL DEFAULT 2,
+	status_id integer NULL,
 	created timestamp NULL DEFAULT now(),
 	modified timestamp NULL
 );
@@ -146,6 +165,8 @@ ALTER TABLE product.vector_data_product ADD CONSTRAINT FK_vector_data_product_da
 	FOREIGN KEY (type_id) REFERENCES product.data_format (id) ON DELETE No Action ON UPDATE No Action;
 ALTER TABLE product.vector_data_product ADD CONSTRAINT FK_vector_data_product_visibility
 	FOREIGN KEY (visibility_id) REFERENCES common.visibility (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE product.vector_data_product ADD CONSTRAINT FK_vector_data_product_product_status
+	FOREIGN KEY (status_id) REFERENCES product.product_status (id) ON DELETE No Action ON UPDATE No Action;
 
 -------------------------------------------------------------------------------
 -- table: product.auxiliary_data

@@ -16,6 +16,8 @@
 
 package ro.cs.tao.utils;
 
+import java.util.Objects;
+
 /**
  * Holder class for two objects that can be used as a key in a map.
  *
@@ -26,8 +28,8 @@ public class Tuple<T,V> {
     private final V keyTwo;
 
     public Tuple(T keyOne, V keyTwo) {
-        if (keyOne == null || keyTwo == null) {
-            throw new IllegalArgumentException("Keys cannot be null");
+        if (keyOne == null) {
+            throw new IllegalArgumentException("The first key cannot be null");
         }
         this.keyOne = keyOne;
         this.keyTwo = keyTwo;
@@ -37,13 +39,18 @@ public class Tuple<T,V> {
     public V getKeyTwo() { return keyTwo; }
 
     @Override
+    public String toString() {
+        return "[\""  + keyOne.toString() + "\"," +
+                (keyTwo != null ? "\"" + keyTwo.toString() + "\"" : "null") + "]";
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
-        Tuple<?, ?> key = (Tuple<?, ?>) o;
-
-        return keyOne.equals(key.keyOne) && keyTwo.equals(key.keyTwo);
+        Tuple<?, ?> tuple = (Tuple<?, ?>) o;
+        return keyOne.equals(tuple.keyOne) &&
+                Objects.equals(keyTwo, tuple.keyTwo);
     }
 
     @Override

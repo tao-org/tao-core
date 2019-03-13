@@ -66,7 +66,7 @@ public class ExecutionGroup extends ExecutionTask {
             this.outputParameterValues = new ArrayList<>();
         }
         Variable variable = this.outputParameterValues.stream()
-                                .filter(o -> o.getKey().equals(parameterId)).findFirst().orElse(null);
+                .filter(o -> o.getKey().equals(parameterId)).findFirst().orElse(null);
         if (variable != null) {
             variable.setValue(appendValueToList(variable.getValue(), value));
         } else {
@@ -93,7 +93,7 @@ public class ExecutionGroup extends ExecutionTask {
 
     @Override
     public String buildExecutionCommand() {
-        throw new java.lang.UnsupportedOperationException("Operation not permitted on a task group");
+        throw new UnsupportedOperationException("Operation not permitted on a task group");
     }
 
     public void addTask(ExecutionTask task) {

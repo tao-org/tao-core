@@ -25,6 +25,7 @@ import java.util.List;
 public interface ProductService extends CRUDService<EOProduct, String> {
 
     List<EOProduct> inspect(Path sourcePath) throws IOException;
+    List<EOProduct> getByNames(String... names);
     int importProducts(List<EOProduct> products);
     int importProducts(String sourcePath, boolean linkOnly) throws IOException;
     List<String> checkExisting(String... names);
