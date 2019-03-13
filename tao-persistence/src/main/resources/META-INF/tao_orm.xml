@@ -38,6 +38,10 @@
                 <column name="visibility_id" nullable="true" column-definition="integer null DEFAULT 2"/>
                 <convert converter="ro.cs.tao.persistence.convert.VisibilityConverter" attribute-name="visibility" />
             </basic>
+            <basic name="productStatus">
+                <column name="status_id" nullable="true" column-definition="integer null" />
+                <convert converter="ro.cs.tao.persistence.convert.ProductStatusConverter" attribute-name="productStatus"/>
+            </basic>
 
             <element-collection name="attributes" target-class="ro.cs.tao.eodata.Attribute" access="PROPERTY" fetch="EAGER">
                 <collection-table name="product.data_product_attributes" >
@@ -930,6 +934,9 @@
             <basic name="workflowNodeId">
                 <column name="graph_node_id" nullable="true" column-definition="bigint"/>
             </basic>
+            <basic name="componentId">
+                <column name="component_id" nullable="true" column-definition="varchar(512)"/>
+            </basic>
             <basic name="sensor">
                 <column name="sensor_name" nullable="false" column-definition="varchar(1024) NOT NULL"/>
             </basic>
@@ -1154,6 +1161,10 @@
 
     <embeddable class="ro.cs.tao.component.ComponentLink" access="PROPERTY">
         <attributes>
+            <basic name="aggregator">
+                <column name="aggregator" nullable="true" column-definition="varchar(512)"/>
+                <convert converter="ro.cs.tao.persistence.convert.AggregatorConverter" attribute-name="aggregator"/>
+            </basic>
             <basic name="sourceNodeId" fetch="EAGER">
                 <column name="source_graph_node_id" nullable="false"/>
             </basic>
@@ -1219,5 +1230,7 @@
     <converter class="ro.cs.tao.persistence.convert.ConditionConverter" />
     <converter class="ro.cs.tao.persistence.convert.StringListConverter" />
     <converter class="ro.cs.tao.persistence.convert.TagTypeConverter" />
+    <converter class="ro.cs.tao.persistence.convert.ProductStatusConverter" />
+    <converter class="ro.cs.tao.persistence.convert.AggregatorConverter" />
 
 </entity-mappings>

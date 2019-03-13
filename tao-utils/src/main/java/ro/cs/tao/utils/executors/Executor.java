@@ -16,6 +16,7 @@
 package ro.cs.tao.utils.executors;
 
 import com.jcraft.jsch.Channel;
+import ro.cs.tao.utils.executors.monitoring.ActivityListener;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,8 +35,8 @@ import java.util.logging.Logger;
  */
 public abstract class Executor<T> implements Runnable {
     public static final String SHELL_COMMAND_SEPARATOR = ";";
-    public static final String SHELL_COMMAND_SEPARATOR_AMP = "&&";
-    public static final String SHELL_COMMAND_SEPARATOR_BAR = "||";
+    private static final String SHELL_COMMAND_SEPARATOR_AMP = "&&";
+    private static final String SHELL_COMMAND_SEPARATOR_BAR = "||";
     private static final NamedThreadPoolExecutor executorService;
     private static final Logger staticLogger;
 
@@ -49,12 +50,13 @@ public abstract class Executor<T> implements Runnable {
     String user;
     String password;
     volatile boolean isStopped;
-    volatile boolean isSuspended;
+    private volatile boolean isSuspended;
     List<String> arguments;
     Logger logger;
     boolean asSuperUser;
     OutputConsumer outputConsumer;
     File workingDirectory;
+    ActivityListener monitor;
 
     private volatile int retCode = Integer.MAX_VALUE;
     private final CountDownLatch counter;
@@ -69,8 +71,15 @@ public abstract class Executor<T> implements Runnable {
      * @return                  The Executor object that is responsible of execution
      */
     public static Executor execute(OutputConsumer outputConsumer, ExecutionUnit job) {
+        return execute(outputConsumer, job, null);
+    }
+
+    public static Executor execute(OutputConsumer outputConsumer, ExecutionUnit job, ActivityListener monitor) {
         Executor executor = prepare(outputConsumer, job);
         awaitForConditions(job);
+        if (monitor != null) {
+            executor.setMonitor(monitor);
+        }
         executorService.submit(executor);
         printQueue();
         return executor;
@@ -142,14 +151,18 @@ public abstract class Executor<T> implements Runnable {
      * @return                  The return code of the execution
      */
     public static int execute(OutputConsumer outputConsumer, long timeout, ExecutionUnit job) {
-        Executor executor = execute(outputConsumer, job);
+        return execute(outputConsumer, timeout, job, null);
+    }
+
+    public static int execute(OutputConsumer outputConsumer, long timeout, ExecutionUnit job, ActivityListener monitor) {
+        Executor executor = execute(outputConsumer, job, monitor);
         try {
             executor.getWaitObject().await(timeout, TimeUnit.SECONDS);
         } catch (InterruptedException ignored) {
             staticLogger.severe(String.format("The job %s failed to complete within the allocated time [%s s] and is being terminated",
                                               job, timeout));
-            executor.stop();
         } finally {
+            executor.stop();
             printQueue();
         }
         return executor.getReturnCode();
@@ -202,6 +215,9 @@ public abstract class Executor<T> implements Runnable {
      * @param jobs      One or more command descriptors
      */
     public static int[] execute(OutputConsumer outputConsumer, long timeout, ExecutionUnit... jobs) {
+        return execute(outputConsumer, timeout, null, jobs);
+    }
+    public static int[] execute(OutputConsumer outputConsumer, long timeout, ActivityListener monitor, ExecutionUnit... jobs) {
         Executor[] executors = prepare(outputConsumer, jobs);
         int[] retCodes = new int[executors.length];
         final CountDownLatch aggregateLatch = new CountDownLatch(jobs.length);
@@ -210,14 +226,17 @@ public abstract class Executor<T> implements Runnable {
             final int finalI = i;
             waitThreads[i] = new Thread(() -> {
                 try {
+                    if (monitor != null) {
+                        executors[finalI].setMonitor(monitor);
+                    }
                     executorService.submit(executors[finalI]);
                     printQueue();
                     executors[finalI].getWaitObject().await(timeout, TimeUnit.SECONDS);
                 } catch (InterruptedException iex) {
                     staticLogger.severe(String.format("The job %s failed to complete within the allocated time [%s s] and is being terminated",
                                                       jobs[finalI], timeout));
-                    executors[finalI].stop();
                 } finally {
+                    executors[finalI].stop();
                     printQueue();
                     aggregateLatch.countDown();
                 }
@@ -329,6 +348,8 @@ public abstract class Executor<T> implements Runnable {
         logger = Logger.getLogger(Executor.class.getName());
     }
 
+    public void setMonitor(ActivityListener monitor) { this.monitor = monitor; }
+
     /**
      * Returns the process exit code.
      */
@@ -337,9 +358,7 @@ public abstract class Executor<T> implements Runnable {
     /**
      * Signals the stop of the execution.
      */
-    public void stop() {
-        this.isStopped = true;
-    }
+    public void stop() { this.isStopped = true; }
 
     /**
      * Checks if the process is/has stopped.

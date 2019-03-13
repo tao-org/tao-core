@@ -44,6 +44,18 @@ public abstract class XmlMetadataInspector implements MetadataInspector {
         return null;
     }
 
+    protected String getAttributeValue(String tagName, String attribute, Element element) {
+        NodeList list = element.getElementsByTagName(tagName);
+        if (list != null && list.getLength() > 0) {
+            NodeList subList = list.item(0).getChildNodes();
+            if (subList != null) {
+                NamedNodeMap attributes = ((Element) subList).getAttributes();
+                return attributes.getNamedItem(attribute).getNodeValue();
+            }
+        }
+        return null;
+    }
+
     protected String getValue(String namespace, String tagName, Element element) {
         NodeList list = element.getElementsByTagNameNS(namespace, tagName);
         if (list != null && list.getLength() > 0) {
