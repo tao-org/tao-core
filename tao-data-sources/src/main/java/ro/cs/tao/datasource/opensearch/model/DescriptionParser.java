@@ -125,7 +125,9 @@ public class DescriptionParser {
                     if (this.currentOptions != null) {
                         this.currentEndpoint.addParameter(this.currentParameter,
                                                           new DataSourceParameter(this.currentParameter.getRemoteName(),
-                                                                                  String.class, null, false,
+                                                                                  String.class,
+                                                                                  this.currentParameter.getRemoteName(),
+                                                                                  null, false,
                                                                                   this.currentOptions.toArray(new Object[0])));
                         this.currentOptions = null;
                     } else {
