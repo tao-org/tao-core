@@ -16,6 +16,7 @@
 package ro.cs.tao.datasource.param;
 
 import ro.cs.tao.datasource.ProductFetchStrategy;
+import ro.cs.tao.utils.Tuple;
 
 import java.util.Map;
 
@@ -40,4 +41,22 @@ public interface ParameterProvider {
      * Returns the fetchers associated with the supported sensors.
      */
     Map<String, ProductFetchStrategy> getRegisteredProductFetchStrategies();
+
+    static <T> Tuple<ParameterName, DataSourceParameter> createParameter(String systemName, String remoteName,
+                                                                          String label, Class<T> type) {
+        return createParameter(systemName, remoteName, label, type, null);
+    }
+
+    static <T> Tuple<ParameterName, DataSourceParameter> createParameter(String systemName, String remoteName,
+                                                              String label, Class<T> type, T defaultValue) {
+        return new Tuple<>(ParameterName.create(systemName, remoteName, label),
+                           new DataSourceParameter(systemName, type, label, defaultValue));
+    }
+
+    static <T> Tuple<ParameterName, DataSourceParameter> createParameter(String systemName, String remoteName,
+                                                                         String label, Class<T> type, T defaultValue,
+                                                                         boolean required, T... valueSet) {
+        return new Tuple<>(ParameterName.create(systemName, remoteName, label),
+                           new DataSourceParameter(systemName, type, label, defaultValue, required, valueSet));
+    }
 }
