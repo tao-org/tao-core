@@ -41,6 +41,7 @@ public class DataSourceGroupManager extends TaoComponentManager<DataSourceCompon
         if (group != null) {
             // workaround for two eager collections
             Set<Query> queries = group.getDataSourceQueries();
+
             List<DataSourceComponent> components = group.getDataSourceComponents();
             if (components != null) {
                 group.setDataSourceComponents(group.getDataSourceComponents().stream().distinct().collect(Collectors.toList()));
