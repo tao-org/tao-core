@@ -92,6 +92,8 @@ public class ConfigurationManager {
                 ));
     }
 
+    public void setValue(String name, String value) { this.settings.setProperty(name, value); }
+
     private void externalizeProperties(Path target) throws IOException {
         byte[] buffer = new byte[1024];
         try (BufferedInputStream is = new BufferedInputStream(ConfigurationManager.class.getResourceAsStream("/ro/cs/tao/configuration/" + CONFIG_FILE_NAME));
