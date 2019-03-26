@@ -33,6 +33,7 @@ import ro.cs.tao.docker.Container;
 import ro.cs.tao.eodata.AuxiliaryData;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.VectorData;
+import ro.cs.tao.eodata.naming.NamingRule;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.MessagePersister;
@@ -116,6 +117,9 @@ public class PersistenceManager implements MessagePersister {
 
     @Autowired
     private TagRepository tagRepository;
+
+    @Autowired
+    private NamingRuleManager namingRuleManager;
 
     @PostConstruct
     public void initialize() {
@@ -808,5 +812,33 @@ public class PersistenceManager implements MessagePersister {
     public List<Group> getGroups() {
         return userManager.getGroups();
     }
-// endregion
+    // endregion
+
+    //region NamingRule
+
+    public NamingRule getRuleById(int id) {
+        return namingRuleManager.findById(id);
+    }
+
+    public List<NamingRule> getRules(String sensor) {
+        return namingRuleManager.findBySensor(sensor);
+    }
+
+    public List<NamingRule> getAllRules() {
+        return namingRuleManager.list();
+    }
+
+    public NamingRule saveRule(NamingRule rule) throws PersistenceException {
+        return namingRuleManager.save(rule);
+    }
+
+    public void deleteRule(int ruleId) {
+        namingRuleManager.delete(ruleId);
+    }
+
+    public void deleteRule(NamingRule rule) {
+        namingRuleManager.delete(rule);
+    }
+
+    //endregion
 }

@@ -167,3 +167,44 @@ INSERT INTO usr.user_group (user_id, group_id) VALUES (4, 2);
 INSERT INTO topology.node (id, username, password, total_cpu, total_ram, total_hdd, description)
 VALUES ('localhost', '', '', 8, 32, 1024, 'Master Node');
 
+-- Naming rules
+INSERT INTO product.naming_rule (id, sensor, regex, description) VALUES
+(1, 'Sentinel2', '(S2[A-B])_(MSIL1C|MSIL2A)_(\d{8})T(\d{6})_(N\d{4})_R(\d{3})_T(\d{2}\w{3})_(\d{8}T\d{6})(?:.SAFE)?', 'Sentinel-2 L1C and L2A product naming'),
+(2, 'Sentinel1', '(S1[A-B])_(S[1-6]|IW|EW|WV)_(SLC|GRD|RAW|OCN)([FHM_])_([0-2])([AS])(SH|SV|DH|DV)_(\d{8})T(\d{6})_(\d{8})T(\d{6})_(\d{6})_([0-9A-F]{6})_([0-9A-F]{4})(?:.SAFE)?', 'Sentinel-1 L1 product naming'),
+(3, 'Landsat8', '(L\w\d{2})_(L[1-2]\w{2})_(\d{3})(\d{3})_(\d{8})_(\d{8})_(\d{2})_(\w{2})', 'Landsat-8 L1 product naming');
+
+INSERT INTO product.naming_rule_token (naming_rule_id, token_name, matching_group_number, description) VALUES
+(1, 'MISSION', 1, 'Mission identifier'),
+(1, 'LEVEL', 2, 'Product level'),
+(1, 'ADATE', 3, 'Acquisition date'),
+(1, 'ATIME', 4, 'Acquisition time'),
+(1, 'BASELINE', 5, 'Processing baseline'),
+(1, 'ORBIT', 6, 'Relative orbit'),
+(1, 'TILE', 7, 'UTM tile'),
+(1, 'DISCRIMINATOR', 8, 'Product discriminator');
+
+INSERT INTO product.naming_rule_token (naming_rule_id, token_name, matching_group_number, description) VALUES
+(2, 'MISSION', 1, 'Mission identifier'),
+(2, 'MODE', 2, 'Mode'),
+(2, 'TYPE', 3, 'Product type'),
+(2, 'RESOLUTION', 4, 'Resolution class'),
+(2, 'LEVEL', 5, 'Processing level'),
+(2, 'CLASS', 6, 'Product class'),
+(2, 'POLARISATION', 7, 'Polarisation'),
+(2, 'STARTDATE', 8, 'Acquisition start date'),
+(2, 'STARTTIME', 9, 'Acquisition start time'),
+(2, 'STOPDATE', 10, 'Acquisition stop date'),
+(2, 'STOPTIME', 11, 'Acquisition stop time'),
+(2, 'ORBIT', 12, 'Absolute orbit'),
+(2, 'DATATAKE', 13, 'Datatake identifier'),
+(2, 'DISCRIMINATOR', 14, 'Product discriminator');
+
+INSERT INTO product.naming_rule_token (naming_rule_id, token_name, matching_group_number, description) VALUES
+(3, 'MISSION', 1, 'Mission identifier'),
+(3, 'LEVEL', 2, 'Processing level'),
+(3, 'PATH', 3, 'Acquisition path'),
+(3, 'ROW', 4, 'Acquisition row'),
+(1, 'ADATE', 5, 'Acquisition date'),
+(1, 'PDATE', 6, 'Processing date'),
+(1, 'COLLECTION', 7, 'Collection number'),
+(1, 'CATEGORY', 8, 'Collection category');

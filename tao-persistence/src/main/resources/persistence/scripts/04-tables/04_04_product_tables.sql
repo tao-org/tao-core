@@ -211,3 +211,35 @@ DROP SEQUENCE IF EXISTS product.data_type_id_seq CASCADE;
 CREATE SEQUENCE product.data_type_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
 ALTER TABLE product.data_type ALTER COLUMN id SET DEFAULT nextval('product.data_type_id_seq');
 ALTER SEQUENCE product.data_type_id_seq OWNED BY product.data_type.id;
+
+-------------------------------------------------------------------------------
+-- table: product.naming_rule
+DROP TABLE IF EXISTS product.naming_rule CASCADE;
+CREATE TABLE product.naming_rule
+(
+    id integer NOT NULL,
+    sensor varchar(50) NOT NULL,
+    regex varchar(512) NOT NULL,
+    description varchar(100) NOT NULL
+);
+ALTER TABLE product.naming_rule ADD CONSTRAINT PK_naming_rule
+    PRIMARY KEY (id);
+DROP SEQUENCE IF EXISTS product.naming_rule_id_seq CASCADE;
+CREATE SEQUENCE product.naming_rule_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE product.naming_rule ALTER COLUMN id SET DEFAULT nextval('product.naming_rule_id_seq');
+ALTER SEQUENCE product.naming_rule_id_seq OWNED BY product.naming_rule.id;
+
+-------------------------------------------------------------------------------
+-- table: product.naming_rule_token
+DROP TABLE IF EXISTS product.naming_rule_token CASCADE;
+CREATE TABLE product.naming_rule_token
+(
+    naming_rule_id integer NOT NULL,
+    token_name varchar(20) NOT NULL,
+    matching_group_number integer NOT NULL,
+    description varchar(100) NOT NULL
+);
+ALTER TABLE product.naming_rule_token ADD CONSTRAINT PK_naming_rule_token
+    PRIMARY KEY (naming_rule_id, token_name);
+ALTER TABLE product.naming_rule_token ADD CONSTRAINT FK_naming_rule_token_naming_rule
+	FOREIGN KEY (naming_rule_id) REFERENCES product.naming_rule (id) ON DELETE No Action ON UPDATE No Action;
