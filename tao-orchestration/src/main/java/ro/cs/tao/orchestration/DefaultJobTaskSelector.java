@@ -16,10 +16,8 @@
 
 package ro.cs.tao.orchestration;
 
-import ro.cs.tao.execution.model.ExecutionJob;
-import ro.cs.tao.execution.model.ExecutionStatus;
-import ro.cs.tao.execution.model.ExecutionTask;
-import ro.cs.tao.execution.model.TaskSelector;
+import ro.cs.tao.component.ComponentLink;
+import ro.cs.tao.execution.model.*;
 import ro.cs.tao.orchestration.util.TaskUtilities;
 import ro.cs.tao.utils.TriFunction;
 import ro.cs.tao.workflow.WorkflowDescriptor;
@@ -27,6 +25,7 @@ import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.logging.Logger;
 
@@ -56,6 +55,22 @@ public class DefaultJobTaskSelector implements TaskSelector<ExecutionJob> {
     @Override
     public Class<ExecutionJob> getTaskContainerClass() {
         return ExecutionJob.class;
+    }
+
+    @Override
+    public DataSourceExecutionTask findDataSourceTask(ExecutionJob job, ExecutionTask currentTask) {
+        WorkflowNodeDescriptor workflowNode = this.workflowProvider.apply(currentTask.getWorkflowNodeId());
+        if (workflowNode == null) {
+            logger.severe(String.format("No workflow node with id %s was found in the database",
+                                        currentTask.getWorkflowNodeId()));
+            return null;
+        }
+        WorkflowDescriptor workflow = workflowNode.getWorkflow();
+        List<WorkflowNodeDescriptor> ancestors = workflow.findAncestors(workflow.getOrderedNodes(), workflowNode);
+        return job.orderedTasks().stream().filter(t -> t.getWorkflowNodeId().equals(ancestors.get(0).getId()) &&
+                                                       t instanceof DataSourceExecutionTask)
+                                          .map(t -> (DataSourceExecutionTask) t)
+                                          .findFirst().orElse(null);
     }
 
     @Override

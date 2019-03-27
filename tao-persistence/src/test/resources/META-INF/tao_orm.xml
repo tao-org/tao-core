@@ -918,6 +918,9 @@
     
     <entity class="ro.cs.tao.datasource.beans.Query" access="PROPERTY">
         <table name="workflow.query"/>
+        <entity-listeners>
+            <entity-listener class="ro.cs.tao.persistence.audit.QueryListener"/>
+        </entity-listeners>
         <convert converter="ro.cs.tao.persistence.convert.QueryValuesMapConverter" attribute-name="values"/>
         <attributes>
             <id name="id">
@@ -1069,6 +1072,31 @@
         </attributes>
     </entity>
 
+    <entity class="ro.cs.tao.eodata.naming.NamingRule" access="PROPERTY">
+        <table name="product.naming_rule"/>
+        <attributes>
+            <id name="id">
+                <column name="id" nullable="false" column-definition="integr NOT NULL"/>
+                <generated-value strategy="SEQUENCE" generator="rule_identifier"/>
+                <sequence-generator name="rule_identifier" sequence-name="product.naming_rule_id_seq" allocation-size="1"/>
+            </id>
+            <basic name="sensor">
+                <column name="sensor" nullable="false" column-definition="varchar(50) NOT NULL"/>
+            </basic>
+            <basic name="regEx">
+                <column name="regex" nullable="false" column-definition="varchar(512) NOT NULL"/>
+            </basic>
+            <basic name="description">
+                <column name="description" nullable="false" column-definition="varchar(100) NOT NULL"/>
+            </basic>
+            <element-collection name="tokens" target-class="ro.cs.tao.eodata.naming.NameToken" access="PROPERTY" fetch="EAGER">
+                <collection-table name="product.naming_rule_token">
+                    <join-column name="naming_rule_id" referenced-column-name="id"/>
+                </collection-table>
+            </element-collection>
+        </attributes>
+    </entity>
+
     <embeddable class="ro.cs.tao.eodata.Attribute" access="PROPERTY">
         <attributes>
             <basic name="name">
@@ -1205,6 +1233,20 @@
             </basic>
             <basic name="value">
                 <column name="pref_value" nullable="false" column-definition="varchar(250) NOT NULL"/>
+            </basic>
+        </attributes>
+    </embeddable>
+
+    <embeddable class="ro.cs.tao.eodata.naming.NameToken" access="PROPERTY">
+        <attributes>
+            <basic name="name">
+                <column name="token_name" nullable="false" column-definition="varchar(20) NOT NULL"/>
+            </basic>
+            <basic name="matchingGroupNumber">
+                <column name="matching_group_number" nullable="false" column-definition="integer NOT NULL"/>
+            </basic>
+            <basic name="description">
+                <column name="description" nullable="false" column-definition="varchar(100) NOT NULL"/>
             </basic>
         </attributes>
     </embeddable>

@@ -42,16 +42,16 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private LocalDateTime lastUpdated;
-    protected String internalState;
     private String log;
     private ExecutionJob job;
     private ExecutionStatus executionStatus = ExecutionStatus.UNDETERMINED;
-    List<Variable> inputParameterValues;
-    List<Variable> outputParameterValues;
-    InternalStateHandler stateHandler;
     private SessionContext context;
     // In case of parallel executions, the same WF node can produce multiple execution tasks
     private int instanceId;
+    protected String internalState;
+    List<Variable> inputParameterValues;
+    List<Variable> outputParameterValues;
+    InternalStateHandler stateHandler;
 
     public ExecutionTask() { }
 

@@ -24,32 +24,35 @@ import java.util.Objects;
  */
 public class DataSourceParameter {
     private final String name;
+    private final String label;
     private final Class type;
     private final Object defaultValue;
     private final boolean required;
     private Object[] valueSet;
 
-    public DataSourceParameter(String name, Class type) {
+    public DataSourceParameter(String name, Class type, String label) {
         this(name, type, null, false);
     }
 
-    public DataSourceParameter(String name, Class type, boolean required) {
-        this(name, type, null, required);
+    public DataSourceParameter(String name, Class type, String label, boolean required) {
+        this(name, type, label, null, required);
     }
 
-    public DataSourceParameter(String name, Class type, Object defaultValue) {
-        this(name, type, defaultValue, false);
+    public DataSourceParameter(String name, Class type, String label, Object defaultValue) {
+        this(name, type, label, defaultValue, false);
     }
 
-    public DataSourceParameter(String name, Class type, Object defaultValue, boolean required) {
+    public DataSourceParameter(String name, Class type, String label, Object defaultValue, boolean required) {
         this.name = name;
+        this.label = label;
         this.type = type;
         this.defaultValue = defaultValue;
         this.required = required;
     }
 
-    public DataSourceParameter(String name, Class type, Object defaultValue, boolean required, Object... valueSet) {
+    public DataSourceParameter(String name, Class type, String label, Object defaultValue, boolean required, Object... valueSet) {
         this.name = name;
+        this.label = label;
         this.type = type;
         this.defaultValue = defaultValue;
         this.required = required;
@@ -57,6 +60,8 @@ public class DataSourceParameter {
     }
 
     public String getName() { return name; }
+
+    public String getLabel() { return label; }
 
     public Class getType() { return type; }
 

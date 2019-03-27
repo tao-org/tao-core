@@ -33,6 +33,7 @@ import ro.cs.tao.docker.Container;
 import ro.cs.tao.eodata.AuxiliaryData;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.VectorData;
+import ro.cs.tao.eodata.naming.NamingRule;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.MessagePersister;
@@ -116,6 +117,9 @@ public class PersistenceManager implements MessagePersister {
 
     @Autowired
     private TagRepository tagRepository;
+
+    @Autowired
+    private NamingRuleManager namingRuleManager;
 
     @PostConstruct
     public void initialize() {
@@ -654,42 +658,39 @@ public class PersistenceManager implements MessagePersister {
 
     //region Query
     public Query findQueryById(long id) {
-        return ensurePasswordDecrypted(queryManager.findById(id));
+        return queryManager.findById(id);
     }
 
     public List<Query> getQueries(Iterable<Long> ids) {
-        return ensurePasswordDecrypted(queryManager.findAllById(ids));
+        return queryManager.findAllById(ids);
     }
 
     public Query getQuery(String userId, String sensor, String dataSource, long workflowNodeId) {
-        return ensurePasswordDecrypted(queryManager.findByUserIdAndSensorAndDataSourceAndWorkflowNodeId(userId,
-                                                                                                        sensor,
-                                                                                                        dataSource,
-                                                                                                        workflowNodeId));
+        return queryManager.findByUserIdAndSensorAndDataSourceAndWorkflowNodeId(userId, sensor, dataSource, workflowNodeId);
     }
 
     public List<Query> getQueries(String userId, long nodeId) {
-        return ensurePasswordDecrypted(queryManager.findByUserIdAndWorkflowNodeId(userId, nodeId));
+        return queryManager.findByUserIdAndWorkflowNodeId(userId, nodeId);
     }
 
     public List<Query> getQueries(String userId, String sensor, String dataSource) {
-        return ensurePasswordDecrypted(queryManager.findByUserIdAndSensorAndDataSource(userId, sensor, dataSource));
+        return queryManager.findByUserIdAndSensorAndDataSource(userId, sensor, dataSource);
     }
 
     public List<Query> getQueries(String userId) {
-        return ensurePasswordDecrypted(queryManager.findByUserId(userId));
+        return queryManager.findByUserId(userId);
     }
 
     public List<Query> getQueriesBySensor(String userId, String sensor) {
-        return ensurePasswordDecrypted(queryManager.findByUserIdAndSensor(userId, sensor));
+        return queryManager.findByUserIdAndSensor(userId, sensor);
     }
 
     public List<Query> getQueriesByDataSource(String userId, String dataSource) {
-        return ensurePasswordDecrypted(queryManager.findByUserIdAndDataSource(userId, dataSource));
+        return queryManager.findByUserIdAndDataSource(userId, dataSource);
     }
 
     public Page<Query> getAllQueries (Pageable pageable) {
-        return ensurePasswordDecrypted(queryManager.findAll(pageable));
+        return queryManager.findAll(pageable);
     }
 
     public Query saveQuery(Query query) throws PersistenceException {
@@ -712,7 +713,7 @@ public class PersistenceManager implements MessagePersister {
             query.setCreated(timestamp);
         }
         query.setModified(timestamp);
-        return ensurePasswordDecrypted(queryManager.saveQuery(ensurePasswordEncrypted(query)));
+        return queryManager.saveQuery(query);
     }
 
     public void removeQuery(long id) {
@@ -811,34 +812,33 @@ public class PersistenceManager implements MessagePersister {
     public List<Group> getGroups() {
         return userManager.getGroups();
     }
+    // endregion
 
-    private Query ensurePasswordEncrypted(Query object) {
-        if (object != null && Crypto.decrypt(object.getPassword(), object.getUser()) == null) {
-            // we have an unencrypted password
-            object.setPassword(Crypto.encrypt(object.getPassword(), object.getUser()));
-        }
-        return object;
+    //region NamingRule
+
+    public NamingRule getRuleById(int id) {
+        return namingRuleManager.findById(id);
     }
 
-    private Query ensurePasswordDecrypted(Query object) {
-        if (object != null && Crypto.decrypt(object.getPassword(), object.getUser()) != null) {
-            // we have an unencrypted password
-            object.setPassword(Crypto.decrypt(object.getPassword(), object.getUser()));
-        }
-        return object;
+    public List<NamingRule> getRules(String sensor) {
+        return namingRuleManager.findBySensor(sensor);
     }
 
-    private <T extends Iterable<Query>> T ensurePasswordDecrypted(T objects) {
-        if (objects != null) {
-            objects.forEach(object -> {
-                if (object != null && Crypto.decrypt(object.getPassword(), object.getUser()) != null) {
-                    // we have an unencrypted password
-                    object.setPassword(Crypto.decrypt(object.getPassword(), object.getUser()));
-                }
-            });
-        }
-        return objects;
+    public List<NamingRule> getAllRules() {
+        return namingRuleManager.list();
     }
 
-// endregion
+    public NamingRule saveRule(NamingRule rule) throws PersistenceException {
+        return namingRuleManager.save(rule);
+    }
+
+    public void deleteRule(int ruleId) {
+        namingRuleManager.delete(ruleId);
+    }
+
+    public void deleteRule(NamingRule rule) {
+        namingRuleManager.delete(rule);
+    }
+
+    //endregion
 }
