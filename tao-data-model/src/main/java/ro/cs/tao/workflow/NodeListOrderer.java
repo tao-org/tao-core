@@ -136,4 +136,27 @@ public interface NodeListOrderer {
         children.forEach(c -> c.setLevel(node.getLevel() + 1));
         return children;
     }
+
+    default List<WorkflowNodeDescriptor> findAncestors(List<WorkflowNodeDescriptor> masterList,
+                                                       WorkflowNodeDescriptor node) {
+        if (masterList == null || masterList.size() == 0 || node == null) {
+            return null;
+        }
+        List<WorkflowNodeDescriptor> ancestors = new ArrayList<>();
+        Queue<WorkflowNodeDescriptor> queue = new ArrayDeque<>();
+        Set<ComponentLink> componentLinks = node.getIncomingLinks();
+        if (componentLinks != null) {
+            for (ComponentLink link : componentLinks) {
+                WorkflowNodeDescriptor previous = masterList.stream().filter(n -> n.getId().equals(link.getSourceNodeId())).findFirst().get();
+                queue.add(previous);
+                if (previous.getIncomingLinks() == null) {
+                    ancestors.add(previous);
+                }
+                while (!queue.isEmpty()) {
+                    ancestors.addAll(findAncestors(masterList, queue.remove()));
+                }
+            }
+        }
+        return ancestors;
+    }
 }

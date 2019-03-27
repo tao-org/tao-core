@@ -45,6 +45,11 @@ public abstract class SystemVariable {
      * Variable for the shared (accessible by all users) files location.
      */
     public static final SystemVariable SHARED_FILES = new SharedFiles();
+    /**
+     * Variable for the web cache location.
+     */
+    public static final SystemVariable CACHE = new Cache();
+
     private static final Set<SystemVariable> allVariables;
 
     static {
@@ -53,6 +58,7 @@ public abstract class SystemVariable {
         allVariables.add(SHARED_WORKSPACE);
         allVariables.add(USER_FILES);
         allVariables.add(SHARED_FILES);
+        allVariables.add(CACHE);
     }
 
     /**
@@ -119,6 +125,18 @@ public abstract class SystemVariable {
         @Override
         public String value() {
             return Paths.get(SHARED_WORKSPACE.value()).resolve("files").toString();
+        }
+    }
+
+    private static final class Cache extends SystemVariable {
+
+        @Override
+        public String key() { return "$CACHE"; }
+
+        @Override
+        public String value() {
+            return Paths.get(ConfigurationManager.getInstance().getValue("product.location"))
+                    .resolve("cache").toString();
         }
     }
 }

@@ -73,4 +73,5 @@ public interface ComponentService extends CRUDService<ProcessingComponent, Strin
      * @param component     The entity to be exported.
      */
     String exportTo(MediaType mediaType, ProcessingComponent component) throws SerializationException;
+
 }

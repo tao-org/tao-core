@@ -252,7 +252,15 @@ public class NetUtils {
                     case 200:
                         HttpEntity entity = response.getEntity();
                         Header contentType = entity.getContentType();
-                        result = new NetStreamResponse(entity.getContentLength(), contentType.getValue(),
+                        Header[] headers = response.getHeaders("Content-Disposition");
+                        String name = null;
+                        if (headers.length > 0) {
+                            name = headers[0].getValue();
+                            if (name.toLowerCase().contains("filename")) {
+                                name = name.toLowerCase().substring(name.lastIndexOf("=") + 1).replace("\"", "");
+                            }
+                        }
+                        result = new NetStreamResponse(name, entity.getContentLength(), contentType.getValue(),
                                                        EntityUtils.toByteArray(entity));
 
                         break;

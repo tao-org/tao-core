@@ -29,9 +29,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 public class MailSender {
 
+    private static final Pattern emailPattern = Pattern.compile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$");
     private static final Logger logger = Logger.getLogger(MailSender.class.getName());
     private String mailSmtpAuth;
     private String mailSmtpStartTlsEnable;
@@ -57,6 +59,36 @@ public class MailSender {
         this.mailTo = configManager.getValue("mail.to");
         this.mailUsername = configManager.getValue("mail.smtp.username");
         this.mailPassword = configManager.getValue("mail.smtp.password");
+    }
+
+    public MailSender(String host, int port, boolean auth, String user, String password,
+                      boolean startTLS, String sender, String recipient) {
+        this.mailSmtpAuth = String.valueOf(auth);
+        this.mailSmtpStartTlsEnable = String.valueOf(startTLS);
+        if (host == null || host.isEmpty()) {
+            throw new IllegalArgumentException("Invalid mail host");
+        }
+        this.mailSmptpHost = host;
+        if (port == 0) {
+            throw new IllegalArgumentException("Invalid mail port");
+        }
+        this.mailSmtpPort = String.valueOf(port);
+        if (auth && (user == null || user.isEmpty() || password == null || password.isEmpty())) {
+            throw new IllegalArgumentException("Mail authentication is required, but the provided credentials are invalid");
+        }
+        this.mailUsername = user;
+        this.mailPassword = password;
+        if (sender == null) {
+            String appName = ConfigurationManager.getInstance().getValue("spring.application.name",
+                                                                         "TAO Services");
+            sender = "sysadm@" + appName.toLowerCase().replaceAll(" ", "_") + ".org";
+        }
+        this.mailFrom = sender;
+        if (recipient == null || !emailPattern.matcher(recipient).matches()) {
+            throw new IllegalArgumentException(String.format("Invalid email recipient [%s]",
+                                                             recipient == null ? "null" : recipient));
+        }
+        this.mailTo = recipient;
     }
 
     public void sendMail(String subject, String message) {

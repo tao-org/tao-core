@@ -58,7 +58,7 @@ public class DataSourceComponentGroup extends TaoComponent {
         }
     }
 
-    public Set<Query> getDataSourceQueries() { return dataSourceQueries; }
+    public Set<Query> getDataSourceQueries() {  return dataSourceQueries; }
     public void setDataSourceQueries(Set<Query> dataSourceQueries) { this.dataSourceQueries = dataSourceQueries; }
 
     public void addQuery(Query query, String sourceId) {
