@@ -37,6 +37,7 @@ import ro.cs.tao.utils.executors.*;
 import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.Principal;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -380,7 +381,7 @@ public class TopologyManager implements ITopologyManager {
             List<String> commands;
             String shareName = share.startsWith("/") ? share.substring(1) : share;
             if (SystemUtils.IS_OS_WINDOWS) {
-                commands = ProcessHelper.tokenizeCommands(createLocalShareWindowsTemplate, shareName, path);
+                commands = ProcessHelper.tokenizeCommands(createLocalShareWindowsTemplate, shareName, Paths.get(path).toAbsolutePath());
             } else {
                 commands = ProcessHelper.tokenizeCommands(createLocalShareLinuxTemplate, shareName, path);
             }
