@@ -27,6 +27,8 @@ import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.eodata.enums.Visibility;
 import ro.cs.tao.eodata.metadata.DecodeStatus;
 import ro.cs.tao.eodata.metadata.MetadataInspector;
+import ro.cs.tao.eodata.naming.NameExpressionParser;
+import ro.cs.tao.eodata.naming.NamingRule;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.OutputDataHandlerManager;
 import ro.cs.tao.execution.model.*;
@@ -52,6 +54,8 @@ import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
 import ro.cs.tao.workflow.enums.TransitionBehavior;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.UserPrincipal;
@@ -236,13 +240,11 @@ public class Orchestrator extends Notifiable {
                 .getServiceRegistry(TaskSelector.class).getServices()
                 .stream().filter(s -> ExecutionGroup.class.equals(s.getTaskContainerClass()))
                 .collect(Collectors.toSet());
-        if (selectors != null) {
-            //noinspection unchecked
-            this.groupTaskSelector = selectors.stream()
-                    .filter(s -> s.getClass().getName().equals(groupTaskSelectorClass))
-                    .map(s -> (TaskSelector<ExecutionGroup>) s)
-                    .findFirst().orElse(null);
-        }
+        //noinspection unchecked
+        this.groupTaskSelector = selectors.stream()
+                .filter(s -> s.getClass().getName().equals(groupTaskSelectorClass))
+                .map(s -> (TaskSelector<ExecutionGroup>) s)
+                .findFirst().orElse(null);
         if (this.groupTaskSelector == null) {
             throw new RuntimeException(String.format("Cannot instantiate the selector class defined by %s in configuration",
                                                      GROUP_TASK_SELECTOR_KEY));
@@ -259,13 +261,11 @@ public class Orchestrator extends Notifiable {
                 .getServiceRegistry(TaskSelector.class).getServices()
                 .stream().filter(s -> ExecutionJob.class.equals(s.getTaskContainerClass()))
                 .collect(Collectors.toSet());
-        if (selectors != null) {
-            //noinspection unchecked
-            this.jobTaskSelector = selectors.stream()
-                    .filter(s -> s.getClass().getName().equals(jobTaskSelectorClass))
-                    .map(s -> (TaskSelector<ExecutionJob>) s)
-                    .findFirst().orElse(null);
-        }
+        //noinspection unchecked
+        this.jobTaskSelector = selectors.stream()
+                .filter(s -> s.getClass().getName().equals(jobTaskSelectorClass))
+                .map(s -> (TaskSelector<ExecutionJob>) s)
+                .findFirst().orElse(null);
         if (this.jobTaskSelector == null) {
             throw new RuntimeException(String.format("Cannot instantiate the selector class defined by %s in configuration",
                                                      JOB_TASK_SELECTOR_KEY));
@@ -408,18 +408,44 @@ public class Orchestrator extends Notifiable {
         boolean lastFromGroup = groupTask != null &&
                 groupTask.getOutputParameterValues().stream()
                         .allMatch(o -> targets.stream().anyMatch(t -> t.getName().equals(o.getKey())));
+        final Map<String, Object> parameterValues = pcTask.getInputParameterValues().stream()
+                                                          .collect(Collectors.toMap(Variable::getKey, Variable::getValue));
         targets.forEach(t -> {
-            String targetOutput = pcTask.getInstanceTargetOuptut(t);
+            String targetOutput = null;
+            if (parameterValues.containsKey(t.getName())) {
+                DataSourceExecutionTask originatingTask = findOriginatingTask(pcTask);
+                if (originatingTask != null) {
+                    targetOutput = parameterValues.get(t.getName()).toString();
+                    String sensor = originatingTask.getComponent().getSensorName().replace("-", "");
+                    List<NamingRule> rules = persistenceManager.getRules(sensor);
+                    if (rules.size() > 0) {
+                        NameExpressionParser parser = new NameExpressionParser(rules.get(0));
+                        final List<Variable> values = originatingTask.getOutputParameterValues();
+                        if (values != null && values.size() > 0) {
+                            final List<String> valuesList;
+                            valuesList = this.listAdapter.marshal(values.get(0).getValue());
+                            final int size = valuesList.size();
+                            for (int i = 0; i < size; i++) {
+                                try {
+                                    Path path = Paths.get(new URI(valuesList.get(i)));
+                                    valuesList.set(i, path.getName(path.getNameCount() - 1).toString());
+                                } catch (URISyntaxException e) {
+                                    logger.warning(e.getMessage());
+                                }
+                            }
+                            targetOutput = parser.resolve(targetOutput, valuesList.toArray(new String[0]));
+                        }
+                    }
+                }
+            } else {
+                targetOutput = t.getDataDescriptor().getLocation();
+            }
+            targetOutput = pcTask.getInstanceTargetOuptut(targetOutput);
+            logger.finest(String.format("Output [%s] of task [id=%d] was set to '%s'",
+                                        t.getName(), pcTask.getId(), targetOutput));
             if (targetOutput == null) {
                 logger.severe(String.format("NULL TARGET [task %s, parameter %s]", pcTask.getId(), t.getName()));
-            } /*else {
-                try {
-                    FileUtilities.ensurePermissions(Paths.get(targetOutput));
-                } catch (Exception e) {
-                    logger.warning(String.format("Cannot set permissions [task %s, output %s=%s]",
-                                                 pcTask.getId(), t.getName(), targetOutput));
-                }
-            }*/
+            }
             pcTask.setOutputParameterValue(t.getName(), targetOutput);
             if (keepOutput) {
                 persistOutputProducts(pcTask);
@@ -681,6 +707,15 @@ public class Orchestrator extends Notifiable {
             return next;
         }
         return this.jobTaskSelector.chooseNext(job, task);
+    }
+
+    private DataSourceExecutionTask findOriginatingTask(ExecutionTask current) {
+        ExecutionGroup groupTask = current.getGroupTask();
+        if (groupTask != null) {
+            return this.groupTaskSelector.findDataSourceTask(groupTask, current);
+        } else {
+            return this.jobTaskSelector.findDataSourceTask(current.getJob(), current);
+        }
     }
 
     private void persistOutputProducts(ExecutionTask task) {

@@ -166,9 +166,13 @@ public class ProcessingExecutionTask extends ExecutionTask {
             }
         }
         for (TargetDescriptor descriptor : this.component.getTargets()) {
-            String location = descriptor.getDataDescriptor().getLocation();
+            String location = inputParameterValues.stream()
+                                                  .filter(v -> descriptor.getName().equals(v.getKey()))
+                                                  .map(Variable::getValue)
+                                                  .findFirst()
+                                                  .orElse(descriptor.getDataDescriptor().getLocation());
             if (location != null) {
-                inputParams.put(descriptor.getName(), getInstanceTargetOuptut(descriptor));
+                inputParams.put(descriptor.getName(), getInstanceTargetOuptut(location));
             }
         }
         Map<String, String> variables = new HashMap<>();
@@ -179,9 +183,9 @@ public class ProcessingExecutionTask extends ExecutionTask {
         return this.component.buildExecutionCommand(inputParams, variables);
     }
 
-    public String getInstanceTargetOuptut(TargetDescriptor descriptor) {
+    public String getInstanceTargetOuptut(String location) {
         if (this.instanceTargetOutput == null) {
-            this.instanceTargetOutput = descriptor.getDataDescriptor().getLocation();
+            this.instanceTargetOutput = location;
             if (this.instanceTargetOutput != null) {
                 Path path = Paths.get(this.instanceTargetOutput);
                 SessionContext context = getContext();
@@ -194,7 +198,7 @@ public class ProcessingExecutionTask extends ExecutionTask {
                                                   this.getId(),
                                                   this.internalState == null ? "" : this.internalState + "-",
                                                   FileUtilities.getFilenameWithoutExtension(fileName));
-                fileName = folderName + FileUtilities.getExtension(fileName);
+                //fileName = folderName + FileUtilities.getExtension(fileName);
                 try {
                     FileUtilities.ensureExists(path.getParent().resolve(folderName));
                 } catch (IOException e) {
