@@ -427,6 +427,10 @@ public class PersistenceManager implements MessagePersister {
         return dataSourceComponentManager.getDataSourceComponentByLabel(label);
     }
 
+    public DataSourceComponent getQueryDataSourceComponent(long queryId) {
+        return dataSourceComponentManager.getQueryDataSourceComponent(queryId);
+    }
+
     public DataSourceComponent getDataSourceInstance(String id) {
         return dataSourceComponentManager.get(id);
     }

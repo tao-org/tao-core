@@ -17,10 +17,7 @@
 package ro.cs.tao.eodata.metadata;
 
 import ro.cs.tao.eodata.EOProduct;
-import ro.cs.tao.eodata.enums.DataFormat;
-import ro.cs.tao.eodata.enums.OrbitDirection;
-import ro.cs.tao.eodata.enums.PixelType;
-import ro.cs.tao.eodata.enums.SensorType;
+import ro.cs.tao.eodata.enums.*;
 import ro.cs.tao.utils.FileUtilities;
 
 import java.io.IOException;
@@ -157,6 +154,7 @@ public interface MetadataInspector {
             product.setCrs(this.crs);
             product.setWidth(this.width);
             product.setHeight(this.height);
+            product.setVisibility(Visibility.PUBLIC);
             if (this.orbitDirection != null) {
                 product.addAttribute("orbitdirection", this.orbitDirection.name());
             }
