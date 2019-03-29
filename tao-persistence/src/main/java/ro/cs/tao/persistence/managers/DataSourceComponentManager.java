@@ -39,6 +39,10 @@ public class DataSourceComponentManager extends TaoComponentManager<DataSourceCo
         return (components == null || components.size() == 0) ? null : components.get(0);
     }
 
+    public DataSourceComponent getQueryDataSourceComponent(long queryId) {
+        return this.repository.getQueryDataSourceComponent(queryId);
+    }
+
     @Override
     protected boolean checkId(String entityId, boolean existingEntity) {
         return entityId != null && !entityId.isEmpty();

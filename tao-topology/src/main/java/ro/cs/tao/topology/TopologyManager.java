@@ -77,7 +77,7 @@ public class TopologyManager implements ITopologyManager {
 
         //if [ ! -e /mnt/tao ]; then sed -i '$a//#MASTERHOST##SHARE# /mnt/tao cifs user=tao,password=tao123,file_mode=0777,dir_mode=0777,noperm 0 0' /etc/fstab; fi
         createMountTemplate = "if [ ! -e %1$s ]; then mkdir %1$s; chmod 777 %1$s; sed -i '$a//%2$s%3$s %1$s cifs user=tao,password=tao123,file_mode=0777,dir_mode=0777,noperm 0 0' /etc/fstab; mount -a; fi;";
-        createLocalShareWindowsTemplate = "net share %s=%s /GRANT:Everyone,ALL";
+        createLocalShareWindowsTemplate = "net share %s=%s /GRANT:Everyone,FULL";
         createLocalShareLinuxTemplate = "if [[ $(smbclient -N -g -L localhost | grep \"%1$s\" ]]; then sed -i '$a[%1$s]\n\tpath = %2$s\n\tbrowsable = yes\n\twritable = yes\n\tguest ok = yes' /etc/samba/smb.conf; fi;";
         sharedAccumulator = new OutputAccumulator();
 

@@ -34,20 +34,22 @@ public interface DataSourceComponentService extends CRUDService<DataSourceCompon
      * Creates a user data source component that wraps the given list of products.
      * @param products      The list of products
      * @param dataSource    The data source name
+     * @param queryId       (optional) The id of the query from which the products originated
      * @param label         The label of the custom data source component
      * @param principal     The principal to create the component for
      */
-    DataSourceComponent createForProducts(List<EOProduct> products, String dataSource,
+    DataSourceComponent createForProducts(List<EOProduct> products, String dataSource, Long queryId,
                                           String label, Principal principal) throws PersistenceException;
     /**
      * Creates a user data source component that wraps the given list of products.
      * @param productNames      The list of names of products
      * @param sensor            The type of products (must be of the same satellite)
      * @param dataSource        The name of the data source
+     * @param queryId           (optional) The id of the query from which the products originated
      * @param label             The label of the custom data source component
      * @param principal         The principal to create the component for
      */
-    DataSourceComponent createForProductNames(List<String> productNames, String sensor, String dataSource,
+    DataSourceComponent createForProductNames(List<String> productNames, String sensor, String dataSource, Long queryId,
                                               String label, Principal principal) throws PersistenceException;
 
     List<Tag> getDatasourceTags();
