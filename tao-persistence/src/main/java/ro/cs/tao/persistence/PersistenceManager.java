@@ -673,6 +673,22 @@ public class PersistenceManager implements MessagePersister {
         return queryManager.findByUserIdAndSensorAndDataSourceAndWorkflowNodeId(userId, sensor, dataSource, workflowNodeId);
     }
 
+    public List<Query> getUserQueries(String userId, long nodeId) {
+        return queryManager.getUserQueries(userId, nodeId);
+    }
+
+    public List<Query> getUserQueries(String userId, String sensor, String dataSource) {
+        return queryManager.getUserQueries(userId, sensor, dataSource);
+    }
+
+    public List<Query> getQueriesByUserAndSensor(String userId, String sensor) {
+        return queryManager.getQueriesByUserAndSensor(userId, sensor);
+    }
+
+    public List<Query> getQueriesByUserAndDataSource(String userId, String dataSource) {
+        return queryManager.getQueriesByUserAndDataSource(userId, dataSource);
+    }
+
     public List<Query> getQueries(String userId, long nodeId) {
         return queryManager.findByUserIdAndWorkflowNodeId(userId, nodeId);
     }
@@ -684,6 +700,10 @@ public class PersistenceManager implements MessagePersister {
     public List<Query> getQueries(String userId) {
         return queryManager.findByUserId(userId);
     }
+
+    public List<Query> getUserQueries(String userId) { return queryManager.getUserQueries(userId); }
+
+    public Query getQuery(long queryId) { return queryManager.getQuery(queryId); }
 
     public List<Query> getQueriesBySensor(String userId, String sensor) {
         return queryManager.findByUserIdAndSensor(userId, sensor);

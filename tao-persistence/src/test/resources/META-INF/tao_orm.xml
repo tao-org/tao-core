@@ -971,6 +971,8 @@
             <basic name="modified">
                 <column name="modified" nullable="true" column-definition="timestamp NULL"/>
             </basic>
+            <transient name="groupId"/>
+            <transient name="groupLabel"/>
         </attributes>
     </entity>
 

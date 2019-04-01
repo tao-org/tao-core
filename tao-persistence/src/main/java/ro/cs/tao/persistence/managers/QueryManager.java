@@ -73,12 +73,36 @@ public class QueryManager {
         return queryRepository.findByUserId(userId);
     }
 
+    public List<Query> getUserQueries(String userId) { return queryRepository.getUserQueries(userId); }
+
+    public Query getQuery(long queryId) { return queryRepository.getQuery(queryId); }
+
+    public Query getQuery(String userId, String sensor, String dataSource, long nodeId) {
+        return queryRepository.getQuery(userId, sensor, dataSource, nodeId);
+    }
+
+    public List<Query> getUserQueries(String userId, long nodeId) {
+        return queryRepository.getUserQueries(userId, nodeId);
+    }
+
     public List<Query> findByUserIdAndSensor(String userId, String sensor) {
         return queryRepository.findByUserIdAndSensor(userId, sensor);
     }
 
     public List<Query> findByUserIdAndDataSource(String userId, String dataSource) {
         return queryRepository.findByUserIdAndDataSource(userId, dataSource);
+    }
+
+    public List<Query> getUserQueries(String userId, String sensor, String dataSource) {
+        return queryRepository.getUserQueries(userId, sensor, dataSource);
+    }
+
+    public List<Query> getQueriesByUserAndSensor(String userId, String sensor) {
+        return queryRepository.getQueriesByUserAndSensor(userId, sensor);
+    }
+
+    public List<Query> getQueriesByUserAndDataSource(String userId, String dataSource) {
+        return queryRepository.getQueriesByUserAndDataSource(userId, dataSource);
     }
 
     public Page<Query> findAll(Pageable pageable) {
