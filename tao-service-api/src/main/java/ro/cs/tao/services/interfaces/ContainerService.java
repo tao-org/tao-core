@@ -27,5 +27,5 @@ import java.util.List;
 public interface ContainerService<T> extends CRUDService<Container, String> {
 
     Container initializeContainer(String id, String name, String path, List<Application> applications);
-    void registerContainer(T dockerFile, String shortName, String description) throws IOException;
+    String registerContainer(T dockerFile, String shortName, String description) throws IOException;
 }
