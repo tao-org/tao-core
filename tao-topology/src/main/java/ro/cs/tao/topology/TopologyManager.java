@@ -220,7 +220,7 @@ public class TopologyManager implements ITopologyManager {
     }
 
     @Override
-    public void registerImage(Path imagePath, String shortName, String description) throws TopologyException {
+    public String registerImage(Path imagePath, String shortName, String description) throws TopologyException {
         if (imagePath == null || !Files.exists(imagePath)) {
             throw new TopologyException("Invalid image path");
         }
@@ -238,12 +238,14 @@ public class TopologyManager implements ITopologyManager {
         int retCode;
         Executor executor = Executor.execute(sharedAccumulator, job);
         logger.fine("Executing " + String.join(" ", commands));
+        String containerId = null;
         waitFor(executor, 10, TimeUnit.MINUTES);
         if ((retCode = executor.getReturnCode()) == 0) {
             Container image = getDockerImage(correctedName);
+            containerId = image.getId();
             String localRegistry = ConfigurationManager.getInstance().getValue("tao.docker.registry");
             String tag = localRegistry + "/" + correctedName;
-            commands = ProcessHelper.tokenizeCommands(dockerTagCmdTemplate, image.getId(), tag);
+            commands = ProcessHelper.tokenizeCommands(dockerTagCmdTemplate, containerId, tag);
             job = new ExecutionUnit(ExecutorType.PROCESS, masterNodeInfo.getId(),
                                     masterNodeInfo.getUserName(), masterNodeInfo.getUserPass(),
                                     commands, false, SSHMode.EXEC);
@@ -264,14 +266,14 @@ public class TopologyManager implements ITopologyManager {
                     if ((retCode = executor.getReturnCode()) == 0) {
                         Messaging.send(principal, Topics.INFORMATION, this,
                                        String.format("Docker image '%s' successfully registered", correctedName));
-                        return;
+                        return containerId;
                     } else {
                         logger.severe("Command output: " + sharedAccumulator.getOutput());
                     }
                 } else {
                     Messaging.send(principal, Topics.INFORMATION, this,
                                    String.format("Docker image '%s' successfully registered", correctedName));
-                    return;
+                    return containerId;
                 }
             } else {
                 logger.severe(String.format("Execution failed with code %s. Command output: %s",
@@ -284,6 +286,7 @@ public class TopologyManager implements ITopologyManager {
         sharedAccumulator.reset();
         logger.severe(message);
         Messaging.send(principal, Topics.ERROR, this, message);
+        return containerId;
     }
 
     @Override
@@ -421,10 +424,12 @@ public class TopologyManager implements ITopologyManager {
                                               ProcessHelper.tokenizeCommands(dockerListAllCmd),
                                               false, SSHMode.EXEC);
         sharedAccumulator.reset();
+        sharedAccumulator.preserveLineSeparator(true);
         final Executor executor = Executor.execute(sharedAccumulator, job);
         waitFor(executor, 3, TimeUnit.SECONDS);
         if (executor.getReturnCode() == 0) {
-            String[] lines = sharedAccumulator.getOutput().replace("\n", "").split(";");
+            final String output = sharedAccumulator.getOutput();
+            String[] lines = SystemUtils.IS_OS_WINDOWS ? output.split("\n") : output.replace("\n", "").split(";");
             for (String line : lines) {
                 String[] tokens = line.split(" |\t");
                 List<String> list = Arrays.stream(tokens).filter(item -> !item.trim().isEmpty()).
@@ -439,7 +444,7 @@ public class TopologyManager implements ITopologyManager {
                         container.setName(list.get(2));
                         container.setTag(list.get(1));
                         containers.add(container);
-                        getPersistenceManager().getContainerById(containerId);
+                        //getPersistenceManager().getContainerById(containerId);
                     }
                 }
             }
@@ -448,6 +453,7 @@ public class TopologyManager implements ITopologyManager {
             sharedAccumulator.reset();
             logger.severe(message);
         }
+        sharedAccumulator.preserveLineSeparator(false);
         return containers;
     }
 

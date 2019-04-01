@@ -17,12 +17,20 @@
 package ro.cs.tao.utils.executors;
 
 public class OutputAccumulator implements OutputConsumer {
-    private StringBuilder buffer = new StringBuilder();
+    private boolean delimitLines;
+    private final StringBuilder buffer = new StringBuilder();
+
+    public void preserveLineSeparator(boolean delimitLines) {
+        this.delimitLines = delimitLines;
+    }
 
     @Override
     public void consume(String message) {
-            buffer.append(message);
+        buffer.append(message);
+        if (delimitLines) {
+            buffer.append("\n");
         }
+    }
     public String getOutput() {
         return this.buffer.toString();
     }
