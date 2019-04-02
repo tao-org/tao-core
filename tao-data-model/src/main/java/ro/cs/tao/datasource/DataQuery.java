@@ -20,6 +20,7 @@ import ro.cs.tao.datasource.param.DataSourceParameter;
 import ro.cs.tao.datasource.param.ParameterName;
 import ro.cs.tao.datasource.param.QueryParameter;
 import ro.cs.tao.eodata.EOProduct;
+import ro.cs.tao.eodata.enums.Visibility;
 import ro.cs.tao.serialization.BaseSerializer;
 import ro.cs.tao.serialization.MediaType;
 import ro.cs.tao.serialization.SerializationException;
@@ -143,6 +144,11 @@ public abstract class DataQuery extends StringIdentifiable {
                 .filter(entry -> entry.getValue().getDefaultValue() != null && !actualParameters.containsKey(entry.getKey()))
                 .forEach(e -> addParameter(e.getKey(), e.getValue().getType(), e.getValue().getDefaultValue()));
         List<EOProduct> retList = executeImpl();
+        retList.forEach(p -> {
+            if (p.getVisibility() == null) {
+                p.setVisibility(Visibility.PUBLIC);
+            }
+        });
         retList.sort(Comparator.comparing(EOProduct::getAcquisitionDate));
         return retList;
     }

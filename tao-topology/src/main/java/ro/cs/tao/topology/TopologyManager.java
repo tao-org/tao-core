@@ -37,6 +37,7 @@ import ro.cs.tao.utils.executors.*;
 import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.Principal;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -76,7 +77,7 @@ public class TopologyManager implements ITopologyManager {
 
         //if [ ! -e /mnt/tao ]; then sed -i '$a//#MASTERHOST##SHARE# /mnt/tao cifs user=tao,password=tao123,file_mode=0777,dir_mode=0777,noperm 0 0' /etc/fstab; fi
         createMountTemplate = "if [ ! -e %1$s ]; then mkdir %1$s; chmod 777 %1$s; sed -i '$a//%2$s%3$s %1$s cifs user=tao,password=tao123,file_mode=0777,dir_mode=0777,noperm 0 0' /etc/fstab; mount -a; fi;";
-        createLocalShareWindowsTemplate = "net share %s=%s /GRANT:Everyone,ALL";
+        createLocalShareWindowsTemplate = "net share %s=%s /GRANT:Everyone,FULL";
         createLocalShareLinuxTemplate = "if [[ $(smbclient -N -g -L localhost | grep \"%1$s\" ]]; then sed -i '$a[%1$s]\n\tpath = %2$s\n\tbrowsable = yes\n\twritable = yes\n\tguest ok = yes' /etc/samba/smb.conf; fi;";
         sharedAccumulator = new OutputAccumulator();
 
@@ -219,7 +220,7 @@ public class TopologyManager implements ITopologyManager {
     }
 
     @Override
-    public void registerImage(Path imagePath, String shortName, String description) throws TopologyException {
+    public String registerImage(Path imagePath, String shortName, String description) throws TopologyException {
         if (imagePath == null || !Files.exists(imagePath)) {
             throw new TopologyException("Invalid image path");
         }
@@ -237,12 +238,14 @@ public class TopologyManager implements ITopologyManager {
         int retCode;
         Executor executor = Executor.execute(sharedAccumulator, job);
         logger.fine("Executing " + String.join(" ", commands));
+        String containerId = null;
         waitFor(executor, 10, TimeUnit.MINUTES);
         if ((retCode = executor.getReturnCode()) == 0) {
             Container image = getDockerImage(correctedName);
+            containerId = image.getId();
             String localRegistry = ConfigurationManager.getInstance().getValue("tao.docker.registry");
             String tag = localRegistry + "/" + correctedName;
-            commands = ProcessHelper.tokenizeCommands(dockerTagCmdTemplate, image.getId(), tag);
+            commands = ProcessHelper.tokenizeCommands(dockerTagCmdTemplate, containerId, tag);
             job = new ExecutionUnit(ExecutorType.PROCESS, masterNodeInfo.getId(),
                                     masterNodeInfo.getUserName(), masterNodeInfo.getUserPass(),
                                     commands, false, SSHMode.EXEC);
@@ -263,14 +266,14 @@ public class TopologyManager implements ITopologyManager {
                     if ((retCode = executor.getReturnCode()) == 0) {
                         Messaging.send(principal, Topics.INFORMATION, this,
                                        String.format("Docker image '%s' successfully registered", correctedName));
-                        return;
+                        return containerId;
                     } else {
                         logger.severe("Command output: " + sharedAccumulator.getOutput());
                     }
                 } else {
                     Messaging.send(principal, Topics.INFORMATION, this,
                                    String.format("Docker image '%s' successfully registered", correctedName));
-                    return;
+                    return containerId;
                 }
             } else {
                 logger.severe(String.format("Execution failed with code %s. Command output: %s",
@@ -283,6 +286,7 @@ public class TopologyManager implements ITopologyManager {
         sharedAccumulator.reset();
         logger.severe(message);
         Messaging.send(principal, Topics.ERROR, this, message);
+        return containerId;
     }
 
     @Override
@@ -380,7 +384,7 @@ public class TopologyManager implements ITopologyManager {
             List<String> commands;
             String shareName = share.startsWith("/") ? share.substring(1) : share;
             if (SystemUtils.IS_OS_WINDOWS) {
-                commands = ProcessHelper.tokenizeCommands(createLocalShareWindowsTemplate, shareName, path);
+                commands = ProcessHelper.tokenizeCommands(createLocalShareWindowsTemplate, shareName, Paths.get(path).toAbsolutePath());
             } else {
                 commands = ProcessHelper.tokenizeCommands(createLocalShareLinuxTemplate, shareName, path);
             }
@@ -420,10 +424,12 @@ public class TopologyManager implements ITopologyManager {
                                               ProcessHelper.tokenizeCommands(dockerListAllCmd),
                                               false, SSHMode.EXEC);
         sharedAccumulator.reset();
+        sharedAccumulator.preserveLineSeparator(true);
         final Executor executor = Executor.execute(sharedAccumulator, job);
         waitFor(executor, 3, TimeUnit.SECONDS);
         if (executor.getReturnCode() == 0) {
-            String[] lines = sharedAccumulator.getOutput().replace("\n", "").split(";");
+            final String output = sharedAccumulator.getOutput();
+            String[] lines = SystemUtils.IS_OS_WINDOWS ? output.split("\n") : output.replace("\n", "").split(";");
             for (String line : lines) {
                 String[] tokens = line.split(" |\t");
                 List<String> list = Arrays.stream(tokens).filter(item -> !item.trim().isEmpty()).
@@ -438,7 +444,7 @@ public class TopologyManager implements ITopologyManager {
                         container.setName(list.get(2));
                         container.setTag(list.get(1));
                         containers.add(container);
-                        getPersistenceManager().getContainerById(containerId);
+                        //getPersistenceManager().getContainerById(containerId);
                     }
                 }
             }
@@ -447,6 +453,7 @@ public class TopologyManager implements ITopologyManager {
             sharedAccumulator.reset();
             logger.severe(message);
         }
+        sharedAccumulator.preserveLineSeparator(false);
         return containers;
     }
 

@@ -17,6 +17,7 @@ package ro.cs.tao.services.model.datasource;
 
 import ro.cs.tao.datasource.param.DataSourceParameter;
 
+import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -34,6 +35,13 @@ public class DataSourceDescriptor {
         this.sensor = sensor;
         this.dataSourceName = dataSourceName;
         this.parameters = parameters;
+        if (this.parameters != null) {
+            Iterator<String> iterator = parameters.keySet().iterator();
+            int order = 1;
+            while (iterator.hasNext()) {
+                parameters.get(iterator.next()).setOrder(order++);
+            }
+        }
     }
 
     public String getSensor() {

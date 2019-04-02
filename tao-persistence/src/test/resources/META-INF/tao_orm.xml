@@ -40,7 +40,6 @@
             </basic>
             <basic name="productStatus">
                 <column name="status_id" nullable="true" column-definition="integer null" />
-                <convert converter="ro.cs.tao.persistence.convert.ProductStatusConverter" attribute-name="productStatus"/>
             </basic>
 
             <element-collection name="attributes" target-class="ro.cs.tao.eodata.Attribute" access="PROPERTY" fetch="EAGER">
@@ -145,6 +144,7 @@
         <convert converter="ro.cs.tao.persistence.convert.SensorTypeConverter" attribute-name="sensorType" />
         <convert converter="ro.cs.tao.persistence.convert.PixelTypeConverter" attribute-name="pixelType" />
         <convert converter="ro.cs.tao.persistence.convert.VisibilityConverter" attribute-name="visibility" />
+        <convert converter="ro.cs.tao.persistence.convert.ProductStatusConverter" attribute-name="productStatus"/>
         <attributes>
             <basic name="sensorType">
                 <column name="sensor_type_id" nullable="false" column-definition="integer not null"/>
@@ -177,6 +177,7 @@
         <!-- Converter DataFormatConverter not seen in mapped superclass, therefore declared here -->
         <convert converter="ro.cs.tao.persistence.convert.DataFormatConverter" attribute-name="formatType" />
         <convert converter="ro.cs.tao.persistence.convert.VisibilityConverter" attribute-name="visibility" />
+        <convert converter="ro.cs.tao.persistence.convert.ProductStatusConverter" attribute-name="productStatus"/>
         <attributes/>
     </entity>
 
@@ -970,6 +971,8 @@
             <basic name="modified">
                 <column name="modified" nullable="true" column-definition="timestamp NULL"/>
             </basic>
+            <transient name="groupId"/>
+            <transient name="groupLabel"/>
         </attributes>
     </entity>
 

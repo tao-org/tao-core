@@ -17,7 +17,6 @@ package ro.cs.tao.execution.model;
 
 import ro.cs.tao.component.*;
 import ro.cs.tao.component.validation.ValidationException;
-import ro.cs.tao.eodata.naming.NamingRule;
 import ro.cs.tao.security.SessionContext;
 import ro.cs.tao.utils.FileUtilities;
 

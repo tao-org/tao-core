@@ -38,4 +38,9 @@ public interface DataSourceComponentRepository extends PagingAndSortingRepositor
 
     @Query(value = "SELECT dsc FROM DataSourceComponent dsc WHERE dsc.label = ?1")
     List<DataSourceComponent> getDataSourceComponentByLabel(String label);
+
+    @Query(value = "SELECT dsc.* FROM component.data_source_component dsc " +
+                   "JOIN workflow.query q ON q.component_id = dsc.id WHERE q.id = ?1",
+           nativeQuery = true)
+    DataSourceComponent getQueryDataSourceComponent(long queryId);
 }

@@ -29,6 +29,7 @@ public class DataSourceParameter {
     private final Object defaultValue;
     private final boolean required;
     private Object[] valueSet;
+    private int order;
 
     public DataSourceParameter(String name, Class type, String label) {
         this(name, type, null, false);
@@ -70,6 +71,10 @@ public class DataSourceParameter {
     public Object getDefaultValue() { return defaultValue; }
 
     public Object[] getValueSet() { return valueSet; }
+
+    public int getOrder() { return order; }
+
+    public void setOrder(int order) { this.order = order; }
 
     @Override
     public boolean equals(Object o) {

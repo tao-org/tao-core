@@ -16,7 +16,6 @@
 
 package ro.cs.tao.orchestration;
 
-import ro.cs.tao.component.ComponentLink;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.orchestration.util.TaskUtilities;
 import ro.cs.tao.utils.TriFunction;
@@ -25,7 +24,6 @@ import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.logging.Logger;
 
