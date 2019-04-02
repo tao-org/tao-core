@@ -39,6 +39,7 @@ import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.MessagePersister;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.persistence.managers.*;
+import ro.cs.tao.persistence.repository.QueryViewRepository;
 import ro.cs.tao.persistence.repository.TagRepository;
 import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.topology.ServiceDescription;
@@ -427,6 +428,10 @@ public class PersistenceManager implements MessagePersister {
         return dataSourceComponentManager.getDataSourceComponentByLabel(label);
     }
 
+    public DataSourceComponent getQueryDataSourceComponent(long queryId) {
+        return dataSourceComponentManager.getQueryDataSourceComponent(queryId);
+    }
+
     public DataSourceComponent getDataSourceInstance(String id) {
         return dataSourceComponentManager.get(id);
     }
@@ -669,6 +674,22 @@ public class PersistenceManager implements MessagePersister {
         return queryManager.findByUserIdAndSensorAndDataSourceAndWorkflowNodeId(userId, sensor, dataSource, workflowNodeId);
     }
 
+    public List<Query> getUserQueries(String userId, long nodeId) {
+        return queryManager.getUserQueries(userId, nodeId);
+    }
+
+    public List<Query> getUserQueries(String userId, String sensor, String dataSource) {
+        return queryManager.getUserQueries(userId, sensor, dataSource);
+    }
+
+    public List<Query> getQueriesByUserAndSensor(String userId, String sensor) {
+        return queryManager.getQueriesByUserAndSensor(userId, sensor);
+    }
+
+    public List<Query> getQueriesByUserAndDataSource(String userId, String dataSource) {
+        return queryManager.getQueriesByUserAndDataSource(userId, dataSource);
+    }
+
     public List<Query> getQueries(String userId, long nodeId) {
         return queryManager.findByUserIdAndWorkflowNodeId(userId, nodeId);
     }
@@ -679,6 +700,16 @@ public class PersistenceManager implements MessagePersister {
 
     public List<Query> getQueries(String userId) {
         return queryManager.findByUserId(userId);
+    }
+
+    public List<Query> getUserQueries(String userId) throws PersistenceException {
+        //return queryManager.getUserQueries(userId);
+        return new QueryViewRepository(this).getUserQueries(userId);
+    }
+
+    public Query getQuery(long queryId) throws PersistenceException {
+        //return queryManager.getQuery(queryId);
+        return new QueryViewRepository(this).getQuery(queryId);
     }
 
     public List<Query> getQueriesBySensor(String userId, String sensor) {

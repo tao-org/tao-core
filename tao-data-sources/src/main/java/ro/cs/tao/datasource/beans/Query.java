@@ -53,6 +53,8 @@ public class Query {
     private LocalDateTime created;
     private LocalDateTime modified;
     private String componentId;
+    private String groupId;
+    private String groupLabel;
 
     public Query() { }
 
@@ -112,6 +114,12 @@ public class Query {
 
     public String getComponentId() { return componentId; }
     public void setComponentId(String componentId) { this.componentId = componentId; }
+
+    public String getGroupId() { return groupId; }
+    public void setGroupId(String groupId) { this.groupId = groupId; }
+
+    public String getGroupLabel() { return groupLabel; }
+    public void setGroupLabel(String groupLabel) { this.groupLabel = groupLabel; }
 
     public static DataQuery toDataQuery(Query webQuery) throws SerializationException {
         DataQuery query = null;

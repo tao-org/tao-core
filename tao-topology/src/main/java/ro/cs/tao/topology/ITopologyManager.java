@@ -31,6 +31,6 @@ public interface ITopologyManager {
     void update(NodeDescription nodeInfo) throws TopologyException;
     void remove(String hostName) throws TopologyException;
     List<Container> getAvailableDockerImages();
-    void registerImage(Path imagePath, String shortName, String description) throws TopologyException;
+    String registerImage(Path imagePath, String shortName, String description) throws TopologyException;
     List<DockerImageInstaller> getInstallers();
 }

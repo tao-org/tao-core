@@ -2,10 +2,7 @@ package ro.cs.tao.utils.async;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 /**
  * @author Cosmin Cara
@@ -17,6 +14,26 @@ public class Parallel {
      */
     public interface Runnable<T> {
         void run(T i);
+    }
+
+    public interface Cancellable<T> {
+        void run(T i, Signal cancelSignal);
+    }
+
+    public static class Signal {
+        private final List<Future<?>> tasks;
+
+        public Signal(List<Future<?>> tasks) {
+            this.tasks = tasks;
+        }
+
+        public void signal() {
+            for (Future<?> task : tasks) {
+                if (!task.isDone()) {
+                    task.cancel(true);
+                }
+            }
+        }
     }
 
     /**
@@ -81,6 +98,25 @@ public class Parallel {
         tasks.forEach(task -> {
             try   { task.get(); }
             catch (InterruptedException | ExecutionException ignored) { }
+        });
+        executor.shutdown();
+    }
+
+    public static void For(int start, int stop, final Cancellable<Integer> code) {
+        For(start, stop, PARALLELISM, code);
+    }
+
+    public static void For(int start, int stop, int parallelism, final Cancellable<Integer> code) {
+        final ExecutorService executor = Executors.newFixedThreadPool(parallelism);
+        final List<Future<?>> tasks  = new LinkedList<>();
+        final Signal cancelSignal = new Signal(tasks);
+        for (int i = start; i < stop; i++) {
+            final Integer index = i;
+            tasks.add(executor.submit(() -> code.run(index, cancelSignal)));
+        }
+        tasks.forEach(task -> {
+            try   { task.get(); }
+            catch (InterruptedException | ExecutionException | CancellationException ignored) { }
         });
         executor.shutdown();
     }
