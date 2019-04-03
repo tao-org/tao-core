@@ -34,6 +34,8 @@ public interface ResponseParser<T> {
      */
     List<T> parse(String content) throws ParseException;
 
+    T parseValue(String content) throws ParseException;
+
     default long parseCount(String content) throws ParseException { return -1; }
 
     /**

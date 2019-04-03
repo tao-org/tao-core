@@ -51,6 +51,25 @@ public class JsonResponseParser<T> implements ResponseParser<T> {
     }
 
     @Override
+    public T parseValue(String content) throws ParseException {
+        T result = null;
+        try {
+            CompositeFilter filter = new CompositeFilter();
+            filter.addFilter(new NullFilter());
+            filter.addFilter(new ValueFilter("null"));
+            String[] excludedAttributes = this.getExcludedAttributes();
+            if (excludedAttributes != null && excludedAttributes.length > 0) {
+                filter.addFilter(new NameFilter(Arrays.stream(excludedAttributes)
+                                                        .collect(Collectors.toSet())));
+            }
+            result = handler.readValue(content);
+        } catch (IOException e) {
+            logger.warning(e.getMessage());
+        }
+        return result;
+    }
+
+    @Override
     public List<T> parse(String content) throws ParseException {
         List<T> result = null;
         try {

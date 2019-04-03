@@ -45,10 +45,12 @@ public class SimpleArchiveDownloadStrategy extends DownloadStrategy {
 
     public SimpleArchiveDownloadStrategy(String targetFolder, Properties properties) {
         super(targetFolder, properties);
+        this.fetchMode = FetchMode.OVERWRITE;
     }
 
     protected SimpleArchiveDownloadStrategy(SimpleArchiveDownloadStrategy other) {
         super(other);
+        this.fetchMode = FetchMode.OVERWRITE;
     }
 
     @Override
