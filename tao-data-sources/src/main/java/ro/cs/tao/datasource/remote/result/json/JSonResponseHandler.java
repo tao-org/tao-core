@@ -26,6 +26,7 @@ import java.util.List;
  * @author Cosmin Cara
  */
 public interface JSonResponseHandler<T> {
-    List<T> readValues(String content, AttributeFilter...filters) throws IOException;
+    default List<T> readValues(String content, AttributeFilter...filters) throws IOException { return null; }
     default long countValues(String content) throws IOException { return -1; }
+    default T readValue(String content, AttributeFilter...filters) throws IOException { return null; }
 }
