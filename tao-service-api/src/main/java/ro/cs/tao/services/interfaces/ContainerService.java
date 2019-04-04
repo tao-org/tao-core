@@ -18,14 +18,16 @@ package ro.cs.tao.services.interfaces;
 import ro.cs.tao.docker.Application;
 import ro.cs.tao.docker.Container;
 
-import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 
 /**
  * @author Cosmin Cara
  */
-public interface ContainerService<T> extends CRUDService<Container, String> {
+public interface ContainerService extends CRUDService<Container, String> {
 
     Container initializeContainer(String id, String name, String path, List<Application> applications);
-    String registerContainer(T dockerFile, String shortName, String description) throws IOException;
+
+    String registerContainer(Path dockerFile, String shortName, String description, Container descriptor);
+
 }

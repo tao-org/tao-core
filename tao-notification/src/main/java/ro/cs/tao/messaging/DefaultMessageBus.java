@@ -134,6 +134,7 @@ public class DefaultMessageBus implements ro.cs.tao.messaging.EventBus<Event<Mes
 
     @Override
     public void send(Principal principal, String topic, Message message) {
+        message.setUser(principal.getName());
         send(principal, topic, Event.wrap(message));
     }
 
