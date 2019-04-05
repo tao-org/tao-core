@@ -24,15 +24,81 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Stream;
 
+/**
+ * Service interface for manipulation of files and folders (server-side).
+ *
+ * @author Cosmin Cara
+ */
 @Service
 public interface StorageService<T> extends TAOService {
+    /**
+     * Creates a folder.
+     *
+     * @param folderRelativePath    The folder path, relative to the current workspace
+     * @param userOnly              If <code>true</code>, the folder is created in the workspace of the calling user.
+     *                              Otherwise, it is created in the shared workspace.
+     */
     Path createFolder(String folderRelativePath, boolean userOnly) throws IOException;
-    void storeUserFile(T object, String description) throws Exception;
-    void storePublicFile(T object, String description) throws Exception;
+
+    /**
+     * Stores a file in the given folder, in the user workspace
+     *
+     * @param object            The file object
+     * @param relativeFolder    The folder path, relative to the workspace of the calling user
+     * @param description       A description for the file
+     */
+    void storeUserFile(T object, String relativeFolder, String description) throws Exception;
+    /**
+     * Stores a file in the given folder, in the shared workspace
+     *
+     * @param object            The file object
+     * @param relativeFolder    The folder path, relative to the shared workspace
+     * @param description       A description for the file
+     */
+    void storePublicFile(T object, String relativeFolder, String description) throws Exception;
+
+    /**
+     * Removes the file or folder with the given name.
+     *
+     * @param name          The name of the file or folder
+     */
     void remove(String name) throws IOException;
+
+    /**
+     * List the uploaded files in a workspace
+     *
+     * @param userOnly  If <code>true</code>, the attempt is made in the user workspace. Otherwise, it is made in
+     *                  the shared workspace
+     */
     Stream<Path> listFiles(boolean userOnly) throws IOException;
+
+    /**
+     * List the products and the uploaded files in a workspace
+     * @param userOnly  If <code>true</code>, the attempt is made in the user workspace. Otherwise, it is made in
+     *                  the shared workspace
+     */
     Stream<Path> listWorkspace(boolean userOnly) throws IOException;
+
+    /**
+     * List the children files starting from the given path.
+     *
+     * @param fromPath  The path to look into.
+     */
     Stream<Path> listFiles(String fromPath) throws IOException;
+
+    /**
+     * Lists the results of the given workflow, regardless of the execution job.
+     * The results come as a combination of file information and product information.
+     *
+     * @param workflowId    The id of the workflow.
+     */
     List<FileObject> getWorkflowResults(long workflowId) throws IOException;
+
+    /**
+     * List the results of the given execution job.
+     * The results come as a combination of file information and product information.
+     *
+     * @param jobId         The job identifier.
+     */
     List<FileObject> getJobResults(long jobId) throws IOException;
 }
