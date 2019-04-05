@@ -88,10 +88,10 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
                 TopologyManager topologyManager = TopologyManager.getInstance();
                 container = topologyManager.getDockerImage(getContainerName());
                 if (container == null) {
-                    this.logger.finest(String.format("Image %s was not found in Docker registry. Registration starting.\n" +
+                    this.logger.info(String.format("Image %s was not found in Docker registry. Registration starting.\n" +
                                                              "Until registration completes, the corresponding components will not be available.", getContainerName()));
                     topologyManager.registerImage(dockerfilePath.toRealPath(), getContainerName(), getDescription());
-                    this.logger.finest(String.format("Registration completed for docker image %s.", getContainerName()));
+                    this.logger.info(String.format("Registration completed for docker image %s.", getContainerName()));
                     container = topologyManager.getDockerImage(getContainerName());
                 } else {
                     logger.finest(String.format("Image %s was found in Docker registry", getContainerName()));
@@ -103,7 +103,7 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
         }
         Container dbContainer = persistenceManager.getContainerById(container != null ? container.getId() : getContainerName());
         if (dbContainer == null) {
-            logger.fine(String.format("Container %s not registered in database, will create one", getContainerName()));
+            logger.info(String.format("Container %s not registered in database, will create one", getContainerName()));
             dbContainer = new Container();
             dbContainer.setId(container != null ? container.getId() : getContainerName());
             dbContainer.setName(getContainerName());

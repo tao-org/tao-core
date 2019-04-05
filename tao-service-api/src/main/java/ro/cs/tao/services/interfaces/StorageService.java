@@ -26,6 +26,7 @@ import java.util.stream.Stream;
 
 @Service
 public interface StorageService<T> extends TAOService {
+    Path createFolder(String folderRelativePath, boolean userOnly) throws IOException;
     void storeUserFile(T object, String description) throws Exception;
     void storePublicFile(T object, String description) throws Exception;
     void remove(String name) throws IOException;
