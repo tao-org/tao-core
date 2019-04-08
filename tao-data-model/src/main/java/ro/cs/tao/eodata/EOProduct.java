@@ -130,6 +130,7 @@ public class EOProduct extends EOData implements Serializable {
     @Override
     public Map<String, String> toAttributeMap() {
         Map<String, String> attributes = super.toAttributeMap();
+        attributes.put("name", getName());
         attributes.put("sensorType", sensorType != null ? sensorType.name() : "n/a");
         attributes.put("pixelType", pixelType != null ? pixelType.name() : "n/a");
         attributes.put("productType", safeValue(productType));

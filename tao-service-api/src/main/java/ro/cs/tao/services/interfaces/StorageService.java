@@ -22,7 +22,6 @@ import ro.cs.tao.services.model.FileObject;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.stream.Stream;
 
 /**
  * Service interface for manipulation of files and folders (server-side).
@@ -64,27 +63,26 @@ public interface StorageService<T> extends TAOService {
      */
     void remove(String name) throws IOException;
 
+    List<FileObject> listUploaded() throws IOException;
     /**
-     * List the uploaded files in a workspace
+     * List the products and uploaded files in the shared workspace
      *
-     * @param userOnly  If <code>true</code>, the attempt is made in the user workspace. Otherwise, it is made in
-     *                  the shared workspace
      */
-    Stream<Path> listFiles(boolean userOnly) throws IOException;
+    List<FileObject> listPublicWorkspace() throws IOException;
 
+    List<FileObject> listUploaded(String userName) throws IOException;
     /**
-     * List the products and the uploaded files in a workspace
-     * @param userOnly  If <code>true</code>, the attempt is made in the user workspace. Otherwise, it is made in
-     *                  the shared workspace
+     * List the products and the uploaded files in a user workspace
+     * @param userName The user name
      */
-    Stream<Path> listWorkspace(boolean userOnly) throws IOException;
+    List<FileObject> listUserWorkspace(String userName) throws IOException;
 
     /**
      * List the children files starting from the given path.
      *
      * @param fromPath  The path to look into.
      */
-    Stream<Path> listFiles(String fromPath) throws IOException;
+    List<FileObject> listFiles(Path fromPath) throws IOException;
 
     /**
      * Lists the results of the given workflow, regardless of the execution job.
