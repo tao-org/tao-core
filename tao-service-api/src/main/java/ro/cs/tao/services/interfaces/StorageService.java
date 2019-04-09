@@ -22,6 +22,7 @@ import ro.cs.tao.services.model.FileObject;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Service interface for manipulation of files and folders (server-side).
@@ -82,7 +83,7 @@ public interface StorageService<T> extends TAOService {
      *
      * @param fromPath  The path to look into.
      */
-    List<FileObject> listFiles(Path fromPath) throws IOException;
+    List<FileObject> listFiles(Path fromPath, Set<Path> exclusions) throws IOException;
 
     /**
      * Lists the results of the given workflow, regardless of the execution job.
