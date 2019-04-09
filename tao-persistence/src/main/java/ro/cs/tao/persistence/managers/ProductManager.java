@@ -78,6 +78,11 @@ public class ProductManager {
     }
 
     @Transactional
+    public List<EOProduct> getOtherPublishedProducts(String user) {
+        return eoProductRepository.getOtherPublishedProducts(user);
+    }
+
+    @Transactional
     public List<EOProduct> getEOProducts(Set<String> locations) {
         return eoProductRepository.getProductsByLocation(locations);
     }
