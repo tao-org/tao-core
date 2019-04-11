@@ -63,13 +63,13 @@ public class ProgressNotifier implements ProgressListener {
         if (taskName == null) {
             taskName = subTaskName;
         }
-        sendMessage(SUBTASK_START, taskName, subTaskName);
+        sendTransientMessage(SUBTASK_START, taskName, subTaskName);
     }
 
     @Override
     public void subActivityEnded(String subTaskName) {
         this.subTaskCounter = 1;
-        sendMessage(SUBTASK_END, taskName, subTaskName);
+        sendTransientMessage(SUBTASK_END, taskName, subTaskName);
     }
 
     @Override
@@ -87,7 +87,7 @@ public class ProgressNotifier implements ProgressListener {
         }
         taskCounter = progressValue;
         if (taskCounter < 1) {
-            sendMessage(TASK_PROGRESS, taskName, String.format("%.4f", progressValue));
+            sendTransientMessage(TASK_PROGRESS, taskName, String.format("%.4f", progressValue));
         } else {
             ended();
         }
@@ -118,6 +118,10 @@ public class ProgressNotifier implements ProgressListener {
     }
 
     private void sendMessage(String messageTemplate, Object...args) {
-        Messaging.send(this.principal, this.topic, this.owner, String.format(messageTemplate, args));
+        Messaging.send(this.principal, this.topic, this.owner, String.format(messageTemplate, args), true);
+    }
+
+    private void sendTransientMessage(String messageTemplate, Object...args) {
+        Messaging.send(this.principal, this.topic, this.owner, String.format(messageTemplate, args), false);
     }
 }

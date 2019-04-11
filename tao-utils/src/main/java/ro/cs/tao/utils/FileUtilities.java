@@ -19,8 +19,8 @@ package ro.cs.tao.utils;
 import java.io.*;
 import java.net.URI;
 import java.net.URL;
-import java.nio.file.*;
 import java.nio.file.FileSystem;
+import java.nio.file.*;
 import java.nio.file.attribute.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -191,6 +191,36 @@ public class FileUtilities {
             }
         }
         return targetPath;
+    }
+
+    public static boolean isPathAccessible(Path path) {
+        boolean retVal;
+        if (path != null) {
+            try {
+                retVal = ((Files.isDirectory(path) || Files.isRegularFile(path)) && Files.exists(path) && Files.isReadable(path)) ||
+                        (Files.isSymbolicLink(path) && Files.isReadable(Files.readSymbolicLink(path)));
+            } catch (IOException ex) {
+                retVal = false;
+            }
+        } else {
+            retVal = false;
+        }
+        return retVal;
+    }
+
+    public static boolean isPathWriteable(Path path) {
+        boolean retVal;
+        if (path != null) {
+            try {
+                retVal = ((Files.isDirectory(path) || Files.isRegularFile(path)) && Files.exists(path) && Files.isWritable(path)) ||
+                        (Files.isSymbolicLink(path) && Files.isWritable(Files.readSymbolicLink(path)));
+            } catch (IOException ex) {
+                retVal = false;
+            }
+        } else {
+            retVal = false;
+        }
+        return retVal;
     }
 
     public static Path linkFile(Path sourcePath, Path file) throws IOException {

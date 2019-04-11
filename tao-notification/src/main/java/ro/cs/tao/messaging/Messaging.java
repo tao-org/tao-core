@@ -77,6 +77,10 @@ public class Messaging {
         instance.send(principal, topic, source, message);
     }
 
+    public static void send(Principal principal, String topic, Object source, String message, boolean persist) {
+        instance.send(principal, topic, source, message, persist);
+    }
+
     public static void shutdown() {
         instance.shutdown();
     }

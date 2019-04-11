@@ -35,6 +35,7 @@ import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
 import ro.cs.tao.workflow.enums.ComponentType;
 import ro.cs.tao.workflow.enums.Status;
 
+import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -82,6 +83,11 @@ public abstract class SampleWorkflowBase implements SampleWorkflow {
             persistenceManager.saveDataSourceComponent(dataSourceComponent);
         }
         return dataSourceComponent;
+    }
+
+    protected DataSourceComponent newDataSourceComponent(String sensor, List<String> productNames, Principal principal) throws PersistenceException {
+        // let's have a DataSourceComponent
+        return dataSourceComponentService.createForProductNames(productNames, sensor, "Local Database", null, "Test DSC", principal);
     }
 
     @Override
