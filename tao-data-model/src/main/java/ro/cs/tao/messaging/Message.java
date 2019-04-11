@@ -39,6 +39,7 @@ public class Message {
     private static MapAdapter mapAdapter;
     private long timestamp;
     private boolean read;
+    private boolean persistent;
     private Map<String, String> data;
 
     static {
@@ -51,21 +52,29 @@ public class Message {
     }
 
     public static Message create(String user, Object source, String message) {
+        return create(user, source, message, true);
+    }
+
+    public static Message create(String user, Object source, String message, boolean persistent) {
         HashMap<String, String> data = new HashMap<>();
         data.put(PRINCIPAL_KEY, user);
         data.put(PAYLOAD_KEY, message);
         if (source != null) {
             data.put(SOURCE_KEY, source.toString());
         }
-        return new Message(System.currentTimeMillis(), data);
+        return new Message(System.currentTimeMillis(), data, persistent);
     }
 
     public Message() { }
 
     private Message(long timestamp, HashMap<String, String> data) {
+        this(timestamp, data, true);
+    }
+    private Message(long timestamp, HashMap<String, String> data, boolean persistent) {
         this.timestamp = timestamp;
         this.data = data;
         this.read = false;
+        this.persistent = persistent;
     }
 
     public String getTopic() { return this.data != null ? this.data.get(TOPIC_KEY) : null; }
@@ -118,6 +127,10 @@ public class Message {
             e.printStackTrace();
         }
     }
+
+    @Transient
+    public boolean isPersistent() { return persistent; }
+    public void setPersistent(boolean persistent) { this.persistent = persistent; }
 
     @Transient
     public String getItem(String key) {
