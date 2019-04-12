@@ -149,7 +149,7 @@ public interface NodeListOrderer {
             for (ComponentLink link : componentLinks) {
                 WorkflowNodeDescriptor previous = masterList.stream().filter(n -> n.getId().equals(link.getSourceNodeId())).findFirst().get();
                 queue.add(previous);
-                if (previous.getIncomingLinks() == null) {
+                if (previous.getIncomingLinks() == null || previous.getIncomingLinks().size() == 0) {
                     ancestors.add(previous);
                 }
                 while (!queue.isEmpty()) {
