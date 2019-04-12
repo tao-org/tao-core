@@ -411,42 +411,14 @@ public class Orchestrator extends Notifiable {
         final Map<String, Object> parameterValues = pcTask.getInputParameterValues().stream()
                                                           .collect(Collectors.toMap(Variable::getKey, Variable::getValue));
         targets.forEach(t -> {
-            String targetOutput = null;
-            if (parameterValues.containsKey(t.getName())) {
-                DataSourceExecutionTask originatingTask = findOriginatingTask(pcTask);
-                if (originatingTask != null) {
-                    targetOutput = parameterValues.get(t.getName()).toString();
-                    String sensor = originatingTask.getComponent().getSensorName().replace("-", "");
-                    List<NamingRule> rules = persistenceManager.getRules(sensor);
-                    if (rules.size() > 0) {
-                        NameExpressionParser parser = new NameExpressionParser(rules.get(0));
-                        final List<Variable> values = originatingTask.getOutputParameterValues();
-                        if (values != null && values.size() > 0) {
-                            final List<String> valuesList;
-                            valuesList = this.listAdapter.marshal(values.get(0).getValue());
-                            final int size = valuesList.size();
-                            for (int i = 0; i < size; i++) {
-                                try {
-                                    Path path = Paths.get(new URI(valuesList.get(i)));
-                                    valuesList.set(i, path.getName(path.getNameCount() - 1).toString());
-                                } catch (URISyntaxException e) {
-                                    logger.warning(e.getMessage());
-                                }
-                            }
-                            targetOutput = parser.resolve(targetOutput, valuesList.toArray(new String[0]));
-                        }
-                    }
-                }
-            } else {
-                targetOutput = t.getDataDescriptor().getLocation();
-            }
+            String targetOutput = pcTask.getOutputParameterValues().stream().filter(o -> o.getKey().equals(t.getName())).findFirst().get().getValue();
             targetOutput = pcTask.getInstanceTargetOuptut(targetOutput);
+            pcTask.setOutputParameterValue(t.getName(), targetOutput);
             logger.finest(String.format("Output [%s] of task [id=%d] was set to '%s'",
                                         t.getName(), pcTask.getId(), targetOutput));
             if (targetOutput == null) {
                 logger.severe(String.format("NULL TARGET [task %s, parameter %s]", pcTask.getId(), t.getName()));
             }
-            pcTask.setOutputParameterValue(t.getName(), targetOutput);
             if (keepOutput) {
                 persistOutputProducts(pcTask);
             }
@@ -465,9 +437,9 @@ public class Orchestrator extends Notifiable {
     }
 
     private void flowOutputs(ExecutionTask task, ExecutionTask nextTask) throws PersistenceException {
+        final List<Variable> values = task.getOutputParameterValues();
         if (task instanceof DataSourceExecutionTask) {
             // A DataSourceExecutionTask outputs the list of results as a JSON
-            final List<Variable> values = task.getOutputParameterValues();
             int cardinality = 0;
             Variable theOnlyValue = null;
             final List<String> valuesList;
@@ -504,6 +476,7 @@ public class Orchestrator extends Notifiable {
                     nextTask.setExecutionStatus(ExecutionStatus.CANCELLED);
                     statusChanged(nextTask, message);
                 }
+                final List<Variable> nextInputParameters = nextTask.getInputParameterValues();
                 if (expectedCardinality != 0) {
                     if (cardinality < expectedCardinality) {
                         String message = String.format("Insufficient inputs for task %s [expected %s, received %s]",
@@ -514,17 +487,96 @@ public class Orchestrator extends Notifiable {
                         statusChanged(nextTask, message);
                     }
                     int idx = 0;
-                    for (Variable var : nextTask.getInputParameterValues()) {
-                        nextTask.setInputParameterValue(var.getKey(), valuesList.get(idx++));
+                    final Set<String> outParams = nextTask.getOutputParameterValues().stream().map(Variable::getKey).collect(Collectors.toSet());
+                    Variable overriddenOutParam = null;
+                    for (Variable var : nextInputParameters) {
+                        if (!outParams.contains(var.getKey())) {
+                            nextTask.setInputParameterValue(var.getKey(), valuesList.get(idx++));
+                        } else {
+                            overriddenOutParam = var;
+                        }
+                    }
+                    if (overriddenOutParam != null) {
+                        DataSourceExecutionTask originatingTask = findOriginatingTask(nextTask);
+                        if (originatingTask != null) {
+                            String targetOutput = overriddenOutParam.getValue();
+                            String sensor = originatingTask.getComponent().getSensorName().replace("-", "");
+                            List<NamingRule> rules = persistenceManager.getRules(sensor);
+                            if (rules.size() > 0) {
+                                NameExpressionParser parser = new NameExpressionParser(rules.get(0));
+                                final List<Variable> oValues = originatingTask.getOutputParameterValues();
+                                if (oValues != null && oValues.size() > 0) {
+                                    final List<String> oValuesList;
+                                    oValuesList = this.listAdapter.marshal(oValues.get(0).getValue());
+                                    final int size = oValuesList.size();
+                                    for (int i = 0; i < size; i++) {
+                                        try {
+                                            Path path = Paths.get(new URI(oValuesList.get(i)));
+                                            oValuesList.set(i, path.getName(path.getNameCount() - 1).toString());
+                                        } catch (URISyntaxException e) {
+                                            logger.warning(e.getMessage());
+                                        }
+                                    }
+                                    final String key = overriddenOutParam.getKey();
+                                    nextTask.setOutputParameterValue(key, parser.resolve(targetOutput, oValuesList.toArray(new String[0])));
+                                    nextTask.getInputParameterValues().removeIf(v -> v.getKey().equals(key));
+                                }
+                            }
+                        }
                     }
                 } else { // nextTask accepts a list
                     Map<String, String> connectedInputs = TaskUtilities.getConnectedInputs(task, nextTask);
                     if (theOnlyValue != null && connectedInputs != null) {
-                        for (Variable var : nextTask.getInputParameterValues()) {
+                        for (Variable var : nextInputParameters) {
                             if (theOnlyValue.getKey().equals(connectedInputs.get(var.getKey()))) {
                                 nextTask.setInputParameterValue(var.getKey(), theOnlyValue.getValue());
                                 break;
                             }
+                        }
+                    }
+                }
+            }
+        } else {
+            Map<String, String> connectedInputs = TaskUtilities.getConnectedInputs(task, nextTask);
+            final List<Variable> nextInputParameters = nextTask.getInputParameterValues();
+            if (connectedInputs != null) {
+                for (Map.Entry<String, String> entry : connectedInputs.entrySet()) {
+                    nextTask.setInputParameterValue(entry.getKey(),
+                                                    values.stream().filter(v -> v.getKey().equals(entry.getValue())).findFirst().get().getValue());
+                }
+            }
+            final Set<String> outParams = nextTask.getOutputParameterValues().stream().map(Variable::getKey).collect(Collectors.toSet());
+            Variable overriddenOutParam = null;
+            for (Variable var : nextInputParameters) {
+                if (outParams.contains(var.getKey())) {
+                    overriddenOutParam = var;
+                    break;
+                }
+            }
+            if (overriddenOutParam != null) {
+                DataSourceExecutionTask originatingTask = findOriginatingTask(nextTask);
+                if (originatingTask != null) {
+                    String targetOutput = overriddenOutParam.getValue();
+                    String sensor = originatingTask.getComponent().getSensorName().replace("-", "");
+                    List<NamingRule> rules = persistenceManager.getRules(sensor);
+                    if (rules.size() > 0) {
+                        NameExpressionParser parser = new NameExpressionParser(rules.get(0));
+                        final List<Variable> oValues = originatingTask.getOutputParameterValues();
+                        if (oValues != null && oValues.size() > 0) {
+                            final List<String> oValuesList;
+                            oValuesList = this.listAdapter.marshal(oValues.get(0).getValue());
+                            final int size = oValuesList.size();
+                            for (int i = 0; i < size; i++) {
+                                try {
+                                    Path path = Paths.get(new URI(oValuesList.get(i)));
+                                    oValuesList.set(i, path.getName(path.getNameCount() - 1).toString());
+                                } catch (URISyntaxException e) {
+                                    logger.warning(e.getMessage());
+                                }
+                            }
+                            final String key = overriddenOutParam.getKey();
+                            nextTask.setOutputParameterValue(key, parser.resolve(targetOutput, oValuesList.toArray(new String[0])));
+                            nextTask.getInputParameterValues().removeIf(v -> v.getKey().equals(key));
                         }
                     }
                 }

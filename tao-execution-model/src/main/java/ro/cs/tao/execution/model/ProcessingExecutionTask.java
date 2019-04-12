@@ -72,6 +72,13 @@ public class ProcessingExecutionTask extends ExecutionTask {
                 break;
             }
         }
+        List<TargetDescriptor> targets = this.component.getTargets();
+        for (TargetDescriptor target : targets) {
+            if (target.getName().equals(parameterName)) {
+                descriptorExists = true;
+                break;
+            }
+        }
         if (!descriptorExists) {
             throw new ValidationException(String.format("The parameter ID [%s] does not exists in the component '%s'",
                     parameterName, component.getLabel()));
@@ -166,11 +173,11 @@ public class ProcessingExecutionTask extends ExecutionTask {
             }
         }
         for (TargetDescriptor descriptor : this.component.getTargets()) {
-            String location = inputParameterValues.stream()
-                                                  .filter(v -> descriptor.getName().equals(v.getKey()))
-                                                  .map(Variable::getValue)
-                                                  .findFirst()
-                                                  .orElse(descriptor.getDataDescriptor().getLocation());
+            String location = outputParameterValues.stream()
+                                                   .filter(v -> descriptor.getName().equals(v.getKey()))
+                                                   .map(Variable::getValue)
+                                                   .findFirst()
+                                                   .orElse(descriptor.getDataDescriptor().getLocation());
             if (location != null) {
                 inputParams.put(descriptor.getName(), getInstanceTargetOuptut(location));
             }
