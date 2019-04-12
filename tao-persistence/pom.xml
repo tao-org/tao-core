@@ -102,7 +102,7 @@
 		<dependency>
 			<groupId>com.mchange</groupId>
 			<artifactId>c3p0</artifactId>
-			<version>0.9.5.2</version>
+			<version>0.9.5.3</version>
 		</dependency>
 
 		<!-- PostgreSQL -->
@@ -156,8 +156,8 @@
                                 <property name="sourceDir" value="${project.build.sourceDirectory}" />
                                 <property name="postgresql_jar" value="postgresql-${postgresql.version}.jar" />
                                 <property name="execDbCleanupDir" value="${basedir}/src/main/resources/build_scripts/" />
-                                <!-- reinstall_db will be commented for production, it's just for development purposes -->
-								<ant antfile="${execDbCleanupDir}/reinstall_db.xml" />
+                                <!-- reinstall_db will be commented for production, it's just for development purposes
+								<ant antfile="${execDbCleanupDir}/reinstall_db.xml" />-->
 							</target>
 						</configuration>
 					</execution>
