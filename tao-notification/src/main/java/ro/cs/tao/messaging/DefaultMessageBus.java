@@ -117,13 +117,14 @@ public class DefaultMessageBus implements ro.cs.tao.messaging.EventBus<Event<Mes
     @Override
     public void send(Principal principal, String topic, Event<Message> event) {
         checkPatternConsumers(topic);
-        event.getData().setTopic(topic);
+        Message message = event.getData();
+        message.setTopic(topic);
         this.messageBus.notify(topic, event);
         if (this.messagePersister != null) {
             this.executorService.submit(() -> {
                 try {
-                    if (this.messagePersister != null) {
-                        this.messagePersister.saveMessage(event.getData());
+                    if (this.messagePersister != null && message.isPersistent()) {
+                        this.messagePersister.saveMessage(message);
                     }
                 } catch (Exception e) {
                     this.logger.severe(e.getMessage());
@@ -144,7 +145,7 @@ public class DefaultMessageBus implements ro.cs.tao.messaging.EventBus<Event<Mes
                     .filter(e -> e.getKey().matcher(topic).matches())
                     .map(Map.Entry::getValue)
                     .collect(Collectors.toSet());
-            if (set != null && set.size() > 0) {
+            if (set.size() > 0) {
                 set.forEach(sub -> sub.forEach(s -> this.messageBus.on($(topic), s)));
                 this.matchedTopics.add(topic);
             }
