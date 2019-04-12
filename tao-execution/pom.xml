@@ -59,12 +59,4 @@
         </dependency>
     </dependencies>
 
-    <repositories>
-        <repository>
-            <id>tao-snapshots</id>
-            <name>TAO Snapshots</name>
-            <url>${taoSnapshotsUrl}/</url>
-        </repository>
-    </repositories>
-
 </project>
