@@ -178,6 +178,8 @@ public class PersistenceManager implements MessagePersister {
 
     public List<EOProduct> getPublicProducts() { return productManager.getPublicEOProducts(); }
 
+    public List<EOProduct> getOtherPublishedProducts(String currentUser) { return productManager.getOtherPublishedProducts(currentUser); }
+
     public List<String> getExistingProductNames(String... names) {
         return productManager.getExistingProductNames(names);
     }
@@ -742,6 +744,9 @@ public class PersistenceManager implements MessagePersister {
         }
         if (query.getCreated() == null) {
             query.setCreated(timestamp);
+        }
+        if (query.getWorkflowNodeId() == 0) {
+            query.setWorkflowNodeId(null);
         }
         query.setModified(timestamp);
         return queryManager.saveQuery(query);

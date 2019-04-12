@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.services.interfaces;
 
+import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.docker.Application;
 import ro.cs.tao.docker.Container;
 
@@ -22,12 +23,30 @@ import java.nio.file.Path;
 import java.util.List;
 
 /**
+ * Service interface for (Docker) container operations.
+ *
  * @author Cosmin Cara
  */
 public interface ContainerService extends CRUDService<Container, String> {
 
+    /**
+     * Updates database container information and its list of applications
+     * @param id            The Docker container id (as returned by Docker)
+     * @param name          The name of the container
+     * @param path          The description of the container
+     * @param applications  The list of applications exposed by this container
+     */
     Container initializeContainer(String id, String name, String path, List<Application> applications);
 
-    String registerContainer(Path dockerFile, String shortName, String description, Container descriptor);
+    /**
+     * Registers a new container with Docker and populates database with its components (if provided)
+     *
+     * @param dockerFile    The Dockerfile path
+     * @param shortName     The Docker image name
+     * @param description   The description of the container
+     * @param descriptor    The container descriptor (entity)
+     * @param components    The list of components contained in this container
+     */
+    String registerContainer(Path dockerFile, String shortName, String description, Container descriptor, ProcessingComponent[] components);
 
 }
