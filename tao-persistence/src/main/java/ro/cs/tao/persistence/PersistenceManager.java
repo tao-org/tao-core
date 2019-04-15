@@ -745,7 +745,7 @@ public class PersistenceManager implements MessagePersister {
         if (query.getCreated() == null) {
             query.setCreated(timestamp);
         }
-        if (query.getWorkflowNodeId() == 0) {
+        if (query.getWorkflowNodeId() != null && query.getWorkflowNodeId() == 0) {
             query.setWorkflowNodeId(null);
         }
         query.setModified(timestamp);
