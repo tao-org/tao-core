@@ -50,12 +50,19 @@ public abstract class DataSource<Q extends DataQuery> extends StringIdentifiable
         return this.properties.getProperty(name);
     }
 
-    @XmlTransient
     /**
      * Returns the capabilities flag of this data source.
      * See {@link DataSourceCapability} enumeration for more details
      */
+    @XmlTransient
     public int getCapabilities() { return DataSourceCapability.QUERY | DataSourceCapability.DOWNLOAD; }
+
+    /**
+     * Returns the maximum number of allowed downloads supported by this data source.
+     * The default value is 1; implementors may override this to allow more concurrent downloads.
+     */
+    @XmlTransient
+    public int getMaximumAllowedTransfers() { return 1; }
 
     /**
      * Returns the timeout for this data source connection
