@@ -66,8 +66,14 @@ public class SimpleArchiveDownloadStrategy extends DownloadStrategy {
             currentProduct = product;
         }
         String productUrl = getProductUrl(product);
-        String extension = productUrl.endsWith(".zip") ? ".zip" :
-                productUrl.endsWith(".tar.gz") ? ".tar.gz" : "";
+        String extension;
+        // It is possible that, for archives, the query string of the URL to contain some authentication/redirection tokens
+        if (productUrl.indexOf('?') > 0) {
+            String trimmedUrl = productUrl.substring(0, productUrl.indexOf('?'));
+            extension = trimmedUrl.endsWith(".zip") ? ".zip" : trimmedUrl.endsWith(".tar.gz") ? ".tar.gz" : "";
+        } else {
+            extension = productUrl.endsWith(".zip") ? ".zip" : productUrl.endsWith(".tar.gz") ? ".tar.gz" : "";
+        }
         boolean isArchive = !extension.isEmpty();
         try (CloseableHttpResponse response = NetUtils.openConnection(HttpMethod.GET, productUrl, null)) {
             int statusCode = response.getStatusLine().getStatusCode();

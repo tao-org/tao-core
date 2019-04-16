@@ -371,14 +371,6 @@ public class DataSourceComponent extends TaoComponent {
         }
         String errorMessage;
         for (EOProduct product : products) {
-            /*try {
-                Path folder = Paths.get(destinationPath).resolve("serialized");
-                Files.createDirectories(folder);
-                Files.write(folder.resolve(product.getName() + ".json"),
-                            SerializerFactory.create(EOProduct.class, MediaType.JSON).serialize(product).getBytes());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }*/
             // add the attribute for max retries such that if the maxRetries is exceeded
             // to be set, on failure, to aborted state
             product.addAttribute("maxRetries", String.valueOf(this.maxRetries));
