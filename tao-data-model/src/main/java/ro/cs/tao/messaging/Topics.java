@@ -40,4 +40,8 @@ public class Topics {
      * Special topic for signaling that an execution task has changed its state.
      */
     public static final String EXECUTION = "execution.status.changed";
+    /**
+     * Special topic for signaling that a topology node was added or removed.
+     */
+    public static final String TOPOLOGY = "topology.changed";
 }
