@@ -15,7 +15,7 @@
  */
 package ro.cs.tao.services.interfaces;
 
-import ro.cs.tao.services.model.monitoring.RuntimeInfo;
+import ro.cs.tao.execution.monitor.RuntimeInfo;
 
 import java.util.List;
 import java.util.Map;

@@ -14,21 +14,26 @@
  * with this program; if not, see http://www.gnu.org/licenses/
  */
 
-package ro.cs.tao.services.model.monitoring;
+package ro.cs.tao.execution.monitor;
 
-public class SysInfo {
-    private int logicalProcessors;
+public class RuntimeInfo {
+    // processor
+    private double cpuTotal;
+    // memory
     private long availableMemory;
     private long totalMemory;
-    private long availableDiskSize;
-    private long totalDiskSize;
+    private MemoryUnit memoryUnit;
+    // disk
+    private long diskUsed;
+    private long diskTotal;
+    private MemoryUnit diskUnit;
 
-    public int getLogicalProcessors() {
-        return logicalProcessors;
+    public double getCpuTotal() {
+        return cpuTotal;
     }
 
-    public void setLogicalProcessors(int logicalProcessors) {
-        this.logicalProcessors = logicalProcessors;
+    public void setCpuTotal(double cpuTotal) {
+        this.cpuTotal = cpuTotal;
     }
 
     public long getAvailableMemory() {
@@ -47,19 +52,33 @@ public class SysInfo {
         this.totalMemory = totalMemory;
     }
 
-    public long getAvailableDiskSize() {
-        return availableDiskSize;
+    public MemoryUnit getMemoryUnit() {
+        return memoryUnit != null ? memoryUnit : MemoryUnit.MEGABYTE;
     }
 
-    public void setAvailableDiskSize(long availableDiskSize) {
-        this.availableDiskSize = availableDiskSize;
+    public void setMemoryUnit(MemoryUnit memoryUnit) {
+        this.memoryUnit = memoryUnit;
     }
 
-    public long getTotalDiskSize() {
-        return totalDiskSize;
+    public long getDiskUsed() {
+        return diskUsed;
     }
 
-    public void setTotalDiskSize(long totalDiskSize) {
-        this.totalDiskSize = totalDiskSize;
+    public void setDiskUsed(long diskUsed) {
+        this.diskUsed = diskUsed;
     }
+
+    public long getDiskTotal() {
+        return diskTotal;
+    }
+
+    public void setDiskTotal(long diskTotal) {
+        this.diskTotal = diskTotal;
+    }
+
+    public MemoryUnit getDiskUnit() {
+        return this.diskUnit != null ? this.diskUnit : MemoryUnit.GIGABYTE;
+    }
+
+    public void setDiskUnit(MemoryUnit diskUnit) { this.diskUnit = diskUnit; }
 }

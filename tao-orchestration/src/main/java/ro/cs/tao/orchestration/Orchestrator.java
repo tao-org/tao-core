@@ -29,6 +29,7 @@ import ro.cs.tao.eodata.metadata.DecodeStatus;
 import ro.cs.tao.eodata.metadata.MetadataInspector;
 import ro.cs.tao.eodata.naming.NameExpressionParser;
 import ro.cs.tao.eodata.naming.NamingRule;
+import ro.cs.tao.execution.ExecutionConfiguration;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.OutputDataHandlerManager;
 import ro.cs.tao.execution.model.*;
@@ -54,6 +55,7 @@ import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
 import ro.cs.tao.workflow.enums.TransitionBehavior;
 
+import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -80,6 +82,7 @@ public class Orchestrator extends Notifiable {
 
     private static final String GROUP_TASK_SELECTOR_KEY = "group.task.selector";
     private static final String JOB_TASK_SELECTOR_KEY = "job.task.selector";
+    private static final String DOCKER_MOUNT_POINT;
 
     private static final Orchestrator instance;
     private final Map<Long, InternalStateHandler> groupStateHandlers;
@@ -87,6 +90,12 @@ public class Orchestrator extends Notifiable {
 
     static {
         instance = new Orchestrator();
+        String value = ExecutionConfiguration.getContainerMount();
+        value = value.substring(value.indexOf(':') + 1);
+        if (!value.endsWith(File.separator)) {
+            value += File.separator;
+        }
+        DOCKER_MOUNT_POINT = value;
     }
 
     public static Orchestrator getInstance() {
@@ -450,6 +459,10 @@ public class Orchestrator extends Notifiable {
             } else {
                 valuesList = new ArrayList<>();
             }
+            final String masterRootPath = nextTask.getContext().getWorkspace().getParent().toUri().toString();
+            for (int i = 0; i < valuesList.size(); i++) {
+                valuesList.set(i, valuesList.get(i).replace(masterRootPath, DOCKER_MOUNT_POINT).replace('\\', '/'));
+            }
             if (cardinality == 0) { // no point to continue since we have nothing to do
                 logger.severe(String.format("Task %s produced no results", task.getId()));
                 nextTask.setExecutionStatus(ExecutionStatus.CANCELLED);
@@ -513,7 +526,7 @@ public class Orchestrator extends Notifiable {
                                         try {
                                             Path path = Paths.get(new URI(oValuesList.get(i)));
                                             oValuesList.set(i, path.getName(path.getNameCount() - 1).toString());
-                                        } catch (URISyntaxException e) {
+                                        } catch (Exception e) {
                                             logger.warning(e.getMessage());
                                         }
                                     }
@@ -819,7 +832,13 @@ public class Orchestrator extends Notifiable {
         try {
             if (descriptor.getDataDescriptor().getFormatType() == DataFormat.RASTER &&
                     metadataInspector != null) {
-                Path path = Paths.get(outValue);
+                String netPath = context.getNetSpace().toString().replace('\\', '/');
+                Path path;
+                if (outValue.startsWith(netPath)) {
+                    path = Paths.get(outValue.replace(netPath, context.getWorkspace().toString()));
+                } else {
+                    path = Paths.get(outValue);
+                }
                 MetadataInspector.Metadata metadata = metadataInspector.getMetadata(path);
                 if (metadata != null) {
                     product = metadata.toProductDescriptor(path);

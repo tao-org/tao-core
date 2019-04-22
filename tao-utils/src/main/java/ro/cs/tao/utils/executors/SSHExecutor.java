@@ -149,7 +149,7 @@ public class SSHExecutor extends Executor<Channel> {
 
     @Override
     public void stop() {
-        if (!this.channel.isClosed() && this.channel.isConnected()) {
+        if (this.channel != null && !this.channel.isClosed() && this.channel.isConnected()) {
             try {
                 this.channel.sendSignal("2");
             } catch (Exception e) {
@@ -165,7 +165,9 @@ public class SSHExecutor extends Executor<Channel> {
             insertSudoParams();
             cmdLine = "sudo -S -p '' " + String.join(" ", arguments);
         }
-        logger.fine("[[" + host + "]] " + cmdLine);
+        if (logMessages) {
+            logger.fine("[[" + host + "]] " + cmdLine);
+        }
         ((ChannelExec) this.channel).setCommand(cmdLine);
         this.channel.setInputStream(null);
         ((ChannelExec) this.channel).setPty(asSuperUser);
@@ -173,7 +175,7 @@ public class SSHExecutor extends Executor<Channel> {
             @Override
             public synchronized void write(byte[] b, int off, int len) {
                 String message = new String(b, off, len).replaceAll("\n", "");
-                if (message.length() > 0) {
+                if (message.length() > 0 && logMessages) {
                     logger.fine("[" + host + "] " + message);
                 }
             }

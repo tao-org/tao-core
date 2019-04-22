@@ -15,22 +15,24 @@
  */
 package ro.cs.tao.execution.drmaa;
 
-import org.apache.commons.lang3.SystemUtils;
 import org.ggf.drmaa.*;
 import ro.cs.tao.component.ProcessingComponent;
-import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.docker.Application;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.execution.Constants;
+import ro.cs.tao.execution.ExecutionConfiguration;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.Executor;
 import ro.cs.tao.execution.local.DefaultSession;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.execution.model.ProcessingExecutionTask;
+import ro.cs.tao.execution.monitor.NodeManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.topology.NodeDescription;
 
+import java.net.Inet4Address;
+import java.net.UnknownHostException;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -42,11 +44,9 @@ import java.util.regex.Pattern;
  * @author Cosmin Cara
  */
 public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
-    private static final String DOCKER_BIND_MOUNT_CONFIG_KEY  = "tao.docker.bind_mount";
-    private static final String FORCE_MEMORY_REQUIREMENTS_KEY = "tao.force.memory.requirements";
+    private static String masterHost;
     private Session session;
-    private boolean useDockerForExecution;
-    private boolean forceMemoryRequirements;
+    //private boolean useDockerForExecution;
 
     @Override
     public void initialize() throws ExecutionException {
@@ -54,10 +54,9 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         try {
             session.init(null);
             super.initialize();
-            useDockerForExecution = !SystemUtils.IS_OS_WINDOWS;
-            forceMemoryRequirements = Boolean.parseBoolean(ConfigurationManager.getInstance().getValue(FORCE_MEMORY_REQUIREMENTS_KEY,
-                                                                                                       "false"));
-        } catch (DrmaaException e) {
+            //useDockerForExecution = !SystemUtils.IS_OS_WINDOWS;
+            masterHost = Inet4Address.getLocalHost().getHostName();
+        } catch (UnknownHostException | DrmaaException e) {
             isInitialized = false;
             throw new ExecutionException("Error initiating DRMAA session", e);
         }
@@ -87,10 +86,16 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
 
             task.setResourceId(id);
             task.setStartTime(LocalDateTime.now());
-            List<NodeDescription> hosts = persistenceManager.getNodes();
+            if (jt instanceof JobTemplateExtension) {
+                JobTemplateExtension job = (JobTemplateExtension) jt;
+                if (job.hasAttribute(Constants.NODE_ATTRIBUTE)) {
+                    task.setExecutionNodeHostName((String) job.getAttribute(Constants.NODE_ATTRIBUTE));
+                }
+            }
+            /*List<NodeDescription> hosts = persistenceManager.getNodes();
             if (hosts.size() == 1) {
                 task.setExecutionNodeHostName(hosts.get(0).getId());
-            }
+            }*/
             changeTaskStatus(task,
                              session instanceof DefaultSession ? ExecutionStatus.RUNNING : ExecutionStatus.QUEUED_ACTIVE,
                              true);
@@ -207,39 +212,54 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                 .stream()
                 .filter(a -> component.getId().endsWith(a.getName().toLowerCase()))
                 .findFirst().orElse(null);
-        if (useDockerForExecution) {
-            String location = task.getComponent().getFileLocation();
-            if (!Paths.get(location).isAbsolute()) {
-                task.getComponent().setExpandedFileLocation(Paths.get(container.getApplicationPath(), location).toString());
+        JobTemplate jt = session.createJobTemplate();
+        if (jt == null) {
+            throw new ExecutionException("Error creating job template from the session!");
+        }
+        long memory = app != null ? app.getMemoryRequirements() : 0L;
+        if (jt instanceof JobTemplateExtension) {
+            JobTemplateExtension job = (JobTemplateExtension) jt;
+            if (job.hasAttribute(Constants.MEMORY_REQUIREMENTS_ATTRIBUTE) && app != null &&
+                    ExecutionConfiguration.forceMemoryConstraint()) {
+                job.setAttribute(Constants.MEMORY_REQUIREMENTS_ATTRIBUTE, memory);
             }
-        } else {
-            if (app != null && app.hasParallelFlag()) {
-                Class<?> type = app.parallelArgumentType();
-                if (type.isAssignableFrom(Integer.class)) {
-                    pArgs = app.parallelArguments(Integer.class, Runtime.getRuntime().availableProcessors() / 2);
-                } else if (type.isAssignableFrom(Long.class)) {
-                    pArgs = app.parallelArguments(Integer.class, Runtime.getRuntime().availableProcessors() / 2);
-                } else {
-                    pArgs = app.parallelArguments(Boolean.class, true);
+        }
+        NodeDescription node = getAvailableNode(memory);
+        if (jt instanceof JobTemplateExtension) {
+            JobTemplateExtension job = (JobTemplateExtension) jt;
+            if (job.hasAttribute(Constants.NODE_ATTRIBUTE)) {
+                if (node != null) {
+                    job.setAttribute(Constants.NODE_ATTRIBUTE, node.getId());
                 }
             }
-            container = null;
+        }
+        if (node != null) {
+            task.setExecutionNodeHostName(node.getId());
+        }
+        String location = task.getComponent().getFileLocation();
+        if (!Paths.get(location).isAbsolute()) {
+            String path = container.getApplicationPath();
+            if (!path.endsWith("/")) {
+                path += "/";
+            }
+            path += location;
+            task.getComponent().setExpandedFileLocation(path);
+        }
+        if (app != null && app.hasParallelFlag()) {
+            Class<?> type = app.parallelArgumentType();
+            if (type.isAssignableFrom(Integer.class)) {
+                pArgs = app.parallelArguments(Integer.class, Runtime.getRuntime().availableProcessors() / 2);
+            } else if (type.isAssignableFrom(Long.class)) {
+                pArgs = app.parallelArguments(Integer.class, Runtime.getRuntime().availableProcessors() / 2);
+            } else {
+                pArgs = app.parallelArguments(Boolean.class, true);
+            }
         }
         String executionCmd = task.buildExecutionCommand();
         if (pArgs != null) {
             int idx = executionCmd.indexOf('\n');
             executionCmd = executionCmd.substring(0, idx) + "\n" + String.join("\n", pArgs) +
                     executionCmd.substring(idx);
-        }
-        JobTemplate jt = session.createJobTemplate();
-        if (jt == null) {
-            throw new ExecutionException("Error creating job template from the session!");
-        }
-        if (jt instanceof JobTemplateExtension) {
-            JobTemplateExtension job = (JobTemplateExtension) jt;
-            if (job.hasAttribute(Constants.MEMORY_REQUIREMENTS_ATTRIBUTE) && app != null && forceMemoryRequirements) {
-                job.setAttribute(Constants.MEMORY_REQUIREMENTS_ATTRIBUTE, app.getMemoryRequirements());
-            }
         }
         List<String> argsList = new ArrayList<>();
         String cmd;
@@ -250,9 +270,14 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             argsList.add(m.group(1)); // Add .replace("\"", "") to remove surrounding quotes.
         }
 
-        if (container != null) {
+        //if (container != null) {
             cmd = "docker";
-            String dockerBindMount = ConfigurationManager.getInstance().getValue(DOCKER_BIND_MOUNT_CONFIG_KEY).trim();
+            final String dockerBindMount;
+            if (task.getExecutionNodeHostName().equals(masterHost)) {
+                dockerBindMount = ExecutionConfiguration.getDockerMasterBindMount();
+            } else {
+                dockerBindMount = ExecutionConfiguration.getDockerNodeBindMount();
+            }
             List<String> dockerArgsList = new ArrayList<String>() {{
                 add("run");
                 add("-i");      // Keep STDIN open even if not attached
@@ -263,15 +288,28 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                 add("-v");      // Bind mount a volume
                 add(dockerBindMount);
             }};
+        String value = ExecutionConfiguration.getDockerRegistry();
+        if (value != null) {
+            dockerArgsList.add(value + "/" + container.getName());
+        } else {
             dockerArgsList.add(container.getId());
+        }
             dockerArgsList.addAll(argsList);
             argsList = dockerArgsList;
-        } else {
-            cmd = argsList.remove(0);
-        }
+        //} else {
+        //    cmd = argsList.remove(0);
+        //}
         jt.setRemoteCommand(cmd);
         jt.setArgs(argsList);
         logger.fine(String.format("[Task %s ]: %s %s", String.valueOf(task.getId()), cmd, String.join(" ", argsList)));
         return jt;
+    }
+
+    private NodeDescription getAvailableNode(long memory) {
+        NodeDescription node = null;
+        if (NodeManager.isAvailable() && NodeManager.getInstance() != null) {
+            node = NodeManager.getInstance().getAvailableNode(memory, 0);
+        }
+        return node;
     }
 }
