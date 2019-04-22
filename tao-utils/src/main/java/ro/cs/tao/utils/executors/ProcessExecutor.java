@@ -48,7 +48,9 @@ public class ProcessExecutor extends Executor<Process> {
         BufferedReader outReader = null;
         int ret = 0x80000000;
         try {
-            this.logger.finest("[" + this.host + "] " + String.join(" ", arguments));
+            if (logMessages) {
+                this.logger.finest("[" + this.host + "] " + String.join(" ", arguments));
+            }
             resetProcess();
             ProcessBuilder pb = new ProcessBuilder(arguments);
             if (this.workingDirectory != null) {
@@ -133,7 +135,9 @@ public class ProcessExecutor extends Executor<Process> {
     @Override
     public void stop() {
         super.stop();
-        ProcessHelper.terminate(this.channel);
+        if (this.channel != null) {
+            ProcessHelper.terminate(this.channel);
+        }
     }
 
     @Override

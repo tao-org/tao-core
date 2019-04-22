@@ -190,6 +190,12 @@ public class ProcessingExecutionTask extends ExecutionTask {
         return this.component.buildExecutionCommand(inputParams, variables);
     }
 
+    /**
+     * Computes the actual path of the output of this task.
+     * The "virtual" path (what is reported to the next task) is build considering the common share,
+     * while the actual path is build consideing the master workspace path.
+     * @param location  The template value of the target of this task.
+     */
     public String getInstanceTargetOuptut(String location) {
         if (this.instanceTargetOutput == null) {
             this.instanceTargetOutput = location;
@@ -197,7 +203,7 @@ public class ProcessingExecutionTask extends ExecutionTask {
                 Path path = Paths.get(this.instanceTargetOutput);
                 SessionContext context = getContext();
                 if (!path.isAbsolute()) {
-                    path = context.getWorkspace().resolve(path);
+                    path = context.getNetSpace().resolve(path);
                 }
                 String fileName = path.getFileName().toString();
                 String folderName = String.format(nameTemplate,
@@ -205,13 +211,12 @@ public class ProcessingExecutionTask extends ExecutionTask {
                                                   this.getId(),
                                                   this.internalState == null ? "" : this.internalState + "-",
                                                   FileUtilities.getFilenameWithoutExtension(fileName));
-                //fileName = folderName + FileUtilities.getExtension(fileName);
                 try {
-                    FileUtilities.ensureExists(path.getParent().resolve(folderName));
+                    FileUtilities.ensureExists(context.getWorkspace().resolve(folderName));
                 } catch (IOException e) {
                     Logger.getLogger(ProcessingExecutionTask.class.getName()).severe(e.getMessage());
                 }
-                this.instanceTargetOutput = path.getParent().resolve(folderName).resolve(fileName).toString();
+                this.instanceTargetOutput = path.getParent().resolve(folderName).resolve(fileName).toString().replace('\\', '/');
             }
         }
         return this.instanceTargetOutput;
