@@ -31,11 +31,13 @@ import java.util.List;
 public abstract class SessionContext {
     private final Principal principal;
     private final Path workspaceRoot;
+    private final Path netSpaceRoot;
     private final List<UserPreference> preferences;
 
     protected SessionContext() {
         this.principal = setPrincipal();
         this.workspaceRoot = Paths.get(ConfigurationManager.getInstance().getValue("product.location"));
+        this.netSpaceRoot = Paths.get(ConfigurationManager.getInstance().getValue("node.mount.folder"));
         this.preferences = setPreferences();
     }
 
@@ -51,6 +53,8 @@ public abstract class SessionContext {
      * Returns the root path in the shared file system for the current principal
      */
     public Path getWorkspace() { return workspaceRoot.resolve(principal.getName()); }
+
+    public Path getNetSpace() { return netSpaceRoot.getParent().resolve(principal.getName()); }
 
     /**
      * Returns the location where the current principal can upload files

@@ -379,9 +379,9 @@ public class ProcessingComponent extends TaoComponent {
         }
         StringBuilder cmdBuilder = new StringBuilder();
         if (this.expandedFileLocation != null) {
-            cmdBuilder.append(this.expandedFileLocation).append("\n");
+            cmdBuilder.append(this.expandedFileLocation.replace('\\', '/')).append("\n");
         } else {
-            cmdBuilder.append(this.fileLocation).append("\n");
+            cmdBuilder.append(this.fileLocation.replace('\\', '/')).append("\n");
         }
         String transformedTemplate = templateEngine.transform(this.template, clonedMap);
         if (transformedTemplate == null || "null".equals(transformedTemplate)) {

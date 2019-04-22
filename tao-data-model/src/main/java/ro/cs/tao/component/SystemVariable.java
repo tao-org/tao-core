@@ -50,6 +50,8 @@ public abstract class SystemVariable {
      */
     public static final SystemVariable CACHE = new Cache();
 
+    public static final SystemVariable SHARE = new Share();
+
     private static final Set<SystemVariable> allVariables;
 
     static {
@@ -59,6 +61,7 @@ public abstract class SystemVariable {
         allVariables.add(USER_FILES);
         allVariables.add(SHARED_FILES);
         allVariables.add(CACHE);
+        allVariables.add(SHARE);
     }
 
     /**
@@ -137,6 +140,16 @@ public abstract class SystemVariable {
         public String value() {
             return Paths.get(ConfigurationManager.getInstance().getValue("product.location"))
                     .resolve("cache").toString();
+        }
+    }
+
+    private static final class Share extends SystemVariable {
+        @Override
+        public String key() { return "$SHARE"; }
+
+        @Override
+        public String value() {
+            return Paths.get(ConfigurationManager.getInstance().getValue("node.mount.folder")).toString();
         }
     }
 }
