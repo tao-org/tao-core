@@ -12,8 +12,13 @@ import ro.cs.tao.utils.Crypto;
 import ro.cs.tao.utils.async.Parallel;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
+
+/**
+ * Singleton than monitors registered topology nodes for resources availability.
+ *
+ * @author Cosmin Cara
+ */
 public class NodeManager extends Notifiable {
     private static final int concurrentCalls;
     private static final boolean isAvailable;
@@ -32,8 +37,16 @@ public class NodeManager extends Notifiable {
         pollInterval = Integer.parseInt(ConfigurationManager.getInstance().getValue("topology.node.poll.interval", "15"));
     }
 
+    /**
+     * Checks if this implementation can be used.
+     * It can be used only if the DefaultSessionFactory is configured, otherwise the resource management is supposed
+     * to be done by the CRM itself.
+     */
     public static boolean isAvailable() { return isAvailable; }
 
+    /**
+     * Returns the only instance of this class.
+     */
     public static NodeManager getInstance() { return instance; }
 
     private NodeManager() {
@@ -43,6 +56,9 @@ public class NodeManager extends Notifiable {
         subscribe(Topics.TOPOLOGY);
     }
 
+    /**
+     * Initializes this instance with the list of registered topology nodes.
+     */
     public void initialize(List<NodeDescription> nodes) {
         if (nodes != null) {
             for (NodeDescription node : nodes) {
@@ -54,6 +70,9 @@ public class NodeManager extends Notifiable {
         }
     }
 
+    /**
+     * Starts monitoring the registered nodes.
+     */
     public void start() {
         stop();
         this.nodeCheckTask = new NodeCheckTask();
@@ -63,6 +82,9 @@ public class NodeManager extends Notifiable {
         this.nodeCheckTimer.schedule(new NodeCheckTask(), pollInterval, pollInterval);
     }
 
+    /**
+     * Stops monitoring the registered nodes.
+     */
     public void stop() {
         if (this.nodeCheckTask != null) {
             this.nodeCheckTask.cancel();
@@ -100,37 +122,60 @@ public class NodeManager extends Notifiable {
         }
         this.runtimeInfo.put(host, OSRuntimeInfo.createInspector(host, node.getUserName(),
                                                                  Crypto.decrypt(node.getUserPass(), node.getUserName()))
-                                                .getSnapshot());
+                                                .getInfo());
     }
 
+    /**
+     * Returns the currently monitored nodes.
+     */
     public NodeDescription[] getCurrentNodes() {
         return nodes.values().toArray(new NodeDescription[0]);
     }
 
+    /**
+     * Returns the description of the first node found available.
+     * This method blocks until a node is available.
+     * If there is just a single node (i.e. the master) registered, it returns immediately the master node description.
+     */
     public NodeDescription getFirstAvailableNode() {
         return nodes.size() == 1 ? nodes.values().iterator().next() : getAvailableNode(0, 0);
     }
 
+    /**
+     * Returns the description of the first node found available.
+     * This method blocks until a node is available, retrying to find it each 5 seconds.
+     * The node choice is made as follows:
+     *  1) The memory threshold is checked (i.e. find all nodes that have the available memory greater than or equal to the memory threshold).
+     *  2) The disk threshold is checked among the candidates from step 1.
+     *  3) The processor usage (per core) is checked among the candidates from step 2.
+     *
+     * @param memory    The memory threshold
+     * @param disk      The disk threshold
+     */
     public NodeDescription getAvailableNode(long memory, long disk) {
         String nodeName = null;
-        Set<String> candidates = runtimeInfo.entrySet().stream()
-                                               .filter(e -> e.getValue().getAvailableMemory() >= memory)
-                                               .map(Map.Entry::getKey)
-                                               .collect(Collectors.toSet());
-        if (candidates.size() > 0) {
-            Set<String> remaining = runtimeInfo.entrySet().stream()
-                                .filter(e -> (e.getValue().getDiskTotal() - e.getValue().getDiskUsed()) >= disk && candidates.contains(e.getKey()))
-                                .map(Map.Entry::getKey).collect(Collectors.toSet());
-            if (remaining.size() > 0) {
-                nodeName = runtimeInfo.entrySet().stream()
-                                .filter(e -> remaining.contains(e.getKey()))
-                                .sorted(Comparator.comparingDouble(o -> o.getValue().getCpuTotal() / (double) nodes.get(o.getKey()).getProcessorCount()))
-                                .map(Map.Entry::getKey).findFirst().orElse(null);
+        while (nodeName == null) {
+            nodeName = runtimeInfo.entrySet().stream()
+                            .filter(e -> e.getValue().getAvailableMemory() >= memory)
+                            .filter(e -> (e.getValue().getDiskTotal() - e.getValue().getDiskUsed()) >= disk)
+                            .sorted((e1, e2) -> Long.compare(e2.getValue().getAvailableMemory(), e1.getValue().getAvailableMemory()))
+                            //.sorted(Comparator.comparingDouble(o -> o.getValue().getCpuTotal() / (double) nodes.get(o.getKey()).getProcessorCount()))
+                            .map(Map.Entry::getKey).findFirst().orElse(null);
+            if (nodeName == null) {
+                logger.fine("No processing node was found to be available. Will retry in 5 seconds.");
             }
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException ignored) { }
         }
-        return nodeName != null ? nodes.get(nodeName) : null;
+        return nodes.get(nodeName);
     }
 
+    /**
+     * Returns the last available resource utilisation information for the given host.
+     *
+     * @param hostName  The node host name
+     */
     public RuntimeInfo getNodeSnapshot(String hostName) {
         return this.runtimeInfo.get(hostName);
     }

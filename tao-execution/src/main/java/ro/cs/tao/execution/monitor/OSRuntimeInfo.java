@@ -98,6 +98,7 @@ public abstract class OSRuntimeInfo {
                             runtimeInfo.setCpuTotal(Double.parseDouble(message.split("=")[1]));
                         } else if (message.startsWith("TotalVisibleMemorySize")) {
                             runtimeInfo.setTotalMemory(Long.parseLong(message.split("=")[1]) / MemoryUnit.KILOBYTE.value());
+                            runtimeInfo.setMemoryUnit(MemoryUnit.MEGABYTE);
                         } else if (message.startsWith("FreePhysicalMemory")) {
                             // WMIC returns total memory in kilobytes
                             runtimeInfo.setAvailableMemory(Long.parseLong(message.split("=")[1]) / MemoryUnit.KILOBYTE.value());
@@ -117,6 +118,7 @@ public abstract class OSRuntimeInfo {
                     diskSize = diskSize / MemoryUnit.GIGABYTE.value();
                     runtimeInfo.setDiskTotal(diskSize);
                     runtimeInfo.setDiskUsed(diskSize - freeSpace / MemoryUnit.GIGABYTE.value());
+                    runtimeInfo.setDiskUnit(MemoryUnit.GIGABYTE);
                 }
             } catch (Exception ex) {
                 Logger.getLogger(OSRuntimeInfo.class.getName()).severe(ex.getMessage());
