@@ -30,6 +30,8 @@ import ro.cs.tao.execution.model.ProcessingExecutionTask;
 import ro.cs.tao.execution.monitor.NodeManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.topology.NodeDescription;
+import ro.cs.tao.utils.Tuple;
+import ro.cs.tao.utils.executors.BlockingQueueWorker;
 
 import java.net.Inet4Address;
 import java.net.UnknownHostException;
@@ -37,6 +39,8 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -46,7 +50,16 @@ import java.util.regex.Pattern;
 public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
     private static String masterHost;
     private Session session;
-    //private boolean useDockerForExecution;
+    private final BlockingQueue<Tuple<JobTemplate, ProcessingExecutionTask>> queue;
+    private final BlockingQueueWorker<Tuple<JobTemplate, ProcessingExecutionTask>> queueWorker;
+
+    public DrmaaTaoExecutor() {
+        super();
+        this.queue = new LinkedBlockingDeque<>();
+        this.queueWorker = new BlockingQueueWorker<>(this.queue, this::executeImpl);
+    }
+
+
 
     @Override
     public void initialize() throws ExecutionException {
@@ -56,6 +69,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             super.initialize();
             //useDockerForExecution = !SystemUtils.IS_OS_WINDOWS;
             masterHost = Inet4Address.getLocalHost().getHostName();
+            this.queueWorker.start();
         } catch (UnknownHostException | DrmaaException e) {
             isInitialized = false;
             throw new ExecutionException("Error initiating DRMAA session", e);
@@ -76,31 +90,8 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
     public void execute(ProcessingExecutionTask task) throws ExecutionException  {
         try {
             JobTemplate jt = createJobTemplate(task);
-
-            String id = session.runJob(jt);
-            if (id == null) {
-                throw new ExecutionException(String.format("Unable to run job (id null) for task %s", task.getId()));
-            }
-
-            session.deleteJobTemplate(jt);
-
-            task.setResourceId(id);
-            task.setStartTime(LocalDateTime.now());
-            if (jt instanceof JobTemplateExtension) {
-                JobTemplateExtension job = (JobTemplateExtension) jt;
-                if (job.hasAttribute(Constants.NODE_ATTRIBUTE)) {
-                    task.setExecutionNodeHostName((String) job.getAttribute(Constants.NODE_ATTRIBUTE));
-                }
-            }
-            /*List<NodeDescription> hosts = persistenceManager.getNodes();
-            if (hosts.size() == 1) {
-                task.setExecutionNodeHostName(hosts.get(0).getId());
-            }*/
-            changeTaskStatus(task,
-                             session instanceof DefaultSession ? ExecutionStatus.RUNNING : ExecutionStatus.QUEUED_ACTIVE,
-                             true);
-            logger.fine(String.format("Succesfully submitted task with id %s [session %s]", task.getId(), id));
-        } catch (DrmaaException | InternalException | PersistenceException e) {
+            this.queue.put(new Tuple<>(jt, task));
+        } catch (InterruptedException | DrmaaException | PersistenceException e) {
             logger.severe(String.format("Error submitting task with id %s: %s", task.getId(), e.getMessage()));
             throw new ExecutionException("Error executing DRMAA session operation", e);
         }
@@ -202,6 +193,34 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
 
     public String getDRMVersion() { return session != null ? session.getVersion().toString() : "n/a"; }
 
+    private Void executeImpl(Tuple<JobTemplate, ProcessingExecutionTask> pair) {
+        final JobTemplate jt = pair.getKeyOne();
+        final ProcessingExecutionTask task = pair.getKeyTwo();
+        try {
+            String id = session.runJob(jt);
+            session.deleteJobTemplate(jt);
+            if (id == null) {
+                logger.severe(String.format("Unable to run job (id null) for task %s", task.getId()));
+                changeTaskStatus(task, ExecutionStatus.FAILED, true);
+                return null;
+            }
+            task.setResourceId(id);
+            task.setStartTime(LocalDateTime.now());
+            if (jt instanceof JobTemplateExtension) {
+                JobTemplateExtension job = (JobTemplateExtension) jt;
+                if (job.hasAttribute(Constants.NODE_ATTRIBUTE)) {
+                    task.setExecutionNodeHostName((String) job.getAttribute(Constants.NODE_ATTRIBUTE));
+                }
+            }
+            changeTaskStatus(task,
+                             session instanceof DefaultSession ? ExecutionStatus.RUNNING : ExecutionStatus.QUEUED_ACTIVE,
+                             true);
+        } catch (DrmaaException | InternalException e) {
+            logger.severe(String.format("Error submitting task with id %s: %s", task.getId(), e.getMessage()));
+        }
+        return null;
+    }
+
     private JobTemplate createJobTemplate(ProcessingExecutionTask task) throws DrmaaException, PersistenceException {
         // Get from the component the execution command
         Container container;
@@ -224,6 +243,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                 job.setAttribute(Constants.MEMORY_REQUIREMENTS_ATTRIBUTE, memory);
             }
         }
+        // the next call blocks until a node is available
         NodeDescription node = getAvailableNode(memory);
         if (jt instanceof JobTemplateExtension) {
             JobTemplateExtension job = (JobTemplateExtension) jt;
@@ -309,6 +329,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         NodeDescription node = null;
         if (NodeManager.isAvailable() && NodeManager.getInstance() != null) {
             node = NodeManager.getInstance().getAvailableNode(memory, 0);
+            logger.fine(String.format("Node [%s] was chosen for next execution", node.getId()));
         }
         return node;
     }
