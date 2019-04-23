@@ -91,6 +91,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         try {
             JobTemplate jt = createJobTemplate(task);
             this.queue.put(new Tuple<>(jt, task));
+            changeTaskStatus(task, ExecutionStatus.QUEUED_ACTIVE);
         } catch (InterruptedException | DrmaaException | PersistenceException e) {
             logger.severe(String.format("Error submitting task with id %s: %s", task.getId(), e.getMessage()));
             throw new ExecutionException("Error executing DRMAA session operation", e);
@@ -213,8 +214,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                 }
             }
             changeTaskStatus(task,
-                             session instanceof DefaultSession ? ExecutionStatus.RUNNING : ExecutionStatus.QUEUED_ACTIVE,
-                             true);
+                             session instanceof DefaultSession ? ExecutionStatus.RUNNING : ExecutionStatus.QUEUED_ACTIVE);
         } catch (DrmaaException | InternalException e) {
             logger.severe(String.format("Error submitting task with id %s: %s", task.getId(), e.getMessage()));
         }
