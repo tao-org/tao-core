@@ -33,12 +33,14 @@ public abstract class OSRuntimeInfo {
     final String user;
     final String password;
     final boolean isRemote;
+    final Logger logger;
 
     OSRuntimeInfo(String host, String user, String password, boolean remote) {
         this.node = host;
         this.user = user;
         this.password = password;
         this.isRemote = remote;
+        this.logger = Logger.getLogger(getClass().getName());
     }
 
     public static OSRuntimeInfo createInspector(String host, String user, String password) throws Exception {
@@ -94,21 +96,26 @@ public abstract class OSRuntimeInfo {
                 if (executor.execute(false) == 0) {
                     List<String> messages = consumer.getMessages();
                     for (String message : messages) {
+                        String[] strings = message.split("=");
+                        if (strings.length == 1) {
+                            logger.warning(String.format("Abnormal message: %s", message));
+                            continue;
+                        }
                         if (message.startsWith("LoadPercentage")) {
-                            runtimeInfo.setCpuTotal(Double.parseDouble(message.split("=")[1]));
+                            runtimeInfo.setCpuTotal(Double.parseDouble(strings[1]));
                         } else if (message.startsWith("TotalVisibleMemorySize")) {
-                            runtimeInfo.setTotalMemory(Long.parseLong(message.split("=")[1]) / MemoryUnit.KILOBYTE.value());
+                            runtimeInfo.setTotalMemory(Long.parseLong(strings[1]) / MemoryUnit.KILOBYTE.value());
                             runtimeInfo.setMemoryUnit(MemoryUnit.MEGABYTE);
                         } else if (message.startsWith("FreePhysicalMemory")) {
                             // WMIC returns total memory in kilobytes
-                            runtimeInfo.setAvailableMemory(Long.parseLong(message.split("=")[1]) / MemoryUnit.KILOBYTE.value());
+                            runtimeInfo.setAvailableMemory(Long.parseLong(strings[1]) / MemoryUnit.KILOBYTE.value());
                         } else if (message.startsWith("Size") && message.length() > 5) {
-                            String strSize = message.split("=")[1];
+                            String strSize = strings[1];
                             if (strSize != null && !strSize.isEmpty()) {
                                 diskSize += Long.parseLong(strSize);
                             }
                         } else if (message.startsWith("FreeSpace=") && message.length() > 10) {
-                            String strSize = message.split("=")[1];
+                            String strSize = strings[1];
                             if (strSize != null && !strSize.isEmpty()) {
                                 freeSpace += Long.parseLong(strSize);
                             }
@@ -121,7 +128,7 @@ public abstract class OSRuntimeInfo {
                     runtimeInfo.setDiskUnit(MemoryUnit.GIGABYTE);
                 }
             } catch (Exception ex) {
-                Logger.getLogger(OSRuntimeInfo.class.getName()).severe(ex.getMessage());
+                logger.severe(ex.getMessage());
             }
             return runtimeInfo;
         }
@@ -139,13 +146,18 @@ public abstract class OSRuntimeInfo {
                     List<String> messages = consumer.getMessages();
                     for (String message : messages) {
                         if (message.startsWith("LoadPercentage")) {
-                            cpu = Double.parseDouble(message.split("=")[1]);
+                            String[] strings = message.split("=");
+                            if (strings.length == 1) {
+                                logger.warning(String.format("Abnormal message: %s", message));
+                                continue;
+                            }
+                            cpu = Double.parseDouble(strings[1]);
                             break;
                         }
                     }
                 }
             } catch (Exception ex) {
-                Logger.getLogger(OSRuntimeInfo.class.getName()).severe(ex.getMessage());
+                logger.severe(ex.getMessage());
             }
             return cpu;
         }
@@ -163,13 +175,18 @@ public abstract class OSRuntimeInfo {
                     List<String> messages = consumer.getMessages();
                     for (String message : messages) {
                         if (message.startsWith("TotalVisibleMemorySize")) {
-                            mem = Long.parseLong(message.split("=")[1]) / MemoryUnit.KILOBYTE.value();
+                            String[] strings = message.split("=");
+                            if (strings.length == 1) {
+                                logger.warning(String.format("Abnormal message: %s", message));
+                                continue;
+                            }
+                            mem = Long.parseLong(strings[1]) / MemoryUnit.KILOBYTE.value();
                             break;
                         }
                     }
                 }
             } catch (Exception ex) {
-                Logger.getLogger(OSRuntimeInfo.class.getName()).severe(ex.getMessage());
+                logger.severe(ex.getMessage());
             }
             return mem;
         }
@@ -187,14 +204,19 @@ public abstract class OSRuntimeInfo {
                     List<String> messages = consumer.getMessages();
                     for (String message : messages) {
                         if (message.startsWith("FreePhysicalMemory")) {
+                            String[] strings = message.split("=");
+                            if (strings.length == 1) {
+                                logger.warning(String.format("Abnormal message: %s", message));
+                                continue;
+                            }
                             // WMIC returns total memory in kilobytes
-                            mem = Long.parseLong(message.split("=")[1]) / MemoryUnit.KILOBYTE.value();
+                            mem = Long.parseLong(strings[1]) / MemoryUnit.KILOBYTE.value();
                             break;
                         }
                     }
                 }
             } catch (Exception ex) {
-                Logger.getLogger(OSRuntimeInfo.class.getName()).severe(ex.getMessage());
+                logger.severe(ex.getMessage());
             }
             return mem;
         }
@@ -222,7 +244,7 @@ public abstract class OSRuntimeInfo {
                     mem = mem / MemoryUnit.GIGABYTE.value();
                 }
             } catch (Exception ex) {
-                Logger.getLogger(OSRuntimeInfo.class.getName()).severe(ex.getMessage());
+                logger.severe(ex.getMessage());
             }
             return mem;
         }
@@ -251,7 +273,7 @@ public abstract class OSRuntimeInfo {
                     mem = total - mem / MemoryUnit.GIGABYTE.value();
                 }
             } catch (Exception ex) {
-                Logger.getLogger(OSRuntimeInfo.class.getName()).severe(ex.getMessage());
+                logger.severe(ex.getMessage());
             }
             return mem;
         }
@@ -292,7 +314,7 @@ public abstract class OSRuntimeInfo {
                     }
                 }
             } catch (Exception ex) {
-                Logger.getLogger(OSRuntimeInfo.class.getName()).severe(ex.getMessage());
+                logger.severe(ex.getMessage());
             }
             return cpu;
         }
@@ -321,7 +343,7 @@ public abstract class OSRuntimeInfo {
                     }
                 }
             } catch (Exception ex) {
-                Logger.getLogger(OSRuntimeInfo.class.getName()).severe(ex.getMessage());
+                logger.severe(ex.getMessage());
             }
             return mem;
         }
@@ -350,7 +372,7 @@ public abstract class OSRuntimeInfo {
                     }
                 }
             } catch (Exception ex) {
-                Logger.getLogger(OSRuntimeInfo.class.getName()).severe(ex.getMessage());
+                logger.severe(ex.getMessage());
             }
             return mem;
         }
@@ -378,7 +400,7 @@ public abstract class OSRuntimeInfo {
                     }
                 }
             } catch (Exception ex) {
-                Logger.getLogger(OSRuntimeInfo.class.getName()).severe(ex.getMessage());
+                logger.severe(ex.getMessage());
             }
             return mem;
         }
@@ -406,7 +428,7 @@ public abstract class OSRuntimeInfo {
                     }
                 }
             } catch (Exception ex) {
-                Logger.getLogger(OSRuntimeInfo.class.getName()).severe(ex.getMessage());
+                logger.severe(ex.getMessage());
             }
             return mem;
         }
