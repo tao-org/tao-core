@@ -162,7 +162,7 @@ public class ProcessingExecutionTask extends ExecutionTask {
         if (component == null) {
             return null;
         }
-        Map<String, String> inputParams = new HashMap<>();
+        Map<String, Object> inputParams = new HashMap<>();
         if (inputParameterValues != null) {
             for (Variable input : inputParameterValues) {
                 String value = input.getValue();
