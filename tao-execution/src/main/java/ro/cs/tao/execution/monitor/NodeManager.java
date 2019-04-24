@@ -79,7 +79,7 @@ public class NodeManager extends Notifiable {
         if (this.nodeCheckTimer == null) {
             this.nodeCheckTimer = new Timer("node-monitor");
         }
-        this.nodeCheckTimer.schedule(new NodeCheckTask(), pollInterval, pollInterval);
+        this.nodeCheckTimer.schedule(new NodeCheckTask(), pollInterval * 1000, pollInterval * 1000);
     }
 
     /**
