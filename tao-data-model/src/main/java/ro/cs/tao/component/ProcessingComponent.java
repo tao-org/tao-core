@@ -318,14 +318,40 @@ public class ProcessingComponent extends TaoComponent {
     public String buildExecutionCommand(Map<String, Object> parameterValues, Map<String, String> variables) throws TemplateException {
         TemplateEngine templateEngine = getTemplateEngine();
         Map<String, Object> clonedMap = new HashMap<>();
+        Map<String, TemplateParameterDescriptor> templateParameters =
+                this.parameters.stream().filter(p -> p instanceof TemplateParameterDescriptor)
+                               .collect(Collectors.toMap(ParameterDescriptor::getName, p -> (TemplateParameterDescriptor) p));
         for (Map.Entry<String, Object> entry : parameterValues.entrySet()) {
-            try {
-                if (entry.getValue() instanceof String) {
-                    clonedMap.put(entry.getKey(),
-                                  Paths.get(URI.create((String) entry.getValue())).toString());
+            String paramName = entry.getKey();
+            Object paramValue = entry.getValue();
+            if (templateParameters.containsKey(paramName)) {
+                Map<String, Object> values = (Map<String, Object>) parameterValues.get(paramName);
+                TemplateParameterDescriptor descriptor = templateParameters.get(paramName);
+                TemplateEngine paramEngine = descriptor.getTemplateEngine();
+                String transformed = paramEngine.transform(descriptor.getTemplate(), values);
+                String outputPath = variables.get("$TEMPLATE_REAL_PATH");
+                String templateCmdPath = variables.get("$TEMPLATE_CMD_PATH");
+                if (outputPath != null && templateCmdPath != null) {
+                    String file = outputPath + "/" + descriptor.getDefaultValue();
+                    try {
+                        Files.write(Paths.get(file), transformed.getBytes());
+                        clonedMap.put(paramName, templateCmdPath + "/" + descriptor.getDefaultValue());
+                    } catch (IOException e) {
+                        Logger.getLogger(getClass().getName()).severe(String.format("Cannot write transformed template '%s'. Reason: %s",
+                                                                                    file, e.getMessage()));
+                    }
+                } else {
+                    Logger.getLogger(getClass().getName()).warning(String.format("Parameter '%s' is a template parameter, but the output path cannot be determined",
+                                                                                 paramName));
                 }
-            } catch (Exception ex) {
-                clonedMap.put(entry.getKey(), entry.getValue());
+            } else {
+                try {
+                    if (paramValue instanceof String) {
+                        clonedMap.put(paramName, Paths.get(URI.create((String) paramValue)).toString());
+                    }
+                } catch(Exception ex){
+                    clonedMap.put(paramName, paramValue);
+                }
             }
         }
         for (ParameterDescriptor parameterDescriptor : this.parameters) {

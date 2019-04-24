@@ -32,6 +32,7 @@ import java.util.List;
 public class NodeDescription extends StringIdentifiable {
     private String userName;
     private String userPass;
+    private NodeType nodeType;
     private int processorCount;
     private int memorySizeGB;
     private int diskSpaceSizeGB;
@@ -46,20 +47,20 @@ public class NodeDescription extends StringIdentifiable {
     public String defaultId() { return null; }
 
     @XmlElement(name = "userName")
-    public String getUserName() {
-        return userName;
-    }
+    public String getUserName() { return userName; }
     public void setUserName(String userName) {
         this.userName = userName;
     }
 
     @XmlElement(name = "password")
-    public String getUserPass() {
-        return userPass;
-    }
+    public String getUserPass() { return userPass; }
     public void setUserPass(String userPass) {
         this.userPass = userPass;
     }
+
+    @XmlElement(name = "nodeType")
+    public NodeType getNodeType() { return nodeType; }
+    public void setNodeType(NodeType nodeType) { this.nodeType = nodeType; }
 
     @XmlElement(name = "processors")
     public int getProcessorCount() {
