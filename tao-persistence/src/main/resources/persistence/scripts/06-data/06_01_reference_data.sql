@@ -69,7 +69,7 @@ INSERT INTO workflow.query_parameter (data_type_id, name) VALUES
 
 -- Template type
 INSERT INTO component.template_type (type) VALUES
-('VELOCITY'), VALUES ('JAVASCRIPT'), VALUES ('XSLT');
+('VELOCITY'), ('JAVASCRIPT'), ('XSLT');
 
 -- Component type
 INSERT INTO workflow.component_type (id, description) VALUES

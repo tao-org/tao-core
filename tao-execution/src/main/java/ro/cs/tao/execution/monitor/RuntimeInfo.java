@@ -16,6 +16,8 @@
 
 package ro.cs.tao.execution.monitor;
 
+import java.time.LocalDateTime;
+
 public class RuntimeInfo {
     // processor
     private double cpuTotal;
@@ -27,6 +29,11 @@ public class RuntimeInfo {
     private long diskUsed;
     private long diskTotal;
     private MemoryUnit diskUnit;
+    private final LocalDateTime timestamp;
+
+    public RuntimeInfo() {
+        this.timestamp = LocalDateTime.now();
+    }
 
     public double getCpuTotal() {
         return cpuTotal;
@@ -81,4 +88,6 @@ public class RuntimeInfo {
     }
 
     public void setDiskUnit(MemoryUnit diskUnit) { this.diskUnit = diskUnit; }
+
+    public LocalDateTime getTimestamp() { return timestamp; }
 }
