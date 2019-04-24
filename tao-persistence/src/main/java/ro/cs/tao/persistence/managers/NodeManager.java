@@ -25,6 +25,7 @@ import ro.cs.tao.persistence.repository.NodeRepository;
 import ro.cs.tao.persistence.repository.ServiceRepository;
 import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.topology.NodeServiceStatus;
+import ro.cs.tao.topology.NodeType;
 import ro.cs.tao.topology.ServiceDescription;
 import ro.cs.tao.utils.Crypto;
 
@@ -64,6 +65,14 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
         return node;
     }
 
+    public List<NodeDescription> findByActive(boolean active) {
+        return repository.findByActive(active);
+    }
+
+    public List<NodeDescription> getNodesByType(NodeType type) {
+        return repository.findByNodeType(type);
+    }
+
     @Transactional
     public NodeDescription saveExecutionNode(NodeDescription node) throws PersistenceException {
         // check method parameters
@@ -91,6 +100,20 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
             }
         }
         ensurePasswordEncrypted(node);
+        if (node.getNodeType() == null) {
+            int processors = node.getProcessorCount();
+            NodeType nodeType;
+            if (processors <= 4) {
+                nodeType = NodeType.S;
+            } else if (processors <= 8) {
+                nodeType = NodeType.M;
+            } else if (processors <= 16) {
+                nodeType = NodeType.L;
+            } else {
+                nodeType = NodeType.XL;
+            }
+            node.setNodeType(nodeType);
+        }
         // save the new NodeDescription entity and return it
         node = repository.save(node);
         ensurePasswordDecrypted(node);
@@ -119,6 +142,20 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
             }
         }
         ensurePasswordEncrypted(entity);
+        if (entity.getNodeType() == null) {
+            int processors = entity.getProcessorCount();
+            NodeType nodeType;
+            if (processors <= 4) {
+                nodeType = NodeType.S;
+            } else if (processors <= 8) {
+                nodeType = NodeType.M;
+            } else if (processors <= 16) {
+                nodeType = NodeType.L;
+            } else {
+                nodeType = NodeType.XL;
+            }
+            entity.setNodeType(nodeType);
+        }
         // save the new NodeDescription entity and return it
         entity = repository.save(entity);
         ensurePasswordDecrypted(entity);

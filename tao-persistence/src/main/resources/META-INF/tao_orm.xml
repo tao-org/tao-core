@@ -204,12 +204,16 @@
 
     <entity class="ro.cs.tao.topology.NodeDescription" access="PROPERTY">
         <table name="topology.node"/>
+        <convert converter="ro.cs.tao.persistence.convert.NodeTypeConverter" attribute-name="nodeType" />
         <attributes>
             <basic name="userName">
                 <column name="username" nullable="false" column-definition="character varying(50) NOT NULL"/>
             </basic>
             <basic name="userPass">
                 <column name="password" nullable="false" column-definition="text NOT NULL"/>
+            </basic>
+            <basic name="nodeType">
+                <column name="type_id" nullable="false" column-definition="integer NOT NULL"/>
             </basic>
             <basic name="processorCount">
                 <column name="total_cpu" nullable="false" column-definition="integer not null"/>
@@ -1278,5 +1282,6 @@
     <converter class="ro.cs.tao.persistence.convert.TagTypeConverter" />
     <converter class="ro.cs.tao.persistence.convert.ProductStatusConverter" />
     <converter class="ro.cs.tao.persistence.convert.AggregatorConverter" />
+    <converter class="ro.cs.tao.persistence.convert.NodeTypeConverter" />
 
 </entity-mappings>

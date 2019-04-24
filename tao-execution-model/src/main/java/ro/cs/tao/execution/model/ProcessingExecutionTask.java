@@ -187,6 +187,9 @@ public class ProcessingExecutionTask extends ExecutionTask {
         variables.put(SystemVariable.SHARED_WORKSPACE.key(), SystemVariable.SHARED_WORKSPACE.value());
         variables.put(SystemVariable.USER_FILES.key(), getContext().getWorkspace().resolve("files").toString());
         variables.put(SystemVariable.SHARED_FILES.key(), SystemVariable.SHARED_FILES.value());
+        String[] outPath = buildOutputPath();
+        variables.put("$TEMPLATE_REAL_PATH", outPath != null ? outPath[0] : null);
+        variables.put("$TEMPLATE_CMD_PATH", outPath != null ? outPath[1] : null);
         return this.component.buildExecutionCommand(inputParams, variables);
     }
 
@@ -220,5 +223,36 @@ public class ProcessingExecutionTask extends ExecutionTask {
             }
         }
         return this.instanceTargetOutput;
+    }
+
+    public String[] buildOutputPath() {
+        String[] outPath = null;
+        String location = null;
+        for (TargetDescriptor descriptor : this.component.getTargets()) {
+            location = outputParameterValues.stream()
+                    .filter(v -> descriptor.getName().equals(v.getKey()))
+                    .map(Variable::getValue)
+                    .findFirst()
+                    .orElse(descriptor.getDataDescriptor().getLocation());
+            if (location != null) {
+                break;
+            }
+        }
+        if (location != null) {
+            Path path = Paths.get(location);
+            SessionContext context = getContext();
+            if (!path.isAbsolute()) {
+                path = context.getNetSpace().resolve(path);
+            }
+            String fileName = path.getFileName().toString();
+            String folderName = String.format(nameTemplate,
+                                              this.getJob().getId(),
+                                              this.getId(),
+                                              this.internalState == null ? "" : this.internalState + "-",
+                                              FileUtilities.getFilenameWithoutExtension(fileName));
+            outPath = new String[] { context.getWorkspace().resolve(folderName).toString().replace('\\', '/'),
+                                     path.getParent().resolve(folderName).toString().replace('\\', '/') };
+        }
+        return outPath;
     }
 }

@@ -42,6 +42,7 @@ import ro.cs.tao.persistence.managers.*;
 import ro.cs.tao.persistence.repository.QueryViewRepository;
 import ro.cs.tao.persistence.repository.TagRepository;
 import ro.cs.tao.topology.NodeDescription;
+import ro.cs.tao.topology.NodeType;
 import ro.cs.tao.topology.ServiceDescription;
 import ro.cs.tao.user.Group;
 import ro.cs.tao.user.User;
@@ -264,6 +265,14 @@ public class PersistenceManager implements MessagePersister {
 
     public NodeDescription getNodeByHostName(String hostName) throws PersistenceException {
         return nodeManager.getNodeByHostName(hostName);
+    }
+
+    public List<NodeDescription> getNodesByType(NodeType type) {
+        return nodeManager.getNodesByType(type);
+    }
+
+    public List<NodeDescription> getNodes(boolean active) {
+        return nodeManager.findByActive(active);
     }
 
     public NodeDescription saveExecutionNode(NodeDescription node) throws PersistenceException {

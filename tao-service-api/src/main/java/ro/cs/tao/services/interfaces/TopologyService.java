@@ -18,6 +18,7 @@ package ro.cs.tao.services.interfaces;
 import ro.cs.tao.Tag;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.topology.NodeDescription;
+import ro.cs.tao.topology.NodeType;
 
 import java.util.List;
 
@@ -26,6 +27,7 @@ import java.util.List;
  */
 public interface TopologyService extends CRUDService<NodeDescription, String> {
     List<Container> getDockerImages();
-
     List<Tag> getNodeTags();
+    List<NodeDescription> getNodes(boolean active);
+    List<NodeDescription> getNodes(NodeType nodeType);
 }
