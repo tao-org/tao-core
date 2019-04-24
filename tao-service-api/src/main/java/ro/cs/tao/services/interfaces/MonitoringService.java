@@ -27,6 +27,8 @@ public interface MonitoringService<T> extends TAOService {
 
     RuntimeInfo getMasterSnapshot();
 
+    Map<String, RuntimeInfo> getNodesSnapshot();
+
     RuntimeInfo getNodeSnapshot(String hostName);
 
     List<T> getLiveNotifications();

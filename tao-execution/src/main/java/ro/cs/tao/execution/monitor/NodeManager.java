@@ -120,9 +120,21 @@ public class NodeManager extends Notifiable {
         if (node == null) {
             throw new NullPointerException("[no credentials]");
         }
-        this.runtimeInfo.put(host, OSRuntimeInfo.createInspector(host, node.getUserName(),
-                                                                 Crypto.decrypt(node.getUserPass(), node.getUserName()))
-                                                .getInfo());
+        RuntimeInfo info = null;
+        try {
+            info = OSRuntimeInfo.createInspector(host, node.getUserName(),
+                                                             Crypto.decrypt(node.getUserPass(), node.getUserName()))
+                                .getInfo();
+        } catch (Exception ignored) { }
+        if (info == null) {
+            info = new RuntimeInfo();
+            info.setAvailableMemory(-1);
+            info.setDiskTotal(node.getDiskSpaceSizeGB());
+            info.setTotalMemory(node.getMemorySizeGB());
+            info.setCpuTotal(-1);
+            info.setDiskUsed(-1);
+        }
+        this.runtimeInfo.put(host, info);
     }
 
     /**
@@ -178,6 +190,10 @@ public class NodeManager extends Notifiable {
      */
     public RuntimeInfo getNodeSnapshot(String hostName) {
         return this.runtimeInfo.get(hostName);
+    }
+
+    public Map<String, RuntimeInfo> getNodesSnapshot() {
+        return this.runtimeInfo;
     }
 
     protected class NodeCheckTask extends TimerTask {
