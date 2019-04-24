@@ -98,8 +98,7 @@ public abstract class OSRuntimeInfo {
                     for (String message : messages) {
                         String[] strings = message.split("=");
                         if (strings.length == 1) {
-                            logger.warning(String.format("Abnormal message: %s", message));
-                            continue;
+                            strings = new String[] { message, "0" };
                         }
                         if (message.startsWith("LoadPercentage")) {
                             runtimeInfo.setCpuTotal(Double.parseDouble(strings[1]));
@@ -177,8 +176,7 @@ public abstract class OSRuntimeInfo {
                         if (message.startsWith("TotalVisibleMemorySize")) {
                             String[] strings = message.split("=");
                             if (strings.length == 1) {
-                                logger.warning(String.format("Abnormal message: %s", message));
-                                continue;
+                                strings = new String[] { message, "0" };
                             }
                             mem = Long.parseLong(strings[1]) / MemoryUnit.KILOBYTE.value();
                             break;
@@ -206,8 +204,7 @@ public abstract class OSRuntimeInfo {
                         if (message.startsWith("FreePhysicalMemory")) {
                             String[] strings = message.split("=");
                             if (strings.length == 1) {
-                                logger.warning(String.format("Abnormal message: %s", message));
-                                continue;
+                                strings = new String[] { message, "0" };
                             }
                             // WMIC returns total memory in kilobytes
                             mem = Long.parseLong(strings[1]) / MemoryUnit.KILOBYTE.value();

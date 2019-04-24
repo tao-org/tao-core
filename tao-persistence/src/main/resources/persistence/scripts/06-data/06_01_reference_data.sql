@@ -121,8 +121,8 @@ INSERT INTO usr.user_group (user_id, group_id) VALUES (3, 2);
 INSERT INTO usr.user_group (user_id, group_id) VALUES (4, 2);
 
 -- localhost execution node
-INSERT INTO topology.node (id, username, password, total_cpu, total_ram, total_hdd, description)
-VALUES ('localhost', '', '', 8, 32, 1024, 'Master Node');
+INSERT INTO topology.node (id, username, password, type_id, total_cpu, total_ram, total_hdd, description)
+VALUES ('localhost', '', '', 2, 8, 32, 1024, 'Master Node');
 
 -- Naming rules
 INSERT INTO product.naming_rule (id, sensor, regex, description) VALUES
