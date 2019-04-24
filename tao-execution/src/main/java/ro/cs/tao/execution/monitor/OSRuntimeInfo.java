@@ -21,6 +21,7 @@ import ro.cs.tao.utils.executors.Executor;
 import ro.cs.tao.utils.executors.ExecutorType;
 import ro.cs.tao.utils.executors.OutputConsumer;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -53,14 +54,14 @@ public abstract class OSRuntimeInfo {
         }
     }
 
-    public abstract double getProcessorUsage();
-    public abstract long getTotalMemoryMB();
-    public abstract long getAvailableMemoryMB();
-    public abstract long getTotalDiskGB();
-    public abstract long getUsedDiskGB();
-    public abstract RuntimeInfo getInfo();
+    public abstract double getProcessorUsage() throws IOException;
+    public abstract long getTotalMemoryMB() throws IOException;
+    public abstract long getAvailableMemoryMB() throws IOException;
+    public abstract long getTotalDiskGB() throws IOException;
+    public abstract long getUsedDiskGB() throws IOException;
+    public abstract RuntimeInfo getInfo() throws IOException;
 
-    public RuntimeInfo getSnapshot() {
+    public RuntimeInfo getSnapshot() throws IOException {
         RuntimeInfo runtimeInfo = new RuntimeInfo();
         runtimeInfo.setCpuTotal(getProcessorUsage());
         runtimeInfo.setTotalMemory(getTotalMemoryMB());
@@ -79,7 +80,7 @@ public abstract class OSRuntimeInfo {
         }
 
         @Override
-        public RuntimeInfo getInfo() {
+        public RuntimeInfo getInfo() throws IOException {
             RuntimeInfo runtimeInfo = new RuntimeInfo();
             List<String> args = new ArrayList<>();
             Collections.addAll(args, "cmd", "/c");
@@ -128,12 +129,13 @@ public abstract class OSRuntimeInfo {
                 }
             } catch (Exception ex) {
                 logger.severe(ex.getMessage());
+                throw new IOException(ex);
             }
             return runtimeInfo;
         }
 
         @Override
-        public double getProcessorUsage() {
+        public double getProcessorUsage() throws IOException {
             double cpu = 0.0;
             try {
                 List<String> args = new ArrayList<>();
@@ -157,12 +159,13 @@ public abstract class OSRuntimeInfo {
                 }
             } catch (Exception ex) {
                 logger.severe(ex.getMessage());
+                throw new IOException(ex);
             }
             return cpu;
         }
 
         @Override
-        public long getTotalMemoryMB() {
+        public long getTotalMemoryMB() throws IOException {
             long mem = 0;
             try {
                 List<String> args = new ArrayList<>();
@@ -185,12 +188,13 @@ public abstract class OSRuntimeInfo {
                 }
             } catch (Exception ex) {
                 logger.severe(ex.getMessage());
+                throw new IOException(ex);
             }
             return mem;
         }
 
         @Override
-        public long getAvailableMemoryMB() {
+        public long getAvailableMemoryMB() throws IOException {
             long mem = 0;
             try {
                 List<String> args = new ArrayList<>();
@@ -214,12 +218,13 @@ public abstract class OSRuntimeInfo {
                 }
             } catch (Exception ex) {
                 logger.severe(ex.getMessage());
+                throw new IOException(ex);
             }
             return mem;
         }
 
         @Override
-        public long getTotalDiskGB() {
+        public long getTotalDiskGB() throws IOException {
             long mem = 0;
             try {
                 List<String> args = new ArrayList<>();
@@ -242,12 +247,13 @@ public abstract class OSRuntimeInfo {
                 }
             } catch (Exception ex) {
                 logger.severe(ex.getMessage());
+                throw new IOException(ex);
             }
             return mem;
         }
 
         @Override
-        public long getUsedDiskGB() {
+        public long getUsedDiskGB() throws IOException {
             long mem = 0;
             try {
                 List<String> args = new ArrayList<>();
@@ -271,6 +277,7 @@ public abstract class OSRuntimeInfo {
                 }
             } catch (Exception ex) {
                 logger.severe(ex.getMessage());
+                throw new IOException(ex);
             }
             return mem;
         }
@@ -283,12 +290,12 @@ public abstract class OSRuntimeInfo {
         }
 
         @Override
-        public RuntimeInfo getInfo() {
+        public RuntimeInfo getInfo()  throws IOException{
             return getSnapshot();
         }
 
         @Override
-        public double getProcessorUsage() {
+        public double getProcessorUsage() throws IOException {
             double cpu = 0.0;
             try {
                 Executor executor;
@@ -312,12 +319,13 @@ public abstract class OSRuntimeInfo {
                 }
             } catch (Exception ex) {
                 logger.severe(ex.getMessage());
+                throw new IOException(ex);
             }
             return cpu;
         }
 
         @Override
-        public long getTotalMemoryMB() {
+        public long getTotalMemoryMB() throws IOException{
             long mem = 0;
             try {
                 Executor executor;
@@ -341,12 +349,13 @@ public abstract class OSRuntimeInfo {
                 }
             } catch (Exception ex) {
                 logger.severe(ex.getMessage());
+                throw new IOException(ex);
             }
             return mem;
         }
 
         @Override
-        public long getAvailableMemoryMB() {
+        public long getAvailableMemoryMB() throws IOException {
             long mem = 0;
             try {
                 Executor executor;
@@ -370,12 +379,13 @@ public abstract class OSRuntimeInfo {
                 }
             } catch (Exception ex) {
                 logger.severe(ex.getMessage());
+                throw new IOException(ex);
             }
             return mem;
         }
 
         @Override
-        public long getTotalDiskGB() {
+        public long getTotalDiskGB() throws IOException {
             long mem = 0;
             try {
                 Executor executor;
@@ -398,12 +408,13 @@ public abstract class OSRuntimeInfo {
                 }
             } catch (Exception ex) {
                 logger.severe(ex.getMessage());
+                throw new IOException(ex);
             }
             return mem;
         }
 
         @Override
-        public long getUsedDiskGB() {
+        public long getUsedDiskGB() throws IOException {
             long mem = 0;
             try {
                 Executor executor;
@@ -426,6 +437,7 @@ public abstract class OSRuntimeInfo {
                 }
             } catch (Exception ex) {
                 logger.severe(ex.getMessage());
+                throw new IOException(ex);
             }
             return mem;
         }
