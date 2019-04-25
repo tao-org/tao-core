@@ -53,7 +53,8 @@ public enum FetchMode implements TaoEnum<Integer> {
     SYMLINK(4, "Symlink"),
     /**
      * No remote download will be performed. This mode behaves like the SYMLINK one, except no symlink
-     * is created. Instead, only an existence check of the remote file(s) is performed.
+     * is created. Instead, only an existence check of the remote file(s) is performed and the path, if exists,
+     * becomes the product location.
      */
     @XmlEnumValue("5")
     CHECK(5, "Existence check only");
