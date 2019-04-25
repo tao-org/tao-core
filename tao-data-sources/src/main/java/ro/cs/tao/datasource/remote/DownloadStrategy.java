@@ -232,10 +232,11 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
                     } else {
                         file = check(product, Paths.get(localArchiveRoot));
                     }
-                    if (file == null) {
-                        logger.warning("Product check failed");
+                    if (file != null) {
+                        break;
+                    } else {
+                        logger.warning("Product check failed. Download will be attempted from the remote source");
                     }
-                    break;
                 case OVERWRITE:
                 case RESUME:
                 default:

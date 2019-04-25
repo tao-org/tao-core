@@ -115,7 +115,7 @@ public class NodeManager extends Notifiable {
         }
     }
 
-    private synchronized void updateNodeInfo(String host) throws Exception {
+    private synchronized void updateNodeInfo(String host) {
         NodeDescription node = nodes.get(host);
         if (node == null) {
             throw new NullPointerException("[no credentials]");
