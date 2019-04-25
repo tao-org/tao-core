@@ -45,10 +45,6 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
         return list(ro.cs.tao.Sort.by(identifier(), SortDirection.ASC))
                 .stream()
                 .filter(NodeDescription::getActive)
-                .map(n -> {
-                    ensurePasswordDecrypted(n);
-                    return n;
-                })
                 .collect(Collectors.toList());
     }
 
@@ -58,11 +54,7 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
         if (hostName == null || hostName.isEmpty()) {
             throw new PersistenceException("Invalid parameters were provided for searching execution node by host name ("+ String.valueOf(hostName) +") !");
         }
-        NodeDescription node = repository.findById(hostName).orElse(null);
-        if (node != null) {
-            ensurePasswordDecrypted(node);
-        }
-        return node;
+        return repository.findById(hostName).orElse(null);
     }
 
     public List<NodeDescription> findByActive(boolean active) {
@@ -99,7 +91,6 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
                 serviceStatus.setServiceDescription(existingService);
             }
         }
-        ensurePasswordEncrypted(node);
         if (node.getNodeType() == null) {
             int processors = node.getProcessorCount();
             NodeType nodeType;
@@ -115,9 +106,7 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
             node.setNodeType(nodeType);
         }
         // save the new NodeDescription entity and return it
-        node = repository.save(node);
-        ensurePasswordDecrypted(node);
-        return node;
+        return repository.save(node);
     }
 
     @Override
@@ -141,7 +130,6 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
                 serviceStatus.setServiceDescription(existingService);
             }
         }
-        ensurePasswordEncrypted(entity);
         if (entity.getNodeType() == null) {
             int processors = entity.getProcessorCount();
             NodeType nodeType;
@@ -157,9 +145,7 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
             entity.setNodeType(nodeType);
         }
         // save the new NodeDescription entity and return it
-        entity = repository.save(entity);
-        ensurePasswordDecrypted(entity);
-        return entity;
+        return repository.save(entity);
     }
 
     @Transactional
