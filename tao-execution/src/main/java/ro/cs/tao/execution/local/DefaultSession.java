@@ -22,7 +22,6 @@ import ro.cs.tao.execution.monitor.NodeManager;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.topology.NodeDescription;
-import ro.cs.tao.utils.Crypto;
 import ro.cs.tao.utils.executors.*;
 
 import java.net.InetAddress;
@@ -172,8 +171,8 @@ public class DefaultSession implements Session {
             final ExecutionUnit unit = isLocalHost(node.getId()) ?
                     new ExecutionUnit(ExecutorType.PROCESS, node.getId(), node.getUserName(), node.getUserPass(),
                                       args, false/*cmdsToRunAsSu.contains(jt.getRemoteCommand())*/, null) :
-                    new ExecutionUnit(ExecutorType.SSH2, node.getId(), node.getUserName(),
-                                      Crypto.decrypt(node.getUserPass(), node.getUserName()),
+                    new ExecutionUnit(ExecutorType.SSH2, node.getId(), node.getUserName(), node.getUserPass(),
+                                      //Crypto.decrypt(node.getUserPass(), node.getUserName()),
                                       args, false /*cmdsToRunAsSu.contains(jt.getRemoteCommand())*/, SSHMode.EXEC);
             if (memConstraint != null) {
                 unit.setMinMemory(memConstraint);

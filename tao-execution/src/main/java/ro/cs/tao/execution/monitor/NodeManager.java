@@ -8,7 +8,6 @@ import ro.cs.tao.messaging.Topics;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.topology.NodeDescription;
-import ro.cs.tao.utils.Crypto;
 import ro.cs.tao.utils.async.Parallel;
 
 import java.util.*;
@@ -122,8 +121,8 @@ public class NodeManager extends Notifiable {
         }
         RuntimeInfo info = null;
         try {
-            info = OSRuntimeInfo.createInspector(host, node.getUserName(),
-                                                             Crypto.decrypt(node.getUserPass(), node.getUserName()))
+            info = OSRuntimeInfo.createInspector(host, node.getUserName(), node.getUserPass())
+                                                             //Crypto.decrypt(node.getUserPass(), node.getUserName()))
                                 .getInfo();
         } catch (Exception ignored) { }
         if (info == null) {
