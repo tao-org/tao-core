@@ -23,6 +23,11 @@ import ro.cs.tao.persistence.repository.ContainerRepository;
 
 @Component("componentManager")
 public class ContainerManager extends EntityManager<Container, String, ContainerRepository> {
+
+    public Container getByName(String name) {
+        return repository.findByName(name);
+    }
+
     @Override
     protected String identifier() { return "id"; }
 

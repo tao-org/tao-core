@@ -25,7 +25,9 @@ import ro.cs.tao.serialization.GeometryAdapter;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.awt.*;
 import java.net.URI;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.logging.Logger;
 
 /**
  * Models the data of a component port (either source or target).
@@ -136,9 +138,15 @@ public class DataDescriptor {
                 // if the value is a URL
                 URI.create(value);
             } catch (Exception e) {
-                // else it should be a relative path
-                if (Paths.get(value).isAbsolute()) {
-                    throw new IllegalArgumentException(DataDescriptor.class.getSimpleName() + ": location must be relative");
+                try {
+                    Path path = Paths.get(value);
+                    // else it should be a relative path
+                    if (path.isAbsolute()) {
+                        throw new IllegalArgumentException(DataDescriptor.class.getSimpleName() + ": location must be relative");
+                    }
+                } catch (Exception other) {
+                    Logger.getLogger(getClass().getName()).warning(String.format("Value '%s' should represent a path, but appears not to",
+                                                                                 value));
                 }
             }
         }
