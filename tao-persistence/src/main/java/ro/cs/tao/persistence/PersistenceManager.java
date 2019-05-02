@@ -313,6 +313,10 @@ public class PersistenceManager implements MessagePersister {
         return containerManager.get(id);
     }
 
+    public Container getContainerByName(String name) {
+        return containerManager.getByName(name);
+    }
+
     public Container saveContainer(Container container) throws PersistenceException {
         return containerManager.save(container);
     }
