@@ -166,6 +166,7 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
                 }
                 if (status == ExecutionStatus.DONE || firstTime) {
                     task.setExecutionStatus(status);
+                    task.setLastUpdated(LocalDateTime.now());
                     persistenceManager.updateExecutionTask(task);
                 } else {
                     persistenceManager.updateTaskStatus(task, status);

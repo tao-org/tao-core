@@ -116,7 +116,7 @@ public class Orchestrator extends Notifiable {
         this.groupStateHandlers = new HashMap<>();
         this.queue = new LinkedBlockingDeque<>();
         this.executors = Collections.synchronizedMap(new HashMap<>());
-        this.runningTasks = new HashSet<>();
+        this.runningTasks = Collections.synchronizedSet(new HashSet<>());
         this.listAdapter = new StringListAdapter();
         subscribe(Topics.EXECUTION);
     }
@@ -293,9 +293,8 @@ public class Orchestrator extends Notifiable {
             logger.fine(String.format("Status change for task %s [node %s]: %s", taskId, task.getWorkflowNodeId(), status.name()));
             statusChanged(task, message.getMessage());
             if (status == ExecutionStatus.DONE || status == ExecutionStatus.CANCELLED || status == ExecutionStatus.FAILED) {
-                synchronized (this.runningTasks) {
-                    this.runningTasks.remove(task.getId());
-                }
+                this.runningTasks.remove(task.getId());
+                logger.fine(String.format("Active or pending tasks: %d", this.runningTasks.size()));
             }
             if (status == ExecutionStatus.DONE) {
                 WorkflowNodeDescriptor taskNode = persistenceManager.getWorkflowNodeById(task.getWorkflowNodeId());
@@ -322,11 +321,9 @@ public class Orchestrator extends Notifiable {
                             }
                         }
                         nextTask.setContext(currentContext);
-                        synchronized (this.runningTasks) {
-                            if (!this.runningTasks.contains(nextTask.getId())) {
-                                this.runningTasks.add(nextTask.getId());
-                                TaskCommand.START.applyTo(nextTask);
-                            }
+                        if (!this.runningTasks.contains(nextTask.getId())) {
+                            this.runningTasks.add(nextTask.getId());
+                            TaskCommand.START.applyTo(nextTask);
                         }
                     }
                 } else {
@@ -417,22 +414,27 @@ public class Orchestrator extends Notifiable {
         boolean lastFromGroup = groupTask != null &&
                 groupTask.getOutputParameterValues().stream()
                         .allMatch(o -> targets.stream().anyMatch(t -> t.getName().equals(o.getKey())));
-        final Map<String, Object> parameterValues = pcTask.getInputParameterValues().stream()
-                                                          .collect(Collectors.toMap(Variable::getKey, Variable::getValue));
+        final Map<String, Variable> parameterValues = pcTask.getInputParameterValues().stream()
+                                                          .collect(Collectors.toMap(Variable::getKey, Function.identity()));
         targets.forEach(t -> {
-            String targetOutput = pcTask.getOutputParameterValues().stream().filter(o -> o.getKey().equals(t.getName())).findFirst().get().getValue();
-            targetOutput = pcTask.getInstanceTargetOuptut(targetOutput);
-            pcTask.setOutputParameterValue(t.getName(), targetOutput);
-            logger.finest(String.format("Output [%s] of task [id=%d] was set to '%s'",
-                                        t.getName(), pcTask.getId(), targetOutput));
-            if (targetOutput == null) {
-                logger.severe(String.format("NULL TARGET [task %s, parameter %s]", pcTask.getId(), t.getName()));
+            Variable variable = parameterValues.get(t.getName());
+            if (variable == null) {
+                variable = pcTask.getOutputParameterValues().stream().filter(o -> o.getKey().equals(t.getName())).findFirst().orElse(null);
             }
-            if (keepOutput) {
-                persistOutputProducts(pcTask);
-            }
-            if (lastFromGroup) {
-                groupTask.setOutputParameterValue(t.getName(), targetOutput);
+            if (variable != null) {
+                String targetOutput = variable.getValue();
+                pcTask.setOutputParameterValue(t.getName(), targetOutput);
+                logger.finest(String.format("Output [%s] of task [id=%d] was set to '%s'",
+                                            t.getName(), pcTask.getId(), targetOutput));
+                if (targetOutput == null) {
+                    logger.severe(String.format("NULL TARGET [task %s, parameter %s]", pcTask.getId(), t.getName()));
+                }
+                if (keepOutput) {
+                    persistOutputProducts(pcTask);
+                }
+                if (lastFromGroup) {
+                    groupTask.setOutputParameterValue(t.getName(), targetOutput);
+                }
             }
         });
         ExecutionTask task;

@@ -173,13 +173,15 @@ public class ProcessingExecutionTask extends ExecutionTask {
             }
         }
         for (TargetDescriptor descriptor : this.component.getTargets()) {
-            String location = outputParameterValues.stream()
-                                                   .filter(v -> descriptor.getName().equals(v.getKey()))
-                                                   .map(Variable::getValue)
-                                                   .findFirst()
-                                                   .orElse(descriptor.getDataDescriptor().getLocation());
-            if (location != null) {
-                inputParams.put(descriptor.getName(), getInstanceTargetOuptut(location));
+            Variable variable = outputParameterValues.stream()
+                    .filter(v -> descriptor.getName().equals(v.getKey())).findFirst().orElse(null);
+            if (variable != null) {
+                String location = variable.getValue() != null ? variable.getValue() : descriptor.getDataDescriptor().getLocation();
+                if (location != null) {
+                    this.instanceTargetOutput = getInstanceTargetOuptut(location);
+                    inputParams.put(descriptor.getName(), this.instanceTargetOutput);
+                    setInputParameterValue(descriptor.getName(), this.instanceTargetOutput);
+                }
             }
         }
         Map<String, String> variables = new HashMap<>();
@@ -229,13 +231,13 @@ public class ProcessingExecutionTask extends ExecutionTask {
         String[] outPath = null;
         String location = null;
         for (TargetDescriptor descriptor : this.component.getTargets()) {
-            location = outputParameterValues.stream()
-                    .filter(v -> descriptor.getName().equals(v.getKey()))
-                    .map(Variable::getValue)
-                    .findFirst()
-                    .orElse(descriptor.getDataDescriptor().getLocation());
-            if (location != null) {
-                break;
+            Variable variable = outputParameterValues.stream()
+                    .filter(v -> descriptor.getName().equals(v.getKey())).findFirst().orElse(null);
+            if (variable != null) {
+                location = variable.getValue() != null ? variable.getValue() : descriptor.getDataDescriptor().getLocation();
+                if (location != null) {
+                    break;
+                }
             }
         }
         if (location != null) {

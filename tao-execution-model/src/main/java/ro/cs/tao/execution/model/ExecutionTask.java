@@ -49,8 +49,8 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
     // In case of parallel executions, the same WF node can produce multiple execution tasks
     private int instanceId;
     protected String internalState;
-    List<Variable> inputParameterValues;
-    List<Variable> outputParameterValues;
+    List<Variable> inputParameterValues = new ArrayList<>();
+    List<Variable> outputParameterValues = new ArrayList<>();
     InternalStateHandler stateHandler;
 
     public ExecutionTask() { }

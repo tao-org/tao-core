@@ -90,8 +90,8 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
     public void execute(ProcessingExecutionTask task) throws ExecutionException  {
         try {
             JobTemplate jt = createJobTemplate(task);
+            changeTaskStatus(task, ExecutionStatus.QUEUED_ACTIVE, true);
             this.queue.put(new Tuple<>(jt, task));
-            changeTaskStatus(task, ExecutionStatus.QUEUED_ACTIVE);
         } catch (InterruptedException | DrmaaException | PersistenceException e) {
             logger.severe(String.format("Error submitting task with id %s: %s", task.getId(), e.getMessage()));
             throw new ExecutionException("Error executing DRMAA session operation", e);
@@ -202,7 +202,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             session.deleteJobTemplate(jt);
             if (id == null) {
                 logger.severe(String.format("Unable to run job (id null) for task %s", task.getId()));
-                changeTaskStatus(task, ExecutionStatus.FAILED, true);
+                changeTaskStatus(task, ExecutionStatus.FAILED);
                 return null;
             }
             task.setResourceId(id);
@@ -316,9 +316,6 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         }
             dockerArgsList.addAll(argsList);
             argsList = dockerArgsList;
-        //} else {
-        //    cmd = argsList.remove(0);
-        //}
         jt.setRemoteCommand(cmd);
         jt.setArgs(argsList);
         logger.fine(String.format("[Task %s ]: %s %s", String.valueOf(task.getId()), cmd, String.join(" ", argsList)));
