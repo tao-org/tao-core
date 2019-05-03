@@ -66,6 +66,7 @@ public class NodeManager extends Notifiable {
                     this.runtimeInfo.put(node.getId(), new RuntimeInfo());
                 }
             }
+            new NodeCheckTask().run();
         }
     }
 

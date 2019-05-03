@@ -17,6 +17,7 @@ package ro.cs.tao.component;
 
 import ro.cs.tao.component.constraints.ConstraintFactory;
 import ro.cs.tao.component.constraints.IOConstraint;
+import ro.cs.tao.component.enums.ParameterType;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
@@ -158,5 +159,18 @@ public class TargetDescriptor extends StringIdentifiable {
         }
         clone.cardinality = this.cardinality;
         return clone;
+    }
+
+    /**
+     * Returns a ParameterDescription representation of this target instance
+     */
+    public ParameterDescriptor toParameter() {
+        return new ParameterDescriptor() {{
+            setLabel("Output parameter");
+            setName(TargetDescriptor.this.getName());
+            setType(ParameterType.REGULAR);
+            setDataType(String.class);
+            setDefaultValue(TargetDescriptor.this.getDataDescriptor().getLocation());
+        }};
     }
 }
