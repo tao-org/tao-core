@@ -161,7 +161,7 @@ INSERT INTO product.naming_rule_token (naming_rule_id, token_name, matching_grou
 (3, 'LEVEL', 2, 'Processing level'),
 (3, 'PATH', 3, 'Acquisition path'),
 (3, 'ROW', 4, 'Acquisition row'),
-(1, 'ADATE', 5, 'Acquisition date'),
-(1, 'PDATE', 6, 'Processing date'),
-(1, 'COLLECTION', 7, 'Collection number'),
-(1, 'CATEGORY', 8, 'Collection category');
+(3, 'ADATE', 5, 'Acquisition date'),
+(3, 'PDATE', 6, 'Processing date'),
+(3, 'COLLECTION', 7, 'Collection number'),
+(3, 'CATEGORY', 8, 'Collection category');
