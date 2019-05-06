@@ -24,11 +24,15 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.component.LongIdentifiable;
+import ro.cs.tao.datasource.DataSourceComponent;
+import ro.cs.tao.datasource.beans.Query;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.persistence.repository.WorkflowDescriptorRepository;
+import ro.cs.tao.workflow.ParameterValue;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
+import ro.cs.tao.workflow.enums.ComponentType;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -51,6 +55,10 @@ public class WorkflowManager {
     /** CRUD Repository for WorkflowDescriptor entities */
     @Autowired
     private WorkflowDescriptorRepository workflowDescriptorRepository;
+    @Autowired
+    private QueryManager queryManager;
+    @Autowired
+    private DataSourceComponentManager dataSourceComponentManager;
 
     //region WorkflowDescriptor
     public List<WorkflowDescriptor> getAllWorkflows() {
@@ -91,6 +99,24 @@ public class WorkflowManager {
                         .forEach(g -> {
                             if (g.getNodes() != null) {
                                 g.setNodes(g.getNodes().stream().distinct().collect(Collectors.toList()));
+                            }
+                        });
+                WorkflowDescriptor finalWorkflow = workflow;
+                workflow.getNodes().stream()
+                        .filter(n -> n.getComponentType() == ComponentType.DATASOURCE)
+                        .forEach(n -> {
+                            List<ParameterValue> customValues = n.getCustomValues();
+                            if (customValues == null || customValues.isEmpty()) {
+                                DataSourceComponent component = dataSourceComponentManager.get(n.getComponentId());
+                                Query query = queryManager.findByUserIdAndSensorAndDataSourceAndWorkflowNodeId(finalWorkflow.getUserName(),
+                                                                                                               component.getSensorName(),
+                                                                                                               component.getDataSourceName(),
+                                                                                                               n.getId());
+                                if (query != null) {
+                                    n.setCustomValues(query.getValues().entrySet().stream()
+                                                           .map(e -> new ParameterValue(e.getKey(), e.getValue()))
+                                                           .collect(Collectors.toList()));
+                                }
                             }
                         });
             }
