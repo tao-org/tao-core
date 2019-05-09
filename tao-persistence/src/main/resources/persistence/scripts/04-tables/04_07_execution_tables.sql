@@ -77,8 +77,8 @@ ALTER TABLE execution.task ADD CONSTRAINT FK_task_job
 	FOREIGN KEY (job_id) REFERENCES execution.job (id) ON DELETE No Action ON UPDATE No Action;
 ALTER TABLE execution.task ADD CONSTRAINT FK_task_group
 	FOREIGN KEY (task_group_id) REFERENCES execution.task (id) ON DELETE No Action ON UPDATE No Action;
-ALTER TABLE execution.task ADD CONSTRAINT FK_task_execution_node
-	FOREIGN KEY (execution_node_host_name) REFERENCES topology.node (id) ON DELETE No Action ON UPDATE No Action;
+--ALTER TABLE execution.task ADD CONSTRAINT FK_task_execution_node
+--	FOREIGN KEY (execution_node_host_name) REFERENCES topology.node (id) ON DELETE No Action ON UPDATE No Action;
 ALTER TABLE execution.task ADD CONSTRAINT FK_task_execution_status
 	FOREIGN KEY (execution_status_id) REFERENCES execution.status (id) ON DELETE No Action ON UPDATE No Action;
 DROP SEQUENCE IF EXISTS execution.task_id_seq CASCADE;

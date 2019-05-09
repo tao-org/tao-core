@@ -29,6 +29,7 @@ import ro.cs.tao.eodata.metadata.DecodeStatus;
 import ro.cs.tao.eodata.metadata.MetadataInspector;
 import ro.cs.tao.eodata.naming.NameExpressionParser;
 import ro.cs.tao.eodata.naming.NamingRule;
+import ro.cs.tao.execution.ExecutionConfiguration;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.OutputDataHandlerManager;
 import ro.cs.tao.execution.model.*;
@@ -54,6 +55,7 @@ import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
 import ro.cs.tao.workflow.enums.TransitionBehavior;
 
+import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -80,6 +82,7 @@ public class Orchestrator extends Notifiable {
 
     private static final String GROUP_TASK_SELECTOR_KEY = "group.task.selector";
     private static final String JOB_TASK_SELECTOR_KEY = "job.task.selector";
+    private static final String DOCKER_MOUNT_POINT;
 
     private static final Orchestrator instance;
     private final Map<Long, InternalStateHandler> groupStateHandlers;
@@ -87,6 +90,12 @@ public class Orchestrator extends Notifiable {
 
     static {
         instance = new Orchestrator();
+        String value = ExecutionConfiguration.getContainerMount();
+        value = value.substring(value.indexOf(':') + 1);
+        if (!value.endsWith(File.separator)) {
+            value += File.separator;
+        }
+        DOCKER_MOUNT_POINT = value;
     }
 
     public static Orchestrator getInstance() {
@@ -107,7 +116,7 @@ public class Orchestrator extends Notifiable {
         this.groupStateHandlers = new HashMap<>();
         this.queue = new LinkedBlockingDeque<>();
         this.executors = Collections.synchronizedMap(new HashMap<>());
-        this.runningTasks = new HashSet<>();
+        this.runningTasks = Collections.synchronizedSet(new HashSet<>());
         this.listAdapter = new StringListAdapter();
         subscribe(Topics.EXECUTION);
     }
@@ -284,9 +293,8 @@ public class Orchestrator extends Notifiable {
             logger.fine(String.format("Status change for task %s [node %s]: %s", taskId, task.getWorkflowNodeId(), status.name()));
             statusChanged(task, message.getMessage());
             if (status == ExecutionStatus.DONE || status == ExecutionStatus.CANCELLED || status == ExecutionStatus.FAILED) {
-                synchronized (this.runningTasks) {
-                    this.runningTasks.remove(task.getId());
-                }
+                this.runningTasks.remove(task.getId());
+                logger.fine(String.format("Active or pending tasks: %d", this.runningTasks.size()));
             }
             if (status == ExecutionStatus.DONE) {
                 WorkflowNodeDescriptor taskNode = persistenceManager.getWorkflowNodeById(task.getWorkflowNodeId());
@@ -313,11 +321,9 @@ public class Orchestrator extends Notifiable {
                             }
                         }
                         nextTask.setContext(currentContext);
-                        synchronized (this.runningTasks) {
-                            if (!this.runningTasks.contains(nextTask.getId())) {
-                                this.runningTasks.add(nextTask.getId());
-                                TaskCommand.START.applyTo(nextTask);
-                            }
+                        if (!this.runningTasks.contains(nextTask.getId())) {
+                            this.runningTasks.add(nextTask.getId());
+                            TaskCommand.START.applyTo(nextTask);
                         }
                     }
                 } else {
@@ -408,22 +414,27 @@ public class Orchestrator extends Notifiable {
         boolean lastFromGroup = groupTask != null &&
                 groupTask.getOutputParameterValues().stream()
                         .allMatch(o -> targets.stream().anyMatch(t -> t.getName().equals(o.getKey())));
-        final Map<String, Object> parameterValues = pcTask.getInputParameterValues().stream()
-                                                          .collect(Collectors.toMap(Variable::getKey, Variable::getValue));
+        final Map<String, Variable> parameterValues = pcTask.getInputParameterValues().stream()
+                                                          .collect(Collectors.toMap(Variable::getKey, Function.identity()));
         targets.forEach(t -> {
-            String targetOutput = pcTask.getOutputParameterValues().stream().filter(o -> o.getKey().equals(t.getName())).findFirst().get().getValue();
-            targetOutput = pcTask.getInstanceTargetOuptut(targetOutput);
-            pcTask.setOutputParameterValue(t.getName(), targetOutput);
-            logger.finest(String.format("Output [%s] of task [id=%d] was set to '%s'",
-                                        t.getName(), pcTask.getId(), targetOutput));
-            if (targetOutput == null) {
-                logger.severe(String.format("NULL TARGET [task %s, parameter %s]", pcTask.getId(), t.getName()));
+            Variable variable = parameterValues.get(t.getName());
+            if (variable == null) {
+                variable = pcTask.getOutputParameterValues().stream().filter(o -> o.getKey().equals(t.getName())).findFirst().orElse(null);
             }
-            if (keepOutput) {
-                persistOutputProducts(pcTask);
-            }
-            if (lastFromGroup) {
-                groupTask.setOutputParameterValue(t.getName(), targetOutput);
+            if (variable != null) {
+                String targetOutput = variable.getValue();
+                pcTask.setOutputParameterValue(t.getName(), targetOutput);
+                logger.finest(String.format("Output [%s] of task [id=%d] was set to '%s'",
+                                            t.getName(), pcTask.getId(), targetOutput));
+                if (targetOutput == null) {
+                    logger.severe(String.format("NULL TARGET [task %s, parameter %s]", pcTask.getId(), t.getName()));
+                }
+                if (keepOutput) {
+                    persistOutputProducts(pcTask);
+                }
+                if (lastFromGroup) {
+                    groupTask.setOutputParameterValue(t.getName(), targetOutput);
+                }
             }
         });
         ExecutionTask task;
@@ -449,6 +460,10 @@ public class Orchestrator extends Notifiable {
                 cardinality = valuesList.size();
             } else {
                 valuesList = new ArrayList<>();
+            }
+            final String masterRootPath = nextTask.getContext().getWorkspace().getParent().toUri().toString();
+            for (int i = 0; i < valuesList.size(); i++) {
+                valuesList.set(i, valuesList.get(i).replace(masterRootPath, DOCKER_MOUNT_POINT).replace('\\', '/'));
             }
             if (cardinality == 0) { // no point to continue since we have nothing to do
                 logger.severe(String.format("Task %s produced no results", task.getId()));
@@ -513,7 +528,7 @@ public class Orchestrator extends Notifiable {
                                         try {
                                             Path path = Paths.get(new URI(oValuesList.get(i)));
                                             oValuesList.set(i, path.getName(path.getNameCount() - 1).toString());
-                                        } catch (URISyntaxException e) {
+                                        } catch (Exception e) {
                                             logger.warning(e.getMessage());
                                         }
                                     }
@@ -819,7 +834,13 @@ public class Orchestrator extends Notifiable {
         try {
             if (descriptor.getDataDescriptor().getFormatType() == DataFormat.RASTER &&
                     metadataInspector != null) {
-                Path path = Paths.get(outValue);
+                String netPath = context.getNetSpace().toString().replace('\\', '/');
+                Path path;
+                if (outValue.startsWith(netPath)) {
+                    path = Paths.get(outValue.replace(netPath, context.getWorkspace().toString()));
+                } else {
+                    path = Paths.get(outValue);
+                }
                 MetadataInspector.Metadata metadata = metadataInspector.getMetadata(path);
                 if (metadata != null) {
                     product = metadata.toProductDescriptor(path);
