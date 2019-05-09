@@ -18,6 +18,7 @@ package ro.cs.tao.execution.local;
 import org.ggf.drmaa.*;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.execution.Constants;
+import ro.cs.tao.execution.monitor.NodeManager;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.topology.NodeDescription;
@@ -49,8 +50,7 @@ public class DefaultSession implements Session {
     // TODO: This should be configurable - add it to tao.properties or in a specific file?
     private Set<String> cmdsToRunAsSu = new HashSet<String>() {{add("docker");}};
     private Logger logger = Logger.getLogger(DefaultSession.class.getName());
-
-    public void setNodes(NodeDescription[] nodes) { this.nodes = nodes; }
+    private boolean canHaveNodeList;
 
     @Override
     public String serviceName() { return "NoCRM"; }
@@ -63,6 +63,7 @@ public class DefaultSession implements Session {
                 final InetAddress inetAddress = InetAddress.getLocalHost();
                 final String hostName = inetAddress.getHostName();
                 final String ipAddress = inetAddress.getHostAddress();
+                canHaveNodeList = NodeManager.isAvailable();
                 if (nodes == null) {
                     nodes = new NodeDescription[0];
                 }
@@ -103,6 +104,9 @@ public class DefaultSession implements Session {
     @Override
     public JobTemplate createJobTemplate() throws DrmaaException {
         checkSession();
+        if (canHaveNodeList) {
+            this.nodes = NodeManager.getInstance().getCurrentNodes();
+        }
         JobTemplate jobTemplate = new SimpleJobTemplate() {
             private long softTimeLimit;
             @Override
@@ -118,7 +122,8 @@ public class DefaultSession implements Session {
             @Override
             protected Set getOptionalAttributeNames() {
                 Set set = new HashSet();
-                set.add("MemoryRequirements");
+                set.add(Constants.MEMORY_REQUIREMENTS_ATTRIBUTE);
+                set.add(Constants.NODE_ATTRIBUTE);
                 return set;
             }
         };
@@ -147,10 +152,19 @@ public class DefaultSession implements Session {
             throw new InvalidJobTemplateException();
         }
         synchronized (this) {
-            if (nodeCounter.get() == this.nodes.length) {
-                nodeCounter.set(0);
+            Long memConstraint = null;
+            NodeDescription node = null;
+            if (jt instanceof JobTemplateExtension) {
+                JobTemplateExtension job = (JobTemplateExtension) jt;
+                if (job.hasAttribute(Constants.MEMORY_REQUIREMENTS_ATTRIBUTE)) {
+                    Object value = job.getAttribute(Constants.MEMORY_REQUIREMENTS_ATTRIBUTE);
+                    memConstraint = value != null ? ((Integer) value).longValue() : null;
+                }
+                if (job.hasAttribute(Constants.NODE_ATTRIBUTE)) {
+                    String host = (String) job.getAttribute(Constants.NODE_ATTRIBUTE);
+                    node = this.nodes != null ? Arrays.stream(this.nodes).filter(n -> host.equals(n.getId())).findFirst().orElse(null) : null;
+                }
             }
-            NodeDescription node = this.nodes[this.nodeCounter.getAndIncrement()];
             List<String> args = new ArrayList<>();
             args.add(jt.getRemoteCommand());
             args.addAll(jt.getArgs());
@@ -158,15 +172,10 @@ public class DefaultSession implements Session {
                     new ExecutionUnit(ExecutorType.PROCESS, node.getId(), node.getUserName(), node.getUserPass(),
                                       args, false/*cmdsToRunAsSu.contains(jt.getRemoteCommand())*/, null) :
                     new ExecutionUnit(ExecutorType.SSH2, node.getId(), node.getUserName(), node.getUserPass(),
-                                      args, cmdsToRunAsSu.contains(jt.getRemoteCommand()), SSHMode.EXEC);
-            if (jt instanceof JobTemplateExtension) {
-                JobTemplateExtension job = (JobTemplateExtension) jt;
-                if (job.hasAttribute(Constants.MEMORY_REQUIREMENTS_ATTRIBUTE)) {
-                    Object value = job.getAttribute(Constants.MEMORY_REQUIREMENTS_ATTRIBUTE);
-                    if (value != null) {
-                        unit.setMinMemory(((Integer) value).longValue());
-                    }
-                }
+                                      //Crypto.decrypt(node.getUserPass(), node.getUserName()),
+                                      args, false /*cmdsToRunAsSu.contains(jt.getRemoteCommand())*/, SSHMode.EXEC);
+            if (memConstraint != null) {
+                unit.setMinMemory(memConstraint);
             }
             String jobId = jt.getJobName() + ":" + System.nanoTime();
             final OutputAccumulator consumer = new OutputAccumulator();
@@ -359,7 +368,7 @@ public class DefaultSession implements Session {
         return ret;
     }
 
-    private void checkSession() throws NoActiveSessionException {
+    private void    checkSession() throws NoActiveSessionException {
         if (!this.initialized) {
             throw new NoActiveSessionException();
         }
@@ -374,4 +383,17 @@ public class DefaultSession implements Session {
             throw new InvalidJobTemplateException();
         }
     }
+
+    /*private NodeDescription getAvailableNode(long memory) {
+        NodeDescription node;
+        if (NodeManager.isAvailable() && NodeManager.getInstance() != null) {
+            node = NodeManager.getInstance().getAvailableNode(memory, 0);
+        } else {
+            if (nodeCounter.get() == this.nodes.length) {
+                nodeCounter.set(0);
+            }
+            node = this.nodes[this.nodeCounter.getAndIncrement()];
+        }
+        return node;
+    }*/
 }

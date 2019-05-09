@@ -13,21 +13,29 @@
  * You should have received a copy of the GNU General Public License along
  * with this program; if not, see http://www.gnu.org/licenses/
  */
-package ro.cs.tao.services.interfaces;
+package ro.cs.tao.execution.monitor;
 
-import ro.cs.tao.Tag;
-import ro.cs.tao.docker.Container;
-import ro.cs.tao.topology.NodeDescription;
-import ro.cs.tao.topology.NodeType;
-
-import java.util.List;
+import java.util.Arrays;
 
 /**
  * @author Cosmin Cara
  */
-public interface TopologyService extends CRUDService<NodeDescription, String> {
-    List<Container> getDockerImages();
-    List<Tag> getNodeTags();
-    List<NodeDescription> getNodes(boolean active);
-    List<NodeDescription> getNodes(NodeType nodeType);
+public enum MemoryUnit {
+    BYTE(1),
+    KILOBYTE(1024),
+    MEGABYTE(1024*1024),
+    GIGABYTE(1024*1024*1024);
+
+    private final int value;
+
+    MemoryUnit(int value) { this.value = value; }
+    @Override
+    public String toString() { return String.valueOf(this.value); }
+
+    public int value() { return this.value; }
+
+    public static String getEnumConstantNameByValue(final int value) {
+        return Arrays.stream(values()).filter(t -> String.valueOf(value).equals(t.toString())).findFirst().get().name();
+    }
+
 }

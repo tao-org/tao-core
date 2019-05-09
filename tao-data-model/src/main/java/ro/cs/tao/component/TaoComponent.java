@@ -20,9 +20,7 @@ import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import ro.cs.tao.security.SessionContext;
 
 import javax.xml.bind.annotation.XmlElementWrapper;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * Base class for TAO components. Components can be:
@@ -45,8 +43,9 @@ public abstract class TaoComponent extends StringIdentifiable {
     protected int targetCardinality = 1;*/
     protected List<SourceDescriptor> sources;
     protected List<TargetDescriptor> targets;
-
     protected List<String> tags;
+
+    protected Map<String, StringIdentifiable> descriptorIndex = new HashMap<>();
 
     private SessionContext sessionContext;
 
@@ -134,6 +133,9 @@ public abstract class TaoComponent extends StringIdentifiable {
      */
     public void setSources(List<SourceDescriptor> sources) {
         this.sources = sources;
+        if (this.sources != null) {
+            this.sources.forEach(s -> this.descriptorIndex.put(s.getId(), s));
+        }
     }
 
     /**
@@ -145,6 +147,7 @@ public abstract class TaoComponent extends StringIdentifiable {
         }
         source.setParentId(this.id);
         this.sources.add(source);
+        this.descriptorIndex.put(source.getId(), source);
     }
     /**
      * Removes an input of this component
@@ -153,6 +156,7 @@ public abstract class TaoComponent extends StringIdentifiable {
         source.setParentId(null);
         if (this.sources != null) {
             this.sources.remove(source);
+            this.descriptorIndex.remove(source.getId());
         }
     }
     /**
@@ -169,6 +173,9 @@ public abstract class TaoComponent extends StringIdentifiable {
      */
     public void setTargets(List<TargetDescriptor> targets) {
         this.targets = targets;
+        if (this.targets != null) {
+            this.targets.forEach(t -> this.descriptorIndex.put(t.getId(), t));
+        }
     }
     /**
      * Adds an output to this component.
@@ -181,6 +188,7 @@ public abstract class TaoComponent extends StringIdentifiable {
         }
         target.setParentId(this.id);
         this.targets.add(target);
+        this.descriptorIndex.put(target.getId(), target);
     }
     /**
      * Removes an output of this component
@@ -191,6 +199,7 @@ public abstract class TaoComponent extends StringIdentifiable {
         target.setParentId(null);
         if (this.targets != null) {
             this.targets.remove(target);
+            this.descriptorIndex.remove(target.getId());
         }
     }
     @XmlElementWrapper(name = "tags")
@@ -236,4 +245,8 @@ public abstract class TaoComponent extends StringIdentifiable {
         }
         return clone;
     }
+
+    public <T extends StringIdentifiable> T findDescriptor(String id) { return (T) this.descriptorIndex.get(id); }
+
+    public boolean hasDescriptor(String id) { return this.descriptorIndex.containsKey(id); }
 }

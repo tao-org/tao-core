@@ -162,7 +162,7 @@ public class ProcessingExecutionTask extends ExecutionTask {
         if (component == null) {
             return null;
         }
-        Map<String, String> inputParams = new HashMap<>();
+        Map<String, Object> inputParams = new HashMap<>();
         if (inputParameterValues != null) {
             for (Variable input : inputParameterValues) {
                 String value = input.getValue();
@@ -173,13 +173,15 @@ public class ProcessingExecutionTask extends ExecutionTask {
             }
         }
         for (TargetDescriptor descriptor : this.component.getTargets()) {
-            String location = outputParameterValues.stream()
-                                                   .filter(v -> descriptor.getName().equals(v.getKey()))
-                                                   .map(Variable::getValue)
-                                                   .findFirst()
-                                                   .orElse(descriptor.getDataDescriptor().getLocation());
-            if (location != null) {
-                inputParams.put(descriptor.getName(), getInstanceTargetOuptut(location));
+            Variable variable = outputParameterValues.stream()
+                    .filter(v -> descriptor.getName().equals(v.getKey())).findFirst().orElse(null);
+            if (variable != null) {
+                String location = variable.getValue() != null ? variable.getValue() : descriptor.getDataDescriptor().getLocation();
+                if (location != null) {
+                    this.instanceTargetOutput = getInstanceTargetOuptut(location);
+                    inputParams.put(descriptor.getName(), this.instanceTargetOutput);
+                    setInputParameterValue(descriptor.getName(), this.instanceTargetOutput);
+                }
             }
         }
         Map<String, String> variables = new HashMap<>();
@@ -187,9 +189,18 @@ public class ProcessingExecutionTask extends ExecutionTask {
         variables.put(SystemVariable.SHARED_WORKSPACE.key(), SystemVariable.SHARED_WORKSPACE.value());
         variables.put(SystemVariable.USER_FILES.key(), getContext().getWorkspace().resolve("files").toString());
         variables.put(SystemVariable.SHARED_FILES.key(), SystemVariable.SHARED_FILES.value());
+        String[] outPath = buildOutputPath();
+        variables.put("$TEMPLATE_REAL_PATH", outPath != null ? outPath[0] : null);
+        variables.put("$TEMPLATE_CMD_PATH", outPath != null ? outPath[1] : null);
         return this.component.buildExecutionCommand(inputParams, variables);
     }
 
+    /**
+     * Computes the actual path of the output of this task.
+     * The "virtual" path (what is reported to the next task) is build considering the common share,
+     * while the actual path is build consideing the master workspace path.
+     * @param location  The template value of the target of this task.
+     */
     public String getInstanceTargetOuptut(String location) {
         if (this.instanceTargetOutput == null) {
             this.instanceTargetOutput = location;
@@ -197,7 +208,7 @@ public class ProcessingExecutionTask extends ExecutionTask {
                 Path path = Paths.get(this.instanceTargetOutput);
                 SessionContext context = getContext();
                 if (!path.isAbsolute()) {
-                    path = context.getWorkspace().resolve(path);
+                    path = context.getNetSpace().resolve(path);
                 }
                 String fileName = path.getFileName().toString();
                 String folderName = String.format(nameTemplate,
@@ -205,15 +216,45 @@ public class ProcessingExecutionTask extends ExecutionTask {
                                                   this.getId(),
                                                   this.internalState == null ? "" : this.internalState + "-",
                                                   FileUtilities.getFilenameWithoutExtension(fileName));
-                //fileName = folderName + FileUtilities.getExtension(fileName);
                 try {
-                    FileUtilities.ensureExists(path.getParent().resolve(folderName));
+                    FileUtilities.ensureExists(context.getWorkspace().resolve(folderName));
                 } catch (IOException e) {
                     Logger.getLogger(ProcessingExecutionTask.class.getName()).severe(e.getMessage());
                 }
-                this.instanceTargetOutput = path.getParent().resolve(folderName).resolve(fileName).toString();
+                this.instanceTargetOutput = path.getParent().resolve(folderName).resolve(fileName).toString().replace('\\', '/');
             }
         }
         return this.instanceTargetOutput;
+    }
+
+    public String[] buildOutputPath() {
+        String[] outPath = null;
+        String location = null;
+        for (TargetDescriptor descriptor : this.component.getTargets()) {
+            Variable variable = outputParameterValues.stream()
+                    .filter(v -> descriptor.getName().equals(v.getKey())).findFirst().orElse(null);
+            if (variable != null) {
+                location = variable.getValue() != null ? variable.getValue() : descriptor.getDataDescriptor().getLocation();
+                if (location != null) {
+                    break;
+                }
+            }
+        }
+        if (location != null) {
+            Path path = Paths.get(location);
+            SessionContext context = getContext();
+            if (!path.isAbsolute()) {
+                path = context.getNetSpace().resolve(path);
+            }
+            String fileName = path.getFileName().toString();
+            String folderName = String.format(nameTemplate,
+                                              this.getJob().getId(),
+                                              this.getId(),
+                                              this.internalState == null ? "" : this.internalState + "-",
+                                              FileUtilities.getFilenameWithoutExtension(fileName));
+            outPath = new String[] { context.getWorkspace().resolve(folderName).toString().replace('\\', '/'),
+                                     path.getParent().resolve(folderName).toString().replace('\\', '/') };
+        }
+        return outPath;
     }
 }

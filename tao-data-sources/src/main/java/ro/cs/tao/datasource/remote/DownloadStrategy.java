@@ -58,6 +58,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     //private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
     private static final String PROGRESS_KEY = "progress.enabled";
     private static final String PROGRESS_INTERVAL = "progress.interval";
+    private static final String MISSING_ACTION = "local.missing.action";
     private final boolean progressEnabled;
     protected Properties props;
     protected String destination;
@@ -75,12 +76,14 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     private volatile boolean cancelled;
     private Timer timer;
     private long progressReportInterval;
+    private boolean downloadIfNotFound;
 
     public DownloadStrategy(String targetFolder, Properties properties) {
         this.destination = targetFolder;
         this.props = properties;
         this.progressEnabled = Boolean.parseBoolean(this.props.getProperty(PROGRESS_KEY, "true"));
         this.progressReportInterval = Long.parseLong(this.props.getProperty(PROGRESS_INTERVAL, "2000"));
+        this.downloadIfNotFound = "download".equalsIgnoreCase(this.props.getProperty(MISSING_ACTION, "none"));
     }
 
     protected DownloadStrategy(DownloadStrategy other) {
@@ -232,8 +235,10 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
                     } else {
                         file = check(product, Paths.get(localArchiveRoot));
                     }
-                    if (file == null) {
-                        logger.warning("Product check failed");
+                    if (file != null) {
+                        break;
+                    } else {
+                        logger.warning("Product check failed. Download will be attempted from the remote source");
                     }
                     break;
                 case OVERWRITE:
@@ -244,6 +249,13 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
                         logger.warning("Product download aborted");
                     }
                     break;
+            }
+            if (this.downloadIfNotFound && file == null &&
+                this.fetchMode != FetchMode.OVERWRITE && this.fetchMode != FetchMode.RESUME) {
+                file = fetchImpl(product);
+                if (file == null) {
+                    logger.warning("Product download aborted");
+                }
             }
             return file;
         } finally {

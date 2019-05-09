@@ -254,7 +254,7 @@ public class ProcessingComponent extends TaoComponent {
     }
 
     /**
-     * Validates the parameter values agains the parameter descriptors.
+     * Validates the parameter values against the parameter descriptors.
      */
     public void validate(Map<String, Object> parameterValues) throws ValidationException {
         if (parameterValues != null) {
@@ -263,54 +263,17 @@ public class ProcessingComponent extends TaoComponent {
                             .filter(d -> parameterValues.containsKey(d.getId()))
                             .collect(Collectors.toList());
             for (ParameterDescriptor descriptor : parameterDescriptors) {
-                descriptor.validate(parameterValues.get(descriptor.getId()));
-                List<ParameterDependency> dependencies = descriptor.getDependencies();
-                if (dependencies != null) {
-                    for (ParameterDependency dependency : dependencies) {
-                        ParameterDescriptor dependent = getParameterDescriptors().stream()
-                                .filter(p -> dependency.getReferencedParameterId().equals(p.id)).findFirst().orElse(null);
-                        if (dependent == null) {
-                            throw new ValidationException(String.format("Parameter [%s] depends on parameter with id [%s] which was not found for this component",
-                                                                        descriptor.getName(), dependency.getReferencedParameterId()));
+                switch (descriptor.getType()) {
+                    case REGULAR:
+                        validateParameter(descriptor, parameterValues);
+                        break;
+                    case TEMPLATE:
+                        final Map<String, Object> templateValues = (Map<String, Object>) parameterValues.get(descriptor.getId());
+                        final List<ParameterDescriptor> children = ((TemplateParameterDescriptor) descriptor).getParameters();
+                        for (ParameterDescriptor child : children) {
+                            validateParameter(child, templateValues);
                         }
-                        Condition condition = dependency.getCondition();
-                        String expectedValue = dependency.getExpectedValue();
-                        Object referencedParameterValue = parameterValues.get(dependency.getReferencedParameterId());
-                        boolean isValid = true;
-                        switch (condition) {
-                            case EQ:
-                                isValid = expectedValue != null ? expectedValue.equals(String.valueOf(referencedParameterValue)) :
-                                        referencedParameterValue == null;
-                                break;
-                            case NEQ:
-                                isValid = expectedValue != null ? !expectedValue.equals(String.valueOf(referencedParameterValue)) :
-                                        referencedParameterValue != null;
-                                break;
-                            case LT:
-                                isValid = expectedValue != null && expectedValue.compareTo(String.valueOf(referencedParameterValue)) < 0;
-                                break;
-                            case LTE:
-                                isValid = expectedValue != null && expectedValue.compareTo(String.valueOf(referencedParameterValue)) <= 0;
-                                break;
-                            case GT:
-                                isValid = expectedValue != null && expectedValue.compareTo(String.valueOf(referencedParameterValue)) > 0;
-                                break;
-                            case GTE:
-                                isValid = expectedValue != null && expectedValue.compareTo(String.valueOf(referencedParameterValue)) >= 0;
-                                break;
-                            case IN:
-                                isValid = expectedValue != null && dependency.expectedValues().contains(expectedValue);
-                                break;
-                            case NOTIN:
-                                isValid = expectedValue == null || !dependency.expectedValues().contains(expectedValue);
-                                break;
-                        }
-                        if (!isValid) {
-                            throw new ValidationException(String.format("Parameter [%s] is dependent on parameter [%s]. Expected value: [%s]. Found: [%s]",
-                                                                        descriptor.getName(), dependent.getName(),
-                                                                        expectedValue, referencedParameterValue));
-                        }
-                    }
+                        break;
                 }
             }
         }
@@ -352,15 +315,43 @@ public class ProcessingComponent extends TaoComponent {
         return newDescriptor;
     }
 
-    public String buildExecutionCommand(Map<String, String> parameterValues, Map<String, String> variables) throws TemplateException {
+    public String buildExecutionCommand(Map<String, Object> parameterValues, Map<String, String> variables) throws TemplateException {
         TemplateEngine templateEngine = getTemplateEngine();
         Map<String, Object> clonedMap = new HashMap<>();
-        for (Map.Entry<String, String> entry : parameterValues.entrySet()) {
-            try {
-                clonedMap.put(entry.getKey(),
-                              Paths.get(URI.create(entry.getValue())).toString());
-            } catch (Exception ex) {
-                clonedMap.put(entry.getKey(), entry.getValue());
+        Map<String, TemplateParameterDescriptor> templateParameters =
+                this.parameters.stream().filter(p -> p instanceof TemplateParameterDescriptor)
+                               .collect(Collectors.toMap(ParameterDescriptor::getName, p -> (TemplateParameterDescriptor) p));
+        for (Map.Entry<String, Object> entry : parameterValues.entrySet()) {
+            String paramName = entry.getKey();
+            Object paramValue = entry.getValue();
+            if (templateParameters.containsKey(paramName)) {
+                Map<String, Object> values = (Map<String, Object>) parameterValues.get(paramName);
+                TemplateParameterDescriptor descriptor = templateParameters.get(paramName);
+                TemplateEngine paramEngine = descriptor.getTemplateEngine();
+                String transformed = paramEngine.transform(descriptor.getTemplate(), values);
+                String outputPath = variables.get("$TEMPLATE_REAL_PATH");
+                String templateCmdPath = variables.get("$TEMPLATE_CMD_PATH");
+                if (outputPath != null && templateCmdPath != null) {
+                    String file = outputPath + "/" + descriptor.getDefaultValue();
+                    try {
+                        Files.write(Paths.get(file), transformed.getBytes());
+                        clonedMap.put(paramName, templateCmdPath + "/" + descriptor.getDefaultValue());
+                    } catch (IOException e) {
+                        Logger.getLogger(getClass().getName()).severe(String.format("Cannot write transformed template '%s'. Reason: %s",
+                                                                                    file, e.getMessage()));
+                    }
+                } else {
+                    Logger.getLogger(getClass().getName()).warning(String.format("Parameter '%s' is a template parameter, but the output path cannot be determined",
+                                                                                 paramName));
+                }
+            } else {
+                try {
+                    if (paramValue instanceof String) {
+                        clonedMap.put(paramName, Paths.get(URI.create((String) paramValue)).toString());
+                    }
+                } catch(Exception ex){
+                    clonedMap.put(paramName, paramValue);
+                }
             }
         }
         for (ParameterDescriptor parameterDescriptor : this.parameters) {
@@ -379,9 +370,9 @@ public class ProcessingComponent extends TaoComponent {
         }
         StringBuilder cmdBuilder = new StringBuilder();
         if (this.expandedFileLocation != null) {
-            cmdBuilder.append(this.expandedFileLocation).append("\n");
+            cmdBuilder.append(this.expandedFileLocation.replace('\\', '/')).append("\n");
         } else {
-            cmdBuilder.append(this.fileLocation).append("\n");
+            cmdBuilder.append(this.fileLocation.replace('\\', '/')).append("\n");
         }
         String transformedTemplate = templateEngine.transform(this.template, clonedMap);
         if (transformedTemplate == null || "null".equals(transformedTemplate)) {
@@ -415,6 +406,58 @@ public class ProcessingComponent extends TaoComponent {
                 break;
         }
         return cmdBuilder.toString();
+    }
+
+    private void validateParameter(final ParameterDescriptor descriptor, final Map<String, Object> values) {
+        descriptor.validate(values.get(descriptor.getId()));
+        final List<ParameterDependency> dependencies = descriptor.getDependencies();
+        if (dependencies != null) {
+            for (ParameterDependency dependency : dependencies) {
+                final ParameterDescriptor dependent = getParameterDescriptors().stream()
+                        .filter(p -> dependency.getReferencedParameterId().equals(p.id)).findFirst().orElse(null);
+                if (dependent == null) {
+                    throw new ValidationException(String.format("Parameter [%s] depends on parameter with id [%s] which was not found for this component",
+                                                                descriptor.getName(), dependency.getReferencedParameterId()));
+                }
+                final Condition condition = dependency.getCondition();
+                final String expectedValue = dependency.getExpectedValue();
+                final Object referencedParameterValue = values.get(dependency.getReferencedParameterId());
+                boolean isValid = true;
+                switch (condition) {
+                    case EQ:
+                        isValid = expectedValue != null ? expectedValue.equals(String.valueOf(referencedParameterValue)) :
+                                referencedParameterValue == null;
+                        break;
+                    case NEQ:
+                        isValid = expectedValue != null ? !expectedValue.equals(String.valueOf(referencedParameterValue)) :
+                                referencedParameterValue != null;
+                        break;
+                    case LT:
+                        isValid = expectedValue != null && expectedValue.compareTo(String.valueOf(referencedParameterValue)) < 0;
+                        break;
+                    case LTE:
+                        isValid = expectedValue != null && expectedValue.compareTo(String.valueOf(referencedParameterValue)) <= 0;
+                        break;
+                    case GT:
+                        isValid = expectedValue != null && expectedValue.compareTo(String.valueOf(referencedParameterValue)) > 0;
+                        break;
+                    case GTE:
+                        isValid = expectedValue != null && expectedValue.compareTo(String.valueOf(referencedParameterValue)) >= 0;
+                        break;
+                    case IN:
+                        isValid = expectedValue != null && dependency.expectedValues().contains(expectedValue);
+                        break;
+                    case NOTIN:
+                        isValid = expectedValue == null || !dependency.expectedValues().contains(expectedValue);
+                        break;
+                }
+                if (!isValid) {
+                    throw new ValidationException(String.format("Parameter [%s] is dependent on parameter [%s]. Expected value: [%s]. Found: [%s]",
+                                                                descriptor.getName(), dependent.getName(),
+                                                                expectedValue, referencedParameterValue));
+                }
+            }
+        }
     }
 
     private void removeEmptyParameter(ParameterDescriptor descriptor) {

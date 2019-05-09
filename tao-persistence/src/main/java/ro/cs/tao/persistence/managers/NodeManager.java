@@ -25,6 +25,7 @@ import ro.cs.tao.persistence.repository.NodeRepository;
 import ro.cs.tao.persistence.repository.ServiceRepository;
 import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.topology.NodeServiceStatus;
+import ro.cs.tao.topology.NodeType;
 import ro.cs.tao.topology.ServiceDescription;
 import ro.cs.tao.utils.Crypto;
 
@@ -44,10 +45,6 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
         return list(ro.cs.tao.Sort.by(identifier(), SortDirection.ASC))
                 .stream()
                 .filter(NodeDescription::getActive)
-                .map(n -> {
-                    ensurePasswordDecrypted(n);
-                    return n;
-                })
                 .collect(Collectors.toList());
     }
 
@@ -57,11 +54,15 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
         if (hostName == null || hostName.isEmpty()) {
             throw new PersistenceException("Invalid parameters were provided for searching execution node by host name ("+ String.valueOf(hostName) +") !");
         }
-        NodeDescription node = repository.findById(hostName).orElse(null);
-        if (node != null) {
-            ensurePasswordDecrypted(node);
-        }
-        return node;
+        return repository.findById(hostName).orElse(null);
+    }
+
+    public List<NodeDescription> findByActive(boolean active) {
+        return repository.findByActive(active);
+    }
+
+    public List<NodeDescription> getNodesByType(NodeType type) {
+        return repository.findByNodeType(type);
     }
 
     @Transactional
@@ -90,11 +91,22 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
                 serviceStatus.setServiceDescription(existingService);
             }
         }
-        ensurePasswordEncrypted(node);
+        if (node.getNodeType() == null) {
+            int processors = node.getProcessorCount();
+            NodeType nodeType;
+            if (processors <= 4) {
+                nodeType = NodeType.S;
+            } else if (processors <= 8) {
+                nodeType = NodeType.M;
+            } else if (processors <= 16) {
+                nodeType = NodeType.L;
+            } else {
+                nodeType = NodeType.XL;
+            }
+            node.setNodeType(nodeType);
+        }
         // save the new NodeDescription entity and return it
-        node = repository.save(node);
-        ensurePasswordDecrypted(node);
-        return node;
+        return repository.save(node);
     }
 
     @Override
@@ -118,11 +130,22 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
                 serviceStatus.setServiceDescription(existingService);
             }
         }
-        ensurePasswordEncrypted(entity);
+        if (entity.getNodeType() == null) {
+            int processors = entity.getProcessorCount();
+            NodeType nodeType;
+            if (processors <= 4) {
+                nodeType = NodeType.S;
+            } else if (processors <= 8) {
+                nodeType = NodeType.M;
+            } else if (processors <= 16) {
+                nodeType = NodeType.L;
+            } else {
+                nodeType = NodeType.XL;
+            }
+            entity.setNodeType(nodeType);
+        }
         // save the new NodeDescription entity and return it
-        entity = repository.save(entity);
-        ensurePasswordDecrypted(entity);
-        return entity;
+        return repository.save(entity);
     }
 
     @Transactional

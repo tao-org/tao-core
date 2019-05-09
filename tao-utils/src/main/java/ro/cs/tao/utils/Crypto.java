@@ -64,6 +64,7 @@ public class Crypto {
                 return new String(cipher.doFinal(Base64.getDecoder().decode(strToDecrypt)));
             } catch (Exception e) {
                 //e.printStackTrace();
+                return strToDecrypt;
             }
         }
         return null;

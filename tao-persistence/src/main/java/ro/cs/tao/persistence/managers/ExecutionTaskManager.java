@@ -228,7 +228,7 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
 
     @Override
     protected boolean checkEntity(ExecutionTask entity) {
-        return !(entity.getId() != null && entity.getId() > 0 && (entity.getResourceId() == null || entity.getResourceId().isEmpty()));
+        return entity.getExecutionStatus() != null && entity.getWorkflowNodeId() != null;
     }
 
     private boolean checkExecutionJob(ExecutionJob job, boolean existingEntity) {

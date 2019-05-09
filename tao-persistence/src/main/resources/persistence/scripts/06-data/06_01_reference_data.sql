@@ -1,133 +1,91 @@
+-- Topology node types
+INSERT INTO topology.node_type (id, code, description) VALUES
+(1, 'S', '2-4 processors, 4-8GB RAM'), (2, 'M', '5-8 processors, 8-16GB RAM'), (3, 'L', '9-16 processors, 32-64GB RAM'), (4, 'XL', '16+ processors, 64+GB RAM');
+
 -- Processing components visibility
-INSERT INTO component.component_visibility (visibility) VALUES ('SYSTEM');
-INSERT INTO component.component_visibility (visibility) VALUES ('USER');
-INSERT INTO component.component_visibility (visibility) VALUES ('CONTRIBUTOR');
+INSERT INTO component.component_visibility (visibility) VALUES
+('SYSTEM'), ('USER'), ('CONTRIBUTOR');
 
 -- Processing components type
-INSERT INTO component.processing_component_type (id, type) VALUES (1, 'EXECUTABLE');
-INSERT INTO component.processing_component_type (id, type) VALUES (2, 'SCRIPT');
+INSERT INTO component.processing_component_type (id, type) VALUES
+(1, 'EXECUTABLE'), (2, 'SCRIPT');
 
 -- Tag type
-INSERT INTO common.tag_type (id, description) VALUES (1, 'TOPOLOGY_NODE');
-INSERT INTO common.tag_type (id, description) VALUES (2, 'COMPONENT');
-INSERT INTO common.tag_type (id, description) VALUES (3, 'DATASOURCE');
-INSERT INTO common.tag_type (id, description) VALUES (4, 'WORKFLOW');
+INSERT INTO common.tag_type (id, description) VALUES
+(1, 'TOPOLOGY_NODE'), (2, 'COMPONENT'), (3, 'DATASOURCE'), (4, 'WORKFLOW');
 
 -- Condition
-INSERT INTO component.condition (id, description) VALUES (1, 'Equals');
-INSERT INTO component.condition (id, description) VALUES (2, 'Not equals');
-INSERT INTO component.condition (id, description) VALUES (3, 'Less than');
-INSERT INTO component.condition (id, description) VALUES (4, 'Less than or equal');
-INSERT INTO component.condition (id, description) VALUES (5, 'Greater than');
-INSERT INTO component.condition (id, description) VALUES (6, 'Greater than or equals');
-INSERT INTO component.condition (id, description) VALUES (7, 'In');
-INSERT INTO component.condition (id, description) VALUES (8, 'Not in');
+INSERT INTO component.condition (id, description) VALUES
+(1, 'Equals'), (2, 'Not equals'), (3, 'Less than'), (4, 'Less than or equal'), (5, 'Greater than'), (6, 'Greater than or equals'), (7, 'In'), (8, 'Not in');
 
 -- Data formats
-INSERT INTO product.data_format (type) VALUES ('RASTER');
-INSERT INTO product.data_format (type) VALUES ('VECTOR');
-INSERT INTO product.data_format (type) VALUES ('OTHER');
+INSERT INTO product.data_format (type) VALUES
+('RASTER'), ('VECTOR'), ('OTHER');
 
 -- Data types
-INSERT INTO product.data_type (type) VALUES ('String');
-INSERT INTO product.data_type (type) VALUES ('Integer');
-INSERT INTO product.data_type (type) VALUES ('Double');
-INSERT INTO product.data_type (type) VALUES ('Short');
-INSERT INTO product.data_type (type) VALUES ('Date');
-INSERT INTO product.data_type (type) VALUES ('Polygon2D');
+INSERT INTO product.data_type (type) VALUES
+('String'), ('Integer'), ('Double'), ('Short'), ('Date'), ('Polygon2D');
 
 -- Data formats
-INSERT INTO product.product_status (status) VALUES ('QUERIED');
-INSERT INTO product.product_status (status) VALUES ('DOWNLOADING');
-INSERT INTO product.product_status (status) VALUES ('DOWNLOADED');
-INSERT INTO product.product_status (status) VALUES ('FAILED');
-INSERT INTO product.product_status (status) VALUES ('PRODUCED');
+INSERT INTO product.product_status (status) VALUES
+('QUERIED'), ('DOWNLOADING'), ('DOWNLOADED'), ('FAILED'), ('PRODUCED');
 
 -- Execution status
-INSERT INTO execution.status (description) VALUES ('UNDETERMINED');
-INSERT INTO execution.status (description) VALUES ('QUEUED_ACTIVE');
-INSERT INTO execution.status (description) VALUES ('RUNNING');
-INSERT INTO execution.status (description) VALUES ('SUSPENDED');
-INSERT INTO execution.status (description) VALUES ('DONE');
-INSERT INTO execution.status (description) VALUES ('FAILED');
-INSERT INTO execution.status (description) VALUES ('CANCELLED');
+INSERT INTO execution.status (description) VALUES
+('UNDETERMINED'), ('QUEUED_ACTIVE'), ('RUNNING'), ('SUSPENDED'), ('DONE'), ('FAILED'), ('CANCELLED');
 
 -- Fetch mode
-INSERT INTO component.fetch_mode (fetch_mode) VALUES ('OVERWRITE');
-INSERT INTO component.fetch_mode (fetch_mode) VALUES ('RESUME');
-INSERT INTO component.fetch_mode (fetch_mode) VALUES ('COPY');
-INSERT INTO component.fetch_mode (fetch_mode) VALUES ('SYMLINK');
+INSERT INTO component.fetch_mode (fetch_mode) VALUES
+('OVERWRITE'), ('RESUME'), ('COPY'), ('SYMLINK');
 
 -- Orbit direction
-INSERT INTO product.orbit_direction (direction) VALUES ('ASCENDING');
-INSERT INTO product.orbit_direction (direction) VALUES ('DESCENDING');
+INSERT INTO product.orbit_direction (direction) VALUES
+('ASCENDING'), ('DESCENDING');
 
 -- Parameter type
-INSERT INTO component.parameter_type (type) VALUES ('RegularParameter');
-INSERT INTO component.parameter_type (type) VALUES ('TemplateParameter');
+INSERT INTO component.parameter_type (type) VALUES
+('RegularParameter'), ('TemplateParameter');
 
 -- Pixel types
-INSERT INTO product.pixel_type (type) VALUES ('UINT8');
-INSERT INTO product.pixel_type (type) VALUES ('INT8');
-INSERT INTO product.pixel_type (type) VALUES ('UINT16');
-INSERT INTO product.pixel_type (type) VALUES ('INT16');
-INSERT INTO product.pixel_type (type) VALUES ('UINT32');
-INSERT INTO product.pixel_type (type) VALUES ('INT32');
-INSERT INTO product.pixel_type (type) VALUES ('FLOAT32');
-INSERT INTO product.pixel_type (type) VALUES ('FLOAT64');
+INSERT INTO product.pixel_type (type) VALUES
+('UINT8'), ('INT8'), ('UINT16'), ('INT16'), ('UINT32'), ('INT32'), ('FLOAT32'), ('FLOAT64');
 
 -- Sensor types
-INSERT INTO product.sensor_type (type) VALUES ('OPTICAL');
-INSERT INTO product.sensor_type (type) VALUES ('RADAR');
-INSERT INTO product.sensor_type (type) VALUES ('ALTIMETRIC');
-INSERT INTO product.sensor_type (type) VALUES ('ATMOSPHERIC');
-INSERT INTO product.sensor_type (type) VALUES ('UNKNOWN');
+INSERT INTO product.sensor_type (type) VALUES
+('OPTICAL'), ('RADAR'), ('ALTIMETRIC'), ('ATMOSPHERIC'), ('UNKNOWN');
 
 -- Service status
-INSERT INTO  topology.service_status (status) VALUES ('NOT_FOUND');
-INSERT INTO  topology.service_status (status) VALUES ('INSTALLED');
-INSERT INTO  topology.service_status (status) VALUES ('UNINSTALLED');
-INSERT INTO  topology.service_status (status) VALUES ('ERROR');
+INSERT INTO  topology.service_status (status) VALUES
+('NOT_FOUND'), ('INSTALLED'), ('UNINSTALLED'), ('ERROR');
 
 -- Data Query parameters
 -- common parameters
-INSERT INTO workflow.query_parameter (data_type_id, name) VALUES (1, 'platformName');
-INSERT INTO workflow.query_parameter (data_type_id, name) VALUES (5, 'startDate');
-INSERT INTO workflow.query_parameter (data_type_id, name) VALUES (5, 'endDate');
-INSERT INTO workflow.query_parameter (data_type_id, name) VALUES (6, 'footprint');
-INSERT INTO workflow.query_parameter (data_type_id, name) VALUES (1, 'productType');
-INSERT INTO workflow.query_parameter (data_type_id, name) VALUES (1, 'relativeOrbit');
-
+INSERT INTO workflow.query_parameter (data_type_id, name) VALUES
+(1, 'platformName'), (5, 'startDate'), (5, 'endDate'), (6, 'footprint'), (1, 'productType'), (1, 'relativeOrbit'),
 -- Radar parameters
-INSERT INTO workflow.query_parameter (data_type_id, name) VALUES (1, 'polarisation');
-INSERT INTO workflow.query_parameter (data_type_id, name) VALUES (1, 'sensorOperationalMode');
-
+(1, 'polarisation'), (1, 'sensorOperationalMode'),
 -- Optical parameters
-INSERT INTO workflow.query_parameter (data_type_id, name) VALUES (3, 'cloudCover');
+(3, 'cloudCover');
 
 -- Template type
-INSERT INTO component.template_type (type) VALUES ('VELOCITY');
-INSERT INTO component.template_type (type) VALUES ('JAVASCRIPT');
-INSERT INTO component.template_type (type) VALUES ('XSLT');
+INSERT INTO component.template_type (type) VALUES
+('VELOCITY'), ('JAVASCRIPT'), ('XSLT');
 
 -- Component type
-INSERT INTO workflow.component_type (id, description) VALUES (1, 'DATASOURCE');
-INSERT INTO workflow.component_type (id, description) VALUES (2, 'PROCESSING');
-INSERT INTO workflow.component_type (id, description) VALUES (3, 'GROUP');
-INSERT INTO workflow.component_type (id, description) VALUES (4, 'DATASOURCE_GROUP');
+INSERT INTO workflow.component_type (id, description) VALUES
+(1, 'DATASOURCE'), (2, 'PROCESSING'), (3, 'GROUP'), (4, 'DATASOURCE_GROUP');
 
 -- Behavior
-INSERT INTO workflow.node_behavior (id, description) VALUES (1, 'FAIL_ON_ERROR');
-INSERT INTO workflow.node_behavior (id, description) VALUES (2, 'CONTINUE_ON_ERROR');
+INSERT INTO workflow.node_behavior (id, description) VALUES
+(1, 'FAIL_ON_ERROR'), (2, 'CONTINUE_ON_ERROR');
 
 -- Workflow graph status
-INSERT INTO workflow.status (description) VALUES ('DRAFT');
-INSERT INTO workflow.status (description) VALUES ('READY');
-INSERT INTO workflow.status (description) VALUES ('PUBLISHED');
+INSERT INTO workflow.status (description) VALUES
+('DRAFT'), ('READY'), ('PUBLISHED');
 
 -- Workflow graph visibility
-INSERT INTO common.visibility (visibility) VALUES ('PUBLIC');
-INSERT INTO common.visibility (visibility) VALUES ('PRIVATE');
+INSERT INTO common.visibility (visibility) VALUES
+('PUBLIC'), ('PRIVATE');
 
 -- Groups
 -- admin group
@@ -136,9 +94,8 @@ INSERT INTO usr."group" (name) VALUES ('ADMIN');
 INSERT INTO usr."group" (name) VALUES ('USER');
 
 -- User status
-INSERT INTO usr.user_status (status) VALUES ('PENDING');
-INSERT INTO usr.user_status (status) VALUES ('ACTIVE');
-INSERT INTO usr.user_status (status) VALUES ('DISABLED');
+INSERT INTO usr.user_status (status) VALUES
+('PENDING'), ('ACTIVE'), ('DISABLED');
 
 -- Users
 -- admin user (password "admin" - "$2a$08$wU07f1hSVkTO7321eVi0quF8If7d23Ly66dkwGAOzbb6xrZFeo69m")
@@ -164,8 +121,8 @@ INSERT INTO usr.user_group (user_id, group_id) VALUES (3, 2);
 INSERT INTO usr.user_group (user_id, group_id) VALUES (4, 2);
 
 -- localhost execution node
-INSERT INTO topology.node (id, username, password, total_cpu, total_ram, total_hdd, description)
-VALUES ('localhost', '', '', 8, 32, 1024, 'Master Node');
+INSERT INTO topology.node (id, username, password, type_id, total_cpu, total_ram, total_hdd, description)
+VALUES ('localhost', '', '', 2, 8, 32, 1024, 'Master Node');
 
 -- Naming rules
 INSERT INTO product.naming_rule (id, sensor, regex, description) VALUES
@@ -204,7 +161,7 @@ INSERT INTO product.naming_rule_token (naming_rule_id, token_name, matching_grou
 (3, 'LEVEL', 2, 'Processing level'),
 (3, 'PATH', 3, 'Acquisition path'),
 (3, 'ROW', 4, 'Acquisition row'),
-(1, 'ADATE', 5, 'Acquisition date'),
-(1, 'PDATE', 6, 'Processing date'),
-(1, 'COLLECTION', 7, 'Collection number'),
-(1, 'CATEGORY', 8, 'Collection category');
+(3, 'ADATE', 5, 'Acquisition date'),
+(3, 'PDATE', 6, 'Processing date'),
+(3, 'COLLECTION', 7, 'Collection number'),
+(3, 'CATEGORY', 8, 'Collection category');

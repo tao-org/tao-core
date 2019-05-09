@@ -19,6 +19,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.docker.Container;
+import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.Topics;
 import ro.cs.tao.persistence.PersistenceManager;
@@ -167,6 +168,15 @@ public class TopologyManager implements ITopologyManager {
                 }
             });
         }
+        Message message = new Message();
+        message.setTopic(Topics.TOPOLOGY);
+        message.setUser(SystemPrincipal.instance().getName());
+        message.setPersistent(false);
+        message.addItem("node", info.getId());
+        message.addItem("operation", "added");
+        message.addItem("user", info.getUserName());
+        message.addItem("password", info.getUserPass());
+        Messaging.send(SystemPrincipal.instance(), Topics.TOPOLOGY, message);
     }
 
     @Override
@@ -188,6 +198,13 @@ public class TopologyManager implements ITopologyManager {
                 public ToolInstallStatus execute(NodeDescription ref) { return installer.uninstallNode(node); }
             });
         }
+        Message message = new Message();
+        message.setTopic(Topics.TOPOLOGY);
+        message.setUser(SystemPrincipal.instance().getName());
+        message.setPersistent(false);
+        message.addItem("node", hostName);
+        message.addItem("operation", "removed");
+        Messaging.send(SystemPrincipal.instance(), Topics.TOPOLOGY, message);
     }
 
     @Override
@@ -262,7 +279,7 @@ public class TopologyManager implements ITopologyManager {
                     sharedAccumulator.reset();
                     executor = Executor.execute(sharedAccumulator, job);
                     logger.fine("Executing " + String.join(" ", commands));
-                    waitFor(executor, 30, TimeUnit.SECONDS);
+                    waitFor(executor, 10, TimeUnit.MINUTES);
                     if ((retCode = executor.getReturnCode()) == 0) {
                         Messaging.send(principal, Topics.INFORMATION, this,
                                        String.format("Docker image '%s' successfully registered", correctedName));

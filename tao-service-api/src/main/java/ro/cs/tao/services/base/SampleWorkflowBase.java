@@ -39,6 +39,7 @@ import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 public abstract class SampleWorkflowBase implements SampleWorkflow {
     protected static PersistenceManager persistenceManager;
@@ -92,15 +93,21 @@ public abstract class SampleWorkflowBase implements SampleWorkflow {
 
     @Override
     public WorkflowDescriptor createWorkflowDescriptor() throws PersistenceException {
-        WorkflowDescriptor descriptor = new WorkflowDescriptor();
-        descriptor.setName(getName());
-        descriptor.setStatus(Status.DRAFT);
-        descriptor.setCreated(LocalDateTime.now());
-        descriptor.setActive(true);
-        descriptor.setUserName("admin");
-        descriptor.setVisibility(Visibility.PRIVATE);
-        descriptor = persistenceManager.saveWorkflowDescriptor(descriptor);
-        addNodes(descriptor);
+        WorkflowDescriptor descriptor;
+        descriptor = persistenceManager.getWorkflowDescriptor(getName());
+        if (descriptor == null) {
+            descriptor = new WorkflowDescriptor();
+            descriptor.setName(getName());
+            descriptor.setStatus(Status.DRAFT);
+            descriptor.setCreated(LocalDateTime.now());
+            descriptor.setActive(true);
+            descriptor.setUserName("admin");
+            descriptor.setVisibility(Visibility.PRIVATE);
+            descriptor = persistenceManager.saveWorkflowDescriptor(descriptor);
+            addNodes(descriptor);
+        } else {
+            Logger.getLogger(getClass().getName()).warning(String.format("Workflow '%s' already exists", getName()));
+        }
         return descriptor;
     }
 
