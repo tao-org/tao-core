@@ -65,8 +65,9 @@ public class NodeManager extends Notifiable {
         if (nodes != null) {
             for (NodeDescription node : nodes) {
                 if (node.getActive()) {
-                    this.nodes.put(node.getId(), node);
-                    this.runtimeInfo.put(node.getId(), new RuntimeInfo());
+                    String host = node.getId();
+                    this.nodes.put(host, node);
+                    this.runtimeInfo.put(host, new RuntimeInfo());
                 }
             }
             new NodeInspectTask().run();
@@ -184,6 +185,7 @@ public class NodeManager extends Notifiable {
             nodeName = runtimeInfo.entrySet().stream()
                             .filter(e -> e.getValue().getAvailableMemory() >= memory)
                             .filter(e -> (e.getValue().getDiskTotal() - e.getValue().getDiskUsed()) >= disk)
+                            .sorted(Comparator.comparingDouble(e -> e.getValue().getCpuTotal()))
                             .sorted((e1, e2) -> Long.compare(e2.getValue().getAvailableMemory(), e1.getValue().getAvailableMemory()))
                             //.sorted(Comparator.comparingDouble(o -> o.getValue().getCpuTotal() / (double) nodes.get(o.getKey()).getProcessorCount()))
                             .map(Map.Entry::getKey).findFirst().orElse(null);
@@ -254,9 +256,22 @@ public class NodeManager extends Notifiable {
                 List<NodeDescription> allNodes = persistenceManager.getNodes();
                 Map<String, NodeDescription> allMap = new HashMap<>();
                 for (NodeDescription node : allNodes) {
-                    if (nodes.containsKey(node.getId())) {
+                    String host = node.getId();
+                    if (nodes.containsKey(host)) {
                         if (!node.getActive()) {
-                            runtimeInfo.put(node.getId(),
+                            runtimeInfo.put(host,
+                                            new RuntimeInfo() {{
+                                                setAvailableMemory(-1);
+                                                setDiskTotal(node.getDiskSpaceSizeGB());
+                                                setTotalMemory(node.getMemorySizeGB());
+                                                setCpuTotal(-1);
+                                                setDiskUsed(-1);
+                                            }});
+                        }
+                    } else {
+                        if (node.getActive()) {
+                            nodes.put(host, node);
+                            runtimeInfo.put(host,
                                             new RuntimeInfo() {{
                                                 setAvailableMemory(-1);
                                                 setDiskTotal(node.getDiskSpaceSizeGB());
@@ -266,7 +281,7 @@ public class NodeManager extends Notifiable {
                                             }});
                         }
                     }
-                    allMap.put(node.getId(), node);
+                    allMap.put(host, node);
                 }
                 nodes.entrySet().removeIf(current -> !allMap.containsKey(current.getKey()));
                 runtimeInfo.entrySet().removeIf(current -> !allMap.containsKey(current.getKey()));
