@@ -223,6 +223,17 @@ public class FileUtilities {
         return retVal;
     }
 
+    public static Path resolveSymLinks(Path path) throws IOException {
+        Path realPath = path.getRoot();
+        for (int i = 0; i < path.getNameCount(); i++) {
+            realPath = realPath.resolve(path.getName(i));
+            if (Files.isSymbolicLink(realPath)) {
+                realPath = Files.readSymbolicLink(realPath);
+            }
+        }
+        return realPath;
+    }
+
     public static Path linkFile(Path sourcePath, Path file) throws IOException {
         return Files.exists(file) ? file : Files.createSymbolicLink(file, sourcePath);
     }
