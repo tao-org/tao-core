@@ -33,6 +33,7 @@ import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.utils.Tuple;
 import ro.cs.tao.utils.executors.BlockingQueueWorker;
 
+import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.UnknownHostException;
 import java.nio.file.Paths;
@@ -92,7 +93,8 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             JobTemplate jt = createJobTemplate(task);
             changeTaskStatus(task, ExecutionStatus.QUEUED_ACTIVE, true);
             this.queue.put(new Tuple<>(jt, task));
-        } catch (InterruptedException | DrmaaException | PersistenceException e) {
+            logger.finest(String.format("Task %s has been added to the wait queue", task.getId()));
+        } catch (InterruptedException | DrmaaException | IOException e) {
             logger.severe(String.format("Error submitting task with id %s: %s", task.getId(), e.getMessage()));
             throw new ExecutionException("Error executing DRMAA session operation", e);
         }
@@ -197,6 +199,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
     private Void executeImpl(Tuple<JobTemplate, ProcessingExecutionTask> pair) {
         final JobTemplate jt = pair.getKeyOne();
         final ProcessingExecutionTask task = pair.getKeyTwo();
+        logger.finest(String.format("Task %s has been dequeued for execution", task.getId()));
         try {
             String id = session.runJob(jt);
             session.deleteJobTemplate(jt);
@@ -221,7 +224,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         return null;
     }
 
-    private JobTemplate createJobTemplate(ProcessingExecutionTask task) throws DrmaaException, PersistenceException {
+    private JobTemplate createJobTemplate(ProcessingExecutionTask task) throws DrmaaException, IOException {
         // Get from the component the execution command
         Container container;
         String[] pArgs = null;
