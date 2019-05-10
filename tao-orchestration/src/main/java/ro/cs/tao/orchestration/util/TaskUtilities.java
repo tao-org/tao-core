@@ -259,8 +259,6 @@ public class TaskUtilities {
                 e2.printStackTrace();
                 result = path;
             }
-        } finally {
-            logger.finest(String.format("Converted %s to %s", path, result));
         }
         return result;
     }
