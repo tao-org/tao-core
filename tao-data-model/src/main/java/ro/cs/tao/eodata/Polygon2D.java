@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
  */
 public class Polygon2D {
     //private static final Pattern polyPattern = Pattern.compile("POLYGON\\s?\\(\\(.*\\)\\)");
-    private static final Pattern coordPattern = Pattern.compile("((?:-?(?:\\d+(?:\\.\\d+)?)) (?:-?(?:\\d+(?:\\.\\d+)?)))");
+    private static final Pattern coordPattern = Pattern.compile("((?:-?(?:\\d*(?:\\.\\d+)?)) (?:-?(?:\\d*(?:\\.\\d+)?)))");
 
     private Path2D.Double[] polygons;
     private int numPoints;
@@ -72,11 +72,6 @@ public class Polygon2D {
                     polygon.append(i, Double.parseDouble(coords[0]), Double.parseDouble(coords[1]));
                 }
             }
-            /*Matcher coordMatcher = coordPattern.matcher(polyText);
-            while (coordMatcher.find()) {
-                String[] coords = coordMatcher.group().split(" ");
-                polygon.append(Double.parseDouble(coords[0]), Double.parseDouble(coords[1]));
-            }*/
         } else {
             // maybe we have only a list of coordinates, without being wrapped in a POLYGON((..))
             Matcher coordMatcher = coordPattern.matcher(wkt);
