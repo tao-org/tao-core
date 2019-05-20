@@ -185,8 +185,9 @@ public class NodeManager extends Notifiable {
             nodeName = runtimeInfo.entrySet().stream()
                             .filter(e -> e.getValue().getAvailableMemory() >= memory)
                             .filter(e -> (e.getValue().getDiskTotal() - e.getValue().getDiskUsed()) >= disk)
-                            .sorted(Comparator.comparingDouble(e -> e.getValue().getCpuTotal()))
-                            .sorted((e1, e2) -> Long.compare(e2.getValue().getAvailableMemory(), e1.getValue().getAvailableMemory()))
+                            .sorted(Comparator.comparingDouble(e -> computeLoad(nodes.get(e.getKey()),
+                                                                                e.getValue().getCpuTotal(),
+                                                                                e.getValue().getAvailableMemory())))
                             //.sorted(Comparator.comparingDouble(o -> o.getValue().getCpuTotal() / (double) nodes.get(o.getKey()).getProcessorCount()))
                             .map(Map.Entry::getKey).findFirst().orElse(null);
             if (nodeName == null) {
@@ -290,6 +291,18 @@ public class NodeManager extends Notifiable {
             } finally {
                 refreshInProgress = false;
             }
+        }
+    }
+
+    private double computeLoad(NodeDescription node, double actualCPU, long freeMemory) {
+        double result  = 0.0;
+        try {
+            double noCpus = node.getProcessorCount();
+            double totalMem = node.getMemorySizeGB() * MemoryUnit.GIGABYTE.value();
+            result = (actualCPU / noCpus) * (1 - (freeMemory / totalMem));
+            return result;
+        } finally {
+            logger.finest(String.format("Processing pressure for %s: %f", node.getId(), result));
         }
     }
 }
