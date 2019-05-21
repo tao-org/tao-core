@@ -15,6 +15,12 @@
  */
 package ro.cs.tao.eodata;
 
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.MultiPolygon;
+import org.locationtech.jts.io.ParseException;
+import org.locationtech.jts.io.WKTReader;
+
 import java.awt.geom.Path2D;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
@@ -25,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -35,7 +42,7 @@ import java.util.regex.Pattern;
  */
 public class Polygon2D {
     //private static final Pattern polyPattern = Pattern.compile("POLYGON\\s?\\(\\(.*\\)\\)");
-    private static final Pattern coordPattern = Pattern.compile("((?:-?(?:\\d+(?:\\.\\d+)?)) (?:-?(?:\\d+(?:\\.\\d+)?)))");
+    private static final Pattern coordPattern = Pattern.compile("((?:-?(?:\\d*(?:\\.\\d+)?)) (?:-?(?:\\d*(?:\\.\\d+)?)))");
 
     private Path2D.Double[] polygons;
     private int numPoints;
@@ -50,40 +57,64 @@ public class Polygon2D {
      */
     public static Polygon2D fromWKT(String wkt) {
         Polygon2D polygon = new Polygon2D();
-        if (wkt.startsWith("MULTIPOLYGON")) {
-            wkt = wkt.substring(13, wkt.length() - 1);
+        /*if (wkt.startsWith("MULTIPOLYGON")) {
+            wkt = wkt.substring(13, wkt.length() - 1).trim();
             String[] texts = wkt.split("\\),\\(");
             for (int i = 0; i < texts.length; i++) {
                 String polyText = texts[i].replace("(", "").replace(")", "");
                 Matcher coordMatcher = coordPattern.matcher(polyText);
                 while (coordMatcher.find()) {
                     String[] coords = coordMatcher.group().split(" ");
-                    polygon.append(i, Double.parseDouble(coords[0]), Double.parseDouble(coords[1]));
+                    polygon.append(i, Double.parseDouble(coords[0].trim()), Double.parseDouble(coords[1].trim()));
                 }
             }
         } else if (wkt.startsWith("POLYGON")){
-            wkt = wkt.substring(7);//wkt.replace("POLYGON", "");
+            wkt = wkt.substring(7).trim();//wkt.replace("POLYGON", "");
             String[] texts = wkt.split("\\),\\(");
             for (int i = 0; i < texts.length; i++) {
                 String polyText = texts[i].replace("(", "").replace(")", "");
                 Matcher coordMatcher = coordPattern.matcher(polyText);
                 while (coordMatcher.find()) {
                     String[] coords = coordMatcher.group().split(" ");
-                    polygon.append(i, Double.parseDouble(coords[0]), Double.parseDouble(coords[1]));
+                    polygon.append(i, Double.parseDouble(coords[0].trim()), Double.parseDouble(coords[1].trim()));
                 }
             }
-            /*Matcher coordMatcher = coordPattern.matcher(polyText);
-            while (coordMatcher.find()) {
-                String[] coords = coordMatcher.group().split(" ");
-                polygon.append(Double.parseDouble(coords[0]), Double.parseDouble(coords[1]));
-            }*/
         } else {
             // maybe we have only a list of coordinates, without being wrapped in a POLYGON((..))
             Matcher coordMatcher = coordPattern.matcher(wkt);
             while (coordMatcher.find()) {
                 String[] coords = coordMatcher.group().split(" ");
-                polygon.append(Double.parseDouble(coords[0]), Double.parseDouble(coords[1]));
+                polygon.append(Double.parseDouble(coords[0].trim()), Double.parseDouble(coords[1].trim()));
             }
+        }*/
+        try {
+            WKTReader reader = new WKTReader();
+            Geometry geometry = reader.read(wkt);
+            if (wkt.startsWith("MULTIPOLYGON")) {
+                MultiPolygon mPolygon = (MultiPolygon) geometry;
+                int n = mPolygon.getNumGeometries();
+                for (int i = 0; i < n; i++) {
+                    Coordinate[] coordinates = mPolygon.getGeometryN(i).getCoordinates();
+                    for (Coordinate coordinate : coordinates) {
+                        polygon.append(i, coordinate.x, coordinate.y);
+                    }
+                }
+            } else if (wkt.startsWith("POLYGON")) {
+                Coordinate[] coordinates = geometry.getCoordinates();
+                for (Coordinate coordinate : coordinates) {
+                    polygon.append(coordinate.x, coordinate.y);
+                }
+            } else {
+                // maybe we have only a list of coordinates, without being wrapped in a POLYGON((..))
+                Matcher coordMatcher = coordPattern.matcher(wkt);
+                while (coordMatcher.find()) {
+                    String[] coords = coordMatcher.group().split(" ");
+                    polygon.append(Double.parseDouble(coords[0].trim()), Double.parseDouble(coords[1].trim()));
+                }
+            }
+        } catch (ParseException e) {
+            Logger.getLogger(Polygon2D.class.getName()).warning(String.format("Cannot parse wkt [%s]. Reason: %s",
+                                                                              wkt, e.getMessage()));
         }
         return polygon;
     }
@@ -203,11 +234,14 @@ public class Polygon2D {
 
     /**
      * Produces a WKT representation of this polygon.
+     * Default decimal precision is 4.
      */
     public String toWKT() {
         return toWKT(4);
     }
-
+    /**
+     * Produces a WKT representation of this polygon with a given decimal precision
+     */
     public String toWKT(int precision) {
         StringBuilder buffer = new StringBuilder();
         boolean isMulti = this.polygons.length > 1;
@@ -239,6 +273,41 @@ public class Polygon2D {
             buffer.append(")");
         }
         return buffer.toString();
+    }
+    /**
+     * Produces an array of WKT representations of this polygon.
+     * Default decimal precision is 4.
+     */
+    public String[] toWKTArray() {
+        return toWKTArray(4);
+    }
+    /**
+     * Produces an array of WKT representations of this polygon with a given decimal precision.
+     */
+    public String[] toWKTArray(int precision) {
+        String[] polygons = new String[this.polygons.length];
+        StringBuilder buffer = new StringBuilder();
+        for (int j = 0; j < this.polygons.length; j++) {
+            buffer.append("POLYGON((");
+            PathIterator pathIterator = this.polygons[j].getPathIterator(null);
+            StringBuilder format = new StringBuilder(".");
+            int i = 0;
+            while (i++ < precision) format.append("#");
+            DecimalFormat dfFormat = new DecimalFormat(format.toString(),
+                                                       DecimalFormatSymbols.getInstance(Locale.ENGLISH));
+            while (!pathIterator.isDone()) {
+                double[] segment = new double[6];
+                pathIterator.currentSegment(segment);
+                buffer.append(dfFormat.format(segment[0])).append(" ").append(dfFormat.format(segment[1])).append(",");
+                pathIterator.next();
+            }
+            buffer.setLength(buffer.length() - 1);
+            buffer.append("))");
+            polygons[j] = buffer.toString();
+            buffer.setLength(0);
+        }
+
+        return polygons;
     }
 
     public Rectangle2D getBounds2D() {

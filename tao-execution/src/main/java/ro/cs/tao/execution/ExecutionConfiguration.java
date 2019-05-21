@@ -1,9 +1,9 @@
 package ro.cs.tao.execution;
 
 import ro.cs.tao.configuration.ConfigurationManager;
+import ro.cs.tao.utils.FileUtilities;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -22,30 +22,20 @@ public class ExecutionConfiguration {
         return forceMemoryRequirements;
     }
 
-    public static String getDockerMasterBindMount() {
+    public static String getDockerMasterBindMount() throws IOException {
         if (dockerMasterBindMount == null) {
             dockerMasterBindMount = ConfigurationManager.getInstance()
                                                         .getValue(Constants.DOCKER_BIND_MOUNT_MASTER_CONFIG_KEY,
                                                                   "/mnt/tao/working_dir:/mnt").trim();
             // At least on Windows, docker doesn't handle well folder symlinks in the path
             Path path = Paths.get(dockerMasterBindMount.substring(0, dockerMasterBindMount.indexOf(':')));
-            Path realPath = path.getRoot();
-            for (int i = 0; i < path.getNameCount(); i++) {
-                realPath = realPath.resolve(path.getName(i));
-                if (Files.isSymbolicLink(realPath)) {
-                    try {
-                        realPath = Files.readSymbolicLink(realPath);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-            dockerMasterBindMount = realPath.toString() + dockerMasterBindMount.substring(dockerMasterBindMount.indexOf(':'));
+            Path realPath = FileUtilities.resolveSymLinks(path);
+            dockerMasterBindMount = realPath.toString().replace("\\", "/") + dockerMasterBindMount.substring(dockerMasterBindMount.indexOf(':'));
         }
         return dockerMasterBindMount;
     }
 
-    public static String getDockerNodeBindMount() {
+    public static String getDockerNodeBindMount() throws IOException {
         if (dockerNodeBindMount == null) {
             dockerNodeBindMount = ConfigurationManager.getInstance().getValue(Constants.DOCKER_BIND_MOUNT_SLAVE_CONFIG_KEY).trim()
                                 + ":" + getContainerMount();
@@ -60,7 +50,7 @@ public class ExecutionConfiguration {
         return dockerRegistry;
     }
 
-    public static String getContainerMount() {
+    public static String getContainerMount() throws IOException {
         if (containerMount == null) {
             final String value = getDockerMasterBindMount();
             containerMount = value.substring(value.lastIndexOf(':') + 1);

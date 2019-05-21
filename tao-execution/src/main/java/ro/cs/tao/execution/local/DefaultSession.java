@@ -158,7 +158,7 @@ public class DefaultSession implements Session {
                 JobTemplateExtension job = (JobTemplateExtension) jt;
                 if (job.hasAttribute(Constants.MEMORY_REQUIREMENTS_ATTRIBUTE)) {
                     Object value = job.getAttribute(Constants.MEMORY_REQUIREMENTS_ATTRIBUTE);
-                    memConstraint = value != null ? ((Integer) value).longValue() : null;
+                    memConstraint = value != null ? Long.parseLong(value.toString()) : null;
                 }
                 if (job.hasAttribute(Constants.NODE_ATTRIBUTE)) {
                     String host = (String) job.getAttribute(Constants.NODE_ATTRIBUTE);
@@ -168,7 +168,7 @@ public class DefaultSession implements Session {
             List<String> args = new ArrayList<>();
             args.add(jt.getRemoteCommand());
             args.addAll(jt.getArgs());
-            final ExecutionUnit unit = isLocalHost(node.getId()) ?
+            final ExecutionUnit unit = node == null || isLocalHost(node.getId()) ?
                     new ExecutionUnit(ExecutorType.PROCESS, node.getId(), node.getUserName(), node.getUserPass(),
                                       args, false/*cmdsToRunAsSu.contains(jt.getRemoteCommand())*/, null) :
                     new ExecutionUnit(ExecutorType.SSH2, node.getId(), node.getUserName(), node.getUserPass(),

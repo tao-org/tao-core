@@ -18,14 +18,20 @@ package ro.cs.tao.orchestration.util;
 
 import org.springframework.stereotype.Component;
 import ro.cs.tao.component.*;
+import ro.cs.tao.execution.ExecutionConfiguration;
 import ro.cs.tao.execution.model.DataSourceExecutionTask;
 import ro.cs.tao.execution.model.ExecutionJob;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.persistence.PersistenceManager;
+import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.enums.TransitionBehavior;
 
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -39,6 +45,21 @@ public class TaskUtilities {
 
     private static PersistenceManager persistenceManager;
     private static final Logger logger = Logger.getLogger(TaskUtilities.class.getName());
+    private static final String DOCKER_MOUNT_POINT;
+
+    static {
+        String value = "/";
+        try {
+            value = ExecutionConfiguration.getContainerMount();
+            value = value.substring(value.indexOf(':') + 1);
+            if (!value.endsWith("/")) {
+                value += "/";
+            }
+        } catch (IOException e) {
+            logger.severe(e.getMessage());
+        }
+        DOCKER_MOUNT_POINT = value;
+    }
 
     /**
      * Setter for the persistence manager
@@ -220,5 +241,25 @@ public class TaskUtilities {
             }
         }
         return toTask;
+    }
+
+    public static String relativizePathForExecution(String path) {
+        String result = "";
+        try {
+            Path p = FileUtilities.resolveSymLinks(Paths.get(URI.create(path)).toAbsolutePath());
+            Path root = FileUtilities.resolveSymLinks(Paths.get(SystemVariable.ROOT.value()).toAbsolutePath());
+            result = DOCKER_MOUNT_POINT + root.relativize(p).toString().replace("\\", "/");
+        } catch (Exception e1) {
+            e1.printStackTrace();
+            try {
+                Path p = FileUtilities.resolveSymLinks(Paths.get(path).toAbsolutePath());
+                Path root = FileUtilities.resolveSymLinks(Paths.get(SystemVariable.ROOT.value()).toAbsolutePath());
+                result = DOCKER_MOUNT_POINT + root.relativize(p).toString().replace("\\", "/");
+            } catch (Exception e2) {
+                e2.printStackTrace();
+                result = path;
+            }
+        }
+        return result;
     }
 }

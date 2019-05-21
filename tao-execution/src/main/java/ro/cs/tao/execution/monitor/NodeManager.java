@@ -4,7 +4,6 @@ import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.execution.local.DefaultSessionFactory;
 import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.Notifiable;
-import ro.cs.tao.messaging.Topics;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.topology.NodeDescription;
@@ -26,8 +25,11 @@ public class NodeManager extends Notifiable {
     private final PersistenceManager persistenceManager;
     private final Map<String, NodeDescription> nodes;
     private final Map<String, RuntimeInfo> runtimeInfo;
-    private Timer nodeCheckTimer;
-    private NodeCheckTask nodeCheckTask;
+    private Timer nodeInspectTimer;
+    private Timer nodeRefreshTimer;
+    private NodeInspectTask nodeInspectTask;
+    private NodeRefreshTask nodeRefreshTask;
+    private volatile boolean refreshInProgress;
 
     static {
         concurrentCalls = Math.max(2, java.lang.Runtime.getRuntime().availableProcessors() / 4);
@@ -52,7 +54,8 @@ public class NodeManager extends Notifiable {
         nodes = new HashMap<>();
         runtimeInfo = new HashMap<>();
         persistenceManager = SpringContextBridge.services().getPersistenceManager();
-        subscribe(Topics.TOPOLOGY);
+        refreshInProgress = false;
+        //subscribe(Topics.TOPOLOGY);
     }
 
     /**
@@ -62,11 +65,12 @@ public class NodeManager extends Notifiable {
         if (nodes != null) {
             for (NodeDescription node : nodes) {
                 if (node.getActive()) {
-                    this.nodes.put(node.getId(), node);
-                    this.runtimeInfo.put(node.getId(), new RuntimeInfo());
+                    String host = node.getId();
+                    this.nodes.put(host, node);
+                    this.runtimeInfo.put(host, new RuntimeInfo());
                 }
             }
-            new NodeCheckTask().run();
+            new NodeInspectTask().run();
         }
     }
 
@@ -75,28 +79,39 @@ public class NodeManager extends Notifiable {
      */
     public void start() {
         stop();
-        this.nodeCheckTask = new NodeCheckTask();
-        if (this.nodeCheckTimer == null) {
-            this.nodeCheckTimer = new Timer("node-monitor");
+        this.nodeInspectTask = new NodeInspectTask();
+        this.nodeRefreshTask = new NodeRefreshTask();
+        if (this.nodeInspectTimer == null) {
+            this.nodeInspectTimer = new Timer("node-monitor");
         }
-        this.nodeCheckTimer.schedule(new NodeCheckTask(), pollInterval * 1000, pollInterval * 1000);
+        if (this.nodeRefreshTimer == null) {
+            this.nodeRefreshTimer = new Timer("node-refresh");
+        }
+        this.nodeRefreshTimer.schedule(this.nodeRefreshTask, 0, pollInterval * 4 * 1000);
+        this.nodeInspectTimer.schedule(this.nodeInspectTask, pollInterval * 1000, pollInterval * 1000);
     }
 
     /**
      * Stops monitoring the registered nodes.
      */
     public void stop() {
-        if (this.nodeCheckTask != null) {
-            this.nodeCheckTask.cancel();
+        if (this.nodeInspectTask != null) {
+            this.nodeInspectTask.cancel();
         }
-        if (this.nodeCheckTimer != null) {
-            this.nodeCheckTimer.purge();
+        if (this.nodeInspectTimer != null) {
+            this.nodeInspectTimer.purge();
+        }
+        if (this.nodeRefreshTask != null) {
+            this.nodeRefreshTask.cancel();
+        }
+        if (this.nodeRefreshTimer != null) {
+            this.nodeRefreshTimer.purge();
         }
     }
 
     @Override
     protected void onMessageReceived(Message message) {
-        String host = message.getItem("node");
+        /*String host = message.getItem("node");
         String operation = message.getItem("operation");
         try {
             if ("added".equals(operation)) {
@@ -112,7 +127,7 @@ public class NodeManager extends Notifiable {
             }
         } catch (Exception e) {
             logger.severe(e.getMessage());
-        }
+        }*/
     }
 
     private synchronized void updateNodeInfo(String host) {
@@ -170,7 +185,9 @@ public class NodeManager extends Notifiable {
             nodeName = runtimeInfo.entrySet().stream()
                             .filter(e -> e.getValue().getAvailableMemory() >= memory)
                             .filter(e -> (e.getValue().getDiskTotal() - e.getValue().getDiskUsed()) >= disk)
-                            .sorted((e1, e2) -> Long.compare(e2.getValue().getAvailableMemory(), e1.getValue().getAvailableMemory()))
+                            .sorted(Comparator.comparingDouble(e -> computeLoad(nodes.get(e.getKey()),
+                                                                                e.getValue().getCpuTotal(),
+                                                                                e.getValue().getAvailableMemory())))
                             //.sorted(Comparator.comparingDouble(o -> o.getValue().getCpuTotal() / (double) nodes.get(o.getKey()).getProcessorCount()))
                             .map(Map.Entry::getKey).findFirst().orElse(null);
             if (nodeName == null) {
@@ -196,20 +213,25 @@ public class NodeManager extends Notifiable {
         return this.runtimeInfo;
     }
 
-    protected class NodeCheckTask extends TimerTask {
+    protected class NodeInspectTask extends TimerTask {
         private boolean inProgress;
-        NodeCheckTask() {
+        NodeInspectTask() {
             this.inProgress = false;
         }
         @Override
         public void run() {
             try {
-                if (!this.inProgress) {
+                if (!this.inProgress && !refreshInProgress) {
                     this.inProgress = true;
                     final Set<String> hosts = new HashSet<>(nodes.keySet());
                     Parallel.ForEach(hosts, concurrentCalls, (h) -> {
                         if (nodes.containsKey(h)) {
                             try {
+                                while (refreshInProgress) {
+                                    try {
+                                        Thread.sleep(500);
+                                    } catch (Throwable ignored) { }
+                                }
                                 updateNodeInfo(h);
                             } catch (Exception e) {
                                 logger.severe(String.format("Cannot update node information [node=%s, error=%s]",
@@ -224,6 +246,63 @@ public class NodeManager extends Notifiable {
                 this.inProgress = false;
             }
 
+        }
+    }
+
+    protected class NodeRefreshTask extends TimerTask {
+        @Override
+        public void run() {
+            refreshInProgress = true;
+            try {
+                List<NodeDescription> allNodes = persistenceManager.getNodes();
+                Map<String, NodeDescription> allMap = new HashMap<>();
+                for (NodeDescription node : allNodes) {
+                    String host = node.getId();
+                    if (nodes.containsKey(host)) {
+                        if (!node.getActive()) {
+                            runtimeInfo.put(host,
+                                            new RuntimeInfo() {{
+                                                setAvailableMemory(-1);
+                                                setDiskTotal(node.getDiskSpaceSizeGB());
+                                                setTotalMemory(node.getMemorySizeGB());
+                                                setCpuTotal(-1);
+                                                setDiskUsed(-1);
+                                            }});
+                        }
+                    } else {
+                        if (node.getActive()) {
+                            nodes.put(host, node);
+                            runtimeInfo.put(host,
+                                            new RuntimeInfo() {{
+                                                setAvailableMemory(-1);
+                                                setDiskTotal(node.getDiskSpaceSizeGB());
+                                                setTotalMemory(node.getMemorySizeGB());
+                                                setCpuTotal(-1);
+                                                setDiskUsed(-1);
+                                            }});
+                        }
+                    }
+                    allMap.put(host, node);
+                }
+                nodes.entrySet().removeIf(current -> !allMap.containsKey(current.getKey()));
+                runtimeInfo.entrySet().removeIf(current -> !allMap.containsKey(current.getKey()));
+            } catch (Exception e) {
+                logger.severe("Error during refreshing nodes list from database: " + e.getMessage());
+            } finally {
+                refreshInProgress = false;
+            }
+        }
+    }
+
+    private double computeLoad(NodeDescription node, double actualCPU, long freeMemory) {
+        double result  = 0.0;
+        try {
+            double noCpus = node.getProcessorCount();
+            double totalMem = node.getMemorySizeGB() * MemoryUnit.GIGABYTE.value();
+            result = (actualCPU / noCpus) * (1 - (freeMemory / totalMem));
+            return result;
+        } finally {
+            logger.finest(String.format("Processing pressure for %s: %f", node.getId(), result));
         }
     }
 }

@@ -291,6 +291,10 @@ public class PersistenceManager implements MessagePersister {
         nodeManager.deleteExecutionNode(hostName);
     }
 
+    public ServiceDescription getServiceDescription(String name, String version) {
+        return nodeManager.getServiceDescription(name, version);
+    }
+
     public ServiceDescription saveServiceDescription(ServiceDescription service) throws PersistenceException {
         return nodeManager.saveServiceDescription(service);
     }
