@@ -108,6 +108,27 @@
         </snapshotRepository>
     </distributionManagement>
 
+    <profiles>
+        <profile>
+            <id>postgres</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <build.profile.id>postgres</build.profile.id>
+            </properties>
+        </profile>
+        <profile>
+            <id>h2</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <build.profile.id>h2</build.profile.id>
+            </properties>
+        </profile>
+    </profiles>
+
     <build>
         <directory>${project.basedir}/target</directory>
         <outputDirectory>${project.build.directory}/classes</outputDirectory>

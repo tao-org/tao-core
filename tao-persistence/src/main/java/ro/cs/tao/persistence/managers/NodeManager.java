@@ -165,6 +165,10 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
         return repository.save(nodeEnt);
     }
 
+    public ServiceDescription getServiceDescription(String name, String version) {
+        return serviceRepository.findByNameAndVersion(name, version);
+    }
+
     @Transactional
     public ServiceDescription saveServiceDescription(ServiceDescription service) throws PersistenceException {
         // check method parameters

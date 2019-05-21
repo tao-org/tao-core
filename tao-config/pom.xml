@@ -13,4 +13,38 @@
     <name>TAO Configuration</name>
     <packaging>jar</packaging>
 
+    <build>
+        <filters>
+            <filter>src/main/resources/profiles/${build.profile.id}/tao.properties</filter>
+        </filters>
+        <resources>
+            <resource>
+                <filtering>true</filtering>
+                <directory>src/main/resources</directory>
+            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-config</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.outputDirectory}/ro/cs/tao/configuration</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>src/main/resources/profiles/${build.profile.id}</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
 </project>
