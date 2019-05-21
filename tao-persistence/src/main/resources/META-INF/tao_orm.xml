@@ -1065,8 +1065,8 @@
         <attributes>
             <id name="id">
                 <column name="id" nullable="false" column-definition="bigserial NOT NULL"/>
-                <generated-value strategy="SEQUENCE" generator="group_identifier"/>
-                <sequence-generator name="group_identifier" sequence-name="common.tag_id_seq" allocation-size="1" />
+                <generated-value strategy="IDENTITY" generator="group_identifier"/>
+                <!--<sequence-generator name="group_identifier" sequence-name="common.tag_id_seq" allocation-size="1" />-->
             </id>
             <basic name="tagType">
                 <column name="tag_type_id" nullable="false" column-definition="integer NOT NULL"/>
@@ -1078,7 +1078,7 @@
     </entity>
     
     <entity class="ro.cs.tao.user.Group" access="PROPERTY">
-        <table name="usr.group"/>
+        <table name="usr.grp"/>
         <attributes>
             <id name="id">
                 <column name="id" nullable="false" column-definition="serial NOT NULL"/>

@@ -39,6 +39,7 @@ import ro.cs.tao.persistence.data.jsonutil.JsonStringType;
 import javax.annotation.Resource;
 import javax.sql.DataSource;
 import java.beans.PropertyVetoException;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -213,9 +214,11 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
 //			dataSource.setLoginTimeout(
 //					Integer.parseInt(environment.getRequiredProperty(PROPERTY_NAME_DATABASE_CONNECTION_LOGINTIMEOUT)));
             dataSource.setTestConnectionOnCheckout(Boolean.getBoolean(environment.getRequiredProperty(PROPERTY_NAME_DATABASE_CONNECTION_TESTONCHECKOUT)));
-
-            if (dataSource.getConnection() == null) {
+            Connection connection;
+            if ((connection = dataSource.getConnection()) == null) {
                 logger.log(Level.SEVERE, "Database connection cannot be established!");
+            } else {
+                connection.close();
             }
         } catch (SQLException | IllegalStateException | PropertyVetoException e) {
             logger.log(Level.SEVERE, "Error configuring data source: " + e.getMessage());
