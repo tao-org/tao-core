@@ -52,10 +52,13 @@ public abstract class SystemVariable {
 
     public static final SystemVariable SHARE = new Share();
 
+    public static final SystemVariable ROOT = new WorkspaceRoot();
+
     private static final Set<SystemVariable> allVariables;
 
     static {
         allVariables = new HashSet<>();
+        allVariables.add(ROOT);
         allVariables.add(USER_WORKSPACE);
         allVariables.add(SHARED_WORKSPACE);
         allVariables.add(USER_FILES);
@@ -87,6 +90,17 @@ public abstract class SystemVariable {
      * The value of this variable.
      */
     public abstract String value();
+
+    private static final class WorkspaceRoot extends SystemVariable {
+
+        @Override
+        public String key() { return "$ROOT"; }
+
+        @Override
+        public String value() {
+            return Paths.get(ConfigurationManager.getInstance().getValue("product.location")).toString();
+        }
+    }
 
     private static final class UserWorkspace extends SystemVariable {
 
