@@ -1,16 +1,16 @@
 -------------------------------------------------------------------------------
 -- table: usr.group
-DROP TABLE IF EXISTS usr."group" CASCADE;
-CREATE TABLE usr."group"
+DROP TABLE IF EXISTS usr.grp CASCADE;
+CREATE TABLE usr.grp
 (
 	id integer NOT NULL,
 	name varchar(50) NOT NULL
 );
-ALTER TABLE usr."group" ADD CONSTRAINT PK_group PRIMARY KEY (id);
+ALTER TABLE usr.grp ADD CONSTRAINT PK_group PRIMARY KEY (id);
 DROP SEQUENCE IF EXISTS usr.group_id_seq CASCADE;
 CREATE SEQUENCE usr.group_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
-ALTER TABLE usr."group" ALTER COLUMN id SET DEFAULT nextval('usr.group_id_seq');
-ALTER SEQUENCE usr.group_id_seq OWNED BY usr."group".id;
+ALTER TABLE usr.grp ALTER COLUMN id SET DEFAULT nextval('usr.group_id_seq');
+ALTER SEQUENCE usr.group_id_seq OWNED BY usr.grp.id;
 -------------------------------------------------------------------------------
 -- table: usr.user_status
 DROP TABLE IF EXISTS usr.user_status CASCADE;
@@ -69,7 +69,7 @@ ALTER TABLE usr.user_group ADD CONSTRAINT PK_user_group PRIMARY KEY (user_id, gr
 ALTER TABLE usr.user_group ADD CONSTRAINT FK_user_group_user
 	FOREIGN KEY (user_id) REFERENCES usr."user" (id) ON DELETE No Action ON UPDATE No Action;
 ALTER TABLE usr.user_group ADD CONSTRAINT FK_user_group_group
-	FOREIGN KEY (group_id) REFERENCES usr."group" (id) ON DELETE No Action ON UPDATE No Action;
+	FOREIGN KEY (group_id) REFERENCES usr.grp (id) ON DELETE No Action ON UPDATE No Action;
 
 -------------------------------------------------------------------------------
 -- table: usr.user_prefs
