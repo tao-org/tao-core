@@ -89,9 +89,9 @@ INSERT INTO common.visibility (visibility) VALUES
 
 -- Groups
 -- admin group
-INSERT INTO usr."group" (name) VALUES ('ADMIN');
+INSERT INTO usr.grp (name) VALUES ('ADMIN');
 -- operator group
-INSERT INTO usr."group" (name) VALUES ('USER');
+INSERT INTO usr.grp (name) VALUES ('USER');
 
 -- User status
 INSERT INTO usr.user_status (status) VALUES
