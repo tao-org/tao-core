@@ -524,10 +524,14 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     }
 
     private class TimedJob extends TimerTask {
+        private double lastValue;
         @Override
         public void run() {
             if (progressListener != null && currentProductProgress != null) {
-                progressListener.notifyProgress(currentProductProgress.value());
+                if (currentProductProgress.value() != lastValue) {
+                    progressListener.notifyProgress(currentProductProgress.value());
+                    lastValue = currentProductProgress.value();
+                }
             }
         }
     }
