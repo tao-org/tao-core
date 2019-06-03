@@ -225,7 +225,8 @@ public class FileUtilities {
 
     public static Path resolveSymLinks(Path path) throws IOException {
         Path realPath = path.getRoot();
-        for (int i = 0; i < path.getNameCount(); i++) {
+        final int nameCount = path.getNameCount();
+        for (int i = 0; i < nameCount; i++) {
             realPath = realPath.resolve(path.getName(i));
             if (Files.isSymbolicLink(realPath)) {
                 realPath = Files.readSymbolicLink(realPath);

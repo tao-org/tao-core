@@ -43,6 +43,12 @@ public abstract class Executor<T> implements Runnable {
     static {
         executorService = new NamedThreadPoolExecutor("process-exec", Runtime.getRuntime().availableProcessors());
         staticLogger = Logger.getLogger(Executor.class.getName());
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                executorService.shutdownNow();
+            }
+        });
     }
 
     T channel;
