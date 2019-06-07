@@ -53,7 +53,7 @@ import java.util.*;
  * @see JobTemplate
  * @since 1.0
  *
- * @apiNote Modified for TAO to allow extensions
+ * Modified for TAO to allow extensions
  */
 public class SimpleJobTemplate implements JobTemplate, JobTemplateExtension, Serializable {
     private String toString = null;

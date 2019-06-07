@@ -30,4 +30,5 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface Constraint {
     String name();
+    String value() default "";
 }
