@@ -18,7 +18,7 @@ package ro.cs.tao.component.converters;
 import ro.cs.tao.datasource.converters.ConversionException;
 
 /**
- * Convenience (fallback> convertor between an object of the given type and {@link String} objects.
+ * Convenience (fallback converter between an object of the given type and {@link String} objects.
  *
  * @author Cosmin Cara
  */

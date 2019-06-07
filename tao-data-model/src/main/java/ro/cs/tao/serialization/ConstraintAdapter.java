@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.serialization;
 
+import ro.cs.tao.component.constraints.ConstraintFactory;
 import ro.cs.tao.component.constraints.IOConstraint;
 
 import javax.xml.bind.annotation.adapters.XmlAdapter;
@@ -30,6 +31,6 @@ public class ConstraintAdapter extends XmlAdapter<IOConstraint, String> {
 
     @Override
     public IOConstraint marshal(String v) throws Exception {
-        return v == null ? null : (IOConstraint) Class.forName(v).newInstance();
+        return v == null ? null : ConstraintFactory.create(v);
     }
 }

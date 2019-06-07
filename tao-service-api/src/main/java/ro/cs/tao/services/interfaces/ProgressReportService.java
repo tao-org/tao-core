@@ -25,7 +25,7 @@ public interface ProgressReportService extends TAOService {
      * Returns information about current long running tasks.
      * Long running tasks should report their progress via the common message bus
      * and topics matching the pattern "(.+)progress".
-     *
+     * @return  The list of tasks in progress
      */
     List<TaskProgress> getRunningTasks();
 

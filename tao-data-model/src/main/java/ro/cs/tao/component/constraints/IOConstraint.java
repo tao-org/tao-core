@@ -25,6 +25,8 @@ import ro.cs.tao.component.TargetDescriptor;
  * @author Cosmin Cara
  */
 public abstract class IOConstraint {
+    protected String value;
+
     /**
      * Verifies if this constraint is satisfied.
      * @param args  The descriptors to be checked.
@@ -41,4 +43,6 @@ public abstract class IOConstraint {
     public boolean check(SourceDescriptor source, TargetDescriptor target) {
         return true;
     }
+
+    public String getValue() { return value; }
 }

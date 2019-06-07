@@ -24,12 +24,12 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.util.Arrays;
 
 /**
- * Constraint that indicates that several data descriptors should have the sensor value.
+ * Constraint that indicates that several data descriptors should have the sane sensor type (i.e. optical raster).
  *
  * @author Cosmin Cara
  * @see DataDescriptor
  */
-@Constraint(name = "Same sensor")
+@Constraint(name = "Same sensor type")
 @XmlJavaTypeAdapter(ConstraintAdapter.class)
 public class SensorConstraint extends IOConstraint {
     @Override
