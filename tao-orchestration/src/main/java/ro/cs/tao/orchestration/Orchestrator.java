@@ -835,7 +835,7 @@ public class Orchestrator extends Notifiable {
                 MetadataInspector.Metadata metadata = metadataInspector.getMetadata(path);
                 if (metadata != null) {
                     product = metadata.toProductDescriptor(path);
-                    product.setUserName(context.getPrincipal().getName());
+                    product.addReference(context.getPrincipal().getName());
                     product.setVisibility(Visibility.PRIVATE);
                 }
             }
