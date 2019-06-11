@@ -24,9 +24,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Date;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * @author Cosmin Cara
@@ -42,6 +40,7 @@ public class EOProduct extends EOData implements Serializable {
     private long approximateSize;
     private Date processingDate;
     private URI quicklookLocation;
+    private Set<String> references;
 
     //region Getters and setters
     public SensorType getSensorType() {
@@ -111,6 +110,23 @@ public class EOProduct extends EOData implements Serializable {
     public void setApproximateSize(long approximateSize) {
         this.approximateSize = approximateSize;
     }
+
+    public Set<String> getReferences() { return references; }
+    public void setReferences(Set<String> references) { this.references = references; }
+
+    public void addReference(String userName) {
+        if (this.references == null) {
+            this.references = new HashSet<>();
+        }
+        this.references.add(userName);
+    }
+
+    public void removeReference(String userName) {
+        if (this.references != null) {
+            this.references.remove(userName);
+        }
+    }
+
     //endregion
     //region equals and hashCode
     @Override

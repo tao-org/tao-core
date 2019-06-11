@@ -15,9 +15,6 @@
             <basic name="name">
                 <column name="name" nullable="false" column-definition="varchar(250) not null"/>
             </basic>
-            <basic name="userName">
-                <column name="username" nullable="true" column-definition="varchar NULL"/>
-            </basic>
             <basic name="formatType">
                 <column name="type_id" nullable="false" column-definition="integer not null"/>
                 <convert converter="ro.cs.tao.persistence.convert.DataFormatConverter" attribute-name="formatType" />
@@ -167,8 +164,8 @@
             <basic name="approximateSize">
                 <column name="approximate_size" nullable="false" column-definition="bigint not null"/>
             </basic>
-            <element-collection name="references" target-class="java.lang.String" fetch="EAGER">
-                <collection-table name="product.raster_data_product_refs" >
+            <element-collection name="references">
+                <collection-table name="product.raster_data_product_refs">
                     <join-column name="product_id" referenced-column-name="id" />
                 </collection-table>
             </element-collection>
@@ -184,7 +181,7 @@
         <convert converter="ro.cs.tao.persistence.convert.VisibilityConverter" attribute-name="visibility" />
         <convert converter="ro.cs.tao.persistence.convert.ProductStatusConverter" attribute-name="productStatus"/>
         <attributes>
-            <element-collection name="references" target-class="java.lang.String" fetch="EAGER">
+            <element-collection name="references">
                 <collection-table name="product.vector_data_product_refs" >
                     <join-column name="product_id" referenced-column-name="id" />
                 </collection-table>
@@ -428,15 +425,6 @@
         <attributes>
             <basic name="userName">
                 <column name="username" nullable="false" column-definition="character varying not null"/>
-            </basic>
-            <basic name="visibility">
-                <column name="visibility_id" nullable="false" column-definition="integer not null"/>
-            </basic>
-            <basic name="parallelism">
-                <column name="parallelism" nullable="false" column-definition="integer NULL DEFAULT 1"/>
-            </basic>
-            <basic name="active">
-                <column name="active" nullable="true" column-definition="boolean NULL DEFAULT true"/>
             </basic>
             <many-to-many name="dataSourceComponents" fetch="EAGER">
                 <join-table name="component.data_source_component_group_components">

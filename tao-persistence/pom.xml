@@ -52,7 +52,7 @@
 		<dependency>
 			<groupId>org.springframework.data</groupId>
 			<artifactId>spring-data-jpa</artifactId>
-			<version>2.1.8.RELEASE</version>
+			<version>2.0.9.RELEASE</version>
 		</dependency>
 
 		<dependency>
@@ -196,7 +196,7 @@
                                 <property name="postgresql_jar" value="postgresql-${postgresql.version}.jar" />
                                 <property name="execDbCleanupDir" value="${basedir}/src/main/resources/build_scripts/" />
                                 <!-- reinstall_db will be commented for production, it's just for development purposes -->
-								<!--<ant antfile="${execDbCleanupDir}/reinstall_db.xml" />-->
+								<ant antfile="${execDbCleanupDir}/reinstall_db.xml" />
 							</target>
 						</configuration>
 					</execution>

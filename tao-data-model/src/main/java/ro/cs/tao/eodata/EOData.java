@@ -28,7 +28,10 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Cosmin Cara
@@ -45,7 +48,6 @@ public abstract class EOData implements Serializable {
     private String entryPoint;
     private Visibility visibility;
     private ProductStatus productStatus;
-    private Set<String> references;
 
     //region Getters and Setters
     public String getId() {
@@ -64,22 +66,6 @@ public abstract class EOData implements Serializable {
 
     /*public String getUserName() { return userName; }
     public void setUserName(String userName) { this.userName = userName; }*/
-
-    public Set<String> getReferences() { return references; }
-    public void setReferences(Set<String> references) { this.references = references; }
-
-    public void addReference(String userName) {
-        if (this.references == null) {
-            this.references = new HashSet<>();
-        }
-        this.references.add(userName);
-    }
-
-    public void removeReference(String userName) {
-        if (this.references != null) {
-            this.references.remove(userName);
-        }
-    }
 
     public DataFormat getFormatType() { return formatType; }
     public void setFormatType(DataFormat type) { this.formatType = type; }
