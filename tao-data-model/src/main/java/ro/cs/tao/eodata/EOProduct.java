@@ -40,7 +40,7 @@ public class EOProduct extends EOData implements Serializable {
     private long approximateSize;
     private Date processingDate;
     private URI quicklookLocation;
-    private Set<String> references;
+    private Set<String> refs;
 
     //region Getters and setters
     public SensorType getSensorType() {
@@ -111,19 +111,19 @@ public class EOProduct extends EOData implements Serializable {
         this.approximateSize = approximateSize;
     }
 
-    public Set<String> getReferences() { return references; }
-    public void setReferences(Set<String> references) { this.references = references; }
+    public Set<String> getRefs() { return refs; }
+    public void setRefs(Set<String> refs) { this.refs = refs; }
 
     public void addReference(String userName) {
-        if (this.references == null) {
-            this.references = new HashSet<>();
+        if (this.refs == null) {
+            this.refs = new HashSet<>();
         }
-        this.references.add(userName);
+        this.refs.add(userName);
     }
 
     public void removeReference(String userName) {
-        if (this.references != null) {
-            this.references.remove(userName);
+        if (this.refs != null) {
+            this.refs.remove(userName);
         }
     }
 

@@ -81,7 +81,7 @@ public class JobFactory {
                         if (inputs.containsKey(key)) {
                             taskInputs = inputs.get(node.getName());
                         } else {
-                            key = String.valueOf(node.getId()) + ":" + node.getName();
+                            key = node.getId() + ":" + node.getName();
                             taskInputs = inputs.get(key);
                         }
                     }

@@ -291,7 +291,48 @@ public abstract class OSRuntimeInfo {
 
         @Override
         public RuntimeInfo getInfo()  throws IOException{
-            return getSnapshot();
+            //return getSnapshot();
+            RuntimeInfo runtimeInfo = new RuntimeInfo();
+            try {
+                Executor executor;
+                List<String> args = new ArrayList<>();
+                Collections.addAll(args, "uptime && cat /proc/meminfo && df -k --total".split(" "));
+                executor = Executor.create(this.isRemote ? ExecutorType.SSH2 : ExecutorType.PROCESS, this.node, args);
+                executor.setUser(this.user);
+                executor.setPassword(this.password);
+                Consumer consumer = new Consumer();
+                executor.setOutputConsumer(consumer);
+                if (executor.execute(false) == 0) {
+                    List<String> messages = consumer.getMessages();
+                    for (String message : messages) {
+                        if (!message.isEmpty()) {
+                            if (message.startsWith("MemTotal")) {
+                                message = message.replace("MemTotal:", "").trim();
+                                String value = message.substring(0, message.indexOf(" kB"));
+                                runtimeInfo.setTotalMemory(Long.parseLong(value) / MemoryUnit.KILOBYTE.value());
+                            } else if (message.startsWith("MemAvailable")) {
+                                message = message.replace("MemAvailable:", "").trim();
+                                String value = message.substring(0, message.indexOf(" kB"));
+                                runtimeInfo.setAvailableMemory(Long.parseLong(value) / MemoryUnit.KILOBYTE.value());
+                                break;
+                            } else if (message.startsWith("total")) {
+                                String[] values = message.replace("total", "").trim().split(" ");
+                                runtimeInfo.setDiskTotal(Long.parseLong(values[0]) / MemoryUnit.MEGABYTE.value());
+                                runtimeInfo.setDiskUsed(Long.parseLong(values[1]) / MemoryUnit.MEGABYTE.value());
+                                break;
+                            } else if (message.contains("load average")) {
+                                int idx = message.indexOf("load average");
+                                String value = message.substring(idx + 14, message.indexOf(",", idx));
+                                runtimeInfo.setCpuTotal(Double.parseDouble(value));
+                            }
+                        }
+                    }
+                }
+            } catch (Exception ex) {
+                logger.severe(ex.getMessage());
+                throw new IOException(ex);
+            }
+            return runtimeInfo;
         }
 
         @Override
