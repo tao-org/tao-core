@@ -98,7 +98,7 @@ public abstract class SystemVariable {
 
         @Override
         public String value() {
-            return Paths.get(ConfigurationManager.getInstance().getValue("product.location")).toString();
+            return Paths.get(ConfigurationManager.getInstance().getValue("workspace.location")).toString();
         }
     }
 
@@ -118,7 +118,7 @@ public abstract class SystemVariable {
 
         @Override
         public String value() {
-            return Paths.get(ConfigurationManager.getInstance().getValue("product.location"))
+            return Paths.get(ConfigurationManager.getInstance().getValue("workspace.location"))
                         .resolve("public").toString();
         }
     }
@@ -152,7 +152,7 @@ public abstract class SystemVariable {
 
         @Override
         public String value() {
-            return Paths.get(ConfigurationManager.getInstance().getValue("product.location"))
+            return Paths.get(ConfigurationManager.getInstance().getValue("workspace.location"))
                     .resolve("cache").toString();
         }
     }

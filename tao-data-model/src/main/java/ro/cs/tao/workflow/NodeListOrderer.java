@@ -36,15 +36,18 @@ public interface NodeListOrderer {
     default List<WorkflowNodeDescriptor> findRoots(List<WorkflowNodeDescriptor> nodes) {
         List<WorkflowNodeDescriptor> roots = null;
         if (nodes != null) {
-            List<WorkflowNodeGroupDescriptor> groups =
-                    nodes.stream()
-                            .filter(n -> n instanceof WorkflowNodeGroupDescriptor)
-                            .map(n -> (WorkflowNodeGroupDescriptor)n).collect(Collectors.toList());
+            final Set<Long> nodeInGroups = new HashSet<>();
+            nodes.stream().filter(n -> n instanceof WorkflowNodeGroupDescriptor)
+                          .forEach(n -> {
+                              final List<WorkflowNodeDescriptor> children = ((WorkflowNodeGroupDescriptor) n).getNodes();
+                              if (children != null) {
+                                  nodeInGroups.addAll(children.stream().map(WorkflowNodeDescriptor::getId).collect(Collectors.toSet()));
+                              }
+                          });
             roots = nodes.stream()
-                    .filter(n -> (n.getIncomingLinks() == null || n.getIncomingLinks().isEmpty()) &&
-                                  groups.stream().noneMatch(g -> g.getNodes() != null && g.getNodes().contains(n)))
-                    .collect(Collectors.toList());
-            if (roots == null || roots.size() == 0) {
+                         .filter(n -> !nodeInGroups.contains(n.getId()) && (n.getIncomingLinks() == null || n.getIncomingLinks().isEmpty()))
+                         .collect(Collectors.toList());
+            if (roots.size() == 0) {
                 throw new IllegalArgumentException("The collection must have at least one root node (without incoming links)");
             }
         }
@@ -60,8 +63,7 @@ public interface NodeListOrderer {
         if (nodes != null) {
             final Set<Long> parents = new HashSet<>();
             nodes.stream().filter(n -> n.getIncomingLinks() != null)
-                          .forEach(n -> n.getIncomingLinks()
-                                         .forEach(l -> parents.add(l.getSourceNodeId())));
+                          .forEach(n -> n.getIncomingLinks().forEach(l -> parents.add(l.getSourceNodeId())));
             leaves = nodes.stream().filter(n -> !parents.contains(n.getId())).collect(Collectors.toList());
         }
         return leaves;
@@ -121,39 +123,41 @@ public interface NodeListOrderer {
         if (masterList == null || masterList.size() == 0 || node == null) {
             return null;
         }
-        List<WorkflowNodeDescriptor> children = null;
-        if (node instanceof WorkflowNodeGroupDescriptor) {
-            children = ((WorkflowNodeGroupDescriptor) node).getNodes().stream().distinct().collect(Collectors.toList());
-        }
-        if (children == null) {
-            children = new ArrayList<>();
-        }
+        final List<WorkflowNodeDescriptor> children = node instanceof WorkflowNodeGroupDescriptor ?
+            ((WorkflowNodeGroupDescriptor) node).getNodes().stream().distinct().collect(Collectors.toList()) : new ArrayList<>();
         children.addAll(masterList.stream().filter(n -> {
-            Set<ComponentLink> links = n.getIncomingLinks();
+            final Set<ComponentLink> links = n.getIncomingLinks();
             return links != null && links.stream().anyMatch(l -> node.getId().equals(l.getSourceNodeId()));
-            //links.stream().anyMatch(l -> node.getComponentId().equals(l.getInput().getParentId()));
-        }).distinct().collect(Collectors.toList()));
-        children.forEach(c -> c.setLevel(node.getLevel() + 1));
+        }).distinct().peek(c -> c.setLevel(node.getLevel() + 1)).collect(Collectors.toList()));
         return children;
     }
 
+    /**
+     * Returns the parents of the given node, among the collection of nodes given as input.
+     * If the node has no parents, an empty list is returned.
+     *
+     * @param masterList    The collection of nodes to be searched.
+     * @param node          The node whose parents must be returned.
+     */
     default List<WorkflowNodeDescriptor> findAncestors(List<WorkflowNodeDescriptor> masterList,
                                                        WorkflowNodeDescriptor node) {
         if (masterList == null || masterList.size() == 0 || node == null) {
             return null;
         }
-        List<WorkflowNodeDescriptor> ancestors = new ArrayList<>();
-        Queue<WorkflowNodeDescriptor> queue = new ArrayDeque<>();
-        Set<ComponentLink> componentLinks = node.getIncomingLinks();
-        if (componentLinks != null) {
+        final List<WorkflowNodeDescriptor> ancestors = new ArrayList<>();
+        final Queue<WorkflowNodeDescriptor> queue = new ArrayDeque<>();
+        final Set<ComponentLink> componentLinks = node.getIncomingLinks();
+        if (componentLinks != null && componentLinks.size() > 0) {
             for (ComponentLink link : componentLinks) {
-                WorkflowNodeDescriptor previous = masterList.stream().filter(n -> n.getId().equals(link.getSourceNodeId())).findFirst().get();
-                queue.add(previous);
-                if (previous.getIncomingLinks() == null || previous.getIncomingLinks().size() == 0) {
-                    ancestors.add(previous);
-                }
-                while (!queue.isEmpty()) {
-                    ancestors.addAll(findAncestors(masterList, queue.remove()));
+                final WorkflowNodeDescriptor previous = masterList.stream().filter(n -> n.getId().equals(link.getSourceNodeId())).findFirst().orElse(null);
+                if (previous != null) {
+                    queue.add(previous);
+                    if (previous.getIncomingLinks() == null || previous.getIncomingLinks().size() == 0) {
+                        ancestors.add(previous);
+                    }
+                    while (!queue.isEmpty()) {
+                        ancestors.addAll(findAncestors(masterList, queue.remove()));
+                    }
                 }
             }
         }

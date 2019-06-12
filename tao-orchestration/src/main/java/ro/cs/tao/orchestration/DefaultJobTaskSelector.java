@@ -57,14 +57,14 @@ public class DefaultJobTaskSelector implements TaskSelector<ExecutionJob> {
 
     @Override
     public DataSourceExecutionTask findDataSourceTask(ExecutionJob job, ExecutionTask currentTask) {
-        WorkflowNodeDescriptor workflowNode = this.workflowProvider.apply(currentTask.getWorkflowNodeId());
+        final WorkflowNodeDescriptor workflowNode = this.workflowProvider.apply(currentTask.getWorkflowNodeId());
         if (workflowNode == null) {
             logger.severe(String.format("No workflow node with id %s was found in the database",
                                         currentTask.getWorkflowNodeId()));
             return null;
         }
         WorkflowDescriptor workflow = workflowNode.getWorkflow();
-        List<WorkflowNodeDescriptor> ancestors = workflow.findAncestors(workflow.getOrderedNodes(), workflowNode);
+        final List<WorkflowNodeDescriptor> ancestors = workflow.findAncestors(workflow.getOrderedNodes(), workflowNode);
         return job.orderedTasks().stream().filter(t -> t.getWorkflowNodeId().equals(ancestors.get(0).getId()) &&
                                                        t instanceof DataSourceExecutionTask)
                                           .map(t -> (DataSourceExecutionTask) t)

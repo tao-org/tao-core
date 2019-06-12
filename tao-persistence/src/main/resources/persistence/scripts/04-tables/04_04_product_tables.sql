@@ -146,10 +146,10 @@ DROP TABLE IF EXISTS product.raster_data_product_refs CASCADE;
 CREATE TABLE product.raster_data_product_refs
 (
 	product_id character varying(1000) NOT NULL,
-	username character varying(100) NOT NULL
+	refs character varying(100) NOT NULL
 );
 ALTER TABLE product.raster_data_product_refs ADD CONSTRAINT PK_raster_data_product_refs
-	PRIMARY KEY (product_id, username);
+	PRIMARY KEY (product_id, refs);
 ALTER TABLE product.raster_data_product_refs ADD CONSTRAINT FK_raster_data_product_refs_product
 	FOREIGN KEY (product_id) REFERENCES product.raster_data_product (id) ON DELETE No Action ON UPDATE No Action;
 
@@ -185,10 +185,10 @@ DROP TABLE IF EXISTS product.vector_data_product_refs CASCADE;
 CREATE TABLE product.vector_data_product_refs
 (
 	product_id character varying(1000) NOT NULL,
-	username character varying(100) NOT NULL
+	refs character varying(100) NOT NULL
 );
 ALTER TABLE product.vector_data_product_refs ADD CONSTRAINT PK_vector_data_product_refs
-	PRIMARY KEY (product_id, username);
+	PRIMARY KEY (product_id, refs);
 ALTER TABLE product.vector_data_product_refs ADD CONSTRAINT FK_vector_data_product_refs_product
 	FOREIGN KEY (product_id) REFERENCES product.vector_data_product (id) ON DELETE No Action ON UPDATE No Action;
 

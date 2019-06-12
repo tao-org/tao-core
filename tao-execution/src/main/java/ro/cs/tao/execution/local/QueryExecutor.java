@@ -16,10 +16,7 @@
 
 package ro.cs.tao.execution.local;
 
-import ro.cs.tao.component.Aggregator;
-import ro.cs.tao.component.ComponentLink;
-import ro.cs.tao.component.TaoComponent;
-import ro.cs.tao.component.Variable;
+import ro.cs.tao.component.*;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.datasource.DataQuery;
 import ro.cs.tao.datasource.DataSourceComponent;
@@ -113,7 +110,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                 dataSourceComponent.setProductStatusListener(this);
                 final List<EOProduct> products = dataSourceComponent.doFetch(results,
                         null,
-                        ConfigurationManager.getInstance().getValue("product.location"),
+                        SystemVariable.SHARED_WORKSPACE.value(),
                         ConfigurationManager.getInstance().getValue(String.format("local.%s.path", sensorName)),
                                                                              null);
                 if (products != null) {

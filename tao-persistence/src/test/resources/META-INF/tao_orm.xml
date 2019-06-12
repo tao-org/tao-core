@@ -164,7 +164,7 @@
             <basic name="approximateSize">
                 <column name="approximate_size" nullable="false" column-definition="bigint not null"/>
             </basic>
-            <element-collection name="references">
+            <element-collection name="refs">
                 <collection-table name="product.raster_data_product_refs">
                     <join-column name="product_id" referenced-column-name="id" />
                 </collection-table>
@@ -181,7 +181,7 @@
         <convert converter="ro.cs.tao.persistence.convert.VisibilityConverter" attribute-name="visibility" />
         <convert converter="ro.cs.tao.persistence.convert.ProductStatusConverter" attribute-name="productStatus"/>
         <attributes>
-            <element-collection name="references">
+            <element-collection name="refs">
                 <collection-table name="product.vector_data_product_refs" >
                     <join-column name="product_id" referenced-column-name="id" />
                 </collection-table>

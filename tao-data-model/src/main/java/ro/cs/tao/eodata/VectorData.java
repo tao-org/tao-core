@@ -25,21 +25,21 @@ import java.util.Set;
 @XmlRootElement(name = "eoData")
 public class VectorData extends EOData {
 
-    private Set<String> references;
+    private Set<String> refs;
 
-    public Set<String> getReferences() { return references; }
-    public void setReferences(Set<String> references) { this.references = references; }
+    public Set<String> getRefs() { return refs; }
+    public void setRefs(Set<String> refs) { this.refs = refs; }
 
     public void addReference(String userName) {
-        if (this.references == null) {
-            this.references = new HashSet<>();
+        if (this.refs == null) {
+            this.refs = new HashSet<>();
         }
-        this.references.add(userName);
+        this.refs.add(userName);
     }
 
     public void removeReference(String userName) {
-        if (this.references != null) {
-            this.references.remove(userName);
+        if (this.refs != null) {
+            this.refs.remove(userName);
         }
     }
 }
