@@ -197,6 +197,14 @@ public class PersistenceManager implements MessagePersister {
         productManager.deleteIfNotReferenced(refererComponentId, productName);
     }
 
+    public List<EOProduct> getWorkflowOutputs(long workflowId) {
+        return productManager.getWorkflowOutputs(workflowId);
+    }
+
+    public List<EOProduct> getJobOutputs(long jobId) {
+        return productManager.getJobOutputs(jobId);
+    }
+
     public List<VectorData> getVectorDataProducts() {
         return productManager.getVectorDataProducts();
     }
