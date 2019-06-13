@@ -48,6 +48,16 @@ public interface EOProductRepository extends PagingAndSortingRepository<EOProduc
             nativeQuery = true)
     int getOtherProductReferences(@Param("componentId") String componentId, @Param("name") String name);
 
+    @Query(value = "WITH t AS (SELECT CONCAT('%', t.job_id, '-', t.id, '%') AS c FROM execution.task t " +
+            "JOIN execution.job j on j.id = t.job_id WHERE j.workflow_id = :workflowId) " +
+            "SELECT p.* FROM product.raster_data_product p JOIN t ON CONCAT(p.location, p.entry_point) LIKE t.c", nativeQuery = true)
+    List<EOProduct> getWorkflowOutputs(@Param("workflowId") long workflowId);
+
+    @Query(value = "WITH t AS (SELECT CONCAT('%', t.job_id, '-', t.id, '%') AS c FROM execution.task t " +
+            "WHERE t.job_id = :jobId) " +
+            "SELECT p.* FROM product.raster_data_product p JOIN t ON CONCAT(p.location, p.entry_point) LIKE t.c", nativeQuery = true)
+    List<EOProduct> getJobOutputs(@Param("jobId") long jobId);
+
     @Modifying
     @Query(value = "WITH delprods AS (WITH refs AS (SELECT COUNT(s.id) AS cnt FROM component.source_descriptor s JOIN component.data_source_component c ON c.id = s.parent_id " +
             "WHERE c.id != :componentId AND s.location LIKE '%:name%') DELETE FROM product.raster_data_product USING refs " +

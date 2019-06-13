@@ -114,6 +114,14 @@ public class ProductManager {
         eoProductRepository.deleteIfNotReferenced(refererComponentId, productName);
     }
 
+    public List<EOProduct> getWorkflowOutputs(long workflowId) {
+        return eoProductRepository.getWorkflowOutputs(workflowId);
+    }
+
+    public List<EOProduct> getJobOutputs(long jobId) {
+        return eoProductRepository.getJobOutputs(jobId);
+    }
+
     /**
      * Retrieve all VectorData
      */
