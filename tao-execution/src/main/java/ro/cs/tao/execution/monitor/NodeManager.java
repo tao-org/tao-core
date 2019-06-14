@@ -25,7 +25,7 @@ public class NodeManager extends Notifiable {
     private static final boolean isAvailable;
     private static final NodeManager instance;
     private static final int pollInterval;
-    private static final QuotaVerifier quotaVerifier;
+    private static QuotaVerifier quotaVerifier;
     private final PersistenceManager persistenceManager;
     private final Map<String, NodeDescription> nodes;
     private final Map<String, RuntimeInfo> runtimeInfo;
