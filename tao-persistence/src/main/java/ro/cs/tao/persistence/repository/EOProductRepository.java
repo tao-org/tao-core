@@ -48,6 +48,10 @@ public interface EOProductRepository extends PagingAndSortingRepository<EOProduc
             nativeQuery = true)
     int getOtherProductReferences(@Param("componentId") String componentId, @Param("name") String name);
 
+    @Query(value = "SELECT COALESCE(SUM(p.approximate_size), 0) FROM product.raster_data_product p " +
+            "JOIN product.raster_data_product_refs r ON r.product_id = p.id WHERE r.refs = :userName", nativeQuery = true)
+    long getUserRasterProductsSize(@Param("userName") String userName);
+
     @Query(value = "WITH t AS (SELECT CONCAT('%', t.job_id, '-', t.id, '%') AS c FROM execution.task t " +
             "JOIN execution.job j on j.id = t.job_id WHERE j.workflow_id = :workflowId) " +
             "SELECT p.* FROM product.raster_data_product p JOIN t ON CONCAT(p.location, p.entry_point) LIKE t.c", nativeQuery = true)

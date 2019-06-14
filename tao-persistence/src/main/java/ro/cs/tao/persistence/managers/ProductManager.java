@@ -83,6 +83,11 @@ public class ProductManager {
     }
 
     @Transactional
+    public long getUserEOProductsSize(String user) {
+        return eoProductRepository.getUserRasterProductsSize(user);
+    }
+
+    @Transactional
     public List<EOProduct> getEOProducts(Set<String> locations) {
         return eoProductRepository.getProductsByLocation(locations);
     }
