@@ -326,7 +326,9 @@
             <basic name="multiThread">
                 <column name="multi_thread" nullable="true" column-definition="boolean NULL DEFAULT false"/>
             </basic>
-
+            <basic name="parallelism">
+                <column name="parallelism" nullable="true" column-definition="integer NULL DEFAULT 1"/>
+            </basic>
             <basic name="active">
                 <column name="active" nullable="true" column-definition="boolean NULL DEFAULT true"/>
             </basic>
@@ -633,6 +635,12 @@
             </basic>
             <basic name="instanceId">
                 <column name="instance_id" nullable="false" column-definition="integer NOT NULL"/>
+            </basic>
+            <basic name="usedCPU">
+                <column name="used_cpu" nullable="true" column-definition="integer NULL"/>
+            </basic>
+            <basic name="usedRAM">
+                <column name="used_ram" nullable="true" column-definition="integer NULL"/>
             </basic>
             <basic name="level">
                 <column name="execution_level" nullable="false" column-definition="integer NOT NULL"/>

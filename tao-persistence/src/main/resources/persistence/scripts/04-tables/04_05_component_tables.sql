@@ -121,6 +121,7 @@ CREATE TABLE component.processing_component
 	owner_user varchar NULL,
 	visibility_id integer NOT NULL,
 	multi_thread boolean NULL DEFAULT false,
+	parallelism integer NULL DEFAULT 1,
 	template_contents text NULL,
 	component_type_id integer NULL DEFAULT 1,
 	tags text NULL,

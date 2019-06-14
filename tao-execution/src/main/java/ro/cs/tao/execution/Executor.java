@@ -28,6 +28,7 @@ import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.security.SessionContext;
 import ro.cs.tao.security.SystemSessionContext;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
+import ro.cs.tao.utils.Tuple;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -44,11 +45,20 @@ import java.util.logging.Logger;
 public abstract class Executor<T extends ExecutionTask> extends StringIdentifiable {
     private static final String TIMER_PERIOD = "5";
     /* Flag for trying to close the monitoring thread in an elegant manner */
+    private static final Map<String, Tuple<Integer, Long>> resourcesUsage = new HashMap<>();
     protected Boolean isInitialized = false;
     protected final PersistenceManager persistenceManager = SpringContextBridge.services().getPersistenceManager();
     protected final Logger logger = Logger.getLogger(getClass().getName());
     private final Timer executionsCheckTimer = new Timer("exec-monitor");
     private final Map<Long, SessionContext> contextMap = new HashMap<>();
+
+    public static Tuple<Integer, Long> getResourcesInUse(String userName) {
+        Tuple<Integer, Long> tuple = resourcesUsage.get(userName);
+        if (tuple == null) {
+            tuple = new Tuple<>(0, 0L);
+        }
+        return tuple;
+    }
 
     public Executor() {
         super();
@@ -164,12 +174,31 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
                     }
                     this.contextMap.put(task.getId(), task.getContext());
                 }
-                if (status == ExecutionStatus.DONE || firstTime) {
+                final String userName = task.getContext().getPrincipal().getName();
+                final int cpu = task.getUsedCPU();
+                final long memory = task.getUsedRAM();
+                if (firstTime) {
                     task.setExecutionStatus(status);
                     task.setLastUpdated(LocalDateTime.now());
                     persistenceManager.updateExecutionTask(task);
                 } else {
-                    persistenceManager.updateTaskStatus(task, status);
+                    switch (status) {
+                        case DONE:
+                            task.setExecutionStatus(status);
+                            task.setLastUpdated(LocalDateTime.now());
+                            persistenceManager.updateExecutionTask(task);
+                            decrement(userName, cpu, memory);
+                            break;
+                        case CANCELLED:
+                        case SUSPENDED:
+                        case FAILED:
+                            persistenceManager.updateTaskStatus(task, status);
+                            decrement(userName, cpu, memory);
+                            break;
+                        case RUNNING:
+                            persistenceManager.updateTaskStatus(task, status);
+                            break;
+                    }
                 }
             } catch (PersistenceException e) {
                 logger.severe(e.getMessage());
@@ -179,6 +208,24 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
                 context = SystemSessionContext.instance();
             }
             Messaging.send(context.getPrincipal(), Topics.EXECUTION, task.getId(), status.name());
+        }
+    }
+
+    private void decrement(String userName, int cpu, long memory) {
+        synchronized (resourcesUsage) {
+            final Tuple<Integer, Long> tuple = resourcesUsage.get(userName);
+            resourcesUsage.put(userName,
+                               new Tuple<>(Math.max(0, tuple.getKeyOne() - cpu),
+                                           Math.max(0, tuple.getKeyTwo() - memory)));
+        }
+    }
+
+    private void increment(String userName, int cpu, long memory) {
+        synchronized (resourcesUsage) {
+            final Tuple<Integer, Long> tuple = resourcesUsage.get(userName);
+            resourcesUsage.put(userName,
+                               new Tuple<>(Math.max(0, tuple.getKeyOne() + cpu),
+                                           Math.max(0, tuple.getKeyTwo() + memory)));
         }
     }
 
