@@ -37,6 +37,8 @@ public interface StorageService<T> extends TAOService {
      * @param folderRelativePath    The folder path, relative to the current workspace
      * @param userOnly              If <code>true</code>, the folder is created in the workspace of the calling user.
      *                              Otherwise, it is created in the shared workspace.
+     * @return  The path in the user workspace
+     * @throws  IOException if the path cannot be created
      */
     Path createFolder(String folderRelativePath, boolean userOnly) throws IOException;
 
@@ -46,6 +48,7 @@ public interface StorageService<T> extends TAOService {
      * @param object            The file object
      * @param relativeFolder    The folder path, relative to the workspace of the calling user
      * @param description       A description for the file
+     * @throws  Exception if the file cannot be stored
      */
     void storeUserFile(T object, String relativeFolder, String description) throws Exception;
     /**
@@ -54,6 +57,7 @@ public interface StorageService<T> extends TAOService {
      * @param object            The file object
      * @param relativeFolder    The folder path, relative to the shared workspace
      * @param description       A description for the file
+     * @throws  Exception if the file cannot be stored
      */
     void storePublicFile(T object, String relativeFolder, String description) throws Exception;
 
@@ -61,20 +65,34 @@ public interface StorageService<T> extends TAOService {
      * Removes the file or folder with the given name.
      *
      * @param name          The name of the file or folder
+     * @throws IOException if the file or folder cannot be removed
      */
     void remove(String name) throws IOException;
 
+    /**
+     * List the files uploaded in the shared workspace
+     * @return  The list of shared uploaded files
+     * @throws IOException if the content cannot be retrieved
+     */
     List<FileObject> listUploaded() throws IOException;
     /**
      * List the products and uploaded files in the shared workspace
-     *
+     * @return  The list of shared products and files
+     * @throws IOException if the content cannot be retrieved
      */
     List<FileObject> listPublicWorkspace() throws IOException;
 
+    /**
+     * List the files uploaded in a user workspace
+     * @return  The list of user uploaded files
+     * @throws IOException if the content cannot be retrieved
+     */
     List<FileObject> listUploaded(String userName) throws IOException;
     /**
      * List the products and the uploaded files in a user workspace
      * @param userName The user name
+     * @return The list uf user products and files
+     * @throws IOException if the content cannot be retrieved
      */
     List<FileObject> listUserWorkspace(String userName) throws IOException;
 
@@ -82,6 +100,8 @@ public interface StorageService<T> extends TAOService {
      * List the children files starting from the given path.
      *
      * @param fromPath  The path to look into.
+     * @return The subtree of the given path
+     * @throws IOException if the content cannot be retrieved
      */
     List<FileObject> listFiles(Path fromPath, Set<Path> exclusions) throws IOException;
 

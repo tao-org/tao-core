@@ -66,13 +66,13 @@ public class UserManager {
         if (newUserInfo == null) {
             throw new PersistenceException("Invalid new user info received!");
         }
+        final List<Group> groups = newUserInfo.getGroups();
         if (StringUtilities.isNullOrEmpty(newUserInfo.getUsername()) ||
                 StringUtilities.isNullOrEmpty(newUserInfo.getEmail()) ||
                 StringUtilities.isNullOrEmpty(newUserInfo.getLastName()) ||
                 StringUtilities.isNullOrEmpty(newUserInfo.getFirstName()) ||
                 StringUtilities.isNullOrEmpty(newUserInfo.getOrganization()) ||
-          newUserInfo.getQuota() == null ||
-          newUserInfo.getGroups() == null || newUserInfo.getGroups().isEmpty()) {
+                groups == null || groups.isEmpty()) {
             throw new PersistenceException("Invalid new user info received!");
         }
 
@@ -107,9 +107,12 @@ public class UserManager {
         if (!StringUtilities.isNullOrEmpty(newUserInfo.getPhone())) {
             user.setPhone(newUserInfo.getPhone());
         }
-        user.setQuota(newUserInfo.getQuota());
+        final long inputQuota = groups.stream().map(Group::getInputQuota).min(Comparator.comparing(Long::longValue)).orElse(-1L);
+        final long processingQuota = groups.stream().map(Group::getProcessingQuota).min(Comparator.comparing(Long::longValue)).orElse(-1L);
+        user.setInputQuota(inputQuota);
+        user.setProcessingQuota(processingQuota);
         user.setOrganization(newUserInfo.getOrganization());
-        user.setGroups(newUserInfo.getGroups());
+        user.setGroups(groups);
         user.setExternal(newUserInfo.isExternal());
         if (user.isExternal()) {
             // external users don't need pending activation
@@ -278,8 +281,11 @@ public class UserManager {
 
         if (fromAdmin) {
             // check quota
-            if (Double.compare(original.getQuota(), updated.getQuota()) != 0) {
-                original.setQuota(updated.getQuota());
+            if (original.getInputQuota() != updated.getInputQuota()) {
+                original.setInputQuota(updated.getInputQuota());
+            }
+            if (original.getProcessingQuota() != updated.getProcessingQuota()) {
+                original.setProcessingQuota(updated.getProcessingQuota());
             }
             // check organisation
             if (!original.getOrganization().equalsIgnoreCase(updated.getOrganization())) {

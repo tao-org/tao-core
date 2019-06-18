@@ -48,6 +48,8 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
     private SessionContext context;
     // In case of parallel executions, the same WF node can produce multiple execution tasks
     private int instanceId;
+    private Integer usedCPU;
+    private Integer usedRAM;
     protected String internalState;
     List<Variable> inputParameterValues = new ArrayList<>();
     List<Variable> outputParameterValues = new ArrayList<>();
@@ -178,6 +180,22 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
 
     public int getInstanceId() { return instanceId; }
     public void setInstanceId(int instanceId) { this.instanceId = instanceId; }
+
+    public int getUsedCPU() {
+        if (usedCPU == null) {
+            usedCPU = 0;
+        }
+        return usedCPU;
+    }
+    public void setUsedCPU(Integer usedCPU) { this.usedCPU = usedCPU; }
+
+    public int getUsedRAM() {
+        if (usedRAM == null) {
+            usedRAM = 0;
+        }
+        return usedRAM;
+    }
+    public void setUsedRAM(Integer usedRAM) { this.usedRAM = usedRAM; }
 
     public abstract String buildExecutionCommand();
 

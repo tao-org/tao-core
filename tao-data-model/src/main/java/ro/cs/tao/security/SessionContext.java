@@ -36,7 +36,7 @@ public abstract class SessionContext {
 
     protected SessionContext() {
         this.principal = setPrincipal();
-        this.workspaceRoot = Paths.get(ConfigurationManager.getInstance().getValue("product.location"));
+        this.workspaceRoot = Paths.get(ConfigurationManager.getInstance().getValue("workspace.location"));
         this.netSpaceRoot = Paths.get(ConfigurationManager.getInstance().getValue("node.mount.folder"));
         this.preferences = setPreferences();
     }

@@ -83,6 +83,11 @@ public class ProductManager {
     }
 
     @Transactional
+    public long getUserEOProductsSize(String user) {
+        return eoProductRepository.getUserRasterProductsSize(user);
+    }
+
+    @Transactional
     public List<EOProduct> getEOProducts(Set<String> locations) {
         return eoProductRepository.getProductsByLocation(locations);
     }
@@ -112,6 +117,14 @@ public class ProductManager {
 
     public void deleteIfNotReferenced(String refererComponentId, String productName) {
         eoProductRepository.deleteIfNotReferenced(refererComponentId, productName);
+    }
+
+    public List<EOProduct> getWorkflowOutputs(long workflowId) {
+        return eoProductRepository.getWorkflowOutputs(workflowId);
+    }
+
+    public List<EOProduct> getJobOutputs(long jobId) {
+        return eoProductRepository.getJobOutputs(jobId);
     }
 
     /**

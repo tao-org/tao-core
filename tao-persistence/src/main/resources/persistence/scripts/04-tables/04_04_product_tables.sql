@@ -122,7 +122,7 @@ CREATE TABLE product.raster_data_product
 	width integer NOT NULL,
 	height integer NOT NULL,
 	approximate_size bigint NOT NULL,
-	username varchar NULL,
+	-- username varchar NULL,
 	visibility_id integer NULL DEFAULT 2,
 	status_id integer NULL,
 	created timestamp NULL DEFAULT now(),
@@ -141,6 +141,18 @@ ALTER TABLE product.raster_data_product ADD CONSTRAINT FK_raster_data_product_vi
 ALTER TABLE product.raster_data_product ADD CONSTRAINT FK_raster_data_product_product_status
    	FOREIGN KEY (status_id) REFERENCES product.product_status (id) ON DELETE No Action ON UPDATE No Action;
 
+-- table: product.raster_data_product_refs
+DROP TABLE IF EXISTS product.raster_data_product_refs CASCADE;
+CREATE TABLE product.raster_data_product_refs
+(
+	product_id character varying(1000) NOT NULL,
+	refs character varying(100) NOT NULL
+);
+ALTER TABLE product.raster_data_product_refs ADD CONSTRAINT PK_raster_data_product_refs
+	PRIMARY KEY (product_id, refs);
+ALTER TABLE product.raster_data_product_refs ADD CONSTRAINT FK_raster_data_product_refs_product
+	FOREIGN KEY (product_id) REFERENCES product.raster_data_product (id) ON DELETE No Action ON UPDATE No Action;
+
 -------------------------------------------------------------------------------
 -- table: product.vector_data_product
 DROP TABLE IF EXISTS product.vector_data_product CASCADE;
@@ -153,7 +165,7 @@ CREATE TABLE product.vector_data_product
 	coordinate_reference_system text NULL,
 	location varchar NOT NULL,
 	entry_point varchar NULL,
-	username varchar NULL,
+	--username varchar NULL,
 	visibility_id integer NULL DEFAULT 2,
 	status_id integer NULL,
 	created timestamp NULL DEFAULT now(),
@@ -167,6 +179,18 @@ ALTER TABLE product.vector_data_product ADD CONSTRAINT FK_vector_data_product_vi
 	FOREIGN KEY (visibility_id) REFERENCES common.visibility (id) ON DELETE No Action ON UPDATE No Action;
 ALTER TABLE product.vector_data_product ADD CONSTRAINT FK_vector_data_product_product_status
 	FOREIGN KEY (status_id) REFERENCES product.product_status (id) ON DELETE No Action ON UPDATE No Action;
+
+-- table: product.vector_data_product_refs
+DROP TABLE IF EXISTS product.vector_data_product_refs CASCADE;
+CREATE TABLE product.vector_data_product_refs
+(
+	product_id character varying(1000) NOT NULL,
+	refs character varying(100) NOT NULL
+);
+ALTER TABLE product.vector_data_product_refs ADD CONSTRAINT PK_vector_data_product_refs
+	PRIMARY KEY (product_id, refs);
+ALTER TABLE product.vector_data_product_refs ADD CONSTRAINT FK_vector_data_product_refs_product
+	FOREIGN KEY (product_id) REFERENCES product.vector_data_product (id) ON DELETE No Action ON UPDATE No Action;
 
 -------------------------------------------------------------------------------
 -- table: product.auxiliary_data

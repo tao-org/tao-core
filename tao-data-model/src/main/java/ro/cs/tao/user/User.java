@@ -32,7 +32,10 @@ public class User {
     private String firstName;
     private String phone;
     private LocalDateTime lastLoginDate;
-    private Double quota;
+    private long inputQuota;
+    private long actualInputQuota;
+    private long processingQuota;
+    private long actualProcessingQuota;
     private String organization;
     private UserStatus status;
     // flag that indicates if the user is external (it uses an external auth method); for external users, TAO does'nt store passwords
@@ -41,10 +44,12 @@ public class User {
     private String passwordResetKey;
 
     private LocalDateTime created;
+    private LocalDateTime expiresOn;
     private LocalDateTime modified;
 
     private List<Group> groups;
     private List<UserPreference> preferences;
+    private List<UserMachine> machines;
 
 
     public Long getId() {
@@ -119,13 +124,21 @@ public class User {
         this.lastLoginDate = lastLoginDate;
     }
 
-    public Double getQuota() {
-        return quota;
-    }
+    public long getInputQuota() { return inputQuota; }
 
-    public void setQuota(Double quota) {
-        this.quota = quota;
-    }
+    public void setInputQuota(long inputQuota) { this.inputQuota = inputQuota; }
+
+    public long getActualInputQuota() { return actualInputQuota; }
+
+    public void setActualInputQuota(long actualInputQuota) { this.actualInputQuota = actualInputQuota; }
+
+    public long getProcessingQuota() { return processingQuota; }
+
+    public void setProcessingQuota(long processingQuota) { this.processingQuota = processingQuota; }
+
+    public long getActualProcessingQuota() { return actualProcessingQuota; }
+
+    public void setActualProcessingQuota(long actualProcessingQuota) { this.actualProcessingQuota = actualProcessingQuota; }
 
     public String getOrganization() {
         return organization;
@@ -167,6 +180,10 @@ public class User {
         this.created = created;
     }
 
+    public LocalDateTime getExpiresOn() { return expiresOn; }
+
+    public void setExpiresOn(LocalDateTime expiresOn) { this.expiresOn = expiresOn; }
+
     public LocalDateTime getModified() {
         return modified;
     }
@@ -190,4 +207,8 @@ public class User {
     public void setPreferences(List<UserPreference> preferences) {
         this.preferences = preferences;
     }
+
+    public List<UserMachine> getMachines() { return machines; }
+
+    public void setMachines(List<UserMachine> machines) { this.machines = machines; }
 }

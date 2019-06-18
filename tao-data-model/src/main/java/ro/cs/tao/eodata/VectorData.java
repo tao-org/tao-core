@@ -16,11 +16,30 @@
 package ro.cs.tao.eodata;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Cosmin Cara
  */
 @XmlRootElement(name = "eoData")
 public class VectorData extends EOData {
-    // no additional fields
+
+    private Set<String> refs;
+
+    public Set<String> getRefs() { return refs; }
+    public void setRefs(Set<String> refs) { this.refs = refs; }
+
+    public void addReference(String userName) {
+        if (this.refs == null) {
+            this.refs = new HashSet<>();
+        }
+        this.refs.add(userName);
+    }
+
+    public void removeReference(String userName) {
+        if (this.refs != null) {
+            this.refs.remove(userName);
+        }
+    }
 }

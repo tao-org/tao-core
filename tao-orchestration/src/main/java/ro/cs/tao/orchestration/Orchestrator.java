@@ -99,7 +99,7 @@ public class Orchestrator extends Notifiable {
     private TaskSelector<ExecutionGroup> groupTaskSelector;
     private TaskSelector<ExecutionJob> jobTaskSelector;
     private JobFactory jobFactory;
-    private MetadataInspector metadataInspector;
+    private Set<MetadataInspector> metadataServices;
     private final Map<SessionContext, ExecutorService> executors;
     private final Set<Long> runningTasks;
 
@@ -121,14 +121,7 @@ public class Orchestrator extends Notifiable {
         initializeGroupSelector(workflowProvider, this.persistenceManager::getTaskByGroupAndNode);
         TaskStatusHandler.registerHandlers(persistenceManager);
         this.jobFactory = new JobFactory(this.persistenceManager);
-        Set<MetadataInspector> services = ServiceRegistryManager.getInstance()
-                .getServiceRegistry(MetadataInspector.class)
-                .getServices();
-        if (services != null) {
-            this.metadataInspector = services.stream()
-                    .filter(s -> s.decodeQualification(Paths.get(ConfigurationManager.getInstance().getValue("product.location"))) == DecodeStatus.SUITABLE)
-                    .findFirst().orElse(null);
-        }
+        this.metadataServices = ServiceRegistryManager.getInstance().getServiceRegistry(MetadataInspector.class).getServices();
         QueueMonitor monitor = new QueueMonitor();
         monitor.setName("orchestrator");
         monitor.start();
@@ -777,25 +770,24 @@ public class Orchestrator extends Notifiable {
     }
 
     private void persistOutputProducts(ExecutionTask task) {
-        if (metadataInspector != null) {
-            List<Variable> values = task.getOutputParameterValues();
-            WorkflowNodeDescriptor node = persistenceManager.getWorkflowNodeById(task.getWorkflowNodeId());
-            TaoComponent component;
-            if (node instanceof WorkflowNodeGroupDescriptor) {
-                component = persistenceManager.getGroupComponentById(node.getComponentId());
-            } else {
-                component = persistenceManager.getProcessingComponentById(node.getComponentId());
-            }
-            List<EOProduct> products = new ArrayList<>();
-            for (Variable value : values) {
-                products.addAll(createProducts(component, value, task.getContext()));
-            }
-            try {
-                OutputDataHandlerManager.getInstance().applyHandlers(products);
-            } catch (DataHandlingException ex) {
-                logger.severe(String.format("Error persisting products: %s", ex.getMessage()));
-            }
+        List<Variable> values = task.getOutputParameterValues();
+        WorkflowNodeDescriptor node = persistenceManager.getWorkflowNodeById(task.getWorkflowNodeId());
+        TaoComponent component;
+        if (node instanceof WorkflowNodeGroupDescriptor) {
+            component = persistenceManager.getGroupComponentById(node.getComponentId());
+        } else {
+            component = persistenceManager.getProcessingComponentById(node.getComponentId());
         }
+        List<EOProduct> products = new ArrayList<>();
+        for (Variable value : values) {
+            products.addAll(createProducts(component, value, task.getContext()));
+        }
+        try {
+            OutputDataHandlerManager.getInstance().applyHandlers(products);
+        } catch (DataHandlingException ex) {
+            logger.severe(String.format("Error persisting products: %s", ex.getMessage()));
+        }
+
     }
 
     private List<EOProduct> createProducts(TaoComponent component, Variable outParam, SessionContext context) {
@@ -823,8 +815,7 @@ public class Orchestrator extends Notifiable {
     private EOProduct createProduct(TargetDescriptor descriptor, String outValue, SessionContext context) {
         EOProduct product = null;
         try {
-            if (descriptor.getDataDescriptor().getFormatType() == DataFormat.RASTER &&
-                    metadataInspector != null) {
+            if (descriptor.getDataDescriptor().getFormatType() == DataFormat.RASTER) {
                 String netPath = context.getNetSpace().toString().replace('\\', '/');
                 Path path;
                 if (outValue.startsWith(netPath)) {
@@ -832,11 +823,16 @@ public class Orchestrator extends Notifiable {
                 } else {
                     path = Paths.get(outValue);
                 }
-                MetadataInspector.Metadata metadata = metadataInspector.getMetadata(path);
-                if (metadata != null) {
-                    product = metadata.toProductDescriptor(path);
-                    product.setUserName(context.getPrincipal().getName());
-                    product.setVisibility(Visibility.PRIVATE);
+                MetadataInspector metadataInspector = this.metadataServices.stream()
+                        .filter(s -> s.decodeQualification(path) == DecodeStatus.SUITABLE)
+                        .findFirst().orElse(null);
+                if (metadataInspector != null) {
+                    MetadataInspector.Metadata metadata = metadataInspector.getMetadata(path);
+                    if (metadata != null) {
+                        product = metadata.toProductDescriptor(path);
+                        product.addReference(context.getPrincipal().getName());
+                        product.setVisibility(Visibility.PRIVATE);
+                    }
                 }
             }
         } catch (Exception e2) {

@@ -15,9 +15,6 @@
             <basic name="name">
                 <column name="name" nullable="false" column-definition="varchar(250) not null"/>
             </basic>
-            <basic name="userName">
-                <column name="username" nullable="true" column-definition="varchar NULL"/>
-            </basic>
             <basic name="formatType">
                 <column name="type_id" nullable="false" column-definition="integer not null"/>
                 <convert converter="ro.cs.tao.persistence.convert.DataFormatConverter" attribute-name="formatType" />
@@ -167,6 +164,11 @@
             <basic name="approximateSize">
                 <column name="approximate_size" nullable="false" column-definition="bigint not null"/>
             </basic>
+            <element-collection name="refs">
+                <collection-table name="product.raster_data_product_refs">
+                    <join-column name="product_id" referenced-column-name="id" />
+                </collection-table>
+            </element-collection>
             <transient name="processingDate"/>
             <transient name="quicklookLocation" />
         </attributes>
@@ -178,7 +180,13 @@
         <convert converter="ro.cs.tao.persistence.convert.DataFormatConverter" attribute-name="formatType" />
         <convert converter="ro.cs.tao.persistence.convert.VisibilityConverter" attribute-name="visibility" />
         <convert converter="ro.cs.tao.persistence.convert.ProductStatusConverter" attribute-name="productStatus"/>
-        <attributes/>
+        <attributes>
+            <element-collection name="refs">
+                <collection-table name="product.vector_data_product_refs" >
+                    <join-column name="product_id" referenced-column-name="id" />
+                </collection-table>
+            </element-collection>
+        </attributes>
     </entity>
 
     <entity class="ro.cs.tao.eodata.AuxiliaryData" access="PROPERTY">
@@ -318,7 +326,9 @@
             <basic name="multiThread">
                 <column name="multi_thread" nullable="true" column-definition="boolean NULL DEFAULT false"/>
             </basic>
-
+            <basic name="parallelism">
+                <column name="parallelism" nullable="true" column-definition="integer NULL DEFAULT 1"/>
+            </basic>
             <basic name="active">
                 <column name="active" nullable="true" column-definition="boolean NULL DEFAULT true"/>
             </basic>
@@ -417,15 +427,6 @@
         <attributes>
             <basic name="userName">
                 <column name="username" nullable="false" column-definition="character varying not null"/>
-            </basic>
-            <basic name="visibility">
-                <column name="visibility_id" nullable="false" column-definition="integer not null"/>
-            </basic>
-            <basic name="parallelism">
-                <column name="parallelism" nullable="false" column-definition="integer NULL DEFAULT 1"/>
-            </basic>
-            <basic name="active">
-                <column name="active" nullable="true" column-definition="boolean NULL DEFAULT true"/>
             </basic>
             <many-to-many name="dataSourceComponents" fetch="EAGER">
                 <join-table name="component.data_source_component_group_components">
@@ -634,6 +635,12 @@
             </basic>
             <basic name="instanceId">
                 <column name="instance_id" nullable="false" column-definition="integer NOT NULL"/>
+            </basic>
+            <basic name="usedCPU">
+                <column name="used_cpu" nullable="true" column-definition="integer NULL"/>
+            </basic>
+            <basic name="usedRAM">
+                <column name="used_ram" nullable="true" column-definition="integer NULL"/>
             </basic>
             <basic name="level">
                 <column name="execution_level" nullable="false" column-definition="integer NOT NULL"/>
@@ -1025,8 +1032,17 @@
             <basic name="lastLoginDate">
                 <column name="last_login_date" nullable="true" column-definition="timestamp without time zone"/>
             </basic>
-            <basic name="quota">
-                <column name="quota" nullable="false" column-definition="real NOT NULL"/>
+            <basic name="inputQuota">
+                <column name="input_quota" nullable="false" column-definition="bigint NOT NULL"/>
+            </basic>
+            <basic name="actualInputQuota">
+                <column name="actual_input_quota" nullable="false" column-definition="bigint NOT NULL"/>
+            </basic>
+            <basic name="processingQuota">
+                <column name="processing_quota" nullable="false" column-definition="bigint NOT NULL"/>
+            </basic>
+            <basic name="actualProcessingQuota">
+                <column name="actual_processing_quota" nullable="false" column-definition="bigint NOT NULL"/>
             </basic>
             <basic name="organization">
                 <column name="organization" nullable="false" column-definition="character varying(255) NOT NULL"/>
@@ -1039,6 +1055,9 @@
             </basic>
             <basic name="passwordResetKey">
                 <column name="password_reset_key" nullable="true" column-definition="character varying(255) NULL"/>
+            </basic>
+            <basic name="expiresOn">
+                <column name="expiration_date" nullable="true" column-definition="timestamp NULL"/>
             </basic>
 
             <many-to-many name="groups" fetch="LAZY">
@@ -1053,6 +1072,12 @@
 
             <element-collection name="preferences" target-class="ro.cs.tao.user.UserPreference" access="PROPERTY" fetch="EAGER">
                 <collection-table name="usr.user_prefs">
+                    <join-column name="user_id" referenced-column-name="id" updatable="true" />
+                </collection-table>
+            </element-collection>
+
+            <element-collection name="machines" target-class="ro.cs.tao.user.UserMachine" access="PROPERTY" fetch="LAZY">
+                <collection-table name="usr.user_quota">
                     <join-column name="user_id" referenced-column-name="id" updatable="true" />
                 </collection-table>
             </element-collection>
@@ -1087,6 +1112,12 @@
             </id>
             <basic name="name">
                 <column name="name" nullable="false" column-definition="character varying(50) NOT NULL"/>
+            </basic>
+            <basic name="inputQuota">
+                <column name="input_quota" nullable="false" column-definition="bigint NOT NULL"/>
+            </basic>
+            <basic name="processingQuota">
+                <column name="processing_quota" nullable="false" column-definition="bigint NOT NULL"/>
             </basic>
         </attributes>
     </entity>
@@ -1252,6 +1283,17 @@
             </basic>
             <basic name="value">
                 <column name="pref_value" nullable="false" column-definition="varchar(250) NOT NULL"/>
+            </basic>
+        </attributes>
+    </embeddable>
+
+    <embeddable class="ro.cs.tao.user.UserMachine" access="PROPERTY">
+        <attributes>
+            <basic name="machineType">
+                <column name="machine_type_id" nullable="false" column-definition="smallint NOT NULL"/>
+            </basic>
+            <basic name="quantity">
+                <column name="machine_count" nullable="false" column-definition="smallint NOT NULL"/>
             </basic>
         </attributes>
     </embeddable>

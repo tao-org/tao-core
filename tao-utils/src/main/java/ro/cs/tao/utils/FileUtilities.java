@@ -225,10 +225,13 @@ public class FileUtilities {
 
     public static Path resolveSymLinks(Path path) throws IOException {
         Path realPath = path.getRoot();
-        for (int i = 0; i < path.getNameCount(); i++) {
+        final int nameCount = path.getNameCount();
+        for (int i = 0; i < nameCount; i++) {
             realPath = realPath.resolve(path.getName(i));
             if (Files.isSymbolicLink(realPath)) {
                 realPath = Files.readSymbolicLink(realPath);
+            } else {
+                realPath = realPath.toAbsolutePath();
             }
         }
         return realPath;
@@ -337,7 +340,7 @@ public class FileUtilities {
 
     public static long folderSize(Path folder) throws IOException {
         return Files.walk(folder)
-                .filter(p -> p.toFile().isFile())
+                .filter(p -> Files.isRegularFile(p))
                 .mapToLong(p -> p.toFile().length())
                 .sum();
     }
@@ -346,22 +349,16 @@ public class FileUtilities {
         if (sourceURL == null || destinationFile == null) {
             throw new IllegalArgumentException("One of the arguments is null");
         }
-        InputStream inputStream = sourceURL.openStream();
-        try {
+        try (InputStream inputStream = sourceURL.openStream()) {
             File dest = destinationFile.toFile();
             dest.getParentFile().mkdirs();
-            BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(dest));
-            try {
+            try (BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(dest))) {
                 byte[] buffer = new byte[4096];
                 int read;
                 while ((read = inputStream.read(buffer)) > 0) {
                     bos.write(buffer, 0, read);
                 }
-            } finally {
-                bos.close();
             }
-        } finally {
-            inputStream.close();
         }
     }
 
@@ -377,7 +374,7 @@ public class FileUtilities {
             ZipEntry entry;
             long size = 0;
             long totalRead = 0;
-            int progress = 0;
+            int progress;
             Enumeration<? extends ZipEntry> entries = zipFile.entries();
             while (entries.hasMoreElements()) {
                 entry = entries.nextElement();

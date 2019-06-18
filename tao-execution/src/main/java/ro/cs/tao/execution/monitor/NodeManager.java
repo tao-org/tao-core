@@ -1,6 +1,8 @@
 package ro.cs.tao.execution.monitor;
 
 import ro.cs.tao.configuration.ConfigurationManager;
+import ro.cs.tao.execution.DefaultQuotaVerifier;
+import ro.cs.tao.execution.QuotaVerifier;
 import ro.cs.tao.execution.local.DefaultSessionFactory;
 import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.Notifiable;
@@ -10,6 +12,7 @@ import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.utils.async.Parallel;
 
 import java.util.*;
+import java.util.logging.Logger;
 
 
 /**
@@ -22,6 +25,7 @@ public class NodeManager extends Notifiable {
     private static final boolean isAvailable;
     private static final NodeManager instance;
     private static final int pollInterval;
+    private static QuotaVerifier quotaVerifier;
     private final PersistenceManager persistenceManager;
     private final Map<String, NodeDescription> nodes;
     private final Map<String, RuntimeInfo> runtimeInfo;
@@ -33,9 +37,17 @@ public class NodeManager extends Notifiable {
 
     static {
         concurrentCalls = Math.max(2, java.lang.Runtime.getRuntime().availableProcessors() / 4);
-        isAvailable = DefaultSessionFactory.class.getName().equals(ConfigurationManager.getInstance().getValue("tao.drmaa.sessionfactory"));
+        ConfigurationManager configurationManager = ConfigurationManager.getInstance();
+        isAvailable = DefaultSessionFactory.class.getName().equals(configurationManager.getValue("tao.drmaa.sessionfactory"));
         instance = isAvailable ? new NodeManager() : null;
-        pollInterval = Integer.parseInt(ConfigurationManager.getInstance().getValue("topology.node.poll.interval", "15"));
+        pollInterval = Integer.parseInt(configurationManager.getValue("topology.node.poll.interval", "15"));
+        String quotaVerifierClass = configurationManager.getValue("tao.quota.verifier", DefaultQuotaVerifier.class.getName());
+        try {
+            quotaVerifier = (QuotaVerifier) Class.forName(quotaVerifierClass).newInstance();
+        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+            Logger.getLogger(NodeManager.class.getName()).severe("No QuotaVerifier class found");
+            quotaVerifier = null;
+        }
     }
 
     /**
