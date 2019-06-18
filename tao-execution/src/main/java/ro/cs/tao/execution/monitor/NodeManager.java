@@ -45,8 +45,9 @@ public class NodeManager extends Notifiable {
         try {
             quotaVerifier = (QuotaVerifier) Class.forName(quotaVerifierClass).newInstance();
         } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-            Logger.getLogger(NodeManager.class.getName()).severe("No QuotaVerifier class found");
-            quotaVerifier = null;
+            Logger.getLogger(NodeManager.class.getName()).severe(String.format("QuotaVerifier class [%s] could not be instantiated. Reason: %s",
+                                                                               quotaVerifierClass, e.getMessage()));
+            quotaVerifier = new DefaultQuotaVerifier();
         }
     }
 
