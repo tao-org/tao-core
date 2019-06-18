@@ -36,5 +36,5 @@ public interface RuntimeOptimizer {
      *
      * @param sources   The components to be aggregated
      */
-    ProcessingComponent aggregate(ProcessingComponent... sources);
+    ProcessingComponent aggregate(ProcessingComponent... sources) throws AggregationException;
 }

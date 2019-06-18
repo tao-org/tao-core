@@ -165,11 +165,11 @@ public class TaskUtilities {
             return null;
         }
 
-        WorkflowNodeDescriptor targetNode = persistenceManager.getWorkflowNodeById(targetTask.getWorkflowNodeId());
-        Set<ComponentLink> links = targetNode.getIncomingLinks();
-        if (links != null) {
+        final WorkflowNodeDescriptor targetNode = persistenceManager.getWorkflowNodeById(targetTask.getWorkflowNodeId());
+        final Set<ComponentLink> links = targetNode.getIncomingLinks();
+        if (links != null && links.size() > 0) {
             final Map<String, String> connections = new LinkedHashMap<>();
-            WorkflowNodeDescriptor sourceNode = persistenceManager.getWorkflowNodeById(sourceTask.getWorkflowNodeId());
+            final WorkflowNodeDescriptor sourceNode = persistenceManager.getWorkflowNodeById(sourceTask.getWorkflowNodeId());
             links.stream()
                     .filter(l -> l.getSourceNodeId() == sourceNode.getId())
                     .forEach(l -> connections.put(l.getOutput().getName(), l.getInput().getName()));
@@ -186,10 +186,10 @@ public class TaskUtilities {
      */
     public static boolean haveParentsCompleted(ExecutionTask task) {
         boolean completed = true;
-        WorkflowNodeDescriptor node = persistenceManager.getWorkflowNodeById(task.getWorkflowNodeId());
-        ExecutionJob job = task.getJob();
-        Set<ComponentLink> links = node.getIncomingLinks();
-        if (links != null) {
+        final WorkflowNodeDescriptor node = persistenceManager.getWorkflowNodeById(task.getWorkflowNodeId());
+        final ExecutionJob job = task.getJob();
+        final Set<ComponentLink> links = node.getIncomingLinks();
+        if (links != null && links.size() > 0) {
             for (ComponentLink link : links) {
                 ExecutionTask parentTask = persistenceManager.getTaskByJobAndNode(job.getId(), link.getSourceNodeId(), task.getInstanceId());
                 WorkflowNodeDescriptor parentNode = persistenceManager.getWorkflowNodeById(link.getSourceNodeId());
@@ -208,7 +208,7 @@ public class TaskUtilities {
     }
 
     public static boolean haveAllTasksCompleted(ExecutionJob job) {
-        List<ExecutionTask> tasks = job.orderedTasks();
+        final List<ExecutionTask> tasks = job.orderedTasks();
         return tasks != null &&
                 tasks.stream().allMatch(t -> t.getExecutionStatus() == ExecutionStatus.DONE ||
                                              t.getExecutionStatus() == ExecutionStatus.FAILED ||
@@ -224,17 +224,18 @@ public class TaskUtilities {
         if (toTask instanceof DataSourceExecutionTask) {
             throw new IllegalArgumentException("DataSourceExecutionTask cannot accept incoming links");
         }
-        WorkflowNodeDescriptor node = persistenceManager.getWorkflowNodeById(toTask.getWorkflowNodeId());
-        ExecutionJob job = toTask.getJob();
-        Set<ComponentLink> links = node.getIncomingLinks();
-        if (links != null) {
+        final WorkflowNodeDescriptor node = persistenceManager.getWorkflowNodeById(toTask.getWorkflowNodeId());
+        final ExecutionJob job = toTask.getJob();
+        final Set<ComponentLink> links = node.getIncomingLinks();
+        if (links != null && links.size() > 0) {
             for (ComponentLink link : links) {
-                ExecutionTask parentTask = persistenceManager.getTaskByJobAndNode(job.getId(), link.getSourceNodeId(), toTask.getInstanceId());
-                Variable out = parentTask.getOutputParameterValues()
+                final ExecutionTask parentTask = persistenceManager.getTaskByJobAndNode(job.getId(), link.getSourceNodeId(), toTask.getInstanceId());
+                final Variable out = parentTask.getOutputParameterValues()
                         .stream().filter(o -> o.getKey().equals(link.getInput().getName()))
                         .findFirst().orElse(null);
-                if (out != null && out.getValue() != null) {
-                    toTask.setInputParameterValue(link.getOutput().getName(), out.getValue());
+                final String outValue = out != null ? out.getValue() : null;
+                if (outValue != null) {
+                    toTask.setInputParameterValue(link.getOutput().getName(), outValue);
                 } else {
                     logger.severe(String.format("No output was set for task %s", parentTask.getId()));
                 }

@@ -60,6 +60,7 @@ public class ProcessingComponent extends TaoComponent {
     private Set<Variable> variables;
     private List<ParameterDescriptor> parameters;
     private boolean multiThread;
+    private Integer parallelism;
     private ProcessingComponentVisibility visibility;
     private boolean active;
     private ProcessingComponentType componentType;
@@ -254,6 +255,22 @@ public class ProcessingComponent extends TaoComponent {
     }
 
     /**
+     * Returns the recommended degree of parallelism for this component.
+     */
+    public Integer getParallelism() {
+        if (parallelism == null) {
+            parallelism = 0;
+        }
+        return parallelism;
+    }
+    /**
+     * Sets the recommended degree of parallelsim for this component
+     */
+    public void setParallelism(int parallelism) {
+        this.parallelism = parallelism;
+    }
+
+    /**
      * Validates the parameter values against the parameter descriptors.
      */
     public void validate(Map<String, Object> parameterValues) throws ValidationException {
@@ -310,6 +327,7 @@ public class ProcessingComponent extends TaoComponent {
             }
         }
         newDescriptor.multiThread = this.multiThread;
+        newDescriptor.parallelism = this.parallelism;
         newDescriptor.active = this.active;
         newDescriptor.visibility = this.visibility;
         return newDescriptor;

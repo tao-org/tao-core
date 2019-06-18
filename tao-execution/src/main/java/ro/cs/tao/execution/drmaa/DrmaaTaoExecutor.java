@@ -27,6 +27,7 @@ import ro.cs.tao.execution.local.DefaultSession;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.execution.model.ProcessingExecutionTask;
+import ro.cs.tao.execution.monitor.MemoryUnit;
 import ro.cs.tao.execution.monitor.NodeManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.topology.NodeDescription;
@@ -238,7 +239,8 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         if (jt == null) {
             throw new ExecutionException("Error creating job template from the session!");
         }
-        long memory = app != null ? app.getMemoryRequirements() : 0L;
+        final long memory = app != null ? app.getMemoryRequirements() : 0L;
+        final int cpu = component.getParallelism();
         if (jt instanceof JobTemplateExtension) {
             JobTemplateExtension job = (JobTemplateExtension) jt;
             if (job.hasAttribute(Constants.MEMORY_REQUIREMENTS_ATTRIBUTE) && app != null &&
@@ -303,13 +305,24 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             }
             List<String> dockerArgsList = new ArrayList<String>() {{
                 add("run");
-                add("-i");      // Keep STDIN open even if not attached
-                //add("-t");      // Allocate a pseudo-TTY
-                add("--rm");    // Automatically remove the container when it exits
-                add("--volume-driver");    // Automatically remove the container when it exits
-                add("cifs");    // Automatically remove the container when it exits
-                add("-v");      // Bind mount a volume
+                add("-i");              // Keep STDIN open even if not attached
+                //add("-t");            // Allocate a pseudo-TTY
+                add("--rm");            // Automatically remove the container when it exits
+                add("--volume-driver"); // Automatically remove the container when it exits
+                add("cifs");            // Automatically remove the container when it exits
+                add("-v");              // Bind mount a volume
                 add(dockerBindMount);
+                if (cpu > 0) {
+                    add("--cpus");      // Enforce the number of CPUs to be used
+                    add(String.valueOf(cpu));
+                    task.setUsedCPU(cpu);
+                }
+                if (memory > 0) {
+                    add("--memory");    // Enforce the memory limit to be used
+                    // memory, if not 0, is expressed in MB
+                    add(String.valueOf(memory * MemoryUnit.MEGABYTE.value()));
+                    task.setUsedRAM((int) memory);
+                }
             }};
         String value = ExecutionConfiguration.getDockerRegistry();
         if (value != null) {

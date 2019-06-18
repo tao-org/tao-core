@@ -43,35 +43,42 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
     WorkflowDescriptor getFullDescriptor(Long id);
 
     /**
-     * Returns the workflows of a given user that have a specific status.
+     * Returns the workflows of a given user, that have a specific status.
      * @param user      The user name (login)
      * @param status    The desired workflow status
+     * @return The workflow information list (not the full workflow structures)
      */
     List<WorkflowInfo> getUserWorkflowsByStatus(String user, Status status);
     /**
      * Returns the published (i.e. final) workflows of an user by their visibility.
      * @param user          The user name (login)
      * @param visibility    The workflow visibility
+     * @return The workflow information list (not the full workflow structures)
      */
     List<WorkflowInfo> getUserPublishedWorkflowsByVisibility(String user, Visibility visibility);
     /**
      * Returns the public workflows that are not belonging to a specific user.
      * @param user      The user name (login)
+     * @return The workflow information list (not the full workflow structures)
      */
     List<WorkflowInfo> getOtherPublicWorkflows(String user);
     /**
      * Returns the summary information for a workflow.
      * @param workflowId    The workflow identifier
+     * @return The workflow information (not the full workflow structure)
      */
     WorkflowInfo getWorkflowInfo(long workflowId);
     /**
      * Returns all the public workflows.
+     * @return The workflow information list (not the full workflow structures)
      */
     List<WorkflowInfo> getPublicWorkflows();
     /**
      * Adds a node to a workflow.
+     * @param workflowId    The workflow identifier
      * @param nodeDescriptor    The node to add
      * @return  The updated workflow
+     * @throws PersistenceException if the node cannot be added or persisted
      */
     WorkflowNodeDescriptor addNode(long workflowId, WorkflowNodeDescriptor nodeDescriptor) throws PersistenceException;
     /**
@@ -79,6 +86,7 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
      * @param workflowId    The workflow identifier
      * @param nodeDescriptor    The node to update
      * @return  The updated workflow
+     * @throws PersistenceException if the node cannot be updated or persisted
      */
     WorkflowNodeDescriptor updateNode(long workflowId, WorkflowNodeDescriptor nodeDescriptor) throws PersistenceException;
     /**
@@ -86,6 +94,7 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
      * @param workflowId    The workflow identifier
      * @param nodeDescriptors    The list of nodes to update
      * @return  The updated workflow
+     * @throws PersistenceException if the nodes cannot be updated or persisted
      */
     List<WorkflowNodeDescriptor> updateNodes(long workflowId, List<WorkflowNodeDescriptor> nodeDescriptors) throws PersistenceException;
 
@@ -97,12 +106,16 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
     void updateNodesPositions(long workflowId, Map<Long, float[]> positions) throws PersistenceException;
     /**
      * Removes a node from a workflow.
+     * @param workflowId    The workflow identifier
      * @param nodeDescriptor    The node to remove
-     * @return  The updated workflow
      */
     void removeNode(long workflowId, WorkflowNodeDescriptor nodeDescriptor) throws PersistenceException;
     /**
      * Adds a link between nodes of a workflow.
+     * @param sourceNodeId  The identifier of the source (originating) node
+     * @param sourceTargetId    The identifier of the target descriptor (output port) of the source node
+     * @param targetNodeId  The identifier of the target (destination) node
+     * @param targetSourceId    The identifier of the source descriptor (input port) of the target node
      * @return  The updated target node
      */
     WorkflowNodeDescriptor addLink(long sourceNodeId, String sourceTargetId,

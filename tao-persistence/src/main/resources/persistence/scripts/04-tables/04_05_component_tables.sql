@@ -121,6 +121,7 @@ CREATE TABLE component.processing_component
 	owner_user varchar NULL,
 	visibility_id integer NOT NULL,
 	multi_thread boolean NULL DEFAULT false,
+	parallelism integer NULL DEFAULT 1,
 	template_contents text NULL,
 	component_type_id integer NULL DEFAULT 1,
 	tags text NULL,
@@ -527,5 +528,3 @@ ALTER TABLE component.data_source_component_group_queries ADD CONSTRAINT PK_data
 	PRIMARY KEY (data_source_component_group_id, query_id);
 ALTER TABLE component.data_source_component_group_queries ADD CONSTRAINT FK_data_source_component_group_queries_1
 	FOREIGN KEY (data_source_component_group_id) REFERENCES component.data_source_component_group (id) ON DELETE No Action ON UPDATE No Action;
-ALTER TABLE component.data_source_component_group_queries ADD CONSTRAINT FK_data_source_component_group_queries_2
-	FOREIGN KEY (query_id) REFERENCES workflow.query (id) ON DELETE No Action ON UPDATE No Action;

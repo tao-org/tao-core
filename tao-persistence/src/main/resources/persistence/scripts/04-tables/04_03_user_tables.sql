@@ -1,16 +1,18 @@
 -------------------------------------------------------------------------------
 -- table: usr.group
-DROP TABLE IF EXISTS usr."group" CASCADE;
-CREATE TABLE usr."group"
+DROP TABLE IF EXISTS usr.grp CASCADE;
+CREATE TABLE usr.grp
 (
 	id integer NOT NULL,
-	name varchar(50) NOT NULL
+	name varchar(50) NOT NULL,
+	input_quota bigint NOT NULL DEFAULT -1,
+	processing_quota bigint NOT NULL DEFAULT -1
 );
-ALTER TABLE usr."group" ADD CONSTRAINT PK_group PRIMARY KEY (id);
+ALTER TABLE usr.grp ADD CONSTRAINT PK_group PRIMARY KEY (id);
 DROP SEQUENCE IF EXISTS usr.group_id_seq CASCADE;
 CREATE SEQUENCE usr.group_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
-ALTER TABLE usr."group" ALTER COLUMN id SET DEFAULT nextval('usr.group_id_seq');
-ALTER SEQUENCE usr.group_id_seq OWNED BY usr."group".id;
+ALTER TABLE usr.grp ALTER COLUMN id SET DEFAULT nextval('usr.group_id_seq');
+ALTER SEQUENCE usr.group_id_seq OWNED BY usr.grp.id;
 -------------------------------------------------------------------------------
 -- table: usr.user_status
 DROP TABLE IF EXISTS usr.user_status CASCADE;
@@ -40,12 +42,16 @@ CREATE TABLE usr."user"
 	first_name varchar(50) NOT NULL,
 	phone varchar(50) NULL,
 	last_login_date timestamp NULL,
-	quota real NOT NULL,
+	input_quota bigint NOT NULL,
+	actual_input_quota bigint NOT NULL,
+	processing_quota bigint NOT NULL,
+    actual_processing_quota bigint NOT NULL,
 	organization varchar(255) NOT NULL,
 	status_id integer NOT NULL,
 	external boolean NULL DEFAULT false,
 	password_reset_key varchar(255) NULL,
 	created timestamp NULL DEFAULT now(),
+	expiration_date timestamp NULL,
 	modified timestamp NULL
 );
 ALTER TABLE usr."user" ADD CONSTRAINT PK_user PRIMARY KEY (id);
@@ -69,7 +75,7 @@ ALTER TABLE usr.user_group ADD CONSTRAINT PK_user_group PRIMARY KEY (user_id, gr
 ALTER TABLE usr.user_group ADD CONSTRAINT FK_user_group_user
 	FOREIGN KEY (user_id) REFERENCES usr."user" (id) ON DELETE No Action ON UPDATE No Action;
 ALTER TABLE usr.user_group ADD CONSTRAINT FK_user_group_group
-	FOREIGN KEY (group_id) REFERENCES usr."group" (id) ON DELETE No Action ON UPDATE No Action;
+	FOREIGN KEY (group_id) REFERENCES usr.grp (id) ON DELETE No Action ON UPDATE No Action;
 
 -------------------------------------------------------------------------------
 -- table: usr.user_prefs
@@ -83,3 +89,18 @@ CREATE TABLE usr.user_prefs
 ALTER TABLE usr.user_prefs ADD CONSTRAINT PK_user_prefs PRIMARY KEY (user_id, pref_key);
 ALTER TABLE usr.user_prefs ADD CONSTRAINT FK_user_prefs_user
 	FOREIGN KEY (user_id) REFERENCES usr."user" (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: usr.user_quota
+DROP TABLE IF EXISTS usr.user_quota CASCADE;
+CREATE TABLE usr.user_quota
+(
+	user_id integer NOT NULL,
+	machine_type_id smallint NOT NULL,
+	machine_count smallint NOT NULL
+);
+ALTER TABLE usr.user_quota ADD CONSTRAINT PK_user_quota PRIMARY KEY (user_id, machine_type_id);
+ALTER TABLE usr.user_quota ADD CONSTRAINT FK_user_user_quota
+	FOREIGN KEY (user_id) REFERENCES usr."user" (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE usr.user_quota ADD CONSTRAINT FK_machine_user_quota
+	FOREIGN KEY (machine_type_id) REFERENCES topology.node_type (id) ON DELETE No Action ON UPDATE No Action;

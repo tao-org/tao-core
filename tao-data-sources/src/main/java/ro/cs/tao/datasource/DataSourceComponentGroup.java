@@ -106,6 +106,11 @@ public class DataSourceComponentGroup extends TaoComponent {
             for (TargetDescriptor target : childTargets) {
                 TargetDescriptor clone = target.clone();
                 clone.setName(target.getId());
+                try {
+                    clone.addConstraint(fromComponent.getSensorName());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
                 addTarget(clone);
             }
         }

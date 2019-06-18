@@ -18,6 +18,7 @@ package ro.cs.tao.eodata;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.MultiPolygon;
+import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
 
@@ -56,51 +57,23 @@ public class Polygon2D {
      * @return      A closed polygon.
      */
     public static Polygon2D fromWKT(String wkt) {
-        Polygon2D polygon = new Polygon2D();
-        /*if (wkt.startsWith("MULTIPOLYGON")) {
-            wkt = wkt.substring(13, wkt.length() - 1).trim();
-            String[] texts = wkt.split("\\),\\(");
-            for (int i = 0; i < texts.length; i++) {
-                String polyText = texts[i].replace("(", "").replace(")", "");
-                Matcher coordMatcher = coordPattern.matcher(polyText);
-                while (coordMatcher.find()) {
-                    String[] coords = coordMatcher.group().split(" ");
-                    polygon.append(i, Double.parseDouble(coords[0].trim()), Double.parseDouble(coords[1].trim()));
-                }
-            }
-        } else if (wkt.startsWith("POLYGON")){
-            wkt = wkt.substring(7).trim();//wkt.replace("POLYGON", "");
-            String[] texts = wkt.split("\\),\\(");
-            for (int i = 0; i < texts.length; i++) {
-                String polyText = texts[i].replace("(", "").replace(")", "");
-                Matcher coordMatcher = coordPattern.matcher(polyText);
-                while (coordMatcher.find()) {
-                    String[] coords = coordMatcher.group().split(" ");
-                    polygon.append(i, Double.parseDouble(coords[0].trim()), Double.parseDouble(coords[1].trim()));
-                }
-            }
-        } else {
-            // maybe we have only a list of coordinates, without being wrapped in a POLYGON((..))
-            Matcher coordMatcher = coordPattern.matcher(wkt);
-            while (coordMatcher.find()) {
-                String[] coords = coordMatcher.group().split(" ");
-                polygon.append(Double.parseDouble(coords[0].trim()), Double.parseDouble(coords[1].trim()));
-            }
-        }*/
+        final Polygon2D polygon = new Polygon2D();
         try {
-            WKTReader reader = new WKTReader();
-            Geometry geometry = reader.read(wkt);
+            final WKTReader reader = new WKTReader();
+            final Geometry geometry = reader.read(wkt);
             if (wkt.startsWith("MULTIPOLYGON")) {
-                MultiPolygon mPolygon = (MultiPolygon) geometry;
-                int n = mPolygon.getNumGeometries();
+                final MultiPolygon mPolygon = (MultiPolygon) geometry;
+                final int n = mPolygon.getNumGeometries();
                 for (int i = 0; i < n; i++) {
-                    Coordinate[] coordinates = mPolygon.getGeometryN(i).getCoordinates();
+                    final Geometry geometryN = mPolygon.getGeometryN(i);
+                    final Coordinate[] coordinates = geometryN instanceof Polygon ?
+                            ((Polygon) geometryN).getExteriorRing().getCoordinates() : geometryN.getCoordinates();
                     for (Coordinate coordinate : coordinates) {
                         polygon.append(i, coordinate.x, coordinate.y);
                     }
                 }
             } else if (wkt.startsWith("POLYGON")) {
-                Coordinate[] coordinates = geometry.getCoordinates();
+                final Coordinate[] coordinates = ((Polygon) geometry).getExteriorRing().getCoordinates();
                 for (Coordinate coordinate : coordinates) {
                     polygon.append(coordinate.x, coordinate.y);
                 }
@@ -123,10 +96,10 @@ public class Polygon2D {
         if (path == null) {
             return null;
         }
-        Polygon2D polygon2D = new Polygon2D();
-        PathIterator pathIterator = path.getPathIterator(null);
+        final Polygon2D polygon2D = new Polygon2D();
+        final PathIterator pathIterator = path.getPathIterator(null);
+        final double[] segment = new double[6];
         while (!pathIterator.isDone()) {
-            double[] segment = new double[6];
             pathIterator.currentSegment(segment);
             polygon2D.append(segment[0], segment[1]);
             pathIterator.next();
@@ -151,11 +124,10 @@ public class Polygon2D {
     public void append(int index, double x, double y) {
         if (polygons == null) {
             polygons = new Path2D.Double[index + 1];
-        }
-        if (index >= polygons.length) {
+            polygons[index] = new Path2D.Double();
+            polygons[index].moveTo(x, y);
+        } else if (index >= polygons.length) {
             polygons = Arrays.copyOf(polygons, index + 1);
-        }
-        if (polygons[index] == null) {
             polygons[index] = new Path2D.Double();
             polygons[index].moveTo(x, y);
         } else {
@@ -243,21 +215,20 @@ public class Polygon2D {
      * Produces a WKT representation of this polygon with a given decimal precision
      */
     public String toWKT(int precision) {
-        StringBuilder buffer = new StringBuilder();
-        boolean isMulti = this.polygons.length > 1;
+        StringBuilder format = new StringBuilder(".");
+        int i = 0;
+        while (i++ < precision) format.append("#");
+        final DecimalFormat dfFormat = new DecimalFormat(format.toString(), DecimalFormatSymbols.getInstance(Locale.ENGLISH));
+        final StringBuilder buffer = new StringBuilder();
+        final boolean isMulti = this.polygons.length > 1;
         buffer.append(isMulti ? "MULTIPOLYGON(((" : "POLYGON((");
+        final double[] segment = new double[6];
         for (int j = 0; j < this.polygons.length; j++) {
             if (j > 0) {
                 buffer.append("((");
             }
-            PathIterator pathIterator = polygons[j].getPathIterator(null);
-            StringBuilder format = new StringBuilder(".");
-            int i = 0;
-            while (i++ < precision) format.append("#");
-            DecimalFormat dfFormat = new DecimalFormat(format.toString(),
-                                                       DecimalFormatSymbols.getInstance(Locale.ENGLISH));
+            final PathIterator pathIterator = polygons[j].getPathIterator(null);
             while (!pathIterator.isDone()) {
-                double[] segment = new double[6];
                 pathIterator.currentSegment(segment);
                 buffer.append(dfFormat.format(segment[0])).append(" ").append(dfFormat.format(segment[1])).append(",");
                 pathIterator.next();
@@ -285,18 +256,17 @@ public class Polygon2D {
      * Produces an array of WKT representations of this polygon with a given decimal precision.
      */
     public String[] toWKTArray(int precision) {
-        String[] polygons = new String[this.polygons.length];
-        StringBuilder buffer = new StringBuilder();
+        final String[] polygons = new String[this.polygons.length];
+        final StringBuilder buffer = new StringBuilder();
+        final StringBuilder format = new StringBuilder(".");
+        int i = 0;
+        while (i++ < precision) format.append("#");
+        final DecimalFormat dfFormat = new DecimalFormat(format.toString(), DecimalFormatSymbols.getInstance(Locale.ENGLISH));
+        final double[] segment = new double[6];
         for (int j = 0; j < this.polygons.length; j++) {
             buffer.append("POLYGON((");
             PathIterator pathIterator = this.polygons[j].getPathIterator(null);
-            StringBuilder format = new StringBuilder(".");
-            int i = 0;
-            while (i++ < precision) format.append("#");
-            DecimalFormat dfFormat = new DecimalFormat(format.toString(),
-                                                       DecimalFormatSymbols.getInstance(Locale.ENGLISH));
             while (!pathIterator.isDone()) {
-                double[] segment = new double[6];
                 pathIterator.currentSegment(segment);
                 buffer.append(dfFormat.format(segment[0])).append(" ").append(dfFormat.format(segment[1])).append(",");
                 pathIterator.next();

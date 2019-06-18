@@ -37,11 +37,7 @@
 
 package org.ggf.drmaa;
 
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Locale;
-import java.util.TimeZone;
+import java.util.*;
 
 /**
  * The PartialTimestamp is a subclass of java.util.Calendar that allows for a
@@ -375,7 +371,7 @@ public class PartialTimestamp extends Calendar {
     
     // This needs to be completey rewritten to account for modifiers on unset fields
     /**
-     * Adds the given value to the given <i>field</i>.  If the field< is unset, the
+     * Adds the given value to the given <i>field</i>.  If the field is unset, the
      * <i>amount</i> will
      * be added to the field's modifier instead.  If the field is set, but the addition
      * causes changes to another field, which is unset, the unset field will receive
@@ -2246,7 +2242,7 @@ public class PartialTimestamp extends Calendar {
     
     /**
      * Sets the value of the given field.  If the field is unset before the call,
-     * it will still be &quotunset&quot; after the call finishes.
+     * it will still be &quot;unset&quot; after the call finishes.
      * @param field the field to set
      * @param value the value to which to set the field
      */

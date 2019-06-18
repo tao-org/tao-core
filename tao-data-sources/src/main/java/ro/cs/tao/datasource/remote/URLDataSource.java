@@ -25,7 +25,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 /**
- * Base specialization of the {@link #AbstractDataSource} class for modelling a data source that can be accessed
+ * Base specialization of the {@link AbstractDataSource} class for modelling a data source that can be accessed
  * via an url.
  *
  * @author Cosmin Cara

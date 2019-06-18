@@ -197,6 +197,18 @@ public class PersistenceManager implements MessagePersister {
         productManager.deleteIfNotReferenced(refererComponentId, productName);
     }
 
+    public List<EOProduct> getWorkflowOutputs(long workflowId) {
+        return productManager.getWorkflowOutputs(workflowId);
+    }
+
+    public long getUserProductsSize(String user) {
+        return productManager.getUserEOProductsSize(user);
+    }
+
+    public List<EOProduct> getJobOutputs(long jobId) {
+        return productManager.getJobOutputs(jobId);
+    }
+
     public List<VectorData> getVectorDataProducts() {
         return productManager.getVectorDataProducts();
     }
@@ -828,6 +840,10 @@ public class PersistenceManager implements MessagePersister {
     public boolean checkLoginCredentials(String userName, String password) {
         //return userManager.checkLoginCredentials(userName, password);
         return userManager.login(userName, Crypto.encrypt(password, userName));
+    }
+
+    public User getUserInfo(String userName) {
+        return userManager.findUserByUsername(userName);
     }
 
     public User updateUser(User updatedInfo, boolean fromAdmin) throws PersistenceException {

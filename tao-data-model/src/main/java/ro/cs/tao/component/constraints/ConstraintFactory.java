@@ -17,6 +17,7 @@ package ro.cs.tao.component.constraints;
 
 import org.reflections.Reflections;
 
+import java.lang.reflect.Constructor;
 import java.util.*;
 
 /**
@@ -37,7 +38,16 @@ public final class ConstraintFactory {
         String className = aliases.getOrDefault(name, name);
         try {
             if (!cache.containsKey(className)) {
-                cache.put(className, (IOConstraint) Class.forName(className).newInstance());
+                Class<?> constraintClass = className.equals("Same sensor") ? SpecificSensorConstraint.class : Class.forName(className);
+                Constructor<?> constructor;
+                try {
+                    constructor = constraintClass.getDeclaredConstructor(String.class);
+                    cache.put(className, (IOConstraint) constructor.newInstance(name));
+                } catch (NoSuchMethodException ignored) {
+                    constructor = constraintClass.getDeclaredConstructor();
+                    cache.put(className, (IOConstraint) constructor.newInstance());
+                }
+
             }
             return cache.get(className);
         } catch (Exception e) {

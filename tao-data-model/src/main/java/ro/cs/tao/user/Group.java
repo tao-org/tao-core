@@ -19,6 +19,8 @@ public class Group {
 
     private Integer id;
     private String name;
+    private long inputQuota;
+    private long processingQuota;
 
     public Integer getId() {
         return id;
@@ -35,4 +37,14 @@ public class Group {
     public void setName(String name) {
         this.name = name;
     }
+
+    public Long getInputQuota() { return inputQuota; }
+
+    public void setInputQuota(Long inputQuota) { this.inputQuota = inputQuota; }
+
+    public void setInputQuota(long inputQuota) { this.inputQuota = inputQuota; }
+
+    public long getProcessingQuota() { return processingQuota; }
+
+    public void setProcessingQuota(long processingQuota) { this.processingQuota = processingQuota; }
 }
