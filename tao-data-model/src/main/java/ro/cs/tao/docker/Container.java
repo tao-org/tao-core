@@ -20,10 +20,7 @@ import ro.cs.tao.component.StringIdentifiable;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Descriptor for a Docker container
@@ -38,6 +35,9 @@ public class Container extends StringIdentifiable {
     private String applicationPath;
     private String logo;
     private List<Application> applications;
+    private Set<String> format;
+    private String commonParameters;
+    private String formatNameParameter;
 
     @Override
     public String defaultId() { return UUID.randomUUID().toString();}
@@ -69,6 +69,22 @@ public class Container extends StringIdentifiable {
     public void addApplication(Application application) {
         getApplications().add(application);
     }
+
+    @XmlElementWrapper(name = "formats")
+    public Set<String> getFormat() {
+        if (format == null) {
+            format = new LinkedHashSet<>();
+        }
+        return format;
+    }
+    public void setFormat(Set<String> format) { this.format = format; }
+    public void addFormat(String formatName) { getFormat().add(formatName); }
+
+    public String getCommonParameters() { return commonParameters; }
+    public void setCommonParameters(String commonParameters) { this.commonParameters = commonParameters; }
+
+    public String getFormatNameParameter() { return formatNameParameter; }
+    public void setFormatNameParameter(String formatNameParameter) { this.formatNameParameter = formatNameParameter; }
 
     public String getLogo() { return logo; }
     public void setLogo(String logo) { this.logo = logo; }

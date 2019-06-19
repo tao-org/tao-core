@@ -259,7 +259,7 @@ public class ProcessingComponent extends TaoComponent {
      */
     public Integer getParallelism() {
         if (parallelism == null) {
-            parallelism = 0;
+            parallelism = 1;
         }
         return parallelism;
     }

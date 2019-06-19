@@ -17,6 +17,8 @@ package ro.cs.tao.execution.drmaa;
 
 import org.ggf.drmaa.*;
 import ro.cs.tao.component.ProcessingComponent;
+import ro.cs.tao.component.TargetDescriptor;
+import ro.cs.tao.component.Variable;
 import ro.cs.tao.docker.Application;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.execution.Constants;
@@ -41,6 +43,7 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.regex.Matcher;
@@ -227,15 +230,14 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
 
     private JobTemplate createJobTemplate(ProcessingExecutionTask task) throws DrmaaException, IOException {
         // Get from the component the execution command
-        Container container;
         String[] pArgs = null;
-        ProcessingComponent component = task.getComponent();
-        container = persistenceManager.getContainerById(component.getContainerId());
+        final ProcessingComponent component = task.getComponent();
+        final Container container = persistenceManager.getContainerById(component.getContainerId());
         Application app = container.getApplications()
                 .stream()
                 .filter(a -> component.getId().endsWith(a.getName().toLowerCase()))
                 .findFirst().orElse(null);
-        JobTemplate jt = session.createJobTemplate();
+        final JobTemplate jt = session.createJobTemplate();
         if (jt == null) {
             throw new ExecutionException("Error creating job template from the session!");
         }
@@ -270,6 +272,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             path += location;
             task.getComponent().setExpandedFileLocation(path);
         }
+        // if parallel flags are defined, use them
         if (app != null && app.hasParallelFlag()) {
             Class<?> type = app.parallelArgumentType();
             if (type.isAssignableFrom(Integer.class)) {
@@ -280,11 +283,41 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                 pArgs = app.parallelArguments(Boolean.class, true);
             }
         }
+        // Assemble the regular execution command, as produced by the processing component after applying values
         String executionCmd = task.buildExecutionCommand();
+        // Insert parallel arguments, if any
         if (pArgs != null) {
             int idx = executionCmd.indexOf('\n');
             executionCmd = executionCmd.substring(0, idx) + "\n" + String.join("\n", pArgs) +
                     executionCmd.substring(idx);
+        }
+        // Insert common parameters, if defined at container level
+        final String commonParameters = container.getCommonParameters();
+        if (commonParameters != null) {
+            int idx = executionCmd.indexOf('\n');
+            executionCmd = executionCmd.substring(0, idx) + "\n" + String.join("\n", commonParameters.split(" ")) +
+                    executionCmd.substring(idx);
+        }
+        // Insert output format name, if supported by the container and defined in component or by user
+        final String formatNameParameter = container.getFormatNameParameter();
+        if (formatNameParameter != null) {
+            final Set<String> formats = container.getFormat();
+            // check if the format name was given by user
+            Variable formatVariable = task.getOutputParameterValues().stream()
+                    .filter(v -> "formatName".equals(v.getKey())).findFirst().orElse(null);
+            if (formatVariable == null) {
+                // then check if the format name was defined in the component
+                TargetDescriptor target = component.getTargets().stream()
+                                                    .filter(t -> t.getDataDescriptor().getFormatName() != null).findFirst().orElse(null);
+                if (target != null) {
+                    formatVariable = new Variable("formatName", target.getDataDescriptor().getFormatName());
+                }
+            }
+            if (formatVariable != null && (formats == null || formats.contains(formatVariable.getValue()))) {
+                int idx = executionCmd.indexOf('\n');
+                executionCmd = executionCmd.substring(0, idx) + "\n" + String.join("\n", formatNameParameter, formatVariable.getValue()) +
+                                executionCmd.substring(idx);
+            }
         }
         List<String> argsList = new ArrayList<>();
         String cmd;
