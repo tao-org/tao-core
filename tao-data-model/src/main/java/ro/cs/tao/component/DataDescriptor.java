@@ -37,6 +37,7 @@ import java.util.logging.Logger;
 @XmlRootElement(name = "dataDescriptor")
 public class DataDescriptor {
     private DataFormat formatType;
+    private String formatName;
     private Geometry geometry;
     private CoordinateReferenceSystem crs;
     private SensorType sensorType;
@@ -55,6 +56,15 @@ public class DataDescriptor {
      * @see DataFormat for possible values.
      */
     public void setFormatType(DataFormat formatType) { this.formatType = formatType; }
+
+    /**
+     * Gets the format name of the component output. This is dependent on the application implementation.
+     */
+    public String getFormatName() { return formatName; }
+    /**
+     * Sets the format name of the component output
+     */
+    public void setFormatName(String formatName) { this.formatName = formatName; }
 
     /**
      * Returns the geometry (WKT) of the component port, if specified.
