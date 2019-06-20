@@ -20,6 +20,7 @@ import ro.cs.tao.component.enums.ParameterType;
 import ro.cs.tao.component.validation.*;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -45,6 +46,7 @@ public class ParameterDescriptor extends StringIdentifiable {
     private Validator customValidator;
     private Validator validator;
     private List<ParameterDependency> dependencies;
+    private ParameterExpansionRule expansionRule;
 
     public ParameterDescriptor() { super(); }
 
@@ -165,6 +167,14 @@ public class ParameterDescriptor extends StringIdentifiable {
         }
     }
 
+    public ParameterExpansionRule getExpansionRule() { return expansionRule; }
+    public void setExpansionRule(ParameterExpansionRule expansionRule) {
+        this.expansionRule = expansionRule;
+        /*if (this.expansionRule != null) {
+            this.expansionRule.setParameterId(this.id);
+        }*/
+    }
+
     @Override
     public String defaultId() { return "NewParameter"; }
 
@@ -177,7 +187,31 @@ public class ParameterDescriptor extends StringIdentifiable {
             clone.dependencies = new ArrayList<>();
             clone.dependencies.addAll(this.dependencies);
         }
+        clone.expansionRule = this.expansionRule;
         return clone;
+    }
+
+    public String expandValues(Object values) {
+        if (this.type == null || values == null || !values.getClass().isArray()) {
+            return values != null ? String.valueOf(values) : null;
+        }
+        if (this.expansionRule == null) {
+            this.expansionRule = new ParameterExpansionRule();
+            this.expansionRule.setJoinValues(true);
+            this.expansionRule.setSeparator(" ");
+        }
+        StringBuilder builder = new StringBuilder();
+        final int length = Array.getLength(values);
+        final String separator = this.expansionRule.getSeparator();
+        final boolean joinValues = this.expansionRule.isJoinValues();
+        for (int i = 0; i < length; i++) {
+            builder.append(Array.get(values, i)).append(separator);
+            if (i > 0 && i < length - 1 && !joinValues) {
+                builder.append("-").append(this.id).append(this.expansionRule.getSeparator());
+            }
+        }
+        builder.setLength(builder.length() - 1);
+        return builder.toString();
     }
 
     protected Validator createValidator() {
