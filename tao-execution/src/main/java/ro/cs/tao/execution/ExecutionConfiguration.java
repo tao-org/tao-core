@@ -13,6 +13,7 @@ public class ExecutionConfiguration {
     private static String dockerNodeBindMount;
     private static String containerMount;
     private static String dockerRegistry;
+    private static Boolean useDocker;
 
     public static boolean forceMemoryConstraint() {
         if (forceMemoryRequirements == null) {
@@ -45,7 +46,7 @@ public class ExecutionConfiguration {
 
     public static String getDockerRegistry() {
         if (dockerRegistry == null) {
-            dockerRegistry = ConfigurationManager.getInstance().getValue("tao.docker.registry");
+            dockerRegistry = ConfigurationManager.getInstance().getValue(Constants.DOCKER_REGISTRY);
         }
         return dockerRegistry;
     }
@@ -56,5 +57,12 @@ public class ExecutionConfiguration {
             containerMount = value.substring(value.lastIndexOf(':') + 1);
         }
         return containerMount;
+    }
+
+    public static boolean useDocker() {
+        if (useDocker == null) {
+            useDocker = Boolean.parseBoolean(ConfigurationManager.getInstance().getValue(Constants.PLUGINS_USE_DOCKER, "false"));
+        }
+        return useDocker;
     }
 }

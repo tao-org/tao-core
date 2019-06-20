@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.execution.drmaa;
 
+import org.apache.commons.lang3.SystemUtils;
 import org.ggf.drmaa.*;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.TargetDescriptor;
@@ -242,7 +243,6 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             throw new ExecutionException("Error creating job template from the session!");
         }
         final long memory = app != null ? app.getMemoryRequirements() : 0L;
-        final int cpu = component.getParallelism();
         if (jt instanceof JobTemplateExtension) {
             JobTemplateExtension job = (JobTemplateExtension) jt;
             if (job.hasAttribute(Constants.MEMORY_REQUIREMENTS_ATTRIBUTE) && app != null &&
@@ -252,17 +252,17 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         }
         // the next call blocks until a node is available
         NodeDescription node = getAvailableNode(memory);
+        if (node == null) {
+            throw new TryLaterException("Cannot obtain an available node [null]");
+        }
         if (jt instanceof JobTemplateExtension) {
             JobTemplateExtension job = (JobTemplateExtension) jt;
             if (job.hasAttribute(Constants.NODE_ATTRIBUTE)) {
-                if (node != null) {
-                    job.setAttribute(Constants.NODE_ATTRIBUTE, node.getId());
-                }
+                job.setAttribute(Constants.NODE_ATTRIBUTE, node.getId());
             }
         }
-        if (node != null) {
-            task.setExecutionNodeHostName(node.getId());
-        }
+        task.setExecutionNodeHostName(node.getId());
+        final int cpu = Math.min(component.getParallelism(), node.getProcessorCount());
         String location = task.getComponent().getFileLocation();
         if (!Paths.get(location).isAbsolute()) {
             String path = container.getApplicationPath();
@@ -320,15 +320,15 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             }
         }
         List<String> argsList = new ArrayList<>();
-        String cmd;
+        final String cmd;
 
         // split the execution command but preserving the entities between double quotes
-        Matcher m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(executionCmd);
+        final Matcher m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(executionCmd);
         while (m.find()) {
             argsList.add(m.group(1)); // Add .replace("\"", "") to remove surrounding quotes.
         }
 
-        //if (container != null) {
+        if (ExecutionConfiguration.useDocker()) {
             cmd = "docker";
             final String dockerBindMount;
             if (task.getExecutionNodeHostName().equals(masterHost)) {
@@ -336,7 +336,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             } else {
                 dockerBindMount = ExecutionConfiguration.getDockerNodeBindMount();
             }
-            List<String> dockerArgsList = new ArrayList<String>() {{
+            final List<String> dockerArgsList = new ArrayList<String>() {{
                 add("run");
                 add("-i");              // Keep STDIN open even if not attached
                 //add("-t");            // Allocate a pseudo-TTY
@@ -346,25 +346,29 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                 add("-v");              // Bind mount a volume
                 add(dockerBindMount);
                 if (cpu > 0) {
-                    add("--cpus");      // Enforce the number of CPUs to be used
+                    add(SystemUtils.IS_OS_WINDOWS ? "--cpu-count" : "--cpus");      // Enforce the number of CPUs to be used
                     add(String.valueOf(cpu));
                     task.setUsedCPU(cpu);
                 }
                 if (memory > 0) {
                     add("--memory");    // Enforce the memory limit to be used
                     // memory, if not 0, is expressed in MB
-                    add(String.valueOf(memory * MemoryUnit.MEGABYTE.value()));
+                    add(String.valueOf(memory * MemoryUnit.MEGABYTE.value()) + "MB");
                     task.setUsedRAM((int) memory);
                 }
             }};
-        String value = ExecutionConfiguration.getDockerRegistry();
-        if (value != null) {
-            dockerArgsList.add(value + "/" + container.getName());
-        } else {
-            dockerArgsList.add(container.getId());
-        }
+            String value = ExecutionConfiguration.getDockerRegistry();
+            if (value != null) {
+                dockerArgsList.add(value + "/" + container.getName());
+            } else {
+                dockerArgsList.add(container.getId());
+            }
             dockerArgsList.addAll(argsList);
             argsList = dockerArgsList;
+        } else {
+            cmd = argsList.get(0);
+            argsList.remove(0);
+        }
         jt.setRemoteCommand(cmd);
         jt.setArgs(argsList);
         logger.fine(String.format("[Task %s ]: %s %s", String.valueOf(task.getId()), cmd, String.join(" ", argsList)));
