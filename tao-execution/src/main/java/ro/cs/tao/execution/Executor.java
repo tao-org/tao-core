@@ -181,6 +181,7 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
                     task.setExecutionStatus(status);
                     task.setLastUpdated(LocalDateTime.now());
                     persistenceManager.updateExecutionTask(task);
+                    increment(userName, cpu, memory);
                 } else {
                     switch (status) {
                         case DONE:
@@ -214,18 +215,24 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
     private void decrement(String userName, int cpu, long memory) {
         synchronized (resourcesUsage) {
             final Tuple<Integer, Long> tuple = resourcesUsage.get(userName);
-            resourcesUsage.put(userName,
-                               new Tuple<>(Math.max(0, tuple.getKeyOne() - cpu),
-                                           Math.max(0, tuple.getKeyTwo() - memory)));
+            if (tuple != null) {
+                resourcesUsage.put(userName,
+                                   new Tuple<>(Math.max(0, tuple.getKeyOne() - cpu),
+                                               Math.max(0, tuple.getKeyTwo() - memory)));
+            }
         }
     }
 
     private void increment(String userName, int cpu, long memory) {
         synchronized (resourcesUsage) {
             final Tuple<Integer, Long> tuple = resourcesUsage.get(userName);
-            resourcesUsage.put(userName,
-                               new Tuple<>(Math.max(0, tuple.getKeyOne() + cpu),
-                                           Math.max(0, tuple.getKeyTwo() + memory)));
+            if (tuple == null) {
+                resourcesUsage.put(userName, new Tuple<>(cpu, memory));
+            } else {
+                resourcesUsage.put(userName,
+                                   new Tuple<>(Math.max(0, tuple.getKeyOne() + cpu),
+                                               Math.max(0, tuple.getKeyTwo() + memory)));
+            }
         }
     }
 
