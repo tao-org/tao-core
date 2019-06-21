@@ -16,12 +16,24 @@
 
 package ro.cs.tao.persistence.managers;
 
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.logging.Logger;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
+
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.persistence.repository.GroupRepository;
 import ro.cs.tao.persistence.repository.UserRepository;
@@ -30,11 +42,6 @@ import ro.cs.tao.user.User;
 import ro.cs.tao.user.UserPreference;
 import ro.cs.tao.user.UserStatus;
 import ro.cs.tao.utils.StringUtilities;
-
-import java.time.Clock;
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.logging.Logger;
 
 @Configuration
 @EnableTransactionManagement
@@ -439,5 +446,114 @@ public class UserManager {
         return results;
     }
 
+    // Quota related methods
+    /**
+     * Return the user's quotas. 
+     * 
+     * <p>
+     * The result is an array with four long values, with the following significance:
+     * <ol>
+     * <li> the user's input quota.
+     * <li> the user's actual input quota
+     * <li> the user's processing quota.
+     * <li> the user's actual processing quota
+     * 
+     * <p>
+     * Users that have no quota limitation will have the value -1 in all of those fields.
+     * 
+     * @param username the identifier of the user's whose quota must be obtained
+     * @return an array with the four quota values.
+     * @throws PersistenceException if the user is not defined in the database
+     */
+    @Transactional
+    public long[] getUserDiskQuotas(String username) throws PersistenceException {
+        
+    	// get the user
+    	final User user = userRepository.findByUsername(username);
+        if (user == null)
+        {
+            throw new PersistenceException("There is no user with the given username: " + String.valueOf(username));
+        }
+        
+        final long result[] = new long[4];
+        // fill the result with data 
+        result[0] = user.getInputQuota();
+        result[1] = user.getActualInputQuota();
+        result[2] = user.getProcessingQuota();
+        result[3] = user.getActualProcessingQuota();
+        
+        return result;
+    }
+    
+    /**
+     * Update the user's actual input quota with the new value.
+     * 
+     * <p>
+     *   If the current value for the actual input quota is -1, no update is performed.
+     * 
+     * @param username the identifier of the user's whose quota must be updated
+     * @param actualInputQuota the new value for the actual input quota
+     * @return the new value of the actual input quota for the user
+     * @throws PersistenceException if the user is not defined in the database
+     */
+    @Transactional
+    public long updateUserInputQuota(String username, long actualInputQuota) throws PersistenceException {
+    	// get the user
+    	final User user = userRepository.findByUsername(username);
+        if (user == null)
+        {
+            throw new PersistenceException("There is no user with the given username: " + String.valueOf(username));
+        }
+        
+        // check if the field should be updated to the new value or not
+        if (user.getActualInputQuota() == -1)
+        {
+        	// no update is necessary as the user has no quota limitation
+        	return user.getActualInputQuota();
+        }
+        
+        // update the database entry
+        user.setActualInputQuota(actualInputQuota);
+        final User newUser = userRepository.save(user);
+        
+        // return the new input quota
+    	return newUser.getActualInputQuota();
+    }
+    
+    /**
+     * Update the user's actual processing quota with the new value.
+     * 
+     * <p>
+     *   If the current value for the actual processing quota is -1, no update is performed.
+     * 
+     * @param username the identifier of the user's whose quota must be updated
+     * @param actualProcessingQuota the new value for the actual processing quota
+     * @return the new value of the actual processing quota for the user
+     * @throws PersistenceException if the user is not defined in the database
+     */
+    @Transactional
+    public long updateUserProcessingQuota(String username, long actualProcessingQuota) throws PersistenceException {
+    	// get the user
+    	final User user = userRepository.findByUsername(username);
+        if (user == null)
+        {
+            throw new PersistenceException("There is no user with the given username: " + String.valueOf(username));
+        }
+        
+        // check if the field should be updated to the new value or not
+        if (user.getActualProcessingQuota() == -1)
+        {
+        	// no update is necessary as the user has no quota limitation
+        	return user.getActualProcessingQuota();
+        }
+        
+        // update the database entry
+        user.setActualProcessingQuota(actualProcessingQuota);
+        final User newUser = userRepository.save(user);
+        
+        // return the new input quota
+    	return newUser.getActualProcessingQuota();
+    }
+    // End Quota related methods
     //endregion
 }

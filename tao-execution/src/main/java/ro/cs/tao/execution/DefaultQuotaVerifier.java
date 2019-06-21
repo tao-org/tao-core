@@ -22,7 +22,7 @@ public class DefaultQuotaVerifier implements QuotaVerifier {
             throw new IllegalArgumentException("[principal] null");
         }
         String userName = principal.getName();
-        User user = getPersistenceManager().getUserInfo(userName);
+        User user = getPersistenceManager().findUserByUsername(userName);
         if (user == null) {
             throw new PersistenceException(String.format("User '%s' not found", userName));
         }
@@ -36,7 +36,7 @@ public class DefaultQuotaVerifier implements QuotaVerifier {
         if (principal == null) {
             throw new IllegalArgumentException("[principal] null");
         }
-        User user = getPersistenceManager().getUserInfo(principal.getName());
+        User user = getPersistenceManager().findUserByUsername(principal.getName());
         if (user == null) {
             throw new PersistenceException(String.format("User '%s' not found", principal.getName()));
         }

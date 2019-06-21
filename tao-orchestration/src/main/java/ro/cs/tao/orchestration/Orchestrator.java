@@ -15,7 +15,33 @@
  */
 package ro.cs.tao.orchestration;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.UserPrincipal;
+import java.security.Principal;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.function.Function;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
 import org.apache.commons.lang3.exception.ExceptionUtils;
+
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.component.TargetDescriptor;
@@ -29,9 +55,23 @@ import ro.cs.tao.eodata.metadata.DecodeStatus;
 import ro.cs.tao.eodata.metadata.MetadataInspector;
 import ro.cs.tao.eodata.naming.NameExpressionParser;
 import ro.cs.tao.eodata.naming.NamingRule;
+import ro.cs.tao.execution.DefaultQuotaVerifier;
 import ro.cs.tao.execution.ExecutionException;
+import ro.cs.tao.execution.NullQuotaVerifier;
 import ro.cs.tao.execution.OutputDataHandlerManager;
-import ro.cs.tao.execution.model.*;
+import ro.cs.tao.execution.QuotaVerifier;
+import ro.cs.tao.execution.model.DataSourceExecutionTask;
+import ro.cs.tao.execution.model.ExecutionGroup;
+import ro.cs.tao.execution.model.ExecutionJob;
+import ro.cs.tao.execution.model.ExecutionStatus;
+import ro.cs.tao.execution.model.ExecutionTask;
+import ro.cs.tao.execution.model.InternalStateHandler;
+import ro.cs.tao.execution.model.LoopState;
+import ro.cs.tao.execution.model.LoopStateHandler;
+import ro.cs.tao.execution.model.ProcessingExecutionTask;
+import ro.cs.tao.execution.model.TaskSelector;
+import ro.cs.tao.execution.monitor.NodeManager;
+import ro.cs.tao.execution.monitor.UserQuotaManager;
 import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.Notifiable;
@@ -54,23 +94,6 @@ import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
 import ro.cs.tao.workflow.enums.TransitionBehavior;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.attribute.UserPrincipal;
-import java.security.Principal;
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.function.Function;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
 /**
  * The singleton orchestrator of task executions.
  *
@@ -80,6 +103,7 @@ public class Orchestrator extends Notifiable {
 
     private static final String GROUP_TASK_SELECTOR_KEY = "group.task.selector";
     private static final String JOB_TASK_SELECTOR_KEY = "job.task.selector";
+    private static QuotaVerifier quotaVerifier;
 
     private static final Orchestrator instance;
     private final Map<Long, InternalStateHandler> groupStateHandlers;
@@ -87,6 +111,15 @@ public class Orchestrator extends Notifiable {
 
     static {
         instance = new Orchestrator();
+        
+        String quotaVerifierClass = ConfigurationManager.getInstance().getValue("tao.quota.verifier", DefaultQuotaVerifier.class.getName());
+        try {
+            quotaVerifier = (QuotaVerifier) Class.forName(quotaVerifierClass).newInstance();
+        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+            Logger.getLogger(NodeManager.class.getName()).severe(String.format("QuotaVerifier class [%s] could not be instantiated. Reason: %s",
+                                                                               quotaVerifierClass, e.getMessage()));
+            quotaVerifier = new NullQuotaVerifier();
+        }
     }
 
     public static Orchestrator getInstance() {
@@ -114,6 +147,7 @@ public class Orchestrator extends Notifiable {
 
     public void setPersistenceManager(PersistenceManager persistenceManager) {
         this.persistenceManager = persistenceManager;
+        quotaVerifier.setPersistenceManager(persistenceManager);
         JobCommand.setPersistenceManager(persistenceManager);
         TaskUtilities.setPersistenceManager(persistenceManager);
         final Function<Long, WorkflowNodeDescriptor> workflowProvider = this.persistenceManager::getWorkflowNodeById;
@@ -141,6 +175,13 @@ public class Orchestrator extends Notifiable {
             if (descriptor == null) {
                 throw new ExecutionException(String.format("Non-existent workflow [%s]", workflowId));
             }
+            
+            // check if the user's disk quota is not reached
+            if (!checkProcessingQuota()) {
+            	// do not create any job
+            	return -1;
+            }
+            
             final ExecutionJob executionJob = this.jobFactory.createJob(description, descriptor, inputs);
             this.executors.put(SessionStore.currentContext(), executorService);
             executorService.submit(() -> JobCommand.START.applyTo(executionJob));
@@ -390,6 +431,8 @@ public class Orchestrator extends Notifiable {
             service.shutdown();
             executors.remove(context);
         }
+        // update user processing quota
+        UserQuotaManager.getInstance().updateUserProcessingQuota();
     }
 
     private ExecutionTask handleProcessingTask(ProcessingExecutionTask pcTask, boolean keepOutput) throws PersistenceException {
@@ -841,7 +884,45 @@ public class Orchestrator extends Notifiable {
         }
         return product;
     }
+    
+    /**
+     * Check if the user still has disk processing quota available
+     * 
+     * @return true if the user stil has disk processing quota available, false otherwise. 
+     * @throws ExecutionException if the database access fails. 
+     */
+    private boolean checkProcessingQuota() throws ExecutionException {
+    	final Principal userPrincipal = SessionStore.currentContext().getPrincipal();
+        
+    	// update the quota before checking
+        UserQuotaManager.getInstance().updateUserProcessingQuota();
 
+    	try {
+			if (!quotaVerifier.checkUserProcessingQuota(userPrincipal))
+			{
+				// the allocated quota was reached. the execution cannot start
+				// get the user's quotas
+				final long[] quotas = persistenceManager.getUserDiskQuotas(userPrincipal.getName());
+				
+				// create the message
+				final String msg = String.format("The workflow execution cannot start because you have reached "
+						+ "your processing disk quota (defined quota: %dGB, used quota: %dGB). Please delete some files from your "
+						+ "workspace to continue", quotas[2], quotas[3]);
+				
+				// publish the message to the ERROR topic and log it
+				Messaging.send(userPrincipal, Topics.ERROR, this, msg);
+				logger.info(msg);
+				
+				return false;
+			}
+			
+			// quota available. Execution can start
+			return true;
+		} catch (PersistenceException e) {
+			throw new ExecutionException(String.format("Cannot determine disk execution quota. Reason: %s", e.getMessage()), e);
+		}
+    }
+    
     private class QueueMonitor extends Thread {
         @Override
         public void run() {
