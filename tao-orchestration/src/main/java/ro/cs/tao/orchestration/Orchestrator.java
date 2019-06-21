@@ -86,6 +86,7 @@ import ro.cs.tao.security.SessionContext;
 import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.serialization.StringListAdapter;
+import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.user.UserPreference;
 import ro.cs.tao.utils.TriFunction;
@@ -128,7 +129,7 @@ public class Orchestrator extends Notifiable {
 
     private final StringListAdapter listAdapter;
     private final Logger logger = Logger.getLogger(Orchestrator.class.getName());
-    private PersistenceManager persistenceManager;
+    private final PersistenceManager persistenceManager;
     private TaskSelector<ExecutionGroup> groupTaskSelector;
     private TaskSelector<ExecutionJob> jobTaskSelector;
     private JobFactory jobFactory;
@@ -142,14 +143,13 @@ public class Orchestrator extends Notifiable {
         this.executors = Collections.synchronizedMap(new HashMap<>());
         this.runningTasks = Collections.synchronizedSet(new HashSet<>());
         this.listAdapter = new StringListAdapter();
+        this.persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
         subscribe(Topics.EXECUTION);
     }
 
-    public void setPersistenceManager(PersistenceManager persistenceManager) {
-        this.persistenceManager = persistenceManager;
-        quotaVerifier.setPersistenceManager(persistenceManager);
-        JobCommand.setPersistenceManager(persistenceManager);
-        TaskUtilities.setPersistenceManager(persistenceManager);
+    public void start() {
+        //JobCommand.setPersistenceManager(persistenceManager);
+        //TaskUtilities.setPersistenceManager(persistenceManager);
         final Function<Long, WorkflowNodeDescriptor> workflowProvider = this.persistenceManager::getWorkflowNodeById;
         initializeJobSelector(workflowProvider, this.persistenceManager::getTaskByJobAndNode);
         initializeGroupSelector(workflowProvider, this.persistenceManager::getTaskByGroupAndNode);
@@ -159,6 +159,7 @@ public class Orchestrator extends Notifiable {
         QueueMonitor monitor = new QueueMonitor();
         monitor.setName("orchestrator");
         monitor.start();
+        logger.fine("Orchestration service initialized");
     }
 
     /**
