@@ -346,7 +346,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                 add("-v");              // Bind mount a volume
                 add(dockerBindMount);
                 if (cpu > 0) {
-                    add(SystemUtils.IS_OS_WINDOWS ? "--cpu-count" : "--cpus");      // Enforce the number of CPUs to be used
+                    add(SystemUtils.IS_OS_WINDOWS ? "--cpus" : "--cpus");      // Enforce the number of CPUs to be used
                     add(String.valueOf(cpu));
                     task.setUsedCPU(cpu);
                 }
