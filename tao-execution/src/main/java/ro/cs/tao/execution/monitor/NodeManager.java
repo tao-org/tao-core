@@ -50,7 +50,7 @@ public class NodeManager extends Notifiable {
                                                                                quotaVerifierClass, e.getMessage()));
             quotaVerifier = new NullQuotaVerifier();
         }
-        quotaVerifier.setPersistenceManager(SpringContextBridge.services().getPersistenceManager());
+        quotaVerifier.setPersistenceManager(SpringContextBridge.services().getService(PersistenceManager.class));
     }
 
     /**
@@ -68,7 +68,7 @@ public class NodeManager extends Notifiable {
     private NodeManager() {
         nodes = new HashMap<>();
         runtimeInfo = new HashMap<>();
-        persistenceManager = SpringContextBridge.services().getPersistenceManager();
+        persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
         refreshInProgress = false;
         //subscribe(Topics.TOPOLOGY);
     }

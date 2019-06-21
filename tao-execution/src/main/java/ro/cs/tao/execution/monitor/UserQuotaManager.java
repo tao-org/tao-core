@@ -38,7 +38,7 @@ public class UserQuotaManager {
 	 * Private constructor.
 	 */
 	private UserQuotaManager() {
-		this.persistenceManager = SpringContextBridge.services().getPersistenceManager();
+		this.persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
 	}
 	
 	/**
