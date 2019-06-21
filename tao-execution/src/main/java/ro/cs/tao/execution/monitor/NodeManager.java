@@ -66,7 +66,7 @@ public class NodeManager extends Notifiable {
     private NodeManager() {
         nodes = new HashMap<>();
         runtimeInfo = new HashMap<>();
-        persistenceManager = SpringContextBridge.services().getPersistenceManager();
+        persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
         refreshInProgress = false;
         //subscribe(Topics.TOPOLOGY);
     }

@@ -25,9 +25,10 @@ import ro.cs.tao.datasource.remote.FetchMode;
 import ro.cs.tao.eodata.enums.Visibility;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.services.interfaces.ComponentService;
 import ro.cs.tao.services.interfaces.DataSourceComponentService;
-import ro.cs.tao.services.interfaces.SampleWorkflow;
+import ro.cs.tao.services.interfaces.WorkflowBuilder;
 import ro.cs.tao.services.interfaces.WorkflowService;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
@@ -41,30 +42,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-public abstract class SampleWorkflowBase implements SampleWorkflow {
-    protected static PersistenceManager persistenceManager;
-    protected static ComponentService componentService;
-    protected static WorkflowService workflowService;
-    protected static DataSourceComponentService dataSourceComponentService;
+public abstract class WorkflowBuilderBase implements WorkflowBuilder {
+    protected static final PersistenceManager persistenceManager;
+    protected static final ComponentService componentService;
+    protected static final WorkflowService workflowService;
+    protected static final DataSourceComponentService dataSourceComponentService;
     private static final float xOrigin = 300;
     private static final float yOrigin = 150;
     private static final float xStep = 300;
     private static final float yStep = 150;
 
-    public static void setPersistenceManager(PersistenceManager persistenceManager) {
-        SampleWorkflowBase.persistenceManager = persistenceManager;
-    }
-
-    public static void setComponentService(ComponentService componentService) {
-        SampleWorkflowBase.componentService = componentService;
-    }
-
-    public static void setDataSourceComponentService(DataSourceComponentService dataSourceComponentService) {
-        SampleWorkflowBase.dataSourceComponentService = dataSourceComponentService;
-    }
-
-    public static void setWorkflowService(WorkflowService workflowService) {
-        SampleWorkflowBase.workflowService = workflowService;
+    static {
+        persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
+        componentService = SpringContextBridge.services().getService(ComponentService.class);
+        workflowService = SpringContextBridge.services().getService(WorkflowService.class);
+        dataSourceComponentService = SpringContextBridge.services().getService(DataSourceComponentService.class);
     }
 
     protected DataSourceComponent newDataSourceComponent(String sensor, String dataSource) throws PersistenceException {
@@ -205,7 +197,7 @@ public abstract class SampleWorkflowBase implements SampleWorkflow {
         }
     }
 
-    private float[] placeNode(WorkflowNodeDescriptor relativeTo, Direction direction) {
+    protected float[] placeNode(WorkflowNodeDescriptor relativeTo, Direction direction) {
         float x,y;
         if (relativeTo == null) {
             x = xOrigin;

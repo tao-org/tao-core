@@ -36,7 +36,7 @@ import java.util.logging.Logger;
  * @author Cosmin Cara
  */
 public class ProductPersister implements OutputDataHandler<EOProduct> {
-    private final PersistenceManager persistenceManager = SpringContextBridge.services().getPersistenceManager();
+    private final PersistenceManager persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
     private final Logger logger = Logger.getLogger(getClass().getName());
 
     @Override
