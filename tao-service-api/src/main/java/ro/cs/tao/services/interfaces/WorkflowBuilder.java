@@ -19,7 +19,7 @@ package ro.cs.tao.services.interfaces;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 
-public interface SampleWorkflow {
+public interface WorkflowBuilder {
     String getName();
     WorkflowDescriptor createWorkflowDescriptor() throws PersistenceException;
 }

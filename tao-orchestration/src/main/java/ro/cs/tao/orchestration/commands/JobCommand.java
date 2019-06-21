@@ -21,6 +21,7 @@ import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.security.SessionStore;
+import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 
 import java.util.HashSet;
 import java.util.List;
@@ -37,16 +38,13 @@ public abstract class JobCommand {
     public static final JobCommand SUSPEND = new JobSuspend();
     public static final JobCommand RESUME = new JobResume();
 
-    private static PersistenceManager persistenceManager;
+    private static final PersistenceManager persistenceManager;
 
     private final ExecutionStatus requestedStatus;
     private final Set<ExecutionStatus> allowedStates;
 
-    /**
-     * Sets the persistence manager for all subclasses
-     */
-    public static void setPersistenceManager(PersistenceManager persister) {
-        persistenceManager = persister;
+    static {
+        persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
     }
 
     private JobCommand(ExecutionStatus requestedStatus) {
