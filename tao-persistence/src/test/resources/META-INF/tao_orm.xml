@@ -68,8 +68,7 @@
                 but the mapping to a column name can be only done once (here!),
                 all correspondant columns must have the same name (and definition) defined here  -->
                 <column name="id" nullable="false" column-definition="bigserial NOT NULL"/>
-                <generated-value strategy="SEQUENCE" generator="dsc_identifier"/>
-                <sequence-generator name="dsc_identifier" sequence-name="execution.user_data_source_connection_id_seq" allocation-size="1" />
+                <generated-value strategy="IDENTITY" generator="dsc_identifier"/>
             </id>
         </attributes>
     </mapped-superclass>
@@ -260,8 +259,7 @@
         <attributes>
             <id name="id">
                 <column name="id" nullable="false" column-definition="integer NOT NULL"/>
-                <generated-value strategy="SEQUENCE" generator="service_identifier"/>
-                <sequence-generator name="service_identifier" sequence-name="topology.service_id_seq" allocation-size="1" />
+                <generated-value strategy="IDENTITY" generator="service_identifier"/>
             </id>
             <basic name="name">
                 <column name="name" nullable="false" column-definition="character varying(250) NOT NULL"/>
@@ -505,9 +503,10 @@
                 <column name="not_null" nullable="true" column-definition="boolean NULL"/>
             </basic>
             <one-to-one name="expansionRule" fetch="EAGER" target-entity="ro.cs.tao.component.ParameterExpansionRule">
-                <join-table name="component.processing_parameter_expansion">
-                    <join-column name="parameter_id" referenced-column-name="id"/>
-                </join-table>
+                <join-column name="id" referenced-column-name="parameter_id"/>
+                <cascade>
+                    <cascade-all/>
+                </cascade>
             </one-to-one>
 
             <element-collection name="dependencies" target-class="ro.cs.tao.component.ParameterDependency" access="PROPERTY" fetch="LAZY">
@@ -966,8 +965,7 @@
         <attributes>
             <id name="id">
                 <column name="id" nullable="false" column-definition="bigserial NOT NULL"/>
-                <generated-value strategy="SEQUENCE" generator="query_identifier"/>
-                <sequence-generator name="query_identifier" sequence-name="workflow.query_id_seq" allocation-size="1" />
+                <generated-value strategy="IDENTITY" generator="query_identifier"/>
             </id>
             <basic name="label">
                 <column name="label" nullable="true" column-definition="text"/>
@@ -1022,8 +1020,7 @@
         <attributes>
             <id name="id">
                 <column name="id" nullable="false" column-definition="serial NOT NULL"/>
-                <generated-value strategy="SEQUENCE" generator="user_identifier"/>
-                <sequence-generator name="user_identifier" sequence-name="usr.user_id_seq" allocation-size="1" />
+                <generated-value strategy="IDENTITY" generator="user_identifier"/>
             </id>
             <basic name="username">
                 <column name="username" nullable="false" column-definition="character varying(50) NOT NULL"/>
@@ -1124,8 +1121,7 @@
         <attributes>
             <id name="id">
                 <column name="id" nullable="false" column-definition="serial NOT NULL"/>
-                <generated-value strategy="SEQUENCE" generator="group_identifier"/>
-                <sequence-generator name="group_identifier" sequence-name="usr.group_id_seq" allocation-size="1" />
+                <generated-value strategy="IDENTITY" generator="group_identifier"/>
             </id>
             <basic name="name">
                 <column name="name" nullable="false" column-definition="character varying(50) NOT NULL"/>
@@ -1144,8 +1140,7 @@
         <attributes>
             <id name="id">
                 <column name="id" nullable="false" column-definition="integr NOT NULL"/>
-                <generated-value strategy="SEQUENCE" generator="rule_identifier"/>
-                <sequence-generator name="rule_identifier" sequence-name="product.naming_rule_id_seq" allocation-size="1"/>
+                <generated-value strategy="IDENTITY" generator="rule_identifier"/>
             </id>
             <basic name="sensor">
                 <column name="sensor" nullable="false" column-definition="varchar(50) NOT NULL"/>
@@ -1165,6 +1160,7 @@
     </entity>
 
     <entity class="ro.cs.tao.component.ParameterExpansionRule" access="PROPERTY">
+        <table name="component.processing_parameter_expansion"/>
         <attributes>
             <id name="parameterId">
                 <column name="parameter_id" nullable="false"/>

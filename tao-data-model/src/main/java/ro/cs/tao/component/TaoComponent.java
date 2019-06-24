@@ -137,7 +137,9 @@ public abstract class TaoComponent extends StringIdentifiable {
             if (this.descriptorIndex == null) {
                 this.descriptorIndex = new HashMap<>();
             }
-            this.sources.forEach(s -> this.descriptorIndex.put(s.getId(), s));
+            this.sources.forEach(s -> {
+                if (s != null && s.getId() != null) { this.descriptorIndex.put(s.getId(), s); }
+            });
         }
     }
 
