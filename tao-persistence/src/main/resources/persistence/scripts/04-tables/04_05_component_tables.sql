@@ -80,6 +80,8 @@ CREATE TABLE component.container
 	tag varchar(1024) NOT NULL,
 	application_path varchar(1024) NULL,
 	logo_image varchar NULL,
+	common_parameters varchar(128) NULL,
+	format_name_parameter varchar(20) NULL,
 	created timestamp NULL DEFAULT now(),
     modified timestamp NULL
 );
@@ -100,6 +102,19 @@ CREATE TABLE component.container_applications
 ALTER TABLE component.container_applications ADD CONSTRAINT PK_container_applications
 	PRIMARY KEY (container_id, name);
 ALTER TABLE component.container_applications ADD CONSTRAINT FK_container_applications_container
+	FOREIGN KEY (container_id) REFERENCES component.container (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: container_formats
+DROP TABLE IF EXISTS component.container_formats CASCADE;
+CREATE TABLE component.container_formats
+(
+	container_id varchar(1024) NOT NULL,
+	format varchar(30) NOT NULL
+);
+ALTER TABLE component.container_formats ADD CONSTRAINT PK_container_formats
+	PRIMARY KEY (container_id, format);
+ALTER TABLE component.container_formats ADD CONSTRAINT FK_container_formats_container
 	FOREIGN KEY (container_id) REFERENCES component.container (id) ON DELETE No Action ON UPDATE No Action;
 
 -------------------------------------------------------------------------------
@@ -169,6 +184,20 @@ ALTER TABLE component.processing_parameter ADD CONSTRAINT PK_processing_paramete
 	PRIMARY KEY (id);
 ALTER TABLE component.processing_parameter ADD CONSTRAINT FK_processing_parameter_parameter_type
 	FOREIGN KEY (type_id) REFERENCES component.parameter_type (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: processing_parameter_expansion
+DROP TABLE IF EXISTS component.processing_parameter_expansion CASCADE;
+CREATE TABLE component.processing_parameter_expansion
+(
+	parameter_id varchar(512) NOT NULL,
+	join_values boolean NOT NULL DEFAULT true,
+    separator char(1) NOT NULL DEFAULT ' '
+);
+ALTER TABLE component.processing_parameter_expansion ADD CONSTRAINT PK_processing_parameter_expansion
+	PRIMARY KEY (parameter_id);
+ALTER TABLE component.processing_parameter_expansion ADD CONSTRAINT FK_processing_parameter_expansion_parameter
+	FOREIGN KEY (parameter_id) REFERENCES component.processing_parameter (id) ON DELETE No Action ON UPDATE No Action;
 
 -------------------------------------------------------------------------------
 -- table: component.condition
@@ -298,6 +327,7 @@ CREATE TABLE component.source_descriptor
 	cardinality integer NOT NULL,
 	constraints text NULL,
 	data_format_id integer NOT NULL,
+	format_name varchar(30),
     geometry geography(POLYGON, 4326) NULL,
     coordinate_reference_system text NULL,
     sensor_type_id integer NULL,
@@ -321,6 +351,7 @@ CREATE TABLE component.target_descriptor
     cardinality integer NOT NULL,
 	constraints text NULL,
 	data_format_id integer NOT NULL,
+	format_name varchar(30) NULL,
     geometry geography(POLYGON, 4326) NULL,
     coordinate_reference_system text NULL,
     sensor_type_id integer NULL,

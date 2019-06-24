@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import ro.cs.tao.component.enums.Condition;
+import ro.cs.tao.component.enums.ParameterType;
 import ro.cs.tao.component.enums.ProcessingComponentType;
 import ro.cs.tao.component.enums.ProcessingComponentVisibility;
 import ro.cs.tao.component.template.BasicTemplate;
@@ -39,6 +40,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -259,7 +261,7 @@ public class ProcessingComponent extends TaoComponent {
      */
     public Integer getParallelism() {
         if (parallelism == null) {
-            parallelism = 0;
+            parallelism = 1;
         }
         return parallelism;
     }
@@ -339,6 +341,9 @@ public class ProcessingComponent extends TaoComponent {
         Map<String, TemplateParameterDescriptor> templateParameters =
                 this.parameters.stream().filter(p -> p instanceof TemplateParameterDescriptor)
                                .collect(Collectors.toMap(ParameterDescriptor::getName, p -> (TemplateParameterDescriptor) p));
+        Map<String, ParameterDescriptor> arrayParameters =
+                this.parameters.stream().filter(p -> p.getType() == ParameterType.ARRAY)
+                               .collect(Collectors.toMap(ParameterDescriptor::getName, Function.identity()));
         for (Map.Entry<String, Object> entry : parameterValues.entrySet()) {
             String paramName = entry.getKey();
             Object paramValue = entry.getValue();
@@ -361,6 +366,12 @@ public class ProcessingComponent extends TaoComponent {
                 } else {
                     Logger.getLogger(getClass().getName()).warning(String.format("Parameter '%s' is a template parameter, but the output path cannot be determined",
                                                                                  paramName));
+                }
+            } else if (arrayParameters.containsKey(paramName)) {
+                Object values = parameterValues.get(paramName);
+                if (values != null) {
+                    ParameterDescriptor descriptor = arrayParameters.get(paramName);
+                    clonedMap.put(paramName, descriptor.expandValues(values));
                 }
             } else {
                 try {

@@ -134,7 +134,12 @@ public abstract class TaoComponent extends StringIdentifiable {
     public void setSources(List<SourceDescriptor> sources) {
         this.sources = sources;
         if (this.sources != null) {
-            this.sources.forEach(s -> this.descriptorIndex.put(s.getId(), s));
+            if (this.descriptorIndex == null) {
+                this.descriptorIndex = new HashMap<>();
+            }
+            this.sources.forEach(s -> {
+                if (s != null && s.getId() != null) { this.descriptorIndex.put(s.getId(), s); }
+            });
         }
     }
 
@@ -174,6 +179,9 @@ public abstract class TaoComponent extends StringIdentifiable {
     public void setTargets(List<TargetDescriptor> targets) {
         this.targets = targets;
         if (this.targets != null) {
+            if (this.descriptorIndex == null) {
+                this.descriptorIndex = new HashMap<>();
+            }
             this.targets.forEach(t -> this.descriptorIndex.put(t.getId(), t));
         }
     }

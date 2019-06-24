@@ -39,7 +39,7 @@ public class ExecutionsManagerTest {
 
     static void testExecuteTask() throws PersistenceException {
 
-        PersistenceManager persistenceManager = SpringContextBridge.services().getPersistenceManager();
+        PersistenceManager persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
 
         // Add an execution node if it does not exist
         createNode("test_hostname");
@@ -85,7 +85,7 @@ public class ExecutionsManagerTest {
     }
 
     static void testSuspendResumeStopTask() throws PersistenceException {
-        PersistenceManager persistenceManager = SpringContextBridge.services().getPersistenceManager();
+        PersistenceManager persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
 
         // Add an execution node if it does not exist
         createNode("test_hostname");
@@ -159,7 +159,7 @@ public class ExecutionsManagerTest {
     }
 
     private static NodeDescription createNode(String nodeName) throws PersistenceException {
-        PersistenceManager persistenceManager = SpringContextBridge.services().getPersistenceManager();
+        PersistenceManager persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
 
         NodeDescription node = new NodeDescription();
         node.setActive(Boolean.TRUE);
@@ -220,7 +220,7 @@ public class ExecutionsManagerTest {
     }
 
     private static void saveProcessingComponent(ProcessingComponent component) throws PersistenceException {
-        PersistenceManager persistenceManager = SpringContextBridge.services().getPersistenceManager();
+        PersistenceManager persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
         try {
             persistenceManager.updateProcessingComponent(component);
         } catch (PersistenceException e) {

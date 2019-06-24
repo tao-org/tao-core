@@ -16,8 +16,10 @@
 package ro.cs.tao.component.validation;
 
 import ro.cs.tao.component.ParameterDescriptor;
+import ro.cs.tao.component.enums.ParameterType;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import java.lang.reflect.Array;
 
 /**
  * Validator that checks that the given value is of the type defined in the parameter descriptor.
@@ -35,10 +37,21 @@ public class TypeValidator extends Validator {
             throw new ValidationException("Cannot validate a null reference");
         }
         final Class<?> dataType = parameter.getDataType();
-        if (!isAssignableFrom(dataType, value)) {
-            throw new ValidationException(String.format("Value for [%s] must be of type %s",
-                                                        parameter.getName(),
-                                                        dataType.getSimpleName()));
+        if (parameter.getType() == ParameterType.REGULAR) {
+            if (!isAssignableFrom(dataType, value)) {
+                throw new ValidationException(String.format("Value for [%s] must be of type %s",
+                                                            parameter.getName(),
+                                                            dataType.getSimpleName()));
+            }
+        } else if (parameter.getType() == ParameterType.ARRAY) {
+            final int len = Array.getLength(value);
+            for (int i = 0; i < len; i++) {
+                final Object elementValue = Array.get(value, i);
+                if (!isAssignableFrom(dataType, elementValue)) {
+                    throw new ValidationException(String.format("Array element [%s] for [%s] must be of type %s",
+                                                                elementValue, parameter.getName(), dataType.getSimpleName()));
+                }
+            }
         }
     }
 
