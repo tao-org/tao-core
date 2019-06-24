@@ -24,6 +24,7 @@ import ro.cs.tao.execution.model.ExecutionJob;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.persistence.PersistenceManager;
+import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.enums.TransitionBehavior;
@@ -43,7 +44,7 @@ import java.util.logging.Logger;
 @Component
 public class TaskUtilities {
 
-    private static PersistenceManager persistenceManager;
+    private static final PersistenceManager persistenceManager;
     private static final Logger logger = Logger.getLogger(TaskUtilities.class.getName());
     private static final String DOCKER_MOUNT_POINT;
 
@@ -59,15 +60,8 @@ public class TaskUtilities {
             logger.severe(e.getMessage());
         }
         DOCKER_MOUNT_POINT = value;
+        persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
     }
-
-    /**
-     * Setter for the persistence manager
-     */
-    public static void setPersistenceManager(PersistenceManager manager) {
-        persistenceManager = manager;
-    }
-
 
     public static WorkflowNodeDescriptor getWorkflowNode(ExecutionTask task) {
         if (task == null || task.getWorkflowNodeId() == null) {

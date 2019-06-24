@@ -47,7 +47,7 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
     /* Flag for trying to close the monitoring thread in an elegant manner */
     private static final Map<String, Tuple<Integer, Long>> resourcesUsage = new HashMap<>();
     protected Boolean isInitialized = false;
-    protected final PersistenceManager persistenceManager = SpringContextBridge.services().getPersistenceManager();
+    protected final PersistenceManager persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
     protected final Logger logger = Logger.getLogger(getClass().getName());
     private final Timer executionsCheckTimer = new Timer("exec-monitor");
     private final Map<Long, SessionContext> contextMap = new HashMap<>();
@@ -181,6 +181,7 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
                     task.setExecutionStatus(status);
                     task.setLastUpdated(LocalDateTime.now());
                     persistenceManager.updateExecutionTask(task);
+                    increment(userName, cpu, memory);
                 } else {
                     switch (status) {
                         case DONE:
@@ -214,18 +215,24 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
     private void decrement(String userName, int cpu, long memory) {
         synchronized (resourcesUsage) {
             final Tuple<Integer, Long> tuple = resourcesUsage.get(userName);
-            resourcesUsage.put(userName,
-                               new Tuple<>(Math.max(0, tuple.getKeyOne() - cpu),
-                                           Math.max(0, tuple.getKeyTwo() - memory)));
+            if (tuple != null) {
+                resourcesUsage.put(userName,
+                                   new Tuple<>(Math.max(0, tuple.getKeyOne() - cpu),
+                                               Math.max(0, tuple.getKeyTwo() - memory)));
+            }
         }
     }
 
     private void increment(String userName, int cpu, long memory) {
         synchronized (resourcesUsage) {
             final Tuple<Integer, Long> tuple = resourcesUsage.get(userName);
-            resourcesUsage.put(userName,
-                               new Tuple<>(Math.max(0, tuple.getKeyOne() + cpu),
-                                           Math.max(0, tuple.getKeyTwo() + memory)));
+            if (tuple == null) {
+                resourcesUsage.put(userName, new Tuple<>(cpu, memory));
+            } else {
+                resourcesUsage.put(userName,
+                                   new Tuple<>(Math.max(0, tuple.getKeyOne() + cpu),
+                                               Math.max(0, tuple.getKeyTwo() + memory)));
+            }
         }
     }
 

@@ -50,7 +50,7 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
     }
 
     public BaseImageInstaller() {
-        this.persistenceManager = SpringContextBridge.services().getPersistenceManager();
+        this.persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
         this.logger = Logger.getLogger(getClass().getName());
         this.componentTags = this.persistenceManager.getComponentTags();
         if (this.componentTags == null) {

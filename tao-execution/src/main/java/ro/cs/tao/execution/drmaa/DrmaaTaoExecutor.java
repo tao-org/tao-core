@@ -15,8 +15,11 @@
  */
 package ro.cs.tao.execution.drmaa;
 
+import org.apache.commons.lang3.SystemUtils;
 import org.ggf.drmaa.*;
 import ro.cs.tao.component.ProcessingComponent;
+import ro.cs.tao.component.TargetDescriptor;
+import ro.cs.tao.component.Variable;
 import ro.cs.tao.docker.Application;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.execution.Constants;
@@ -41,6 +44,7 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.regex.Matcher;
@@ -227,20 +231,18 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
 
     private JobTemplate createJobTemplate(ProcessingExecutionTask task) throws DrmaaException, IOException {
         // Get from the component the execution command
-        Container container;
         String[] pArgs = null;
-        ProcessingComponent component = task.getComponent();
-        container = persistenceManager.getContainerById(component.getContainerId());
+        final ProcessingComponent component = task.getComponent();
+        final Container container = persistenceManager.getContainerById(component.getContainerId());
         Application app = container.getApplications()
                 .stream()
                 .filter(a -> component.getId().endsWith(a.getName().toLowerCase()))
                 .findFirst().orElse(null);
-        JobTemplate jt = session.createJobTemplate();
+        final JobTemplate jt = session.createJobTemplate();
         if (jt == null) {
             throw new ExecutionException("Error creating job template from the session!");
         }
         final long memory = app != null ? app.getMemoryRequirements() : 0L;
-        final int cpu = component.getParallelism();
         if (jt instanceof JobTemplateExtension) {
             JobTemplateExtension job = (JobTemplateExtension) jt;
             if (job.hasAttribute(Constants.MEMORY_REQUIREMENTS_ATTRIBUTE) && app != null &&
@@ -250,17 +252,17 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         }
         // the next call blocks until a node is available
         NodeDescription node = getAvailableNode(memory);
+        if (node == null) {
+            throw new TryLaterException("Cannot obtain an available node [null]");
+        }
         if (jt instanceof JobTemplateExtension) {
             JobTemplateExtension job = (JobTemplateExtension) jt;
             if (job.hasAttribute(Constants.NODE_ATTRIBUTE)) {
-                if (node != null) {
-                    job.setAttribute(Constants.NODE_ATTRIBUTE, node.getId());
-                }
+                job.setAttribute(Constants.NODE_ATTRIBUTE, node.getId());
             }
         }
-        if (node != null) {
-            task.setExecutionNodeHostName(node.getId());
-        }
+        task.setExecutionNodeHostName(node.getId());
+        final int cpu = Math.min(component.getParallelism(), node.getProcessorCount());
         String location = task.getComponent().getFileLocation();
         if (!Paths.get(location).isAbsolute()) {
             String path = container.getApplicationPath();
@@ -270,6 +272,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             path += location;
             task.getComponent().setExpandedFileLocation(path);
         }
+        // if parallel flags are defined, use them
         if (app != null && app.hasParallelFlag()) {
             Class<?> type = app.parallelArgumentType();
             if (type.isAssignableFrom(Integer.class)) {
@@ -280,22 +283,52 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                 pArgs = app.parallelArguments(Boolean.class, true);
             }
         }
+        // Assemble the regular execution command, as produced by the processing component after applying values
         String executionCmd = task.buildExecutionCommand();
+        // Insert parallel arguments, if any
         if (pArgs != null) {
             int idx = executionCmd.indexOf('\n');
             executionCmd = executionCmd.substring(0, idx) + "\n" + String.join("\n", pArgs) +
                     executionCmd.substring(idx);
         }
+        // Insert common parameters, if defined at container level
+        final String commonParameters = container.getCommonParameters();
+        if (commonParameters != null) {
+            int idx = executionCmd.indexOf('\n');
+            executionCmd = executionCmd.substring(0, idx) + "\n" + String.join("\n", commonParameters.split(" ")) +
+                    executionCmd.substring(idx);
+        }
+        // Insert output format name, if supported by the container and defined in component or by user
+        final String formatNameParameter = container.getFormatNameParameter();
+        if (formatNameParameter != null) {
+            final Set<String> formats = container.getFormat();
+            // check if the format name was given by user
+            Variable formatVariable = task.getOutputParameterValues().stream()
+                    .filter(v -> "formatName".equals(v.getKey())).findFirst().orElse(null);
+            if (formatVariable == null) {
+                // then check if the format name was defined in the component
+                TargetDescriptor target = component.getTargets().stream()
+                                                    .filter(t -> t.getDataDescriptor().getFormatName() != null).findFirst().orElse(null);
+                if (target != null) {
+                    formatVariable = new Variable("formatName", target.getDataDescriptor().getFormatName());
+                }
+            }
+            if (formatVariable != null && (formats == null || formats.contains(formatVariable.getValue()))) {
+                int idx = executionCmd.indexOf('\n');
+                executionCmd = executionCmd.substring(0, idx) + "\n" + String.join("\n", formatNameParameter, formatVariable.getValue()) +
+                                executionCmd.substring(idx);
+            }
+        }
         List<String> argsList = new ArrayList<>();
-        String cmd;
+        final String cmd;
 
         // split the execution command but preserving the entities between double quotes
-        Matcher m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(executionCmd);
+        final Matcher m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(executionCmd);
         while (m.find()) {
             argsList.add(m.group(1)); // Add .replace("\"", "") to remove surrounding quotes.
         }
 
-        //if (container != null) {
+        if (ExecutionConfiguration.useDocker()) {
             cmd = "docker";
             final String dockerBindMount;
             if (task.getExecutionNodeHostName().equals(masterHost)) {
@@ -303,7 +336,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             } else {
                 dockerBindMount = ExecutionConfiguration.getDockerNodeBindMount();
             }
-            List<String> dockerArgsList = new ArrayList<String>() {{
+            final List<String> dockerArgsList = new ArrayList<String>() {{
                 add("run");
                 add("-i");              // Keep STDIN open even if not attached
                 //add("-t");            // Allocate a pseudo-TTY
@@ -313,25 +346,29 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                 add("-v");              // Bind mount a volume
                 add(dockerBindMount);
                 if (cpu > 0) {
-                    add("--cpus");      // Enforce the number of CPUs to be used
+                    add(SystemUtils.IS_OS_WINDOWS ? "--cpus" : "--cpus");      // Enforce the number of CPUs to be used
                     add(String.valueOf(cpu));
                     task.setUsedCPU(cpu);
                 }
                 if (memory > 0) {
                     add("--memory");    // Enforce the memory limit to be used
                     // memory, if not 0, is expressed in MB
-                    add(String.valueOf(memory * MemoryUnit.MEGABYTE.value()));
+                    add(String.valueOf(memory * MemoryUnit.MEGABYTE.value()) + "MB");
                     task.setUsedRAM((int) memory);
                 }
             }};
-        String value = ExecutionConfiguration.getDockerRegistry();
-        if (value != null) {
-            dockerArgsList.add(value + "/" + container.getName());
-        } else {
-            dockerArgsList.add(container.getId());
-        }
+            String value = ExecutionConfiguration.getDockerRegistry();
+            if (value != null) {
+                dockerArgsList.add(value + "/" + container.getName());
+            } else {
+                dockerArgsList.add(container.getId());
+            }
             dockerArgsList.addAll(argsList);
             argsList = dockerArgsList;
+        } else {
+            cmd = argsList.get(0);
+            argsList.remove(0);
+        }
         jt.setRemoteCommand(cmd);
         jt.setArgs(argsList);
         logger.fine(String.format("[Task %s ]: %s %s", String.valueOf(task.getId()), cmd, String.join(" ", argsList)));

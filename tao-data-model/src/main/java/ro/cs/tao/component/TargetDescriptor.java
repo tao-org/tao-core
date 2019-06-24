@@ -164,13 +164,22 @@ public class TargetDescriptor extends StringIdentifiable {
     /**
      * Returns a ParameterDescription representation of this target instance
      */
-    public ParameterDescriptor toParameter() {
-        return new ParameterDescriptor() {{
+    public List<ParameterDescriptor> toParameter() {
+        final List<ParameterDescriptor> list = new ArrayList<>();
+        list.add(new ParameterDescriptor() {{
             setLabel("Output parameter");
             setName(TargetDescriptor.this.getName());
             setType(ParameterType.REGULAR);
             setDataType(String.class);
             setDefaultValue(TargetDescriptor.this.getDataDescriptor().getLocation());
-        }};
+        }});
+        list.add(new ParameterDescriptor() {{
+            setLabel("Format name");
+            setName("formatName");
+            setType(ParameterType.REGULAR);
+            setDataType(String.class);
+            setDefaultValue(TargetDescriptor.this.getDataDescriptor().getFormatName());
+        }});
+        return list;
     }
 }

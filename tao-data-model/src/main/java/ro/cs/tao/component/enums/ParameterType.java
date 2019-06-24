@@ -28,7 +28,7 @@ import javax.xml.bind.annotation.XmlEnumValue;
 @XmlEnum(Integer.class)
 public enum ParameterType implements TaoEnum<Integer> {
     /**
-     * The parameter is a regular parameter
+     * The parameter is a regular parameter (simple value type)
      */
     @XmlEnumValue("1")
     REGULAR(1, "Regular"),
@@ -36,7 +36,12 @@ public enum ParameterType implements TaoEnum<Integer> {
      * The parameter is a template parameter (describing the invocation of the component, for example)
      */
     @XmlEnumValue("2")
-    TEMPLATE(2, "Template");
+    TEMPLATE(2, "Template"),
+    /**
+     * The parameter represents an array of simple values
+     */
+    @XmlEnumValue("3")
+    ARRAY(3, "Array");
 
     private final int value;
     private final String description;

@@ -2,6 +2,7 @@ package ro.cs.tao.execution.monitor;
 
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.execution.DefaultQuotaVerifier;
+import ro.cs.tao.execution.NullQuotaVerifier;
 import ro.cs.tao.execution.QuotaVerifier;
 import ro.cs.tao.execution.local.DefaultSessionFactory;
 import ro.cs.tao.messaging.Message;
@@ -45,9 +46,11 @@ public class NodeManager extends Notifiable {
         try {
             quotaVerifier = (QuotaVerifier) Class.forName(quotaVerifierClass).newInstance();
         } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-            Logger.getLogger(NodeManager.class.getName()).severe("No QuotaVerifier class found");
-            quotaVerifier = null;
+            Logger.getLogger(NodeManager.class.getName()).severe(String.format("QuotaVerifier class [%s] could not be instantiated. Reason: %s",
+                                                                               quotaVerifierClass, e.getMessage()));
+            quotaVerifier = new NullQuotaVerifier();
         }
+        quotaVerifier.setPersistenceManager(SpringContextBridge.services().getService(PersistenceManager.class));
     }
 
     /**
@@ -65,7 +68,7 @@ public class NodeManager extends Notifiable {
     private NodeManager() {
         nodes = new HashMap<>();
         runtimeInfo = new HashMap<>();
-        persistenceManager = SpringContextBridge.services().getPersistenceManager();
+        persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
         refreshInProgress = false;
         //subscribe(Topics.TOPOLOGY);
     }

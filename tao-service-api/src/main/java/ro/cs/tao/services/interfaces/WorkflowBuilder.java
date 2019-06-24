@@ -13,11 +13,13 @@
  * You should have received a copy of the GNU General Public License along
  * with this program; if not, see http://www.gnu.org/licenses/
  */
-package ro.cs.tao.services.bridge.spring;
 
-/**
- * Created by cosmin on 9/13/2017.
- */
-public interface SpringContextBridgedServices {
-    <T> T getService(Class<T> clazz);
+package ro.cs.tao.services.interfaces;
+
+import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.workflow.WorkflowDescriptor;
+
+public interface WorkflowBuilder {
+    String getName();
+    WorkflowDescriptor createWorkflowDescriptor() throws PersistenceException;
 }

@@ -87,7 +87,7 @@ public class TopologyManager implements ITopologyManager {
 
     private TopologyManager() {
         this.logger = Logger.getLogger(TopologyManager.class.getName());
-        this.persistenceManager = LazyInitialize.using(() -> SpringContextBridge.services().getPersistenceManager());
+        this.persistenceManager = LazyInitialize.using(() -> SpringContextBridge.services().getService(PersistenceManager.class));
         this.executorService = new NamedThreadPoolExecutor("topology-thread", 1);//Executors.newSingleThreadExecutor();
         // initialize the hostname and ip address in the master node description
         initMasterNodeDescription();
