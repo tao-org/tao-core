@@ -37,6 +37,7 @@ public class WorkflowNodeGroupDescriptor
     public List<WorkflowNodeDescriptor> getNodes() {
         return this.nodes;
     }
+    public void setNodes(List<WorkflowNodeDescriptor> nodes) { this.nodes = nodes; }
 
     @Transient
     public List<WorkflowNodeDescriptor> getOrderedNodes() {
@@ -45,24 +46,24 @@ public class WorkflowNodeGroupDescriptor
 
     // addNode and removeNode are needed for bidirectional relationship
     public void addNode(WorkflowNodeDescriptor node) {
+        if (node == null) {
+            return;
+        }
         if (this.nodes == null) {
             this.nodes = new ArrayList<>();
         }
-        if (this.nodes.stream().noneMatch(n -> (n.getId() != null && n.getId().equals(node.getId())) ||
-                (n.getComponentId() != null && n.getComponentId().equals(node.getComponentId())))) {
-            this.nodes.add(node);
+        for (WorkflowNodeDescriptor existing : this.nodes) {
+            if (existing.getId().equals(node.getId())) {
+                return;
+            }
         }
+        this.nodes.add(node);
     }
 
     public void removeNode(WorkflowNodeDescriptor node) {
-        if (this.nodes.stream().noneMatch(n -> (n.getId() != null && n.getId().equals(node.getId())) ||
-                (n.getComponentId() != null && n.getComponentId().equals(node.getComponentId())))) {
-            node.setWorkflow(null);
-            this.nodes.remove(node);
+        if (node == null || this.nodes == null) {
+            return;
         }
-    }
-
-    public void setNodes(List<WorkflowNodeDescriptor> nodes) {
-        this.nodes = nodes;
+        this.nodes.removeIf(n -> n.getId().equals(node.getId()));
     }
 }

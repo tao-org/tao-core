@@ -17,6 +17,7 @@
 package ro.cs.tao.services.base;
 
 import ro.cs.tao.component.ProcessingComponent;
+import ro.cs.tao.component.SourceDescriptor;
 import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.datasource.DataSourceComponent;
@@ -108,7 +109,7 @@ public abstract class WorkflowBuilderBase implements WorkflowBuilder {
     protected WorkflowNodeDescriptor addNode(WorkflowDescriptor parent, String name, String componentId,
                                              ComponentType componentType, Map<String, String> customValues,
                                              WorkflowNodeDescriptor parentNode, ComponentType parentComponentType,
-                                             Direction relativeDirection) throws PersistenceException {
+                                             Direction... relativeDirection) throws PersistenceException {
         WorkflowNodeDescriptor node = new WorkflowNodeDescriptor();
         node.setWorkflow(parent);
         node.setName(name);
@@ -138,7 +139,7 @@ public abstract class WorkflowBuilderBase implements WorkflowBuilder {
                                              ComponentType componentType, Map<String, String> customValues,
                                              WorkflowNodeDescriptor parentNode, ComponentType parentComponentType,
                                              int parentIndex,
-                                             Direction relativeDirection) throws PersistenceException {
+                                             Direction... relativeDirection) throws PersistenceException {
         WorkflowNodeDescriptor node = new WorkflowNodeDescriptor();
         node.setWorkflow(parent);
         node.setName(name);
@@ -189,15 +190,43 @@ public abstract class WorkflowBuilderBase implements WorkflowBuilder {
     }
 
     protected void addLink(WorkflowDescriptor workflow, WorkflowNodeDescriptor parent, WorkflowNodeDescriptor child) throws PersistenceException {
+        addLink(workflow, parent, null, child, null);
+    }
+
+    protected void addLink(WorkflowDescriptor workflow,
+                           WorkflowNodeDescriptor parent,
+                           String fromParentPort,
+                           WorkflowNodeDescriptor child,
+                           String toChildPort) throws PersistenceException {
         if (parent != null && child != null) {
             ProcessingComponent component1 = componentService.findById(parent.getComponentId());
             ProcessingComponent component2 = componentService.findById(child.getComponentId());
-            workflowService.addLink(parent.getId(), component1.getTargets().get(0).getId(),
-                                    child.getId(), component2.getSources().get(0).getId());
+            final TargetDescriptor linkSource;
+            final SourceDescriptor linkTarget;
+            if (fromParentPort == null) {
+                linkSource = component1.getTargets().get(0);
+            } else {
+                linkSource = component1.findDescriptor(fromParentPort);
+                if (linkSource == null) {
+                    throw new PersistenceException(String.format("No such target descriptor [%s] for component [%s]",
+                                                                 fromParentPort, parent.getId()));
+                }
+            }
+            if (toChildPort == null) {
+                linkTarget = component2.getSources().get(0);
+            } else {
+                linkTarget = component2.findDescriptor(toChildPort);
+                if (linkTarget == null) {
+                    throw new PersistenceException(String.format("No such source descriptor [%s] for component [%s]",
+                                                                 toChildPort, parent.getId()));
+                }
+            }
+            workflowService.addLink(parent.getId(), linkSource.getId(),
+                                    child.getId(), linkTarget.getId());
         }
     }
 
-    protected float[] placeNode(WorkflowNodeDescriptor relativeTo, Direction direction) {
+    protected float[] placeNode(WorkflowNodeDescriptor relativeTo, Direction... directions) {
         float x,y;
         if (relativeTo == null) {
             x = xOrigin;
@@ -206,36 +235,40 @@ public abstract class WorkflowBuilderBase implements WorkflowBuilder {
             x = relativeTo.getxCoord();
             y = relativeTo.getyCoord();
         }
-        if (direction != null) {
-            switch (direction) {
-                case TOP:
-                    y -= yStep;
-                    break;
-                case BOTTOM:
-                    y += yStep;
-                    break;
-                case LEFT:
-                    x -= xStep;
-                    break;
-                case RIGHT:
-                    x += xStep;
-                    break;
-                case TOP_LEFT:
-                    x -= xStep;
-                    y -= yStep;
-                    break;
-                case TOP_RIGHT:
-                    x += xStep;
-                    y -= yStep;
-                    break;
-                case BOTTOM_LEFT:
-                    x -= xStep;
-                    y += yStep;
-                    break;
-                case BOTTOM_RIGHT:
-                    x += xStep;
-                    y += yStep;
-                    break;
+        if (directions != null) {
+            for (Direction direction : directions) {
+                if (direction != null) {
+                    switch (direction) {
+                        case TOP:
+                            y -= yStep;
+                            break;
+                        case BOTTOM:
+                            y += yStep;
+                            break;
+                        case LEFT:
+                            x -= xStep;
+                            break;
+                        case RIGHT:
+                            x += xStep;
+                            break;
+                        case TOP_LEFT:
+                            x -= xStep;
+                            y -= yStep;
+                            break;
+                        case TOP_RIGHT:
+                            x += xStep;
+                            y -= yStep;
+                            break;
+                        case BOTTOM_LEFT:
+                            x -= xStep;
+                            y += yStep;
+                            break;
+                        case BOTTOM_RIGHT:
+                            x += xStep;
+                            y += yStep;
+                            break;
+                    }
+                }
             }
         }
         return new float[] { x, y };
