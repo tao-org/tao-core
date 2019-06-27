@@ -147,12 +147,15 @@ public class SourceDescriptor extends StringIdentifiable {
     public SourceDescriptor clone() {
         SourceDescriptor clone = new SourceDescriptor();
         clone.name = this.name;
-        clone.dataDescriptor = new DataDescriptor();
-        clone.dataDescriptor.setSensorType(this.dataDescriptor.getSensorType());
-        clone.dataDescriptor.setLocation(this.dataDescriptor.getLocation());
-        clone.dataDescriptor.setCrs(this.dataDescriptor.getCrs());
-        clone.dataDescriptor.setFormatType(this.dataDescriptor.getFormatType());
-        clone.dataDescriptor.setDimension(this.dataDescriptor.getDimension());
+        if (this.dataDescriptor != null) {
+            clone.dataDescriptor = new DataDescriptor();
+            clone.dataDescriptor.setSensorType(this.dataDescriptor.getSensorType());
+            clone.dataDescriptor.setLocation(this.dataDescriptor.getLocation());
+            clone.dataDescriptor.setCrs(this.dataDescriptor.getCrs());
+            clone.dataDescriptor.setFormatType(this.dataDescriptor.getFormatType());
+            clone.dataDescriptor.setDimension(this.dataDescriptor.getDimension());
+            clone.dataDescriptor.setFormatName(this.dataDescriptor.getFormatName());
+        }
         if (this.constraints != null) {
             clone.constraints = new ArrayList<>(this.constraints);
         }
