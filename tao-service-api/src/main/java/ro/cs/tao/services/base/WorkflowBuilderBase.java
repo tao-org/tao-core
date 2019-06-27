@@ -31,6 +31,7 @@ import ro.cs.tao.services.interfaces.ComponentService;
 import ro.cs.tao.services.interfaces.DataSourceComponentService;
 import ro.cs.tao.services.interfaces.WorkflowBuilder;
 import ro.cs.tao.services.interfaces.WorkflowService;
+import ro.cs.tao.services.utils.WorkflowUtilities;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
@@ -39,6 +40,7 @@ import ro.cs.tao.workflow.enums.Status;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -125,10 +127,11 @@ public abstract class WorkflowBuilderBase implements WorkflowBuilder {
         }
         node.setPreserveOutput(true);
         node.setCreated(LocalDateTime.now());
+        node.setLevel(parentNode != null ? parentNode.getLevel() + 1 : 0);
         node = workflowService.addNode(parent.getId(), node);
         if (parentNode != null) {
-            TaoComponent component1 = componentService.findComponent(parentNode.getComponentId(), parentComponentType);
-            TaoComponent component2 = componentService.findComponent(node.getComponentId(), componentType);
+            TaoComponent component1 = WorkflowUtilities.findComponent(parentNode);
+            TaoComponent component2 = WorkflowUtilities.findComponent(node);
             workflowService.addLink(parentNode.getId(), component1.getTargets().get(0).getId(),
                                     node.getId(), component2.getSources().get(0).getId());
         }
@@ -155,9 +158,10 @@ public abstract class WorkflowBuilderBase implements WorkflowBuilder {
         }
         node.setPreserveOutput(true);
         node.setCreated(LocalDateTime.now());
+        node.setLevel(parentNode != null ? parentNode.getLevel() + 1 : 0);
         node = workflowService.addNode(parent.getId(), node);
         if (parentNode != null) {
-            TaoComponent component1 = componentService.findComponent(parentNode.getComponentId(), parentComponentType);
+            TaoComponent component1 = WorkflowUtilities.findComponent(parentNode);
             if (!(component1 instanceof DataSourceComponentGroup)) {
                 throw new PersistenceException("Method is intended for data source groups as parent");
             }
@@ -168,7 +172,7 @@ public abstract class WorkflowBuilderBase implements WorkflowBuilder {
                                                              parentIndex, targets.size() - 1));
             }
             //DataSourceComponent parentComponent = dataSourceComponents.get(parentIndex);
-            TaoComponent component2 = componentService.findComponent(node.getComponentId(), componentType);
+            TaoComponent component2 = WorkflowUtilities.findComponent(node);
             workflowService.addLink(parentNode.getId(), targets.get(parentIndex).getId(),
                                     node.getId(), component2.getSources().get(0).getId());
         }
@@ -186,7 +190,8 @@ public abstract class WorkflowBuilderBase implements WorkflowBuilder {
         grpNode.setyCoord(coords[1]);
         grpNode.setCreated(LocalDateTime.now());
         grpNode.setPreserveOutput(true);
-        return workflowService.addGroup(parent.getId(), grpNode, parentNode.getId(), nodes);
+        grpNode.setLevel(parentNode != null ? parentNode.getLevel() + 1 : 0);
+        return workflowService.group(parent.getId(), grpNode, Arrays.asList(nodes));
     }
 
     protected void addLink(WorkflowDescriptor workflow, WorkflowNodeDescriptor parent, WorkflowNodeDescriptor child) throws PersistenceException {
@@ -226,7 +231,7 @@ public abstract class WorkflowBuilderBase implements WorkflowBuilder {
         }
     }
 
-    protected float[] placeNode(WorkflowNodeDescriptor relativeTo, Direction... directions) {
+    private float[] placeNode(WorkflowNodeDescriptor relativeTo, Direction... directions) {
         float x,y;
         if (relativeTo == null) {
             x = xOrigin;

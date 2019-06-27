@@ -18,11 +18,9 @@ package ro.cs.tao.services.interfaces;
 import ro.cs.tao.Sort;
 import ro.cs.tao.Tag;
 import ro.cs.tao.component.ProcessingComponent;
-import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.serialization.MediaType;
 import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.services.model.component.ProcessingComponentInfo;
-import ro.cs.tao.workflow.enums.ComponentType;
 
 import java.util.List;
 
@@ -32,8 +30,6 @@ import java.util.List;
  * @author Cosmin Cara
  */
 public interface ComponentService extends CRUDService<ProcessingComponent, String> {
-
-    TaoComponent findComponent(String id, ComponentType type);
 
     /**
      * Retrieves the list of class names that represent component input/output constraints.
