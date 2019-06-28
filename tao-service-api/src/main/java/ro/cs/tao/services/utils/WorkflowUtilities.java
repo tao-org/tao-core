@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component;
 import ro.cs.tao.component.*;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.workflow.GraphObject;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
@@ -22,14 +23,11 @@ import java.util.stream.Collectors;
  */
 @Component
 public class WorkflowUtilities {
-    private static PersistenceManager persistenceManager;
+    private static final PersistenceManager persistenceManager;
     private static final Logger logger = Logger.getLogger(WorkflowUtilities.class.getName());
 
-    /**
-     * Setter for the persistence manager
-     */
-    public static void setPersistenceManager(PersistenceManager manager) {
-        persistenceManager = manager;
+    static {
+        persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
     }
 
     /**
@@ -67,6 +65,7 @@ public class WorkflowUtilities {
                 nodes.forEach(n -> {
                     if (nodes.stream()
                             .noneMatch(n1 -> !n1.getId().equals(n.getId()) &&
+                                             n1.getIncomingLinks() != null &&
                                              n1.getIncomingLinks().stream()
                                                 .anyMatch(l -> n.getId().equals(l.getSourceNodeId())))) {
                         terminals.add(n);
