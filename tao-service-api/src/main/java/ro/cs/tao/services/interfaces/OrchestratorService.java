@@ -21,6 +21,7 @@ import ro.cs.tao.datasource.beans.Parameter;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.model.ExecutionJobSummary;
 import ro.cs.tao.execution.model.ExecutionTaskSummary;
+import ro.cs.tao.persistence.exception.PersistenceException;
 
 import java.util.List;
 import java.util.Map;
@@ -37,13 +38,13 @@ public interface OrchestratorService extends TAOService {
      * The parameters are grouped by the component identifier
      * @param workflowId    The workflow identifier
      */
-    Map<String, List<Parameter>> getWorkflowParameters(long workflowId);
+    Map<String, List<Parameter>> getWorkflowParameters(long workflowId) throws PersistenceException;
 
     /**
      * Returns the outputs (i.e. the target descriptors of terminal nodes) of a workflow.
      * @param workflowId    The workflow identifier
      */
-    List<TargetDescriptor> getWorkflowOutputs(long workflowId);
+    List<TargetDescriptor> getWorkflowOutputs(long workflowId) throws PersistenceException;
     /**
      * Creates a job from a workflow definition and starts its execution.
      *
