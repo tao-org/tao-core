@@ -121,6 +121,7 @@ public class Orchestrator extends Notifiable {
                                                                                quotaVerifierClass, e.getMessage()));
             quotaVerifier = new NullQuotaVerifier();
         }
+        quotaVerifier.setPersistenceManager(instance.persistenceManager);
     }
 
     public static Orchestrator getInstance() {
