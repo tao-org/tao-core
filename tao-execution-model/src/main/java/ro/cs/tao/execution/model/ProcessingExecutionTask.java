@@ -210,12 +210,24 @@ public class ProcessingExecutionTask extends ExecutionTask {
                 if (!path.isAbsolute()) {
                     path = context.getNetSpace().resolve(path);
                 }
-                String fileName = path.getFileName().toString();
-                String folderName = String.format(nameTemplate,
-                                                  this.getJob().getId(),
-                                                  this.getId(),
-                                                  this.internalState == null ? "" : this.internalState + "-",
-                                                  FileUtilities.getFilenameWithoutExtension(fileName));
+                final String fileName;
+                final String folderName;
+                if (this.component.getTargets().stream().anyMatch(t -> t.getDataDescriptor().getLocation().equals(location))) {
+                    fileName = String.format(nameTemplate,
+                                             this.getJob().getId(),
+                                             this.getId(),
+                                             this.internalState == null ? "" : this.internalState + "-",
+                                             path.getFileName().toString());
+                    folderName = FileUtilities.getFilenameWithoutExtension(fileName);
+                } else {
+                    fileName = path.getFileName().toString();
+                    folderName = String.format(nameTemplate,
+                                               this.getJob().getId(),
+                                               this.getId(),
+                                               this.internalState == null ? "" : this.internalState + "-",
+                                               FileUtilities.getFilenameWithoutExtension(fileName));
+                }
+
                 try {
                     FileUtilities.ensureExists(context.getWorkspace().resolve(folderName));
                 } catch (IOException e) {

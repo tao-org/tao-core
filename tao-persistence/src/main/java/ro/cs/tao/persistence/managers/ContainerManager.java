@@ -21,7 +21,7 @@ import ro.cs.tao.docker.Application;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.persistence.repository.ContainerRepository;
 
-@Component("componentManager")
+@Component("containerManager")
 public class ContainerManager extends EntityManager<Container, String, ContainerRepository> {
 
     public Container getByName(String name) {
