@@ -198,7 +198,9 @@ public class ProcessingExecutionTask extends ExecutionTask {
     /**
      * Computes the actual path of the output of this task.
      * The "virtual" path (what is reported to the next task) is build considering the common share,
-     * while the actual path is build consideing the master workspace path.
+     * while the actual path is build considering the master workspace path.
+     * If the value of the parameter is different from the default one, then it is left "as-is", because
+     * it may represent a name expression that will be externally parsed.
      * @param location  The template value of the target of this task.
      */
     public String getInstanceTargetOuptut(String location) {
@@ -210,12 +212,27 @@ public class ProcessingExecutionTask extends ExecutionTask {
                 if (!path.isAbsolute()) {
                     path = context.getNetSpace().resolve(path);
                 }
-                String fileName = path.getFileName().toString();
-                String folderName = String.format(nameTemplate,
-                                                  this.getJob().getId(),
-                                                  this.getId(),
-                                                  this.internalState == null ? "" : this.internalState + "-",
-                                                  FileUtilities.getFilenameWithoutExtension(fileName));
+                final String fileName;
+                if (this.component.getTargets().stream().anyMatch(t -> t.getDataDescriptor().getLocation().equals(location))) {
+                    fileName = String.format(nameTemplate,
+                                             this.getJob().getId(),
+                                             this.getId(),
+                                             this.internalState == null ? "" : this.internalState + "-",
+                                             path.getFileName().toString());
+//                    folderName = FileUtilities.getFilenameWithoutExtension(fileName);
+                } else {
+                    fileName = path.getFileName().toString();
+//                    folderName = String.format(nameTemplate,
+//                                               this.getJob().getId(),
+//                                               this.getId(),
+//                                               this.internalState == null ? "" : this.internalState + "-",
+//                                               FileUtilities.getFilenameWithoutExtension(fileName));
+                }
+                final String folderName = String.format(nameTemplate,
+                                                        this.getJob().getId(),
+                                                        this.getId(),
+                                                        this.internalState == null ? "" : this.internalState + "-",
+                                                        this.component.getId());
                 try {
                     FileUtilities.ensureExists(context.getWorkspace().resolve(folderName));
                 } catch (IOException e) {

@@ -19,6 +19,8 @@ package ro.cs.tao.component;
 import ro.cs.tao.component.enums.ProcessingComponentVisibility;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -49,50 +51,16 @@ public class GroupComponent extends TaoComponent {
         component.setParallelism(1);
         if (sources != null) {
             for (SourceDescriptor source : sources) {
-                SourceDescriptor sourceDescriptor = new SourceDescriptor();
+                SourceDescriptor sourceDescriptor = source.clone();
                 sourceDescriptor.setId(UUID.randomUUID().toString());
-                sourceDescriptor.setName(source.getName());
-                List<String> constraints = source.getConstraints();
-                if (constraints != null) {
-                    for (String constraint : constraints) {
-                        sourceDescriptor.addConstraint(constraint);
-                    }
-                }
-                DataDescriptor srcData = source.getDataDescriptor();
-                DataDescriptor data = new DataDescriptor();
-                data.setFormatType(srcData.getFormatType());
-                data.setLocation(srcData.getLocation());
-                data.setDimension(srcData.getDimension());
-                data.setGeometry(srcData.getGeometry());
-                data.setSensorType(srcData.getSensorType());
-                data.setCrs(srcData.getCrs());
-                sourceDescriptor.setDataDescriptor(data);
-                sourceDescriptor.setCardinality(source.getCardinality());
-                component.addSource(sourceDescriptor);
+                component.addSource(sourceDescriptor, source.getId());
             }
         }
         if (targets != null) {
             for (TargetDescriptor target: targets) {
-                TargetDescriptor targetDescriptor = new TargetDescriptor();
+                TargetDescriptor targetDescriptor = target.clone();
                 targetDescriptor.setId(UUID.randomUUID().toString());
-                targetDescriptor.setName(target.getName());
-                List<String> constraints = target.getConstraints();
-                if (constraints != null) {
-                    for (String constraint : constraints) {
-                        targetDescriptor.addConstraint(constraint);
-                    }
-                }
-                DataDescriptor srcData = target.getDataDescriptor();
-                DataDescriptor data = new DataDescriptor();
-                data.setFormatType(srcData.getFormatType());
-                data.setLocation(srcData.getLocation());
-                data.setDimension(srcData.getDimension());
-                data.setGeometry(srcData.getGeometry());
-                data.setSensorType(srcData.getSensorType());
-                data.setCrs(srcData.getCrs());
-                targetDescriptor.setDataDescriptor(data);
-                targetDescriptor.setCardinality(target.getCardinality());
-                component.addTarget(targetDescriptor);
+                component.addTarget(targetDescriptor, target.getId());
             }
         }
         component.setActive(true);
@@ -125,6 +93,50 @@ public class GroupComponent extends TaoComponent {
 
     @Override
     public String defaultId() { return "NewGroup"; }
+
+    private void addSource(SourceDescriptor source, String originalId) {
+        if (this.sources == null) {
+            this.sources = new ArrayList<>();
+        }
+        source.setParentId(this.id);
+        this.sources.add(source);
+        if (this.descriptorIndex == null) {
+            this.descriptorIndex = new HashMap<>();
+        }
+        this.descriptorIndex.put(source.getId(), source);
+        this.descriptorIndex.put(originalId, source);
+    }
+
+    public void removeSource(SourceDescriptor source) {
+        super.removeSource(source);
+        if (this.descriptorIndex != null) {
+            this.descriptorIndex.entrySet().stream()
+                    .filter(e -> e.getValue().getId().equals(source.getId()))
+                    .findFirst().ifPresent(entry -> this.descriptorIndex.remove(entry.getKey()));
+        }
+    }
+
+    private void addTarget(TargetDescriptor target, String originalId) {
+        if (this.targets == null) {
+            this.targets = new ArrayList<>();
+        }
+        target.setParentId(this.id);
+        this.targets.add(target);
+        if (this.descriptorIndex == null) {
+            this.descriptorIndex = new HashMap<>();
+        }
+        this.descriptorIndex.put(target.getId(), target);
+        this.descriptorIndex.put(originalId, target);
+    }
+
+    public void removeTarget(TargetDescriptor target) {
+        super.removeTarget(target);
+        if (this.descriptorIndex != null) {
+            this.descriptorIndex.entrySet().stream()
+                    .filter(e -> e.getValue().getId().equals(target.getId()))
+                    .findFirst().ifPresent(entry -> this.descriptorIndex.remove(entry.getKey()));
+        }
+    }
 
     @Override
     public GroupComponent clone() throws CloneNotSupportedException {

@@ -50,7 +50,7 @@ public class NodeManager extends Notifiable {
                                                                                quotaVerifierClass, e.getMessage()));
             quotaVerifier = new NullQuotaVerifier();
         }
-        quotaVerifier.setPersistenceManager(SpringContextBridge.services().getService(PersistenceManager.class));
+        quotaVerifier.setPersistenceManager(isAvailable ? instance.persistenceManager : SpringContextBridge.services().getService(PersistenceManager.class));
     }
 
     /**

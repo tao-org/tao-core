@@ -17,6 +17,7 @@
 package ro.cs.tao.services.base;
 
 import ro.cs.tao.component.ProcessingComponent;
+import ro.cs.tao.component.SourceDescriptor;
 import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.datasource.DataSourceComponent;
@@ -30,6 +31,7 @@ import ro.cs.tao.services.interfaces.ComponentService;
 import ro.cs.tao.services.interfaces.DataSourceComponentService;
 import ro.cs.tao.services.interfaces.WorkflowBuilder;
 import ro.cs.tao.services.interfaces.WorkflowService;
+import ro.cs.tao.services.utils.WorkflowUtilities;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
@@ -38,6 +40,7 @@ import ro.cs.tao.workflow.enums.Status;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -108,7 +111,7 @@ public abstract class WorkflowBuilderBase implements WorkflowBuilder {
     protected WorkflowNodeDescriptor addNode(WorkflowDescriptor parent, String name, String componentId,
                                              ComponentType componentType, Map<String, String> customValues,
                                              WorkflowNodeDescriptor parentNode, ComponentType parentComponentType,
-                                             Direction relativeDirection) throws PersistenceException {
+                                             Direction... relativeDirection) throws PersistenceException {
         WorkflowNodeDescriptor node = new WorkflowNodeDescriptor();
         node.setWorkflow(parent);
         node.setName(name);
@@ -124,10 +127,11 @@ public abstract class WorkflowBuilderBase implements WorkflowBuilder {
         }
         node.setPreserveOutput(true);
         node.setCreated(LocalDateTime.now());
+        node.setLevel(parentNode != null ? parentNode.getLevel() + 1 : 0);
         node = workflowService.addNode(parent.getId(), node);
         if (parentNode != null) {
-            TaoComponent component1 = componentService.findComponent(parentNode.getComponentId(), parentComponentType);
-            TaoComponent component2 = componentService.findComponent(node.getComponentId(), componentType);
+            TaoComponent component1 = WorkflowUtilities.findComponent(parentNode);
+            TaoComponent component2 = WorkflowUtilities.findComponent(node);
             workflowService.addLink(parentNode.getId(), component1.getTargets().get(0).getId(),
                                     node.getId(), component2.getSources().get(0).getId());
         }
@@ -138,7 +142,7 @@ public abstract class WorkflowBuilderBase implements WorkflowBuilder {
                                              ComponentType componentType, Map<String, String> customValues,
                                              WorkflowNodeDescriptor parentNode, ComponentType parentComponentType,
                                              int parentIndex,
-                                             Direction relativeDirection) throws PersistenceException {
+                                             Direction... relativeDirection) throws PersistenceException {
         WorkflowNodeDescriptor node = new WorkflowNodeDescriptor();
         node.setWorkflow(parent);
         node.setName(name);
@@ -154,9 +158,10 @@ public abstract class WorkflowBuilderBase implements WorkflowBuilder {
         }
         node.setPreserveOutput(true);
         node.setCreated(LocalDateTime.now());
+        node.setLevel(parentNode != null ? parentNode.getLevel() + 1 : 0);
         node = workflowService.addNode(parent.getId(), node);
         if (parentNode != null) {
-            TaoComponent component1 = componentService.findComponent(parentNode.getComponentId(), parentComponentType);
+            TaoComponent component1 = WorkflowUtilities.findComponent(parentNode);
             if (!(component1 instanceof DataSourceComponentGroup)) {
                 throw new PersistenceException("Method is intended for data source groups as parent");
             }
@@ -167,7 +172,7 @@ public abstract class WorkflowBuilderBase implements WorkflowBuilder {
                                                              parentIndex, targets.size() - 1));
             }
             //DataSourceComponent parentComponent = dataSourceComponents.get(parentIndex);
-            TaoComponent component2 = componentService.findComponent(node.getComponentId(), componentType);
+            TaoComponent component2 = WorkflowUtilities.findComponent(node);
             workflowService.addLink(parentNode.getId(), targets.get(parentIndex).getId(),
                                     node.getId(), component2.getSources().get(0).getId());
         }
@@ -185,19 +190,48 @@ public abstract class WorkflowBuilderBase implements WorkflowBuilder {
         grpNode.setyCoord(coords[1]);
         grpNode.setCreated(LocalDateTime.now());
         grpNode.setPreserveOutput(true);
-        return workflowService.addGroup(parent.getId(), grpNode, parentNode.getId(), nodes);
+        grpNode.setLevel(parentNode != null ? parentNode.getLevel() + 1 : 0);
+        return workflowService.group(parent.getId(), grpNode, Arrays.asList(nodes));
     }
 
     protected void addLink(WorkflowDescriptor workflow, WorkflowNodeDescriptor parent, WorkflowNodeDescriptor child) throws PersistenceException {
+        addLink(workflow, parent, null, child, null);
+    }
+
+    protected void addLink(WorkflowDescriptor workflow,
+                           WorkflowNodeDescriptor parent,
+                           String fromParentPort,
+                           WorkflowNodeDescriptor child,
+                           String toChildPort) throws PersistenceException {
         if (parent != null && child != null) {
             ProcessingComponent component1 = componentService.findById(parent.getComponentId());
             ProcessingComponent component2 = componentService.findById(child.getComponentId());
-            workflowService.addLink(parent.getId(), component1.getTargets().get(0).getId(),
-                                    child.getId(), component2.getSources().get(0).getId());
+            final TargetDescriptor linkSource;
+            final SourceDescriptor linkTarget;
+            if (fromParentPort == null) {
+                linkSource = component1.getTargets().get(0);
+            } else {
+                linkSource = component1.findDescriptor(fromParentPort);
+                if (linkSource == null) {
+                    throw new PersistenceException(String.format("No such target descriptor [%s] for component [%s]",
+                                                                 fromParentPort, parent.getId()));
+                }
+            }
+            if (toChildPort == null) {
+                linkTarget = component2.getSources().get(0);
+            } else {
+                linkTarget = component2.findDescriptor(toChildPort);
+                if (linkTarget == null) {
+                    throw new PersistenceException(String.format("No such source descriptor [%s] for component [%s]",
+                                                                 toChildPort, parent.getId()));
+                }
+            }
+            workflowService.addLink(parent.getId(), linkSource.getId(),
+                                    child.getId(), linkTarget.getId());
         }
     }
 
-    protected float[] placeNode(WorkflowNodeDescriptor relativeTo, Direction direction) {
+    private float[] placeNode(WorkflowNodeDescriptor relativeTo, Direction... directions) {
         float x,y;
         if (relativeTo == null) {
             x = xOrigin;
@@ -206,36 +240,40 @@ public abstract class WorkflowBuilderBase implements WorkflowBuilder {
             x = relativeTo.getxCoord();
             y = relativeTo.getyCoord();
         }
-        if (direction != null) {
-            switch (direction) {
-                case TOP:
-                    y -= yStep;
-                    break;
-                case BOTTOM:
-                    y += yStep;
-                    break;
-                case LEFT:
-                    x -= xStep;
-                    break;
-                case RIGHT:
-                    x += xStep;
-                    break;
-                case TOP_LEFT:
-                    x -= xStep;
-                    y -= yStep;
-                    break;
-                case TOP_RIGHT:
-                    x += xStep;
-                    y -= yStep;
-                    break;
-                case BOTTOM_LEFT:
-                    x -= xStep;
-                    y += yStep;
-                    break;
-                case BOTTOM_RIGHT:
-                    x += xStep;
-                    y += yStep;
-                    break;
+        if (directions != null) {
+            for (Direction direction : directions) {
+                if (direction != null) {
+                    switch (direction) {
+                        case TOP:
+                            y -= yStep;
+                            break;
+                        case BOTTOM:
+                            y += yStep;
+                            break;
+                        case LEFT:
+                            x -= xStep;
+                            break;
+                        case RIGHT:
+                            x += xStep;
+                            break;
+                        case TOP_LEFT:
+                            x -= xStep;
+                            y -= yStep;
+                            break;
+                        case TOP_RIGHT:
+                            x += xStep;
+                            y -= yStep;
+                            break;
+                        case BOTTOM_LEFT:
+                            x -= xStep;
+                            y += yStep;
+                            break;
+                        case BOTTOM_RIGHT:
+                            x += xStep;
+                            y += yStep;
+                            break;
+                    }
+                }
             }
         }
         return new float[] { x, y };
