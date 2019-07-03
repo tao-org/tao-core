@@ -39,10 +39,10 @@ import java.util.Map;
 public class VelocityTemplateEngine extends TemplateEngine {
     private static final String LINE_SEPARATOR = "\r\n|\n";
 
-    private String macroTemplateContents;
+    private static String macroTemplateContents;
 
-    VelocityTemplateEngine() {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream("macros.vm")))) {
+    static {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(VelocityTemplateEngine.class.getResourceAsStream("macros.vm")))) {
             String line;
             StringBuilder builder = new StringBuilder();
             while ((line = reader.readLine()) != null) {
@@ -50,7 +50,7 @@ public class VelocityTemplateEngine extends TemplateEngine {
             }
             if (builder.length() > 0) {
                 builder.setLength(builder.length() - 1);
-                this.macroTemplateContents = builder.toString();
+                macroTemplateContents = builder.toString();
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -102,9 +102,9 @@ public class VelocityTemplateEngine extends TemplateEngine {
 
     private org.apache.velocity.Template createTemplate(org.apache.velocity.app.VelocityEngine engine, Template internalTemplate) throws ParseException {
         org.apache.velocity.Template template;
-        if (this.macroTemplateContents != null && !this.macroTemplateContents.isEmpty()) {
+        if (macroTemplateContents != null && !macroTemplateContents.isEmpty()) {
             RuntimeServices runtimeServices = RuntimeSingleton.getRuntimeServices();
-            String veloTemplate = this.macroTemplateContents + "\n" + internalTemplate.getContents();
+            String veloTemplate = macroTemplateContents + "\n" + internalTemplate.getContents();
             StringReader reader = new StringReader(veloTemplate);
             SimpleNode node = runtimeServices.parse(reader, internalTemplate.getName());
             template = new org.apache.velocity.Template();

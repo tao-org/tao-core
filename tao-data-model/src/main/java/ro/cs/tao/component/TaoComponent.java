@@ -137,9 +137,11 @@ public abstract class TaoComponent extends StringIdentifiable {
             if (this.descriptorIndex == null) {
                 this.descriptorIndex = new HashMap<>();
             }
-            this.sources.forEach(s -> {
-                if (s != null && s.getId() != null) { this.descriptorIndex.put(s.getId(), s); }
-            });
+            try {
+                this.sources.forEach(s -> this.descriptorIndex.put(s.getId(), s));
+            } catch (Exception ignored) {
+                // a LazyInitializationException may occur here due to multiple lazy-loaded collections
+            }
         }
     }
 
@@ -182,7 +184,11 @@ public abstract class TaoComponent extends StringIdentifiable {
             if (this.descriptorIndex == null) {
                 this.descriptorIndex = new HashMap<>();
             }
-            this.targets.forEach(t -> this.descriptorIndex.put(t.getId(), t));
+            try {
+                this.targets.forEach(t -> this.descriptorIndex.put(t.getId(), t));
+            } catch (Exception ignored) {
+                // a LazyInitializationException may occur here due to multiple lazy-loaded collections
+            }
         }
     }
     /**
@@ -254,7 +260,29 @@ public abstract class TaoComponent extends StringIdentifiable {
         return clone;
     }
 
-    public <T extends StringIdentifiable> T findDescriptor(String id) { return (T) this.descriptorIndex.get(id); }
+    public <T extends StringIdentifiable> T findDescriptor(String id) {
+        if (this.descriptorIndex == null || this.descriptorIndex.size() != indexExpectedCount()) {
+            reinitIndex();
+        }
+        return (T) this.descriptorIndex.get(id);
+    }
 
-    public boolean hasDescriptor(String id) { return this.descriptorIndex.containsKey(id); }
+    public boolean hasDescriptor(String id) {
+        if (this.descriptorIndex == null || this.descriptorIndex.size() != indexExpectedCount()) {
+            reinitIndex();
+        }
+        return this.descriptorIndex.containsKey(id);
+    }
+
+    private int indexExpectedCount() {
+        return (this.sources != null ? this.sources.size() : 0) + (this.targets != null ? this.targets.size() : 0);
+    }
+
+    private void reinitIndex() {
+        if (this.descriptorIndex == null) {
+            this.descriptorIndex = new HashMap<>();
+        }
+        this.sources.forEach(s -> this.descriptorIndex.putIfAbsent(s.getId(), s));
+        this.targets.forEach(t -> this.descriptorIndex.putIfAbsent(t.getId(), t));
+    }
 }

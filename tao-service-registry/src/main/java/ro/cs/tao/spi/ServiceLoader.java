@@ -38,7 +38,7 @@ public class ServiceLoader {
                 T next = iterator.next();
                 registry.addService(next);
             } catch (ServiceConfigurationError e) {
-                Logger.getLogger(ServiceLoader.class.getName()).severe(e.getMessage());
+                Logger.getLogger(ServiceLoader.class.getName()).warning(e.getMessage());
             }
         }
     }

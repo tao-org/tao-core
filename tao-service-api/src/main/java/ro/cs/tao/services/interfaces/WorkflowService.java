@@ -40,8 +40,17 @@ import java.util.Map;
  */
 public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
 
+    /**
+     * Returns a full workflow graph for the workflow with the given identifier
+     * @param id    The workflow identifier
+     */
     WorkflowDescriptor getFullDescriptor(Long id);
-
+    /**
+     * Returns the summary information for a workflow.
+     * @param workflowId    The workflow identifier
+     * @return The workflow information (not the full workflow structure)
+     */
+    WorkflowInfo getWorkflowInfo(long workflowId);
     /**
      * Returns the workflows of a given user, that have a specific status.
      * @param user      The user name (login)
@@ -62,12 +71,6 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
      * @return The workflow information list (not the full workflow structures)
      */
     List<WorkflowInfo> getOtherPublicWorkflows(String user);
-    /**
-     * Returns the summary information for a workflow.
-     * @param workflowId    The workflow identifier
-     * @return The workflow information (not the full workflow structure)
-     */
-    WorkflowInfo getWorkflowInfo(long workflowId);
     /**
      * Returns all the public workflows.
      * @return The workflow information list (not the full workflow structures)
@@ -97,7 +100,6 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
      * @throws PersistenceException if the nodes cannot be updated or persisted
      */
     List<WorkflowNodeDescriptor> updateNodes(long workflowId, List<WorkflowNodeDescriptor> nodeDescriptors) throws PersistenceException;
-
     /**
      * Updates only the positions of the given nodes.
      * @param workflowId    The workflow identifier
@@ -127,62 +129,53 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
      */
     WorkflowNodeDescriptor removeLink(long nodeId, ComponentLink link) throws PersistenceException;
     /**
-     * Adds a group node to a workflow.
+     * Creates a group node and adds it to a workflow, from a list of nodes.
+     * The sources of the group will be created from the nodes that either don't have any incoming link or that have
+     * links only from nodes outside the node list.
+     * The targets of the group will be created from the nodes that either don't have any outgoing link or that have
+     * links only to nodes outside the node list.
      * @param workflowId         The workflow identifier
      * @param groupDescriptor    The group node to add
-     * @param nodeBeforeId       The parent node (node before the group) identifier
      * @param nodes              The nodes to be grouped
-     * @return  The group node
+     * @return  The group node after its database persistence
      */
-    WorkflowNodeDescriptor addGroup(long workflowId, WorkflowNodeGroupDescriptor groupDescriptor,
-                                    long nodeBeforeId, WorkflowNodeDescriptor[] nodes) throws PersistenceException;
+    WorkflowNodeDescriptor group(long workflowId, WorkflowNodeGroupDescriptor groupDescriptor,
+                                 List<WorkflowNodeDescriptor> nodes) throws PersistenceException;
     /**
-     * Adds a group node to a workflow.
-     * @param workflowId         The workflow identifier
-     * @param groupDescriptor    The group node to add
-     * @param nodeBeforeId       The parent node (node before the group) identifier
-     * @param nodes              The nodes to be grouped
-     * @return  The group node
-     */
-    WorkflowNodeDescriptor addGroup(long workflowId, WorkflowNodeGroupDescriptor groupDescriptor,
-                                    long nodeBeforeId, List<WorkflowNodeDescriptor> nodes) throws PersistenceException;
-    /**
-     * Adds a group node to a workflow.
-     * @param workflowId         The workflow identifier
-     * @param groupDescriptor    The group node to add
-     * @param nodesBeforeIds     The identifier of parent nodes (from which there are links to the selected nodes)
-     * @param nodes              The nodes to be grouped
-     * @return  The group node
-     */
-    WorkflowNodeDescriptor addGroup(long workflowId, WorkflowNodeGroupDescriptor groupDescriptor,
-                                    Long[] nodesBeforeIds, List<WorkflowNodeDescriptor> nodes) throws PersistenceException;
-    /**
-     * Adds a group node to a workflow
+     * Creates a group node and adds it to a workflow, from a list of nodes.
+     * The sources of the group will be created from the nodes that either don't have any incoming link or that have
+     * links only from nodes outside the node list.
+     * The targets of the group will be created from the nodes that either don't have any outgoing link or that have
+     * links only to nodes outside the node list.
      * @param workflowId        The workflow identifier
-     * @param nodeBeforeId      The parent node (node before the group) identifier
-     * @param nodeIds           The ids of the nodes to be grouped
-     * @return  The group node
+     * @param groupName         The name of the group node
+     * @param nodes             The nodes to be grouped
+     * @return  The group node after its database persistence
      */
-    WorkflowNodeDescriptor addGroup(long workflowId, long nodeBeforeId, String groupName, Long[] nodeIds) throws PersistenceException;
+    WorkflowNodeDescriptor group(long workflowId, String groupName, List<WorkflowNodeDescriptor> nodes) throws PersistenceException;
     /**
-     * Adds a group node to a workflow
+     * Creates a group node and adds it to a workflow, from a list of nodes.
+     * The sources of the group will be created from the nodes that either don't have any incoming link or that have
+     * links only from nodes outside the node list.
+     * The targets of the group will be created from the nodes that either don't have any outgoing link or that have
+     * links only to nodes outside the node list.
      * @param workflowId        The workflow identifier
-     * @param nodesBeforeIds    The identifier of parent nodes (from which there are links to the selected nodes)
-     * @param nodeIds           The ids of the nodes to be grouped
-     * @return  The group node
+     * @param groupName         The name of the group node
+     * @param nodeIds           The identifiers of the nodes to be grouped
+     * @return  The group node after its database persistence
      */
-    WorkflowNodeDescriptor addGroup(long workflowId, Long[] nodesBeforeIds, String groupName, Long[] nodeIds) throws PersistenceException;
+    WorkflowNodeDescriptor group(long workflowId, String groupName, Long[] nodeIds) throws PersistenceException;
+    /**
+     * Removes a group node from a workflow.
+     * @param groupDescriptor    The group node to remove
+     */
+    void ungroup(WorkflowNodeGroupDescriptor groupDescriptor, boolean removeChildren) throws PersistenceException;
     /**
      * Updates a group node of a workflow.
      * @param groupDescriptor    The group node to update
      * @return  The updated group node
      */
     WorkflowNodeDescriptor updateGroup(WorkflowNodeGroupDescriptor groupDescriptor) throws PersistenceException;
-    /**
-     * Removes a group node from a workflow.
-     * @param groupDescriptor    The group node to remove
-     */
-    void removeGroup(WorkflowNodeGroupDescriptor groupDescriptor, boolean removeChildren) throws PersistenceException;
     /**
      * Creates a duplicate of the given workflow
      *
@@ -220,13 +213,13 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
      * The parameters are grouped by the component identifier
      * @param workflowId    The workflow identifier
      */
-    Map<String, List<Parameter>> getWorkflowParameters(long workflowId);
+    Map<String, List<Parameter>> getWorkflowParameters(long workflowId) throws PersistenceException;
 
     /**
      * Returns the output descriptors (i.e. the ones of the terminal node) of a workflow.
      * @param workflowId    The workflow identifier
      */
-    List<TargetDescriptor> getWorkflowOutputs(long workflowId);
+    List<TargetDescriptor> getWorkflowOutputs(long workflowId) throws PersistenceException;
 
     /**
      * Returns all tags that are associated with workflows.
