@@ -16,7 +16,20 @@
 
 package ro.cs.tao.execution.local;
 
-import ro.cs.tao.component.*;
+import java.net.InetAddress;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.stream.Collectors;
+
+import ro.cs.tao.component.Aggregator;
+import ro.cs.tao.component.ComponentLink;
+import ro.cs.tao.component.SystemVariable;
+import ro.cs.tao.component.TaoComponent;
+import ro.cs.tao.component.Variable;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.datasource.DataQuery;
 import ro.cs.tao.datasource.DataSourceComponent;
@@ -33,21 +46,14 @@ import ro.cs.tao.execution.Executor;
 import ro.cs.tao.execution.OutputDataHandlerManager;
 import ro.cs.tao.execution.model.DataSourceExecutionTask;
 import ro.cs.tao.execution.model.ExecutionStatus;
+import ro.cs.tao.execution.monitor.UserQuotaManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.serialization.StringListAdapter;
 import ro.cs.tao.utils.Tuple;
 import ro.cs.tao.utils.executors.NamedThreadPoolExecutor;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
-
-import java.net.InetAddress;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.stream.Collectors;
 
 /**
  * Specialized executor that will perform a query to a data source.
@@ -237,6 +243,12 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
 
     @Override
     public boolean downloadStarted(EOProduct product) {
+    	// check input quota before download
+    	if (!UserQuotaManager.getInstance().checkUserInputQuota(logger)) {
+    		// do not allow for the download to start
+    		return false;
+    	}
+    	
         product.setProductStatus(ProductStatus.DOWNLOADING);
         try {
             persistenceManager.saveEOProduct(product);
@@ -250,8 +262,13 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
     @Override
     public void downloadCompleted(EOProduct product) {
         product.setProductStatus(ProductStatus.DOWNLOADED);
+        // update the product's reference
+        product.addReference(SessionStore.currentContext().getPrincipal().getName());
         try {
             persistenceManager.saveEOProduct(product);
+            
+            // update user input quota
+            UserQuotaManager.getInstance().updateUserInputQuota();        
         } catch (PersistenceException e) {
             logger.severe(String.format("Updating product %s failed. Reason: %s", product.getName(), e.getMessage()));
         }
