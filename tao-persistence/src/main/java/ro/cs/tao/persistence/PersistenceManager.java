@@ -207,6 +207,11 @@ public class PersistenceManager implements MessagePersister {
         return productManager.getUserEOProductsSize(user);
     }
 
+    public long getUserInputProductsSize(String user, String location) {
+        return productManager.getUserInputEOProductsSize(user, location);
+    }
+
+    
     public List<EOProduct> getJobOutputs(long jobId) {
         return productManager.getJobOutputs(jobId);
     }

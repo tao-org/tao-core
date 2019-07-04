@@ -1,10 +1,12 @@
 package ro.cs.tao.execution;
 
+import ro.cs.tao.component.SystemVariable;
 import ro.cs.tao.execution.model.ExecutionJob;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.user.User;
 
+import java.io.File;
 import java.security.Principal;
 
 public class DefaultQuotaVerifier implements QuotaVerifier {
@@ -27,7 +29,8 @@ public class DefaultQuotaVerifier implements QuotaVerifier {
             throw new PersistenceException(String.format("User '%s' not found", userName));
         }
         final long targetQuota = user.getInputQuota();
-        final long actualQuota = persistenceManager.getUserProductsSize(userName); //user.getActualInputQuota();
+        final String location = new File(SystemVariable.SHARED_WORKSPACE.value()).toURI().toString();
+        final long actualQuota = user.getActualInputQuota();
         return targetQuota == -1 || targetQuota > actualQuota;
     }
 

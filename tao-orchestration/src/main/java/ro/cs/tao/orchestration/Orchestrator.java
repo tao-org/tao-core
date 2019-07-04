@@ -894,35 +894,10 @@ public class Orchestrator extends Notifiable {
      * @throws ExecutionException if the database access fails. 
      */
     private boolean checkProcessingQuota() throws ExecutionException {
-    	final Principal userPrincipal = SessionStore.currentContext().getPrincipal();
-        
     	// update the quota before checking
         UserQuotaManager.getInstance().updateUserProcessingQuota();
-
-    	try {
-			if (!quotaVerifier.checkUserProcessingQuota(userPrincipal))
-			{
-				// the allocated quota was reached. the execution cannot start
-				// get the user's quotas
-				final long[] quotas = persistenceManager.getUserDiskQuotas(userPrincipal.getName());
-				
-				// create the message
-				final String msg = String.format("The workflow execution cannot start because you have reached "
-						+ "your processing disk quota (defined quota: %dGB, used quota: %dGB). Please delete some files from your "
-						+ "workspace to continue", quotas[2], quotas[3]);
-				
-				// publish the message to the ERROR topic and log it
-				Messaging.send(userPrincipal, Topics.ERROR, this, msg);
-				logger.info(msg);
-				
-				return false;
-			}
-			
-			// quota available. Execution can start
-			return true;
-		} catch (PersistenceException e) {
-			throw new ExecutionException(String.format("Cannot determine disk execution quota. Reason: %s", e.getMessage()), e);
-		}
+        
+        return UserQuotaManager.getInstance().checkUserProcessingQuota(logger);
     }
     
     private class QueueMonitor extends Thread {
