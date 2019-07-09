@@ -17,6 +17,7 @@
 package ro.cs.tao.services.interfaces;
 
 import ro.cs.tao.eodata.EOProduct;
+import ro.cs.tao.quota.QuotaException;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -27,7 +28,7 @@ public interface ProductService extends CRUDService<EOProduct, String> {
     List<EOProduct> inspect(Path sourcePath) throws IOException;
     List<EOProduct> getByNames(String... names);
     int importProducts(List<EOProduct> products);
-    int importProducts(String sourcePath, boolean linkOnly) throws IOException;
+    int importProducts(String sourcePath, boolean linkOnly) throws IOException, QuotaException;
     List<String> checkExisting(String... names);
 
 }
