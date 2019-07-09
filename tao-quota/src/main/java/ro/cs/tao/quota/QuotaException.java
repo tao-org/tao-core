@@ -1,14 +1,14 @@
 /**
  * 
  */
-package ro.cs.tao.execution.quota;
-
-import ro.cs.tao.BaseException;
+package ro.cs.tao.quota;
 
 /**
+ * Quota related exceptions.
+ * 
  * @author Lucian Barbulescu
  */
-public class QuotaException extends BaseException {
+public class QuotaException extends Exception {
 
 	public QuotaException() {
 		super();
