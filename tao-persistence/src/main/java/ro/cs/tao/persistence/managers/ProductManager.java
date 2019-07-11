@@ -16,14 +16,6 @@
 
 package ro.cs.tao.persistence.managers;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.Sort;
@@ -31,7 +23,6 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
-
 import ro.cs.tao.eodata.AuxiliaryData;
 import ro.cs.tao.eodata.EOData;
 import ro.cs.tao.eodata.EOProduct;
@@ -40,6 +31,10 @@ import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.persistence.repository.AuxDataRepository;
 import ro.cs.tao.persistence.repository.EOProductRepository;
 import ro.cs.tao.persistence.repository.VectorDataRepository;
+
+import java.util.*;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @Configuration
 @EnableTransactionManagement
@@ -58,6 +53,10 @@ public class ProductManager {
 
     @Autowired
     private AuxDataRepository auxDataRepository;
+
+    public EOProduct getEOProduct(String id) {
+        return eoProductRepository.findById(id).orElse(null);
+    }
 
     /**
      * Retrieve all EOProduct
