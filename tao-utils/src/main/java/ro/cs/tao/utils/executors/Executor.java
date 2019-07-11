@@ -16,6 +16,7 @@
 package ro.cs.tao.utils.executors;
 
 import com.jcraft.jsch.Channel;
+import org.apache.commons.lang.SystemUtils;
 import ro.cs.tao.utils.executors.monitoring.ActivityListener;
 
 import java.io.File;
@@ -438,6 +439,20 @@ public abstract class Executor<T> implements Runnable {
             });
         }
         return args;
+    }
+
+    protected List<String> formatArguments() {
+        if (SystemUtils.IS_OS_LINUX &&
+                (arguments.contains(";") || arguments.contains("&") || arguments.contains("&&") || arguments.contains("|") || arguments.contains("||"))) {
+            List<String> newArgs = new ArrayList<>();
+            newArgs.add("/bin/sh");
+            newArgs.add("-c");
+            final String quoteChar = arguments.contains(" sed ") ? "'" : "";
+            newArgs.add(quoteChar + String.join(" ", arguments) + quoteChar);
+            return newArgs;
+        } else {
+            return arguments;
+        }
     }
 
     protected void insertSudoParams() {
