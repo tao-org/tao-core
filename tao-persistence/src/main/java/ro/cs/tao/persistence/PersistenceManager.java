@@ -159,6 +159,11 @@ public class PersistenceManager implements MessagePersister {
 
     //endregion
     //region EOProduct and VectorData
+
+    public EOProduct getEOProduct(String id) {
+        return productManager.getEOProduct(id);
+    }
+
     public List<EOProduct> getEOProducts() {
         return productManager.getEOProducts();
     }
