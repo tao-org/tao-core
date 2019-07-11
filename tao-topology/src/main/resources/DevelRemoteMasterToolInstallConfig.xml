@@ -213,6 +213,7 @@
             <step>
                 <order_id>1</order_id>
                 <invocation_type>ssh2</invocation_type>
+                <execution_mode>SUPERUSER</execution_mode>
                 <command>
                     <![CDATA[
                         docker -v || yum install docker -y
@@ -224,6 +225,7 @@
             <step>
                 <order_id>2</order_id>
                 <invocation_type>ssh2</invocation_type>
+                <execution_mode>SUPERUSER</execution_mode>
                 <command>
                     <![CDATA[
                          docker -v && yum remove docker -y

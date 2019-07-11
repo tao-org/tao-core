@@ -48,13 +48,13 @@ public class ProcessExecutor extends Executor<Process> {
         BufferedReader outReader = null;
         int ret = 0x80000000;
         try {
-            if (logMessages) {
-                this.logger.finest("[" + this.host + "] " + String.join(" ", arguments));
-            }
             resetProcess();
-            ProcessBuilder pb = new ProcessBuilder(arguments);
+            final ProcessBuilder pb = new ProcessBuilder(formatArguments());
             if (this.workingDirectory != null) {
                 pb.directory(this.workingDirectory);
+            }
+            if (logMessages) {
+                this.logger.finest("[" + this.host + "] " + String.join(" ", pb.command()));
             }
             //redirect the error of the tool to the standard output
             pb.redirectErrorStream(true);
