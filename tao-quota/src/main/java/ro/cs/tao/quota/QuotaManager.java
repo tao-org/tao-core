@@ -22,6 +22,14 @@ public interface QuotaManager {
      */
     boolean checkUserInputQuota(Principal principal) throws QuotaException;
     /**
+     * Verifies if the input quota of the user will be exceeded by adding the new value.
+     * @param principal The user for which to verify the input quota
+     * @param addedQuota the additional value that will have an impact on the user's quota (in bytes)
+     * @return  <code>true</code> if the quota was not exceeded, <code>false</code> otherwise
+     * @throws QuotaException if the operation fails due to some error
+     */
+    boolean checkUserInputQuota(Principal principal, long addedQuota) throws QuotaException;
+    /**
      * Verifies if the processing quota of the user was exceeded.
      * @param principal The user for which to verify the processing quota
      * @return  <code>true</code> if the quota was not exceeded, <code>false</code> otherwise
@@ -37,22 +45,18 @@ public interface QuotaManager {
     boolean checkUserProcessingResources(Principal principal) throws QuotaException;
     
     /**
-     * Update the user's input quota.
+     * Update the user's input quota based on the public products that are assigned to him.
      * @param principal The user for which the operation must be performed
-     * @param addedQuota The quota value to add, in bytes. It can be negative. If 0 is used, the quota is re-computed, 
-     * @return <code>true</code> if by adding the  value the quota is not exceeded, <code>false</code> otherwise
      * @throws QuotaException if the operation fails due to some error
      */
-    boolean updateUserInputQuota(Principal principal, long addedQuota) throws QuotaException;
+    void updateUserInputQuota(Principal principal) throws QuotaException;
     
     /**
-     * Update the user's disk processing quota
+     * Update the user's disk processing quota based on the content of its private folder
      * @param principal The user for which the operation must be performed
-     * @param addedQuota The quota value to add, in bytes. It can be negative. If 0 is used, the quota is re-computed, 
-     * @return <code>true</code> if by adding the  value the quota is not exceeded, <code>false</code> otherwise
      * @throws QuotaException if the operation fails due to some error
      */
-    boolean updateUserProcessingQuota(Principal principal, long addedQuota) throws QuotaException;
+    void updateUserProcessingQuota(Principal principal) throws QuotaException;
     
     /**
      * Update the user's processing resources quota.

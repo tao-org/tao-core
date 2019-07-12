@@ -249,29 +249,43 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
     	
         try {
         	// check input quota before download
-        	if (!UserQuotaManager.getInstance().updateUserInputQuota(principal, product.getApproximateSize())) {
+        	if (product.getRefs() != null && !product.getRefs().contains(principal.getName()) && !UserQuotaManager.getInstance().checkUserInputQuota(principal, product.getApproximateSize())) {
         		// do not allow for the download to start
         		return false;
         	}
         	
             product.setProductStatus(ProductStatus.DOWNLOADING);
+            // attach the current user 
+            product.addReference(principal.getName());
             persistenceManager.saveEOProduct(product);
+            
+            // update the user's input quota
+            UserQuotaManager.getInstance().updateUserInputQuota(principal);
             return true;
-        } catch (QuotaException | PersistenceException e) {
+        } catch (PersistenceException e) {
             logger.severe(String.format("Updating product %s failed. Reason: %s", product.getName(), e.getMessage()));
             return false;
+        } catch (QuotaException  e) {
+        	logger.severe(String.format("Cannot update the input quota for user %s. Reason: %s", principal.getName(), e.getMessage()));
+        	return false;
         }
     }
 
     @Override
     public void downloadCompleted(EOProduct product) {
-        product.setProductStatus(ProductStatus.DOWNLOADED);
-        // update the product's reference
-        product.addReference(SessionStore.currentContext().getPrincipal().getName());
+    	final Principal principal = SessionStore.currentContext().getPrincipal();
         try {
+            product.setProductStatus(ProductStatus.DOWNLOADED);
+            // update the product's reference
+            product.addReference(principal.getName());
             persistenceManager.saveEOProduct(product);
+            
+            // update the user's input quota
+            UserQuotaManager.getInstance().updateUserInputQuota(principal);
         } catch (PersistenceException e) {
             logger.severe(String.format("Updating product %s failed. Reason: %s", product.getName(), e.getMessage()));
+        } catch (QuotaException  e) {
+        	logger.severe(String.format("Cannot update the input quota for user %s. Reason: %s", principal.getName(), e.getMessage()));
         }
     }
 
@@ -279,14 +293,16 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
     public void downloadFailed(EOProduct product, String reason) {
     	final Principal principal = SessionStore.currentContext().getPrincipal();
     	
-        product.setProductStatus(ProductStatus.FAILED);
         try {
+            product.setProductStatus(ProductStatus.FAILED);
             persistenceManager.saveEOProduct(product);
             // roll back the user's quota
-            UserQuotaManager.getInstance().updateUserInputQuota(principal, -product.getApproximateSize());
+            UserQuotaManager.getInstance().updateUserInputQuota(principal);
             logger.warning(String.format("Product %s not downloaded. Reason: %s", product.getName(), reason));
-        } catch (QuotaException | PersistenceException e) {
+        } catch (PersistenceException e) {
             logger.severe(String.format("Updating product %s failed. Reason: %s", product.getName(), e.getMessage()));
+        } catch (QuotaException  e) {
+        	logger.severe(String.format("Cannot update the input quota for user %s. Reason: %s", principal.getName(), e.getMessage()));
         }
     }
 

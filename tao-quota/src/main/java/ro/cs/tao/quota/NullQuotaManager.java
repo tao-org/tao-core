@@ -20,6 +20,12 @@ public class NullQuotaManager implements QuotaManager {
 	}
 
 	@Override
+	public boolean checkUserInputQuota(Principal principal, long addedQuota) throws QuotaException {
+		// always true
+		return true;
+	}
+	
+	@Override
 	public boolean checkUserProcessingQuota(Principal principal) throws QuotaException {
 		// always true
 		return true;
@@ -32,15 +38,13 @@ public class NullQuotaManager implements QuotaManager {
 	}
 
 	@Override
-	public boolean updateUserInputQuota(Principal principal, long addedQuota) throws QuotaException {
-		// always true
-		return true;
+	public void updateUserInputQuota(Principal principal) throws QuotaException {
+		// Nothing to do
 	}
 
 	@Override
-	public boolean updateUserProcessingQuota(Principal principal, long addedQuota) throws QuotaException {
-		// always true
-		return true;
+	public void updateUserProcessingQuota(Principal principal) throws QuotaException {
+		// Nothing to do
 	}
 
 	@Override
@@ -49,5 +53,4 @@ public class NullQuotaManager implements QuotaManager {
 		// always true
 		return true;
 	}
-
 }
