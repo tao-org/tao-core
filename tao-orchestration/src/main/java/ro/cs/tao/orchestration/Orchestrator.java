@@ -421,7 +421,7 @@ public class Orchestrator extends Notifiable {
         }
         // update user processing quota
         try {
-			UserQuotaManager.getInstance().updateUserProcessingQuota(SessionStore.currentContext().getPrincipal(), 0);
+			UserQuotaManager.getInstance().updateUserProcessingQuota(SessionStore.currentContext().getPrincipal());
 		} catch (QuotaException e) {
 			logger.severe(String.format("Error updating quota. Error message: %s", e.getMessage()));
 		}
@@ -886,7 +886,7 @@ public class Orchestrator extends Notifiable {
     private boolean checkProcessingQuota() throws QuotaException {
     	final Principal principal = SessionStore.currentContext().getPrincipal();
     	// update the quota before checking
-        UserQuotaManager.getInstance().updateUserProcessingQuota(principal, 0);
+        UserQuotaManager.getInstance().updateUserProcessingQuota(principal);
         
         return UserQuotaManager.getInstance().checkUserProcessingQuota(principal);
     }

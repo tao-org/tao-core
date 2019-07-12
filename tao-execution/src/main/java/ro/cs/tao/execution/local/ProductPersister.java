@@ -24,6 +24,7 @@ import ro.cs.tao.eodata.enums.ProductStatus;
 import ro.cs.tao.eodata.enums.Visibility;
 import ro.cs.tao.eodata.util.Conversions;
 import ro.cs.tao.persistence.PersistenceManager;
+import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 
 import java.awt.geom.Point2D;
@@ -65,6 +66,7 @@ public class ProductPersister implements OutputDataHandler<EOProduct> {
                 }
                 product.setVisibility(Visibility.PRIVATE);
                 product.setProductStatus(ProductStatus.PRODUCED);
+                product.addReference(SessionStore.currentContext().getPrincipal().getName());
                 product = persistenceManager.saveEOProduct(product);
             } catch (Exception e) {
                 logger.severe(String.format("Product %s could not be written to database: %s",

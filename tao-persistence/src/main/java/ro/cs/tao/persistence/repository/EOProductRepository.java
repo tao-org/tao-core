@@ -53,8 +53,9 @@ public interface EOProductRepository extends PagingAndSortingRepository<EOProduc
     long getUserRasterProductsSize(@Param("userName") String userName);
 
     @Query(value = "SELECT COALESCE(SUM(p.approximate_size), 0) FROM product.raster_data_product p " +
-            "JOIN product.raster_data_product_refs r ON r.product_id = p.id WHERE r.refs = :userName AND "
-            + "p.location LIKE CONCAT(CAST(:publicLocation AS varchar), '%')", nativeQuery = true)
+            "JOIN product.raster_data_product_refs r ON r.product_id = p.id JOIN product.product_status s ON " +
+    		"p.status_id = s.id WHERE r.refs = :userName AND s.status IN ('DOWNLOADING','DOWNLOADED') AND " +
+            "p.location LIKE CONCAT(CAST(:publicLocation AS varchar), '%')", nativeQuery = true)
     long getUserInputRasterProductsSize(@Param("userName") String userName, @Param("publicLocation") String publicLocation);
 
     @Query(value = "WITH t AS (SELECT CONCAT('%', t.job_id, '-', t.id, '%') AS c FROM execution.task t " +
