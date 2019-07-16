@@ -16,7 +16,21 @@
 
 package ro.cs.tao.execution.local;
 
-import ro.cs.tao.component.*;
+import java.net.InetAddress;
+import java.security.Principal;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.stream.Collectors;
+
+import ro.cs.tao.component.Aggregator;
+import ro.cs.tao.component.ComponentLink;
+import ro.cs.tao.component.SystemVariable;
+import ro.cs.tao.component.TaoComponent;
+import ro.cs.tao.component.Variable;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.datasource.DataQuery;
 import ro.cs.tao.datasource.DataSourceComponent;
@@ -34,20 +48,14 @@ import ro.cs.tao.execution.OutputDataHandlerManager;
 import ro.cs.tao.execution.model.DataSourceExecutionTask;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.quota.QuotaException;
+import ro.cs.tao.quota.UserQuotaManager;
+import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.serialization.StringListAdapter;
 import ro.cs.tao.utils.Tuple;
 import ro.cs.tao.utils.executors.NamedThreadPoolExecutor;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
-
-import java.net.InetAddress;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.stream.Collectors;
 
 /**
  * Specialized executor that will perform a query to a data source.
@@ -237,34 +245,64 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
 
     @Override
     public boolean downloadStarted(EOProduct product) {
-        product.setProductStatus(ProductStatus.DOWNLOADING);
+    	final Principal principal = SessionStore.currentContext().getPrincipal();
+    	
         try {
+        	// check input quota before download
+        	if (product.getRefs() != null && !product.getRefs().contains(principal.getName()) && !UserQuotaManager.getInstance().checkUserInputQuota(principal, product.getApproximateSize())) {
+        		// do not allow for the download to start
+        		return false;
+        	}
+        	
+            product.setProductStatus(ProductStatus.DOWNLOADING);
+            // attach the current user 
+            product.addReference(principal.getName());
             persistenceManager.saveEOProduct(product);
+            
+            // update the user's input quota
+            UserQuotaManager.getInstance().updateUserInputQuota(principal);
             return true;
         } catch (PersistenceException e) {
             logger.severe(String.format("Updating product %s failed. Reason: %s", product.getName(), e.getMessage()));
             return false;
+        } catch (QuotaException  e) {
+        	logger.severe(String.format("Cannot update the input quota for user %s. Reason: %s", principal.getName(), e.getMessage()));
+        	return false;
         }
     }
 
     @Override
     public void downloadCompleted(EOProduct product) {
-        product.setProductStatus(ProductStatus.DOWNLOADED);
+    	final Principal principal = SessionStore.currentContext().getPrincipal();
         try {
+            product.setProductStatus(ProductStatus.DOWNLOADED);
+            // update the product's reference
+            product.addReference(principal.getName());
             persistenceManager.saveEOProduct(product);
+            
+            // update the user's input quota
+            UserQuotaManager.getInstance().updateUserInputQuota(principal);
         } catch (PersistenceException e) {
             logger.severe(String.format("Updating product %s failed. Reason: %s", product.getName(), e.getMessage()));
+        } catch (QuotaException  e) {
+        	logger.severe(String.format("Cannot update the input quota for user %s. Reason: %s", principal.getName(), e.getMessage()));
         }
     }
 
     @Override
     public void downloadFailed(EOProduct product, String reason) {
-        product.setProductStatus(ProductStatus.FAILED);
+    	final Principal principal = SessionStore.currentContext().getPrincipal();
+    	
         try {
+            product.setProductStatus(ProductStatus.FAILED);
             persistenceManager.saveEOProduct(product);
+            // roll back the user's quota
+            UserQuotaManager.getInstance().updateUserInputQuota(principal);
             logger.warning(String.format("Product %s not downloaded. Reason: %s", product.getName(), reason));
         } catch (PersistenceException e) {
             logger.severe(String.format("Updating product %s failed. Reason: %s", product.getName(), e.getMessage()));
+        } catch (QuotaException  e) {
+        	logger.severe(String.format("Cannot update the input quota for user %s. Reason: %s", principal.getName(), e.getMessage()));
         }
     }
 

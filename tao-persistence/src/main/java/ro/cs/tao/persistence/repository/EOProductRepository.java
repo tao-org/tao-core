@@ -44,13 +44,19 @@ public interface EOProductRepository extends PagingAndSortingRepository<EOProduc
     List<EOProduct> getProductsByName(@Param("names") Set<String> names);
 
     @Query(value = "SELECT COUNT(s.id) FROM component.source_descriptor s JOIN component.data_source_component c ON c.id = s.parent_id " +
-            "WHERE c.id != :componentId AND s.location LIKE '%:name%'",
+            "WHERE c.id != :componentId AND s.location LIKE CONCAT('%',CAST(:name AS varchar),'%')",
             nativeQuery = true)
     int getOtherProductReferences(@Param("componentId") String componentId, @Param("name") String name);
 
     @Query(value = "SELECT COALESCE(SUM(p.approximate_size), 0) FROM product.raster_data_product p " +
             "JOIN product.raster_data_product_refs r ON r.product_id = p.id WHERE r.refs = :userName", nativeQuery = true)
     long getUserRasterProductsSize(@Param("userName") String userName);
+
+    @Query(value = "SELECT COALESCE(SUM(p.approximate_size), 0) FROM product.raster_data_product p " +
+            "JOIN product.raster_data_product_refs r ON r.product_id = p.id JOIN product.product_status s ON " +
+    		"p.status_id = s.id WHERE r.refs = :userName AND s.status IN ('DOWNLOADING','DOWNLOADED') AND " +
+            "p.location LIKE CONCAT(CAST(:publicLocation AS varchar), '%')", nativeQuery = true)
+    long getUserInputRasterProductsSize(@Param("userName") String userName, @Param("publicLocation") String publicLocation);
 
     @Query(value = "WITH t AS (SELECT CONCAT('%', t.job_id, '-', t.id, '%') AS c FROM execution.task t " +
             "JOIN execution.job j on j.id = t.job_id WHERE j.workflow_id = :workflowId) " +
@@ -64,7 +70,7 @@ public interface EOProductRepository extends PagingAndSortingRepository<EOProduc
 
     @Modifying
     @Query(value = "WITH delprods AS (WITH refs AS (SELECT COUNT(s.id) AS cnt FROM component.source_descriptor s JOIN component.data_source_component c ON c.id = s.parent_id " +
-            "WHERE c.id != :componentId AND s.location LIKE '%:name%') DELETE FROM product.raster_data_product USING refs " +
+            "WHERE c.id != :componentId AND s.location LIKE CONCAT('%', CAST(:name AS varchar), '%') DELETE FROM product.raster_data_product USING refs " +
             "WHERE name = :name AND status_id NOT IN (2,3,5) AND refs.cnt = 0 RETURNING id) " +
             "DELETE FROM product.data_product_attributes USING delprods WHERE data_product_id = delprods.id",
             nativeQuery = true)

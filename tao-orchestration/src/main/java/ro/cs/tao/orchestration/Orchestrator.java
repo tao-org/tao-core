@@ -55,11 +55,8 @@ import ro.cs.tao.eodata.metadata.DecodeStatus;
 import ro.cs.tao.eodata.metadata.MetadataInspector;
 import ro.cs.tao.eodata.naming.NameExpressionParser;
 import ro.cs.tao.eodata.naming.NamingRule;
-import ro.cs.tao.execution.DefaultQuotaVerifier;
 import ro.cs.tao.execution.ExecutionException;
-import ro.cs.tao.execution.NullQuotaVerifier;
 import ro.cs.tao.execution.OutputDataHandlerManager;
-import ro.cs.tao.execution.QuotaVerifier;
 import ro.cs.tao.execution.model.DataSourceExecutionTask;
 import ro.cs.tao.execution.model.ExecutionGroup;
 import ro.cs.tao.execution.model.ExecutionJob;
@@ -70,8 +67,6 @@ import ro.cs.tao.execution.model.LoopState;
 import ro.cs.tao.execution.model.LoopStateHandler;
 import ro.cs.tao.execution.model.ProcessingExecutionTask;
 import ro.cs.tao.execution.model.TaskSelector;
-import ro.cs.tao.execution.monitor.NodeManager;
-import ro.cs.tao.execution.monitor.UserQuotaManager;
 import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.Notifiable;
@@ -82,6 +77,8 @@ import ro.cs.tao.orchestration.status.TaskStatusHandler;
 import ro.cs.tao.orchestration.util.TaskUtilities;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.quota.QuotaException;
+import ro.cs.tao.quota.UserQuotaManager;
 import ro.cs.tao.security.SessionContext;
 import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.serialization.SerializationException;
@@ -104,7 +101,6 @@ public class Orchestrator extends Notifiable {
 
     private static final String GROUP_TASK_SELECTOR_KEY = "group.task.selector";
     private static final String JOB_TASK_SELECTOR_KEY = "job.task.selector";
-    private static QuotaVerifier quotaVerifier;
 
     private static final Orchestrator instance;
     private final Map<Long, InternalStateHandler> groupStateHandlers;
@@ -112,16 +108,6 @@ public class Orchestrator extends Notifiable {
 
     static {
         instance = new Orchestrator();
-        
-        String quotaVerifierClass = ConfigurationManager.getInstance().getValue("tao.quota.verifier", DefaultQuotaVerifier.class.getName());
-        try {
-            quotaVerifier = (QuotaVerifier) Class.forName(quotaVerifierClass).newInstance();
-        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-            Logger.getLogger(NodeManager.class.getName()).severe(String.format("QuotaVerifier class [%s] could not be instantiated. Reason: %s",
-                                                                               quotaVerifierClass, e.getMessage()));
-            quotaVerifier = new NullQuotaVerifier();
-        }
-        quotaVerifier.setPersistenceManager(instance.persistenceManager);
     }
 
     public static Orchestrator getInstance() {
@@ -188,7 +174,7 @@ public class Orchestrator extends Notifiable {
             this.executors.put(SessionStore.currentContext(), executorService);
             executorService.submit(() -> JobCommand.START.applyTo(executionJob));
             return executionJob.getId();
-        } catch (PersistenceException e) {
+        } catch (QuotaException | PersistenceException e) {
             logger.severe(e.getMessage());
             throw new ExecutionException(e.getMessage());
         }
@@ -434,7 +420,11 @@ public class Orchestrator extends Notifiable {
             executors.remove(context);
         }
         // update user processing quota
-        UserQuotaManager.getInstance().updateUserProcessingQuota();
+        try {
+			UserQuotaManager.getInstance().updateUserProcessingQuota(SessionStore.currentContext().getPrincipal());
+		} catch (QuotaException e) {
+			logger.severe(String.format("Error updating quota. Error message: %s", e.getMessage()));
+		}
     }
 
     private ExecutionTask handleProcessingTask(ProcessingExecutionTask pcTask, boolean keepOutput) throws PersistenceException {
@@ -891,38 +881,14 @@ public class Orchestrator extends Notifiable {
      * Check if the user still has disk processing quota available
      * 
      * @return true if the user stil has disk processing quota available, false otherwise. 
-     * @throws ExecutionException if the database access fails. 
+     * @throws QuotaException if the operation fails. 
      */
-    private boolean checkProcessingQuota() throws ExecutionException {
-    	final Principal userPrincipal = SessionStore.currentContext().getPrincipal();
-        
+    private boolean checkProcessingQuota() throws QuotaException {
+    	final Principal principal = SessionStore.currentContext().getPrincipal();
     	// update the quota before checking
-        UserQuotaManager.getInstance().updateUserProcessingQuota();
-
-    	try {
-			if (!quotaVerifier.checkUserProcessingQuota(userPrincipal))
-			{
-				// the allocated quota was reached. the execution cannot start
-				// get the user's quotas
-				final long[] quotas = persistenceManager.getUserDiskQuotas(userPrincipal.getName());
-				
-				// create the message
-				final String msg = String.format("The workflow execution cannot start because you have reached "
-						+ "your processing disk quota (defined quota: %dGB, used quota: %dGB). Please delete some files from your "
-						+ "workspace to continue", quotas[2], quotas[3]);
-				
-				// publish the message to the ERROR topic and log it
-				Messaging.send(userPrincipal, Topics.ERROR, this, msg);
-				logger.info(msg);
-				
-				return false;
-			}
-			
-			// quota available. Execution can start
-			return true;
-		} catch (PersistenceException e) {
-			throw new ExecutionException(String.format("Cannot determine disk execution quota. Reason: %s", e.getMessage()), e);
-		}
+        UserQuotaManager.getInstance().updateUserProcessingQuota(principal);
+        
+        return UserQuotaManager.getInstance().checkUserProcessingQuota(principal);
     }
     
     private class QueueMonitor extends Thread {
