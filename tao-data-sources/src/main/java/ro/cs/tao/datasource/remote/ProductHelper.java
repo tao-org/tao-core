@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.datasource.remote;
 
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -26,6 +27,7 @@ import java.util.regex.Pattern;
  * @author Cosmin Cara
  */
 public abstract class ProductHelper {
+    protected Path path;
     protected String name;
     protected String id;
     protected String sensingDate;
@@ -37,6 +39,11 @@ public abstract class ProductHelper {
 
     public ProductHelper(String name) {
         setName(name);
+    }
+
+    public ProductHelper(Path productPath) {
+        this(productPath.getFileName().toString());
+        this.path = productPath;
     }
 
     /**
@@ -112,7 +119,13 @@ public abstract class ProductHelper {
     /**
      * Returns the path of the product, relative to the product repository root.
      */
-    public abstract String getProductRelativePath();
+    public String getProductRelativePath() {
+        if (this.path != null) {
+            return this.path.getParent().toString();
+        } else {
+            return null;
+        }
+    }
 
     /**
      * Returns the tile name pattern.
