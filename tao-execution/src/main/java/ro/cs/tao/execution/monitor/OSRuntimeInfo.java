@@ -300,9 +300,10 @@ public abstract class OSRuntimeInfo {
                 executor = Executor.create(this.isRemote ? ExecutorType.SSH2 : ExecutorType.PROCESS, this.node, args);
                 executor.setUser(this.user);
                 executor.setPassword(this.password);
-                Consumer consumer = new Consumer();
+                final Consumer consumer = new Consumer();
                 executor.setOutputConsumer(consumer);
-                if (executor.execute(false) == 0) {
+                final int code = executor.execute(false);
+                if (code == 0) {
                     List<String> messages = consumer.getMessages();
                     for (String message : messages) {
                         if (!message.isEmpty()) {
@@ -327,6 +328,9 @@ public abstract class OSRuntimeInfo {
                             }
                         }
                     }
+                } else {
+                    logger.warning(String.format("Could not retrieve node information. Request returned code %d. Output:\n%s",
+                                                 code, String.join("\n", consumer.getMessages())));
                 }
             } catch (Exception ex) {
                 logger.severe(ex.getMessage());

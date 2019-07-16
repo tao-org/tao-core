@@ -16,13 +16,29 @@
 
 package ro.cs.tao.eodata.metadata;
 
-import org.w3c.dom.Element;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.Node;
+import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.stream.XMLEventReader;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.StartElement;
+import javax.xml.stream.events.XMLEvent;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Base class for XML metadata inspectors.
@@ -31,14 +47,108 @@ import java.util.List;
  */
 public abstract class XmlMetadataInspector implements MetadataInspector {
 
+    private Document xmlDocument;
+    private XPath xPath;
+    protected Logger logger = Logger.getLogger(getClass().getName());
+
     public XmlMetadataInspector() { }
 
-    protected String getValue(String tagName, Element element) {
+    protected void readDocument(Path documentPath) throws ParserConfigurationException, IOException, SAXException, XMLStreamException {
+        DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+        try (InputStream inputStream = Files.newInputStream(documentPath)) {
+            this.xmlDocument = builder.parse(inputStream);
+        }
+        this.xPath = XPathFactory.newInstance().newXPath();
+        try (InputStream inputStream = Files.newInputStream(documentPath)) {
+            XMLEventReader reader = XMLInputFactory.newInstance().createXMLEventReader(inputStream);
+            while (reader.hasNext()) {
+                XMLEvent xmlEvent = reader.nextEvent();
+                if (xmlEvent.isStartElement()) {
+                    this.xPath.setNamespaceContext(((StartElement) xmlEvent).getNamespaceContext());
+                    break;
+                }
+            }
+        }
+    }
+
+    protected String getValue(String xPathExpression) {
+        String value = null;
+        if (this.xPath != null) {
+            try {
+                value = (String) this.xPath.compile(xPathExpression).evaluate(this.xmlDocument, XPathConstants.STRING);
+            } catch (XPathExpressionException e) {
+                e.printStackTrace();
+            }
+        }
+        return value;
+    }
+
+    protected List<String> getValues(String xPathExpression) {
+        List<String> values = null;
+        if (this.xPath != null) {
+            try {
+                NodeList nodes = (NodeList) this.xPath.compile(xPathExpression).evaluate(this.xmlDocument, XPathConstants.NODESET);
+                if (nodes != null) {
+                    values = new ArrayList<>();
+                    final int length = nodes.getLength();
+                    for (int i = 0; i < length; i++) {
+                        values.add(nodes.item(i).getNodeValue());
+                    }
+                }
+            } catch (XPathExpressionException e) {
+                e.printStackTrace();
+            }
+        }
+        return values;
+    }
+
+    /*protected String getValue(String tagName, Element element) {
         NodeList list = element.getElementsByTagName(tagName);
         if (list != null && list.getLength() > 0) {
             NodeList subList = list.item(0).getChildNodes();
             if (subList != null && subList.getLength() > 0) {
                 return subList.item(0).getNodeValue();
+            }
+        }
+        return null;
+    }
+
+    protected String getValue(Element element, String parentTagName, String tagName) {
+        NodeList list = element.getElementsByTagName(parentTagName);
+        if (list != null && list.getLength() > 0) {
+            NodeList subList = list.item(0).getChildNodes();
+            if (subList != null && subList.getLength() > 0) {
+                for (int i = 0; i < subList.getLength(); i++) {
+                    final Node node = subList.item(i);
+                    if (tagName.equals(node.getNodeName())) {
+                        return node.getNodeValue();
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    protected String getValue(Element element, String parentTagName, String parentAttribute, String attributeValue, String tagName) {
+        NodeList list = element.getElementsByTagName(parentTagName);
+        if (list != null && list.getLength() > 0) {
+            NodeList subList = list.item(0).getChildNodes();
+            if (subList != null && subList.getLength() > 0) {
+                for (int i = 0; i < subList.getLength(); i++) {
+                    final Node node = subList.item(i);
+                    NamedNodeMap attributes = ((Element) subList).getAttributes();
+                    if (attributes != null) {
+                        Node namedItem = attributes.getNamedItem(parentAttribute);
+                        if (namedItem != null && attributeValue.equals(namedItem.getNodeValue())) {
+                            NodeList childNodes = node.getChildNodes();
+                            for (int j = 0; i < childNodes.getLength(); j++) {
+                                if (tagName.equals(childNodes.item(j).getNodeName())) {
+                                    return node.getNodeValue();
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
         return null;
@@ -127,6 +237,6 @@ public abstract class XmlMetadataInspector implements MetadataInspector {
             }
         }
         return values;
-    }
+    }*/
 
 }

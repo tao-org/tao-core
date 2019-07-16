@@ -159,8 +159,9 @@ public class Query {
                                                                      SIMPLE_DATE_FORMAT.parse(elements[0]),
                                                                      SIMPLE_DATE_FORMAT.parse(elements[1])));
                         } else {
-                            Object array = Array.newInstance(type, elements.length);
-                            GenericAdapter adapter = new GenericAdapter(type.getName());
+                            final Class arrayType = type.isArray() ? type.getComponentType() : type;
+                            Object array = Array.newInstance(arrayType, elements.length);
+                            GenericAdapter adapter = new GenericAdapter(arrayType.getName());
                             for (int i = 0; i < elements.length; i++) {
                                 Array.set(array, i, adapter.marshal(elements[i]));
                             }

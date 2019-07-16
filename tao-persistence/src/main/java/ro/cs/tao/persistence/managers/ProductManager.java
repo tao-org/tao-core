@@ -54,6 +54,10 @@ public class ProductManager {
     @Autowired
     private AuxDataRepository auxDataRepository;
 
+    public EOProduct getEOProduct(String id) {
+        return eoProductRepository.findById(id).orElse(null);
+    }
+
     /**
      * Retrieve all EOProduct
      */
@@ -87,6 +91,11 @@ public class ProductManager {
         return eoProductRepository.getUserRasterProductsSize(user);
     }
 
+    @Transactional
+    public long getUserInputEOProductsSize(String user, String location) {
+    	return eoProductRepository.getUserInputRasterProductsSize(user, location);
+    }
+    
     @Transactional
     public List<EOProduct> getEOProducts(Set<String> locations) {
         return eoProductRepository.getProductsByLocation(locations);

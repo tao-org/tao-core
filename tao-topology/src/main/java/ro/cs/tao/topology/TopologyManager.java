@@ -77,9 +77,9 @@ public class TopologyManager implements ITopologyManager {
         dockerListCmdTemplate = "docker images %s --format {{.ID}}\\t{{.Tag}}\\t{{.Repository}}";
 
         //if [ ! -e /mnt/tao ]; then sed -i '$a//#MASTERHOST##SHARE# /mnt/tao cifs user=tao,password=tao123,file_mode=0777,dir_mode=0777,noperm 0 0' /etc/fstab; fi
-        createMountTemplate = "if [ ! -e %1$s ]; then mkdir %1$s; chmod 777 %1$s; sed -i '$a//%2$s%3$s %1$s cifs user=tao,password=tao123,file_mode=0777,dir_mode=0777,noperm 0 0' /etc/fstab; mount -a; fi;";
+        createMountTemplate = "if [ ! -e %1$s ]; then mkdir %1$s; chmod 777 %1$s; sed -i \"$ a//%2$s%3$s %1$s cifs user=%4,password=%5,file_mode=0777,dir_mode=0777,noperm 0 0\" /etc/fstab; mount -a; fi;";
         createLocalShareWindowsTemplate = "net share %s=%s /GRANT:Everyone,FULL";
-        createLocalShareLinuxTemplate = "if [[ $(smbclient -N -g -L localhost | grep \"%1$s\" ]]; then sed -i '$a[%1$s]\n\tpath = %2$s\n\tbrowsable = yes\n\twritable = yes\n\tguest ok = yes' /etc/samba/smb.conf; fi;";
+        createLocalShareLinuxTemplate = "if [ -e $(smbclient -N -g -L localhost | grep \"%1$s\") ]; then sed -i \"$ a[%1$s]\n\tpath = %2$s\n\tbrowsable = yes\n\twritable = yes\n\tguest ok = yes\" /etc/samba/smb.conf; fi;";
         sharedAccumulator = new OutputAccumulator();
 
         instance = new TopologyManager();
@@ -370,12 +370,13 @@ public class TopologyManager implements ITopologyManager {
         status.setToolName("Mount");
         String mount = ConfigurationManager.getInstance().getValue("node.mount.folder", "/mnt/tao");
         String share = ConfigurationManager.getInstance().getValue("master.share.name", "/tao");
-        final List<String> commands = ProcessHelper.tokenizeCommands(createMountTemplate, mount, masterNodeInfo.getId(), share);
+        final List<String> commands = ProcessHelper.tokenizeCommands(createMountTemplate, mount, masterNodeInfo.getId(),
+                                                                     share, masterNodeInfo.getUserName(), masterNodeInfo.getUserPass());
         ExecutionUnit job = new ExecutionUnit(ExecutorType.SSH2,
                                               node.getId(),
                                               node.getUserName(),
                                               node.getUserPass(),
-                                              commands, false, SSHMode.EXEC);
+                                              commands, true, SSHMode.EXEC);
         sharedAccumulator.reset();
         Executor executor = Executor.execute(sharedAccumulator, job);
         logger.fine("Executing " + String.join(" ", commands));
@@ -394,7 +395,7 @@ public class TopologyManager implements ITopologyManager {
     public ToolInstallStatus checkShare(NodeDescription master) {
         ToolInstallStatus status = new ToolInstallStatus();
         status.setToolName("Local Share");
-        String path = ConfigurationManager.getInstance().getValue("product.location", "/mnt/tao/working_dir");
+        String path = ConfigurationManager.getInstance().getValue("workspace.location", "/mnt/tao/working_dir");
         String share = ConfigurationManager.getInstance().getValue("master.share.name", "/tao");
         status.setStatus(ServiceStatus.INSTALLED);
         if (!(share.startsWith("\\\\") || share.startsWith("//"))) {
