@@ -18,6 +18,7 @@
         <module>tao-data-sources</module>
         <module>tao-persistence</module>
         <module>tao-topology</module>
+		<module>tao-quota</module>
         <module>tao-execution</module>
         <module>tao-spring-bridge</module>
         <module>tao-notification</module>
