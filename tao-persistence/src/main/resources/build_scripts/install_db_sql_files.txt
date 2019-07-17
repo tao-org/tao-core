@@ -12,6 +12,7 @@
 ../persistence/scripts/04-tables/04_05_component_tables.sql;taodata
 ../persistence/scripts/04-tables/04_06_workflow_tables.sql;taodata
 ../persistence/scripts/04-tables/04_07_execution_tables.sql;taodata
+../persistence/scripts/04-tables/04_08_scheduling_tables.sql;taodata
 
 ../persistence/scripts/05-grant/05_01_grant_tao.sql;taodata
 
