@@ -77,6 +77,7 @@ CREATE TABLE component.container
 (
 	id varchar(1024) NOT NULL,
 	name varchar(1024) NOT NULL,
+	description varchar(1024) NOT NULL,
 	tag varchar(1024) NOT NULL,
 	application_path varchar(1024) NULL,
 	logo_image varchar NULL,
