@@ -279,6 +279,9 @@
             <basic name="name">
                 <column name="name" nullable="false" column-definition="character varying(1024) NOT NULL"/>
             </basic>
+            <basic name="description">
+                <column name="description" nullable="false" column-definition="character varying(1024) NOT NULL"/>
+            </basic>
             <basic name="tag">
                 <column name="tag" nullable="false" column-definition="character varying(1024) NOT NULL"/>
             </basic>
