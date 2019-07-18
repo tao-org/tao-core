@@ -1061,9 +1061,6 @@
             <basic name="actualProcessingQuota">
                 <column name="actual_processing_quota" nullable="false" column-definition="int NOT NULL"/>
             </basic>
-            <basic name="actualProcessingQuota">
-                <column name="actual_processing_quota" nullable="false" column-definition="int NOT NULL"/>
-            </basic>
             <basic name="cpuQuota">
                 <column name="cpu_quota" nullable="false" column-definition="int NOT NULL"/>
             </basic>

@@ -108,6 +108,11 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
         return existingTask;
     }
 
+    @Transactional
+    public List<ExecutionTask> getRunningTasksForUser(String userName) {
+        return repository.getRunningTasksForUser(userName);
+    }    
+
     /**
      * Saves a task directly attached to an existent job
      *
