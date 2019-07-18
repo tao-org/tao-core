@@ -39,10 +39,11 @@ public interface QuotaManager {
     /**
      * Verifies if the processing resources assigned to a user were exceeded.
      * @param principal The user for which to verify the processing resources
+     * @param cpu the number of CPU's required to run the task
      * @return  <code>true</code> if the quota was not exceeded, <code>false</code> otherwise
      * @throws QuotaException if the operation fails due to some error
      */
-    boolean checkUserProcessingResources(Principal principal) throws QuotaException;
+    boolean checkUserProcessingResources(Principal principal, int cpu, int memory) throws QuotaException;
     
     /**
      * Update the user's input quota based on the public products that are assigned to him.
@@ -57,14 +58,4 @@ public interface QuotaManager {
      * @throws QuotaException if the operation fails due to some error
      */
     void updateUserProcessingQuota(Principal principal) throws QuotaException;
-    
-    /**
-     * Update the user's processing resources quota.
-     * @param principal The user for which the operation must be performed
-     * @param addedCpu The number of CPUs to add. It can be negative.
-     * @param addedMemory The used memory, in MB. It can be negative
-     * @return <code>true</code> if by adding the  value the quota is not exceeded, <code>false</code> otherwise
-     * @throws QuotaException if the operation fails due to some error
-     */
-    boolean updateUserProcessingResources(Principal principal, long addedCpu, long addedMemory) throws QuotaException;
 }

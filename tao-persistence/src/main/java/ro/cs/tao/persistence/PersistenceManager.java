@@ -720,6 +720,25 @@ public class PersistenceManager implements MessagePersister {
     public ExecutionTask saveExecutionGroupWithSubTasks(ExecutionGroup taskGroup, ExecutionJob job) throws PersistenceException {
         return executionTaskManager.saveExecutionGroupWithSubTasks(taskGroup, job);
     }
+    
+    /**
+     * Get the used resources for a user.
+     * <p>
+     *   The function returns an array with two elements. <br>
+     *   The first element is the total number of CPU's used by the user <br>
+     *   The second element contains the size of the used memory, in MB.  
+     * 
+     * @param userName the user for which the call is performed
+     * @return the number of CPU cores and MB of memory used
+     */
+    public int[] getUsedResourcesForUser(final String userName) {
+    	final int[] result = new int[] {0, 0};
+    	
+    	final List<ExecutionTask> tasks = executionTaskManager.getRunningTasksForUser(userName);
+    	tasks.stream().forEach(t -> {result[0] += t.getUsedCPU(); result[1] += t.getUsedRAM();});
+    	
+    	return result;
+    }
     //endregion
 
     //region Query
