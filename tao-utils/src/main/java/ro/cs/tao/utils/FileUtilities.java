@@ -153,6 +153,10 @@ public class FileUtilities {
                 new ArrayList<>();
     }
 
+    public static List<Path> listTree(Path folder) throws IOException {
+        return Files.walk(folder).collect(Collectors.toList());
+    }
+
     public static List<Path> listFilesWithExtension(Path folder, String extension) {
         final File[] files = folder.toFile().listFiles();
         return files != null ?
