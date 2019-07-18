@@ -107,6 +107,7 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
                 e.printStackTrace();
             }
         }
+        this.stateHandler.assignTask(this);
     }
 
     public InternalStateHandler getStateHandler() { return this.stateHandler; }

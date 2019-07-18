@@ -90,7 +90,7 @@ public class WorkflowDescriptor
 
     @Transient
     public List<WorkflowNodeDescriptor> getOrderedNodes() {
-        return orderNodes(this.nodes);
+        return orderNodes(this.nodes, null);
     }
 
     // addNode and removeNode are needed for bidirectional relationship
