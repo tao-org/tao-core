@@ -16,24 +16,12 @@
 
 package ro.cs.tao.persistence.managers;
 
-import java.time.Clock;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.logging.Logger;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
-
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.persistence.repository.GroupRepository;
 import ro.cs.tao.persistence.repository.UserRepository;
@@ -42,6 +30,11 @@ import ro.cs.tao.user.User;
 import ro.cs.tao.user.UserPreference;
 import ro.cs.tao.user.UserStatus;
 import ro.cs.tao.utils.StringUtilities;
+
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.logging.Logger;
 
 @Configuration
 @EnableTransactionManagement
@@ -114,8 +107,8 @@ public class UserManager {
         if (!StringUtilities.isNullOrEmpty(newUserInfo.getPhone())) {
             user.setPhone(newUserInfo.getPhone());
         }
-        final long inputQuota = groups.stream().map(Group::getInputQuota).min(Comparator.comparing(Long::longValue)).orElse(-1L);
-        final long processingQuota = groups.stream().map(Group::getProcessingQuota).min(Comparator.comparing(Long::longValue)).orElse(-1L);
+        final int inputQuota = groups.stream().map(Group::getInputQuota).min(Comparator.comparing(Integer::intValue)).orElse(-1);
+        final int processingQuota = groups.stream().map(Group::getProcessingQuota).min(Comparator.comparing(Integer::intValue)).orElse(-1);
         user.setInputQuota(inputQuota);
         user.setProcessingQuota(processingQuota);
         user.setOrganization(newUserInfo.getOrganization());
@@ -497,7 +490,7 @@ public class UserManager {
      * @throws PersistenceException if the user is not defined in the database
      */
     @Transactional
-    public long updateUserInputQuota(String username, long actualInputQuota) throws PersistenceException {
+    public int updateUserInputQuota(String username, int actualInputQuota) throws PersistenceException {
     	// get the user
     	final User user = userRepository.findByUsername(username);
         if (user == null)
@@ -532,7 +525,7 @@ public class UserManager {
      * @throws PersistenceException if the user is not defined in the database
      */
     @Transactional
-    public long updateUserProcessingQuota(String username, long actualProcessingQuota) throws PersistenceException {
+    public int updateUserProcessingQuota(String username, int actualProcessingQuota) throws PersistenceException {
     	// get the user
     	final User user = userRepository.findByUsername(username);
         if (user == null)

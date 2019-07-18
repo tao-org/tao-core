@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 /**
  * Interface defining common (default) implementation for all graph nodes containers
  * (such as {@link WorkflowDescriptor} and {@link WorkflowNodeGroupDescriptor}.
+ * It allows the emulation of multiple inheritance for the above classes.
  *
  * @author Cosmin Cara
  */
@@ -33,8 +34,8 @@ public interface NodeListOrderer {
      * A node is root if it has no incoming links from other nodes.
      * @param nodes     The node list.
      */
-    default List<WorkflowNodeDescriptor> findRoots(List<WorkflowNodeDescriptor> nodes) {
-        List<WorkflowNodeDescriptor> roots = null;
+    default List<WorkflowNodeDescriptor> findRoots(final List<WorkflowNodeDescriptor> nodes) {
+        final List<WorkflowNodeDescriptor> roots;
         if (nodes != null) {
             final Set<Long> nodeInGroups = new HashSet<>();
             nodes.stream().filter(n -> n instanceof WorkflowNodeGroupDescriptor)
@@ -50,6 +51,8 @@ public interface NodeListOrderer {
             if (roots.size() == 0) {
                 throw new IllegalArgumentException("The collection must have at least one root node (without incoming links)");
             }
+        } else {
+            roots = null;
         }
         return roots;
     }
@@ -58,52 +61,47 @@ public interface NodeListOrderer {
      * Returns the terminal nodes (nodes that are not sources for links) from a collection of nodes.
      * @param nodes The node collection
      */
-    default List<WorkflowNodeDescriptor> findLeaves(List<WorkflowNodeDescriptor> nodes) {
-        List<WorkflowNodeDescriptor> leaves = null;
+    default List<WorkflowNodeDescriptor> findLeaves(final List<WorkflowNodeDescriptor> nodes) {
+        final List<WorkflowNodeDescriptor> leaves;
         if (nodes != null) {
             final Set<Long> parents = new HashSet<>();
             nodes.stream().filter(n -> n.getIncomingLinks() != null)
                           .forEach(n -> n.getIncomingLinks().forEach(l -> parents.add(l.getSourceNodeId())));
             leaves = nodes.stream().filter(n -> !parents.contains(n.getId())).collect(Collectors.toList());
+        } else {
+            leaves = null;
         }
         return leaves;
     }
 
     /**
-     * Returns an ordered list of nodes from an initial list of nodes.
+     * Returns an ordered list of nodes from an initial list of nodes, affecting also the input list.
      * The output nodes are obtaining by breadth-first traversal of the graph represented by the input nodes.
-     * @param nodes     The nodes to be ordered.
+     * @param nodes         The nodes to be ordered.
+     * @param parentNode    The parent node group descriptor (if the implementor is of this type) or <code>null</code> for WorkflowDescriptor
      */
-    default List<WorkflowNodeDescriptor> orderNodes(List<WorkflowNodeDescriptor> nodes) {
+    default List<WorkflowNodeDescriptor> orderNodes(final List<WorkflowNodeDescriptor> nodes, final WorkflowNodeGroupDescriptor parentNode) {
         if (nodes != null) {
-            List<WorkflowNodeDescriptor> newList = new ArrayList<>();
-            List<WorkflowNodeDescriptor> roots = findRoots(nodes);
-            //Stack<WorkflowNodeDescriptor> stack = new Stack<>();
-            Queue<WorkflowNodeDescriptor> queue = new ArrayDeque<>(nodes.size());
+            final List<WorkflowNodeDescriptor> newList = new ArrayList<>();
+            final List<WorkflowNodeDescriptor> roots = findRoots(nodes);
+            final Queue<WorkflowNodeDescriptor> queue = new ArrayDeque<>(nodes.size());
             for (WorkflowNodeDescriptor root : roots) {
-                int level = 1;
-                root.setLevel(level);
+                root.setLevel(parentNode != null ? parentNode.getLevel() + 1 : 1);
                 newList.add(root);
             }
             for (WorkflowNodeDescriptor root : roots) {
-                //stack.push(root);
                 queue.add(root);
-                //while (!stack.isEmpty()) {
                 while (!queue.isEmpty()) {
-                    //List<WorkflowNodeDescriptor> children = findChildren(nodes, stack.pop());
-                    List<WorkflowNodeDescriptor> children = findChildren(nodes, queue.remove());
+                    final List<WorkflowNodeDescriptor> children = findChildren(nodes, queue.remove());
                     if (children != null && children.size() > 0) {
                         children.forEach(n -> {
                             if (!newList.contains(n)) {
                                 newList.add(n);
-                                //stack.push(n);
                                 queue.add(n);
                             }
                         });
                     }
                 }
-                //stack.clear();
-                queue.clear();
             }
             nodes.clear();
             nodes.addAll(newList);
@@ -118,8 +116,8 @@ public interface NodeListOrderer {
      * @param masterList    The collection of nodes to be searched.
      * @param node          The node whose children must be returned.
      */
-    default List<WorkflowNodeDescriptor> findChildren(List<WorkflowNodeDescriptor> masterList,
-                                                      WorkflowNodeDescriptor node) {
+    default List<WorkflowNodeDescriptor> findChildren(final List<WorkflowNodeDescriptor> masterList,
+                                                      final WorkflowNodeDescriptor node) {
         if (masterList == null || masterList.size() == 0 || node == null) {
             return null;
         }
@@ -139,8 +137,8 @@ public interface NodeListOrderer {
      * @param masterList    The collection of nodes to be searched.
      * @param node          The node whose parents must be returned.
      */
-    default List<WorkflowNodeDescriptor> findAncestors(List<WorkflowNodeDescriptor> masterList,
-                                                       WorkflowNodeDescriptor node) {
+    default List<WorkflowNodeDescriptor> findAncestors(final List<WorkflowNodeDescriptor> masterList,
+                                                       final WorkflowNodeDescriptor node) {
         if (masterList == null || masterList.size() == 0 || node == null) {
             return null;
         }

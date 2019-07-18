@@ -22,6 +22,7 @@ import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Specialization of an execution task to encapsulate the execution of a group of tasks.
@@ -51,7 +52,15 @@ public class ExecutionGroup extends ExecutionTask {
             this.inputParameterValues.add(new Variable(parameterId, value));
         }
         if (this.tasks != null && this.tasks.size() > 0) {
-            this.tasks.get(0).setInputParameterValues(mapInput(this.inputParameterValues));
+            // We may have a parallelism > 1, case in which there should be more than one initial task in the group
+            List<ExecutionTask> firstTasks = this.tasks.stream().filter(t -> t.getLevel() == this.getLevel() + 1).collect(Collectors.toList());
+            for (ExecutionTask task : firstTasks) {
+                if (this.stateHandler != null) {
+                    task.setInputParameterValues(this.stateHandler.advanceToNextState(this.inputParameterValues));
+                } else {
+                    task.setInputParameterValues(this.inputParameterValues);
+                }
+            }
         }
     }
 
@@ -129,34 +138,27 @@ public class ExecutionGroup extends ExecutionTask {
     }
 
     /**
-     * Returns a list of mapped variables for the first task in group.
+     * Returns a list of mapped variables for the first tasks in group.
      * If the <code>inputParameterValues</code> collection contains multiple variables, the mapping is done as follows:
      * - if the variable value is a single value, it is transferred as-is
      * - if no state handler is attached to this group, the variable value is transferred as-is
      * - if the variable value is a serialized list, the item of the list corresponding to the internal state index is transferred
+     *   and the internal state index is incremented
      */
-    private List<Variable> mapInput(List<Variable> inputs) {
+    /*private List<Variable> mapInput(List<Variable> inputs) {
         setInputParameterValues(inputs);
         if (this.inputParameterValues == null) {
             this.inputParameterValues = new ArrayList<>();
         }
         List<Variable> mappedInput = new ArrayList<>();
-        Integer index = null;
-        if (this.stateHandler != null) {
-            index = ((LoopState) this.stateHandler.currentState()).getCurrent();
-        }
         for (Variable inputParameterValue : this.inputParameterValues) {
             Variable newVar = new Variable();
             newVar.setKey(inputParameterValue.getKey());
-            if (index != null) {
-                newVar.setValue(getListValue(inputParameterValue.getValue(), index));
-            } else {
-                newVar.setValue(inputParameterValue.getValue());
-            }
+            newVar.setValue(inputParameterValue.getValue());
             mappedInput.add(newVar);
         }
         return mappedInput;
-    }
+    }*/
 
     /**
      *

@@ -912,11 +912,11 @@ public class PersistenceManager implements MessagePersister {
         return userManager.getUserDiskQuotas(username);
     }
     
-    public long updateUserInputQuota(String username, long actualInputQuota) throws PersistenceException {
+    public int updateUserInputQuota(String username, int actualInputQuota) throws PersistenceException {
     	return userManager.updateUserInputQuota(username, actualInputQuota);
     }
     
-    public long updateUserProcessingQuota(String username, long actualProcessingQuota) throws PersistenceException {
+    public int updateUserProcessingQuota(String username, int actualProcessingQuota) throws PersistenceException {
     	return userManager.updateUserProcessingQuota(username, actualProcessingQuota);
     }    
     // endregion

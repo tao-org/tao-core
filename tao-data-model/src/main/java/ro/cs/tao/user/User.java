@@ -32,10 +32,13 @@ public class User {
     private String firstName;
     private String phone;
     private LocalDateTime lastLoginDate;
-    private long inputQuota;
-    private long actualInputQuota;
-    private long processingQuota;
-    private long actualProcessingQuota;
+    private int inputQuota;
+    private int actualInputQuota;
+    private int processingQuota;
+    private int actualProcessingQuota;
+    private int cpuQuota;
+    private int memoryQuota;
+
     private String organization;
     private UserStatus status;
     // flag that indicates if the user is external (it uses an external auth method); for external users, TAO does'nt store passwords
@@ -49,8 +52,6 @@ public class User {
 
     private List<Group> groups;
     private List<UserPreference> preferences;
-    private List<UserMachine> machines;
-
 
     public Long getId() {
         return id;
@@ -124,21 +125,29 @@ public class User {
         this.lastLoginDate = lastLoginDate;
     }
 
-    public long getInputQuota() { return inputQuota; }
+    public int getInputQuota() { return inputQuota; }
 
-    public void setInputQuota(long inputQuota) { this.inputQuota = inputQuota; }
+    public void setInputQuota(int inputQuota) { this.inputQuota = inputQuota; }
 
-    public long getActualInputQuota() { return actualInputQuota; }
+    public int getActualInputQuota() { return actualInputQuota; }
 
-    public void setActualInputQuota(long actualInputQuota) { this.actualInputQuota = actualInputQuota; }
+    public void setActualInputQuota(int actualInputQuota) { this.actualInputQuota = actualInputQuota; }
 
-    public long getProcessingQuota() { return processingQuota; }
+    public int getProcessingQuota() { return processingQuota; }
 
-    public void setProcessingQuota(long processingQuota) { this.processingQuota = processingQuota; }
+    public void setProcessingQuota(int processingQuota) { this.processingQuota = processingQuota; }
 
-    public long getActualProcessingQuota() { return actualProcessingQuota; }
+    public int getActualProcessingQuota() { return actualProcessingQuota; }
 
-    public void setActualProcessingQuota(long actualProcessingQuota) { this.actualProcessingQuota = actualProcessingQuota; }
+    public int getCpuQuota() { return cpuQuota; }
+
+    public void setCpuQuota(int cpuQuota) { this.cpuQuota = cpuQuota; }
+
+    public int getMemoryQuota() { return memoryQuota; }
+
+    public void setMemoryQuota(int memoryQuota) { this.memoryQuota = memoryQuota; }
+
+    public void setActualProcessingQuota(int actualProcessingQuota) { this.actualProcessingQuota = actualProcessingQuota; }
 
     public String getOrganization() {
         return organization;
@@ -208,7 +217,4 @@ public class User {
         this.preferences = preferences;
     }
 
-    public List<UserMachine> getMachines() { return machines; }
-
-    public void setMachines(List<UserMachine> machines) { this.machines = machines; }
 }
