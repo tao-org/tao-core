@@ -32,9 +32,15 @@ public class NullQuotaManager implements QuotaManager {
 	}
 
 	@Override
-	public boolean checkUserProcessingResources(Principal principal, int cpu, int memory) throws QuotaException {
+	public boolean checkUserProcessingMemory(Principal principal, int memory) throws QuotaException {
 		// always true
 		return true;
+	}
+
+	@Override
+	public int getAvailableCpus(Principal principal) throws QuotaException {
+		// always unlimited
+		return -1;
 	}
 
 	@Override
