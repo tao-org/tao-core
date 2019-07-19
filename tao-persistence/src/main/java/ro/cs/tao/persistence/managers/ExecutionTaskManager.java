@@ -109,8 +109,13 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
     }
 
     @Transactional
-    public List<ExecutionTask> getRunningTasksForUser(String userName) {
-        return repository.getRunningTasksForUser(userName);
+    public int getCPUsForUser(String userName) {
+        return repository.getCPUsForUser(userName);
+    }    
+
+    @Transactional
+    public int getMemoryForUser(String userName) {
+        return repository.getMemoryForUser(userName);
     }    
 
     /**
