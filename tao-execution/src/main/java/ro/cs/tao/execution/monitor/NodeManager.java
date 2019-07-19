@@ -195,16 +195,31 @@ public class NodeManager extends Notifiable {
     public NodeData getAvailableNode(int cpus, long memory, long disk) {
         String nodeName = null;
         final Principal principal = SessionStore.currentContext().getPrincipal();
+        int requestedCPUs = cpus;
         while (nodeName == null) {
-            nodeName = runtimeInfo.entrySet().stream()
+        	
+            try {
+            	// check if the user has any CPU limitation
+            	final int availableCpu = UserQuotaManager.getInstance().getAvailableCpus(principal);
+            	
+                if ((availableCpu == -1 || availableCpu > 0) && UserQuotaManager.getInstance().checkUserProcessingMemory(principal, (int)memory)) {
+                    requestedCPUs = availableCpu == -1 ? cpus : Math.min(cpus, availableCpu);
+                	
+                	nodeName = runtimeInfo.entrySet().stream()
                             .filter(e -> e.getValue().getAvailableMemory() >= memory)
                             .filter(e -> (e.getValue().getDiskTotal() - e.getValue().getDiskUsed()) >= disk)
-                            .filter(e -> checkUserQuota(principal, nodes.get(e.getKey()), cpus, memory))
                             .sorted(Comparator.comparingDouble(e -> computeLoad(nodes.get(e.getKey()),
                                                                                 e.getValue().getCpuTotal(),
                                                                                 e.getValue().getAvailableMemory())))
                             //.sorted(Comparator.comparingDouble(o -> o.getValue().getCpuTotal() / (double) nodes.get(o.getKey()).getProcessorCount()))
                             .map(Map.Entry::getKey).findFirst().orElse(null);
+                }
+            	
+            } catch (QuotaException e) {
+    			logger.info(String.format("Error while computing the CPU and Meory quota for the user %s. Error message: %s", principal.getName(), e.getMessage()));
+    			nodeName = null;
+            }
+        	
             if (nodeName == null) {
                 logger.fine("No processing node was found to be available. Will retry in 5 seconds.");
             }
@@ -215,7 +230,7 @@ public class NodeManager extends Notifiable {
         
         final NodeDescription node = nodes.get(nodeName);
         
-        return new NodeData(node, Math.min(cpus, node.getProcessorCount()), memory);
+        return new NodeData(node, Math.min(requestedCPUs, node.getProcessorCount()), memory);
     }
 
     /**
@@ -359,27 +374,5 @@ public class NodeManager extends Notifiable {
         } finally {
             logger.finest(String.format("Processing pressure for %s: %f", node.getId(), result));
         }
-    }
-    
-    /**
-     * Check if the node can be selected for execution based on the user quota.
-     * 
-     * @param principal the user's information
-     * @param nodeDescription the node description
-     * @param cpus the number of cpus required
-     * @param memory the memory required (in MB)
-     * @return true if the node can be selected for execution, false if not.
-     */
-    private boolean checkUserQuota(final Principal principal, final NodeDescription nodeDescription, final int cpus, final long memory) {
-    	
-    	final int reqCPUs = Math.min(cpus, nodeDescription.getProcessorCount());
-    	final int reqMem = (int)memory;
-
-    	try {
-			return UserQuotaManager.getInstance().checkUserProcessingResources(principal, reqCPUs, reqMem);
-		} catch (QuotaException e) {
-			logger.info(String.format("Error while computing the processing quota for the user %s. Error message: %s", principal.getName(), e.getMessage()));
-			return false;
-		}
     }
 }
