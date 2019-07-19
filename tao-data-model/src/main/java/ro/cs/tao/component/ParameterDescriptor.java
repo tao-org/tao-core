@@ -50,10 +50,11 @@ public class ParameterDescriptor extends StringIdentifiable {
 
     public ParameterDescriptor() { super(); }
 
-    private ParameterDescriptor(String id, ParameterType type, Class<?> dataType, String defaultValue,
-                                String description, String label, String unit, String[] valueSet,
-                                String format, Boolean notNull) {
+    public ParameterDescriptor(String id, String name, ParameterType type, Class<?> dataType, String defaultValue,
+                               String description, String label, String unit, String[] valueSet, String format,
+                               boolean notNull, ParameterExpansionRule expansionRule) {
         super(id);
+        this.name = name;
         this.type = type;
         this.dataType = dataType;
         this.defaultValue = defaultValue;
@@ -63,6 +64,7 @@ public class ParameterDescriptor extends StringIdentifiable {
         this.valueSet = valueSet;
         this.format = format;
         this.notNull = notNull;
+        this.expansionRule = expansionRule;
     }
 
     public ParameterDescriptor(String id) {
