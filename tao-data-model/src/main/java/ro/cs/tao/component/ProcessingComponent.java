@@ -429,6 +429,18 @@ public class ProcessingComponent extends TaoComponent {
                     throw new TemplateException(e);
                 }
                 break;
+            case AGGREGATE:
+                try {
+                    Path scriptPath = SessionStore.currentContext().getWorkspace().resolve("scripts");
+                    Files.createDirectories(scriptPath);
+                    Path scriptFile = scriptPath.resolve(System.currentTimeMillis() + "-" + this.template.getName());
+                    Files.write(scriptFile, transformedTemplate.getBytes());
+                    cmdBuilder.append(scriptFile.toString()).append("\n");
+                } catch (IOException e) {
+                    Logger.getLogger(ProcessingComponent.class.getName()).severe("Cannot persist aggregated template file");
+                    throw new TemplateException(e);
+                }
+                break;
             case EXECUTABLE:
             default:
                 cmdBuilder.append(transformedTemplate).append("\n");

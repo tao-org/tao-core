@@ -26,7 +26,7 @@ public class NamedThreadPoolExecutor extends ThreadPoolExecutor {
     private static final String THREAD_NAME = "%s-%d";
 
     public NamedThreadPoolExecutor(String poolName, int maxThreads) {
-        this(maxThreads, maxThreads, 0L, TimeUnit.MILLISECONDS, poolName);
+        this(maxThreads, maxThreads, 30L, TimeUnit.SECONDS, poolName);
     }
 
     private NamedThreadPoolExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime, final TimeUnit unit,
