@@ -37,13 +37,22 @@ public interface QuotaManager {
      */
     boolean checkUserProcessingQuota(Principal principal) throws QuotaException;
     /**
-     * Verifies if the processing resources assigned to a user were exceeded.
+     * Verifies if the user has enough RAM memory available.
      * @param principal The user for which to verify the processing resources
-     * @param cpu the number of CPU's required to run the task
+     * @param memory the amount of memory, in MB, required by the user
      * @return  <code>true</code> if the quota was not exceeded, <code>false</code> otherwise
      * @throws QuotaException if the operation fails due to some error
      */
-    boolean checkUserProcessingResources(Principal principal, int cpu, int memory) throws QuotaException;
+    boolean checkUserProcessingMemory(Principal principal, int memory) throws QuotaException;
+    
+    /**
+     * Get the available number of cpus for a user.
+     * 
+     * @param principal the user details 
+     * @return the available number of cpu's for the user or -1 if no restrictions apply.
+     * @throws QuotaException if the operation fails due to some error
+     */
+    int getAvailableCpus(Principal principal) throws QuotaException;
     
     /**
      * Update the user's input quota based on the public products that are assigned to him.
