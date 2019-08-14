@@ -18,6 +18,7 @@ package ro.cs.tao.scheduling;
 import org.quartz.*;
 import ro.cs.tao.utils.StringUtilities;
 
+import java.io.Serializable;
 import java.sql.Date;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -27,8 +28,11 @@ import java.util.UUID;
 /**
  * @author Cosmin Cara
  */
-public class JobDescriptor {
-    private String name;
+public class JobDescriptor implements Serializable {
+    /** Generated serial ID. */
+	private static final long serialVersionUID = 1600312854311093678L;
+	
+	private String name;
     private String group;
     private LocalDateTime fireTime;
     private int repeatInterval;
@@ -94,6 +98,7 @@ public class JobDescriptor {
         return JobBuilder.newJob(jobType)
                          .withIdentity(getName(), getGroup())
                          .usingJobData(jobDataMap)
+                         .storeDurably()
                          .build();
     }
 
