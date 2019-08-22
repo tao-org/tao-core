@@ -108,18 +108,19 @@ public class JobFactory {
                                           WorkflowDescriptor workflow,
                                           WorkflowNodeGroupDescriptor groupNode,
                                           Map<String, String> inputs) throws PersistenceException {
-        ExecutionGroup group = new ExecutionGroup();
+        final ExecutionGroup group = new ExecutionGroup();
         group.setWorkflowNodeId(groupNode.getId());
         group.setExecutionStatus(ExecutionStatus.UNDETERMINED);
         group.setResourceId("group-" + groupNode.getId() + "-" + job.getId());
         persistenceManager.saveExecutionTask(group, job);
         List<WorkflowNodeDescriptor> nodes = groupNode.getOrderedNodes();
-        GroupComponent component = persistenceManager.getGroupComponentById(groupNode.getComponentId());
-        int parallelism = component != null ? component.getParallelism() : 1;
+        final GroupComponent component = persistenceManager.getGroupComponentById(groupNode.getComponentId());
+        final int parallelism = component != null ? component.getParallelism() : 1;
         for (WorkflowNodeDescriptor node : nodes) {
             for (int i = 1; i <= parallelism; i++) {
                 ExecutionTask task = createTask(job, workflow, node, inputs);
-                task.setLevel(groupNode.getLevel() + 1);
+                //task.setLevel(groupNode.getLevel() + 1);
+                task.setLevel(node.getLevel());
                 task.setInstanceId(i);
                 persistenceManager.saveExecutionTask(task, job);
                 group.addTask(task);

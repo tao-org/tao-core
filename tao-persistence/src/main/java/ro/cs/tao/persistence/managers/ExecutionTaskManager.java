@@ -108,6 +108,16 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
         return existingTask;
     }
 
+    @Transactional
+    public int getCPUsForUser(String userName) {
+        return repository.getCPUsForUser(userName);
+    }    
+
+    @Transactional
+    public int getMemoryForUser(String userName) {
+        return repository.getMemoryForUser(userName);
+    }    
+
     /**
      * Saves a task directly attached to an existent job
      *

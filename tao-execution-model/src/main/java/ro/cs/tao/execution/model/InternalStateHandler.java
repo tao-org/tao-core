@@ -16,7 +16,10 @@
 
 package ro.cs.tao.execution.model;
 
+import ro.cs.tao.component.Variable;
 import ro.cs.tao.serialization.SerializationException;
+
+import java.util.List;
 
 /**
  * Defines an object that "knows" how to deal with the internal state of an execution task,
@@ -24,23 +27,28 @@ import ro.cs.tao.serialization.SerializationException;
  * The internal state of a component can be anything, from a simple integer counter to more complex structures.
  *
  * @param <S>   The type of the internal state.
+ * @param <T>   The type of the execution task
  *
  * @author Cosmin Cara
  */
-public interface InternalStateHandler<S> {
+public interface InternalStateHandler<S, T extends ExecutionTask> {
+
+    void assignTask(T task);
     /**
-     * Assigns a current state to a component.
+     * Assigns a current state to an execution task.
      * @param serializedState   The serialized internal state representation
      */
     void setCurrentState(String serializedState) throws SerializationException;
 
     /**
-     * Retrieves the current internal state of a component.
+     * Retrieves the current internal state of an execution task.
      */
     S currentState();
 
+    List<Variable> advanceToNextState(List<Variable> inputs);
+
     /**
-     * Retrieves the value for the next internal state.
+     * Advances the internal state and returns the new value.
      */
     S nextState();
 

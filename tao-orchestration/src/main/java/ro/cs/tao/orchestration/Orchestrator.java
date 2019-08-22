@@ -15,33 +15,7 @@
  */
 package ro.cs.tao.orchestration;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.attribute.UserPrincipal;
-import java.security.Principal;
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.function.Function;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
 import org.apache.commons.lang3.exception.ExceptionUtils;
-
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.component.TargetDescriptor;
@@ -57,16 +31,7 @@ import ro.cs.tao.eodata.naming.NameExpressionParser;
 import ro.cs.tao.eodata.naming.NamingRule;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.OutputDataHandlerManager;
-import ro.cs.tao.execution.model.DataSourceExecutionTask;
-import ro.cs.tao.execution.model.ExecutionGroup;
-import ro.cs.tao.execution.model.ExecutionJob;
-import ro.cs.tao.execution.model.ExecutionStatus;
-import ro.cs.tao.execution.model.ExecutionTask;
-import ro.cs.tao.execution.model.InternalStateHandler;
-import ro.cs.tao.execution.model.LoopState;
-import ro.cs.tao.execution.model.LoopStateHandler;
-import ro.cs.tao.execution.model.ProcessingExecutionTask;
-import ro.cs.tao.execution.model.TaskSelector;
+import ro.cs.tao.execution.model.*;
 import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.Notifiable;
@@ -91,6 +56,22 @@ import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
 import ro.cs.tao.workflow.enums.TransitionBehavior;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.Principal;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.function.Function;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * The singleton orchestrator of task executions.
@@ -218,9 +199,7 @@ public class Orchestrator extends Notifiable {
         try {
             SessionContext context = new SessionContext() {
                 @Override
-                protected Principal setPrincipal() {
-                    return (UserPrincipal) message::getUser;
-                }
+                protected Principal setPrincipal() { return message::getUser; }
 
                 @Override
                 protected List<UserPreference> setPreferences() {
@@ -469,25 +448,24 @@ public class Orchestrator extends Notifiable {
     private void flowOutputs(ExecutionTask task, ExecutionTask nextTask) throws PersistenceException {
         final List<Variable> values = task.getOutputParameterValues();
         if (task instanceof DataSourceExecutionTask) {
+            final int cardinality;
             // A DataSourceExecutionTask outputs the list of results as a JSON
-            int cardinality = 0;
             Variable theOnlyValue = null;
             final List<String> valuesList;
             if (values != null && values.size() > 0) {
                 theOnlyValue = values.get(0);
                 valuesList = this.listAdapter.marshal(theOnlyValue.getValue());
-                cardinality = valuesList.size();
             } else {
                 valuesList = new ArrayList<>();
             }
-            //final String masterRootPath = nextTask.getContext().getWorkspace().getParent().toUri().toString();
-            for (int i = 0; i < valuesList.size(); i++) {
-                valuesList.set(i, TaskUtilities.relativizePathForExecution(valuesList.get(i)));//.replace(masterRootPath, DOCKER_MOUNT_POINT).replace('\\', '/'));
-            }
+            cardinality = valuesList.size();
             if (cardinality == 0) { // no point to continue since we have nothing to do
                 logger.severe(String.format("Task %s produced no results", task.getId()));
                 nextTask.setExecutionStatus(ExecutionStatus.CANCELLED);
                 statusChanged(nextTask, null);
+            }
+            for (int i = 0; i < cardinality; i++) {
+                valuesList.set(i, TaskUtilities.relativizePathForExecution(valuesList.get(i)));
             }
             if (nextTask instanceof ExecutionGroup) {
                 ExecutionGroup groupTask = (ExecutionGroup) nextTask;
@@ -530,6 +508,7 @@ public class Orchestrator extends Notifiable {
                             overriddenOutParam = var;
                         }
                     }
+                    // If there is an overridden output parameter, it may be that we have a name expression
                     if (overriddenOutParam != null) {
                         DataSourceExecutionTask originatingTask = findOriginatingTask(nextTask);
                         if (originatingTask != null) {
@@ -587,6 +566,7 @@ public class Orchestrator extends Notifiable {
                     break;
                 }
             }
+            // If there is an overridden output parameter, it may be that we have a name expression
             if (overriddenOutParam != null) {
                 DataSourceExecutionTask originatingTask = findOriginatingTask(nextTask);
                 if (originatingTask != null) {

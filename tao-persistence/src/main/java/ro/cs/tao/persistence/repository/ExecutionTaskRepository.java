@@ -43,4 +43,11 @@ public interface ExecutionTaskRepository extends PagingAndSortingRepository<Exec
 
     @Query(value = "SELECT * FROM execution.task WHERE discriminator = 11 AND execution_status_id = 2 AND resource_id IS NOT NULL", nativeQuery = true)
     List<ExecutionTask> getExecutingTasks();
+
+    @Query(value = "SELECT COALESCE(SUM(t.used_cpu), 0) FROM execution.task as t JOIN execution.job AS j ON j.id = t.job_id WHERE t.execution_status_id IN (1, 2) AND j.username = :userName", nativeQuery = true)
+    int getCPUsForUser(@Param("userName") String userName);
+
+    @Query(value = "SELECT COALESCE(SUM(t.used_ram), 0) FROM execution.task as t JOIN execution.job AS j ON j.id = t.job_id WHERE t.execution_status_id IN (1, 2) AND j.username = :userName", nativeQuery = true)
+    int getMemoryForUser(@Param("userName") String userName);
+    
 }

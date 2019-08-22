@@ -1,5 +1,6 @@
 package ro.cs.tao.execution.monitor;
 
+import java.security.Principal;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -14,6 +15,9 @@ import ro.cs.tao.execution.local.DefaultSessionFactory;
 import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.Notifiable;
 import ro.cs.tao.persistence.PersistenceManager;
+import ro.cs.tao.quota.QuotaException;
+import ro.cs.tao.quota.UserQuotaManager;
+import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.utils.async.Parallel;
@@ -173,7 +177,7 @@ public class NodeManager extends Notifiable {
      * If there is just a single node (i.e. the master) registered, it returns immediately the master node description.
      */
     public NodeDescription getFirstAvailableNode() {
-        return nodes.size() == 1 ? nodes.values().iterator().next() : getAvailableNode(0, 0);
+        return nodes.size() == 1 ? nodes.values().iterator().next() : getAvailableNode(0, 0, 0).getNode();
     }
 
     /**
@@ -184,13 +188,24 @@ public class NodeManager extends Notifiable {
      *  2) The disk threshold is checked among the candidates from step 1.
      *  3) The processor usage (per core) is checked among the candidates from step 2.
      *
+     * @param cpus 		The number of CPUs normally required by the component
      * @param memory    The memory threshold
      * @param disk      The disk threshold
      */
-    public NodeDescription getAvailableNode(long memory, long disk) {
+    public NodeData getAvailableNode(int cpus, long memory, long disk) {
         String nodeName = null;
+        final Principal principal = SessionStore.currentContext().getPrincipal();
+        int requestedCPUs = cpus;
         while (nodeName == null) {
-            nodeName = runtimeInfo.entrySet().stream()
+        	
+            try {
+            	// check if the user has any CPU limitation
+            	final int availableCpu = UserQuotaManager.getInstance().getAvailableCpus(principal);
+            	
+                if ((availableCpu == -1 || availableCpu > 0) && UserQuotaManager.getInstance().checkUserProcessingMemory(principal, (int)memory)) {
+                    requestedCPUs = availableCpu == -1 ? cpus : Math.min(cpus, availableCpu);
+                	
+                	nodeName = runtimeInfo.entrySet().stream()
                             .filter(e -> e.getValue().getAvailableMemory() >= memory)
                             .filter(e -> (e.getValue().getDiskTotal() - e.getValue().getDiskUsed()) >= disk)
                             .sorted(Comparator.comparingDouble(e -> computeLoad(nodes.get(e.getKey()),
@@ -198,6 +213,13 @@ public class NodeManager extends Notifiable {
                                                                                 e.getValue().getAvailableMemory())))
                             //.sorted(Comparator.comparingDouble(o -> o.getValue().getCpuTotal() / (double) nodes.get(o.getKey()).getProcessorCount()))
                             .map(Map.Entry::getKey).findFirst().orElse(null);
+                }
+            	
+            } catch (QuotaException e) {
+    			logger.info(String.format("Error while computing the CPU and Meory quota for the user %s. Error message: %s", principal.getName(), e.getMessage()));
+    			nodeName = null;
+            }
+        	
             if (nodeName == null) {
                 logger.fine("No processing node was found to be available. Will retry in 5 seconds.");
             }
@@ -205,7 +227,10 @@ public class NodeManager extends Notifiable {
                 Thread.sleep(5000);
             } catch (InterruptedException ignored) { }
         }
-        return nodes.get(nodeName);
+        
+        final NodeDescription node = nodes.get(nodeName);
+        
+        return new NodeData(node, Math.min(requestedCPUs, node.getProcessorCount()), memory);
     }
 
     /**
@@ -300,6 +325,43 @@ public class NodeManager extends Notifiable {
                 refreshInProgress = false;
             }
         }
+    }
+    
+    /**
+     * This class contains the node on which a task can be executed together with the number of 
+     * CPU's and the memory that should be used.
+     *  
+     * @author Lucian Barbulescu
+     */
+    public static class NodeData {
+    	private final NodeDescription node;
+    	private final int cpu;
+    	private final long memory;
+		
+    	/**
+    	 * Constructor.
+    	 * 
+    	 * @param node the node descriptor
+    	 * @param cpu the number of cpus
+    	 * @param memory the memory
+    	 */
+    	private NodeData(NodeDescription node, int cpu, long memory) {
+			this.node = node;
+			this.cpu = cpu;
+			this.memory = memory;
+		}
+
+		public NodeDescription getNode() {
+			return node;
+		}
+
+		public int getCpu() {
+			return cpu;
+		}
+
+		public long getMemory() {
+			return memory;
+		}
     }
 
     private double computeLoad(NodeDescription node, double actualCPU, long freeMemory) {

@@ -218,6 +218,7 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
             if ((connection = dataSource.getConnection()) == null) {
                 logger.log(Level.SEVERE, "Database connection cannot be established!");
             } else {
+                logger.info(String.format("Using %s as database driver", dataSource.getDriverClass()));
                 connection.close();
             }
         } catch (SQLException | IllegalStateException | PropertyVetoException e) {
