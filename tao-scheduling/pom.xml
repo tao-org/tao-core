@@ -41,6 +41,16 @@
             <artifactId>tao-persistence</artifactId>
             <version>${project.version}</version>
         </dependency>
+		<dependency>
+            <groupId>ro.cs.tao</groupId>
+            <artifactId>tao-orchestration</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ro.cs.tao</groupId>
+            <artifactId>tao-spring-bridge</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.quartz-scheduler/quartz -->
         <dependency>
