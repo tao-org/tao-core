@@ -29,6 +29,8 @@ import ro.cs.tao.serialization.SerializerFactory;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.transform.stream.StreamSource;
 import java.io.StringReader;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -41,6 +43,7 @@ import java.util.stream.Collectors;
 @XmlTransient
 public abstract class DataQuery extends StringIdentifiable {
     protected static final int DEFAULT_LIMIT = 100;
+    protected static final String QUERY_RESULT_MESSAGE = "Query %s [%s-%s] (page #%d) returned %d results";
     /* Correspondence between system parameter names and remote parameter names */
     private Map<String, String> parameterNameMap;
     /* Set of mandatory parameter system names */
@@ -143,7 +146,9 @@ public abstract class DataQuery extends StringIdentifiable {
         this.dataSourceParameters.entrySet().stream()
                 .filter(entry -> entry.getValue().getDefaultValue() != null && !actualParameters.containsKey(entry.getKey()))
                 .forEach(e -> addParameter(e.getKey(), e.getValue().getType(), e.getValue().getDefaultValue()));
+        Instant start = Instant.now();
         List<EOProduct> retList = executeImpl();
+        logger.finest(String.format("Data query completed in %d ms.", Duration.between(start, Instant.now()).toMillis()));
         retList.forEach(p -> {
             if (p.getVisibility() == null) {
                 p.setVisibility(Visibility.PUBLIC);
@@ -166,7 +171,10 @@ public abstract class DataQuery extends StringIdentifiable {
         this.dataSourceParameters.entrySet().stream()
                 .filter(entry -> entry.getValue().getDefaultValue() != null && !parameters.containsKey(entry.getKey()))
                 .forEach(e -> addParameter(e.getKey(), e.getValue().getType(), e.getValue().getDefaultValue()));
-        return getCountImpl();
+        Instant start = Instant.now();
+        final long count = getCountImpl();
+        logger.finest(String.format("Count query completed in %d ms.", Duration.between(start, Instant.now()).toMillis()));
+        return count;
     }
 
     public Map<String, DataSourceParameter> getSupportedParameters() { return this.dataSourceParameters; }

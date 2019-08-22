@@ -61,7 +61,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.UserPrincipal;
 import java.security.Principal;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -200,9 +199,7 @@ public class Orchestrator extends Notifiable {
         try {
             SessionContext context = new SessionContext() {
                 @Override
-                protected Principal setPrincipal() {
-                    return (UserPrincipal) message::getUser;
-                }
+                protected Principal setPrincipal() { return message::getUser; }
 
                 @Override
                 protected List<UserPreference> setPreferences() {
