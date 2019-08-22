@@ -39,14 +39,19 @@ public interface ContainerService extends CRUDService<Container, String> {
     Container initializeContainer(String id, String name, String path, List<Application> applications);
 
     /**
+     * Updates database container information
+     * @param id            The Docker container id (as returned by Docker)
+     * @param webContainer  The container to be updated (may come from a deserialization)
+     */
+    Container initializeContainer(String id, Container webContainer);
+
+    /**
      * Registers a new container with Docker and populates database with its components (if provided)
      *
      * @param dockerFile    The Dockerfile path
-     * @param shortName     The Docker image name
-     * @param description   The description of the container
      * @param descriptor    The container descriptor (entity)
      * @param components    The list of components contained in this container
      */
-    String registerContainer(Path dockerFile, String shortName, String description, Container descriptor, ProcessingComponent[] components);
+    String registerContainer(Path dockerFile, Container descriptor, ProcessingComponent[] components);
 
 }

@@ -24,17 +24,19 @@ import java.util.Map;
  * @author Cosmin Cara
  */
 public interface Job extends org.quartz.Job {
-    String configKey();
     String groupName();
-    default JobDescriptor createDescriptor(String name, int rateInMinutes) {
-        return new JobDescriptor()
+    default JobDescriptor createDescriptor(String name, LocalDateTime startTime, int rateInMinutes) {
+        JobDescriptor jd = new JobDescriptor()
                 .setName(name)
                 .setGroup(groupName())
-                .setFireTime(LocalDateTime.now().plusSeconds(10))
                 .setRate(rateInMinutes);
+        if (startTime == null) {
+            return jd.setFireTime(LocalDateTime.now().plusSeconds(10));
+        }
+        return jd.setFireTime(startTime);
     }
-    default JobDetail buildDetail(String jobName, int interval, Map<String, Object> parameters) {
-        return createDescriptor(jobName, interval)
+    default JobDetail buildDetail(String jobName, LocalDateTime startTime, int interval, Map<String, Object> parameters) {
+        return createDescriptor(jobName, startTime, interval)
                 .buildJobDetail(getClass(), parameters);
     }
 }

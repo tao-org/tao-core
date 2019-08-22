@@ -17,25 +17,37 @@
 package ro.cs.tao.execution.model;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import ro.cs.tao.component.Variable;
 import ro.cs.tao.serialization.SerializationException;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Specialization of a state handler for loop states.
  *
  * @author Cosmin Cara
  */
-public class LoopStateHandler implements InternalStateHandler<LoopState> {
+public class LoopStateHandler implements InternalStateHandler<LoopState, ExecutionGroup> {
     private LoopState loopState;
+    private ObjectMapper serializer;
+    private ExecutionGroup handledTask;
 
     public LoopStateHandler(LoopState loopState) {
         this.loopState = loopState;
+        this.serializer = new ObjectMapper();
+    }
+
+    @Override
+    public void assignTask(ExecutionGroup task) {
+        this.handledTask = task;
     }
 
     @Override
     public void setCurrentState(String serializedState) throws SerializationException {
         try {
             if (serializedState != null) {
-                this.loopState = new ObjectMapper().readValue(serializedState, LoopState.class);
+                this.loopState = this.serializer.readValue(serializedState, LoopState.class);
             }
         } catch (Exception ex) {
             throw new SerializationException(ex);
@@ -59,12 +71,34 @@ public class LoopStateHandler implements InternalStateHandler<LoopState> {
     public String serializeState() throws SerializationException {
         try {
             if (this.loopState != null) {
-                return new ObjectMapper().writeValueAsString(this.loopState);
+                return this.serializer.writeValueAsString(this.loopState);
             } else {
                 return null;
             }
         } catch (Exception ex) {
             throw new SerializationException(ex);
         }
+    }
+
+    @Override
+    public List<Variable> advanceToNextState(List<Variable> inputs) {
+        if (handledTask == null || inputs == null) {
+            return null;
+        }
+        handledTask.setInputParameterValues(inputs);
+        if (handledTask.inputParameterValues == null) {
+            handledTask.inputParameterValues = new ArrayList<>();
+        }
+        List<Variable> mappedInput = new ArrayList<>();
+        int index = currentState().getCurrent();
+        for (Variable inputParameterValue : handledTask.inputParameterValues) {
+            Variable newVar = new Variable();
+            newVar.setKey(inputParameterValue.getKey());
+            newVar.setValue(handledTask.getListValue(inputParameterValue.getValue(), index));
+            // Advance to the next internal state, but without persisting it
+            nextState();
+            mappedInput.add(newVar);
+        }
+        return mappedInput;
     }
 }

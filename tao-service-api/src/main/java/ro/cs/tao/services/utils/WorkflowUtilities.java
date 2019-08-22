@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
  *
  * @author Cosmin Cara
  */
-@Component
+//@Component
 public class WorkflowUtilities {
     private static final PersistenceManager persistenceManager;
     private static final Logger logger = Logger.getLogger(WorkflowUtilities.class.getName());

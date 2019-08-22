@@ -279,6 +279,9 @@
             <basic name="name">
                 <column name="name" nullable="false" column-definition="character varying(1024) NOT NULL"/>
             </basic>
+            <basic name="description">
+                <column name="description" nullable="false" column-definition="character varying(1024) NOT NULL"/>
+            </basic>
             <basic name="tag">
                 <column name="tag" nullable="false" column-definition="character varying(1024) NOT NULL"/>
             </basic>
@@ -707,7 +710,7 @@
             <many-to-one name="component" fetch="LAZY" target-entity="ro.cs.tao.component.ProcessingComponent">
                 <join-column name="component_id" nullable="false"/>
             </many-to-one>
-            <transient name="instanceTargetOutput"/>
+            <!--<transient name="instanceTargetOutput"/>-->
         </attributes>
     </entity>
 
@@ -1047,16 +1050,22 @@
                 <column name="last_login_date" nullable="true" column-definition="timestamp without time zone"/>
             </basic>
             <basic name="inputQuota">
-                <column name="input_quota" nullable="false" column-definition="bigint NOT NULL"/>
+                <column name="input_quota" nullable="false" column-definition="int NOT NULL"/>
             </basic>
             <basic name="actualInputQuota">
-                <column name="actual_input_quota" nullable="false" column-definition="bigint NOT NULL"/>
+                <column name="actual_input_quota" nullable="false" column-definition="int NOT NULL"/>
             </basic>
             <basic name="processingQuota">
-                <column name="processing_quota" nullable="false" column-definition="bigint NOT NULL"/>
+                <column name="processing_quota" nullable="false" column-definition="int NOT NULL"/>
             </basic>
             <basic name="actualProcessingQuota">
-                <column name="actual_processing_quota" nullable="false" column-definition="bigint NOT NULL"/>
+                <column name="actual_processing_quota" nullable="false" column-definition="int NOT NULL"/>
+            </basic>
+            <basic name="cpuQuota">
+                <column name="cpu_quota" nullable="false" column-definition="int NOT NULL"/>
+            </basic>
+            <basic name="memoryQuota">
+                <column name="memory_quota" nullable="false" column-definition="int NOT NULL"/>
             </basic>
             <basic name="organization">
                 <column name="organization" nullable="false" column-definition="character varying(255) NOT NULL"/>
@@ -1090,11 +1099,6 @@
                 </collection-table>
             </element-collection>
 
-            <element-collection name="machines" target-class="ro.cs.tao.user.UserMachine" access="PROPERTY" fetch="LAZY">
-                <collection-table name="usr.user_quota">
-                    <join-column name="user_id" referenced-column-name="id" updatable="true" />
-                </collection-table>
-            </element-collection>
         </attributes>
     </entity>
 

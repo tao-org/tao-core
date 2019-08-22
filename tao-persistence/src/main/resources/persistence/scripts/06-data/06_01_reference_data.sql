@@ -8,7 +8,7 @@ INSERT INTO component.component_visibility (visibility) VALUES
 
 -- Processing components type
 INSERT INTO component.processing_component_type (id, type) VALUES
-(1, 'EXECUTABLE'), (2, 'SCRIPT');
+(1, 'EXECUTABLE'), (2, 'SCRIPT'), (3, 'AGGREGATE');
 
 -- Tag type
 INSERT INTO common.tag_type (id, description) VALUES
@@ -99,20 +99,20 @@ INSERT INTO usr.user_status (status) VALUES
 
 -- Users
 -- admin user (password "admin" - "$2a$08$wU07f1hSVkTO7321eVi0quF8If7d23Ly66dkwGAOzbb6xrZFeo69m")
-INSERT INTO usr."user" (username, password, email, alternative_email, last_name, first_name, input_quota, actual_input_quota, processing_quota, actual_processing_quota, organization, status_id, created)
-VALUES ('admin', 'QxdxrJkXAQMN5nT9+dBWLg==', 'kraftek@c-s.ro', 'oana.hogoiu@c-s.ro', 'Administrator', 'Account', -1, -1, -1, -1, 'TAO', 2, CURRENT_TIMESTAMP);
+INSERT INTO usr."user" (username, password, email, alternative_email, last_name, first_name, input_quota, actual_input_quota, processing_quota, actual_processing_quota, cpu_quota, memory_quota, organization, status_id, created)
+VALUES ('admin', 'QxdxrJkXAQMN5nT9+dBWLg==', 'kraftek@c-s.ro', 'oana.hogoiu@c-s.ro', 'Administrator', 'Account', -1, -1, -1, -1, -1, -1, 'TAO', 2, CURRENT_TIMESTAMP);
 
 -- System Account (password "system" - "$2a$12$mXbtZweZmmFjcKIA0/NmF.uxcHik8rTKGdkkyrelKiZWe3bhgR.aC")
-INSERT INTO usr."user" (username, password, email, alternative_email, last_name, first_name, input_quota, actual_input_quota, processing_quota, actual_processing_quota, organization, status_id, created)
-VALUES ('SystemAccount', 'TSEBHrrH9Uo+O69A5nzq9A==', 'kraftek@c-s.ro', 'oana.hogoiu@c-s.ro', 'Cosmin', 'Cara', -1, -1, -1, -1, 'CSRO', 2, CURRENT_TIMESTAMP);
+INSERT INTO usr."user" (username, password, email, alternative_email, last_name, first_name, input_quota, actual_input_quota, processing_quota, actual_processing_quota, cpu_quota, memory_quota, organization, status_id, created)
+VALUES ('SystemAccount', 'TSEBHrrH9Uo+O69A5nzq9A==', 'kraftek@c-s.ro', 'oana.hogoiu@c-s.ro', 'Cosmin', 'Cara', -1, -1, -1, -1, -1, -1, 'CSRO', 2, CURRENT_TIMESTAMP);
 
 -- operator user (password "operator" - "$2a$09$AvkhkrwRHqQIdEfslOLB8ulHzKo89AUIuuANhHmrE5RxzGUsMFGs.")
-INSERT INTO usr."user" (username, password, email, alternative_email, last_name, first_name, input_quota, actual_input_quota, processing_quota, actual_processing_quota, organization, status_id, created)
-VALUES ('operator', 'dzkzdsvxRSrhlNLJdvThzg==', 'kraftek@c-s.ro', 'oana.hogoiu@c-s.ro', 'Cosmin', 'Cara', -1, -1, -1, -1, 'CSRO', 2, CURRENT_TIMESTAMP);
+INSERT INTO usr."user" (username, password, email, alternative_email, last_name, first_name, input_quota, actual_input_quota, processing_quota, actual_processing_quota, cpu_quota, memory_quota, organization, status_id, created)
+VALUES ('operator', 'dzkzdsvxRSrhlNLJdvThzg==', 'kraftek@c-s.ro', 'oana.hogoiu@c-s.ro', 'Cosmin', 'Cara', -1, -1, -1, -1, -1, -1, 'CSRO', 2, CURRENT_TIMESTAMP);
 
 -- operator anonymousUser
-INSERT INTO usr."user" (username, password, email, alternative_email, last_name, first_name, input_quota, actual_input_quota, processing_quota, actual_processing_quota, organization, status_id, created)
-VALUES ('anonymous', 'Gm5jHka7JxkbhZW60GoQFw==', 'kraftek@c-s.ro', 'oana.hogoiu@c-s.ro', 'Anonymous', 'Anonymous', 100, 0, 100, 0, 'CSRO', 2, CURRENT_TIMESTAMP);
+INSERT INTO usr."user" (username, password, email, alternative_email, last_name, first_name, input_quota, actual_input_quota, processing_quota, actual_processing_quota, cpu_quota, memory_quota, organization, status_id, created)
+VALUES ('anonymous', 'Gm5jHka7JxkbhZW60GoQFw==', 'kraftek@c-s.ro', 'oana.hogoiu@c-s.ro', 'Anonymous', 'Anonymous', 100, 0, 100, 0, 4, 8192, 'CSRO', 2, CURRENT_TIMESTAMP);
 
 -- User groups
 INSERT INTO usr.user_group (user_id, group_id) VALUES (1, 1);

@@ -24,10 +24,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class NamedThreadPoolExecutor extends ThreadPoolExecutor {
     private static final String THREAD_NAME = "%s-%d";
+    private String poolName;
 
     public NamedThreadPoolExecutor(String poolName, int maxThreads) {
-        this(maxThreads, maxThreads, 0L, TimeUnit.MILLISECONDS, poolName);
+        this(maxThreads, maxThreads, 1L, TimeUnit.SECONDS, poolName);
+        this.poolName = poolName;
     }
+
+    String getPoolName() {  return this.poolName; }
 
     private NamedThreadPoolExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime, final TimeUnit unit,
                                     final String poolName) {
@@ -39,7 +43,8 @@ public class NamedThreadPoolExecutor extends ThreadPoolExecutor {
                       final String name = String.format(THREAD_NAME, poolName, counter.incrementAndGet());
                       return new Thread(r, name);
                   }
-              });
-
+              },
+              new RejectedTaskHandler());
+        allowCoreThreadTimeOut(false);
     }
 }

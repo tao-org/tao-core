@@ -31,6 +31,7 @@ import java.util.*;
 public class Container extends StringIdentifiable {
 
     private String name;
+    private String description;
     private String tag;
     private String applicationPath;
     private String logo;
@@ -49,6 +50,10 @@ public class Container extends StringIdentifiable {
     @XmlElement(name = "name")
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
+
+    @XmlElement(name = "description")
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
     @XmlElement(name = "tag")
     public String getTag() { return tag; }

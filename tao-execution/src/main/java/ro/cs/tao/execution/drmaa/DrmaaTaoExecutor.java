@@ -32,7 +32,9 @@ import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.execution.model.ProcessingExecutionTask;
 import ro.cs.tao.execution.monitor.MemoryUnit;
 import ro.cs.tao.execution.monitor.NodeManager;
+import ro.cs.tao.execution.monitor.NodeManager.NodeData;
 import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.utils.Tuple;
 import ro.cs.tao.utils.executors.BlockingQueueWorker;
@@ -251,7 +253,8 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             }
         }
         // the next call blocks until a node is available
-        NodeDescription node = getAvailableNode(memory);
+        final NodeData nodeData = getAvailableNode(component.getParallelism(), memory);
+        NodeDescription node = nodeData.getNode();
         if (node == null) {
             throw new TryLaterException("Cannot obtain an available node [null]");
         }
@@ -262,7 +265,9 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             }
         }
         task.setExecutionNodeHostName(node.getId());
-        final int cpu = Math.min(component.getParallelism(), node.getProcessorCount());
+        //final int cpu = Math.min(component.getParallelism(), node.getProcessorCount());
+        final int cpu = nodeData.getCpu();
+        final long mem = nodeData.getMemory();
         String location = task.getComponent().getFileLocation();
         if (!Paths.get(location).isAbsolute()) {
             String path = container.getApplicationPath();
@@ -350,11 +355,11 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                     add(String.valueOf(cpu));
                     task.setUsedCPU(cpu);
                 }
-                if (memory > 0) {
+                if (mem > 0) {
                     add("--memory");    // Enforce the memory limit to be used
                     // memory, if not 0, is expressed in MB
-                    add(String.valueOf(memory * MemoryUnit.MEGABYTE.value()) + "MB");
-                    task.setUsedRAM((int) memory);
+                    add(String.valueOf(mem) + "MB");
+                    task.setUsedRAM((int) mem);
                 }
             }};
             String value = ExecutionConfiguration.getDockerRegistry();
@@ -375,12 +380,12 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         return jt;
     }
 
-    private NodeDescription getAvailableNode(long memory) {
-        NodeDescription node = null;
+    private NodeData getAvailableNode(int cpus, long memory) {
+    	NodeData nodeData = null;
         if (NodeManager.isAvailable() && NodeManager.getInstance() != null) {
-            node = NodeManager.getInstance().getAvailableNode(memory, 0);
-            logger.fine(String.format("Node [%s] was chosen for next execution", node.getId()));
+        	nodeData = NodeManager.getInstance().getAvailableNode(cpus, memory, 0);
+            logger.fine(String.format("Node [%s] was chosen for next execution", nodeData.getNode().getId()));
         }
-        return node;
+        return nodeData;
     }
 }

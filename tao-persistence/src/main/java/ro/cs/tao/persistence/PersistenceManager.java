@@ -720,6 +720,14 @@ public class PersistenceManager implements MessagePersister {
     public ExecutionTask saveExecutionGroupWithSubTasks(ExecutionGroup taskGroup, ExecutionJob job) throws PersistenceException {
         return executionTaskManager.saveExecutionGroupWithSubTasks(taskGroup, job);
     }
+    
+    public int getCPUsForUser(String userName) {
+        return executionTaskManager.getCPUsForUser(userName);
+    }    
+
+    public int getMemoryForUser(String userName) {
+        return executionTaskManager.getMemoryForUser(userName);
+    }   
     //endregion
 
     //region Query
@@ -912,11 +920,11 @@ public class PersistenceManager implements MessagePersister {
         return userManager.getUserDiskQuotas(username);
     }
     
-    public long updateUserInputQuota(String username, long actualInputQuota) throws PersistenceException {
+    public int updateUserInputQuota(String username, int actualInputQuota) throws PersistenceException {
     	return userManager.updateUserInputQuota(username, actualInputQuota);
     }
     
-    public long updateUserProcessingQuota(String username, long actualProcessingQuota) throws PersistenceException {
+    public int updateUserProcessingQuota(String username, int actualProcessingQuota) throws PersistenceException {
     	return userManager.updateUserProcessingQuota(username, actualProcessingQuota);
     }    
     // endregion

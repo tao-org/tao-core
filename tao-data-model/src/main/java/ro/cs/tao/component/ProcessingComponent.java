@@ -225,6 +225,10 @@ public class ProcessingComponent extends TaoComponent {
      */
     public void setTemplateType(TemplateType templateType) {
         this.templateType = templateType;
+        // TODO LBU: TO VERIFY!!!!!
+        if (this.templateEngine != null && !this.templateEngine.getTemplateType().equals(templateType)) {
+            this.templateEngine = EngineFactory.createInstance(templateType);
+        }
     }
 
     /**
@@ -426,6 +430,18 @@ public class ProcessingComponent extends TaoComponent {
                     }
                 } catch (IOException e) {
                     Logger.getLogger(ProcessingComponent.class.getName()).severe("Cannot persist script file");
+                    throw new TemplateException(e);
+                }
+                break;
+            case AGGREGATE:
+                try {
+                    Path scriptPath = SessionStore.currentContext().getWorkspace().resolve("scripts");
+                    Files.createDirectories(scriptPath);
+                    Path scriptFile = scriptPath.resolve(System.currentTimeMillis() + "-" + this.template.getName());
+                    Files.write(scriptFile, transformedTemplate.getBytes());
+                    cmdBuilder.append(scriptFile.toString()).append("\n");
+                } catch (IOException e) {
+                    Logger.getLogger(ProcessingComponent.class.getName()).severe("Cannot persist aggregated template file");
                     throw new TemplateException(e);
                 }
                 break;

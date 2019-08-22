@@ -15,18 +15,22 @@
  */
 package ro.cs.tao.scheduling;
 
+import java.util.logging.Logger;
+
 import org.quartz.JobDataMap;
+import org.quartz.JobDetail;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
-import ro.cs.tao.persistence.PersistenceManager;
 
-import java.util.logging.Logger;
+import ro.cs.tao.persistence.PersistenceManager;
 
 /**
  * @author Cosmin Cara
  */
 public abstract class AbstractJob implements Job {
 
+	public static final String FRIENDLY_NAME_KEY = "friendlyName";
+	
     protected static final String MESSAGE = "[site '%s',sensor '%s'] %s";
 
     protected final PersistenceManager persistenceManager;
@@ -38,16 +42,17 @@ public abstract class AbstractJob implements Job {
 
     @Override
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
+    	final JobDetail jobDetail = jobExecutionContext.getJobDetail();
         logger.info(String.format("Job '%s' started", jobExecutionContext.getJobDetail().getKey()));
         final JobDataMap dataMap = jobExecutionContext.getMergedJobDataMap();
         try {
-            executeImpl(dataMap);
+            executeImpl(dataMap, jobDetail);
         } catch (Throwable t) {
             logger.warning(t.getMessage());
         }
     }
-
-    protected abstract void executeImpl(JobDataMap dataMap);
+    
+	protected abstract void executeImpl(JobDataMap dataMap, JobDetail jobDetail);
 
     protected abstract PersistenceManager persistenceManager();
 }
