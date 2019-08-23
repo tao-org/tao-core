@@ -97,6 +97,16 @@ public class ProductManager {
     }
     
     @Transactional
+    public Date getNewestProductDateForUser(String user, String footprint) {
+    	final EOProduct prod = eoProductRepository.getNewestProductForUser(user, footprint);
+    	if (prod == null) {
+    		return null;
+    	}
+    	return prod.getAcquisitionDate();
+    }
+
+    
+    @Transactional
     public List<EOProduct> getEOProducts(Set<String> locations) {
         return eoProductRepository.getProductsByLocation(locations);
     }

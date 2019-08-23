@@ -216,6 +216,9 @@ public class PersistenceManager implements MessagePersister {
         return productManager.getUserInputEOProductsSize(user, location);
     }
 
+    public Date getNewestProductDateForUser(String user, String footprint) {
+    	return productManager.getNewestProductDateForUser(user, footprint);
+    }
     
     public List<EOProduct> getJobOutputs(long jobId) {
         return productManager.getJobOutputs(jobId);
