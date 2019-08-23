@@ -50,6 +50,7 @@ import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.quota.QuotaException;
 import ro.cs.tao.quota.UserQuotaManager;
+import ro.cs.tao.security.SessionContext;
 import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.serialization.StringListAdapter;
 import ro.cs.tao.utils.Tuple;
@@ -254,6 +255,26 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
         		return false;
         	}
         	
+        	// check if the product already exists
+        	final EOProduct oldProd = persistenceManager.getEOProduct(product.getId());
+        	if (oldProd != null) {
+        		// if the product is failed or downloading, copy its references but continue with the download
+        		if (oldProd.getProductStatus() == ProductStatus.FAILED || oldProd.getProductStatus() == ProductStatus.DOWNLOADING) {
+        			product.setRefs(oldProd.getRefs());
+        		} else {
+        			// add the current user as reference
+        			product.addReference(principal.getName());
+        			product.setRefs(oldProd.getRefs());
+        			// copy the status of the previous product
+        			product.setProductStatus(oldProd.getProductStatus());
+
+        			// update the user's input quota
+                    UserQuotaManager.getInstance().updateUserInputQuota(principal);
+            		// do not allow for the download to start
+        			return false;
+        		}
+        	}        	
+        	
             product.setProductStatus(ProductStatus.DOWNLOADING);
             // attach the current user 
             product.addReference(principal.getName());
@@ -275,6 +296,13 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
     public void downloadCompleted(EOProduct product) {
     	final Principal principal = SessionStore.currentContext().getPrincipal();
         try {
+        	// re-update the references, in case some other user tried to download this product after 
+        	// the current user started
+        	final EOProduct oldProd = persistenceManager.getEOProduct(product.getId());
+        	if (oldProd != null) {
+        		product.setRefs(oldProd.getRefs());
+        	}
+        	
             product.setProductStatus(ProductStatus.DOWNLOADED);
             // update the product's reference
             product.addReference(principal.getName());
@@ -295,6 +323,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
     	
         try {
             product.setProductStatus(ProductStatus.FAILED);
+            product.removeReference(principal.getName());
             persistenceManager.saveEOProduct(product);
             // roll back the user's quota
             UserQuotaManager.getInstance().updateUserInputQuota(principal);

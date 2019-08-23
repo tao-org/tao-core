@@ -30,6 +30,7 @@ import ro.cs.tao.persistence.PersistenceManager;
 public abstract class AbstractJob implements Job {
 
 	public static final String FRIENDLY_NAME_KEY = "friendlyName";
+	public static final String USER_AUTHENTICATION_KEY = "userAuthentication";
 	
     protected static final String MESSAGE = "[site '%s',sensor '%s'] %s";
 

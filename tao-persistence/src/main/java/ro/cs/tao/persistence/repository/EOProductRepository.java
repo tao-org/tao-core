@@ -68,6 +68,13 @@ public interface EOProductRepository extends PagingAndSortingRepository<EOProduc
             "SELECT p.* FROM product.raster_data_product p JOIN t ON CONCAT(p.location, p.entry_point) LIKE t.c", nativeQuery = true)
     List<EOProduct> getJobOutputs(@Param("jobId") long jobId);
 
+    @Query(value = "SELECT p.* FROM product.raster_data_product p JOIN product.raster_data_product_refs r "
+    		+ "ON r.product_id = p.id WHERE r.refs = :userName AND p.acquisition_date IS NOT NULL AND "
+    		+ "st_intersects(\"geometry\", st_geomfromtext(:footprint)) "
+    		+ "ORDER BY p.acquisition_date DESC LIMIT 1", nativeQuery = true)
+    EOProduct getNewestProductForUser(@Param("userName") String userName, @Param("footprint") String footprint);
+
+    
     @Modifying
     @Query(value = "WITH delprods AS (WITH refs AS (SELECT COUNT(s.id) AS cnt FROM component.source_descriptor s JOIN component.data_source_component c ON c.id = s.parent_id " +
             "WHERE c.id != :componentId AND s.location LIKE CONCAT('%', CAST(:name AS varchar), '%') DELETE FROM product.raster_data_product USING refs " +
