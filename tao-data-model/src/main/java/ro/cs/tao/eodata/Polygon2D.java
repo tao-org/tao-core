@@ -221,7 +221,8 @@ public class Polygon2D {
         final DecimalFormat dfFormat = new DecimalFormat(format.toString(), DecimalFormatSymbols.getInstance(Locale.ENGLISH));
         final StringBuilder buffer = new StringBuilder();
         final boolean isMulti = this.polygons.length > 1;
-        buffer.append(isMulti ? "MULTIPOLYGON(((" : "POLYGON((");
+        final boolean isPoint = this.polygons.length == 1 && this.numPoints == 1;
+        buffer.append(isPoint ? "POINT(" : isMulti ? "MULTIPOLYGON(((" : "POLYGON((");
         final double[] segment = new double[6];
         for (int j = 0; j < this.polygons.length; j++) {
             if (j > 0) {
@@ -234,7 +235,7 @@ public class Polygon2D {
                 pathIterator.next();
             }
             buffer.setLength(buffer.length() - 1);
-            buffer.append("))");
+            buffer.append(isPoint ? ")" : "))");
             if (isMulti) {
                 buffer.append(",");
             }
