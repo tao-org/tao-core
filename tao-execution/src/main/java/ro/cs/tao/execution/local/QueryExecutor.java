@@ -120,6 +120,8 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                     // first try to retrieve the products that have already been downloaded locally
                     List<EOProduct> localProducts = persistenceManager.getEOProducts(results.stream().map(EOData::getId).collect(Collectors.joining()));
                     if (localProducts != null) {
+                        localProducts.removeIf(p -> p.getProductStatus() != ProductStatus.DOWNLOADED);
+                        localProducts.forEach(this::downloadCompleted);
                         products.addAll(localProducts);
                         Set<String> ids = localProducts.stream().map(EOData::getId).collect(Collectors.toSet());
                         results.removeIf(p -> ids.contains(p.getId()));

@@ -168,9 +168,23 @@ public abstract class DataQuery extends StringIdentifiable {
             ex.addAdditionalInfo("Missing", String.join(",", missing));
             throw ex;
         }
-        this.dataSourceParameters.entrySet().stream()
+        for (Map.Entry<String, DataSourceParameter> entry : this.dataSourceParameters.entrySet()) {
+            final DataSourceParameter parameter = entry.getValue();
+            if (parameter.getDefaultValue() != null) {
+                if (!parameters.containsKey(entry.getKey())) {
+                    addParameter(entry.getKey(), parameter.getType(), parameter.getDefaultValue());
+                } else {
+                    QueryParameter queryParameter = parameters.get(entry.getKey());
+                    if (queryParameter.getType().equals(String.class) &&
+                            (queryParameter.getValue() == null || ((String) queryParameter.getValue()).trim().isEmpty())) {
+                        addParameter(entry.getKey(), parameter.getType(), parameter.getDefaultValue());
+                    }
+                }
+            }
+        }
+        /*this.dataSourceParameters.entrySet().stream()
                 .filter(entry -> entry.getValue().getDefaultValue() != null && !parameters.containsKey(entry.getKey()))
-                .forEach(e -> addParameter(e.getKey(), e.getValue().getType(), e.getValue().getDefaultValue()));
+                .forEach(e -> addParameter(e.getKey(), e.getValue().getType(), e.getValue().getDefaultValue()));*/
         Instant start = Instant.now();
         final long count = getCountImpl();
         logger.finest(String.format("Count query completed in %d ms.", Duration.between(start, Instant.now()).toMillis()));
