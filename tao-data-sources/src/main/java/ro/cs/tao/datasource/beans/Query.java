@@ -151,6 +151,9 @@ public class Query {
                     }
                     final Class type = descriptor.getType();
                     String value = entry.getValue();
+                    if ("".equals(value)) {
+                        value = null;
+                    }
                     if (value != null && value.startsWith("[") & value.endsWith("]")) {
                         String[] elements = value.substring(1, value.length() - 1).split(",");
                         if (Date.class.isAssignableFrom(type)) {
@@ -174,7 +177,7 @@ public class Query {
                         } else if (Polygon2D.class.isAssignableFrom(type)) {
                             query.addParameter(paramName, type, Polygon2D.fromWKT(String.valueOf(value)));
                         } else {
-                            query.addParameter(paramName, entry.getValue());
+                            query.addParameter(paramName, value);
                         }
                     }
                 }
