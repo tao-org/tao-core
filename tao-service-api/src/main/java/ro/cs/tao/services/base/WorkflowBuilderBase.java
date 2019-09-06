@@ -16,7 +16,6 @@
 
 package ro.cs.tao.services.base;
 
-import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.SourceDescriptor;
 import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.component.TargetDescriptor;
@@ -194,18 +193,17 @@ public abstract class WorkflowBuilderBase implements WorkflowBuilder {
         return workflowService.group(parent.getId(), grpNode, Arrays.asList(nodes));
     }
 
-    protected void addLink(WorkflowDescriptor workflow, WorkflowNodeDescriptor parent, WorkflowNodeDescriptor child) throws PersistenceException {
-        addLink(workflow, parent, null, child, null);
+    protected void addLink(WorkflowNodeDescriptor parent, WorkflowNodeDescriptor child) throws PersistenceException {
+        addLink(parent, null, child, null);
     }
 
-    protected void addLink(WorkflowDescriptor workflow,
-                           WorkflowNodeDescriptor parent,
+    protected void addLink(WorkflowNodeDescriptor parent,
                            String fromParentPort,
                            WorkflowNodeDescriptor child,
                            String toChildPort) throws PersistenceException {
         if (parent != null && child != null) {
-            ProcessingComponent component1 = componentService.findById(parent.getComponentId());
-            ProcessingComponent component2 = componentService.findById(child.getComponentId());
+            TaoComponent component1 = WorkflowUtilities.findComponent(parent);
+            TaoComponent component2 = WorkflowUtilities.findComponent(child);
             final TargetDescriptor linkSource;
             final SourceDescriptor linkTarget;
             if (fromParentPort == null) {
