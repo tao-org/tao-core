@@ -28,6 +28,7 @@
         <module>tao-execution-model</module>
         <module>tao-scheduling</module>
         <module>tao-quota</module>
+        <module>tao-workflow-optimizer</module>
     </modules>
 
     <properties>
@@ -253,6 +254,15 @@
             <id>tyty</id>
             <name>Florin Tutunaru</name>
             <email>florin.tutunaru@c-s.ro</email>
+            <organization>CS ROMANIA</organization>
+            <roles>
+                <role>Java Developer</role>
+            </roles>
+        </developer>
+        <developer>
+            <id>apirlea</id>
+            <name>Alexandru Pirlea</name>
+            <email>alex.pirlea@c-s.ro</email>
             <organization>CS ROMANIA</organization>
             <roles>
                 <role>Java Developer</role>
