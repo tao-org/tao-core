@@ -43,8 +43,8 @@ public class OptimizedWorkflowBuilder extends WorkflowBuilderBase {
     }
 
     @Override
-    protected void addLink(WorkflowDescriptor workflow, WorkflowNodeDescriptor parent, WorkflowNodeDescriptor child) throws PersistenceException {
-        super.addLink(workflow, parent, child);
+    public void addLink(WorkflowNodeDescriptor parent, WorkflowNodeDescriptor child) throws PersistenceException {
+        super.addLink(parent, child);
     }
 
     protected WorkflowDescriptor updateWorkflowDescriptor(WorkflowDescriptor wf) throws PersistenceException {
