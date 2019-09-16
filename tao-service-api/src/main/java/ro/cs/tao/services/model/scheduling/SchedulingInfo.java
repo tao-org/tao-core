@@ -3,14 +3,30 @@
  */
 package ro.cs.tao.services.model.scheduling;
 
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
 /**
  * @author Lucian Barbulescu
  *
  */
 public class SchedulingInfo {
+	private static final SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+	
 	private String id;
 	private String friendlyName;
 	private String state;
+	private long workflowId;
+	private String workflowName;
+    private int repeatInterval;
+    private String startTime;
+	private SchedulingMode mode;
+	private List<Long> jobIds;
+
 	
 	public String getId() {
 		return id;
@@ -30,6 +46,44 @@ public class SchedulingInfo {
 	public void setState(String state) {
 		this.state = state;
 	}
-	
-	
+	public long getWorkflowId() {
+		return workflowId;
+	}
+	public void setWorkflowId(long workflowId) {
+		this.workflowId = workflowId;
+	}
+	public String getWorkflowName() {
+		return workflowName;
+	}
+	public void setWorkflowName(String workflowName) {
+		this.workflowName = workflowName;
+	}
+	public int getRepeatInterval() {
+		return repeatInterval;
+	}
+	public void setRepeatInterval(int repeatInterval) {
+		this.repeatInterval = repeatInterval;
+	}
+	public String getStartTime() {
+		return startTime;
+	}
+	public void setStartTime(LocalDateTime startTime) {
+		final Date d = Date.from(startTime.atZone(ZoneId.systemDefault()).toInstant());
+		this.startTime = df.format(d);
+	}
+	public SchedulingMode getMode() {
+		return mode;
+	}
+	public void setMode(SchedulingMode mode) {
+		this.mode = mode;
+	}
+	public List<Long> getJobIds() {
+		if (jobIds == null) {
+			return new ArrayList<Long>();
+		}
+		return jobIds;
+	}
+	public void setJobIds(List<Long> jobIds) {
+		this.jobIds = jobIds;
+	}
 }
