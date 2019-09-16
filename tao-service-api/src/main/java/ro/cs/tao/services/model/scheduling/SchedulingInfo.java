@@ -8,7 +8,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /** Information related to a schedule.
  * 
@@ -27,7 +29,7 @@ public class SchedulingInfo {
     private String startTime;
 	private SchedulingMode mode;
 	private List<JobInfo> jobs;
-
+	private Map<String, Map<String, String>> parameters;
 	
 	public String getId() {
 		return id;
@@ -91,4 +93,14 @@ public class SchedulingInfo {
 	public void setJobs(List<JobInfo> jobs) {
 		this.jobs = jobs;
 	}
+	public Map<String, Map<String, String>> getParameters() {
+		if (parameters == null) {
+			return new HashMap<String, Map<String, String>>();
+		}
+		return parameters;
+	}
+	public void setParameters(Map<String, Map<String, String>> parameters) {
+		this.parameters = parameters;
+	}
+	
 }
