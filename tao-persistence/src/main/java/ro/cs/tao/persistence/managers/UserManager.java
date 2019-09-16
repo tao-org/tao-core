@@ -287,6 +287,13 @@ public class UserManager {
             if (original.getProcessingQuota() != updated.getProcessingQuota()) {
                 original.setProcessingQuota(updated.getProcessingQuota());
             }
+            if (original.getCpuQuota() != updated.getCpuQuota()) {
+                original.setCpuQuota(updated.getCpuQuota());
+            }
+            if (original.getMemoryQuota() != updated.getMemoryQuota()) {
+                original.setMemoryQuota(updated.getMemoryQuota());
+            }
+            
             // check organisation
             if (!original.getOrganization().equalsIgnoreCase(updated.getOrganization())) {
                 original.setOrganization(updated.getOrganization());
