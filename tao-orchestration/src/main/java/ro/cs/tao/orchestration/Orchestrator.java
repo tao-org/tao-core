@@ -36,6 +36,7 @@ import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.Notifiable;
 import ro.cs.tao.messaging.Topics;
+import ro.cs.tao.optimization.WorkflowOptimizer;
 import ro.cs.tao.orchestration.commands.JobCommand;
 import ro.cs.tao.orchestration.commands.TaskCommand;
 import ro.cs.tao.orchestration.status.TaskStatusHandler;
@@ -152,8 +153,17 @@ public class Orchestrator extends Notifiable {
             	// do not create any job
             	return -1;
             }
-            
-            final ExecutionJob executionJob = this.jobFactory.createJob(description, descriptor, inputs);
+
+            WorkflowDescriptor optimized = WorkflowOptimizer.getOptimizedWorkflow(descriptor);
+            final ExecutionJob executionJob;
+
+            // check if optimisation was successful and needed
+            if (optimized != null) {
+                executionJob = this.jobFactory.createJob(description, optimized, inputs);
+            } else {
+                executionJob = this.jobFactory.createJob(description, descriptor, inputs);
+            }
+
             this.executors.put(context, executorService);
             executorService.submit(() -> JobCommand.START.applyTo(executionJob));
             return executionJob.getId();
