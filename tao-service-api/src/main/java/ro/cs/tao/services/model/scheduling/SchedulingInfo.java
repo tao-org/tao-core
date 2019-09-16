@@ -10,7 +10,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-/**
+/** Information related to a schedule.
+ * 
  * @author Lucian Barbulescu
  *
  */
@@ -25,7 +26,7 @@ public class SchedulingInfo {
     private int repeatInterval;
     private String startTime;
 	private SchedulingMode mode;
-	private List<Long> jobIds;
+	private List<JobInfo> jobs;
 
 	
 	public String getId() {
@@ -68,8 +69,12 @@ public class SchedulingInfo {
 		return startTime;
 	}
 	public void setStartTime(LocalDateTime startTime) {
-		final Date d = Date.from(startTime.atZone(ZoneId.systemDefault()).toInstant());
-		this.startTime = df.format(d);
+		if (startTime == null) {
+			this.startTime="";
+		} else {
+			final Date d = Date.from(startTime.atZone(ZoneId.systemDefault()).toInstant());
+			this.startTime = df.format(d);
+		}
 	}
 	public SchedulingMode getMode() {
 		return mode;
@@ -77,13 +82,13 @@ public class SchedulingInfo {
 	public void setMode(SchedulingMode mode) {
 		this.mode = mode;
 	}
-	public List<Long> getJobIds() {
-		if (jobIds == null) {
-			return new ArrayList<Long>();
+	public List<JobInfo> getJobs() {
+		if (jobs == null) {
+			return new ArrayList<JobInfo>();
 		}
-		return jobIds;
+		return jobs;
 	}
-	public void setJobIds(List<Long> jobIds) {
-		this.jobIds = jobIds;
+	public void setJobs(List<JobInfo> jobs) {
+		this.jobs = jobs;
 	}
 }
