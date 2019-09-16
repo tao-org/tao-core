@@ -111,6 +111,7 @@ public class WorkflowOptimizer {
 
                     /* change graph neighbours */
                     u.setSuccessors(v.getSuccessors());
+                    v.getSuccessors().forEach((node) -> node.setPredecessors(v.getPredecessors()));
 
                     /* remove v from graph */
                     graph.removeNode(v);

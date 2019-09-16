@@ -1,12 +1,13 @@
 package ro.cs.tao.optimization;
 
 import com.google.common.collect.Lists;
-import ro.cs.tao.component.ParameterDescriptor;
-import ro.cs.tao.component.ProcessingComponent;
-import ro.cs.tao.component.RuntimeOptimizer;
-import ro.cs.tao.component.TargetDescriptor;
+import ro.cs.tao.component.*;
+import ro.cs.tao.datasource.DataSourceComponent;
+import ro.cs.tao.datasource.beans.Query;
 import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.services.base.WorkflowBuilderBase;
+import ro.cs.tao.services.utils.WorkflowUtilities;
 import ro.cs.tao.workflow.ParameterValue;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
@@ -96,6 +97,29 @@ public class OptimizedWorkflowBuilder extends WorkflowBuilderBase {
         newNode.setPreserveOutput(oldNode.getPreserveOutput());
         newNode.setCreated(LocalDateTime.now());
         newNode.setLevel(node.getLevel());
+
+        if (newNode.getComponentType() == ComponentType.DATASOURCE) {
+            DataSourceComponent dsComponent = persistenceManager.getDataSourceInstance(oldNode.getComponentId());
+
+            Query oldQuery = persistenceManager.getQuery(SessionStore.currentContext().getPrincipal().getName(),
+                    dsComponent.getSensorName(),
+                    dsComponent.getDataSourceName(),
+                    oldNode.getId());
+
+            Query newQuery = new Query();
+
+            newQuery.setLabel(oldQuery.getLabel());
+            newQuery.setUserId(SessionStore.currentContext().getPrincipal().getName());
+            newQuery.setSensor(oldQuery.getSensor());
+            newQuery.setDataSource(dsComponent.getDataSourceName());
+            newQuery.setPageNumber(oldQuery.getPageNumber());
+            newQuery.setPageSize(oldQuery.getPageSize());
+            newQuery.setLimit(oldQuery.getLimit());
+            newQuery.setValues(oldQuery.getValues());
+            newQuery.setWorkflowNodeId(newNode.getId());
+
+            persistenceManager.saveQuery(newQuery);
+        }
 
         newNode = workflowService.addNode(workflow.getId(), newNode);
 

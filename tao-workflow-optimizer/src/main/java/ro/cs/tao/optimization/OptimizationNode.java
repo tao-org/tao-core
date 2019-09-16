@@ -39,6 +39,10 @@ public class OptimizationNode {
         return predecessors;
     }
 
+    public void setPredecessors(List<OptimizationNode> predecessors) {
+        this.predecessors = predecessors;
+    }
+
     public Long getFirstNodeId() {
         return nodeIds.get(0);
     }
