@@ -107,10 +107,24 @@ public class UserManager {
         if (!StringUtilities.isNullOrEmpty(newUserInfo.getPhone())) {
             user.setPhone(newUserInfo.getPhone());
         }
-        final int inputQuota = groups.stream().map(Group::getInputQuota).min(Comparator.comparing(Integer::intValue)).orElse(-1);
-        final int processingQuota = groups.stream().map(Group::getProcessingQuota).min(Comparator.comparing(Integer::intValue)).orElse(-1);
-        user.setInputQuota(inputQuota);
-        user.setProcessingQuota(processingQuota);
+        
+        if (newUserInfo.getInputQuota() == 0) {
+            final int inputQuota = groups.stream().map(Group::getInputQuota).min(Comparator.comparing(Integer::intValue)).orElse(-1);
+            user.setInputQuota(inputQuota);
+        } else {
+        	user.setInputQuota(newUserInfo.getInputQuota());
+        }
+        
+        if (newUserInfo.getProcessingQuota() == 0) {
+        	final int processingQuota = groups.stream().map(Group::getProcessingQuota).min(Comparator.comparing(Integer::intValue)).orElse(-1);
+            user.setProcessingQuota(processingQuota);
+        } else {
+        	user.setProcessingQuota(newUserInfo.getProcessingQuota());
+        }
+        
+        user.setCpuQuota(newUserInfo.getCpuQuota());
+        user.setMemoryQuota(newUserInfo.getMemoryQuota());
+        
         user.setOrganization(newUserInfo.getOrganization());
         user.setGroups(groups);
         user.setExternal(newUserInfo.isExternal());
