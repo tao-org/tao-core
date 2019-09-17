@@ -7,7 +7,6 @@ import ro.cs.tao.datasource.beans.Query;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.services.base.WorkflowBuilderBase;
-import ro.cs.tao.services.utils.WorkflowUtilities;
 import ro.cs.tao.workflow.ParameterValue;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
@@ -98,6 +97,8 @@ public class OptimizedWorkflowBuilder extends WorkflowBuilderBase {
         newNode.setCreated(LocalDateTime.now());
         newNode.setLevel(node.getLevel());
 
+        newNode = workflowService.addNode(workflow.getId(), newNode);
+
         if (newNode.getComponentType() == ComponentType.DATASOURCE) {
             DataSourceComponent dsComponent = persistenceManager.getDataSourceInstance(oldNode.getComponentId());
 
@@ -108,8 +109,9 @@ public class OptimizedWorkflowBuilder extends WorkflowBuilderBase {
 
             Query newQuery = new Query();
 
-            newQuery.setLabel(oldQuery.getLabel());
-            newQuery.setUserId(SessionStore.currentContext().getPrincipal().getName());
+            newQuery.setLabel(oldQuery.getLabel() + UUID.randomUUID().toString());
+
+            newQuery.setUserId(oldQuery.getUserId());
             newQuery.setSensor(oldQuery.getSensor());
             newQuery.setDataSource(dsComponent.getDataSourceName());
             newQuery.setPageNumber(oldQuery.getPageNumber());
@@ -118,12 +120,21 @@ public class OptimizedWorkflowBuilder extends WorkflowBuilderBase {
             newQuery.setValues(oldQuery.getValues());
             newQuery.setWorkflowNodeId(newNode.getId());
 
-            persistenceManager.saveQuery(newQuery);
+//            String decryptedPassword = Crypto.decrypt(oldQuery.getPassword(), oldQuery.getUser());
+
+            newQuery.setUser(oldQuery.getUser());
+            newQuery.setPassword(oldQuery.getPassword());
+//            newQuery.setPassword(decryptedPassword);
+
+//            String cryptedPassword = Crypto.decrypt(newQuery.getPassword(), newQuery.getUser());
+//            newQuery.setPassword(cryptedPassword);
+
+            newQuery = persistenceManager.saveQuery(newQuery);
+
+            cache.add(newQuery);
         }
 
-        newNode = workflowService.addNode(workflow.getId(), newNode);
-
-        return newNode;
+        return persistenceManager.updateWorkflowNodeDescriptor(newNode);
     }
 
     private boolean isTarget(ParameterValue param, ProcessingComponent component) {
@@ -219,6 +230,9 @@ public class OptimizedWorkflowBuilder extends WorkflowBuilderBase {
 
                 } else if (obj instanceof WorkflowDescriptor) {
                     persistenceManager.deleteWorkflowDescriptor(((WorkflowDescriptor) obj).getId());
+
+                } else if (obj instanceof Query) {
+                    persistenceManager.removeQuery(((Query) obj).getId());
 
                 } else {
                     logger.fine("Unknown element in list.");
