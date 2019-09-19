@@ -15,14 +15,14 @@ public class OptimizationNode {
     private List<OptimizationNode> successors   = new ArrayList<>();
     private List<OptimizationNode> predecessors = new ArrayList<>();
     private List<Long> nodeIds = new ArrayList<>();
-    private ComponentsDefinition defined;
+    private NodesDefinition defined;
     private int level = -1;
 
-    public ComponentsDefinition getComponentDefinition() {
+    public NodesDefinition getNodesDefinition() {
         return defined;
     }
 
-    public OptimizationNode(Long nodeId, ComponentsDefinition defined) {
+    public OptimizationNode(Long nodeId, NodesDefinition defined) {
         nodeIds.add(nodeId);
         this.defined = defined;
     }
