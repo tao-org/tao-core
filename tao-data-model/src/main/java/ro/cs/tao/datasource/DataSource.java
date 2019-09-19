@@ -88,6 +88,7 @@ public abstract class DataSource<Q extends DataQuery> extends StringIdentifiable
     public abstract void setConnectionString(String connectionString);
     @XmlTransient
     public abstract String getAlternateConnectionString();
+    public boolean requiresAuthentication() { return false; }
     /**
      * Sets the credentials needed to connect to this data source
      * @param username  The user id
