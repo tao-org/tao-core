@@ -20,8 +20,16 @@ import java.util.logging.Logger;
  */
 public class WorkflowOptimizer {
 
-    private static OptimizationGraph createGraph(WorkflowDescriptor workflow, ComponentsDefinition defined) {
+    /**
+     * Creates an easier to work on graph.
+     *
+     * @param workflow workflow on which optimisation is based
+     * @return graph to be optimised
+     */
+    private static OptimizationGraph createGraph(WorkflowDescriptor workflow) {
         Logger logger = Logger.getLogger(WorkflowOptimizer.class.getName());
+
+        NodesDefinition defined = new NodesDefinition();
 
         OptimizationGraph graph = new OptimizationGraph();
         Map<Long, OptimizationNode> references = new HashMap<>();
@@ -91,6 +99,12 @@ public class WorkflowOptimizer {
         return graph;
     }
 
+    /**
+     * Cycles all edges in the graph until no modifications are made.
+     * If edge is a critical edge and vertices have the same optimizer, vertices are merged.
+     *
+     * @param graph to be optimised
+     */
     private static void optimizeGraph(OptimizationGraph graph) {
         boolean isModified;
 
@@ -106,10 +120,10 @@ public class WorkflowOptimizer {
                 if (v != null && u.isCompatibleWith(v)) {
                     isModified = true;
 
-                    /* merge as group node */
+                    /* merge nodes for aggregated component */
                     u.getNodeIds().addAll(v.getNodeIds());
 
-                    /* change graph neighbours */
+                    /* change node's parents and children */
                     u.setSuccessors(v.getSuccessors());
                     v.getSuccessors().forEach((node) -> node.setPredecessors(v.getPredecessors()));
 
@@ -120,10 +134,17 @@ public class WorkflowOptimizer {
         } while (isModified);
     }
 
-    private static WorkflowDescriptor createWorkflow(OptimizationGraph graph) {
+    /**
+     * A workflow is created based on graph.
+     *
+     * @param graph optimized graph
+     * @param workflowName original workflow's name
+     * @return optimized workflow
+     */
+    private static WorkflowDescriptor createWorkflow(OptimizationGraph graph, String workflowName) {
         Logger logger = Logger.getLogger(WorkflowOptimizer.class.getName());
 
-        OptimizedWorkflowBuilder builder = new OptimizedWorkflowBuilder();
+        OptimizedWorkflowBuilder builder = new OptimizedWorkflowBuilder(workflowName);
 
         try {
             Map<OptimizationNode, WorkflowNodeDescriptor> translation = new HashMap<>();
@@ -155,34 +176,39 @@ public class WorkflowOptimizer {
             return builder.updateWorkflowDescriptor(workflow);
 
         } catch (AggregationException e1) {
-            logger.fine("Aggregation exception: " + e1.getMessage());
+            logger.finer("Aggregation exception: " + e1.getMessage());
             builder.cleanCache();
             return null;
 
         } catch (PersistenceException e2) {
-            logger.fine("Persistence exception: " + e2.getMessage());
+            logger.finer("Persistence exception: " + e2.getMessage());
             builder.cleanCache();
             return null;
 
         }
     }
 
+    /**
+     * Sets of components are aggregated if possible.
+     * If no such aggregation is possible, no workflow is created and return is null.
+     *
+     * @param workflow original workflow
+     * @return optimized workflow
+     */
     public static WorkflowDescriptor getOptimizedWorkflow(WorkflowDescriptor workflow) {
         Logger logger = Logger.getLogger(WorkflowOptimizer.class.getName());
 
         if (workflow == null) {
-            logger.finest("Null workflow parameter.");
+            logger.finer("Null workflow parameter.");
             return null;
         }
 
         if (workflow.getNodes().isEmpty()) {
-            logger.finest("Empty workflow.");
+            logger.finer("Empty workflow.");
             return null;
         }
 
-        ComponentsDefinition defined = new ComponentsDefinition();
-
-        OptimizationGraph graph = createGraph(workflow, defined);
+        OptimizationGraph graph = createGraph(workflow);
 
         if (graph == null) {
             /* error while creating optimization graph */
@@ -197,10 +223,10 @@ public class WorkflowOptimizer {
         int sizeAfter = graph.size();
 
         if (sizeAfter == sizeBefore) {
-            logger.fine("No need for optimisation.");
+            logger.finer("No need for optimisation.");
             return null;
         }
 
-        return createWorkflow(graph);
+        return createWorkflow(graph, workflow.getName());
     }
 }

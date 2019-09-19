@@ -28,8 +28,8 @@ public class OptimizedWorkflowBuilder extends WorkflowBuilderBase {
     private String name;
     private Logger logger = Logger.getLogger(getClass().getName());
 
-    public OptimizedWorkflowBuilder() {
-        this.name = "Optimized-Workflow-" + UUID.randomUUID().toString();
+    public OptimizedWorkflowBuilder(String name) {
+        this.name = "Optimized " + name;
     }
 
     @Override
@@ -51,6 +51,14 @@ public class OptimizedWorkflowBuilder extends WorkflowBuilderBase {
         return persistenceManager.getWorkflowDescriptor(wf.getId());
     }
 
+    /**
+     * Creates and adds a workflow node to workflow.
+     *
+     * @param node contains component/s for new workflow node
+     * @param workflow where to add the node
+     * @return created node
+     * @throws PersistenceException
+     */
     protected WorkflowNodeDescriptor createOptimizedNode(OptimizationNode node, WorkflowDescriptor workflow) throws PersistenceException {
         WorkflowNodeDescriptor optimizedNode = null;
 
@@ -68,9 +76,9 @@ public class OptimizedWorkflowBuilder extends WorkflowBuilderBase {
             logger.finer("Creating aggregated components from nodes: " + node.getNodeIds());
 
             node.getNodeIds().forEach((id) ->
-                                 components.add(node.getComponentDefinition().getComponent(id)));
+                                 components.add(node.getNodesDefinition().getComponent(id)));
 
-            RuntimeOptimizer optimizer = node.getComponentDefinition().getOptimizer(node.getFirstNodeId());
+            RuntimeOptimizer optimizer = node.getNodesDefinition().getOptimizer(node.getFirstNodeId());
 
             ProcessingComponent result = optimizer.aggregate(components.toArray(new ProcessingComponent[0]));
 
@@ -82,9 +90,19 @@ public class OptimizedWorkflowBuilder extends WorkflowBuilderBase {
         return optimizedNode;
     }
 
+    /**
+     * Creates and adds a workflow node to workflow.
+     * Copies all information from older node to newer node.
+     * If needed, a query is also created.
+     *
+     * @param node old node
+     * @param workflow where to add the node
+     * @return new node
+     * @throws PersistenceException
+     */
     private WorkflowNodeDescriptor getNodeClone(OptimizationNode node, WorkflowDescriptor workflow) throws PersistenceException {
         WorkflowNodeDescriptor newNode = new WorkflowNodeDescriptor();
-        WorkflowNodeDescriptor oldNode = node.getComponentDefinition().getWorkflowNode(node.getFirstNodeId());
+        WorkflowNodeDescriptor oldNode = node.getNodesDefinition().getWorkflowNode(node.getFirstNodeId());
 
         newNode.setWorkflow(workflow);
         newNode.setName(oldNode.getName());
@@ -120,14 +138,8 @@ public class OptimizedWorkflowBuilder extends WorkflowBuilderBase {
             newQuery.setValues(oldQuery.getValues());
             newQuery.setWorkflowNodeId(newNode.getId());
 
-//            String decryptedPassword = Crypto.decrypt(oldQuery.getPassword(), oldQuery.getUser());
-
             newQuery.setUser(oldQuery.getUser());
             newQuery.setPassword(oldQuery.getPassword());
-//            newQuery.setPassword(decryptedPassword);
-
-//            String cryptedPassword = Crypto.decrypt(newQuery.getPassword(), newQuery.getUser());
-//            newQuery.setPassword(cryptedPassword);
 
             newQuery = persistenceManager.saveQuery(newQuery);
 
@@ -161,8 +173,18 @@ public class OptimizedWorkflowBuilder extends WorkflowBuilderBase {
         return ret;
     }
 
+    /**
+     * Creates and adds a workflow node to workflow.
+     * Based on type, parameters from older nodes are modified/kept/removed
+     *
+     * @param comp aggregated component
+     * @param node contains information of components before aggregation
+     * @param workflow where to add the node
+     * @return new node
+     * @throws PersistenceException
+     */
     private WorkflowNodeDescriptor createNodeWithComponent(ProcessingComponent comp, OptimizationNode node, WorkflowDescriptor workflow) throws PersistenceException {
-        ComponentsDefinition defined = node.getComponentDefinition();
+        NodesDefinition defined = node.getNodesDefinition();
 
         WorkflowNodeDescriptor newNode = new WorkflowNodeDescriptor();
         WorkflowNodeDescriptor oldNode = defined.getWorkflowNode(node.getFirstNodeId());
@@ -216,8 +238,10 @@ public class OptimizedWorkflowBuilder extends WorkflowBuilderBase {
         return wf;
     }
 
+    /**
+     * Delete elements from newest to oldest.
+     */
     protected void cleanCache() {
-        /* Delete elements from newest to oldest. */
         cache = Lists.reverse(cache);
 
         for (Object obj : cache) {
