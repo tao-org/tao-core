@@ -19,6 +19,7 @@ import ro.cs.tao.ProgressListener;
 import ro.cs.tao.security.SessionStore;
 
 import java.security.Principal;
+import java.util.Locale;
 
 /**
  * Default implementation for a progress listener that sends progress information on the message bus.
@@ -82,12 +83,12 @@ public class ProgressNotifier implements ProgressListener {
     public void notifyProgress(double progressValue) {
         if (progressValue < taskCounter) {
             throw new IllegalArgumentException(
-                    String.format("Progress taskCounter cannot go backwards [actual:%.2f%%, received:%.2f%%]",
+                    String.format(Locale.US, "Progress taskCounter cannot go backwards [actual:%.2f%%, received:%.2f%%]",
                                   taskCounter, progressValue));
         }
         taskCounter = progressValue;
         if (taskCounter < 1) {
-            sendTransientMessage(TASK_PROGRESS, taskName, String.format("%.4f", progressValue));
+            sendTransientMessage(TASK_PROGRESS, taskName, String.format(Locale.US, "%.4f", progressValue));
         } else {
             ended();
         }
@@ -102,26 +103,26 @@ public class ProgressNotifier implements ProgressListener {
     public void notifyProgress(String subTaskName, double subTaskProgress, double overallProgress) {
         if (subTaskProgress < subTaskCounter) {
             throw new IllegalArgumentException(
-                    String.format("Progress counter cannot go backwards [actual:%.2f%%, received:%.2f%%]",
+                    String.format(Locale.US, "Progress counter cannot go backwards [actual:%.2f%%, received:%.2f%%]",
                                   subTaskCounter, subTaskProgress));
         }
         subTaskCounter = subTaskProgress;
         taskCounter = overallProgress;
         if (subTaskCounter < 1) {
             sendMessage(SUBTASK_PROGRESS, taskName,
-                        String.format("%.4f", taskCounter),
+                        String.format(Locale.US, "%.4f", taskCounter),
                         subTaskName,
-                        String.format("%.4f", subTaskCounter));
+                        String.format(Locale.US, "%.4f", subTaskCounter));
         } else {
             subActivityEnded(subTaskName);
         }
     }
 
     private void sendMessage(String messageTemplate, Object...args) {
-        Messaging.send(this.principal, this.topic, this.owner, String.format(messageTemplate, args), true);
+        Messaging.send(this.principal, this.topic, this.owner, String.format(Locale.US, messageTemplate, args), true);
     }
 
     private void sendTransientMessage(String messageTemplate, Object...args) {
-        Messaging.send(this.principal, this.topic, this.owner, String.format(messageTemplate, args), false);
+        Messaging.send(this.principal, this.topic, this.owner, String.format(Locale.US, messageTemplate, args), false);
     }
 }
