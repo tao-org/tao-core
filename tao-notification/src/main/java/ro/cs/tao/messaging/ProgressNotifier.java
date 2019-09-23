@@ -16,6 +16,7 @@
 package ro.cs.tao.messaging;
 
 import ro.cs.tao.ProgressListener;
+import ro.cs.tao.messaging.progress.*;
 import ro.cs.tao.security.SessionStore;
 
 import java.security.Principal;
@@ -27,13 +28,6 @@ import java.util.Locale;
  * @author Cosmin Cara
  */
 public class ProgressNotifier implements ProgressListener {
-    private static final String TASK_START = "Started %s";
-    private static final String TASK_END = "Completed %s";
-    private static final String SUBTASK_START = "Started %s:%s";
-    private static final String SUBTASK_END = "Completed %s:%s";
-    private static final String TASK_PROGRESS = "%s: %s";
-    private static final String SUBTASK_PROGRESS = "[%s: %s] - %s: %s";
-
     private final String topic;
     private final Object owner;
     private final Principal principal;
@@ -55,7 +49,7 @@ public class ProgressNotifier implements ProgressListener {
     public void started(String taskName) {
         this.taskCounter = 0;
         this.taskName = taskName;
-        sendMessage(TASK_START, taskName);
+        sendMessage(new TaskStartMessage(taskName));
     }
 
     @Override
@@ -64,19 +58,19 @@ public class ProgressNotifier implements ProgressListener {
         if (taskName == null) {
             taskName = subTaskName;
         }
-        sendTransientMessage(SUBTASK_START, taskName, subTaskName);
+        sendTransientMessage(new SubTaskStartMessage(taskName, subTaskName));
     }
 
     @Override
     public void subActivityEnded(String subTaskName) {
         this.subTaskCounter = 1;
-        sendTransientMessage(SUBTASK_END, taskName, subTaskName);
+        sendTransientMessage(new SubTaskEndMessage(taskName, subTaskName));
     }
 
     @Override
     public void ended() {
         this.taskCounter = 1;
-        sendMessage(TASK_END, taskName);
+        sendMessage(new TaskEndMessage(taskName));
     }
 
     @Override
@@ -88,7 +82,7 @@ public class ProgressNotifier implements ProgressListener {
         }
         taskCounter = progressValue;
         if (taskCounter < 1) {
-            sendTransientMessage(TASK_PROGRESS, taskName, String.format(Locale.US, "%.4f", progressValue));
+            sendTransientMessage(new TaskProgressMessage(taskName, progressValue));
         } else {
             ended();
         }
@@ -109,20 +103,17 @@ public class ProgressNotifier implements ProgressListener {
         subTaskCounter = subTaskProgress;
         taskCounter = overallProgress;
         if (subTaskCounter < 1) {
-            sendMessage(SUBTASK_PROGRESS, taskName,
-                        String.format(Locale.US, "%.4f", taskCounter),
-                        subTaskName,
-                        String.format(Locale.US, "%.4f", subTaskCounter));
+            sendMessage(new SubTaskProgressMessage(taskName, subTaskName, taskCounter, subTaskCounter));
         } else {
             subActivityEnded(subTaskName);
         }
     }
 
-    private void sendMessage(String messageTemplate, Object...args) {
-        Messaging.send(this.principal, this.topic, this.owner, String.format(Locale.US, messageTemplate, args), true);
+    private void sendMessage(Message message) {
+        Messaging.send(this.principal, this.topic, message, true);
     }
 
-    private void sendTransientMessage(String messageTemplate, Object...args) {
-        Messaging.send(this.principal, this.topic, this.owner, String.format(Locale.US, messageTemplate, args), false);
+    private void sendTransientMessage(Message message) {
+        Messaging.send(this.principal, this.topic, message, false);
     }
 }
