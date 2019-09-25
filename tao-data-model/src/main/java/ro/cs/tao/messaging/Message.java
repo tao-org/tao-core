@@ -129,6 +129,17 @@ public class Message {
     }
 
     @Transient
+    public String getPayload() {
+        return this.data != null ? this.data.get(PAYLOAD_KEY) : null;
+    }
+    public void setPayload(String data) {
+        if (this.data == null) {
+            this.data = new HashMap<>();
+        }
+        this.data.put(PAYLOAD_KEY, data);
+    }
+
+    @Transient
     public boolean isPersistent() { return persistent; }
     public void setPersistent(boolean persistent) { this.persistent = persistent; }
 

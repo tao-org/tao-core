@@ -49,7 +49,7 @@ public class ProgressNotifier implements ProgressListener {
     public void started(String taskName) {
         this.taskCounter = 0;
         this.taskName = taskName;
-        sendMessage(new TaskStartMessage(taskName));
+        sendMessage(new ActivityStartMessage(taskName));
     }
 
     @Override
@@ -58,19 +58,19 @@ public class ProgressNotifier implements ProgressListener {
         if (taskName == null) {
             taskName = subTaskName;
         }
-        sendTransientMessage(new SubTaskStartMessage(taskName, subTaskName));
+        sendTransientMessage(new SubActivityStartMessage(taskName, subTaskName));
     }
 
     @Override
     public void subActivityEnded(String subTaskName) {
         this.subTaskCounter = 1;
-        sendTransientMessage(new SubTaskEndMessage(taskName, subTaskName));
+        sendTransientMessage(new SubActivityEndMessage(taskName, subTaskName));
     }
 
     @Override
     public void ended() {
         this.taskCounter = 1;
-        sendMessage(new TaskEndMessage(taskName));
+        sendMessage(new ActivityEndMessage(taskName));
     }
 
     @Override
@@ -82,7 +82,7 @@ public class ProgressNotifier implements ProgressListener {
         }
         taskCounter = progressValue;
         if (taskCounter < 1) {
-            sendTransientMessage(new TaskProgressMessage(taskName, progressValue));
+            sendTransientMessage(new ActivityProgressMessage(taskName, progressValue));
         } else {
             ended();
         }
@@ -103,7 +103,7 @@ public class ProgressNotifier implements ProgressListener {
         subTaskCounter = subTaskProgress;
         taskCounter = overallProgress;
         if (subTaskCounter < 1) {
-            sendMessage(new SubTaskProgressMessage(taskName, subTaskName, taskCounter, subTaskCounter));
+            sendMessage(new SubActivityProgressMessage(taskName, subTaskName, taskCounter, subTaskCounter));
         } else {
             subActivityEnded(subTaskName);
         }
