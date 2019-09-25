@@ -4,13 +4,13 @@ import ro.cs.tao.messaging.Message;
 
 import java.util.Objects;
 
-public class TaskEndMessage extends Message {
+public class ActivityEndMessage extends Message {
     private final String taskName;
 
-    public TaskEndMessage(String taskName) {
+    public ActivityEndMessage(String taskName) {
         super();
         this.taskName = taskName;
-        setMessage("Completed " + this.taskName);
+        setPayload("Completed " + this.taskName);
     }
 
     public String getTaskName() { return taskName; }
@@ -19,7 +19,7 @@ public class TaskEndMessage extends Message {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        TaskEndMessage that = (TaskEndMessage) o;
+        ActivityEndMessage that = (ActivityEndMessage) o;
         return taskName.equals(that.taskName);
     }
 

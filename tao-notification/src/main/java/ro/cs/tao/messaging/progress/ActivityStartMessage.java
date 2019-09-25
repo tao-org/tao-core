@@ -4,13 +4,13 @@ import ro.cs.tao.messaging.Message;
 
 import java.util.Objects;
 
-public class TaskStartMessage extends Message {
+public class ActivityStartMessage extends Message {
     private final String taskName;
 
-    public TaskStartMessage(String taskName) {
+    public ActivityStartMessage(String taskName) {
         super();
         this.taskName = taskName;
-        setMessage("Started " + this.taskName);
+        setPayload("Started " + this.taskName);
     }
 
     public String getTaskName() { return taskName; }
@@ -19,7 +19,7 @@ public class TaskStartMessage extends Message {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        TaskStartMessage that = (TaskStartMessage) o;
+        ActivityStartMessage that = (ActivityStartMessage) o;
         return taskName.equals(that.taskName);
     }
 

@@ -4,15 +4,15 @@ import ro.cs.tao.messaging.Message;
 
 import java.util.Objects;
 
-public class SubTaskEndMessage extends Message {
+public class SubActivityEndMessage extends Message {
     private final String taskName;
     private final String subTaskName;
 
-    public SubTaskEndMessage(String taskName, String subTaskName) {
+    public SubActivityEndMessage(String taskName, String subTaskName) {
         super();
         this.taskName = taskName;
         this.subTaskName = subTaskName;
-        setMessage("Started " + this.taskName + ":" + this.subTaskName);
+        setPayload("Started " + this.taskName + ":" + this.subTaskName);
     }
 
     public String getTaskName() { return taskName; }
@@ -23,7 +23,7 @@ public class SubTaskEndMessage extends Message {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        SubTaskEndMessage that = (SubTaskEndMessage) o;
+        SubActivityEndMessage that = (SubActivityEndMessage) o;
         return taskName.equals(that.taskName) &&
                 subTaskName.equals(that.subTaskName);
     }

@@ -5,18 +5,18 @@ import ro.cs.tao.messaging.Message;
 import java.util.Locale;
 import java.util.Objects;
 
-public class SubTaskProgressMessage extends Message {
+public class SubActivityProgressMessage extends Message {
     private final String taskName;
     private final double taskProgress;
     private final String subTaskName;
     private final double subTaskProgress;
 
-    public SubTaskProgressMessage(String taskName, String subTaskName, double taskProgress, double subTaskProgress) {
+    public SubActivityProgressMessage(String taskName, String subTaskName, double taskProgress, double subTaskProgress) {
         this.taskName = taskName;
         this.taskProgress = taskProgress;
         this.subTaskName = subTaskName;
         this.subTaskProgress = subTaskProgress;
-        setMessage(String.format("[%s: %s] - %s: %s",
+        setPayload(String.format("[%s: %s] - %s: %s",
                                  taskName, String.format(Locale.US, "%.4f", taskProgress),
                                  subTaskName, String.format(Locale.US, "%.4f", subTaskProgress)));
     }
@@ -37,7 +37,7 @@ public class SubTaskProgressMessage extends Message {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        SubTaskProgressMessage that = (SubTaskProgressMessage) o;
+        SubActivityProgressMessage that = (SubActivityProgressMessage) o;
         return Double.compare(that.taskProgress, taskProgress) == 0 &&
                 Double.compare(that.subTaskProgress, subTaskProgress) == 0 &&
                 taskName.equals(that.taskName) &&
