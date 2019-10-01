@@ -36,6 +36,7 @@ import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.Notifiable;
 import ro.cs.tao.messaging.Topics;
+import ro.cs.tao.optimization.WorkflowOptimizer;
 import ro.cs.tao.orchestration.commands.JobCommand;
 import ro.cs.tao.orchestration.commands.TaskCommand;
 import ro.cs.tao.orchestration.status.TaskStatusHandler;
@@ -61,6 +62,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.UserPrincipal;
 import java.security.Principal;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -133,11 +135,12 @@ public class Orchestrator extends Notifiable {
     /**
      * Creates a job from a workflow definition and starts its execution.
      *
+     * @param context 	 The session context 
      * @param workflowId The workflow identifier
      * @param inputs     The overridden parameter values for workflow nodes
      * @throws ExecutionException In case anything goes wrong or a job for this workflow was already created
      */
-    public long startWorkflow(long workflowId, String description,
+    public long startWorkflow(SessionContext context, long workflowId, String description,
                               Map<String, Map<String, String>> inputs, ExecutorService executorService) throws ExecutionException {
         try {
             WorkflowDescriptor descriptor = persistenceManager.getWorkflowDescriptor(workflowId);
@@ -146,13 +149,22 @@ public class Orchestrator extends Notifiable {
             }
             
             // check if the user's disk quota is not reached
-            if (!checkProcessingQuota()) {
+            if (!checkProcessingQuota(context.getPrincipal())) {
             	// do not create any job
             	return -1;
             }
-            
-            final ExecutionJob executionJob = this.jobFactory.createJob(description, descriptor, inputs);
-            this.executors.put(SessionStore.currentContext(), executorService);
+
+            WorkflowDescriptor optimized = WorkflowOptimizer.getOptimizedWorkflow(descriptor);
+            final ExecutionJob executionJob;
+
+            // check if optimisation was successful and needed
+            if (optimized != null) {
+                executionJob = this.jobFactory.createJob(description, optimized, inputs);
+            } else {
+                executionJob = this.jobFactory.createJob(description, descriptor, inputs);
+            }
+
+            this.executors.put(context, executorService);
             executorService.submit(() -> JobCommand.START.applyTo(executionJob));
             return executionJob.getId();
         } catch (QuotaException | PersistenceException e) {
@@ -400,7 +412,7 @@ public class Orchestrator extends Notifiable {
         }
         // update user processing quota
         try {
-			UserQuotaManager.getInstance().updateUserProcessingQuota(SessionStore.currentContext().getPrincipal());
+			UserQuotaManager.getInstance().updateUserProcessingQuota(context.getPrincipal());
 		} catch (QuotaException e) {
 			logger.severe(String.format("Error updating quota. Error message: %s", e.getMessage()));
 		}
@@ -860,15 +872,16 @@ public class Orchestrator extends Notifiable {
     /**
      * Check if the user still has disk processing quota available
      * 
+     * @param user the user for which the interogation is made
+     * 
      * @return true if the user stil has disk processing quota available, false otherwise. 
      * @throws QuotaException if the operation fails. 
      */
-    private boolean checkProcessingQuota() throws QuotaException {
-    	final Principal principal = SessionStore.currentContext().getPrincipal();
+    private boolean checkProcessingQuota(Principal user) throws QuotaException {
     	// update the quota before checking
-        UserQuotaManager.getInstance().updateUserProcessingQuota(principal);
+        UserQuotaManager.getInstance().updateUserProcessingQuota(user);
         
-        return UserQuotaManager.getInstance().checkUserProcessingQuota(principal);
+        return UserQuotaManager.getInstance().checkUserProcessingQuota(user);
     }
     
     private class QueueMonitor extends Thread {

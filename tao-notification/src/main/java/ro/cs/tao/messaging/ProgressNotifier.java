@@ -16,9 +16,11 @@
 package ro.cs.tao.messaging;
 
 import ro.cs.tao.ProgressListener;
+import ro.cs.tao.messaging.progress.*;
 import ro.cs.tao.security.SessionStore;
 
 import java.security.Principal;
+import java.util.Locale;
 
 /**
  * Default implementation for a progress listener that sends progress information on the message bus.
@@ -26,13 +28,6 @@ import java.security.Principal;
  * @author Cosmin Cara
  */
 public class ProgressNotifier implements ProgressListener {
-    private static final String TASK_START = "Started %s";
-    private static final String TASK_END = "Completed %s";
-    private static final String SUBTASK_START = "Started %s:%s";
-    private static final String SUBTASK_END = "Completed %s:%s";
-    private static final String TASK_PROGRESS = "%s: %s";
-    private static final String SUBTASK_PROGRESS = "[%s: %s] - %s: %s";
-
     private final String topic;
     private final Object owner;
     private final Principal principal;
@@ -54,7 +49,7 @@ public class ProgressNotifier implements ProgressListener {
     public void started(String taskName) {
         this.taskCounter = 0;
         this.taskName = taskName;
-        sendMessage(TASK_START, taskName);
+        sendMessage(new ActivityStartMessage(taskName));
     }
 
     @Override
@@ -63,31 +58,31 @@ public class ProgressNotifier implements ProgressListener {
         if (taskName == null) {
             taskName = subTaskName;
         }
-        sendTransientMessage(SUBTASK_START, taskName, subTaskName);
+        sendTransientMessage(new SubActivityStartMessage(taskName, subTaskName));
     }
 
     @Override
     public void subActivityEnded(String subTaskName) {
         this.subTaskCounter = 1;
-        sendTransientMessage(SUBTASK_END, taskName, subTaskName);
+        sendTransientMessage(new SubActivityEndMessage(taskName, subTaskName));
     }
 
     @Override
     public void ended() {
         this.taskCounter = 1;
-        sendMessage(TASK_END, taskName);
+        sendMessage(new ActivityEndMessage(taskName));
     }
 
     @Override
     public void notifyProgress(double progressValue) {
         if (progressValue < taskCounter) {
             throw new IllegalArgumentException(
-                    String.format("Progress taskCounter cannot go backwards [actual:%.2f%%, received:%.2f%%]",
+                    String.format(Locale.US, "Progress taskCounter cannot go backwards [actual:%.2f%%, received:%.2f%%]",
                                   taskCounter, progressValue));
         }
         taskCounter = progressValue;
         if (taskCounter < 1) {
-            sendTransientMessage(TASK_PROGRESS, taskName, String.format("%.4f", progressValue));
+            sendTransientMessage(new ActivityProgressMessage(taskName, progressValue));
         } else {
             ended();
         }
@@ -102,26 +97,23 @@ public class ProgressNotifier implements ProgressListener {
     public void notifyProgress(String subTaskName, double subTaskProgress, double overallProgress) {
         if (subTaskProgress < subTaskCounter) {
             throw new IllegalArgumentException(
-                    String.format("Progress counter cannot go backwards [actual:%.2f%%, received:%.2f%%]",
+                    String.format(Locale.US, "Progress counter cannot go backwards [actual:%.2f%%, received:%.2f%%]",
                                   subTaskCounter, subTaskProgress));
         }
         subTaskCounter = subTaskProgress;
         taskCounter = overallProgress;
         if (subTaskCounter < 1) {
-            sendMessage(SUBTASK_PROGRESS, taskName,
-                        String.format("%.4f", taskCounter),
-                        subTaskName,
-                        String.format("%.4f", subTaskCounter));
+            sendMessage(new SubActivityProgressMessage(taskName, subTaskName, taskCounter, subTaskCounter));
         } else {
             subActivityEnded(subTaskName);
         }
     }
 
-    private void sendMessage(String messageTemplate, Object...args) {
-        Messaging.send(this.principal, this.topic, this.owner, String.format(messageTemplate, args), true);
+    private void sendMessage(Message message) {
+        Messaging.send(this.principal, this.topic, message, true);
     }
 
-    private void sendTransientMessage(String messageTemplate, Object...args) {
-        Messaging.send(this.principal, this.topic, this.owner, String.format(messageTemplate, args), false);
+    private void sendTransientMessage(Message message) {
+        Messaging.send(this.principal, this.topic, message, false);
     }
 }
