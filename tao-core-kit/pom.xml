@@ -74,6 +74,11 @@
             <artifactId>tao-spring-bridge</artifactId>
             <version>${project.version}</version>
         </dependency>
+		<dependency>
+			<groupId>ro.cs.tao</groupId>
+            <artifactId>tao-workflow-optimizer</artifactId>
+            <version>${project.version}</version>
+		</dependency>
         <dependency>
             <groupId>ro.cs.tao</groupId>
             <artifactId>tao-orchestration</artifactId>

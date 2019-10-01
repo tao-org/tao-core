@@ -33,6 +33,11 @@
             <artifactId>tao-config</artifactId>
             <version>${project.version}</version>
         </dependency>
+		<dependency>
+            <groupId>ro.cs.tao</groupId>
+            <artifactId>tao-workflow-optimizer</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>ro.cs.tao</groupId>
             <artifactId>tao-execution</artifactId>
