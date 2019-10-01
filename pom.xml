@@ -24,10 +24,11 @@
         <module>tao-notification</module>
         <module>tao-service-api</module>
         <module>tao-drmaa-api</module>
+		<module>tao-workflow-optimizer</module>
         <module>tao-orchestration</module>
-        <module>tao-core-kit</module>
-        <module>tao-execution-model</module>
+		<module>tao-execution-model</module>
         <module>tao-scheduling</module>
+        <module>tao-core-kit</module>
     </modules>
 
     <properties>
