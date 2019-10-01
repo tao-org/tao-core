@@ -29,14 +29,18 @@ public class TaskProgress {
         this.name = name;
     }
 
-    public TaskProgress(String name, double progress, SubTaskProgress subTaskProgress) {
+    public TaskProgress(String name, double progress, String subTask, double subProgress) {
+        this(name, progress, new SubTaskProgress(subTask, subProgress));
+    }
+
+    public TaskProgress(String name, double progress) {
+        this(name, progress, null);
+    }
+
+    private TaskProgress(String name, double progress, SubTaskProgress subTaskProgress) {
         this.name = name;
         this.progress = progress;
         this.subTaskProgress = subTaskProgress;
-    }
-
-    public TaskProgress(String name, double progress, String subTask, double subProgress) {
-        this(name, progress, new SubTaskProgress(subTask, subProgress));
     }
 
     public String getName() {

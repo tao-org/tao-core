@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import ro.cs.tao.services.model.scheduling.SchedulingInfo;
+import ro.cs.tao.services.model.scheduling.SchedulingMode;
 
 /**
  * Interface for job scheduling operations
@@ -31,10 +32,10 @@ public interface SchedulingService extends TAOService {
 	 * @param repeatInterval the execution repeat interval, in seconds
 	 * @param workflowId the workflow that will be executed
 	 * @param inputs the workflow inputs map
-	 * @param additional the workflow additional data used for special executions
+	 * @param mode the scheduling execution mode
 	 * @return the name allocated to the schedule job
 	 */
-	String addExecutionSchedule(final String name, LocalDateTime startDate, int repeatInterval, final long workflowId, Map<String, Map<String, String>> inputs, Map<String, Map<String, String>> additional);
+	String addExecutionSchedule(final String name, LocalDateTime startDate, int repeatInterval, final long workflowId, Map<String, Map<String, String>> inputs, final SchedulingMode mode);
 
 	
 	/**
@@ -46,10 +47,10 @@ public interface SchedulingService extends TAOService {
 	 * @param repeatInterval the execution repeat interval, in seconds
 	 * @param workflowId the workflow that will be executed
 	 * @param inputs the workflow inputs map
-	 * @param additional the workflow additional data used for special executions
+	 * @param mode the scheduling execution mode
 	 * @return the name allocated to the schedule job
 	 */
-	String updateExecutionSchedule(final String id, final String name, LocalDateTime startDate, int repeatInterval, final long workflowId, Map<String, Map<String, String>> inputs, Map<String, Map<String, String>> additional);
+	String updateExecutionSchedule(final String id, final String name, LocalDateTime startDate, int repeatInterval, final long workflowId, Map<String, Map<String, String>> inputs, final SchedulingMode mode);
 
 	
 	/**

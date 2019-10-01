@@ -16,26 +16,13 @@
 
 package ro.cs.tao.execution.local;
 
-import java.net.InetAddress;
-import java.security.Principal;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.stream.Collectors;
-
-import ro.cs.tao.component.Aggregator;
-import ro.cs.tao.component.ComponentLink;
-import ro.cs.tao.component.SystemVariable;
-import ro.cs.tao.component.TaoComponent;
-import ro.cs.tao.component.Variable;
+import ro.cs.tao.component.*;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.datasource.DataQuery;
 import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.datasource.ProductStatusListener;
 import ro.cs.tao.datasource.beans.Query;
+import ro.cs.tao.eodata.EOData;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.enums.ProductStatus;
 import ro.cs.tao.eodata.sorting.Association;
@@ -57,6 +44,17 @@ import ro.cs.tao.utils.executors.NamedThreadPoolExecutor;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 
+import java.net.InetAddress;
+import java.security.Principal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.stream.Collectors;
+
 /**
  * Specialized executor that will perform a query to a data source.
  *
@@ -64,6 +62,7 @@ import ro.cs.tao.workflow.WorkflowNodeDescriptor;
  */
 public class QueryExecutor extends Executor<DataSourceExecutionTask> implements ProductStatusListener {
 
+    private static final String LOCAL_DATABASE = "Local Database";
     private ExecutorService backgroundWorker = new NamedThreadPoolExecutor("query-thread", 1);//Executors.newSingleThreadExecutor();
     private DataSourceComponent dataSourceComponent;
     @Override
@@ -116,16 +115,31 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                 }
                 String sensorName = dataSourceComponent.getSensorName().toLowerCase().replace(" ", "-");
                 dataSourceComponent.setProductStatusListener(this);
-                final List<EOProduct> products = dataSourceComponent.doFetch(results,
+                List<EOProduct> products = new ArrayList<>();
+                if (!dataSourceComponent.getId().contains(LOCAL_DATABASE)) {
+                    // first try to retrieve the products that have already been downloaded locally
+                    List<EOProduct> localProducts = persistenceManager.getEOProducts(results.stream().map(EOData::getId).collect(Collectors.joining()));
+                    if (localProducts != null) {
+                        localProducts.removeIf(p -> p.getProductStatus() != ProductStatus.DOWNLOADED);
+                        localProducts.forEach(this::downloadCompleted);
+                        products.addAll(localProducts);
+                        Set<String> ids = localProducts.stream().map(EOData::getId).collect(Collectors.toSet());
+                        results.removeIf(p -> ids.contains(p.getId()));
+                    }
+                }
+                final List<EOProduct> remoteProducts = dataSourceComponent.doFetch(results,
                         null,
                         SystemVariable.SHARED_WORKSPACE.value(),
                         ConfigurationManager.getInstance().getValue(String.format("local.%s.path", sensorName)),
                                                                              null);
-                if (products != null) {
-                    if (!dataSourceComponent.getId().contains("Local Database")) {
-                        backgroundWorker.submit(() -> persistResults(products));
+                if (remoteProducts != null) {
+                    if (!dataSourceComponent.getId().contains(LOCAL_DATABASE)) {
+                        backgroundWorker.submit(() -> persistResults(remoteProducts));
                     }
-                    task.getComponent().setTargetCardinality(results.size());
+                    products.addAll(remoteProducts);
+                }
+                //if (results.size() > 0) {
+                    task.getComponent().setTargetCardinality(products.size());
                     Long workflowNodeId = task.getWorkflowNodeId();
                     WorkflowDescriptor workflow = persistenceManager.getFullWorkflowDescriptor(task.getJob().getWorkflowId());
                     List<WorkflowNodeDescriptor> linkedNodes =
@@ -141,7 +155,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                                 String[] sort = aggregator.getSorter();
                                 if (sort != null) {
                                     DataSorter<EOProduct> sorter = ProductSortingFactory.getSorter(sort[0]);
-                                    results = sorter.sort(products, sort[1] == null || sort[1].equalsIgnoreCase("asc"));
+                                    products = sorter.sort(products, sort[1] == null || sort[1].equalsIgnoreCase("asc"));
                                 }
                                 String[] group = aggregator.getAssociator();
                                 if (group != null) {
@@ -155,7 +169,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                                         association = ProductAssociationFactory.getAssociation(group[0],
                                                                                                Integer.parseInt(group[1]));
                                     }
-                                    tuples = association.associate(results);
+                                    tuples = association.associate(products);
                                 }
                             }
                         }
@@ -165,9 +179,9 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                                                      serializeGroups(tuples));
                     } else {
                         task.setOutputParameterValue(dataSourceComponent.getTargets().get(0).getName(),
-                                                     serializeResults(results));
+                                                     serializeResults(products));
                     }
-                }
+                //}
                 status = ExecutionStatus.DONE;
             } else {
                 logger.info("Query returned no results");
@@ -254,6 +268,26 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
         		return false;
         	}
         	
+        	// check if the product already exists
+        	final EOProduct oldProd = persistenceManager.getEOProduct(product.getId());
+        	if (oldProd != null) {
+        		// if the product is failed or downloading, copy its references but continue with the download
+        		if (oldProd.getProductStatus() == ProductStatus.FAILED || oldProd.getProductStatus() == ProductStatus.DOWNLOADING) {
+        			product.setRefs(oldProd.getRefs());
+        		} else {
+        			// add the current user as reference
+        			product.addReference(principal.getName());
+        			product.setRefs(oldProd.getRefs());
+        			// copy the status of the previous product
+        			product.setProductStatus(oldProd.getProductStatus());
+
+        			// update the user's input quota
+                    UserQuotaManager.getInstance().updateUserInputQuota(principal);
+            		// do not allow for the download to start
+        			return false;
+        		}
+        	}        	
+        	
             product.setProductStatus(ProductStatus.DOWNLOADING);
             // attach the current user 
             product.addReference(principal.getName());
@@ -275,6 +309,13 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
     public void downloadCompleted(EOProduct product) {
     	final Principal principal = SessionStore.currentContext().getPrincipal();
         try {
+        	// re-update the references, in case some other user tried to download this product after 
+        	// the current user started
+        	final EOProduct oldProd = persistenceManager.getEOProduct(product.getId());
+        	if (oldProd != null) {
+        		product.setRefs(oldProd.getRefs());
+        	}
+        	
             product.setProductStatus(ProductStatus.DOWNLOADED);
             // update the product's reference
             product.addReference(principal.getName());
@@ -295,6 +336,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
     	
         try {
             product.setProductStatus(ProductStatus.FAILED);
+            product.removeReference(principal.getName());
             persistenceManager.saveEOProduct(product);
             // roll back the user's quota
             UserQuotaManager.getInstance().updateUserInputQuota(principal);

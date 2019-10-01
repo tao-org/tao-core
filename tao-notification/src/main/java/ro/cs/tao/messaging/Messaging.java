@@ -73,12 +73,20 @@ public class Messaging {
         instance.send(principal, topic, message);
     }
 
+    public static void send(Principal principal, String topic, Message message, boolean persistent) {
+        instance.send(principal, topic, message, persistent);
+    }
+
     public static void send(Principal principal, String topic, Object source, String message) {
         instance.send(principal, topic, source, message);
     }
 
     public static void send(Principal principal, String topic, Object source, String message, boolean persist) {
         instance.send(principal, topic, source, message, persist);
+    }
+
+    public static void send(Principal principal, String topic, Object source, Message message, boolean persist) {
+        instance.send(principal, topic, message, persist);
     }
 
     public static void shutdown() {

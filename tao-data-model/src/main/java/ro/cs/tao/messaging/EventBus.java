@@ -91,6 +91,11 @@ public interface EventBus<T extends Serializable> {
         send(principal, topic, Message.create(principal.getName(), source, message, persistent));
     }
 
+    default void send(Principal principal, String topic, Message message, boolean persistent) {
+        message.setPersistent(persistent);
+        send(principal, topic, message);
+    }
+
     /**
      * Instructs the event bus to shutdown.
      */

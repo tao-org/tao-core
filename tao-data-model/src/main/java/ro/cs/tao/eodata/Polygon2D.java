@@ -50,8 +50,7 @@ public class Polygon2D {
 
     /**
      * Creates a polygon from a well-known text.
-     * For now, only single POLYGONs are supported.
-     * If multiple polygons are encountered, only the first one is taken into account.
+     * Only POLYGON, MULTIPOLYGON and POINT are supported.
      *
      * @param wkt   The text to parse.
      * @return      A closed polygon.
@@ -77,6 +76,9 @@ public class Polygon2D {
                 for (Coordinate coordinate : coordinates) {
                     polygon.append(coordinate.x, coordinate.y);
                 }
+            } else if (wkt.startsWith("POINT")) {
+                Coordinate coordinate = geometry.getCoordinate();
+                polygon.append(coordinate.x, coordinate.y);
             } else {
                 // maybe we have only a list of coordinates, without being wrapped in a POLYGON((..))
                 Matcher coordMatcher = coordPattern.matcher(wkt);
@@ -221,7 +223,8 @@ public class Polygon2D {
         final DecimalFormat dfFormat = new DecimalFormat(format.toString(), DecimalFormatSymbols.getInstance(Locale.ENGLISH));
         final StringBuilder buffer = new StringBuilder();
         final boolean isMulti = this.polygons.length > 1;
-        buffer.append(isMulti ? "MULTIPOLYGON(((" : "POLYGON((");
+        final boolean isPoint = this.polygons.length == 1 && this.numPoints == 1;
+        buffer.append(isPoint ? "POINT(" : isMulti ? "MULTIPOLYGON(((" : "POLYGON((");
         final double[] segment = new double[6];
         for (int j = 0; j < this.polygons.length; j++) {
             if (j > 0) {
@@ -234,7 +237,7 @@ public class Polygon2D {
                 pathIterator.next();
             }
             buffer.setLength(buffer.length() - 1);
-            buffer.append("))");
+            buffer.append(isPoint ? ")" : "))");
             if (isMulti) {
                 buffer.append(",");
             }

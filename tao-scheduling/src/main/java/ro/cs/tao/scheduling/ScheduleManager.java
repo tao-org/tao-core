@@ -42,8 +42,6 @@ import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 
 public class ScheduleManager {
-	public final static String JOB_STATUS_KEY = "jobStatus";
-	
 	private final static String INSTANCE_NAME_KEY = "tao.quartz.scheduler.instanceName";
 	private final static String DRIVER_DELEGATE_CLASS_KEY = "tao.quartz.jobStore.driverDelegateClass";
 	private final static String TABLE_PREFIX_KEY = "tao.quartz.jobStore.tablePrefix";
@@ -191,33 +189,30 @@ public class ScheduleManager {
 	}
 	
 	
-	public static List<JobDetail> getUserSchedules(final String userName) throws ScheduleException {
+	public static List<JobData> getUserSchedules(final String userName) throws ScheduleException {
 		if (instance == null || instance.quarzScheduler == null) {
 			throw new ScheduleException("Scheduling not available");
 		}
 		try {
-			final List<JobDetail> jobs = new LinkedList<>();
+			final List<JobData> jobs = new LinkedList<>();
 			final Set<JobKey> keys = instance.quarzScheduler.getJobKeys(GroupMatcher.jobGroupEquals(userName));
 			for (JobKey key : keys) {
-				JobDetail jd = instance.quarzScheduler.getJobDetail(key); 
+				final JobDetail jd = instance.quarzScheduler.getJobDetail(key); 
+				final Trigger t;
+				final TriggerState triggerState;
 				
 				// add the current state to the parameters
 				final List<? extends Trigger> triggers = instance.quarzScheduler.getTriggersOfJob(key);
 				if (triggers == null || triggers.isEmpty()) {
 					// no trigger associated!
-					jd.getJobDataMap().put(JOB_STATUS_KEY, TriggerState.NONE.name());
+					t = null;
+					triggerState = null;
 				} else {
-					final Trigger t = triggers.get(0);
-					final TriggerState triggerState = instance.quarzScheduler.getTriggerState(t.getKey());
-					if (triggerState == null) {
-						// no trigger associated!
-						jd.getJobDataMap().put(JOB_STATUS_KEY, TriggerState.NONE.name());
-					} else {
-						jd.getJobDataMap().put(JOB_STATUS_KEY, triggerState.name());
-					}
+					t = triggers.get(0);
+					triggerState = instance.quarzScheduler.getTriggerState(t.getKey());
 				}
 				
-				jobs.add(jd);
+				jobs.add(new JobData(jd, t, triggerState));
 			}
 			return jobs;
 		} catch(SchedulerException e) {
