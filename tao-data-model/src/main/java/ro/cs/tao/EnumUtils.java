@@ -25,11 +25,12 @@ public class EnumUtils {
      */
     public static <T extends Enum<T> & TaoEnum> String getEnumConstantNameByValue(Class<T> enumType, final int value) {
         for (T type : enumType.getEnumConstants()) {
-            if (Integer.class.equals(enumType) && type.value().equals(value)) {
+            Object typeValue = type.value();
+            if (typeValue instanceof Integer && typeValue.equals(value)) {
                 return type.name();
-            } else if (Short.class.equals(enumType) && ((Short)type.value()).intValue() == value) {
+            } else if (typeValue instanceof Short && ((Short) typeValue).intValue() == value) {
                 return type.name();
-            } else if (Byte.class.equals(enumType) && ((Byte)type.value()).intValue() == value) {
+            } else if (typeValue instanceof Byte && ((Byte) typeValue).intValue() == value) {
                 return type.name();
             }
         }
@@ -38,11 +39,12 @@ public class EnumUtils {
 
     public static <T extends Enum<T> & TaoEnum> T getEnumConstantByValue(Class<T> enumType, final int value) {
         for (T type : enumType.getEnumConstants()) {
-            if (Integer.class.equals(enumType) && type.value().equals(value)) {
+            Object typeValue = type.value();
+            if (typeValue instanceof Integer && typeValue.equals(value)) {
                 return type;
-            } else if (Short.class.equals(enumType) && ((Short)type.value()).intValue() == value) {
+            } else if (typeValue instanceof Short && ((Short) typeValue).intValue() == value) {
                 return type;
-            } else if (Byte.class.equals(enumType) && ((Byte)type.value()).intValue() == value) {
+            } else if (typeValue instanceof Byte && ((Byte) typeValue).intValue() == value) {
                 return type;
             }
         }
