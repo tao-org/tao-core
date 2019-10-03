@@ -25,7 +25,11 @@ public class EnumUtils {
      */
     public static <T extends Enum<T> & TaoEnum> String getEnumConstantNameByValue(Class<T> enumType, final int value) {
         for (T type : enumType.getEnumConstants()) {
-            if (((int) type.value()) == value) {
+            if (Integer.class.equals(enumType) && type.value().equals(value)) {
+                return type.name();
+            } else if (Short.class.equals(enumType) && ((Short)type.value()).intValue() == value) {
+                return type.name();
+            } else if (Byte.class.equals(enumType) && ((Byte)type.value()).intValue() == value) {
                 return type.name();
             }
         }
@@ -34,7 +38,11 @@ public class EnumUtils {
 
     public static <T extends Enum<T> & TaoEnum> T getEnumConstantByValue(Class<T> enumType, final int value) {
         for (T type : enumType.getEnumConstants()) {
-            if (((int) type.value()) == value) {
+            if (Integer.class.equals(enumType) && type.value().equals(value)) {
+                return type;
+            } else if (Short.class.equals(enumType) && ((Short)type.value()).intValue() == value) {
+                return type;
+            } else if (Byte.class.equals(enumType) && ((Byte)type.value()).intValue() == value) {
                 return type;
             }
         }
