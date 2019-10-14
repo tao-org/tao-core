@@ -33,7 +33,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.deploy.root.path>file://W:/mnt/tao-releases</project.deploy.root.path>
+        <project.deploy.root.path>file://W:/Dev/tao-github-publication</project.deploy.root.path>
         <geotools.version>20.0</geotools.version>
         <spring.version>5.0.8.RELEASE</spring.version>
         <jackson.version>2.9.8</jackson.version>
@@ -43,23 +43,10 @@
         <!-- maven -->
         <maven.compiler.data>1.8</maven.compiler.data>
         <maven.compiler.target>1.8</maven.compiler.target>
-
         <mavenPublicUrl>http://central.maven.org/maven2</mavenPublicUrl>
-
         <taoReleasesUrl>${project.deploy.root.path}/tao-core</taoReleasesUrl>
-        <osgeoUrl>http://cayman.c-s.ro:8081/nexus/repository/osgeo/</osgeoUrl>
-        <hibernatespatialUrl>http://cayman:8081/nexus/repository/hibernatespatial/</hibernatespatialUrl>
-        <springio-milestoneUrl>http://cayman:8081/nexus/repository/springio-milestone/</springio-milestoneUrl>
-
-        <!-- SonarQube -->
-        <sonar.host.url>http://cayman.c-s.ro:9000/sonar</sonar.host.url>
-        <sonar.language>java</sonar.language>
-        <sonar.scm.provider>git</sonar.scm.provider>
-        <sonar.exclusions>**/ro/cs/tao/**/*Test, **/ro/cs/tao/**/*.xml</sonar.exclusions>
-        <!-- Jacoco in SonarQube -->
-        <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
-        <sonar.jacoco.reportPaths>${project.basedir}/../target/jacoco.exec</sonar.jacoco.reportPaths>
-
+        <hibernatespatialUrl>https://mvnrepository.com/artifact/org.hibernate/hibernate-spatial/</hibernatespatialUrl>
+        <springio-milestoneUrl>http://repo.spring.io/milestone/</springio-milestoneUrl>
     </properties>
 
     <repositories>
@@ -100,11 +87,6 @@
             <name>TAO releases</name>
             <url>${taoReleasesUrl}</url>
         </repository>
-        <snapshotRepository>
-            <id>tao-snapshots</id>
-            <name>TAO snapshots</name>
-            <url>${taoSnapshotsUrl}</url>
-        </snapshotRepository>
     </distributionManagement>
 
     <profiles>
@@ -172,46 +154,6 @@
                 </plugin>
             </plugins>
         </pluginManagement>
-
-        <plugins>
-            <plugin>
-                <groupId>org.sonatype.plugins</groupId>
-                <artifactId>nexus-staging-maven-plugin</artifactId>
-                <version>1.6.8</version>
-                <executions>
-                    <execution>
-                        <id>default-deploy</id>
-                        <phase>deploy</phase>
-                        <goals>
-                            <goal>deploy</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <serverId>cayman-nexus</serverId>
-                    <nexusUrl>${nexusUrl}</nexusUrl>
-                    <skipStaging>true</skipStaging>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.7.9</version>
-                <configuration>
-                    <destFile>${sonar.jacoco.reportPaths}</destFile>
-                    <append>true</append>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>agent</id>
-                        <goals>
-                            <goal>prepare-agent</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
     </build>
 
     <developers>
