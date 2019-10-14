@@ -138,7 +138,11 @@ public class SimpleArchiveDownloadStrategy extends DownloadStrategy {
                             outputStream.close();
                             logger.finest("End reading from input stream");
                             checkCancelled();
-                            productFile = extract(archivePath, computeTarget(archivePath));
+                            if (Boolean.parseBoolean(this.props.getProperty("auto.uncompress", "true"))) {
+                                productFile = extract(archivePath, computeTarget(archivePath));
+                            } else {
+                                productFile = archivePath;
+                            }
                             if (productFile != null) {
                                 try {
                                     product.setLocation(productFile.toUri().toString());
