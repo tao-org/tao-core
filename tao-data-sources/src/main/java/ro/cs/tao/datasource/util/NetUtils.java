@@ -26,6 +26,8 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -140,7 +142,78 @@ public class NetUtils {
     }
 
     public static CloseableHttpResponse openConnection(HttpMethod method, String url, Credentials credentials) throws IOException {
-        return openConnection(method, url, credentials, null);
+        return openConnection(method, url, credentials, (List<NameValuePair>) null);
+    }
+
+    public static CloseableHttpResponse openConnection(HttpMethod method, String url, Credentials credentials, String json) throws IOException {
+        CloseableHttpResponse response;
+        try {
+            URI uri = new URI(url);
+            String domain = uri.getHost();
+            if (domain.indexOf(".") > 0) {
+                String[] tokens = domain.split("\\.");
+                domain = tokens[tokens.length - 2] + "." + tokens[tokens.length - 1];
+            }
+            final CompositeKey key;
+            if (credentials != null) {
+                key = new CompositeKey(domain, credentials.getUserPrincipal(), credentials.getPassword());
+            } else {
+                key = new CompositeKey(domain, null);
+            }
+            synchronized (httpClients) {
+                if (!httpClients.containsKey(key)) {
+                    //ThreadLocal<CloseableHttpClient> local = new ThreadLocal<>();
+                    CredentialsProvider credentialsProvider = null;
+                    if (credentials != null) {
+                        credentialsProvider = proxyCredentials != null ? proxyCredentials : new BasicCredentialsProvider();
+                        credentialsProvider.setCredentials(new AuthScope(uri.getHost(), uri.getPort()), credentials);
+                    }
+                    CloseableHttpClient httpClient;
+                    if (credentialsProvider != null) {
+                        httpClient = HttpClients.custom().setDefaultCookieStore(new BasicCookieStore())
+                                .setDefaultCredentialsProvider(credentialsProvider)
+                                .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
+                                .build();
+                    } else {
+                        httpClient = HttpClients.custom()
+                                .setDefaultCookieStore(new BasicCookieStore())
+                                .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
+                                .build();
+                    }
+                    httpClients.put(key, httpClient);
+                }
+            }
+            CloseableHttpClient httpClient = httpClients.get(key);
+            HttpRequestBase requestBase;
+            switch (method) {
+                case GET:
+                    requestBase = new HttpGet(uri);
+                    break;
+                case POST:
+                    requestBase = new HttpPost(uri);
+                    if (json != null) {
+                        StringEntity requestEntity = new StringEntity(json, ContentType.APPLICATION_JSON);
+                        ((HttpPost) requestBase).setEntity(requestEntity);
+                    }
+                    break;
+                default:
+                    throw new IllegalArgumentException("Method not supported");
+            }
+            if (apacheHttpProxy != null) {
+                RequestConfig config = RequestConfig.custom().setProxy(apacheHttpProxy).build();
+                requestBase.setConfig(config);
+            }
+            RequestConfig config = requestBase.getConfig();
+            if (config != null) {
+                Logger.getRootLogger().debug("Details: %s", config.toString());
+            }
+            response = httpClient.execute(requestBase);
+            Logger.getRootLogger().debug("HTTP %s %s returned %s", method.toString(), url, response.getStatusLine().getStatusCode());
+        } catch (URISyntaxException | IOException e) {
+            Logger.getRootLogger().debug("Could not create connection to %s : %s", url, e.getMessage());
+            throw new IOException(e);
+        }
+        return response;
     }
 
     public static CloseableHttpResponse openConnection(HttpMethod method, String url, Credentials credentials, List<NameValuePair> parameters) throws IOException {
