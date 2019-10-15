@@ -30,7 +30,7 @@ public interface ParameterProvider {
     /**
      * Returns the query parameters for all the sensors supported by this data source
      */
-    Map<String, Map<ParameterName, DataSourceParameter>> getSupportedParameters();
+    Map<String, Map<String, DataSourceParameter>> getSupportedParameters();
 
     /**
      * Returns the sensors supported by this data source
@@ -42,21 +42,19 @@ public interface ParameterProvider {
      */
     Map<String, ProductFetchStrategy> getRegisteredProductFetchStrategies();
 
-    static <T> Tuple<ParameterName, DataSourceParameter> createParameter(String systemName, String remoteName,
-                                                                          String label, Class<T> type) {
+    static <T> Tuple<String, DataSourceParameter> createParameter(String systemName, String remoteName,
+                                                                  String label, Class<T> type) {
         return createParameter(systemName, remoteName, label, type, null);
     }
 
-    static <T> Tuple<ParameterName, DataSourceParameter> createParameter(String systemName, String remoteName,
-                                                              String label, Class<T> type, T defaultValue) {
-        return new Tuple<>(ParameterName.create(systemName, remoteName, label),
-                           new DataSourceParameter(systemName, type, label, defaultValue));
+    static <T> Tuple<String, DataSourceParameter> createParameter(String systemName, String remoteName,
+                                                                  String label, Class<T> type, T defaultValue) {
+        return new Tuple<>(systemName, new DataSourceParameter(systemName, remoteName, type, label, defaultValue));
     }
 
-    static <T> Tuple<ParameterName, DataSourceParameter> createParameter(String systemName, String remoteName,
+    static <T> Tuple<String, DataSourceParameter> createParameter(String systemName, String remoteName,
                                                                          String label, Class<T> type, T defaultValue,
                                                                          boolean required, T... valueSet) {
-        return new Tuple<>(ParameterName.create(systemName, remoteName, label),
-                           new DataSourceParameter(systemName, type, label, defaultValue, required, valueSet));
+        return new Tuple<>(systemName, new DataSourceParameter(systemName, remoteName, type, label, defaultValue, required, valueSet));
     }
 }
