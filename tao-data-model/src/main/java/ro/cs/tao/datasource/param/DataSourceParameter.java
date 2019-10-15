@@ -23,7 +23,7 @@ import java.util.Objects;
  * @author Cosmin Cara
  */
 public class DataSourceParameter {
-    private final String systemName;
+    private final String name;
     private final String remoteName;
     private final String label;
     private final Class type;
@@ -32,20 +32,20 @@ public class DataSourceParameter {
     private Object[] valueSet;
     private int order;
 
-    public DataSourceParameter(String systemName, String remoteName, Class type, String label) {
-        this(systemName, remoteName, type, null, false);
+    public DataSourceParameter(String name, String remoteName, Class type, String label) {
+        this(name, remoteName, type, null, false);
     }
 
-    public DataSourceParameter(String systemName, String remoteName, Class type, String label, boolean required) {
-        this(systemName, remoteName, type, label, null, required);
+    public DataSourceParameter(String name, String remoteName, Class type, String label, boolean required) {
+        this(name, remoteName, type, label, null, required);
     }
 
-    public DataSourceParameter(String systemName, String remoteName, Class type, String label, Object defaultValue) {
-        this(systemName, remoteName, type, label, defaultValue, false);
+    public DataSourceParameter(String name, String remoteName, Class type, String label, Object defaultValue) {
+        this(name, remoteName, type, label, defaultValue, false);
     }
 
-    public DataSourceParameter(String systemName, String remoteName, Class type, String label, Object defaultValue, boolean required) {
-        this.systemName = systemName;
+    public DataSourceParameter(String name, String remoteName, Class type, String label, Object defaultValue, boolean required) {
+        this.name = name;
         this.remoteName = remoteName;
         this.label = label;
         this.type = type;
@@ -53,8 +53,8 @@ public class DataSourceParameter {
         this.required = required;
     }
 
-    public DataSourceParameter(String systemName, String remoteName, Class type, String label, Object defaultValue, boolean required, Object... valueSet) {
-        this.systemName = systemName;
+    public DataSourceParameter(String name, String remoteName, Class type, String label, Object defaultValue, boolean required, Object... valueSet) {
+        this.name = name;
         this.remoteName = remoteName;
         this.label = label;
         this.type = type;
@@ -63,7 +63,7 @@ public class DataSourceParameter {
         this.valueSet = valueSet;
     }
 
-    public String getSystemName() { return systemName; }
+    public String getName() { return name; }
 
     public String getRemoteName() { return remoteName; }
 
@@ -86,13 +86,13 @@ public class DataSourceParameter {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         DataSourceParameter that = (DataSourceParameter) o;
-        return Objects.equals(systemName, that.systemName) &&
+        return Objects.equals(name, that.name) &&
                 Objects.equals(type, that.type);
     }
 
     @Override
     public int hashCode() {
 
-        return Objects.hash(systemName, type);
+        return Objects.hash(name, type);
     }
 }
