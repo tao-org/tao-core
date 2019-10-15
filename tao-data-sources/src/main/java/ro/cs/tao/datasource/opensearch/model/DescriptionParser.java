@@ -123,16 +123,18 @@ public class DescriptionParser {
                     break;
                 case "Parameter":
                     if (this.currentOptions != null) {
-                        this.currentEndpoint.addParameter(this.currentParameter,
-                                                          new DataSourceParameter(this.currentParameter.getRemoteName(),
+                        this.currentEndpoint.addParameter(this.currentParameter.getSystemName(),
+                                                          new DataSourceParameter(this.currentParameter.getSystemName(),
+                                                                                  this.currentParameter.getRemoteName(),
                                                                                   String.class,
                                                                                   this.currentParameter.getRemoteName(),
                                                                                   null, false,
                                                                                   this.currentOptions.toArray(new Object[0])));
                         this.currentOptions = null;
                     } else {
-                        this.currentEndpoint.addParameter(this.currentParameter,
-                                                          new DataSourceParameter(this.currentParameter.getRemoteName(),
+                        this.currentEndpoint.addParameter(this.currentParameter.getSystemName(),
+                                                          new DataSourceParameter(this.currentParameter.getSystemName(),
+                                                                                  this.currentParameter.getRemoteName(),
                                                                                   this.currentParamClass, null, false));
                         this.currentParamClass = null;
                     }
