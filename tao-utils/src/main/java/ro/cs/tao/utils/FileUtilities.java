@@ -376,7 +376,6 @@ public class FileUtilities {
         try (ZipFile zipFile = new ZipFile(sourceFile.toFile())) {
             ZipEntry entry;
             long size = 0;
-            int progress;
             Enumeration<? extends ZipEntry> entries = zipFile.entries();
             while (entries.hasMoreElements()) {
                 entry = entries.nextElement();
