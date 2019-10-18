@@ -45,7 +45,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
-import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 @Configuration
@@ -55,7 +54,7 @@ import java.util.logging.Logger;
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 public class DatabaseConfiguration implements ApplicationListener<ContextClosedEvent> {
 
-    private static final Logger logger = LogManager.getLogManager().getLogger("");
+    private static final Logger logger = Logger.getLogger(DatabaseConfiguration.class.getName());
 
     /**
      * Constant for the database driver class property name (within .properties
@@ -191,13 +190,9 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
 
             dataSource.setDriverClass(environment.getRequiredProperty(PROPERTY_NAME_DATABASE_DRIVER));
 
-            // DB URL + user name + pass from persistence.properties
-            //dataSource.setJdbcUrl(environment.getRequiredProperty(PROPERTY_NAME_DATABASE_URL));
-            //dataSource.setUser(environment.getRequiredProperty(PROPERTY_NAME_DATABASE_USERNAME));
-            //dataSource.setPassword(environment.getRequiredProperty(PROPERTY_NAME_DATABASE_PASSWORD));
-
             // DB URL + user name + pass from tao.properties
             dataSource.setJdbcUrl(ConfigurationManager.getInstance().getValue(PROPERTY_NAME_DATABASE_URL));
+
             dataSource.setUser(ConfigurationManager.getInstance().getValue(PROPERTY_NAME_DATABASE_USERNAME));
             dataSource.setPassword(ConfigurationManager.getInstance().getValue(PROPERTY_NAME_DATABASE_PASSWORD));
 
@@ -218,7 +213,9 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
             if ((connection = dataSource.getConnection()) == null) {
                 logger.log(Level.SEVERE, "Database connection cannot be established!");
             } else {
-                logger.info(String.format("Using %s as database driver", dataSource.getDriverClass()));
+                String[] jdbcUrlTokens = dataSource.getJdbcUrl().split(":");
+                logger.fine(String.format("Using %s as database driver to connect to '%s'",
+                                          dataSource.getDriverClass(), jdbcUrlTokens[2]));
                 connection.close();
             }
         } catch (SQLException | IllegalStateException | PropertyVetoException e) {
