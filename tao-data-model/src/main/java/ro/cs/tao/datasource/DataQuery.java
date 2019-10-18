@@ -281,7 +281,7 @@ public abstract class DataQuery extends StringIdentifiable {
         Map<String, Map<String, DataSourceParameter>> supportedParameters = source.getSupportedParameters();
         this.dataSourceParameters = supportedParameters.get(sensorName);
         this.parameterNameMap = this.dataSourceParameters.values().stream()
-                .collect(Collectors.toMap(DataSourceParameter::getSystemName, DataSourceParameter::getRemoteName));
+                .collect(Collectors.toMap(DataSourceParameter::getName, DataSourceParameter::getRemoteName));
         this.mandatoryParams = this.dataSourceParameters.entrySet().stream()
                 .filter(e -> e.getValue().isRequired() && e.getValue().getDefaultValue() == null)
                 .map(Map.Entry::getKey)
