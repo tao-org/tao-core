@@ -78,7 +78,7 @@ public abstract class OpenSearchParameterProvider implements ParameterProvider {
             Map<String, DataSourceParameter> parameters = endpoint.getParameters();
             DataSourceParameter parameter = parameters.values().stream()
                     .filter(v -> v.getRemoteName().equals(sensorParameterName())).findFirst().orElse(null);
-            String sensorParamName = parameter != null ? parameter.getSystemName() : null;
+            String sensorParamName = parameter != null ? parameter.getName() : null;
             DataSourceParameter sensorParam = parameters.get(sensorParamName);
             this.parameters = new HashMap<>();
             Object[] values = sensorParam.getValueSet();
