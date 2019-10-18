@@ -103,17 +103,19 @@ public class ProgressNotifier implements ProgressListener {
         subTaskCounter = subTaskProgress;
         taskCounter = overallProgress;
         if (subTaskCounter < 1) {
-            sendMessage(new SubActivityProgressMessage(taskName, subTaskName, taskCounter, subTaskCounter));
+            sendTransientMessage(new SubActivityProgressMessage(taskName, subTaskName, taskCounter, subTaskCounter));
         } else {
             subActivityEnded(subTaskName);
         }
     }
 
     private void sendMessage(Message message) {
+        message.setTimestamp(System.currentTimeMillis());
         Messaging.send(this.principal, this.topic, message, true);
     }
 
     private void sendTransientMessage(Message message) {
+        message.setTimestamp(System.currentTimeMillis());
         Messaging.send(this.principal, this.topic, message, false);
     }
 }
