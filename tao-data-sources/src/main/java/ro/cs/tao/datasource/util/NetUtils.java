@@ -15,7 +15,11 @@
  */
 package ro.cs.tao.datasource.util;
 
-import org.apache.http.*;
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpHost;
+import org.apache.http.NameValuePair;
+import org.apache.http.StatusLine;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -36,7 +40,14 @@ import org.apache.http.util.EntityUtils;
 import ro.cs.tao.utils.CompositeKey;
 
 import java.io.IOException;
-import java.net.*;
+import java.net.Authenticator;
+import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
+import java.net.PasswordAuthentication;
+import java.net.Proxy;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,12 +59,12 @@ import java.util.Map;
  */
 public class NetUtils {
 
+    private static final Map<CompositeKey, CloseableHttpClient> httpClients = new HashMap<>();
     private static String authToken;
     private static Proxy javaNetProxy;
     private static HttpHost apacheHttpProxy;
     private static CredentialsProvider proxyCredentials;
     private static int timeout = 30000;
-    private static final Map<CompositeKey, CloseableHttpClient> httpClients = new HashMap<>();
 
     public static String getAuthToken() {
         return authToken;
@@ -64,7 +75,7 @@ public class NetUtils {
     }
 
     public static void setProxy(String type, final String host, final int port, final String user, final String pwd) {
-        if (type != null && host != null && !"".equals(type) && !"".equals(host) ) {
+        if (type != null && host != null && !"".equals(type) && !"".equals(host)) {
             Proxy.Type proxyType = Enum.valueOf(Proxy.Type.class, type.toUpperCase());
             javaNetProxy = new Proxy(proxyType, new InetSocketAddress(host, port));
             Authenticator.setDefault(new Authenticator() {
@@ -106,6 +117,10 @@ public class NetUtils {
     }
 
     public static HttpURLConnection openConnection(String url, String authToken) {
+        return openConnection(HttpMethod.GET, url, authToken, null);
+    }
+
+    public static HttpURLConnection openConnection(HttpMethod method, String url, String authToken, List<NameValuePair> requestProperties) {
         HttpURLConnection connection = null;
         try {
             URL urlObj = new URL(url);
@@ -116,8 +131,14 @@ public class NetUtils {
                 connection = (HttpURLConnection) urlObj.openConnection(javaNetProxy);
                 Logger.getRootLogger().debug("Proxy connection to %s opened", url);
             }
-            if (authToken != null) {
+            connection.setRequestMethod(method.name());
+            if (authToken != null && !authToken.isEmpty()) {
                 connection.setRequestProperty("Authorization", authToken);
+            }
+            if (requestProperties != null && !requestProperties.isEmpty()) {
+                for (NameValuePair requestProperty : requestProperties) {
+                    connection.setRequestProperty(requestProperty.getName(), requestProperty.getValue());
+                }
             }
             connection.setConnectTimeout(timeout);
             connection.setReadTimeout(timeout);
@@ -126,8 +147,8 @@ public class NetUtils {
         }
         if (connection != null) {
             StringBuilder builder = new StringBuilder();
-            Map<String, List<String>> requestProperties = connection.getRequestProperties();
-            for (Map.Entry<String, List<String>> entry : requestProperties.entrySet()) {
+            Map<String, List<String>> currentRequestProperties = connection.getRequestProperties();
+            for (Map.Entry<String, List<String>> entry : currentRequestProperties.entrySet()) {
                 builder.append(entry.getKey()).append("=");
                 for (String value : entry.getValue()) {
                     builder.append(value).append(",");
