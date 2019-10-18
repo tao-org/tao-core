@@ -373,18 +373,17 @@ public class FileUtilities {
         if (!Files.exists(destination)) {
             Files.createDirectory(destination);
         }
-        byte[] buffer;
         try (ZipFile zipFile = new ZipFile(sourceFile.toFile())) {
             ZipEntry entry;
             long size = 0;
-            long totalRead = 0;
-            int progress;
             Enumeration<? extends ZipEntry> entries = zipFile.entries();
             while (entries.hasMoreElements()) {
                 entry = entries.nextElement();
                 size += (entry.getSize() > 0 ? entry.getSize() : 0);
             }
+            logger.fine(String.format("Estimated size for %s: %.2fMB", sourceFile, (double) (size / 1048576)));
             entries = zipFile.entries();
+            final byte[] buffer = new byte[262144];
             while (entries.hasMoreElements()) {
                 entry = entries.nextElement();
                 if (entry.isDirectory() && !keepFolderStructure)
@@ -395,18 +394,12 @@ public class FileUtilities {
                     if (entry.isDirectory()) {
                         Files.createDirectories(filePath);
                     } else {
+                        int read;
                         try (InputStream inputStream = zipFile.getInputStream(entry)) {
                             try (BufferedOutputStream bos = new BufferedOutputStream(
                                     new FileOutputStream(keepFolderStructure ? filePath.toFile() : strippedFilePath.toFile()))) {
-                                buffer = new byte[4096];
-                                int read;
                                 while ((read = inputStream.read(buffer)) > 0) {
                                     bos.write(buffer, 0, read);
-                                    totalRead += read;
-                                    progress = (int) (totalRead / size * 100);
-                                    if (progress % 10 == 0) {
-                                        logger.finest(String.format("Unzip %s: %s%%", sourceFile, progress));
-                                    }
                                 }
                             }
                         }

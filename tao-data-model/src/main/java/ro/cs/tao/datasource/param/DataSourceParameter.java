@@ -24,6 +24,7 @@ import java.util.Objects;
  */
 public class DataSourceParameter {
     private final String name;
+    private final String remoteName;
     private final String label;
     private final Class type;
     private final Object defaultValue;
@@ -31,28 +32,30 @@ public class DataSourceParameter {
     private Object[] valueSet;
     private int order;
 
-    public DataSourceParameter(String name, Class type, String label) {
-        this(name, type, null, false);
+    public DataSourceParameter(String name, String remoteName, Class type, String label) {
+        this(name, remoteName, type, null, false);
     }
 
-    public DataSourceParameter(String name, Class type, String label, boolean required) {
-        this(name, type, label, null, required);
+    public DataSourceParameter(String name, String remoteName, Class type, String label, boolean required) {
+        this(name, remoteName, type, label, null, required);
     }
 
-    public DataSourceParameter(String name, Class type, String label, Object defaultValue) {
-        this(name, type, label, defaultValue, false);
+    public DataSourceParameter(String name, String remoteName, Class type, String label, Object defaultValue) {
+        this(name, remoteName, type, label, defaultValue, false);
     }
 
-    public DataSourceParameter(String name, Class type, String label, Object defaultValue, boolean required) {
+    public DataSourceParameter(String name, String remoteName, Class type, String label, Object defaultValue, boolean required) {
         this.name = name;
+        this.remoteName = remoteName;
         this.label = label;
         this.type = type;
         this.defaultValue = defaultValue;
         this.required = required;
     }
 
-    public DataSourceParameter(String name, Class type, String label, Object defaultValue, boolean required, Object... valueSet) {
+    public DataSourceParameter(String name, String remoteName, Class type, String label, Object defaultValue, boolean required, Object... valueSet) {
         this.name = name;
+        this.remoteName = remoteName;
         this.label = label;
         this.type = type;
         this.defaultValue = defaultValue;
@@ -61,6 +64,8 @@ public class DataSourceParameter {
     }
 
     public String getName() { return name; }
+
+    public String getRemoteName() { return remoteName; }
 
     public String getLabel() { return label; }
 

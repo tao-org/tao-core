@@ -792,6 +792,7 @@
                 <column name="data" nullable="false" column-definition="character varying NOT NULL"/>
             </basic>
             <transient name="message"/>
+            <transient name="payload"/>
             <transient name="persistent"/>
         </attributes>
     </entity>

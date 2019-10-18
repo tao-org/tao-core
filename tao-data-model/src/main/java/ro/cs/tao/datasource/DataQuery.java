@@ -17,7 +17,6 @@ package ro.cs.tao.datasource;
 
 import ro.cs.tao.component.StringIdentifiable;
 import ro.cs.tao.datasource.param.DataSourceParameter;
-import ro.cs.tao.datasource.param.ParameterName;
 import ro.cs.tao.datasource.param.QueryParameter;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.enums.Visibility;
@@ -270,7 +269,7 @@ public abstract class DataQuery extends StringIdentifiable {
         }
     }
 
-    private void initialize(DataSource source, String sensorName) {
+    private void initialize(DataSource<?> source, String sensorName) {
         this.source = source;
         this.sensorName = sensorName;
         this.parameters = new LinkedHashMap<>();
@@ -279,12 +278,10 @@ public abstract class DataQuery extends StringIdentifiable {
         this.pageSize = -1;
         this.pageNumber = -1;
         this.limit = -1;
-        Map<String, Map<ParameterName, DataSourceParameter>> supportedParameters = source.getSupportedParameters();
-        Map<ParameterName, DataSourceParameter> parameterMap = supportedParameters.get(sensorName);
-        this.parameterNameMap = parameterMap.keySet().stream()
-                .collect(Collectors.toMap(ParameterName::getSystemName, ParameterName::getRemoteName));
-        this.dataSourceParameters = parameterMap.entrySet().stream()
-                .collect(Collectors.toMap(e -> e.getKey().getSystemName(), Map.Entry::getValue));
+        Map<String, Map<String, DataSourceParameter>> supportedParameters = source.getSupportedParameters();
+        this.dataSourceParameters = supportedParameters.get(sensorName);
+        this.parameterNameMap = this.dataSourceParameters.values().stream()
+                .collect(Collectors.toMap(DataSourceParameter::getName, DataSourceParameter::getRemoteName));
         this.mandatoryParams = this.dataSourceParameters.entrySet().stream()
                 .filter(e -> e.getValue().isRequired() && e.getValue().getDefaultValue() == null)
                 .map(Map.Entry::getKey)
