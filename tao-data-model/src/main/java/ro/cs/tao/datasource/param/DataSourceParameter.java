@@ -15,6 +15,9 @@
  */
 package ro.cs.tao.datasource.param;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Objects;
 
 /**
@@ -61,6 +64,25 @@ public class DataSourceParameter {
         this.defaultValue = defaultValue;
         this.required = required;
         this.valueSet = valueSet;
+    }
+
+    @JsonCreator
+    public DataSourceParameter(@JsonProperty("name") String name,
+                               @JsonProperty("remoteName") String remoteName,
+                               @JsonProperty("label") String label,
+                               @JsonProperty("type") Class type,
+                               @JsonProperty("defaultValue") Object defaultValue,
+                               @JsonProperty("required") boolean required,
+                               @JsonProperty("valueSet") Object[] valueSet,
+                               @JsonProperty("order") int order) {
+        this.name = name;
+        this.remoteName = remoteName;
+        this.label = label;
+        this.type = type;
+        this.defaultValue = defaultValue;
+        this.required = required;
+        this.valueSet = valueSet;
+        this.order = order;
     }
 
     public String getName() { return name; }
