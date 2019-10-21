@@ -2,6 +2,7 @@ package ro.cs.tao.messaging.progress;
 
 import ro.cs.tao.messaging.Message;
 
+import java.beans.Transient;
 import java.util.Objects;
 
 public class SubActivityStartMessage extends Message {
@@ -15,8 +16,10 @@ public class SubActivityStartMessage extends Message {
         setPayload("Started " + this.taskName + ":" + this.subTaskName);
     }
 
+    @Transient
     public String getTaskName() { return taskName; }
 
+    @Transient
     public String getSubTaskName() { return subTaskName; }
 
     @Override

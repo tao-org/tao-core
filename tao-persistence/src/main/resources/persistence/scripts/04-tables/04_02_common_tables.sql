@@ -37,7 +37,8 @@ CREATE TABLE common.notification
     topic character varying NOT NULL,
 	username character varying NOT NULL,
 	read boolean NULL,
-	data character varying NOT NULL
+	data character varying NOT NULL,
+	discriminator integer NOT NULL
 );
 ALTER TABLE common.notification ADD CONSTRAINT PK_notification PRIMARY KEY (timestamp, username);
 CREATE INDEX IX_notification ON common.notification

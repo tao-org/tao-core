@@ -775,6 +775,8 @@
 
     <entity class="ro.cs.tao.messaging.Message" access="PROPERTY">
         <table name="common.notification"/>
+        <inheritance strategy="SINGLE_TABLE"/>
+        <discriminator-column name="discriminator" column-definition="integer NOT NULL" discriminator-type="INTEGER"/>
         <attributes>
             <id name="timestamp">
                 <column name="timestamp" nullable="false" column-definition="bigint NOT NULL"/>
@@ -794,6 +796,20 @@
             <transient name="message"/>
             <transient name="payload"/>
             <transient name="persistent"/>
+        </attributes>
+    </entity>
+
+    <entity class="ro.cs.tao.messaging.progress.ActivityStartMessage" access="PROPERTY">
+        <discriminator-value>2</discriminator-value>
+        <attributes>
+            <transient name="taskName"/>
+        </attributes>
+    </entity>
+
+    <entity class="ro.cs.tao.messaging.progress.ActivityEndMessage" access="PROPERTY">
+        <discriminator-value>3</discriminator-value>
+        <attributes>
+            <transient name="taskName"/>
         </attributes>
     </entity>
 

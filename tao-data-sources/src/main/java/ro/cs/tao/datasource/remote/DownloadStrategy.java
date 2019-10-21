@@ -269,6 +269,10 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
 
     protected abstract String getMetadataUrl(EOProduct descriptor);
 
+    protected String getAuthenticationToken() {
+        return NetUtils.getAuthToken();
+    }
+
     protected boolean checkTileFilter(EOProduct product) {
         return this.filteredTiles == null || this.tileIdPattern.matcher(product.getName()).matches();
     }

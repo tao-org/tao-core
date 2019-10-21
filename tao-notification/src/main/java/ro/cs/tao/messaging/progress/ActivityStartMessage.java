@@ -2,17 +2,23 @@ package ro.cs.tao.messaging.progress;
 
 import ro.cs.tao.messaging.Message;
 
+import java.beans.Transient;
 import java.util.Objects;
 
 public class ActivityStartMessage extends Message {
-    private final String taskName;
+    private String taskName;
+
+    public ActivityStartMessage() {
+        super();
+    }
 
     public ActivityStartMessage(String taskName) {
-        super();
+        this();
         this.taskName = taskName;
         setPayload("Started " + this.taskName);
     }
 
+    @Transient
     public String getTaskName() { return taskName; }
 
     @Override

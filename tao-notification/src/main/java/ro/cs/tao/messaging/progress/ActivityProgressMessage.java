@@ -2,6 +2,7 @@ package ro.cs.tao.messaging.progress;
 
 import ro.cs.tao.messaging.Message;
 
+import java.beans.Transient;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -16,10 +17,13 @@ public class ActivityProgressMessage extends Message {
         setPayload(this.taskName + ":" + String.format(Locale.US, "%.4f", this.progress));
     }
 
+    @Transient
     public String getTaskName() { return taskName; }
 
+    @Transient
     public double getProgress() { return progress; }
 
+    @Transient
     public String getProgressPercent() { return String.format(Locale.US, "%.2f", this.progress * 100.0); }
 
     @Override
