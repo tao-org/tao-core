@@ -15,27 +15,44 @@
  */
 package ro.cs.tao.datasource.param;
 
+import com.google.common.collect.Maps;
+
 import java.io.IOException;
 import java.net.URL;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import static com.google.common.collect.Iterables.toArray;
 import static ro.cs.tao.serialization.ObjectMapperProvider.JSON_DATA_SOURCE_PARAMETERS_READER;
-import static ro.cs.tao.serialization.ObjectMapperProvider.JSON_OBJECT_MAPPER;
 
 /**
- * Created by vnetoiu on 10/17/2019.
+ * @author Valentin Netoiu on 10/17/2019.
  */
 public abstract class AbstractParameterProvider implements ParameterProvider {
 
-    protected Logger logger = Logger.getLogger(getClass().getName());
-    protected final URL parametersConfigUrl;
-    protected final URL sensorsConfigUrl;
+    protected final String[] supportedSensors;
+    protected final Map<String, Map<String, DataSourceParameter>> supportedParameters;
 
-    protected AbstractParameterProvider(URL parametersConfigUrl, URL sensorsConfigUrl) {
-        this.parametersConfigUrl = parametersConfigUrl;
-        this.sensorsConfigUrl = sensorsConfigUrl;
+    protected Logger logger = Logger.getLogger(getClass().getName());
+
+    protected AbstractParameterProvider() {
+        Map<String, Map<String, DataSourceParameter>> readParameters = null;
+        URL parametersConfigUrl = getClass().getResource("parameters.json");
+        if(parametersConfigUrl != null){
+            try {
+                readParameters = JSON_DATA_SOURCE_PARAMETERS_READER.readValue(parametersConfigUrl);
+            } catch (IOException e) {
+                logger.severe(String.format("Cannot load data source supported parameters from %s. Cause: %s", parametersConfigUrl, e.getMessage()));
+            }
+        }
+
+        if(readParameters != null){
+            supportedParameters = readParameters;
+            supportedSensors = toArray(readParameters.keySet(), String.class);
+        } else {
+            supportedParameters = Maps.newHashMap();
+            supportedSensors = new String[0];
+        }
     }
 
     /**
@@ -43,16 +60,7 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
      */
     @Override
     public Map<String, Map<String, DataSourceParameter>> getSupportedParameters() {
-       if(parametersConfigUrl != null){
-           try {
-               Map<String, Map<String, DataSourceParameter>> supportedParameters = JSON_DATA_SOURCE_PARAMETERS_READER.readValue(parametersConfigUrl);
-               return supportedParameters;
-           } catch (IOException e) {
-               logger.severe(String.format("Cannot load data source supported parameters from %s. Cause: %s", parametersConfigUrl, e.getMessage()));
-           }
-       }
-
-        return new HashMap<>();
+       return supportedParameters;
     }
 
 
@@ -61,14 +69,6 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
      */
     @Override
     public String[] getSupportedSensors() {
-        if(sensorsConfigUrl != null){
-            try {
-                String[] supportedSensors = JSON_OBJECT_MAPPER.readerFor(String[].class).readValue(sensorsConfigUrl);
-                return supportedSensors;
-            } catch (IOException e) {
-                logger.severe(String.format("Cannot load data source supported sensors from %s. Cause: %s", sensorsConfigUrl, e.getMessage()));
-            }
-        }
-        return new String[0];
+        return supportedSensors;
     }
 }
