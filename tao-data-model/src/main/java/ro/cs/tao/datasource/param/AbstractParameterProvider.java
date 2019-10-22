@@ -16,14 +16,14 @@
 package ro.cs.tao.datasource.param;
 
 import com.google.common.collect.Maps;
-
 import java.io.IOException;
 import java.net.URL;
 import java.util.Map;
 import java.util.logging.Logger;
 
 import static com.google.common.collect.Iterables.toArray;
-import static ro.cs.tao.serialization.ObjectMapperProvider.JSON_DATA_SOURCE_PARAMETERS_READER;
+import static ro.cs.tao.serialization.ObjectMapperProvider.JSON_DATA_SOURCE_PARAMETERS_TYPE_REFERENCE;
+import static ro.cs.tao.serialization.ObjectMapperProvider.JSON_OBJECT_MAPPER;
 
 /**
  * @author Valentin Netoiu on 10/17/2019.
@@ -40,7 +40,7 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
         URL parametersConfigUrl = getClass().getResource("parameters.json");
         if(parametersConfigUrl != null){
             try {
-                readParameters = JSON_DATA_SOURCE_PARAMETERS_READER.readValue(parametersConfigUrl);
+                readParameters = JSON_OBJECT_MAPPER.readValue(parametersConfigUrl, JSON_DATA_SOURCE_PARAMETERS_TYPE_REFERENCE);
             } catch (IOException e) {
                 logger.severe(String.format("Cannot load data source supported parameters from %s. Cause: %s", parametersConfigUrl, e.getMessage()));
             }
