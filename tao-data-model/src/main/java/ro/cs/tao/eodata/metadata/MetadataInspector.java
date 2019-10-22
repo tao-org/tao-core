@@ -18,6 +18,9 @@ package ro.cs.tao.eodata.metadata;
 
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.enums.*;
+import ro.cs.tao.serialization.MediaType;
+import ro.cs.tao.serialization.SerializationException;
+import ro.cs.tao.serialization.SerializerFactory;
 import ro.cs.tao.utils.FileUtilities;
 
 import java.io.IOException;
@@ -134,6 +137,7 @@ public interface MetadataInspector {
         }
         public void setAdditionalAttributes(Map<String, String> additionalAttributes) { this.additionalAttributes = additionalAttributes; }
         public void addAttribute(String name, String value) { getAdditionalAttributes().put(name, value); }
+        public String getAttribute(String name) { return getAdditionalAttributes().get(name); }
 
         public int[] getHistogram() { return histogram; }
         public void setHistogram(int[] histogram) { this.histogram = histogram; }
@@ -181,22 +185,11 @@ public interface MetadataInspector {
 
         @Override
         public String toString() {
-            return "Metadata{" +
-                    "productId='" + productId + '\'' +
-                    ", footprint='" + footprint + '\'' +
-                    ", crs='" + crs + '\'' +
-                    ", entryPoint='" + entryPoint + '\'' +
-                    ", pixelType=" + pixelType +
-                    ", productType='" + productType + '\'' +
-                    ", sensorType=" + sensorType +
-                    ", aquisitionDate=" + aquisitionDate +
-                    ", size=" + size +
-                    ", width=" + width +
-                    ", height=" + height +
-                    ", orbitDirection=" + orbitDirection +
-                    ", controlSums=" + controlSums +
-                    ", statistics=" + statistics +
-                    '}';
+            try {
+                return SerializerFactory.create(Metadata.class, MediaType.JSON).serialize(this);
+            } catch (SerializationException e) {
+                return this.getClass().getName() + "@" + hashCode() + ": inconsistent object";
+            }
         }
     }
 }
