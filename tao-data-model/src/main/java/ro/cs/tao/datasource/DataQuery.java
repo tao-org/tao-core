@@ -41,7 +41,8 @@ import java.util.stream.Collectors;
  */
 @XmlTransient
 public abstract class DataQuery extends StringIdentifiable {
-    protected static final int DEFAULT_LIMIT = 100;
+    protected static final int DEFAULT_LIMIT = Integer.MAX_VALUE;
+    protected static final int DEFAULT_PAGE_SIZE = 50;
     protected static final String QUERY_RESULT_MESSAGE = "Query %s [%s-%s] (page #%d) returned %d results";
     /* Correspondence between system parameter names and remote parameter names */
     private Map<String, String> parameterNameMap;
