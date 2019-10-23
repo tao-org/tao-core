@@ -37,7 +37,7 @@ import static ro.cs.tao.serialization.ObjectMapperProvider.JSON_OBJECT_MAPPER;
  */
 public abstract class AbstractParameterProvider implements ParameterProvider {
 
-    private static final String PARAMETER_DESCRIPTOR_RESOURCE = "ro/cs/tao/datasource/parameters.json";
+    private static final String PARAMETER_DESCRIPTOR_RESOURCE = "ro/cs/tao/datasource/parameters/parameters.json";
     private static final List<String> parameterResources;
 
     protected final String[] supportedSensors;
