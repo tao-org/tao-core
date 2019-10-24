@@ -220,7 +220,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
                     }
                     break;
                 case SYMLINK:
-                    if (this.filteredTiles != null || product.getAttributeValue("tileid") != null) {
+                    if (this.filteredTiles != null || product.getAttributeValue("tiles") != null) {
                         file = link(product);
                     } else {
                         file = link(product, Paths.get(localArchiveRoot), destPath);
@@ -356,7 +356,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     protected boolean isCancelled() { return this.cancelled; }
 
     protected Path link(EOProduct product) throws IOException {
-        return link(product, Paths.get(localArchiveRoot), Paths.get(destination));
+        return link(product, localArchiveRoot != null ? Paths.get(localArchiveRoot) : null, Paths.get(destination));
     }
 
     protected Path link(EOProduct product, Path sourceRoot, Path targetRoot) throws IOException {
