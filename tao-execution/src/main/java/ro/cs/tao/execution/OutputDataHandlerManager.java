@@ -60,6 +60,25 @@ public class OutputDataHandlerManager {
             }
             this.handlers.get(clazz).add(handler);
         }
+        for (Class<?> key : this.handlers.keySet()) {
+            this.handlers.get(key).sort(Comparator.comparingInt(OutputDataHandler::getPriority));
+        }
+
+    }
+
+    public <T> T applyHandlers(T item) throws DataHandlingException {
+        if (item == null) {
+            throw new DataHandlingException("Unhandled null value");
+        }
+        List<OutputDataHandler> handlers = this.handlers.get(item.getClass());
+        if (handlers != null) {
+            for (OutputDataHandler handler : handlers) {
+                item = (T) handler.handle(item);
+            }
+        } else {
+            logger.warning(String.format("No output handler defined for type %s", item.getClass()));
+        }
+        return item;
     }
 
     /**

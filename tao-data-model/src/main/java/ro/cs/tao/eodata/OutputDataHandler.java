@@ -16,6 +16,7 @@
 
 package ro.cs.tao.eodata;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -45,4 +46,16 @@ public interface OutputDataHandler<T> {
      *
      */
     List<T> handle(List<T> list) throws DataHandlingException;
+
+    /**
+     * Performs the operation for which this handler is intended on the given item.
+     *
+     * @param item  The item to be handled
+     * @return  The updated item.
+     *
+     */
+    default T handle(T item) throws DataHandlingException {
+        List<T> list = handle(new ArrayList<T>() {{ add(item); }});
+        return list != null && list.size() == 1 ? list.get(0) : null;
+    }
 }
