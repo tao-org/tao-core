@@ -77,6 +77,7 @@ public class OutputDataHandlerManager {
             }
         } else {
             logger.warning(String.format("No output handler defined for type %s", item.getClass()));
+            return null;
         }
         return item;
     }
