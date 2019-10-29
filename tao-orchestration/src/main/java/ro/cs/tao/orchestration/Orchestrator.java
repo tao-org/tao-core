@@ -35,7 +35,7 @@ import ro.cs.tao.execution.model.*;
 import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.Notifiable;
-import ro.cs.tao.messaging.Topics;
+import ro.cs.tao.messaging.Topic;
 import ro.cs.tao.optimization.WorkflowOptimizer;
 import ro.cs.tao.orchestration.commands.JobCommand;
 import ro.cs.tao.orchestration.commands.TaskCommand;
@@ -46,7 +46,6 @@ import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.quota.QuotaException;
 import ro.cs.tao.quota.UserQuotaManager;
 import ro.cs.tao.security.SessionContext;
-import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.serialization.StringListAdapter;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
@@ -62,7 +61,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.UserPrincipal;
 import java.security.Principal;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -114,7 +112,7 @@ public class Orchestrator extends Notifiable {
         this.runningTasks = Collections.synchronizedSet(new HashSet<>());
         this.listAdapter = new StringListAdapter();
         this.persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
-        subscribe(Topics.EXECUTION);
+        subscribe(Topic.EXECUTION.value());
     }
 
     public void start() {
@@ -359,7 +357,7 @@ public class Orchestrator extends Notifiable {
                                                                    " failed after %ss"),
                                                    job.getId(), workflow.getName(), time != null ? time.getSeconds() : "<unknown>");
                         logger.info(msg);
-                        Messaging.send(currentContext.getPrincipal(), Topics.EXECUTION, this, msg);
+                        Messaging.send(currentContext.getPrincipal(), Topic.EXECUTION.value(), this, msg);
                         shutDownExecutor(currentContext);
                     } else {
                         logger.fine("Job has still tasks to complete");
@@ -385,7 +383,7 @@ public class Orchestrator extends Notifiable {
                                                job.getId(), workflow.getName(), time != null ? time.getSeconds() : "<unknown>");
                     logger.warning(msg);
                     persistenceManager.updateExecutionJob(job);
-                    Messaging.send(currentContext.getPrincipal(), Topics.EXECUTION, this, msg);
+                    Messaging.send(currentContext.getPrincipal(), Topic.EXECUTION.value(), this, msg);
                     shutDownExecutor(currentContext);
                 }
             }
