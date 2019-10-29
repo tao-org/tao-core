@@ -15,15 +15,21 @@
  */
 package ro.cs.tao.datasource;
 
+import ro.cs.tao.messaging.Topic;
+
 /**
  * Holder for data source - specific topics
  *
  * @author Cosmin Cara
  */
-public class DataSourceTopics {
+public class DataSourceTopic extends Topic {
 
     /**
      * Topic name for reporting product download progress.
      */
-    public static final String PRODUCT_PROGRESS = "product_progress";
+    public static final Topic PRODUCT_PROGRESS = Topic.create("progress", "product");
+
+    public DataSourceTopic(String category, String tag) {
+        super(category, tag);
+    }
 }

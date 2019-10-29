@@ -21,7 +21,7 @@ import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.Messaging;
-import ro.cs.tao.messaging.Topics;
+import ro.cs.tao.messaging.Topic;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.security.SessionStore;
@@ -169,14 +169,14 @@ public class TopologyManager implements ITopologyManager {
             });
         }
         Message message = new Message();
-        message.setTopic(Topics.TOPOLOGY);
+        message.setTopic(Topic.TOPOLOGY.value());
         message.setUser(SystemPrincipal.instance().getName());
         message.setPersistent(false);
         message.addItem("node", info.getId());
         message.addItem("operation", "added");
         message.addItem("user", info.getUserName());
         message.addItem("password", info.getUserPass());
-        Messaging.send(SystemPrincipal.instance(), Topics.TOPOLOGY, message);
+        Messaging.send(SystemPrincipal.instance(), Topic.TOPOLOGY.value(), message);
     }
 
     @Override
@@ -199,12 +199,12 @@ public class TopologyManager implements ITopologyManager {
             });
         }
         Message message = new Message();
-        message.setTopic(Topics.TOPOLOGY);
+        message.setTopic(Topic.TOPOLOGY.value());
         message.setUser(SystemPrincipal.instance().getName());
         message.setPersistent(false);
         message.addItem("node", hostName);
         message.addItem("operation", "removed");
-        Messaging.send(SystemPrincipal.instance(), Topics.TOPOLOGY, message);
+        Messaging.send(SystemPrincipal.instance(), Topic.TOPOLOGY.value(), message);
     }
 
     @Override
@@ -281,14 +281,14 @@ public class TopologyManager implements ITopologyManager {
                     logger.fine("Executing " + String.join(" ", commands));
                     waitFor(executor, 10, TimeUnit.MINUTES);
                     if ((retCode = executor.getReturnCode()) == 0) {
-                        Messaging.send(principal, Topics.INFORMATION, this,
+                        Messaging.send(principal, Topic.INFORMATION.value(), this,
                                        String.format("Docker image '%s' successfully registered", correctedName));
                         return containerId;
                     } else {
                         logger.severe("Command output: " + sharedAccumulator.getOutput());
                     }
                 } else {
-                    Messaging.send(principal, Topics.INFORMATION, this,
+                    Messaging.send(principal, Topic.INFORMATION.value(), this,
                                    String.format("Docker image '%s' successfully registered", correctedName));
                     return containerId;
                 }
@@ -302,7 +302,7 @@ public class TopologyManager implements ITopologyManager {
                                        correctedName, retCode, sharedAccumulator.getOutput());
         sharedAccumulator.reset();
         logger.severe(message);
-        Messaging.send(principal, Topics.ERROR, this, message);
+        Messaging.send(principal, Topic.ERROR.value(), this, message);
         return containerId;
     }
 
@@ -478,23 +478,23 @@ public class TopologyManager implements ITopologyManager {
     public void onCompleted(NodeDescription node, ToolInstallStatus status) {
         switch (status.getStatus()) {
             case INSTALLED:
-                Messaging.send(SystemPrincipal.instance(), Topics.INFORMATION,
+                Messaging.send(SystemPrincipal.instance(), Topic.INFORMATION.value(),
                                this,
                                String.format("%s installation on %s completed",
                                               status.getToolName(),
                                               node.getId()));
                 break;
             case UNINSTALLED:
-                Messaging.send(SystemPrincipal.instance(), Topics.INFORMATION,
-                                       this,
-                                       String.format("%s uninstallation on %s completed",
+                Messaging.send(SystemPrincipal.instance(), Topic.INFORMATION.value(),
+                               this,
+                               String.format("%s uninstallation on %s completed",
                                               status.getToolName(),
                                               node.getId()));
                 break;
             case ERROR:
-                Messaging.send(SystemPrincipal.instance(), Topics.WARNING,
-                                       this,
-                                       String.format("%s installation on %s failed [reason: %s]",
+                Messaging.send(SystemPrincipal.instance(), Topic.WARNING.value(),
+                               this,
+                               String.format("%s installation on %s failed [reason: %s]",
                                               status.getToolName(),
                                               node.getId(),
                                               status.getReason()));
