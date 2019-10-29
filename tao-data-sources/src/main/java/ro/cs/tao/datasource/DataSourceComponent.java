@@ -409,7 +409,7 @@ public class DataSourceComponent extends TaoComponent {
                     }
                     currentFetcher.setProgressListener(new ProgressNotifier(SessionStore.currentContext().getPrincipal(),
                                                                             this,
-                                                                            DataSourceTopics.PRODUCT_PROGRESS));
+                                                                            DataSourceTopic.PRODUCT_PROGRESS.value()));
                     Path productPath = currentFetcher.fetch(product);
                     if (productPath != null) {
                         product.setLocation(productPath.toUri().toString());

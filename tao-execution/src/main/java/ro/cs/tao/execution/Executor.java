@@ -22,7 +22,7 @@ import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.messaging.Messaging;
-import ro.cs.tao.messaging.Topics;
+import ro.cs.tao.messaging.Topic;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.security.SessionContext;
@@ -208,7 +208,7 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
             if (context == null) {
                 context = SystemSessionContext.instance();
             }
-            Messaging.send(context.getPrincipal(), Topics.EXECUTION, task.getId(), status.name());
+            Messaging.send(context.getPrincipal(), Topic.EXECUTION.value(), task.getId(), status.name());
         }
     }
 
