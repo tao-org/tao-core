@@ -21,8 +21,8 @@ package ro.cs.tao.messaging;
  * @author Cosmin Cara
  */
 public class SubTaskProgress {
-    private String key;
-    private double value;
+    private final String key;
+    private final double value;
 
     public SubTaskProgress(String key, double value) {
         this.key = key;
@@ -33,15 +33,7 @@ public class SubTaskProgress {
         return key;
     }
 
-    public void setKey(String key) {
-        this.key = key;
-    }
-
     public double getValue() {
         return value;
-    }
-
-    public void setValue(double value) {
-        this.value = value;
     }
 }

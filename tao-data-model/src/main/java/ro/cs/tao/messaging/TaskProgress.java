@@ -15,60 +15,74 @@
  */
 package ro.cs.tao.messaging;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+
 /**
  * Encapsulates the execution progress of a task, and possible of its currently-executing sub-task.
  *
  * @author Cosmin Cara
  */
 public class TaskProgress {
-    private String name;
-    private double progress;
-    private SubTaskProgress subTaskProgress;
+    protected final String name;
+    protected final String category;
+    protected double progress;
+    protected SubTaskProgress subTaskProgress;
+    protected Map<String, String> info;
 
-    public TaskProgress(String name) {
+    public TaskProgress(String name, String category) {
         this.name = name;
+        this.category = category;
     }
 
-    public TaskProgress(String name, double progress, String subTask, double subProgress) {
-        this(name, progress, new SubTaskProgress(subTask, subProgress));
+    public TaskProgress(String name, String category, double progress, String subTask, double subProgress) {
+        this(name, category, progress, new SubTaskProgress(subTask, subProgress));
     }
 
-    public TaskProgress(String name, double progress) {
-        this(name, progress, null);
+    public TaskProgress(String name, String category, double progress) {
+        this(name, category, progress, null);
     }
 
-    private TaskProgress(String name, double progress, SubTaskProgress subTaskProgress) {
-        this.name = name;
+    private TaskProgress(String name, String category, double progress, SubTaskProgress subTaskProgress) {
+        this(name, category);
         this.progress = progress;
         this.subTaskProgress = subTaskProgress;
     }
 
-    public String getName() {
-        return name;
+    public String getName() { return name; }
+
+    public String getCategory() { return category; }
+
+    public double getProgress() { return progress; }
+
+    public SubTaskProgress getSubTaskProgress() { return subTaskProgress; }
+
+    public void addInfo(String key, String value) {
+        if (this.info == null) {
+            this.info = new HashMap<>();
+        }
+        this.info.put(key, value);
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public Map<String, String> getInfo() { return info; }
+    public void setInfo(Map<String, String> data) { this.info = data; }
+
+    public String getInfo(String key) {
+        return info != null ? info.get(key) : null;
     }
 
-    public double getProgress() {
-        return progress;
-    }
-
-    public void setProgress(double progress) {
-        this.progress = progress;
-    }
-
-    public SubTaskProgress getSubTaskProgress() {
-        return subTaskProgress;
-    }
-
-    public void setSubTaskProgress(SubTaskProgress subTaskProgress) {
-        this.subTaskProgress = subTaskProgress;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TaskProgress that = (TaskProgress) o;
+        return name.equals(that.name) &&
+                category.equals(that.category);
     }
 
     @Override
     public int hashCode() {
-        return this.name.hashCode();
+        return Objects.hash(name, category);
     }
 }

@@ -21,6 +21,7 @@ import ro.cs.tao.security.SessionStore;
 
 import java.security.Principal;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * Default implementation for a progress listener that sends progress information on the message bus.
@@ -28,21 +29,27 @@ import java.util.Locale;
  * @author Cosmin Cara
  */
 public class ProgressNotifier implements ProgressListener {
-    private final String topic;
+    private final Topic topic;
     private final Object owner;
     private final Principal principal;
+    private final Map<String, String> additionalInfo;
     private String taskName;
     private double taskCounter;
     private double subTaskCounter;
 
-    public ProgressNotifier(Object source, String topic) {
+    public ProgressNotifier(Object source, Topic topic) {
         this(SessionStore.currentContext().getPrincipal(), source, topic);
     }
 
-    public ProgressNotifier(Principal principal, Object source, String topic) {
+    public ProgressNotifier(Principal principal, Object source, Topic topic) {
+        this(principal, source, topic, null);
+    }
+
+    public ProgressNotifier(Principal principal, Object source, Topic topic, Map<String, String> additionalInfo) {
         this.owner = source;
         this.topic = topic;
         this.principal = principal;
+        this.additionalInfo = additionalInfo;
     }
 
     @Override
@@ -55,9 +62,6 @@ public class ProgressNotifier implements ProgressListener {
     @Override
     public void subActivityStarted(String subTaskName) {
         this.subTaskCounter = 0;
-        if (taskName == null) {
-            taskName = subTaskName;
-        }
         sendTransientMessage(new SubActivityStartMessage(taskName, subTaskName));
     }
 
@@ -111,11 +115,17 @@ public class ProgressNotifier implements ProgressListener {
 
     private void sendMessage(Message message) {
         message.setTimestamp(System.currentTimeMillis());
-        Messaging.send(this.principal, this.topic, message, true);
+        if (additionalInfo != null) {
+            additionalInfo.forEach(message::addItem);
+        }
+        Messaging.send(this.principal, this.topic.value(), message, true);
     }
 
     private void sendTransientMessage(Message message) {
         message.setTimestamp(System.currentTimeMillis());
-        Messaging.send(this.principal, this.topic, message, false);
+        if (additionalInfo != null) {
+            additionalInfo.forEach(message::addItem);
+        }
+        Messaging.send(this.principal, this.topic.value(), message, false);
     }
 }

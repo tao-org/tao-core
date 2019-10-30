@@ -796,6 +796,7 @@
             <transient name="message"/>
             <transient name="payload"/>
             <transient name="persistent"/>
+            <transient name="items"/>
         </attributes>
     </entity>
 
