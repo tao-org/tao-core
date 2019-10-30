@@ -154,6 +154,9 @@ public class Message {
         data.put(key, value);
     }
 
+    @Transient
+    public Map<String, String> getItems() { return data; }
+
     @Override
     public String toString() {
         try {
