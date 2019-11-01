@@ -5,6 +5,7 @@ import ro.cs.tao.datasource.beans.Query;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.data.jsonutil.JacksonUtil;
 import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.utils.Crypto;
 
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -45,8 +46,11 @@ public class QueryViewRepository extends NonMappedRepository<Query, Long> {
             query.setComponentId(resultSet.getString(7));
             query.setSensor(resultSet.getString(8));
             query.setDataSource(resultSet.getString(9));
-            query.setUser(resultSet.getString(10));
-            query.setPassword(resultSet.getString(11));
+            final String user = resultSet.getString(10);
+            if (user != null && !user.isEmpty()) {
+                query.setUser(user);
+                query.setPassword(Crypto.decrypt(resultSet.getString(11), user));
+            }
             query.setPageSize(resultSet.getInt(12));
             query.setPageNumber(resultSet.getInt(13));
             query.setLimit(resultSet.getInt(14));
