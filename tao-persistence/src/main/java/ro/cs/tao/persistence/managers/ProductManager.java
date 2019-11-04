@@ -65,7 +65,7 @@ public class ProductManager {
     public List<EOProduct> getEOProducts() {
         // retrieve products
         return new ArrayList<>(((List<EOProduct>)
-                eoProductRepository.findAll(new Sort(Sort.Direction.ASC,
+                eoProductRepository.findAll(Sort.by(Sort.Direction.ASC,
                                                      Constants.DATA_PRODUCT_IDENTIFIER_PROPERTY_NAME))));
     }
 
@@ -153,7 +153,7 @@ public class ProductManager {
     public List<VectorData> getVectorDataProducts() {
         // retrieve products
         return new ArrayList<>(((List<VectorData>)
-                vectorDataRepository.findAll(new Sort(Sort.Direction.ASC,
+                vectorDataRepository.findAll(Sort.by(Sort.Direction.ASC,
                                                       Constants.DATA_PRODUCT_IDENTIFIER_PROPERTY_NAME))));
     }
 
