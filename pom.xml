@@ -35,14 +35,15 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.deploy.root.path>file://W:/Dev/tao-github-publication</project.deploy.root.path>
         <geotools.version>20.0</geotools.version>
-        <spring.version>5.0.8.RELEASE</spring.version>
+        <spring.version>5.2.0.RELEASE</spring.version>
+        <spring.data.version>2.2.0.RELEASE</spring.data.version>
         <jackson.version>2.10.0</jackson.version>
         <postgresql.version>42.2.4</postgresql.version>
         <hibernate.version>5.3.5.Final</hibernate.version>
         <jts.version>1.16.0</jts.version>
         <!-- maven -->
-        <maven.compiler.data>1.8</maven.compiler.data>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.data>1.11</maven.compiler.data>
+        <maven.compiler.target>1.11</maven.compiler.target>
         <mavenPublicUrl>http://central.maven.org/maven2</mavenPublicUrl>
         <taoReleasesUrl>${project.deploy.root.path}/tao-core</taoReleasesUrl>
         <hibernatespatialUrl>https://mvnrepository.com/artifact/org.hibernate/hibernate-spatial/</hibernatespatialUrl>
