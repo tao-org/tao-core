@@ -7,7 +7,7 @@
     <groupId>ro.cs.tao</groupId>
     <artifactId>tao-core</artifactId>
     <packaging>pom</packaging>
-    <version>1.0</version>
+    <version>1.0.1</version>
     <name>TAO Core</name>
 
     <modules>
@@ -18,7 +18,7 @@
         <module>tao-data-sources</module>
         <module>tao-persistence</module>
         <module>tao-topology</module>
-		<module>tao-quota</module>
+        <module>tao-execution-model</module>
         <module>tao-execution</module>
         <module>tao-spring-bridge</module>
         <module>tao-notification</module>
@@ -26,25 +26,27 @@
         <module>tao-drmaa-api</module>
 		<module>tao-workflow-optimizer</module>
         <module>tao-orchestration</module>
-		<module>tao-execution-model</module>
         <module>tao-scheduling</module>
+        <module>tao-quota</module>
         <module>tao-core-kit</module>
     </modules>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <geotools.version>20.0</geotools.version>
-        <spring.version>5.0.8.RELEASE</spring.version>
+        <spring.version>5.2.0.RELEASE</spring.version>
+        <spring.data.version>2.2.0.RELEASE</spring.data.version>
         <jackson.version>2.10.0</jackson.version>
         <postgresql.version>42.2.4</postgresql.version>
-        <hibernate.version>5.3.5.Final</hibernate.version>
-        <jts.version>1.16.0</jts.version>
+        <hibernate.version>5.4.7.Final</hibernate.version>
+        <jts.version>1.16.1</jts.version>
         <!-- maven -->
         <maven.compiler.data>1.8</maven.compiler.data>
         <maven.compiler.target>1.8</maven.compiler.target>
 
         <mavenPublicUrl>http://central.maven.org/maven2</mavenPublicUrl>
-        <osgeoUrl>http://repo.boundlessgeo.com/main/</osgeoUrl>
+        <taoReleasesUrl>${project.deploy.root.path}/tao-core</taoReleasesUrl>
+        <hibernatespatialUrl>https://mvnrepository.com/artifact/org.hibernate/hibernate-spatial/</hibernatespatialUrl>
         <springio-milestoneUrl>http://repo.spring.io/milestone/</springio-milestoneUrl>
     </properties>
 
@@ -65,10 +67,48 @@
             <url>http://maven.geomajas.org/</url>
         </repository>
         <repository>
+            <id>hibernatespatial</id>
+            <name>Hibernate Spatial</name>
+            <url>${hibernatespatialUrl}</url>
+        </repository>
+        <repository>
             <id>springio-milestone</id>
             <url>${springio-milestoneUrl}</url>
         </repository>
     </repositories>
+
+    <distributionManagement>
+        <site>
+            <id>${project.artifactId}-site</id>
+            <url>${project.baseUri}</url>
+        </site>
+        <repository>
+            <id>tao-releases</id>
+            <name>TAO releases</name>
+            <url>${taoReleasesUrl}</url>
+        </repository>
+    </distributionManagement>
+
+    <profiles>
+        <profile>
+            <id>postgres</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <build.profile.id>postgres</build.profile.id>
+            </properties>
+        </profile>
+        <profile>
+            <id>h2</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <build.profile.id>h2</build.profile.id>
+            </properties>
+        </profile>
+    </profiles>
 
     <build>
         <directory>${project.basedir}/target</directory>
@@ -156,12 +196,12 @@
             </roles>
         </developer>
         <developer>
-            <id>npaun</id>
-            <name>Narcis Paun</name>
-            <email>narcis.paun@c-s.ro</email>
+            <id>apirlea</id>
+            <name>Alexandru Pirlea</name>
+            <email>alex.pirlea@c-s.ro</email>
             <organization>CS ROMANIA</organization>
             <roles>
-                <role>Web Developer</role>
+                <role>Java Developer</role>
             </roles>
         </developer>
     </developers>
