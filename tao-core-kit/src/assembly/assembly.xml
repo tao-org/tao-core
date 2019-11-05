@@ -19,7 +19,7 @@
     </fileSets>
     <files>
         <file>
-            <source>../../tao-services/services-startup/src/main/resources/config/spring.properties</source>
+            <source>../../tao-services/tao-services-startup/src/main/resources/config/spring.properties</source>
             <outputDirectory>config</outputDirectory>
             <destName>application.properties</destName>
         </file>

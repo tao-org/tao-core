@@ -70,13 +70,19 @@ public class OutputDataHandlerManager {
         if (item == null) {
             throw new DataHandlingException("Unhandled null value");
         }
-        List<OutputDataHandler> handlers = this.handlers.get(item.getClass());
+        final Class<?> itemClass = item.getClass();
+        List<OutputDataHandler> handlers = this.handlers.get(itemClass);
+        if (handlers == null) { // maybe the item is a subclass of an existing one
+            handlers = this.handlers.entrySet().stream()
+                                               .filter(e -> e.getKey().isAssignableFrom(itemClass))
+                                               .map(Map.Entry::getValue).findFirst().orElse(null);
+        }
         if (handlers != null) {
             for (OutputDataHandler handler : handlers) {
                 item = (T) handler.handle(item);
             }
         } else {
-            logger.warning(String.format("No output handler defined for type %s", item.getClass()));
+            logger.warning(String.format("No output handler defined for type %s", itemClass));
             return null;
         }
         return item;

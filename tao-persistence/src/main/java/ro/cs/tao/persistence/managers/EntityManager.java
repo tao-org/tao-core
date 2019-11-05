@@ -45,7 +45,7 @@ public abstract class EntityManager<T extends Identifiable<K>, K, R extends Pagi
 
     @Transactional
     public List<T> list() {
-        return new ArrayList<>((List<T>) repository.findAll(new Sort(Sort.Direction.ASC,
+        return new ArrayList<>((List<T>) repository.findAll(Sort.by(Sort.Direction.ASC,
                                                                      identifier())));
     }
 
@@ -65,7 +65,7 @@ public abstract class EntityManager<T extends Identifiable<K>, K, R extends Pagi
             }
             jpaSort = Sort.by(orders);
         } else {
-            jpaSort = new Sort(Sort.Direction.ASC, identifier());
+            jpaSort = Sort.by(Sort.Direction.ASC, identifier());
         }
         return new ArrayList<>((List<T>) repository.findAll(jpaSort));
     }
@@ -83,7 +83,7 @@ public abstract class EntityManager<T extends Identifiable<K>, K, R extends Pagi
                 }
                 jpaSort = Sort.by(orders);
             } else {
-                jpaSort = new Sort(Sort.Direction.ASC, identifier());
+                jpaSort = Sort.by(Sort.Direction.ASC, identifier());
             }
             Page<T> page = repository.findAll(PageRequest.of(pageNumber, pageSize, jpaSort));
             if (page.hasContent()) {

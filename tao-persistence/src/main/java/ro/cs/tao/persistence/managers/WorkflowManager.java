@@ -64,7 +64,7 @@ public class WorkflowManager {
     public List<WorkflowDescriptor> getAllWorkflows() {
         // retrieve workflows and filter them
         return ((List<WorkflowDescriptor>)
-                workflowDescriptorRepository.findAll(new Sort(Sort.Direction.ASC,
+                workflowDescriptorRepository.findAll(Sort.by(Sort.Direction.ASC,
                                                               Constants.WORKFLOW_IDENTIFIER_PROPERTY_NAME)))
                 .stream()
                 .filter(WorkflowDescriptor::isActive)

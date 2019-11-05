@@ -1,4 +1,4 @@
-
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
   ~ Copyright (C) 2018 CS ROMANIA
   ~
@@ -21,7 +21,7 @@
     <parent>
         <artifactId>tao-core</artifactId>
         <groupId>ro.cs.tao</groupId>
-        <version>1.0</version>
+        <version>1.0.1</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -41,7 +41,7 @@
             <artifactId>tao-persistence</artifactId>
             <version>${project.version}</version>
         </dependency>
-		<dependency>
+        <dependency>
             <groupId>ro.cs.tao</groupId>
             <artifactId>tao-orchestration</artifactId>
             <version>${project.version}</version>
@@ -51,7 +51,7 @@
             <artifactId>tao-spring-bridge</artifactId>
             <version>${project.version}</version>
         </dependency>
-
+        
         <!-- https://mvnrepository.com/artifact/org.quartz-scheduler/quartz -->
         <dependency>
             <groupId>org.quartz-scheduler</groupId>
