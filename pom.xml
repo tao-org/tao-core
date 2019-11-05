@@ -39,8 +39,8 @@
         <spring.data.version>2.2.0.RELEASE</spring.data.version>
         <jackson.version>2.10.0</jackson.version>
         <postgresql.version>42.2.4</postgresql.version>
-        <hibernate.version>5.3.5.Final</hibernate.version>
-        <jts.version>1.16.0</jts.version>
+        <hibernate.version>5.4.7.Final</hibernate.version>
+        <jts.version>1.16.1</jts.version>
         <!-- maven -->
         <maven.compiler.data>1.11</maven.compiler.data>
         <maven.compiler.target>1.11</maven.compiler.target>
