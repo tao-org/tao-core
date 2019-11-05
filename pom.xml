@@ -42,8 +42,6 @@
         <hibernate.version>5.4.7.Final</hibernate.version>
         <jts.version>1.16.1</jts.version>
         <!-- maven -->
-        <maven.compiler.data>1.11</maven.compiler.data>
-        <maven.compiler.target>1.11</maven.compiler.target>
         <mavenPublicUrl>http://central.maven.org/maven2</mavenPublicUrl>
         <taoReleasesUrl>${project.deploy.root.path}/tao-core</taoReleasesUrl>
         <hibernatespatialUrl>https://mvnrepository.com/artifact/org.hibernate/hibernate-spatial/</hibernatespatialUrl>
