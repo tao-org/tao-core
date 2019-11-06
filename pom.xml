@@ -33,6 +33,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.deploy.root.path>/tao/deploy</project.deploy.root.path>
         <geotools.version>20.0</geotools.version>
         <spring.version>5.2.0.RELEASE</spring.version>
         <spring.data.version>2.2.0.RELEASE</spring.data.version>
@@ -41,9 +42,8 @@
         <hibernate.version>5.4.7.Final</hibernate.version>
         <jts.version>1.16.1</jts.version>
         <!-- maven -->
-        <maven.compiler.data>1.8</maven.compiler.data>
+		<maven.compiler.data>1.8</maven.compiler.data>
         <maven.compiler.target>1.8</maven.compiler.target>
-
         <mavenPublicUrl>http://central.maven.org/maven2</mavenPublicUrl>
         <taoReleasesUrl>${project.deploy.root.path}/tao-core</taoReleasesUrl>
         <hibernatespatialUrl>https://mvnrepository.com/artifact/org.hibernate/hibernate-spatial/</hibernatespatialUrl>
@@ -137,15 +137,16 @@
                         </archive>
                     </configuration>
                 </plugin>
-            </plugins>
-        </pluginManagement>
-
-        <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-deploy-plugin</artifactId>
                 <version>2.8.2</version>
             </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-install-plugin</artifactId>
+                    <version>3.0.0-M1</version>
+                </plugin>
         </plugins>
     </build>
 
