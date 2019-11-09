@@ -303,7 +303,8 @@ public class DataSourceComponent extends TaoComponent {
     public DataQuery createQuery() {
         DataSourceManager dsManager = DataSourceManager.getInstance();
         DataSource dataSource = this.dataSourceName != null ?
-                dsManager.get(this.sensorName, this.dataSourceName) : dsManager.get(this.sensorName);
+                dsManager.createInstance(this.sensorName, this.dataSourceName) :
+                dsManager.createInstance(this.sensorName);
         dataSource.setCredentials(this.userName, this.password);
         return dataSource.createQuery(this.sensorName);
     }
@@ -315,7 +316,8 @@ public class DataSourceComponent extends TaoComponent {
     public List<EOProduct> doQuery(List<QueryParameter> parameters) throws QueryException {
         DataSourceManager dsManager = DataSourceManager.getInstance();
         DataSource dataSource = this.dataSourceName != null ?
-                dsManager.get(this.sensorName, this.dataSourceName) : dsManager.get(this.sensorName);
+                dsManager.createInstance(this.sensorName, this.dataSourceName) :
+                dsManager.createInstance(this.sensorName);
         dataSource.setCredentials(this.userName, this.password);
         final DataQuery query = dataSource.createQuery(this.sensorName);
         if (parameters != null) {
@@ -332,7 +334,8 @@ public class DataSourceComponent extends TaoComponent {
     public long doCount(List<QueryParameter> parameters) throws QueryException {
         DataSourceManager dsManager = DataSourceManager.getInstance();
         DataSource dataSource = this.dataSourceName != null ?
-                dsManager.get(this.sensorName, this.dataSourceName) : dsManager.get(this.sensorName);
+                dsManager.createInstance(this.sensorName, this.dataSourceName) :
+                dsManager.createInstance(this.sensorName);
         dataSource.setCredentials(this.userName, this.password);
         final DataQuery query = dataSource.createQuery(this.sensorName);
         if (parameters != null) {
@@ -365,7 +368,8 @@ public class DataSourceComponent extends TaoComponent {
     public List<EOProduct> doFetch(List<EOProduct> products, Set<String> tiles, String destinationPath, String localRootPath, Properties additionalProperties) {
         DataSourceManager dsManager = DataSourceManager.getInstance();
         DataSource dataSource = this.dataSourceName != null ?
-                dsManager.get(this.sensorName, this.dataSourceName) : dsManager.get(this.sensorName);
+                dsManager.createInstance(this.sensorName, this.dataSourceName) :
+                dsManager.createInstance(this.sensorName);
         if (this.userName != null) {
             dataSource.setCredentials(this.userName, this.password);
         }
