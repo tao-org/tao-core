@@ -123,7 +123,7 @@ public class DataSourceManager {
     }
 
     /**
-     * Returns an instance of the given data source for the given sensor, if the data source
+     * Returns the (same) instance of the given data source for the given sensor, if the data source
      * is registered.
      *
      * @param sensorName    The sensor name
@@ -133,6 +133,44 @@ public class DataSourceManager {
         DataSource dataSource = null;
         if (this.registeredSources.containsKey(new AbstractMap.SimpleEntry<>(sensorName, dataSourceName))) {
             dataSource = this.registry.getService(dataSourceName);
+        }
+        return dataSource;
+    }
+
+    /**
+     * Returns a new instance of the first data source associated with the given sensor,
+     * or null if no data source is associated.
+     *
+     * @param sensorName    The name of the sensor
+     */
+    public DataSource createInstance(String sensorName) {
+        DataSource dataSource = null;
+        String firstName = getFirst(sensorName);
+        if (firstName != null) {
+            try {
+                dataSource = this.registry.getService(firstName).getClass().newInstance();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return dataSource;
+    }
+
+    /**
+     * Returns a new instance of the given data source for the given sensor, if the data source
+     * is registered.
+     *
+     * @param sensorName    The sensor name
+     * @param dataSourceName     The data source class name
+     */
+    public DataSource createInstance(String sensorName, String dataSourceName) {
+        DataSource dataSource = null;
+        if (this.registeredSources.containsKey(new AbstractMap.SimpleEntry<>(sensorName, dataSourceName))) {
+            try {
+                dataSource = this.registry.getService(dataSourceName).getClass().newInstance();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
         return dataSource;
     }

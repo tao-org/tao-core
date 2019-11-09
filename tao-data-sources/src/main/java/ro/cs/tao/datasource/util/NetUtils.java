@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.datasource.util;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
@@ -48,9 +49,12 @@ import java.net.Proxy;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static org.apache.commons.lang.StringUtils.isNotEmpty;
 
 /**
  * Helper class to check availability of a given url.
@@ -60,18 +64,17 @@ import java.util.Map;
 public class NetUtils {
 
     private static final Map<CompositeKey, CloseableHttpClient> httpClients = new HashMap<>();
-    private static String authToken;
     private static Proxy javaNetProxy;
     private static HttpHost apacheHttpProxy;
     private static CredentialsProvider proxyCredentials;
     private static int timeout = 30000;
 
-    public static String getAuthToken() {
+    public static String getAuthToken(final String username, final String password) {
+        String authToken = null;
+        if(isNotEmpty(username) && isNotEmpty(password)){
+            authToken = "Basic " + new String(Base64.getEncoder().encode((username + ":" + password).getBytes()));
+        }
         return authToken;
-    }
-
-    public static void setAuthToken(String value) {
-        authToken = value;
     }
 
     public static void setProxy(String type, final String host, final int port, final String user, final String pwd) {
@@ -96,11 +99,11 @@ public class NetUtils {
         timeout = newTimeout;
     }
 
-    public static boolean isAvailable(String url) {
+    public static boolean isAvailable(String url, String user, String password) {
         boolean status;
         try {
             Logger.getRootLogger().debug("Verifying url: %s", url);
-            HttpURLConnection connection = openConnection(url, authToken);
+            HttpURLConnection connection = openConnection(url, getAuthToken(user, password));
             connection.setRequestMethod("GET");
             connection.connect();
             status = (200 == connection.getResponseCode() || 400 == connection.getResponseCode());
