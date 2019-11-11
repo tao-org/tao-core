@@ -50,7 +50,7 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
         try {
             Enumeration<URL> resources = AbstractParameterProvider.class.getClassLoader().getResources(PARAMETER_DESCRIPTOR_RESOURCE);
             while (resources.hasMoreElements()) {
-                String resourcePath = resources.nextElement().getPath().replaceFirst("^/(.:/)", "$1").replace("file:/", "");
+                String resourcePath = formatPath(resources.nextElement().getPath());
                 if (SystemUtils.IS_OS_LINUX) {
                     resourcePath = "/" + resourcePath;
                 }
@@ -96,7 +96,7 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
     }
 
     private String readDescriptor() throws IOException {
-        final String classLocation = getClass().getProtectionDomain().getCodeSource().getLocation().getPath().replaceFirst("^/(.:/)", "$1");
+        final String classLocation = formatPath(getClass().getProtectionDomain().getCodeSource().getLocation().getPath());
         String currentResource = null;
         for (String current : parameterResources) {
             if (current.startsWith(classLocation)) {
@@ -117,5 +117,9 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
             rPath = Paths.get(currentResource);
         }
         return new String(Files.readAllBytes(rPath));
+    }
+
+    private static String formatPath(String path){
+        return path.replaceFirst("^/(.:/)", "$1").replace("file:/", "");
     }
 }
