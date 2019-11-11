@@ -22,10 +22,7 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -50,7 +47,7 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
         try {
             Enumeration<URL> resources = AbstractParameterProvider.class.getClassLoader().getResources(PARAMETER_DESCRIPTOR_RESOURCE);
             while (resources.hasMoreElements()) {
-                String resourcePath = resources.nextElement().getPath().replaceFirst("^/(.:/)", "$1").replace("file:/", "");
+                String resourcePath = formatPath(resources.nextElement().getPath());
                 if (SystemUtils.IS_OS_LINUX) {
                     resourcePath = "/" + resourcePath;
                 }
@@ -83,7 +80,7 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
      */
     @Override
     public Map<String, Map<String, DataSourceParameter>> getSupportedParameters() {
-       return supportedParameters;
+        return supportedParameters;
     }
 
 
@@ -96,7 +93,7 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
     }
 
     private String readDescriptor() throws IOException {
-        final String classLocation = getClass().getProtectionDomain().getCodeSource().getLocation().getPath().replaceFirst("^/(.:/)", "$1");
+        final String classLocation = formatPath(getClass().getProtectionDomain().getCodeSource().getLocation().getPath());
         String currentResource = null;
         for (String current : parameterResources) {
             if (current.startsWith(classLocation)) {
@@ -108,14 +105,31 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
             throw new IOException("No parameter descriptor found");
         }
         Path rPath;
-        if (classLocation.endsWith(".jar")) {
-            Map<String, String> env = new HashMap<>();
-            env.put("create", "false");
-            final String strPath = "jar:file:" + (SystemUtils.IS_OS_LINUX ? "" : "/") + currentResource;
-            rPath = FileSystems.newFileSystem(URI.create(strPath), env).getPath("/" + PARAMETER_DESCRIPTOR_RESOURCE);
-        } else {
-            rPath = Paths.get(currentResource);
+        FileSystem fileSystem = null;
+        try {
+            if (classLocation.endsWith(".jar")) {
+                Map<String, String> env = new HashMap<>();
+                env.put("create", "false");
+                final String strPath = "jar:file:" + (SystemUtils.IS_OS_LINUX ? "" : "/") + currentResource;
+                fileSystem = FileSystems.newFileSystem(URI.create(strPath), env);
+                rPath = fileSystem.getPath("/" + PARAMETER_DESCRIPTOR_RESOURCE);
+            } else {
+                rPath = Paths.get(currentResource);
+            }
+            return new String(Files.readAllBytes(rPath));
+        } finally {
+            if (fileSystem != null) {
+                fileSystem.close();
+            }
         }
-        return new String(Files.readAllBytes(rPath));
+    }
+
+    private static String formatPath(String path){
+        String newPath = path.replaceFirst("^/(.:/)", "$1").replace("file:/", "");
+        if(newPath.endsWith("!/")){
+            //remove the last 2 chars
+            newPath = newPath.substring(0, newPath.length()-2);
+        }
+        return newPath;
     }
 }
