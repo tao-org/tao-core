@@ -120,6 +120,11 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
     }
 
     private static String formatPath(String path){
-        return path.replaceFirst("^/(.:/)", "$1").replace("file:/", "");
+        String newPath = path.replaceFirst("^/(.:/)", "$1").replace("file:/", "");
+        if(newPath.endsWith("!/")){
+            //remove the last 2 chars
+            newPath = newPath.substring(0, newPath.length()-2);
+        }
+        return newPath;
     }
 }
