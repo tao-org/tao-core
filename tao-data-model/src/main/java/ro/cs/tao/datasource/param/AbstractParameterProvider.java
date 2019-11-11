@@ -22,10 +22,7 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -109,10 +106,8 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
         }
         Path rPath;
         if (classLocation.endsWith(".jar")) {
-            Map<String, String> env = new HashMap<>();
-            env.put("create", "false");
             final String strPath = "jar:file:" + (SystemUtils.IS_OS_LINUX ? "" : "/") + currentResource;
-            rPath = FileSystems.newFileSystem(URI.create(strPath), env).getPath("/" + PARAMETER_DESCRIPTOR_RESOURCE);
+            rPath = createOrGetFileSystem(URI.create(strPath)).getPath("/" + PARAMETER_DESCRIPTOR_RESOURCE);
         } else {
             rPath = Paths.get(currentResource);
         }
@@ -126,5 +121,15 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
             newPath = newPath.substring(0, newPath.length()-2);
         }
         return newPath;
+    }
+
+    private static FileSystem createOrGetFileSystem(URI uri) throws IOException {
+        try{
+            return FileSystems.getFileSystem(uri);
+        } catch (FileSystemNotFoundException ex){
+            Map<String, String> env = new HashMap<>();
+            env.put("create", "false");
+            return FileSystems.newFileSystem(uri, env);
+        }
     }
 }
