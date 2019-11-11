@@ -80,7 +80,7 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
      */
     @Override
     public Map<String, Map<String, DataSourceParameter>> getSupportedParameters() {
-       return supportedParameters;
+        return supportedParameters;
     }
 
 
@@ -105,13 +105,23 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
             throw new IOException("No parameter descriptor found");
         }
         Path rPath;
-        if (classLocation.endsWith(".jar")) {
-            final String strPath = "jar:file:" + (SystemUtils.IS_OS_LINUX ? "" : "/") + currentResource;
-            rPath = createOrGetFileSystem(URI.create(strPath)).getPath("/" + PARAMETER_DESCRIPTOR_RESOURCE);
-        } else {
-            rPath = Paths.get(currentResource);
+        FileSystem fileSystem = null;
+        try {
+            if (classLocation.endsWith(".jar")) {
+                Map<String, String> env = new HashMap<>();
+                env.put("create", "false");
+                final String strPath = "jar:file:" + (SystemUtils.IS_OS_LINUX ? "" : "/") + currentResource;
+                fileSystem = FileSystems.newFileSystem(URI.create(strPath), env);
+                rPath = fileSystem.getPath("/" + PARAMETER_DESCRIPTOR_RESOURCE);
+            } else {
+                rPath = Paths.get(currentResource);
+            }
+            return new String(Files.readAllBytes(rPath));
+        } finally {
+            if (fileSystem != null) {
+                fileSystem.close();
+            }
         }
-        return new String(Files.readAllBytes(rPath));
     }
 
     private static String formatPath(String path){
@@ -121,15 +131,5 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
             newPath = newPath.substring(0, newPath.length()-2);
         }
         return newPath;
-    }
-
-    private static FileSystem createOrGetFileSystem(URI uri) throws IOException {
-        try{
-            return FileSystems.getFileSystem(uri);
-        } catch (FileSystemNotFoundException ex){
-            Map<String, String> env = new HashMap<>();
-            env.put("create", "false");
-            return FileSystems.newFileSystem(uri, env);
-        }
     }
 }
