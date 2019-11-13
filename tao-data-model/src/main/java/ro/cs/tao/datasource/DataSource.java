@@ -61,7 +61,7 @@ public abstract class DataSource<Q extends DataQuery> extends StringIdentifiable
      * The default value is 1; implementors may override this to allow more concurrent downloads.
      */
     @XmlTransient
-    public int getMaximumAllowedTransfers() { return 1; }
+    public int getMaximumAllowedTransfers() { return 4; }
 
     /**
      * Returns the timeout for this data source connection

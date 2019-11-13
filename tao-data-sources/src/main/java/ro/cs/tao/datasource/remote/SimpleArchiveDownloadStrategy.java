@@ -17,6 +17,7 @@
 package ro.cs.tao.datasource.remote;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
+import ro.cs.tao.datasource.DataSource;
 import ro.cs.tao.datasource.InterruptedException;
 import ro.cs.tao.datasource.QueryException;
 import ro.cs.tao.datasource.util.HttpMethod;
@@ -43,8 +44,8 @@ public class SimpleArchiveDownloadStrategy extends DownloadStrategy {
     private static final long DOWNLOAD_TIMEOUT = 30000; // 30s
     private Timer timeoutTimer;
 
-    public SimpleArchiveDownloadStrategy(String targetFolder, Properties properties) {
-        super(targetFolder, properties);
+    public SimpleArchiveDownloadStrategy(DataSource dataSource, String targetFolder, Properties properties) {
+        super(dataSource, targetFolder, properties);
         this.fetchMode = FetchMode.OVERWRITE;
     }
 
