@@ -16,6 +16,7 @@
 package ro.cs.tao.utils.logger;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.logging.*;
 
 /**
@@ -26,6 +27,7 @@ import java.util.logging.*;
 public class Logger {
 
     public interface CustomLogger {
+        void debug(String message, Object... args);
         void info(String message, Object... args);
         void warn(String message, Object... args);
         void error(String message, Object... args);
@@ -34,6 +36,9 @@ public class Logger {
     private static final java.util.logging.Logger logger;
     private static String rootLogFile;
     private static CustomLogger rootLogger = new CustomLogger() {
+        @Override
+        public void debug(String message, Object... args) { fine(message, args); }
+
         @Override
         public void info(String message, Object... args) {
             information(message, args);
@@ -60,11 +65,11 @@ public class Logger {
         logger.setLevel(Level.ALL);
     }
 
-    public static void initialize(String masterLogFile) throws IOException {
+    public static void initialize(String masterLogFile, boolean verbose) throws IOException {
         synchronized (logger) {
             if (rootLogFile == null) {
                 rootLogFile = masterLogFile;
-                registerHandler(rootLogFile);
+                registerHandler(rootLogFile, verbose);
             }
         }
     }
@@ -73,11 +78,28 @@ public class Logger {
         return rootLogger;
     }
 
-    private static Handler registerHandler(String logFile) throws IOException {
+    private static Handler registerHandler(String logFile, boolean verbose) throws IOException {
         Handler fileHandler = new FileHandler(logFile, true);
         fileHandler.setFormatter(new LogFormatter());
         logger.addHandler(fileHandler);
+        Level level = verbose ? Level.ALL : Level.INFO;
+        logger.setLevel(level);
+        Arrays.stream(java.util.logging.Logger.getLogger("").getHandlers())
+                .forEach(h -> h.setLevel(level));
         return fileHandler;
+    }
+
+    public static void registerHandler(Handler handler) {
+        handler.setFormatter(new LogFormatter());
+        handler.setLevel(logger.getLevel());
+        logger.addHandler(handler);
+    }
+
+    private static void fine(String message, Object...args) {
+        if (args != null && args.length > 0) {
+            message = String.format(message, args);
+        }
+        logger.fine(message);
     }
 
     private static void information(String message, Object...args) {
@@ -109,6 +131,14 @@ public class Logger {
             //fileHandler = registerHandler(logFile);
             fileHandler = new FileHandler(logFile);
             fileHandler.setFormatter(new LogFormatter());
+        }
+
+        @Override
+        public void debug(String message, Object...args) {
+            if (args != null && args.length > 0) {
+                message = String.format(message, args);
+            }
+            fileHandler.publish(new LogRecord(Level.FINE, message));
         }
 
         @Override
