@@ -1,4 +1,4 @@
-package ro.cs.tao.datasource.util;
+package ro.cs.tao.utils;
 
 import java.io.Closeable;
 import java.io.IOException;

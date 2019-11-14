@@ -19,9 +19,9 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import ro.cs.tao.ProgressListener;
 import ro.cs.tao.datasource.InterruptedException;
 import ro.cs.tao.datasource.*;
-import ro.cs.tao.datasource.util.NetUtils;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.utils.FileUtilities;
+import ro.cs.tao.utils.NetUtils;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
