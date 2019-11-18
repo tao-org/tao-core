@@ -206,11 +206,10 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
             throw new IOException("Invalid product name [null]");
         }
         activityStart(product.getName());
+        Path file = null;
         try {
             currentProduct = product;
-            currentProductProgress = new ProductProgress(currentProduct.getApproximateSize(),
-                                                         adjustProductLength());
-            Path file;
+            currentProductProgress = new ProductProgress(currentProduct.getApproximateSize(), adjustProductLength());
             final Path destPath = Paths.get(destination);
             FileUtilities.ensureExists(destPath);
             switch (this.fetchMode) {
@@ -258,10 +257,12 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
                     logger.warning("Product download aborted");
                 }
             }
-            return file;
+        } catch (IOException e) {
+            logger.severe(e.getMessage());
         } finally {
             activityEnd();
         }
+        return file;
     }
 
     public abstract DownloadStrategy clone();
