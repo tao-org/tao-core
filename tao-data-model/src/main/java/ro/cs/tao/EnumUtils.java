@@ -54,4 +54,13 @@ public class EnumUtils {
     public static <T extends Enum<T> & TaoEnum> T getEnumConstantByName(Class<T> enumType, final String name) {
         return Enum.valueOf(enumType, name);
     }
+
+    public static <T extends Enum<T> & TaoEnum> T getEnumConstantByFriendlyName(Class<T> enumType, final String name) {
+        for (T type : enumType.getEnumConstants()) {
+            if (type.friendlyName().equals(name)) {
+                return type;
+            }
+        }
+        return null;
+    }
 }
