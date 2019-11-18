@@ -516,7 +516,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
             logger.severe("Operation timed out");
             throw new IOException("Operation timed out");
         } catch (Exception ex) {
-            ex.printStackTrace();
+            //ex.printStackTrace();
             String errMsg = String.format(errorMessage, remoteUrl, ex.getMessage());
             logger.severe(errMsg);
             throw new IOException(errMsg);
