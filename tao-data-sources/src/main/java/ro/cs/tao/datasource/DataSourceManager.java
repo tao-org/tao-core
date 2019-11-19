@@ -77,6 +77,13 @@ public class DataSourceManager {
     }
 
     /**
+     * Returns all the registered (detected) data sources
+     */
+    public Set<DataSource> getRegisteredDataSources() {
+        return new HashSet<>(this.registry.getServices());
+    }
+
+    /**
      * Returns the list of supported (detected) sensors (satellites)
      */
     public SortedSet<String> getSupportedSensors() {
