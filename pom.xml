@@ -132,10 +132,12 @@
                         <archive>
                             <manifest>
                                 <addClasspath>true</addClasspath>
-                                <addDefaultImplementationEntries/>
+                                <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
                             </manifest>
                             <manifestEntries>
-                                <version>${project.version}</version>
+                                <Bundle-Name>TAO Core</Bundle-Name>
+                                <Version>${project.version}</Version>
+                                <Build-Time>${maven.build.timestamp}</Build-Time>
                             </manifestEntries>
                         </archive>
                     </configuration>
