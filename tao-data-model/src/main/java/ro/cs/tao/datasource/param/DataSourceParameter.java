@@ -18,6 +18,7 @@ package ro.cs.tao.datasource.param;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -114,7 +115,6 @@ public class DataSourceParameter {
 
     @Override
     public int hashCode() {
-
         return Objects.hash(name, type);
     }
 }
