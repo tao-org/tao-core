@@ -16,18 +16,19 @@
 package ro.cs.tao.serialization;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
-import javax.xml.transform.stream.StreamSource;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author  Cosmin Cara
  */
 public abstract class BaseSerializer<T> implements Serializer<T, String> {
-    protected boolean formatOutput;
-
-    Class<T> tClass;
+    private Class<T> tClass;
+    boolean formatOutput;
 
     BaseSerializer(Class<T> tClass) {
         this.tClass = tClass;
@@ -38,16 +39,10 @@ public abstract class BaseSerializer<T> implements Serializer<T, String> {
     public void setFormatOutput(boolean value) { this.formatOutput = value; }
 
     @Override
-    public T deserialize(StreamSource source) throws SerializationException {
-        throw new NoSuchMethodError("Not implemented");
-    }
-
-    @Override
-    public List<T> deserializeList(Class<T> tClass, StreamSource source) throws SerializationException {
-        throw new NoSuchMethodError("Not implemented");
-    }
-
     public T deserialize(String source) throws SerializationException {
+        if (source == null || "null".equalsIgnoreCase(source)) {
+            return null;
+        }
         try {
             ObjectMapper mapper = createMapper();
             return mapper.readerFor(this.tClass).readValue(source);
@@ -55,17 +50,33 @@ public abstract class BaseSerializer<T> implements Serializer<T, String> {
             throw new SerializationException(e);
         }
     }
-
+    @Override
     public List<T> deserialize(Class<T> clazz, String source) throws SerializationException {
+        if (source == null || "null".equalsIgnoreCase(source)) {
+            return null;
+        }
         try {
             ObjectMapper mapper = createMapper();
-            TypeReference<List<T>> typeRef = new TypeReference<List<T>>() {};
-            return mapper.readerFor(typeRef).readValue(source);
+            TypeReference<List<T>> typeRef = new TypeReference<List<T>>() { };
+            final JsonNode jsonNode = mapper.readTree(source);
+            final List<T> results = new ArrayList<>();
+            jsonNode.fields().forEachRemaining(entry -> {
+                final JsonNode node = entry.getValue();
+                if (node.isArray()) {
+                    final int size = node.size();
+                    for (int i = 0; i < size; i++) {
+                        results.add(mapper.convertValue(node.get(i), clazz));
+                    }
+                }/* else {
+                    results.add(mapper.convertValue(node, clazz));
+                }*/
+            });
+            return results;
         } catch (Exception e) {
             throw new SerializationException(e);
         }
     }
-
+    @Override
     public String serialize(T object) throws SerializationException {
         try {
             ObjectMapper mapper = createMapper();
@@ -74,12 +85,11 @@ public abstract class BaseSerializer<T> implements Serializer<T, String> {
             throw new SerializationException(e);
         }
     }
-
+    @Override
     public String serialize(List<T> objects, String name) throws SerializationException {
         try {
             ObjectMapper mapper = createMapper();
-            TypeReference<List<T>> typeRef = new TypeReference<List<T>>() {};
-            return mapper.writerFor(typeRef).writeValueAsString(objects);
+            return mapper.enable(SerializationFeature.WRAP_ROOT_VALUE).writer().withRootName(name).writeValueAsString(objects);
         } catch (Exception e) {
             throw new SerializationException(e);
         }
