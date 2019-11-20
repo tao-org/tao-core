@@ -191,14 +191,14 @@ ALTER TABLE component.processing_parameter ADD CONSTRAINT FK_processing_paramete
 DROP TABLE IF EXISTS component.processing_parameter_expansion CASCADE;
 CREATE TABLE component.processing_parameter_expansion
 (
-	parameter_id varchar(512) NOT NULL,
+	id varchar(512) NOT NULL,
 	join_values boolean NOT NULL DEFAULT true,
     separator char(1) NOT NULL DEFAULT ' '
 );
 ALTER TABLE component.processing_parameter_expansion ADD CONSTRAINT PK_processing_parameter_expansion
-	PRIMARY KEY (parameter_id);
+	PRIMARY KEY (id);
 ALTER TABLE component.processing_parameter_expansion ADD CONSTRAINT FK_processing_parameter_expansion_parameter
-	FOREIGN KEY (parameter_id) REFERENCES component.processing_parameter (id) ON DELETE No Action ON UPDATE No Action;
+	FOREIGN KEY (id) REFERENCES component.processing_parameter (id) ON DELETE No Action ON UPDATE No Action;
 
 -------------------------------------------------------------------------------
 -- table: component.condition

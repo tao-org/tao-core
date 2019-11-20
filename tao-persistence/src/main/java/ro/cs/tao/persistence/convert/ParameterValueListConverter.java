@@ -22,8 +22,6 @@ import ro.cs.tao.serialization.SerializerFactory;
 import ro.cs.tao.workflow.ParameterValue;
 
 import javax.persistence.AttributeConverter;
-import javax.xml.transform.stream.StreamSource;
-import java.io.StringReader;
 import java.util.List;
 
 /**
@@ -52,7 +50,7 @@ public class ParameterValueListConverter implements AttributeConverter<List<Para
     @Override
     public List<ParameterValue> convertToEntityAttribute(String s) {
         try {
-            return serializer.deserializeList(ParameterValue.class, new StreamSource(new StringReader(s)));
+            return serializer.deserialize(ParameterValue.class, s);
         } catch (SerializationException e) {
             throw new RuntimeException(e.getCause());
         }

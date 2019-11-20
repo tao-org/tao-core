@@ -10,16 +10,16 @@ import javax.xml.bind.annotation.XmlRootElement;
  */
 @XmlRootElement(name = "expansionRule")
 public class ParameterExpansionRule {
-    private String parameterId;
+    private String id;
     private boolean joinValues;
     private String separator;
 
-    public String getParameterId() {
-        return parameterId;
+    public String getId() {
+        return id;
     }
 
-    public void setParameterId(String parameterId) {
-        this.parameterId = parameterId;
+    public void setId(String parameterId) {
+        this.id = parameterId;
     }
 
     /**

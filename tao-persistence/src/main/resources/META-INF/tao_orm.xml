@@ -505,10 +505,10 @@
             <basic name="notNull">
                 <column name="not_null" nullable="true" column-definition="boolean NULL"/>
             </basic>
-            <one-to-one name="expansionRule" fetch="EAGER" target-entity="ro.cs.tao.component.ParameterExpansionRule">
-                <join-column name="id" referenced-column-name="parameter_id"/>
+            <one-to-one name="expansionRule" fetch="LAZY" target-entity="ro.cs.tao.component.ParameterExpansionRule">
+                <join-column name="id" referenced-column-name="id" />
                 <cascade>
-                    <cascade-all/>
+                    <cascade-refresh/>
                 </cascade>
             </one-to-one>
 
@@ -1184,8 +1184,8 @@
     <entity class="ro.cs.tao.component.ParameterExpansionRule" access="PROPERTY">
         <table name="component.processing_parameter_expansion"/>
         <attributes>
-            <id name="parameterId">
-                <column name="parameter_id" nullable="false"/>
+            <id name="id">
+                <column name="id" nullable="false"/>
             </id>
             <basic name="joinValues">
                 <column name="join_values" nullable="false" column-definition="boolean NOT NULL DEFAULT true"/>

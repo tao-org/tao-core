@@ -4,8 +4,6 @@ import ro.cs.tao.serialization.MediaType;
 import ro.cs.tao.serialization.Serializer;
 import ro.cs.tao.serialization.SerializerFactory;
 
-import javax.xml.transform.stream.StreamSource;
-import java.io.StringReader;
 import java.lang.reflect.ParameterizedType;
 
 /**
@@ -46,12 +44,12 @@ public abstract class BaseSerializationTest<T> {
 
     protected T deserializeJson() throws Exception {
         Serializer<T, String> serializer = SerializerFactory.create(this.entityClass, MediaType.JSON);
-        return serializer.deserialize(new StreamSource(new StringReader(this.entityJSON)));
+        return serializer.deserialize(this.entityJSON);
     }
 
     public T deserializeXml() throws Exception {
         Serializer<T, String> serializer = SerializerFactory.create(this.entityClass, MediaType.XML);
-        return serializer.deserialize(new StreamSource(new StringReader(this.entityXML)));
+        return serializer.deserialize(this.entityXML);
     }
 
     protected abstract String referenceJSON();

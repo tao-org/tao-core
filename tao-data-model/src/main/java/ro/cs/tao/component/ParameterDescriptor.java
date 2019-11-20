@@ -199,6 +199,7 @@ public class ParameterDescriptor extends StringIdentifiable {
         }
         if (this.expansionRule == null) {
             this.expansionRule = new ParameterExpansionRule();
+            //this.expansionRule.setId(this.id);
             this.expansionRule.setJoinValues(true);
             this.expansionRule.setSeparator(" ");
         }
