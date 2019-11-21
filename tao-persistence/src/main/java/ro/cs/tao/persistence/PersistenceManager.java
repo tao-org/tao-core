@@ -663,6 +663,10 @@ public class PersistenceManager implements MessagePersister {
         return executionTaskManager.getExecutingTasks();
     }
 
+    public List<ExecutionTask> getRemoteExecutingTasks() {
+        return executionTaskManager.getRemoteExecutingTasks();
+    }
+
     public List<ExecutionTaskSummary> getTasksStatus(long jobId) {
         return executionTaskManager.getStatus(jobId);
     }
