@@ -18,6 +18,7 @@ package ro.cs.tao.datasource.param;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang.SystemUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
+import ro.cs.tao.datasource.ProductFetchStrategy;
 
 import java.io.IOException;
 import java.net.URI;
@@ -40,6 +41,7 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
 
     protected final String[] supportedSensors;
     protected final Map<String, Map<String, DataSourceParameter>> supportedParameters;
+    protected Map<String, ProductFetchStrategy> productFetchers;
     protected Logger logger = Logger.getLogger(getClass().getName());
 
     static {
@@ -83,7 +85,6 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
         return supportedParameters;
     }
 
-
     /**
      * Returns the sensors supported by this data source
      */
@@ -91,6 +92,9 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
     public String[] getSupportedSensors() {
         return supportedSensors;
     }
+
+    @Override
+    public Map<String, ProductFetchStrategy> getRegisteredProductFetchStrategies() { return productFetchers; }
 
     private String readDescriptor() throws IOException {
         final String classLocation = formatPath(getClass().getProtectionDomain().getCodeSource().getLocation().getPath());
