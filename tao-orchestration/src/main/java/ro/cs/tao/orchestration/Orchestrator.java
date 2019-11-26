@@ -199,7 +199,7 @@ public class Orchestrator extends Notifiable {
      * @param workflowId The workflow identifier
      * @throws ExecutionException In case anything goes wrong or there was no job for this workflow
      */
-    public void resumeWorkflow(long workflowId) throws ExecutionException {
+    public void resumeJob(long workflowId) throws ExecutionException {
         ExecutionJob job = checkJob(workflowId);
         JobCommand.RESUME.applyTo(job);
     }
