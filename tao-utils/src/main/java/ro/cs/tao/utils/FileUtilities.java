@@ -285,8 +285,11 @@ public class FileUtilities {
 
     public static void move(Path source, Path destination) throws IOException {
         if (source != null && destination != null) {
+            if (!Files.exists(destination)) {
+                Files.createDirectories(destination);
+            }
             if (Files.isRegularFile(source)) {
-                Files.move(source,destination, StandardCopyOption.REPLACE_EXISTING);
+                Files.move(source, destination, StandardCopyOption.REPLACE_EXISTING);
             } else {
                 Path targetFolder = destination.resolve(source.getFileName());
                 Files.createDirectories(targetFolder);
