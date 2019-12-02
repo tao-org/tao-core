@@ -22,15 +22,15 @@ import ro.cs.tao.utils.executors.monitoring.ActivityListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
 
 /**
- * Base class for process executors
+ * Base class for process executors that also acts as an Executor factory.
+ * The parameter type of subclasses represent the unit that handles the respective execution.
  *
  * @author Cosmin Cara
  */
@@ -40,10 +40,14 @@ public abstract class Executor<T> implements Runnable {
     private static final String SHELL_COMMAND_SEPARATOR_BAR = "||";
     private static final NamedThreadPoolExecutor executorService;
     private static final Logger staticLogger;
+    private static final AtomicLong requestedMemory;
+    private static final Map<Executor<?>, Long> memoryRequirements;
 
     static {
         executorService = new NamedThreadPoolExecutor("process-exec", Runtime.getRuntime().availableProcessors());
         staticLogger = Logger.getLogger(Executor.class.getName());
+        requestedMemory = new AtomicLong(0L);
+        memoryRequirements = Collections.synchronizedMap(new HashMap<>());
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
@@ -77,12 +81,12 @@ public abstract class Executor<T> implements Runnable {
      * @param job               The command (job) to be executed
      * @return                  The Executor object that is responsible of execution
      */
-    public static Executor execute(OutputConsumer outputConsumer, ExecutionUnit job) {
+    public static Executor<?> execute(OutputConsumer outputConsumer, ExecutionUnit job) {
         return execute(outputConsumer, job, null);
     }
 
-    public static Executor execute(OutputConsumer outputConsumer, ExecutionUnit job, ActivityListener monitor) {
-        Executor executor = prepare(outputConsumer, job);
+    public static Executor<?> execute(OutputConsumer outputConsumer, ExecutionUnit job, ActivityListener monitor) {
+        Executor<?> executor = prepare(outputConsumer, job);
         awaitForConditions(job);
         if (monitor != null) {
             executor.setMonitor(monitor);
@@ -99,11 +103,11 @@ public abstract class Executor<T> implements Runnable {
      * @param job               The command (job) to be executed
      * @return                  The Executor object that is responsible of execution
      */
-    public static Executor prepare(OutputConsumer outputConsumer, ExecutionUnit job) {
+    public static Executor<?> prepare(OutputConsumer outputConsumer, ExecutionUnit job) {
         if (job == null) {
             throw new IllegalArgumentException("ExecutionUnit must not be null");
         }
-        Executor executor = create(job.getType(),
+        Executor<?> executor = create(job.getType(),
                                    job.getHost(),
                                    job.getArguments(),
                                    job.asSuperUser(),
@@ -111,6 +115,7 @@ public abstract class Executor<T> implements Runnable {
         executor.setUser(job.getUser());
         executor.setPassword(job.getPassword());
         executor.setOutputConsumer(outputConsumer);
+        memoryRequirements.put(executor, job.getMinMemory() != null ? job.getMinMemory() : 0L);
         return executor;
     }
 
@@ -124,19 +129,19 @@ public abstract class Executor<T> implements Runnable {
      * @param job               The command (job) to be executed
      * @return                  The Executor object that is responsible of execution
      */
-    public static Executor execute(OutputConsumer outputConsumer, File workingDirectory, ExecutionUnit job) {
-        Executor executor = prepare(outputConsumer, workingDirectory, job);
+    public static Executor<?> execute(OutputConsumer outputConsumer, File workingDirectory, ExecutionUnit job) {
+        Executor<?> executor = prepare(outputConsumer, workingDirectory, job);
         awaitForConditions(job);
         executorService.submit(executor);
         printQueue();
         return executor;
     }
 
-    public static Executor prepare(OutputConsumer outputConsumer, File workingDirectory, ExecutionUnit job) {
+    public static Executor<?> prepare(OutputConsumer outputConsumer, File workingDirectory, ExecutionUnit job) {
         if (job == null) {
             throw new IllegalArgumentException("ExecutionUnit must not be null");
         }
-        Executor executor = create(job.getType(),
+        Executor<?> executor = create(job.getType(),
                                    job.getHost(),
                                    job.getArguments(),
                                    job.asSuperUser(),
@@ -145,6 +150,7 @@ public abstract class Executor<T> implements Runnable {
         executor.setUser(job.getUser());
         executor.setPassword(job.getPassword());
         executor.setOutputConsumer(outputConsumer);
+        memoryRequirements.put(executor, job.getMinMemory() != null ? job.getMinMemory() : 0L);
         return executor;
     }
 
@@ -162,7 +168,7 @@ public abstract class Executor<T> implements Runnable {
     }
 
     public static int execute(OutputConsumer outputConsumer, long timeout, ExecutionUnit job, ActivityListener monitor) {
-        Executor executor = execute(outputConsumer, job, monitor);
+        Executor<?> executor = execute(outputConsumer, job, monitor);
         try {
             executor.getWaitObject().await(timeout, TimeUnit.SECONDS);
         } catch (InterruptedException ignored) {
@@ -175,14 +181,14 @@ public abstract class Executor<T> implements Runnable {
         return executor.getReturnCode();
     }
 
-    public static Executor[] prepare(OutputConsumer outputConsumer, ExecutionUnit... jobs) {
+    public static Executor<?>[] prepare(OutputConsumer outputConsumer, ExecutionUnit... jobs) {
         if (jobs == null || jobs.length == 0) {
             throw new IllegalArgumentException("At least one ExecutionUnit expected");
         }
-        Executor[] executors = new Executor[jobs.length];
+        Executor<?>[] executors = new Executor[jobs.length];
         for (int i = 0; i < jobs.length; i++) {
             ExecutionUnit job = jobs[i];
-            Executor executor = create(job.getType(),
+            Executor<?> executor = create(job.getType(),
                                        job.getHost(),
                                        job.getArguments(),
                                        job.asSuperUser(),
@@ -191,6 +197,7 @@ public abstract class Executor<T> implements Runnable {
             executor.setPassword(job.getPassword());
             executor.setOutputConsumer(outputConsumer);
             executors[i] = executor;
+            memoryRequirements.put(executor, job.getMinMemory() != null ? job.getMinMemory() : 0L);
         }
         return executors;
     }
@@ -203,8 +210,8 @@ public abstract class Executor<T> implements Runnable {
      * @param outputConsumer    The consumer of the process output
      * @param jobs              One or more command descriptors
      */
-    public static Executor[] execute(OutputConsumer outputConsumer, ExecutionUnit... jobs) {
-        Executor[] executors = prepare(outputConsumer, jobs);
+    public static Executor<?>[] execute(OutputConsumer outputConsumer, ExecutionUnit... jobs) {
+        Executor<?>[] executors = prepare(outputConsumer, jobs);
         for (int i = 0; i < jobs.length; i++) {
             //awaitForConditions(jobs[i]);
             executorService.submit(executors[i]);
@@ -225,7 +232,7 @@ public abstract class Executor<T> implements Runnable {
         return execute(outputConsumer, timeout, null, jobs);
     }
     public static int[] execute(OutputConsumer outputConsumer, long timeout, ActivityListener monitor, ExecutionUnit... jobs) {
-        Executor[] executors = prepare(outputConsumer, jobs);
+        Executor<?>[] executors = prepare(outputConsumer, jobs);
         int[] retCodes = new int[executors.length];
         final CountDownLatch aggregateLatch = new CountDownLatch(jobs.length);
         final Thread[] waitThreads = new Thread[jobs.length];
@@ -263,20 +270,20 @@ public abstract class Executor<T> implements Runnable {
         return retCodes;
     }
 
-    public static Executor create(ExecutorType type, String host, List<String> arguments) {
+    public static Executor<?> create(ExecutorType type, String host, List<String> arguments) {
         return create(type, host, arguments, false, SSHMode.EXEC, null);
     }
 
-    public static Executor create(ExecutorType type, String host, List<String> arguments, boolean asSuperUser) {
+    public static Executor<?> create(ExecutorType type, String host, List<String> arguments, boolean asSuperUser) {
         return create(type, host, arguments, asSuperUser, SSHMode.EXEC, null);
     }
 
-    public static Executor create(ExecutorType type, String host, List<String> arguments, boolean asSuperUser, SSHMode mode) {
+    public static Executor<?> create(ExecutorType type, String host, List<String> arguments, boolean asSuperUser, SSHMode mode) {
         return create(type, host, arguments, asSuperUser, mode, null);
     }
 
-    public static Executor create(ExecutorType type, String host, List<String> arguments, boolean asSuperUser, SSHMode mode, File workingDir) {
-        Executor executor = null;
+    public static Executor<?> create(ExecutorType type, String host, List<String> arguments, boolean asSuperUser, SSHMode mode, File workingDir) {
+        Executor<?> executor = null;
         switch (type) {
             case PROCESS:
                 executor = new ProcessExecutor(host, arguments, asSuperUser, workingDir);
@@ -288,7 +295,7 @@ public abstract class Executor<T> implements Runnable {
         return executor;
     }
 
-    public static Executor create(ExecutorType type, String host, int port, List<String> arguments, boolean asSuperUser, SSHMode mode) {
+    public static Executor<?> create(ExecutorType type, String host, int port, List<String> arguments, boolean asSuperUser, SSHMode mode) {
         if (type != ExecutorType.SSH2) {
             throw new IllegalArgumentException("Wrong executor type if port specified");
         }
@@ -308,17 +315,19 @@ public abstract class Executor<T> implements Runnable {
         }
     }
 
-    private static boolean canExecute(ExecutionUnit executionUnit) {
+    private static synchronized boolean canExecute(ExecutionUnit executionUnit) {
         boolean retVal;
-        if (executionUnit.getMinMemory() != null) {
+        final Long minMemory = executionUnit.getMinMemory();
+        if (minMemory != null) {
             try {
                 RuntimeInfo runtimeInfo = RuntimeInfo.createInspector(executionUnit.getHost(),
                                                                       executionUnit.getUser(), executionUnit.getPassword());
-                long availMem = runtimeInfo.getAvailableMemoryMB();
-                retVal = availMem >= executionUnit.getMinMemory();
+                final long availMem = runtimeInfo.getAvailableMemoryMB();
+                final long requested = requestedMemory.get();
+                retVal = (availMem - requested) >= minMemory;
                 Logger.getLogger(Executor.class.getName())
-                        .fine(String.format("Job %s requires %sMB of RAM, system has %sMB available",
-                                            executionUnit.hashCode(), executionUnit.getMinMemory(), availMem));
+                        .fine(String.format("Job %s requires %dMB of RAM, system has %dMB available (of which %dMB requested by other jobs)",
+                                            executionUnit.hashCode(), minMemory, availMem, requested));
             } catch (Exception e) {
                 Logger.getLogger(Executor.class.getName()).warning(e.getMessage());
                 retVal = true;
@@ -400,6 +409,7 @@ public abstract class Executor<T> implements Runnable {
     public void run() {
         try {
             isStopped = isSuspended = false;
+            requestedMemory.getAndAdd(memoryRequirements.get(this));
             retCode = execute(true);
         } catch (Exception e) {
             retCode = -255;
@@ -408,6 +418,7 @@ public abstract class Executor<T> implements Runnable {
             if (this.counter != null) {
                 counter.countDown();
             }
+            requestedMemory.getAndAdd(-memoryRequirements.remove(this));
             isStopped = true;
         }
     }
@@ -418,8 +429,6 @@ public abstract class Executor<T> implements Runnable {
      *
      * @param logMessages   If <code>true</code>, the output will be logged
      *
-     * @throws IOException
-     * @throws InterruptedException
      */
     public abstract int execute(boolean logMessages) throws Exception;
 
