@@ -115,7 +115,12 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
                 Map<String, String> env = new HashMap<>();
                 env.put("create", "false");
                 final String strPath = "jar:file:" + (SystemUtils.IS_OS_LINUX ? "" : "/") + currentResource;
-                fileSystem = FileSystems.newFileSystem(URI.create(strPath), env);
+                final URI uri = URI.create(strPath);
+                try {
+                    fileSystem = FileSystems.getFileSystem(uri);
+                } catch (FileSystemNotFoundException ignored) {
+                    fileSystem = FileSystems.newFileSystem(uri, env);
+                }
                 rPath = fileSystem.getPath("/" + PARAMETER_DESCRIPTOR_RESOURCE);
             } else {
                 rPath = Paths.get(currentResource);
