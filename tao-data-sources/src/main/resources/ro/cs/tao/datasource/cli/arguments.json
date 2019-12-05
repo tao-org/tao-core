@@ -1,4 +1,70 @@
 {
+  "groups" : [
+    {
+      "name": "help",
+      "options": ["help"]
+    },
+    {
+      "name": "out",
+      "options": ["out"]
+    },
+    {
+      "name": "satellite",
+      "options": ["satellite"]
+    },
+    {
+      "name": "repository",
+      "options": ["repository"]
+    },
+    {
+      "name": "user",
+      "options": ["user"]
+    },
+    {
+      "name": "password",
+      "options": ["password"]
+    },
+    {
+      "name": "page",
+      "options": ["page"]
+    },
+    {
+      "name": "pageSize",
+      "options": ["pageSize"]
+    },
+    {
+      "name": "limit",
+      "options": ["limit"]
+    },
+    {
+      "name": "mode",
+      "options": ["mode"]
+    },
+    {
+      "name": "query",
+      "options": ["query"]
+    },
+    {
+      "name": "proxyType",
+      "options": ["proxyType"]
+    },
+    {
+      "name": "proxyHost",
+      "options": ["proxyHost"]
+    },
+    {
+      "name": "proxyPort",
+      "options": ["proxyPort"]
+    },
+    {
+      "name": "proxyUser",
+      "options": ["proxyUser"]
+    },
+    {
+      "name": "proxyPass",
+      "options": ["proxyPass"]
+    }
+  ],
   "options": [
     {
       "name": "help",
@@ -99,6 +165,16 @@
       "valueSeparator": null,
       "required": false,
       "description": "The mode of fetching the products. Default is OVERWRITE"
+    },
+    {
+      "name": "parameters",
+      "opt": "params",
+      "longOpt": "parameters",
+      "cardinality": -1,
+      "hint": "<name1=value1 name2=value2 ...>",
+      "valueSeparator": " ",
+      "required": true,
+      "description": "The values represent pairs of datasource parameter names and values, separated by spaces"
     },
     {
       "name": "query",
