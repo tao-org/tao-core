@@ -16,5 +16,6 @@ public class Constants {
     static final String PROXY_PORT = "proxyPort";
     static final String PROXY_USER = "proxyUser";
     static final String PROXY_PASSWORD = "proxyPass";
+    static final String PARAMETERS = "parameters";
     static final String HELP = "help";
 }
