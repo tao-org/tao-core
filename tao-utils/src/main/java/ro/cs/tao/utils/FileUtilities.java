@@ -76,7 +76,14 @@ public class FileUtilities {
         if (Files.notExists(destination)) {
             Files.createDirectories(destination);
         }
-        try (FileSystem zipFileSystem = FileSystems.newFileSystem(uri, env)) {
+        FileSystem zipFileSystem;
+        try {
+            zipFileSystem = FileSystems.newFileSystem(uri, env);
+        } catch (Exception ex) {
+            logger.warning(ex.getMessage());
+            zipFileSystem = FileSystems.getFileSystem(uri);
+        }
+        try {
             final Path root = zipFileSystem.getPath("/");
             Files.walkFileTree(root, new SimpleFileVisitor<Path>(){
                 @Override
@@ -99,6 +106,10 @@ public class FileUtilities {
                     return FileVisitResult.CONTINUE;
                 }
             });
+        } finally {
+            if (zipFileSystem != null) {
+                zipFileSystem.close();
+            }
         }
         return destination;
     }
