@@ -17,13 +17,12 @@ public class NodeDescriptionTest extends BaseSerializationTest<NodeDescription> 
     @Override
     protected String referenceJSON() {
         return "{\n" +
-                "   \"node\" : {\n" +
                 "      \"active\" : true,\n" +
                 "      \"diskSpace\" : 500,\n" +
                 "      \"id\" : \"host_sample\",\n" +
                 "      \"memory\" : 16,\n" +
                 "      \"processors\" : 4,\n" +
-                "      \"services\" : {\n" +
+                "       \"services\" : {\n" +
                 "         \"servicesStatus\" : [ {\n" +
                 "            \"service\" : {\n" +
                 "               \"description\" : \"Docker description\",\n" +
@@ -39,10 +38,9 @@ public class NodeDescriptionTest extends BaseSerializationTest<NodeDescription> 
                 "            },\n" +
                 "            \"status\" : \"NOT_FOUND\"\n" +
                 "        } ]\n" +
-                "    },\n" +
+                "       },\n" +
                 "      \"userName\" : \"user\",\n" +
                 "      \"password\" : \"drowssap\"\n" +
-                "   }\n" +
                 "}";
     }
 
@@ -51,7 +49,6 @@ public class NodeDescriptionTest extends BaseSerializationTest<NodeDescription> 
         return "<node>\n" +
                 "   <diskSpace>500</diskSpace>\n" +
                 "   <id>host_sample</id>\n" +
-                "   <ipAddress>10.0.0.1</ipAddress>\n" +
                 "   <memory>16</memory>\n" +
                 "   <processors>4</processors>\n" +
                 "   <userName>user</userName>\n" +

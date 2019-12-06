@@ -1,11 +1,6 @@
 import org.junit.Assert;
 import org.junit.Test;
-import ro.cs.tao.component.DataDescriptor;
-import ro.cs.tao.component.ParameterDescriptor;
-import ro.cs.tao.component.ProcessingComponent;
-import ro.cs.tao.component.SourceDescriptor;
-import ro.cs.tao.component.TargetDescriptor;
-import ro.cs.tao.component.Variable;
+import ro.cs.tao.component.*;
 import ro.cs.tao.component.template.BasicTemplate;
 import ro.cs.tao.component.template.Template;
 import ro.cs.tao.component.template.TemplateType;
@@ -22,40 +17,35 @@ public class ProcessingComponentTest extends BaseSerializationTest<ProcessingCom
     @Override
     protected String referenceJSON() {
         return "{\n" +
-                "   \"processingComponent\" : {\n" +
                 "      \"id\" : \"OTB-Segmentation-CC\",\n" +
                 "      \"authors\" : \"King Arthur\",\n" +
                 "      \"copyright\" : \"(C) Camelot Productions\",\n" +
                 "      \"description\" : \"Performs segmentation of an image, and output either a raster or a vector file. In vector mode, large input datasets are supported.\",\n" +
                 "      \"label\" : \"OTB Segmentation CC\",\n" +
                 "      \"nodeAffinity\" : \"Any\",\n" +
-                "      \"inputs\" : {\n" +
                 "         \"sources\" : [ {\n" +
                 "            \"id\" : \"sourceProductFile\",\n" +
                 "            \"parentId\" : \"OTB-Segmentation-Cc\",\n" +
                 "            \"dataDescriptor\" : {\n" +
-                "                   \"dataFormat\" : \"RASTER\"" +
+                "                   \"formatType\" : \"RASTER\"" +
                 "             },\n" +
-                "            \"constraints\" : {\n" +
+//                "            \"constraints\" : {\n" +
                 "               \"constraint\" : [ \"Only rasters\" ]\n" +
-                "            }\n" +
-                "         } ]\n" +
-                "      },\n" +
-                "      \"outputs\" : {\n" +
+//                "            }\n" +
+                "         } ],\n" +
                 "         \"targets\" : [ {\n" +
                 "            \"id\" : \"out_str\",\n" +
                 "            \"parentId\" : \"OTB-Segmentation-Cc\",\n" +
                 "            \"dataDescriptor\" : {\n" +
-                "                   \"dataFormat\" : \"RASTER\"" +
+                "                   \"formatType\" : \"RASTER\"" +
                 "             },\n" +
-                "            \"constraints\" : {\n" +
+//                "            \"constraints\" : {\n" +
                 "               \"constraint\" : [ ]\n" +
-                "            }\n" +
-                "         } ]\n" +
-                "      },\n" +
+//                "            }\n" +
+                "         } ],\n" +
                 "      \"version\" : \"1.0\",\n" +
                 "      \"fileLocation\" : \"E:\\\\OTB\\\\otbcli_Segmentation.bat\",\n" +
-                "      \"parameters\" : {\n" +
+//                "      \"parameters\" : {\n" +
                 "         \"parameterDescriptors\" : [ {\n" +
                 "            \"id\" : \"outmode_string\",\n" +
                 "            \"dataType\" : \"java.lang.String\",\n" +
@@ -66,22 +56,21 @@ public class ProcessingComponentTest extends BaseSerializationTest<ProcessingCom
                 "            \"dataType\" : \"java.lang.Boolean\",\n" +
                 "            \"defaultValue\" : \"true\",\n" +
                 "            \"description\" : \"Activate 8-Neighborhood connectivity (default is 4).\"\n" +
-                "         } ]\n" +
-                "      },\n" +
+                "         } ],\n" +
+//                "      },\n" +
                 "      \"template\" : {\n" +
                 "         \"type\" : \"basicTemplate\",\n" +
                 "         \"contents\" : \"-in\\n$sourceProductFile\\n-filter.cc.expr\\n$expr_string\\n-mode.vector.out\\n$out_str\\n-mode.vector.outmode\\n$outmode_string\\n-mode.vector.neighbor\\n$neighbor_bool\\n-mode.vector.stitch\\n$stitch_bool\\n-mode.vector.minsize\\n$minsize_int\\n-mode.vector.simplify\\n$simplify_float\\n-mode.vector.layername\\n$layername_string\\n-mode.vector.fieldname\\n$fieldname_string\\n-mode.vector.tilesize\\n$tilesize_int\\n-mode.vector.startlabel\\n$startlabel_int\",\n" +
                 "         \"id\" : \"segmentation-cc-template.vm\",\n" +
                 "         \"templateType\" : 1\n" +
                 "      },\n" +
-                "      \"variables\" : {\n" +
+//                "      \"variables\" : {\n" +
                 "         \"variables\" : [ {\n" +
-                "            \"id\" : \"ITK_AUTOLOAD_PATH\",\n" +
+                "            \"key\" : \"ITK_AUTOLOAD_PATH\",\n" +
                 "            \"value\" : \"E:\\\\OTB\\\\bin\"\n" +
-                "         } ]\n" +
-                "      },\n" +
+                "         } ],\n" +
+//                "      },\n" +
                 "      \"workingDirectory\" : \"E:\\\\OTB\"\n" +
-                "   }\n" +
                 "}";
     }
 
@@ -99,7 +88,7 @@ public class ProcessingComponentTest extends BaseSerializationTest<ProcessingCom
                 "            <id>sourceProductFile</id>\n" +
                 "            <parentId>OTB-Segmentation-CC</parentId>\n" +
                 "            <dataDescriptor>\n" +
-                "               <dataFormat>RASTER</dataFormat>\n" +
+                "               <formatType>RASTER</formatType>\n" +
                 "            </dataDescriptor>\n" +
                 "            <constraints>\n" +
                 "                <constraint>Only rasters</constraint>/>\n" +
@@ -111,7 +100,7 @@ public class ProcessingComponentTest extends BaseSerializationTest<ProcessingCom
                 "            <id>out_str</id>\n" +
                 "            <parentId>OTB-Segmentation-CC</parentId>\n" +
                 "            <dataDescriptor>\n" +
-                "               <dataFormat>RASTER</dataFormat>\n" +
+                "               <formatType>RASTER</formatType>\n" +
                 "            </dataDescriptor>\n" +
                 "            <constraints/>\n" +
                 "        </targets>\n" +
@@ -162,7 +151,7 @@ public class ProcessingComponentTest extends BaseSerializationTest<ProcessingCom
                 "    </template>\n" +
                 "    <variables>\n" +
                 "        <variables>\n" +
-                "            <id>ITK_AUTOLOAD_PATH</id>\n" +
+                "            <key>ITK_AUTOLOAD_PATH</key>\n" +
                 "            <value>E:\\OTB\\bin</value>\n" +
                 "        </variables>\n" +
                 "    </variables>\n" +

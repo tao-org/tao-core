@@ -1,0 +1,240 @@
+{
+  "groups" : [
+    {
+      "name": "help",
+      "options": ["help"]
+    },
+    {
+      "name": "out",
+      "options": ["out"]
+    },
+    {
+      "name": "satellite",
+      "options": ["satellite"]
+    },
+    {
+      "name": "repository",
+      "options": ["repository"]
+    },
+    {
+      "name": "user",
+      "options": ["user"]
+    },
+    {
+      "name": "password",
+      "options": ["password"]
+    },
+    {
+      "name": "page",
+      "options": ["page"]
+    },
+    {
+      "name": "pageSize",
+      "options": ["pageSize"]
+    },
+    {
+      "name": "limit",
+      "options": ["limit"]
+    },
+    {
+      "name": "mode",
+      "options": ["mode"]
+    },
+    {
+      "name": "query",
+      "options": ["query"]
+    },
+    {
+      "name": "proxyType",
+      "options": ["proxyType"]
+    },
+    {
+      "name": "proxyHost",
+      "options": ["proxyHost"]
+    },
+    {
+      "name": "proxyPort",
+      "options": ["proxyPort"]
+    },
+    {
+      "name": "proxyUser",
+      "options": ["proxyUser"]
+    },
+    {
+      "name": "proxyPass",
+      "options": ["proxyPass"]
+    }
+  ],
+  "options": [
+    {
+      "name": "help",
+      "opt": "h",
+      "longOpt": "help",
+      "cardinality": 2,
+      "hint": "satellite [repository]",
+      "valueSeparator": " ",
+      "required": false,
+      "description": "Display repository plugins. If repository is also given, displays the parameters supported by it"
+    },
+    {
+      "name": "out",
+      "opt": "o",
+      "longOpt": "out",
+      "cardinality": 1,
+      "hint": "output path",
+      "valueSeparator": null,
+      "required": true,
+      "description": "The path in which the products will be downloaded"
+    },
+    {
+      "name": "satellite",
+      "opt": "s",
+      "longOpt": "satellite",
+      "cardinality": 1,
+      "hint": "satellite name",
+      "valueSeparator": null,
+      "required": true,
+      "description": "The satellite to search for"
+    },
+    {
+      "name": "repository",
+      "opt": "r",
+      "longOpt": "repository",
+      "cardinality": 1,
+      "hint": "repository name",
+      "valueSeparator": null,
+      "required": true,
+      "description": "The remote repository where the products will be searched"
+    },
+    {
+      "name": "user",
+      "opt": "u",
+      "longOpt": "user",
+      "cardinality": 1,
+      "hint": "repository user",
+      "valueSeparator": null,
+      "required": false,
+      "description": "The user to login to the remote repository"
+    },
+    {
+      "name": "password",
+      "opt": "pwd",
+      "longOpt": "password",
+      "cardinality": 1,
+      "hint": "repository password",
+      "valueSeparator": null,
+      "required": false,
+      "description": "The password to login to the remote repository"
+    },
+    {
+      "name": "page",
+      "opt": "p",
+      "longOpt": "page",
+      "cardinality": 1,
+      "hint": "integer",
+      "valueSeparator": null,
+      "required": false,
+      "description": "The page number. Default is 1"
+    },
+    {
+      "name": "pageSize",
+      "opt": "ps",
+      "longOpt": "pageSize",
+      "cardinality": 1,
+      "hint": "integer",
+      "valueSeparator": null,
+      "required": false,
+      "description": "The page size. Default is 10"
+    },
+    {
+      "name": "limit",
+      "opt": "l",
+      "longOpt": "limit",
+      "cardinality": 1,
+      "hint": "integer",
+      "valueSeparator": null,
+      "required": false,
+      "description": "Maximum number of products. Default is 20"
+    },
+    {
+      "name": "mode",
+      "opt": "m",
+      "longOpt": "mode",
+      "cardinality": 1,
+      "hint": "OVERWRITE|RESUME",
+      "valueSeparator": null,
+      "required": false,
+      "description": "The mode of fetching the products. Default is OVERWRITE"
+    },
+    {
+      "name": "parameters",
+      "opt": "params",
+      "longOpt": "parameters",
+      "cardinality": -1,
+      "hint": "<name1=value1 name2=value2 ...>",
+      "valueSeparator": " ",
+      "required": true,
+      "description": "The values represent pairs of datasource parameter names and values, separated by spaces"
+    },
+    {
+      "name": "query",
+      "opt": "query",
+      "longOpt": "queryOnly",
+      "cardinality": 0,
+      "hint": null,
+      "valueSeparator": null,
+      "required": false,
+      "description": "Perform only the query and return the product names"
+    },
+    {
+      "name": "proxyType",
+      "opt": "pType",
+      "longOpt": "proxyType",
+      "cardinality": 1,
+      "hint": "http|socks",
+      "valueSeparator": null,
+      "required": false,
+      "description": "Proxy type. Supported values are http or socks"
+    },
+    {
+      "name": "proxyHost",
+      "opt": "pHost",
+      "longOpt": "proxyHost",
+      "cardinality": 1,
+      "hint": "host name or IP address",
+      "valueSeparator": null,
+      "required": false,
+      "description": "Proxy host"
+    },
+    {
+      "name": "proxyPort",
+      "opt": "pPort",
+      "longOpt": "proxyPort",
+      "cardinality": 1,
+      "hint": "integer",
+      "valueSeparator": null,
+      "required": false,
+      "description": "Proxy port"
+    },
+    {
+      "name": "proxyUser",
+      "opt": "pUser",
+      "longOpt": "proxyUser",
+      "cardinality": 1,
+      "hint": "proxy user",
+      "valueSeparator": null,
+      "required": false,
+      "description": "Proxy user. Don't use if the proxy doesn't require authentication"
+    },
+    {
+      "name": "proxyPass",
+      "opt": "pPwd",
+      "longOpt": "proxyPwd",
+      "cardinality": 1,
+      "hint": "proxy password",
+      "valueSeparator": null,
+      "required": false,
+      "description": "Proxy password. Don't use if the proxy doesn't require authentication"
+    }
+  ]
+}

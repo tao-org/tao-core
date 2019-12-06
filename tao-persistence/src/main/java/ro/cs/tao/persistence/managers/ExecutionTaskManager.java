@@ -48,13 +48,11 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
     }
 
     @Transactional
-    public List<ExecutionTask> getRunningTasks() {
-        return repository.getRunningTasks();
-    }
+    public List<ExecutionTask> getRunningTasks() { return repository.getRunningTasks(); }
 
-    public List<ExecutionTask> getExecutingTasks() {
-        return repository.getExecutingTasks();
-    }
+    public List<ExecutionTask> getExecutingTasks() { return repository.getExecutingTasks(); }
+
+    public List<ExecutionTask> getRemoteExecutingTasks() { return repository.getRemoteExecutingTasks(); }
 
     @Transactional
     public List<ExecutionTaskSummary> getStatus(long jobId) {

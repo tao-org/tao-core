@@ -135,6 +135,12 @@ public abstract class EOData implements Serializable {
         return attribute != null ? attribute.getValue() : null;
     }
 
+    public void removeAttribute(String name) {
+        if (this.attributes != null) {
+            this.attributes.removeIf(a -> a.getName().equals(name));
+        }
+    }
+
     public String getCrs() {
         try {
             return new CRSAdapter().unmarshal(this.crs);

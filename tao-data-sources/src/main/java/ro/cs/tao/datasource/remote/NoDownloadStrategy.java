@@ -1,5 +1,6 @@
 package ro.cs.tao.datasource.remote;
 
+import ro.cs.tao.datasource.DataSource;
 import ro.cs.tao.datasource.InterruptedException;
 import ro.cs.tao.eodata.EOProduct;
 
@@ -9,8 +10,8 @@ import java.util.Properties;
 
 public class NoDownloadStrategy extends DownloadStrategy {
 
-    public NoDownloadStrategy(String targetFolder, Properties properties) {
-        super(targetFolder, properties);
+    public NoDownloadStrategy(DataSource dataSource, String targetFolder, Properties properties) {
+        super(dataSource, targetFolder, properties);
     }
 
     private NoDownloadStrategy(NoDownloadStrategy other) {

@@ -172,24 +172,24 @@ public class Orchestrator extends Notifiable {
     }
 
     /**
-     * Stops the execution of the job corresponding to this workflow.
+     * Stops the execution of the given job corresponding
      *
-     * @param workflowId The workflow identifier
+     * @param jobId The job identifier
      * @throws ExecutionException In case anything goes wrong or there was no job for this workflow
      */
-    public void stopWorkflow(long workflowId) throws ExecutionException {
-        ExecutionJob job = checkWorkflow(workflowId);
+    public void stopJob(long jobId) throws ExecutionException {
+        ExecutionJob job = checkJob(jobId);
         JobCommand.STOP.applyTo(job);
     }
 
     /**
-     * Pauses (suspends) the execution of the job corresponding to this workflow.
+     * Pauses (suspends) the execution of the given job corresponding.
      *
-     * @param workflowId The workflow identifier
+     * @param jobId The job identifier
      * @throws ExecutionException In case anything goes wrong or there was no job for this workflow
      */
-    public void pauseWorkflow(long workflowId) throws ExecutionException {
-        ExecutionJob job = checkWorkflow(workflowId);
+    public void pauseJob(long jobId) throws ExecutionException {
+        ExecutionJob job = checkJob(jobId);
         JobCommand.SUSPEND.applyTo(job);
     }
 
@@ -199,8 +199,8 @@ public class Orchestrator extends Notifiable {
      * @param workflowId The workflow identifier
      * @throws ExecutionException In case anything goes wrong or there was no job for this workflow
      */
-    public void resumeWorkflow(long workflowId) throws ExecutionException {
-        ExecutionJob job = checkWorkflow(workflowId);
+    public void resumeJob(long workflowId) throws ExecutionException {
+        ExecutionJob job = checkJob(workflowId);
         JobCommand.RESUME.applyTo(job);
     }
 
@@ -746,14 +746,12 @@ public class Orchestrator extends Notifiable {
         }
     }
 
-    private ExecutionJob checkWorkflow(long workflowId) {
-        List<ExecutionJob> jobs = persistenceManager.getJobs(workflowId);
-        if (jobs == null || jobs.isEmpty()) {
-            throw new ExecutionException(String.format("No job exists for workflow %s", workflowId));
+    private ExecutionJob checkJob(long jobId) {
+        ExecutionJob job = persistenceManager.getJobById(jobId);
+        if (job == null) {
+            throw new ExecutionException(String.format("Job [id=%d] does not exist", jobId));
         }
-        return jobs.stream().filter(j -> j.getExecutionStatus() != ExecutionStatus.DONE
-                && j.getExecutionStatus() != ExecutionStatus.CANCELLED
-                && j.getExecutionStatus() != ExecutionStatus.FAILED).findFirst().orElse(null);
+        return job;
     }
 
     private void bulkSetStatus(Collection<ExecutionTask> tasks, ExecutionStatus status) {

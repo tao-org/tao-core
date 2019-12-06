@@ -17,9 +17,9 @@ package ro.cs.tao.datasource;
 
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.datasource.param.DataSourceParameter;
-import ro.cs.tao.datasource.util.NetUtils;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
+import ro.cs.tao.utils.NetUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -74,6 +74,13 @@ public class DataSourceManager {
                 }
             }
         });
+    }
+
+    /**
+     * Returns all the registered (detected) data sources
+     */
+    public Set<DataSource> getRegisteredDataSources() {
+        return new HashSet<>(this.registry.getServices());
     }
 
     /**

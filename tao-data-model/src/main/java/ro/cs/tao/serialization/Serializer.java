@@ -15,7 +15,6 @@
  */
 package ro.cs.tao.serialization;
 
-import javax.xml.transform.stream.StreamSource;
 import java.util.List;
 
 /**
@@ -24,8 +23,8 @@ import java.util.List;
 public interface Serializer<S, R> {
 
     void setFormatOutput(boolean value);
-    S deserialize(StreamSource source) throws SerializationException;
-    List<S> deserializeList(Class<S> sClass, StreamSource source) throws SerializationException;
+    S deserialize(String source) throws SerializationException;
+    List<S> deserialize(Class<S> sClass, String source) throws SerializationException;
     R serialize(S object) throws SerializationException;
     R serialize(List<S> objects, String name) throws SerializationException;
 

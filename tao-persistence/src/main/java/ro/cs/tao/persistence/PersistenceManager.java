@@ -24,8 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.Sort;
 import ro.cs.tao.Tag;
 import ro.cs.tao.component.GroupComponent;
-import ro.cs.tao.component.ParameterDescriptor;
-import ro.cs.tao.component.ParameterExpansionRule;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.enums.TagType;
 import ro.cs.tao.datasource.DataSourceComponent;
@@ -399,15 +397,6 @@ public class PersistenceManager implements MessagePersister {
     }
 
     public ProcessingComponent saveProcessingComponent(ProcessingComponent component) throws PersistenceException {
-        final List<ParameterDescriptor> descriptors = component.getParameterDescriptors();
-        if (descriptors != null) {
-            descriptors.forEach(d -> {
-                ParameterExpansionRule expansionRule = d.getExpansionRule();
-                if (expansionRule != null && !d.getId().equals(expansionRule.getParameterId())) {
-                    expansionRule.setParameterId(d.getId());
-                }
-            });
-        }
         ProcessingComponent c = processingComponentManager.save(component);
         componentCache.put(c.getId(), c);
         return c;
@@ -415,15 +404,6 @@ public class PersistenceManager implements MessagePersister {
 
 
     public ProcessingComponent updateProcessingComponent(ProcessingComponent component) throws PersistenceException {
-        final List<ParameterDescriptor> descriptors = component.getParameterDescriptors();
-        if (descriptors != null) {
-            descriptors.forEach(d -> {
-                ParameterExpansionRule expansionRule = d.getExpansionRule();
-                if (expansionRule != null && !d.getId().equals(expansionRule.getParameterId())) {
-                    expansionRule.setParameterId(d.getId());
-                }
-            });
-        }
         ProcessingComponent c = processingComponentManager.update(component);
         componentCache.put(c.getId(), c);
         return c;
@@ -681,6 +661,10 @@ public class PersistenceManager implements MessagePersister {
 
     public List<ExecutionTask> getExecutingTasks() {
         return executionTaskManager.getExecutingTasks();
+    }
+
+    public List<ExecutionTask> getRemoteExecutingTasks() {
+        return executionTaskManager.getRemoteExecutingTasks();
     }
 
     public List<ExecutionTaskSummary> getTasksStatus(long jobId) {

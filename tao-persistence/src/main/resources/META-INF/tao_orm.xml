@@ -505,10 +505,10 @@
             <basic name="notNull">
                 <column name="not_null" nullable="true" column-definition="boolean NULL"/>
             </basic>
-            <one-to-one name="expansionRule" fetch="EAGER" target-entity="ro.cs.tao.component.ParameterExpansionRule">
-                <join-column name="id" referenced-column-name="parameter_id"/>
+            <one-to-one name="expansionRule" fetch="LAZY" target-entity="ro.cs.tao.component.ParameterExpansionRule">
+                <join-column name="id" referenced-column-name="id" />
                 <cascade>
-                    <cascade-all/>
+                    <cascade-refresh/>
                 </cascade>
             </one-to-one>
 
@@ -620,7 +620,8 @@
         <table name="execution.task"/>
         <!-- set inheritance to single table, since ExecutionGroup           inherits from ExecutionTask,
                                                     ProcessingExecutionTask  inherits from ExecutionTask,
-                                                    DataSourceExecutionTask  inherits from ExecutionTask-->
+                                                    DataSourceExecutionTask  inherits from ExecutionTask
+                                                    WPSExecutionTask         inherits from ExecutionTask-->
         <inheritance strategy="SINGLE_TABLE"/>
 
         <!-- define discriminator in root class, avoid default DTYPE -->
@@ -740,6 +741,18 @@
                     <cascade-all/>
                 </cascade>
             </many-to-many>
+        </attributes>
+    </entity>
+
+    <entity class="ro.cs.tao.execution.model.WPSExecutionTask" access="PROPERTY">
+
+        <discriminator-value>33</discriminator-value>
+
+        <attributes>
+            <many-to-one name="component" fetch="LAZY" target-entity="ro.cs.tao.component.WPSComponent">
+                <join-column name="component_id" nullable="false"/>
+            </many-to-one>
+            <!--<transient name="instanceTargetOutput"/>-->
         </attributes>
     </entity>
 
@@ -1184,8 +1197,8 @@
     <entity class="ro.cs.tao.component.ParameterExpansionRule" access="PROPERTY">
         <table name="component.processing_parameter_expansion"/>
         <attributes>
-            <id name="parameterId">
-                <column name="parameter_id" nullable="false"/>
+            <id name="id">
+                <column name="id" nullable="false"/>
             </id>
             <basic name="joinValues">
                 <column name="join_values" nullable="false" column-definition="boolean NOT NULL DEFAULT true"/>
