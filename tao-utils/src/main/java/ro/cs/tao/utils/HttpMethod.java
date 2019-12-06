@@ -13,19 +13,12 @@
  * You should have received a copy of the GNU General Public License along
  * with this program; if not, see http://www.gnu.org/licenses/
  */
-package ro.cs.tao.serialization;
-
-import java.util.List;
+package ro.cs.tao.utils;
 
 /**
  * @author Cosmin Cara
  */
-public interface Serializer<S, R> {
-
-    void setFormatOutput(boolean value);
-    S deserialize(String source) throws SerializationException;
-    List<S> deserialize(Class<S> sClass, String source) throws SerializationException;
-    R serialize(S object) throws SerializationException;
-    R serialize(List<S> objects, String name) throws SerializationException;
-
+public enum HttpMethod {
+    GET,
+    POST
 }

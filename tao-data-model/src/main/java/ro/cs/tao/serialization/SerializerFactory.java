@@ -30,7 +30,7 @@ public class SerializerFactory {
         }
     }
 
-    public static <T> BaseSerializer<T> create(Class<T> clazz, MediaType mediaType, Class...dependencies) throws SerializationException {
+    /*public static <T> BaseSerializer<T> create(Class<T> clazz, MediaType mediaType, Class...dependencies) throws SerializationException {
         switch (mediaType) {
             case JSON:
                 return new JsonSerializer<T>(clazz, dependencies);
@@ -38,6 +38,6 @@ public class SerializerFactory {
             default:
                 return new XmlSerializer<T>(clazz, dependencies);
         }
-    }
+    }*/
 
 }

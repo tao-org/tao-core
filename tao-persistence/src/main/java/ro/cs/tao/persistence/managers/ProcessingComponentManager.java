@@ -16,16 +16,26 @@
 
 package ro.cs.tao.persistence.managers;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import ro.cs.tao.component.ParameterDescriptor;
+import ro.cs.tao.component.ParameterExpansionRule;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.enums.ProcessingComponentType;
+import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.persistence.repository.ParameterExpansionRuleRepository;
 import ro.cs.tao.persistence.repository.ProcessingComponentRepository;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Component("processingComponentManager")
 public class ProcessingComponentManager extends TaoComponentManager<ProcessingComponent, ProcessingComponentRepository> {
+
+    @Autowired
+    private ParameterExpansionRuleRepository expansionRuleRepository;
 
     /**
      * Retrieve active processing components with SYSTEM and CONTRIBUTOR visibility
@@ -42,6 +52,38 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
 
     public List<ProcessingComponent> getProcessingComponentsByLabel(String label) {
         return repository.getByLabel(label);
+    }
+
+    @Override
+    public ProcessingComponent save(ProcessingComponent entity) throws PersistenceException {
+        List<ParameterDescriptor> descriptors = entity.getParameterDescriptors();
+        Map<ParameterDescriptor, ParameterExpansionRule> map = new HashMap<>();
+        if (descriptors != null) {
+            descriptors.forEach(d -> {
+                ParameterExpansionRule expansionRule = d.getExpansionRule();
+                if (expansionRule != null && !d.getId().equals(expansionRule.getId())) {
+                    expansionRule.setId(d.getId());
+                    map.put(d, expansionRule);
+                    d.setExpansionRule(null);
+                }
+            });
+        }
+        super.save(entity);
+        if (map.size() > 0) {
+            expansionRuleRepository.saveAll(map.values());
+            descriptors.forEach(d -> {
+                if (map.containsKey(d)) {
+                    d.setExpansionRule(map.get(d));
+                }
+            });
+            map.clear();
+        }
+        return entity;
+    }
+
+    @Override
+    public ProcessingComponent update(ProcessingComponent entity) throws PersistenceException {
+        return super.update(entity);
     }
 
     @Override

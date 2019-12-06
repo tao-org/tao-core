@@ -15,11 +15,9 @@ public class EOProductTest extends BaseSerializationTest<EOProduct> {
     @Override
     protected String referenceJSON() {
         return "{\n" +
-                "   \"eoData\" : {\n" +
                 "      \"crs\" : \"EPSG:4326\",\n" +
                 "      \"geometry\" : \"POLYGON ((0 0, 1 1, 2 2, 3 3, 0 0))\",\n" +
                 "      \"id\" : \"1234567890\",\n" +
-                "      \"id\" : \"Product\",\n" +
                 "      \"formatType\" : \"1\",\n" +
                 "      \"acquisitionDate\" : \"2017-09-01T18:33:47+03:00\",\n" +
                 "      \"height\" : 1024,\n" +
@@ -27,7 +25,6 @@ public class EOProductTest extends BaseSerializationTest<EOProduct> {
                 "      \"productType\" : \"Satellite-5\",\n" +
                 "      \"sensorType\" : \"0\",\n" +
                 "      \"width\" : 1024\n" +
-                "   }\n" +
                 "}";
     }
 
@@ -37,7 +34,6 @@ public class EOProductTest extends BaseSerializationTest<EOProduct> {
                 "    <crs>EPSG:4326</crs>\n" +
                 "    <geometry>POLYGON ((0 0, 1 1, 2 2, 3 3, 0 0))</geometry>\n" +
                 "    <id>1234567890</id>\n" +
-                "    <id>Product</id>\n" +
                 "    <formatType>1</formatType>\n" +
                 "    <acquisitionDate>2017-09-01T18:33:47+03:00</acquisitionDate>\n" +
                 "    <height>1024</height>\n" +
@@ -47,7 +43,7 @@ public class EOProductTest extends BaseSerializationTest<EOProduct> {
                 "    <width>1024</width>\n" +
                 "    <attributes>\n" +
                 "        <attribute>\n" +
-                "            <id>attributeX</id>\n" +
+                "            <name>attributeX</name>\n" +
                 "            <value>valueX</value>\n" +
                 "        </attribute>\n" +
                 "    </attributes>\n" +

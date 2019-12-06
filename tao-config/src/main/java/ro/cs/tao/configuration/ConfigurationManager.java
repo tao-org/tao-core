@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
@@ -30,6 +31,7 @@ import java.util.stream.Collectors;
  * @author Cosmin Cara
  */
 public class ConfigurationManager {
+    public static final String APP_HOME = "app.home";
     private static ConfigurationManager instance;
     private static final String CONFIG_FILE_NAME = "tao.properties";
     // this field may be set by the launcher of the services
@@ -56,6 +58,11 @@ public class ConfigurationManager {
     }
 
     public Path getScriptsFolder() { return scriptsFolder; }
+
+    public Path getApplicationHome() {
+        final String value = this.settings.getProperty(APP_HOME);
+        return value != null ? Paths.get(value) : null;
+    }
 
     public String getValue(String name) {
         return this.settings.getProperty(name, null);

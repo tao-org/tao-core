@@ -26,8 +26,6 @@ import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.serialization.SerializerFactory;
 
 import javax.xml.bind.annotation.XmlTransient;
-import javax.xml.transform.stream.StreamSource;
-import java.io.StringReader;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
@@ -235,7 +233,7 @@ public abstract class DataQuery extends StringIdentifiable {
 
     public void importParameters(String xml) throws SerializationException {
         final BaseSerializer<QueryParameter> serializer = SerializerFactory.create(QueryParameter.class, MediaType.XML);
-        List<QueryParameter> parameters = serializer.deserializeList(QueryParameter.class, new StreamSource(new StringReader(xml)));
+        List<QueryParameter> parameters = serializer.deserialize(QueryParameter.class, xml);
         this.parameters.clear();
         for (QueryParameter parameter : parameters) {
             addParameter(parameter.getName(), parameter.getValue());

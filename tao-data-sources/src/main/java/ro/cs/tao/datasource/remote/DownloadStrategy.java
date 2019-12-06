@@ -17,13 +17,11 @@ package ro.cs.tao.datasource.remote;
 
 import org.apache.http.auth.UsernamePasswordCredentials;
 import ro.cs.tao.ProgressListener;
-import ro.cs.tao.datasource.DefaultProductPathBuilder;
 import ro.cs.tao.datasource.InterruptedException;
-import ro.cs.tao.datasource.ProductFetchStrategy;
-import ro.cs.tao.datasource.ProductPathBuilder;
-import ro.cs.tao.datasource.util.NetUtils;
+import ro.cs.tao.datasource.*;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.utils.FileUtilities;
+import ro.cs.tao.utils.NetUtils;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -60,6 +58,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     private static final String PROGRESS_INTERVAL = "progress.interval";
     private static final String MISSING_ACTION = "local.missing.action";
     private final boolean progressEnabled;
+    protected final DataSource dataSource;
     protected Properties props;
     protected String destination;
     protected EOProduct currentProduct;
@@ -78,7 +77,8 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     private long progressReportInterval;
     private boolean downloadIfNotFound;
 
-    public DownloadStrategy(String targetFolder, Properties properties) {
+    public DownloadStrategy(DataSource dataSource, String targetFolder, Properties properties) {
+        this.dataSource = dataSource;
         this.destination = targetFolder;
         this.props = properties;
         this.progressEnabled = Boolean.parseBoolean(this.props.getProperty(PROGRESS_KEY, "true"));
@@ -103,6 +103,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         this.fetchMode = other.fetchMode;
         this.progressReportInterval = other.progressReportInterval;
         this.pathBuilder = other.pathBuilder;
+        this.dataSource = other.dataSource;
     }
 
     /**
@@ -205,11 +206,10 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
             throw new IOException("Invalid product name [null]");
         }
         activityStart(product.getName());
+        Path file = null;
         try {
             currentProduct = product;
-            currentProductProgress = new ProductProgress(currentProduct.getApproximateSize(),
-                                                         adjustProductLength());
-            Path file;
+            currentProductProgress = new ProductProgress(currentProduct.getApproximateSize(), adjustProductLength());
             final Path destPath = Paths.get(destination);
             FileUtilities.ensureExists(destPath);
             switch (this.fetchMode) {
@@ -257,10 +257,12 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
                     logger.warning("Product download aborted");
                 }
             }
-            return file;
+        } catch (IOException e) {
+            logger.severe(e.getMessage());
         } finally {
             activityEnd();
         }
+        return file;
     }
 
     public abstract DownloadStrategy clone();
@@ -514,7 +516,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
             logger.severe("Operation timed out");
             throw new IOException("Operation timed out");
         } catch (Exception ex) {
-            ex.printStackTrace();
+            //ex.printStackTrace();
             String errMsg = String.format(errorMessage, remoteUrl, ex.getMessage());
             logger.severe(errMsg);
             throw new IOException(errMsg);

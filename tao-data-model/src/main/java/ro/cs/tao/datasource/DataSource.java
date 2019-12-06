@@ -61,7 +61,7 @@ public abstract class DataSource<Q extends DataQuery> extends StringIdentifiable
      * The default value is 1; implementors may override this to allow more concurrent downloads.
      */
     @XmlTransient
-    public int getMaximumAllowedTransfers() { return 1; }
+    public int getMaximumAllowedTransfers() { return 4; }
 
     /**
      * Returns the timeout for this data source connection
@@ -80,6 +80,16 @@ public abstract class DataSource<Q extends DataQuery> extends StringIdentifiable
      */
     @XmlTransient
     public abstract String getConnectionString();
+    /**
+     * Returns the connection string for this data source and the given sensor.
+     * In the case of a remote data source, it is the base url of the remote endpoint.
+     * In the case of a database data source, it is the connection string of the database.
+     * The default implementation delegates to getConnectionString()
+     */
+    @XmlTransient
+    public String getConnectionString(String sensorName) {
+        return getConnectionString();
+    }
     /**
      * Sets the connection string for this data source.
      * @param connectionString      The connection string

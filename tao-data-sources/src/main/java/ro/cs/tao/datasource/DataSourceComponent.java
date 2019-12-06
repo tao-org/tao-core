@@ -16,6 +16,7 @@
 package ro.cs.tao.datasource;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
+import ro.cs.tao.ProgressListener;
 import ro.cs.tao.component.DataDescriptor;
 import ro.cs.tao.component.SourceDescriptor;
 import ro.cs.tao.component.TaoComponent;
@@ -76,6 +77,8 @@ public class DataSourceComponent extends TaoComponent {
     private int maxRetries;
     @XmlTransient
     private List<Parameter> overriddenParameters;
+    @XmlTransient
+    private ProgressListener progressListener;
 
     @XmlTransient
     private final Logger logger;
@@ -293,6 +296,12 @@ public class DataSourceComponent extends TaoComponent {
     }
 
     /**
+     * Sets a progress listener that will receive progress notifications.
+     * @param listener  The progress listener
+     */
+    public void setProgressListener(ProgressListener listener) { this.progressListener = listener; }
+
+    /**
      * Returns the product that this component currently is trying to fetch.
      */
     public EOProduct getCurrentProduct() { return currentProduct; }
@@ -411,9 +420,13 @@ public class DataSourceComponent extends TaoComponent {
                         logger.warning(String.format("Fetch strategy for data source [%s] doesn't support tiles filter",
                                                      dataSourceName));
                     }
-                    currentFetcher.setProgressListener(new ProgressNotifier(SessionStore.currentContext().getPrincipal(),
-                                                                            this,
-                                                                            DataSourceTopic.PRODUCT_PROGRESS));
+                    if (this.progressListener == null) {
+                        currentFetcher.setProgressListener(new ProgressNotifier(SessionStore.currentContext().getPrincipal(),
+                                                                                this,
+                                                                                DataSourceTopic.PRODUCT_PROGRESS));
+                    } else {
+                        currentFetcher.setProgressListener(this.progressListener);
+                    }
                     Path productPath = currentFetcher.fetch(product);
                     if (productPath != null) {
                         product.setLocation(productPath.toUri().toString());

@@ -15,113 +15,82 @@
  */
 package ro.cs.tao.serialization;
 
-import ro.cs.tao.component.constraints.*;
-import ro.cs.tao.component.template.BasicTemplate;
-import ro.cs.tao.component.template.Template;
-import ro.cs.tao.component.validation.*;
-import ro.cs.tao.component.validation.Validator;
-import ro.cs.tao.datasource.param.QueryParameter;
-import ro.cs.tao.eodata.Polygon2D;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
-import javax.xml.bind.*;
-import javax.xml.namespace.QName;
-import javax.xml.transform.stream.StreamSource;
-import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author  Cosmin Cara
  */
 public abstract class BaseSerializer<T> implements Serializer<T, String> {
-    private static Class[] classes;
-    protected boolean formatOutput;
+    private Class<T> tClass;
+    boolean formatOutput;
 
-    static {
-        classes = new Class[] {
-                ListWrapper.class,
-                Polygon2D.class,
-                Template.class, BasicTemplate.class,
-                IOConstraint.class, CRSConstraint.class, DimensionConstraint.class, GeometryConstraint.class,
-                SensorConstraint.class,
-                Validator.class, NotEmptyValidator.class, NotNullValidator.class, TypeValidator.class, ValueSetValidator.class,
-                QueryParameter.class
-        };
-    }
-
-    Class<T> tClass;
-    JAXBContext context;
-
-    BaseSerializer(Class<T> tClass) throws SerializationException {
+    BaseSerializer(Class<T> tClass) {
         this.tClass = tClass;
-        try {
-            final Class[] classesCopy = new Class[classes.length + 1];
-            System.arraycopy(classes, 0, classesCopy, 0, classes.length);
-            classesCopy[classes.length] = tClass;
-            this.context = JAXBContext.newInstance(classesCopy);
-        } catch (JAXBException e) {
-            throw new SerializationException(e);
-        }
     }
 
-    BaseSerializer(Class<T> tClass, Class...dependencies) throws SerializationException {
-        this.tClass = tClass;
-        try {
-            final Class[] classesCopy = new Class[classes.length + (dependencies != null ? dependencies.length : 0) + 1];
-            System.arraycopy(classes, 0, classesCopy, 0, classes.length);
-            if (dependencies != null && dependencies.length > 0) {
-                System.arraycopy(dependencies, 0, classesCopy, classes.length, dependencies.length);
-            }
-            classesCopy[classesCopy.length - 1] = tClass;
-            this.context = JAXBContext.newInstance(classesCopy);
-        } catch (JAXBException e) {
-            throw new SerializationException(e);
-        }
-    }
-
-    BaseSerializer(Class<T> tClass, Map<String, Object> properties, Class...dependencies) throws SerializationException {
-        this.tClass = tClass;
-        try {
-            final Class[] classesCopy = new Class[classes.length + 1];
-            System.arraycopy(classes, 0, classesCopy, 0, classes.length);
-            if (dependencies != null && dependencies.length > 0) {
-                System.arraycopy(dependencies, 0, classesCopy, classes.length, dependencies.length);
-            }
-            classesCopy[classesCopy.length - 1] = tClass;
-            if (properties != null) {
-                this.context = JAXBContext.newInstance(classesCopy, properties);
-            } else {
-                this.context = JAXBContext.newInstance(classesCopy);
-            }
-        } catch (JAXBException e) {
-            throw new SerializationException(e);
-        }
-    }
+    protected abstract ObjectMapper createMapper();
 
     public void setFormatOutput(boolean value) { this.formatOutput = value; }
 
-    public List<T> deserializeList(Class<T> clazz, StreamSource source) throws SerializationException {
+    @Override
+    public T deserialize(String source) throws SerializationException {
+        if (source == null || "null".equalsIgnoreCase(source)) {
+            return null;
+        }
         try {
-            Unmarshaller unmarshaller = this.context.createUnmarshaller();
-            ListWrapper<T> wrapper = (ListWrapper<T>) unmarshaller.unmarshal(source, ListWrapper.class).getValue();
-            return wrapper.getItems();
-        } catch (JAXBException e) {
+            ObjectMapper mapper = createMapper();
+            return mapper.readerFor(this.tClass).readValue(source);
+        } catch (Exception e) {
             throw new SerializationException(e);
         }
     }
-
+    @Override
+    public List<T> deserialize(Class<T> clazz, String source) throws SerializationException {
+        if (source == null || "null".equalsIgnoreCase(source)) {
+            return null;
+        }
+        try {
+            ObjectMapper mapper = createMapper();
+            TypeReference<List<T>> typeRef = new TypeReference<List<T>>() { };
+            final JsonNode jsonNode = mapper.readTree(source);
+            final List<T> results = new ArrayList<>();
+            jsonNode.fields().forEachRemaining(entry -> {
+                final JsonNode node = entry.getValue();
+                if (node.isArray()) {
+                    final int size = node.size();
+                    for (int i = 0; i < size; i++) {
+                        results.add(mapper.convertValue(node.get(i), clazz));
+                    }
+                }/* else {
+                    results.add(mapper.convertValue(node, clazz));
+                }*/
+            });
+            return results;
+        } catch (Exception e) {
+            throw new SerializationException(e);
+        }
+    }
+    @Override
+    public String serialize(T object) throws SerializationException {
+        try {
+            ObjectMapper mapper = createMapper();
+            return mapper.writerFor(this.tClass).writeValueAsString(object);
+        } catch (Exception e) {
+            throw new SerializationException(e);
+        }
+    }
+    @Override
     public String serialize(List<T> objects, String name) throws SerializationException {
         try {
-            Marshaller marshaller = this.context.createMarshaller();
-            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, this.formatOutput);
-            marshaller.setProperty(Marshaller.JAXB_FRAGMENT, Boolean.TRUE);
-            QName qName = new QName(name);
-            ListWrapper<T> wrapper = new ListWrapper<>(objects);
-            JAXBElement<ListWrapper> rootElement = new JAXBElement<>(qName, ListWrapper.class, wrapper);
-            StringWriter writer = new StringWriter();
-            marshaller.marshal(rootElement, writer);
-            return writer.toString();
-        } catch (JAXBException e) {
+            ObjectMapper mapper = createMapper();
+            return mapper.enable(SerializationFeature.WRAP_ROOT_VALUE).writer().withRootName(name).writeValueAsString(objects);
+        } catch (Exception e) {
             throw new SerializationException(e);
         }
     }

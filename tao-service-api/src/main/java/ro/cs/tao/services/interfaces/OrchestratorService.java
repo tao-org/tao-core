@@ -56,26 +56,26 @@ public interface OrchestratorService extends TAOService {
      */
     long startWorkflow(long workflowId, String jobName, Map<String, Map<String, String>> inputs) throws ExecutionException;
     /**
-     * Stops the execution of the job corresponding to this workflow.
+     * Stops the execution of the given job.
      *
-     * @param workflowId    The workflow identifier
-     * @throws ExecutionException   In case anything goes wrong or there was no job for this workflow
+     * @param jobId    The job identifier
+     * @throws ExecutionException   In case anything goes wrong or there was no job
      */
-    void stopWorkflow(long workflowId) throws ExecutionException;
+    void stopJob(long jobId) throws ExecutionException;
     /**
-     * Pauses (suspends) the execution of the job corresponding to this workflow.
+     * Pauses (suspends) the execution of the given job.
      *
-     * @param workflowId    The workflow identifier
-     * @throws ExecutionException   In case anything goes wrong or there was no job for this workflow
+     * @param jobId    The job identifier
+     * @throws ExecutionException   In case anything goes wrong or there was no job
      */
-    void pauseWorkflow(long workflowId) throws ExecutionException;
+    void pauseJob(long jobId) throws ExecutionException;
     /**
-     * Resumes the execution of the job corresponding to this workflow.
+     * Resumes the execution of the given job.
      *
-     * @param workflowId    The workflow identifier
-     * @throws ExecutionException   In case anything goes wrong or there was no job for this workflow
+     * @param jobId    The job identifier
+     * @throws ExecutionException   In case anything goes wrong or there was no job
      */
-    void resumeWorkflow(long workflowId) throws ExecutionException;
+    void resumeJob(long jobId) throws ExecutionException;
 
     /**
      * Returns (from the database) the list of tasks that are marked as being executed.
