@@ -29,7 +29,7 @@ import java.util.List;
  * @author Cosmin Cara
  */
 public abstract class SessionContext {
-    private final Principal principal;
+    protected final Principal principal;
     private final Path workspaceRoot;
     private final Path netSpaceRoot;
     private final List<UserPreference> preferences;
