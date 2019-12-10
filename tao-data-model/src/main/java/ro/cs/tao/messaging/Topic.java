@@ -23,6 +23,10 @@ import java.util.regex.Pattern;
  */
 public class Topic {
     /**
+     * Topic for system messages / events.
+     */
+    public static final Topic SYSTEM = Topic.create("system");
+    /**
      * Topic for informational messages / events.
      */
     public static final Topic INFORMATION = Topic.create("info");

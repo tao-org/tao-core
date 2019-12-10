@@ -27,13 +27,12 @@ import java.util.List;
  * The internal state of a component can be anything, from a simple integer counter to more complex structures.
  *
  * @param <S>   The type of the internal state.
- * @param <T>   The type of the execution task
  *
  * @author Cosmin Cara
  */
-public interface InternalStateHandler<S, T extends ExecutionTask> {
+public interface InternalStateHandler<S> {
 
-    void assignTask(T task);
+    void assignTask(ExecutionTask task);
     /**
      * Assigns a current state to an execution task.
      * @param serializedState   The serialized internal state representation

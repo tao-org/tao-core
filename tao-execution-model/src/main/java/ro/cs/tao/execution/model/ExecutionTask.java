@@ -53,7 +53,7 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
     protected String internalState;
     List<Variable> inputParameterValues = new ArrayList<>();
     List<Variable> outputParameterValues = new ArrayList<>();
-    InternalStateHandler stateHandler;
+    InternalStateHandler<?> stateHandler;
 
     public ExecutionTask() { }
 
@@ -92,7 +92,7 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
     public String getLog() { return log; }
     public void setLog(String log) { this.log = log; }
 
-    public void setStateHandler(InternalStateHandler handler) {
+    public void setStateHandler(InternalStateHandler<?> handler) {
         this.stateHandler = handler;
         if (this.internalState == null) {
             try {
@@ -110,7 +110,7 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
         this.stateHandler.assignTask(this);
     }
 
-    public InternalStateHandler getStateHandler() { return this.stateHandler; }
+    public InternalStateHandler<?> getStateHandler() { return this.stateHandler; }
 
     public String getInternalState() { return internalState; }
     public void setInternalState(String internalState) { this.internalState = internalState; }

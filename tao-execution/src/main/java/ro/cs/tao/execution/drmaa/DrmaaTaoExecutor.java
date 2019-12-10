@@ -30,11 +30,9 @@ import ro.cs.tao.execution.local.DefaultSession;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.execution.model.ProcessingExecutionTask;
-import ro.cs.tao.execution.monitor.MemoryUnit;
 import ro.cs.tao.execution.monitor.NodeManager;
 import ro.cs.tao.execution.monitor.NodeManager.NodeData;
 import ro.cs.tao.persistence.exception.PersistenceException;
-import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.utils.Tuple;
 import ro.cs.tao.utils.executors.BlockingQueueWorker;
@@ -53,7 +51,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
+ * Executor class that delegates the execution to a DRMAA session.
+ * This implementation uses a blocking queue for tasks, to serialize them one by one to the DRMAA infrastructure.
+ *
  * @author Cosmin Cara
+ * @author Cosmin Udroiu
  */
 public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
     private static String masterHost;
@@ -67,15 +69,12 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         this.queueWorker = new BlockingQueueWorker<>(this.queue, this::executeImpl);
     }
 
-
-
     @Override
     public void initialize() throws ExecutionException {
         session = org.ggf.drmaa.SessionFactory.getFactory().getSession();
         try {
             session.init(null);
             super.initialize();
-            //useDockerForExecution = !SystemUtils.IS_OS_WINDOWS;
             masterHost = Inet4Address.getLocalHost().getHostName();
             this.queueWorker.start();
         } catch (UnknownHostException | DrmaaException e) {
@@ -142,7 +141,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         if(!isInitialized) {
             return;
         }
-        List<ExecutionTask> tasks = persistenceManager.getExecutingTasks();
+        final List<ExecutionTask> tasks = persistenceManager.getExecutingTasks();
         if (tasks != null) {
             // For each job, get its status from DRMAA
             for (ExecutionTask task : tasks) {
@@ -155,6 +154,13 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                         case Session.SYSTEM_SUSPENDED:
                         case Session.USER_SUSPENDED:
                         case Session.USER_SYSTEM_SUSPENDED:
+                            try {
+                                persistenceManager.updateTaskStatus(task, ExecutionStatus.SUSPENDED);
+                            } catch (PersistenceException e) {
+                                logger.severe(String.format("Status update for task %s failed. Reason: %s",
+                                                            task.getId(), e.getMessage()));
+                            }
+                            break;
                         case Session.UNDETERMINED:
                         case Session.QUEUED_ACTIVE:
                             // nothing to do
@@ -358,7 +364,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                 if (mem > 0) {
                     add("--memory");    // Enforce the memory limit to be used
                     // memory, if not 0, is expressed in MB
-                    add(String.valueOf(mem) + "MB");
+                    add(mem + "MB");
                     task.setUsedRAM((int) mem);
                 }
             }};
@@ -376,15 +382,18 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         }
         jt.setRemoteCommand(cmd);
         jt.setArgs(argsList);
-        logger.fine(String.format("[Task %s ]: %s %s", String.valueOf(task.getId()), cmd, String.join(" ", argsList)));
+        logger.fine(String.format("[Task %s ]: %s %s", task.getId(), cmd, String.join(" ", argsList)));
         return jt;
     }
 
-    private NodeData getAvailableNode(int cpus, long memory) {
+    private NodeData getAvailableNode(int cpus, long memory) throws DrmaaException {
     	NodeData nodeData = null;
         if (NodeManager.isAvailable() && NodeManager.getInstance() != null) {
         	nodeData = NodeManager.getInstance().getAvailableNode(cpus, memory, 0);
             logger.fine(String.format("Node [%s] was chosen for next execution", nodeData.getNode().getId()));
+        }
+        if (nodeData == null) {
+            throw new DeniedByDrmException("No node was found for execution");
         }
         return nodeData;
     }
