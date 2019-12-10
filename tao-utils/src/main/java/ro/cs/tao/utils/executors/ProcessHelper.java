@@ -16,7 +16,7 @@
 package ro.cs.tao.utils.executors;
 
 import com.sun.jna.Pointer;
-import org.apache.commons.lang.SystemUtils;
+import org.apache.commons.lang3.SystemUtils;
 import ro.cs.tao.utils.executors.win.Kernel32;
 import ro.cs.tao.utils.executors.win.NtDll;
 import ro.cs.tao.utils.executors.win.Win32Api;
