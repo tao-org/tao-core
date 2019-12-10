@@ -10,28 +10,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>tao-service-api</artifactId>
-    <name>TAO Services API</name>
+    <name>TAO Common Services API</name>
     <packaging>jar</packaging>
 
     <dependencies>
         <dependency>
             <groupId>ro.cs.tao</groupId>
-            <artifactId>tao-data-model</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ro.cs.tao</groupId>
-            <artifactId>tao-data-sources</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ro.cs.tao</groupId>
-            <artifactId>tao-execution-model</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ro.cs.tao</groupId>
-            <artifactId>tao-execution</artifactId>
+            <artifactId>tao-service-base-api</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -39,12 +24,6 @@
             <artifactId>tao-persistence</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <!--<dependency>
-            <groupId>ro.cs.tao</groupId>
-            <artifactId>tao-orchestration</artifactId>
-            <version>${project.version}</version>
-        </dependency>-->
-
         <dependency>
             <groupId>org.geotools</groupId>
             <artifactId>gt-geojson</artifactId>

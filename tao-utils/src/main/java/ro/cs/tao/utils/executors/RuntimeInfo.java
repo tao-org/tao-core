@@ -16,7 +16,7 @@
 
 package ro.cs.tao.utils.executors;
 
-import org.apache.commons.lang.SystemUtils;
+import org.apache.commons.lang3.SystemUtils;
 
 import java.net.InetAddress;
 import java.util.ArrayList;

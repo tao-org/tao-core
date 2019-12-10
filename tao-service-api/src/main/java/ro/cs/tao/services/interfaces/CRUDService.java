@@ -36,7 +36,7 @@ public interface CRUDService<T, K> extends TAOService {
      * @param id    The entity identifier
      * @return      An instance of the entity or <code>null</code> if not found
      */
-    T findById(K id) throws PersistenceException;
+    T findById(K id);
 
     /**
      * Retrieves all the entities of this type.
