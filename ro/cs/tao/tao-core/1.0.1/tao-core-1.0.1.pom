@@ -29,6 +29,8 @@
         <module>tao-scheduling</module>
         <module>tao-quota</module>
         <module>tao-core-kit</module>
+        <module>tao-execution-api</module>
+        <module>tao-service-base-api</module>
     </modules>
 
     <properties>

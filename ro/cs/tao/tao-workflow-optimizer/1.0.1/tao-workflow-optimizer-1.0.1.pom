@@ -22,7 +22,7 @@
         </dependency>
         <dependency>
             <groupId>ro.cs.tao</groupId>
-            <artifactId>tao-service-api</artifactId>
+            <artifactId>tao-execution-api</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>
