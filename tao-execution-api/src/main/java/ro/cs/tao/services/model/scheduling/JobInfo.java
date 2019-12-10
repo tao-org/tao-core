@@ -1,11 +1,11 @@
 package ro.cs.tao.services.model.scheduling;
 
+import ro.cs.tao.execution.model.ExecutionStatus;
+
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
-
-import ro.cs.tao.execution.model.ExecutionStatus;
 
 /** Information related to a job.
  * 

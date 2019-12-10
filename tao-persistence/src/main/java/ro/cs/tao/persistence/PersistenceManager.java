@@ -254,7 +254,7 @@ public class PersistenceManager implements MessagePersister {
         return productManager.saveEOProduct(eoProduct);
     }
 
-    public void remove(EOProduct product) throws PersistenceException {
+    public void remove(EOProduct product) {
         productManager.removeProduct(product);
     }
 
@@ -266,7 +266,7 @@ public class PersistenceManager implements MessagePersister {
         return productManager.saveVectorDataProduct(vectorDataProduct);
     }
 
-    public void remove(VectorData product) throws PersistenceException {
+    public void remove(VectorData product) {
         productManager.removeProduct(product);
     }
 

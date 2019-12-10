@@ -1,15 +1,8 @@
-import org.apache.commons.lang.SystemUtils;
-import org.ggf.drmaa.DrmaaException;
-import org.ggf.drmaa.ExitTimeoutException;
-import org.ggf.drmaa.JobInfo;
-import org.ggf.drmaa.JobTemplate;
-import org.ggf.drmaa.Session;
-import org.ggf.drmaa.SessionFactory;
+import org.apache.commons.lang3.SystemUtils;
+import org.ggf.drmaa.*;
 
 import java.util.Arrays;
 import java.util.List;
-
-import org.junit.runner.JUnitCore;
 
 /**
  * @author Cosmin Cara

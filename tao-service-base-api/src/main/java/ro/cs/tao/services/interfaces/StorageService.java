@@ -16,7 +16,6 @@
 
 package ro.cs.tao.services.interfaces;
 
-import org.springframework.stereotype.Service;
 import ro.cs.tao.services.model.FileObject;
 
 import java.io.IOException;
@@ -29,7 +28,6 @@ import java.util.Set;
  *
  * @author Cosmin Cara
  */
-@Service
 public interface StorageService<T> extends TAOService {
     /**
      * Creates a folder.

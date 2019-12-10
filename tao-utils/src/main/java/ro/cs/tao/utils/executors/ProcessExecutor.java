@@ -15,8 +15,8 @@
  */
 package ro.cs.tao.utils.executors;
 
-import org.apache.commons.lang.SystemUtils;
-import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.SystemUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import java.io.*;
 import java.util.List;

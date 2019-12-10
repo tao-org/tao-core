@@ -3,10 +3,10 @@
  */
 package ro.cs.tao.services.model.scheduling;
 
+import ro.cs.tao.TaoEnum;
+
 import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlEnumValue;
-
-import ro.cs.tao.TaoEnum;
 
 /**
  * The scheduling mode.

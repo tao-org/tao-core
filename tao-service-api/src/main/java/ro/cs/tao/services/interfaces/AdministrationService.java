@@ -39,6 +39,8 @@ public interface AdministrationService extends TAOService {
 
     List<Group> getGroups();
 
+    List<User> getAdministrators();
+
     User getUserInfo(String username);
 
     User updateUserInfo(User updatedInfo) throws PersistenceException;

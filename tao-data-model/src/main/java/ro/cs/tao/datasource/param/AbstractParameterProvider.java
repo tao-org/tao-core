@@ -16,8 +16,8 @@
 package ro.cs.tao.datasource.param;
 
 import com.google.common.collect.Maps;
-import org.apache.commons.lang.SystemUtils;
-import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.SystemUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import ro.cs.tao.datasource.ProductFetchStrategy;
 
 import java.io.IOException;

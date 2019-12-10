@@ -1,6 +1,5 @@
 package ro.cs.tao.services.utils;
 
-import org.springframework.stereotype.Component;
 import ro.cs.tao.component.*;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;

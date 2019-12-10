@@ -3,12 +3,12 @@
  */
 package ro.cs.tao.services.interfaces;
 
+import ro.cs.tao.services.model.scheduling.SchedulingInfo;
+import ro.cs.tao.services.model.scheduling.SchedulingMode;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-
-import ro.cs.tao.services.model.scheduling.SchedulingInfo;
-import ro.cs.tao.services.model.scheduling.SchedulingMode;
 
 /**
  * Interface for job scheduling operations
