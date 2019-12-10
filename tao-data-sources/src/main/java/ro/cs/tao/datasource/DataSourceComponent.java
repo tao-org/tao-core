@@ -15,7 +15,7 @@
  */
 package ro.cs.tao.datasource;
 
-import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import ro.cs.tao.ProgressListener;
 import ro.cs.tao.component.DataDescriptor;
 import ro.cs.tao.component.SourceDescriptor;

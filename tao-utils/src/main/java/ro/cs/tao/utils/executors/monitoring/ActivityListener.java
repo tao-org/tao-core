@@ -1,7 +1,7 @@
 package ro.cs.tao.utils.executors.monitoring;
 
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import ro.cs.tao.utils.Triple;
 
 import java.io.IOException;

@@ -16,7 +16,7 @@
 package ro.cs.tao.utils.executors;
 
 import com.jcraft.jsch.Channel;
-import org.apache.commons.lang.SystemUtils;
+import org.apache.commons.lang3.SystemUtils;
 import ro.cs.tao.utils.executors.monitoring.ActivityListener;
 
 import java.io.File;

@@ -206,7 +206,7 @@ public class ProductManager {
     }
 
     @Transactional
-    public void removeProduct(EOProduct eoProduct) throws PersistenceException {
+    public void removeProduct(EOProduct eoProduct) {
         eoProductRepository.delete(eoProduct);
     }
 
@@ -216,7 +216,7 @@ public class ProductManager {
     }
 
     @Transactional
-    public void removeProduct(VectorData vectorProduct) throws PersistenceException {
+    public void removeProduct(VectorData vectorProduct) {
         vectorDataRepository.delete(vectorProduct);
     }
 

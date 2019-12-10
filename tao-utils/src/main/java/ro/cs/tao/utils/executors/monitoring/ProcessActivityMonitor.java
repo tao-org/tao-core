@@ -1,6 +1,6 @@
 package ro.cs.tao.utils.executors.monitoring;
 
-import org.apache.commons.lang.SystemUtils;
+import org.apache.commons.lang3.SystemUtils;
 import ro.cs.tao.utils.Triple;
 import ro.cs.tao.utils.executors.ProcessHelper;
 

@@ -30,5 +30,7 @@ public interface ProductService extends CRUDService<EOProduct, String> {
     int importProducts(List<EOProduct> products);
     int importProducts(String sourcePath, boolean linkOnly) throws IOException, QuotaException;
     List<String> checkExisting(String... names);
-
+    int countAdditionalProductReferences(String componentId, String name);
+    void deleteIfNotReferenced(String refererComponentId, String productName);
+    void delete(EOProduct product);
 }
