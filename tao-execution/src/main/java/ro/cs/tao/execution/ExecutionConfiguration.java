@@ -1,5 +1,6 @@
 package ro.cs.tao.execution;
 
+import ro.cs.tao.configuration.Configuration;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.utils.FileUtilities;
 
@@ -17,7 +18,7 @@ public class ExecutionConfiguration {
 
     public static boolean forceMemoryConstraint() {
         if (forceMemoryRequirements == null) {
-            forceMemoryRequirements = Boolean.parseBoolean(ConfigurationManager.getInstance().getValue(Constants.FORCE_MEMORY_REQUIREMENTS_KEY,
+            forceMemoryRequirements = Boolean.parseBoolean(ConfigurationManager.getInstance().getValue(Configuration.DRMAA.FORCE_MEMORY_REQUIREMENTS,
                                                                                                        "false"));
         }
         return forceMemoryRequirements;
@@ -26,7 +27,7 @@ public class ExecutionConfiguration {
     public static String getDockerMasterBindMount() throws IOException {
         if (dockerMasterBindMount == null) {
             dockerMasterBindMount = ConfigurationManager.getInstance()
-                                                        .getValue(Constants.DOCKER_BIND_MOUNT_MASTER_CONFIG_KEY,
+                                                        .getValue(Configuration.Docker.CONTAINER_MOUNT,
                                                                   "/mnt/tao/working_dir:/mnt").trim();
             // At least on Windows, docker doesn't handle well folder symlinks in the path
             Path path = Paths.get(dockerMasterBindMount.substring(0, dockerMasterBindMount.indexOf(':')));
@@ -38,7 +39,7 @@ public class ExecutionConfiguration {
 
     public static String getDockerNodeBindMount() throws IOException {
         if (dockerNodeBindMount == null) {
-            dockerNodeBindMount = ConfigurationManager.getInstance().getValue(Constants.DOCKER_BIND_MOUNT_SLAVE_CONFIG_KEY).trim()
+            dockerNodeBindMount = ConfigurationManager.getInstance().getValue(Configuration.FileSystem.NODE_SHARE_MOUNT).trim()
                                 + ":" + getContainerMount();
         }
         return dockerNodeBindMount;
@@ -46,7 +47,7 @@ public class ExecutionConfiguration {
 
     public static String getDockerRegistry() {
         if (dockerRegistry == null) {
-            dockerRegistry = ConfigurationManager.getInstance().getValue(Constants.DOCKER_REGISTRY);
+            dockerRegistry = ConfigurationManager.getInstance().getValue(Configuration.Docker.REGISTRY_URL);
         }
         return dockerRegistry;
     }
@@ -61,7 +62,7 @@ public class ExecutionConfiguration {
 
     public static boolean useDocker() {
         if (useDocker == null) {
-            useDocker = Boolean.parseBoolean(ConfigurationManager.getInstance().getValue(Constants.PLUGINS_USE_DOCKER, "false"));
+            useDocker = Boolean.parseBoolean(ConfigurationManager.getInstance().getValue(Configuration.Docker.PLUGINS_USE_DOCKER, "false"));
         }
         return useDocker;
     }

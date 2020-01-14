@@ -1,10 +1,7 @@
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import ro.cs.tao.topology.NodeDescription;
-import ro.cs.tao.topology.NodeServiceStatus;
-import ro.cs.tao.topology.ServiceDescription;
-import ro.cs.tao.topology.ServiceStatus;
+import ro.cs.tao.topology.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -82,9 +79,12 @@ public class NodeDescriptionTest extends BaseSerializationTest<NodeDescription> 
         entity.setId("host_sample");
         entity.setUserName("user");
         entity.setUserPass("drowssap");
-        entity.setProcessorCount(4);
-        entity.setMemorySizeGB(16);
-        entity.setDiskSpaceSizeGB(500);
+        NodeFlavor flavor = new NodeFlavor();
+        flavor.setId("test");
+        flavor.setCpu(4);
+        flavor.setMemory(4096);
+        flavor.setDisk(500);
+        entity.setFlavor(flavor);
         List<NodeServiceStatus> servicesStatus = new ArrayList<>();
         servicesStatus.add(new NodeServiceStatus(new ServiceDescription("Docker", "1.9", "Docker description"), ServiceStatus.INSTALLED));
         servicesStatus.add(new NodeServiceStatus(new ServiceDescription("Torque", "1.5", "Torque CRM"), ServiceStatus.NOT_FOUND));

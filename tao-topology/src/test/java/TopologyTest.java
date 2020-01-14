@@ -1,9 +1,9 @@
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.ImportResource;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import ro.cs.tao.topology.NodeDescription;
+import ro.cs.tao.topology.NodeFlavor;
 import ro.cs.tao.topology.ToolCommandsTokens;
 import ro.cs.tao.topology.TopologyManager;
 
@@ -51,18 +51,15 @@ public class TopologyTest {
 
 
     private static void testAddTopologyNode() {
-        ApplicationContext context = new ClassPathXmlApplicationContext("classpath:tao-topology-context.xml");
+        ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("classpath:tao-topology-context.xml");
 
         List<String> tokens = ToolCommandsTokens.getDefinedTokensList();
         System.out.println(tokens);
         NodeDescription masterInfo = new NodeDescription();
         masterInfo.setId("master.testtorque.ro");
-        try
-        {
-            TopologyManager.getInstance().setMasterNodeInfo(masterInfo);
-        }
-        catch(Exception e)
-        {
+        try {
+            TopologyManager.setMasterNode(masterInfo);
+        } catch(Exception e) {
             logger.error(e.getMessage());
         }
 
@@ -71,11 +68,16 @@ public class TopologyTest {
         nodeInfo.setId("node01.testtorque.ro");
         nodeInfo.setUserName("sen2agri");
         nodeInfo.setUserPass("sen2agri");
-        nodeInfo.setProcessorCount(2);
-        TopologyManager.getInstance().add(nodeInfo);
+        NodeFlavor flavor = new NodeFlavor();
+        flavor.setCpu(2);
+        flavor.setMemory(1024);
+        flavor.setDisk(120);
+        flavor.setRxtxFactor(1.0f);
+        nodeInfo.setFlavor(flavor);
+        TopologyManager.getInstance().addNode(nodeInfo);
 
         // close application context
-        ((ClassPathXmlApplicationContext) context).close();
+        context.close();
     }
 
 }

@@ -47,6 +47,8 @@ import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static ro.cs.tao.configuration.Configuration.Services;
+
 @Configuration
 @EnableTransactionManagement
 @EnableJpaAuditing
@@ -61,21 +63,6 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
      * file)
      */
     private static final String PROPERTY_NAME_DATABASE_DRIVER = "spring.database.driverClassName";
-
-    /**
-     * Constant for the DB connection URL
-     */
-    private static final String PROPERTY_NAME_DATABASE_URL = "spring.datasource.url";
-
-    /**
-     * Constant for the DB connection username
-     */
-    private static final String PROPERTY_NAME_DATABASE_USERNAME = "spring.datasource.username";
-
-    /**
-     * Constant for the DB connection password
-     */
-    private static final String PROPERTY_NAME_DATABASE_PASSWORD = "spring.datasource.password";
 
     /**
      * C3p0 Connection Pool minimum pool size
@@ -191,10 +178,10 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
             dataSource.setDriverClass(environment.getRequiredProperty(PROPERTY_NAME_DATABASE_DRIVER));
 
             // DB URL + user name + pass from tao.properties
-            dataSource.setJdbcUrl(ConfigurationManager.getInstance().getValue(PROPERTY_NAME_DATABASE_URL));
+            dataSource.setJdbcUrl(ConfigurationManager.getInstance().getValue(Services.DATABASE_CONNECTION_STRING));
 
-            dataSource.setUser(ConfigurationManager.getInstance().getValue(PROPERTY_NAME_DATABASE_USERNAME));
-            dataSource.setPassword(ConfigurationManager.getInstance().getValue(PROPERTY_NAME_DATABASE_PASSWORD));
+            dataSource.setUser(ConfigurationManager.getInstance().getValue(Services.DATABASE_USER));
+            dataSource.setPassword(ConfigurationManager.getInstance().getValue(Services.DATABASE_PASSWORD));
 
             dataSource.setInitialPoolSize(Integer
               .parseInt(environment.getRequiredProperty(PROPERTY_NAME_DATABASE_CONNECTION_INITIALPOOLSIZE)));

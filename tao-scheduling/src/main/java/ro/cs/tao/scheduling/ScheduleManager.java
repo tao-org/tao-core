@@ -16,19 +16,7 @@
 
 package ro.cs.tao.scheduling;
 
-import java.time.LocalDateTime;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.logging.Logger;
-
-import org.quartz.JobDataMap;
-import org.quartz.JobDetail;
-import org.quartz.JobKey;
-import org.quartz.Scheduler;
-import org.quartz.SchedulerException;
-import org.quartz.Trigger;
+import org.quartz.*;
 import org.quartz.Trigger.TriggerState;
 import org.quartz.impl.DirectSchedulerFactory;
 import org.quartz.impl.jdbcjobstore.InvalidConfigurationException;
@@ -36,17 +24,19 @@ import org.quartz.impl.jdbcjobstore.JobStoreTX;
 import org.quartz.impl.matchers.GroupMatcher;
 import org.quartz.simpl.SimpleThreadPool;
 import org.quartz.utils.DBConnectionManager;
-
+import ro.cs.tao.configuration.Configuration;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 
-public class ScheduleManager {
-	private final static String INSTANCE_NAME_KEY = "tao.quartz.scheduler.instanceName";
-	private final static String DRIVER_DELEGATE_CLASS_KEY = "tao.quartz.jobStore.driverDelegateClass";
-	private final static String TABLE_PREFIX_KEY = "tao.quartz.jobStore.tablePrefix";
-	private final static String DATASOURCE_KEY = "tao.quartz.jobStore.dataSource";
+import java.time.LocalDateTime;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.logging.Logger;
 
+public class ScheduleManager {
 	private static ScheduleManager instance;
 	private static final Logger logger;
 	private Scheduler quarzScheduler;
@@ -60,11 +50,11 @@ public class ScheduleManager {
 		try {
 			final PersistenceManager persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
 			
-			final String dataSource = ConfigurationManager.getInstance().getValue(DATASOURCE_KEY);
-			final String instanceName = ConfigurationManager.getInstance().getValue(INSTANCE_NAME_KEY);
+			final String dataSource = ConfigurationManager.getInstance().getValue(Configuration.Scheduling.QUARTZ_JOB_STORE_DATASOURCE);
+			final String instanceName = ConfigurationManager.getInstance().getValue(Configuration.Scheduling.QUARTZ_SCHEDULER_NAME);
 			final String instanceID = instanceName + "-1";
-			final String tablePrefix = ConfigurationManager.getInstance().getValue(TABLE_PREFIX_KEY);
-			final String driverDelegateClass = ConfigurationManager.getInstance().getValue(DRIVER_DELEGATE_CLASS_KEY);
+			final String tablePrefix = ConfigurationManager.getInstance().getValue(Configuration.Scheduling.QUARTZ_JOB_STORE_TABLE_PREFIX);
+			final String driverDelegateClass = ConfigurationManager.getInstance().getValue(Configuration.Scheduling.QUARTZ_JOB_STORE_DRIVER_CLASS);
 
 			DBConnectionManager.getInstance().addConnectionProvider(dataSource,
 					new SharedConnectionProvider(persistenceManager.getDataSource()));
