@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.utils.mail;
 
+import ro.cs.tao.configuration.Configuration;
 import ro.cs.tao.configuration.ConfigurationManager;
 
 import javax.activation.DataHandler;
@@ -51,14 +52,14 @@ public class MailSender {
 
     public MailSender() {
         ConfigurationManager configManager = ConfigurationManager.getInstance();
-        this.mailSmtpAuth = configManager.getValue("mail.smtp.auth");
-        this.mailSmtpStartTlsEnable = configManager.getValue("mail.smtp.starttls.enable");
-        this.mailSmptpHost = configManager.getValue("mail.smtp.host");
-        this.mailSmtpPort = configManager.getValue("mail.smtp.port");
-        this.mailFrom = configManager.getValue("mail.from");
-        this.mailTo = configManager.getValue("mail.to");
-        this.mailUsername = configManager.getValue("mail.smtp.username");
-        this.mailPassword = configManager.getValue("mail.smtp.password");
+        this.mailSmtpAuth = configManager.getValue(Configuration.Mail.SMTP_AUTHENTICATION_ENABLED);
+        this.mailSmtpStartTlsEnable = configManager.getValue(Configuration.Mail.SMTP_STARTTLS_ENABLED);
+        this.mailSmptpHost = configManager.getValue(Configuration.Mail.SMTP_HOST);
+        this.mailSmtpPort = configManager.getValue(Configuration.Mail.SMTP_PORT);
+        this.mailFrom = configManager.getValue(Configuration.Mail.SENDER);
+        this.mailTo = configManager.getValue(Configuration.Mail.RECIPIENT);
+        this.mailUsername = configManager.getValue(Configuration.Mail.SMTP_USER);
+        this.mailPassword = configManager.getValue(Configuration.Mail.SMTP_PASSWORD);
     }
 
     public MailSender(String host, int port, boolean auth, String user, String password,

@@ -18,21 +18,21 @@ package ro.cs.tao.topology;
 /**
  * @author Cosmin Cara
  */
-public class ToolInstallStatus {
-    private String toolName;
+public class ServiceInstallStatus {
+    private String serviceName;
     private ServiceStatus status;
     private String reason;
 
-    public ToolInstallStatus() {
+    public ServiceInstallStatus() {
         this.status = ServiceStatus.NOT_FOUND;
     }
 
-    public String getToolName() {
-        return toolName;
+    public String getServiceName() {
+        return serviceName;
     }
 
-    public void setToolName(String toolName) {
-        this.toolName = toolName;
+    public void setServiceName(String serviceName) {
+        this.serviceName = serviceName;
     }
 
     public ServiceStatus getStatus() {
