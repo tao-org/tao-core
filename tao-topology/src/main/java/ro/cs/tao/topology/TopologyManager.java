@@ -30,6 +30,7 @@ import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.topology.docker.DockerImageInstaller;
 import ro.cs.tao.topology.docker.DockerManager;
 import ro.cs.tao.topology.provider.DefaultNodeOperationListener;
+import ro.cs.tao.topology.provider.DefaultNodeProvider;
 import ro.cs.tao.topology.provider.NodeOperationListener;
 import ro.cs.tao.topology.provider.NodeProvider;
 import ro.cs.tao.utils.async.BinaryTask;
@@ -90,16 +91,14 @@ public class TopologyManager {
         final ServiceRegistry<TopologyToolInstaller> installersRegistry = serviceRegistryManager.getServiceRegistry(TopologyToolInstaller.class);
         this.installers = installersRegistry.getServices();
         final ServiceRegistry<NodeProvider> nodeProviderRegistry = serviceRegistryManager.getServiceRegistry(NodeProvider.class);
-        final String nodeProviderClassName = ConfigurationManager.getInstance().getValue(Configuration.Topology.PROVIDER_CLASS);
+        final String nodeProviderClassName = ConfigurationManager.getInstance().getValue(Configuration.Topology.PROVIDER_CLASS,
+                                                                                         DefaultNodeProvider.class.getName());
         final Set<NodeProvider> nodeProviders = nodeProviderRegistry.getServices();
         if (nodeProviders == null) {
             throw new TopologyException("No instances of NodeProvider found");
         }
         for (NodeProvider provider : nodeProviders) {
-            if (nodeProviderClassName == null) {
-                this.nodeProvider = provider;
-                break;
-            } else if (provider.getClass().getName().equals(nodeProviderClassName)) {
+            if (provider.getClass().getName().equals(nodeProviderClassName)) {
                 this.nodeProvider = provider;
                 break;
             }

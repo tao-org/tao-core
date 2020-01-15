@@ -117,8 +117,8 @@ INSERT INTO usr.user_group (user_id, group_id) VALUES (3, 2);
 INSERT INTO usr.user_group (user_id, group_id) VALUES (4, 2);
 
 -- Node flavor
-INSERT INTO topology.node_flavor (id, cpu, memory, disk, rxtx)
-VALUES ('master', 8, 32, 1024, 1.0);
+INSERT INTO topology.node_flavor (id, cpu, memory, disk, swap, rxtx)
+VALUES ('master', 8, 32, 1024, 32, 1.0);
 
 -- localhost execution node
 INSERT INTO topology.node (id, username, password, flavor_id, description)

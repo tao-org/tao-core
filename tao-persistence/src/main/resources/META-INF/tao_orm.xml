@@ -221,6 +221,9 @@
             <basic name="disk">
                 <column name="disk" nullable="false" column-definition="integer NOT NULL"/>
             </basic>
+            <basic name="swap">
+                <column name="swap" nullable="false" column-definition="integer NOT NULL"/>
+            </basic>
             <basic name="rxtxFactor">
                 <column name="rxtx" nullable="false" column-definition="real NOT NULL"/>
             </basic>
