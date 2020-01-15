@@ -1,7 +1,3 @@
--- Topology node types
-INSERT INTO topology.node_type (id, code, description) VALUES
-(1, 'S', '2-4 processors, 4-8GB RAM'), (2, 'M', '5-8 processors, 8-16GB RAM'), (3, 'L', '9-16 processors, 32-64GB RAM'), (4, 'XL', '16+ processors, 64+GB RAM');
-
 -- Processing components visibility
 INSERT INTO component.component_visibility (visibility) VALUES
 ('SYSTEM'), ('USER'), ('CONTRIBUTOR');
@@ -120,9 +116,13 @@ INSERT INTO usr.user_group (user_id, group_id) VALUES (2, 1);
 INSERT INTO usr.user_group (user_id, group_id) VALUES (3, 2);
 INSERT INTO usr.user_group (user_id, group_id) VALUES (4, 2);
 
+-- Node flavor
+INSERT INTO topology.node_flavor (id, cpu, memory, disk, swap, rxtx)
+VALUES ('master', 8, 32, 1024, 32, 1.0);
+
 -- localhost execution node
-INSERT INTO topology.node (id, username, password, type_id, total_cpu, total_ram, total_hdd, description)
-VALUES ('localhost', '', '', 2, 8, 32, 1024, 'Master Node');
+INSERT INTO topology.node (id, username, password, flavor_id, description)
+VALUES ('localhost', '', '', 'master', 'Master Node');
 
 -- Naming rules
 INSERT INTO product.naming_rule (id, sensor, regex, description) VALUES

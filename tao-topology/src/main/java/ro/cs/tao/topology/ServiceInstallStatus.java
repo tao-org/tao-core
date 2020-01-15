@@ -15,17 +15,39 @@
  */
 package ro.cs.tao.topology;
 
-import ro.cs.tao.component.StringIdentifiable;
-
 /**
- * @author Cosmin Udroiu
+ * @author Cosmin Cara
  */
-public abstract class TopologyToolInstaller extends StringIdentifiable {
-    @Override
-    public String defaultId() { return "NewToolInstaller"; }
+public class ServiceInstallStatus {
+    private String serviceName;
+    private ServiceStatus status;
+    private String reason;
 
-    public abstract void setMasterNodeDescription(NodeDescription masterNodeInfo);
-    public abstract ServiceInstallStatus installNewNode(NodeDescription info) throws TopologyException;
-    public abstract ServiceInstallStatus uninstallNode(NodeDescription info)throws TopologyException;
-    public abstract void editNode(NodeDescription nodeInfo)throws TopologyException;
+    public ServiceInstallStatus() {
+        this.status = ServiceStatus.NOT_FOUND;
+    }
+
+    public String getServiceName() {
+        return serviceName;
+    }
+
+    public void setServiceName(String serviceName) {
+        this.serviceName = serviceName;
+    }
+
+    public ServiceStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(ServiceStatus status) {
+        this.status = status;
+    }
+
+    public String getReason() {
+        return reason;
+    }
+
+    public void setReason(String reason) {
+        this.reason = reason;
+    }
 }

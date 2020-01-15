@@ -18,6 +18,7 @@ package ro.cs.tao.execution;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.StringIdentifiable;
 import ro.cs.tao.component.TaoComponent;
+import ro.cs.tao.configuration.Configuration;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
@@ -77,7 +78,7 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
      */
     public void initialize() throws ExecutionException {
         int pollingInterval = 1000 *
-                Integer.parseInt(ConfigurationManager.getInstance().getValue("tao.drmaa.polling.interval", TIMER_PERIOD));
+                Integer.parseInt(ConfigurationManager.getInstance().getValue(Configuration.DRMAA.POLLING_INTERVAL, TIMER_PERIOD));
         initialize(pollingInterval);
     }
 

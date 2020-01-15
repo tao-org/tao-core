@@ -5,7 +5,7 @@ import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.topology.NodeDescription;
-import ro.cs.tao.topology.NodeType;
+import ro.cs.tao.topology.NodeFlavor;
 
 import java.util.List;
 
@@ -20,7 +20,7 @@ import java.util.List;
 @Transactional
 public interface NodeRepository extends PagingAndSortingRepository<NodeDescription, String> {
 
-    List<NodeDescription> findByNodeType(NodeType type);
+    List<NodeDescription> findByFlavor(NodeFlavor flavor);
 
     List<NodeDescription> findByActive(boolean active);
 

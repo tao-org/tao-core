@@ -109,8 +109,8 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
             throw new IOException("No parameter descriptor found");
         }
         Path rPath;
-        FileSystem fileSystem = null;
-        try {
+        FileSystem fileSystem;
+        //try {
             if (classLocation.endsWith(".jar")) {
                 Map<String, String> env = new HashMap<>();
                 env.put("create", "false");
@@ -126,11 +126,12 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
                 rPath = Paths.get(currentResource);
             }
             return new String(Files.readAllBytes(rPath));
-        } finally {
+        // Block commented since subsequent usage of a previously created fileSystem will throw ClosedFileSystemException
+        /*} finally {
             if (fileSystem != null) {
                 fileSystem.close();
             }
-        }
+        }*/
     }
 
     private static String formatPath(String path){

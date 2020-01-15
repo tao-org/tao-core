@@ -17,6 +17,7 @@ package ro.cs.tao.topology;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.SystemUtils;
+import ro.cs.tao.configuration.Configuration;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.topology.xml.ToolInstallersConfigHandler;
 import ro.cs.tao.topology.xml.ToolInstallersConfigParser;
@@ -52,7 +53,7 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
         // extract the tools script dir to tao working dir
         extractResourceDir(taoWorkingDir, "tools_scripts");
 
-        final String toolInstallCfgFile = ConfigurationManager.getInstance().getValue("topology.tool_install_config");
+        final String toolInstallCfgFile = ConfigurationManager.getInstance().getValue(Configuration.Topology.TOOL_CONFIG);
         InputStream is = this.getClass().getResourceAsStream(toolInstallCfgFile);
         this.toolInstallConfigs = ToolInstallersConfigParser.parse(is,
                 new ToolInstallersConfigHandler("tool_install_configurations"));
@@ -68,18 +69,18 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
     }
 
     @Override
-    public ToolInstallStatus installNewNode(NodeDescription info) throws TopologyException {
-        ToolInstallStatus installStatus = new ToolInstallStatus();
+    public ServiceInstallStatus installNewNode(NodeDescription info) throws TopologyException {
+        ServiceInstallStatus installStatus = new ServiceInstallStatus();
         for (ToolInstallConfig toolCfg : toolInstallConfigs) {
             try {
-                installStatus.setToolName(toolCfg.getName());
+                installStatus.setServiceName(toolCfg.getName());
                 invokeSteps(info, toolCfg, false);
                 installStatus.setStatus(ServiceStatus.INSTALLED);
             } catch (TopologyException tex) {
                 installStatus.setStatus(ServiceStatus.ERROR);
                 installStatus.setReason(tex.getMessage());
             }
-            info.addServiceStatus(new NodeServiceStatus(new ServiceDescription(installStatus.getToolName(),
+            info.addServiceStatus(new NodeServiceStatus(new ServiceDescription(installStatus.getServiceName(),
                 toolCfg.getVersion(),
                 toolCfg.getDescription()),
               installStatus.getStatus()));
@@ -88,11 +89,11 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
     }
 
     @Override
-    public ToolInstallStatus uninstallNode(NodeDescription info) throws TopologyException {
-        ToolInstallStatus installStatus = new ToolInstallStatus();
+    public ServiceInstallStatus uninstallNode(NodeDescription info) throws TopologyException {
+        ServiceInstallStatus installStatus = new ServiceInstallStatus();
         for (ToolInstallConfig toolCfg : toolInstallConfigs) {
             try {
-                installStatus.setToolName(toolCfg.getName());
+                installStatus.setServiceName(toolCfg.getName());
                 invokeSteps(info, toolCfg, true);
                 installStatus.setStatus(ServiceStatus.UNINSTALLED);
             } catch (TopologyException tex) {
@@ -218,7 +219,7 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
                         replacementStr = info.getUserPass();
                         break;
                     case ToolCommandsTokens.NODE_PROCESSORS_CNT:
-                        replacementStr = String.valueOf(info.getProcessorCount());
+                        replacementStr = String.valueOf(info.getFlavor().getCpu());
                         break;
                     case ToolCommandsTokens.INSTALL_SCRIPTS_ROOT_PATH:
                         replacementStr = installToolsRootPath;

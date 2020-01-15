@@ -28,7 +28,7 @@ import java.util.List;
  *
  * @author Cosmin Cara
  */
-public class LoopStateHandler implements InternalStateHandler<LoopState, ExecutionGroup> {
+public class LoopStateHandler implements InternalStateHandler<LoopState> {
     private LoopState loopState;
     private ObjectMapper serializer;
     private ExecutionGroup handledTask;
@@ -39,8 +39,14 @@ public class LoopStateHandler implements InternalStateHandler<LoopState, Executi
     }
 
     @Override
-    public void assignTask(ExecutionGroup task) {
-        this.handledTask = task;
+    public void assignTask(ExecutionTask task) {
+        if (ExecutionGroup.class.isAssignableFrom(task.getClass())) {
+            this.handledTask = (ExecutionGroup) task;
+        } else {
+            throw new ClassCastException(String.format("Expected: %s. Received: %s",
+                                                       ExecutionGroup.class.getSimpleName(),
+                                                       task.getClass().getSimpleName()));
+        }
     }
 
     @Override

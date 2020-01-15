@@ -31,6 +31,7 @@
 /*___INFO__MARK_END__*/
 package org.ggf.drmaa;
 
+import ro.cs.tao.configuration.Configuration;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
@@ -167,7 +168,7 @@ public abstract class SessionFactory {
             e = ie;
         }
         SessionFactory factory = null;
-        String className = ConfigurationManager.getInstance().getValue("tao.drmaa.sessionfactory");
+        String className = ConfigurationManager.getInstance().getValue(Configuration.DRMAA.SESSION_FACTORY_CLASS);
         // try to find services in properties or CLASSPATH
         try {
             if (className != null && ! className.equals("")) {
