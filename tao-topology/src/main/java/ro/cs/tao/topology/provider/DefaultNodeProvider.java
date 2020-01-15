@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
  * @author Cosmin Cara
  */
 public class DefaultNodeProvider implements NodeProvider {
-    private final Logger logger;
+    protected final Logger logger;
     private Supplier<PersistenceManager> persistenceManager;
 
     public DefaultNodeProvider() {

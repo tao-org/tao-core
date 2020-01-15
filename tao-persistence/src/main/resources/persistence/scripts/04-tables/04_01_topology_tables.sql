@@ -7,6 +7,7 @@ CREATE TABLE topology.node_flavor
 	cpu integer NOT NULL,
 	memory integer NOT NULL,
 	disk integer NOT NULL,
+	swap integer NOT NULL,
 	rxtx real NOT NULL
 );
 ALTER TABLE topology.node_flavor ADD CONSTRAINT PK_node_flavor PRIMARY KEY (id);

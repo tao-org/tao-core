@@ -4,14 +4,27 @@ import ro.cs.tao.component.StringIdentifiable;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
-import java.util.Objects;
 
 @XmlRootElement(name = "flavor")
 public class NodeFlavor extends StringIdentifiable {
     private int cpu;
     private int memory;
     private int disk;
+    private int swap;
     private float rxtxFactor;
+
+    public NodeFlavor() {
+        super();
+    }
+
+    public NodeFlavor(String id, int cpu, int memory, int disk, int swap, float rxtxFactor) {
+        super(id);
+        this.cpu = cpu;
+        this.memory = memory;
+        this.disk = disk;
+        this.swap = swap;
+        this.rxtxFactor = rxtxFactor;
+    }
 
     @XmlElement(name = "cpu")
     public int getCpu() { return cpu; }
@@ -25,24 +38,21 @@ public class NodeFlavor extends StringIdentifiable {
     public int getDisk() { return disk; }
     public void setDisk(int disk) { this.disk = disk; }
 
+    @XmlElement(name = "swap")
+    public int getSwap() { return swap; }
+    public void setSwap(int swap) { this.swap = swap; }
+
     @XmlElement(name = "rxtxFactor")
     public float getRxtxFactor() { return rxtxFactor; }
     public void setRxtxFactor(float rxtxFactor) { this.rxtxFactor = rxtxFactor; }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
-        NodeFlavor flavor = (NodeFlavor) o;
-        return cpu == flavor.cpu &&
-                memory == flavor.memory &&
-                disk == flavor.disk &&
-                Float.compare(flavor.rxtxFactor, rxtxFactor) == 0;
+        return super.equals(o);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), cpu, memory, disk, rxtxFactor);
+        return super.hashCode();
     }
 }
