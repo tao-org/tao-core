@@ -20,6 +20,7 @@ import ro.cs.tao.EnumUtils;
 import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.component.Variable;
+import ro.cs.tao.configuration.Configuration;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.eodata.DataHandlingException;
 import ro.cs.tao.eodata.EOProduct;
@@ -35,6 +36,7 @@ import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.Notifiable;
 import ro.cs.tao.messaging.Topic;
+import ro.cs.tao.messaging.system.StartupCompletedMessage;
 import ro.cs.tao.optimization.WorkflowOptimizer;
 import ro.cs.tao.orchestration.commands.JobCommand;
 import ro.cs.tao.orchestration.commands.TaskCommand;
@@ -67,6 +69,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.function.Function;
 import java.util.logging.Logger;
@@ -80,11 +83,8 @@ import java.util.stream.IntStream;
  */
 public class Orchestrator extends Notifiable {
 
-    private static final String GROUP_TASK_SELECTOR_KEY = "group.task.selector";
-    private static final String JOB_TASK_SELECTOR_KEY = "job.task.selector";
-
     private static final Orchestrator instance;
-    private final Map<Long, InternalStateHandler> groupStateHandlers;
+    private final Map<Long, InternalStateHandler<?>> groupStateHandlers;
     private final BlockingQueue<AbstractMap.SimpleEntry<Message, SessionContext>> queue;
 
     static {
@@ -112,7 +112,7 @@ public class Orchestrator extends Notifiable {
         this.runningTasks = Collections.synchronizedSet(new HashSet<>());
         this.listAdapter = new StringListAdapter();
         this.persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
-        subscribe(Topic.EXECUTION.value());
+        subscribe(Topic.EXECUTION.value(), Topic.SYSTEM.value());
     }
 
     public void start() {
@@ -196,58 +196,66 @@ public class Orchestrator extends Notifiable {
     /**
      * Resumes the execution of the job corresponding to this workflow.
      *
-     * @param workflowId The workflow identifier
-     * @throws ExecutionException In case anything goes wrong or there was no job for this workflow
+     * @param jobId The job identifier
+     * @throws ExecutionException In case anything goes wrong or there was no job with this id
      */
-    public void resumeJob(long workflowId) throws ExecutionException {
-        ExecutionJob job = checkJob(workflowId);
+    public void resumeJob(long jobId) throws ExecutionException {
+        ExecutionJob job = checkJob(jobId);
         JobCommand.RESUME.applyTo(job);
     }
 
     @Override
     protected void onMessageReceived(Message message) {
-        try {
-            SessionContext context = new SessionContext() {
-                @Override
-                protected Principal setPrincipal() { return message::getUser; }
-
-                @Override
-                protected List<UserPreference> setPreferences() {
-                    try {
-                        return persistenceManager != null ?
-                                persistenceManager.getUserPreferences(getPrincipal().getName()) : null;
-                    } catch (PersistenceException e) {
-                        logger.severe(e.getMessage());
-                    }
-                    return null;
+        if (message instanceof StartupCompletedMessage) {
+            final List<ExecutionJob> jobs = prepareStalledJobs();
+            if (jobs != null) {
+                for (ExecutionJob job : jobs) {
+                    this.executors.put(new MessageContext(job.getUserName()),
+                                       Executors.newFixedThreadPool(2));
+                    logger.fine(String.format("Resuming job [id=%s]", job.getId()));
+                    JobCommand.RESUME.applyTo(job);
                 }
-
-                @Override
-                public int hashCode() {
-                    return getPrincipal() != null ? getPrincipal().getName().hashCode() : super.hashCode();
-                }
-
-                @Override
-                public boolean equals(Object obj) {
-                    if (!(obj instanceof SessionContext)) {
-                        return false;
-                    }
-                    SessionContext other = (SessionContext) obj;
-                    return (this.getPrincipal() == null && other.getPrincipal() == null) ||
-                            (this.getPrincipal().getName().equals(other.getPrincipal().getName()));
-                }
-            };
-            queue.put(new AbstractMap.SimpleEntry<>(message, context));
-        } catch (InterruptedException e) {
-            logger.severe(e.getMessage());
+            }
+        } else {
+            try {
+                final SessionContext context = new MessageContext(message);
+                queue.put(new AbstractMap.SimpleEntry<>(message, context));
+            } catch (InterruptedException e) {
+                logger.severe(e.getMessage());
+            }
         }
+    }
+
+    private List<ExecutionJob> prepareStalledJobs() {
+        List<ExecutionJob> jobs = persistenceManager.getJobs(ExecutionStatus.RUNNING);
+        if (jobs != null) {
+            for (ExecutionJob job : jobs) {
+                job.getTasks().stream()
+                              .filter(t -> t.getExecutionStatus() == ExecutionStatus.RUNNING)
+                              .forEach(t -> {
+                                  try {
+                                      t = persistenceManager.updateTaskStatus(t, ExecutionStatus.SUSPENDED);
+                                  } catch (PersistenceException e) {
+                                      logger.severe(String.format("Cannot reset status for task %s [job %s]",
+                                                                  t.getId(), job.getId()));
+                                  }
+                              });
+                job.setExecutionStatus(ExecutionStatus.SUSPENDED);
+                try {
+                    persistenceManager.updateExecutionJob(job);
+                } catch (PersistenceException e) {
+                    logger.severe(String.format("Cannot reset status for job %s", job.getId()));
+                }
+            }
+        }
+        return jobs;
     }
 
     private void initializeGroupSelector(Function<Long, WorkflowNodeDescriptor> workflowProvider,
                                          TriFunction<Long, Long, Integer, ExecutionTask> nodeProvider) {
-        String groupTaskSelectorClass = ConfigurationManager.getInstance().getValue(GROUP_TASK_SELECTOR_KEY,
+        String groupTaskSelectorClass = ConfigurationManager.getInstance().getValue(Configuration.Orchestrator.GROUP_SELECTOR_CLASS,
                                                                                     DefaultGroupTaskSelector.class.getName());
-        Set<TaskSelector> selectors = ServiceRegistryManager.getInstance()
+        final Set<TaskSelector> selectors = ServiceRegistryManager.getInstance()
                 .getServiceRegistry(TaskSelector.class).getServices()
                 .stream().filter(s -> ExecutionGroup.class.equals(s.getTaskContainerClass()))
                 .collect(Collectors.toSet());
@@ -258,7 +266,7 @@ public class Orchestrator extends Notifiable {
                 .findFirst().orElse(null);
         if (this.groupTaskSelector == null) {
             throw new RuntimeException(String.format("Cannot instantiate the selector class defined by %s in configuration",
-                                                     GROUP_TASK_SELECTOR_KEY));
+                                                     Configuration.Orchestrator.GROUP_SELECTOR_CLASS));
         }
         this.groupTaskSelector.setWorkflowProvider(workflowProvider);
         this.groupTaskSelector.setTaskByNodeProvider(nodeProvider);
@@ -266,9 +274,9 @@ public class Orchestrator extends Notifiable {
 
     private void initializeJobSelector(Function<Long, WorkflowNodeDescriptor> workflowProvider,
                                        TriFunction<Long, Long, Integer, ExecutionTask> nodeProvider) {
-        String jobTaskSelectorClass = ConfigurationManager.getInstance().getValue(JOB_TASK_SELECTOR_KEY,
+        String jobTaskSelectorClass = ConfigurationManager.getInstance().getValue(Configuration.Orchestrator.JOB_SELECTOR_CLASS,
                                                                                   DefaultJobTaskSelector.class.getName());
-        Set<TaskSelector> selectors = ServiceRegistryManager.getInstance()
+        final Set<TaskSelector> selectors = ServiceRegistryManager.getInstance()
                 .getServiceRegistry(TaskSelector.class).getServices()
                 .stream().filter(s -> ExecutionJob.class.equals(s.getTaskContainerClass()))
                 .collect(Collectors.toSet());
@@ -279,7 +287,7 @@ public class Orchestrator extends Notifiable {
                 .findFirst().orElse(null);
         if (this.jobTaskSelector == null) {
             throw new RuntimeException(String.format("Cannot instantiate the selector class defined by %s in configuration",
-                                                     JOB_TASK_SELECTOR_KEY));
+                                                     Configuration.Orchestrator.JOB_SELECTOR_CLASS));
         }
         this.jobTaskSelector.setWorkflowProvider(workflowProvider);
         this.jobTaskSelector.setTaskByNodeProvider(nodeProvider);
@@ -317,7 +325,7 @@ public class Orchestrator extends Notifiable {
                         if (parentGroupTask != null) {
                             String state = parentGroupTask.getInternalState();
                             if (state != null) {
-                                InternalStateHandler handler = this.groupStateHandlers.get(parentGroupTask.getId());
+                                InternalStateHandler<?> handler = this.groupStateHandlers.get(parentGroupTask.getId());
                                 parentGroupTask.setStateHandler(handler);
                                 nextTask.setInternalState(String.valueOf(((LoopState) handler.currentState()).getCurrent()));
                             }
@@ -879,7 +887,51 @@ public class Orchestrator extends Notifiable {
         
         return UserQuotaManager.getInstance().checkUserProcessingQuota(user);
     }
-    
+
+    private class MessageContext extends SessionContext {
+        private final Principal impersonatingUser;
+
+        private MessageContext(Message message) {
+            this.impersonatingUser = message::getUser;
+        }
+
+        private MessageContext(String userName) {
+            this.impersonatingUser = () -> userName;
+        }
+
+        @Override
+        protected Principal setPrincipal() {
+            return this.impersonatingUser;
+        }
+
+        @Override
+        protected List<UserPreference> setPreferences() {
+            try {
+                Principal principal = getPrincipal();
+                return persistenceManager != null && principal != null ?
+                        persistenceManager.getUserPreferences(getPrincipal().getName()) : null;
+            } catch (PersistenceException e) {
+                logger.severe(e.getMessage());
+            }
+            return null;
+        }
+
+        @Override
+        public int hashCode() {
+            return getPrincipal() != null ? getPrincipal().getName().hashCode() : super.hashCode();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (!(obj instanceof SessionContext)) {
+                return false;
+            }
+            SessionContext other = (SessionContext) obj;
+            return (this.getPrincipal() == null && other.getPrincipal() == null) ||
+                    (this.getPrincipal().getName().equals(other.getPrincipal().getName()));
+        }
+    }
+
     private class QueueMonitor extends Thread {
         @Override
         public void run() {

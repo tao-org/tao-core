@@ -1,13 +1,16 @@
 -------------------------------------------------------------------------------
--- topology.node_type
-DROP TABLE IF EXISTS topology.node_type CASCADE;
-CREATE TABLE topology.node_type
+-- topology.node_flavor
+DROP TABLE IF EXISTS topology.node_flavor CASCADE;
+CREATE TABLE topology.node_flavor
 (
-	id integer NOT NULL,
-	code varchar(3) NOT NULL,
-	description varchar(100) NOT NULL
+	id varchar(250) NOT NULL,
+	cpu integer NOT NULL,
+	memory integer NOT NULL,
+	disk integer NOT NULL,
+	swap integer NOT NULL,
+	rxtx real NOT NULL
 );
-ALTER TABLE topology.node_type ADD CONSTRAINT PK_node_type PRIMARY KEY (id);
+ALTER TABLE topology.node_flavor ADD CONSTRAINT PK_node_flavor PRIMARY KEY (id);
 
 -------------------------------------------------------------------------------
 -- table: topology.execution_node
@@ -17,10 +20,7 @@ CREATE TABLE topology.node
 	id varchar(250) NOT NULL,
 	username varchar(50) NOT NULL,
 	password text NOT NULL,
-	type_id integer NOT NULL,
-	total_CPU integer NOT NULL,
-	total_RAM integer NOT NULL,
-	total_HDD integer NOT NULL,
+	flavor_id varchar(250) NOT NULL,
 	description text NULL,
 	SSH_key text NULL,
 	used_CPU integer NULL,
@@ -32,8 +32,8 @@ CREATE TABLE topology.node
 	active boolean NULL DEFAULT true
 );
 ALTER TABLE topology.node ADD CONSTRAINT PK_execution_node PRIMARY KEY (id);
-ALTER TABLE topology.node ADD CONSTRAINT FK_execution_node_type
-    FOREIGN KEY (type_id) REFERENCES topology.node_type (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE topology.node ADD CONSTRAINT FK_execution_node_flavor
+    FOREIGN KEY (flavor_id) REFERENCES topology.node_flavor (id) ON DELETE No Action ON UPDATE No Action;
 
 -------------------------------------------------------------------------------
 -- topology.service_status
