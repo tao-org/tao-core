@@ -288,6 +288,8 @@ public class PersistenceManager implements MessagePersister {
 
     public NodeFlavor getMasterFlavor() { return nodeManager.getMasterFlavor(); }
 
+    public NodeFlavor getMatchingFlavor(NodeFlavor flavor) { return nodeManager.getMatchingFlavor(flavor); }
+
     public NodeFlavor save(NodeFlavor flavor) { return nodeManager.save(flavor); }
 
     public List<NodeDescription> getNodes() {

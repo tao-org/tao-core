@@ -1,7 +1,9 @@
 package ro.cs.tao.persistence.repository;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.topology.NodeFlavor;
@@ -10,4 +12,8 @@ import ro.cs.tao.topology.NodeFlavor;
 @Qualifier(value = "nodeFlavorRepository")
 @Transactional
 public interface NodeFlavorRepository extends CrudRepository<NodeFlavor, String> {
+
+    @Query(value = "SELECT * FROM topology.node_flavor WHERE cpu >= :cpu AND memory >= :memory AND disk >= :disk ORDER BY cpu, memory, disk LIMIT 1",
+            nativeQuery = true)
+    NodeFlavor getMatchingFlavor(@Param("cpu")int cpu, @Param("memory")int memory, @Param("disk")int disk);
 }
