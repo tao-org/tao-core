@@ -129,6 +129,8 @@ public class TopologyManager {
         this.listeners.remove(listener);
     }
 
+    public List<NodeFlavor> listNodeFlavors() { return this.nodeProvider.listFlavors(); }
+
     public NodeDescription getNode(String hostName) {
         return this.nodeProvider.getNode(hostName);
     }

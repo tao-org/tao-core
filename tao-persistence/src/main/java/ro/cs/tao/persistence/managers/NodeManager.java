@@ -54,6 +54,10 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
         return nodeFlavorRepository.findById("master").orElse(null);
     }
 
+    public NodeFlavor getMatchingFlavor(NodeFlavor flavor) {
+        return flavor != null ? nodeFlavorRepository.getMatchingFlavor(flavor.getCpu(), flavor.getMemory(), flavor.getDisk()) : null;
+    }
+
     public NodeFlavor save(NodeFlavor flavor) {
         return nodeFlavorRepository.save(flavor);
     }
