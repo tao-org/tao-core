@@ -31,8 +31,6 @@ import ro.cs.tao.topology.docker.DockerImageInstaller;
 import ro.cs.tao.topology.docker.DockerManager;
 import ro.cs.tao.topology.provider.DefaultNodeOperationListener;
 import ro.cs.tao.topology.provider.DefaultNodeProvider;
-import ro.cs.tao.topology.provider.NodeOperationListener;
-import ro.cs.tao.topology.provider.NodeProvider;
 import ro.cs.tao.utils.async.BinaryTask;
 import ro.cs.tao.utils.async.LazyInitialize;
 import ro.cs.tao.utils.executors.*;
@@ -61,7 +59,8 @@ public class TopologyManager {
     private static NodeDescription masterNodeInfo;
 
     private final Logger logger;
-    private NodeProvider nodeProvider;
+    private NodeProvider externalNodeProvider;
+    private final DefaultNodeProvider localNodeProvider;
     private final Set<NodeOperationListener> listeners;
     private final Set<TopologyToolInstaller> installers;
     private final Supplier<PersistenceManager> persistenceManager;
@@ -91,20 +90,18 @@ public class TopologyManager {
         final ServiceRegistry<TopologyToolInstaller> installersRegistry = serviceRegistryManager.getServiceRegistry(TopologyToolInstaller.class);
         this.installers = installersRegistry.getServices();
         final ServiceRegistry<NodeProvider> nodeProviderRegistry = serviceRegistryManager.getServiceRegistry(NodeProvider.class);
-        final String nodeProviderClassName = ConfigurationManager.getInstance().getValue(Configuration.Topology.PROVIDER_CLASS,
-                                                                                         DefaultNodeProvider.class.getName());
+        this.localNodeProvider = new DefaultNodeProvider();
         final Set<NodeProvider> nodeProviders = nodeProviderRegistry.getServices();
-        if (nodeProviders == null) {
-            throw new TopologyException("No instances of NodeProvider found");
-        }
         for (NodeProvider provider : nodeProviders) {
-            if (provider.getClass().getName().equals(nodeProviderClassName)) {
-                this.nodeProvider = provider;
+            if (!provider.getClass().getName().equals(DefaultNodeProvider.class.getName())) {
+                this.externalNodeProvider = provider;
                 break;
             }
         }
-        if (this.nodeProvider == null) {
-            throw new TopologyException(String.format("NodeProvider [%s] not found", nodeProviderClassName));
+        if (this.externalNodeProvider == null) {
+            logger.info("No external node provider found");
+        } else {
+            logger.info(String.format("External node provider '%s' registered", this.externalNodeProvider.getClass().getSimpleName()));
         }
         this.listeners = new HashSet<>();
         registerListener(new DefaultNodeOperationListener());
@@ -129,20 +126,27 @@ public class TopologyManager {
         this.listeners.remove(listener);
     }
 
-    public List<NodeFlavor> listNodeFlavors() { return this.nodeProvider.listFlavors(); }
+    public List<NodeFlavor> listNodeFlavors() { return this.localNodeProvider.listFlavors(); }
 
-    public NodeDescription getNode(String hostName) {
-        return this.nodeProvider.getNode(hostName);
-    }
+    public NodeDescription getNode(String hostName) { return this.localNodeProvider.getNode(hostName); }
 
     public List<NodeDescription> listNodes() {
-        return this.nodeProvider.listNodes();
+        return this.externalNodeProvider != null ?
+                this.externalNodeProvider.listNodes() : this.localNodeProvider.listNodes();
     }
 
     public void addNode(NodeDescription info) throws TopologyException {
-        this.nodeProvider.addNode(info);
+        if (this.externalNodeProvider != null) {
+            info = this.externalNodeProvider.create(info);
+        }
+        this.localNodeProvider.create(info);
         // make sure the common share is mounted on the node
-        notifyListeners(info, checkMount(info));
+        final ServiceInstallStatus mountStatus = checkMount(info);
+        if (mountStatus.getStatus() == ServiceStatus.ERROR) {
+            logger.severe(String.format("Common share mount could not be done on node [%s]. Reason: %s",
+                                        info.getId(), mountStatus.getReason()));
+        }
+        notifyListeners(info, ServiceInstallStatus.NODE_ADDED);
         for (TopologyToolInstaller installer: installers) {
             // execute all the installers
             this.executorService.submit(new BinaryTask<NodeDescription, ServiceInstallStatus>(info, this::notifyListeners) {
@@ -171,23 +175,23 @@ public class TopologyManager {
     }
 
     public void removeNode(String hostName) {
-        NodeDescription node = getNode(hostName);
+        final NodeDescription node = getNode(hostName);
         if (node == null) {
-            throw new TopologyException(String.format("Node [%s] does not exist", hostName));
+            throw new TopologyException(String.format("Node [%s] doesn't exist", hostName));
         }
-        try {
-            getPersistenceManager().deleteExecutionNode(hostName);
-        } catch (PersistenceException e) {
-            logger.severe("Cannot remove node description from database. Host name is :" + hostName);
-            throw new TopologyException(e);
+        if (this.externalNodeProvider != null) {
+            this.externalNodeProvider.remove(hostName);
+        } else {
+            // execute all the installers
+            for (TopologyToolInstaller installer: installers) {
+                this.executorService.submit(new BinaryTask<NodeDescription, ServiceInstallStatus>(node, this::notifyListeners) {
+                    @Override
+                    public ServiceInstallStatus execute(NodeDescription ref) { return installer.uninstallNode(node); }
+                });
+            }
         }
-        // execute all the installers
-        for (TopologyToolInstaller installer: installers) {
-            this.executorService.submit(new BinaryTask<NodeDescription, ServiceInstallStatus>(node, this::notifyListeners) {
-                @Override
-                public ServiceInstallStatus execute(NodeDescription ref) { return installer.uninstallNode(node); }
-            });
-        }
+        this.localNodeProvider.remove(hostName);
+        notifyListeners(node, ServiceInstallStatus.NODE_REMOVED);
         Message message = new Message();
         message.setTopic(Topic.TOPOLOGY.value());
         message.setUser(SystemPrincipal.instance().getName());
@@ -203,7 +207,10 @@ public class TopologyManager {
         for (TopologyToolInstaller installer: installers) {
             installer.editNode(nodeInfo);
         }
-        this.nodeProvider.updateNode(nodeInfo);
+        if (this.externalNodeProvider != null) {
+            nodeInfo = this.externalNodeProvider.update(nodeInfo);
+        }
+        this.localNodeProvider.update(nodeInfo);
     }
 
     public NodeDescription getMasterNodeInfo() {

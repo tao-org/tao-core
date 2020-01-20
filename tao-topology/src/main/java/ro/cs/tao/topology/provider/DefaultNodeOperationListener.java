@@ -4,6 +4,7 @@ import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.Topic;
 import ro.cs.tao.security.SystemPrincipal;
 import ro.cs.tao.topology.NodeDescription;
+import ro.cs.tao.topology.NodeOperationListener;
 import ro.cs.tao.topology.ServiceInstallStatus;
 
 /**

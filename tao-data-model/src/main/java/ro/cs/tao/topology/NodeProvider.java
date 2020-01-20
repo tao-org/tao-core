@@ -1,8 +1,4 @@
-package ro.cs.tao.topology.provider;
-
-import ro.cs.tao.topology.NodeDescription;
-import ro.cs.tao.topology.NodeFlavor;
-import ro.cs.tao.topology.TopologyException;
+package ro.cs.tao.topology;
 
 import java.util.List;
 
@@ -36,7 +32,7 @@ public interface NodeProvider {
      *
      * @param node  The node information
      */
-    NodeDescription addNode(NodeDescription node) throws TopologyException;
+    NodeDescription create(NodeDescription node) throws TopologyException;
     /**
      * Adds a node to the TAO topology. Depending on the actual implementation, some providers may also create
      * the physical node.
@@ -47,23 +43,23 @@ public interface NodeProvider {
      * @param user      The user that has (or will have) administrative privileges on the node
      * @param pwd       The user password
      */
-    NodeDescription addNode(NodeFlavor flavor, String name, String description, String user, String pwd) throws TopologyException;
+    NodeDescription create(NodeFlavor flavor, String name, String description, String user, String pwd) throws TopologyException;
     /**
      * Removes a node from the TAO topology. Depending on the actual implementation, some providers may also delete
      * the physical node.
      *
      * @param nodeName      The node (host) name.
      */
-    void removeNode(String nodeName) throws TopologyException;
+    void remove(String nodeName) throws TopologyException;
     /**
      * Removes a node from the TAO topology. Depending on the actual implementation, some providers may also delete
      * the physical node.
      *
      * @param node  The node descriptor
      */
-    default void removeNode(NodeDescription node)  throws TopologyException {
+    default void remove(NodeDescription node)  throws TopologyException {
         if (node != null) {
-            removeNode(node.getId());
+            remove(node.getId());
         }
     }
     /**
@@ -72,16 +68,16 @@ public interface NodeProvider {
      *
      * @param nodeName  The node (host) name
      */
-    void suspendNode(String nodeName) throws TopologyException;
+    void suspend(String nodeName) throws TopologyException;
     /**
      * Puts the node in an inactive state. Depending on the actual implementation, some providers may only mark
      * the node as inactive, while others may put the physical node in a suspended state.
      *
      * @param node  The node descriptor
      */
-    default void suspendNode(NodeDescription node)  throws TopologyException {
+    default void suspend(NodeDescription node)  throws TopologyException {
         if (node != null) {
-            suspendNode(node.getId());
+            suspend(node.getId());
         }
     }
     /**
@@ -90,16 +86,16 @@ public interface NodeProvider {
      *
      * @param nodeName  The node (host) name
      */
-    void resumeNode(String nodeName)  throws TopologyException;
+    void resume(String nodeName)  throws TopologyException;
     /**
      * Puts the node in an active state. Depending on the actual implementation, some providers may only mark
      * the node as active, while others may bring back the physical node in a runnable state.
      *
      * @param node  The node descriptor
      */
-    default void resumeNode(NodeDescription node)  throws TopologyException {
+    default void resume(NodeDescription node)  throws TopologyException {
         if (node != null) {
-            resumeNode(node.getId());
+            resume(node.getId());
         }
     }
     /**
@@ -108,5 +104,5 @@ public interface NodeProvider {
      *
      * @param node  The node descriptor
      */
-    NodeDescription updateNode(NodeDescription node) throws TopologyException;
+    NodeDescription update(NodeDescription node) throws TopologyException;
 }
