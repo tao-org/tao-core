@@ -364,8 +364,8 @@ public class PersistenceManagerTest {
     public void TC_08_retrieve_execution_node_by_host_name()
     {
         logger.info("TC_08_retrieve_execution_node_by_host_name");
-        try
-        {
+        /*try
+        {*/
             List<NodeDescription> nodes  = persistenceManager.getNodes();
             if(nodes.size() > 0)
             {
@@ -374,12 +374,12 @@ public class PersistenceManagerTest {
                 NodeDescription searchedNode  = persistenceManager.getNodeByHostName(hostName);
                 Assert.assertTrue(searchedNode != null && searchedNode.getId().equals(hostName));
             }
-        }
+        /*}
         catch (PersistenceException e)
         {
             logger.error(ExceptionUtils.getStackTrace(e));
             Assert.fail(e.getMessage());
-        }
+        }*/
     }
 
     @Test

@@ -71,11 +71,7 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
     }
 
     @Transactional
-    public NodeDescription getNodeByHostName(final String hostName) throws PersistenceException {
-        // check method parameters
-        if (hostName == null || hostName.isEmpty()) {
-            throw new PersistenceException("Invalid parameters were provided for searching execution node by host name ("+ String.valueOf(hostName) +") !");
-        }
+    public NodeDescription getNodeByHostName(final String hostName) {
         return repository.findById(hostName).orElse(null);
     }
 

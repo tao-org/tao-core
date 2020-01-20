@@ -296,7 +296,7 @@ public class PersistenceManager implements MessagePersister {
         return nodeManager.list();
     }
 
-    public NodeDescription getNodeByHostName(String hostName) throws PersistenceException {
+    public NodeDescription getNodeByHostName(String hostName) {
         return nodeManager.getNodeByHostName(hostName);
     }
 
