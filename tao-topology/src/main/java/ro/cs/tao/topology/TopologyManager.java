@@ -126,7 +126,16 @@ public class TopologyManager {
         this.listeners.remove(listener);
     }
 
-    public List<NodeFlavor> listNodeFlavors() { return this.localNodeProvider.listFlavors(); }
+    public List<NodeFlavor> listNodeFlavors() {
+        List<NodeFlavor> flavors = this.localNodeProvider.listFlavors();
+        if (flavors == null) {
+            flavors = new ArrayList<>();
+        }
+        if (flavors.size() <= 1 && this.externalNodeProvider != null) {
+            flavors.addAll(this.externalNodeProvider.listFlavors());
+        }
+        return flavors;
+    }
 
     public NodeDescription getNode(String hostName) { return this.localNodeProvider.getNode(hostName); }
 

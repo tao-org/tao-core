@@ -47,12 +47,7 @@ public class DefaultNodeProvider implements NodeProvider {
 
     @Override
     public NodeDescription getNode(String nodeName) throws TopologyException {
-        try {
-            return getPersistenceManager().getNodeByHostName(nodeName);
-        } catch (PersistenceException e) {
-            logger.severe("Cannot get node description from database for node " + nodeName);
-            throw new TopologyException(e);
-        }
+        return getPersistenceManager().getNodeByHostName(nodeName);
     }
 
     @Override
