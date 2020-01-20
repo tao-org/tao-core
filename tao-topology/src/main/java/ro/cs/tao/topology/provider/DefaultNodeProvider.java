@@ -5,6 +5,7 @@ import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.topology.NodeFlavor;
+import ro.cs.tao.topology.NodeProvider;
 import ro.cs.tao.topology.TopologyException;
 import ro.cs.tao.utils.async.LazyInitialize;
 
@@ -55,7 +56,7 @@ public class DefaultNodeProvider implements NodeProvider {
     }
 
     @Override
-    public NodeDescription addNode(NodeDescription node) throws TopologyException {
+    public NodeDescription create(NodeDescription node) throws TopologyException {
         if (node == null) {
             throw new TopologyException("null");
         }
@@ -78,18 +79,18 @@ public class DefaultNodeProvider implements NodeProvider {
     }
 
     @Override
-    public NodeDescription addNode(NodeFlavor flavor, String name, String description, String user, String pwd) throws TopologyException {
+    public NodeDescription create(NodeFlavor flavor, String name, String description, String user, String pwd) throws TopologyException {
         NodeDescription info = new NodeDescription();
         info.setId(name);
         info.setDescription(description);
         info.setUserName(user);
         info.setUserPass(pwd);
         info.setFlavor(flavor);
-        return addNode(info);
+        return create(info);
     }
 
     @Override
-    public void removeNode(String nodeName) throws TopologyException {
+    public void remove(String nodeName) throws TopologyException {
         NodeDescription node = getNode(nodeName);
         if (node == null) {
             throw new TopologyException(String.format("Node [%s] does not exist", nodeName));
@@ -103,25 +104,25 @@ public class DefaultNodeProvider implements NodeProvider {
     }
 
     @Override
-    public void suspendNode(String nodeName) throws TopologyException {
+    public void suspend(String nodeName) throws TopologyException {
         NodeDescription node = getNode(nodeName);
         if (node != null) {
             node.setActive(false);
-            updateNode(node);
+            update(node);
         }
     }
 
     @Override
-    public void resumeNode(String nodeName) throws TopologyException {
+    public void resume(String nodeName) throws TopologyException {
         NodeDescription node = getNode(nodeName);
         if (node != null) {
             node.setActive(true);
-            updateNode(node);
+            update(node);
         }
     }
 
     @Override
-    public NodeDescription updateNode(NodeDescription node) throws TopologyException {
+    public NodeDescription update(NodeDescription node) throws TopologyException {
         try {
             return getPersistenceManager().updateExecutionNode(node);
         } catch (PersistenceException e) {

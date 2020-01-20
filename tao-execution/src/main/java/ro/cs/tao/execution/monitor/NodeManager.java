@@ -12,6 +12,8 @@ import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.topology.NodeFlavor;
+import ro.cs.tao.topology.NodeOperationListener;
+import ro.cs.tao.topology.ServiceInstallStatus;
 import ro.cs.tao.utils.async.Parallel;
 
 import java.security.Principal;
@@ -23,7 +25,7 @@ import java.util.*;
  *
  * @author Cosmin Cara
  */
-public class NodeManager extends Notifiable {
+public class NodeManager extends Notifiable implements NodeOperationListener {
     private static final int concurrentCalls;
     private static final boolean isAvailable;
     private static final NodeManager instance;
@@ -113,6 +115,25 @@ public class NodeManager extends Notifiable {
         }
         if (this.nodeRefreshTimer != null) {
             this.nodeRefreshTimer.purge();
+        }
+    }
+
+    @Override
+    public void onCompleted(NodeDescription node, ServiceInstallStatus status) {
+        if (status.getServiceName().equals("Node")) {
+            final String host = node.getId();
+            switch (status.getStatus()) {
+                case INSTALLED:
+                    this.nodes.put(host, node);
+                    this.runtimeInfo.put(host, new RuntimeInfo());
+                    break;
+                case UNINSTALLED:
+                    this.nodes.remove(host);
+                    this.runtimeInfo.remove(host);
+                    break;
+                default:
+                    break;
+            }
         }
     }
 

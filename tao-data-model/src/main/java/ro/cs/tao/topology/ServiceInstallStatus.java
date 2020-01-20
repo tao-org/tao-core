@@ -19,6 +19,14 @@ package ro.cs.tao.topology;
  * @author Cosmin Cara
  */
 public class ServiceInstallStatus {
+    public static final ServiceInstallStatus NODE_ADDED = new ServiceInstallStatus() {{
+        setServiceName("Node");
+        setStatus(ServiceStatus.INSTALLED);
+    }};
+    public static final ServiceInstallStatus NODE_REMOVED = new ServiceInstallStatus() {{
+        setServiceName("Node");
+        setStatus(ServiceStatus.UNINSTALLED);
+    }};
     private String serviceName;
     private ServiceStatus status;
     private String reason;

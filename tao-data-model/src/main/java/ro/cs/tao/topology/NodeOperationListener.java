@@ -1,7 +1,4 @@
-package ro.cs.tao.topology.provider;
-
-import ro.cs.tao.topology.NodeDescription;
-import ro.cs.tao.topology.ServiceInstallStatus;
+package ro.cs.tao.topology;
 
 /**
  * Listener for completion of node service installation operations
