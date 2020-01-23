@@ -17,11 +17,6 @@
     <dependencies>
         <dependency>
             <groupId>ro.cs.tao</groupId>
-            <artifactId>tao-config</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ro.cs.tao</groupId>
             <artifactId>tao-service-registry</artifactId>
             <version>${project.version}</version>
         </dependency>
