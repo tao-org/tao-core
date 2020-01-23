@@ -31,6 +31,7 @@
         <module>tao-core-kit</module>
         <module>tao-execution-api</module>
         <module>tao-service-base-api</module>
+        <module>tao-mail</module>
     </modules>
 
     <properties>

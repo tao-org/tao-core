@@ -13,6 +13,14 @@
     <name>TAO Configuration</name>
     <packaging>jar</packaging>
 
+    <dependencies>
+        <dependency>
+            <groupId>ro.cs.tao</groupId>
+            <artifactId>tao-data-model</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+
     <build>
         <filters>
             <filter>src/main/resources/profiles/${build.profile.id}/tao.properties</filter>
