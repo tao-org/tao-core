@@ -16,8 +16,7 @@
 
 package ro.cs.tao.services.interfaces;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import ro.cs.tao.Sort;
 import ro.cs.tao.datasource.beans.Query;
 
 import java.util.List;
@@ -31,5 +30,5 @@ public interface QueryService extends CRUDService<Query, Long> {
     List<Query> getQueries(String userId, long nodeid);
     List<Query> getQueriesBySensor(String userId, String sensor);
     List<Query> getQueriesByDataSource(String userId, String dataSource);
-    Page<Query> getAllQueries(Pageable pageable);
+    List<Query> getQueries(int pageNumber, int pageSize, Sort sort);
 }

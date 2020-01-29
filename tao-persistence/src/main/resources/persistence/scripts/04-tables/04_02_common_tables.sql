@@ -33,6 +33,7 @@ ALTER SEQUENCE common.tag_id_seq OWNED BY common.tag.id;
 DROP TABLE IF EXISTS common.notification CASCADE;
 CREATE TABLE common.notification
 (
+    id bigserial NOT NULL,
     timestamp bigint NOT NULL,
     topic character varying NOT NULL,
 	username character varying NOT NULL,
@@ -41,6 +42,10 @@ CREATE TABLE common.notification
 	discriminator integer NOT NULL
 );
 ALTER TABLE common.notification ADD CONSTRAINT PK_notification PRIMARY KEY (timestamp, username);
+DROP SEQUENCE IF EXISTS common.notification_id_seq CASCADE;
+CREATE SEQUENCE common.notification_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE common.notification ALTER COLUMN id SET DEFAULT nextval('common.notification_id_seq');
+ALTER SEQUENCE common.notification_id_seq OWNED BY common.notification.id;
 CREATE INDEX IX_notification ON common.notification
     USING btree (topic COLLATE pg_catalog."default", username COLLATE pg_catalog."default");
 

@@ -18,7 +18,7 @@ package ro.cs.tao.services.interfaces;
 import ro.cs.tao.Sort;
 import ro.cs.tao.SortDirection;
 import ro.cs.tao.component.validation.ValidationException;
-import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.utils.GenericComparator;
 
 import java.util.*;
@@ -120,5 +120,5 @@ public interface CRUDService<T, K> extends TAOService {
     default void validate(T object) throws ValidationException { }
 
     default T tag(K id, List<String> tags) throws PersistenceException { return null; }
-    default T untag(K id, List<String> tags) throws PersistenceException { return null; }
+    default T unTag(K id, List<String> tags) throws PersistenceException { return null; }
 }

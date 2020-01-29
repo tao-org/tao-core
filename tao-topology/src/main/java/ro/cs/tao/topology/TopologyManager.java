@@ -16,15 +16,11 @@
 package ro.cs.tao.topology;
 
 import org.apache.commons.lang3.SystemUtils;
-import ro.cs.tao.configuration.Configuration;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.Topic;
-import ro.cs.tao.persistence.PersistenceManager;
-import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.security.SystemPrincipal;
-import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.topology.docker.DockerImageInstaller;
@@ -32,7 +28,6 @@ import ro.cs.tao.topology.docker.DockerManager;
 import ro.cs.tao.topology.provider.DefaultNodeOperationListener;
 import ro.cs.tao.topology.provider.DefaultNodeProvider;
 import ro.cs.tao.utils.async.BinaryTask;
-import ro.cs.tao.utils.async.LazyInitialize;
 import ro.cs.tao.utils.executors.*;
 
 import java.net.InetAddress;
@@ -43,7 +38,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 import java.util.logging.Logger;
 
 /**
@@ -63,7 +57,6 @@ public class TopologyManager {
     private final DefaultNodeProvider localNodeProvider;
     private final Set<NodeOperationListener> listeners;
     private final Set<TopologyToolInstaller> installers;
-    private final Supplier<PersistenceManager> persistenceManager;
     private final ExecutorService executorService;
 
     static {
@@ -78,12 +71,7 @@ public class TopologyManager {
 
     private TopologyManager() {
         this.logger = Logger.getLogger(TopologyManager.class.getName());
-        this.persistenceManager = LazyInitialize.using(() -> SpringContextBridge.services().getService(PersistenceManager.class));
         this.executorService = new NamedThreadPoolExecutor("topology-thread", 1);//Executors.newSingleThreadExecutor();
-        // initialize the hostname and ip address in the master node description
-        if (masterNodeInfo == null) {
-            initMasterNodeDescription();
-        }
 
         // load all services for tool installers and initialize the master node info
         ServiceRegistryManager serviceRegistryManager = ServiceRegistryManager.getInstance();
@@ -106,6 +94,10 @@ public class TopologyManager {
         this.listeners = new HashSet<>();
         registerListener(new DefaultNodeOperationListener());
         // Set the auto-determined master node info
+        // initialize the hostname and ip address in the master node description
+        if (masterNodeInfo == null) {
+            initMasterNodeDescription();
+        }
         setMasterNodeInfo();
         DockerManager.setMasterNode(masterNodeInfo);
     }
@@ -163,8 +155,8 @@ public class TopologyManager {
                 public ServiceInstallStatus execute(NodeDescription node) {
                     ServiceInstallStatus status = installer.installNewNode(node);
                     try {
-                        node = getPersistenceManager().updateExecutionNode(node);
-                    } catch (PersistenceException e) {
+                        node = localNodeProvider.update(node);
+                    } catch (Exception e) {
                         logger.severe(String.format("Cannot update service status for '%s' on node [%s]",
                                                     status.getServiceName(), node.getId()));
                     }
@@ -247,8 +239,8 @@ public class TopologyManager {
     public ServiceInstallStatus checkMount(NodeDescription node) {
         ServiceInstallStatus status = new ServiceInstallStatus();
         status.setServiceName("Mount");
-        String mount = ConfigurationManager.getInstance().getValue(Configuration.FileSystem.NODE_SHARE_MOUNT, "/mnt/tao");
-        String share = ConfigurationManager.getInstance().getValue(Configuration.FileSystem.MASTER_SHARE, "/tao");
+        String mount = ConfigurationManager.getInstance().getValue("node.mount.folder", "/mnt/tao");
+        String share = ConfigurationManager.getInstance().getValue("master.share.name", "/tao");
         final List<String> commands = ProcessHelper.tokenizeCommands(createMountTemplate, mount, masterNodeInfo.getId(),
                                                                      share, masterNodeInfo.getUserName(), masterNodeInfo.getUserPass());
         ExecutionUnit job = new ExecutionUnit(ExecutorType.SSH2,
@@ -274,8 +266,8 @@ public class TopologyManager {
     public ServiceInstallStatus checkMasterShare() {
         ServiceInstallStatus status = new ServiceInstallStatus();
         status.setServiceName("Local Share");
-        String path = ConfigurationManager.getInstance().getValue(Configuration.FileSystem.WORKSPACE_LOCATION, "/mnt/tao/working_dir");
-        String share = ConfigurationManager.getInstance().getValue(Configuration.FileSystem.MASTER_SHARE, "/tao");
+        String path = ConfigurationManager.getInstance().getValue("workspace.location", "/mnt/tao/working_dir");
+        String share = ConfigurationManager.getInstance().getValue("master.share.name", "/tao");
         status.setStatus(ServiceStatus.INSTALLED);
         if (!(share.startsWith("\\\\") || share.startsWith("//"))) {
             List<String> commands;
@@ -310,7 +302,7 @@ public class TopologyManager {
             // than the call to "hostname" call in Linux. Maybe an invocation of hostname will solve the problem
             // but this might break the portability
             String hostName = InetAddress.getLocalHost().getHostName();
-            masterNodeInfo = getPersistenceManager().getNodeByHostName(hostName);
+            masterNodeInfo = this.localNodeProvider.getNode(hostName);
             if (masterNodeInfo == null) {
                 masterNodeInfo = new NodeDescription();
                 masterNodeInfo.setId(hostName);
@@ -319,10 +311,6 @@ public class TopologyManager {
             e.printStackTrace();
             throw new TopologyException("Master hostname retrieval failure", e);
         }
-    }
-
-    private PersistenceManager getPersistenceManager() {
-        return this.persistenceManager.get();
     }
 
     private void waitFor(Executor<?> executor, long amount, TimeUnit unit) {

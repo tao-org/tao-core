@@ -20,10 +20,12 @@ import org.apache.commons.lang3.SystemUtils;
 import ro.cs.tao.Tag;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.enums.TagType;
-import ro.cs.tao.configuration.Configuration;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.docker.Container;
-import ro.cs.tao.persistence.PersistenceManager;
+import ro.cs.tao.persistence.ContainerProvider;
+import ro.cs.tao.persistence.PersistenceException;
+import ro.cs.tao.persistence.ProcessingComponentProvider;
+import ro.cs.tao.persistence.TagProvider;
 import ro.cs.tao.persistence.data.jsonutil.JacksonUtil;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 
@@ -41,8 +43,10 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
     //protected static final Set<String> winExtensions = new HashSet<String>() {{ add(".bat"); add(".exe"); }};
     private static final Path dockerPath;
     protected final Logger logger;
+    protected final TagProvider tagProvider;
+    protected final ContainerProvider containerProvider;
+    protected final ProcessingComponentProvider componentProvider;
     private List<Tag> componentTags;
-    private final PersistenceManager persistenceManager;
 
     static {
         dockerPath = findInPath("docker" + (SystemUtils.IS_OS_WINDOWS ? ".exe" : ""));
@@ -52,22 +56,22 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
     }
 
     public BaseImageInstaller() {
-        this.persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
+        this.tagProvider = SpringContextBridge.services().getService(TagProvider.class);
+        this.containerProvider = SpringContextBridge.services().getService(ContainerProvider.class);
+        this.componentProvider = SpringContextBridge.services().getService(ProcessingComponentProvider.class);
         this.logger = Logger.getLogger(getClass().getName());
-        this.componentTags = this.persistenceManager.getComponentTags();
+        this.componentTags = this.tagProvider.list();
         if (this.componentTags == null) {
             this.componentTags = new ArrayList<>();
         }
     }
-
-    public PersistenceManager getPersistenceManager() { return persistenceManager; }
 
     @Override
     public Container installImage() {
         Container container = null;
         if (dockerPath != null) {
             try {
-                final String cfgValue = ConfigurationManager.getInstance().getValue(Configuration.Docker.IMAGES_LOCATION);
+                final String cfgValue = ConfigurationManager.getInstance().getValue("tao.docker.images");
                 if (cfgValue == null) {
                     logger.warning("Invalid path for docker images");
                     return null;
@@ -103,7 +107,7 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
                                              getContainerName(), e.getMessage()));
             }
         }
-        Container dbContainer = persistenceManager.getContainerById(container != null ? container.getId() : getContainerName());
+        Container dbContainer = this.containerProvider.get(container != null ? container.getId() : getContainerName());
         if (dbContainer == null) {
             logger.info(String.format("Container %s not registered in database, will create one", getContainerName()));
             dbContainer = new Container();
@@ -168,10 +172,10 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
         return currentPath;
     }
 
-    protected Tag getOrCreateTag(String tagText) {
+    protected Tag getOrCreateTag(String tagText) throws PersistenceException {
         Tag tag = this.componentTags.stream().filter(t -> t.getText().equalsIgnoreCase(tagText)).findFirst().orElse(null);
         if (tag == null) {
-            tag = this.persistenceManager.saveTag(new Tag(TagType.COMPONENT, tagText));
+            tag = this.tagProvider.save(new Tag(TagType.COMPONENT, tagText));
             this.componentTags.add(tag);
         }
         return tag;

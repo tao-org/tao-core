@@ -1,0 +1,24 @@
+package ro.cs.tao.execution.persistence;
+
+import ro.cs.tao.execution.model.*;
+import ro.cs.tao.persistence.EntityProvider;
+import ro.cs.tao.persistence.PersistenceException;
+
+import java.util.List;
+
+public interface ExecutionTaskProvider extends EntityProvider<ExecutionTask, Long> {
+
+    List<ExecutionTask> listRunning();
+    List<ExecutionTask> listExecuting();
+    List<ExecutionTask> listRemoteExecuting();
+    List<ExecutionTaskSummary> getTasksStatus(long jobId);
+    ExecutionTask getByJobAndNode(long jobId, long nodeId, int instanceId);
+    ExecutionTask getByGroupAndNode(long groupId, long nodeId, int instanceId);
+    ExecutionTask getByResourceId(String id);
+    ExecutionTask save(ExecutionTask task, ExecutionJob job) throws PersistenceException;
+    ExecutionTask updateStatus(ExecutionTask task, ExecutionStatus newStatus) throws PersistenceException;
+    ExecutionTask save(ExecutionTask task, ExecutionGroup taskGroup) throws PersistenceException;
+    ExecutionTask saveWithSubTasks(ExecutionGroup taskGroup, ExecutionJob job) throws PersistenceException;
+    int getCPUsForUser(String userName);
+    int getMemoryForUser(String userName);
+}

@@ -2,7 +2,6 @@ package ro.cs.tao.topology.docker;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
-import ro.cs.tao.configuration.Configuration;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.messaging.Messaging;
@@ -80,7 +79,7 @@ public class DockerManager {
 
     private List<Container> listAvailableDockerImages() {
         List<Container> containers = getDockerImages();
-        List<Container> dbContainers = getPersistenceManager().getContainers();
+        List<Container> dbContainers = getPersistenceManager().containers().list();
         if (containers.size() == 0) {
             logger.warning("Docker execution failed. Check that Docker is installed and the sudo credentials are valid");
         } else {
@@ -152,7 +151,7 @@ public class DockerManager {
         if ((retCode = executor.getReturnCode()) == 0) {
             Container image = getDockerImage(correctedName);
             containerId = image.getId();
-            String localRegistry = ConfigurationManager.getInstance().getValue(Configuration.Docker.REGISTRY_URL);
+            String localRegistry = ConfigurationManager.getInstance().getValue("tao.docker.registry");
             String tag = localRegistry + "/" + correctedName;
             commands = ProcessHelper.tokenizeCommands(dockerTagCmdTemplate, containerId, tag);
             job = new ExecutionUnit(ExecutorType.PROCESS,

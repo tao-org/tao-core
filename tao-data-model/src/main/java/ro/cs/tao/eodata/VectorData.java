@@ -16,6 +16,7 @@
 package ro.cs.tao.eodata;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -23,7 +24,7 @@ import java.util.Set;
  * @author Cosmin Cara
  */
 @XmlRootElement(name = "eoData")
-public class VectorData extends EOData {
+public class VectorData extends EOData implements Serializable {
 
     private Set<String> refs;
 

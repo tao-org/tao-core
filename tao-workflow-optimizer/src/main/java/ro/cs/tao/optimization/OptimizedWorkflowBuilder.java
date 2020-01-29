@@ -1,10 +1,13 @@
 package ro.cs.tao.optimization;
 
 import com.google.common.collect.Lists;
-import ro.cs.tao.component.*;
+import ro.cs.tao.component.ParameterDescriptor;
+import ro.cs.tao.component.ProcessingComponent;
+import ro.cs.tao.component.RuntimeOptimizer;
+import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.datasource.beans.Query;
-import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.services.base.WorkflowBuilderBase;
 import ro.cs.tao.workflow.ParameterValue;
@@ -33,7 +36,7 @@ public class OptimizedWorkflowBuilder extends WorkflowBuilderBase {
     }
 
     @Override
-    protected void addNodes(WorkflowDescriptor workflow) throws PersistenceException {
+    protected void addNodes(WorkflowDescriptor workflow) {
         /* do nothing */
     }
 
@@ -47,8 +50,8 @@ public class OptimizedWorkflowBuilder extends WorkflowBuilderBase {
         super.addLink(parent, child);
     }
 
-    protected WorkflowDescriptor updateWorkflowDescriptor(WorkflowDescriptor wf) throws PersistenceException {
-        return persistenceManager.getWorkflowDescriptor(wf.getId());
+    protected WorkflowDescriptor updateWorkflowDescriptor(WorkflowDescriptor wf) {
+        return persistenceManager.workflows().get(wf.getId());
     }
 
     /**
@@ -57,7 +60,6 @@ public class OptimizedWorkflowBuilder extends WorkflowBuilderBase {
      * @param node contains component/s for new workflow node
      * @param workflow where to add the node
      * @return created node
-     * @throws PersistenceException
      */
     protected WorkflowNodeDescriptor createOptimizedNode(OptimizationNode node, WorkflowDescriptor workflow) throws PersistenceException {
         WorkflowNodeDescriptor optimizedNode = null;
@@ -82,7 +84,7 @@ public class OptimizedWorkflowBuilder extends WorkflowBuilderBase {
 
             ProcessingComponent result = optimizer.aggregate(components.toArray(new ProcessingComponent[0]));
 
-            result = persistenceManager.saveProcessingComponent(result);
+            result = persistenceManager.processingComponents().save(result);
 
             optimizedNode = createNodeWithComponent(result, node, workflow);
         }
@@ -98,7 +100,6 @@ public class OptimizedWorkflowBuilder extends WorkflowBuilderBase {
      * @param node old node
      * @param workflow where to add the node
      * @return new node
-     * @throws PersistenceException
      */
     private WorkflowNodeDescriptor getNodeClone(OptimizationNode node, WorkflowDescriptor workflow) throws PersistenceException {
         WorkflowNodeDescriptor newNode = new WorkflowNodeDescriptor();
@@ -118,12 +119,12 @@ public class OptimizedWorkflowBuilder extends WorkflowBuilderBase {
         newNode = workflowService.addNode(workflow.getId(), newNode);
 
         if (newNode.getComponentType() == ComponentType.DATASOURCE) {
-            DataSourceComponent dsComponent = persistenceManager.getDataSourceInstance(oldNode.getComponentId());
+            DataSourceComponent dsComponent = persistenceManager.dataSourceComponents().get(oldNode.getComponentId());
 
-            Query oldQuery = persistenceManager.getQuery(SessionStore.currentContext().getPrincipal().getName(),
-                    dsComponent.getSensorName(),
-                    dsComponent.getDataSourceName(),
-                    oldNode.getId());
+            Query oldQuery = persistenceManager.queries().get(SessionStore.currentContext().getPrincipal().getName(),
+                                                              dsComponent.getSensorName(),
+                                                              dsComponent.getDataSourceName(),
+                                                              oldNode.getId());
 
             Query newQuery = new Query();
 
@@ -141,12 +142,12 @@ public class OptimizedWorkflowBuilder extends WorkflowBuilderBase {
             newQuery.setUser(oldQuery.getUser());
             newQuery.setPassword(oldQuery.getPassword());
 
-            newQuery = persistenceManager.saveQuery(newQuery);
+            newQuery = persistenceManager.queries().save(newQuery);
 
             cache.add(newQuery);
         }
 
-        return persistenceManager.updateWorkflowNodeDescriptor(newNode);
+        return persistenceManager.workflowNodes().update(newNode);
     }
 
     private boolean isTarget(ParameterValue param, ProcessingComponent component) {
@@ -167,6 +168,7 @@ public class OptimizedWorkflowBuilder extends WorkflowBuilderBase {
         for (ParameterDescriptor descriptor : component.getParameterDescriptors()) {
             if (descriptor.getName().equals(param.getParameterName())) {
                 ret = true;
+                break;
             }
         }
 
@@ -181,7 +183,6 @@ public class OptimizedWorkflowBuilder extends WorkflowBuilderBase {
      * @param node contains information of components before aggregation
      * @param workflow where to add the node
      * @return new node
-     * @throws PersistenceException
      */
     private WorkflowNodeDescriptor createNodeWithComponent(ProcessingComponent comp, OptimizationNode node, WorkflowDescriptor workflow) throws PersistenceException {
         NodesDefinition defined = node.getNodesDefinition();
@@ -247,16 +248,16 @@ public class OptimizedWorkflowBuilder extends WorkflowBuilderBase {
         for (Object obj : cache) {
             try {
                 if (obj instanceof ProcessingComponent) {
-                    persistenceManager.deleteProcessingComponent(((ProcessingComponent) obj).getId());
+                    persistenceManager.processingComponents().delete(((ProcessingComponent) obj).getId());
 
                 } else if (obj instanceof WorkflowNodeDescriptor) {
-                    persistenceManager.delete((WorkflowNodeDescriptor) obj);
+                    persistenceManager.workflowNodes().delete((WorkflowNodeDescriptor) obj);
 
                 } else if (obj instanceof WorkflowDescriptor) {
-                    persistenceManager.deleteWorkflowDescriptor(((WorkflowDescriptor) obj).getId());
+                    persistenceManager.workflows().delete(((WorkflowDescriptor) obj).getId());
 
                 } else if (obj instanceof Query) {
-                    persistenceManager.removeQuery(((Query) obj).getId());
+                    persistenceManager.queries().delete(((Query) obj).getId());
 
                 } else {
                     logger.fine("Unknown element in list.");

@@ -1,7 +1,7 @@
 package ro.cs.tao.topology.provider;
 
+import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.PersistenceManager;
-import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.topology.NodeFlavor;
@@ -12,7 +12,6 @@ import ro.cs.tao.utils.async.LazyInitialize;
 import java.util.List;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 /**
  * Default implementation for topology nodes provider, using the TAO database as "provider".
@@ -40,14 +39,12 @@ public class DefaultNodeProvider implements NodeProvider {
 
     @Override
     public List<NodeDescription> listNodes() throws TopologyException {
-        return getPersistenceManager().getNodes().stream()
-                .filter(NodeDescription::getActive)     // we take only active node but not the deleted ones
-                .collect(Collectors.toList());
+        return getPersistenceManager().nodes().list(true);
     }
 
     @Override
     public NodeDescription getNode(String nodeName) throws TopologyException {
-        return getPersistenceManager().getNodeByHostName(nodeName);
+        return getPersistenceManager().nodes().get(nodeName);
     }
 
     @Override
@@ -55,16 +52,16 @@ public class DefaultNodeProvider implements NodeProvider {
         if (node == null) {
             throw new TopologyException("null");
         }
-        if (getPersistenceManager().checkIfExistsNodeByHostName(node.getId())) {
+        if (getPersistenceManager().nodes().exists(node.getId())) {
             try {
-                node = getPersistenceManager().updateExecutionNode(node);
-            } catch (PersistenceException e) {
+                node = getPersistenceManager().nodes().update(node);
+            } catch (Exception e) {
                 logger.severe("Cannot update node description to database. Rolling back installation on node " + node.getId() + "...");
                 throw new TopologyException(e);
             }
         } else {
             try {
-                node = getPersistenceManager().saveExecutionNode(node);
+                node = getPersistenceManager().nodes().save(node);
             } catch (PersistenceException e) {
                 logger.severe("Cannot save node description to database. Rolling back installation on node " + node.getId() + "...");
                 throw new TopologyException(e);
@@ -91,7 +88,7 @@ public class DefaultNodeProvider implements NodeProvider {
             throw new TopologyException(String.format("Node [%s] does not exist", nodeName));
         }
         try {
-            getPersistenceManager().deleteExecutionNode(nodeName);
+            getPersistenceManager().nodes().delete(nodeName);
         } catch (PersistenceException e) {
             logger.severe("Cannot remove node description from database. Host name is :" + nodeName);
             throw new TopologyException(e);
@@ -119,8 +116,8 @@ public class DefaultNodeProvider implements NodeProvider {
     @Override
     public NodeDescription update(NodeDescription node) throws TopologyException {
         try {
-            return getPersistenceManager().updateExecutionNode(node);
-        } catch (PersistenceException e) {
+            return getPersistenceManager().nodes().update(node);
+        } catch (Exception e) {
             logger.severe(String.format("Cannot update node description in database [host:%s; reason:%s]",
                                         node != null ? node.getId() : "null", e.getMessage()));
             throw new TopologyException(e);

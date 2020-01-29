@@ -23,8 +23,8 @@ import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.datasource.DataSourceComponentGroup;
 import ro.cs.tao.datasource.remote.FetchMode;
 import ro.cs.tao.eodata.enums.Visibility;
+import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.PersistenceManager;
-import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.services.interfaces.ComponentService;
 import ro.cs.tao.services.interfaces.DataSourceComponentService;
@@ -65,7 +65,7 @@ public abstract class WorkflowBuilderBase implements WorkflowBuilder {
         // let's have a DataSourceComponent
         String componentId = sensor + "-" + dataSource;
         DataSourceComponent dataSourceComponent;
-        dataSourceComponent = persistenceManager.getDataSourceInstance(componentId);
+        dataSourceComponent = persistenceManager.dataSourceComponents().get(componentId);
         if (dataSourceComponent == null) {
             dataSourceComponent = new DataSourceComponent(sensor, dataSource);
             dataSourceComponent.setFetchMode(FetchMode.OVERWRITE);
@@ -75,7 +75,7 @@ public abstract class WorkflowBuilderBase implements WorkflowBuilder {
             dataSourceComponent.setAuthors("TAO Team");
             dataSourceComponent.setCopyright("(C) TAO Team");
             dataSourceComponent.setNodeAffinity("Any");
-            persistenceManager.saveDataSourceComponent(dataSourceComponent);
+            persistenceManager.dataSourceComponents().save(dataSourceComponent);
         }
         return dataSourceComponent;
     }
@@ -88,7 +88,7 @@ public abstract class WorkflowBuilderBase implements WorkflowBuilder {
     @Override
     public WorkflowDescriptor createWorkflowDescriptor() throws PersistenceException {
         WorkflowDescriptor descriptor;
-        descriptor = persistenceManager.getWorkflowDescriptor(getName());
+        descriptor = persistenceManager.workflows().getByName(getName());
         if (descriptor == null) {
             descriptor = new WorkflowDescriptor();
             descriptor.setName(getName());
@@ -97,7 +97,7 @@ public abstract class WorkflowBuilderBase implements WorkflowBuilder {
             descriptor.setActive(true);
             descriptor.setUserName("admin");
             descriptor.setVisibility(Visibility.PRIVATE);
-            descriptor = persistenceManager.saveWorkflowDescriptor(descriptor);
+            descriptor = persistenceManager.workflows().save(descriptor);
             addNodes(descriptor);
         } else {
             Logger.getLogger(getClass().getName()).warning(String.format("Workflow '%s' already exists", getName()));

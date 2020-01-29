@@ -19,7 +19,7 @@ package ro.cs.tao.services.interfaces;
 import ro.cs.tao.Tag;
 import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.eodata.EOProduct;
-import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.persistence.PersistenceException;
 
 import java.security.Principal;
 import java.util.List;

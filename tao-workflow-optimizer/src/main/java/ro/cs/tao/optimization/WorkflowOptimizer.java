@@ -2,7 +2,7 @@ package ro.cs.tao.optimization;
 
 import ro.cs.tao.component.*;
 import ro.cs.tao.execution.Optimizers;
-import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.services.utils.WorkflowUtilities;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;

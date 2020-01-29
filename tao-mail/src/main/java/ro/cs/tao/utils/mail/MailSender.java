@@ -15,8 +15,9 @@
  */
 package ro.cs.tao.utils.mail;
 
-import ro.cs.tao.configuration.Configuration;
-import ro.cs.tao.configuration.ConfigurationManager;
+import ro.cs.tao.configuration.ConfigurationProvider;
+import ro.cs.tao.spi.ServiceRegistry;
+import ro.cs.tao.spi.ServiceRegistryManager;
 
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
@@ -29,6 +30,7 @@ import javax.mail.internet.MimeMultipart;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
+import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
@@ -36,6 +38,7 @@ public class MailSender {
 
     private static final Pattern emailPattern = Pattern.compile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$");
     private static final Logger logger = Logger.getLogger(MailSender.class.getName());
+    private static final ConfigurationProvider configurationProvider;
     private String mailSmtpAuth;
     private String mailSmtpStartTlsEnable;
     private String mailSmptpHost;
@@ -45,21 +48,30 @@ public class MailSender {
     private String mailUsername;
     private String mailPassword;
 
+    static {
+        final ServiceRegistry<ConfigurationProvider> serviceRegistry = ServiceRegistryManager.getInstance().getServiceRegistry(ConfigurationProvider.class);
+        final Set<ConfigurationProvider> services = serviceRegistry.getServices();
+        if (services.size() != 1) {
+            throw new IllegalArgumentException("Multiple configuration providers are not allowed");
+        }
+        configurationProvider = services.iterator().next();
+    }
+
     public static void main (String[] args) {
         MailSender sender = new MailSender();
         sender.sendMail("Test", "Test");
     }
 
     public MailSender() {
-        ConfigurationManager configManager = ConfigurationManager.getInstance();
-        this.mailSmtpAuth = configManager.getValue(Configuration.Mail.SMTP_AUTHENTICATION_ENABLED);
-        this.mailSmtpStartTlsEnable = configManager.getValue(Configuration.Mail.SMTP_STARTTLS_ENABLED);
-        this.mailSmptpHost = configManager.getValue(Configuration.Mail.SMTP_HOST);
-        this.mailSmtpPort = configManager.getValue(Configuration.Mail.SMTP_PORT);
-        this.mailFrom = configManager.getValue(Configuration.Mail.SENDER);
-        this.mailTo = configManager.getValue(Configuration.Mail.RECIPIENT);
-        this.mailUsername = configManager.getValue(Configuration.Mail.SMTP_USER);
-        this.mailPassword = configManager.getValue(Configuration.Mail.SMTP_PASSWORD);
+
+        this.mailSmtpAuth = configurationProvider.getValue("mail.smtp.auth");
+        this.mailSmtpStartTlsEnable = configurationProvider.getValue("mail.smtp.starttls.enable");
+        this.mailSmptpHost = configurationProvider.getValue("mail.smtp.host");
+        this.mailSmtpPort = configurationProvider.getValue("mail.smtp.port");
+        this.mailFrom = configurationProvider.getValue("mail.from");
+        this.mailTo = configurationProvider.getValue("mail.to");
+        this.mailUsername = configurationProvider.getValue("mail.smtp.username");
+        this.mailPassword = configurationProvider.getValue("mail.smtp.password");
     }
 
     public MailSender(String host, int port, boolean auth, String user, String password,
@@ -80,8 +92,7 @@ public class MailSender {
         this.mailUsername = user;
         this.mailPassword = password;
         if (sender == null) {
-            String appName = ConfigurationManager.getInstance().getValue("spring.application.name",
-                                                                         "TAO Services");
+            String appName = configurationProvider.getValue("spring.application.name", "TAO Services");
             sender = "sysadm@" + appName.toLowerCase().replaceAll(" ", "_") + ".org";
         }
         this.mailFrom = sender;
@@ -117,7 +128,7 @@ public class MailSender {
         props.put("mail.smtp.port", mailSmtpPort);
 
         Session session = Session.getInstance(props,
-          new javax.mail.Authenticator() {
+          new Authenticator() {
               protected PasswordAuthentication getPasswordAuthentication() {
                   return new PasswordAuthentication(mailUsername, mailPassword);
               }

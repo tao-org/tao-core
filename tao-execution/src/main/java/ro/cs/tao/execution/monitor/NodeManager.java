@@ -1,19 +1,14 @@
 package ro.cs.tao.execution.monitor;
 
-import ro.cs.tao.configuration.Configuration;
 import ro.cs.tao.configuration.ConfigurationManager;
+import ro.cs.tao.configuration.ConfigurationProvider;
 import ro.cs.tao.execution.local.DefaultSessionFactory;
 import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.Notifiable;
-import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.quota.QuotaException;
 import ro.cs.tao.quota.UserQuotaManager;
 import ro.cs.tao.security.SessionStore;
-import ro.cs.tao.services.bridge.spring.SpringContextBridge;
-import ro.cs.tao.topology.NodeDescription;
-import ro.cs.tao.topology.NodeFlavor;
-import ro.cs.tao.topology.NodeOperationListener;
-import ro.cs.tao.topology.ServiceInstallStatus;
+import ro.cs.tao.topology.*;
 import ro.cs.tao.utils.async.Parallel;
 
 import java.security.Principal;
@@ -30,7 +25,11 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     private static final boolean isAvailable;
     private static final NodeManager instance;
     private static final int pollInterval;
-    private final PersistenceManager persistenceManager;
+    private static final int DEFAULT_NODE_WAIT_TIME = 10000;
+    //private final PersistenceManager persistenceManager;
+    private int nodeLimit;
+    private NodeProvider nodeProvider;
+    private DefaultNodeInfo defaultNodeInfo;
     private final Map<String, NodeDescription> nodes;
     private final Map<String, RuntimeInfo> runtimeInfo;
     private Timer nodeInspectTimer;
@@ -41,10 +40,10 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
 
     static {
         concurrentCalls = Math.max(2, java.lang.Runtime.getRuntime().availableProcessors() / 4);
-        ConfigurationManager configurationManager = ConfigurationManager.getInstance();
-        isAvailable = DefaultSessionFactory.class.getName().equals(configurationManager.getValue(Configuration.DRMAA.SESSION_FACTORY_CLASS));
+        final ConfigurationProvider configurationManager = ConfigurationManager.getInstance();
+        isAvailable = DefaultSessionFactory.class.getName().equals(configurationManager.getValue("tao.drmaa.sessionfactory"));
         instance = isAvailable ? new NodeManager() : null;
-        pollInterval = Integer.parseInt(configurationManager.getValue(Configuration.Topology.NODE_POLL_INTERVAL, "15"));
+        pollInterval = Integer.parseInt(configurationManager.getValue("topology.node.poll.interval", "15"));
     }
 
     /**
@@ -62,16 +61,52 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     private NodeManager() {
         nodes = new HashMap<>();
         runtimeInfo = new HashMap<>();
-        persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
+        //persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
         refreshInProgress = false;
+        nodeLimit = 0;
         //subscribe(Topics.TOPOLOGY);
     }
+
+    public DefaultNodeInfo getDefaultNodeInfo() {
+        if (defaultNodeInfo == null) {
+            defaultNodeInfo = new DefaultNodeInfo("TAO-", "Processing node", "taouser", "taopassword");
+        }
+        return defaultNodeInfo;
+    }
+
+    public void setDefaultNodeInfo(DefaultNodeInfo defaultNodeInfo) {
+        this.defaultNodeInfo = defaultNodeInfo;
+    }
+
+    /**
+     * Sets the node provider, which is responsible of retrieving the list of managed nodes.
+     *
+     * @param nodeProvider  The node provider
+     */
+    public void setNodeProvider(NodeProvider nodeProvider) { this.nodeProvider = nodeProvider; }
+
+    /**
+     * Returns the maximum number of nodes this instance can manage.
+     * A value less than or equal to 0 denotes that the limitation is not supported.
+     */
+    public int getNodeLimit() { return nodeLimit; }
+
+    /**
+     * Sets the maximum number of nodes this instance can manage.
+     * A value less than or equal to 0 denotes that the limitation is not supported.
+     *
+     * @param nodeLimit The node limit
+     */
+    public void setNodeLimit(int nodeLimit) { this.nodeLimit = nodeLimit; }
+
+    public boolean canCreateNewNodes() { return this.nodeLimit > 0; }
 
     /**
      * Initializes this instance with the list of registered topology nodes.
      */
-    public void initialize(List<NodeDescription> nodes) {
-        if (nodes != null) {
+    public void initialize() {
+        if (this.nodeProvider != null) {
+            final List<NodeDescription> nodes = this.nodeProvider.listNodes();
             for (NodeDescription node : nodes) {
                 if (node.getActive()) {
                     String host = node.getId();
@@ -80,6 +115,8 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                 }
             }
             new NodeInspectTask().run();
+        } else {
+            throw new RuntimeException("NodeProvider is not set");
         }
     }
 
@@ -232,16 +269,45 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                 }
             	
             } catch (QuotaException e) {
-    			logger.info(String.format("Error while computing the CPU and Meory quota for the user %s. Error message: %s", principal.getName(), e.getMessage()));
+    			logger.info(String.format("Error while computing the CPU and memory quota for the user %s. Error message: %s", principal.getName(), e.getMessage()));
     			nodeName = null;
             }
         	
             if (nodeName == null) {
-                logger.fine("No processing node was found to be available. Will retry in 5 seconds.");
+                if (canCreateNewNodes()) {
+                    if (this.nodes.size() < this.nodeLimit) {
+                        final List<NodeFlavor> nodeFlavors = this.nodeProvider.listFlavors();
+                        final NodeFlavor matchingFlavor = nodeFlavors.stream()
+                                                                     .filter(f -> f.getCpu() >= 2 * cpus && f.getMemory() >= 4 * memory)
+                                                                     .min(Comparator.comparingInt(NodeFlavor::getCpu))
+                                                                     .orElse(null);
+                        if (matchingFlavor == null) {
+                            logger.fine("No processing node matching the request was found. Will retry in 10 seconds.");
+                            try {
+                                Thread.sleep(DEFAULT_NODE_WAIT_TIME);
+                            } catch (InterruptedException ignored) { }
+                        } else {
+                            final DefaultNodeInfo nodeInfo = getDefaultNodeInfo();
+                            this.nodeProvider.create(matchingFlavor,
+                                                     nodeInfo.getNamePrefix() + System.currentTimeMillis(),
+                                                     nodeInfo.getDescription(),
+                                                     nodeInfo.getUser(),
+                                                     nodeInfo.getPassword());
+                            // The new node should be added into this.nodes in onCompleted() method
+                        }
+                    } else {
+                        logger.fine("No processing node was found to be available. Will retry in 10 seconds.");
+                        try {
+                            Thread.sleep(DEFAULT_NODE_WAIT_TIME);
+                        } catch (InterruptedException ignored) { }
+                    }
+                } else {
+                    logger.fine("No processing node was found to be available. Will retry in 10 seconds.");
+                    try {
+                        Thread.sleep(DEFAULT_NODE_WAIT_TIME);
+                    } catch (InterruptedException ignored) { }
+                }
             }
-            try {
-                Thread.sleep(5000);
-            } catch (InterruptedException ignored) { }
         }
         
         final NodeDescription node = nodes.get(nodeName);
@@ -303,7 +369,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         public void run() {
             refreshInProgress = true;
             try {
-                List<NodeDescription> allNodes = persistenceManager.getNodes();
+                List<NodeDescription> allNodes = nodeProvider.listNodes();
                 Map<String, NodeDescription> allMap = new HashMap<>();
                 for (NodeDescription node : allNodes) {
                     String host = node.getId();

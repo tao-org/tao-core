@@ -16,14 +16,14 @@
 package ro.cs.tao.user;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import ro.cs.tao.component.LongIdentifiable;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @JsonIgnoreProperties( { "password", "created", "modified" })
-public class User {
+public class User extends LongIdentifiable {
 
-    private Long id;
     private String username;
     private String password;
     private String email;
@@ -52,14 +52,6 @@ public class User {
 
     private List<Group> groups;
     private List<UserPreference> preferences;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getUsername() {
         return username;

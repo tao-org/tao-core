@@ -15,7 +15,7 @@
  */
 package ro.cs.tao.services.interfaces;
 
-import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.services.model.user.DisableUserInfo;
 import ro.cs.tao.services.model.user.UserUnicityInfo;
 import ro.cs.tao.user.Group;

@@ -14,7 +14,7 @@
  * with this program; if not, see http://www.gnu.org/licenses/
  */
 
-package ro.cs.tao.utils;
+package ro.cs.tao;
 
 import java.util.Objects;
 

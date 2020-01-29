@@ -13,8 +13,8 @@ import ro.cs.tao.execution.model.ExecutionJob;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.execution.model.ProcessingExecutionTask;
+import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.PersistenceManager;
-import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.topology.NodeDescription;
 
@@ -57,29 +57,29 @@ public class ExecutionsManagerTest {
         ExecutionTask task = creatTask(processingComponent, "test_hostname",
             Collections.unmodifiableMap(Stream.of(
                     new AbstractMap.SimpleEntry<>("id", "1")).
-                    collect(Collectors.toMap((e) -> e.getKey(), (e) -> e.getValue()))));
+                    collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue))));
         job.addTask(task);
 
-        persistenceManager.saveExecutionJob(job);
+        persistenceManager.jobs().save(job);
         for (int i = 0; i < 10; i++) {
-            persistenceManager.saveExecutionTask(task, job);
+            persistenceManager.tasks().save(task, job);
             ExecutionsManager.getInstance().execute(task);
             // reset the parameters of the task object in order to be used again
             task = creatTask(processingComponent, "test_hostname",
                     Collections.unmodifiableMap(Stream.of(
                             new AbstractMap.SimpleEntry<>("id", "1")).
-                            collect(Collectors.toMap((e) -> e.getKey(), (e) -> e.getValue()))));
+                            collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue))));
             job.addTask(task);
-            persistenceManager.updateExecutionJob(job);
+            persistenceManager.jobs().update(job);
         }
-        int curRunningTasks = persistenceManager.getRunningTasks().size();
+        int curRunningTasks = persistenceManager.tasks().listRunning().size();
         while(curRunningTasks > 0) {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            List<ExecutionTask> runningTasks = persistenceManager.getRunningTasks();
+            List<ExecutionTask> runningTasks = persistenceManager.tasks().listRunning();
             curRunningTasks = runningTasks.size();
         }
     }
@@ -103,9 +103,9 @@ public class ExecutionsManagerTest {
 
         ExecutionTask task = creatTask(processingComponent, "test_hostname", new HashMap<>());
         job.addTask(task);
-        persistenceManager.saveExecutionJob(job);
+        persistenceManager.jobs().save(job);
 
-        persistenceManager.saveExecutionTask(task, job);
+        persistenceManager.tasks().save(task, job);
         ExecutionsManager.getInstance().execute(task);
         try {
             Thread.sleep(1000);
@@ -114,7 +114,7 @@ public class ExecutionsManagerTest {
         }
         ExecutionsManager.getInstance().suspend(task);
         // Get from the database the task
-        task = persistenceManager.getTaskById(task.getId());
+        task = persistenceManager.tasks().get(task.getId());
         if(task.getExecutionStatus() != ExecutionStatus.SUSPENDED) {
             logger.info("Suspend failed!");
         } else {
@@ -144,7 +144,7 @@ public class ExecutionsManagerTest {
                 e.printStackTrace();
             }
             // Get from the database the task
-            task = persistenceManager.getTaskById(task.getId());
+            task = persistenceManager.tasks().get(task.getId());
             ExecutionStatus status = task.getExecutionStatus();
             if(status == ExecutionStatus.FAILED) {
                 logger.info("Stop succeeded!");
@@ -169,9 +169,9 @@ public class ExecutionsManagerTest {
         node.setUserPass("test");
 
         try {
-            persistenceManager.updateExecutionNode(node);
-        } catch (PersistenceException e) {
-            persistenceManager.saveExecutionNode(node);
+            persistenceManager.nodes().update(node);
+        } catch (Exception e) {
+            persistenceManager.nodes().save(node);
         }
         return node;
     }
@@ -222,9 +222,9 @@ public class ExecutionsManagerTest {
     private static void saveProcessingComponent(ProcessingComponent component) throws PersistenceException {
         PersistenceManager persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
         try {
-            persistenceManager.updateProcessingComponent(component);
+            persistenceManager.processingComponents().update(component);
         } catch (PersistenceException e) {
-            persistenceManager.saveProcessingComponent(component);
+            persistenceManager.processingComponents().save(component);
         }
     }
 
@@ -233,7 +233,7 @@ public class ExecutionsManagerTest {
         task.setComponent(processingComponent);
         task.setExecutionNodeHostName(hostName);
         task.setWorkflowNodeId(1L);
-        values.forEach((k,v)-> task.setInputParameterValue(k, v));
+        values.forEach(task::setInputParameterValue);
 
         return task;
     }

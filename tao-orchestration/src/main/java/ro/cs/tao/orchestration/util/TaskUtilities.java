@@ -18,12 +18,16 @@ package ro.cs.tao.orchestration.util;
 
 import org.springframework.stereotype.Component;
 import ro.cs.tao.component.*;
+import ro.cs.tao.datasource.persistence.DataSourceComponentProvider;
 import ro.cs.tao.execution.ExecutionConfiguration;
 import ro.cs.tao.execution.model.DataSourceExecutionTask;
 import ro.cs.tao.execution.model.ExecutionJob;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
-import ro.cs.tao.persistence.PersistenceManager;
+import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
+import ro.cs.tao.persistence.GroupComponentProvider;
+import ro.cs.tao.persistence.ProcessingComponentProvider;
+import ro.cs.tao.persistence.WorkflowNodeProvider;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
@@ -44,7 +48,11 @@ import java.util.logging.Logger;
 @Component
 public class TaskUtilities {
 
-    private static final PersistenceManager persistenceManager;
+    private static final WorkflowNodeProvider workflowNodeProvider;
+    private static final ProcessingComponentProvider processingComponentProvider;
+    private static final DataSourceComponentProvider dataSourceComponentProvider;
+    private static final GroupComponentProvider groupComponentProvider;
+    private static final ExecutionTaskProvider taskProvider;
     private static final Logger logger = Logger.getLogger(TaskUtilities.class.getName());
     private static final String DOCKER_MOUNT_POINT;
 
@@ -60,14 +68,18 @@ public class TaskUtilities {
             logger.severe(e.getMessage());
         }
         DOCKER_MOUNT_POINT = value;
-        persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
+        workflowNodeProvider = SpringContextBridge.services().getService(WorkflowNodeProvider.class);
+        taskProvider = SpringContextBridge.services().getService(ExecutionTaskProvider.class);
+        processingComponentProvider = SpringContextBridge.services().getService(ProcessingComponentProvider.class);
+        dataSourceComponentProvider = SpringContextBridge.services().getService(DataSourceComponentProvider.class);
+        groupComponentProvider = SpringContextBridge.services().getService(GroupComponentProvider.class);
     }
 
     public static WorkflowNodeDescriptor getWorkflowNode(ExecutionTask task) {
         if (task == null || task.getWorkflowNodeId() == null) {
             return null;
         }
-        return persistenceManager.getWorkflowNodeById(task.getWorkflowNodeId());
+        return workflowNodeProvider.get(task.getWorkflowNodeId());
     }
 
     public static TransitionBehavior getTransitionBehavior(ExecutionTask task) {
@@ -80,21 +92,18 @@ public class TaskUtilities {
      * @param task  The execution task
      */
     public static TaoComponent getComponentFor(ExecutionTask task) {
-        if (persistenceManager == null) {
-            return null;
-        }
         TaoComponent component = null;
         if (task != null) {
-            WorkflowNodeDescriptor node = persistenceManager.getWorkflowNodeById(task.getWorkflowNodeId());
+            WorkflowNodeDescriptor node = workflowNodeProvider.get(task.getWorkflowNodeId());
             switch (node.getComponentType()) {
                 case PROCESSING:
-                    component = persistenceManager.getProcessingComponentById(node.getComponentId());
+                    component = processingComponentProvider.get(node.getComponentId());
                     break;
                 case DATASOURCE:
-                    component = persistenceManager.getDataSourceInstance(node.getComponentId());
+                    component = dataSourceComponentProvider.get(node.getComponentId());
                     break;
                 case GROUP:
-                    component = persistenceManager.getGroupComponentById(node.getComponentId());
+                    component = groupComponentProvider.get(node.getComponentId());
                     break;
             }
         }
@@ -155,15 +164,11 @@ public class TaskUtilities {
      * are the sourceTask's outputs.
      */
     public static Map<String, String> getConnectedInputs(ExecutionTask sourceTask, ExecutionTask targetTask) {
-        if (persistenceManager == null) {
-            return null;
-        }
-
-        final WorkflowNodeDescriptor targetNode = persistenceManager.getWorkflowNodeById(targetTask.getWorkflowNodeId());
+        final WorkflowNodeDescriptor targetNode = workflowNodeProvider.get(targetTask.getWorkflowNodeId());
         final Set<ComponentLink> links = targetNode.getIncomingLinks();
         if (links != null && links.size() > 0) {
             final Map<String, String> connections = new LinkedHashMap<>();
-            final WorkflowNodeDescriptor sourceNode = persistenceManager.getWorkflowNodeById(sourceTask.getWorkflowNodeId());
+            final WorkflowNodeDescriptor sourceNode = workflowNodeProvider.get(sourceTask.getWorkflowNodeId());
             links.stream()
                     .filter(l -> l.getSourceNodeId() == sourceNode.getId())
                     .forEach(l -> connections.put(l.getOutput().getName(), l.getInput().getName()));
@@ -180,13 +185,13 @@ public class TaskUtilities {
      */
     public static boolean haveParentsCompleted(ExecutionTask task) {
         boolean completed = true;
-        final WorkflowNodeDescriptor node = persistenceManager.getWorkflowNodeById(task.getWorkflowNodeId());
+        final WorkflowNodeDescriptor node = workflowNodeProvider.get(task.getWorkflowNodeId());
         final ExecutionJob job = task.getJob();
         final Set<ComponentLink> links = node.getIncomingLinks();
         if (links != null && links.size() > 0) {
             for (ComponentLink link : links) {
-                ExecutionTask parentTask = persistenceManager.getTaskByJobAndNode(job.getId(), link.getSourceNodeId(), task.getInstanceId());
-                WorkflowNodeDescriptor parentNode = persistenceManager.getWorkflowNodeById(link.getSourceNodeId());
+                ExecutionTask parentTask = taskProvider.getByJobAndNode(job.getId(), link.getSourceNodeId(), task.getInstanceId());
+                WorkflowNodeDescriptor parentNode = workflowNodeProvider.get(link.getSourceNodeId());
                 completed = (parentTask.getExecutionStatus() == ExecutionStatus.DONE &&
                              parentTask.getOutputParameterValues() != null &&
                              parentTask.getOutputParameterValues().stream().anyMatch(o -> o.getValue() != null)) ||
@@ -218,12 +223,12 @@ public class TaskUtilities {
         if (toTask instanceof DataSourceExecutionTask) {
             throw new IllegalArgumentException("DataSourceExecutionTask cannot accept incoming links");
         }
-        final WorkflowNodeDescriptor node = persistenceManager.getWorkflowNodeById(toTask.getWorkflowNodeId());
+        final WorkflowNodeDescriptor node = workflowNodeProvider.get(toTask.getWorkflowNodeId());
         final ExecutionJob job = toTask.getJob();
         final Set<ComponentLink> links = node.getIncomingLinks();
         if (links != null && links.size() > 0) {
             for (ComponentLink link : links) {
-                final ExecutionTask parentTask = persistenceManager.getTaskByJobAndNode(job.getId(), link.getSourceNodeId(), toTask.getInstanceId());
+                final ExecutionTask parentTask = taskProvider.getByJobAndNode(job.getId(), link.getSourceNodeId(), toTask.getInstanceId());
                 final Variable out = parentTask.getOutputParameterValues()
                         .stream().filter(o -> o.getKey().equals(link.getInput().getName()))
                         .findFirst().orElse(null);
@@ -239,7 +244,7 @@ public class TaskUtilities {
     }
 
     public static String relativizePathForExecution(String path) {
-        String result = "";
+        String result;
         try {
             Path p = FileUtilities.resolveSymLinks(Paths.get(URI.create(path)).toAbsolutePath());
             Path root = FileUtilities.resolveSymLinks(Paths.get(SystemVariable.ROOT.value()).toAbsolutePath());

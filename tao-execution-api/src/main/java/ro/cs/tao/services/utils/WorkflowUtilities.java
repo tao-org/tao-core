@@ -1,8 +1,8 @@
 package ro.cs.tao.services.utils;
 
 import ro.cs.tao.component.*;
+import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.PersistenceManager;
-import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.workflow.GraphObject;
 import ro.cs.tao.workflow.WorkflowDescriptor;
@@ -12,7 +12,6 @@ import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
 import java.awt.geom.Rectangle2D;
 import java.util.*;
 import java.util.function.Function;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
@@ -23,7 +22,6 @@ import java.util.stream.Collectors;
 //@Component
 public class WorkflowUtilities {
     private static final PersistenceManager persistenceManager;
-    private static final Logger logger = Logger.getLogger(WorkflowUtilities.class.getName());
 
     static {
         persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
@@ -191,16 +189,16 @@ public class WorkflowUtilities {
         TaoComponent component = null;
         switch (nodeDescriptor.getComponentType()) {
             case DATASOURCE:
-                component = persistenceManager.getDataSourceInstance(id);
+                component = persistenceManager.dataSourceComponents().get(id);
                 break;
             case PROCESSING:
-                component = persistenceManager.getProcessingComponentById(id);
+                component = persistenceManager.processingComponents().get(id);
                 break;
             case GROUP:
-                component = persistenceManager.getGroupComponentById(id);
+                component = persistenceManager.groupComponents().get(id);
                 break;
             case DATASOURCE_GROUP:
-                component = persistenceManager.getDataSourceComponentGroup(id);
+                component = persistenceManager.dataSourceGroups().get(id);
                 break;
         }
         if (component == null) {

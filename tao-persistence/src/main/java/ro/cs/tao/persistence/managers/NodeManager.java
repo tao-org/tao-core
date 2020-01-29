@@ -17,26 +17,29 @@
 package ro.cs.tao.persistence.managers;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.SortDirection;
-import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.persistence.NodeProvider;
+import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.repository.NodeFlavorRepository;
 import ro.cs.tao.persistence.repository.NodeRepository;
 import ro.cs.tao.persistence.repository.ServiceRepository;
-import ro.cs.tao.topology.NodeDescription;
-import ro.cs.tao.topology.NodeFlavor;
-import ro.cs.tao.topology.NodeServiceStatus;
-import ro.cs.tao.topology.ServiceDescription;
+import ro.cs.tao.topology.*;
 import ro.cs.tao.utils.Crypto;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Configuration
+@EnableTransactionManagement
+@EnableJpaRepositories(basePackages = { "ro.cs.tao.persistence.repository" })
 @Component("nodeManager")
-public class NodeManager extends EntityManager<NodeDescription, String, NodeRepository> {
+public class NodeManager extends EntityManager<NodeDescription, String, NodeRepository> implements NodeProvider {
 
     /** CRUD Repository for ServiceDescription entities */
     @Autowired
@@ -44,47 +47,21 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
     @Autowired
     private NodeFlavorRepository nodeFlavorRepository;
 
-    public List<NodeFlavor> getNodeFlavors() {
-        List<NodeFlavor> result = new ArrayList<>();
-        nodeFlavorRepository.findAll().forEach(result::add);
-        return result;
-    }
-
-    public NodeFlavor getMasterFlavor() {
-        return nodeFlavorRepository.findById("master").orElse(null);
-    }
-
-    public NodeFlavor getMatchingFlavor(NodeFlavor flavor) {
-        return flavor != null ? nodeFlavorRepository.getMatchingFlavor(flavor.getCpu(), flavor.getMemory(), flavor.getDisk()) : null;
-    }
-
-    public NodeFlavor save(NodeFlavor flavor) {
-        return nodeFlavorRepository.save(flavor);
-    }
-
-    @Transactional
-    public List<NodeDescription> listActive() {
+    @Override
+    public List<NodeDescription> list(boolean active) {
         return list(ro.cs.tao.Sort.by(identifier(), SortDirection.ASC))
                 .stream()
-                .filter(NodeDescription::getActive)
+                .filter(n -> n.getActive() == active)
                 .collect(Collectors.toList());
     }
 
-    @Transactional
-    public NodeDescription getNodeByHostName(final String hostName) {
-        return repository.findById(hostName).orElse(null);
-    }
-
-    public List<NodeDescription> findByActive(boolean active) {
-        return repository.findByActive(active);
-    }
-
-    public List<NodeDescription> getNodesByType(NodeFlavor flavor) {
+    @Override
+    public List<NodeDescription> getByFlavor(NodeFlavor flavor) {
         return repository.findByFlavor(flavor);
     }
 
-    @Transactional
-    public NodeDescription saveExecutionNode(NodeDescription node) throws PersistenceException {
+    @Override
+    public NodeDescription save(NodeDescription node) throws PersistenceException {
         // check method parameters
         if(!checkEntity(node)) {
             throw new PersistenceException("Invalid parameters were provided for adding new execution node!");
@@ -114,11 +91,11 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
     }
 
     @Override
-    public NodeDescription update(NodeDescription entity) throws PersistenceException {
+    public NodeDescription update(NodeDescription entity) throws TopologyException {
         // check if there is already another node with the same host name
         final Optional<NodeDescription> nodeWithSameHostName = repository.findById(entity.getId());
         if (!nodeWithSameHostName.isPresent()) {
-            throw new PersistenceException(String.format("Entity %s does not exist. use 'saveExecutionode' instead.",
+            throw new TopologyException(String.format("Entity %s does not exist. use 'saveExecutionode' instead.",
                                                          entity.getId()));
         }
         // save the services first
@@ -135,14 +112,14 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
             }
         }
         if (entity.getFlavor() == null) {
-            throw new PersistenceException(String.format("Node flavor not defined for node '%s'", entity.getId()));
+            throw new TopologyException(String.format("Node flavor not defined for node '%s'", entity.getId()));
         }
         // save the new NodeDescription entity and return it
         return repository.save(entity);
     }
 
-    @Transactional
-    public NodeDescription deleteExecutionNode(final String hostName) throws PersistenceException {
+    @Override
+    public void delete(final String hostName) throws PersistenceException {
         // check method parameters
         if (hostName == null || hostName.isEmpty()) {
             throw new PersistenceException("Invalid parameters were provided for deleting execution node (host name \""+ String.valueOf(hostName) +"\") !");
@@ -155,14 +132,15 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
         }
         nodeEnt.setActive(false);
         // save it
-        return repository.save(nodeEnt);
+        repository.save(nodeEnt);
     }
 
+    @Override
     public ServiceDescription getServiceDescription(String name, String version) {
         return serviceRepository.findByNameAndVersion(name, version);
     }
 
-    @Transactional
+    @Override
     public ServiceDescription saveServiceDescription(ServiceDescription service) throws PersistenceException {
         // check method parameters
         if(!checkServiceDescription(service)) {

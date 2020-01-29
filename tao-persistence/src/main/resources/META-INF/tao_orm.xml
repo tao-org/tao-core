@@ -804,9 +804,13 @@
         <inheritance strategy="SINGLE_TABLE"/>
         <discriminator-column name="discriminator" column-definition="integer NOT NULL" discriminator-type="INTEGER"/>
         <attributes>
-            <id name="timestamp">
-                <column name="timestamp" nullable="false" column-definition="bigint NOT NULL"/>
+            <id name="id">
+                <column name="id" nullable="false" column-definition="bigserial NOT NULL"/>
+                <generated-value strategy="IDENTITY" />
             </id>
+            <basic name="timestamp">
+                <column name="timestamp" nullable="false" column-definition="bigint NOT NULL"/>
+            </basic>
             <basic name="topic">
                 <column name="topic" nullable="false" column-definition="character varying NOT NULL"/>
             </basic>

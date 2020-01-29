@@ -32,9 +32,9 @@ import ro.cs.tao.eodata.enums.SensorType;
 import ro.cs.tao.eodata.enums.Visibility;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.messaging.Message;
+import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.config.DatabaseConfiguration;
-import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.security.SystemPrincipal;
 import ro.cs.tao.topology.*;
 import ro.cs.tao.workflow.ParameterValue;
@@ -214,7 +214,7 @@ public class PersistenceManagerTest {
             servicesStatus.add(new NodeServiceStatus(new ServiceDescription("Torque", "1.5", "Torque CRM"), ServiceStatus.NOT_FOUND));
             node.setServicesStatus(servicesStatus);
 
-            node = persistenceManager.saveExecutionNode(node);
+            node = persistenceManager.nodes().save(node);
             // check persisted node
             Assert.assertTrue(node != null && node.getId() != null);
         }
@@ -250,7 +250,7 @@ public class PersistenceManagerTest {
             servicesStatus.add(new NodeServiceStatus(new ServiceDescription("Torque", "1.5", "Torque CRM"), ServiceStatus.UNINSTALLED));
             node.setServicesStatus(servicesStatus);
 
-            node = persistenceManager.saveExecutionNode(node);
+            node = persistenceManager.nodes().save(node);
             // check persisted node
             Assert.assertTrue(node != null && node.getId() != null);
         }
@@ -286,7 +286,7 @@ public class PersistenceManagerTest {
             servicesStatus.add(new NodeServiceStatus(new ServiceDescription("Torque", "1.5", "Torque CRM"), ServiceStatus.INSTALLED));
             node.setServicesStatus(servicesStatus);
 
-            node = persistenceManager.saveExecutionNode(node);
+            node = persistenceManager.nodes().save(node);
             // check persisted node
             Assert.assertTrue(node != null && node.getId() != null);
         }
@@ -303,7 +303,7 @@ public class PersistenceManagerTest {
         logger.info("TC_05_retrieve_all_execution_nodes");
         try
         {
-            List<NodeDescription> nodes  = persistenceManager.getNodes();
+            List<NodeDescription> nodes  = persistenceManager.nodes().list();
             Assert.assertTrue(nodes != null && nodes.size() > 0);
             for (NodeDescription node : nodes)
             {
@@ -323,16 +323,16 @@ public class PersistenceManagerTest {
         logger.info("TC_06_update_execution_node");
         try
         {
-            List<NodeDescription> nodes  = persistenceManager.getNodes();
+            List<NodeDescription> nodes  = persistenceManager.nodes().list();
             if(nodes.size() > 0)
             {
                 NodeDescription firstNode = nodes.get(0);
                 firstNode.getFlavor().setDisk(9);
-                firstNode = persistenceManager.updateExecutionNode(firstNode);
+                firstNode = persistenceManager.nodes().update(firstNode);
                 Assert.assertEquals(9, firstNode.getFlavor().getDisk());
             }
         }
-        catch (PersistenceException e)
+        catch (TopologyException e)
         {
             logger.error(ExceptionUtils.getStackTrace(e));
             Assert.fail(e.getMessage());
@@ -345,12 +345,12 @@ public class PersistenceManagerTest {
         logger.info("TC_07_check_execution_node_existence_by_host_name");
         try
         {
-            List<NodeDescription> nodes  = persistenceManager.getNodes();
+            List<NodeDescription> nodes  = persistenceManager.nodes().list();
             if(nodes.size() > 0)
             {
                 NodeDescription firstNode = nodes.get(0);
                 String hostName = firstNode.getId();
-                Assert.assertTrue(persistenceManager.checkIfExistsNodeByHostName(hostName));
+                Assert.assertTrue(persistenceManager.nodes().exists(hostName));
             }
         }
         catch (Exception e)
@@ -366,12 +366,12 @@ public class PersistenceManagerTest {
         logger.info("TC_08_retrieve_execution_node_by_host_name");
         /*try
         {*/
-            List<NodeDescription> nodes  = persistenceManager.getNodes();
+            List<NodeDescription> nodes  = persistenceManager.nodes().list();
             if(nodes.size() > 0)
             {
                 NodeDescription firstNode = nodes.get(0);
                 String hostName = firstNode.getId();
-                NodeDescription searchedNode  = persistenceManager.getNodeByHostName(hostName);
+                NodeDescription searchedNode  = persistenceManager.nodes().get(hostName);
                 Assert.assertTrue(searchedNode != null && searchedNode.getId().equals(hostName));
             }
         /*}
@@ -402,12 +402,13 @@ public class PersistenceManagerTest {
 
             node.setDescription("Node 2 just for test");
 
-            node = persistenceManager.saveExecutionNode(node);
+            node = persistenceManager.nodes().save(node);
             // check persisted node
             Assert.assertTrue(node != null && node.getId() != null);
 
             // deactivate node
-            node = persistenceManager.deleteExecutionNode(node.getId());
+            persistenceManager.nodes().delete(node.getId());
+            node = persistenceManager.nodes().get(node.getId());
 
             Assert.assertTrue(node != null && !node.getActive());
         }
@@ -427,7 +428,7 @@ public class PersistenceManagerTest {
             // add a new container for test
             Container container = createNewTestContainer("container01");
 
-            container = persistenceManager.saveContainer(container);
+            container = persistenceManager.containers().save(container);
             // check persisted container
             Assert.assertTrue(container != null && container.getId() != null);
             Assert.assertTrue(container.getApplications() != null && container.getApplications().size() == 3);
@@ -473,7 +474,7 @@ public class PersistenceManagerTest {
         logger.info("TC_11_retrieve_containers");
         try
         {
-            List<Container> containers  = persistenceManager.getContainers();
+            List<Container> containers  = persistenceManager.containers().list();
             Assert.assertTrue(containers != null && containers.size() > 0);
 
             logger.info("Found " + containers.size() + " container(s).");
@@ -499,15 +500,15 @@ public class PersistenceManagerTest {
             // add a new container for test
             Container container = createNewTestContainer("container02");
 
-            container = persistenceManager.saveContainer(container);
+            container = persistenceManager.containers().save(container);
             // check persisted container
             Assert.assertTrue(container != null && container.getId() != null);
 
             // delete container
-            persistenceManager.deleteContainer(container.getId());
+            persistenceManager.containers().delete(container.getId());
 
             // check that the container was deleted
-            Assert.assertTrue(!persistenceManager.existsContainer("container02"));
+            Assert.assertFalse(persistenceManager.containers().exists("container02"));
         }
         catch (PersistenceException e)
         {
@@ -525,7 +526,7 @@ public class PersistenceManagerTest {
             // add a new processing component for test
             ProcessingComponent component = createNewProcessingComponent("component01", "container01");
 
-            component = persistenceManager.saveProcessingComponent(component);
+            component = persistenceManager.processingComponents().save(component);
             // check persisted component
             Assert.assertTrue(component != null && component.getId() != null);
         }
@@ -631,7 +632,7 @@ public class PersistenceManagerTest {
         logger.info("TC_14_retrieve_processing_components");
         try
         {
-            List<ProcessingComponent> components  = persistenceManager.getProcessingComponents();
+            List<ProcessingComponent> components  = persistenceManager.processingComponents().list();
             Assert.assertTrue(components != null && components.size() > 0);
 
             logger.info("Found " + components.size() + " processing component(s).");
@@ -654,13 +655,13 @@ public class PersistenceManagerTest {
         logger.info("TC_15_update_processing_component");
         try
         {
-            List<ProcessingComponent> components  = persistenceManager.getProcessingComponents();
+            List<ProcessingComponent> components  = persistenceManager.processingComponents().list();
             if(components.size() > 0)
             {
                 ProcessingComponent firstComponent = components.get(0);
                 firstComponent.setDescription("Description updated");
-                firstComponent = persistenceManager.updateProcessingComponent(firstComponent);
-                Assert.assertTrue(firstComponent.getDescription().equals("Description updated"));
+                firstComponent = persistenceManager.processingComponents().update(firstComponent);
+                Assert.assertEquals("Description updated", firstComponent.getDescription());
             }
         }
         catch (PersistenceException e)
@@ -676,13 +677,13 @@ public class PersistenceManagerTest {
         logger.info("TC_16_check_processing_component_existence_by_id");
         try
         {
-            List<ProcessingComponent> components  = persistenceManager.getProcessingComponents();;
+            List<ProcessingComponent> components  = persistenceManager.processingComponents().list();;
 
             if(components.size() > 0)
             {
                 ProcessingComponent firstComponent = components.get(0);
                 String identifier = firstComponent.getId();
-                Assert.assertTrue(persistenceManager.existsProcessingComponent(identifier));
+                Assert.assertTrue(persistenceManager.processingComponents().exists(identifier));
             }
         }
         catch (Exception e)
@@ -698,12 +699,12 @@ public class PersistenceManagerTest {
         logger.info("TC_17_retrieve_processing_component_by_id");
 //        try
 //        {
-            List<ProcessingComponent> components  = persistenceManager.getProcessingComponents();;
+            List<ProcessingComponent> components  = persistenceManager.processingComponents().list();;
             if(components.size() > 0)
             {
                 ProcessingComponent firstComponent = components.get(0);
                 String identifier = firstComponent.getId();
-                ProcessingComponent searchedComponent  = persistenceManager.getProcessingComponentById(identifier);
+                ProcessingComponent searchedComponent  = persistenceManager.processingComponents().get(identifier);
                 Assert.assertTrue(searchedComponent != null && searchedComponent.getId().equals(identifier));
             }
 //        }
@@ -723,12 +724,13 @@ public class PersistenceManagerTest {
             // add a new processing component for test
             ProcessingComponent component = createNewProcessingComponent("component02_to_delete", "container01");
 
-            component = persistenceManager.saveProcessingComponent(component);
+            component = persistenceManager.processingComponents().save(component);
             // check persisted component
             Assert.assertTrue(component != null && component.getId() != null);
 
             // deactivate component
-            component = persistenceManager.deleteProcessingComponent(component.getId());
+            persistenceManager.processingComponents().delete(component.getId());
+            component = persistenceManager.processingComponents().get(component.getId());
 
             Assert.assertTrue(component != null && !component.getActive());
         }
@@ -747,20 +749,20 @@ public class PersistenceManagerTest {
         {
             // add a new container for test
             Container container = createNewTestContainer("container03");
-            container = persistenceManager.saveContainer(container);
+            container = persistenceManager.containers().save(container);
             // check persisted container
             Assert.assertTrue(container != null && container.getId() != null);
 
             // add a new processing component for test
             ProcessingComponent component = createNewProcessingComponent("PC_container_to_delete", "container03");
-            component = persistenceManager.saveProcessingComponent(component);
+            component = persistenceManager.processingComponents().save(component);
             // check persisted component
             Assert.assertTrue(component != null && component.getId() != null);
 
             // delete container
-            persistenceManager.deleteContainer(container.getId());
+            persistenceManager.containers().delete(container.getId());
             // check that the container was deleted
-            Assert.assertTrue(!persistenceManager.existsContainer("container03"));
+            Assert.assertFalse(persistenceManager.containers().exists("container03"));
 
         }
         catch (PersistenceException e)
@@ -818,7 +820,7 @@ public class PersistenceManagerTest {
             // add a new data source component for test
             DataSourceComponent component = createNewDataSourceComponent("datasourcecomponent01");
 
-            component = persistenceManager.saveDataSourceComponent(component);
+            component = persistenceManager.dataSourceComponents().save(component);
             // check persisted component
             Assert.assertTrue(component != null && component.getId() != null);
             // check targets
@@ -852,7 +854,7 @@ public class PersistenceManagerTest {
             product.setLocation("https://landsat-pds.s3.amazonaws.com/c1/L8/201/044/LC08_L1TP_201044_20170930_20171013_01_T1");
             product.setVisibility(Visibility.PRIVATE);
 
-            persistenceManager.saveEOProduct(product);
+            persistenceManager.rasterData().save(product);
         } catch (Exception e) {
             logger.error(ExceptionUtils.getStackTrace(e));
             Assert.fail(e.getMessage());
@@ -865,7 +867,7 @@ public class PersistenceManagerTest {
         logger.info("TC_24_retrieve_raster_data_products");
         try
         {
-            List<EOProduct> products  = persistenceManager.getEOProducts();
+            List<EOProduct> products  = persistenceManager.rasterData().list();
             Assert.assertTrue(products != null && products.size() > 0);
 
             logger.info("Found " + products.size() + " raster data product(s).");
@@ -908,7 +910,7 @@ public class PersistenceManagerTest {
 
             newVectorProduct.setAttributes(attributes);
 
-            newVectorProduct = persistenceManager.saveVectorDataProduct(newVectorProduct);
+            newVectorProduct = persistenceManager.vectorData().save(newVectorProduct);
             Assert.assertTrue(newVectorProduct != null && newVectorProduct.getId() != null);
 
         }
@@ -925,7 +927,7 @@ public class PersistenceManagerTest {
         logger.info("TC_26_retrieve_vector_data_products");
         try
         {
-            List<VectorData> vectorProducts  = persistenceManager.getVectorDataProducts();
+            List<VectorData> vectorProducts  = persistenceManager.vectorData().list();
             Assert.assertTrue(vectorProducts != null && vectorProducts.size() > 0);
 
             logger.info("Found " + vectorProducts.size() + " vector data product(s).");
@@ -957,7 +959,7 @@ public class PersistenceManagerTest {
 
             try
             {
-                persistenceManager.saveMessage(message);
+                persistenceManager.notifications().save(message);
             } catch (PersistenceException e) {
                 logger.error("Error saving notification message", e);
             }
@@ -1063,14 +1065,14 @@ public class PersistenceManagerTest {
             workflow.addNode(node3);
 
             // save the parent workflow entity
-            workflow = persistenceManager.saveWorkflowDescriptor(workflow);
+            workflow = persistenceManager.workflows().save(workflow);
             Assert.assertTrue(workflow != null && workflow.getId() != null);
             logger.info("Workflow " + workflow.getName() + " saved, ID = " + workflow.getId().toString());
 
             logger.info("After saving nodes cascade : Workflow has " + workflow.getNodes().size() + " nodes");
 
             // check persisted workflow
-            Assert.assertTrue(workflow != null && workflow.getNodes() != null && workflow.getNodes().size() == 3);
+            Assert.assertTrue(workflow.getNodes() != null && workflow.getNodes().size() == 3);
         }
         catch (PersistenceException e)
         {
@@ -1107,15 +1109,15 @@ public class PersistenceManagerTest {
             workflow.addNode(node1);
 
             // save the parent workflow entity
-            workflow = persistenceManager.saveWorkflowDescriptor(workflow);
+            workflow = persistenceManager.workflows().save(workflow);
             Assert.assertTrue(workflow != null && workflow.getId() != null);
             logger.info("Workflow " + workflow.getName() + " saved, ID = " + workflow.getId().toString());
 
             // check persisted workflow
-            Assert.assertTrue(workflow != null && workflow.getNodes() != null && workflow.getNodes().size() == 1);
+            Assert.assertTrue(workflow.getNodes() != null && workflow.getNodes().size() == 1);
 
             // check persisted node custom values
-            Assert.assertTrue(workflow.getNodes().get(0).getCustomValues().size() == 3);
+            Assert.assertEquals(3, workflow.getNodes().get(0).getCustomValues().size());
         }
         catch (PersistenceException e)
         {
@@ -1163,21 +1165,21 @@ public class PersistenceManagerTest {
             workflow.addNode(node3);
 
             // save the parent workflow entity
-            workflow = persistenceManager.saveWorkflowDescriptor(workflow);
+            workflow = persistenceManager.workflows().save(workflow);
             Assert.assertTrue(workflow != null && workflow.getId() != null);
             logger.info("Workflow " + workflow.getName() + " saved, ID = " + workflow.getId().toString());
 
             logger.info("After saving nodes cascade : Workflow has " + workflow.getNodes().size() + " nodes");
             // check persisted workflow
-            Assert.assertTrue(workflow != null && workflow.getNodes() != null && workflow.getNodes().size() == 3);
+            Assert.assertTrue(workflow.getNodes() != null && workflow.getNodes().size() == 3);
 
             // remove a node
             workflow.removeNode(node2);
-            workflow = persistenceManager.updateWorkflowDescriptor(workflow);
+            workflow = persistenceManager.workflows().update(workflow);
 
             logger.info("After removing a node : Workflow has " + workflow.getNodes().size() + " nodes");
             // check persisted workflow
-            Assert.assertTrue(workflow != null && workflow.getNodes() != null && workflow.getNodes().size() == 2);
+            Assert.assertTrue(workflow.getNodes() != null && workflow.getNodes().size() == 2);
 
         }
         catch (PersistenceException e)
@@ -1232,16 +1234,17 @@ public class PersistenceManagerTest {
             workflow.addNode(node4);
 
             // save the parent workflow entity
-            workflow = persistenceManager.saveWorkflowDescriptor(workflow);
+            workflow = persistenceManager.workflows().save(workflow);
             Assert.assertTrue(workflow != null && workflow.getId() != null);
             logger.info("Workflow " + workflow.getName() + " saved, ID = " + workflow.getId().toString());
 
             logger.info("After saving nodes cascade : Workflow has " + workflow.getNodes().size() + " nodes");
             // check persisted workflow
-            Assert.assertTrue(workflow != null && workflow.getNodes() != null && workflow.getNodes().size() == 4);
+            Assert.assertTrue(workflow.getNodes() != null && workflow.getNodes().size() == 4);
 
             // delete workflow
-            workflow = persistenceManager.deleteWorkflowDescriptor(workflow.getId());
+            persistenceManager.workflows().delete(workflow.getId());
+            workflow = persistenceManager.workflows().get(workflow.getId());
             Assert.assertTrue(workflow != null && workflow.getNodes() != null && workflow.getNodes().size() == 4 && !workflow.isActive());
             logger.info("Successfully deactivate workflow ID " + workflow.getId());
 
@@ -1304,7 +1307,7 @@ public class PersistenceManagerTest {
             workflow.addNode(targetNode);
 
             // save the parent workflow entity
-            workflow = persistenceManager.saveWorkflowDescriptor(workflow);
+            workflow = persistenceManager.workflows().save(workflow);
             Assert.assertTrue(workflow != null && workflow.getId() != null);
             logger.info("Workflow " + workflow.getName() + " saved, ID = " + workflow.getId().toString());
 
@@ -1316,19 +1319,17 @@ public class PersistenceManagerTest {
             links.add(componentLink1);
             targetNode.setIncomingLinks(links);
 
-            persistenceManager.updateWorkflowNodeDescriptor(targetNode);
+            persistenceManager.workflowNodes().update(targetNode);
 
             // check persisted node custom values
             final List<ParameterValue> customValues = workflow.getNodes().get(0).getCustomValues();
-            Assert.assertTrue(customValues.size() == 3);
+            Assert.assertEquals(3, customValues.size());
             logger.info("1st node custom values: ");
             for (ParameterValue pValue: customValues) {
                 logger.info("\t\t\t" + pValue.getParameterName() + "=" + pValue.getParameterValue());
             }
             logger.info("1st node custom values (with forEach): ");
-            if (customValues != null) {
-                customValues.forEach(v -> logger.info("\t\t\t\t" + v.getParameterName() + "=" + v.getParameterValue()));
-            }
+            customValues.forEach(v -> logger.info("\t\t\t\t" + v.getParameterName() + "=" + v.getParameterValue()));
 
             // check persisted incoming links
             Assert.assertTrue(workflow.getNodes().get(0).getIncomingLinks() == null || workflow.getNodes().get(0).getIncomingLinks().size() == 0);
@@ -1412,7 +1413,7 @@ public class PersistenceManagerTest {
             workflow.addNode(nodeGroup);
 
             // save the parent workflow entity
-            workflow = persistenceManager.saveWorkflowDescriptor(workflow);
+            workflow = persistenceManager.workflows().save(workflow);
 
             Assert.assertTrue(workflow != null && workflow.getId() != null);
             logger.info("Workflow " + workflow.getName() + " saved, ID = " + workflow.getId().toString());
@@ -1450,7 +1451,7 @@ public class PersistenceManagerTest {
             query.setUserId("admin");
             query.setWorkflowNodeId(1L);
 
-            query = persistenceManager.saveQuery(query);
+            query = persistenceManager.queries().save(query);
             // check persisted query
             Assert.assertNotNull(query);
         }
@@ -1473,7 +1474,7 @@ public class PersistenceManagerTest {
             job.setWorkflowId(1L);
             job.setUserName("admin");
 
-            job = persistenceManager.saveExecutionJob(job);
+            job = persistenceManager.jobs().save(job);
             // check persisted job
             Assert.assertTrue(job != null && job.getId() != 0);
         }
@@ -1491,11 +1492,11 @@ public class PersistenceManagerTest {
         try
         {
             // retrieve one existing job, for test
-            List<ExecutionJob> jobs = persistenceManager.getAllJobs();
+            List<ExecutionJob> jobs = persistenceManager.jobs().list();
             // retrieve processing components
-            List<ProcessingComponent> components = persistenceManager.getProcessingComponents();
+            List<ProcessingComponent> components = persistenceManager.processingComponents().list();
             // retrieve execution nodes
-            List<NodeDescription> nodes = persistenceManager.getNodes();
+            List<NodeDescription> nodes = persistenceManager.nodes().list();
 
             if(jobs != null && jobs.size() > 0 &&
               components != null && components.size() > 0 &&
@@ -1514,7 +1515,7 @@ public class PersistenceManagerTest {
                 task.setExecutionStatus(ExecutionStatus.RUNNING);
                 task.setExecutionNodeHostName(node.getId());
                 task.setComponent(component);
-                task.setWorkflowNodeId(persistenceManager.getWorkflowDescriptor(job.getWorkflowId()).getNodes().get(0).getId());
+                task.setWorkflowNodeId(persistenceManager.workflows().get(job.getWorkflowId()).getNodes().get(0).getId());
 
                 List<Variable> inputsValues = new ArrayList<>();
                 Variable input1 = new Variable();
@@ -1529,7 +1530,7 @@ public class PersistenceManagerTest {
 
                 task.setInputParameterValues(inputsValues);
 
-                task = (ProcessingExecutionTask) persistenceManager.saveExecutionTask(task, job);
+                task = (ProcessingExecutionTask) persistenceManager.tasks().save(task, job);
                 // check persisted task
                 Assert.assertTrue(task != null && task.getId() != 0);
                 // check if job correctly updated
@@ -1552,11 +1553,11 @@ public class PersistenceManagerTest {
         try
         {
             // retrieve one existing job, for test
-            List<ExecutionJob> jobs = persistenceManager.getAllJobs();
+            List<ExecutionJob> jobs = persistenceManager.jobs().list();
             // retrieve data sources components
-            List<DataSourceComponent> components = persistenceManager.getDataSourceComponents();
+            List<DataSourceComponent> components = persistenceManager.dataSourceComponents().list();
             // retrieve execution nodes
-            List<NodeDescription> nodes = persistenceManager.getNodes();
+            List<NodeDescription> nodes = persistenceManager.nodes().list();
 
             if(jobs != null && jobs.size() > 0 &&
               components != null && components.size() > 0 &&
@@ -1575,7 +1576,7 @@ public class PersistenceManagerTest {
                 task.setExecutionStatus(ExecutionStatus.RUNNING);
                 task.setExecutionNodeHostName(node.getId());
                 task.setComponent(component);
-                task.setWorkflowNodeId(persistenceManager.getWorkflowDescriptor(job.getWorkflowId()).getNodes().get(0).getId());
+                task.setWorkflowNodeId(persistenceManager.workflows().get(job.getWorkflowId()).getNodes().get(0).getId());
 
                 List<Variable> inputsValues = new ArrayList<>();
                 Variable input1 = new Variable();
@@ -1590,7 +1591,7 @@ public class PersistenceManagerTest {
 
                 task.setInputParameterValues(inputsValues);
 
-                task = (DataSourceExecutionTask) persistenceManager.saveExecutionTask(task, job);
+                task = (DataSourceExecutionTask) persistenceManager.tasks().save(task, job);
                 // check persisted task
                 Assert.assertTrue(task != null && task.getId() != 0);
                 // check if job correctly updated
@@ -1613,13 +1614,13 @@ public class PersistenceManagerTest {
         try
         {
             // retrieve one existing job, for test
-            List<ExecutionJob> jobs = persistenceManager.getAllJobs();
+            List<ExecutionJob> jobs = persistenceManager.jobs().list();
             // retrieve data sources components
-            List<DataSourceComponent> dataSourceComponents = persistenceManager.getDataSourceComponents();
+            List<DataSourceComponent> dataSourceComponents = persistenceManager.dataSourceComponents().list();
             // retrieve also processing components
-            List<ProcessingComponent> processingComponents = persistenceManager.getProcessingComponents();
+            List<ProcessingComponent> processingComponents = persistenceManager.processingComponents().list();
             // retrieve execution nodes
-            List<NodeDescription> nodes = persistenceManager.getNodes();
+            List<NodeDescription> nodes = persistenceManager.nodes().list();
 
             if(jobs != null && jobs.size() > 0 &&
               dataSourceComponents != null && dataSourceComponents.size() > 0 &&
@@ -1640,7 +1641,7 @@ public class PersistenceManagerTest {
                 processingTask.setExecutionStatus(ExecutionStatus.RUNNING);
                 processingTask.setExecutionNodeHostName(node.getId());
                 processingTask.setComponent(processingComponent);
-                processingTask.setWorkflowNodeId(persistenceManager.getWorkflowDescriptor(job.getWorkflowId()).getNodes().get(0).getId());
+                processingTask.setWorkflowNodeId(persistenceManager.workflows().get(job.getWorkflowId()).getNodes().get(0).getId());
 
                 List<Variable> inputsValues = new ArrayList<>();
                 Variable input1 = new Variable();
@@ -1662,7 +1663,7 @@ public class PersistenceManagerTest {
                 dataSourceTask.setExecutionStatus(ExecutionStatus.RUNNING);
                 dataSourceTask.setExecutionNodeHostName(node.getId());
                 dataSourceTask.setComponent(dataSourceComponent);
-                dataSourceTask.setWorkflowNodeId(persistenceManager.getWorkflowDescriptor(job.getWorkflowId()).getNodes().get(0).getId());
+                dataSourceTask.setWorkflowNodeId(persistenceManager.workflows().get(job.getWorkflowId()).getNodes().get(0).getId());
 
                 dataSourceTask.setInputParameterValues(inputsValues);
 
@@ -1672,10 +1673,10 @@ public class PersistenceManagerTest {
                 taskGroup.setResourceId("ExecutionGroup-resourceId01");
                 taskGroup.setExecutionStatus(ExecutionStatus.RUNNING);
                 taskGroup.setExecutionNodeHostName(node.getId());
-                taskGroup.setWorkflowNodeId(persistenceManager.getWorkflowDescriptor(job.getWorkflowId()).getNodes().get(0).getId());
+                taskGroup.setWorkflowNodeId(persistenceManager.workflows().get(job.getWorkflowId()).getNodes().get(0).getId());
 
                 // save first the execution group and after the sub-tasks within
-                ExecutionGroup taskGroupSaved = (ExecutionGroup)persistenceManager.saveExecutionTask(taskGroup, job);
+                ExecutionGroup taskGroupSaved = (ExecutionGroup)persistenceManager.tasks().save(taskGroup, job);
                 // check persisted task group
                 Assert.assertTrue(taskGroupSaved != null && taskGroupSaved.getId() != 0);
                 // check if job correctly updated
@@ -1684,16 +1685,16 @@ public class PersistenceManagerTest {
                 logger.info("Now job ID" + job.getId()  + " has " + job.getTasks().size() + " tasks/groups");
 
                 processingTask.setGroupTask(taskGroupSaved);
-                processingTask = (ProcessingExecutionTask)persistenceManager.saveExecutionTask(processingTask, job);
+                processingTask = (ProcessingExecutionTask)persistenceManager.tasks().save(processingTask, job);
 
                 dataSourceTask.setGroupTask(taskGroupSaved);
-                dataSourceTask = (DataSourceExecutionTask)persistenceManager.saveExecutionTask(dataSourceTask, job);
+                dataSourceTask = (DataSourceExecutionTask)persistenceManager.tasks().save(dataSourceTask, job);
 
                 // add tasks to saved group
                 taskGroupSaved.addTask(processingTask);
                 taskGroupSaved.addTask(dataSourceTask);
 
-                persistenceManager.updateExecutionTask(taskGroupSaved);
+                persistenceManager.tasks().update(taskGroupSaved);
 
                 logger.info("Now job ID" + job.getId()  + " has " + job.getTasks().size() + " tasks/groups");
 
@@ -1713,13 +1714,13 @@ public class PersistenceManagerTest {
         try
         {
             // retrieve one existing job, for test
-            List<ExecutionJob> jobs = persistenceManager.getAllJobs();
+            List<ExecutionJob> jobs = persistenceManager.jobs().list();
             // retrieve data sources components
-            List<DataSourceComponent> dataSourceComponents = persistenceManager.getDataSourceComponents();
+            List<DataSourceComponent> dataSourceComponents = persistenceManager.dataSourceComponents().list();
             // retrieve also processing components
-            List<ProcessingComponent> processingComponents = persistenceManager.getProcessingComponents();
+            List<ProcessingComponent> processingComponents = persistenceManager.processingComponents().list();
             // retrieve execution nodes
-            List<NodeDescription> nodes = persistenceManager.getNodes();
+            List<NodeDescription> nodes = persistenceManager.nodes().list();
 
             if(jobs != null && jobs.size() > 0 &&
               dataSourceComponents != null && dataSourceComponents.size() > 0 &&
@@ -1740,7 +1741,7 @@ public class PersistenceManagerTest {
                 processingTask.setExecutionStatus(ExecutionStatus.RUNNING);
                 processingTask.setExecutionNodeHostName(node.getId());
                 processingTask.setComponent(processingComponent);
-                processingTask.setWorkflowNodeId(persistenceManager.getWorkflowDescriptor(job.getWorkflowId()).getNodes().get(0).getId());
+                processingTask.setWorkflowNodeId(persistenceManager.workflows().get(job.getWorkflowId()).getNodes().get(0).getId());
 
                 List<Variable> inputsValues = new ArrayList<>();
                 Variable input1 = new Variable();
@@ -1762,7 +1763,7 @@ public class PersistenceManagerTest {
                 dataSourceTask.setExecutionStatus(ExecutionStatus.RUNNING);
                 dataSourceTask.setExecutionNodeHostName(node.getId());
                 dataSourceTask.setComponent(dataSourceComponent);
-                dataSourceTask.setWorkflowNodeId(persistenceManager.getWorkflowDescriptor(job.getWorkflowId()).getNodes().get(0).getId());
+                dataSourceTask.setWorkflowNodeId(persistenceManager.workflows().get(job.getWorkflowId()).getNodes().get(0).getId());
 
                 dataSourceTask.setInputParameterValues(inputsValues);
 
@@ -1772,10 +1773,10 @@ public class PersistenceManagerTest {
                 taskGroup.setResourceId("ExecutionGroup-resourceId02");
                 taskGroup.setExecutionStatus(ExecutionStatus.RUNNING);
                 taskGroup.setExecutionNodeHostName(node.getId());
-                taskGroup.setWorkflowNodeId(persistenceManager.getWorkflowDescriptor(job.getWorkflowId()).getNodes().get(0).getId());
+                taskGroup.setWorkflowNodeId(persistenceManager.workflows().get(job.getWorkflowId()).getNodes().get(0).getId());
 
                 // save first the execution group and after the sub-tasks within
-                ExecutionGroup taskGroupSaved = (ExecutionGroup)persistenceManager.saveExecutionTask(taskGroup, job);
+                ExecutionGroup taskGroupSaved = (ExecutionGroup)persistenceManager.tasks().save(taskGroup, job);
                 // check persisted task group
                 Assert.assertTrue(taskGroupSaved != null && taskGroupSaved.getId() != 0);
                 // check if job correctly updated
@@ -1784,16 +1785,16 @@ public class PersistenceManagerTest {
                 logger.info("Now job ID" + job.getId()  + " has " + job.getTasks().size() + " tasks/groups");
 
                 processingTask.setGroupTask(taskGroupSaved);
-                processingTask = (ProcessingExecutionTask)persistenceManager.saveExecutionGroupSubTask(processingTask, taskGroupSaved);
+                processingTask = (ProcessingExecutionTask)persistenceManager.tasks().save(processingTask, taskGroupSaved);
 
                 dataSourceTask.setGroupTask(taskGroupSaved);
-                dataSourceTask = (DataSourceExecutionTask)persistenceManager.saveExecutionGroupSubTask(dataSourceTask, taskGroupSaved);
+                dataSourceTask = (DataSourceExecutionTask)persistenceManager.tasks().save(dataSourceTask, taskGroupSaved);
 
                 // add tasks to saved group
                 taskGroupSaved.addTask(processingTask);
                 taskGroupSaved.addTask(dataSourceTask);
 
-                persistenceManager.updateExecutionTask(taskGroupSaved);
+                persistenceManager.tasks().update(taskGroupSaved);
 
                 logger.info("Now job ID" + job.getId()  + " has " + job.getTasks().size() + " tasks/groups");
 
@@ -1813,13 +1814,13 @@ public class PersistenceManagerTest {
         try
         {
             // retrieve one existing job, for test
-            List<ExecutionJob> jobs = persistenceManager.getAllJobs();
+            List<ExecutionJob> jobs = persistenceManager.jobs().list();
             // retrieve data sources components
-            List<DataSourceComponent> dataSourceComponents = persistenceManager.getDataSourceComponents();
+            List<DataSourceComponent> dataSourceComponents = persistenceManager.dataSourceComponents().list();
             // retrieve also processing components
-            List<ProcessingComponent> processingComponents = persistenceManager.getProcessingComponents();
+            List<ProcessingComponent> processingComponents = persistenceManager.processingComponents().list();
             // retrieve execution nodes
-            List<NodeDescription> nodes = persistenceManager.getNodes();
+            List<NodeDescription> nodes = persistenceManager.nodes().list();
 
             if(jobs != null && jobs.size() > 0 &&
               dataSourceComponents != null && dataSourceComponents.size() > 0 &&
@@ -1840,7 +1841,7 @@ public class PersistenceManagerTest {
                 processingTask.setExecutionStatus(ExecutionStatus.RUNNING);
                 processingTask.setExecutionNodeHostName(node.getId());
                 processingTask.setComponent(processingComponent);
-                processingTask.setWorkflowNodeId(persistenceManager.getWorkflowDescriptor(job.getWorkflowId()).getNodes().get(0).getId());
+                processingTask.setWorkflowNodeId(persistenceManager.workflows().get(job.getWorkflowId()).getNodes().get(0).getId());
 
                 List<Variable> inputsValues = new ArrayList<>();
                 Variable input1 = new Variable();
@@ -1862,7 +1863,7 @@ public class PersistenceManagerTest {
                 dataSourceTask.setExecutionStatus(ExecutionStatus.RUNNING);
                 dataSourceTask.setExecutionNodeHostName(node.getId());
                 dataSourceTask.setComponent(dataSourceComponent);
-                dataSourceTask.setWorkflowNodeId(persistenceManager.getWorkflowDescriptor(job.getWorkflowId()).getNodes().get(0).getId());
+                dataSourceTask.setWorkflowNodeId(persistenceManager.workflows().get(job.getWorkflowId()).getNodes().get(0).getId());
 
                 dataSourceTask.setInputParameterValues(inputsValues);
 
@@ -1872,13 +1873,13 @@ public class PersistenceManagerTest {
                 taskGroup.setResourceId("ExecutionGroup-resourceId03");
                 taskGroup.setExecutionStatus(ExecutionStatus.RUNNING);
                 taskGroup.setExecutionNodeHostName(node.getId());
-                taskGroup.setWorkflowNodeId(persistenceManager.getWorkflowDescriptor(job.getWorkflowId()).getNodes().get(0).getId());
+                taskGroup.setWorkflowNodeId(persistenceManager.workflows().get(job.getWorkflowId()).getNodes().get(0).getId());
 
                 // add tasks to tasks group
                 taskGroup.addTask(processingTask);
                 taskGroup.addTask(dataSourceTask);
 
-                taskGroup = (ExecutionGroup)persistenceManager.saveExecutionGroupWithSubTasks(taskGroup, job);
+                taskGroup = (ExecutionGroup)persistenceManager.tasks().saveWithSubTasks(taskGroup, job);
 
                 // check persisted task group
                 Assert.assertTrue(taskGroup != null && taskGroup.getId() != 0);
@@ -1903,7 +1904,7 @@ public class PersistenceManagerTest {
         try
         {
             // retrieve running tasks
-            List<ExecutionTask> tasks = persistenceManager.getRunningTasks();
+            List<ExecutionTask> tasks = persistenceManager.tasks().listRunning();
 
             Assert.assertTrue(tasks != null && tasks.size() > 0);
 

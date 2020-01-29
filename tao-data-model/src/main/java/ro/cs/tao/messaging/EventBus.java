@@ -15,6 +15,8 @@
  */
 package ro.cs.tao.messaging;
 
+import ro.cs.tao.persistence.MessageProvider;
+
 import java.io.Serializable;
 import java.security.Principal;
 import java.util.function.Consumer;
@@ -50,7 +52,7 @@ public interface EventBus<T extends Serializable> {
      * Assigns a persister to this event bus such that any message will be stored.
      * @param persister The message persister.
      */
-    void setPersister(MessagePersister persister);
+    void setPersister(MessageProvider persister);
 
     /**
      * Sends an event on a topic.

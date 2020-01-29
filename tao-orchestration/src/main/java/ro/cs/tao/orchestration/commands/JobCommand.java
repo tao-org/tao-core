@@ -78,7 +78,7 @@ public abstract class JobCommand {
             }
             try {
                 job.setExecutionStatus(this.requestedStatus);
-                job = persistenceManager.updateExecutionJob(job);
+                job = persistenceManager.jobs().update(job);
                 doAction(job);
             } catch (Exception ex) {
                 job.setExecutionStatus(ExecutionStatus.FAILED);

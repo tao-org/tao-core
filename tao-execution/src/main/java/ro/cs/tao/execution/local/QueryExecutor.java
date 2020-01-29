@@ -16,6 +16,7 @@
 
 package ro.cs.tao.execution.local;
 
+import ro.cs.tao.Tuple;
 import ro.cs.tao.component.*;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.datasource.DataQuery;
@@ -33,13 +34,13 @@ import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.Executor;
 import ro.cs.tao.execution.model.DataSourceExecutionTask;
 import ro.cs.tao.execution.model.ExecutionStatus;
-import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.persistence.EOProductProvider;
+import ro.cs.tao.persistence.WorkflowProvider;
 import ro.cs.tao.quota.QuotaException;
 import ro.cs.tao.quota.UserQuotaManager;
 import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.serialization.StringListAdapter;
 import ro.cs.tao.spi.OutputDataHandlerManager;
-import ro.cs.tao.utils.Tuple;
 import ro.cs.tao.utils.executors.NamedThreadPoolExecutor;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
@@ -65,8 +66,26 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
     private static final String LOCAL_DATABASE = "Local Database";
     private ExecutorService backgroundWorker = new NamedThreadPoolExecutor("query-thread", 1);//Executors.newSingleThreadExecutor();
     private DataSourceComponent dataSourceComponent;
+    private static EOProductProvider productProvider;
+    private static WorkflowProvider workflowProvider;
     @Override
     public boolean supports(TaoComponent component) { return component instanceof DataSourceComponent; }
+
+    public static void setProductProvider(EOProductProvider provider) {
+        productProvider = provider;
+    }
+
+    public static void setWorkflowProvider(WorkflowProvider provider) { workflowProvider = provider; }
+
+    public QueryExecutor() {
+        super();
+        if (productProvider == null) {
+            throw new ExecutionException("A ProductProvider is required to use this executor");
+        }
+        if (workflowProvider == null) {
+            throw new ExecutionException("A WorkflowProvider is required to use this executor");
+        }
+    }
 
     @Override
     public void execute(DataSourceExecutionTask task) throws ExecutionException {
@@ -118,7 +137,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                 List<EOProduct> products = new ArrayList<>();
                 if (!dataSourceComponent.getId().contains(LOCAL_DATABASE)) {
                     // first try to retrieve the products that have already been downloaded locally
-                    List<EOProduct> localProducts = persistenceManager.getEOProducts(results.stream().map(EOData::getId).collect(Collectors.joining()));
+                    List<EOProduct> localProducts = productProvider.list(results.stream().map(EOData::getId).collect(Collectors.toList()));
                     if (localProducts != null) {
                         localProducts.removeIf(p -> p.getProductStatus() != ProductStatus.DOWNLOADED);
                         localProducts.forEach(this::downloadCompleted);
@@ -128,60 +147,59 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                     }
                 }
                 final List<EOProduct> remoteProducts = dataSourceComponent.doFetch(results,
-                        null,
-                        SystemVariable.SHARED_WORKSPACE.value(),
+                                                                                   null,
+                                                                                   SystemVariable.SHARED_WORKSPACE.value(),
                         ConfigurationManager.getInstance().getValue(String.format("local.%s.path", sensorName)),
-                                                                             null);
+                                                                                   null);
                 if (remoteProducts != null) {
                     if (!dataSourceComponent.getId().contains(LOCAL_DATABASE)) {
                         backgroundWorker.submit(() -> persistResults(remoteProducts));
                     }
                     products.addAll(remoteProducts);
                 }
-                //if (results.size() > 0) {
-                    task.getComponent().setTargetCardinality(products.size());
-                    Long workflowNodeId = task.getWorkflowNodeId();
-                    WorkflowDescriptor workflow = persistenceManager.getFullWorkflowDescriptor(task.getJob().getWorkflowId());
-                    List<WorkflowNodeDescriptor> linkedNodes =
-                            workflow.getNodes().stream().filter(n -> n.getIncomingLinks() != null &&
-                                                                     n.getIncomingLinks().stream().anyMatch(l -> l.getSourceNodeId() == workflowNodeId))
-                                                        .collect(Collectors.toList());
-                    Aggregator aggregator;
-                    List<Tuple<EOProduct, EOProduct>> tuples = null;
-                    for (WorkflowNodeDescriptor linkedNode : linkedNodes) {
-                        Set<ComponentLink> links = linkedNode.getIncomingLinks();
-                        for (ComponentLink link : links) {
-                            if (link.getSourceNodeId() == workflowNodeId && (aggregator = link.getAggregator()) != null) {
-                                String[] sort = aggregator.getSorter();
-                                if (sort != null) {
-                                    DataSorter<EOProduct> sorter = ProductSortingFactory.getSorter(sort[0]);
-                                    products = sorter.sort(products, sort[1] == null || sort[1].equalsIgnoreCase("asc"));
-                                }
-                                String[] group = aggregator.getAssociator();
-                                if (group != null) {
-                                    Association<EOProduct> association;
-                                    if (group.length == 1) {
-                                        association = ProductAssociationFactory.getAssociation(group[0]);
-                                    } else {
-                                        if (group[1] == null) {
-                                            group[1] = "0";
-                                        }
-                                        association = ProductAssociationFactory.getAssociation(group[0],
-                                                                                               Integer.parseInt(group[1]));
+                task.getComponent().setTargetCardinality(products.size());
+                Long workflowNodeId = task.getWorkflowNodeId();
+                List<Tuple<EOProduct, EOProduct>> tuples = null;
+
+                WorkflowDescriptor workflow = workflowProvider.get(task.getJob().getWorkflowId());
+                List<WorkflowNodeDescriptor> linkedNodes =
+                        workflow.getNodes().stream().filter(n -> n.getIncomingLinks() != null &&
+                                n.getIncomingLinks().stream().anyMatch(l -> l.getSourceNodeId() == workflowNodeId))
+                                .collect(Collectors.toList());
+                Aggregator aggregator;
+                for (WorkflowNodeDescriptor linkedNode : linkedNodes) {
+                    Set<ComponentLink> links = linkedNode.getIncomingLinks();
+                    for (ComponentLink link : links) {
+                        if (link.getSourceNodeId() == workflowNodeId && (aggregator = link.getAggregator()) != null) {
+                            String[] sort = aggregator.getSorter();
+                            if (sort != null) {
+                                DataSorter<EOProduct> sorter = ProductSortingFactory.getSorter(sort[0]);
+                                products = sorter.sort(products, sort[1] == null || sort[1].equalsIgnoreCase("asc"));
+                            }
+                            String[] group = aggregator.getAssociator();
+                            if (group != null) {
+                                Association<EOProduct> association;
+                                if (group.length == 1) {
+                                    association = ProductAssociationFactory.getAssociation(group[0]);
+                                } else {
+                                    if (group[1] == null) {
+                                        group[1] = "0";
                                     }
-                                    tuples = association.associate(products);
+                                    association = ProductAssociationFactory.getAssociation(group[0],
+                                                                                           Integer.parseInt(group[1]));
                                 }
+                                tuples = association.associate(products);
                             }
                         }
                     }
-                    if (tuples != null) {
-                        task.setOutputParameterValue(dataSourceComponent.getTargets().get(0).getName(),
-                                                     serializeGroups(tuples));
-                    } else {
-                        task.setOutputParameterValue(dataSourceComponent.getTargets().get(0).getName(),
-                                                     serializeResults(products));
-                    }
-                //}
+                }
+                if (tuples != null) {
+                    task.setOutputParameterValue(dataSourceComponent.getTargets().get(0).getName(),
+                                                 serializeGroups(tuples));
+                } else {
+                    task.setOutputParameterValue(dataSourceComponent.getTargets().get(0).getName(),
+                                                 serializeResults(products));
+                }
                 status = ExecutionStatus.DONE;
             } else {
                 logger.info("Query returned no results");
@@ -269,7 +287,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
         	}
         	
         	// check if the product already exists
-        	final EOProduct oldProd = persistenceManager.getEOProduct(product.getId());
+        	final EOProduct oldProd = productProvider.get(product.getId());
         	if (oldProd != null) {
         		// if the product is failed or downloading, copy its references but continue with the download
         		if (oldProd.getProductStatus() == ProductStatus.FAILED || oldProd.getProductStatus() == ProductStatus.DOWNLOADING) {
@@ -291,17 +309,17 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
             product.setProductStatus(ProductStatus.DOWNLOADING);
             // attach the current user 
             product.addReference(principal.getName());
-            persistenceManager.saveEOProduct(product);
-            
+            productProvider.save(product);
+
             // update the user's input quota
             UserQuotaManager.getInstance().updateUserInputQuota(principal);
             return true;
-        } catch (PersistenceException e) {
-            logger.severe(String.format("Updating product %s failed. Reason: %s", product.getName(), e.getMessage()));
-            return false;
         } catch (QuotaException  e) {
         	logger.severe(String.format("Cannot update the input quota for user %s. Reason: %s", principal.getName(), e.getMessage()));
         	return false;
+        } catch (Exception e) {
+            logger.severe(String.format("Updating product %s failed. Reason: %s", product.getName(), e.getMessage()));
+            return false;
         }
     }
 
@@ -311,7 +329,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
         try {
         	// re-update the references, in case some other user tried to download this product after 
         	// the current user started
-        	final EOProduct oldProd = persistenceManager.getEOProduct(product.getId());
+        	final EOProduct oldProd = productProvider.get(product.getId());
         	if (oldProd != null) {
         		product.setRefs(oldProd.getRefs());
         	}
@@ -319,14 +337,14 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
             product.setProductStatus(ProductStatus.DOWNLOADED);
             // update the product's reference
             product.addReference(principal.getName());
-            persistenceManager.saveEOProduct(product);
-            
+            productProvider.save(product);
+
             // update the user's input quota
             UserQuotaManager.getInstance().updateUserInputQuota(principal);
-        } catch (PersistenceException e) {
-            logger.severe(String.format("Updating product %s failed. Reason: %s", product.getName(), e.getMessage()));
         } catch (QuotaException  e) {
         	logger.severe(String.format("Cannot update the input quota for user %s. Reason: %s", principal.getName(), e.getMessage()));
+        } catch (Exception e) {
+            logger.severe(String.format("Updating product %s failed. Reason: %s", product.getName(), e.getMessage()));
         }
     }
 
@@ -337,14 +355,14 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
         try {
             product.setProductStatus(ProductStatus.FAILED);
             product.removeReference(principal.getName());
-            persistenceManager.saveEOProduct(product);
+            productProvider.save(product);
             // roll back the user's quota
             UserQuotaManager.getInstance().updateUserInputQuota(principal);
             logger.warning(String.format("Product %s not downloaded. Reason: %s", product.getName(), reason));
-        } catch (PersistenceException e) {
-            logger.severe(String.format("Updating product %s failed. Reason: %s", product.getName(), e.getMessage()));
         } catch (QuotaException  e) {
         	logger.severe(String.format("Cannot update the input quota for user %s. Reason: %s", principal.getName(), e.getMessage()));
+        } catch (Exception e) {
+            logger.severe(String.format("Updating product %s failed. Reason: %s", product.getName(), e.getMessage()));
         }
     }
 

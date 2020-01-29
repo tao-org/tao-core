@@ -18,6 +18,7 @@ package ro.cs.tao.eodata;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import ro.cs.tao.component.StringIdentifiable;
 import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.eodata.enums.ProductStatus;
 import ro.cs.tao.eodata.enums.Visibility;
@@ -36,9 +37,8 @@ import java.util.Map;
 /**
  * @author Cosmin Cara
  */
-public abstract class EOData implements Serializable {
+public abstract class EOData extends StringIdentifiable implements Serializable {
 
-    private String id;
     private String name;
     private DataFormat formatType;
     private Geometry geometry;
@@ -49,14 +49,9 @@ public abstract class EOData implements Serializable {
     private Visibility visibility;
     private ProductStatus productStatus;
 
-    //region Getters and Setters
-    public String getId() {
-        return id;
-    }
-    public void setId(String id) {
-        this.id = id;
-    }
+    public EOData() { super(); }
 
+    //region Getters and Setters
     public String getName() {
         return name;
     }
