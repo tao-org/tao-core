@@ -21,10 +21,17 @@ import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.datasource.DataSourceComponentGroup;
 import ro.cs.tao.datasource.beans.Query;
 import ro.cs.tao.datasource.param.CommonParameterNames;
+import ro.cs.tao.datasource.persistence.DataSourceComponentGroupProvider;
+import ro.cs.tao.datasource.persistence.DataSourceComponentProvider;
+import ro.cs.tao.datasource.persistence.QueryProvider;
 import ro.cs.tao.execution.model.*;
-import ro.cs.tao.persistence.PersistenceManager;
-import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.execution.persistence.ExecutionJobProvider;
+import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
+import ro.cs.tao.persistence.GroupComponentProvider;
+import ro.cs.tao.persistence.PersistenceException;
+import ro.cs.tao.persistence.ProcessingComponentProvider;
 import ro.cs.tao.security.SessionStore;
+import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.workflow.ParameterValue;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
@@ -46,11 +53,23 @@ import java.util.stream.Collectors;
 public class JobFactory {
 
     private static final int DEFAULT_INSTANCE = 1;
-    private final PersistenceManager persistenceManager;
+    private final ExecutionJobProvider jobProvider;
+    private final ExecutionTaskProvider taskProvider;
+    private final QueryProvider queryProvider;
+    private final ProcessingComponentProvider processingComponentProvider;
+    private final DataSourceComponentProvider dataSourceComponentProvider;
+    private final DataSourceComponentGroupProvider dataSourceComponentGroupProvider;
+    private final GroupComponentProvider groupComponentProvider;
     private final Logger logger;
 
-    JobFactory(PersistenceManager persistenceManager) {
-        this.persistenceManager = persistenceManager;
+    JobFactory() {
+        this.jobProvider = SpringContextBridge.services().getService(ExecutionJobProvider.class);
+        this.taskProvider = SpringContextBridge.services().getService(ExecutionTaskProvider.class);
+        this.queryProvider = SpringContextBridge.services().getService(QueryProvider.class);
+        this.processingComponentProvider = SpringContextBridge.services().getService(ProcessingComponentProvider.class);
+        this.dataSourceComponentProvider = SpringContextBridge.services().getService(DataSourceComponentProvider.class);
+        this.dataSourceComponentGroupProvider = SpringContextBridge.services().getService(DataSourceComponentGroupProvider.class);
+        this.groupComponentProvider = SpringContextBridge.services().getService(GroupComponentProvider.class);
         this.logger = Logger.getLogger(JobFactory.class.getName());
     }
 
@@ -63,7 +82,7 @@ public class JobFactory {
             job.setStartTime(LocalDateTime.now());
             job.setWorkflowId(workflow.getId());
             job.setExecutionStatus(ExecutionStatus.UNDETERMINED);
-            job = persistenceManager.saveExecutionJob(job);
+            job = jobProvider.save(job);
             List<WorkflowNodeDescriptor> nodes = workflow.getOrderedNodes();
             Set<WorkflowNodeGroupDescriptor> groups = nodes.stream()
                                                             .filter(n -> n instanceof WorkflowNodeGroupDescriptor)
@@ -93,9 +112,9 @@ public class JobFactory {
                     }
                     task.setLevel(node.getLevel());
                     if (task.getId() == null) {
-                        persistenceManager.saveExecutionTask(task, job);
+                        taskProvider.save(task, job);
                     } else {
-                        persistenceManager.updateExecutionTask(task);
+                        taskProvider.update(task);
                     }
                     logger.fine(String.format("Created task for node %s [level %s]", node.getId(), task.getLevel()));
                 }
@@ -112,9 +131,9 @@ public class JobFactory {
         group.setWorkflowNodeId(groupNode.getId());
         group.setExecutionStatus(ExecutionStatus.UNDETERMINED);
         group.setResourceId("group-" + groupNode.getId() + "-" + job.getId());
-        persistenceManager.saveExecutionTask(group, job);
+        taskProvider.save(group, job);
         List<WorkflowNodeDescriptor> nodes = groupNode.getOrderedNodes();
-        final GroupComponent component = persistenceManager.getGroupComponentById(groupNode.getComponentId());
+        final GroupComponent component = groupComponentProvider.get(groupNode.getComponentId());
         final int parallelism = component != null ? component.getParallelism() : 1;
         for (WorkflowNodeDescriptor node : nodes) {
             for (int i = 1; i <= parallelism; i++) {
@@ -122,7 +141,7 @@ public class JobFactory {
                 //task.setLevel(groupNode.getLevel() + 1);
                 task.setLevel(node.getLevel());
                 task.setInstanceId(i);
-                persistenceManager.saveExecutionTask(task, job);
+                taskProvider.save(task, job);
                 group.addTask(task);
             }
         }
@@ -148,8 +167,8 @@ public class JobFactory {
         group.setWorkflowNodeId(groupNode.getId());
         group.setExecutionStatus(ExecutionStatus.UNDETERMINED);
         group.setResourceId("group-" + groupNode.getId() + "-" + job.getId());
-        persistenceManager.saveExecutionTask(group, job);
-        DataSourceComponentGroup dscGroup = persistenceManager.getDataSourceComponentGroup(groupNode.getComponentId());
+        taskProvider.save(group, job);
+        DataSourceComponentGroup dscGroup = dataSourceComponentGroupProvider.get(groupNode.getComponentId());
         List<DataSourceComponent> components = dscGroup.getDataSourceComponents();
         for (DataSourceComponent component : components) {
             Query query = dscGroup.getDataSourceQueries().stream()
@@ -157,7 +176,7 @@ public class JobFactory {
             if (query != null) {
                 ExecutionTask task = createDataSourceExecutionTask(job, groupNode, component, query);
                 task.setLevel(groupNode.getLevel());
-                persistenceManager.saveExecutionTask(task, job);
+                taskProvider.save(task, job);
                 group.addTask(task);
             } else {
                 logger.warning(String.format("No query is associated with data source '%s'", component.getId()));
@@ -199,7 +218,7 @@ public class JobFactory {
     private ExecutionTask createProcessingExecutionTask(WorkflowNodeDescriptor workflowNode,
                                                         Set<ComponentLink> incomingLinks) {
         List<ParameterValue> customValues = workflowNode.getCustomValues();
-        ProcessingComponent component = persistenceManager.getProcessingComponentById(workflowNode.getComponentId());
+        ProcessingComponent component = processingComponentProvider.get(workflowNode.getComponentId());
         ProcessingExecutionTask task = new ProcessingExecutionTask();
         task.setComponent(component);
         // Placeholders for inputs of previous tasks
@@ -238,11 +257,11 @@ public class JobFactory {
         if (inputs != null) {
             taskInputs.putAll(inputs);
         }
-        DataSourceComponent dsComponent = persistenceManager.getDataSourceInstance(workflowNode.getComponentId());
-        Query query = persistenceManager.getQuery(SessionStore.currentContext().getPrincipal().getName(),
-                                                  dsComponent.getSensorName(),
-                                                  dsComponent.getDataSourceName(),
-                                                  workflowNode.getId());
+        DataSourceComponent dsComponent = dataSourceComponentProvider.get(workflowNode.getComponentId());
+        Query query = queryProvider.get(SessionStore.currentContext().getPrincipal().getName(),
+                                        dsComponent.getSensorName(),
+                                        dsComponent.getDataSourceName(),
+                                        workflowNode.getId());
         if (query == null) {
             query = new Query();
             query.setUser(SessionStore.currentContext().getPrincipal().getName());
@@ -288,7 +307,7 @@ public class JobFactory {
         query.setLimit(val);
         query.setValues(taskInputs);
         query.setUserId(job.getUserName());
-        persistenceManager.saveQuery(query);
+        queryProvider.save(query);
         task.setComponent(dsComponent);
         task.setInputParameterValue("query", query.toString());
         return task;
@@ -308,10 +327,10 @@ public class JobFactory {
         } else {
             taskInputs = new HashMap<>();
         }
-        Query localQuery = persistenceManager.getQuery(SessionStore.currentContext().getPrincipal().getName(),
-                                                       component.getSensorName(),
-                                                       component.getDataSourceName(),
-                                                       workflowNode.getId());
+        Query localQuery = queryProvider.get(SessionStore.currentContext().getPrincipal().getName(),
+                                             component.getSensorName(),
+                                             component.getDataSourceName(),
+                                             workflowNode.getId());
         if (localQuery == null) {
             localQuery = new Query();
             localQuery.setUser(SessionStore.currentContext().getPrincipal().getName());
@@ -357,7 +376,7 @@ public class JobFactory {
         localQuery.setLimit(val);
         localQuery.setValues(taskInputs);
         localQuery.setUserId(job.getUserName());
-        persistenceManager.saveQuery(localQuery);
+        queryProvider.save(localQuery);
         task.setComponent(component);
         task.setInputParameterValue("local.query", localQuery.toString());
         task.setInputParameterValue("remote.query", query.toString());

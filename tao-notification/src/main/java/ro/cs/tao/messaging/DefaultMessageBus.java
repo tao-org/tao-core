@@ -19,6 +19,7 @@ import reactor.Environment;
 import reactor.bus.Event;
 import reactor.bus.EventBus;
 import reactor.core.config.DispatcherType;
+import ro.cs.tao.persistence.MessageProvider;
 import ro.cs.tao.utils.executors.NamedThreadPoolExecutor;
 
 import java.security.Principal;
@@ -43,7 +44,7 @@ public class DefaultMessageBus implements ro.cs.tao.messaging.EventBus<Event<Mes
     private final Set<String> topics;
     private final Map<Pattern, Set<reactor.fn.Consumer<Event<Message>>>> patternSubscribers;
     private final Set<String> matchedTopics;
-    private MessagePersister messagePersister;
+    private MessageProvider messagePersister;
     private final ExecutorService executorService;
     private final Logger logger;
 
@@ -66,7 +67,7 @@ public class DefaultMessageBus implements ro.cs.tao.messaging.EventBus<Event<Mes
     }
 
     @Override
-    public void setPersister(MessagePersister messagePersister) {
+    public void setPersister(MessageProvider messagePersister) {
         this.messagePersister = messagePersister;
     }
 
@@ -124,7 +125,7 @@ public class DefaultMessageBus implements ro.cs.tao.messaging.EventBus<Event<Mes
             this.executorService.submit(() -> {
                 try {
                     if (this.messagePersister != null && message.isPersistent()) {
-                        this.messagePersister.saveMessage(message);
+                        this.messagePersister.save(message);
                     }
                 } catch (Exception e) {
                     this.logger.severe(e.getMessage());

@@ -41,7 +41,7 @@ public class NodeDescription extends StringIdentifiable {
     public NodeDescription() { this.active = true;}
 
     @Override
-    public String defaultId() { return null; }
+    public String defaultId() { return "NewNode"; }
 
     @XmlElement(name = "userName")
     public String getUserName() { return userName; }

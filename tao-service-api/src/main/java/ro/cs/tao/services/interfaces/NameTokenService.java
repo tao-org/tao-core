@@ -1,7 +1,7 @@
 package ro.cs.tao.services.interfaces;
 
 import ro.cs.tao.eodata.naming.NamingRule;
-import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.services.model.component.NamingRuleTokens;
 
 import java.util.List;

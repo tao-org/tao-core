@@ -21,7 +21,7 @@ import java.util.List;
 @Repository
 @Qualifier(value = "messageRepository")
 @Transactional
-public interface MessageRepository extends PagingAndSortingRepository<Message, String> {
+public interface MessageRepository extends PagingAndSortingRepository<Message, Long> {
 
     /**
      * Find Message entity by user identifier

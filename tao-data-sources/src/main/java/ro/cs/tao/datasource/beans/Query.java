@@ -17,6 +17,7 @@ package ro.cs.tao.datasource.beans;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import ro.cs.tao.component.LongIdentifiable;
 import ro.cs.tao.datasource.DataQuery;
 import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.datasource.DataSourceManager;
@@ -35,10 +36,9 @@ import java.util.logging.Logger;
 /**
  * @author Cosmin Cara
  */
-public class Query {
+public class Query extends LongIdentifiable {
     private static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
     private static final Map<CompositeKey, DataSourceComponent> componentPool = Collections.synchronizedMap(new HashMap<>());
-    private Long id;
     private String label;
     private String userId;
     private Long workflowNodeId;
@@ -56,10 +56,7 @@ public class Query {
     private String groupId;
     private String groupLabel;
 
-    public Query() { }
-
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Query() { super(); }
 
     public String getLabel() { return label; }
     public void setLabel(String label) { this.label = label; }

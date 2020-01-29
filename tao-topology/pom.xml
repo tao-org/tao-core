@@ -33,12 +33,6 @@
 
         <dependency>
             <groupId>ro.cs.tao</groupId>
-            <artifactId>tao-config</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>ro.cs.tao</groupId>
             <artifactId>tao-spring-bridge</artifactId>
             <version>${project.version}</version>
             <!--<type>jar</type>

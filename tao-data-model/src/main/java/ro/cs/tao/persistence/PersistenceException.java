@@ -13,18 +13,21 @@
  * You should have received a copy of the GNU General Public License along
  * with this program; if not, see http://www.gnu.org/licenses/
  */
-package ro.cs.tao.persistence.exception;
+package ro.cs.tao.persistence;
 
 /**
  * Persistence exception
  * @author Oana H.
  *
  */
-public class PersistenceException extends Exception{
+public class PersistenceException extends Exception {
 
     public PersistenceException() { super(); }
     public PersistenceException(String message) { super(message); }
     public PersistenceException(String message, Throwable cause) { super(message, cause); }
     public PersistenceException(Throwable cause) { super(cause); }
+    public PersistenceException(String message, Object... arguments) {
+        super(String.format(message, arguments));
+    }
 
 }

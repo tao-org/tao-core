@@ -1,12 +1,13 @@
 param (
-    [string]$port = "5432",
+    [string]$server = "localhost",
+	[string]$port = "5432",
 #    [Parameter(Mandatory=$true)][string]$username,
 #    [string]$password = $( Read-Host "Input password, please" )
     [string]$password = "postgres"
 )
 
 # Functions
-function Ensure-psql-access($port, $password) {
+function Ensure-psql-access($server, $port, $password) {
     # create the full path if it does not exist
     $pgPassFileFolderPath = "$env:APPDATA\postgresql\"
     if (-Not (Test-Path $pgPassFileFolderPath)) {
@@ -121,21 +122,21 @@ function Get-Scripts-To-Execute($txtFile) {
     return $retArray
 }
 
-function Execute-Sql-Script($sqlFile, $port, $db) {
+function Execute-Sql-Script($sqlFile, $host, $port, $db) {
     if ($db -eq "") {
-        Write-Host "Executing: $PostgresInstallBinPath -h localhost -p $port -U postgres -f $sqlFile ... " -ForegroundColor Magenta
-        $execResult = & $PostgresInstallBinPath -h localhost -p $port -U postgres -f $sqlFile
+        Write-Host "Executing: $PostgresInstallBinPath -h $host -p $port -U postgres -f $sqlFile ... " -ForegroundColor Magenta
+        $execResult = & $PostgresInstallBinPath -h $host -p $port -U postgres -f $sqlFile
     } else {
-        Write-Host "Executing: $PostgresInstallBinPath -h localhost -p $port -U postgres -d $db -f $sqlFile ... " -ForegroundColor Magenta
-        $execResult = & $PostgresInstallBinPath -h localhost -p $port -U postgres -d $db -f $sqlFile
+        Write-Host "Executing: $PostgresInstallBinPath -h $host -p $port -U postgres -d $db -f $sqlFile ... " -ForegroundColor Magenta
+        $execResult = & $PostgresInstallBinPath -h $host -p $port -U postgres -d $db -f $sqlFile
     }
 }
 
-function Execute-Sql-Command($sqlCmd, $port, $db) {
+function Execute-Sql-Command($sqlCmd, $host, $port, $db) {
     if ($db -eq "") {
-        $ret = ($sqlCmd) | & $PostgresInstallBinPath -h localhost -p $port -U postgres
+        $ret = ($sqlCmd) | & $PostgresInstallBinPath -h $host -p $port -U postgres
     } else {
-        $ret = ($sqlCmd) | & $PostgresInstallBinPath -h localhost -p $port -U postgres -d $db
+        $ret = ($sqlCmd) | & $PostgresInstallBinPath -h $host -p $port -U postgres -d $db
     }
     return $ret
 }

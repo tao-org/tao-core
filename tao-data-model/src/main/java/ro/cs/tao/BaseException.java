@@ -47,6 +47,10 @@ public class BaseException extends RuntimeException {
         super(cause);
     }
 
+    public BaseException(String message, Object... arguments) {
+        super(String.format(message, arguments));
+    }
+
     /**
      * Returns any additional information this exception may hold.
      */

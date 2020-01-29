@@ -16,7 +16,6 @@
 package ro.cs.tao.execution.local;
 
 import org.ggf.drmaa.*;
-import ro.cs.tao.configuration.Configuration;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.execution.Constants;
 import ro.cs.tao.execution.monitor.NodeManager;
@@ -72,8 +71,8 @@ public class DefaultSession implements Session {
                 if (Arrays.stream(nodes).noneMatch(n -> hostName.equalsIgnoreCase(n.getId()) || hostName.equals(ipAddress))) {
                     NodeDescription localNode = new NodeDescription();
                     localNode.setId(hostName);
-                    localNode.setUserName(ConfigurationManager.getInstance().getValue(Configuration.Topology.MASTER_USER));
-                    localNode.setUserPass(ConfigurationManager.getInstance().getValue(Configuration.Topology.MASTER_PASSWORD));
+                    localNode.setUserName(ConfigurationManager.getInstance().getValue("topology.master.user"));
+                    localNode.setUserPass(ConfigurationManager.getInstance().getValue("topology.master.password"));
                     NodeFlavor flavor = new NodeFlavor();
                     flavor.setId("master");
                     flavor.setCpu(Runtime.getRuntime().availableProcessors());

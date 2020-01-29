@@ -35,4 +35,8 @@ public class TopologyException extends BaseException {
     public TopologyException(Throwable cause) {
         super(cause);
     }
+
+    public TopologyException(String message, Object... arguments) {
+        super(message, arguments);
+    }
 }

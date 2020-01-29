@@ -17,6 +17,7 @@ package ro.cs.tao.execution.drmaa;
 
 import org.apache.commons.lang3.SystemUtils;
 import org.ggf.drmaa.*;
+import ro.cs.tao.Tuple;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.component.Variable;
@@ -32,9 +33,9 @@ import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.execution.model.ProcessingExecutionTask;
 import ro.cs.tao.execution.monitor.NodeManager;
 import ro.cs.tao.execution.monitor.NodeManager.NodeData;
-import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
+import ro.cs.tao.persistence.ContainerProvider;
 import ro.cs.tao.topology.NodeDescription;
-import ro.cs.tao.utils.Tuple;
 import ro.cs.tao.utils.executors.BlockingQueueWorker;
 
 import java.io.IOException;
@@ -59,12 +60,24 @@ import java.util.regex.Pattern;
  */
 public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
     private static String masterHost;
+    private static ExecutionTaskProvider taskProvider;
+    private static ContainerProvider containerProvider;
     private Session session;
     private final BlockingQueue<Tuple<JobTemplate, ProcessingExecutionTask>> queue;
     private final BlockingQueueWorker<Tuple<JobTemplate, ProcessingExecutionTask>> queueWorker;
 
+    public static void setTaskProvider(ExecutionTaskProvider provider) { taskProvider = provider; }
+
+    public static void setContainerProvider(ContainerProvider provider) { containerProvider = provider; }
+
     public DrmaaTaoExecutor() {
         super();
+        if (taskProvider == null) {
+            throw new ExecutionException("A TaskProvider is required to use this executor");
+        }
+        if (containerProvider == null) {
+            throw new ExecutionException("A ContainerProvider is required to use this executor");
+        }
         this.queue = new LinkedBlockingDeque<>();
         this.queueWorker = new BlockingQueueWorker<>(this.queue, this::executeImpl);
     }
@@ -141,7 +154,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         if(!isInitialized) {
             return;
         }
-        final List<ExecutionTask> tasks = persistenceManager.getExecutingTasks();
+        final List<ExecutionTask> tasks = taskProvider.list();
         if (tasks != null) {
             // For each job, get its status from DRMAA
             for (ExecutionTask task : tasks) {
@@ -155,8 +168,8 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                         case Session.USER_SUSPENDED:
                         case Session.USER_SYSTEM_SUSPENDED:
                             try {
-                                persistenceManager.updateTaskStatus(task, ExecutionStatus.SUSPENDED);
-                            } catch (PersistenceException e) {
+                                notifyStatusListener(task, ExecutionStatus.SUSPENDED);
+                            } catch (Exception e) {
                                 logger.severe(String.format("Status update for task %s failed. Reason: %s",
                                                             task.getId(), e.getMessage()));
                             }
@@ -167,8 +180,8 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                             break;
                         case Session.RUNNING:
                             try {
-                                persistenceManager.updateTaskStatus(task, ExecutionStatus.RUNNING);
-                            } catch (PersistenceException e) {
+                                notifyStatusListener(task, ExecutionStatus.RUNNING);
+                            } catch (Exception e) {
                                 logger.severe(String.format("Status update for task %s failed. Reason: %s",
                                                             task.getId(), e.getMessage()));
                             }
@@ -241,7 +254,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         // Get from the component the execution command
         String[] pArgs = null;
         final ProcessingComponent component = task.getComponent();
-        final Container container = persistenceManager.getContainerById(component.getContainerId());
+        final Container container = containerProvider.get(component.getContainerId());
         Application app = container.getApplications()
                 .stream()
                 .filter(a -> component.getId().endsWith(a.getName().toLowerCase()))

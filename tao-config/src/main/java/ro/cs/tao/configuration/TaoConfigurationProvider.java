@@ -30,48 +30,70 @@ import java.util.stream.Collectors;
  * Singleton manager for handling the settings defined in the configuration file.
  * @author Cosmin Cara
  */
-public class ConfigurationManager {
-    public static final String APP_HOME = "app.home";
-    private static ConfigurationManager instance;
+public class TaoConfigurationProvider implements ConfigurationProvider {
+    private static TaoConfigurationProvider instance;
     private static final String CONFIG_FILE_NAME = "tao.properties";
     // this field may be set by the launcher of the services
-    private static Path configFolder;
+    private Path configFolder;
     // this field may be set by the launcher of the services
-    private static Path scriptsFolder;
+    private Path scriptsFolder;
     private Properties settings;
 
-    public static ConfigurationManager getInstance() {
+    public static TaoConfigurationProvider getInstance() {
         if (instance == null) {
-            instance = new ConfigurationManager();
+            instance = new TaoConfigurationProvider();
         }
         return instance;
     }
 
-    private ConfigurationManager() {
-        if (settings == null) {
-            settings = new Properties();
-            try {
-                settings.load(ConfigurationManager.class.getResourceAsStream("/ro/cs/tao/configuration/" + CONFIG_FILE_NAME));
-            } catch (IOException ignored) {
-            }
+    public TaoConfigurationProvider() {
+        settings = new Properties();
+        try {
+            settings.load(TaoConfigurationProvider.class.getResourceAsStream("/ro/cs/tao/configuration/" + CONFIG_FILE_NAME));
+        } catch (IOException ignored) {
+        }
+        if (instance == null) {
+            instance = this;
         }
     }
 
+    @Override
     public Path getScriptsFolder() { return scriptsFolder; }
+
+    @Override
+    public void setScriptsFolder(Path folder) { scriptsFolder = folder; }
+
+    @Override
+    public void putAll(Properties properties) {
+        if (settings != null) {
+            settings.putAll(properties);
+        } else {
+            settings = properties;
+        }
+    }
+
+    @Override
+    public Path getConfigurationFolder() { return configFolder; }
+
+    @Override
+    public void setConfigurationFolder(Path folder) { configFolder = folder; }
 
     public Path getApplicationHome() {
         final String value = this.settings.getProperty(APP_HOME);
         return value != null ? Paths.get(value) : null;
     }
 
+    @Override
     public String getValue(String name) {
         return this.settings.getProperty(name, null);
     }
 
+    @Override
     public String getValue(String name, String defaultValue) {
         return this.settings.getProperty(name, defaultValue);
     }
 
+    @Override
     public boolean getBooleanValue(String name) {
         String strValue = this.settings.getProperty(name);
         boolean returnValue = false;
@@ -82,29 +104,32 @@ public class ConfigurationManager {
         return returnValue;
     }
 
+    @Override
     public Map<String, String> getValues(String filter) {
         return this.settings.entrySet().stream()
                 .filter(e -> ((String) e.getKey()).contains(filter)).collect(
                         Collectors.toMap(
                                 e -> (String) e.getKey(),
                                 e -> (String) e.getValue()
-                        ));
+                                        ));
     }
 
+    @Override
     public Map<String, String> getAll() {
         return this.settings.entrySet().stream().collect(
                 Collectors.toMap(
                         e -> (String) e.getKey(),
                         e -> (String) e.getValue()
-                ));
+                                ));
     }
 
+    @Override
     public void setValue(String name, String value) { this.settings.setProperty(name, value); }
 
     private void externalizeProperties(Path target) throws IOException {
         byte[] buffer = new byte[1024];
-        try (BufferedInputStream is = new BufferedInputStream(ConfigurationManager.class.getResourceAsStream("/ro/cs/tao/configuration/" + CONFIG_FILE_NAME));
-                OutputStream os = new BufferedOutputStream(Files.newOutputStream(target))) {
+        try (BufferedInputStream is = new BufferedInputStream(TaoConfigurationProvider.class.getResourceAsStream("/ro/cs/tao/configuration/" + CONFIG_FILE_NAME));
+             OutputStream os = new BufferedOutputStream(Files.newOutputStream(target))) {
             int read;
             while ((read = is.read(buffer)) != -1) {
                 os.write(buffer, 0, read);

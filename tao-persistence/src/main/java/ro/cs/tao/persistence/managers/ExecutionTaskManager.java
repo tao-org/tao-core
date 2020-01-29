@@ -22,17 +22,20 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.execution.model.*;
-import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
+import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.repository.ExecutionTaskRepository;
 
 import javax.sql.DataSource;
 import java.sql.PreparedStatement;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Component("executionManager")
-public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, ExecutionTaskRepository> {
+public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, ExecutionTaskRepository>
+                                  implements ExecutionTaskProvider {
 
     @Autowired
     private ExecutionJobManager executionJobManager;
@@ -41,21 +44,24 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
     private DataSource dataSource;
 
     public ExecutionTask updateStatus(ExecutionTask task, ExecutionStatus newStatus) throws PersistenceException {
+        task.setLastUpdated(LocalDateTime.now());
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         jdbcTemplate.update("UPDATE execution.task SET execution_status_id = ?, resource_id = ?, start_time = ? WHERE id = ?",
                             newStatus.value(), task.getResourceId(), task.getLastUpdated(), task.getId());
         return get(task.getId());
     }
 
-    @Transactional
-    public List<ExecutionTask> getRunningTasks() { return repository.getRunningTasks(); }
+    @Override
+    public List<ExecutionTask> listRunning() { return repository.getRunningTasks(); }
 
-    public List<ExecutionTask> getExecutingTasks() { return repository.getExecutingTasks(); }
+    @Override
+    public List<ExecutionTask> listExecuting() { return repository.getExecutingTasks(); }
 
-    public List<ExecutionTask> getRemoteExecutingTasks() { return repository.getRemoteExecutingTasks(); }
+    @Override
+    public List<ExecutionTask> listRemoteExecuting() { return repository.getRemoteExecutingTasks(); }
 
-    @Transactional
-    public List<ExecutionTaskSummary> getStatus(long jobId) {
+    @Override
+    public List<ExecutionTaskSummary> getTasksStatus(long jobId) {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         return jdbcTemplate.query(con -> {
             PreparedStatement statement =
@@ -87,31 +93,27 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
         });
     }
 
-    @Transactional
-    public ExecutionTask getTaskByJobAndNode(long jobId, long nodeId, int instanceId) {
+    @Override
+    public ExecutionTask getByJobAndNode(long jobId, long nodeId, int instanceId) {
         return repository.findByJobAndWorkflowNode(jobId, nodeId, instanceId);
     }
 
-    @Transactional
-    public ExecutionTask getTaskByGroupAndNode(long groupId, long nodeId, int instanceId) {
+    @Override
+    public ExecutionTask getByGroupAndNode(long groupId, long nodeId, int instanceId) {
         return repository.findByGroupAndWorkflowNode(groupId, nodeId, instanceId);
     }
 
-    @Transactional
-    public ExecutionTask getTaskByResourceId(String id) throws PersistenceException {
-        final ExecutionTask existingTask = repository.findByResourceId(id);
-        if (existingTask == null) {
-            throw new PersistenceException("There is no execution task with the given resource identifier: " + id);
-        }
-        return existingTask;
+    @Override
+    public ExecutionTask getByResourceId(String id) {
+        return repository.findByResourceId(id);
     }
 
-    @Transactional
+    @Override
     public int getCPUsForUser(String userName) {
         return repository.getCPUsForUser(userName);
     }    
 
-    @Transactional
+    @Override
     public int getMemoryForUser(String userName) {
         return repository.getMemoryForUser(userName);
     }    
@@ -162,8 +164,8 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
         return null;
     }
 
-    @Transactional
-    public ExecutionTask saveExecutionGroupSubTask(ExecutionTask task, ExecutionGroup taskGroup) throws PersistenceException {
+    @Override
+    public ExecutionTask save(ExecutionTask task, ExecutionGroup taskGroup) throws PersistenceException {
 
         // check method parameters
         if (!checkExecutionGroupTask(task, taskGroup, false)) {
@@ -203,8 +205,8 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
         return null;
     }
 
-    @Transactional
-    public ExecutionTask saveExecutionGroupWithSubTasks(ExecutionGroup taskGroup, ExecutionJob job) throws PersistenceException {
+    @Override
+    public ExecutionTask saveWithSubTasks(ExecutionGroup taskGroup, ExecutionJob job) throws PersistenceException {
 
         // check method parameters
         if (!checkExecutionTask(taskGroup, job, false)) {
@@ -217,7 +219,7 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
         taskGroup = (ExecutionGroup) save(taskGroup, job);
 
         for (ExecutionTask subTask : subTasks){
-            saveExecutionGroupSubTask(subTask, taskGroup);
+            save(subTask, taskGroup);
         }
 
         return taskGroup;

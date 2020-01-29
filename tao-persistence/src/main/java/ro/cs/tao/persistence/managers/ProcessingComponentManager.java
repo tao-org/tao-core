@@ -18,12 +18,12 @@ package ro.cs.tao.persistence.managers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.component.ParameterDescriptor;
 import ro.cs.tao.component.ParameterExpansionRule;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.enums.ProcessingComponentType;
-import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.persistence.PersistenceException;
+import ro.cs.tao.persistence.ProcessingComponentProvider;
 import ro.cs.tao.persistence.repository.ParameterExpansionRuleRepository;
 import ro.cs.tao.persistence.repository.ProcessingComponentRepository;
 
@@ -32,7 +32,8 @@ import java.util.List;
 import java.util.Map;
 
 @Component("processingComponentManager")
-public class ProcessingComponentManager extends TaoComponentManager<ProcessingComponent, ProcessingComponentRepository> {
+public class ProcessingComponentManager extends TaoComponentManager<ProcessingComponent, ProcessingComponentRepository>
+                                        implements ProcessingComponentProvider {
 
     @Autowired
     private ParameterExpansionRuleRepository expansionRuleRepository;
@@ -40,17 +41,18 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
     /**
      * Retrieve active processing components with SYSTEM and CONTRIBUTOR visibility
      */
-    @Transactional
-    public List<ProcessingComponent> getUserProcessingComponents(String userName) {
+    @Override
+    public List<ProcessingComponent> listUserProcessingComponents(String userName) {
         return repository.getUserComponentsByType(userName, ProcessingComponentType.EXECUTABLE.value());
     }
 
-    @Transactional
-    public List<ProcessingComponent> getUserScriptComponents(String userName) {
+    @Override
+    public List<ProcessingComponent> listUserScriptComponents(String userName) {
         return repository.getUserComponentsByType(userName, ProcessingComponentType.SCRIPT.value());
     }
 
-    public List<ProcessingComponent> getProcessingComponentsByLabel(String label) {
+    @Override
+    public List<ProcessingComponent> listByLabel(String label) {
         return repository.getByLabel(label);
     }
 
@@ -79,11 +81,6 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
             map.clear();
         }
         return entity;
-    }
-
-    @Override
-    public ProcessingComponent update(ProcessingComponent entity) throws PersistenceException {
-        return super.update(entity);
     }
 
     @Override

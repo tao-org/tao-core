@@ -15,21 +15,17 @@
  */
 package ro.cs.tao.execution;
 
+import ro.cs.tao.Tuple;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.StringIdentifiable;
 import ro.cs.tao.component.TaoComponent;
-import ro.cs.tao.configuration.Configuration;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.Topic;
-import ro.cs.tao.persistence.PersistenceManager;
-import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.security.SessionContext;
 import ro.cs.tao.security.SystemSessionContext;
-import ro.cs.tao.services.bridge.spring.SpringContextBridge;
-import ro.cs.tao.utils.Tuple;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -47,8 +43,9 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
     private static final String TIMER_PERIOD = "5";
     /* Flag for trying to close the monitoring thread in an elegant manner */
     private static final Map<String, Tuple<Integer, Long>> resourcesUsage = new HashMap<>();
+    private static TaskStatusListener statusListener;
     protected Boolean isInitialized = false;
-    protected final PersistenceManager persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
+    //protected final PersistenceManager persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
     protected final Logger logger = Logger.getLogger(getClass().getName());
     private final Timer executionsCheckTimer = new Timer("exec-monitor");
     private final Map<Long, SessionContext> contextMap = new HashMap<>();
@@ -59,6 +56,10 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
             tuple = new Tuple<>(0, 0L);
         }
         return tuple;
+    }
+
+    public static void setStatusListener(TaskStatusListener statusListener) {
+        Executor.statusListener = statusListener;
     }
 
     public Executor() {
@@ -78,7 +79,7 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
      */
     public void initialize() throws ExecutionException {
         int pollingInterval = 1000 *
-                Integer.parseInt(ConfigurationManager.getInstance().getValue(Configuration.DRMAA.POLLING_INTERVAL, TIMER_PERIOD));
+                Integer.parseInt(ConfigurationManager.getInstance().getValue("tao.drmaa.polling.interval", TIMER_PERIOD));
         initialize(pollingInterval);
     }
 
@@ -181,28 +182,28 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
                 if (firstTime) {
                     task.setExecutionStatus(status);
                     task.setLastUpdated(LocalDateTime.now());
-                    persistenceManager.updateExecutionTask(task);
+                    notifyStatusListener(task);
                     increment(userName, cpu, memory);
                 } else {
                     switch (status) {
                         case DONE:
                             task.setExecutionStatus(status);
                             task.setLastUpdated(LocalDateTime.now());
-                            persistenceManager.updateExecutionTask(task);
+                            notifyStatusListener(task);
                             decrement(userName, cpu, memory);
                             break;
                         case CANCELLED:
                         case SUSPENDED:
                         case FAILED:
-                            persistenceManager.updateTaskStatus(task, status);
+                            notifyStatusListener(task, status);
                             decrement(userName, cpu, memory);
                             break;
                         case RUNNING:
-                            persistenceManager.updateTaskStatus(task, status);
+                            notifyStatusListener(task, status);
                             break;
                     }
                 }
-            } catch (PersistenceException e) {
+            } catch (Exception e) {
                 logger.severe(e.getMessage());
             }
             SessionContext context = this.contextMap.get(task.getId());
@@ -210,6 +211,18 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
                 context = SystemSessionContext.instance();
             }
             Messaging.send(context.getPrincipal(), Topic.EXECUTION.value(), task.getId(), status.name());
+        }
+    }
+
+    protected synchronized void notifyStatusListener(ExecutionTask task, ExecutionStatus status) {
+        if (statusListener != null) {
+            statusListener.taskStatusChanged(task, status);
+        }
+    }
+
+    protected synchronized void notifyStatusListener(ExecutionTask task) {
+        if (statusListener != null) {
+            statusListener.taskChanged(task);
         }
     }
 

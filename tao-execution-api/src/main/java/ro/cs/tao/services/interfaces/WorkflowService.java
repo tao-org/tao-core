@@ -21,7 +21,7 @@ import ro.cs.tao.component.ComponentLink;
 import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.datasource.beans.Parameter;
 import ro.cs.tao.eodata.enums.Visibility;
-import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.services.model.execution.ExecutionJobInfo;
 import ro.cs.tao.services.model.execution.ExecutionTaskInfo;
 import ro.cs.tao.services.model.workflow.WorkflowInfo;
@@ -45,6 +45,11 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
      * @param id    The workflow identifier
      */
     WorkflowDescriptor getFullDescriptor(Long id);
+    /**
+     * Returns a full workflow graph for the workflow with the given name
+     * @param name    The workflow name
+     */
+    WorkflowDescriptor getDescriptor(String name);
     /**
      * Returns the summary information for a workflow.
      * @param workflowId    The workflow identifier

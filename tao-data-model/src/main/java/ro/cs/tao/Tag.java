@@ -1,9 +1,9 @@
 package ro.cs.tao;
 
+import ro.cs.tao.component.LongIdentifiable;
 import ro.cs.tao.component.enums.TagType;
 
-public class Tag {
-    private long id;
+public class Tag extends LongIdentifiable {
     private TagType tagType;
     private String text;
 
@@ -13,9 +13,6 @@ public class Tag {
         this.tagType = tagType;
         this.text = text;
     }
-
-    public long getId() { return id; }
-    public void setId(long id) { this.id = id; }
 
     public TagType getTagType() { return tagType; }
     public void setTagType(TagType tagType) { this.tagType = tagType; }

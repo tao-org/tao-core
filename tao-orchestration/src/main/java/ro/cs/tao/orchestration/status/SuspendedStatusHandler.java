@@ -3,17 +3,18 @@ package ro.cs.tao.orchestration.status;
 import ro.cs.tao.execution.model.ExecutionJob;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
+import ro.cs.tao.execution.persistence.ExecutionJobProvider;
+import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.orchestration.commands.TaskCommand;
-import ro.cs.tao.persistence.PersistenceManager;
-import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.persistence.PersistenceException;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class SuspendedStatusHandler extends TaskStatusHandler {
 
-    protected SuspendedStatusHandler(PersistenceManager persistenceManager) {
-        super(persistenceManager);
+    protected SuspendedStatusHandler(ExecutionJobProvider jobProvider, ExecutionTaskProvider taskProvider) {
+        super(jobProvider, taskProvider);
     }
 
     @Override
@@ -26,6 +27,6 @@ public class SuspendedStatusHandler extends TaskStatusHandler {
         stopTasks(tasks);
         bulkSetStatus(tasks, taskStatus);
         job.setExecutionStatus(taskStatus);
-        this.persistenceManager.updateExecutionJob(job);
+        jobProvider.update(job);
     }
 }

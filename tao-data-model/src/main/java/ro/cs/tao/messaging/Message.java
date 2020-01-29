@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.messaging;
 
+import ro.cs.tao.component.LongIdentifiable;
 import ro.cs.tao.serialization.*;
 
 import javax.xml.bind.annotation.XmlElement;
@@ -29,7 +30,7 @@ import java.util.Map;
  * @author Cosmin Cara
  */
 @XmlRootElement(name = "message")
-public class Message {
+public class Message extends LongIdentifiable {
     public static final String PRINCIPAL_KEY = "Principal";
     public static final String PAYLOAD_KEY = "Payload";
     public static final String SOURCE_KEY = "Source";
@@ -65,12 +66,13 @@ public class Message {
         return new Message(System.currentTimeMillis(), data, persistent);
     }
 
-    public Message() { }
+    public Message() { super(); }
 
     private Message(long timestamp, HashMap<String, String> data) {
         this(timestamp, data, true);
     }
     private Message(long timestamp, HashMap<String, String> data, boolean persistent) {
+        this.id = 0L;
         this.timestamp = timestamp;
         this.data = data;
         this.read = false;

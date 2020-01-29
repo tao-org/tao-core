@@ -16,7 +16,6 @@
 
 package ro.cs.tao.component;
 
-import ro.cs.tao.configuration.Configuration;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.security.SessionStore;
 
@@ -99,7 +98,7 @@ public abstract class SystemVariable {
 
         @Override
         public String value() {
-            return Paths.get(ConfigurationManager.getInstance().getValue(Configuration.FileSystem.WORKSPACE_LOCATION)).toString();
+            return Paths.get(ConfigurationManager.getInstance().getValue("workspace.location")).toString();
         }
     }
 
@@ -119,7 +118,7 @@ public abstract class SystemVariable {
 
         @Override
         public String value() {
-            return Paths.get(ConfigurationManager.getInstance().getValue(Configuration.FileSystem.WORKSPACE_LOCATION))
+            return Paths.get(ConfigurationManager.getInstance().getValue("workspace.location"))
                         .resolve("public").toString();
         }
     }
@@ -153,7 +152,7 @@ public abstract class SystemVariable {
 
         @Override
         public String value() {
-            return Paths.get(ConfigurationManager.getInstance().getValue(Configuration.FileSystem.WORKSPACE_LOCATION))
+            return Paths.get(ConfigurationManager.getInstance().getValue("workspace.location"))
                     .resolve("cache").toString();
         }
     }
@@ -164,7 +163,7 @@ public abstract class SystemVariable {
 
         @Override
         public String value() {
-            return Paths.get(ConfigurationManager.getInstance().getValue(Configuration.FileSystem.NODE_SHARE_MOUNT)).toString();
+            return Paths.get(ConfigurationManager.getInstance().getValue("node.mount.folder")).toString();
         }
     }
 }
