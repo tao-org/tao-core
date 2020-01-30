@@ -41,6 +41,7 @@ public class EOProduct extends EOData implements Serializable {
     private Date processingDate;
     private URI quicklookLocation;
     private Set<String> refs;
+    private String satelliteName;
 
     //region Getters and setters
     public SensorType getSensorType() {
@@ -102,6 +103,10 @@ public class EOProduct extends EOData implements Serializable {
             this.quicklookLocation = new URI(location);
         }
     }
+
+    public String getSatelliteName() { return satelliteName; }
+
+    public void setSatelliteName(String satelliteName) { this.satelliteName = satelliteName; }
 
     public long getApproximateSize() {
         return approximateSize;
