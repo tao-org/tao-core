@@ -1,17 +1,16 @@
 param (
-    [string]$server = "localhost",
-	[string]$port = "5432",
+    [string]$port = "5432",
 #    [Parameter(Mandatory=$true)][string]$username,
 #    [string]$password = $( Read-Host "Input password, please" )
     [string]$password = "postgres"
 )
 
 # Functions
-function Ensure-psql-access($server, $port, $password) {
+function Ensure-psql-access($port, $password) {
     # create the full path if it does not exist
     $pgPassFileFolderPath = "$env:APPDATA\postgresql\"
     if (-Not (Test-Path $pgPassFileFolderPath)) {
-        New-Item -path "$env:APPDATA\postgresql\" -type directory 
+        New-Item -path "$env:APPDATA\postgresql\" -type directory
         #-ErrorAction SilentlyContinue
     }
     $pgPassFile = "${pgPassFileFolderPath}\pgpass.conf"
@@ -28,16 +27,16 @@ function Ensure-psql-access($server, $port, $password) {
             }
         }
     }
-    
-    Write-Host "Using port $port and password $password" -ForegroundColor Magenta    
+
+    Write-Host "Using port $port and password $password" -ForegroundColor Magenta
     if ($port -ne "" -and $password -ne "") {
         $postgresPassLine = "`nlocalhost:${port}:*:postgres:${password}"
-        $postgresPassLineEscaped = "localhost:${port}:\*:postgres:*"   
+        $postgresPassLineEscaped = "localhost:${port}:\*:postgres:*"
         if (Test-Path $pgPassFile) {
             # the file exist, check the line
             $file = Get-Content $pgPassFile
             $containsWord = $file | %{$_ -match $postgresPassLineEscaped}
-            
+
             If(-Not ($containsWord -contains $true))
             {
                 # the line does not exist
@@ -55,7 +54,7 @@ function Ensure-psql-access($server, $port, $password) {
                 }
             } else {
                 # nothing to do ... the line already exist
-                $postgresPassLineEscaped2 = "localhost:${port}:\*:postgres:${password}"   
+                $postgresPassLineEscaped2 = "localhost:${port}:\*:postgres:${password}"
                 $file = Get-Content $pgPassFile
                 $containsWord = $file | %{$_ -match $postgresPassLineEscaped2}
                 If(-Not ($containsWord -contains $true)) {
@@ -72,11 +71,11 @@ function Ensure-psql-access($server, $port, $password) {
     }
 }
 
-function Update-Environment {   
+function Update-Environment {
     foreach($level in "Machine","User") {
        [Environment]::GetEnvironmentVariables($level).GetEnumerator() | % {
           # For Path variables, append the new values, if they're not already in there
-          if($_.Name -match 'Path$') { 
+          if($_.Name -match 'Path$') {
              $_.Value = ($((Get-Content "Env:$($_.Name)") + ";$($_.Value)") -split ';' | Select -unique) -join ';'
           }
           $_
@@ -88,7 +87,7 @@ function Get-Scripts-To-Execute($txtFile) {
     # This line is not working on Powershell 2.0
     # $retArray = [ordered]@{}
     $retArray = New-Object System.Collections.Specialized.OrderedDictionary
-    
+
     foreach($line in Get-Content $txtFile) {
         $line = $line.Trim()
         if ($line.length -eq 0) {
@@ -122,21 +121,21 @@ function Get-Scripts-To-Execute($txtFile) {
     return $retArray
 }
 
-function Execute-Sql-Script($sqlFile, $host, $port, $db) {
+function Execute-Sql-Script($sqlFile, $port, $db) {
     if ($db -eq "") {
-        Write-Host "Executing: $PostgresInstallBinPath -h $host -p $port -U postgres -f $sqlFile ... " -ForegroundColor Magenta
-        $execResult = & $PostgresInstallBinPath -h $host -p $port -U postgres -f $sqlFile
+        Write-Host "Executing: $PostgresInstallBinPath -h localhost -p $port -U postgres -f $sqlFile ... " -ForegroundColor Magenta
+        $execResult = & $PostgresInstallBinPath -h localhost -p $port -U postgres -f $sqlFile
     } else {
-        Write-Host "Executing: $PostgresInstallBinPath -h $host -p $port -U postgres -d $db -f $sqlFile ... " -ForegroundColor Magenta
-        $execResult = & $PostgresInstallBinPath -h $host -p $port -U postgres -d $db -f $sqlFile
+        Write-Host "Executing: $PostgresInstallBinPath -h localhost -p $port -U postgres -d $db -f $sqlFile ... " -ForegroundColor Magenta
+        $execResult = & $PostgresInstallBinPath -h localhost -p $port -U postgres -d $db -f $sqlFile
     }
 }
 
-function Execute-Sql-Command($sqlCmd, $host, $port, $db) {
+function Execute-Sql-Command($sqlCmd, $port, $db) {
     if ($db -eq "") {
-        $ret = ($sqlCmd) | & $PostgresInstallBinPath -h $host -p $port -U postgres
+        $ret = ($sqlCmd) | & $PostgresInstallBinPath -h localhost -p $port -U postgres
     } else {
-        $ret = ($sqlCmd) | & $PostgresInstallBinPath -h $host -p $port -U postgres -d $db
+        $ret = ($sqlCmd) | & $PostgresInstallBinPath -h localhost -p $port -U postgres -d $db
     }
     return $ret
 }
