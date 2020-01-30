@@ -1,5 +1,6 @@
 package ro.cs.tao.configuration;
 
+import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.ServiceLoader;
 
@@ -11,6 +12,12 @@ public class ConfigurationManager {
         final Iterator<ConfigurationProvider> iterator = loader.iterator();
         if (iterator.hasNext()) {
             configurationProvider = iterator.next();
+        } else {
+            configurationProvider = new EmptyConfigurationProvider();
+            final String userHome = System.getProperty("user.home");
+            configurationProvider.setValue("products.location", userHome);
+            configurationProvider.setScriptsFolder(Paths.get(userHome));
+            configurationProvider.setConfigurationFolder(Paths.get(userHome));
         }
     }
 
