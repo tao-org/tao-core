@@ -170,6 +170,7 @@
             </element-collection>
             <transient name="processingDate"/>
             <transient name="quicklookLocation" />
+            <transient name="satelliteName"/>
         </attributes>
     </entity>
 
