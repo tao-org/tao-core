@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.datasource.remote;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import ro.cs.tao.ProgressListener;
 import ro.cs.tao.datasource.InterruptedException;
@@ -258,7 +259,8 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
                 }
             }
         } catch (IOException e) {
-            logger.severe(e.getMessage());
+            logger.severe(ExceptionUtils.getStackTrace(e));
+            throw e;
         } finally {
             activityEnd();
         }
