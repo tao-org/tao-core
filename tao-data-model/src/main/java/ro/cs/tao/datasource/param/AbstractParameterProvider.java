@@ -38,6 +38,7 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
 
     private static final String PARAMETER_DESCRIPTOR_RESOURCE = "ro/cs/tao/datasource/parameters/parameters.json";
     private static final List<String> parameterResources;
+    private static final Map<Class<?>, Map<String, Map<String, DataSourceParameter>>> readDescriptors;
 
     protected final String[] supportedSensors;
     protected final Map<String, Map<String, DataSourceParameter>> supportedParameters;
@@ -46,6 +47,7 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
 
     static {
         parameterResources = new ArrayList<>();
+        readDescriptors = Collections.synchronizedMap(new HashMap<>());
         try {
             Enumeration<URL> resources = AbstractParameterProvider.class.getClassLoader().getResources(PARAMETER_DESCRIPTOR_RESOURCE);
             while (resources.hasMoreElements()) {
@@ -63,7 +65,11 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
     protected AbstractParameterProvider() {
         Map<String, Map<String, DataSourceParameter>> readParameters = null;
         try {
-            readParameters = JSON_OBJECT_MAPPER.readValue(readDescriptor(), JSON_DATA_SOURCE_PARAMETERS_TYPE_REFERENCE);
+            final Class<? extends AbstractParameterProvider> clazz = getClass();
+            if (!readDescriptors.containsKey(clazz)) {
+                readDescriptors.put(clazz, JSON_OBJECT_MAPPER.readValue(readDescriptor(), JSON_DATA_SOURCE_PARAMETERS_TYPE_REFERENCE));
+            }
+            readParameters = readDescriptors.get(clazz);
         } catch (IOException e) {
             logger.severe(String.format("Cannot load data source supported parameters. Cause: %s", e.getMessage()));
         }
@@ -109,8 +115,8 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
             throw new IOException("No parameter descriptor found");
         }
         Path rPath;
-        FileSystem fileSystem;
-        //try {
+        FileSystem fileSystem = null;
+        try {
             if (classLocation.endsWith(".jar")) {
                 Map<String, String> env = new HashMap<>();
                 env.put("create", "false");
@@ -126,12 +132,11 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
                 rPath = Paths.get(currentResource);
             }
             return new String(Files.readAllBytes(rPath));
-        // Block commented since subsequent usage of a previously created fileSystem will throw ClosedFileSystemException
-        /*} finally {
+        } finally {
             if (fileSystem != null) {
                 fileSystem.close();
             }
-        }*/
+        }
     }
 
     private static String formatPath(String path){

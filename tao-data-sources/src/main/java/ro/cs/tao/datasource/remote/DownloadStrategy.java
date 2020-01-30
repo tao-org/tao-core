@@ -380,10 +380,10 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         return check(product, Paths.get(localArchiveRoot));
     }
 
-    protected Path check(EOProduct product, Path sourceRoot) {
+    protected Path check(EOProduct product, Path sourceRoot) throws IOException {
         Path sourcePath = findProductPath(sourceRoot, product);
         if (sourcePath == null) {
-            logger.warning(String.format("Product %s not found in the local archive", product.getName()));
+            throw new IOException(String.format("Product %s not found in the local archive", product.getName()));
         }
         return sourcePath;
     }
