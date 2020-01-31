@@ -78,6 +78,7 @@ public class TaoConfigurationProvider implements ConfigurationProvider {
     @Override
     public void setConfigurationFolder(Path folder) { configFolder = folder; }
 
+    @Override
     public Path getApplicationHome() {
         final String value = this.settings.getProperty(APP_HOME);
         return value != null ? Paths.get(value) : null;

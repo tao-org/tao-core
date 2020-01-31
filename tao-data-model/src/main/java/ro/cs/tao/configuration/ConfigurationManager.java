@@ -15,6 +15,7 @@ public class ConfigurationManager {
         } else {
             configurationProvider = new EmptyConfigurationProvider();
             final String userHome = System.getProperty("user.home");
+            configurationProvider.setValue(ConfigurationProvider.APP_HOME, userHome);
             configurationProvider.setValue("products.location", userHome);
             configurationProvider.setScriptsFolder(Paths.get(userHome));
             configurationProvider.setConfigurationFolder(Paths.get(userHome));

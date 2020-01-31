@@ -1,6 +1,7 @@
 package ro.cs.tao.configuration;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -12,6 +13,11 @@ public class EmptyConfigurationProvider implements ConfigurationProvider {
 
     public EmptyConfigurationProvider() {
         this.properties = new Properties();
+    }
+
+    @Override
+    public Path getApplicationHome() {
+        return this.properties.containsKey(APP_HOME) ? Paths.get(this.properties.getProperty(APP_HOME)) : null;
     }
 
     @Override
