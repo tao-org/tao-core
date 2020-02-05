@@ -132,8 +132,9 @@ public class TopologyManager {
     public NodeDescription getNode(String hostName) { return this.localNodeProvider.getNode(hostName); }
 
     public List<NodeDescription> listNodes() {
-        return this.externalNodeProvider != null ?
-                this.externalNodeProvider.listNodes() : this.localNodeProvider.listNodes();
+        /*return this.externalNodeProvider != null ?
+                this.externalNodeProvider.listNodes() : this.localNodeProvider.listNodes();*/
+        return this.localNodeProvider.listNodes();
     }
 
     public void addNode(NodeDescription info) throws TopologyException {
