@@ -10,10 +10,12 @@ import ro.cs.tao.quota.UserQuotaManager;
 import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.topology.*;
 import ro.cs.tao.utils.async.Parallel;
+import ro.cs.tao.utils.executors.NamedThreadPoolExecutor;
 
 import java.security.Principal;
 import java.util.*;
-
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Singleton than monitors registered topology nodes for resources availability.
@@ -24,9 +26,10 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     private static final int concurrentCalls;
     private static final boolean isAvailable;
     private static final NodeManager instance;
+    private static final int nodeCreationWaitTime;
     private static final int pollInterval;
+    private static final NamedThreadPoolExecutor executor;
     private static final int DEFAULT_NODE_WAIT_TIME = 10000;
-    //private final PersistenceManager persistenceManager;
     private int nodeLimit;
     private NodeProvider nodeProvider;
     private DefaultNodeInfo defaultNodeInfo;
@@ -44,6 +47,8 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         isAvailable = DefaultSessionFactory.class.getName().equals(configurationManager.getValue("tao.drmaa.sessionfactory"));
         instance = isAvailable ? new NodeManager() : null;
         pollInterval = Integer.parseInt(configurationManager.getValue("topology.node.poll.interval", "15"));
+        nodeCreationWaitTime = Integer.parseInt(configurationManager.getValue("topology.node.create.wait", "15"));
+        executor = new NamedThreadPoolExecutor("node-manager", 1);
     }
 
     /**
@@ -133,7 +138,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         if (this.nodeRefreshTimer == null) {
             this.nodeRefreshTimer = new Timer("node-refresh");
         }
-        this.nodeRefreshTimer.schedule(this.nodeRefreshTask, 0, pollInterval * 4 * 1000);
+        this.nodeRefreshTimer.schedule(this.nodeRefreshTask, 0, pollInterval * 1000);
         this.nodeInspectTimer.schedule(this.nodeInspectTask, pollInterval * 1000, pollInterval * 1000);
     }
 
@@ -274,32 +279,31 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
             }
         	
             if (nodeName == null) {
-                if (canCreateNewNodes()) {
-                    if (this.nodes.size() < this.nodeLimit) {
-                        final List<NodeFlavor> nodeFlavors = this.nodeProvider.listFlavors();
-                        final NodeFlavor matchingFlavor = nodeFlavors.stream()
-                                                                     .filter(f -> f.getCpu() >= 2 * cpus && f.getMemory() >= 4 * memory)
-                                                                     .min(Comparator.comparingInt(NodeFlavor::getCpu))
-                                                                     .orElse(null);
-                        if (matchingFlavor == null) {
-                            logger.fine("No processing node matching the request was found. Will retry in 10 seconds.");
-                            try {
-                                Thread.sleep(DEFAULT_NODE_WAIT_TIME);
-                            } catch (InterruptedException ignored) { }
-                        } else {
-                            final DefaultNodeInfo nodeInfo = getDefaultNodeInfo();
-                            this.nodeProvider.create(matchingFlavor,
-                                                     nodeInfo.getNamePrefix() + System.currentTimeMillis(),
-                                                     nodeInfo.getDescription(),
-                                                     nodeInfo.getUser(),
-                                                     nodeInfo.getPassword());
-                            // The new node should be added into this.nodes in onCompleted() method
-                        }
-                    } else {
-                        logger.fine("No processing node was found to be available. Will retry in 10 seconds.");
+                if (canCreateNewNodes() && this.nodes.size() < this.nodeLimit) {
+                    final List<NodeFlavor> nodeFlavors = this.nodeProvider.listFlavors();
+                    final NodeFlavor matchingFlavor = nodeFlavors.stream()
+                                                                 .filter(f -> f.getCpu() >= 2 * cpus && f.getMemory() >= 4 * memory)
+                                                                 .min(Comparator.comparingInt(NodeFlavor::getCpu))
+                                                                 .orElse(null);
+                    if (matchingFlavor == null) {
+                        logger.fine("No processing node matching the request was found. Will retry in 10 seconds.");
                         try {
                             Thread.sleep(DEFAULT_NODE_WAIT_TIME);
                         } catch (InterruptedException ignored) { }
+                    } else {
+                        final DefaultNodeInfo nodeInfo = getDefaultNodeInfo();
+                        final Future<NodeDescription> future = executor.submit(() ->
+                                   this.nodeProvider.create(matchingFlavor,
+                                                            nodeInfo.getNamePrefix() + System.currentTimeMillis(),
+                                                            nodeInfo.getDescription(),
+                                                            nodeInfo.getUser(),
+                                                            nodeInfo.getPassword()));
+                        try {
+                            future.get(nodeCreationWaitTime, TimeUnit.SECONDS);
+                            // The new node should be added into this.nodes in onCompleted() method
+                        } catch (Exception e) {
+                            logger.severe(String.format("Node creation failed. Reason: %s", e.getMessage()));
+                        }
                     }
                 } else {
                     logger.fine("No processing node was found to be available. Will retry in 10 seconds.");
