@@ -114,7 +114,7 @@ public class Orchestrator extends Notifiable {
     private TaskSelector<ExecutionJob> jobTaskSelector;
     private JobFactory jobFactory;
     private Set<MetadataInspector> metadataServices;
-    private final Map<SessionContext, ExecutorService> executors;
+    private final Map<String, ExecutorService> executors;
     private final Set<Long> runningTasks;
 
     private Orchestrator() {
@@ -165,9 +165,9 @@ public class Orchestrator extends Notifiable {
             if (descriptor == null) {
                 throw new ExecutionException(String.format("Non-existent workflow [%s]", workflowId));
             }
-            
+            final Principal principal = context.getPrincipal();
             // check if the user's disk quota is not reached
-            if (!checkProcessingQuota(context.getPrincipal())) {
+            if (!checkProcessingQuota(principal)) {
             	// do not create any job
             	return -1;
             }
@@ -182,7 +182,7 @@ public class Orchestrator extends Notifiable {
                 executionJob = this.jobFactory.createJob(description, descriptor, inputs);
             }
 
-            this.executors.put(context, executorService);
+            this.executors.put(principal.getName(), executorService);
             executorService.submit(() -> JobCommand.START.applyTo(executionJob));
             return executionJob.getId();
         } catch (QuotaException | PersistenceException e) {
@@ -230,7 +230,7 @@ public class Orchestrator extends Notifiable {
             final List<ExecutionJob> jobs = prepareStalledJobs();
             if (jobs != null) {
                 for (ExecutionJob job : jobs) {
-                    this.executors.put(new MessageContext(job.getUserName()),
+                    this.executors.put(job.getUserName(),
                                        Executors.newFixedThreadPool(2));
                     logger.fine(String.format("Resuming job [id=%s]", job.getId()));
                     JobCommand.RESUME.applyTo(job);
@@ -429,10 +429,11 @@ public class Orchestrator extends Notifiable {
     }
 
     private void shutDownExecutor(final SessionContext context) {
-        final ExecutorService service = executors.get(context);
+        final String principalName = context.getPrincipal().getName();
+        final ExecutorService service = executors.get(principalName);
         if (service != null) {
             service.shutdown();
-            executors.remove(context);
+            executors.remove(principalName);
         }
         // update user processing quota
         try {
@@ -918,6 +919,9 @@ public class Orchestrator extends Notifiable {
         }
 
         @Override
+        public Principal getPrincipal() { return this.impersonatingUser; }
+
+        @Override
         protected Principal setPrincipal() {
             return this.impersonatingUser;
         }
@@ -951,7 +955,7 @@ public class Orchestrator extends Notifiable {
             while (true) {
                 try {
                     AbstractMap.SimpleEntry<Message, SessionContext> entry = queue.take();
-                    ExecutorService service = Orchestrator.this.executors.get(entry.getValue());
+                    ExecutorService service = Orchestrator.this.executors.get(entry.getValue().getPrincipal().getName());
                     if (service != null) {
                         service.submit(() -> processMessage(entry.getKey(), entry.getValue()));
                     }/* else {

@@ -52,16 +52,21 @@ public class DefaultNodeProvider implements NodeProvider {
         if (node == null) {
             throw new TopologyException("null");
         }
-        if (getPersistenceManager().nodes().exists(node.getId())) {
+        final PersistenceManager persistenceManager = getPersistenceManager();
+        if (persistenceManager.nodes().exists(node.getId())) {
             try {
-                node = getPersistenceManager().nodes().update(node);
+                node = persistenceManager.nodes().update(node);
             } catch (Exception e) {
                 logger.severe("Cannot update node description to database. Rolling back installation on node " + node.getId() + "...");
                 throw new TopologyException(e);
             }
         } else {
             try {
-                node = getPersistenceManager().nodes().save(node);
+                final NodeFlavor flavor = node.getFlavor();
+                if (!persistenceManager.nodeFlavors().exists(flavor.getId())) {
+                    persistenceManager.nodeFlavors().save(flavor);
+                }
+                node = persistenceManager.nodes().save(node);
             } catch (PersistenceException e) {
                 logger.severe("Cannot save node description to database. Rolling back installation on node " + node.getId() + "...");
                 throw new TopologyException(e);

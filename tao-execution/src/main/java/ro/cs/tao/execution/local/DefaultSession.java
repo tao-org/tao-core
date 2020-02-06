@@ -198,37 +198,50 @@ public class DefaultSession implements Session {
     @Override
     public void control(String jobId, int action) throws DrmaaException {
         checkSession();
-        Executor runner = this.runningJobs.get(jobId);
-        if (runner != null) {
-            switch (action) {
-                case HOLD:
-                    if (!runner.isRunning()) {
-                        throw new HoldInconsistentStateException();
-                    }
-                    runner.suspend();
-                    break;
-                case SUSPEND:
-                    if (!runner.isRunning()) {
-                        throw new SuspendInconsistentStateException();
-                    }
-                    runner.suspend();
-                    break;
-                case TERMINATE:
-                    runner.stop();
-                    break;
-                case RELEASE:
-                    if (!runner.isSuspended()) {
-                        throw new ReleaseInconsistentStateException();
-                    }
-                    runner.resume();
-                    break;
-                case RESUME:
-                    if (!runner.isSuspended()) {
-                        throw new ResumeInconsistentStateException();
-                    }
-                    runner.resume();
-                    break;
-            }
+        Executor<?> runner = this.runningJobs.get(jobId);
+        switch (action) {
+            case HOLD:
+                if (runner == null) {
+                    throw new NoActiveSessionException("No active executor for job " + jobId);
+                }
+                if (!runner.isRunning()) {
+                    throw new HoldInconsistentStateException();
+                }
+                runner.suspend();
+                break;
+            case SUSPEND:
+                if (runner == null) {
+                    throw new NoActiveSessionException("No active executor for job " + jobId);
+                }
+                if (!runner.isRunning()) {
+                    throw new SuspendInconsistentStateException();
+                }
+                runner.suspend();
+                break;
+            case TERMINATE:
+                if (runner == null) {
+                    throw new NoActiveSessionException("No active executor for job " + jobId);
+                }
+                runner.stop();
+                break;
+            case RELEASE:
+                if (runner == null) {
+                    throw new NoActiveSessionException("No active executor for job " + jobId);
+                }
+                if (!runner.isSuspended()) {
+                    throw new ReleaseInconsistentStateException();
+                }
+                runner.resume();
+                break;
+            case RESUME:
+                if (runner == null) {
+                    throw new NoActiveSessionException("No active executor for job " + jobId);
+                }
+                if (!runner.isSuspended()) {
+                    throw new ResumeInconsistentStateException();
+                }
+                runner.resume();
+                break;
         }
     }
 

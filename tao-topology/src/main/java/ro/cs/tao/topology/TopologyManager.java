@@ -39,6 +39,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * @author Cosmin Udroiu
@@ -61,7 +62,7 @@ public class TopologyManager {
 
     static {
         //if [ ! -e /mnt/tao ]; then sed -i '$a//#MASTERHOST##SHARE# /mnt/tao cifs user=tao,password=tao123,file_mode=0777,dir_mode=0777,noperm 0 0' /etc/fstab; fi
-        createMountTemplate = "if [ ! -e %1$s ]; then mkdir %1$s; chmod 777 %1$s; sed -i \"$ a//%2$s%3$s %1$s cifs user=%4,password=%5,file_mode=0777,dir_mode=0777,noperm 0 0\" /etc/fstab; mount -a; fi;";
+        createMountTemplate = "if [ ! -e %1$s ]; then mkdir %1$s; chmod 777 %1$s; sed -i \"$ a//%2$s%3$s %1$s cifs user=%4$s,password=%5$s,file_mode=0777,dir_mode=0777,noperm 0 0\" /etc/fstab; mount -a; fi;";
         createLocalShareWindowsTemplate = "net share %s=%s /GRANT:Everyone,FULL";
         createLocalShareLinuxTemplate = "if [ -e $(smbclient -N -g -L localhost | grep \"%1$s\") ]; then sed -i \"$ a[%1$s]\n\tpath = %2$s\n\tbrowsable = yes\n\twritable = yes\n\tguest ok = yes\" /etc/samba/smb.conf; fi;";
         sharedAccumulator = new OutputAccumulator();
@@ -80,14 +81,18 @@ public class TopologyManager {
         final ServiceRegistry<NodeProvider> nodeProviderRegistry = serviceRegistryManager.getServiceRegistry(NodeProvider.class);
         this.localNodeProvider = new DefaultNodeProvider();
         final Set<NodeProvider> nodeProviders = nodeProviderRegistry.getServices();
+        final String configuredProvider = ConfigurationManager.getInstance().getValue("topology.provider");
+        logger.info(String.format("External node providers available: %s",
+                                  nodeProviders.size() == 0 ? "none" :
+                                          nodeProviders.stream().map(p -> p.getClass().getName()).collect(Collectors.joining(","))));
         for (NodeProvider provider : nodeProviders) {
-            if (!provider.getClass().getName().equals(DefaultNodeProvider.class.getName())) {
+            if (provider.getClass().getName().equals(configuredProvider)) {
                 this.externalNodeProvider = provider;
-                break;
             }
         }
+
         if (this.externalNodeProvider == null) {
-            logger.info("No external node provider found");
+            logger.info("No external node provider configured");
         } else {
             logger.info(String.format("External node provider '%s' registered", this.externalNodeProvider.getClass().getSimpleName()));
         }

@@ -24,6 +24,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -100,7 +101,7 @@ public class EOProduct extends EOData implements Serializable {
 
     public void setQuicklookLocation(String location) throws URISyntaxException {
         if (location != null) {
-            this.quicklookLocation = new URI(location);
+            this.quicklookLocation = Paths.get(location).toUri();
         }
     }
 
