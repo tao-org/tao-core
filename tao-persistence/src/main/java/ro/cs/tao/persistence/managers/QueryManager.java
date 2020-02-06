@@ -71,14 +71,17 @@ public class QueryManager extends EntityManager<Query, Long, QueryRepository> im
     @Override
     public Query save(Query query) throws PersistenceException {
         LocalDateTime timestamp = LocalDateTime.now();
+        final Query existingQuery;
         if (query.getLabel() == null) {
             query.setLabel(String.format("Query for %s on %s - %s",
                                          query.getSensor(), query.getDataSource(),
                                          timestamp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
+            existingQuery = get(query.getUserId(), query.getSensor(), query.getDataSource(), query.getWorkflowNodeId());
+        } else {
+            existingQuery = get(query.getUserId(), query.getLabel());
         }
         try {
-            Query existingQuery = get(query.getUserId(), query.getLabel());
-            if (existingQuery != null && !existingQuery.getId().equals(query.getId())) {
+            if (existingQuery != null && query.getId() != null && !existingQuery.getId().equals(query.getId())) {
                 throw new PersistenceException(String.format("There is already a query with the same label for the user %s",
                                                              query.getUserId()));
             }
@@ -92,12 +95,12 @@ public class QueryManager extends EntityManager<Query, Long, QueryRepository> im
             query.setWorkflowNodeId(null);
         }
         query.setModified(timestamp);
-        return super.save(query);
-    }
-
-    @Override
-    protected boolean checkId(Long entityId, boolean existingEntity) {
-        return entityId != null && (existingEntity == (get(entityId) != null));
+        if (query.getId() == null && existingQuery != null) {
+            query.setId(existingQuery.getId());
+            return super.update(query);
+        } else {
+            return super.save(query);
+        }
     }
 
     @Override

@@ -145,7 +145,12 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             session.control(task.getResourceId(), Session.RESUME);
             changeTaskStatus(task, ExecutionStatus.QUEUED_ACTIVE);
         } catch (DrmaaException e) {
-            throw new ExecutionException("Error executing DRMAA session resume for task with id " + task.getId(), e);
+            // maybe we got here because the task came from an interrupted job
+            if (e instanceof NoActiveSessionException) {
+                execute(task);
+            } else {
+                throw new ExecutionException("Error executing DRMAA session resume for task with id " + task.getId(), e);
+            }
         }
     }
 
@@ -154,7 +159,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         if(!isInitialized) {
             return;
         }
-        final List<ExecutionTask> tasks = taskProvider.list();
+        final List<ExecutionTask> tasks = taskProvider.listExecuting();
         if (tasks != null) {
             // For each job, get its status from DRMAA
             for (ExecutionTask task : tasks) {

@@ -52,9 +52,9 @@ public abstract class SessionContext {
     /**
      * Returns the root path in the shared file system for the current principal
      */
-    public Path getWorkspace() { return workspaceRoot.resolve(principal.getName()); }
+    public Path getWorkspace() { return workspaceRoot.resolve(getPrincipal().getName()); }
 
-    public Path getNetSpace() { return netSpaceRoot.getParent().resolve(principal.getName()); }
+    public Path getNetSpace() { return netSpaceRoot.getParent().resolve(getPrincipal().getName()); }
 
     /**
      * Returns the location where the current principal can upload files

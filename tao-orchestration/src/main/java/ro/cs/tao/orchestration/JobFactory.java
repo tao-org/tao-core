@@ -307,7 +307,11 @@ public class JobFactory {
         query.setLimit(val);
         query.setValues(taskInputs);
         query.setUserId(job.getUserName());
-        queryProvider.save(query);
+        if (query.getId() == null || query.getId() == 0) {
+            queryProvider.save(query);
+        } else {
+            queryProvider.update(query);
+        }
         task.setComponent(dsComponent);
         task.setInputParameterValue("query", query.toString());
         return task;

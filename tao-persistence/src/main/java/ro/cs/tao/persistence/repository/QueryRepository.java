@@ -22,8 +22,15 @@ public interface QueryRepository extends PagingAndSortingRepository<Query, Long>
 
     Query findByUserIdAndSensorAndDataSourceAndWorkflowNodeId(String userId, String sensor, String dataSource, long nodeId);
 
-    @org.springframework.data.jpa.repository.Query(
+    /*@org.springframework.data.jpa.repository.Query(
             value = "SELECT dscg.id, dscg.label, q.* FROM workflow.query q " +
+                    "LEFT JOIN component.data_source_component_group_components dscgc ON dscgc.data_source_component_id = q.component_id " +
+                    "LEFT JOIN component.data_source_component_group dscg ON dscg.id = dscgc.data_source_component_group_id " +
+                    "WHERE q.user_id = :userId AND q.sensor_name = :sensor AND q.data_source = :dataSource AND q.graph_node_id = :nodeId",
+            nativeQuery = true
+    )*/
+    @org.springframework.data.jpa.repository.Query(
+            value = "SELECT q.* FROM workflow.query q " +
                     "LEFT JOIN component.data_source_component_group_components dscgc ON dscgc.data_source_component_id = q.component_id " +
                     "LEFT JOIN component.data_source_component_group dscg ON dscg.id = dscgc.data_source_component_group_id " +
                     "WHERE q.user_id = :userId AND q.sensor_name = :sensor AND q.data_source = :dataSource AND q.graph_node_id = :nodeId",

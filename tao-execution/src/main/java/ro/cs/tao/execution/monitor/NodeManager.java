@@ -265,7 +265,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                 	
                 	nodeName = runtimeInfo.entrySet().stream()
                             .filter(e -> e.getValue().getAvailableMemory() >= memory)
-                            .filter(e -> (e.getValue().getDiskTotal() - e.getValue().getDiskUsed()) >= disk)
+                            //.filter(e -> (e.getValue().getDiskTotal() - e.getValue().getDiskUsed()) >= disk)
                             .sorted(Comparator.comparingDouble(e -> computeLoad(nodes.get(e.getKey()),
                                                                                 e.getValue().getCpuTotal(),
                                                                                 e.getValue().getAvailableMemory())))
@@ -455,7 +455,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         try {
             final NodeFlavor flavor = node.getFlavor();
             double noCpus = flavor.getCpu();
-            double totalMem = flavor.getMemory() * MemoryUnit.GIGABYTE.value();
+            double totalMem = flavor.getMemory() * MemoryUnit.MEGABYTE.value();
             result = (actualCPU / noCpus) * (1 - (freeMemory / totalMem));
             return result;
         } finally {
