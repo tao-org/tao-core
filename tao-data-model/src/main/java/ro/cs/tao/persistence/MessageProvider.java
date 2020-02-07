@@ -8,5 +8,6 @@ public interface MessageProvider extends EntityProvider<Message, Long> {
 
     List<Message> getUserMessages(String user, Integer pageNumber);
     List<Message> getUnreadMessages(String user);
+    Message get(String userName, long timestamp);
 
 }

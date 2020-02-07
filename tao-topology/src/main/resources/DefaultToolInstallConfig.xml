@@ -126,6 +126,48 @@
                     ]]>
                 </command>
             </step>
+            <step>
+                <order_id>20</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <ignore_err>true</ignore_err>
+                <command>
+                    <![CDATA[
+                        groupadd docker
+                    ]]>
+                </command>
+            </step>
+            <step>
+                <order_id>30</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <ignore_err>true</ignore_err>
+                <command>
+                    <![CDATA[
+                        usermod -aG docker #node_user#
+                    ]]>
+                </command>
+            </step>
+            <step>
+                <order_id>40</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <command>
+                    <![CDATA[
+                        systemctl enable docker
+                    ]]>
+                </command>
+            </step>
+            <step>
+                <order_id>50</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <command>
+                    <![CDATA[
+                        systemctl start docker
+                    ]]>
+                </command>
+            </step>
         </install_steps>
         <uninstall_steps>
             <step>
@@ -134,7 +176,7 @@
                 <execution_mode>superuser</execution_mode>
                 <command>
                     <![CDATA[
-                         docker -v && yum remove docker -y
+                         docker -v && yum -y remove docker
                     ]]>
                 </command>
             </step>

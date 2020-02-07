@@ -15,6 +15,8 @@
  */
 package ro.cs.tao.messaging;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
@@ -22,6 +24,7 @@ import java.util.regex.Pattern;
  * @author Cosmin Cara
  */
 public class Topic {
+    private static final Map<String, Topic> topicRegistry = new HashMap<>();
     /**
      * Topic for system messages / events.
      */
@@ -52,7 +55,10 @@ public class Topic {
     public static final Topic TOPOLOGY = Topic.create("topology");
 
     public static Topic create(String category) {
-        return new Topic(category, null);
+        if (!topicRegistry.containsKey(category)) {
+            topicRegistry.put(category, new Topic(category, null));
+        }
+        return topicRegistry.get(category);
     }
 
     public static Topic create(String category, String tag) {
