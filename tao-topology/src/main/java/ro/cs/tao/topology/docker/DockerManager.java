@@ -13,15 +13,15 @@ import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.topology.TopologyException;
 import ro.cs.tao.topology.TopologyManager;
+import ro.cs.tao.utils.StringUtilities;
 import ro.cs.tao.utils.async.LazyInitialize;
 import ro.cs.tao.utils.executors.*;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.Principal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
@@ -39,10 +39,12 @@ public class DockerManager {
     private static final String dockerPushCmdTemplate;
     private static final String dockerListCmdTemplate;
     private static final String dockerListAllCmd;
+    private static final String dockerPullCmd;
     private static final OutputAccumulator sharedAccumulator;
     private static final DockerManager instance;
 
     private final Supplier<PersistenceManager> persistenceManager;
+    private final Map<String, Executor<?>> daemonContainerExecutors;
     private final Logger logger;
     private NodeDescription masterNode;
 
@@ -52,6 +54,7 @@ public class DockerManager {
         dockerPushCmdTemplate = "docker push %s";
         dockerListAllCmd = "docker images --format {{.ID}}\\t{{.Tag}}\\t{{.Repository}}";
         dockerListCmdTemplate = "docker images %s --format {{.ID}}\\t{{.Tag}}\\t{{.Repository}}";
+        dockerPullCmd = "docker pull %s";
         sharedAccumulator = new OutputAccumulator();
         instance = new DockerManager();
     }
@@ -68,13 +71,30 @@ public class DockerManager {
         return instance.get(name);
     }
 
+    public static Container pullImage(String name) {
+        return instance.pull(name);
+    }
+
+    public static void runDaemon(String containerName, List<String> arguments) throws IOException {
+        instance.runAsDaemon(containerName, arguments);
+    }
+
+    public static String runWait(String containerName, List<String> arguments, long timeoutMinutes)  throws IOException {
+        return instance.run(containerName, arguments, timeoutMinutes);
+    }
+
     public static String registerImage(Path imagePath, String shortName, String description) throws TopologyException {
         return instance.register(imagePath, shortName, description);
+    }
+
+    public static void stopContainer(String containerName) throws IOException {
+        instance.stop(containerName);
     }
 
     private DockerManager() {
         this.logger = Logger.getLogger(TopologyManager.class.getName());
         this.persistenceManager = LazyInitialize.using(() -> SpringContextBridge.services().getService(PersistenceManager.class));
+        this.daemonContainerExecutors = Collections.synchronizedMap(new HashMap<>());
     }
 
     private List<Container> listAvailableDockerImages() {
@@ -125,6 +145,29 @@ public class DockerManager {
             logger.severe(message);
         }
 
+        return container;
+    }
+
+    private Container pull(String name) {
+        Container container = null;
+        final List<String> commands = ProcessHelper.tokenizeCommands(dockerPullCmd, name);
+        ExecutionUnit job = new ExecutionUnit(ExecutorType.PROCESS,
+                                              masterNode.getId(),
+                                              masterNode.getUserName(),
+                                              masterNode.getUserPass(),
+                                              commands, false, SSHMode.EXEC);
+        sharedAccumulator.reset();
+        int retCode;
+        final Executor<?> executor = Executor.execute(sharedAccumulator, job);
+        waitFor(executor, 50, TimeUnit.SECONDS);
+        if ((retCode = executor.getReturnCode()) == 0) {
+            container = get(name);
+        } else {
+            String message = String.format("Docker command failed wit code %s. Details: '%s'",
+                                           retCode, sharedAccumulator.getOutput());
+            logger.severe(message);
+        }
+        sharedAccumulator.reset();
         return container;
     }
 
@@ -199,6 +242,82 @@ public class DockerManager {
         logger.severe(message);
         Messaging.send(principal, Topic.ERROR.value(), this, message);
         return containerId;
+    }
+
+    private String run(String containerName, List<String> arguments, long timeoutMinutes)  throws IOException {
+        if (StringUtilities.isNullOrEmpty(containerName) || arguments == null) {
+            return null;
+        }
+        arguments.add(0, "docker");
+        arguments.add(1, "run");
+        arguments.add(containerName);
+        ExecutionUnit job = new ExecutionUnit(ExecutorType.PROCESS,
+                                              masterNode.getId(),
+                                              masterNode.getUserName(),
+                                              masterNode.getUserPass(),
+                                              arguments, false, SSHMode.EXEC);
+        sharedAccumulator.reset();
+        try {
+            int retCode;
+            final Executor<?> executor = Executor.execute(sharedAccumulator, job);
+            waitFor(executor, timeoutMinutes, TimeUnit.MINUTES);
+            if ((retCode = executor.getReturnCode()) != 0) {
+                return sharedAccumulator.getOutput();
+            } else {
+                String message = String.format("Docker command failed wit code %s. Details: '%s'",
+                                               retCode, sharedAccumulator.getOutput());
+                throw new IOException(message);
+            }
+        } finally {
+            sharedAccumulator.reset();
+        }
+    }
+
+    private void runAsDaemon(String containerName, List<String> arguments) throws IOException {
+        if (StringUtilities.isNullOrEmpty(containerName) || arguments == null) {
+            return;
+        }
+        arguments.add(0, "docker");
+        arguments.add(1, "run");
+        arguments.add(2, "-d");
+        arguments.add(containerName);
+        ExecutionUnit job = new ExecutionUnit(ExecutorType.PROCESS,
+                                              masterNode.getId(),
+                                              masterNode.getUserName(),
+                                              masterNode.getUserPass(),
+                                              arguments, false, SSHMode.EXEC);
+        sharedAccumulator.reset();
+        this.daemonContainerExecutors.put(containerName,
+                                          Executor.execute(sharedAccumulator, job));
+    }
+
+    private void stop(String containerName) throws IOException {
+        if (this.daemonContainerExecutors.containsKey(containerName)) {
+            List<String> args = new ArrayList<String>() {{
+                add("docker");
+                add("stop");
+                add(containerName);
+            }};
+            ExecutionUnit job = new ExecutionUnit(ExecutorType.PROCESS,
+                                                  masterNode.getId(),
+                                                  masterNode.getUserName(),
+                                                  masterNode.getUserPass(),
+                                                  args, false, SSHMode.EXEC);
+            this.daemonContainerExecutors.get(containerName).stop();
+            sharedAccumulator.reset();
+            try {
+                int retCode;
+                final Executor<?> executor = Executor.execute(sharedAccumulator, job);
+                waitFor(executor, 15, TimeUnit.SECONDS);
+                if ((retCode = executor.getReturnCode()) != 0) {
+                    String message = String.format("Docker command failed wit code %s. Details: '%s'",
+                                                   retCode, sharedAccumulator.getOutput());
+                    throw new IOException(message);
+                }
+            } finally {
+                sharedAccumulator.reset();
+            }
+        }
     }
 
     private PersistenceManager getPersistenceManager() {
