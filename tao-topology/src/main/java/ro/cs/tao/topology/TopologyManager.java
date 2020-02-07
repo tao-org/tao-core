@@ -46,7 +46,7 @@ import java.util.stream.Collectors;
  */
 public class TopologyManager {
 
-    private static final String createMountTemplate;
+    //private static final String createMountTemplate;
     private static final String createLocalShareWindowsTemplate;
     private static final String createLocalShareLinuxTemplate;
     private static final OutputAccumulator sharedAccumulator;
@@ -62,7 +62,7 @@ public class TopologyManager {
 
     static {
         //if [ ! -e /mnt/tao ]; then sed -i '$a//#MASTERHOST##SHARE# /mnt/tao cifs user=tao,password=tao123,file_mode=0777,dir_mode=0777,noperm 0 0' /etc/fstab; fi
-        createMountTemplate = "if [ ! -e %1$s ]; then mkdir %1$s; chmod 777 %1$s; sed -i \"$ a//%2$s%3$s %1$s cifs user=%4$s,password=%5$s,file_mode=0777,dir_mode=0777,noperm 0 0\" /etc/fstab; mount -a; fi;";
+        //createMountTemplate = "if [ ! -e %1$s ]; then mkdir %1$s; chmod 777 %1$s; sed -i \"$ a//%2$s%3$s %1$s cifs user=%4$s,password=%5$s,file_mode=0777,dir_mode=0777,noperm 0 0\" /etc/fstab; mount -a; fi;";
         createLocalShareWindowsTemplate = "net share %s=%s /GRANT:Everyone,FULL";
         createLocalShareLinuxTemplate = "if [ -e $(smbclient -N -g -L localhost | grep \"%1$s\") ]; then sed -i \"$ a[%1$s]\n\tpath = %2$s\n\tbrowsable = yes\n\twritable = yes\n\tguest ok = yes\" /etc/samba/smb.conf; fi;";
         sharedAccumulator = new OutputAccumulator();
@@ -147,12 +147,12 @@ public class TopologyManager {
             info = this.externalNodeProvider.create(info);
         }
         this.localNodeProvider.create(info);
-        // make sure the common share is mounted on the node
+        /*// make sure the common share is mounted on the node
         final ServiceInstallStatus mountStatus = checkMount(info);
         if (mountStatus.getStatus() == ServiceStatus.ERROR) {
             logger.severe(String.format("Common share mount could not be done on node [%s]. Reason: %s",
                                         info.getId(), mountStatus.getReason()));
-        }
+        }*/
         notifyListeners(info, ServiceInstallStatus.NODE_ADDED);
         for (TopologyToolInstaller installer: installers) {
             // execute all the installers
@@ -209,7 +209,7 @@ public class TopologyManager {
     }
 
     public void updateNode(NodeDescription nodeInfo) {
-        checkMount(nodeInfo);
+        //checkMount(nodeInfo);
         // execute all the installers
         for (TopologyToolInstaller installer: installers) {
             installer.editNode(nodeInfo);
@@ -242,7 +242,7 @@ public class TopologyManager {
         }
     }
 
-    public ServiceInstallStatus checkMount(NodeDescription node) {
+    /*public ServiceInstallStatus checkMount(NodeDescription node) {
         ServiceInstallStatus status = new ServiceInstallStatus();
         status.setServiceName("Mount");
         String mount = ConfigurationManager.getInstance().getValue("node.mount.folder", "/mnt/tao");
@@ -267,7 +267,7 @@ public class TopologyManager {
         }
         sharedAccumulator.reset();
         return status;
-    }
+    }*/
 
     public ServiceInstallStatus checkMasterShare() {
         ServiceInstallStatus status = new ServiceInstallStatus();

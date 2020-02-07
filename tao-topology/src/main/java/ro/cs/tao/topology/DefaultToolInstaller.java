@@ -205,6 +205,9 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
                     case ToolCommandsTokens.MASTER_PASS:
                         replacementStr = masterNodeInfo.getUserPass();
                         break;
+                    case ToolCommandsTokens.MASTER_SHARE:
+                        replacementStr = ConfigurationManager.getInstance().getValue("master.share.name", "/tao");
+                        break;
                     case ToolCommandsTokens.NODE_HOSTNAME:
                         replacementStr = info.getId();
                         break;
@@ -213,6 +216,9 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
                         break;
                     case ToolCommandsTokens.NODE_PASSWORD:
                         replacementStr = info.getUserPass();
+                        break;
+                    case ToolCommandsTokens.NODE_SHARE:
+                        replacementStr = ConfigurationManager.getInstance().getValue("node.mount.folder", "/mnt/tao");
                         break;
                     case ToolCommandsTokens.NODE_PROCESSORS_CNT:
                         replacementStr = String.valueOf(info.getFlavor().getCpu());
