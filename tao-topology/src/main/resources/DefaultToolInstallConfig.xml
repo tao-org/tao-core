@@ -176,7 +176,7 @@
     </tool_install_config>
     <tool_install_config>
         <name>Docker installer</name>
-        <description>Installs Docker on the executin nodes</description>
+        <description>Installs Docker on the execution nodes</description>
         <version>1.0</version>
         <priority>1</priority>
         <install_steps>
@@ -246,6 +246,77 @@
             </step>
         </uninstall_steps>
     </tool_install_config>
-
+    <tool_install_config>
+        <name>SIAB installer</name>
+        <description>Installs Shell-in-a-Box container on the execution nodes</description>
+        <version>1.0</version>
+        <priority>2</priority>
+        <install_steps>
+            <step>
+                <order_id>10</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <command>
+                    <![CDATA[
+                        docker pull spali/shellinabox:latest
+                    ]]>
+                </command>
+            </step>
+            <step>
+                <order_id>20</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <ignore_err>true</ignore_err>
+                <command>
+                    <![CDATA[
+                        firewall-cmd --zone:public --add-port:4200/tcp
+                    ]]>
+                </command>
+            </step>
+            <step>
+                <order_id>30</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <ignore_err>true</ignore_err>
+                <command>
+                    <![CDATA[
+                        firewall-cmd --reload
+                    ]]>
+                </command>
+            </step>
+            <step>
+                <order_id>40</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <command>
+                    <![CDATA[
+                        docker run -d --name shellinabox -p 4200:4200 -e SHELLINABOX_ALLOW_SUDO=1 -e SHELLINABOX_SERVICE_HOST=#node_hostname# -e SHELLINABOX_USER=#node_user# -e SHELLINABOX_DEFAULT=#node_hostname# -e SHELLINABOX_DISABLE_SSL=1 spali/shellinabox
+                    ]]>
+                </command>
+            </step>
+        </install_steps>
+        <uninstall_steps>
+            <step>
+                <order_id>10</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <command>
+                    <![CDATA[
+                         docker stop shellinabox
+                    ]]>
+                </command>
+            </step>
+            <step>
+                <order_id>10</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <command>
+                    <![CDATA[
+                         docker rm shellinabox
+                    ]]>
+                </command>
+            </step>
+        </uninstall_steps>
+    </tool_install_config>
 </tool_install_configurations>
 

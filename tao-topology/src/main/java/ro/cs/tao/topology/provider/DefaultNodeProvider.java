@@ -34,7 +34,7 @@ public class DefaultNodeProvider implements NodeProvider {
 
     @Override
     public List<NodeFlavor> listFlavors() throws TopologyException {
-        return null;
+        return getPersistenceManager().nodeFlavors().list();
     }
 
     @Override
