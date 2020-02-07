@@ -32,4 +32,7 @@ public interface MessageRepository extends PagingAndSortingRepository<Message, L
 
     @Query(value = "SELECT * FROM common.notification WHERE username = :user AND read = false", nativeQuery = true)
     List<Message> getUnreadMessages(@Param("user") String userName);
+
+    @Query(value = "SELECT * FROM common.notification WHERE username = :user AND timestamp = :timestamp", nativeQuery = true)
+    Message get(@Param("user") String userName, @Param("timestamp") long timestamp);
 }

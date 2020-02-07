@@ -47,6 +47,11 @@ public class NotificationManager extends EntityManager<Message, Long, MessageRep
     }
 
     @Override
+    public Message get(String userName, long timestamp) {
+        return repository.get(userName, timestamp);
+    }
+
+    @Override
     protected String identifier() { return "id"; }
 
     @Override

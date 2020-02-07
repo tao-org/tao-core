@@ -180,12 +180,9 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
             default:
                 break;
         }
-        if (job != null) {
-            OutputConsumer consumer = new StepExecutionOutputConsumer(curStep);
-            // wait for execution timeout
-            return Executor.execute(consumer, curStep.getExecutionTimeout(), job);
-        }
-        return ToolInvocationCodes.INVALID_INVOCATION_TYPE;
+        OutputConsumer consumer = new StepExecutionOutputConsumer(curStep);
+        // wait for execution timeout
+        return Executor.execute(consumer, curStep.getExecutionTimeout(), job);
     }
 
     /**
