@@ -25,9 +25,11 @@ public class ToolCommandsTokens {
     static final String MASTER_HOSTNAME = "#master_hostname#";
     static final String MASTER_USER = "#master_user#";
     static final String MASTER_PASS = "#master_pass#";
+    static final String MASTER_SHARE = "#master_share#";
     static final String NODE_HOSTNAME = "#node_hostname#";
     static final String NODE_USER = "#node_user#";
     static final String NODE_PASSWORD = "#node_pass#";
+    static final String NODE_SHARE = "#node_share#";
     static final String NODE_PROCESSORS_CNT = "#procs_cnt#";
     static final String INSTALL_SCRIPTS_ROOT_PATH = "#scripts_root_path#";
     static final String STEP_OUTPUT = "#step_output#";
@@ -36,9 +38,9 @@ public class ToolCommandsTokens {
 
     static {
          tokensList = new ArrayList<String>() {{
-             add(MASTER_HOSTNAME); add(MASTER_USER); add(MASTER_PASS); add(NODE_HOSTNAME);
-             add(NODE_USER); add(NODE_PASSWORD); add(NODE_PROCESSORS_CNT); add(INSTALL_SCRIPTS_ROOT_PATH);
-             add(STEP_OUTPUT);
+             add(MASTER_HOSTNAME); add(MASTER_USER); add(MASTER_PASS); add(MASTER_SHARE);
+             add(NODE_HOSTNAME); add(NODE_USER); add(NODE_PASSWORD); add(NODE_SHARE); add(NODE_PROCESSORS_CNT);
+             add(INSTALL_SCRIPTS_ROOT_PATH); add(STEP_OUTPUT);
          }};
     }
 
