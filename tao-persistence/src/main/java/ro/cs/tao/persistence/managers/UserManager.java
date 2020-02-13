@@ -71,18 +71,18 @@ public class UserManager extends EntityManager<User, Long, UserRepository> imple
         }
 
         // check email in alternative email addresses too
-        if (repository.findByEmail(newUserInfo.getEmail()) != null ||
+        /*if (repository.findByEmail(newUserInfo.getEmail()) != null ||
                 repository.findByAlternativeEmail(newUserInfo.getEmail()) != null) {
             throw new PersistenceException("Email " + newUserInfo.getEmail() + " already taken!");
-        }
+        }*/
 
         // check also alternative email
-        if (!StringUtilities.isNullOrEmpty(newUserInfo.getAlternativeEmail())) {
+        /*if (!StringUtilities.isNullOrEmpty(newUserInfo.getAlternativeEmail())) {
             if (repository.findByEmail(newUserInfo.getAlternativeEmail()) != null ||
                     repository.findByAlternativeEmail(newUserInfo.getAlternativeEmail()) != null) {
                 throw new PersistenceException("Email " + newUserInfo.getEmail() + " already taken!");
             }
-        }
+        }*/
 
         // create new User entity
         final User user = new User();
