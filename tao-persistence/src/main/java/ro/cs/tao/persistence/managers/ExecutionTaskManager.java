@@ -61,6 +61,9 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
     public List<ExecutionTask> listRemoteExecuting() { return repository.getRemoteExecutingTasks(); }
 
     @Override
+    public List<ExecutionTask> listByHost(String hostName) { return repository.getTasksByHost(hostName); }
+
+    @Override
     public List<ExecutionTaskSummary> getTasksStatus(long jobId) {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         return jdbcTemplate.query(con -> {

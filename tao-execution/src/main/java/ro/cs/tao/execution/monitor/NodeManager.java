@@ -3,6 +3,8 @@ package ro.cs.tao.execution.monitor;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.configuration.ConfigurationProvider;
 import ro.cs.tao.execution.local.DefaultSessionFactory;
+import ro.cs.tao.execution.model.ExecutionTask;
+import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.Notifiable;
 import ro.cs.tao.quota.QuotaException;
@@ -13,6 +15,7 @@ import ro.cs.tao.utils.async.Parallel;
 import ro.cs.tao.utils.executors.NamedThreadPoolExecutor;
 
 import java.security.Principal;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -30,13 +33,16 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     private static final int pollInterval;
     private static final NamedThreadPoolExecutor executor;
     private static final int DEFAULT_NODE_WAIT_TIME = 10000;
+    private static final int DEFAULT_KEEP_ALIVE_SECONDS = 1800;
     private int nodeLimit;
     private NodeProvider nodeProvider;
+    private ExecutionTaskProvider taskProvider;
     private DefaultNodeInfo defaultNodeInfo;
     private final Map<String, NodeDescription> nodes;
     private final Map<String, RuntimeInfo> runtimeInfo;
     private Timer nodeInspectTimer;
     private Timer nodeRefreshTimer;
+    private final Map<String, LocalDateTime> keepAliveMap;
     private NodeInspectTask nodeInspectTask;
     private NodeRefreshTask nodeRefreshTask;
     private volatile boolean refreshInProgress;
@@ -66,10 +72,9 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     private NodeManager() {
         nodes = new HashMap<>();
         runtimeInfo = new HashMap<>();
-        //persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
         refreshInProgress = false;
         nodeLimit = 0;
-        //subscribe(Topics.TOPOLOGY);
+        keepAliveMap = Collections.synchronizedMap(new HashMap<>());
     }
 
     public DefaultNodeInfo getDefaultNodeInfo() {
@@ -91,6 +96,12 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     public void setNodeProvider(NodeProvider nodeProvider) { this.nodeProvider = nodeProvider; }
 
     /**
+     * Sets the task provider, which is responsible of retrieving tasks executing on a node.
+     * @param taskProvider  The task provider
+     */
+    public void setTaskProvider(ExecutionTaskProvider taskProvider) { this.taskProvider = taskProvider; }
+
+    /**
      * Returns the maximum number of nodes this instance can manage.
      * A value less than or equal to 0 denotes that the limitation is not supported.
      */
@@ -110,6 +121,9 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
      * Initializes this instance with the list of registered topology nodes.
      */
     public void initialize() {
+        if (this.taskProvider == null) {
+            throw new RuntimeException("TaskProvider is not set");
+        }
         if (this.nodeProvider != null) {
             final List<NodeDescription> nodes = this.nodeProvider.listNodes();
             for (NodeDescription node : nodes) {
@@ -168,58 +182,15 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                 case INSTALLED:
                     this.nodes.put(host, node);
                     this.runtimeInfo.put(host, new RuntimeInfo());
+                    this.keepAliveMap.put(host, LocalDateTime.now().plusSeconds(DEFAULT_KEEP_ALIVE_SECONDS));
                     break;
                 case UNINSTALLED:
-                    this.nodes.remove(host);
-                    this.runtimeInfo.remove(host);
+                    removeNode(host);
                     break;
                 default:
                     break;
             }
         }
-    }
-
-    @Override
-    protected void onMessageReceived(Message message) {
-        /*String host = message.getItem("node");
-        String operation = message.getItem("operation");
-        try {
-            if ("added".equals(operation)) {
-                nodes.put(host, persistenceManager.getNodeByHostName(host));
-                updateNodeInfo(host);
-            } else if ("removed".equals(operation)) {
-                synchronized (this) {
-                    runtimeInfo.remove(host);
-                    nodes.remove(host);
-                }
-            } else {
-                logger.warning("Unsupported topology operation");
-            }
-        } catch (Exception e) {
-            logger.severe(e.getMessage());
-        }*/
-    }
-
-    private synchronized void updateNodeInfo(String host) {
-        NodeDescription node = nodes.get(host);
-        if (node == null) {
-            throw new NullPointerException("[no credentials]");
-        }
-        RuntimeInfo info = null;
-        try {
-            info = OSRuntimeInfo.createInspector(host, node.getUserName(), node.getUserPass())
-                                                             //Crypto.decrypt(node.getUserPass(), node.getUserName()))
-                                .getInfo();
-        } catch (Exception ignored) { }
-        if (info == null) {
-            info = new RuntimeInfo();
-            info.setAvailableMemory(-1);
-            info.setDiskTotal(node.getFlavor().getDisk());
-            info.setTotalMemory(node.getFlavor().getMemory());
-            info.setCpuTotal(node.getFlavor().getCpu());
-            info.setDiskUsed(-1);
-        }
-        this.runtimeInfo.put(host, info);
     }
 
     /**
@@ -332,6 +303,89 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         return this.runtimeInfo;
     }
 
+    @Override
+    protected void onMessageReceived(Message message) {
+
+    }
+
+    private double computeLoad(NodeDescription node, double actualCPU, long freeMemory) {
+        double result  = 0.0;
+        try {
+            final NodeFlavor flavor = node.getFlavor();
+            double noCpus = flavor.getCpu();
+            double totalMem = flavor.getMemory() * MemoryUnit.MEGABYTE.value();
+            result = (actualCPU / noCpus) * (1 - (freeMemory / totalMem));
+            return result;
+        } finally {
+            logger.finest(String.format("Processing pressure for %s: %f", node.getId(), result));
+        }
+    }
+
+    private synchronized void updateNodeInfo(String host) {
+        NodeDescription node = nodes.get(host);
+        if (node == null) {
+            throw new NullPointerException("[no credentials]");
+        }
+        RuntimeInfo info = null;
+        try {
+            info = OSRuntimeInfo.createInspector(host, node.getUserName(), node.getUserPass())
+                    //Crypto.decrypt(node.getUserPass(), node.getUserName()))
+                    .getInfo();
+        } catch (Exception ignored) { }
+        if (info == null) {
+            info = new RuntimeInfo();
+            info.setAvailableMemory(-1);
+            info.setDiskTotal(node.getFlavor().getDisk());
+            info.setTotalMemory(node.getFlavor().getMemory());
+            info.setCpuTotal(node.getFlavor().getCpu());
+            info.setDiskUsed(-1);
+        }
+        this.runtimeInfo.put(host, info);
+    }
+
+    private synchronized void removeNode(String host) {
+        this.nodes.remove(host);
+        this.runtimeInfo.remove(host);
+        this.keepAliveMap.remove(host);
+    }
+
+    /**
+     * This class contains the node on which a task can be executed together with the number of
+     * CPU's and the memory that should be used.
+     *
+     * @author Lucian Barbulescu
+     */
+    public static class NodeData {
+        private final NodeDescription node;
+        private final int cpu;
+        private final long memory;
+
+        /**
+         * Constructor.
+         *
+         * @param node the node descriptor
+         * @param cpu the number of cpus
+         * @param memory the memory
+         */
+        private NodeData(NodeDescription node, int cpu, long memory) {
+            this.node = node;
+            this.cpu = cpu;
+            this.memory = memory;
+        }
+
+        public NodeDescription getNode() {
+            return node;
+        }
+
+        public int getCpu() {
+            return cpu;
+        }
+
+        public long getMemory() {
+            return memory;
+        }
+    }
+
     protected class NodeInspectTask extends TimerTask {
         private boolean inProgress;
         NodeInspectTask() {
@@ -350,6 +404,17 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                                     try {
                                         Thread.sleep(500);
                                     } catch (Throwable ignored) { }
+                                }
+                                final LocalDateTime time = keepAliveMap.get(h);
+                                if (time != null && time.compareTo(LocalDateTime.now()) >= 0) {
+                                    final List<ExecutionTask> tasks = taskProvider.listByHost(h);
+                                    if (tasks == null || tasks.size() == 0) {
+                                        removeNode(h);
+                                        TopologyManager.getInstance().removeNode(h);
+                                        return;
+                                    } else {
+                                        keepAliveMap.replace(h, LocalDateTime.now().plusSeconds(DEFAULT_KEEP_ALIVE_SECONDS));
+                                    }
                                 }
                                 updateNodeInfo(h);
                             } catch (Exception e) {
@@ -412,54 +477,5 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
             }
         }
     }
-    
-    /**
-     * This class contains the node on which a task can be executed together with the number of 
-     * CPU's and the memory that should be used.
-     *  
-     * @author Lucian Barbulescu
-     */
-    public static class NodeData {
-    	private final NodeDescription node;
-    	private final int cpu;
-    	private final long memory;
-		
-    	/**
-    	 * Constructor.
-    	 * 
-    	 * @param node the node descriptor
-    	 * @param cpu the number of cpus
-    	 * @param memory the memory
-    	 */
-    	private NodeData(NodeDescription node, int cpu, long memory) {
-			this.node = node;
-			this.cpu = cpu;
-			this.memory = memory;
-		}
 
-		public NodeDescription getNode() {
-			return node;
-		}
-
-		public int getCpu() {
-			return cpu;
-		}
-
-		public long getMemory() {
-			return memory;
-		}
-    }
-
-    private double computeLoad(NodeDescription node, double actualCPU, long freeMemory) {
-        double result  = 0.0;
-        try {
-            final NodeFlavor flavor = node.getFlavor();
-            double noCpus = flavor.getCpu();
-            double totalMem = flavor.getMemory() * MemoryUnit.MEGABYTE.value();
-            result = (actualCPU / noCpus) * (1 - (freeMemory / totalMem));
-            return result;
-        } finally {
-            logger.finest(String.format("Processing pressure for %s: %f", node.getId(), result));
-        }
-    }
 }

@@ -187,7 +187,7 @@ public class TopologyManager {
         if (node == null) {
             throw new TopologyException(String.format("Node [%s] doesn't exist", hostName));
         }
-        if (this.externalNodeProvider != null) {
+        if (this.externalNodeProvider != null && node.getVolatile()) {
             this.externalNodeProvider.remove(hostName);
         } else {
             // execute all the installers

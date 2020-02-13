@@ -252,6 +252,9 @@
             <basic name="active">
                 <column name="active" nullable="true" column-definition="boolean NULL DEFAULT true"/>
             </basic>
+            <basic name="volatile">
+                <column name="volatile" nullable="true" column-definition="boolean NULL DEFAULT false"/>
+            </basic>
             <basic name="tags">
                 <column name="tags" nullable="true" column-definition="text NULL"/>
                 <convert converter="ro.cs.tao.persistence.convert.StringListConverter"/>
@@ -758,7 +761,7 @@
         </attributes>
     </entity>
 
-    <entity class="ro.cs.tao.execution.model.WPSExecutionTask" access="PROPERTY">
+    <!--<entity class="ro.cs.tao.execution.model.WPSExecutionTask" access="PROPERTY">
 
         <discriminator-value>33</discriminator-value>
 
@@ -766,9 +769,9 @@
             <many-to-one name="component" fetch="LAZY" target-entity="ro.cs.tao.component.WPSComponent">
                 <join-column name="component_id" nullable="false"/>
             </many-to-one>
-            <!--<transient name="instanceTargetOutput"/>-->
+            &lt;!&ndash;<transient name="instanceTargetOutput"/>&ndash;&gt;
         </attributes>
-    </entity>
+    </entity>-->
 
     <entity class="ro.cs.tao.execution.model.ExecutionJob" access="PROPERTY">
         <table name="execution.job"/>
