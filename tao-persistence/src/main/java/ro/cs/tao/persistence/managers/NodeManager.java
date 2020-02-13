@@ -130,9 +130,12 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
         if (nodeEnt == null) {
             throw new PersistenceException("There is no execution node with the specified host name: " + hostName);
         }
-        nodeEnt.setActive(false);
-        // save it
-        repository.save(nodeEnt);
+        if (nodeEnt.getVolatile()) {
+            repository.delete(nodeEnt);
+        } else {
+            nodeEnt.setActive(false);
+            repository.save(nodeEnt);
+        }
     }
 
     @Override

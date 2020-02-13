@@ -35,6 +35,7 @@ public class NodeDescription extends StringIdentifiable {
     private NodeFlavor flavor;
     private String description;
     private Boolean active;
+    private Boolean isVolatile;
     private List<NodeServiceStatus> servicesStatus;
     private List<String> tags;
 
@@ -72,6 +73,9 @@ public class NodeDescription extends StringIdentifiable {
     public void setActive(Boolean active) {
         this.active = active;
     }
+
+    public Boolean getVolatile() { return isVolatile; }
+    public void setVolatile(Boolean value) { isVolatile = value; }
 
     @XmlElementWrapper(name = "services")
     public List<NodeServiceStatus> getServicesStatus() {

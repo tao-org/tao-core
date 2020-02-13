@@ -29,6 +29,7 @@ CREATE TABLE topology.node
 	tags text NULL,
 	created timestamp NULL DEFAULT now(),
     modified timestamp NULL,
+    volatile boolean NULL DEFAULT false,
 	active boolean NULL DEFAULT true
 );
 ALTER TABLE topology.node ADD CONSTRAINT PK_execution_node PRIMARY KEY (id);

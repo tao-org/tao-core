@@ -307,12 +307,30 @@ public class DockerManager {
             sharedAccumulator.reset();
             try {
                 int retCode;
-                final Executor<?> executor = Executor.execute(sharedAccumulator, job);
+                Executor<?> executor = Executor.execute(sharedAccumulator, job);
                 waitFor(executor, 15, TimeUnit.SECONDS);
                 if ((retCode = executor.getReturnCode()) != 0) {
                     String message = String.format("Docker command failed wit code %s. Details: '%s'",
                                                    retCode, sharedAccumulator.getOutput());
                     throw new IOException(message);
+                } else {
+                    sharedAccumulator.reset();
+                    args.clear();
+                    args.add("docker");
+                    args.add("rm");
+                    args.add(containerName);
+                    job = new ExecutionUnit(ExecutorType.PROCESS,
+                                            masterNode.getId(),
+                                            masterNode.getUserName(),
+                                            masterNode.getUserPass(),
+                                            args, false, SSHMode.EXEC);
+                    executor = Executor.execute(sharedAccumulator, job);
+                    waitFor(executor, 15, TimeUnit.SECONDS);
+                    if ((retCode = executor.getReturnCode()) != 0) {
+                        String message = String.format("Docker command failed wit code %s. Details: '%s'",
+                                                       retCode, sharedAccumulator.getOutput());
+                        throw new IOException(message);
+                    }
                 }
             } finally {
                 sharedAccumulator.reset();
