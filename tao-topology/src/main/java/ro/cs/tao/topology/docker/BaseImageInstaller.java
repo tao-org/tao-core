@@ -36,6 +36,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Properties;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -78,13 +79,12 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
                 }
                 final Path dockerImagesPath = Paths.get(cfgValue);
                 Files.createDirectories(dockerImagesPath);
-                final Path dockerfilePath = dockerImagesPath.resolve(getContainerName()).resolve("Dockerfile");
-                if (!Files.exists(dockerfilePath)) {
-                    logger.finest(String.format("Extracting Dockerfile for image %s", getContainerName()));
-                    Files.createDirectories(dockerfilePath.getParent());
-                    final byte[] buffer = new byte[1024];
-                    try (BufferedInputStream is = new BufferedInputStream(getClass().getResourceAsStream("Dockerfile"));
-                         OutputStream os = new BufferedOutputStream(Files.newOutputStream(dockerfilePath))) {
+                // first try the container.properties file, maybe it is a container from Docker Hub
+                Path dockerfilePath = dockerImagesPath.resolve(getContainerName()).resolve("container.properties");
+                final byte[] buffer = new byte[1024];
+                try (InputStream is = getClass().getResourceAsStream("container.properties");
+                     OutputStream os = new BufferedOutputStream(Files.newOutputStream(dockerfilePath))) {
+                    if (is != null) {
                         int read;
                         while ((read = is.read(buffer)) != -1) {
                             os.write(buffer, 0, read);
@@ -92,7 +92,26 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
                         os.flush();
                     }
                 }
-                container = DockerManager.getDockerImage(getContainerName());
+                Properties properties = new Properties();
+                properties.load(Files.newBufferedReader(dockerfilePath));
+                if (properties.size() > 0) {
+                    container = DockerManager.pullImage(properties.getProperty("docker.hub.name"));
+                } else {
+                    dockerfilePath = dockerImagesPath.resolve(getContainerName()).resolve("Dockerfile");
+                    if (!Files.exists(dockerfilePath)) {
+                        logger.finest(String.format("Extracting Dockerfile for image %s", getContainerName()));
+                        Files.createDirectories(dockerfilePath.getParent());
+                        try (BufferedInputStream is = new BufferedInputStream(getClass().getResourceAsStream("Dockerfile"));
+                             OutputStream os = new BufferedOutputStream(Files.newOutputStream(dockerfilePath))) {
+                            int read;
+                            while ((read = is.read(buffer)) != -1) {
+                                os.write(buffer, 0, read);
+                            }
+                            os.flush();
+                        }
+                    }
+                    container = DockerManager.getDockerImage(getContainerName());
+                }
                 if (container == null) {
                     this.logger.info(String.format("Image %s was not found in Docker registry. Registration starting.\n" +
                                                              "Until registration completes, the corresponding components will not be available.", getContainerName()));
