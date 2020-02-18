@@ -121,8 +121,8 @@ INSERT INTO topology.node_flavor (id, cpu, memory, disk, swap, rxtx)
 VALUES ('master', 8, 32, 1024, 32, 1.0);
 
 -- localhost execution node
-INSERT INTO topology.node (id, username, password, flavor_id, description)
-VALUES ('localhost', '', '', 'master', 'Master Node');
+INSERT INTO topology.node (id, username, password, flavor_id, description, role)
+VALUES ('localhost', '', '', 'master', 'Master Node', 'master');
 
 -- Naming rules
 INSERT INTO product.naming_rule (id, sensor, regex, description) VALUES
