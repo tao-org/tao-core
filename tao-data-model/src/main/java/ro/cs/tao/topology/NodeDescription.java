@@ -34,6 +34,7 @@ public class NodeDescription extends StringIdentifiable {
     private String userPass;
     private NodeFlavor flavor;
     private String description;
+    private NodeRole role;
     private Boolean active;
     private Boolean isVolatile;
     private List<NodeServiceStatus> servicesStatus;
@@ -60,6 +61,7 @@ public class NodeDescription extends StringIdentifiable {
     public NodeFlavor getFlavor() { return flavor; }
     public void setFlavor(NodeFlavor flavor) { this.flavor = flavor; }
 
+    @XmlElement(name = "description")
     public String getDescription() {
         return description;
     }
@@ -67,6 +69,11 @@ public class NodeDescription extends StringIdentifiable {
         this.description = description;
     }
 
+    @XmlElement(name = "role")
+    public NodeRole getRole() { return role; }
+    public void setRole(NodeRole role) { this.role = role; }
+
+    @XmlElement(name = "active")
     public Boolean getActive() {
         return active;
     }
@@ -74,6 +81,7 @@ public class NodeDescription extends StringIdentifiable {
         this.active = active;
     }
 
+    @XmlElement(name = "volatile")
     public Boolean getVolatile() { return isVolatile; }
     public void setVolatile(Boolean value) { isVolatile = value; }
 

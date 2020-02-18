@@ -27,8 +27,9 @@ CREATE TABLE topology.node
 	used_RAM integer NULL,
 	used_HDD integer NULL,
 	tags text NULL,
+	role varchar(6) NULL DEFAULT 'worker',
 	created timestamp NULL DEFAULT now(),
-    modified timestamp NULL,
+    modified timestamp NULL DEFAULT now(),
     volatile boolean NULL DEFAULT false,
 	active boolean NULL DEFAULT true
 );

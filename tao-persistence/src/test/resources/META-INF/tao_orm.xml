@@ -236,6 +236,7 @@
         <entity-listeners>
             <entity-listener class="ro.cs.tao.persistence.audit.NodeDescriptionListener"/>
         </entity-listeners>
+        <convert converter="ro.cs.tao.persistence.convert.NodeRoleConverter" attribute-name="role"/>
         <attributes>
             <basic name="userName">
                 <column name="username" nullable="false" column-definition="character varying(50) NOT NULL"/>
@@ -248,6 +249,9 @@
             </basic>
             <basic name="description">
                 <column name="description" nullable="true" column-definition="text null"/>
+            </basic>
+            <basic name="role">
+                <column name="role" nullable="true" column-definition="varchar(6) null DEFAULT 'worker'"/>
             </basic>
             <basic name="active">
                 <column name="active" nullable="true" column-definition="boolean NULL DEFAULT true"/>
@@ -1421,5 +1425,6 @@
     <converter class="ro.cs.tao.persistence.convert.TagTypeConverter" />
     <converter class="ro.cs.tao.persistence.convert.ProductStatusConverter" />
     <converter class="ro.cs.tao.persistence.convert.AggregatorConverter" />
+    <converter class="ro.cs.tao.persistence.convert.NodeRoleConverter" />
 
 </entity-mappings>
