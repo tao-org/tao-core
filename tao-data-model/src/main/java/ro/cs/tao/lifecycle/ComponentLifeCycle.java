@@ -19,6 +19,7 @@ package ro.cs.tao.lifecycle;
  * @author Cosmin Cara
  */
 public interface ComponentLifeCycle {
+    int priority();
     void onStartUp();
     void onShutdown();
 }
