@@ -16,12 +16,12 @@
 package ro.cs.tao.datasource.param;
 
 import com.google.common.collect.Maps;
-import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import ro.cs.tao.datasource.ProductFetchStrategy;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.*;
 import java.util.*;
@@ -51,13 +51,10 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
         try {
             Enumeration<URL> resources = AbstractParameterProvider.class.getClassLoader().getResources(PARAMETER_DESCRIPTOR_RESOURCE);
             while (resources.hasMoreElements()) {
-                String resourcePath = formatPath(resources.nextElement().getPath());
-                if (SystemUtils.IS_OS_LINUX) {
-                    resourcePath = "/" + resourcePath;
-                }
+                String resourcePath = resources.nextElement().toURI().toString().replace("jar:", "");
                 parameterResources.add(resourcePath);
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             System.err.println(ExceptionUtils.getStackTrace(e));
         }
     }
@@ -70,7 +67,7 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
                 readDescriptors.put(clazz, JSON_OBJECT_MAPPER.readValue(readDescriptor(), JSON_DATA_SOURCE_PARAMETERS_TYPE_REFERENCE));
             }
             readParameters = readDescriptors.get(clazz);
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.severe(String.format("Cannot load data source supported parameters. Cause: %s", e.getMessage()));
         }
 
@@ -102,12 +99,12 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
     @Override
     public Map<String, ProductFetchStrategy> getRegisteredProductFetchStrategies() { return productFetchers; }
 
-    private String readDescriptor() throws IOException {
-        final String classLocation = formatPath(getClass().getProtectionDomain().getCodeSource().getLocation().getPath());
+    private String readDescriptor() throws IOException, URISyntaxException {
+        final String classLocation = getClass().getProtectionDomain().getCodeSource().getLocation().toURI().toString();
         String currentResource = null;
         for (String current : parameterResources) {
             if (current.startsWith(classLocation)) {
-                currentResource = current.replaceFirst("^/(.:/)", "$1");
+                currentResource = current;
                 break;
             }
         }
@@ -120,7 +117,7 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
             if (classLocation.endsWith(".jar")) {
                 Map<String, String> env = new HashMap<>();
                 env.put("create", "false");
-                final String strPath = "jar:file:" + (SystemUtils.IS_OS_LINUX ? "" : "/") + currentResource;
+                final String strPath = "jar:" + currentResource;
                 final URI uri = URI.create(strPath);
                 try {
                     fileSystem = FileSystems.getFileSystem(uri);
@@ -129,7 +126,7 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
                 }
                 rPath = fileSystem.getPath("/" + PARAMETER_DESCRIPTOR_RESOURCE);
             } else {
-                rPath = Paths.get(currentResource);
+                rPath = Paths.get(URI.create(currentResource));
             }
             return new String(Files.readAllBytes(rPath));
         } finally {
@@ -137,14 +134,5 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
                 fileSystem.close();
             }
         }
-    }
-
-    private static String formatPath(String path){
-        String newPath = path.replaceFirst("^/(.:/)", "$1").replace("file:/", "");
-        if(newPath.endsWith("!/")){
-            //remove the last 2 chars
-            newPath = newPath.substring(0, newPath.length()-2);
-        }
-        return newPath;
     }
 }
