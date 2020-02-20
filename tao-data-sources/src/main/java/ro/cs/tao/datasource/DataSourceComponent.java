@@ -310,11 +310,7 @@ public class DataSourceComponent extends TaoComponent {
      * Creates a query that can be submitted to (executed against) the data source of this component.
      */
     public DataQuery createQuery() {
-        DataSourceManager dsManager = DataSourceManager.getInstance();
-        DataSource dataSource = this.dataSourceName != null ?
-                dsManager.createInstance(this.sensorName, this.dataSourceName) :
-                dsManager.createInstance(this.sensorName);
-        dataSource.setCredentials(this.userName, this.password);
+        DataSource<?> dataSource = createDataSource();
         return dataSource.createQuery(this.sensorName);
     }
 
@@ -322,13 +318,8 @@ public class DataSourceComponent extends TaoComponent {
      * Performs a query with the given query parameters.
      * @param parameters    The query parameters
      */
-    public List<EOProduct> doQuery(List<QueryParameter> parameters) throws QueryException {
-        DataSourceManager dsManager = DataSourceManager.getInstance();
-        DataSource dataSource = this.dataSourceName != null ?
-                dsManager.createInstance(this.sensorName, this.dataSourceName) :
-                dsManager.createInstance(this.sensorName);
-        dataSource.setCredentials(this.userName, this.password);
-        final DataQuery query = dataSource.createQuery(this.sensorName);
+    public List<EOProduct> doQuery(List<QueryParameter<?>> parameters) throws QueryException {
+        final DataQuery query = createQuery();
         if (parameters != null) {
             parameters.forEach(query::addParameter);
         }
@@ -340,13 +331,8 @@ public class DataSourceComponent extends TaoComponent {
      * @param parameters    The query parameters
      * @return  The number of results
      */
-    public long doCount(List<QueryParameter> parameters) throws QueryException {
-        DataSourceManager dsManager = DataSourceManager.getInstance();
-        DataSource dataSource = this.dataSourceName != null ?
-                dsManager.createInstance(this.sensorName, this.dataSourceName) :
-                dsManager.createInstance(this.sensorName);
-        dataSource.setCredentials(this.userName, this.password);
-        final DataQuery query = dataSource.createQuery(this.sensorName);
+    public long doCount(List<QueryParameter<?>> parameters) throws QueryException {
+        final DataQuery query = createQuery();
         if (parameters != null) {
             parameters.forEach(query::addParameter);
         }
@@ -375,13 +361,61 @@ public class DataSourceComponent extends TaoComponent {
      * @param additionalProperties  Additional properties that can be passed to the component
      */
     public List<EOProduct> doFetch(List<EOProduct> products, Set<String> tiles, String destinationPath, String localRootPath, Properties additionalProperties) {
-        DataSourceManager dsManager = DataSourceManager.getInstance();
-        DataSource dataSource = this.dataSourceName != null ?
-                dsManager.createInstance(this.sensorName, this.dataSourceName) :
-                dsManager.createInstance(this.sensorName);
-        if (this.userName != null) {
-            dataSource.setCredentials(this.userName, this.password);
+        return DownloadManager.queueDownload(this, this::doFetchImpl, products, tiles, destinationPath, localRootPath, additionalProperties);
+    }
+
+    /**
+     * Resumes the fetch operation on the current product.
+     */
+    public void resume() {
+        this.cancelled = false;
+        if (this.currentFetcher != null) {
+            this.currentFetcher.resume();
         }
+    }
+
+    /**
+     * Cancels the fetch operation on the current product.
+     */
+    public void cancel() {
+        DownloadManager.cancelDownload(this, this::cancelImpl);
+    }
+
+    @Override
+    public DataSourceComponent clone() throws CloneNotSupportedException {
+        DataSourceComponent newComponent = (DataSourceComponent) super.clone();
+        newComponent.sensorName = this.sensorName;
+        newComponent.dataSourceName = this.dataSourceName;
+        newComponent.fetchMode = this.fetchMode;
+        return newComponent;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        DataSourceComponent that = (DataSourceComponent) o;
+        return Objects.equals(sensorName, that.sensorName) &&
+                Objects.equals(dataSourceName, that.dataSourceName) &&
+                Objects.equals(userName, that.userName);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), sensorName, dataSourceName, userName);
+    }
+
+    private Void cancelImpl() {
+        this.cancelled = true;
+        if (this.currentFetcher != null) {
+            this.currentFetcher.cancel();
+        }
+        return null;
+    }
+
+    private List<EOProduct> doFetchImpl(List<EOProduct> products, Set<String> tiles, String destinationPath, String localRootPath, Properties additionalProperties) {
+        DataSource<?> dataSource = createDataSource();
         String errorMessage;
         for (EOProduct product : products) {
             // add the attribute for max retries such that if the maxRetries is exceeded
@@ -476,40 +510,15 @@ public class DataSourceComponent extends TaoComponent {
         return products;
     }
 
-    /**
-     * Resumes the fetch operation on the current product.
-     */
-    public void resume() {
-        this.cancelled = false;
-        if (this.currentFetcher != null) {
-            this.currentFetcher.resume();
+    private DataSource<?> createDataSource() {
+        DataSourceManager dsManager = DataSourceManager.getInstance();
+        DataSource<?> dataSource = this.dataSourceName != null ?
+                dsManager.createInstance(this.sensorName, this.dataSourceName) :
+                dsManager.createInstance(this.sensorName);
+        if (this.userName != null) {
+            dataSource.setCredentials(this.userName, this.password);
         }
-    }
-
-    /**
-     * Cancels the fetch operation on the current product.
-     */
-    public void cancel() {
-        this.cancelled = true;
-        if (this.currentFetcher != null) {
-            this.currentFetcher.cancel();
-        }
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
-        DataSourceComponent that = (DataSourceComponent) o;
-        return Objects.equals(sensorName, that.sensorName) &&
-                Objects.equals(dataSourceName, that.dataSourceName) &&
-                Objects.equals(userName, that.userName);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(), sensorName, dataSourceName, userName);
+        return dataSource;
     }
 
     private boolean tryApplyFilter(ProductFetchStrategy strategy, Set<String> tiles) {
@@ -522,14 +531,5 @@ public class DataSourceComponent extends TaoComponent {
             }
         }
         return false;
-    }
-
-    @Override
-    public DataSourceComponent clone() throws CloneNotSupportedException {
-        DataSourceComponent newComponent = (DataSourceComponent) super.clone();
-        newComponent.sensorName = this.sensorName;
-        newComponent.dataSourceName = this.dataSourceName;
-        newComponent.fetchMode = this.fetchMode;
-        return newComponent;
     }
 }
