@@ -24,6 +24,7 @@ import ro.cs.tao.serialization.BaseSerializer;
 import ro.cs.tao.serialization.MediaType;
 import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.serialization.SerializerFactory;
+import ro.cs.tao.utils.StringUtilities;
 
 import javax.xml.bind.annotation.XmlTransient;
 import java.time.Duration;
@@ -200,12 +201,16 @@ public abstract class DataQuery extends StringIdentifiable {
 
     public <V> QueryParameter<V> createParameter(String name, Class<V> type, V value) {
         checkSupported(name, type);
-        return new QueryParameter<>(type, name, value);
+        final QueryParameter<V> parameter = new QueryParameter<>(type, name, value);
+        checkValue(parameter, value);
+        return parameter;
     }
 
     public <V> QueryParameter<V> createParameter(String name, Class<V> type, V value, boolean optional) {
         checkSupported(name, type);
-        return new QueryParameter<>(type, name, value, optional);
+        final QueryParameter<V> parameter = new QueryParameter<>(type, name, value, optional);
+        checkValue(parameter, value);
+        return parameter;
     }
 
     public <V> QueryParameter createParameter(String name, Class<V> type, V minValue, V maxValue) {
@@ -240,7 +245,7 @@ public abstract class DataQuery extends StringIdentifiable {
         }
     }
 
-    protected void checkSupported(String name, Class type) {
+    protected void checkSupported(String name, Class<?> type) {
         DataSourceParameter descriptor = this.dataSourceParameters.get(name);
         if (descriptor == null) {
             throw new QueryException(String.format("Parameter [%s] not supported on this data source", name));
@@ -253,6 +258,20 @@ public abstract class DataQuery extends StringIdentifiable {
         if (this.parameters.containsKey(name)) {
             throw new QueryException(
                     String.format("Parameter [%s] already exists", name));
+        }
+    }
+
+    protected <V> void checkValue(QueryParameter<V> parameter, V value) {
+        DataSourceParameter descriptor = this.dataSourceParameters.get(parameter.getName());
+        final Object[] valueSet = descriptor.getValueSet();
+        if (valueSet != null && value != null) {
+            final String stringValue = value.toString();
+            List<String> strValues = Arrays.stream(valueSet).map(Object::toString).collect(Collectors.toList());
+            if (strValues.stream().noneMatch(v -> v.equals(stringValue))) {
+                throw new QueryException(String.format("Unsupported value for parameter [%s]: expected one of %s but found %s",
+                                                       parameter.getName(), String.join(",", strValues),
+                                                       StringUtilities.isNullOrEmpty(stringValue) ? "''" : stringValue));
+            }
         }
     }
 
