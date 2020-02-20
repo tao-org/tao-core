@@ -100,7 +100,7 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
     public Map<String, ProductFetchStrategy> getRegisteredProductFetchStrategies() { return productFetchers; }
 
     private String readDescriptor() throws IOException, URISyntaxException {
-        final String classLocation = getClass().getProtectionDomain().getCodeSource().getLocation().toURI().toString();
+        final String classLocation = getClass().getProtectionDomain().getCodeSource().getLocation().toURI().toString().replace("jar:", "");
         String currentResource = null;
         for (String current : parameterResources) {
             if (current.startsWith(classLocation)) {
