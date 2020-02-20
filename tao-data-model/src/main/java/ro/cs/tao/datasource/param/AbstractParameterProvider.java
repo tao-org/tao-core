@@ -114,7 +114,7 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
         Path rPath;
         FileSystem fileSystem = null;
         try {
-            if (classLocation.endsWith(".jar")) {
+            if (classLocation.endsWith(".jar") || classLocation.contains(".jar")) {
                 Map<String, String> env = new HashMap<>();
                 env.put("create", "false");
                 final String strPath = "jar:" + currentResource;
