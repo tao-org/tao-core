@@ -19,7 +19,7 @@ public class DownloadManager {
     private static final DownloadManager instance;
     private static final Logger logger;
     private final Map<String, NamedThreadPoolExecutor> downloadWorkers;
-    private final Map<Integer, Runnable> queuedDownloads;
+    private final Map<Integer, Future<?>> queuedDownloads;
 
     static {
         instance = new DownloadManager();
@@ -82,6 +82,7 @@ public class DownloadManager {
             final NamedThreadPoolExecutor executor = instance.downloadWorkers.get(dsInstance.defaultId());
             final Future<List<EOProduct>> task = executor.submit(() ->
                          delegate.apply(products, tiles, destinationPath, localRootPath, additionalProperties));
+            instance.queuedDownloads.put(dsInstance.hashCode(), task);
             logger.fine(String.format("Download queued for data source [%s-%s]. There are %d queued downloads for this source",
                                       dsInstance.getDataSourceName(), dsInstance.getSensorName(), executor.getActiveCount()));
             return task.get();
@@ -103,14 +104,28 @@ public class DownloadManager {
         }
         final NamedThreadPoolExecutor executor = instance.downloadWorkers.get(dsInstance.defaultId());
         if (executor != null) {
-            final Runnable task = instance.queuedDownloads.get(dsInstance.hashCode());
+            final Future<?> task = instance.queuedDownloads.get(dsInstance.hashCode());
             if (task != null) {
-                executor.remove(task);
+                task.cancel(true);
             } else {
                 logger.warning(String.format("No download was queued for data source [%s-%s@%d]",
                                              dsInstance.getDataSourceName(), dsInstance.getSensorName(), dsInstance.hashCode()));
             }
         }
+    }
+
+    /**
+     * Returns the statistics of the manager (per data source, how many downloads are in progress, how many are queued).
+     *
+     */
+    public static Map<String, String> getCurrentStatus() {
+        Map<String, String> result = new HashMap<>();
+        for (Map.Entry<String, NamedThreadPoolExecutor> entry : instance.downloadWorkers.entrySet()) {
+            result.put(entry.getKey(),
+                       String.format("%d active, %d queued",
+                                     entry.getValue().getActiveCount(), entry.getValue().getQueue().size()));
+        }
+        return result;
     }
 
     private DownloadManager() {
