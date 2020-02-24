@@ -144,6 +144,11 @@ public class DefaultSession implements Session {
         this.jobTemplates.remove(jt.getJobName());
     }
 
+    public int getJobExitCode(String jobId) {
+        final Executor<?> executor = this.runningJobs.get(jobId);
+        return executor != null ? executor.getReturnCode() : Integer.MIN_VALUE;
+    }
+
     public String getJobOutput(String jobId) throws DrmaaException {
         OutputAccumulator consumer = this.jobOutputs.get(jobId);
         return consumer != null ? consumer.getOutput() : "n/a";
@@ -386,7 +391,7 @@ public class DefaultSession implements Session {
         return ret;
     }
 
-    private void    checkSession() throws NoActiveSessionException {
+    private void checkSession() throws NoActiveSessionException {
         if (!this.initialized) {
             throw new NoActiveSessionException();
         }
@@ -401,17 +406,4 @@ public class DefaultSession implements Session {
             throw new InvalidJobTemplateException();
         }
     }
-
-    /*private NodeDescription getAvailableNode(long memory) {
-        NodeDescription node;
-        if (NodeManager.isAvailable() && NodeManager.getInstance() != null) {
-            node = NodeManager.getInstance().getAvailableNode(memory, 0);
-        } else {
-            if (nodeCounter.get() == this.nodes.length) {
-                nodeCounter.set(0);
-            }
-            node = this.nodes[this.nodeCounter.getAndIncrement()];
-        }
-        return node;
-    }*/
 }

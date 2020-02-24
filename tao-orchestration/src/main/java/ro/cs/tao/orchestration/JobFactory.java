@@ -73,6 +73,13 @@ public class JobFactory {
         this.logger = Logger.getLogger(JobFactory.class.getName());
     }
 
+    /**
+     * Creates an execution job for the given workflow, with the given input parameter values
+     *
+     * @param jobName   The name of the new job
+     * @param workflow  The workflow
+     * @param inputs    The (possibly overridden) input parameter values
+     */
     public ExecutionJob createJob(String jobName, WorkflowDescriptor workflow, Map<String, Map<String, String>> inputs) throws PersistenceException {
         ExecutionJob job = null;
         if (workflow != null && workflow.isActive()) {

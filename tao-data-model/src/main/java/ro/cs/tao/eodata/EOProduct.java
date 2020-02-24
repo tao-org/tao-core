@@ -22,8 +22,10 @@ import ro.cs.tao.eodata.enums.Visibility;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Paths;
 import java.util.*;
 
@@ -101,7 +103,11 @@ public class EOProduct extends EOData implements Serializable {
 
     public void setQuicklookLocation(String location) throws URISyntaxException {
         if (location != null) {
-            this.quicklookLocation = Paths.get(location).toUri();
+            try {
+                this.quicklookLocation = new URL(location).toURI();
+            } catch (MalformedURLException e) {
+                this.quicklookLocation = Paths.get(location).toUri();
+            }
         }
     }
 

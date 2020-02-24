@@ -331,7 +331,8 @@ public class Orchestrator extends Notifiable {
                 // For DataSourceExecutionTask, it is the executor that sets the outputs,
                 // hence we need to "confirm" here the outputs of a processing task.
                 if (task instanceof ProcessingExecutionTask) {
-                    task = handleProcessingTask((ProcessingExecutionTask) task, taskNode.getPreserveOutput());
+                    task = handleProcessingTask((ProcessingExecutionTask) task,
+                                                taskNode == null || taskNode.getPreserveOutput());
                 }
                 List<ExecutionTask> nextTasks = findNextTasks(task);
                 if (nextTasks != null && nextTasks.size() > 0) {

@@ -290,6 +290,11 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         return new NodeData(node, Math.min(requestedCPUs, node.getFlavor().getCpu()), memory);
     }
 
+    public NodeData getNode(String nodeName) {
+        final NodeDescription node = nodes.get(nodeName);
+        return node != null ? new NodeData(node, node.getFlavor().getCpu(), node.getFlavor().getMemory()) : null;
+    }
+
     /**
      * Returns the last available resource utilisation information for the given host.
      *

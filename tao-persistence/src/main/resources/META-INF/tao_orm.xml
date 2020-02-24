@@ -662,6 +662,9 @@
             <basic name="executionNodeHostName">
                 <column name="execution_node_host_name" nullable="true" column-definition="character varying(250) NULL"/>
             </basic>
+            <basic name="command">
+                <column name="command" nullable="true" column-definition="varchar NULL"/>
+            </basic>
             <basic name="startTime">
                 <column name="start_time" nullable="true" column-definition="timestamp without time zone NULL"/>
             </basic>

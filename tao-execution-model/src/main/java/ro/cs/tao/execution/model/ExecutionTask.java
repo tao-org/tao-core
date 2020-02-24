@@ -39,6 +39,7 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
     private int level;
     private String resourceId;
     private String executionNodeHostName;
+    private String command;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private LocalDateTime lastUpdated;
@@ -75,6 +76,9 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
 
     public int getLevel() { return level; }
     public void setLevel(int level) { this.level = level; }
+
+    public String getCommand() { return command; }
+    public void setCommand(String command) { this.command = command; }
 
     /**
      * Sets the status of this task.
