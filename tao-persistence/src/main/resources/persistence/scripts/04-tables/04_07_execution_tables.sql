@@ -59,6 +59,7 @@ CREATE TABLE execution.task
 	job_id bigint NULL,
 	task_group_id bigint NULL,
 	execution_node_host_name varchar(250) NULL,
+	command varchar NULL,
 	execution_status_id integer NOT NULL,
 	execution_level integer NOT NULL,
 	execution_log varchar NULL,

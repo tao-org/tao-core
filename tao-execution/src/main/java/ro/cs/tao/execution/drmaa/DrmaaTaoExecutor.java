@@ -30,11 +30,14 @@ import ro.cs.tao.execution.Executor;
 import ro.cs.tao.execution.local.DefaultSession;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
+import ro.cs.tao.execution.model.ExternalTaskListener;
 import ro.cs.tao.execution.model.ProcessingExecutionTask;
 import ro.cs.tao.execution.monitor.NodeManager;
 import ro.cs.tao.execution.monitor.NodeManager.NodeData;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.persistence.ContainerProvider;
+import ro.cs.tao.persistence.PersistenceException;
+import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.utils.executors.BlockingQueueWorker;
 
@@ -65,6 +68,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
     private Session session;
     private final BlockingQueue<Tuple<JobTemplate, ProcessingExecutionTask>> queue;
     private final BlockingQueueWorker<Tuple<JobTemplate, ProcessingExecutionTask>> queueWorker;
+    private final List<ExternalTaskListener> externalTaskListeners;
 
     public static void setTaskProvider(ExecutionTaskProvider provider) { taskProvider = provider; }
 
@@ -80,6 +84,11 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         }
         this.queue = new LinkedBlockingDeque<>();
         this.queueWorker = new BlockingQueueWorker<>(this.queue, this::executeImpl);
+        final Set<ExternalTaskListener> services = ServiceRegistryManager.getInstance().getServiceRegistry(ExternalTaskListener.class).getServices();
+        this.externalTaskListeners = new ArrayList<>();
+        if (services != null) {
+            this.externalTaskListeners.addAll(services);
+        }
     }
 
     @Override
@@ -178,6 +187,13 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                                 logger.severe(String.format("Status update for task %s failed. Reason: %s",
                                                             task.getId(), e.getMessage()));
                             }
+                            String out;
+                            if (session instanceof DefaultSession) {
+                                out = ((DefaultSession) this.session).getJobOutput(task.getResourceId());
+                            } else {
+                                out = "n/a";
+                            }
+                            notifyExternalListeners(task, ExecutionStatus.SUSPENDED.friendlyName(), -1, out);
                             break;
                         case Session.UNDETERMINED:
                         case Session.QUEUED_ACTIVE:
@@ -198,17 +214,23 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                                 markTaskFinished(task, ExecutionStatus.DONE);
                             }
                             logger.fine(String.format("Task %s DONE", task.getId()));
+                            notifyExternalListeners(task, ExecutionStatus.DONE.friendlyName(), 0, null);
                             break;
                         case Session.FAILED:
                             // Just mark the task as finished with failed status
                             markTaskFinished(task, ExecutionStatus.FAILED);
                             String error;
+                            int code;
                             if (session instanceof DefaultSession) {
-                                error = ((DefaultSession) session).getJobOutput(task.getResourceId());
+                                final DefaultSession defaultSession = (DefaultSession) this.session;
+                                error = (defaultSession).getJobOutput(task.getResourceId());
+                                code = defaultSession.getJobExitCode(task.getResourceId());
                             } else {
                                 error = "n/a";
+                                code = -255;
                             }
                             logger.warning(String.format("Task %s FAILED. Process output: %s", task.getId(), error));
+                            notifyExternalListeners(task, ExecutionStatus.FAILED.friendlyName(), code, error);
                             break;
                     }
                 } catch (DrmaaException | InternalException e) {
@@ -235,8 +257,10 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             String id = session.runJob(jt);
             session.deleteJobTemplate(jt);
             if (id == null) {
-                logger.severe(String.format("Unable to run job (id null) for task %s", task.getId()));
+                final String message = String.format("Unable to run job (id null) for task %s", task.getId());
+                logger.severe(message);
                 changeTaskStatus(task, ExecutionStatus.FAILED);
+                notifyExternalListeners(task, message, -1, null);
                 return null;
             }
             task.setResourceId(id);
@@ -249,8 +273,12 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             }
             changeTaskStatus(task,
                              session instanceof DefaultSession ? ExecutionStatus.RUNNING : ExecutionStatus.QUEUED_ACTIVE);
+            notifyExternalListeners(task, null, -1, null);
         } catch (DrmaaException | InternalException e) {
-            logger.severe(String.format("Error submitting task with id %s: %s", task.getId(), e.getMessage()));
+            final String message = String.format("Error submitting task with id %s: %s", task.getId(), e.getMessage());
+            logger.severe(message);
+            changeTaskStatus(task, ExecutionStatus.FAILED);
+            notifyExternalListeners(task, message, -1, null);
         }
         return null;
     }
@@ -276,12 +304,19 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                 job.setAttribute(Constants.MEMORY_REQUIREMENTS_ATTRIBUTE, memory);
             }
         }
-        // the next call blocks until a node is available
-        final NodeData nodeData = getAvailableNode(component.getParallelism(), memory);
+        final String preferredHostName = task.getExecutionNodeHostName();
+        final NodeData nodeData;
+        if (preferredHostName != null) {
+            nodeData = getNode(preferredHostName);
+        } else {
+            // the next call blocks until a node is available
+            nodeData = getAvailableNode(component.getParallelism(), memory);
+        }
         NodeDescription node = nodeData.getNode();
         if (node == null) {
             throw new TryLaterException("Cannot obtain an available node [null]");
         }
+
         if (jt instanceof JobTemplateExtension) {
             JobTemplateExtension job = (JobTemplateExtension) jt;
             if (job.hasAttribute(Constants.NODE_ATTRIBUTE)) {
@@ -289,7 +324,6 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             }
         }
         task.setExecutionNodeHostName(node.getId());
-        //final int cpu = Math.min(component.getParallelism(), node.getProcessorCount());
         final int cpu = nodeData.getCpu();
         final long mem = nodeData.getMemory();
         String location = task.getComponent().getFileLocation();
@@ -312,8 +346,17 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                 pArgs = app.parallelArguments(Boolean.class, true);
             }
         }
-        // Assemble the regular execution command, as produced by the processing component after applying values
-        String executionCmd = task.buildExecutionCommand();
+        String executionCmd = task.getCommand();
+        if (executionCmd == null) {
+            // Assemble the regular execution command, as produced by the processing component after applying values
+            executionCmd = task.buildExecutionCommand();
+            task.setCommand(executionCmd);
+            try {
+                taskProvider.update(task);
+            } catch (PersistenceException e) {
+                e.printStackTrace();
+            }
+        }
         // Insert parallel arguments, if any
         if (pArgs != null) {
             int idx = executionCmd.indexOf('\n');
@@ -414,5 +457,34 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             throw new DeniedByDrmException("No node was found for execution");
         }
         return nodeData;
+    }
+
+    private NodeData getNode(String nodeName) throws DrmaaException {
+        NodeData nodeData = null;
+        if (NodeManager.isAvailable() && NodeManager.getInstance() != null) {
+            nodeData = NodeManager.getInstance().getNode(nodeName);
+        }
+        if (nodeData == null) {
+            throw new DeniedByDrmException(String.format("Node '%s' was not found", nodeName));
+        }
+        return nodeData;
+    }
+
+    private void notifyExternalListeners(ExecutionTask task, String message, int exitCode, String processOutput) {
+        for (ExternalTaskListener listener : this.externalTaskListeners) {
+            switch (task.getExecutionStatus()) {
+                case QUEUED_ACTIVE:
+                    listener.onStarted(task);
+                    break;
+                case DONE:
+                    listener.onCompleted(task, processOutput);
+                    break;
+                case FAILED:
+                    listener.onError(task, message, exitCode, processOutput);
+                    break;
+                default:
+                    break;
+            }
+        }
     }
 }
