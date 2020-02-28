@@ -38,6 +38,11 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
     @Autowired
     private ParameterExpansionRuleRepository expansionRuleRepository;
 
+    @Override
+    public ProcessingComponent get(String id, String containerId) {
+        return repository.getByIdAndContainer(id, containerId);
+    }
+
     /**
      * Retrieve active processing components with SYSTEM and CONTRIBUTOR visibility
      */

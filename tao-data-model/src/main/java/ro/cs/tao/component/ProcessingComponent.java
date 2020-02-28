@@ -171,6 +171,13 @@ public class ProcessingComponent extends TaoComponent {
         this.parameters = parameters;
     }
 
+    public void addParameter(ParameterDescriptor parameterDescriptor) {
+        final List<ParameterDescriptor> descriptors = getParameterDescriptors();
+        if (!descriptors.contains(parameterDescriptor)) {
+            descriptors.add(parameterDescriptor);
+        }
+    }
+
     /**
      * Check if the current component can run on multiple threads.
      */

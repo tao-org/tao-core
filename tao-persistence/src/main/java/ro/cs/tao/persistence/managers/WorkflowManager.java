@@ -138,6 +138,20 @@ public class WorkflowManager extends EntityManager<WorkflowDescriptor, Long, Wor
     }
 
     @Override
+    public void delete(WorkflowDescriptor entity) throws PersistenceException {
+        // check method parameters
+        if (entity == null) {
+            throw new PersistenceException("Invalid entity provided for deleting workflow");
+        }
+        // retrieve WorkflowDescriptor after its identifier
+        final Optional<WorkflowDescriptor> workflow = repository.findById(entity.getId());
+        if (!workflow.isPresent()) {
+            throw new PersistenceException("There is no workflow with the specified identifier: " + entity.getId());
+        }
+        repository.delete(entity);
+    }
+
+    @Override
     public void delete(final Long workflowId) throws PersistenceException {
         // check method parameters
         if (workflowId == null) {

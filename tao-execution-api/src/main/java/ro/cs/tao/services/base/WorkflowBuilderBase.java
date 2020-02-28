@@ -209,7 +209,8 @@ public abstract class WorkflowBuilderBase implements WorkflowBuilder {
             if (fromParentPort == null) {
                 linkSource = component1.getTargets().get(0);
             } else {
-                linkSource = component1.findDescriptor(fromParentPort);
+                linkSource = component1.getTargets().stream().filter(t -> t.getName().equals(fromParentPort))
+                                       .findFirst().orElse(component1.findDescriptor(fromParentPort));
                 if (linkSource == null) {
                     throw new PersistenceException(String.format("No such target descriptor [%s] for component [%s]",
                                                                  fromParentPort, parent.getId()));
@@ -218,7 +219,8 @@ public abstract class WorkflowBuilderBase implements WorkflowBuilder {
             if (toChildPort == null) {
                 linkTarget = component2.getSources().get(0);
             } else {
-                linkTarget = component2.findDescriptor(toChildPort);
+                linkTarget = component2.getSources().stream().filter(s -> s.getName().equals(toChildPort))
+                                       .findFirst().orElse(component2.findDescriptor(toChildPort));
                 if (linkTarget == null) {
                     throw new PersistenceException(String.format("No such source descriptor [%s] for component [%s]",
                                                                  toChildPort, parent.getId()));
@@ -229,7 +231,7 @@ public abstract class WorkflowBuilderBase implements WorkflowBuilder {
         }
     }
 
-    private float[] placeNode(WorkflowNodeDescriptor relativeTo, Direction... directions) {
+    protected float[] placeNode(WorkflowNodeDescriptor relativeTo, Direction... directions) {
         float x,y;
         if (relativeTo == null) {
             x = xOrigin;

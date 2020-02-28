@@ -171,6 +171,67 @@ public class WorkflowUtilities {
         return owner;
     }
 
+    public static List<WorkflowNodeDescriptor> findAncestors(WorkflowNodeDescriptor node) {
+        if (node == null) {
+            return null;
+        }
+        final WorkflowDescriptor workflow = node.getWorkflow();
+        if (workflow == null) {
+            return null;
+        }
+        final List<WorkflowNodeDescriptor> nodes = workflow.getNodes();;
+        final Set<ComponentLink> links = node.getIncomingLinks();
+        if (links == null || links.isEmpty()) {
+            return null;
+        } else {
+            final Set<Long> parents = links.stream().map(ComponentLink::getSourceNodeId).collect(Collectors.toSet());
+            return nodes.stream().filter(n -> parents.contains(n.getId())).collect(Collectors.toList());
+        }
+    }
+
+    public static List<WorkflowNodeDescriptor> findDescendants(WorkflowNodeDescriptor node) {
+        if (node == null) {
+            return null;
+        }
+        final WorkflowDescriptor workflow = node.getWorkflow();
+        if (workflow == null) {
+            return null;
+        }
+        final List<WorkflowNodeDescriptor> nodes = workflow.getNodes();;
+        return nodes.stream().filter(n -> n.getIncomingLinks() != null &&
+                                          n.getIncomingLinks().stream().anyMatch(l -> node.getId() == l.getSourceNodeId()))
+                    .collect(Collectors.toList());
+    }
+
+    public static List<WorkflowNodeDescriptor> findSiblings(WorkflowNodeDescriptor node) {
+        if (node == null) {
+            return null;
+        }
+        final WorkflowDescriptor workflow = node.getWorkflow();
+        if (workflow == null) {
+            return null;
+        }
+        final List<WorkflowNodeDescriptor> nodes = workflow.getNodes();
+        final List<WorkflowNodeDescriptor> siblings = new ArrayList<>();
+        final Set<ComponentLink> links = node.getIncomingLinks();
+        if (links == null || links.isEmpty()) {
+            siblings.addAll(nodes.stream().filter(n -> {
+                final Set<ComponentLink> linkSet = n.getIncomingLinks();
+                return linkSet == null || linkSet.isEmpty();
+            }).collect(Collectors.toList()));
+        } else {
+            final Set<Long> parents = links.stream().map(ComponentLink::getSourceNodeId).collect(Collectors.toSet());
+            siblings.addAll(nodes.stream().filter(n -> {
+                if (n.getId().equals(node.getId())) {
+                    return false;
+                }
+                final Set<ComponentLink> linkSet = n.getIncomingLinks();
+                return linkSet != null && linkSet.stream().anyMatch(l -> parents.contains(l.getSourceNodeId()));
+            }).collect(Collectors.toList()));
+        }
+        return siblings;
+    }
+
     public static SourceDescriptor findSourceByName(String name, WorkflowNodeDescriptor node) throws PersistenceException {
         TaoComponent component = findComponent(node);
         return component != null ? component.getSources().stream().filter(s -> s.getName().equals(name)).findFirst().orElse(null) : null;
