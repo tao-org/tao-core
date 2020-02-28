@@ -21,10 +21,7 @@ import ro.cs.tao.component.validation.*;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Complete descriptor of a component parameter.
@@ -215,6 +212,20 @@ public class ParameterDescriptor extends StringIdentifiable {
         }
         builder.setLength(builder.length() - 1);
         return builder.toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ParameterDescriptor)) return false;
+        if (!super.equals(o)) return false;
+        ParameterDescriptor that = (ParameterDescriptor) o;
+        return name.equals(that.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), name);
     }
 
     protected Validator createValidator() {

@@ -110,7 +110,8 @@ public abstract class EntityManager<T extends Identifiable<K>, K, R extends Pagi
     @Transactional
     public T save(T entity) throws PersistenceException {
         if (!checkEntity(entity, false)) {
-            throw new PersistenceException("Invalid parameters provided for adding new entity!");
+            throw new PersistenceException(String.format("Invalid parameters provided for adding new entity of type %s!",
+                                                         entity != null ? entity.getClass().getSimpleName() : "[null]"));
         }
         if (entity.getId() != null) {
             final Optional<T> existing = repository.findById(entity.getId());
