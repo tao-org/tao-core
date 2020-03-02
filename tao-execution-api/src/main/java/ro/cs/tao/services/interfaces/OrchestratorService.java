@@ -91,5 +91,5 @@ public interface OrchestratorService extends TAOService {
 
     List<ExecutionJobSummary> getCompletedJobs(String userName);
 
-    WorkflowDescriptor startExternalWorkflow(String jsonGraph) throws ExecutionException;
+    WorkflowDescriptor startExternalWorkflow(String jsonGraph, String container) throws ExecutionException;
 }

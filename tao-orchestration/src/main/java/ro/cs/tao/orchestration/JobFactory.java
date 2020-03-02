@@ -17,6 +17,7 @@
 package ro.cs.tao.orchestration;
 
 import ro.cs.tao.component.*;
+import ro.cs.tao.component.enums.ProcessingComponentType;
 import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.datasource.DataSourceComponentGroup;
 import ro.cs.tao.datasource.beans.Query;
@@ -244,6 +245,10 @@ public class JobFactory {
         String nodeAffinity = component.getNodeAffinity();
         if (nodeAffinity != null && !"Any".equals(nodeAffinity)) {
             task.setExecutionNodeHostName(nodeAffinity);
+        }
+        if (component.getComponentType() == ProcessingComponentType.EXTERNAL && customValues != null) {
+            task.setCommand(component.buildExecutionCommand(customValues.stream().collect(Collectors.toMap(ParameterValue::getParameterName, ParameterValue::getParameterValue)),
+                                                            null));
         }
         return task;
     }
