@@ -71,11 +71,11 @@ public abstract class TaoLoginModule implements LoginModule {
         }
         // verify the username and password
         if (loginImpl(username, password) != null) {
-            logger.fine("LDAP Login Module - Successful login!");
+            logger.fine("Login Module - Successful login!");
             succeeded = true;
             return succeeded;
         } else {
-            logger.fine("LDAP Login Module - Invalid login credentials");
+            logger.fine("Login Module - Invalid login credentials");
             succeeded = false;
             username = null;
             password = null;

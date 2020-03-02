@@ -937,6 +937,10 @@
             <basic name="preserveOutput">
                 <column name="preserve_output" nullable="true" column-definition="boolean NULL DEFAULT true"/>
             </basic>
+            <basic name="additionalInfo">
+                <column name="additional_info" nullable="true" column-definition="json NULL"/>
+                <convert converter="ro.cs.tao.persistence.convert.ParameterValueListConverter"/>
+            </basic>
             <many-to-one name="workflow" fetch="LAZY">
                 <join-column name="workflow_id" referenced-column-name="id" nullable="false"/>
             </many-to-one>
