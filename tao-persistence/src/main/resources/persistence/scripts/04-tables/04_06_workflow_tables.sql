@@ -81,6 +81,7 @@ CREATE TABLE workflow.graph_node
 	behavior_id smallint NULL DEFAULT 1,
 	preserve_output boolean NULL DEFAULT true,
 	custom_values json NULL,
+	additional_info json NULL,
     -- special column used by JPA to distinguish which type of object is stored in one row (since this table holds 2 types of entities)
     discriminator integer NOT NULL
 );

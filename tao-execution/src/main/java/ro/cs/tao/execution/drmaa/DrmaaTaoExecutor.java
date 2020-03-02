@@ -193,7 +193,9 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                             } else {
                                 out = "n/a";
                             }
-                            notifyExternalListeners(task, ExecutionStatus.SUSPENDED.friendlyName(), -1, out);
+                            if (task instanceof ProcessingExecutionTask) {
+                                notifyExternalListeners((ProcessingExecutionTask) task, ExecutionStatus.SUSPENDED.friendlyName(), -1, out);
+                            }
                             break;
                         case Session.UNDETERMINED:
                         case Session.QUEUED_ACTIVE:
@@ -214,7 +216,9 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                                 markTaskFinished(task, ExecutionStatus.DONE);
                             }
                             logger.fine(String.format("Task %s DONE", task.getId()));
-                            notifyExternalListeners(task, ExecutionStatus.DONE.friendlyName(), 0, null);
+                            if (task instanceof ProcessingExecutionTask) {
+                                notifyExternalListeners((ProcessingExecutionTask) task, ExecutionStatus.DONE.friendlyName(), 0, null);
+                            }
                             break;
                         case Session.FAILED:
                             // Just mark the task as finished with failed status
@@ -230,7 +234,9 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                                 code = -255;
                             }
                             logger.warning(String.format("Task %s FAILED. Process output: %s", task.getId(), error));
-                            notifyExternalListeners(task, ExecutionStatus.FAILED.friendlyName(), code, error);
+                            if (task instanceof ProcessingExecutionTask) {
+                                notifyExternalListeners((ProcessingExecutionTask) task, ExecutionStatus.FAILED.friendlyName(), code, error);
+                            }
                             break;
                     }
                 } catch (DrmaaException | InternalException e) {
@@ -470,7 +476,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         return nodeData;
     }
 
-    private void notifyExternalListeners(ExecutionTask task, String message, int exitCode, String processOutput) {
+    private void notifyExternalListeners(ProcessingExecutionTask task, String message, int exitCode, String processOutput) {
         for (ExternalTaskListener listener : this.externalTaskListeners) {
             switch (task.getExecutionStatus()) {
                 case QUEUED_ACTIVE:
