@@ -83,6 +83,21 @@ public abstract class AbstractDataSource<Q extends DataQuery> extends DataSource
         Map<String, Map<String, DataSourceParameter>> descriptors = null;
         if (this.parameterProvider != null) {
             descriptors = this.parameterProvider.getSupportedParameters();
+            if (this.filteredParameters != null) {
+                for (Map.Entry<String, Map<String, Map<String, String>>> entry : this.filteredParameters.entrySet()) {
+                    final Map<String, DataSourceParameter> sensorParameters = descriptors.get(entry.getKey());
+                    if (sensorParameters != null) {
+                        final Map<String, Map<String, String>> parameterMap = entry.getValue();
+                        for (Map.Entry<String, Map<String, String>> parameterValues : parameterMap.entrySet()) {
+                            final DataSourceParameter parameter = sensorParameters.get(parameterValues.getKey());
+                            if (parameter != null) {
+                                final Map<String, String> values = parameterValues.getValue();
+                                parameter.setValueSet(values.values().toArray());
+                            }
+                        }
+                    }
+                }
+            }
         }
         return descriptors;
     }

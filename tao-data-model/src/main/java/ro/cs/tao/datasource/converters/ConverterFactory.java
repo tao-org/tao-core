@@ -33,9 +33,9 @@ public class ConverterFactory {
 
     private final Map<Class, Class<? extends QueryParameterConverter>> converters;
 
-    public static ConverterFactory getInstance() { return new ConverterFactory(); }
+    //public static ConverterFactory getInstance() { return new ConverterFactory(); }
 
-    private ConverterFactory() {
+    public ConverterFactory() {
         converters = new HashMap<>();
         converters.put(Date.class, DateParameterConverter.class);
         converters.put(Polygon2D.class, PolygonParameterConverter.class);

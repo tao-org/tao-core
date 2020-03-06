@@ -141,7 +141,7 @@ public class Zipper {
         return target;
     }
 
-    public static Path decompressTarGz(Path source, Path target, boolean deleteAfterDecompress) {
+    public static Path decompressTarGz(Path source, Path target, boolean deleteAfterDecompress) throws IOException {
         if (source == null || !source.toString().endsWith(".tar.gz")) {
             return null;
         }
@@ -155,7 +155,8 @@ public class Zipper {
                         Files.createDirectories(currentPath);
                     } else {
                         int count;
-                        byte buffer[] = new byte[65536];
+                        final byte[] buffer = new byte[65536];
+                        Files.createDirectories(currentPath.getParent());
                         try (OutputStream outputStream = Files.newOutputStream(currentPath)) {
                             while ((count = tarStream.read(buffer, 0, buffer.length)) != -1) {
                                 outputStream.write(buffer, 0, count);
@@ -169,7 +170,7 @@ public class Zipper {
             }
         } catch (IOException ex) {
             logger.warning(ex.getMessage());
-            return null;
+            throw ex;
         }
         return target;
     }

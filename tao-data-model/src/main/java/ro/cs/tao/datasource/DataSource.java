@@ -33,6 +33,14 @@ import java.util.Properties;
 @XmlRootElement(name = "dataSource")
 public abstract class DataSource<Q extends DataQuery> extends StringIdentifiable {
     protected Properties properties;
+    /**
+     * filteredParameters is an optional map that allows to:
+     * 1) reduce the number of valueSet entries of a parameter
+     * 2) map the entries of a valueSet to more friendly display values
+     * The structure of the map is: Map<Sensor, Map<ParameterName, Map<ValueSetEntry, ValueSetFriendlyValue>>>
+     * If the member is not set, no filtering will be done.
+     */
+    protected Map<String, Map<String, Map<String, String>>> filteredParameters;
 
     public DataSource() {
         this.properties = new Properties();
@@ -140,4 +148,17 @@ public abstract class DataSource<Q extends DataQuery> extends StringIdentifiable
      * @param sensorName    The sensor id
      */
     public abstract ProductFetchStrategy getProductFetchStrategy(String sensorName);
+
+    /**
+     * Sets the mapping for filtering valueSets
+     *
+     * @param filteredParameters    The valueSet mappings
+     */
+    public void setFilteredParameters(Map<String, Map<String, Map<String, String>>> filteredParameters) {
+        this.filteredParameters = filteredParameters;
+    }
+
+    public Map<String, Map<String, Map<String, String>>> getFilteredParameters() {
+        return filteredParameters;
+    }
 }
