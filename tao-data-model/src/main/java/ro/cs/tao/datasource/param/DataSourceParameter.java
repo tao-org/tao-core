@@ -18,7 +18,6 @@ package ro.cs.tao.datasource.param;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -99,6 +98,8 @@ public class DataSourceParameter {
     public Object getDefaultValue() { return defaultValue; }
 
     public Object[] getValueSet() { return valueSet; }
+
+    public void setValueSet(Object[] valueSet) { this.valueSet = valueSet; }
 
     public int getOrder() { return order; }
 
