@@ -45,7 +45,6 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
     private static final Map<String, Tuple<Integer, Long>> resourcesUsage = new HashMap<>();
     private static TaskStatusListener statusListener;
     protected Boolean isInitialized = false;
-    //protected final PersistenceManager persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
     protected final Logger logger = Logger.getLogger(getClass().getName());
     private final Timer executionsCheckTimer = new Timer("exec-monitor");
     private final Map<Long, SessionContext> contextMap = new HashMap<>();
