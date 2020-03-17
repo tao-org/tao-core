@@ -15,7 +15,6 @@
  */
 package ro.cs.tao.datasource.param;
 
-import com.google.common.collect.Maps;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import ro.cs.tao.datasource.ProductFetchStrategy;
 
@@ -27,7 +26,6 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.logging.Logger;
 
-import static com.google.common.collect.Iterables.toArray;
 import static ro.cs.tao.serialization.ObjectMapperProvider.JSON_DATA_SOURCE_PARAMETERS_TYPE_REFERENCE;
 import static ro.cs.tao.serialization.ObjectMapperProvider.JSON_OBJECT_MAPPER;
 
@@ -73,9 +71,9 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
 
         if(readParameters != null){
             supportedParameters = readParameters;
-            supportedSensors = toArray(readParameters.keySet(), String.class);
+            supportedSensors = readParameters.keySet().toArray(new String[0]);
         } else {
-            supportedParameters = Maps.newHashMap();
+            supportedParameters = new HashMap<>();
             supportedSensors = new String[0];
         }
     }
