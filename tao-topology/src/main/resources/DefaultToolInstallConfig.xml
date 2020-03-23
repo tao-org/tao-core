@@ -111,7 +111,68 @@
         </uninstall_steps>
 
     </tool_install_config>
-
+    <tool_install_config>
+        <name>Goofys installer</name>
+        <description>Installs Goofys for being able to mount Object Storage containers</description>
+        <version>1.0</version>
+        <priority>1</priority>
+        <install_steps>
+            <step>
+                <order_id>10</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <command>
+                    <![CDATA[
+                        rpm --import https://mirror.go-repo.io/centos/RPM-GPG-KEY-GO-REPO
+                    ]]>
+                </command>
+            </step>
+            <step>
+                <order_id>20</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <ignore_err>true</ignore_err>
+                <command>
+                    <![CDATA[
+                         curl -s https://mirror.go-repo.io/centos/go-repo.repo | tee /etc/yum.repos.d/go-repo.repo
+                    ]]>
+                </command>
+            </step>
+            <step>
+                <order_id>30</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <ignore_err>true</ignore_err>
+                <command>
+                    <![CDATA[
+                         yum install golang
+                    ]]>
+                </command>
+            </step>
+            <step>
+                <order_id>40</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <command>
+                    <![CDATA[
+                        mount -a
+                    ]]>
+                </command>
+            </step>
+        </install_steps>
+        <uninstall_steps>
+            <step>
+                <order_id>10</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <command>
+                    <![CDATA[
+                         docker -v && yum -y remove docker
+                    ]]>
+                </command>
+            </step>
+        </uninstall_steps>
+    </tool_install_config>
     <tool_install_config>
         <name>Network Share Mount</name>
         <description>Mounts the master shared folder to on the execution nodes</description>
