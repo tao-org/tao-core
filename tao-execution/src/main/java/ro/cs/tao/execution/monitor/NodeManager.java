@@ -34,6 +34,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     private static final NamedThreadPoolExecutor executor;
     private static final int DEFAULT_NODE_WAIT_TIME = 10000;
     private static final int DEFAULT_KEEP_ALIVE_SECONDS = 1800;
+    private static final boolean isDevMode;
     private int nodeLimit;
     private NodeProvider nodeProvider;
     private ExecutionTaskProvider taskProvider;
@@ -55,6 +56,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         pollInterval = Integer.parseInt(configurationManager.getValue("topology.node.poll.interval", "15"));
         nodeCreationWaitTime = Integer.parseInt(configurationManager.getValue("topology.node.create.wait", "15"));
         executor = new NamedThreadPoolExecutor("node-manager", 1);
+        isDevMode = Boolean.parseBoolean(configurationManager.getValue("dev.mode.enabled", "false"));
     }
 
     /**
@@ -222,11 +224,11 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
      * @param disk      The disk threshold
      */
     public NodeData getAvailableNode(int cpus, long memory, long disk) {
-        String nodeName = null;
+        String nodeName = isDevMode ?
+                TopologyManager.getInstance().getMasterNodeInfo().getId() : null;
         final Principal principal = SessionStore.currentContext().getPrincipal();
         int requestedCPUs = cpus;
         while (nodeName == null) {
-        	
             try {
             	// check if the user has any CPU limitation
             	final int availableCpu = UserQuotaManager.getInstance().getAvailableCpus(principal);
@@ -286,7 +288,6 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         }
         
         final NodeDescription node = nodes.get(nodeName);
-        
         return new NodeData(node, Math.min(requestedCPUs, node.getFlavor().getCpu()), memory);
     }
 

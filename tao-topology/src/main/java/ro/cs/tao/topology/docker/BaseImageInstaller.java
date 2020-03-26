@@ -33,10 +33,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -145,16 +142,24 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
 
     protected Container readContainerDescriptor(String fileName) throws IOException {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(fileName)))) {
-            String str = reader.lines().collect(Collectors.joining(""));
+            final String str = reader.lines().collect(Collectors.joining(""));
             return JacksonUtil.fromString(str, Container.class);
         }
     }
 
     protected ProcessingComponent[] readComponentDescriptors(String fileName) throws IOException {
+        ProcessingComponent[] components;
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(fileName)))) {
-            String str2 = reader.lines().collect(Collectors.joining(""));
-            return JacksonUtil.OBJECT_MAPPER.readValue(str2, ProcessingComponent[].class);
+            final String str = reader.lines().collect(Collectors.joining(""));
+            components = JacksonUtil.OBJECT_MAPPER.readValue(str, ProcessingComponent[].class);
         }
+        if (components != null) {
+            final ProcessingComponent[] commons = readCommonDescriptors();
+            final int oldLength = components.length;
+            components = Arrays.copyOf(components, oldLength + commons.length);
+            System.arraycopy(commons, 0, components, oldLength, commons.length);
+        }
+        return components;
     }
 
     protected String readContainerLogo(String fileName) throws IOException {
@@ -209,4 +214,11 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
     protected abstract String getPathInSystem();
 
     protected abstract Container initializeContainer(Container container, String path);
+
+    private ProcessingComponent[] readCommonDescriptors() throws IOException {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(BaseImageInstaller.class.getResourceAsStream("common_applications.json")))) {
+            final String str = reader.lines().collect(Collectors.joining(""));
+            return JacksonUtil.OBJECT_MAPPER.readValue(str, ProcessingComponent[].class);
+        }
+    }
 }

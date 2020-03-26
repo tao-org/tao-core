@@ -21,6 +21,7 @@ import ro.cs.tao.Tuple;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.component.Variable;
+import ro.cs.tao.component.enums.ProcessingComponentType;
 import ro.cs.tao.docker.Application;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.execution.Constants;
@@ -405,8 +406,8 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         while (m.find()) {
             argsList.add(m.group(1)); // Add .replace("\"", "") to remove surrounding quotes.
         }
-
-        if (ExecutionConfiguration.useDocker()) {
+        final boolean isUtilityTask = task.getComponent().getComponentType() == ProcessingComponentType.UTILITY;
+        if (ExecutionConfiguration.useDocker() && !isUtilityTask) {
             cmd = "docker";
             final String dockerBindMount;
             if (task.getExecutionNodeHostName().equals(masterHost)) {
@@ -424,7 +425,8 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                 add("-v");              // Bind mount a volume
                 add(dockerBindMount);
                 if (cpu > 0) {
-                    add(SystemUtils.IS_OS_WINDOWS ? "--cpus" : "--cpus");      // Enforce the number of CPUs to be used
+                    // Enforce the number of CPUs to be used
+                    add(SystemUtils.IS_OS_WINDOWS ? "--cpus" : "--cpus"); // TODO: this seems redundant...
                     add(String.valueOf(cpu));
                     task.setUsedCPU(cpu);
                 }

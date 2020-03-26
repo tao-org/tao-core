@@ -30,7 +30,9 @@ public enum ProcessingComponentType implements TaoEnum<Integer> {
     @XmlEnumValue("3")
     AGGREGATE(3, "Aggregate"),
     @XmlEnumValue("4")
-    EXTERNAL(4, "External");
+    EXTERNAL(4, "External"),
+    @XmlEnumValue("5")
+    UTILITY(5, "Utility");
 
     private final int value;
     private final String description;

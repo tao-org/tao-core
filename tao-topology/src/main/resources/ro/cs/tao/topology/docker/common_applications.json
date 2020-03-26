@@ -1,0 +1,118 @@
+[
+  {
+    "id": null,
+    "label": "Copy",
+    "version": "1.0",
+    "description": "Copies files and folders from one location to another location",
+    "authors": "GNU",
+    "copyright": "(C) GNU",
+    "nodeAffinity": "Any",
+    "sources": [
+      {
+        "id": null,
+        "parentId": "Copy",
+        "name": "source",
+        "cardinality": 0,
+        "dataDescriptor": {
+          "formatType": "OTHER"
+        }
+      }
+    ],
+    "targets": [
+      {
+        "id": null,
+        "parentId": "Copy",
+        "name": "dest",
+        "cardinality": 1,
+        "dataDescriptor": {
+          "formatType": "OTHER"
+        }
+      }
+    ],
+    "containerId": null,
+    "fileLocation": "cp",
+    "workingDirectory": ".",
+    "templateType": "VELOCITY",
+    "variables": [],
+    "multiThread": false,
+    "parallelism": 1,
+    "visibility": "SYSTEM",
+    "active": true,
+    "parameterDescriptors": [],
+    "templatecontents": "-r\n-t\n$dest\n$source"
+  },
+  {
+    "id": null,
+    "label": "Move",
+    "version": "1.0",
+    "description": "Moves files and folders from one location to another location",
+    "authors": "GNU",
+    "copyright": "(C) GNU",
+    "nodeAffinity": "Any",
+    "sources": [
+      {
+        "id": null,
+        "parentId": "Move",
+        "name": "source",
+        "cardinality": 0,
+        "dataDescriptor": {
+          "formatType": "OTHER"
+        }
+      }
+    ],
+    "targets": [
+      {
+        "id": null,
+        "parentId": "Move",
+        "name": "dest",
+        "cardinality": 1,
+        "dataDescriptor": {
+          "formatType": "OTHER"
+        }
+      }
+    ],
+    "containerId": null,
+    "fileLocation": "mv",
+    "workingDirectory": ".",
+    "templateType": "VELOCITY",
+    "variables": [],
+    "multiThread": false,
+    "parallelism": 1,
+    "visibility": "SYSTEM",
+    "active": true,
+    "parameterDescriptors": [],
+    "templatecontents": "-t\n$dest/\n$source"
+  },
+  {
+    "id": null,
+    "label": "Delete",
+    "version": "1.0",
+    "description": "Removes files and folders from a location",
+    "authors": "GNU",
+    "copyright": "(C) GNU",
+    "nodeAffinity": "Any",
+    "sources": [
+      {
+        "id": null,
+        "parentId": "Delete",
+        "name": "source",
+        "cardinality": 1,
+        "dataDescriptor": {
+          "formatType": "OTHER"
+        }
+      }
+    ],
+    "targets": [],
+    "containerId": null,
+    "fileLocation": "rm",
+    "workingDirectory": ".",
+    "templateType": "VELOCITY",
+    "variables": [],
+    "multiThread": false,
+    "parallelism": 1,
+    "visibility": "SYSTEM",
+    "active": true,
+    "parameterDescriptors": [],
+    "templatecontents": "-rf\n$source"
+  }
+]

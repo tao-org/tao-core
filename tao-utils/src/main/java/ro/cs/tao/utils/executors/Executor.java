@@ -291,6 +291,9 @@ public abstract class Executor<T> implements Runnable {
             case SSH2:
                 executor = new SSHExecutor(host, arguments, asSuperUser, mode);
                 break;
+            case MOCK:
+                executor = new MockExecutor(host, arguments, asSuperUser);
+                break;
         }
         return executor;
     }

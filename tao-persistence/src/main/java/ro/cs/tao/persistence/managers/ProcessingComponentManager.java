@@ -43,6 +43,11 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
         return repository.getByIdAndContainer(id, containerId);
     }
 
+    @Override
+    public ProcessingComponent getByLabel(String label, String containerId) {
+        return repository.getByLabelAndContainer(label, containerId);
+    }
+
     /**
      * Retrieve active processing components with SYSTEM and CONTRIBUTOR visibility
      */
@@ -54,6 +59,21 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
     @Override
     public List<ProcessingComponent> listUserScriptComponents(String userName) {
         return repository.getUserComponentsByType(userName, ProcessingComponentType.SCRIPT.value());
+    }
+
+    @Override
+    public boolean hasCopyComponent(String containerId) {
+        return getByLabel("Copy", containerId) != null;
+    }
+
+    @Override
+    public boolean hasMoveComponent(String containerId) {
+        return getByLabel("Move", containerId) != null;
+    }
+
+    @Override
+    public boolean hasDeleteComponent(String containerId) {
+        return getByLabel("Delete", containerId) != null;
     }
 
     @Override

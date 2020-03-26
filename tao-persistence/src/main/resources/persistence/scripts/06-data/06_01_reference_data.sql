@@ -4,7 +4,7 @@ INSERT INTO component.component_visibility (visibility) VALUES
 
 -- Processing components type
 INSERT INTO component.processing_component_type (id, type) VALUES
-(1, 'EXECUTABLE'), (2, 'SCRIPT'), (3, 'AGGREGATE'), (4, 'EXTERNAL');
+(1, 'EXECUTABLE'), (2, 'SCRIPT'), (3, 'AGGREGATE'), (4, 'EXTERNAL'), (5, 'UTILITY');
 
 -- Tag type
 INSERT INTO common.tag_type (id, description) VALUES
