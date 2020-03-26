@@ -334,8 +334,10 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         final int cpu = nodeData.getCpu();
         final long mem = nodeData.getMemory();
         String location = task.getComponent().getFileLocation();
-        if (!Paths.get(location).isAbsolute()) {
+        if ((SystemUtils.IS_OS_WINDOWS && !location.startsWith("/") && !Paths.get(location).isAbsolute()) ||
+            (SystemUtils.IS_OS_LINUX && !Paths.get(location).isAbsolute())) {
             String path = container.getApplicationPath();
+            path = path == null ? "" : path;
             if (!path.endsWith("/")) {
                 path += "/";
             }
@@ -415,6 +417,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             } else {
                 dockerBindMount = ExecutionConfiguration.getDockerNodeBindMount();
             }
+            final String dockerBindTempMount = ExecutionConfiguration.getDockerNodeTempMount();
             final List<String> dockerArgsList = new ArrayList<String>() {{
                 add("run");
                 add("-i");              // Keep STDIN open even if not attached
@@ -424,6 +427,10 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                 add("cifs");            // Automatically remove the container when it exits
                 add("-v");              // Bind mount a volume
                 add(dockerBindMount);
+                if (dockerBindTempMount != null) {
+                    add("-v");
+                    add(dockerBindTempMount);
+                }
                 if (cpu > 0) {
                     // Enforce the number of CPUs to be used
                     add(SystemUtils.IS_OS_WINDOWS ? "--cpus" : "--cpus"); // TODO: this seems redundant...

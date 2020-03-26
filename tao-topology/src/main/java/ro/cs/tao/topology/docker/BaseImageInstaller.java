@@ -65,6 +65,20 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
         }
     }
 
+    public static Container readCommonContainerDescriptor() throws IOException {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(BaseImageInstaller.class.getResourceAsStream("common_container.json")))) {
+            final String str = reader.lines().collect(Collectors.joining(""));
+            return JacksonUtil.fromString(str, Container.class);
+        }
+    }
+
+    public static ProcessingComponent[] readCommonComponentsDescriptors() throws IOException {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(BaseImageInstaller.class.getResourceAsStream("common_applications.json")))) {
+            final String str = reader.lines().collect(Collectors.joining(""));
+            return JacksonUtil.OBJECT_MAPPER.readValue(str, ProcessingComponent[].class);
+        }
+    }
+
     @Override
     public Container installImage() {
         Container container = null;
@@ -141,20 +155,6 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
         return dbContainer;
     }
 
-    public Container readCommonContainerDescriptor() throws IOException {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream("common_container.json")))) {
-            final String str = reader.lines().collect(Collectors.joining(""));
-            return JacksonUtil.fromString(str, Container.class);
-        }
-    }
-
-    public ProcessingComponent[] readCommonComponentsDescriptors() throws IOException {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(BaseImageInstaller.class.getResourceAsStream("common_applications.json")))) {
-            final String str = reader.lines().collect(Collectors.joining(""));
-            return JacksonUtil.OBJECT_MAPPER.readValue(str, ProcessingComponent[].class);
-        }
-    }
-
     protected Container readContainerDescriptor(String fileName) throws IOException {
         Container container;
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(fileName)))) {
@@ -179,6 +179,13 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
         if (components != null) {
             final ProcessingComponent[] commons = readCommonComponentsDescriptors();
             final int oldLength = components.length;
+            for (ProcessingComponent c : commons) {
+                if (c.getId() == null || c.getId().equals(c.defaultId())) {
+                    c.setId(UUID.randomUUID().toString());
+                    c.getSources().forEach(s -> s.setParentId(c.getId()));
+                    c.getTargets().forEach(t -> t.setParentId(c.getId()));
+                }
+            }
             components = Arrays.copyOf(components, oldLength + commons.length);
             System.arraycopy(commons, 0, components, oldLength, commons.length);
         }

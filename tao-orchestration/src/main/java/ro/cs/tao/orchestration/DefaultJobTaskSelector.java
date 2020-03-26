@@ -126,7 +126,7 @@ public class DefaultJobTaskSelector implements TaskSelector<ExecutionJob> {
         WorkflowDescriptor workflow = workflowNode.getWorkflow();
         List<WorkflowNodeDescriptor> childNodes = workflow.findChildren(workflow.getNodes(), workflowNode);
         if (childNodes == null || childNodes.size() == 0) {
-            System.out.println("No children for current node " + workflowNode.getComponentId());
+            //System.out.println("No children for current node " + workflowNode.getComponentId());
             return null;
         }
         List<ExecutionTask> nextOnes = new ArrayList<>();

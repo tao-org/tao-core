@@ -49,9 +49,9 @@ public class DockerHelper {
             arguments.add("docker");
             arguments.add("version");
             try {
-                Executor executor = ProcessExecutor.create(ExecutorType.PROCESS,
-                                                           InetAddress.getLocalHost().getHostName(),
-                                                           arguments);
+                Executor<?> executor = ProcessExecutor.create(ExecutorType.PROCESS,
+                                                              InetAddress.getLocalHost().getHostName(),
+                                                              arguments);
                 OutputAccumulator accumulator = new OutputAccumulator();
                 executor.setOutputConsumer(accumulator);
                 if (executor.execute(true) == 0) {

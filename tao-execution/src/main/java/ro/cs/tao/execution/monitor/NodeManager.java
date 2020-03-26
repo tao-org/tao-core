@@ -2,6 +2,7 @@ package ro.cs.tao.execution.monitor;
 
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.configuration.ConfigurationProvider;
+import ro.cs.tao.execution.ExecutionConfiguration;
 import ro.cs.tao.execution.local.DefaultSessionFactory;
 import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
@@ -56,7 +57,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         pollInterval = Integer.parseInt(configurationManager.getValue("topology.node.poll.interval", "15"));
         nodeCreationWaitTime = Integer.parseInt(configurationManager.getValue("topology.node.create.wait", "15"));
         executor = new NamedThreadPoolExecutor("node-manager", 1);
-        isDevMode = Boolean.parseBoolean(configurationManager.getValue("dev.mode.enabled", "false"));
+        isDevMode = ExecutionConfiguration.developmentModeEnabled();
     }
 
     /**

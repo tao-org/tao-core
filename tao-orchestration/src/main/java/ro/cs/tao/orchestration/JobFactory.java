@@ -230,13 +230,17 @@ public class JobFactory {
         ProcessingExecutionTask task = new ProcessingExecutionTask();
         task.setComponent(component);
         // Placeholders for inputs of previous tasks
-        incomingLinks.forEach(link -> {
-            String name = link.getOutput().getName();
-            task.setInputParameterValue(name, null);
-        });
+        if (incomingLinks != null) {
+            incomingLinks.forEach(link -> {
+                String name = link.getOutput().getName();
+                task.setInputParameterValue(name, null);
+            });
+        }
         // Placeholders for outputs of this task
         List<TargetDescriptor> targets = component.getTargets();
-        targets.forEach(t -> task.setOutputParameterValue(t.getName(), null));
+        if (targets != null) {
+            targets.forEach(t -> task.setOutputParameterValue(t.getName(), null));
+        }
         if (customValues != null) {
             for (ParameterValue param : customValues) {
                 task.setInputParameterValue(param.getParameterName(), param.getParameterValue());

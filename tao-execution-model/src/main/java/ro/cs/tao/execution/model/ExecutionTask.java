@@ -224,8 +224,8 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
         List<String> values = (valuesAsString == null || valuesAsString.isEmpty()) ?
                 new ArrayList<>() :
                 getListParameterValues(valuesAsString);
-        values.removeIf("null"::equals);
-        if (!values.contains(newValue)) {
+        values.removeIf(v -> v.endsWith("null") || v.endsWith("[null]"));
+        if (!values.contains(newValue) && newValue != null && !newValue.endsWith("[null]")) {
             values.add(newValue);
         }
         return convertListToSingleValue(values);

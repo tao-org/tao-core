@@ -18,6 +18,7 @@ package ro.cs.tao.execution.local;
 import org.ggf.drmaa.*;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.execution.Constants;
+import ro.cs.tao.execution.ExecutionConfiguration;
 import ro.cs.tao.execution.monitor.NodeManager;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
@@ -52,7 +53,7 @@ public class DefaultSession implements Session {
     private Set<String> cmdsToRunAsSu = new HashSet<String>() {{add("docker");}};
     private Logger logger = Logger.getLogger(DefaultSession.class.getName());
     private boolean canHaveNodeList;
-    private final boolean isDevMode = Boolean.parseBoolean(ConfigurationManager.getInstance().getValue("tao.dev.mode", "false"));
+    private final boolean isDevMode = ExecutionConfiguration.developmentModeEnabled();
 
     @Override
     public String serviceName() { return "NoCRM"; }

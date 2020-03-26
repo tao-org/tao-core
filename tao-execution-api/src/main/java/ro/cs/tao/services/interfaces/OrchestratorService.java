@@ -22,7 +22,6 @@ import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.model.ExecutionJobSummary;
 import ro.cs.tao.execution.model.ExecutionTaskSummary;
 import ro.cs.tao.persistence.PersistenceException;
-import ro.cs.tao.workflow.WorkflowDescriptor;
 
 import java.util.List;
 import java.util.Map;
@@ -91,5 +90,5 @@ public interface OrchestratorService extends TAOService {
 
     List<ExecutionJobSummary> getCompletedJobs(String userName);
 
-    WorkflowDescriptor startExternalWorkflow(String jsonGraph, String container) throws ExecutionException;
+    long startExternalWorkflow(String jsonGraph, String container) throws ExecutionException;
 }
