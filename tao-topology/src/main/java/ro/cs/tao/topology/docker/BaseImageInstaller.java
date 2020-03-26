@@ -21,6 +21,7 @@ import ro.cs.tao.Tag;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.enums.TagType;
 import ro.cs.tao.configuration.ConfigurationManager;
+import ro.cs.tao.docker.Application;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.persistence.ContainerProvider;
 import ro.cs.tao.persistence.PersistenceException;
@@ -141,10 +142,18 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
     }
 
     protected Container readContainerDescriptor(String fileName) throws IOException {
+        Container container;
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(fileName)))) {
             final String str = reader.lines().collect(Collectors.joining(""));
-            return JacksonUtil.fromString(str, Container.class);
+            container = JacksonUtil.fromString(str, Container.class);
         }
+        if (container != null) {
+            final Container fakeContainer = readCommonContainerDescriptor();
+            for (Application app : fakeContainer.getApplications()) {
+                container.addApplication(app);
+            }
+        }
+        return container;
     }
 
     protected ProcessingComponent[] readComponentDescriptors(String fileName) throws IOException {
@@ -154,7 +163,7 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
             components = JacksonUtil.OBJECT_MAPPER.readValue(str, ProcessingComponent[].class);
         }
         if (components != null) {
-            final ProcessingComponent[] commons = readCommonDescriptors();
+            final ProcessingComponent[] commons = readCommonComponentsDescriptors();
             final int oldLength = components.length;
             components = Arrays.copyOf(components, oldLength + commons.length);
             System.arraycopy(commons, 0, components, oldLength, commons.length);
@@ -215,7 +224,14 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
 
     protected abstract Container initializeContainer(Container container, String path);
 
-    private ProcessingComponent[] readCommonDescriptors() throws IOException {
+    private Container readCommonContainerDescriptor() throws IOException {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream("common_container.json")))) {
+            final String str = reader.lines().collect(Collectors.joining(""));
+            return JacksonUtil.fromString(str, Container.class);
+        }
+    }
+
+    private ProcessingComponent[] readCommonComponentsDescriptors() throws IOException {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(BaseImageInstaller.class.getResourceAsStream("common_applications.json")))) {
             final String str = reader.lines().collect(Collectors.joining(""));
             return JacksonUtil.OBJECT_MAPPER.readValue(str, ProcessingComponent[].class);
