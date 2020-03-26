@@ -52,6 +52,7 @@ public class DefaultSession implements Session {
     private Set<String> cmdsToRunAsSu = new HashSet<String>() {{add("docker");}};
     private Logger logger = Logger.getLogger(DefaultSession.class.getName());
     private boolean canHaveNodeList;
+    private final boolean isDevMode = Boolean.parseBoolean(ConfigurationManager.getInstance().getValue("tao.dev.mode", "false"));
 
     @Override
     public String serviceName() { return "NoCRM"; }
@@ -175,19 +176,26 @@ public class DefaultSession implements Session {
                     node = this.nodes != null ? Arrays.stream(this.nodes).filter(n -> host.equals(n.getId())).findFirst().orElse(null) : null;
                 }
             }
-            List<String> args = new ArrayList<>();
+            final List<String> args = new ArrayList<>();
             args.add(jt.getRemoteCommand());
             args.addAll(jt.getArgs());
-            final ExecutionUnit unit = node == null || isLocalHost(node.getId()) ?
-                    new ExecutionUnit(ExecutorType.PROCESS, node.getId(), node.getUserName(), node.getUserPass(),
-                                      args, false/*cmdsToRunAsSu.contains(jt.getRemoteCommand())*/, null) :
-                    new ExecutionUnit(ExecutorType.SSH2, node.getId(), node.getUserName(), node.getUserPass(),
-                                      //Crypto.decrypt(node.getUserPass(), node.getUserName()),
-                                      args, false /*cmdsToRunAsSu.contains(jt.getRemoteCommand())*/, SSHMode.EXEC);
+            final ExecutionUnit unit;
+            if (isDevMode) {
+                unit = new ExecutionUnit(ExecutorType.MOCK, node.getId(), node.getUserName(), node.getUserPass(),
+                        //Crypto.decrypt(node.getUserPass(), node.getUserName()),
+                        args, false /*cmdsToRunAsSu.contains(jt.getRemoteCommand())*/, SSHMode.EXEC);
+            } else {
+                unit = node == null || isLocalHost(node.getId()) ?
+                        new ExecutionUnit(ExecutorType.PROCESS, node.getId(), node.getUserName(), node.getUserPass(),
+                                args, false/*cmdsToRunAsSu.contains(jt.getRemoteCommand())*/, null) :
+                        new ExecutionUnit(ExecutorType.SSH2, node.getId(), node.getUserName(), node.getUserPass(),
+                                //Crypto.decrypt(node.getUserPass(), node.getUserName()),
+                                args, false /*cmdsToRunAsSu.contains(jt.getRemoteCommand())*/, SSHMode.EXEC);
+            }
             if (memConstraint != null) {
                 unit.setMinMemory(memConstraint);
             }
-            String jobId = jt.getJobName() + ":" + System.nanoTime();
+            final String jobId = jt.getJobName() + ":" + System.nanoTime();
             final OutputAccumulator consumer = new OutputAccumulator();
             this.runningJobs.put(jobId, Executor.execute(consumer, unit));
             this.jobOutputs.put(jobId, consumer);
