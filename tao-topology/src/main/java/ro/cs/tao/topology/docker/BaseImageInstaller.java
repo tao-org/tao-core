@@ -141,6 +141,20 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
         return dbContainer;
     }
 
+    public Container readCommonContainerDescriptor() throws IOException {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream("common_container.json")))) {
+            final String str = reader.lines().collect(Collectors.joining(""));
+            return JacksonUtil.fromString(str, Container.class);
+        }
+    }
+
+    public ProcessingComponent[] readCommonComponentsDescriptors() throws IOException {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(BaseImageInstaller.class.getResourceAsStream("common_applications.json")))) {
+            final String str = reader.lines().collect(Collectors.joining(""));
+            return JacksonUtil.OBJECT_MAPPER.readValue(str, ProcessingComponent[].class);
+        }
+    }
+
     protected Container readContainerDescriptor(String fileName) throws IOException {
         Container container;
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(fileName)))) {
@@ -223,18 +237,4 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
     protected abstract String getPathInSystem();
 
     protected abstract Container initializeContainer(Container container, String path);
-
-    private Container readCommonContainerDescriptor() throws IOException {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream("common_container.json")))) {
-            final String str = reader.lines().collect(Collectors.joining(""));
-            return JacksonUtil.fromString(str, Container.class);
-        }
-    }
-
-    private ProcessingComponent[] readCommonComponentsDescriptors() throws IOException {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(BaseImageInstaller.class.getResourceAsStream("common_applications.json")))) {
-            final String str = reader.lines().collect(Collectors.joining(""));
-            return JacksonUtil.OBJECT_MAPPER.readValue(str, ProcessingComponent[].class);
-        }
-    }
 }
