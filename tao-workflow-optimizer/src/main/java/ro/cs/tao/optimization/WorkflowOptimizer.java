@@ -10,6 +10,7 @@ import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 
 /**
@@ -80,19 +81,22 @@ public class WorkflowOptimizer {
             Long vId = wNode.getId();
             OptimizationNode v = references.get(vId);
 
-            for (ComponentLink link: wNode.getIncomingLinks()) {
-                Long uId = link.getSourceNodeId();
+            final Set<ComponentLink> links = wNode.getIncomingLinks();
+            if (links != null) {
+                for (ComponentLink link : links) {
+                    Long uId = link.getSourceNodeId();
 
-                OptimizationNode u = references.get(uId);
+                    OptimizationNode u = references.get(uId);
 
-                if (u == null) {
-                    /* no known optimization node has node with id uId */
-                    return null;
+                    if (u == null) {
+                        /* no known optimization node has node with id uId */
+                        return null;
+                    }
+
+                    /* add link between optimization nodes both ways */
+                    u.addChild(v);
+                    v.addParent(u);
                 }
-
-                /* add link between optimization nodes both ways */
-                u.addChild(v);
-                v.addParent(u);
             }
         }
 

@@ -213,7 +213,8 @@ public class ProcessingExecutionTask extends ExecutionTask {
                     path = context.getNetSpace().resolve(path);
                 }
                 final String fileName;
-                if (this.component.getTargets().stream().anyMatch(t -> t.getDataDescriptor().getLocation().equals(location))) {
+                if (this.component.getTargets().stream().anyMatch(t -> t.getDataDescriptor().getLocation() != null &&
+                                                                       t.getDataDescriptor().getLocation().equals(location))) {
                     fileName = String.format(nameTemplate,
                                              this.getJob().getId(),
                                              this.getId(),

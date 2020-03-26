@@ -29,6 +29,7 @@ import ro.cs.tao.eodata.metadata.DecodeStatus;
 import ro.cs.tao.eodata.metadata.MetadataInspector;
 import ro.cs.tao.eodata.naming.NameExpressionParser;
 import ro.cs.tao.eodata.naming.NamingRule;
+import ro.cs.tao.execution.ExecutionConfiguration;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.execution.persistence.ExecutionJobProvider;
@@ -54,6 +55,7 @@ import ro.cs.tao.spi.OutputDataHandlerManager;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.user.UserPreference;
 import ro.cs.tao.utils.TriFunction;
+import ro.cs.tao.workflow.ParameterValue;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
@@ -338,7 +340,12 @@ public class Orchestrator extends Notifiable {
                 if (nextTasks != null && nextTasks.size() > 0) {
                     logger.finest(String.format("Has %s next tasks", nextTasks.size()));
                     for (ExecutionTask nextTask : nextTasks) {
-                        flowOutputs(task, nextTask);
+                        final WorkflowNodeDescriptor nextNode = workflowNodeProvider.get(nextTask.getWorkflowNodeId());
+                        final List<ParameterValue> additionalInfo = taskNode != null ? taskNode.getAdditionalInfo() : null;
+                        if (!(additionalInfo != null && additionalInfo.stream().anyMatch(p -> "externalTaskId".equals(p.getParameterName())) &&
+                            nextNode != null && nextNode.getAdditionalInfo() == null)) {
+                            flowOutputs(task, nextTask);
+                        }
                         logger.finest(String.format("Task %s about to start.", nextTask.getId()));
                         nextTask.getInputParameterValues().forEach(
                                 v -> logger.finest(String.format("Input: %s=%s", v.getKey(), v.getValue())));
@@ -821,6 +828,9 @@ public class Orchestrator extends Notifiable {
     }
 
     private void persistOutputProducts(ExecutionTask task) {
+        if (ExecutionConfiguration.developmentModeEnabled()) {
+            return;
+        }
         List<Variable> values = task.getOutputParameterValues();
         WorkflowNodeDescriptor node = workflowNodeProvider.get(task.getWorkflowNodeId());
         TaoComponent component;
