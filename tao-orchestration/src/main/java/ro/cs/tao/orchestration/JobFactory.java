@@ -124,7 +124,8 @@ public class JobFactory {
                     } else {
                         taskProvider.update(task);
                     }
-                    logger.fine(String.format("Created task for node %s [level %s]", node.getId(), task.getLevel()));
+                    logger.finest(String.format("Created task %s.%s for node %s [id=%s, level %s]",
+                                              jobName, task.getId(), node.getName(), node.getId(), task.getLevel()));
                 }
             }
         }
