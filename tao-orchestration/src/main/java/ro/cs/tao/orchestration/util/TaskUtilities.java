@@ -20,16 +20,14 @@ import org.springframework.stereotype.Component;
 import ro.cs.tao.component.*;
 import ro.cs.tao.datasource.persistence.DataSourceComponentProvider;
 import ro.cs.tao.execution.ExecutionConfiguration;
-import ro.cs.tao.execution.model.DataSourceExecutionTask;
-import ro.cs.tao.execution.model.ExecutionJob;
-import ro.cs.tao.execution.model.ExecutionStatus;
-import ro.cs.tao.execution.model.ExecutionTask;
+import ro.cs.tao.execution.model.*;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.persistence.GroupComponentProvider;
 import ro.cs.tao.persistence.ProcessingComponentProvider;
 import ro.cs.tao.persistence.WorkflowNodeProvider;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.utils.FileUtilities;
+import ro.cs.tao.workflow.ParameterValue;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.enums.TransitionBehavior;
 
@@ -234,13 +232,34 @@ public class TaskUtilities {
                         .findFirst().orElse(null);
                 final String outValue = out != null ? out.getValue() : null;
                 if (outValue != null) {
-                    toTask.setInputParameterValue(link.getOutput().getName(), outValue);
+                    final String toSourceName = link.getOutput().getName();
+                    final Variable inputVar = toTask.getInputParameterValues().stream().filter(p -> p.getKey().equals(toSourceName)).findFirst().get();
+                    final boolean isExternal = isExternal(parentTask);
+                    if (!isExternal || inputVar.getValue() == null) {
+                        toTask.setInputParameterValue(toSourceName, outValue);
+                        logger.finest(String.format("Transferred output [%s] of task %s to task %s",
+                                                    toSourceName, parentTask.getId(), toTask.getId()));
+                    } else {
+                        logger.finest(String.format("Output [%s] of task %s was NOT transferred to task %s [%s]",
+                                                    toSourceName, parentTask.getId(), toTask.getId(),
+                                                    !isExternal ?
+                                                            String.format("task %s is not external", parentTask.getId()) :
+                                                            String.format("link destination %s already set", toSourceName)));
+                    }
                 } else {
                     logger.severe(String.format("No output was set for task %s", parentTask.getId()));
                 }
             }
         }
         return toTask;
+    }
+
+    public static boolean isExternal(ExecutionTask task) {
+        if (task instanceof ProcessingExecutionTask) {
+            final List<ParameterValue> additionalInfo = workflowNodeProvider.get(task.getWorkflowNodeId()).getAdditionalInfo();
+            return additionalInfo != null && additionalInfo.stream().anyMatch(p -> "externalTaskId".equals(p.getParameterName()));
+        }
+        return false;
     }
 
     public static String relativizePathForExecution(String path) {
