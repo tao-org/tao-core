@@ -143,7 +143,8 @@ CREATE TABLE component.processing_component
 	tags text NULL,
 	created timestamp NULL DEFAULT now(),
     modified timestamp NULL,
-	active boolean NULL DEFAULT true
+	active boolean NULL DEFAULT true,
+	transient boolean NULL DEFAULT false
 );
 ALTER TABLE component.processing_component ADD CONSTRAINT PK_processing_component
 	PRIMARY KEY (id);
