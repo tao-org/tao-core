@@ -177,7 +177,7 @@ public class ProcessingExecutionTask extends ExecutionTask {
                     .filter(v -> descriptor.getName().equals(v.getKey())).findFirst().orElse(null);
             if (variable != null) {
                 String location = variable.getValue() != null ? variable.getValue() : descriptor.getDataDescriptor().getLocation();
-                if (location != null) {
+                if (location != null && !this.getJob().isExternal()) {
                     this.instanceTargetOutput = getInstanceTargetOuptut(location);
                     inputParams.put(descriptor.getName(), this.instanceTargetOutput);
                     setInputParameterValue(descriptor.getName(), this.instanceTargetOutput);
