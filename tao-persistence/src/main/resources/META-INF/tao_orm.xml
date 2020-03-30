@@ -804,6 +804,9 @@
             <basic name="userName">
                 <column name="username" nullable="false" column-definition="character varying(50) NOT NULL"/>
             </basic>
+            <basic name="external">
+                <column name="is_external" nullable="true" column-definition="boolean NULL DEFAULT false"/>
+            </basic>
 
             <one-to-many name="tasks" fetch="EAGER" mapped-by="job" />
         </attributes>
