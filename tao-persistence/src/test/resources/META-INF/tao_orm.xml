@@ -366,21 +366,20 @@
             <basic name="active">
                 <column name="active" nullable="true" column-definition="boolean NULL DEFAULT true"/>
             </basic>
-
             <basic name="componentType">
                 <column name="component_type_id" nullable="true" column-definition="integer NULL DEFAULT 1"/>
             </basic>
-
             <basic name="containerId">
                 <column name="container_id" nullable="false" column-definition="varchar(1024) NOT NULL"/>
             </basic>
-
             <basic name="templateContents">
                 <column name="template_contents" nullable="true" column-definition="text NULL"/>
             </basic>
-            
             <basic name="owner">
                 <column name="owner_user" nullable="true" column-definition="varchar NULL"/>
+            </basic>
+            <basic name="isTransient">
+                <column name="transient" nullable="false" column-definition="varchar NULL DEFAULT false"/>
             </basic>
 
             <many-to-many name="parameterDescriptors" fetch="EAGER">

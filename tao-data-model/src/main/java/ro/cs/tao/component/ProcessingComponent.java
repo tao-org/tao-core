@@ -67,6 +67,7 @@ public class ProcessingComponent extends TaoComponent {
     private boolean active;
     private ProcessingComponentType componentType;
     private String owner;
+    private boolean isTransient;
 
 
     public ProcessingComponent() {
@@ -76,7 +77,7 @@ public class ProcessingComponent extends TaoComponent {
      * Returns the binary/executable of the tool
      */
     public String getFileLocation() {
-        return fileLocation;
+        return this.fileLocation;
     }
     /**
      * Sets the binary/executable of the tool
@@ -91,7 +92,7 @@ public class ProcessingComponent extends TaoComponent {
      */
     @JsonIgnore
     public String getExpandedFileLocation() {
-        return expandedFileLocation;
+        return this.expandedFileLocation;
     }
     /**
      * Sets the full path (inside the container) of the tool binary/executable.
@@ -105,7 +106,7 @@ public class ProcessingComponent extends TaoComponent {
      * Returns the working directory for the tool.
      */
     public String getWorkingDirectory() {
-        return workingDirectory;
+        return this.workingDirectory;
     }
 
     /**
@@ -120,7 +121,7 @@ public class ProcessingComponent extends TaoComponent {
      */
     @JsonIgnore
     public Template getTemplate() {
-        return template;
+        return this.template;
     }
 
     /**
@@ -143,7 +144,7 @@ public class ProcessingComponent extends TaoComponent {
      */
     @XmlElementWrapper(name = "variables")
     public Set<Variable> getVariables() {
-        return variables;
+        return this.variables;
     }
 
     /**
@@ -182,7 +183,7 @@ public class ProcessingComponent extends TaoComponent {
      * Check if the current component can run on multiple threads.
      */
     public boolean getMultiThread() {
-        return multiThread;
+        return this.multiThread;
     }
     /**
      * Instructs the current component to run on multiple threads.
@@ -195,7 +196,7 @@ public class ProcessingComponent extends TaoComponent {
      * Returns the visibility of the component.
      */
     public ProcessingComponentVisibility getVisibility() {
-        return visibility;
+        return this.visibility;
     }
 
     /**
@@ -209,7 +210,7 @@ public class ProcessingComponent extends TaoComponent {
      * Checks if the component is active (i.e. not deleted).
      */
     public boolean getActive() {
-        return active;
+        return this.active;
     }
 
     /**
@@ -224,7 +225,7 @@ public class ProcessingComponent extends TaoComponent {
      */
     @XmlTransient
     public TemplateType getTemplateType() {
-        return templateType != null ? templateType : TemplateType.VELOCITY;
+        return this.templateType != null ? this.templateType : TemplateType.VELOCITY;
     }
 
     /**
@@ -243,7 +244,7 @@ public class ProcessingComponent extends TaoComponent {
      */
     @JsonGetter(value = "templatecontents")
     public String getTemplateContents(){
-        return template != null ? template.getContents() : null;
+        return this.template != null ? this.template.getContents() : null;
     }
     /**
      * Sets the template contents of the component.
@@ -251,9 +252,9 @@ public class ProcessingComponent extends TaoComponent {
     @JsonSetter(value = "templatecontents")
     public void setTemplateContents(String contents) {
         this.template = new BasicTemplate();
-        template.setTemplateType(getTemplateType());
-        template.setContents(contents, false);
-        template.associateWith(getTemplateEngine());
+        this.template.setTemplateType(getTemplateType());
+        this.template.setContents(contents, false);
+        this.template.associateWith(getTemplateEngine());
     }
 
     /**
@@ -271,10 +272,10 @@ public class ProcessingComponent extends TaoComponent {
      * Returns the recommended degree of parallelism for this component.
      */
     public Integer getParallelism() {
-        if (parallelism == null) {
-            parallelism = 1;
+        if (this.parallelism == null) {
+            this.parallelism = 1;
         }
-        return parallelism;
+        return this.parallelism;
     }
     /**
      * Sets the recommended degree of parallelsim for this component
@@ -309,14 +310,18 @@ public class ProcessingComponent extends TaoComponent {
         }
     }
 
-    public String getContainerId() { return containerId; }
+    public String getContainerId() { return this.containerId; }
     public void setContainerId(String containerId) { this.containerId = containerId; }
 
     public ProcessingComponentType getComponentType() { return componentType; }
     public void setComponentType(ProcessingComponentType componentType) { this.componentType = componentType; }
 
-    public String getOwner() { return owner; }
+    public String getOwner() { return this.owner; }
     public void setOwner(String owner) { this.owner = owner; }
+
+    public boolean isTransient() { return this.isTransient; }
+
+    public void setTransient(boolean value) { this.isTransient = value; }
 
     @Override
     public ProcessingComponent clone() throws CloneNotSupportedException {
