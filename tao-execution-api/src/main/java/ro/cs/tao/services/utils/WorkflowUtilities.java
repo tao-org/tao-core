@@ -232,6 +232,27 @@ public class WorkflowUtilities {
         return siblings;
     }
 
+    public static void deleteWorkflowNodes(long workflowId) throws PersistenceException {
+        WorkflowDescriptor workflow = persistenceManager.workflows().get(workflowId);
+        if (workflow == null) {
+            throw new PersistenceException("Non-existent workflow with id=%d", workflowId);
+        }
+        final List<WorkflowNodeDescriptor> nodes = workflow.getOrderedNodes();
+        if (nodes != null) {
+            for (WorkflowNodeDescriptor node : nodes) {
+                final Set<ComponentLink> links = node.getIncomingLinks();
+                if (links != null) {
+                    links.clear();
+                    persistenceManager.workflowNodes().update(node);
+                }
+            }
+            for (WorkflowNodeDescriptor node : nodes) {
+                persistenceManager.workflowNodes().delete(node);
+            }
+        }
+        persistenceManager.workflows().delete(workflowId);
+    }
+
     public static SourceDescriptor findSourceByName(String name, WorkflowNodeDescriptor node) throws PersistenceException {
         TaoComponent component = findComponent(node);
         return component != null ? component.getSources().stream().filter(s -> s.getName().equals(name)).findFirst().orElse(null) : null;

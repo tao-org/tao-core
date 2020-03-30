@@ -17,6 +17,7 @@ package ro.cs.tao.orchestration;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import ro.cs.tao.EnumUtils;
+import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.component.Variable;
@@ -51,6 +52,7 @@ import ro.cs.tao.security.SessionContext;
 import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.serialization.StringListAdapter;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
+import ro.cs.tao.services.utils.WorkflowUtilities;
 import ro.cs.tao.spi.OutputDataHandlerManager;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.user.UserPreference;
@@ -160,7 +162,7 @@ public class Orchestrator extends Notifiable {
      * @param inputs     The overridden parameter values for workflow nodes
      * @throws ExecutionException In case anything goes wrong or a job for this workflow was already created
      */
-    public long startWorkflow(SessionContext context, long workflowId, String description,
+    public ExecutionJob startWorkflow(SessionContext context, long workflowId, String description,
                               Map<String, Map<String, String>> inputs, ExecutorService executorService) throws ExecutionException {
         try {
             WorkflowDescriptor descriptor = workflowProvider.get(workflowId);
@@ -171,7 +173,7 @@ public class Orchestrator extends Notifiable {
             // check if the user's disk quota is not reached
             if (!checkProcessingQuota(principal)) {
             	// do not create any job
-            	return -1;
+            	return null;
             }
 
             WorkflowDescriptor optimized = WorkflowOptimizer.getOptimizedWorkflow(descriptor);
@@ -186,8 +188,32 @@ public class Orchestrator extends Notifiable {
 
             this.executors.put(principal.getName(), executorService);
             executorService.submit(() -> JobCommand.START.applyTo(executionJob));
-            return executionJob.getId();
+            return executionJob;
         } catch (QuotaException | PersistenceException e) {
+            logger.severe(e.getMessage());
+            throw new ExecutionException(e.getMessage());
+        }
+    }
+
+    /**
+     * Creates a job from an externally-defined workflow and starts its execution.
+     *
+     * @param context 	 The session context
+     * @param workflowId The workflow identifier
+     * @param inputs     The overridden parameter values for workflow nodes
+     * @throws ExecutionException In case anything goes wrong or a job for this workflow was already created
+     */
+    public ExecutionJob startExternalWorkflow(SessionContext context, long workflowId, String description,
+                                              Map<String, Map<String, String>> inputs, ExecutorService executorService) throws ExecutionException {
+        ExecutionJob executionJob;
+        try {
+            executionJob = startWorkflow(context, workflowId, description, inputs, executorService);
+            if (executionJob != null) {
+                executionJob.setExternal(true);
+                jobProvider.update(executionJob);
+            }
+            return executionJob;
+        } catch (Exception e) {
             logger.severe(e.getMessage());
             throw new ExecutionException(e.getMessage());
         }
@@ -395,6 +421,7 @@ public class Orchestrator extends Notifiable {
                         logger.info(msg);
                         Messaging.send(currentContext.getPrincipal(), Topic.EXECUTION.value(), this, msg);
                         shutDownExecutor(currentContext);
+                        cleanupTransientComponents(job);
                     } else {
                         logger.fine("Job has still tasks to complete");
                     }
@@ -421,6 +448,7 @@ public class Orchestrator extends Notifiable {
                     jobProvider.update(job);
                     Messaging.send(currentContext.getPrincipal(), Topic.EXECUTION.value(), this, msg);
                     shutDownExecutor(currentContext);
+                    cleanupTransientComponents(job);
                 }
             }
         } catch (PersistenceException e) {
@@ -449,6 +477,30 @@ public class Orchestrator extends Notifiable {
 		} catch (QuotaException e) {
 			logger.severe(String.format("Error updating quota. Error message: %s", e.getMessage()));
 		}
+    }
+
+    private void cleanupTransientComponents(ExecutionJob job) {
+        if (job.isExternal()) {
+            try {
+                WorkflowUtilities.deleteWorkflowNodes(job.getWorkflowId());
+            } catch (Exception e) {
+                logger.severe(String.format("Cannot remove nodes for workflow %d. Reason: %s", job.getWorkflowId(), e.getMessage()));
+            }
+            final List<ExecutionTask> tasks = job.getTasks();
+            if (tasks != null) {
+                for (ExecutionTask task : tasks) {
+                    final TaoComponent component = TaskUtilities.getComponentFor(task);
+                    if (component instanceof ProcessingComponent && ((ProcessingComponent) component).isTransient()) {
+                        try {
+                            processingComponentProvider.delete(component.getId());
+                        } catch (Exception e) {
+                            logger.severe(String.format("Cannot remove transient node %s or component %s. Reason: %s",
+                                                        task.getWorkflowNodeId(), component.getId(), e.getMessage()));
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private ExecutionTask handleProcessingTask(ProcessingExecutionTask pcTask, boolean keepOutput) throws PersistenceException {
