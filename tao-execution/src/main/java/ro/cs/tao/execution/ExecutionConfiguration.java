@@ -13,6 +13,7 @@ public class ExecutionConfiguration {
     private static String dockerMasterBindMount;
     private static String dockerNodeBindMount;
     private static String dockerTempMount;
+    private static String dockerCfgMount;
     private static String containerMount;
     private static String dockerRegistry;
     private static Boolean useDocker;
@@ -62,6 +63,16 @@ public class ExecutionConfiguration {
             }
         }
         return dockerTempMount;
+    }
+
+    public static String getDockerNodeConfigMount() {
+        if (dockerCfgMount == null) {
+            final String value = ConfigurationManager.getInstance().getValue(Constants.DOCKER_BIND_MOUNT_CFG_CONFIG_KEY);
+            if (!StringUtilities.isNullOrEmpty(value)) {
+                dockerCfgMount = value.trim() + ":/cfg";
+            }
+        }
+        return dockerCfgMount;
     }
 
     public static String getDockerRegistry() {

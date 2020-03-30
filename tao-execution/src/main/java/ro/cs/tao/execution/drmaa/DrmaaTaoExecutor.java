@@ -418,6 +418,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                 dockerBindMount = ExecutionConfiguration.getDockerNodeBindMount();
             }
             final String dockerBindTempMount = ExecutionConfiguration.getDockerNodeTempMount();
+            final String dockerBindCfgMount = ExecutionConfiguration.getDockerNodeConfigMount();
             final List<String> dockerArgsList = new ArrayList<String>() {{
                 add("run");
                 add("-i");              // Keep STDIN open even if not attached
@@ -430,6 +431,10 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                 if (dockerBindTempMount != null) {
                     add("-v");
                     add(dockerBindTempMount);
+                }
+                if (dockerBindCfgMount != null) {
+                    add("-v");
+                    add(dockerBindCfgMount);
                 }
                 if (cpu > 0) {
                     // Enforce the number of CPUs to be used
