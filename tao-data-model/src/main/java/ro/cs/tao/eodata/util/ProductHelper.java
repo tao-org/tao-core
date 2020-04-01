@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License along
  * with this program; if not, see http://www.gnu.org/licenses/
  */
-package ro.cs.tao.datasource.remote;
+package ro.cs.tao.eodata.util;
 
 import java.nio.file.Path;
 import java.util.Map;
@@ -27,6 +27,7 @@ import java.util.regex.Pattern;
  * @author Cosmin Cara
  */
 public abstract class ProductHelper {
+    public static final String URL_SEPARATOR = "/";
     protected Path path;
     protected String name;
     protected String id;

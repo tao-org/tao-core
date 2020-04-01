@@ -135,6 +135,8 @@ public abstract class DataQuery extends StringIdentifiable {
 
     public void setMaxResults(int value) { this.limit = value; }
 
+    public boolean supportsPaging() { return true; }
+
     public List<EOProduct> execute() {
         final Set<String> mandatoryParams = getMandatoryParams();
         final Map<String, QueryParameter> actualParameters = getParameters();
