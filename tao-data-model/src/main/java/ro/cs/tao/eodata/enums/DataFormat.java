@@ -39,7 +39,12 @@ public enum DataFormat implements TaoEnum<Integer> {
      * Other image data format
      */
     @XmlEnumValue("3")
-    OTHER(3, "Unknown");
+    OTHER(3, "Unknown"),
+    /**
+     *
+     */
+    @XmlEnumValue("4")
+    DB_CONNECTION(4, "Database Connection");
 
     /**
      * Numerical value for enum constants

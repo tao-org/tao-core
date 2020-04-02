@@ -19,11 +19,13 @@ import org.apache.commons.lang3.SystemUtils;
 import org.ggf.drmaa.*;
 import ro.cs.tao.Tuple;
 import ro.cs.tao.component.ProcessingComponent;
+import ro.cs.tao.component.SourceDescriptor;
 import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.component.Variable;
 import ro.cs.tao.component.enums.ProcessingComponentType;
 import ro.cs.tao.docker.Application;
 import ro.cs.tao.docker.Container;
+import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.execution.Constants;
 import ro.cs.tao.execution.ExecutionConfiguration;
 import ro.cs.tao.execution.ExecutionException;
@@ -54,6 +56,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Executor class that delegates the execution to a DRMAA session.
@@ -360,6 +363,16 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             // Assemble the regular execution command, as produced by the processing component after applying values
             executionCmd = task.buildExecutionCommand();
             task.setCommand(executionCmd);
+            final List<String> dbSources = component.getSources().stream()
+                    .filter(s -> DataFormat.DB_CONNECTION == s.getDataDescriptor().getFormatType())
+                    .map(SourceDescriptor::getName).collect(Collectors.toList());
+            if (ExecutionConfiguration.useDocker()) {
+                // if using Docker and having some external DB connections, they will be passed to Docker
+                // as environment variables, not as arguments
+                for (String dbSource : dbSources) {
+                    executionCmd = executionCmd.replace("-" + dbSource, "-e " + dbSource);
+                }
+            }
             try {
                 taskProvider.update(task);
             } catch (PersistenceException e) {
