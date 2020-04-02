@@ -16,7 +16,7 @@ INSERT INTO component.condition (id, description) VALUES
 
 -- Data formats
 INSERT INTO product.data_format (type) VALUES
-('RASTER'), ('VECTOR'), ('OTHER');
+('RASTER'), ('VECTOR'), ('OTHER'), ('DB_CONNECTION');
 
 -- Data types
 INSERT INTO product.data_type (type) VALUES
