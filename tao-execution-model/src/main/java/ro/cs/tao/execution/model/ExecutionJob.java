@@ -37,6 +37,7 @@ public class ExecutionJob extends LongIdentifiable implements StatusChangeListen
     private String userName;
     private ExecutionStatus executionStatus;
     private boolean external;
+    private ExternalTaskListenerDescriptor callbackDescriptor;
     private List<ExecutionTask> tasks;
 
     public ExecutionJob() {}
@@ -86,6 +87,9 @@ public class ExecutionJob extends LongIdentifiable implements StatusChangeListen
 
     public boolean isExternal() { return external; }
     public void setExternal(boolean external) { this.external = external; }
+
+    public ExternalTaskListenerDescriptor getCallbackDescriptor() { return callbackDescriptor; }
+    public void setCallbackDescriptor(ExternalTaskListenerDescriptor descriptor) { this.callbackDescriptor = descriptor; }
 
     public void setTasks(List<ExecutionTask> tasks) {
         this.tasks = tasks;

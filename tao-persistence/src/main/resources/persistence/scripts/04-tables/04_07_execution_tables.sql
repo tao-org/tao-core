@@ -25,7 +25,8 @@ CREATE TABLE execution.job
 	username varchar(50) NOT NULL,
 	query_id bigint NULL,
 	execution_status_id integer NOT NULL,
-	is_external boolean NULL DEFAULT false
+	is_external boolean NULL DEFAULT false,
+	callback json NULL
 );
 ALTER TABLE execution.job ADD CONSTRAINT PK_job PRIMARY KEY (id);
 ALTER TABLE execution.job ADD CONSTRAINT FK_job_workflow
