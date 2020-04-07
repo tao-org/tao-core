@@ -782,6 +782,7 @@
     <entity class="ro.cs.tao.execution.model.ExecutionJob" access="PROPERTY">
         <table name="execution.job"/>
         <convert converter="ro.cs.tao.persistence.convert.ExecutionStatusConverter" attribute-name="executionStatus" />
+        <convert converter="ro.cs.tao.persistence.convert.JsonCallbackConverter" attribute-name="callback"/>
         <attributes>
             <basic name="name">
                 <column name="name" nullable="false" column-definition="text not null"/>
@@ -806,6 +807,9 @@
             </basic>
             <basic name="external">
                 <column name="is_external" nullable="true" column-definition="boolean NULL DEFAULT false"/>
+            </basic>
+            <basic name="callbackDescriptor">
+                <column name="callback" nullable="true" column-definition="json NULL"/>
             </basic>
 
             <one-to-many name="tasks" fetch="EAGER" mapped-by="job" />
@@ -1435,5 +1439,6 @@
     <converter class="ro.cs.tao.persistence.convert.ProductStatusConverter" />
     <converter class="ro.cs.tao.persistence.convert.AggregatorConverter" />
     <converter class="ro.cs.tao.persistence.convert.NodeRoleConverter" />
+    <converter class="ro.cs.tao.persistence.convert.JsonCallbackConverter" />
 
 </entity-mappings>

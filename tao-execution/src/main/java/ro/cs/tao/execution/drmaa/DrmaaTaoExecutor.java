@@ -31,10 +31,7 @@ import ro.cs.tao.execution.ExecutionConfiguration;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.Executor;
 import ro.cs.tao.execution.local.DefaultSession;
-import ro.cs.tao.execution.model.ExecutionStatus;
-import ro.cs.tao.execution.model.ExecutionTask;
-import ro.cs.tao.execution.model.ExternalTaskListener;
-import ro.cs.tao.execution.model.ProcessingExecutionTask;
+import ro.cs.tao.execution.model.*;
 import ro.cs.tao.execution.monitor.NodeManager;
 import ro.cs.tao.execution.monitor.NodeManager.NodeData;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
@@ -51,6 +48,7 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -505,18 +503,22 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
 
     private void notifyExternalListeners(ProcessingExecutionTask task, String message, int exitCode, String processOutput) {
         for (ExternalTaskListener listener : this.externalTaskListeners) {
-            switch (task.getExecutionStatus()) {
-                case QUEUED_ACTIVE:
-                    listener.onStarted(task);
-                    break;
-                case DONE:
-                    listener.onCompleted(task, processOutput);
-                    break;
-                case FAILED:
-                    listener.onError(task, message, exitCode, processOutput);
-                    break;
-                default:
-                    break;
+            final ExternalTaskListenerDescriptor jobCallback = task.getJob().getCallbackDescriptor();
+            if (Objects.equals(jobCallback, listener.getDescriptor())) {
+                // only call the listener corresponding to the external listener descriptor of the job
+                switch (task.getExecutionStatus()) {
+                    case QUEUED_ACTIVE:
+                        listener.onStarted(task);
+                        break;
+                    case DONE:
+                        listener.onCompleted(task, processOutput);
+                        break;
+                    case FAILED:
+                        listener.onError(task, message, exitCode, processOutput);
+                        break;
+                    default:
+                        break;
+                }
             }
         }
     }

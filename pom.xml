@@ -32,6 +32,7 @@
         <module>tao-service-base-api</module>
         <module>tao-mail</module>
         <module>tao-core-kit</module>
+        <module>tao-transfer</module>
     </modules>
 
     <properties>

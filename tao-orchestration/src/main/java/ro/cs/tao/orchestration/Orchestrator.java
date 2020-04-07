@@ -204,12 +204,14 @@ public class Orchestrator extends Notifiable {
      * @throws ExecutionException In case anything goes wrong or a job for this workflow was already created
      */
     public ExecutionJob startExternalWorkflow(SessionContext context, long workflowId, String description,
-                                              Map<String, Map<String, String>> inputs, ExecutorService executorService) throws ExecutionException {
+                                              Map<String, Map<String, String>> inputs, ExecutorService executorService,
+                                              ExternalTaskListenerDescriptor callback) throws ExecutionException {
         ExecutionJob executionJob;
         try {
             executionJob = startWorkflow(context, workflowId, description, inputs, executorService);
             if (executionJob != null) {
                 executionJob.setExternal(true);
+                executionJob.setCallbackDescriptor(callback);
                 jobProvider.update(executionJob);
             }
             return executionJob;
