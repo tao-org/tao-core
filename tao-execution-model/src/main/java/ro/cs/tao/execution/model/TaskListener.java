@@ -1,25 +1,24 @@
 package ro.cs.tao.execution.model;
 
 /**
- * Callback interface for implementors that notify systems external to TAO that wish to receive
- * execution task updates.
+ * Callback interface for implementors that wish to be notified about execution task updates.
  *
  * @author  Cosmin Cara
  * @since   1.1.0
  */
-public interface ExternalTaskListener {
+public interface TaskListener {
     /**
-     * Sets the connection information descriptor for the external system/listener.
+     * Sets the connection information descriptor for the listener.
      * If the descriptor is not set, subsequent calls of other methods of this listener will fail.
      *
      * @param descriptor    The descriptor encapsulating the connection information
      */
-    void setDescriptor(ExternalTaskListenerDescriptor descriptor);
+    void setDescriptor(EndpointDescriptor descriptor);
 
     /**
      * Returns the connection information descriptor associated with this listener.
      */
-    ExternalTaskListenerDescriptor getDescriptor();
+    EndpointDescriptor getDescriptor();
 
     /**
      * Called after an execution task has transited to RUNNING state.
@@ -32,7 +31,7 @@ public interface ExternalTaskListener {
      */
     void onUpdated(ProcessingExecutionTask task);
     /**
-     * Called after an execution task has completed successfuly.
+     * Called after an execution task has completed successfully.
      * @param task  The TAO execution task
      * @param processOutput The console output of the task
      */

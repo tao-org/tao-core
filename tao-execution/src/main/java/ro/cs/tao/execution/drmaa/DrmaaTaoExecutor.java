@@ -70,7 +70,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
     private Session session;
     private final BlockingQueue<Tuple<JobTemplate, ProcessingExecutionTask>> queue;
     private final BlockingQueueWorker<Tuple<JobTemplate, ProcessingExecutionTask>> queueWorker;
-    private final List<ExternalTaskListener> externalTaskListeners;
+    private final List<TaskListener> taskListeners;
 
     public static void setTaskProvider(ExecutionTaskProvider provider) { taskProvider = provider; }
 
@@ -86,10 +86,10 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         }
         this.queue = new LinkedBlockingDeque<>();
         this.queueWorker = new BlockingQueueWorker<>(this.queue, this::executeImpl);
-        final Set<ExternalTaskListener> services = ServiceRegistryManager.getInstance().getServiceRegistry(ExternalTaskListener.class).getServices();
-        this.externalTaskListeners = new ArrayList<>();
+        final Set<TaskListener> services = ServiceRegistryManager.getInstance().getServiceRegistry(TaskListener.class).getServices();
+        this.taskListeners = new ArrayList<>();
         if (services != null) {
-            this.externalTaskListeners.addAll(services);
+            this.taskListeners.addAll(services);
         }
     }
 
@@ -502,8 +502,8 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
     }
 
     private void notifyExternalListeners(ProcessingExecutionTask task, String message, int exitCode, String processOutput) {
-        for (ExternalTaskListener listener : this.externalTaskListeners) {
-            final ExternalTaskListenerDescriptor jobCallback = task.getJob().getCallbackDescriptor();
+        for (TaskListener listener : this.taskListeners) {
+            final EndpointDescriptor jobCallback = task.getJob().getCallbackDescriptor();
             if (Objects.equals(jobCallback, listener.getDescriptor())) {
                 // only call the listener corresponding to the external listener descriptor of the job
                 switch (task.getExecutionStatus()) {

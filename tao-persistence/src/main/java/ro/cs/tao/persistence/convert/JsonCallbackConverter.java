@@ -2,17 +2,17 @@ package ro.cs.tao.persistence.convert;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import ro.cs.tao.execution.model.ExternalTaskListenerDescriptor;
+import ro.cs.tao.execution.model.EndpointDescriptor;
 
 import javax.persistence.AttributeConverter;
 
-public class JsonCallbackConverter implements AttributeConverter<ExternalTaskListenerDescriptor, String> {
+public class JsonCallbackConverter implements AttributeConverter<EndpointDescriptor, String> {
     @Override
-    public String convertToDatabaseColumn(ExternalTaskListenerDescriptor descriptor) {
+    public String convertToDatabaseColumn(EndpointDescriptor descriptor) {
         String dbValue = null;
         if (descriptor != null) {
             try {
-                dbValue = new ObjectMapper().writerFor(ExternalTaskListenerDescriptor.class).writeValueAsString(descriptor);
+                dbValue = new ObjectMapper().writerFor(EndpointDescriptor.class).writeValueAsString(descriptor);
             } catch (JsonProcessingException e) {
                 e.printStackTrace();
             }
@@ -21,10 +21,10 @@ public class JsonCallbackConverter implements AttributeConverter<ExternalTaskLis
     }
 
     @Override
-    public ExternalTaskListenerDescriptor convertToEntityAttribute(String value) {
-        ExternalTaskListenerDescriptor descriptor = null;
+    public EndpointDescriptor convertToEntityAttribute(String value) {
+        EndpointDescriptor descriptor = null;
         try {
-            descriptor = new ObjectMapper().readerFor(ExternalTaskListenerDescriptor.class).readValue(value);
+            descriptor = new ObjectMapper().readerFor(EndpointDescriptor.class).readValue(value);
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }

@@ -205,7 +205,7 @@ public class Orchestrator extends Notifiable {
      */
     public ExecutionJob startExternalWorkflow(SessionContext context, long workflowId, String description,
                                               Map<String, Map<String, String>> inputs, ExecutorService executorService,
-                                              ExternalTaskListenerDescriptor callback) throws ExecutionException {
+                                              EndpointDescriptor callback) throws ExecutionException {
         ExecutionJob executionJob;
         try {
             executionJob = startWorkflow(context, workflowId, description, inputs, executorService);

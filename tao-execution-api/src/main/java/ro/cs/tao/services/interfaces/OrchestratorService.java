@@ -19,9 +19,9 @@ package ro.cs.tao.services.interfaces;
 import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.datasource.beans.Parameter;
 import ro.cs.tao.execution.ExecutionException;
+import ro.cs.tao.execution.model.EndpointDescriptor;
 import ro.cs.tao.execution.model.ExecutionJobSummary;
 import ro.cs.tao.execution.model.ExecutionTaskSummary;
-import ro.cs.tao.execution.model.ExternalTaskListenerDescriptor;
 import ro.cs.tao.persistence.PersistenceException;
 
 import java.util.List;
@@ -91,5 +91,5 @@ public interface OrchestratorService extends TAOService {
 
     List<ExecutionJobSummary> getCompletedJobs(String userName);
 
-    long startExternalWorkflow(String jsonGraph, String container, ExternalTaskListenerDescriptor callback) throws ExecutionException;
+    long startExternalWorkflow(String jsonGraph, String container, EndpointDescriptor callback) throws ExecutionException;
 }
