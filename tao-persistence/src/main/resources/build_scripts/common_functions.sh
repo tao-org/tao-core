@@ -151,7 +151,7 @@ function EnsurePsqlAccess() {
         if grep -Fq "${strToWrite}" "${dbConfPassFile}"; then
             echo "The line ${strToWrite} was successfully added to file ${dbConfPassFile}"
         else
-            echo "Error writing line ${strToWrite} into file ${dbConfPassFile}. Postgresql commands might not work or will request password at each step!!!"
+            echo "Error writing line ${strToWrite} into file ${dbConfPassFile}. Postgresql commands might not work or will request password at each externalStep!!!"
         fi
     fi
 }
