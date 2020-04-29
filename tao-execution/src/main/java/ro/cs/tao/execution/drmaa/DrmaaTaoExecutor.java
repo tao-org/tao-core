@@ -30,6 +30,7 @@ import ro.cs.tao.execution.Constants;
 import ro.cs.tao.execution.ExecutionConfiguration;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.Executor;
+import ro.cs.tao.execution.callback.EndpointDescriptor;
 import ro.cs.tao.execution.local.DefaultSession;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.execution.monitor.NodeManager;
@@ -502,8 +503,9 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
     }
 
     private void notifyExternalListeners(ProcessingExecutionTask task, String message, int exitCode, String processOutput) {
+        final ExecutionJob job = task.getJob();
+        final EndpointDescriptor jobCallback = job.getCallbackDescriptor();
         for (TaskListener listener : this.taskListeners) {
-            final EndpointDescriptor jobCallback = task.getJob().getCallbackDescriptor();
             if (Objects.equals(jobCallback, listener.getDescriptor())) {
                 // only call the listener corresponding to the external listener descriptor of the job
                 switch (task.getExecutionStatus()) {

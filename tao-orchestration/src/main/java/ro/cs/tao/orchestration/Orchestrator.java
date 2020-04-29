@@ -32,6 +32,7 @@ import ro.cs.tao.eodata.naming.NameExpressionParser;
 import ro.cs.tao.eodata.naming.NamingRule;
 import ro.cs.tao.execution.ExecutionConfiguration;
 import ro.cs.tao.execution.ExecutionException;
+import ro.cs.tao.execution.callback.EndpointDescriptor;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.execution.persistence.ExecutionJobProvider;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;

@@ -1,4 +1,4 @@
-package ro.cs.tao.execution.model;
+package ro.cs.tao.execution.callback;
 
 import org.apache.http.auth.Credentials;
 import ro.cs.tao.utils.HttpMethod;
@@ -12,12 +12,15 @@ import java.util.Objects;
  * @since   1.1.0
  */
 public class EndpointDescriptor {
-    private final String protocol;
-    private final String hostName;
-    private final int port;
-    private final String endpoint;
-    private final HttpMethod method;
-    private final Credentials credentials;
+    private String protocol;
+    private String hostName;
+    private int port;
+    private String endpoint;
+    private HttpMethod method;
+    private Credentials credentials;
+
+    public EndpointDescriptor() {
+    }
 
     /**
      * Constructs a descriptor given a host, a port and the connection credentials
@@ -119,6 +122,21 @@ public class EndpointDescriptor {
             builder.append(credentials.getUserPrincipal().getName())
                     .append(":").append(credentials.getPassword())
                     .append("@");
+        }
+        builder.append(hostName).append(":").append(port);
+        if (endpoint != null) {
+            if (!endpoint.startsWith("/")) {
+                builder.append("/");
+            }
+            builder.append(endpoint);
+        }
+        return builder.toString();
+    }
+
+    public String toAnonString() {
+        final StringBuilder builder = new StringBuilder();
+        if (protocol != null) {
+            builder.append(protocol).append("//");
         }
         builder.append(hostName).append(":").append(port);
         if (endpoint != null) {

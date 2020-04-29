@@ -19,7 +19,7 @@ package ro.cs.tao.services.interfaces;
 import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.datasource.beans.Parameter;
 import ro.cs.tao.execution.ExecutionException;
-import ro.cs.tao.execution.model.EndpointDescriptor;
+import ro.cs.tao.execution.callback.EndpointDescriptor;
 import ro.cs.tao.execution.model.ExecutionJobSummary;
 import ro.cs.tao.execution.model.ExecutionTaskSummary;
 import ro.cs.tao.persistence.PersistenceException;

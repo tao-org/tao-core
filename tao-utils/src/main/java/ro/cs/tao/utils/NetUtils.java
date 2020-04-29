@@ -26,6 +26,8 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.BasicCookieStore;
@@ -35,8 +37,15 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import ro.cs.tao.utils.logger.Logger;
 
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
 import java.net.*;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
@@ -153,6 +162,32 @@ public class NetUtils {
         return connection;
     }
 
+    private static SSLConnectionSocketFactory sslConnectionSocketFactory() {
+        SSLConnectionSocketFactory sslsf = null;
+        try {
+            // This is to accept self-signed certificates
+            SSLContext ctx = SSLContext.getInstance("TLS");
+            ctx.init(new KeyManager[0], new TrustManager[] {
+                    new X509TrustManager() {
+                        @Override
+                        public void checkClientTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {}
+
+                        @Override
+                        public void checkServerTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {}
+
+                        @Override
+                        public X509Certificate[] getAcceptedIssuers() {
+                            return null;
+                        }
+                    } },
+                    new SecureRandom());
+            sslsf = new SSLConnectionSocketFactory(ctx, NoopHostnameVerifier.INSTANCE);
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
+        return sslsf;
+    }
+
     public static CloseableHttpResponse openConnection(HttpMethod method, String url, Credentials credentials) throws IOException {
         return openConnection(method, url, credentials, (List<NameValuePair>) null);
     }
@@ -185,11 +220,13 @@ public class NetUtils {
                         httpClient = HttpClients.custom().setDefaultCookieStore(new BasicCookieStore())
                                 .setDefaultCredentialsProvider(credentialsProvider)
                                 .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
+                                .setSSLSocketFactory(sslConnectionSocketFactory())
                                 .build();
                     } else {
                         httpClient = HttpClients.custom()
                                 .setDefaultCookieStore(new BasicCookieStore())
                                 .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
+                                .setSSLSocketFactory(sslConnectionSocketFactory())
                                 .build();
                     }
                     httpClients.put(key, httpClient);
@@ -256,11 +293,13 @@ public class NetUtils {
                         httpClient = HttpClients.custom().setDefaultCookieStore(new BasicCookieStore())
                                 .setDefaultCredentialsProvider(credentialsProvider)
                                 .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
+                                .setSSLSocketFactory(sslConnectionSocketFactory())
                                 .build();
                     } else {
                         httpClient = HttpClients.custom()
                                 .setDefaultCookieStore(new BasicCookieStore())
                                 .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
+                                .setSSLSocketFactory(sslConnectionSocketFactory())
                                 .build();
                     }
                     httpClients.put(key, httpClient);
