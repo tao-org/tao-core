@@ -2,7 +2,7 @@ package ro.cs.tao.persistence.convert;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import ro.cs.tao.execution.model.EndpointDescriptor;
+import ro.cs.tao.execution.callback.EndpointDescriptor;
 
 import javax.persistence.AttributeConverter;
 
@@ -23,10 +23,12 @@ public class JsonCallbackConverter implements AttributeConverter<EndpointDescrip
     @Override
     public EndpointDescriptor convertToEntityAttribute(String value) {
         EndpointDescriptor descriptor = null;
-        try {
-            descriptor = new ObjectMapper().readerFor(EndpointDescriptor.class).readValue(value);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
+        if (value != null) {
+            try {
+                descriptor = new ObjectMapper().readerFor(EndpointDescriptor.class).readValue(value);
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
         }
         return descriptor;
     }

@@ -16,6 +16,7 @@
 package ro.cs.tao.execution.model;
 
 import ro.cs.tao.component.LongIdentifiable;
+import ro.cs.tao.execution.callback.EndpointDescriptor;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;

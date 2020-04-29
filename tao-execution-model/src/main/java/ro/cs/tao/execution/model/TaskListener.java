@@ -1,5 +1,7 @@
 package ro.cs.tao.execution.model;
 
+import ro.cs.tao.execution.callback.EndpointDescriptor;
+
 /**
  * Callback interface for implementors that wish to be notified about execution task updates.
  *
