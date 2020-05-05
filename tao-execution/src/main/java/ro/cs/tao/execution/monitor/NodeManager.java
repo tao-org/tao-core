@@ -335,7 +335,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         }
         RuntimeInfo info = null;
         try {
-            info = OSRuntimeInfo.createInspector(host, node.getUserName(), node.getUserPass())
+            info = OSRuntimeInfo.createInspector(host, node.getUserName(), node.getUserPass(), RuntimeInfo.class)
                     //Crypto.decrypt(node.getUserPass(), node.getUserName()))
                     .getInfo();
         } catch (Exception ignored) { }
