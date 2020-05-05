@@ -28,29 +28,31 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
-public abstract class OSRuntimeInfo {
+public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
 
     final String node;
     final String user;
     final String password;
     final boolean isRemote;
+    final Class<R> runtimeClass;
     final Logger logger;
 
-    OSRuntimeInfo(String host, String user, String password, boolean remote) {
+    OSRuntimeInfo(String host, String user, String password, boolean remote, Class<R> clazz) {
         this.node = host;
         this.user = user;
         this.password = password;
         this.isRemote = remote;
+        this.runtimeClass = clazz;
         this.logger = Logger.getLogger(getClass().getName());
     }
 
-    public static OSRuntimeInfo createInspector(String host, String user, String password) throws Exception {
+    public static <R extends RuntimeInfo> OSRuntimeInfo<R> createInspector(String host, String user, String password, Class<R> clazz) throws Exception {
         String localhost = InetAddress.getLocalHost().getHostName();
         if (localhost.equals(host)) {
             return SystemUtils.IS_OS_WINDOWS ?
-                    new Windows(host, user, password, false) : new Linux(host, user, password, false);
+                    new Windows<>(host, user, password, false, clazz) : new Linux<>(host, user, password, false, clazz);
         } else {
-            return new Linux(host, user, password, true);
+            return new Linux<>(host, user, password, true, clazz);
         }
     }
 
@@ -59,10 +61,10 @@ public abstract class OSRuntimeInfo {
     public abstract long getAvailableMemoryMB() throws IOException;
     public abstract long getTotalDiskGB() throws IOException;
     public abstract long getUsedDiskGB() throws IOException;
-    public abstract RuntimeInfo getInfo() throws IOException;
+    public abstract R getInfo() throws Exception;
 
-    public RuntimeInfo getSnapshot() throws IOException {
-        RuntimeInfo runtimeInfo = new RuntimeInfo();
+    public R getSnapshot() throws Exception {
+        R runtimeInfo = this.runtimeClass.newInstance();
         runtimeInfo.setCpuTotal(getProcessorUsage());
         runtimeInfo.setTotalMemory(getTotalMemoryMB());
         runtimeInfo.setAvailableMemory(getAvailableMemoryMB());
@@ -73,15 +75,15 @@ public abstract class OSRuntimeInfo {
         return runtimeInfo;
     }
 
-    private static class Windows extends OSRuntimeInfo {
+    private static class Windows<R extends RuntimeInfo> extends OSRuntimeInfo<R> {
 
-        Windows(String host, String user, String password, boolean remote) {
-            super(host, user, password, remote);
+        Windows(String host, String user, String password, boolean remote, Class<R> clazz) {
+            super(host, user, password, remote, clazz);
         }
 
         @Override
-        public RuntimeInfo getInfo() throws IOException {
-            RuntimeInfo runtimeInfo = new RuntimeInfo();
+        public R getInfo() throws Exception {
+            R runtimeInfo = this.runtimeClass.newInstance();
             List<String> args = new ArrayList<>();
             Collections.addAll(args, "cmd", "/c");
             args.add("wmic cpu get loadpercentage /value && " +
@@ -89,7 +91,7 @@ public abstract class OSRuntimeInfo {
                              "wmic os get freephysicalmemory /value && " +
                              "wmic logicaldisk get size /value && " +
                              "wmic logicaldisk get freespace /value");
-            Executor executor = Executor.create(ExecutorType.PROCESS, this.node, args);
+            Executor<?> executor = Executor.create(ExecutorType.PROCESS, this.node, args);
             Consumer consumer = new Consumer();
             executor.setOutputConsumer(consumer);
             try {
@@ -140,7 +142,7 @@ public abstract class OSRuntimeInfo {
             try {
                 List<String> args = new ArrayList<>();
                 Collections.addAll(args, "wmic cpu get loadpercentage /value".split(" "));
-                Executor executor = Executor.create(ExecutorType.PROCESS, this.node, args);
+                Executor<?> executor = Executor.create(ExecutorType.PROCESS, this.node, args);
                 Consumer consumer = new Consumer();
                 executor.setOutputConsumer(consumer);
                 if (executor.execute(false) == 0) {
@@ -170,7 +172,7 @@ public abstract class OSRuntimeInfo {
             try {
                 List<String> args = new ArrayList<>();
                 Collections.addAll(args, "wmic os get totalvisiblememorysize /value".split(" "));
-                Executor executor = Executor.create(ExecutorType.PROCESS, this.node, args);
+                Executor<?> executor = Executor.create(ExecutorType.PROCESS, this.node, args);
                 Consumer consumer = new Consumer();
                 executor.setOutputConsumer(consumer);
                 if (executor.execute(false) == 0) {
@@ -199,7 +201,7 @@ public abstract class OSRuntimeInfo {
             try {
                 List<String> args = new ArrayList<>();
                 Collections.addAll(args, "wmic os get freephysicalmemory /value".split(" "));
-                Executor executor = Executor.create(ExecutorType.PROCESS, this.node, args);
+                Executor<?> executor = Executor.create(ExecutorType.PROCESS, this.node, args);
                 Consumer consumer = new Consumer();
                 executor.setOutputConsumer(consumer);
                 if (executor.execute(false) == 0) {
@@ -229,7 +231,7 @@ public abstract class OSRuntimeInfo {
             try {
                 List<String> args = new ArrayList<>();
                 Collections.addAll(args, "wmic logicaldisk get size /value".split(" "));
-                Executor executor = Executor.create(ExecutorType.PROCESS, this.node, args);
+                Executor<?> executor = Executor.create(ExecutorType.PROCESS, this.node, args);
                 Consumer consumer = new Consumer();
                 executor.setOutputConsumer(consumer);
                 if (executor.execute(false) == 0) {
@@ -258,7 +260,7 @@ public abstract class OSRuntimeInfo {
             try {
                 List<String> args = new ArrayList<>();
                 Collections.addAll(args, "wmic logicaldisk get freespace /value".split(" "));
-                Executor executor = Executor.create(ExecutorType.PROCESS, this.node, args);
+                Executor<?> executor = Executor.create(ExecutorType.PROCESS, this.node, args);
                 Consumer consumer = new Consumer();
                 executor.setOutputConsumer(consumer);
                 if (executor.execute(false) == 0) {
@@ -283,18 +285,17 @@ public abstract class OSRuntimeInfo {
         }
     }
 
-    private static class Linux extends OSRuntimeInfo {
+    private static class Linux<R extends RuntimeInfo> extends OSRuntimeInfo<R> {
 
-        Linux(String host, String user, String password, boolean remote) {
-            super(host, user, password, remote);
+        Linux(String host, String user, String password, boolean remote, Class<R> clazz) {
+            super(host, user, password, remote, clazz);
         }
 
         @Override
-        public RuntimeInfo getInfo()  throws IOException{
-            //return getSnapshot();
-            RuntimeInfo runtimeInfo = new RuntimeInfo();
+        public R getInfo()  throws Exception{
+            R runtimeInfo = this.runtimeClass.newInstance();
             try {
-                Executor executor;
+                Executor<?> executor;
                 List<String> args = new ArrayList<>();
                 Collections.addAll(args, "uptime && cat /proc/meminfo && df -k --total".split(" "));
                 executor = Executor.create(this.isRemote ? ExecutorType.SSH2 : ExecutorType.PROCESS, this.node, args);
@@ -316,15 +317,38 @@ public abstract class OSRuntimeInfo {
                                 String value = message.substring(0, message.indexOf(" kB"));
                                 runtimeInfo.setAvailableMemory(Long.parseLong(value) / MemoryUnit.KILOBYTE.value());
                                 break;
-                            } else if (message.startsWith("total")) {
-                                String[] values = message.replace("total", "").trim().split(" ");
-                                runtimeInfo.setDiskTotal(Long.parseLong(values[0]) / MemoryUnit.MEGABYTE.value());
-                                runtimeInfo.setDiskUsed(Long.parseLong(values[1]) / MemoryUnit.MEGABYTE.value());
+                            } else if (message.startsWith("/dev/sd")) {
+                                String[] values = message.replace(message.substring(0, message.indexOf(' ')), "").trim().split(" ");
+                                runtimeInfo.setDiskTotal(runtimeInfo.getDiskTotal() + Long.parseLong(values[0]) / MemoryUnit.MEGABYTE.value());
+                                runtimeInfo.setDiskUsed(runtimeInfo.getDiskUsed() + Long.parseLong(values[1]) / MemoryUnit.MEGABYTE.value());
                                 break;
                             } else if (message.contains("load average")) {
                                 int idx = message.indexOf("load average");
                                 String value = message.substring(idx + 14, message.indexOf(",", idx));
                                 runtimeInfo.setCpuTotal(Double.parseDouble(value));
+                            }
+                            if (runtimeInfo instanceof RuntimeInfoEx) {
+                                RuntimeInfoEx rex = (RuntimeInfoEx) runtimeInfo;
+                                if (message.startsWith("Buffers")) {
+                                    message = message.replace("Buffers:", "").trim();
+                                    String value = message.substring(0, message.indexOf(" kB"));
+                                    rex.setBuffers(Long.parseLong(value) / MemoryUnit.KILOBYTE.value());
+                                } else if (message.startsWith("Cached")) {
+                                    message = message.replace("Cached:", "").trim();
+                                    String value = message.substring(0, message.indexOf(" kB"));
+                                    rex.setCached(Long.parseLong(value) / MemoryUnit.KILOBYTE.value());
+                                    break;
+                                } else if (message.startsWith("SwapTotal")) {
+                                    message = message.replace("SwapTotal:", "").trim();
+                                    String value = message.substring(0, message.indexOf(" kB"));
+                                    rex.setSwapTotal(Long.parseLong(value) / MemoryUnit.KILOBYTE.value());
+                                    break;
+                                } else if (message.startsWith("SwapFree")) {
+                                    message = message.replace("SwapFree:", "").trim();
+                                    String value = message.substring(0, message.indexOf(" kB"));
+                                    rex.setSwapFree(Long.parseLong(value) / MemoryUnit.KILOBYTE.value());
+                                    break;
+                                }
                             }
                         }
                     }
@@ -343,7 +367,7 @@ public abstract class OSRuntimeInfo {
         public double getProcessorUsage() throws IOException {
             double cpu = 0.0;
             try {
-                Executor executor;
+                Executor<?> executor;
                 List<String> args = new ArrayList<>();
                 Collections.addAll(args, "uptime".split(" "));
                 executor = Executor.create(this.isRemote ? ExecutorType.SSH2 : ExecutorType.PROCESS, this.node, args);
@@ -373,7 +397,7 @@ public abstract class OSRuntimeInfo {
         public long getTotalMemoryMB() throws IOException{
             long mem = 0;
             try {
-                Executor executor;
+                Executor<?> executor;
                 List<String> args = new ArrayList<>();
                 Collections.addAll(args, "cat /proc/meminfo".split(" "));
                 executor = Executor.create(this.isRemote ? ExecutorType.SSH2 : ExecutorType.PROCESS, this.node, args);
@@ -403,7 +427,7 @@ public abstract class OSRuntimeInfo {
         public long getAvailableMemoryMB() throws IOException {
             long mem = 0;
             try {
-                Executor executor;
+                Executor<?> executor;
                 List<String> args = new ArrayList<>();
                 Collections.addAll(args, "cat /proc/meminfo".split(" "));
                 executor = Executor.create(this.isRemote ? ExecutorType.SSH2 : ExecutorType.PROCESS, this.node, args);
@@ -433,7 +457,7 @@ public abstract class OSRuntimeInfo {
         public long getTotalDiskGB() throws IOException {
             long mem = 0;
             try {
-                Executor executor;
+                Executor<?> executor;
                 List<String> args = new ArrayList<>();
                 Collections.addAll(args, "df -k --total".split(" "));
                 executor = Executor.create(this.isRemote ? ExecutorType.SSH2 : ExecutorType.PROCESS, this.node, args);
@@ -444,10 +468,14 @@ public abstract class OSRuntimeInfo {
                 if (executor.execute(false) == 0) {
                     List<String> messages = consumer.getMessages();
                     for (String message : messages) {
-                        if (message.startsWith("total")) {
+                        /*if (message.startsWith("total")) {
                             String[] values = message.replace("total", "").trim().split(" ");
                             mem = Long.parseLong(values[0]) / MemoryUnit.MEGABYTE.value();
                             break;
+                        }*/
+                        if (message.startsWith("/dev/sd")) {
+                            String[] values = message.replace(message.substring(0, message.indexOf(' ')), "").trim().split(" ");
+                            mem += Long.parseLong(values[0]) / MemoryUnit.MEGABYTE.value();
                         }
                     }
                 }
@@ -462,7 +490,7 @@ public abstract class OSRuntimeInfo {
         public long getUsedDiskGB() throws IOException {
             long mem = 0;
             try {
-                Executor executor;
+                Executor<?> executor;
                 List<String> args = new ArrayList<>();
                 Collections.addAll(args, "df -k --total".split(" "));
                 executor = Executor.create(this.isRemote ? ExecutorType.SSH2 : ExecutorType.PROCESS, this.node, args);
@@ -473,10 +501,14 @@ public abstract class OSRuntimeInfo {
                 if (executor.execute(false) == 0) {
                     List<String> messages = consumer.getMessages();
                     for (String message : messages) {
-                        if (message.startsWith("total")) {
+                        /*if (message.startsWith("total")) {
                             String[] values = message.replace("total", "").trim().split(" ");
                             mem = Long.parseLong(values[1]) / MemoryUnit.MEGABYTE.value();
                             break;
+                        }*/
+                        if (message.startsWith("/dev/sd")) {
+                            String[] values = message.replace(message.substring(0, message.indexOf(' ')), "").trim().split(" ");
+                            mem += Long.parseLong(values[1]) / MemoryUnit.MEGABYTE.value();
                         }
                     }
                 }
@@ -489,7 +521,7 @@ public abstract class OSRuntimeInfo {
     }
 
     private static class Consumer implements OutputConsumer {
-        private List<String> messages = new ArrayList<>();
+        private final List<String> messages = new ArrayList<>();
         @Override
         public void consume(String message) {
             messages.add(message.replace("\r", ""));
