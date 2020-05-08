@@ -1,7 +1,5 @@
 package ro.cs.tao.execution.model;
 
-import ro.cs.tao.execution.callback.EndpointDescriptor;
-
 /**
  * Callback interface for implementors that wish to be notified about execution task updates.
  *
@@ -10,18 +8,10 @@ import ro.cs.tao.execution.callback.EndpointDescriptor;
  */
 public interface TaskListener {
     /**
-     * Sets the connection information descriptor for the listener.
-     * If the descriptor is not set, subsequent calls of other methods of this listener will fail.
-     *
-     * @param descriptor    The descriptor encapsulating the connection information
+     * Checks if this listener can call back using the given protocol.
+     * There can be only one listener per protocol.
      */
-    void setDescriptor(EndpointDescriptor descriptor);
-
-    /**
-     * Returns the connection information descriptor associated with this listener.
-     */
-    EndpointDescriptor getDescriptor();
-
+    boolean supportsProtocol(String protocol);
     /**
      * Called after an execution task has transited to RUNNING state.
      * @param task  The TAO execution task

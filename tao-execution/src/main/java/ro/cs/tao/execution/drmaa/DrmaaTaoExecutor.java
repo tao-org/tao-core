@@ -49,7 +49,6 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -506,7 +505,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         final ExecutionJob job = task.getJob();
         final EndpointDescriptor jobCallback = job.getCallbackDescriptor();
         for (TaskListener listener : this.taskListeners) {
-            if (Objects.equals(jobCallback, listener.getDescriptor())) {
+            if (listener.supportsProtocol(jobCallback.getProtocol())) {
                 // only call the listener corresponding to the external listener descriptor of the job
                 switch (task.getExecutionStatus()) {
                     case QUEUED_ACTIVE:
