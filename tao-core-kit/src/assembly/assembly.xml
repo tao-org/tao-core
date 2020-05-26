@@ -55,6 +55,50 @@
             </outputFileNameMapping>
             <excludes>
                 <exclude>ro.cs.tao:tao-*</exclude>
+                <!-- Unwanted dependencies -->
+                <exclude>commons-lang-2.4.jar</exclude>
+                <exclude>commons-lang3-3.7.jar</exclude>
+                <exclude>hibernate-validator-6.0.17.Final.jar</exclude>
+                <exclude>jackson-databind-2.7.3.jar</exclude>
+                <exclude>jackson-datatype-jdk8-2.10.0.jar</exclude>
+                <exclude>jackson-module-parameter-names-2.10.0.jar</exclude>
+                <exclude>jakarta.activation-api-1.2.1.jar</exclude>
+                <exclude>jakarta.validation-api-2.0.1.jar</exclude>
+                <exclude>jakarta.xml.bind-api-2.3.2.jar</exclude>
+                <exclude>javassist-3.24.0-GA.jar</exclude>
+                <exclude>jaxb-api-2.2.11.jar</exclude>
+                <exclude>jsr305-2.0.0.jar</exclude>
+                <exclude>jts-core-1.14.0.jar</exclude>
+                <exclude>jul-to-slf4j-1.7.28.jar</exclude>
+                <exclude>log4j-api-2.11.1.jar</exclude>
+                <exclude>log4j-api-2.12.1.jar</exclude>
+                <exclude>log4j-to-slf4j-2.12.1.jar</exclude>
+                <exclude>mchange-commons-java-0.2.11.jar</exclude>
+                <exclude>slf4j-api-1.7.21.jar</exclude>
+                <exclude>slf4j-api-1.7.25.jar</exclude>
+                <exclude>slf4j-api-1.7.7.jar</exclude>
+                <exclude>snakeyaml-1.25.jar</exclude>
+                <exclude>spring-aop-5.2.0.RELEASE.jar</exclude>
+                <exclude>spring-beans-5.2.0.RELEASE.jar</exclude>
+                <exclude>spring-boot-2.2.0.RELEASE.jar</exclude>
+                <exclude>spring-boot-autoconfigure-2.2.0.RELEASE.jar</exclude>
+                <exclude>spring-boot-starter-2.2.0.RELEASE.jar</exclude>
+                <exclude>spring-boot-starter-json-2.2.0.RELEASE.jar</exclude>
+                <exclude>spring-boot-starter-logging-2.2.0.RELEASE.jar</exclude>
+                <exclude>spring-boot-starter-security-2.2.0.RELEASE.jar</exclude>
+                <exclude>spring-boot-starter-tomcat-2.2.0.RELEASE.jar</exclude>
+                <exclude>spring-boot-starter-web-2.2.0.RELEASE.jar</exclude>
+                <exclude>spring-context-5.2.0.RELEASE.jar</exclude>
+                <exclude>spring-core-5.2.0.RELEASE.jar</exclude>
+                <exclude>spring-expression-5.2.0.RELEASE.jar</exclude>
+                <exclude>spring-jcl-5.2.0.RELEASE.jar</exclude>
+                <exclude>spring-security-config-5.2.0.RELEASE.jar</exclude>
+                <exclude>spring-security-core-5.2.0.RELEASE.jar</exclude>
+                <exclude>spring-security-web-5.2.0.RELEASE.jar</exclude>
+                <exclude>spring-web-5.2.0.RELEASE.jar</exclude>
+                <exclude>spring-webmvc-5.2.0.RELEASE.jar</exclude>
+                <exclude>tomcat-embed-core-9.0.27.jar</exclude>
+                <exclude>tomcat-embed-websocket-9.0.27.jar</exclude>
             </excludes>
         </dependencySet>
         <dependencySet>
