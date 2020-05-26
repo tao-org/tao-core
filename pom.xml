@@ -39,8 +39,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.deploy.root.path>file://W:/Dev/tao-github-publication</project.deploy.root.path>
         <geotools.version>20.0</geotools.version>
-        <spring.version>5.2.0.RELEASE</spring.version>
-        <spring.data.version>2.2.0.RELEASE</spring.data.version>
+        <spring.version>5.2.6.RELEASE</spring.version>
+        <spring.data.version>2.3.0.RELEASE</spring.data.version>
         <jackson.version>2.10.0</jackson.version>
         <postgresql.version>42.2.4</postgresql.version>
         <hibernate.version>5.4.7.Final</hibernate.version>
