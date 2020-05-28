@@ -103,9 +103,13 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
                         }
                         os.flush();
                     }
+                } catch (Exception notFound) {
+                    logger.fine(String.format("Container %s doesn't have container.properties", getContainerName()));
                 }
                 Properties properties = new Properties();
-                properties.load(Files.newBufferedReader(dockerfilePath));
+                if (Files.exists(dockerfilePath)) {
+                    properties.load(Files.newBufferedReader(dockerfilePath));
+                }
                 if (properties.size() > 0) {
                     container = DockerManager.pullImage(properties.getProperty("docker.hub.name"));
                 } else {
