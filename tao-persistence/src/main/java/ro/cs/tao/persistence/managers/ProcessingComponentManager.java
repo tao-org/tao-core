@@ -95,7 +95,18 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
                 }
             });
         }
-        super.save(entity);
+        //super.save(entity);
+        if (!checkEntity(entity, false)) {
+            throw new PersistenceException(String.format("Invalid parameters provided for adding new entity of type %s!",
+                                                         entity.getClass().getSimpleName()));
+        }
+        if (entity.getId() != null && entity.getContainerId() != null) {
+            final ProcessingComponent existing = repository.getByIdAndContainer(entity.getId(), entity.getContainerId());
+            if (existing != null) {
+                throw new PersistenceException("There is already another entity with the identifier: " + entity.getId());
+            }
+        }
+        repository.save(entity);
         if (map.size() > 0) {
             expansionRuleRepository.saveAll(map.values());
             descriptors.forEach(d -> {
