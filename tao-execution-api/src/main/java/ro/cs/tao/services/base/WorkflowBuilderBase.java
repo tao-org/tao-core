@@ -44,7 +44,6 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
 public abstract class WorkflowBuilderBase implements WorkflowBuilder {
     protected static final PersistenceManager persistenceManager;
@@ -101,9 +100,9 @@ public abstract class WorkflowBuilderBase implements WorkflowBuilder {
             descriptor.setVisibility(Visibility.PRIVATE);
             descriptor = persistenceManager.workflows().save(descriptor);
             addNodes(descriptor);
-        } else {
+        }/* else {
             Logger.getLogger(getClass().getName()).warning(String.format("Workflow '%s' already exists", getName()));
-        }
+        }*/
         return descriptor;
     }
 

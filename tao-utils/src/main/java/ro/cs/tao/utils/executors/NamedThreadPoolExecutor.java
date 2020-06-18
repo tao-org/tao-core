@@ -16,19 +16,38 @@
 
 package ro.cs.tao.utils.executors;
 
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class NamedThreadPoolExecutor extends ThreadPoolExecutor {
     private static final String THREAD_NAME = "%s-%d";
     private String poolName;
+    private long timeout = -1;
+    private TimeUnit timeUnit = TimeUnit.SECONDS;
 
     public NamedThreadPoolExecutor(String poolName, int maxThreads) {
         this(maxThreads, maxThreads, 1L, TimeUnit.SECONDS, poolName);
         this.poolName = poolName;
+    }
+
+    public void setTimeout(long timeout, TimeUnit timeUnit) {
+        this.timeout = timeout;
+        this.timeUnit = timeUnit;
+    }
+
+    @Override
+    public Future<?> submit(Runnable task) {
+        return new TimeoutFuture<>(super.submit(task), this.timeout, this.timeUnit);
+    }
+
+    @Override
+    public <T> Future<T> submit(Runnable task, T result) {
+        return new TimeoutFuture<>(super.submit(task, result), this.timeout, this.timeUnit);
+    }
+
+    @Override
+    public <T> Future<T> submit(Callable<T> task) {
+        return new TimeoutFuture<>(super.submit(task), this.timeout, this.timeUnit);
     }
 
     String getPoolName() {  return this.poolName; }
@@ -46,5 +65,58 @@ public class NamedThreadPoolExecutor extends ThreadPoolExecutor {
               },
               new RejectedTaskHandler());
         allowCoreThreadTimeOut(false);
+    }
+
+    /**
+     * Credits to Igor Kromin
+     */
+    public class TimeoutFuture<T> implements Future<T> {
+        private final Future<T> delegate;
+        private final long timeout;
+        private final TimeUnit timeUnit;
+
+        TimeoutFuture(Future<T> delegate, long timeout, TimeUnit timeUnit) {
+            this.delegate = delegate;
+            this.timeout = timeout;
+            this.timeUnit = timeUnit;
+        }
+        @Override
+        public boolean cancel(boolean mayInterruptIfRunning) {
+            return delegate.cancel(mayInterruptIfRunning);
+        }
+        @Override
+        public boolean isCancelled() {
+            return delegate.isCancelled();
+        }
+        @Override
+        public boolean isDone() {
+            return delegate.isDone();
+        }
+        @Override
+        public T get() throws InterruptedException, ExecutionException {
+            try {
+                if (timeout > 0) {
+                    return delegate.get(timeout, timeUnit);
+                }
+                return delegate.get();
+            }
+            catch (TimeoutException e) {
+                this.cancel(true);
+                throw new ExecutionException(
+                        "Forced timeout after " + timeout + " " + timeUnit.name(), null);
+            }
+        }
+        @Override
+        public T get(long timeout, TimeUnit unit)
+                throws InterruptedException, ExecutionException, TimeoutException {
+            try {
+                return delegate.get(timeout, unit);
+            }
+            catch (TimeoutException e) {
+                this.cancel(true);
+                throw new ExecutionException(
+                        "Timeout after " + timeout + " " + unit.name(), null);
+            }
+        }
     }
 }
