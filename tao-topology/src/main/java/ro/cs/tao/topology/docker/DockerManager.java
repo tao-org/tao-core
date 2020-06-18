@@ -364,7 +364,8 @@ public class DockerManager {
         waitFor(executor, 3, TimeUnit.SECONDS);
         if (executor.getReturnCode() == 0) {
             final String output = sharedAccumulator.getOutput();
-            String[] lines = SystemUtils.IS_OS_WINDOWS ? output.split("\n") : output.replace("\n", "").split(";");
+            //String[] lines = SystemUtils.IS_OS_WINDOWS ? output.split("\n") : output.replace("\n", "").split(";");
+            String[] lines = output.split("[\n;]");
             for (String line : lines) {
                 String[] tokens = line.split("[ \t]");
                 List<String> list = Arrays.stream(tokens).filter(item -> !item.trim().isEmpty()).

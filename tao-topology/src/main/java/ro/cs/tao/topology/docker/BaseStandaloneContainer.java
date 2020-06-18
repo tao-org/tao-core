@@ -25,14 +25,17 @@ public abstract class BaseStandaloneContainer implements StandaloneContainer {
     public void install() throws IOException {
         //docker pull spali/shellinabox
         try {
-            Container container = DockerManager.pullImage(getContainerName());
-            if (container != null) {
-                Container dbContainer = readContainerDescriptor(descriptor());
-                dbContainer.setId(container.getId());
-                dbContainer.setName(container.getName());
-                dbContainer.setTag(container.getTag());
-                dbContainer.setLogo(readContainerLogo(logoFile()));
-                this.containerProvider.save(dbContainer);
+            final Container dockerContainer = DockerManager.pullImage(getContainerName());
+            if (dockerContainer != null) {
+                final Container dbContainer = this.containerProvider.get(dockerContainer.getId());
+                if (dbContainer == null) {
+                    final Container newContainer = readContainerDescriptor(descriptor());
+                    newContainer.setId(dockerContainer.getId());
+                    newContainer.setName(dockerContainer.getName());
+                    newContainer.setTag(dockerContainer.getTag());
+                    newContainer.setLogo(readContainerLogo(logoFile()));
+                    this.containerProvider.save(newContainer);
+                }
             }
         } catch (Exception e) {
             logger.severe(e.getMessage());
