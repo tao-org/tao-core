@@ -93,6 +93,8 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
                 Files.createDirectories(dockerImagesPath);
                 // first try the container.properties file, maybe it is a container from Docker Hub
                 Path dockerfilePath = dockerImagesPath.resolve(getContainerName()).resolve("container.properties");
+                Files.createDirectories(dockerImagesPath.resolve(getContainerName()));
+                dockerfilePath = dockerfilePath.resolve("container.properties");
                 final byte[] buffer = new byte[1024];
                 try (InputStream is = getClass().getResourceAsStream("container.properties");
                      OutputStream os = new BufferedOutputStream(Files.newOutputStream(dockerfilePath))) {
@@ -116,7 +118,7 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
                     dockerfilePath = dockerImagesPath.resolve(getContainerName()).resolve("Dockerfile");
                     if (!Files.exists(dockerfilePath)) {
                         logger.finest(String.format("Extracting Dockerfile for image %s", getContainerName()));
-                        Files.createDirectories(dockerfilePath.getParent());
+                        //Files.createDirectories(dockerfilePath.getParent());
                         try (BufferedInputStream is = new BufferedInputStream(getClass().getResourceAsStream("Dockerfile"));
                              OutputStream os = new BufferedOutputStream(Files.newOutputStream(dockerfilePath))) {
                             int read;

@@ -1,6 +1,5 @@
 package ro.cs.tao.orchestration.status;
 
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
@@ -76,7 +75,7 @@ public abstract class TaskStatusHandler {
             try {
                 TaskCommand.STOP.applyTo(task);
             } catch (ExecutionException ex) {
-                logger.severe(ExceptionUtils.getStackTrace(ex));
+                logger.severe(ex.getMessage());
             }
         }
     }

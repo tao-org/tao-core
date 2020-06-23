@@ -113,12 +113,12 @@ public abstract class EntityManager<T extends Identifiable<K>, K, R extends Pagi
             throw new PersistenceException(String.format("Invalid parameters provided for adding new entity of type %s!",
                                                          entity != null ? entity.getClass().getSimpleName() : "[null]"));
         }
-        if (entity.getId() != null) {
+        /*if (entity.getId() != null) {
             final Optional<T> existing = repository.findById(entity.getId());
             if (existing.isPresent()) {
                 throw new PersistenceException("There is already another entity with the identifier: " + entity.getId());
             }
-        }
+        }*/
         return repository.save(entity);
     }
 

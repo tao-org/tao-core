@@ -60,8 +60,13 @@ public class NotificationManager extends EntityManager<Message, Long, MessageRep
     }
 
     @Override
+    protected boolean checkEntity(Message entity, boolean existingEntity) {
+        return checkEntity(entity);
+    }
+
+    @Override
     protected boolean checkId(Long entityId, boolean existingEntity) {
-        return entityId != null && (existingEntity == (get(entityId) != null));
+        return (!existingEntity && (entityId == null || entityId.equals(0L))) || (existingEntity && get(entityId) != null);
     }
 
 }

@@ -121,12 +121,12 @@ public class DefaultMessageBus implements ro.cs.tao.messaging.EventBus<Event<Mes
         Message message = event.getData();
         message.setTopic(topic);
         this.messageBus.notify(topic, event);
-        if (this.messagePersister != null) {
+        if (this.messagePersister != null && message.isPersistent()) {
             this.executorService.submit(() -> {
                 try {
-                    if (this.messagePersister != null && message.isPersistent()) {
+                    //if (this.messagePersister != null && message.isPersistent()) {
                         this.messagePersister.save(message);
-                    }
+                    //}
                 } catch (Exception e) {
                     this.logger.severe(e.getMessage());
                 }
