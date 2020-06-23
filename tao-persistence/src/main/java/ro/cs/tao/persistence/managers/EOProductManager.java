@@ -104,4 +104,9 @@ public class EOProductManager extends EntityManager<EOProduct, String, EOProduct
                 eoProduct.getLocation() != null && eoProduct.getSensorType() != null && eoProduct.getPixelType() != null &&
                 eoProduct.getVisibility() != null;
     }
+
+    @Override
+    protected boolean checkEntity(EOProduct entity, boolean existingEntity) {
+        return checkEntity(entity);
+    }
 }

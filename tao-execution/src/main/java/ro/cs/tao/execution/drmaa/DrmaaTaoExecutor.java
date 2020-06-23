@@ -504,21 +504,23 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
     private void notifyExternalListeners(ProcessingExecutionTask task, String message, int exitCode, String processOutput) {
         final ExecutionJob job = task.getJob();
         final EndpointDescriptor jobCallback = job.getCallbackDescriptor();
-        for (TaskListener listener : this.taskListeners) {
-            if (listener.supportsProtocol(jobCallback.getProtocol())) {
-                // only call the listener corresponding to the external listener descriptor of the job
-                switch (task.getExecutionStatus()) {
-                    case QUEUED_ACTIVE:
-                        listener.onStarted(task);
-                        break;
-                    case DONE:
-                        listener.onCompleted(task, processOutput);
-                        break;
-                    case FAILED:
-                        listener.onError(task, message, exitCode, processOutput);
-                        break;
-                    default:
-                        break;
+        if (jobCallback != null && this.taskListeners != null) {
+            for (TaskListener listener : this.taskListeners) {
+                if (listener.supportsProtocol(jobCallback.getProtocol())) {
+                    // only call the listener corresponding to the external listener descriptor of the job
+                    switch (task.getExecutionStatus()) {
+                        case QUEUED_ACTIVE:
+                            listener.onStarted(task);
+                            break;
+                        case DONE:
+                            listener.onCompleted(task, processOutput);
+                            break;
+                        case FAILED:
+                            listener.onError(task, message, exitCode, processOutput);
+                            break;
+                        default:
+                            break;
+                    }
                 }
             }
         }

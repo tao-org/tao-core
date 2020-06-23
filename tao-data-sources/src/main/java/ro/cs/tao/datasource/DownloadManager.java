@@ -79,7 +79,10 @@ public class DownloadManager {
                                                 FiveArgsFunction<List<EOProduct>, Set<String>, String, String, Properties, List<EOProduct>> delegate,
                                                 List<EOProduct> products, Set<String> tiles, String destinationPath, String localRootPath, Properties additionalProperties) {
         try {
-            final NamedThreadPoolExecutor executor = instance.downloadWorkers.get(dsInstance.defaultId());
+            final NamedThreadPoolExecutor executor = instance.downloadWorkers.get(dsInstance.getDataSourceName());
+            if (executor == null) {
+                throw new Exception(String.format("No download worker for source %s found", dsInstance.getDataSourceName()));
+            }
             final Future<List<EOProduct>> task = executor.submit(() ->
                          delegate.apply(products, tiles, destinationPath, localRootPath, additionalProperties));
             instance.queuedDownloads.put(dsInstance.hashCode(), task);
