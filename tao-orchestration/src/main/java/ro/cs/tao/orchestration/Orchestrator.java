@@ -601,9 +601,12 @@ public class Orchestrator extends Notifiable {
                     int idx = 0;
                     final Set<String> outParams = nextTask.getOutputParameterValues().stream().map(Variable::getKey).collect(Collectors.toSet());
                     Variable overriddenOutParam = null;
+                    final Map<String, String> connectedInputs = TaskUtilities.getConnectedInputs(task, nextTask);
                     for (Variable var : nextInputParameters) {
                         if (!outParams.contains(var.getKey())) {
-                            nextTask.setInputParameterValue(var.getKey(), valuesList.get(idx++));
+                            if (connectedInputs.containsKey(var.getKey())) {
+                                nextTask.setInputParameterValue(var.getKey(), valuesList.get(idx++));
+                            }
                         } else {
                             overriddenOutParam = var;
                         }
