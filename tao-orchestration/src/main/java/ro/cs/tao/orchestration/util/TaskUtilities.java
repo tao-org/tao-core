@@ -172,7 +172,7 @@ public class TaskUtilities {
                     .forEach(l -> connections.put(l.getOutput().getName(), l.getInput().getName()));
             return connections;
         } else {
-            return null;
+            return new HashMap<>();
         }
     }
 
