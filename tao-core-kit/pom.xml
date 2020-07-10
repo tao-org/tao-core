@@ -1,11 +1,11 @@
-
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>tao-core</artifactId>
         <groupId>ro.cs.tao</groupId>
-        <version>1.1.0-SNAPSHOT</version>
+        <version>1.0.2</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -66,7 +66,17 @@
         </dependency>
         <dependency>
             <groupId>ro.cs.tao</groupId>
+            <artifactId>tao-service-base-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ro.cs.tao</groupId>
             <artifactId>tao-service-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ro.cs.tao</groupId>
+            <artifactId>tao-execution-api</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -74,11 +84,11 @@
             <artifactId>tao-spring-bridge</artifactId>
             <version>${project.version}</version>
         </dependency>
-		<dependency>
-			<groupId>ro.cs.tao</groupId>
+        <dependency>
+            <groupId>ro.cs.tao</groupId>
             <artifactId>tao-workflow-optimizer</artifactId>
             <version>${project.version}</version>
-		</dependency>
+        </dependency>
         <dependency>
             <groupId>ro.cs.tao</groupId>
             <artifactId>tao-orchestration</artifactId>
@@ -89,7 +99,7 @@
             <artifactId>tao-scheduling</artifactId>
             <version>${project.version}</version>
         </dependency>
-		<dependency>
+        <dependency>
             <groupId>ro.cs.tao</groupId>
             <artifactId>tao-quota</artifactId>
             <version>${project.version}</version>
@@ -103,52 +113,61 @@
         <pluginManagement>
             <plugins>
                 <plugin>
-                    <artifactId>maven-jar-plugin</artifactId>
-                    <configuration>
-                        <useDefaultManifestFile>true</useDefaultManifestFile>
-                    </configuration>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-dependency-plugin</artifactId>
-                    <executions>
-                        <execution>
-                            <id>copy-libs</id>
-                            <phase>package</phase>
-                            <goals>
-                                <goal>copy-dependencies</goal>
-                            </goals>
-                            <configuration>
-                                <includeScope>runtime</includeScope>
-                                <excludeGroupIds>ro.cs.tao</excludeGroupIds>
-                                <overWriteReleases>false</overWriteReleases>
-                                <overWriteSnapshots>true</overWriteSnapshots>
-                                <outputDirectory>${project.build.directory}</outputDirectory>
-                            </configuration>
-                        </execution>
-                    </executions>
-                </plugin>
-                <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-assembly-plugin</artifactId>
-                    <version>3.1.0</version>
-                    <configuration>
-                        <descriptors>
-                            <descriptor>src/assembly/assembly.xml</descriptor>
-                        </descriptors>
-                    </configuration>
-                    <executions>
-                        <execution>
-                            <id>directory-bundle</id>
-                            <phase>package</phase>
-                            <goals>
-                                <goal>single</goal>
-                            </goals>
-                        </execution>
-                    </executions>
+                    <version>3.2.0</version>
                 </plugin>
             </plugins>
         </pluginManagement>
+
+        <plugins>
+            <plugin>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <useDefaultManifestFile>true</useDefaultManifestFile>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-libs</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <includeScope>runtime</includeScope>
+                            <excludeGroupIds>ro.cs.tao</excludeGroupIds>
+                            <overWriteReleases>false</overWriteReleases>
+                            <overWriteSnapshots>true</overWriteSnapshots>
+                            <outputDirectory>${project.build.directory}</outputDirectory>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <descriptors>
+                        <descriptor>src/assembly/assembly.xml</descriptor>
+                    </descriptors>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>directory-bundle</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
     </build>
 
 </project>

@@ -10,7 +10,31 @@
             <outputDirectory>bin</outputDirectory>
         </fileSet>
         <fileSet>
-            <directory>../tao-config/src/main/resources/ro/cs/tao/configuration</directory>
+            <directory>../tao-persistence/src/main/resources/build_scripts</directory>
+            <outputDirectory>bin</outputDirectory>
+            <includes>
+                <include>*.ps1</include>
+                <include>*.bat</include>
+                <include>*.sh</include>
+                <include>*.conf</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>../tao-persistence/src/main/resources/profiles/${build.profile.id}</directory>
+            <outputDirectory>db</outputDirectory>
+            <includes>
+                <include>*.db</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>../tao-persistence/src/main/resources/persistence/scripts</directory>
+            <outputDirectory>scripts</outputDirectory>
+            <includes>
+                <include>**/*.*</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>../tao-config/src/main/resources/profiles/${build.profile.id}</directory>
             <outputDirectory>config</outputDirectory>
             <includes>
                 <include>*.properties</include>
