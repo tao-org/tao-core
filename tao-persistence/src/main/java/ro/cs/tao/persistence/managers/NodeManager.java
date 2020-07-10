@@ -21,16 +21,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.SortDirection;
 import ro.cs.tao.persistence.exception.PersistenceException;
-import ro.cs.tao.persistence.repository.NodeFlavorRepository;
 import ro.cs.tao.persistence.repository.NodeRepository;
 import ro.cs.tao.persistence.repository.ServiceRepository;
 import ro.cs.tao.topology.NodeDescription;
-import ro.cs.tao.topology.NodeFlavor;
 import ro.cs.tao.topology.NodeServiceStatus;
+import ro.cs.tao.topology.NodeType;
 import ro.cs.tao.topology.ServiceDescription;
 import ro.cs.tao.utils.Crypto;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -41,22 +39,6 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
     /** CRUD Repository for ServiceDescription entities */
     @Autowired
     private ServiceRepository serviceRepository;
-    @Autowired
-    private NodeFlavorRepository nodeFlavorRepository;
-
-    public List<NodeFlavor> getNodeFlavors() {
-        List<NodeFlavor> result = new ArrayList<>();
-        nodeFlavorRepository.findAll().forEach(result::add);
-        return result;
-    }
-
-    public NodeFlavor getMasterFlavor() {
-        return nodeFlavorRepository.findById("master").orElse(null);
-    }
-
-    public NodeFlavor save(NodeFlavor flavor) {
-        return nodeFlavorRepository.save(flavor);
-    }
 
     @Transactional
     public List<NodeDescription> listActive() {
@@ -79,8 +61,8 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
         return repository.findByActive(active);
     }
 
-    public List<NodeDescription> getNodesByType(NodeFlavor flavor) {
-        return repository.findByFlavor(flavor);
+    public List<NodeDescription> getNodesByType(NodeType type) {
+        return repository.findByNodeType(type);
     }
 
     @Transactional
@@ -109,6 +91,20 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
                 serviceStatus.setServiceDescription(existingService);
             }
         }
+        if (node.getNodeType() == null) {
+            int processors = node.getProcessorCount();
+            NodeType nodeType;
+            if (processors <= 4) {
+                nodeType = NodeType.S;
+            } else if (processors <= 8) {
+                nodeType = NodeType.M;
+            } else if (processors <= 16) {
+                nodeType = NodeType.L;
+            } else {
+                nodeType = NodeType.XL;
+            }
+            node.setNodeType(nodeType);
+        }
         // save the new NodeDescription entity and return it
         return repository.save(node);
     }
@@ -134,8 +130,19 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
                 serviceStatus.setServiceDescription(existingService);
             }
         }
-        if (entity.getFlavor() == null) {
-            throw new PersistenceException(String.format("Node flavor not defined for node '%s'", entity.getId()));
+        if (entity.getNodeType() == null) {
+            int processors = entity.getProcessorCount();
+            NodeType nodeType;
+            if (processors <= 4) {
+                nodeType = NodeType.S;
+            } else if (processors <= 8) {
+                nodeType = NodeType.M;
+            } else if (processors <= 16) {
+                nodeType = NodeType.L;
+            } else {
+                nodeType = NodeType.XL;
+            }
+            entity.setNodeType(nodeType);
         }
         // save the new NodeDescription entity and return it
         return repository.save(entity);
@@ -189,7 +196,8 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
 
     @Override
     protected boolean checkEntity(NodeDescription entity) {
-        return entity.getUserName() != null && entity.getUserPass() != null && entity.getFlavor() != null;
+        return entity.getUserName() != null && entity.getUserPass() != null &&
+               entity.getProcessorCount() > 0 && entity.getDiskSpaceSizeGB() > 0 && entity.getMemorySizeGB() > 0;
     }
 
     private boolean checkServiceDescription(ServiceDescription service) {

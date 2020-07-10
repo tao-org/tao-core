@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import org.apache.commons.cli.*;
 import ro.cs.tao.configuration.ConfigurationManager;
+import ro.cs.tao.configuration.ConfigurationProvider;
 import ro.cs.tao.datasource.*;
 import ro.cs.tao.datasource.param.DataSourceParameter;
 import ro.cs.tao.datasource.remote.FetchMode;
@@ -105,7 +106,7 @@ public class DownloadTool {
             } else {
                 Logger.getLogger("org.apache.http").setLevel(Level.SEVERE);
                 specificArgs.addAll(Arrays.stream(commandLine.getOptions()).map(Option::getOpt).collect(Collectors.toSet()));
-                final ConfigurationManager cfgManager = ConfigurationManager.getInstance();
+                final ConfigurationProvider cfgManager = ConfigurationManager.getInstance();
                 final String targetFolder = getArgValue(commandLine, Constants.FOLDER, String.class,
                                                         cfgManager.getValue("products.location", null));
                 if (targetFolder == null) {

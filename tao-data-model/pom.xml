@@ -5,7 +5,7 @@
     <parent>
         <artifactId>tao-core</artifactId>
         <groupId>ro.cs.tao</groupId>
-        <version>1.1.0-SNAPSHOT</version>
+        <version>1.0.2</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -20,9 +20,9 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>ro.cs.tao</groupId>
-            <artifactId>tao-config</artifactId>
-            <version>${project.version}</version>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.9</version>
         </dependency>
         <dependency>
             <groupId>org.locationtech.jts</groupId>
@@ -78,7 +78,7 @@
         <dependency>
             <groupId>org.reflections</groupId>
             <artifactId>reflections</artifactId>
-            <version>0.9.11</version>
+            <version>0.9.12</version>
         </dependency>
         <dependency>
             <groupId>javax.xml.bind</groupId>

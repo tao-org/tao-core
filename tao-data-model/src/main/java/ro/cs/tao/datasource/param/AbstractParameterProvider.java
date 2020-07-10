@@ -15,19 +15,17 @@
  */
 package ro.cs.tao.datasource.param;
 
-import com.google.common.collect.Maps;
-import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import ro.cs.tao.datasource.ProductFetchStrategy;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.*;
 import java.util.*;
 import java.util.logging.Logger;
 
-import static com.google.common.collect.Iterables.toArray;
 import static ro.cs.tao.serialization.ObjectMapperProvider.JSON_DATA_SOURCE_PARAMETERS_TYPE_REFERENCE;
 import static ro.cs.tao.serialization.ObjectMapperProvider.JSON_OBJECT_MAPPER;
 
@@ -38,6 +36,7 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
 
     private static final String PARAMETER_DESCRIPTOR_RESOURCE = "ro/cs/tao/datasource/parameters/parameters.json";
     private static final List<String> parameterResources;
+    private static final Map<Class<?>, Map<String, Map<String, DataSourceParameter>>> readDescriptors;
 
     protected final String[] supportedSensors;
     protected final Map<String, Map<String, DataSourceParameter>> supportedParameters;
@@ -46,16 +45,14 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
 
     static {
         parameterResources = new ArrayList<>();
+        readDescriptors = Collections.synchronizedMap(new HashMap<>());
         try {
             Enumeration<URL> resources = AbstractParameterProvider.class.getClassLoader().getResources(PARAMETER_DESCRIPTOR_RESOURCE);
             while (resources.hasMoreElements()) {
-                String resourcePath = formatPath(resources.nextElement().getPath());
-                if (SystemUtils.IS_OS_LINUX) {
-                    resourcePath = "/" + resourcePath;
-                }
+                String resourcePath = resources.nextElement().toURI().toString().replace("jar:", "");
                 parameterResources.add(resourcePath);
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             System.err.println(ExceptionUtils.getStackTrace(e));
         }
     }
@@ -63,16 +60,20 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
     protected AbstractParameterProvider() {
         Map<String, Map<String, DataSourceParameter>> readParameters = null;
         try {
-            readParameters = JSON_OBJECT_MAPPER.readValue(readDescriptor(), JSON_DATA_SOURCE_PARAMETERS_TYPE_REFERENCE);
-        } catch (IOException e) {
+            final Class<? extends AbstractParameterProvider> clazz = getClass();
+            if (!readDescriptors.containsKey(clazz)) {
+                readDescriptors.put(clazz, JSON_OBJECT_MAPPER.readValue(readDescriptor(), JSON_DATA_SOURCE_PARAMETERS_TYPE_REFERENCE));
+            }
+            readParameters = readDescriptors.get(clazz);
+        } catch (Exception e) {
             logger.severe(String.format("Cannot load data source supported parameters. Cause: %s", e.getMessage()));
         }
 
         if(readParameters != null){
             supportedParameters = readParameters;
-            supportedSensors = toArray(readParameters.keySet(), String.class);
+            supportedSensors = readParameters.keySet().toArray(new String[0]);
         } else {
-            supportedParameters = Maps.newHashMap();
+            supportedParameters = new HashMap<>();
             supportedSensors = new String[0];
         }
     }
@@ -96,12 +97,12 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
     @Override
     public Map<String, ProductFetchStrategy> getRegisteredProductFetchStrategies() { return productFetchers; }
 
-    private String readDescriptor() throws IOException {
-        final String classLocation = formatPath(getClass().getProtectionDomain().getCodeSource().getLocation().getPath());
+    private String readDescriptor() throws IOException, URISyntaxException {
+        final String classLocation = getClass().getProtectionDomain().getCodeSource().getLocation().toURI().toString().replace("jar:", "");
         String currentResource = null;
         for (String current : parameterResources) {
             if (current.startsWith(classLocation)) {
-                currentResource = current.replaceFirst("^/(.:/)", "$1");
+                currentResource = current;
                 break;
             }
         }
@@ -109,12 +110,12 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
             throw new IOException("No parameter descriptor found");
         }
         Path rPath;
-        FileSystem fileSystem;
-        //try {
-            if (classLocation.endsWith(".jar")) {
+        FileSystem fileSystem = null;
+        try {
+            if (classLocation.endsWith(".jar") || classLocation.contains(".jar")) {
                 Map<String, String> env = new HashMap<>();
                 env.put("create", "false");
-                final String strPath = "jar:file:" + (SystemUtils.IS_OS_LINUX ? "" : "/") + currentResource;
+                final String strPath = "jar:" + currentResource;
                 final URI uri = URI.create(strPath);
                 try {
                     fileSystem = FileSystems.getFileSystem(uri);
@@ -123,23 +124,13 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
                 }
                 rPath = fileSystem.getPath("/" + PARAMETER_DESCRIPTOR_RESOURCE);
             } else {
-                rPath = Paths.get(currentResource);
+                rPath = Paths.get(URI.create(currentResource));
             }
             return new String(Files.readAllBytes(rPath));
-        // Block commented since subsequent usage of a previously created fileSystem will throw ClosedFileSystemException
-        /*} finally {
+        } finally {
             if (fileSystem != null) {
                 fileSystem.close();
             }
-        }*/
-    }
-
-    private static String formatPath(String path){
-        String newPath = path.replaceFirst("^/(.:/)", "$1").replace("file:/", "");
-        if(newPath.endsWith("!/")){
-            //remove the last 2 chars
-            newPath = newPath.substring(0, newPath.length()-2);
         }
-        return newPath;
     }
 }

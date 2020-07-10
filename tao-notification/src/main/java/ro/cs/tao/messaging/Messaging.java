@@ -15,7 +15,6 @@
  */
 package ro.cs.tao.messaging;
 
-import ro.cs.tao.configuration.Configuration;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
@@ -37,7 +36,7 @@ public class Messaging {
     static {
         final ServiceRegistry<EventBus> registry = ServiceRegistryManager.getInstance().getServiceRegistry(EventBus.class);
         final Set<EventBus> services = registry.getServices();
-        final String providerClassName = ConfigurationManager.getInstance().getValue(Configuration.Messaging.PROVIDER_CLASS);
+        final String providerClassName = ConfigurationManager.getInstance().getValue("notification.provider");
         if (services.size() > 1 && providerClassName == null) {
             throw new IllegalArgumentException("Cannot accept more than one message bus. Please set the notification.provider property");
         } else if (providerClassName != null) {

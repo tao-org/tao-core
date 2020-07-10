@@ -15,7 +15,7 @@
  */
 package ro.cs.tao.security;
 
-import ro.cs.tao.component.SystemVariable;
+import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.user.UserPreference;
 
 import java.nio.file.Path;
@@ -36,8 +36,8 @@ public abstract class SessionContext {
 
     protected SessionContext() {
         this.principal = setPrincipal();
-        this.workspaceRoot = Paths.get(SystemVariable.ROOT.value());
-        this.netSpaceRoot = Paths.get(SystemVariable.SHARE.value());
+        this.workspaceRoot = Paths.get(ConfigurationManager.getInstance().getValue("workspace.location"));
+        this.netSpaceRoot = Paths.get(ConfigurationManager.getInstance().getValue("node.mount.folder"));
         this.preferences = setPreferences();
     }
 

@@ -16,14 +16,12 @@
 package ro.cs.tao.execution.local;
 
 import org.ggf.drmaa.*;
-import ro.cs.tao.configuration.Configuration;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.execution.Constants;
 import ro.cs.tao.execution.monitor.NodeManager;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.topology.NodeDescription;
-import ro.cs.tao.topology.NodeFlavor;
 import ro.cs.tao.utils.executors.*;
 
 import java.net.InetAddress;
@@ -46,7 +44,7 @@ public class DefaultSession implements Session {
     private NodeDescription[] nodes;
     private volatile boolean initialized;
     private Map<String, JobTemplate> jobTemplates;
-    private Map<String, Executor<?>> runningJobs;
+    private Map<String, Executor> runningJobs;
     private Map<String, OutputAccumulator> jobOutputs;
     private AtomicInteger nodeCounter;
     // TODO: This should be configurable - add it to tao.properties or in a specific file?
@@ -72,14 +70,10 @@ public class DefaultSession implements Session {
                 if (Arrays.stream(nodes).noneMatch(n -> hostName.equalsIgnoreCase(n.getId()) || hostName.equals(ipAddress))) {
                     NodeDescription localNode = new NodeDescription();
                     localNode.setId(hostName);
-                    localNode.setUserName(ConfigurationManager.getInstance().getValue(Configuration.Topology.MASTER_USER));
-                    localNode.setUserPass(ConfigurationManager.getInstance().getValue(Configuration.Topology.MASTER_PASSWORD));
-                    NodeFlavor flavor = new NodeFlavor();
-                    flavor.setId("master");
-                    flavor.setCpu(Runtime.getRuntime().availableProcessors());
-                    flavor.setMemory((int) (Runtime.getRuntime().maxMemory() / 0x40000000));
-                    flavor.setDisk(256);
-                    flavor.setRxtxFactor(1.0f);
+                    localNode.setUserName(ConfigurationManager.getInstance().getValue("topology.master.user"));
+                    localNode.setUserPass(ConfigurationManager.getInstance().getValue("topology.master.password"));
+                    localNode.setProcessorCount(Runtime.getRuntime().availableProcessors());
+                    localNode.setMemorySizeGB((int) (Runtime.getRuntime().maxMemory() / 0x40000000));
                     localNode.setDescription("Master node (localhost)");
                     NodeDescription[] newNodes = new NodeDescription[this.nodes.length + 1];
                     System.arraycopy(this.nodes, 0, newNodes, 1, this.nodes.length);

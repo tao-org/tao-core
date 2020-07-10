@@ -15,10 +15,10 @@
  */
 package ro.cs.tao.execution;
 
+import ro.cs.tao.Tuple;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.StringIdentifiable;
 import ro.cs.tao.component.TaoComponent;
-import ro.cs.tao.configuration.Configuration;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
@@ -29,7 +29,6 @@ import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.security.SessionContext;
 import ro.cs.tao.security.SystemSessionContext;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
-import ro.cs.tao.utils.Tuple;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -78,7 +77,7 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
      */
     public void initialize() throws ExecutionException {
         int pollingInterval = 1000 *
-                Integer.parseInt(ConfigurationManager.getInstance().getValue(Configuration.DRMAA.POLLING_INTERVAL, TIMER_PERIOD));
+                Integer.parseInt(ConfigurationManager.getInstance().getValue("tao.drmaa.polling.interval", TIMER_PERIOD));
         initialize(pollingInterval);
     }
 

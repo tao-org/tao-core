@@ -170,6 +170,7 @@
             </element-collection>
             <transient name="processingDate"/>
             <transient name="quicklookLocation" />
+            <transient name="satelliteName"/>
         </attributes>
     </entity>
 
@@ -209,32 +210,12 @@
         </attributes>
     </entity>
 
-    <entity class="ro.cs.tao.topology.NodeFlavor" access="PROPERTY">
-        <table name="topology.node_flavor"/>
-        <attributes>
-            <basic name="cpu">
-                <column name="cpu" nullable="false" column-definition="integer NOT NULL"/>
-            </basic>
-            <basic name="memory">
-                <column name="memory" nullable="false" column-definition="integer NOT NULL"/>
-            </basic>
-            <basic name="disk">
-                <column name="disk" nullable="false" column-definition="integer NOT NULL"/>
-            </basic>
-            <basic name="swap">
-                <column name="swap" nullable="false" column-definition="integer NOT NULL"/>
-            </basic>
-            <basic name="rxtxFactor">
-                <column name="rxtx" nullable="false" column-definition="real NOT NULL"/>
-            </basic>
-        </attributes>
-    </entity>
-
     <entity class="ro.cs.tao.topology.NodeDescription" access="PROPERTY">
         <table name="topology.node"/>
         <entity-listeners>
             <entity-listener class="ro.cs.tao.persistence.audit.NodeDescriptionListener"/>
         </entity-listeners>
+        <convert converter="ro.cs.tao.persistence.convert.NodeTypeConverter" attribute-name="nodeType" />
         <attributes>
             <basic name="userName">
                 <column name="username" nullable="false" column-definition="character varying(50) NOT NULL"/>
@@ -244,6 +225,15 @@
             </basic>
             <basic name="nodeType">
                 <column name="type_id" nullable="false" column-definition="integer NOT NULL"/>
+            </basic>
+            <basic name="processorCount">
+                <column name="total_cpu" nullable="false" column-definition="integer not null"/>
+            </basic>
+            <basic name="memorySizeGB">
+                <column name="total_ram" nullable="false" column-definition="integer not null"/>
+            </basic>
+            <basic name="diskSpaceSizeGB">
+                <column name="total_hdd" nullable="false" column-definition="integer not null"/>
             </basic>
             <basic name="description">
                 <column name="description" nullable="true" column-definition="text null"/>
@@ -255,9 +245,7 @@
                 <column name="tags" nullable="true" column-definition="text NULL"/>
                 <convert converter="ro.cs.tao.persistence.convert.StringListConverter"/>
             </basic>
-            <many-to-one name="flavor" fetch="LAZY" target-entity="ro.cs.tao.topology.NodeFlavor">
-                <join-column name="flavor_id" nullable="false"/>
-            </many-to-one>
+
             <element-collection name="servicesStatus" target-class="ro.cs.tao.topology.NodeServiceStatus" access="PROPERTY" fetch="EAGER">
                 <collection-table name="topology.node_service" >
                     <join-column name="host_name" referenced-column-name="id" />
@@ -1367,12 +1355,12 @@
 
     <embeddable class="ro.cs.tao.user.UserMachine" access="PROPERTY">
         <attributes>
+            <basic name="machineType">
+                <column name="machine_type_id" nullable="false" column-definition="smallint NOT NULL"/>
+            </basic>
             <basic name="quantity">
                 <column name="machine_count" nullable="false" column-definition="smallint NOT NULL"/>
             </basic>
-            <many-to-one name="flavor" fetch="EAGER" target-entity="ro.cs.tao.topology.NodeFlavor">
-                <join-column name="flavor_id" nullable="false"/>
-            </many-to-one>
         </attributes>
     </embeddable>
 
@@ -1413,5 +1401,6 @@
     <converter class="ro.cs.tao.persistence.convert.TagTypeConverter" />
     <converter class="ro.cs.tao.persistence.convert.ProductStatusConverter" />
     <converter class="ro.cs.tao.persistence.convert.AggregatorConverter" />
+    <converter class="ro.cs.tao.persistence.convert.NodeTypeConverter" />
 
 </entity-mappings>

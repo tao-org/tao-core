@@ -1,14 +1,14 @@
 package ro.cs.tao.user;
 
-import ro.cs.tao.topology.NodeFlavor;
+import ro.cs.tao.topology.NodeType;
 
 public class UserMachine {
-    private NodeFlavor machineType;
+    private NodeType machineType;
     private int quantity;
 
-    public NodeFlavor getMachineType() { return machineType; }
+    public NodeType getMachineType() { return machineType; }
 
-    public void setMachineType(NodeFlavor machineType) { this.machineType = machineType; }
+    public void setMachineType(NodeType machineType) { this.machineType = machineType; }
 
     public int getQuantity() { return quantity; }
 

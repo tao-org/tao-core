@@ -17,7 +17,6 @@ package ro.cs.tao.persistence.config;
 
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import com.mchange.v2.c3p0.DataSources;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hibernate.annotations.TypeDef;
 import org.hibernate.jpa.HibernatePersistenceProvider;
 import org.springframework.context.ApplicationListener;
@@ -35,6 +34,7 @@ import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.persistence.data.jsonutil.JsonStringType;
+import ro.cs.tao.utils.ExceptionUtils;
 
 import javax.annotation.Resource;
 import javax.sql.DataSource;
@@ -46,8 +46,6 @@ import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import static ro.cs.tao.configuration.Configuration.Services;
 
 @Configuration
 @EnableTransactionManagement
@@ -63,6 +61,21 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
      * file)
      */
     private static final String PROPERTY_NAME_DATABASE_DRIVER = "spring.database.driverClassName";
+
+    /**
+     * Constant for the DB connection URL
+     */
+    private static final String PROPERTY_NAME_DATABASE_URL = "spring.datasource.url";
+
+    /**
+     * Constant for the DB connection username
+     */
+    private static final String PROPERTY_NAME_DATABASE_USERNAME = "spring.datasource.username";
+
+    /**
+     * Constant for the DB connection password
+     */
+    private static final String PROPERTY_NAME_DATABASE_PASSWORD = "spring.datasource.password";
 
     /**
      * C3p0 Connection Pool minimum pool size
@@ -178,10 +191,10 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
             dataSource.setDriverClass(environment.getRequiredProperty(PROPERTY_NAME_DATABASE_DRIVER));
 
             // DB URL + user name + pass from tao.properties
-            dataSource.setJdbcUrl(ConfigurationManager.getInstance().getValue(Services.DATABASE_CONNECTION_STRING));
+            dataSource.setJdbcUrl(ConfigurationManager.getInstance().getValue(PROPERTY_NAME_DATABASE_URL));
 
-            dataSource.setUser(ConfigurationManager.getInstance().getValue(Services.DATABASE_USER));
-            dataSource.setPassword(ConfigurationManager.getInstance().getValue(Services.DATABASE_PASSWORD));
+            dataSource.setUser(ConfigurationManager.getInstance().getValue(PROPERTY_NAME_DATABASE_USERNAME));
+            dataSource.setPassword(ConfigurationManager.getInstance().getValue(PROPERTY_NAME_DATABASE_PASSWORD));
 
             dataSource.setInitialPoolSize(Integer
               .parseInt(environment.getRequiredProperty(PROPERTY_NAME_DATABASE_CONNECTION_INITIALPOOLSIZE)));
@@ -207,7 +220,7 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
             }
         } catch (SQLException | IllegalStateException | PropertyVetoException e) {
             logger.log(Level.SEVERE, "Error configuring data source: " + e.getMessage());
-            logger.log(Level.SEVERE, ExceptionUtils.getStackTrace(e));
+            logger.log(Level.SEVERE, ExceptionUtils.getStackTrace(logger, e));
         }
         // add it to the internal list to be cleaned later
         createdBeans.add(dataSource);
@@ -279,7 +292,7 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
                 DataSources.destroy(dataSource);
             } catch (SQLException e) {
                 logger.log(Level.SEVERE, e.getMessage());
-                logger.log(Level.SEVERE, ExceptionUtils.getStackTrace(e));
+                logger.log(Level.SEVERE, ExceptionUtils.getStackTrace(logger, e));
             }
         }
         createdBeans.clear();
