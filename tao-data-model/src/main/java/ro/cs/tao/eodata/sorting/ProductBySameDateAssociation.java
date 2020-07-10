@@ -1,7 +1,7 @@
 package ro.cs.tao.eodata.sorting;
 
+import ro.cs.tao.Tuple;
 import ro.cs.tao.eodata.EOProduct;
-import ro.cs.tao.utils.Tuple;
 
 import java.util.ArrayList;
 import java.util.List;

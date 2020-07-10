@@ -36,7 +36,10 @@ import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.config.DatabaseConfiguration;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.security.SystemPrincipal;
-import ro.cs.tao.topology.*;
+import ro.cs.tao.topology.NodeDescription;
+import ro.cs.tao.topology.NodeServiceStatus;
+import ro.cs.tao.topology.ServiceDescription;
+import ro.cs.tao.topology.ServiceStatus;
 import ro.cs.tao.workflow.ParameterValue;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
@@ -200,12 +203,9 @@ public class PersistenceManagerTest {
             node.setId("Test1_host_name");
             node.setUserName("Test1 user name");
             node.setUserPass("Test1 user pass");
-            NodeFlavor flavor = new NodeFlavor() {{
-                setCpu(2);
-                setMemory(1024);
-                setDisk(1000);
-            }};
-            node.setFlavor(flavor);
+            node.setProcessorCount(2);
+            node.setMemorySizeGB(10);
+            node.setDiskSpaceSizeGB(1000);
 
             node.setDescription("Node1 just for test");
 
@@ -236,12 +236,9 @@ public class PersistenceManagerTest {
             node.setId("Test2_host_name");
             node.setUserName("Test2 user name");
             node.setUserPass("Test2 user pass");
-            NodeFlavor flavor = new NodeFlavor() {{
-                setCpu(2);
-                setMemory(1024);
-                setDisk(1000);
-            }};
-            node.setFlavor(flavor);
+            node.setProcessorCount(2);
+            node.setMemorySizeGB(10);
+            node.setDiskSpaceSizeGB(1000);
 
             node.setDescription("Node2 just for test");
 
@@ -272,12 +269,9 @@ public class PersistenceManagerTest {
             node.setId("Test3_host_name");
             node.setUserName("Test3 user name");
             node.setUserPass("Test3 user pass");
-            NodeFlavor flavor = new NodeFlavor() {{
-                setCpu(2);
-                setMemory(1024);
-                setDisk(1000);
-            }};
-            node.setFlavor(flavor);
+            node.setProcessorCount(2);
+            node.setMemorySizeGB(10);
+            node.setDiskSpaceSizeGB(1000);
 
             node.setDescription("Node3 just for test");
 
@@ -327,9 +321,9 @@ public class PersistenceManagerTest {
             if(nodes.size() > 0)
             {
                 NodeDescription firstNode = nodes.get(0);
-                firstNode.getFlavor().setDisk(9);
+                firstNode.setDiskSpaceSizeGB(9);
                 firstNode = persistenceManager.updateExecutionNode(firstNode);
-                Assert.assertEquals(9, firstNode.getFlavor().getDisk());
+                Assert.assertTrue(firstNode.getDiskSpaceSizeGB() == 9);
             }
         }
         catch (PersistenceException e)
@@ -393,12 +387,9 @@ public class PersistenceManagerTest {
             node.setId("hostname2");
             node.setUserName("Test user name");
             node.setUserPass("Test user pass");
-            NodeFlavor flavor = new NodeFlavor() {{
-                setCpu(2);
-                setMemory(1024);
-                setDisk(1000);
-            }};
-            node.setFlavor(flavor);
+            node.setProcessorCount(2);
+            node.setMemorySizeGB(10);
+            node.setDiskSpaceSizeGB(1000);
 
             node.setDescription("Node 2 just for test");
 

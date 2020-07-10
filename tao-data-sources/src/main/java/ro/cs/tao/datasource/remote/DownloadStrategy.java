@@ -20,6 +20,8 @@ import ro.cs.tao.ProgressListener;
 import ro.cs.tao.datasource.InterruptedException;
 import ro.cs.tao.datasource.*;
 import ro.cs.tao.eodata.EOProduct;
+import ro.cs.tao.eodata.util.ProductHelper;
+import ro.cs.tao.utils.ExceptionUtils;
 import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.NetUtils;
 
@@ -47,7 +49,6 @@ import java.util.regex.Pattern;
  * @author  Cosmin Cara
  */
 public abstract class DownloadStrategy implements ProductFetchStrategy {
-    public static final String URL_SEPARATOR = "/";
     protected static final String NAME_SEPARATOR = "_";
     protected static final int BUFFER_SIZE = 1024 * 1024;
     private static final String startMessage = "(%s,%s) %s [size: %skB]";
@@ -258,7 +259,9 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
                 }
             }
         } catch (IOException e) {
-            logger.severe(e.getMessage());
+
+            logger.severe(ExceptionUtils.getStackTrace(logger, e));
+            throw e;
         } finally {
             activityEnd();
         }
@@ -378,10 +381,10 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         return check(product, Paths.get(localArchiveRoot));
     }
 
-    protected Path check(EOProduct product, Path sourceRoot) {
+    protected Path check(EOProduct product, Path sourceRoot) throws IOException {
         Path sourcePath = findProductPath(sourceRoot, product);
         if (sourcePath == null) {
-            logger.warning(String.format("Product %s not found in the local archive", product.getName()));
+            throw new IOException(String.format("Product %s not found in the local archive", product.getName()));
         }
         return sourcePath;
     }
@@ -447,7 +450,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
 
     private Path downloadFile(String remoteUrl, Path file, FetchMode mode, String authToken) throws IOException, InterruptedException {
         checkCancelled();
-        String subActivity = remoteUrl.substring(remoteUrl.lastIndexOf(URL_SEPARATOR) + 1);
+        String subActivity = remoteUrl.substring(remoteUrl.lastIndexOf(ProductHelper.URL_SEPARATOR) + 1);
         if ("$value".equals(subActivity)) {
             subActivity = file.getFileName().toString();
         }
@@ -505,6 +508,9 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
                 }
                 logger.fine(String.format("End download for %s", remoteUrl));
             } else {
+                if (remoteFileLength == 0) {
+                    throw new IOException("Remote file length is zero!");
+                }
                 logger.fine("File already downloaded");
                 logger.fine(String.format(completeMessage, currentProduct.getName(), currentStep, file.getFileName(), 0));
                 currentProductProgress.add(remoteFileLength);

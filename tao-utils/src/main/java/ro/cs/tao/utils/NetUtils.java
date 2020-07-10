@@ -211,14 +211,15 @@ public class NetUtils {
                 default:
                     throw new IllegalArgumentException("Method not supported");
             }
+            final RequestConfig.Builder requestBuilder = RequestConfig.custom()
+                                                                      .setConnectionRequestTimeout(timeout)
+                                                                      .setConnectTimeout(timeout)
+                                                                      .setSocketTimeout(timeout);
             if (apacheHttpProxy != null) {
-                RequestConfig config = RequestConfig.custom().setProxy(apacheHttpProxy).build();
-                requestBase.setConfig(config);
+                requestBuilder.setProxy(apacheHttpProxy);
             }
-            RequestConfig config = requestBase.getConfig();
-            if (config != null) {
-                Logger.getRootLogger().debug("Details: %s", config.toString());
-            }
+            requestBase.setConfig(requestBuilder.build());
+            Logger.getRootLogger().debug("Details: %s", requestBase.getConfig().toString());
             response = httpClient.execute(requestBase);
             Logger.getRootLogger().debug("HTTP %s %s returned %s", method.toString(), url, response.getStatusLine().getStatusCode());
         } catch (URISyntaxException | IOException e) {
@@ -281,14 +282,15 @@ public class NetUtils {
                 default:
                     throw new IllegalArgumentException("Method not supported");
             }
+            final RequestConfig.Builder requestBuilder = RequestConfig.custom()
+                    .setConnectionRequestTimeout(timeout)
+                    .setConnectTimeout(timeout)
+                    .setSocketTimeout(timeout);
             if (apacheHttpProxy != null) {
-                RequestConfig config = RequestConfig.custom().setProxy(apacheHttpProxy).build();
-                requestBase.setConfig(config);
+                requestBuilder.setProxy(apacheHttpProxy);
             }
-            RequestConfig config = requestBase.getConfig();
-            if (config != null) {
-                Logger.getRootLogger().debug("Details: %s", config.toString());
-            }
+            requestBase.setConfig(requestBuilder.build());
+            Logger.getRootLogger().debug("Details: %s", requestBase.getConfig().toString());
             response = httpClient.execute(requestBase);
             Logger.getRootLogger().debug("HTTP %s %s returned %s", method.toString(), url, response.getStatusLine().getStatusCode());
         } catch (URISyntaxException | IOException e) {

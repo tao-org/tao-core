@@ -41,7 +41,7 @@ public class Zipper {
 
     private static Logger logger = Logger.getLogger(Zipper.class.getName());
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         Path source = Paths.get("D:\\download\\rou_2018_s1_109\\S1B_IW_SLC__1SDV_20181103T042027_20181103T042055_013435_018DC1_2CCB.zip");
         Path target = Paths.get("D:\\download\\rou_2018_s1_109");
         decompressZip(source, target, false);
@@ -75,7 +75,7 @@ public class Zipper {
         }
     }
 
-    public static Path decompressZip(Path source, Path target, boolean deleteAfterDecompress) {
+    public static Path decompressZip(Path source, Path target, boolean deleteAfterDecompress) throws IOException {
         if (source == null || !source.toString().endsWith(".zip")) {
             return null;
         }
@@ -89,6 +89,7 @@ public class Zipper {
                     if (entry.isDirectory()) {
                         Files.createDirectories(newFile);
                     } else {
+                        Files.createDirectories(newFile.getParent());
                         OutputStream outputStream = Files.newOutputStream(newFile);
                         int read;
                         while ((read = zis.read(buffer)) > 0) {
@@ -105,7 +106,7 @@ public class Zipper {
             }
         } catch (IOException e) {
             logger.warning(e.getMessage());
-            return null;
+            throw e;
         }
         return target;
     }
@@ -140,7 +141,7 @@ public class Zipper {
         return target;
     }
 
-    public static Path decompressTarGz(Path source, Path target, boolean deleteAfterDecompress) {
+    public static Path decompressTarGz(Path source, Path target, boolean deleteAfterDecompress) throws IOException {
         if (source == null || !source.toString().endsWith(".tar.gz")) {
             return null;
         }
@@ -154,7 +155,8 @@ public class Zipper {
                         Files.createDirectories(currentPath);
                     } else {
                         int count;
-                        byte buffer[] = new byte[65536];
+                        final byte[] buffer = new byte[65536];
+                        Files.createDirectories(currentPath.getParent());
                         try (OutputStream outputStream = Files.newOutputStream(currentPath)) {
                             while ((count = tarStream.read(buffer, 0, buffer.length)) != -1) {
                                 outputStream.write(buffer, 0, count);
@@ -168,7 +170,7 @@ public class Zipper {
             }
         } catch (IOException ex) {
             logger.warning(ex.getMessage());
-            return null;
+            throw ex;
         }
         return target;
     }

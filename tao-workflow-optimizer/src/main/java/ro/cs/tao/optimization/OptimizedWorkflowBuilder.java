@@ -1,7 +1,9 @@
 package ro.cs.tao.optimization;
 
-import com.google.common.collect.Lists;
-import ro.cs.tao.component.*;
+import ro.cs.tao.component.ParameterDescriptor;
+import ro.cs.tao.component.ProcessingComponent;
+import ro.cs.tao.component.RuntimeOptimizer;
+import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.datasource.beans.Query;
 import ro.cs.tao.persistence.exception.PersistenceException;
@@ -14,6 +16,7 @@ import ro.cs.tao.workflow.enums.ComponentType;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Logger;
@@ -242,8 +245,7 @@ public class OptimizedWorkflowBuilder extends WorkflowBuilderBase {
      * Delete elements from newest to oldest.
      */
     protected void cleanCache() {
-        cache = Lists.reverse(cache);
-
+        Collections.reverse(cache);
         for (Object obj : cache) {
             try {
                 if (obj instanceof ProcessingComponent) {

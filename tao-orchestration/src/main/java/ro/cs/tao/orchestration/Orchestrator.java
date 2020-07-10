@@ -15,12 +15,10 @@
  */
 package ro.cs.tao.orchestration;
 
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.component.Variable;
-import ro.cs.tao.configuration.Configuration;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.eodata.DataHandlingException;
 import ro.cs.tao.eodata.EOProduct;
@@ -53,6 +51,7 @@ import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.spi.OutputDataHandlerManager;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.user.UserPreference;
+import ro.cs.tao.utils.ExceptionUtils;
 import ro.cs.tao.utils.TriFunction;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
@@ -82,6 +81,9 @@ import java.util.stream.IntStream;
  * @author Cosmin Cara
  */
 public class Orchestrator extends Notifiable {
+
+    private static final String GROUP_TASK_SELECTOR_KEY = "group.task.selector";
+    private static final String JOB_TASK_SELECTOR_KEY = "job.task.selector";
 
     private static final Orchestrator instance;
     private final Map<Long, InternalStateHandler<?>> groupStateHandlers;
@@ -216,13 +218,12 @@ public class Orchestrator extends Notifiable {
                     JobCommand.RESUME.applyTo(job);
                 }
             }
-        } else {
-            try {
-                final SessionContext context = new MessageContext(message);
-                queue.put(new AbstractMap.SimpleEntry<>(message, context));
-            } catch (InterruptedException e) {
-                logger.severe(e.getMessage());
-            }
+        }
+        try {
+            final SessionContext context = new MessageContext(message);
+            queue.put(new AbstractMap.SimpleEntry<>(message, context));
+        } catch (InterruptedException e) {
+            logger.severe(e.getMessage());
         }
     }
 
@@ -253,7 +254,7 @@ public class Orchestrator extends Notifiable {
 
     private void initializeGroupSelector(Function<Long, WorkflowNodeDescriptor> workflowProvider,
                                          TriFunction<Long, Long, Integer, ExecutionTask> nodeProvider) {
-        String groupTaskSelectorClass = ConfigurationManager.getInstance().getValue(Configuration.Orchestrator.GROUP_SELECTOR_CLASS,
+        String groupTaskSelectorClass = ConfigurationManager.getInstance().getValue(GROUP_TASK_SELECTOR_KEY,
                                                                                     DefaultGroupTaskSelector.class.getName());
         final Set<TaskSelector> selectors = ServiceRegistryManager.getInstance()
                 .getServiceRegistry(TaskSelector.class).getServices()
@@ -266,7 +267,7 @@ public class Orchestrator extends Notifiable {
                 .findFirst().orElse(null);
         if (this.groupTaskSelector == null) {
             throw new RuntimeException(String.format("Cannot instantiate the selector class defined by %s in configuration",
-                                                     Configuration.Orchestrator.GROUP_SELECTOR_CLASS));
+                                                     GROUP_TASK_SELECTOR_KEY));
         }
         this.groupTaskSelector.setWorkflowProvider(workflowProvider);
         this.groupTaskSelector.setTaskByNodeProvider(nodeProvider);
@@ -274,7 +275,7 @@ public class Orchestrator extends Notifiable {
 
     private void initializeJobSelector(Function<Long, WorkflowNodeDescriptor> workflowProvider,
                                        TriFunction<Long, Long, Integer, ExecutionTask> nodeProvider) {
-        String jobTaskSelectorClass = ConfigurationManager.getInstance().getValue(Configuration.Orchestrator.JOB_SELECTOR_CLASS,
+        String jobTaskSelectorClass = ConfigurationManager.getInstance().getValue(JOB_TASK_SELECTOR_KEY,
                                                                                   DefaultJobTaskSelector.class.getName());
         final Set<TaskSelector> selectors = ServiceRegistryManager.getInstance()
                 .getServiceRegistry(TaskSelector.class).getServices()
@@ -287,7 +288,7 @@ public class Orchestrator extends Notifiable {
                 .findFirst().orElse(null);
         if (this.jobTaskSelector == null) {
             throw new RuntimeException(String.format("Cannot instantiate the selector class defined by %s in configuration",
-                                                     Configuration.Orchestrator.JOB_SELECTOR_CLASS));
+                                                     JOB_TASK_SELECTOR_KEY));
         }
         this.jobTaskSelector.setWorkflowProvider(workflowProvider);
         this.jobTaskSelector.setTaskByNodeProvider(nodeProvider);
@@ -749,7 +750,7 @@ public class Orchestrator extends Notifiable {
             try {
                 TaskCommand.STOP.applyTo(task);
             } catch (ExecutionException ex) {
-                logger.severe(ExceptionUtils.getStackTrace(ex));
+                logger.severe(ExceptionUtils.getStackTrace(logger, ex));
             }
         }
     }
@@ -867,7 +868,7 @@ public class Orchestrator extends Notifiable {
                 }
             }
         } catch (Exception e2) {
-            logger.severe(ExceptionUtils.getStackTrace(e2));
+            logger.severe(ExceptionUtils.getStackTrace(logger, e2));
             logger.severe("If this was caused by 'gdalinfo', please check that the Docker daemon is not blocked by a firewall");
         }
         return product;
@@ -907,8 +908,7 @@ public class Orchestrator extends Notifiable {
         @Override
         protected List<UserPreference> setPreferences() {
             try {
-                Principal principal = getPrincipal();
-                return persistenceManager != null && principal != null ?
+                return persistenceManager != null ?
                         persistenceManager.getUserPreferences(getPrincipal().getName()) : null;
             } catch (PersistenceException e) {
                 logger.severe(e.getMessage());

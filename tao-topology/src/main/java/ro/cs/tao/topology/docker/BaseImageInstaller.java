@@ -20,25 +20,23 @@ import org.apache.commons.lang3.SystemUtils;
 import ro.cs.tao.Tag;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.enums.TagType;
-import ro.cs.tao.configuration.Configuration;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.data.jsonutil.JacksonUtil;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
+import ro.cs.tao.topology.TopologyManager;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public abstract class BaseImageInstaller implements DockerImageInstaller {
-    //protected static final Set<String> winExtensions = new HashSet<String>() {{ add(".bat"); add(".exe"); }};
+    protected static final Set<String> winExtensions = new HashSet<String>() {{ add(".bat"); add(".exe"); }};
     private static final Path dockerPath;
     protected final Logger logger;
     private List<Tag> componentTags;
@@ -67,18 +65,17 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
         Container container = null;
         if (dockerPath != null) {
             try {
-                final String cfgValue = ConfigurationManager.getInstance().getValue(Configuration.Docker.IMAGES_LOCATION);
-                if (cfgValue == null) {
+                Path dockerImagesPath = Paths.get(ConfigurationManager.getInstance().getValue("tao.docker.images"));
+                if (dockerImagesPath == null) {
                     logger.warning("Invalid path for docker images");
                     return null;
                 }
-                final Path dockerImagesPath = Paths.get(cfgValue);
                 Files.createDirectories(dockerImagesPath);
-                final Path dockerfilePath = dockerImagesPath.resolve(getContainerName()).resolve("Dockerfile");
+                Path dockerfilePath = dockerImagesPath.resolve(getContainerName()).resolve("Dockerfile");
                 if (!Files.exists(dockerfilePath)) {
                     logger.finest(String.format("Extracting Dockerfile for image %s", getContainerName()));
                     Files.createDirectories(dockerfilePath.getParent());
-                    final byte[] buffer = new byte[1024];
+                    byte[] buffer = new byte[1024];
                     try (BufferedInputStream is = new BufferedInputStream(getClass().getResourceAsStream("Dockerfile"));
                          OutputStream os = new BufferedOutputStream(Files.newOutputStream(dockerfilePath))) {
                         int read;
@@ -88,13 +85,14 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
                         os.flush();
                     }
                 }
-                container = DockerManager.getDockerImage(getContainerName());
+                TopologyManager topologyManager = TopologyManager.getInstance();
+                container = topologyManager.getDockerImage(getContainerName());
                 if (container == null) {
                     this.logger.info(String.format("Image %s was not found in Docker registry. Registration starting.\n" +
                                                              "Until registration completes, the corresponding components will not be available.", getContainerName()));
-                    DockerManager.registerImage(dockerfilePath.toRealPath(), getContainerName(), getDescription());
+                    topologyManager.registerImage(dockerfilePath.toRealPath(), getContainerName(), getDescription());
                     this.logger.info(String.format("Registration completed for docker image %s.", getContainerName()));
-                    container = DockerManager.getDockerImage(getContainerName());
+                    container = topologyManager.getDockerImage(getContainerName());
                 } else {
                     logger.finest(String.format("Image %s was found in Docker registry", getContainerName()));
                 }
@@ -122,14 +120,14 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
 
     protected Container readContainerDescriptor(String fileName) throws IOException {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(fileName)))) {
-            String str = reader.lines().collect(Collectors.joining(""));
+            String str = String.join("", reader.lines().collect(Collectors.toList()));
             return JacksonUtil.fromString(str, Container.class);
         }
     }
 
     protected ProcessingComponent[] readComponentDescriptors(String fileName) throws IOException {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(fileName)))) {
-            String str2 = reader.lines().collect(Collectors.joining(""));
+            String str2 = String.join("", reader.lines().collect(Collectors.toList()));
             return JacksonUtil.OBJECT_MAPPER.readValue(str2, ProcessingComponent[].class);
         }
     }

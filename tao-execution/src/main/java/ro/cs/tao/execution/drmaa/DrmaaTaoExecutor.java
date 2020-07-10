@@ -17,6 +17,7 @@ package ro.cs.tao.execution.drmaa;
 
 import org.apache.commons.lang3.SystemUtils;
 import org.ggf.drmaa.*;
+import ro.cs.tao.Tuple;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.component.Variable;
@@ -34,7 +35,6 @@ import ro.cs.tao.execution.monitor.NodeManager;
 import ro.cs.tao.execution.monitor.NodeManager.NodeData;
 import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.topology.NodeDescription;
-import ro.cs.tao.utils.Tuple;
 import ro.cs.tao.utils.executors.BlockingQueueWorker;
 
 import java.io.IOException;

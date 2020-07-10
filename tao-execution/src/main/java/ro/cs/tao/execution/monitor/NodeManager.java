@@ -1,7 +1,7 @@
 package ro.cs.tao.execution.monitor;
 
-import ro.cs.tao.configuration.Configuration;
 import ro.cs.tao.configuration.ConfigurationManager;
+import ro.cs.tao.configuration.ConfigurationProvider;
 import ro.cs.tao.execution.local.DefaultSessionFactory;
 import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.Notifiable;
@@ -11,7 +11,6 @@ import ro.cs.tao.quota.UserQuotaManager;
 import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.topology.NodeDescription;
-import ro.cs.tao.topology.NodeFlavor;
 import ro.cs.tao.utils.async.Parallel;
 
 import java.security.Principal;
@@ -39,10 +38,10 @@ public class NodeManager extends Notifiable {
 
     static {
         concurrentCalls = Math.max(2, java.lang.Runtime.getRuntime().availableProcessors() / 4);
-        ConfigurationManager configurationManager = ConfigurationManager.getInstance();
-        isAvailable = DefaultSessionFactory.class.getName().equals(configurationManager.getValue(Configuration.DRMAA.SESSION_FACTORY_CLASS));
+        final ConfigurationProvider configurationManager = ConfigurationManager.getInstance();
+        isAvailable = DefaultSessionFactory.class.getName().equals(configurationManager.getValue("tao.drmaa.sessionfactory"));
         instance = isAvailable ? new NodeManager() : null;
-        pollInterval = Integer.parseInt(configurationManager.getValue(Configuration.Topology.NODE_POLL_INTERVAL, "15"));
+        pollInterval = Integer.parseInt(configurationManager.getValue("topology.node.poll.interval", "15"));
     }
 
     /**
@@ -151,9 +150,9 @@ public class NodeManager extends Notifiable {
         if (info == null) {
             info = new RuntimeInfo();
             info.setAvailableMemory(-1);
-            info.setDiskTotal(node.getFlavor().getDisk());
-            info.setTotalMemory(node.getFlavor().getMemory());
-            info.setCpuTotal(node.getFlavor().getCpu());
+            info.setDiskTotal(node.getDiskSpaceSizeGB());
+            info.setTotalMemory(node.getMemorySizeGB());
+            info.setCpuTotal(-1);
             info.setDiskUsed(-1);
         }
         this.runtimeInfo.put(host, info);
@@ -225,7 +224,7 @@ public class NodeManager extends Notifiable {
         
         final NodeDescription node = nodes.get(nodeName);
         
-        return new NodeData(node, Math.min(requestedCPUs, node.getFlavor().getCpu()), memory);
+        return new NodeData(node, Math.min(requestedCPUs, node.getProcessorCount()), memory);
     }
 
     /**
@@ -291,8 +290,8 @@ public class NodeManager extends Notifiable {
                             runtimeInfo.put(host,
                                             new RuntimeInfo() {{
                                                 setAvailableMemory(-1);
-                                                setDiskTotal(node.getFlavor().getDisk());
-                                                setTotalMemory(node.getFlavor().getMemory());
+                                                setDiskTotal(node.getDiskSpaceSizeGB());
+                                                setTotalMemory(node.getMemorySizeGB());
                                                 setCpuTotal(-1);
                                                 setDiskUsed(-1);
                                             }});
@@ -303,8 +302,8 @@ public class NodeManager extends Notifiable {
                             runtimeInfo.put(host,
                                             new RuntimeInfo() {{
                                                 setAvailableMemory(-1);
-                                                setDiskTotal(node.getFlavor().getDisk());
-                                                setTotalMemory(node.getFlavor().getMemory());
+                                                setDiskTotal(node.getDiskSpaceSizeGB());
+                                                setTotalMemory(node.getMemorySizeGB());
                                                 setCpuTotal(-1);
                                                 setDiskUsed(-1);
                                             }});
@@ -362,9 +361,8 @@ public class NodeManager extends Notifiable {
     private double computeLoad(NodeDescription node, double actualCPU, long freeMemory) {
         double result  = 0.0;
         try {
-            final NodeFlavor flavor = node.getFlavor();
-            double noCpus = flavor.getCpu();
-            double totalMem = flavor.getMemory() * MemoryUnit.GIGABYTE.value();
+            double noCpus = node.getProcessorCount();
+            double totalMem = node.getMemorySizeGB() * MemoryUnit.GIGABYTE.value();
             result = (actualCPU / noCpus) * (1 - (freeMemory / totalMem));
             return result;
         } finally {

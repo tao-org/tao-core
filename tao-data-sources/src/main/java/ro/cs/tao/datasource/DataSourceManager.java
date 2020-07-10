@@ -37,6 +37,7 @@ public class DataSourceManager {
     private static final int DEFAULT_RETRY_INTERVAL = 60;
     private final ServiceRegistry<DataSource> registry;
     private final Map<Map.Entry<String, String>, Map<String, DataSourceParameter>> registeredSources;
+    private Map<String, Map<String, Map<String, Map<String, String>>>> filteredParameters;
 
     static {
         instance = new DataSourceManager();
@@ -60,8 +61,13 @@ public class DataSourceManager {
                                   proxySettings.get("proxy.password"));
             }
         }
-        this.registry = ServiceRegistryManager.getInstance().getServiceRegistry(DataSource.class);
         this.registeredSources = new HashMap<>();
+        this.registry = ServiceRegistryManager.getInstance().getServiceRegistry(DataSource.class);
+        initializeSources();
+    }
+
+    private void initializeSources() {
+        this.registeredSources.clear();
         final Set<DataSource> services = this.registry.getServices();
         services.forEach(ds -> {
             final String[] sensors = ds.getSupportedSensors();
@@ -69,6 +75,9 @@ public class DataSourceManager {
             for (String sensor : sensors) {
                 Map.Entry<String, String> key = new AbstractMap.SimpleEntry<>(sensor, dsName);
                 if (!this.registeredSources.containsKey(key)) {
+                    if (this.filteredParameters != null && this.filteredParameters.containsKey(key.getValue())) {
+                        ds.setFilteredParameters(this.filteredParameters.get(key.getValue()));
+                    }
                     final Map<String, Map<String, DataSourceParameter>> parameters = ds.getSupportedParameters();
                     this.registeredSources.put(key, parameters.get(sensor));
                 }
@@ -76,11 +85,29 @@ public class DataSourceManager {
         });
     }
 
+    public void setFilteredParameters(Map<Map.Entry<String, String>, Map<String, Map<String, String>>> filter) {
+        // Map<Datasource, Map<Sensor, Map<Parameter, Map<ValueSetEntry, ValueSetFriendlyValue>>>>
+        this.filteredParameters = new HashMap<>();
+        for (Map.Entry<String, String> entry : filter.keySet()) {
+            if (this.registeredSources.containsKey(entry)) {
+                filteredParameters.computeIfAbsent(entry.getKey(), k -> new HashMap<>());
+                filteredParameters.get(entry.getKey()).put(entry.getValue(), filter.get(entry));
+            }
+        }
+        initializeSources();
+    }
+
     /**
      * Returns all the registered (detected) data sources
      */
     public Set<DataSource> getRegisteredDataSources() {
-        return new HashSet<>(this.registry.getServices());
+        final Set<DataSource> services = this.registry.getServices();
+        for (DataSource<?> dataSource : services) {
+            if (this.filteredParameters != null && this.filteredParameters.containsKey(dataSource.getId())) {
+                dataSource.setFilteredParameters(this.filteredParameters.get(dataSource.getId()));
+            }
+        }
+        return new HashSet<>(services);
     }
 
     /**
@@ -120,11 +147,14 @@ public class DataSourceManager {
      *
      * @param sensorName    The name of the sensor
      */
-    public DataSource get(String sensorName) {
-        DataSource dataSource = null;
+    public DataSource<?> get(String sensorName) {
+        DataSource<?> dataSource = null;
         String firstName = getFirst(sensorName);
         if (firstName != null) {
             dataSource = this.registry.getService(firstName);
+            if (this.filteredParameters != null && this.filteredParameters.containsKey(firstName)) {
+                dataSource.setFilteredParameters(this.filteredParameters.get(firstName));
+            }
         }
         return dataSource;
     }
@@ -136,10 +166,13 @@ public class DataSourceManager {
      * @param sensorName    The sensor name
      * @param dataSourceName     The data source class name
      */
-    public DataSource get(String sensorName, String dataSourceName) {
-        DataSource dataSource = null;
+    public DataSource<?> get(String sensorName, String dataSourceName) {
+        DataSource<?> dataSource = null;
         if (this.registeredSources.containsKey(new AbstractMap.SimpleEntry<>(sensorName, dataSourceName))) {
             dataSource = this.registry.getService(dataSourceName);
+            if (this.filteredParameters != null && this.filteredParameters.containsKey(dataSourceName)) {
+                dataSource.setFilteredParameters(this.filteredParameters.get(dataSourceName));
+            }
         }
         return dataSource;
     }
@@ -150,12 +183,15 @@ public class DataSourceManager {
      *
      * @param sensorName    The name of the sensor
      */
-    public DataSource createInstance(String sensorName) {
-        DataSource dataSource = null;
+    public DataSource<?> createInstance(String sensorName) {
+        DataSource<?> dataSource = null;
         String firstName = getFirst(sensorName);
         if (firstName != null) {
             try {
                 dataSource = this.registry.getService(firstName).getClass().newInstance();
+                if (this.filteredParameters != null && this.filteredParameters.containsKey(firstName)) {
+                    dataSource.setFilteredParameters(this.filteredParameters.get(firstName));
+                }
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -170,11 +206,14 @@ public class DataSourceManager {
      * @param sensorName    The sensor name
      * @param dataSourceName     The data source class name
      */
-    public DataSource createInstance(String sensorName, String dataSourceName) {
-        DataSource dataSource = null;
+    public DataSource<?> createInstance(String sensorName, String dataSourceName) {
+        DataSource<?> dataSource = null;
         if (this.registeredSources.containsKey(new AbstractMap.SimpleEntry<>(sensorName, dataSourceName))) {
             try {
                 dataSource = this.registry.getService(dataSourceName).getClass().newInstance();
+                if (this.filteredParameters != null && this.filteredParameters.containsKey(dataSourceName)) {
+                    dataSource.setFilteredParameters(this.filteredParameters.get(dataSourceName));
+                }
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

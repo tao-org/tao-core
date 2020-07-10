@@ -25,7 +25,7 @@ public abstract class TopologyToolInstaller extends StringIdentifiable {
     public String defaultId() { return "NewToolInstaller"; }
 
     public abstract void setMasterNodeDescription(NodeDescription masterNodeInfo);
-    public abstract ServiceInstallStatus installNewNode(NodeDescription info) throws TopologyException;
-    public abstract ServiceInstallStatus uninstallNode(NodeDescription info)throws TopologyException;
+    public abstract ToolInstallStatus installNewNode(NodeDescription info) throws TopologyException;
+    public abstract ToolInstallStatus uninstallNode(NodeDescription info)throws TopologyException;
     public abstract void editNode(NodeDescription nodeInfo)throws TopologyException;
 }

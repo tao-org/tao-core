@@ -16,6 +16,8 @@
 package ro.cs.tao.datasource;
 
 import ro.cs.tao.component.StringIdentifiable;
+import ro.cs.tao.datasource.converters.ConversionException;
+import ro.cs.tao.datasource.converters.ConverterFactory;
 import ro.cs.tao.datasource.param.DataSourceParameter;
 import ro.cs.tao.datasource.param.QueryParameter;
 import ro.cs.tao.eodata.EOProduct;
@@ -24,6 +26,7 @@ import ro.cs.tao.serialization.BaseSerializer;
 import ro.cs.tao.serialization.MediaType;
 import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.serialization.SerializerFactory;
+import ro.cs.tao.utils.StringUtilities;
 
 import javax.xml.bind.annotation.XmlTransient;
 import java.time.Duration;
@@ -42,11 +45,12 @@ public abstract class DataQuery extends StringIdentifiable {
     protected static final int DEFAULT_LIMIT = Integer.MAX_VALUE;
     protected static final int DEFAULT_PAGE_SIZE = 50;
     protected static final String QUERY_RESULT_MESSAGE = "Query %s [%s-%s] (page #%d) returned %d results";
+    protected static final Map<Class<? extends DataQuery>, ConverterFactory> converterFactory = new HashMap<>();
     /* Correspondence between system parameter names and remote parameter names */
     private Map<String, String> parameterNameMap;
     /* Set of mandatory parameter system names */
     private Set<String> mandatoryParams;
-    protected DataSource source;
+    protected DataSource<?> source;
     protected String sensorName;
     private String queryText;
     protected int pageSize;
@@ -61,7 +65,7 @@ public abstract class DataQuery extends StringIdentifiable {
 
     protected DataQuery() { }
 
-    public DataQuery(DataSource source, String sensorName) {
+    public DataQuery(DataSource<?> source, String sensorName) {
         if (source == null) {
             throw new QueryException("Empty source");
         }
@@ -71,11 +75,11 @@ public abstract class DataQuery extends StringIdentifiable {
         initialize(source, sensorName);
     }
 
-    public DataSource getSource() {
+    public DataSource<?> getSource() {
         return source;
     }
 
-    public void setSource(DataSource source) {
+    public void setSource(DataSource<?> source) {
         this.source = source;
     }
 
@@ -87,7 +91,7 @@ public abstract class DataQuery extends StringIdentifiable {
         this.sensorName = sensorName;
     }
 
-    public QueryParameter addParameter(QueryParameter parameter) {
+    public QueryParameter<?> addParameter(QueryParameter<?> parameter) {
         if (parameter == null) {
             throw new IllegalArgumentException("Cannot accept null parameter");
         }
@@ -109,13 +113,13 @@ public abstract class DataQuery extends StringIdentifiable {
     }
 
     public <V> QueryParameter<V> addParameter(String name, V value) {
-        Class clazz = this.dataSourceParameters.get(name).getType();
-        QueryParameter parameter = createParameter(name, clazz, value);
+        Class<V> clazz = this.dataSourceParameters.get(name).getType();
+        QueryParameter<V> parameter = createParameter(name, clazz, value);
         this.parameters.put(name, parameter);
         return parameter;
     }
 
-    public QueryParameter getParameter(String name) { return this.parameters.get(name); }
+    public QueryParameter<?> getParameter(String name) { return this.parameters.get(name); }
 
     public Set<String> getMandatoryParams() { return this.mandatoryParams; }
 
@@ -130,6 +134,8 @@ public abstract class DataQuery extends StringIdentifiable {
     public void setPageNumber(int value) { this.pageNumber = value; }
 
     public void setMaxResults(int value) { this.limit = value; }
+
+    public boolean supportsPaging() { return true; }
 
     public List<EOProduct> execute() {
         final Set<String> mandatoryParams = getMandatoryParams();
@@ -162,8 +168,9 @@ public abstract class DataQuery extends StringIdentifiable {
         List<String> missing = mandatoryParams.stream()
                 .filter(p -> !parameters.containsKey(p)).collect(Collectors.toList());
         if (missing.size() > 0) {
-            QueryException ex = new QueryException("Mandatory parameter(s) not supplied");
-            ex.addAdditionalInfo("Missing", String.join(",", missing));
+            final String list = String.join(",", missing);
+            QueryException ex = new QueryException("Mandatory parameters not supplied: " + list);
+            ex.addAdditionalInfo("Missing", list);
             throw ex;
         }
         for (Map.Entry<String, DataSourceParameter> entry : this.dataSourceParameters.entrySet()) {
@@ -172,7 +179,7 @@ public abstract class DataQuery extends StringIdentifiable {
                 if (!parameters.containsKey(entry.getKey())) {
                     addParameter(entry.getKey(), parameter.getType(), parameter.getDefaultValue());
                 } else {
-                    QueryParameter queryParameter = parameters.get(entry.getKey());
+                    QueryParameter<?> queryParameter = parameters.get(entry.getKey());
                     if (queryParameter.getType().equals(String.class) &&
                             (queryParameter.getValue() == null || ((String) queryParameter.getValue()).trim().isEmpty())) {
                         addParameter(entry.getKey(), parameter.getType(), parameter.getDefaultValue());
@@ -200,20 +207,24 @@ public abstract class DataQuery extends StringIdentifiable {
 
     public <V> QueryParameter<V> createParameter(String name, Class<V> type, V value) {
         checkSupported(name, type);
-        return new QueryParameter<>(type, name, value);
+        final QueryParameter<V> parameter = new QueryParameter<>(type, name, value);
+        checkValue(parameter, value);
+        return parameter;
     }
 
     public <V> QueryParameter<V> createParameter(String name, Class<V> type, V value, boolean optional) {
         checkSupported(name, type);
-        return new QueryParameter<>(type, name, value, optional);
+        final QueryParameter<V> parameter = new QueryParameter<>(type, name, value, optional);
+        checkValue(parameter, value);
+        return parameter;
     }
 
-    public <V> QueryParameter createParameter(String name, Class<V> type, V minValue, V maxValue) {
+    public <V> QueryParameter<V> createParameter(String name, Class<V> type, V minValue, V maxValue) {
         checkSupported(name, type);
         return new QueryParameter<>(type, name, minValue, maxValue);
     }
 
-    public <V> QueryParameter createParameter(String name, Class<V> type, V minValue, V maxValue, boolean optional) {
+    public <V> QueryParameter<V> createParameter(String name, Class<V> type, V minValue, V maxValue, boolean optional) {
         checkSupported(name, type);
         return new QueryParameter<>(type, name, minValue, maxValue, optional);
     }
@@ -240,7 +251,7 @@ public abstract class DataQuery extends StringIdentifiable {
         }
     }
 
-    protected void checkSupported(String name, Class type) {
+    protected void checkSupported(String name, Class<?> type) {
         DataSourceParameter descriptor = this.dataSourceParameters.get(name);
         if (descriptor == null) {
             throw new QueryException(String.format("Parameter [%s] not supported on this data source", name));
@@ -256,6 +267,20 @@ public abstract class DataQuery extends StringIdentifiable {
         }
     }
 
+    protected <V> void checkValue(QueryParameter<V> parameter, V value) {
+        DataSourceParameter descriptor = this.dataSourceParameters.get(parameter.getName());
+        final Object[] valueSet = descriptor.getValueSet();
+        if (valueSet != null && value != null) {
+            final String stringValue = value.toString();
+            List<String> strValues = Arrays.stream(valueSet).map(Object::toString).collect(Collectors.toList());
+            if (strValues.stream().noneMatch(v -> v.equals(stringValue))) {
+                throw new QueryException(String.format("Unsupported value for parameter [%s]: expected one of %s but found %s",
+                                                       parameter.getName(), String.join(",", strValues),
+                                                       StringUtilities.isNullOrEmpty(stringValue) ? "''" : stringValue));
+            }
+        }
+    }
+
     protected abstract List<EOProduct> executeImpl();
 
     protected long getCountImpl() { return -1; }
@@ -266,6 +291,34 @@ public abstract class DataQuery extends StringIdentifiable {
         } else {
             throw new QueryException(String.format("Parameter [%s] not supported on this data source", systemName));
         }
+    }
+
+    protected String getParameterValue(QueryParameter<?> parameter) throws ConversionException {
+        return getRemoteMappedValue(parameter.getName(), converterFactory.get(getClass()).create(parameter).stringValue());
+    }
+
+    protected String getRemoteMappedValue(String parameterName, String mappedValue) {
+        final Map<String, Map<String, Map<String, String>>> filteredParameters = this.source.getFilteredParameters();
+        String value = mappedValue;
+        boolean found = false;
+        if (filteredParameters != null) {
+            final Map<String, Map<String, String>> valueMap = filteredParameters.values().stream().filter(v -> v.containsKey(parameterName)).findFirst().orElse(null);
+            if (valueMap != null) {
+                for (Map<String, String> map : valueMap.values()) {
+                    for (Map.Entry<String, String> entry : map.entrySet()) {
+                        if (mappedValue.equals(entry.getValue())) {
+                            value = entry.getKey();
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (found) {
+                        break;
+                    }
+                }
+            }
+        }
+        return value;
     }
 
     private void initialize(DataSource<?> source, String sensorName) {

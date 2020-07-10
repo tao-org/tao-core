@@ -33,7 +33,6 @@ package ro.cs.tao.execution.drmaa;
 
 import org.ggf.drmaa.Session;
 import org.ggf.drmaa.SessionFactory;
-import ro.cs.tao.configuration.Configuration;
 import ro.cs.tao.configuration.ConfigurationManager;
 
 import java.io.BufferedInputStream;
@@ -87,10 +86,10 @@ public abstract class AbstractSessionFactory extends SessionFactory {
     protected abstract String getJniLibraryName();
 
     private void initLibrary() {
-        String path = ConfigurationManager.getInstance().getValue(Configuration.DRMAA.NATIVE_LIBRARY_PATH);
+        String path = ConfigurationManager.getInstance().getValue("native.library.path");
         if (path == null) {
             throw new MissingResourceException("Native library path is not defined",
-                                               getClass().getSimpleName(), Configuration.DRMAA.NATIVE_LIBRARY_PATH);
+                                               getClass().getSimpleName(), "native.library.path");
         }
         final Path libraryPath = Paths.get(path, getJniLibraryName());
         AccessController.doPrivileged((PrivilegedAction) () -> {

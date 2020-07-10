@@ -1,12 +1,12 @@
 package ro.cs.tao.orchestration.status;
 
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.orchestration.commands.TaskCommand;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.utils.ExceptionUtils;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -73,7 +73,7 @@ public abstract class TaskStatusHandler {
             try {
                 TaskCommand.STOP.applyTo(task);
             } catch (ExecutionException ex) {
-                logger.severe(ExceptionUtils.getStackTrace(ex));
+                logger.severe(ExceptionUtils.getStackTrace(logger, ex));
             }
         }
     }
