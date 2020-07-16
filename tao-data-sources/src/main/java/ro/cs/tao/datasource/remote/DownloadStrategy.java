@@ -15,13 +15,13 @@
  */
 package ro.cs.tao.datasource.remote;
 
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import ro.cs.tao.ProgressListener;
 import ro.cs.tao.datasource.InterruptedException;
 import ro.cs.tao.datasource.*;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.util.ProductHelper;
+import ro.cs.tao.utils.ExceptionUtils;
 import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.NetUtils;
 
@@ -259,7 +259,8 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
                 }
             }
         } catch (IOException e) {
-            logger.severe(ExceptionUtils.getStackTrace(e));
+
+            logger.severe(ExceptionUtils.getStackTrace(logger, e));
             throw e;
         } finally {
             activityEnd();
@@ -507,6 +508,9 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
                 }
                 logger.fine(String.format("End download for %s", remoteUrl));
             } else {
+                if (remoteFileLength == 0) {
+                    throw new IOException("Remote file length is zero!");
+                }
                 logger.fine("File already downloaded");
                 logger.fine(String.format(completeMessage, currentProduct.getName(), currentStep, file.getFileName(), 0));
                 currentProductProgress.add(remoteFileLength);

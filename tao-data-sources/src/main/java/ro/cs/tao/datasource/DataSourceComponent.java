@@ -15,7 +15,6 @@
  */
 package ro.cs.tao.datasource;
 
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import ro.cs.tao.ProgressListener;
 import ro.cs.tao.component.DataDescriptor;
 import ro.cs.tao.component.SourceDescriptor;
@@ -31,6 +30,7 @@ import ro.cs.tao.messaging.ProgressNotifier;
 import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.serialization.GenericAdapter;
 import ro.cs.tao.utils.Crypto;
+import ro.cs.tao.utils.ExceptionUtils;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
@@ -481,7 +481,7 @@ public class DataSourceComponent extends TaoComponent {
                 errorMessage = "Cancelled";
             } catch (IOException ex) {
                 logger.warning(String.format("Fetching product '%s' failed: %s",
-                                             product.getName(), ExceptionUtils.getStackTrace(ex)));
+                                             product.getName(), ExceptionUtils.getStackTrace(logger, ex)));
                 errorMessage = ex.getMessage();
             } catch (URISyntaxException e) {
                 logger.warning(String.format("Updating product location for '%s' failed: %s",

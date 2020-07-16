@@ -22,10 +22,14 @@ import java.net.URL;
 import java.nio.file.FileSystem;
 import java.nio.file.*;
 import java.nio.file.attribute.*;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -155,13 +159,24 @@ public class FileUtilities {
     }
 
     public static List<Path> listFiles(Path folder) {
-        final File[] files = folder.toFile().listFiles();
-        return files != null ?
-                Arrays.stream(files)
-                        .filter(File::isFile)
-                        .map(File::toPath)
-                        .collect(Collectors.toList()) :
-                new ArrayList<>();
+        try {
+            return Files.walk(folder, 1).collect(Collectors.toList());
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+
+    public static List<Path> listFiles(Path folder, String pattern, LocalDateTime before) throws IOException {
+        final Instant instant = before.atZone(ZoneOffset.systemDefault()).toInstant();
+        final Pattern p = Pattern.compile(pattern);
+        return Files.walk(folder, 1).filter(f -> {
+            try {
+                return p.matcher(f.getFileName().toString()).find() && Files.getLastModifiedTime(f).toInstant().isBefore(instant);
+            } catch (IOException inner) {
+                return false;
+            }
+        }).collect(Collectors.toList());
     }
 
     public static List<Path> listTree(Path folder) throws IOException {
@@ -345,14 +360,16 @@ public class FileUtilities {
 
                 @Override
                 public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-                    if (exc == null) {
+                    if (exc == null && !dir.equals(root)) {
                         Files.delete(dir);
                         return FileVisitResult.CONTINUE;
-                    } else {
+                    } else if (exc != null) {
                         throw exc;
                     }
+                    return FileVisitResult.CONTINUE;
                 }
             });
+            Files.delete(root);
         }
     }
 

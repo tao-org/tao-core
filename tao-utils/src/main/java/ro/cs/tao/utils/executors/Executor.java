@@ -73,6 +73,16 @@ public abstract class Executor<T> implements Runnable {
     private final CountDownLatch counter;
 
     /**
+     * Returns the number of tasks currently executed by this executor
+     */
+    public static int getRunningTasks() { return executorService.getActiveCount(); }
+
+    /**
+     * Returns the number of tasks pending to be executed by this executor
+     */
+    public static int getQueuedTasks() { return executorService.getQueue().size(); }
+
+    /**
      * Submits for execution the given command and returns the executor object.
      * The caller is responsible of waiting for the completion of the execution by waiting on
      * Executor.getWaitObject() latch.
