@@ -59,6 +59,7 @@ public interface MetadataInspector {
         private String productId;
         private String footprint;
         private String crs;
+        private String wgs84footprint;
         private String entryPoint;
         private PixelType pixelType;
         private String productType;
@@ -81,6 +82,9 @@ public interface MetadataInspector {
 
         public String getCrs() { return crs; }
         public void setCrs(String crs) { this.crs = crs; }
+
+        public String getWgs84footprint() { return wgs84footprint; }
+        public void setWgs84footprint(String wgs84footprint) { this.wgs84footprint = wgs84footprint; }
 
         public String getEntryPoint() { return entryPoint; }
         public void setEntryPoint(String entryPoint) { this.entryPoint = entryPoint; }

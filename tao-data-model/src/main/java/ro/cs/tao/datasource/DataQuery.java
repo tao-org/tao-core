@@ -168,8 +168,9 @@ public abstract class DataQuery extends StringIdentifiable {
         List<String> missing = mandatoryParams.stream()
                 .filter(p -> !parameters.containsKey(p)).collect(Collectors.toList());
         if (missing.size() > 0) {
-            QueryException ex = new QueryException("Mandatory parameter(s) not supplied");
-            ex.addAdditionalInfo("Missing", String.join(",", missing));
+            final String list = String.join(",", missing);
+            QueryException ex = new QueryException("Mandatory parameters not supplied: " + list);
+            ex.addAdditionalInfo("Missing", list);
             throw ex;
         }
         for (Map.Entry<String, DataSourceParameter> entry : this.dataSourceParameters.entrySet()) {

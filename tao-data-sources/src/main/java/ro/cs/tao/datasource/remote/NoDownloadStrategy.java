@@ -4,6 +4,8 @@ import ro.cs.tao.datasource.DataSource;
 import ro.cs.tao.datasource.InterruptedException;
 import ro.cs.tao.eodata.EOProduct;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
@@ -30,6 +32,21 @@ public class NoDownloadStrategy extends DownloadStrategy {
             currentProduct = product;
         }
         return Paths.get(product.getLocation());
+    }
+
+    @Override
+    protected Path check(EOProduct product) throws IOException {
+        checkCancelled();
+        final Path path = Paths.get(product.getLocation());
+        if (!Files.exists(path)) {
+            throw new IOException(String.format("Product %s not found in the local archive", product.getName()));
+        }
+        return path;
+    }
+
+    @Override
+    protected Path check(EOProduct product, Path sourceRoot) throws IOException {
+        return check(product);
     }
 
     @Override
