@@ -285,6 +285,10 @@ public abstract class DataQuery extends StringIdentifiable {
 
     protected long getCountImpl() { return -1; }
 
+    protected boolean supports(String systemName) {
+        return this.parameterNameMap.containsKey(systemName);
+    }
+
     protected String getRemoteName(String systemName) {
         if (this.parameterNameMap.containsKey(systemName)) {
             return this.parameterNameMap.get(systemName);
