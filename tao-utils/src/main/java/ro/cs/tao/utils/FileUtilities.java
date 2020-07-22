@@ -151,7 +151,9 @@ public class FileUtilities {
         Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-                folders.add(dir);
+                if (root.compareTo(dir) != 0) {
+                    folders.add(dir);
+                }
                 return FileVisitResult.CONTINUE;
             }
         });
