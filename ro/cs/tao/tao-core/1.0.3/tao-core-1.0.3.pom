@@ -36,7 +36,6 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.deploy.root.path>file://D:/github</project.deploy.root.path>
         <geotools.version>20.0</geotools.version>
         <spring.version>5.2.0.RELEASE</spring.version>
         <spring.data.version>2.2.0.RELEASE</spring.data.version>
