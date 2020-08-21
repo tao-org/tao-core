@@ -1088,6 +1088,9 @@
 
     <entity class="ro.cs.tao.user.User" access="PROPERTY">
         <table name="usr.user"/>
+        <entity-listeners>
+            <entity-listener class="ro.cs.tao.persistence.audit.UserListener"/>
+        </entity-listeners>
         <convert converter="ro.cs.tao.persistence.convert.UserStatusConverter" attribute-name="status" />
         <attributes>
             <id name="id">

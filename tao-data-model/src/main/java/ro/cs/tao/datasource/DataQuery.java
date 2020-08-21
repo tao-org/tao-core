@@ -153,12 +153,17 @@ public abstract class DataQuery extends StringIdentifiable {
         Instant start = Instant.now();
         List<EOProduct> retList = executeImpl();
         logger.finest(String.format("Data query completed in %d ms.", Duration.between(start, Instant.now()).toMillis()));
-        retList.forEach(p -> {
+
+        boolean canSortAcqDate = true;
+        for (EOProduct p : retList) {
             if (p.getVisibility() == null) {
                 p.setVisibility(Visibility.PUBLIC);
             }
-        });
-        retList.sort(Comparator.comparing(EOProduct::getAcquisitionDate));
+            canSortAcqDate &= p.getAcquisitionDate() != null;
+        }
+        if (canSortAcqDate) {
+            retList.sort(Comparator.comparing(EOProduct::getAcquisitionDate));
+        }
         return retList;
     }
 

@@ -104,6 +104,11 @@
             <artifactId>tao-quota</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>ro.cs.tao</groupId>
+            <artifactId>tao-mail</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
