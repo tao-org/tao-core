@@ -6,6 +6,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+/**
+ * Fallback provider if no other ConfigurationProvider is registered.
+ * It is not backed by a file, hence the properties added at runtime to it will not be persistent.
+ *
+ * @author Cosmin Cara
+ */
 public class EmptyConfigurationProvider implements ConfigurationProvider {
     private final Properties properties;
     private Path scriptFolder;

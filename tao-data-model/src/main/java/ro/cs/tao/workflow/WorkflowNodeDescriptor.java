@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Descriptor of an workflow node.
+ * Descriptor of a workflow node.
  *
  * @author Cosmin Cara
  */

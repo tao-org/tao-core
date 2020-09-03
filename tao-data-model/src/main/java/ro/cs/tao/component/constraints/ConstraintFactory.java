@@ -21,6 +21,9 @@ import java.lang.reflect.Constructor;
 import java.util.*;
 
 /**
+ * Factory singletot for creating Constraint instances.
+ * The constraint classes are detected via reflection by inspecting their @Constraint annotation.
+ *
  * @author Cosmin Cara
  */
 public final class ConstraintFactory {

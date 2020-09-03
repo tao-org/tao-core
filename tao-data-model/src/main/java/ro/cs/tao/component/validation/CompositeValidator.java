@@ -20,6 +20,8 @@ import ro.cs.tao.component.ParameterDescriptor;
 import java.util.List;
 
 /**
+ * A validator that allows the chaining of (and delegation to) several validators.
+ *
  * @author Cosmin Cara
  */
 public class CompositeValidator extends Validator {

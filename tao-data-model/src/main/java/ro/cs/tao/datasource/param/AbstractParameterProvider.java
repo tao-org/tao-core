@@ -30,6 +30,8 @@ import static ro.cs.tao.serialization.ObjectMapperProvider.JSON_DATA_SOURCE_PARA
 import static ro.cs.tao.serialization.ObjectMapperProvider.JSON_OBJECT_MAPPER;
 
 /**
+ * Base class for data source parameter providers.
+ *
  * @author Valentin Netoiu on 10/17/2019.
  */
 public abstract class AbstractParameterProvider implements ParameterProvider {

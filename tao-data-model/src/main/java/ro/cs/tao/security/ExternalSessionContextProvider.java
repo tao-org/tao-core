@@ -16,8 +16,16 @@
 
 package ro.cs.tao.security;
 
+/**
+ * Supplies the current session context that is managed outside the framework scope (for example, the Spring session is managed by Spring, not by TAO).
+ *
+ * @author Cosmin Cara
+ */
 public interface ExternalSessionContextProvider {
 
+    /**
+     * The session bound to the current runtime context (i.e. user or caller).
+     */
     SessionContext currentContext();
 
 }

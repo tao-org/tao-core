@@ -2,6 +2,11 @@ package ro.cs.tao.component;
 
 import java.util.Arrays;
 
+/**
+ * Holder for lists of sorter and association names.
+ *
+ * @author Cosmin Cara
+ */
 public class Aggregator {
     private String[] sorter;
     private String[] associator;

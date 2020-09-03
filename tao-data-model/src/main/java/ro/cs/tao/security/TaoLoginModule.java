@@ -13,6 +13,11 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.logging.Logger;
 
+/**
+ * Base class for modules that handle the authentication of the callers.
+ *
+ * @author Cosmin Cara
+ */
 public abstract class TaoLoginModule implements LoginModule {
     protected static UserProvider userProvider;
     protected UserPrincipal userPrincipal;

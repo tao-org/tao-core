@@ -18,6 +18,8 @@ package ro.cs.tao.component.constraints;
 import ro.cs.tao.BaseException;
 
 /**
+ * Exception that is thrown when a constraint is violated.
+ *
  * @author Cosmin Cara
  */
 public class ConstraintException extends BaseException {

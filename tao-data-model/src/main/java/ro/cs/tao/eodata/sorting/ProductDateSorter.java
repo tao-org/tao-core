@@ -6,6 +6,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * Sorts a list of EOProduct entities by their acquisition date.
+ *
+ * @author Cosmin Cara
+ */
 public class ProductDateSorter extends DataSorter<EOProduct> {
 
     @Override

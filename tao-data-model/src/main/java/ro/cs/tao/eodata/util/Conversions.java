@@ -24,10 +24,17 @@ import org.opengis.referencing.operation.TransformException;
 import ro.cs.tao.eodata.enums.PixelType;
 
 /**
+ * Utility class for converting one measure to another.
+ *
  * @author Cosmin Cara
  */
 public class Conversions {
 
+    /**
+     * Determines the PixelType enum value given the minimum and maximum values.
+     * @param minValue  The minimum value
+     * @param maxValue  The maximum value
+     */
     public static PixelType pixelTypeFromRange(long minValue, long maxValue) {
         PixelType result = PixelType.FLOAT32;
         if (minValue >= 0) {
@@ -50,6 +57,12 @@ public class Conversions {
         return result;
     }
 
+    /**
+     * Converts the (lat,lon) values to (easting, northing) meter values
+     * @param latitude  The latitude in decimal degrees
+     * @param longitude The longitude in decimal degrees
+     * @return
+     */
     public static double[] degreeToMeters(double latitude, double longitude) {
         double easting;
         double northing;
@@ -105,6 +118,13 @@ public class Conversions {
         return new double[] { easting, northing };
     }
 
+    /**
+     * Converts coordinates given in a certain projection to decimal WGS84 latitude and longitude values.
+     *
+     * @param crs   The coordinate referencing system code (EPSX:xxxx)
+     * @param x     The x coordinate
+     * @param y     The y coordinate
+     */
     public static double[] utmToDegrees(String crs, double x, double y) throws TransformException, FactoryException {
         CoordinateReferenceSystem sourceCrs = CRS.decode(crs);
         CoordinateReferenceSystem targetCrs = CRS.decode("EPSG:4326");
