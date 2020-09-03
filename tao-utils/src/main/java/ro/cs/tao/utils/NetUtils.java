@@ -37,10 +37,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import ro.cs.tao.utils.logger.Logger;
 
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
+import javax.net.ssl.*;
 import java.io.IOException;
 import java.net.*;
 import java.security.SecureRandom;
@@ -65,6 +62,10 @@ public class NetUtils {
     private static HttpHost apacheHttpProxy;
     private static CredentialsProvider proxyCredentials;
     private static int timeout = 30000;
+
+    static {
+        allowSelfSignedCertificates();
+    }
 
     public static String getAuthToken(final String username, final String password) {
         String authToken = null;
@@ -110,6 +111,45 @@ public class NetUtils {
             status = false;
         }
         return status;
+    }
+
+    public static void allowSelfSignedCertificates() {
+        try {
+            /*
+             *  fix for
+             *    Exception in thread "main" javax.net.ssl.SSLHandshakeException:
+             *       sun.security.validator.ValidatorException:
+             *           PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException:
+             *               unable to find valid certification path to requested target
+             */
+            TrustManager[] trustAllCerts = new TrustManager[]{
+                    new X509TrustManager() {
+                        public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                            return null;
+                        }
+
+                        public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                        }
+
+                        public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                        }
+
+                    }
+            };
+            SSLContext sc = SSLContext.getInstance("SSL");
+            sc.init(null, trustAllCerts, new java.security.SecureRandom());
+            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+
+            // Create all-trusting host name verifier
+            HostnameVerifier allHostsValid = (hostname, session) -> true;
+            // Install the all-trusting host verifier
+            HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
+            /*
+             * end of the fix
+             */
+        } catch (Exception ex) {
+            java.util.logging.Logger.getLogger(NetUtils.class.getName()).severe("Cannot apply https/localhost fix. Reason: " + ex.getMessage());
+        }
     }
 
     public static HttpURLConnection openConnection(String url) {
@@ -267,6 +307,10 @@ public class NetUtils {
     }
 
     public static CloseableHttpResponse openConnection(HttpMethod method, String url, Credentials credentials, List<NameValuePair> parameters) throws IOException {
+        return openConnection(method, url, credentials, parameters, timeout);
+    }
+
+    public static CloseableHttpResponse openConnection(HttpMethod method, String url, Credentials credentials, List<NameValuePair> parameters, int timeoutMillis) throws IOException {
         CloseableHttpResponse response;
         try {
             URI uri = new URI(url);
@@ -322,9 +366,9 @@ public class NetUtils {
                     throw new IllegalArgumentException("Method not supported");
             }
             final RequestConfig.Builder requestBuilder = RequestConfig.custom()
-                    .setConnectionRequestTimeout(timeout)
-                    .setConnectTimeout(timeout)
-                    .setSocketTimeout(timeout);
+                    .setConnectionRequestTimeout(timeoutMillis)
+                    .setConnectTimeout(timeoutMillis)
+                    .setSocketTimeout(timeoutMillis);
             if (apacheHttpProxy != null) {
                 requestBuilder.setProxy(apacheHttpProxy);
             }

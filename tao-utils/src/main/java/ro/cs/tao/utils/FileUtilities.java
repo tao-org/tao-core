@@ -204,6 +204,13 @@ public class FileUtilities {
                             Predicate<? super Path> fileFilter) throws IOException {
         if (sourcePath != null && Files.exists(sourcePath)) {
             if (Files.isDirectory(sourcePath)) {
+                List<Path> fileList = FileUtilities.listFiles(sourcePath).stream().filter(Files::isRegularFile).collect(Collectors.toList());
+                if (fileFilter != null) {
+                    fileList = fileList.stream().filter(fileFilter).collect(Collectors.toList());
+                }
+                for (Path file : fileList) {
+                    linkFile(file, targetPath.resolve(sourcePath.relativize(file)));
+                }
                 List<Path> folders = FileUtilities.listFolders(sourcePath);
                 if (folderFilter != null) {
                     folders = folders.stream().filter(folderFilter).collect(Collectors.toList());
@@ -271,6 +278,16 @@ public class FileUtilities {
 
     public static Path linkFile(Path sourcePath, Path file) throws IOException {
         return Files.exists(file) ? file : Files.createSymbolicLink(file, sourcePath);
+    }
+
+    public static Path linkFolder(Path sourcePath, Path target) throws IOException {
+        if (!Files.isDirectory(sourcePath)) {
+            throw new IOException(sourcePath + " is not a directory");
+        }
+        if (!Files.isDirectory(target)) {
+            throw new IOException(target + " is not a directory");
+        }
+        return linkFile(sourcePath, target);
     }
 
     public static int copy(Path source, Path destination) throws IOException {
@@ -429,6 +446,7 @@ public class FileUtilities {
                     } else {
                         int read;
                         try (InputStream inputStream = zipFile.getInputStream(entry)) {
+                            Files.createDirectories(keepFolderStructure ? filePath.getParent() : strippedFilePath.getParent());
                             try (BufferedOutputStream bos = new BufferedOutputStream(
                                     new FileOutputStream(keepFolderStructure ? filePath.toFile() : strippedFilePath.toFile()))) {
                                 while ((read = inputStream.read(buffer)) > 0) {
