@@ -7,6 +7,13 @@ import ro.cs.tao.serialization.ConstraintAdapter;
 
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
+/**
+ * Constraint that indicates that the given source and target descriptors should have
+ * the same cardinality.
+ *
+ * @author Cosmin Cara
+ * @see SourceDescriptor,TargetDescriptor
+ */
 @Constraint(name = "Same cardinality")
 @XmlJavaTypeAdapter(ConstraintAdapter.class)
 public class SelfCardinalityConstraint extends IOConstraint {

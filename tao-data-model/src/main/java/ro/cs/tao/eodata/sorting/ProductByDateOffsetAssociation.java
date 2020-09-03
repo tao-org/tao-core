@@ -9,6 +9,11 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Groups EOProduct entities in pairs of two, based on the difference (in days) of their acquisition dates.
+ *
+ * @author Cosmin Cara
+ */
 public class ProductByDateOffsetAssociation extends Association<EOProduct> {
 
     private int offsetDays;

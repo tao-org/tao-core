@@ -16,40 +16,60 @@
 package ro.cs.tao.datasource.param;
 
 /**
+ * Generic comparators that are used in query parameters dependencies evaluation.
+ *
  * @author Cosmin Cara
  */
 public abstract class Condition {
 
+    /**
+     * Equality condition
+     */
     public static final Condition EQ = new Condition() {
         @Override
         public boolean evaluate(Comparable<Comparable> arg1, Comparable arg2) {
             return arg1!= null && arg2 != null && arg1.compareTo(arg2) == 0;
         }
     };
+    /**
+     * Difference condition
+     */
     public static final Condition NE = new Condition() {
         @Override
         public boolean evaluate(Comparable<Comparable> arg1, Comparable arg2) {
             return arg1 == null || arg2 == null || arg1.compareTo(arg2) != 0;
         }
     };
+    /**
+     * 'Less than' condition
+     */
     public static final Condition LT = new Condition() {
         @Override
         public boolean evaluate(Comparable<Comparable> arg1, Comparable arg2) {
             return arg1!= null && arg2 != null && arg1.compareTo(arg2) < 0;
         }
     };
+    /**
+     * 'Less than or equal' condition
+     */
     public static final Condition LTE = new Condition() {
         @Override
         public boolean evaluate(Comparable<Comparable> arg1, Comparable arg2) {
             return arg1!= null && arg2 != null && arg1.compareTo(arg2) <= 0;
         }
     };
+    /**
+     * 'Greater than condition' condition
+     */
     public static final Condition GT = new Condition() {
         @Override
         public boolean evaluate(Comparable<Comparable> arg1, Comparable arg2) {
             return arg1!= null && arg2 != null && arg1.compareTo(arg2) > 0;
         }
     };
+    /**
+     * 'Greater than or equal' condition
+     */
     public static final Condition GTE = new Condition() {
         @Override
         public boolean evaluate(Comparable<Comparable> arg1, Comparable arg2) {

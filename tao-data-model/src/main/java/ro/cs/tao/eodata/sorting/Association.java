@@ -5,6 +5,12 @@ import ro.cs.tao.eodata.EOData;
 
 import java.util.List;
 
+/**
+ * Base class for association implementations.
+ * An association groups elements of a list of inputs based on its internal implementation.
+ *
+ * @param <T>   The type of the inputs (derivatives of EOData)
+ */
 public abstract class Association<T extends EOData> {
 
     private final String friendlyName;

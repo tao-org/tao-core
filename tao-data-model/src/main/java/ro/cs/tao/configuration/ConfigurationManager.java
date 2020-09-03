@@ -4,6 +4,12 @@ import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.ServiceLoader;
 
+/**
+ * Singleton that handles the configuration provider registration.
+ * If no such provider is registered, an in-memory provider (i.e. that is not backed by a file) will be used.
+ *
+ * @author Cosmin Cara
+ */
 public class ConfigurationManager {
     private static ConfigurationProvider configurationProvider;
 
