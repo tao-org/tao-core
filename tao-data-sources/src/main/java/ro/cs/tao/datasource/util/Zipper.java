@@ -18,6 +18,7 @@ package ro.cs.tao.datasource.util;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
+import ro.cs.tao.utils.ExceptionUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,6 +26,7 @@ import java.io.OutputStream;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
@@ -39,7 +41,7 @@ import java.util.zip.ZipOutputStream;
  */
 public class Zipper {
 
-    private static Logger logger = Logger.getLogger(Zipper.class.getName());
+    private static final Logger logger = Logger.getLogger(Zipper.class.getName());
 
     public static void main(String[] args) throws IOException {
         Path source = Paths.get("D:\\download\\rou_2018_s1_109\\S1B_IW_SLC__1SDV_20181103T042027_20181103T042055_013435_018DC1_2CCB.zip");
@@ -50,7 +52,7 @@ public class Zipper {
     public static void compress(Path sourceFolder, String archiveName, boolean deleteFolder) throws IOException {
         Path zipFile = sourceFolder.getParent().resolve(archiveName + ".zip");
         Files.deleteIfExists(zipFile);
-        zipFile = Files.createFile(zipFile);
+        Files.createFile(zipFile);
         try (ZipOutputStream outputStream = new ZipOutputStream(Files.newOutputStream(zipFile))) {
             try (Stream<Path> files = Files.walk(sourceFolder)) {
                 Iterator<Path> pathIterator = files.iterator();
@@ -105,40 +107,61 @@ public class Zipper {
                 Files.delete(source);
             }
         } catch (IOException e) {
-            logger.warning(e.getMessage());
+            logger.warning(ExceptionUtils.getStackTrace(logger, e));
             throw e;
         }
         return target;
     }
 
-    public static Path decompressZipMT(Path source, Path target, boolean deleteAfterDecompress) {
+    public static Path decompressZipMT(Path source, Path target, boolean createFolderFromName, boolean deleteAfterDecompress) {
         if (source == null || !source.toString().endsWith(".zip")) {
             return null;
         }
+        final AtomicBoolean hasError = new AtomicBoolean(false);
+        final Path root = createFolderFromName ? target : target.getParent();
         try (ZipFile zipFile = new ZipFile(source.toFile())) {
-            Files.createDirectories(target);
+            Files.createDirectories(root);
             zipFile.stream().parallel().forEach(entry -> {
+                final Path newFile = root.toAbsolutePath().resolve(entry.getName());
                 try {
-                    Path newFile = target.resolve(entry.getName());
                     if (entry.isDirectory()) {
                         Files.createDirectories(newFile);
                     } else {
+                        int read;
+                        final byte[] buffer = new byte[65536];
                         try (InputStream inputStream = zipFile.getInputStream(entry)) {
-                            Files.copy(inputStream, newFile, StandardCopyOption.REPLACE_EXISTING);
+                            Files.createDirectories(newFile.getParent());
+                            try (OutputStream outputStream = Files.newOutputStream(newFile)) {
+                                while ((read = inputStream.read(buffer)) > 0) {
+                                    outputStream.write(buffer, 0, read);
+                                }
+                            }
                         }
                     }
                 } catch (IOException inner) {
-                    logger.warning(inner.getMessage());
+                    logger.warning(ExceptionUtils.getStackTrace(logger, inner));
+                    hasError.set(true);
+                    try {
+                        Files.deleteIfExists(newFile);
+                    } catch (IOException e) {
+                        logger.warning(ExceptionUtils.getStackTrace(logger, e));
+                    }
                 }
             });
-            if (deleteAfterDecompress) {
-                Files.delete(source);
-            }
         } catch (IOException ex) {
-            logger.warning(ex.getMessage());
+            logger.warning(ExceptionUtils.getStackTrace(logger, ex));
+            hasError.set(true);
             return null;
+        } finally {
+            if (deleteAfterDecompress && !hasError.get()) {
+                try {
+                    Files.delete(source);
+                } catch (IOException e) {
+                    logger.warning(ExceptionUtils.getStackTrace(logger, e));
+                }
+            }
         }
-        return target;
+        return root;
     }
 
     public static Path decompressTarGz(Path source, Path target, boolean deleteAfterDecompress) throws IOException {
