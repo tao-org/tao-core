@@ -414,11 +414,13 @@ public class UserManager extends EntityManager<User, Long, UserRepository> imple
         if (user == null) {
             throw new PersistenceException("There is no user with the given username: " + String.valueOf(username));
         }
-
-        for (String prefKey : userPrefsKeysToDelete) {
-            user.getPreferences().removeIf(entry -> entry.getKey().equals(prefKey));
+        if (userPrefsKeysToDelete == null || userPrefsKeysToDelete.isEmpty()) {
+            user.setPreferences(null);
+        } else {
+            for (String prefKey : userPrefsKeysToDelete) {
+                user.getPreferences().removeIf(entry -> entry.getKey().equals(prefKey));
+            }
         }
-
         user  = repository.save(user);
         return user.getPreferences();
     }
