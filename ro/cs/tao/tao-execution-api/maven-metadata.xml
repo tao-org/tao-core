@@ -3,7 +3,7 @@
   <groupId>ro.cs.tao</groupId>
   <artifactId>tao-execution-api</artifactId>
   <versioning>
-    <release>1.0.3.2</release>
+    <release>1.0.3.3</release>
     <versions>
       <version>1.0.1</version>
       <version>1.1.0-SNAPSHOT</version>
@@ -11,7 +11,8 @@
       <version>1.0.3</version>
       <version>1.0.3.1</version>
       <version>1.0.3.2</version>
+      <version>1.0.3.3</version>
     </versions>
-    <lastUpdated>20200821135951</lastUpdated>
+    <lastUpdated>20201014152923</lastUpdated>
   </versioning>
 </metadata>
