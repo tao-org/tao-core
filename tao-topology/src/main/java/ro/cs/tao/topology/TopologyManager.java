@@ -27,7 +27,6 @@ import ro.cs.tao.topology.docker.DockerImageInstaller;
 import ro.cs.tao.topology.docker.DockerManager;
 import ro.cs.tao.topology.docker.StandaloneContainer;
 import ro.cs.tao.topology.provider.DefaultNodeOperationListener;
-import ro.cs.tao.topology.provider.DefaultNodeProvider;
 import ro.cs.tao.utils.async.BinaryTask;
 import ro.cs.tao.utils.executors.*;
 
@@ -56,7 +55,7 @@ public class TopologyManager {
 
     private final Logger logger;
     private NodeProvider externalNodeProvider;
-    private final DefaultNodeProvider localNodeProvider;
+    private NodeProvider localNodeProvider;
     private final Set<NodeOperationListener> listeners;
     private final Set<TopologyToolInstaller> installers;
     private final ExecutorService executorService;
@@ -80,7 +79,6 @@ public class TopologyManager {
         final ServiceRegistry<TopologyToolInstaller> installersRegistry = serviceRegistryManager.getServiceRegistry(TopologyToolInstaller.class);
         this.installers = installersRegistry.getServices();
         final ServiceRegistry<NodeProvider> nodeProviderRegistry = serviceRegistryManager.getServiceRegistry(NodeProvider.class);
-        this.localNodeProvider = new DefaultNodeProvider();
         final Set<NodeProvider> nodeProviders = nodeProviderRegistry.getServices();
         final String configuredProvider = ConfigurationManager.getInstance().getValue("topology.provider");
         logger.info(String.format("External node providers available: %s",
@@ -99,13 +97,6 @@ public class TopologyManager {
         }
         this.listeners = new HashSet<>();
         registerListener(new DefaultNodeOperationListener());
-        // Set the auto-determined master node info
-        // initialize the hostname and ip address in the master node description
-        if (masterNodeInfo == null) {
-            initMasterNodeDescription();
-        }
-        setMasterNodeInfo();
-        DockerManager.setMasterNode(masterNodeInfo);
     }
 
     public static TopologyManager getInstance() {
@@ -114,6 +105,17 @@ public class TopologyManager {
 
     public static void setMasterNode(NodeDescription master) {
         masterNodeInfo = master;
+    }
+
+    public void setLocalNodeProvider(NodeProvider provider) {
+        this.localNodeProvider = provider;
+        // Set the auto-determined master node info
+        // initialize the hostname and ip address in the master node description
+        if (masterNodeInfo == null) {
+            initMasterNodeDescription();
+        }
+        setMasterNodeInfo();
+        DockerManager.setMasterNode(masterNodeInfo);
     }
 
     public void registerListener(NodeOperationListener listener) {
