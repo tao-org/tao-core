@@ -28,10 +28,7 @@ import ro.cs.tao.security.SessionContext;
 import ro.cs.tao.security.SystemSessionContext;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
@@ -43,7 +40,7 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
     private static final String TIMER_PERIOD = "5";
     /* Flag for trying to close the monitoring thread in an elegant manner */
     private static final Map<String, Tuple<Integer, Long>> resourcesUsage = new HashMap<>();
-    private static TaskStatusListener statusListener;
+    private static List<TaskStatusListener> statusListeners = new ArrayList<>();
     protected Boolean isInitialized = false;
     protected final Logger logger = Logger.getLogger(getClass().getName());
     private final Timer executionsCheckTimer = new Timer("exec-monitor");
@@ -57,8 +54,12 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
         return tuple;
     }
 
-    public static void setStatusListener(TaskStatusListener statusListener) {
-        Executor.statusListener = statusListener;
+    public static void addStatusListener(TaskStatusListener statusListener) {
+        Executor.statusListeners.add(statusListener);
+    }
+
+    public static void removeStatusListener(TaskStatusListener listener) {
+        Executor.statusListeners.remove(listener);
     }
 
     public Executor() {
@@ -214,14 +215,14 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
     }
 
     protected synchronized void notifyStatusListener(ExecutionTask task, ExecutionStatus status) {
-        if (statusListener != null) {
-            statusListener.taskStatusChanged(task, status);
+        for (TaskStatusListener listener : statusListeners) {
+            listener.taskStatusChanged(task, status);
         }
     }
 
     protected synchronized void notifyStatusListener(ExecutionTask task) {
-        if (statusListener != null) {
-            statusListener.taskChanged(task);
+        for (TaskStatusListener listener : statusListeners) {
+            listener.taskChanged(task);
         }
     }
 
