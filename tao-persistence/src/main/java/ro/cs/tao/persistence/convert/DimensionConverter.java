@@ -15,7 +15,7 @@
  */
 package ro.cs.tao.persistence.convert;
 
-import ro.cs.tao.persistence.data.jsonutil.JacksonUtil;
+import ro.cs.tao.utils.JacksonUtil;
 
 import javax.persistence.AttributeConverter;
 import java.awt.*;

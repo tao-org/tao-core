@@ -27,8 +27,8 @@ import ro.cs.tao.persistence.ContainerProvider;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.ProcessingComponentProvider;
 import ro.cs.tao.persistence.TagProvider;
-import ro.cs.tao.persistence.data.jsonutil.JacksonUtil;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
+import ro.cs.tao.utils.JacksonUtil;
 
 import java.io.*;
 import java.nio.file.Files;

@@ -4,8 +4,8 @@ import org.springframework.jdbc.core.RowMapper;
 import ro.cs.tao.datasource.beans.Query;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.PersistenceManager;
-import ro.cs.tao.persistence.data.jsonutil.JacksonUtil;
 import ro.cs.tao.utils.Crypto;
+import ro.cs.tao.utils.JacksonUtil;
 
 import java.sql.SQLException;
 import java.util.HashMap;

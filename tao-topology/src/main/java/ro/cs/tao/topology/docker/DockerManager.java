@@ -6,7 +6,7 @@ import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.Topic;
-import ro.cs.tao.persistence.PersistenceManager;
+import ro.cs.tao.persistence.ContainerProvider;
 import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.security.SystemPrincipal;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
@@ -14,7 +14,6 @@ import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.topology.TopologyException;
 import ro.cs.tao.topology.TopologyManager;
 import ro.cs.tao.utils.StringUtilities;
-import ro.cs.tao.utils.async.LazyInitialize;
 import ro.cs.tao.utils.executors.*;
 
 import java.io.IOException;
@@ -23,7 +22,6 @@ import java.nio.file.Path;
 import java.security.Principal;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -43,7 +41,7 @@ public class DockerManager {
     private static final OutputAccumulator sharedAccumulator;
     private static final DockerManager instance;
 
-    private final Supplier<PersistenceManager> persistenceManager;
+    private final ContainerProvider containerProvider;
     private final Map<String, Executor<?>> daemonContainerExecutors;
     private final Logger logger;
     private NodeDescription masterNode;
@@ -93,13 +91,13 @@ public class DockerManager {
 
     private DockerManager() {
         this.logger = Logger.getLogger(TopologyManager.class.getName());
-        this.persistenceManager = LazyInitialize.using(() -> SpringContextBridge.services().getService(PersistenceManager.class));
         this.daemonContainerExecutors = Collections.synchronizedMap(new HashMap<>());
+        this.containerProvider = SpringContextBridge.services().getService(ContainerProvider.class);
     }
 
     private List<Container> listAvailableDockerImages() {
         List<Container> containers = getDockerImages();
-        List<Container> dbContainers = getPersistenceManager().containers().list();
+        List<Container> dbContainers = containerProvider.list();
         if (containers.size() == 0) {
             logger.warning("Docker execution failed. Check that Docker is installed and the sudo credentials are valid");
         } else {
@@ -336,10 +334,6 @@ public class DockerManager {
                 sharedAccumulator.reset();
             }
         }
-    }
-
-    private PersistenceManager getPersistenceManager() {
-        return this.persistenceManager.get();
     }
 
     private void waitFor(Executor<?> executor, long amount, TimeUnit unit) {
