@@ -1,15 +1,11 @@
-package ro.cs.tao.persistence.data.jsonutil;
+package ro.cs.tao.utils;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
-import java.util.List;
-
-import org.apache.commons.lang3.exception.ExceptionUtils;
 
 /**
  * Jackson-based utility to allows us to easily transform JSON Object(s) to and from String

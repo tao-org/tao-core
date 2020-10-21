@@ -23,7 +23,7 @@ import ro.cs.tao.eodata.Polygon2D;
 import ro.cs.tao.eodata.enums.ProductStatus;
 import ro.cs.tao.eodata.enums.Visibility;
 import ro.cs.tao.eodata.util.Conversions;
-import ro.cs.tao.persistence.PersistenceManager;
+import ro.cs.tao.persistence.EOProductProvider;
 import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 
@@ -37,7 +37,7 @@ import java.util.logging.Logger;
  * @author Cosmin Cara
  */
 public class ProductPersister implements OutputDataHandler<EOProduct> {
-    private final PersistenceManager persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
+    //private final PersistenceManager persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
     private final Logger logger = Logger.getLogger(getClass().getName());
 
     @Override
@@ -65,7 +65,7 @@ public class ProductPersister implements OutputDataHandler<EOProduct> {
                 product.setVisibility(Visibility.PRIVATE);
                 product.setProductStatus(ProductStatus.PRODUCED);
                 product.addReference(SessionStore.currentContext().getPrincipal().getName());
-                product = persistenceManager.rasterData().save(product);
+                product = SpringContextBridge.services().getService(EOProductProvider.class).save(product);
             } catch (Exception e) {
                 logger.severe(String.format("Product %s could not be written to database: %s",
                                             product.getName(), e.getMessage()));

@@ -2,9 +2,9 @@ package ro.cs.tao.topology.docker;
 
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.persistence.ContainerProvider;
-import ro.cs.tao.persistence.data.jsonutil.JacksonUtil;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.utils.DockerHelper;
+import ro.cs.tao.utils.JacksonUtil;
 
 import java.io.*;
 import java.util.Base64;

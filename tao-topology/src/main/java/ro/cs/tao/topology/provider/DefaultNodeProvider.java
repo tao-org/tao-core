@@ -1,16 +1,14 @@
 package ro.cs.tao.topology.provider;
 
+import ro.cs.tao.persistence.NodeFlavorProvider;
 import ro.cs.tao.persistence.PersistenceException;
-import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.topology.NodeFlavor;
 import ro.cs.tao.topology.NodeProvider;
 import ro.cs.tao.topology.TopologyException;
-import ro.cs.tao.utils.async.LazyInitialize;
 
 import java.util.List;
-import java.util.function.Supplier;
 import java.util.logging.Logger;
 
 /**
@@ -20,11 +18,13 @@ import java.util.logging.Logger;
  */
 public class DefaultNodeProvider implements NodeProvider {
     protected final Logger logger;
-    private Supplier<PersistenceManager> persistenceManager;
+    private final ro.cs.tao.persistence.NodeProvider nodeProvider;
+    private final ro.cs.tao.persistence.NodeFlavorProvider nodeFlavorProvider;
 
     public DefaultNodeProvider() {
         this.logger = Logger.getLogger(DefaultNodeProvider.class.getName());
-        this.persistenceManager = LazyInitialize.using(() -> SpringContextBridge.services().getService(PersistenceManager.class));
+        this.nodeProvider = SpringContextBridge.services().getService(ro.cs.tao.persistence.NodeProvider.class);
+        this.nodeFlavorProvider = SpringContextBridge.services().getService(NodeFlavorProvider.class);
     }
 
     @Override
@@ -34,17 +34,17 @@ public class DefaultNodeProvider implements NodeProvider {
 
     @Override
     public List<NodeFlavor> listFlavors() throws TopologyException {
-        return getPersistenceManager().nodeFlavors().list();
+        return nodeFlavorProvider.list();
     }
 
     @Override
     public List<NodeDescription> listNodes() throws TopologyException {
-        return getPersistenceManager().nodes().list(true);
+        return nodeProvider.list(true);
     }
 
     @Override
     public NodeDescription getNode(String nodeName) throws TopologyException {
-        return getPersistenceManager().nodes().get(nodeName);
+        return nodeProvider.get(nodeName);
     }
 
     @Override
@@ -52,10 +52,9 @@ public class DefaultNodeProvider implements NodeProvider {
         if (node == null) {
             throw new TopologyException("null");
         }
-        final PersistenceManager persistenceManager = getPersistenceManager();
-        if (persistenceManager.nodes().exists(node.getId())) {
+        if (nodeProvider.exists(node.getId())) {
             try {
-                node = persistenceManager.nodes().update(node);
+                node = nodeProvider.update(node);
             } catch (Exception e) {
                 logger.severe("Cannot update node description to database. Rolling back installation on node " + node.getId() + "...");
                 throw new TopologyException(e);
@@ -63,10 +62,10 @@ public class DefaultNodeProvider implements NodeProvider {
         } else {
             try {
                 final NodeFlavor flavor = node.getFlavor();
-                if (!persistenceManager.nodeFlavors().exists(flavor.getId())) {
-                    persistenceManager.nodeFlavors().save(flavor);
+                if (!nodeFlavorProvider.exists(flavor.getId())) {
+                    nodeFlavorProvider.save(flavor);
                 }
-                node = persistenceManager.nodes().save(node);
+                node = nodeProvider.save(node);
             } catch (PersistenceException e) {
                 logger.severe("Cannot save node description to database. Rolling back installation on node " + node.getId() + "...");
                 throw new TopologyException(e);
@@ -93,7 +92,7 @@ public class DefaultNodeProvider implements NodeProvider {
             throw new TopologyException(String.format("Node [%s] does not exist", nodeName));
         }
         try {
-            getPersistenceManager().nodes().delete(nodeName);
+            nodeProvider.delete(nodeName);
         } catch (PersistenceException e) {
             logger.severe("Cannot remove node description from database. Host name is :" + nodeName);
             throw new TopologyException(e);
@@ -121,7 +120,7 @@ public class DefaultNodeProvider implements NodeProvider {
     @Override
     public NodeDescription update(NodeDescription node) throws TopologyException {
         try {
-            return getPersistenceManager().nodes().update(node);
+            return nodeProvider.update(node);
         } catch (Exception e) {
             logger.severe(String.format("Cannot update node description in database [host:%s; reason:%s]",
                                         node != null ? node.getId() : "null", e.getMessage()));
@@ -129,7 +128,4 @@ public class DefaultNodeProvider implements NodeProvider {
         }
     }
 
-    private PersistenceManager getPersistenceManager() {
-        return this.persistenceManager.get();
-    }
 }
