@@ -30,7 +30,7 @@ public interface QueryRepository extends PagingAndSortingRepository<Query, Long>
             nativeQuery = true
     )*/
     @org.springframework.data.jpa.repository.Query(
-            value = "SELECT q.* FROM workflow.query q " +
+            value = "SELECT null as groupId, null as groupLabel,q.* FROM workflow.query q " +
                     "LEFT JOIN component.data_source_component_group_components dscgc ON dscgc.data_source_component_id = q.component_id " +
                     "LEFT JOIN component.data_source_component_group dscg ON dscg.id = dscgc.data_source_component_group_id " +
                     "WHERE q.user_id = :userId AND q.sensor_name = :sensor AND q.data_source = :dataSource AND q.graph_node_id = :nodeId",
@@ -44,7 +44,7 @@ public interface QueryRepository extends PagingAndSortingRepository<Query, Long>
     List<Query> findByUserIdAndWorkflowNodeId(String userId, long nodeId);
 
     @org.springframework.data.jpa.repository.Query(
-            value = "SELECT dscg.id, dscg.label, q.* FROM workflow.query q " +
+            value = "SELECT dscg.id as groupId, dscg.label as groupLabel, q.* FROM workflow.query q " +
                     "LEFT JOIN component.data_source_component_group_components dscgc ON dscgc.data_source_component_id = q.component_id " +
                     "LEFT JOIN component.data_source_component_group dscg ON dscg.id = dscgc.data_source_component_group_id " +
                     "WHERE q.user_id = :userId AND q.graph_node_id = :nodeId", nativeQuery = true
@@ -54,7 +54,7 @@ public interface QueryRepository extends PagingAndSortingRepository<Query, Long>
     List<Query> findByUserIdAndSensorAndDataSource(String userId, String sensor, String dataSource);
 
     @org.springframework.data.jpa.repository.Query(
-            value = "SELECT dscg.id, dscg.label, q.* FROM workflow.query q " +
+            value = "SELECT dscg.id as groupId, dscg.label as groupLabel, q.* FROM workflow.query q " +
                     "LEFT JOIN component.data_source_component_group_components dscgc ON dscgc.data_source_component_id = q.component_id " +
                     "LEFT JOIN component.data_source_component_group dscg ON dscg.id = dscgc.data_source_component_group_id " +
                     "WHERE q.user_id = :userId AND q.sensor_name = :sensor AND q.data_source = :dataSource", nativeQuery = true
@@ -64,7 +64,7 @@ public interface QueryRepository extends PagingAndSortingRepository<Query, Long>
     List<Query> findByUserIdAndSensor(String userId, String sensor);
 
     @org.springframework.data.jpa.repository.Query(
-            value = "SELECT dscg.id, dscg.label, q.* FROM workflow.query q " +
+            value = "SELECT dscg.id as groupId, dscg.label as groupLabel, q.* FROM workflow.query q " +
                     "LEFT JOIN component.data_source_component_group_components dscgc ON dscgc.data_source_component_id = q.component_id " +
                     "LEFT JOIN component.data_source_component_group dscg ON dscg.id = dscgc.data_source_component_group_id " +
                     "WHERE q.user_id = :userId AND q.sensor_name = :sensor", nativeQuery = true
@@ -74,7 +74,7 @@ public interface QueryRepository extends PagingAndSortingRepository<Query, Long>
     List<Query> findByUserIdAndDataSource(String userId, String dataSource);
 
     @org.springframework.data.jpa.repository.Query(
-            value = "SELECT dscg.id, dscg.label, q.* FROM workflow.query q " +
+            value = "SELECT dscg.id as groupId, dscg.label as groupLabel, q.* FROM workflow.query q " +
                     "LEFT JOIN component.data_source_component_group_components dscgc ON dscgc.data_source_component_id = q.component_id " +
                     "LEFT JOIN component.data_source_component_group dscg ON dscg.id = dscgc.data_source_component_group_id " +
                     "WHERE q.user_id = :userId AND q.data_source = :dataSource", nativeQuery = true
@@ -84,7 +84,7 @@ public interface QueryRepository extends PagingAndSortingRepository<Query, Long>
     List<Query> findByUserId(String userId);
 
     @org.springframework.data.jpa.repository.Query(
-            value = "SELECT dscg.id, dscg.label, q.* FROM workflow.query q " +
+            value = "SELECT dscg.id as groupId, dscg.label as groupLabel, q.* FROM workflow.query q " +
                     "LEFT JOIN component.data_source_component_group_components dscgc ON dscgc.data_source_component_id = q.component_id " +
                     "LEFT JOIN component.data_source_component_group dscg ON dscg.id = dscgc.data_source_component_group_id " +
                     "WHERE q.user_id = :userId", nativeQuery = true
@@ -92,7 +92,7 @@ public interface QueryRepository extends PagingAndSortingRepository<Query, Long>
     List<Query> getUserQueries(@Param("userId") String userId);
 
     @org.springframework.data.jpa.repository.Query(
-            value = "SELECT dscg.id, dscg.label, q.* FROM workflow.query q " +
+            value = "SELECT dscg.id as groupId, dscg.label as groupLabel, q.* FROM workflow.query q " +
                     "LEFT JOIN component.data_source_component_group_components dscgc ON dscgc.data_source_component_id = q.component_id " +
                     "LEFT JOIN component.data_source_component_group dscg ON dscg.id = dscgc.data_source_component_group_id " +
                     "WHERE q.id = :queryId", nativeQuery = true
