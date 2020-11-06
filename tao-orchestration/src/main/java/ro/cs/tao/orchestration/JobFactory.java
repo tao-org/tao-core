@@ -113,11 +113,6 @@ public class JobFactory {
                         }
                     }
                     ExecutionTask task = createTask(job, workflow, node, taskInputs);
-                    if (i == 0 && taskInputs != null && !(task instanceof DataSourceExecutionTask)) {
-                        for (Map.Entry<String, String> entry : taskInputs.entrySet()) {
-                            task.setInputParameterValue(entry.getKey(), entry.getValue());
-                        }
-                    }
                     task.setLevel(node.getLevel());
                     if (task.getId() == null) {
                         taskProvider.save(task, job);
@@ -205,7 +200,7 @@ public class JobFactory {
             Set<ComponentLink> links = workflowNode.getIncomingLinks();
             switch (workflowNode.getComponentType()) {
                 case PROCESSING:
-                    task = createProcessingExecutionTask(workflowNode, links);
+                    task = createProcessingExecutionTask(workflowNode, links, inputs);
                     break;
                 case DATASOURCE:
                     task = createDataSourceExecutionTask(job, workflowNode, inputs);
@@ -225,7 +220,8 @@ public class JobFactory {
     }
 
     private ExecutionTask createProcessingExecutionTask(WorkflowNodeDescriptor workflowNode,
-                                                        Set<ComponentLink> incomingLinks) {
+                                                        Set<ComponentLink> incomingLinks,
+                                                        Map<String, String> inputs) {
         List<ParameterValue> customValues = workflowNode.getCustomValues();
         ProcessingComponent component = processingComponentProvider.get(workflowNode.getComponentId());
         ProcessingExecutionTask task = new ProcessingExecutionTask();
@@ -254,6 +250,11 @@ public class JobFactory {
         if (component.getComponentType() == ProcessingComponentType.EXTERNAL && customValues != null) {
             task.setCommand(component.buildExecutionCommand(customValues.stream().collect(Collectors.toMap(ParameterValue::getParameterName, ParameterValue::getParameterValue)),
                                                             null));
+        }
+        if (inputs != null) {
+            for (Map.Entry<String, String> entry : inputs.entrySet()) {
+                task.setInputParameterValue(entry.getKey(), entry.getValue());
+            }
         }
         return task;
     }
