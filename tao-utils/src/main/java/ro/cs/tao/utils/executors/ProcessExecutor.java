@@ -16,7 +16,6 @@
 package ro.cs.tao.utils.executors;
 
 import org.apache.commons.lang3.SystemUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import java.io.*;
 import java.util.List;
@@ -107,8 +106,8 @@ public class ProcessExecutor extends Executor<Process> {
             }
         } catch (Exception e) {
             this.isStopped = true;
-            String message = ExceptionUtils.getStackTrace(e);
-            message = message.substring(0, message.indexOf("\tat "));
+            final String message = ro.cs.tao.utils.ExceptionUtils.getStackTrace(logger, e);
+            //message = message.substring(0, message.indexOf("\tat "));
             throw new IOException(String.format("[%s] failed: %s", host, message));
         } finally {
             closeStream(outReader);
