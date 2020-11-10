@@ -160,6 +160,20 @@ public class FileUtilities {
         return folders;
     }
 
+    public static List<Path> listFolders(Path root, int depth) throws IOException {
+        final List<Path> folders = new ArrayList<>();
+        Files.walkFileTree(root, new HashSet<FileVisitOption>() {{ add(FileVisitOption.FOLLOW_LINKS); }}, depth, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                if (root.compareTo(dir) != 0) {
+                    folders.add(dir);
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        });
+        return folders;
+    }
+
     public static List<Path> listFiles(Path folder) {
         try {
             return Files.walk(folder, 1).collect(Collectors.toList());
