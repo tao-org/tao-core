@@ -354,6 +354,53 @@ public class NetUtils {
         return response;
     }
 
+    public static CloseableHttpResponse openConnection(HttpMethod method, String url, Header header, List<NameValuePair> parameters) throws IOException {
+        CloseableHttpResponse response;
+        try {
+            URI uri = new URI(url);
+            String domain = uri.getHost();
+            if (domain.indexOf(".") > 0) {
+                String[] tokens = domain.split("\\.");
+                domain = tokens[tokens.length - 2] + "." + tokens[tokens.length - 1];
+            }
+            CloseableHttpClient httpClient;
+            httpClient = HttpClients.custom()
+                    .setDefaultCookieStore(new BasicCookieStore())
+                    .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
+                    .build();
+            HttpRequestBase requestBase;
+            switch (method) {
+                case GET:
+                    requestBase = new HttpGet(uri);
+                    break;
+                case POST:
+                    requestBase = new HttpPost(uri);
+                    if (parameters != null) {
+                        ((HttpPost) requestBase).setEntity(new UrlEncodedFormEntity(parameters));
+                    }
+                    break;
+                default:
+                    throw new IllegalArgumentException("Method not supported");
+            }
+            final RequestConfig.Builder requestBuilder = RequestConfig.custom()
+                    .setConnectionRequestTimeout(timeout)
+                    .setConnectTimeout(timeout)
+                    .setSocketTimeout(timeout);
+            if (apacheHttpProxy != null) {
+                requestBuilder.setProxy(apacheHttpProxy);
+            }
+            requestBase.setConfig(requestBuilder.build());
+            requestBase.setHeader(header);
+            Logger.getRootLogger().debug("Details: %s", requestBase.getConfig().toString());
+            response = httpClient.execute(requestBase);
+            Logger.getRootLogger().debug("HTTP %s %s returned %s", method.toString(), url, response.getStatusLine().getStatusCode());
+        } catch (URISyntaxException | IOException e) {
+            Logger.getRootLogger().debug("Could not create connection to %s : %s", url, e.getMessage());
+            throw new IOException(e);
+        }
+        return response;
+    }
+
     public static CloseableHttpResponse openConnection(HttpMethod method, String url, Credentials credentials, List<NameValuePair> parameters) throws IOException {
         return openConnection(method, url, credentials, parameters, timeout);
     }

@@ -782,7 +782,7 @@
     <entity class="ro.cs.tao.execution.model.ExecutionJob" access="PROPERTY">
         <table name="execution.job"/>
         <convert converter="ro.cs.tao.persistence.convert.ExecutionStatusConverter" attribute-name="executionStatus" />
-        <convert converter="ro.cs.tao.persistence.convert.JsonCallbackConverter" attribute-name="callbackDescriptor"/>
+        <convert converter="ro.cs.tao.persistence.convert.JsonCallbackConverter" attribute-name="callback"/>
         <attributes>
             <basic name="name">
                 <column name="name" nullable="false" column-definition="text not null"/>
