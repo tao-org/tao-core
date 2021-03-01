@@ -3,10 +3,10 @@ package ro.cs.tao.datasource;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.datasource.remote.ProductFormat;
 import ro.cs.tao.eodata.EOProduct;
+import ro.cs.tao.utils.DateUtils;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
 import java.util.Scanner;
@@ -36,7 +36,7 @@ public class DefaultProductPathBuilder implements ProductPathBuilder {
                 ProductFormat.FOLDER;
         if (properties != null) {
             String value = properties.getProperty(PATH_SUFFIX, "none");
-            this.suffix = "none".equals(value) ? "" : value;
+            this.suffix = "none".equals(value) ? "" : value.trim();
         } else {
             this.suffix = "";
         }
@@ -111,27 +111,27 @@ public class DefaultProductPathBuilder implements ProductPathBuilder {
         }
 
         String getYearPart(Date date) {
-            return new SimpleDateFormat(yearPart).format(date);
+            return DateUtils.getFormatterAtUTC(yearPart).format(date);
         }
 
         String getMonthPart(Date date) {
-            return new SimpleDateFormat(monthPart).format(date);
+            return DateUtils.getFormatterAtUTC(monthPart).format(date);
         }
 
         String getDayPart(Date date) {
-            return new SimpleDateFormat(dayPart).format(date);
+            return DateUtils.getFormatterAtUTC(dayPart).format(date);
         }
 
         public String getHourPart(Date date) {
-            return new SimpleDateFormat(hourPart).format(date);
+            return DateUtils.getFormatterAtUTC(hourPart).format(date);
         }
 
         public String getMinutePart(Date date) {
-            return new SimpleDateFormat(minutePart).format(date);
+            return DateUtils.getFormatterAtUTC(minutePart).format(date);
         }
 
         public String getSecondPart(Date date) {
-            return new SimpleDateFormat(secondPart).format(date);
+            return DateUtils.getFormatterAtUTC(secondPart).format(date);
         }
 
         @SuppressWarnings("StringConcatenationInLoop")

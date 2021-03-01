@@ -19,6 +19,7 @@ package ro.cs.tao.datasource.opensearch.model;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class OpenSearchService {
     private String shortName;
@@ -45,9 +46,9 @@ public class OpenSearchService {
         }
     }
 
-    public OpenSearchEndpoint getEndpoint(String type) {
+    public List<OpenSearchEndpoint> getEndpoints(String type) {
         return this.endpoints != null ?
-                this.endpoints.stream().filter(e -> e.getType().equals(type)).findFirst().orElse(null) : null;
+                this.endpoints.stream().filter(e -> e.getType().equals(type)).collect(Collectors.toList()) : null;
     }
 
 

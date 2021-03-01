@@ -16,7 +16,10 @@
 
 package ro.cs.tao.utils;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.time.Duration;
+import java.util.TimeZone;
 
 /**
  * Utility class for various operations (such as formatting) on date types.
@@ -35,4 +38,15 @@ public class DateUtils {
                 String.format("%02dh%02dm%02ds", seconds / 3600, (seconds % 3600) / 60, seconds % 60);
     }
 
+    public static DateFormat getFormatterAtUTC(String format) {
+        final SimpleDateFormat formatter = new SimpleDateFormat(format);
+        formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return formatter;
+    }
+
+    public static DateFormat getFormatterAtLocal(String format) {
+        final SimpleDateFormat formatter = new SimpleDateFormat(format);
+        formatter.setTimeZone(TimeZone.getDefault());
+        return formatter;
+    }
 }

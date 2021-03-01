@@ -54,12 +54,11 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     private static final String startMessage = "(%s,%s) %s [size: %skB]";
     private static final String completeMessage = "(%s,%s) %s [elapsed: %ss]";
     private static final String errorMessage ="Cannot download %s: %s";
-    //private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
     private static final String PROGRESS_KEY = "progress.enabled";
     private static final String PROGRESS_INTERVAL = "progress.interval";
     private static final String MISSING_ACTION = "local.missing.action";
     private final boolean progressEnabled;
-    protected final DataSource dataSource;
+    protected final DataSource<?> dataSource;
     protected Properties props;
     protected String destination;
     protected EOProduct currentProduct;
@@ -78,7 +77,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     private long progressReportInterval;
     private boolean downloadIfNotFound;
 
-    public DownloadStrategy(DataSource dataSource, String targetFolder, Properties properties) {
+    public DownloadStrategy(DataSource<?> dataSource, String targetFolder, Properties properties) {
         this.dataSource = dataSource;
         this.destination = targetFolder;
         this.props = properties;
@@ -207,7 +206,8 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
             throw new IOException("Invalid product name [null]");
         }
         activityStart(product.getName());
-        Path file = null;
+        Path file;
+        this.progressReportInterval = Long.parseLong(this.props.getProperty(PROGRESS_INTERVAL, "2000"));
         try {
             currentProduct = product;
             currentProductProgress = new ProductProgress(currentProduct.getApproximateSize(), adjustProductLength());

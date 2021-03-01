@@ -16,9 +16,10 @@
 package ro.cs.tao.component.converters;
 
 import ro.cs.tao.datasource.converters.ConversionException;
+import ro.cs.tao.utils.DateUtils;
 
+import java.text.DateFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
@@ -27,7 +28,7 @@ import java.util.Date;
  * @author Cosmin Cara
  */
 public class DateConverter extends DefaultConverter<Date> {
-    private static final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+    private static final DateFormat format = DateUtils.getFormatterAtUTC("yyyy-MM-dd");
 
     public DateConverter() { }
 

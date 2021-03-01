@@ -29,23 +29,25 @@ public abstract class RuntimeInfo {
     final String host;
     final String user;
     final String pass;
+    final AuthenticationType authenticationType;
     final boolean isRemote;
 
-    RuntimeInfo(String host, String user, String password, boolean remote) {
+    RuntimeInfo(String host, AuthenticationType authenticationType, String user, String password, boolean remote) {
         this.host = host;
         this.user = user;
         this.pass = password;
+        this.authenticationType = authenticationType;
         this.isRemote = remote;
     }
 
-    public static RuntimeInfo createInspector(String hostName,
+    public static RuntimeInfo createInspector(String hostName, AuthenticationType authenticationType,
                                               String user, String password) throws Exception {
         String localhost = InetAddress.getLocalHost().getHostName();
         if (localhost.equals(hostName)) {
-            return SystemUtils.IS_OS_WINDOWS ? new Windows(hostName, user, password, false) :
-                    new Linux(hostName, user, password, false);
+            return SystemUtils.IS_OS_WINDOWS ? new Windows(hostName, authenticationType, user, password, false) :
+                    new Linux(hostName, authenticationType, user, password, false);
         } else {
-            return new Linux(hostName, user, password, true);
+            return new Linux(hostName, authenticationType, user, password, true);
         }
     }
 
@@ -57,8 +59,8 @@ public abstract class RuntimeInfo {
 
     private static class Windows extends RuntimeInfo {
 
-        Windows(String host, String user, String password,boolean remote) {
-            super(host, user, password, remote);
+        Windows(String host, AuthenticationType authenticationType, String user, String password,boolean remote) {
+            super(host, authenticationType, user, password, remote);
         }
 
         @Override
@@ -114,7 +116,8 @@ public abstract class RuntimeInfo {
             long mem = 0;
             try {
                 List<String> args = new ArrayList<>();
-                Collections.addAll(args, "wmic os get freephysicalmemory /value".split(" "));
+                //Collections.addAll(args, "wmic os get freephysicalmemory /value".split(" "));
+                Collections.addAll(args, "wmic os get FreePhysicalMemory /value".split(" "));
                 Executor executor = Executor.create(ExecutorType.PROCESS, this.host, args);
                 Consumer consumer = new Consumer();
                 executor.setOutputConsumer(consumer);
@@ -194,8 +197,8 @@ public abstract class RuntimeInfo {
 
     private static class Linux extends RuntimeInfo {
 
-        Linux(String host, String user, String password, boolean remote) {
-            super(host, user, password, remote);
+        Linux(String host, AuthenticationType authenticationType, String user, String password, boolean remote) {
+            super(host, authenticationType, user, password, remote);
         }
 
         @Override
@@ -207,7 +210,14 @@ public abstract class RuntimeInfo {
                 Collections.addAll(args, "uptime".split(" "));
                 executor = Executor.create(this.isRemote ? ExecutorType.SSH2 : ExecutorType.PROCESS, this.host, args);
                 executor.setUser(this.user);
-                executor.setPassword(this.pass);
+                switch (authenticationType) {
+                    case PASSWORD:
+                        executor.setPassword(this.pass);
+                        break;
+                    case CERTIFICATE:
+                        executor.setCertificate(this.pass);
+                        break;
+                }
                 Consumer consumer = new Consumer();
                 executor.setOutputConsumer(consumer);
                 if (executor.execute(false) == 0) {
@@ -236,7 +246,14 @@ public abstract class RuntimeInfo {
                 Collections.addAll(args, "cat /proc/meminfo".split(" "));
                 executor = Executor.create(this.isRemote ? ExecutorType.SSH2 : ExecutorType.PROCESS, this.host, args);
                 executor.setUser(this.user);
-                executor.setPassword(this.pass);
+                switch (authenticationType) {
+                    case PASSWORD:
+                        executor.setPassword(this.pass);
+                        break;
+                    case CERTIFICATE:
+                        executor.setCertificate(this.pass);
+                        break;
+                }
                 Consumer consumer = new Consumer();
                 executor.setOutputConsumer(consumer);
                 if (executor.execute(false) == 0) {
@@ -265,11 +282,21 @@ public abstract class RuntimeInfo {
                 Collections.addAll(args, "cat /proc/meminfo".split(" "));
                 executor = Executor.create(this.isRemote ? ExecutorType.SSH2 : ExecutorType.PROCESS, this.host, args);
                 executor.setUser(this.user);
-                executor.setPassword(this.pass);
+                switch (authenticationType) {
+                    case PASSWORD:
+                        executor.setPassword(this.pass);
+                        break;
+                    case CERTIFICATE:
+                        executor.setCertificate(this.pass);
+                        break;
+                }
                 Consumer consumer = new Consumer();
                 executor.setOutputConsumer(consumer);
                 if (executor.execute(false) == 0) {
                     List<String> messages = consumer.getMessages();
+                    if (messages.isEmpty()) {
+                        Logger.getLogger(RuntimeInfo.class.getName()).warning("Cannot capture output for cat /proc/meminfo");
+                    }
                     for (String message : messages) {
                         if (message.startsWith("MemAvailable")) {
                             message = message.replace("MemAvailable:", "").trim();
@@ -294,7 +321,14 @@ public abstract class RuntimeInfo {
                 Collections.addAll(args, "df -k --total".split(" "));
                 executor = Executor.create(this.isRemote ? ExecutorType.SSH2 : ExecutorType.PROCESS, this.host, args);
                 executor.setUser(this.user);
-                executor.setPassword(this.pass);
+                switch (authenticationType) {
+                    case PASSWORD:
+                        executor.setPassword(this.pass);
+                        break;
+                    case CERTIFICATE:
+                        executor.setCertificate(this.pass);
+                        break;
+                }
                 Consumer consumer = new Consumer();
                 executor.setOutputConsumer(consumer);
                 if (executor.execute(false) == 0) {
@@ -322,7 +356,14 @@ public abstract class RuntimeInfo {
                 Collections.addAll(args, "df -k --total".split(" "));
                 executor = Executor.create(this.isRemote ? ExecutorType.SSH2 : ExecutorType.PROCESS, this.host, args);
                 executor.setUser(this.user);
-                executor.setPassword(this.pass);
+                switch (authenticationType) {
+                    case PASSWORD:
+                        executor.setPassword(this.pass);
+                        break;
+                    case CERTIFICATE:
+                        executor.setCertificate(this.pass);
+                        break;
+                }
                 Consumer consumer = new Consumer();
                 executor.setOutputConsumer(consumer);
                 if (executor.execute(false) == 0) {
@@ -343,7 +384,7 @@ public abstract class RuntimeInfo {
     }
 
     private static class Consumer implements OutputConsumer {
-        private List<String> messages = new ArrayList<>();
+        private final List<String> messages = new ArrayList<>();
         @Override
         public void consume(String message) {
             messages.add(message.replace("\r", ""));

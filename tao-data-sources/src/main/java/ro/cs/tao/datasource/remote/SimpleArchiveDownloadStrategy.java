@@ -42,8 +42,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class SimpleArchiveDownloadStrategy extends DownloadStrategy {
-    private static final long DOWNLOAD_TIMEOUT = 30000; // 30s
-    private Timer timeoutTimer;
+    protected static final long DOWNLOAD_TIMEOUT = 30000; // 30s
+    protected Timer timeoutTimer;
 
     public SimpleArchiveDownloadStrategy(DataSource dataSource, String targetFolder, Properties properties) {
         super(dataSource, targetFolder, properties);
@@ -104,6 +104,7 @@ public class SimpleArchiveDownloadStrategy extends DownloadStrategy {
                         Files.deleteIfExists(archivePath);
                         SeekableByteChannel outputStream = null;
                         long length = response.getEntity().getContentLength();
+                        System.out.println("Received content length:" + length);
                         long size = currentProduct.getApproximateSize();
                         if (size > length) {
                             Path existingProduct = Paths.get(destination, product.getName() + ".SAFE");

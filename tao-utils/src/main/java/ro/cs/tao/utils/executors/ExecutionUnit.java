@@ -27,6 +27,7 @@ public final class ExecutionUnit {
     private final String host;
     private final String user;
     private final String password;
+    private String certificate;
     private final List<String> arguments;
     private final boolean asSuperUser;
     private final SSHMode sshMode;
@@ -61,6 +62,10 @@ public final class ExecutionUnit {
         return password;
     }
 
+    public String getCertificate() {
+        return certificate;
+    }
+
     public Long getMinMemory() {
         return minMemory;
     }
@@ -72,6 +77,10 @@ public final class ExecutionUnit {
     public Long getMinDisk() { return minDisk; }
 
     public void setMinDisk(Long minDisk) { this.minDisk = minDisk; }
+
+    public void setCertificate(String certificate) {
+        this.certificate = certificate;
+    }
 
     @Override
     public String toString() {
