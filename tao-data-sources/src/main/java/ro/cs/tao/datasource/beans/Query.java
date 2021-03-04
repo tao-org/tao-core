@@ -26,9 +26,10 @@ import ro.cs.tao.eodata.Polygon2D;
 import ro.cs.tao.serialization.GenericAdapter;
 import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.utils.CompositeKey;
+import ro.cs.tao.utils.DateUtils;
 
 import java.lang.reflect.Array;
-import java.text.SimpleDateFormat;
+import java.text.DateFormat;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.logging.Logger;
@@ -37,7 +38,7 @@ import java.util.logging.Logger;
  * @author Cosmin Cara
  */
 public class Query extends LongIdentifiable {
-    private static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
+    private static final DateFormat SIMPLE_DATE_FORMAT = DateUtils.getFormatterAtUTC("yyyy-MM-dd");
     private static final Map<CompositeKey, DataSourceComponent> componentPool = Collections.synchronizedMap(new HashMap<>());
     private String label;
     private String userId;

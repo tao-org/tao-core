@@ -105,6 +105,16 @@ public abstract class DataSource<Q extends DataQuery> extends StringIdentifiable
     public abstract void setConnectionString(String connectionString);
     @XmlTransient
     public abstract String getAlternateConnectionString();
+
+    /**
+     * Checks if this datasource must use the alternate connection string, if any.
+     */
+    public abstract boolean useAlternateConnectionString();
+
+    /**
+     * Instructs this datasource to use the alternate connection string instead of the primary one.
+     */
+    public abstract void useAlternateConnectionString(boolean value);
     public boolean requiresAuthentication() { return false; }
     /**
      * Sets the credentials needed to connect to this data source
@@ -148,6 +158,10 @@ public abstract class DataSource<Q extends DataQuery> extends StringIdentifiable
      * @param sensorName    The sensor id
      */
     public abstract ProductFetchStrategy getProductFetchStrategy(String sensorName);
+
+    public void setAdditionalProperties(Properties properties) {
+        this.properties.putAll(properties);
+    }
 
     /**
      * Sets the mapping for filtering valueSets
