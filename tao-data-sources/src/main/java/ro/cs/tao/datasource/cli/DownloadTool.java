@@ -129,7 +129,7 @@ public class DownloadTool {
                     throw new IllegalArgumentException(Constants.SATELLITE);
                 }
                 final String dataSourceName = commandLine.getOptionValue(Constants.REPOSITORY);
-                final DataSource<?> dataSource = dataSourceManager.get(satellite, dataSourceName);
+                final DataSource<?, ?> dataSource = dataSourceManager.get(satellite, dataSourceName);
                 if (dataSource == null) {
                     throw new IllegalArgumentException(Constants.REPOSITORY);
                 }

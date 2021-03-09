@@ -26,7 +26,7 @@ import java.util.Map;
  *
  * @author Cosmin Cara
  */
-public abstract class AbstractDataSource<Q extends DataQuery> extends DataSource<Q> {
+public abstract class AbstractDataSource<Q extends DataQuery, T> extends DataSource<Q, T> {
     protected String connectionString;
     protected String alternateConnectionString;
     protected long timeout;

@@ -26,7 +26,7 @@ public class DownloadManager {
         logger = Logger.getLogger(DownloadManager.class.getName());
         String dsName;
         int maxTransfers;
-        for (DataSource<?> dataSource : DataSourceManager.getInstance().getRegisteredDataSources()) {
+        for (DataSource<?, ?> dataSource : DataSourceManager.getInstance().getRegisteredDataSources()) {
             dsName = dataSource.defaultId();
             maxTransfers = dataSource.getMaximumAllowedTransfers();
             instance.downloadWorkers.put(dsName, new NamedThreadPoolExecutor(dsName, maxTransfers));
@@ -43,7 +43,7 @@ public class DownloadManager {
      */
     public static void setConcurrentDownloads(String dataSourceName, int value) {
         final NamedThreadPoolExecutor poolExecutor = instance.downloadWorkers.get(dataSourceName);
-        final DataSource<?> dataSource = DataSourceManager.getInstance().getRegisteredDataSources().stream().filter(d -> d.defaultId().equals(dataSourceName)).findFirst().orElse(null);
+        final DataSource<?, ?> dataSource = DataSourceManager.getInstance().getRegisteredDataSources().stream().filter(d -> d.defaultId().equals(dataSourceName)).findFirst().orElse(null);
         if (dataSource == null) {
             throw new IllegalArgumentException(String.format("[%s] not registered", dataSourceName));
         }
