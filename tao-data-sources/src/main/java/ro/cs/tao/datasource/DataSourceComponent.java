@@ -310,7 +310,7 @@ public class DataSourceComponent extends TaoComponent {
      * Creates a query that can be submitted to (executed against) the data source of this component.
      */
     public DataQuery createQuery() {
-        DataSource<?> dataSource = createDataSource();
+        DataSource<?, ?> dataSource = createDataSource();
         return dataSource.createQuery(this.sensorName);
     }
 
@@ -415,7 +415,7 @@ public class DataSourceComponent extends TaoComponent {
     }
 
     private List<EOProduct> doFetchImpl(List<EOProduct> products, Set<String> tiles, String destinationPath, String localRootPath, Properties additionalProperties) {
-        DataSource<?> dataSource = createDataSource();
+        DataSource<?, ?> dataSource = createDataSource();
         String errorMessage;
         for (EOProduct product : products) {
             // add the attribute for max retries such that if the maxRetries is exceeded
@@ -510,9 +510,9 @@ public class DataSourceComponent extends TaoComponent {
         return products;
     }
 
-    private DataSource<?> createDataSource() {
+    private DataSource<?, ?> createDataSource() {
         DataSourceManager dsManager = DataSourceManager.getInstance();
-        DataSource<?> dataSource = this.dataSourceName != null ?
+        DataSource<?, ?> dataSource = this.dataSourceName != null ?
                 dsManager.createInstance(this.sensorName, this.dataSourceName) :
                 dsManager.createInstance(this.sensorName);
         if (this.userName != null) {

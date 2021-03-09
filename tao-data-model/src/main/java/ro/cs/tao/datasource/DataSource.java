@@ -21,6 +21,7 @@ import ro.cs.tao.datasource.param.DataSourceParameter;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
+import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
 
@@ -28,10 +29,12 @@ import java.util.Properties;
  * Base class for data sources.
  * The implementation is an abstract class instead of an interface due to limitations in serialization libraries.
  *
+ * @param <Q> A specialization of the DataQuery class corresponding to this data source
+ * @param <T> The type of the authentication element returned (eg. string token, header object, etc.)
  * @author Cosmin Cara
  */
 @XmlRootElement(name = "dataSource")
-public abstract class DataSource<Q extends DataQuery> extends StringIdentifiable {
+public abstract class DataSource<Q extends DataQuery, T> extends StringIdentifiable {
     protected Properties properties;
     /**
      * filteredParameters is an optional map that allows to:
@@ -126,6 +129,9 @@ public abstract class DataSource<Q extends DataQuery> extends StringIdentifiable
      * Gets the credentials set for this data source.
      */
     public abstract UsernamePasswordCredentials getCredentials();
+
+    public abstract T authenticate() throws IOException;
+
     /**
      * Tests that the datasource source is reachable.
      * Must return <code>true</code> if the source is reachable, <code>false</code> otherwise.

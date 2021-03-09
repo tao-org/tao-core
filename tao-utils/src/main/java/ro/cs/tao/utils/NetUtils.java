@@ -34,6 +34,7 @@ import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 import ro.cs.tao.utils.logger.Logger;
 
@@ -153,14 +154,22 @@ public class NetUtils {
     }
 
     public static HttpURLConnection openConnection(String url) {
-        return openConnection(url, null);
+        return openConnection(url, (String) null);
     }
 
     public static HttpURLConnection openConnection(String url, String authToken) {
         return openConnection(HttpMethod.GET, url, authToken, null);
     }
 
+    public static HttpURLConnection openConnection(String url, Header authToken) {
+        return openURLConnection(HttpMethod.GET, url, authToken, null);
+    }
+
     public static HttpURLConnection openConnection(HttpMethod method, String url, String authToken, List<NameValuePair> requestProperties) {
+        return openURLConnection(method, url, new BasicHeader("Authorization", authToken), requestProperties);
+    }
+
+    public static HttpURLConnection openURLConnection(HttpMethod method, String url, Header authHeader, List<NameValuePair> requestProperties) {
         HttpURLConnection connection = null;
         try {
             URL urlObj = new URL(url);
@@ -172,8 +181,8 @@ public class NetUtils {
                 Logger.getRootLogger().debug("Proxy connection to %s opened", url);
             }
             connection.setRequestMethod(method.name());
-            if (authToken != null && !authToken.isEmpty()) {
-                connection.setRequestProperty("Authorization", authToken);
+            if (authHeader != null) {
+                connection.setRequestProperty(authHeader.getName(), authHeader.getValue());
             }
             if (requestProperties != null && !requestProperties.isEmpty()) {
                 for (NameValuePair requestProperty : requestProperties) {
@@ -391,6 +400,52 @@ public class NetUtils {
             }
             requestBase.setConfig(requestBuilder.build());
             requestBase.setHeader(header);
+            Logger.getRootLogger().debug("Details: %s", requestBase.getConfig().toString());
+            response = httpClient.execute(requestBase);
+            Logger.getRootLogger().debug("HTTP %s %s returned %s", method.toString(), url, response.getStatusLine().getStatusCode());
+        } catch (URISyntaxException | IOException e) {
+            Logger.getRootLogger().debug("Could not create connection to %s : %s", url, e.getMessage());
+            throw new IOException(e);
+        }
+        return response;
+    }
+
+    public static CloseableHttpResponse openConnection(HttpMethod method, String url, List<Header> headers, List<NameValuePair> parameters) throws IOException {
+        CloseableHttpResponse response;
+        try {
+            URI uri = new URI(url);
+            CloseableHttpClient httpClient;
+            httpClient = HttpClients.custom()
+                    .setDefaultCookieStore(new BasicCookieStore())
+                    .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
+                    .build();
+            HttpRequestBase requestBase;
+            switch (method) {
+                case GET:
+                    requestBase = new HttpGet(uri);
+                    break;
+                case POST:
+                    requestBase = new HttpPost(uri);
+                    if (parameters != null) {
+                        ((HttpPost) requestBase).setEntity(new UrlEncodedFormEntity(parameters));
+                    }
+                    break;
+                default:
+                    throw new IllegalArgumentException("Method not supported");
+            }
+            final RequestConfig.Builder requestBuilder = RequestConfig.custom()
+                    .setConnectionRequestTimeout(timeout)
+                    .setConnectTimeout(timeout)
+                    .setSocketTimeout(timeout);
+            if (apacheHttpProxy != null) {
+                requestBuilder.setProxy(apacheHttpProxy);
+            }
+            requestBase.setConfig(requestBuilder.build());
+            if (headers != null) {
+                for (Header header : headers) {
+                    requestBase.setHeader(header);
+                }
+            }
             Logger.getRootLogger().debug("Details: %s", requestBase.getConfig().toString());
             response = httpClient.execute(requestBase);
             Logger.getRootLogger().debug("HTTP %s %s returned %s", method.toString(), url, response.getStatusLine().getStatusCode());

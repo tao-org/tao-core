@@ -30,8 +30,8 @@ import java.net.URISyntaxException;
  *
  * @author Cosmin Cara
  */
-public abstract class URLDataSource<Q extends DataQuery>
-        extends AbstractDataSource<Q> {
+public abstract class URLDataSource<Q extends DataQuery, T>
+        extends AbstractDataSource<Q, T> {
     protected URI remoteUrl;
 
     /**
