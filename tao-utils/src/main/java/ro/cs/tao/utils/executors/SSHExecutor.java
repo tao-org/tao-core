@@ -16,6 +16,7 @@
 package ro.cs.tao.utils.executors;
 
 import com.jcraft.jsch.*;
+import ro.cs.tao.utils.ExceptionUtils;
 
 import java.io.*;
 import java.util.List;
@@ -61,39 +62,37 @@ public class SSHExecutor extends Executor<Channel> {
     private Session getSession() throws Exception {
         if (keepAlive) {
             try {
+                if (singleSession == null) {
+                    singleSession = createSession();
+                } else if (!singleSession.isConnected()) {
+                    singleSession.connect();
+                }
                 ChannelExec testChannel = (ChannelExec) singleSession.openChannel(SSHMode.EXEC.toString());
                 testChannel.setCommand("true");
                 testChannel.connect();
                 testChannel.disconnect();
             } catch (Throwable t) {
                 logger.fine("Session terminated. Create a new one.");
-                JSch jSch = new JSch();
-                //jSch.setKnownHosts("D:\\known_hosts");
-                singleSession = jSch.getSession(this.user, this.host, this.port);
-                singleSession.setUserInfo(new UserInfo(this.password));
-                if (this.certificate != null) {
-                    jSch.addIdentity(this.certificate);
-                } else {
-                    singleSession.setPassword(password.getBytes());
-                }
-                singleSession.setConfig("StrictHostKeyChecking", "no");
-                singleSession.connect(1000);
+                singleSession = createSession();
             }
             return singleSession;
         } else {
-            JSch jSch = new JSch();
-            //jSch.setKnownHosts("D:\\known_hosts");
-            Session session = jSch.getSession(this.user, this.host, this.port);
-            session.setUserInfo(new UserInfo(this.password));
-            if (this.certificate != null) {
-                jSch.addIdentity(this.certificate);
-            } else {
-                session.setPassword(password.getBytes());
-            }
-            session.setConfig("StrictHostKeyChecking", "no");
-            session.connect(1000);
-            return session;
+            return createSession();
         }
+    }
+
+    private Session createSession() throws JSchException {
+        JSch jSch = new JSch();
+        Session session = jSch.getSession(this.user, this.host, this.port);
+        session.setUserInfo(new UserInfo(this.password));
+        if (this.certificate != null) {
+            jSch.addIdentity(this.certificate);
+        } else {
+            session.setPassword(password.getBytes());
+        }
+        session.setConfig("StrictHostKeyChecking", "no");
+        session.connect(1000);
+        return session;
     }
 
     @Override
@@ -105,12 +104,14 @@ public class SSHExecutor extends Executor<Channel> {
         Session session = null;
         try {
             session = getSession();
-            this.channel = session.openChannel(this.mode.toString());
+            final Channel channel = session.openChannel(this.mode.toString());
+            channel.connect();
+            channel.disconnect();
             ret = true;
         } catch (Exception e) {
             logger.severe(String.format("[%s] failed: %s", host, e.getMessage()));
         } finally {
-            resetChannel();
+            //resetChannel();
             if (session != null && !keepAlive) {
                 session.disconnect();
             }
@@ -123,11 +124,11 @@ public class SSHExecutor extends Executor<Channel> {
         if (!SSHMode.EXEC.equals(this.mode) && asSuperUser) {
             throw new UnsupportedOperationException("Mode not permitted");
         }
-        int ret = -1;
-        Session session = null;
+        int ret;
+        //Session session = null;
         try {
-            session = getSession();
-            this.channel = session.openChannel(this.mode.toString());
+            //session = getSession();
+            //this.channel = session.openChannel(this.mode.toString());
             switch(this.mode) {
                 case EXEC:
                     ret = executeSshCmd(logMessages);
@@ -141,15 +142,15 @@ public class SSHExecutor extends Executor<Channel> {
                     break;
             }
         } catch (Exception e) {
-            logger.severe(String.format("[[%s]] failed: %s", host, e.getMessage()));
-            isStopped = true;
+            logger.severe(ExceptionUtils.getStackTrace(logger, e));
+            isStopped = !keepAlive;
             throw new IOException(e);
-        } finally {
+        }/* finally {
             resetChannel();
             if (session != null && !keepAlive) {
                 session.disconnect();
             }
-        }
+        }*/
         return ret;
     }
 
@@ -214,7 +215,25 @@ public class SSHExecutor extends Executor<Channel> {
         }
     }
 
-    private int executeSshCmd(boolean logMessages) throws JSchException, IOException {
+    public void close() {
+        if (singleSession != null) {
+            singleSession.disconnect();
+            singleSession = null;
+        }
+    }
+
+    private void stop(Channel channel) {
+        if (channel != null && !channel.isClosed() && channel.isConnected()) {
+            try {
+                channel.sendSignal("2");
+            } catch (Exception e) {
+                this.logger.warning(e.getMessage());
+            }
+        }
+        super.stop();
+    }
+
+    private int executeSshCmd(boolean logMessages) throws Exception {
         String cmdLine = String.join(" ", arguments);
         if (asSuperUser) {
             insertSudoParams();
@@ -223,10 +242,11 @@ public class SSHExecutor extends Executor<Channel> {
         if (logMessages) {
             logger.fine("[" + host + "] " + cmdLine);
         }
-        ((ChannelExec) this.channel).setCommand(cmdLine);
-        this.channel.setInputStream(null);
-        ((ChannelExec) this.channel).setPty(asSuperUser);
-        ((ChannelExec) this.channel).setErrStream(new ByteArrayOutputStream() {
+        ChannelExec channel = (ChannelExec) getSession().openChannel(SSHMode.EXEC.toString());
+        channel.setCommand(cmdLine);
+        channel.setInputStream(null);
+        channel.setPty(asSuperUser);
+        channel.setErrStream(new ByteArrayOutputStream() {
             @Override
             public synchronized void write(byte[] b, int off, int len) {
                 String message = new String(b, off, len).replaceAll("\n", "");
@@ -240,8 +260,8 @@ public class SSHExecutor extends Executor<Channel> {
                 }
             }
         });
-        InputStream inputStream = this.channel.getInputStream();
-        this.channel.connect();
+        InputStream inputStream = channel.getInputStream();
+        channel.connect();
         if (asSuperUser) {
             if (this.certificate != null) {
                 this.password = "";
@@ -261,22 +281,24 @@ public class SSHExecutor extends Executor<Channel> {
                     }
                 }
             }
-            if (this.channel.isClosed()) {
-                if (inputStream.available() > 0)
+            if (channel.isClosed()) {
+                if (inputStream.available() > 0) {
                     continue;
-                stop();
+                }
+                stop(channel);
             } else {
                 Thread.yield();
             }
         }
-        return this.channel.getExitStatus();
+        this.isStopped = !keepAlive;
+        return channel.getExitStatus();
     }
 
-    private int executeSftpCmd(boolean logMessages) throws JSchException, IOException, SftpException {
-        ChannelSftp channelSftp = (ChannelSftp) this.channel;
+    private int executeSftpCmd(boolean logMessages) throws Exception {
         if(this.arguments.size() < 2) {
             throw new IllegalArgumentException("Invalid number of arguments. It should be at least file and target dir");
         }
+        ChannelSftp channelSftp = (ChannelSftp) getSession().openChannel(SSHMode.SFTP.toString());
         //channel.setInputStream(null);
         //channelSftp.setPty(asSuperUser);
         channelSftp.setOutputStream(new ByteArrayOutputStream() {
@@ -289,7 +311,7 @@ public class SSHExecutor extends Executor<Channel> {
             }
         });
 
-        channel.connect();
+        channelSftp.connect();
 
         String fileToTransfer = this.arguments.get(0);
         String workingDir = this.arguments.get(1);
@@ -301,7 +323,8 @@ public class SSHExecutor extends Executor<Channel> {
             this.logger.fine("Uploading file " + f.getName());
             channelSftp.put(new FileInputStream(f), f.getName(), ChannelSftp.OVERWRITE);
         }
-        return 0;
+        channelSftp.disconnect();
+        return channelSftp.getExitStatus();
     }
 
     /**
@@ -361,7 +384,7 @@ public class SSHExecutor extends Executor<Channel> {
             if (this.channel.isConnected()) {
                 this.channel.disconnect();
             }
-            this.channel = null;
+            //this.channel = null;
         }
     }
 

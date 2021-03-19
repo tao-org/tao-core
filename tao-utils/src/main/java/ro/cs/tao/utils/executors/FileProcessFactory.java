@@ -1,7 +1,6 @@
 package ro.cs.tao.utils.executors;
 
 import com.jcraft.jsch.ChannelSftp;
-import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.SftpATTRS;
 import com.jcraft.jsch.SftpException;
 import ro.cs.tao.utils.FileUtilities;
@@ -9,12 +8,15 @@ import ro.cs.tao.utils.FileUtilities;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.*;
 
+/**
+ * Factory class for providing wrappers over file and process local or remote operations.
+ *
+ * @author Cosmin Cara
+ */
 public class FileProcessFactory implements AutoCloseable {
     private static final String localhost;
     private final String host;
@@ -37,10 +39,17 @@ public class FileProcessFactory implements AutoCloseable {
         localhost = name;
     }
 
+    /**
+     * Creates a factory for local file and process operations
+     */
     public static FileProcessFactory createLocal() {
         return new FileProcessFactory();
     }
 
+    /**
+     * Creates a factory for file and process operations.
+     * If the [host] value is the local host, it will return a local factory, otherwise it will return a remote factory.
+     */
     public static FileProcessFactory createFor(String host, String user, String password, boolean certificate) throws IOException {
         if (localhost.equalsIgnoreCase(host)) {
             return new FileProcessFactory();
@@ -67,10 +76,19 @@ public class FileProcessFactory implements AutoCloseable {
         this.processManager = new LocalProcessManager();
     }
 
+    /**
+     * Returns the host name for which this factory is intended
+     */
     public String getHost() { return host; }
 
+    /**
+     * Returns the wrapper for file operations
+     */
     public FileManager fileManager() { return fileManager; }
 
+    /**
+     * Returns the wrapper for process operations
+     */
     public ProcessManager processManager() { return processManager; }
 
     public void setUserId(int userId) { this.uid = userId; }
@@ -82,6 +100,9 @@ public class FileProcessFactory implements AutoCloseable {
         this.fileManager.close();
     }
 
+    /**
+     * Interface for wrappers for file operations
+     */
     public interface FileManager {
         boolean exists(Path path);
         boolean isDirectory(Path path);
@@ -91,6 +112,7 @@ public class FileProcessFactory implements AutoCloseable {
         boolean deleteIfExists(Path file) throws IOException;
         void deleteFile(Path file) throws IOException;
         void deleteFolder(Path folder) throws IOException;
+        void cleanup(Path folder, Set<String> excludedExtensions, String... patterns) throws IOException;
         long size(Path path) throws IOException;
         long folderSize(Path folder) throws IOException;
         List<String> readAllLines(Path file) throws IOException;
@@ -99,12 +121,28 @@ public class FileProcessFactory implements AutoCloseable {
         void close();
     }
 
+    /**
+     * Interface for wrappers for process operations
+     */
     public interface ProcessManager {
+        /**
+         * Creates an execution unit (i.e. what can be executed by an executor) given a list of command line arguments
+         * @param arguments The commands with/without arguments to be wrapped by the execution unit
+         */
         ExecutionUnit createUnit(List<String> arguments);
+
+        /**
+         * Creates an executor for the given list of command line arguments
+         * @param arguments The commands with/without arguments to be executed by the executor
+         */
         Executor<?> createExecutor(List<String> arguments);
     }
 
-    private class LocalFileManager implements FileManager {
+    /**
+     * Implementation for a local file operations wrapper.
+     * The operations are delegated to java.nio.Files and ro.cs.tao.utils.FileUtilities
+     */
+    private static class LocalFileManager implements FileManager {
 
         @Override
         public boolean exists(Path path) {
@@ -147,6 +185,37 @@ public class FileProcessFactory implements AutoCloseable {
         }
 
         @Override
+        public void cleanup(Path folder, Set<String> excludedExtensions, String... patterns) throws IOException {
+            Files.walkFileTree(folder, new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    if ((patterns != null && Arrays.stream(patterns).anyMatch(p -> file.getFileName().toString().endsWith(p)))
+                            || !excludedExtensions.contains(FileUtilities.getExtension(file.toFile()))) {
+                        Files.delete(file);
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                    // propagate the exception if not null
+                    if (exc != null) {
+                        throw exc;
+                    }
+                    // remove the directory if not empty
+                    boolean hasChildren;
+                    try(DirectoryStream<Path> dirStream = Files.newDirectoryStream(dir)) {
+                        hasChildren = dirStream.iterator().hasNext();
+                    }
+                    if (!hasChildren) {
+                        cleanup(dir, excludedExtensions, patterns);
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        }
+
+        @Override
         public long size(Path path) throws IOException {
             return Files.size(path);
         }
@@ -177,7 +246,10 @@ public class FileProcessFactory implements AutoCloseable {
             //NOOP
         }
     }
-
+    /**
+     * Implementation for a remote file operations wrapper.
+     * The operations are delegated to JSch.
+     */
     private class RemoteFileManager implements FileManager {
         private final SSHExecutor executor;
         private final OutputAccumulator accumulator;
@@ -187,30 +259,117 @@ public class FileProcessFactory implements AutoCloseable {
             this.accumulator = new OutputAccumulator();
             this.executor.setUser(user);
             this.executor.setPassword(token);
+            this.executor.setOutputConsumer(this.accumulator);
             if (useCertificate) {
                 this.executor.setCertificate(token);
             }
             this.executor.setKeepAlive(true);
             if (!this.executor.canConnect()) {
-                throw new RuntimeException("Cannot connect to " + host);
+                throw new IOException("Cannot connect to " + host);
             }
         }
 
         public void deleteFile(Path file) throws IOException {
-            execute("rm","-f", file.toString());
+            //execute("/bin/bash", "-c", "\"rm -f " + file.toString() + "\"");
+            ChannelSftp channel = null;
+            try {
+                channel = (ChannelSftp) this.executor.open(SSHMode.SFTP);
+                channel.cd(file.getParent().toString());
+                channel.rm(file.getFileName().toString());
+            } catch (Exception e) {
+                throw new IOException(e);
+            } finally {
+                if (channel != null) {
+                    channel.disconnect();
+                }
+            }
         }
 
         public void deleteFolder(Path folder) throws IOException {
-            execute("rm", "-rf", folder.toString());
+            //execute("/bin/bash", "-c", "\"rm -rf " + folder.toString() + "\"");
+            ChannelSftp channel = null;
+            try {
+                channel = (ChannelSftp) this.executor.open(SSHMode.SFTP);
+                deleteFolderInner(folder.toString(), channel);
+            } catch (Exception e) {
+                throw new IOException(e);
+            } finally {
+                if (channel != null) {
+                    channel.disconnect();
+                }
+            }
+        }
+
+        @Override
+        public void cleanup(Path folder, Set<String> excludedExtensions, String... patterns) throws IOException {
+            ChannelSftp channel = null;
+            try {
+                channel = (ChannelSftp) this.executor.open(SSHMode.SFTP);
+                cleanup(folder.toString(), excludedExtensions, channel, patterns);
+            } catch (Exception e) {
+                throw new IOException(e);
+            } finally {
+                if (channel != null) {
+                    channel.disconnect();
+                }
+            }
+        }
+
+        private void deleteFolderInner(String path, ChannelSftp channel) throws Exception {
+            channel.cd(path);
+            Vector<ChannelSftp.LsEntry> fileAndFolderList = channel.ls(path);
+            for (ChannelSftp.LsEntry item : fileAndFolderList) {
+                if (!item.getAttrs().isDir()) {
+                    channel.rm(path + "/" + item.getFilename());
+                } else if (!(".".equals(item.getFilename()) || "..".equals(item.getFilename()))) { // If it is a subdir.
+                    try {
+                        channel.rmdir(path + "/" + item.getFilename());
+                    } catch (Exception e) { // If subdir is not empty and error occurs.
+                        deleteFolderInner(path + "/" + item.getFilename(), channel);
+                    }
+                }
+            }
+            channel.rmdir(path); // delete the parent directory after empty
+        }
+
+        private void cleanup(String path, Set<String> excludedExtensions, ChannelSftp channel, String... patterns) throws Exception {
+            channel.cd(path);
+            Vector<ChannelSftp.LsEntry> fileAndFolderList = channel.ls(path);
+            for (ChannelSftp.LsEntry item : fileAndFolderList) {
+                if (!item.getAttrs().isDir()) {
+                    if (patterns == null && excludedExtensions == null) {
+                        channel.rm(path + "/" + item.getFilename());
+                    } else if ((patterns != null && Arrays.stream(patterns).anyMatch(p -> item.getFilename().endsWith(p)))
+                            || !excludedExtensions.contains(item.getFilename().substring(item.getFilename().lastIndexOf('.')))) {
+                        channel.rm(path + "/" + item.getFilename());
+                    }
+                } else if (!(".".equals(item.getFilename()) || "..".equals(item.getFilename()))) { // If it is a subdir.
+                    try {
+                        channel.rmdir(path + "/" + item.getFilename());
+                    } catch (Exception e) { // If subdir is not empty and error occurs.
+                        cleanup(path + "/" + item.getFilename(), excludedExtensions, channel, patterns);
+                    }
+                }
+            }
         }
 
         public void move(Path source, Path destination) throws IOException {
-            execute("mv", source.toString(), destination.toString());
+            ChannelSftp channel = null;
+            try {
+                channel = (ChannelSftp) this.executor.open(SSHMode.SFTP);
+                channel.rename(source.toString(), destination.toString());
+            } catch (Exception e) {
+                throw new IOException(e);
+            } finally {
+                if (channel != null) {
+                    channel.disconnect();
+                }
+            }
         }
 
         public boolean exists(Path path) {
             try {
-                execute("ls", path.toString());
+                execute("/bin/bash", "-c", "\"ls " + path.toString() + "\"");
                 return true;
             } catch (IOException e) {
                 return false;
@@ -219,36 +378,76 @@ public class FileProcessFactory implements AutoCloseable {
 
         @Override
         public boolean isDirectory(Path path) {
+            ChannelSftp channel = null;
             try {
-                ChannelSftp channel = (ChannelSftp) this.executor.open(SSHMode.SFTP);
+                channel = (ChannelSftp) this.executor.open(SSHMode.SFTP);
                 channel.cd(path.getParent().toString());
                 final String fileName = path.getFileName().toString();
                 final SftpATTRS attrs = channel.lstat(fileName);
                 return attrs.isDir();
             } catch (Exception e) {
                 return false;
+            }finally {
+                if (channel != null) {
+                    try {
+                        channel.disconnect();
+                    } catch (Exception ignored) {
+                    }
+                }
             }
         }
 
         public void ensureExists(Path path) throws IOException {
-            this.accumulator.reset();
-            this.executor.arguments.addAll(Arrays.asList("mkdir", "-p", path.toString()));
+            ChannelSftp channel = null;
             try {
-                this.executor.execute(false);
-            } catch (JSchException | SftpException e) {
-                throw new IOException(e);
+                channel = (ChannelSftp) this.executor.open(SSHMode.SFTP);
+                FileUtilities.ensureExists(path, channel);
+            } finally {
+                if (channel != null) {
+                    try {
+                        channel.disconnect();
+                    } catch (Exception ignored) {
+                    }
+                }
             }
         }
 
         public void copyAndDelete(Path source, Path destination) throws IOException {
-            execute("cp", "-r", source.toString(), destination.toString());
-            deleteFolder(source);
+            try {
+                execute("cp", "-rfv", source.toString(), destination.toString());
+            } catch (Exception e) {
+                throw new IOException("Copy failed", e);
+            }
+            try {
+                deleteFolder(source);
+            } catch (IOException e) {
+                throw new IOException("Delete failed", e);
+            }
+        }
+
+        private void copyFile(Path source, Path destination, ChannelSftp uploadChannel) throws Exception {
+            ChannelSftp downloadChannel = null;
+            try {
+                downloadChannel = (ChannelSftp) this.executor.open(SSHMode.SFTP);
+                downloadChannel.put(uploadChannel.get(source.toString()), destination.toString());
+            } finally {
+                if (downloadChannel != null) {
+                    try {
+                        downloadChannel.disconnect();
+                    } catch (Exception ignored) {
+                    }
+                }
+            }
         }
 
         @Override
         public boolean deleteIfExists(Path file) throws IOException {
-            execute("rm","-f", file.toString());
-            return true;
+            try {
+                execute("rm", "-f", file.toString());
+                return true;
+            } catch (IOException e) {
+                return false;
+            }
         }
 
         @Override
@@ -261,7 +460,6 @@ public class FileProcessFactory implements AutoCloseable {
                 if (channel != null) {
                     try {
                         channel.disconnect();
-                        channel.getSession().disconnect();
                     } catch (Exception ignored) {
                     }
                 }
@@ -278,7 +476,6 @@ public class FileProcessFactory implements AutoCloseable {
                 if (channel != null) {
                     try {
                         channel.disconnect();
-                        channel.getSession().disconnect();
                     } catch (Exception ignored) {
                     }
                 }
@@ -308,7 +505,6 @@ public class FileProcessFactory implements AutoCloseable {
                 if (channel != null) {
                     try {
                         channel.disconnect();
-                        channel.getSession().disconnect();
                     } catch (Exception ignored) {
                     }
                 }
@@ -330,12 +526,10 @@ public class FileProcessFactory implements AutoCloseable {
                 if (channel != null) {
                     try {
                         channel.disconnect();
-                        channel.getSession().disconnect();
                     } catch (Exception ignored) {
                     }
                 }
             }
-
         }
 
         @Override
@@ -358,7 +552,7 @@ public class FileProcessFactory implements AutoCloseable {
                 if (channel != null) {
                     try {
                         channel.disconnect();
-                        channel.getSession().disconnect();
+                        //channel.getSession().disconnect();
                     } catch (Exception ignored) {
                     }
                 }
@@ -368,23 +562,28 @@ public class FileProcessFactory implements AutoCloseable {
         @Override
         public void close() {
             this.executor.stop();
+            this.executor.close();
         }
 
         private void execute(String...commands) throws IOException {
             this.executor.arguments.clear();
             this.accumulator.reset();
+            this.executor.isStopped = false;
             this.executor.arguments.addAll(Arrays.asList(commands));
             try {
-                if (this.executor.execute(false) != 0) {
-                    throw new IOException(this.accumulator.getOutput());
+                final int retCode = this.executor.execute(false);
+                if (retCode != 0) {
+                    throw new IOException("[code " + retCode + "] " + this.accumulator.getOutput());
                 }
-            } catch (JSchException | SftpException e) {
+            } catch (Exception e) {
                 throw new IOException(e);
             }
         }
     }
-
-    class LocalProcessManager implements ProcessManager {
+    /**
+     * Implementation for a local process operations wrapper.
+     */
+    private class LocalProcessManager implements ProcessManager {
 
         @Override
         public ExecutionUnit createUnit(List<String> arguments) {
@@ -396,8 +595,10 @@ public class FileProcessFactory implements AutoCloseable {
             return Executor.create(ExecutorType.PROCESS, host, arguments, false);
         }
     }
-
-    class RemoteProcessManager implements ProcessManager {
+    /**
+     * Implementation for a remote process operations wrapper.
+     */
+    private class RemoteProcessManager implements ProcessManager {
 
         @Override
         public ExecutionUnit createUnit(List<String> arguments) {
