@@ -11,8 +11,12 @@ public class ConfigurationManager {
         final ServiceLoader<ConfigurationProvider> loader = ServiceLoader.load(ConfigurationProvider.class);
         final Iterator<ConfigurationProvider> iterator = loader.iterator();
         if (iterator.hasNext()) {
-            configurationProvider = iterator.next();
-        } else {
+            try {
+                configurationProvider = iterator.next();
+            } catch (Throwable ignored) {
+            }
+        }
+        if (configurationProvider == null) {
             configurationProvider = new EmptyConfigurationProvider();
             final String userHome = System.getProperty("user.home");
             configurationProvider.setValue("products.location", userHome);

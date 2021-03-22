@@ -3,6 +3,7 @@ package ro.cs.tao.datasource.cli;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import org.apache.commons.cli.*;
+import ro.cs.tao.ProgressListener;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.configuration.ConfigurationProvider;
 import ro.cs.tao.datasource.*;
@@ -14,17 +15,16 @@ import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.Notifiable;
 import ro.cs.tao.messaging.TaskProgress;
 import ro.cs.tao.messaging.progress.*;
+import ro.cs.tao.utils.DateUtils;
 import ro.cs.tao.utils.NetUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.text.SimpleDateFormat;
+import java.text.DateFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class DownloadTool {
@@ -104,7 +104,7 @@ public class DownloadTool {
             if (commandLine.hasOption(Constants.HELP)) {
                 processHelp(commandLine.getOptionValues(Constants.HELP));
             } else {
-                Logger.getLogger("org.apache.http").setLevel(Level.SEVERE);
+
                 specificArgs.addAll(Arrays.stream(commandLine.getOptions()).map(Option::getOpt).collect(Collectors.toSet()));
                 final ConfigurationProvider cfgManager = ConfigurationManager.getInstance();
                 final String targetFolder = getArgValue(commandLine, Constants.FOLDER, String.class,
@@ -129,7 +129,7 @@ public class DownloadTool {
                     throw new IllegalArgumentException(Constants.SATELLITE);
                 }
                 final String dataSourceName = commandLine.getOptionValue(Constants.REPOSITORY);
-                final DataSource<?> dataSource = dataSourceManager.get(satellite, dataSourceName);
+                final DataSource<?, ?> dataSource = dataSourceManager.get(satellite, dataSourceName);
                 if (dataSource == null) {
                     throw new IllegalArgumentException(Constants.REPOSITORY);
                 }
@@ -141,20 +141,27 @@ public class DownloadTool {
                 Integer value = getArgValue(commandLine, Constants.PAGE_SIZE, Integer.class, null);
                 if (value != null) {
                     query.setPageSize(value);
+                } else {
+                    query.setPageSize(10);
                 }
                 value = getArgValue(commandLine, Constants.PAGE, Integer.class, null);
                 if (value != null) {
                     query.setPageNumber(value);
+                } else {
+                    query.setPageNumber(1);
                 }
                 value = getArgValue(commandLine, Constants.LIMIT, Integer.class, null);
                 if (value != null) {
                     query.setMaxResults(value);
+                } else {
+                    query.setMaxResults(20);
                 }
                 final Boolean queryOnly = getArgValue(commandLine, Constants.QUERY, Boolean.class, false);
                 final List<String> parameters = getArgValues(commandLine, Constants.PARAMETERS, String.class);
                 if (parameters == null) {
                     throw new IllegalArgumentException("Argument --parameters has no value");
                 }
+                NetUtils.setTimeout(getArgValue(commandLine, Constants.TIMEOUT, Integer.class, 30) * 1000);
                 final Map<String, DataSourceParameter> supportedParameters = dataSource.getSupportedParameters().get(satellite);
                 DataSourceParameter currentParameter;
                 String[] tokens;
@@ -182,25 +189,73 @@ public class DownloadTool {
                         query.addParameter(tokens[0], tokens[1]);
                     }
                 }
+                final String format = getArgValue(commandLine, Constants.FORMAT, String.class, "text");
+                if (!("json".equalsIgnoreCase(format) || "text".equalsIgnoreCase(format))) {
+                    System.err.println("Invalid value for parameter [format]");
+                    System.exit(1);
+                }
                 final List<EOProduct> results = query.execute();
                 if (queryOnly) {
                     if (results == null || results.size() == 0) {
                         System.out.println("No results");
                     } else {
-                        final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-                        for (EOProduct result : results) {
-                            System.out.println("name=" + result.getName() + "; date=" + dateFormat.format(result.getAcquisitionDate()) + "; url=" + result.getLocation());
+                        final DateFormat dateFormat = DateUtils.getFormatterAtUTC("yyyy-MM-dd");
+                        if ("text".equalsIgnoreCase(format)) {
+                            for (EOProduct result : results) {
+                                System.out.println("name=" + result.getName() + "; date=" + dateFormat.format(result.getAcquisitionDate()) + "; url=" + result.getLocation());
+                            }
+                        } else if ("json".equalsIgnoreCase(format)) {
+                            System.out.println(new ObjectMapper().writer().writeValueAsString(results));
                         }
                     }
                 } else {
-                    dsComponent.doFetch(results, null, targetFolder);
+                    dsComponent.setProgressListener(new ProgressListener() {
+                        private String current;
+                        @Override
+                        public void started(String taskName) {
+                            current = taskName;
+                            System.out.print("Started " + current);
+                        }
+
+                        @Override
+                        public void subActivityStarted(String subTaskName) {
+                        }
+
+                        @Override
+                        public void subActivityEnded(String subTaskName) {
+                        }
+
+                        @Override
+                        public void ended() {
+                            System.out.print("\rCompleted " + current);
+                        }
+
+                        @Override
+                        public void notifyProgress(double progressValue) {
+                            System.out.print("\r" + current + ": " + String.format("%.2f%% ", progressValue * 100));
+                        }
+
+                        @Override
+                        public void notifyProgress(String subTaskName, double subTaskProgress) {
+                        }
+
+                        @Override
+                        public void notifyProgress(String subTaskName, double subTaskProgress, double overallProgress) {
+                        }
+                    });
+                    System.out.printf("Found %d products%n", results.size());
+                    final Properties properties = new Properties();
+                    properties.put("auto.uncompress", "false");
+                    properties.put("progress.interval", "10000");
+                    dataSource.getProductFetchStrategy(satellite).addProperties(properties);
+                    dsComponent.doFetch(results, null, targetFolder, null, properties);
                 }
             }
         } catch (IllegalArgumentException | QueryException e1) {
-            System.err.println(String.format("Invalid argument or value [%s]", e1.getMessage()));
+            System.err.printf("Invalid argument or value [%s]%n", e1.getMessage());
             retCode = ReturnCode.INVALID_ARG;
         } catch (ClassNotFoundException e2) {
-            System.err.println(String.format("No plugin found for [%s]", e2.getMessage()));
+            System.err.printf("No plugin found for [%s]%n", e2.getMessage());
             retCode = ReturnCode.NO_PLUGIN;
         } catch (Exception e3) {
             System.err.println(e3.getMessage());
@@ -218,22 +273,18 @@ public class DownloadTool {
             if (!cmd.hasOption(argName)) {
                 return null;
             } else {
-                final String[] values = cmd.getOptionValues(argName);
-                List<String> optionValues = new ArrayList<>();
-                String joinedValue = null;
-                for (int i = 0; i < values.length; i++) {
-                    if (values[i].startsWith("'")) {
-                        joinedValue = values[i].substring(1);
-                    } else if (values[i].endsWith("'")) {
-                        joinedValue += " " + values[i].substring(0, values[i].length() - 1);
-                        optionValues.add(joinedValue);
-                        joinedValue = null;
-                    } else  if (joinedValue != null) {
-                        joinedValue += " " + values[i];
-                    } else {
-                        optionValues.add(values[i]);
-                    }
+                final String value = String.join(" ", cmd.getOptionValues(argName));
+                final List<String> optionValues = new ArrayList<>();
+                final List<Integer> indices = new ArrayList<>();
+                int currentIdx = value.indexOf('=');
+                while (currentIdx > 0) {
+                    indices.add(Math.max(value.lastIndexOf(' ', currentIdx), 0));
+                    currentIdx = value.indexOf('=', currentIdx + 1);
                 }
+                for (int i = 1; i < indices.size(); i++) {
+                    optionValues.add(value.substring(indices.get(i -1), indices.get(i)).trim());
+                }
+                //optionValues.add(value.substring(indices.size() - 1).trim());
                 if (Boolean.class.isAssignableFrom(elementClass)) {
                     return optionValues.stream().map(v -> elementClass.cast(Boolean.parseBoolean(v))).collect(Collectors.toList());
                 } else if (Integer.class.isAssignableFrom(elementClass)) {

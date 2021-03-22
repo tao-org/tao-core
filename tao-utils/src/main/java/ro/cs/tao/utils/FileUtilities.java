@@ -16,16 +16,24 @@
 
 package ro.cs.tao.utils;
 
+import com.jcraft.jsch.ChannelSftp;
+import com.jcraft.jsch.SftpATTRS;
+import com.jcraft.jsch.SftpException;
+
 import java.io.*;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.FileSystem;
 import java.nio.file.*;
 import java.nio.file.attribute.*;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -119,13 +127,27 @@ public class FileUtilities {
             if (isPosixFileSystem()) {
                 Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxr-xr-x");
                 FileAttribute<Set<PosixFilePermission>> attrs = PosixFilePermissions.asFileAttribute(perms);
-                folder = Files.createDirectories(folder, attrs);
+                try {
+                    folder = Files.createDirectories(folder, attrs);
+                } catch (Exception e) {
+                    // Maybe just attributes cannot be set
+                    folder = Files.createDirectories(folder);
+                }
             } else {
                 folder = Files.createDirectories(folder);
             }
 
         }
         return folder;
+    }
+
+    public static void ensureExists(Path folder, ChannelSftp clientChannel) throws IOException {
+        final int nameCount = folder.getNameCount();
+        Path current = folder.getRoot().resolve(folder.getName(0));
+        for (int i = 1; i < nameCount; i++) {
+            current = current.resolve(folder.getName(i));
+            remoteCreateDirectory(current, clientChannel);
+        }
     }
 
     public static Path ensurePermissions(Path file) {
@@ -147,7 +169,23 @@ public class FileUtilities {
         Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-                folders.add(dir);
+                if (root.compareTo(dir) != 0) {
+                    folders.add(dir);
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        });
+        return folders;
+    }
+
+    public static List<Path> listFolders(Path root, int depth) throws IOException {
+        final List<Path> folders = new ArrayList<>();
+        Files.walkFileTree(root, new HashSet<FileVisitOption>() {{ add(FileVisitOption.FOLLOW_LINKS); }}, depth, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                if (root.compareTo(dir) != 0) {
+                    folders.add(dir);
+                }
                 return FileVisitResult.CONTINUE;
             }
         });
@@ -155,13 +193,24 @@ public class FileUtilities {
     }
 
     public static List<Path> listFiles(Path folder) {
-        final File[] files = folder.toFile().listFiles();
-        return files != null ?
-                Arrays.stream(files)
-                        .filter(File::isFile)
-                        .map(File::toPath)
-                        .collect(Collectors.toList()) :
-                new ArrayList<>();
+        try {
+            return Files.walk(folder, 1).collect(Collectors.toList());
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+
+    public static List<Path> listFiles(Path folder, String pattern, LocalDateTime before) throws IOException {
+        final Instant instant = before.atZone(ZoneOffset.systemDefault()).toInstant();
+        final Pattern p = Pattern.compile(pattern);
+        return Files.walk(folder, 1).filter(f -> {
+            try {
+                return p.matcher(f.getFileName().toString()).find() && Files.getLastModifiedTime(f).toInstant().isBefore(instant);
+            } catch (IOException inner) {
+                return false;
+            }
+        }).collect(Collectors.toList());
     }
 
     public static List<Path> listTree(Path folder) throws IOException {
@@ -187,6 +236,13 @@ public class FileUtilities {
                             Predicate<? super Path> fileFilter) throws IOException {
         if (sourcePath != null && Files.exists(sourcePath)) {
             if (Files.isDirectory(sourcePath)) {
+                List<Path> fileList = FileUtilities.listFiles(sourcePath).stream().filter(Files::isRegularFile).collect(Collectors.toList());
+                if (fileFilter != null) {
+                    fileList = fileList.stream().filter(fileFilter).collect(Collectors.toList());
+                }
+                for (Path file : fileList) {
+                    linkFile(file, targetPath.resolve(sourcePath.relativize(file)));
+                }
                 List<Path> folders = FileUtilities.listFolders(sourcePath);
                 if (folderFilter != null) {
                     folders = folders.stream().filter(folderFilter).collect(Collectors.toList());
@@ -256,6 +312,16 @@ public class FileUtilities {
         return Files.exists(file) ? file : Files.createSymbolicLink(file, sourcePath);
     }
 
+    public static Path linkFolder(Path sourcePath, Path target) throws IOException {
+        if (!Files.isDirectory(sourcePath)) {
+            throw new IOException(sourcePath + " is not a directory");
+        }
+        if (!Files.isDirectory(target)) {
+            throw new IOException(target + " is not a directory");
+        }
+        return linkFile(sourcePath, target);
+    }
+
     public static int copy(Path source, Path destination) throws IOException {
         final AtomicInteger copied = new AtomicInteger(0);
         if (source != null && destination != null) {
@@ -276,6 +342,66 @@ public class FileUtilities {
                     public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                         Path targetFile = targetFolder.resolve(source.relativize(file));
                         Files.copy(file, targetFile, StandardCopyOption.REPLACE_EXISTING);
+                        copied.incrementAndGet();
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                        if (exc == null) {
+                            return FileVisitResult.CONTINUE;
+                        } else {
+                            throw exc;
+                        }
+                    }
+                });
+            }
+        }
+        return copied.intValue();
+    }
+
+    public static int upload(Path source, Path destination, ChannelSftp channel) throws IOException {
+        final AtomicInteger copied = new AtomicInteger(0);
+        if (source != null && destination != null) {
+            if (Files.isRegularFile(source)) {
+                //Files.copy(source, destination, StandardCopyOption.REPLACE_EXISTING);
+                try {
+                    createDirectories(destination, channel);
+                    channel.cd(destination.toString());
+                    channel.put(Files.newInputStream(source), source.getFileName().toString(), ChannelSftp.OVERWRITE);
+                } catch (SftpException e) {
+                    throw new IOException(e);
+                }
+            } else {
+                Path targetFolder = destination.resolve(source.getFileName());
+                createDirectories(targetFolder, channel);
+                try {
+                    channel.cd(targetFolder.toString());
+                } catch (SftpException e) {
+                    throw new IOException(e);
+                }
+                Files.walkFileTree(source, new SimpleFileVisitor<Path>() {
+                    @Override
+                    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                        Path target = source.relativize(dir);
+                        //Files.createDirectories(target);
+                        try {
+                            channel.mkdir(target.toString());
+                            channel.cd(target.toString());
+                        } catch (SftpException e) {
+                            throw new IOException(e);
+                        }
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                        Path targetFile = source.relativize(file);
+                        try {
+                            channel.put(Files.newInputStream(file), targetFile.getFileName().toString(), ChannelSftp.OVERWRITE);
+                        } catch (SftpException e) {
+                            throw new IOException(e);
+                        }
                         copied.incrementAndGet();
                         return FileVisitResult.CONTINUE;
                     }
@@ -334,6 +460,91 @@ public class FileUtilities {
         }
     }
 
+    public static void copyAndDelete(Path source, Path destination) throws IOException {
+        if (source != null && destination != null) {
+            if (!Files.exists(destination)) {
+                Files.createDirectories(destination);
+            }
+            if (Files.isRegularFile(source)) {
+                Files.deleteIfExists(destination);
+                Files.copy(source, destination, StandardCopyOption.REPLACE_EXISTING);
+                Files.delete(source);
+            } else {
+                Path targetFolder = destination.resolve(source.getFileName());
+                Files.createDirectories(targetFolder);
+                Files.walkFileTree(source, new SimpleFileVisitor<Path>() {
+                    @Override
+                    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                        Path target = targetFolder.resolve(source.relativize(dir));
+                        Files.createDirectories(target);
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                        Path targetFile = targetFolder.resolve(source.relativize(file));
+                        Files.deleteIfExists(targetFile);
+                        Files.copy(file, targetFile, StandardCopyOption.REPLACE_EXISTING);
+                        Files.delete(file);
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                        if (exc == null) {
+                            Files.delete(dir);
+                            return FileVisitResult.CONTINUE;
+                        } else {
+                            throw exc;
+                        }
+                    }
+                });
+                //Files.delete(source);
+            }
+        }
+    }
+
+    public static void remoteCopyAndDelete(Path source, Path destination, ChannelSftp channel) throws IOException {
+        if (source != null && destination != null) {
+            remoteCreateDirectory(destination, channel);
+            if (Files.isRegularFile(source)) {
+                remoteDeleteIfExists(destination, channel);
+                upload(source, destination, channel);
+                remoteDelete(source, channel);
+            } else {
+                Path targetFolder = destination.resolve(source.getFileName());
+                remoteCreateDirectory(targetFolder, channel);
+                Files.walkFileTree(source, new SimpleFileVisitor<Path>() {
+                    @Override
+                    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                        Path target = targetFolder.resolve(source.relativize(dir));
+                        remoteCreateDirectory(target, channel);
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                        Path targetFile = targetFolder.resolve(source.relativize(file));
+                        remoteDeleteIfExists(targetFile, channel);
+                        upload(file, targetFile, channel);
+                        remoteDelete(file, channel);
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                        if (exc == null) {
+                            remoteDelete(dir, channel);
+                            return FileVisitResult.CONTINUE;
+                        } else {
+                            throw exc;
+                        }
+                    }
+                });
+            }
+        }
+    }
+
     public static void deleteTree(Path root) throws IOException {
         if (root != null && Files.isDirectory(root)) {
             Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
@@ -345,20 +556,58 @@ public class FileUtilities {
 
                 @Override
                 public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-                    if (exc == null) {
+                    if (exc == null && !dir.equals(root)) {
                         Files.delete(dir);
                         return FileVisitResult.CONTINUE;
-                    } else {
+                    } else if (exc != null) {
                         throw exc;
                     }
+                    return FileVisitResult.CONTINUE;
                 }
             });
+            Files.delete(root);
+        }
+    }
+
+    public static void remoteDeleteTree(Path root, ChannelSftp channel) throws IOException {
+        if (root != null) {
+            Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    try {
+                        channel.rm(file.toString());
+                    } catch (SftpException e) {
+                        throw new IOException(e);
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                    if (exc == null && !dir.equals(root)) {
+                        try {
+                            channel.rmdir(dir.toString());
+                        } catch (SftpException e) {
+                            throw new IOException(e);
+                        }
+                        return FileVisitResult.CONTINUE;
+                    } else if (exc != null) {
+                        throw exc;
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+            try {
+                channel.rmdir(root.toString());
+            } catch (SftpException e) {
+                throw new IOException(e);
+            }
         }
     }
 
     public static long folderSize(Path folder) throws IOException {
         return Files.walk(folder)
-                .filter(p -> Files.isRegularFile(p))
+                .filter(Files::isRegularFile)
                 .mapToLong(p -> p.toFile().length())
                 .sum();
     }
@@ -410,6 +659,7 @@ public class FileUtilities {
                     } else {
                         int read;
                         try (InputStream inputStream = zipFile.getInputStream(entry)) {
+                            Files.createDirectories(keepFolderStructure ? filePath.getParent() : strippedFilePath.getParent());
                             try (BufferedOutputStream bos = new BufferedOutputStream(
                                     new FileOutputStream(keepFolderStructure ? filePath.toFile() : strippedFilePath.toFile()))) {
                                 while ((read = inputStream.read(buffer)) > 0) {
@@ -438,5 +688,119 @@ public class FileUtilities {
             }
         }
         return supportsPosix;
+    }
+
+    public static void remoteCreateDirectory(Path path, ChannelSftp channel) throws IOException {
+        try {
+            channel.cd(path.getParent().toString());
+            channel.ls(path.getFileName().toString());
+        } catch (SftpException e) {
+            if (e.id == ChannelSftp.SSH_FX_NO_SUCH_FILE) {
+                try {
+                    channel.mkdir(path.getFileName().toString());
+                } catch (SftpException sftpException) {
+                    throw new IOException(sftpException);
+                }
+            } else {
+                throw new IOException(e);
+            }
+        }
+    }
+
+    public static boolean remoteExists(Path path, ChannelSftp channel) throws IOException {
+        try {
+            channel.cd(path.getParent().toString());
+            channel.ls(path.getFileName().toString());
+            return true;
+        } catch (SftpException e) {
+            if (e.id == ChannelSftp.SSH_FX_NO_SUCH_FILE) {
+                return false;
+            } else {
+                throw new IOException(e);
+            }
+        }
+    }
+
+    public static void createDirectories(Path path, ChannelSftp channel) throws IOException {
+        Path current = path.getRoot().resolve(path.getName(0));
+        for (int i = 1; i < path.getNameCount(); i++) {
+            current = current.resolve(path.getName(i));
+            try {
+                channel.ls(current.toString());
+            } catch (SftpException e) {
+                if (e.id == ChannelSftp.SSH_FX_NO_SUCH_FILE) {
+                    try {
+                        channel.mkdir(current.getFileName().toString());
+                    } catch (SftpException sftpException) {
+                        throw new IOException(sftpException);
+                    }
+                } else {
+                    throw new IOException(e);
+                }
+            }
+        }
+    }
+
+    public static long size(Path file, ChannelSftp channel) throws IOException {
+        try {
+            channel.cd(file.getParent().toString());
+            SftpATTRS attrs = channel.lstat(file.getFileName().toString());
+            return attrs != null ? attrs.getSize() : -1;
+        } catch (SftpException e) {
+            throw new IOException(e);
+        }
+    }
+
+    public static void remoteCopy(Path file, ChannelSftp channel) throws IOException {
+        try {
+            channel.cd(file.getParent().toString());
+            channel.put(Files.newInputStream(file), file.getFileName().toString(), ChannelSftp.OVERWRITE);
+        } catch (SftpException e) {
+            throw new IOException(e);
+        }
+    }
+
+    public static void remoteMove(Path source, Path destination, ChannelSftp channel) throws IOException {
+        try {
+            channel.cd(source.getParent().toString());
+            channel.rename(source.getFileName().toString(), source.getParent().relativize(destination).toString());
+        } catch (SftpException e) {
+            throw new IOException(e);
+        }
+    }
+
+    public static boolean remoteDeleteIfExists(Path file, ChannelSftp channel) throws IOException {
+        try {
+            channel.cd(file.getParent().toString());
+            final String fileName = file.getFileName().toString();
+            final SftpATTRS attrs = channel.lstat(fileName);
+            if (attrs.isDir()) {
+                channel.rmdir(fileName);
+            } else {
+                channel.rm(fileName);
+            }
+            return true;
+        } catch (SftpException e) {
+            if (e.id != ChannelSftp.SSH_FX_NO_SUCH_FILE) {
+                throw new IOException(e);
+            } else {
+                return false;
+            }
+        }
+    }
+
+    public static void remoteDelete(Path file, ChannelSftp channel) throws IOException {
+        try {
+            channel.cd(file.getParent().toString());
+            final String fileName = file.getFileName().toString();
+            final SftpATTRS attrs = channel.lstat(fileName);
+            if (attrs.isDir()) {
+                channel.rmdir(fileName);
+            } else {
+                channel.rm(fileName);
+            }
+        } catch (SftpException e) {
+            throw new IOException(e);
+        }
     }
 }

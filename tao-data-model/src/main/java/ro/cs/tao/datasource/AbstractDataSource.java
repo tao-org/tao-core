@@ -26,12 +26,13 @@ import java.util.Map;
  *
  * @author Cosmin Cara
  */
-public abstract class AbstractDataSource<Q extends DataQuery> extends DataSource<Q> {
+public abstract class AbstractDataSource<Q extends DataQuery, T> extends DataSource<Q, T> {
     protected String connectionString;
     protected String alternateConnectionString;
     protected long timeout;
     protected UsernamePasswordCredentials credentials;
     private ParameterProvider parameterProvider;
+    private boolean useAlternateConnectionString;
 
     public AbstractDataSource() {
         super();
@@ -47,13 +48,21 @@ public abstract class AbstractDataSource<Q extends DataQuery> extends DataSource
     public Q createQuery(String type) { return createQueryImpl(type); }
 
     @Override
-    public String getAlternateConnectionString() { return this.alternateConnectionString; }
+    public String getAlternateConnectionString() {
+        return this.alternateConnectionString != null ? this.alternateConnectionString : this.connectionString;
+    }
 
     @Override
     public String getConnectionString() { return connectionString; }
 
     @Override
     public void setConnectionString(String connectionString) { this.connectionString = connectionString; }
+
+    @Override
+    public boolean useAlternateConnectionString() { return this.useAlternateConnectionString; }
+
+    @Override
+    public void useAlternateConnectionString(boolean value) { this.useAlternateConnectionString = value; }
 
     @Override
     public UsernamePasswordCredentials getCredentials() { return this.credentials; }

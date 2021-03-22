@@ -16,6 +16,7 @@
 
 package ro.cs.tao.datasource.remote;
 
+import org.apache.http.Header;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import ro.cs.tao.datasource.DataSource;
 import ro.cs.tao.datasource.InterruptedException;
@@ -41,8 +42,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class SimpleArchiveDownloadStrategy extends DownloadStrategy {
-    private static final long DOWNLOAD_TIMEOUT = 30000; // 30s
-    private Timer timeoutTimer;
+    protected static final long DOWNLOAD_TIMEOUT = 30000; // 30s
+    protected Timer timeoutTimer;
 
     public SimpleArchiveDownloadStrategy(DataSource dataSource, String targetFolder, Properties properties) {
         super(dataSource, targetFolder, properties);
@@ -83,11 +84,27 @@ public class SimpleArchiveDownloadStrategy extends DownloadStrategy {
                 case 200:
                     try {
                         subActivityStart(product.getName());
-                        Path archivePath = Paths.get(destination, product.getName() + extension);
+                        String fileName = null;
+                        // try to get file name from header
+                        final Header header = response.getFirstHeader("Content-Disposition");
+                        if (header != null) {
+                            final String value = header.getValue();
+                            int idx = value.indexOf("filename=");
+                            if (idx > 0) {
+                                fileName = value.substring(idx + 10, value.length() - 1);
+                                extension = fileName.toLowerCase().endsWith(".zip") ? ".zip" : fileName.toLowerCase().endsWith(".tar.gz") ? ".tar.gz" : "";
+                                isArchive = !extension.isEmpty();
+                            }
+                        }
+                        if (fileName == null) {
+                            fileName = product.getName() + extension;
+                        }
+                        final Path archivePath = Paths.get(destination, fileName);
                         FileUtilities.ensureExists(Paths.get(destination));
                         Files.deleteIfExists(archivePath);
                         SeekableByteChannel outputStream = null;
                         long length = response.getEntity().getContentLength();
+                        System.out.println("Received content length:" + length);
                         long size = currentProduct.getApproximateSize();
                         if (size > length) {
                             Path existingProduct = Paths.get(destination, product.getName() + ".SAFE");

@@ -18,12 +18,12 @@ package ro.cs.tao.datasource.param;
 import ro.cs.tao.datasource.converters.QueryParameterConverter;
 import ro.cs.tao.eodata.Polygon2D;
 import ro.cs.tao.serialization.PolygonAdapter;
+import ro.cs.tao.utils.DateUtils;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.lang.reflect.Array;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
@@ -159,7 +159,7 @@ public class QueryParameter<T> {
 
     public String getValueAsFormattedDate(String format) {
         try {
-            return new SimpleDateFormat(format).format((Date) this.value);
+            return DateUtils.getFormatterAtUTC(format).format((Date) this.value);
         } catch (Exception e) {
             return null;
         }
@@ -167,7 +167,7 @@ public class QueryParameter<T> {
 
     public String getMinValueAsFormattedDate(String format) {
         try {
-            return new SimpleDateFormat(format).format((Date) this.minValue);
+            return DateUtils.getFormatterAtUTC(format).format((Date) this.minValue);
         } catch (Exception e) {
             return null;
         }
@@ -175,7 +175,7 @@ public class QueryParameter<T> {
 
     public String getMaxValueAsFormattedDate(String format) {
         try {
-            return new SimpleDateFormat(format).format((Date) this.maxValue);
+            return DateUtils.getFormatterAtUTC(format).format((Date) this.maxValue);
         } catch (Exception e) {
             return null;
         }

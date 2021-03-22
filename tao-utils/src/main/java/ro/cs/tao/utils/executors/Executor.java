@@ -60,6 +60,7 @@ public abstract class Executor<T> implements Runnable {
     String host;
     String user;
     String password;
+    String certificate;
     volatile boolean isStopped;
     private volatile boolean isSuspended;
     List<String> arguments;
@@ -71,6 +72,16 @@ public abstract class Executor<T> implements Runnable {
 
     private volatile int retCode = Integer.MAX_VALUE;
     private final CountDownLatch counter;
+
+    /**
+     * Returns the number of tasks currently executed by this executor
+     */
+    public static int getRunningTasks() { return executorService.getActiveCount(); }
+
+    /**
+     * Returns the number of tasks pending to be executed by this executor
+     */
+    public static int getQueuedTasks() { return executorService.getQueue().size(); }
 
     /**
      * Submits for execution the given command and returns the executor object.
@@ -114,6 +125,7 @@ public abstract class Executor<T> implements Runnable {
                                    job.getSshMode());
         executor.setUser(job.getUser());
         executor.setPassword(job.getPassword());
+        executor.setCertificate(job.getCertificate());
         executor.setOutputConsumer(outputConsumer);
         memoryRequirements.put(executor, job.getMinMemory() != null ? job.getMinMemory() : 0L);
         return executor;
@@ -149,6 +161,7 @@ public abstract class Executor<T> implements Runnable {
                                    workingDirectory);
         executor.setUser(job.getUser());
         executor.setPassword(job.getPassword());
+        executor.setCertificate(job.getCertificate());
         executor.setOutputConsumer(outputConsumer);
         memoryRequirements.put(executor, job.getMinMemory() != null ? job.getMinMemory() : 0L);
         return executor;
@@ -195,6 +208,7 @@ public abstract class Executor<T> implements Runnable {
                                        job.getSshMode());
             executor.setUser(job.getUser());
             executor.setPassword(job.getPassword());
+            executor.setCertificate(job.getCertificate());
             executor.setOutputConsumer(outputConsumer);
             executors[i] = executor;
             memoryRequirements.put(executor, job.getMinMemory() != null ? job.getMinMemory() : 0L);
@@ -320,7 +334,8 @@ public abstract class Executor<T> implements Runnable {
         final Long minMemory = executionUnit.getMinMemory();
         if (minMemory != null) {
             try {
-                RuntimeInfo runtimeInfo = RuntimeInfo.createInspector(executionUnit.getHost(),
+                AuthenticationType authenticationType = executionUnit.getCertificate() != null ? AuthenticationType.CERTIFICATE : AuthenticationType.PASSWORD;
+                RuntimeInfo runtimeInfo = RuntimeInfo.createInspector(executionUnit.getHost(), authenticationType,
                                                                       executionUnit.getUser(), executionUnit.getPassword());
                 final long availMem = runtimeInfo.getAvailableMemoryMB();
                 final long requested = requestedMemory.get();
@@ -399,6 +414,10 @@ public abstract class Executor<T> implements Runnable {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public void setCertificate(String certificate) {
+        this.certificate = certificate;
     }
 
     public void setOutputConsumer(OutputConsumer outputConsumer) { this.outputConsumer = outputConsumer; }

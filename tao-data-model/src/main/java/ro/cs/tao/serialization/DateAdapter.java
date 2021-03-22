@@ -15,15 +15,17 @@
  */
 package ro.cs.tao.serialization;
 
+import ro.cs.tao.utils.DateUtils;
+
 import javax.xml.bind.annotation.adapters.XmlAdapter;
-import java.text.SimpleDateFormat;
+import java.text.DateFormat;
 import java.util.Date;
 
 /**
  * @author Cosmin Cara
  */
 public class DateAdapter extends XmlAdapter<String, Date> {
-    private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:sss");
+    private final DateFormat dateFormat = DateUtils.getFormatterAtUTC("yyyy-MM-dd'T'HH:mm:sss");
 
     @Override
     public Date unmarshal(String v) throws Exception {

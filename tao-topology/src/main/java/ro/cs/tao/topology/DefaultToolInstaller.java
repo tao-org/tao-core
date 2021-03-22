@@ -276,7 +276,6 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
         } else {
             try {
                 workingDirectory = Files.createTempDirectory("TAO").toString();
-                //workingDirectory = workingDirectory + "/TAO_" + new SimpleDateFormat("yyyyMMdd_HHmmss.SSS").format(new Date(System.currentTimeMillis()));
             } catch (IOException e) {
                 throw new TopologyException("Cannot create TAO temporary directory for Topology scripts");
             }
