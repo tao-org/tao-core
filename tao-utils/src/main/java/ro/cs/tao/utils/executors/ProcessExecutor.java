@@ -16,11 +16,11 @@
 package ro.cs.tao.utils.executors;
 
 import org.apache.commons.lang3.SystemUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import java.io.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 
 /**
  * Executes a process with given arguments.
@@ -57,6 +57,13 @@ public class ProcessExecutor extends Executor<Process> {
                 this.logger.finest("[" + this.host + "] " + String.join(" ", pb.command()));
             }
             //redirect the error of the tool to the standard output
+            final Level parentLevel = this.logger.getParent().getLevel();
+            if (arguments.get(0).equals("docker") &&
+                arguments.stream().noneMatch(a -> a.equals("gdalinfo")) &&
+                    (parentLevel == null || parentLevel.intValue() <= Level.FINE.intValue())) {
+                pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+                pb.redirectError(ProcessBuilder.Redirect.INHERIT);
+            }
             pb.redirectErrorStream(true);
             pb.environment().putAll(System.getenv());
             if (asSuperUser) {
@@ -71,7 +78,7 @@ public class ProcessExecutor extends Executor<Process> {
                 this.monitor.attachTo(this.channel);
             }
             //get the process output
-            InputStream inputStream = this.channel.getInputStream();
+            final InputStream inputStream = this.channel.getInputStream();
             outReader = new BufferedReader(new InputStreamReader(inputStream));
             while (!isStopped()) {
                 String line;
@@ -107,8 +114,8 @@ public class ProcessExecutor extends Executor<Process> {
             }
         } catch (Exception e) {
             this.isStopped = true;
-            String message = ExceptionUtils.getStackTrace(e);
-            message = message.substring(0, message.indexOf("\tat "));
+            final String message = ro.cs.tao.utils.ExceptionUtils.getStackTrace(logger, e);
+            //message = message.substring(0, message.indexOf("\tat "));
             throw new IOException(String.format("[%s] failed: %s", host, message));
         } finally {
             closeStream(outReader);

@@ -32,11 +32,14 @@ import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 import ro.cs.tao.utils.logger.Logger;
 
+import javax.net.ssl.*;
 import java.io.IOException;
 import java.net.*;
+import java.security.cert.X509Certificate;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
@@ -56,6 +59,10 @@ public class NetUtils {
     private static HttpHost apacheHttpProxy;
     private static CredentialsProvider proxyCredentials;
     private static int timeout = 30000;
+
+    static {
+        allowSelfSignedCertificates();
+    }
 
     public static String getAuthToken(final String username, final String password) {
         String authToken = null;
@@ -103,15 +110,62 @@ public class NetUtils {
         return status;
     }
 
+    public static void allowSelfSignedCertificates() {
+        try {
+            /*
+             *  fix for
+             *    Exception in thread "main" javax.net.ssl.SSLHandshakeException:
+             *       sun.security.validator.ValidatorException:
+             *           PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException:
+             *               unable to find valid certification path to requested target
+             */
+            TrustManager[] trustAllCerts = new TrustManager[]{
+                    new X509TrustManager() {
+                        public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                            return null;
+                        }
+
+                        public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                        }
+
+                        public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                        }
+
+                    }
+            };
+            SSLContext sc = SSLContext.getInstance("SSL");
+            sc.init(null, trustAllCerts, new java.security.SecureRandom());
+            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+
+            // Create all-trusting host name verifier
+            HostnameVerifier allHostsValid = (hostname, session) -> true;
+            // Install the all-trusting host verifier
+            HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
+            /*
+             * end of the fix
+             */
+        } catch (Exception ex) {
+            java.util.logging.Logger.getLogger(NetUtils.class.getName()).severe("Cannot apply https/localhost fix. Reason: " + ex.getMessage());
+        }
+    }
+
     public static HttpURLConnection openConnection(String url) {
-        return openConnection(url, null);
+        return openConnection(url, (String) null);
     }
 
     public static HttpURLConnection openConnection(String url, String authToken) {
         return openConnection(HttpMethod.GET, url, authToken, null);
     }
 
+    public static HttpURLConnection openConnection(String url, Header authToken) {
+        return openURLConnection(HttpMethod.GET, url, authToken, null);
+    }
+
     public static HttpURLConnection openConnection(HttpMethod method, String url, String authToken, List<NameValuePair> requestProperties) {
+        return openURLConnection(method, url, new BasicHeader("Authorization", authToken), requestProperties);
+    }
+
+    public static HttpURLConnection openURLConnection(HttpMethod method, String url, Header authHeader, List<NameValuePair> requestProperties) {
         HttpURLConnection connection = null;
         try {
             URL urlObj = new URL(url);
@@ -123,8 +177,8 @@ public class NetUtils {
                 Logger.getRootLogger().debug("Proxy connection to %s opened", url);
             }
             connection.setRequestMethod(method.name());
-            if (authToken != null && !authToken.isEmpty()) {
-                connection.setRequestProperty("Authorization", authToken);
+            if (authHeader != null) {
+                connection.setRequestProperty(authHeader.getName(), authHeader.getValue());
             }
             if (requestProperties != null && !requestProperties.isEmpty()) {
                 for (NameValuePair requestProperty : requestProperties) {
@@ -229,7 +283,152 @@ public class NetUtils {
         return response;
     }
 
+    public static CloseableHttpResponse openConnection(HttpMethod method, String url, String header, String authToken, String json) throws IOException {
+        CloseableHttpResponse response;
+        try {
+            URI uri = new URI(url);
+            String domain = uri.getHost();
+            if (domain.indexOf(".") > 0) {
+                String[] tokens = domain.split("\\.");
+                domain = tokens[tokens.length - 2] + "." + tokens[tokens.length - 1];
+            }
+            CloseableHttpClient httpClient;
+                httpClient = HttpClients.custom()
+                        .setDefaultCookieStore(new BasicCookieStore())
+                        .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
+                        .build();
+            HttpRequestBase requestBase;
+            switch (method) {
+                case GET:
+                    requestBase = new HttpGet(uri);
+                    break;
+                case POST:
+                    requestBase = new HttpPost(uri);
+                    if (json != null) {
+                        StringEntity requestEntity = new StringEntity(json, ContentType.APPLICATION_JSON);
+                        ((HttpPost) requestBase).setEntity(requestEntity);
+                    }
+                    break;
+                default:
+                    throw new IllegalArgumentException("Method not supported");
+            }
+            final RequestConfig.Builder requestBuilder = RequestConfig.custom()
+                    .setConnectionRequestTimeout(timeout)
+                    .setConnectTimeout(timeout)
+                    .setSocketTimeout(timeout);
+            if (apacheHttpProxy != null) {
+                requestBuilder.setProxy(apacheHttpProxy);
+            }
+            requestBase.setConfig(requestBuilder.build());
+            requestBase.setHeader(header, authToken);
+            Logger.getRootLogger().debug("Details: %s", requestBase.getConfig().toString());
+            response = httpClient.execute(requestBase);
+            Logger.getRootLogger().debug("HTTP %s %s returned %s", method.toString(), url, response.getStatusLine().getStatusCode());
+        } catch (URISyntaxException | IOException e) {
+            Logger.getRootLogger().debug("Could not create connection to %s : %s", url, e.getMessage());
+            throw new IOException(e);
+        }
+        return response;
+    }
+
+    public static CloseableHttpResponse openConnection(HttpMethod method, String url, Header header, List<NameValuePair> parameters) throws IOException {
+        CloseableHttpResponse response;
+        try {
+            URI uri = new URI(url);
+            String domain = uri.getHost();
+            if (domain.indexOf(".") > 0) {
+                String[] tokens = domain.split("\\.");
+                domain = tokens[tokens.length - 2] + "." + tokens[tokens.length - 1];
+            }
+            CloseableHttpClient httpClient;
+            httpClient = HttpClients.custom()
+                    .setDefaultCookieStore(new BasicCookieStore())
+                    .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
+                    .build();
+            HttpRequestBase requestBase;
+            switch (method) {
+                case GET:
+                    requestBase = new HttpGet(uri);
+                    break;
+                case POST:
+                    requestBase = new HttpPost(uri);
+                    if (parameters != null) {
+                        ((HttpPost) requestBase).setEntity(new UrlEncodedFormEntity(parameters));
+                    }
+                    break;
+                default:
+                    throw new IllegalArgumentException("Method not supported");
+            }
+            final RequestConfig.Builder requestBuilder = RequestConfig.custom()
+                    .setConnectionRequestTimeout(timeout)
+                    .setConnectTimeout(timeout)
+                    .setSocketTimeout(timeout);
+            if (apacheHttpProxy != null) {
+                requestBuilder.setProxy(apacheHttpProxy);
+            }
+            requestBase.setConfig(requestBuilder.build());
+            requestBase.setHeader(header);
+            Logger.getRootLogger().debug("Details: %s", requestBase.getConfig().toString());
+            response = httpClient.execute(requestBase);
+            Logger.getRootLogger().debug("HTTP %s %s returned %s", method.toString(), url, response.getStatusLine().getStatusCode());
+        } catch (URISyntaxException | IOException e) {
+            Logger.getRootLogger().debug("Could not create connection to %s : %s", url, e.getMessage());
+            throw new IOException(e);
+        }
+        return response;
+    }
+
+    public static CloseableHttpResponse openConnection(HttpMethod method, String url, List<Header> headers, List<NameValuePair> parameters) throws IOException {
+        CloseableHttpResponse response;
+        try {
+            URI uri = new URI(url);
+            CloseableHttpClient httpClient;
+            httpClient = HttpClients.custom()
+                    .setDefaultCookieStore(new BasicCookieStore())
+                    .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
+                    .build();
+            HttpRequestBase requestBase;
+            switch (method) {
+                case GET:
+                    requestBase = new HttpGet(uri);
+                    break;
+                case POST:
+                    requestBase = new HttpPost(uri);
+                    if (parameters != null) {
+                        ((HttpPost) requestBase).setEntity(new UrlEncodedFormEntity(parameters));
+                    }
+                    break;
+                default:
+                    throw new IllegalArgumentException("Method not supported");
+            }
+            final RequestConfig.Builder requestBuilder = RequestConfig.custom()
+                    .setConnectionRequestTimeout(timeout)
+                    .setConnectTimeout(timeout)
+                    .setSocketTimeout(timeout);
+            if (apacheHttpProxy != null) {
+                requestBuilder.setProxy(apacheHttpProxy);
+            }
+            requestBase.setConfig(requestBuilder.build());
+            if (headers != null) {
+                for (Header header : headers) {
+                    requestBase.setHeader(header);
+                }
+            }
+            Logger.getRootLogger().debug("Details: %s", requestBase.getConfig().toString());
+            response = httpClient.execute(requestBase);
+            Logger.getRootLogger().debug("HTTP %s %s returned %s", method.toString(), url, response.getStatusLine().getStatusCode());
+        } catch (URISyntaxException | IOException e) {
+            Logger.getRootLogger().debug("Could not create connection to %s : %s", url, e.getMessage());
+            throw new IOException(e);
+        }
+        return response;
+    }
+
     public static CloseableHttpResponse openConnection(HttpMethod method, String url, Credentials credentials, List<NameValuePair> parameters) throws IOException {
+        return openConnection(method, url, credentials, parameters, timeout);
+    }
+
+    public static CloseableHttpResponse openConnection(HttpMethod method, String url, Credentials credentials, List<NameValuePair> parameters, int timeoutMillis) throws IOException {
         CloseableHttpResponse response;
         try {
             URI uri = new URI(url);
@@ -283,9 +482,9 @@ public class NetUtils {
                     throw new IllegalArgumentException("Method not supported");
             }
             final RequestConfig.Builder requestBuilder = RequestConfig.custom()
-                    .setConnectionRequestTimeout(timeout)
-                    .setConnectTimeout(timeout)
-                    .setSocketTimeout(timeout);
+                    .setConnectionRequestTimeout(timeoutMillis)
+                    .setConnectTimeout(timeoutMillis)
+                    .setSocketTimeout(timeoutMillis);
             if (apacheHttpProxy != null) {
                 requestBuilder.setProxy(apacheHttpProxy);
             }

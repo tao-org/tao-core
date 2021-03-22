@@ -1,8 +1,9 @@
 package ro.cs.tao.services.model.scheduling;
 
 import ro.cs.tao.execution.model.ExecutionStatus;
+import ro.cs.tao.utils.DateUtils;
 
-import java.text.SimpleDateFormat;
+import java.text.DateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
@@ -13,7 +14,7 @@ import java.util.Date;
  *
  */
 public class JobInfo {
-	private static final SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+	private static final DateFormat df = DateUtils.getFormatterAtLocal("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 	
 	private long jobId;
 	private String startTime;

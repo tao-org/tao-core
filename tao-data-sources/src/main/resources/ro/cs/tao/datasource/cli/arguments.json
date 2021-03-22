@@ -5,8 +5,8 @@
       "options": ["help"]
     },
     {
-      "name": "out",
-      "options": ["out"]
+      "name": "target",
+      "options": ["target"]
     },
     {
       "name": "satellite",
@@ -45,6 +45,10 @@
       "options": ["query"]
     },
     {
+      "name": "output",
+      "options": ["output"]
+    },
+    {
       "name": "proxyType",
       "options": ["proxyType"]
     },
@@ -77,14 +81,14 @@
       "description": "Display repository plugins. If repository is also given, displays the parameters supported by it"
     },
     {
-      "name": "out",
-      "opt": "o",
-      "longOpt": "out",
+      "name": "target",
+      "opt": "t",
+      "longOpt": "target",
       "cardinality": 1,
-      "hint": "output path",
+      "hint": "target folder",
       "valueSeparator": null,
       "required": true,
-      "description": "The path in which the products will be downloaded"
+      "description": "The folder into which the products will be downloaded"
     },
     {
       "name": "satellite",
@@ -165,6 +169,26 @@
       "valueSeparator": null,
       "required": false,
       "description": "The mode of fetching the products. Default is OVERWRITE"
+    },
+    {
+      "name": "format",
+      "opt": "f",
+      "longOpt": "format",
+      "cardinality": 1,
+      "hint": "text|json",
+      "valueSeparator": null,
+      "required": false,
+      "description": "The format of the output query results. Default is text"
+    },
+    {
+      "name": "timeout",
+      "opt": "tout",
+      "longOpt": "timeout",
+      "cardinality": 1,
+      "hint": "integer",
+      "valueSeparator": null,
+      "required": false,
+      "description": "The time interval (in seconds) to wait for a response. Default is 30"
     },
     {
       "name": "parameters",

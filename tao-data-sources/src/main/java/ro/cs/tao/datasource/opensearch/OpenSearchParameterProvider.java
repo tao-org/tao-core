@@ -31,6 +31,7 @@ import ro.cs.tao.utils.NetUtils;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public abstract class OpenSearchParameterProvider implements ParameterProvider {
@@ -41,7 +42,7 @@ public abstract class OpenSearchParameterProvider implements ParameterProvider {
 
     private OpenSearchService searchService;
     private String url;
-    private String endpointType;
+    protected String endpointType;
 
     public OpenSearchParameterProvider(String url) {
         this.url = url;
@@ -73,24 +74,26 @@ public abstract class OpenSearchParameterProvider implements ParameterProvider {
 
     private void initialize() {
         this.searchService = parseDescription(this.url);
-        OpenSearchEndpoint endpoint = this.searchService.getEndpoint(this.endpointType);
-        if (endpoint != null) {
-            Map<String, DataSourceParameter> parameters = endpoint.getParameters();
-            DataSourceParameter parameter = parameters.values().stream()
-                    .filter(v -> v.getRemoteName().equals(sensorParameterName())).findFirst().orElse(null);
-            String sensorParamName = parameter != null ? parameter.getName() : null;
-            DataSourceParameter sensorParam = parameters.get(sensorParamName);
-            this.parameters = new HashMap<>();
-            Map<String, DataSourceParameter> params = new LinkedHashMap<>(parameters);
-            if (sensorParamName != null) {
-                Object[] values = sensorParam.getValueSet();
-                params.remove(sensorParamName);
-                if (values != null) {
-                    this.sensors = new String[values.length];
-                    for (int i = 0; i < this.sensors.length; i++) {
-                        this.sensors[i] = String.valueOf(values[i]);
-                        this.parameters.put(this.sensors[i], params);
+        List<OpenSearchEndpoint> endpoints = this.searchService.getEndpoints(this.endpointType);
+        if (endpoints != null) {
+            for (OpenSearchEndpoint endpoint : endpoints) {
+                Map<String, DataSourceParameter> parameters = endpoint.getParameters();
+                DataSourceParameter parameter = parameters.values().stream()
+                        .filter(v -> v.getRemoteName().equals(sensorParameterName())).findFirst().orElse(null);
+                String sensorParamName = parameter != null ? parameter.getName() : null;
+                DataSourceParameter sensorParam = parameters.get(sensorParamName);
+                this.parameters = new HashMap<>();
+                if (sensorParamName != null) {
+                    Object[] values = sensorParam.getValueSet();
+                    parameters.remove(sensorParamName);
+                    if (values != null) {
+                        this.sensors = new String[values.length];
+                        for (int i = 0; i < this.sensors.length; i++) {
+                            this.sensors[i] = String.valueOf(values[i]);
+                            this.parameters.put(this.sensors[i], new LinkedHashMap<>(parameters));
+                        }
                     }
+                    break;
                 }
             }
         }

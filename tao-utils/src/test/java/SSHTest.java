@@ -1,10 +1,4 @@
-import ro.cs.tao.utils.executors.DebugOutputConsumer;
-import ro.cs.tao.utils.executors.ExecutionMode;
-import ro.cs.tao.utils.executors.ExecutionUnit;
-import ro.cs.tao.utils.executors.Executor;
-import ro.cs.tao.utils.executors.ExecutorType;
-import ro.cs.tao.utils.executors.OutputConsumer;
-import ro.cs.tao.utils.executors.SSHMode;
+import ro.cs.tao.utils.executors.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,8 +11,8 @@ public class SSHTest {
     public static void main(String[] args) {
         //executeSingleTest();
         //execDockerInfoAsUser();
-        //execDockerInfoAsSudo();
-        execDockerVersionAsUser();
+        execDockerInfoAsSudo();
+        //execDockerVersionAsUser();
         System.exit(0);
     }
 
@@ -81,15 +75,20 @@ public class SSHTest {
     }
 
     private static void execDockerInfoAsSudo() {
-        List<String> args = new ArrayList<String>() {{
+        List<String> arguments = new ArrayList<String>() {{
             add("docker");
             add("info");
         }};
+        //final String certificate = new String(Files.readAllBytes(Paths.get("C:\\SSL\\sen4stat")));
+        final String certificate = "C:\\SSL\\sen4stat";
         ExecutionUnit job = new ExecutionUnit(ExecutorType.SSH2,
-                                              "192.168.61.20", "u1tao", "pass4u1",
-                                              args, ExecutionMode.SUPERUSER.value(),
-                                              SSHMode.EXEC);
-        OutputConsumer consumer = new DebugOutputConsumer();
-        Executor.execute(consumer, 10, job);
+                "45.130.29.142", "eouser", certificate,
+                arguments, ExecutionMode.USER.value(),
+                SSHMode.EXEC);
+        job.setCertificate(certificate);
+        OutputAccumulator consumer = new OutputAccumulator();
+        if (Executor.execute(consumer, 10, job) == 0) {
+            System.out.println(consumer.getOutput());
+        }
     }
 }

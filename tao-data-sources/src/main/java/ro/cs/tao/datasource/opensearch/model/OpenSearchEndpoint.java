@@ -24,11 +24,20 @@ import java.util.Objects;
 
 public class OpenSearchEndpoint {
     private String type;
+    private String scope;
     private String url;
     private Map<String, DataSourceParameter> parameters;
 
     public String getType() { return type; }
     public void setType(String type) { this.type = type; }
+
+    public String getScope() {
+        return scope;
+    }
+
+    public void setScope(String scope) {
+        this.scope = scope;
+    }
 
     public String getUrl() { return url; }
     public void setUrl(String url) { this.url = url; }
@@ -46,9 +55,9 @@ public class OpenSearchEndpoint {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         OpenSearchEndpoint that = (OpenSearchEndpoint) o;
-        return Objects.equals(type, that.type) && Objects.equals(url, that.url);
+        return Objects.equals(type, that.type) && Objects.equals(url, that.url) && Objects.equals(scope, that.scope);
     }
 
     @Override
-    public int hashCode() { return Objects.hash(type, url); }
+    public int hashCode() { return Objects.hash(type, url, scope); }
 }

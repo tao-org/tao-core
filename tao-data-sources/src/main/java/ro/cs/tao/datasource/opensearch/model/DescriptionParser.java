@@ -79,6 +79,7 @@ public class DescriptionParser {
                         url = url.substring(0, url.indexOf("?"));
                     }
                     this.currentEndpoint.setUrl(url);
+                    this.currentEndpoint.setScope(attributes.getValue("rel"));
                     break;
                 case "Parameter":
                     String attributeValue = attributes.getValue("name");

@@ -15,7 +15,9 @@
  */
 package ro.cs.tao.utils.logger;
 
-import java.text.SimpleDateFormat;
+import ro.cs.tao.utils.DateUtils;
+
+import java.text.DateFormat;
 import java.util.Date;
 import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
@@ -26,7 +28,7 @@ import java.util.logging.LogRecord;
  * @author COsmin Cara
  */
 public class LogFormatter extends Formatter {
-    private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+    private final DateFormat dateFormat = DateUtils.getFormatterAtLocal("yyyy-MM-dd HH:mm:ss.SSS");
 
     @Override
     public String format(LogRecord record) {

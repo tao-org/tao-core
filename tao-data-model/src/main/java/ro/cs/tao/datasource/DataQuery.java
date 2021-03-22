@@ -50,22 +50,24 @@ public abstract class DataQuery extends StringIdentifiable {
     private Map<String, String> parameterNameMap;
     /* Set of mandatory parameter system names */
     private Set<String> mandatoryParams;
-    protected DataSource<?> source;
+    protected DataSource<?, ?> source;
     protected String sensorName;
     private String queryText;
     protected int pageSize;
     protected int pageNumber;
     protected int limit;
     protected long timeout;
+    /* Introduces a delay between consecutive queries, expressed in seconds */
+    protected int queryDelay;
     /* Maps parameter system name to a data source parameter (which has the remote name) */
     protected Map<String, DataSourceParameter> dataSourceParameters;
     /* Maps parameter system name to a query parameter (which has the same system name) */
-    protected Map<String, QueryParameter> parameters;
+    protected Map<String, QueryParameter<?>> parameters;
     protected Logger logger = Logger.getLogger(getClass().getName());
 
     protected DataQuery() { }
 
-    public DataQuery(DataSource<?> source, String sensorName) {
+    public DataQuery(DataSource<?, ?> source, String sensorName) {
         if (source == null) {
             throw new QueryException("Empty source");
         }
@@ -75,11 +77,11 @@ public abstract class DataQuery extends StringIdentifiable {
         initialize(source, sensorName);
     }
 
-    public DataSource<?> getSource() {
+    public DataSource<?, ?> getSource() {
         return source;
     }
 
-    public void setSource(DataSource<?> source) {
+    public void setSource(DataSource<?, ?> source) {
         this.source = source;
     }
 
@@ -90,6 +92,10 @@ public abstract class DataQuery extends StringIdentifiable {
     public void setSensorName(String sensorName) {
         this.sensorName = sensorName;
     }
+
+    public int getQueryDelay() { return queryDelay; }
+
+    public void setQueryDelay(int queryDelay) { this.queryDelay = queryDelay; }
 
     public QueryParameter<?> addParameter(QueryParameter<?> parameter) {
         if (parameter == null) {
@@ -139,7 +145,7 @@ public abstract class DataQuery extends StringIdentifiable {
 
     public List<EOProduct> execute() {
         final Set<String> mandatoryParams = getMandatoryParams();
-        final Map<String, QueryParameter> actualParameters = getParameters();
+        final Map<String, QueryParameter<?>> actualParameters = getParameters();
         List<String> missing = mandatoryParams.stream()
                 .filter(p -> !actualParameters.containsKey(p)).collect(Collectors.toList());
         if (missing.size() > 0) {
@@ -153,18 +159,23 @@ public abstract class DataQuery extends StringIdentifiable {
         Instant start = Instant.now();
         List<EOProduct> retList = executeImpl();
         logger.finest(String.format("Data query completed in %d ms.", Duration.between(start, Instant.now()).toMillis()));
-        retList.forEach(p -> {
+
+        boolean canSortAcqDate = true;
+        for (EOProduct p : retList) {
             if (p.getVisibility() == null) {
                 p.setVisibility(Visibility.PUBLIC);
             }
-        });
-        retList.sort(Comparator.comparing(EOProduct::getAcquisitionDate));
+            canSortAcqDate &= p.getAcquisitionDate() != null;
+        }
+        if (canSortAcqDate) {
+            retList.sort(Comparator.comparing(EOProduct::getAcquisitionDate));
+        }
         return retList;
     }
 
     public long getCount() {
         final Set<String> mandatoryParams = getMandatoryParams();
-        final Map<String, QueryParameter> parameters = getParameters();
+        final Map<String, QueryParameter<?>> parameters = getParameters();
         List<String> missing = mandatoryParams.stream()
                 .filter(p -> !parameters.containsKey(p)).collect(Collectors.toList());
         if (missing.size() > 0) {
@@ -198,7 +209,7 @@ public abstract class DataQuery extends StringIdentifiable {
 
     public Map<String, DataSourceParameter> getSupportedParameters() { return this.dataSourceParameters; }
 
-    public Map<String, QueryParameter> getParameters() { return this.parameters; }
+    public Map<String, QueryParameter<?>> getParameters() { return this.parameters; }
 
     public <V> QueryParameter<V> createParameter(String name, Class<V> type) {
         checkSupported(name, type);
@@ -285,6 +296,10 @@ public abstract class DataQuery extends StringIdentifiable {
 
     protected long getCountImpl() { return -1; }
 
+    protected boolean supports(String systemName) {
+        return this.parameterNameMap.containsKey(systemName);
+    }
+
     protected String getRemoteName(String systemName) {
         if (this.parameterNameMap.containsKey(systemName)) {
             return this.parameterNameMap.get(systemName);
@@ -321,7 +336,16 @@ public abstract class DataQuery extends StringIdentifiable {
         return value;
     }
 
-    private void initialize(DataSource<?> source, String sensorName) {
+    protected void sleep() {
+        if (this.queryDelay > 0) {
+            try {
+                Thread.sleep(this.queryDelay * 1000);
+            } catch (java.lang.InterruptedException ignored) {
+            }
+        }
+    }
+
+    private void initialize(DataSource<?, ?> source, String sensorName) {
         this.source = source;
         this.sensorName = sensorName;
         this.parameters = new LinkedHashMap<>();

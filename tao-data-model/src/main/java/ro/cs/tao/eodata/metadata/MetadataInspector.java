@@ -22,6 +22,7 @@ import ro.cs.tao.serialization.MediaType;
 import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.serialization.SerializerFactory;
 import ro.cs.tao.utils.FileUtilities;
+import ro.cs.tao.utils.executors.FileProcessFactory;
 
 import java.io.IOException;
 import java.net.URI;
@@ -54,6 +55,8 @@ public interface MetadataInspector {
      * @param productPath   The path of the product. If the product is complex, it is the wrapping folder.
      */
     Metadata getMetadata(Path productPath) throws IOException;
+
+    void setFileProcessFactory(FileProcessFactory factory);
 
     class Metadata {
         private String productId;

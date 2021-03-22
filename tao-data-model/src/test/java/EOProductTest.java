@@ -5,8 +5,7 @@ import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.eodata.enums.PixelType;
 import ro.cs.tao.eodata.enums.SensorType;
-
-import java.text.SimpleDateFormat;
+import ro.cs.tao.utils.DateUtils;
 
 /**
  * @author Cosmin Cara
@@ -56,7 +55,7 @@ public class EOProductTest extends BaseSerializationTest<EOProduct> {
         super.setUp();
         entity = new EOProduct() {{
             setName("Product");
-            setAcquisitionDate(new SimpleDateFormat("yyyyMMdd'T'hh:mm:ss").parse("20170901T18:33:47"));
+            setAcquisitionDate(DateUtils.getFormatterAtUTC("yyyyMMdd'T'hh:mm:ss").parse("20170901T18:33:47"));
             setLocation("http://some.url.com/some_location/product.zip");
             setFormatType(DataFormat.RASTER);
             setProductType("Satellite-5");

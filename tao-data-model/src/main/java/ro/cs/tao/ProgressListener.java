@@ -28,34 +28,44 @@ public interface ProgressListener {
      * Signals that an activity (task) has started.
      * @param taskName  The name of the activity.
      */
-    void started(String taskName);
+    default void started(String taskName) {
+        System.out.println(taskName + " started");
+    }
     /**
      * Signals that a sub-activity has started.
      * @param subTaskName The name of the sub-activity.
      */
-    void subActivityStarted(String subTaskName);
+    default void subActivityStarted(String subTaskName) {
+        System.out.println(subTaskName + " started");
+    }
     /**
      * Signals that a sub-activity has completed.
      * @param subTaskName The name of the sub-activity.
      */
-    void subActivityEnded(String subTaskName);
+    default void subActivityEnded(String subTaskName) {
+        System.out.println(subTaskName + " completed");
+    }
     /**
      * Signals that the current activity (task) has completed.
      */
-    void ended();
+    default void ended() { }
 
     /**
      * Signals the current progress of the activity.
      * @param progressValue The progress value (between 0 and 1).
      */
-    void notifyProgress(double progressValue);
+    default void notifyProgress(double progressValue) {
+        System.out.printf("[%.2f%%]\r", progressValue * 100);
+    }
 
     /**
      * Signals the progress of the current sub-activity.
      * @param subTaskName       The sub-activity name.
      * @param subTaskProgress   The sub-activity progress.
      */
-    void notifyProgress(String subTaskName, double subTaskProgress);
+    default void notifyProgress(String subTaskName, double subTaskProgress) {
+        System.out.printf("[%s: %.2f%%]\r", subTaskName, subTaskProgress * 100);
+    }
 
     /**
      * Signals the overall activity progress and the progress of the current sub-activity.
@@ -63,5 +73,7 @@ public interface ProgressListener {
      * @param subTaskProgress   The sub-activity progress.
      * @param overallProgress   The main activity progress.
      */
-    void notifyProgress(String subTaskName, double subTaskProgress, double overallProgress);
+    default void notifyProgress(String subTaskName, double subTaskProgress, double overallProgress) {
+        System.out.printf("[Overall progress: %.2f%%, %s progress: %.2f%%]\r", overallProgress * 100, subTaskName, subTaskProgress * 100);
+    }
 }

@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.datasource.remote;
 
+import org.apache.http.Header;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import ro.cs.tao.ProgressListener;
 import ro.cs.tao.datasource.InterruptedException;
@@ -48,18 +49,17 @@ import java.util.regex.Pattern;
  *
  * @author  Cosmin Cara
  */
-public abstract class DownloadStrategy implements ProductFetchStrategy {
+public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
     protected static final String NAME_SEPARATOR = "_";
     protected static final int BUFFER_SIZE = 1024 * 1024;
     private static final String startMessage = "(%s,%s) %s [size: %skB]";
     private static final String completeMessage = "(%s,%s) %s [elapsed: %ss]";
     private static final String errorMessage ="Cannot download %s: %s";
-    //private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
     private static final String PROGRESS_KEY = "progress.enabled";
     private static final String PROGRESS_INTERVAL = "progress.interval";
     private static final String MISSING_ACTION = "local.missing.action";
     private final boolean progressEnabled;
-    protected final DataSource dataSource;
+    protected final DataSource<? extends DataQuery, T> dataSource;
     protected Properties props;
     protected String destination;
     protected EOProduct currentProduct;
@@ -78,7 +78,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
     private long progressReportInterval;
     private boolean downloadIfNotFound;
 
-    public DownloadStrategy(DataSource dataSource, String targetFolder, Properties properties) {
+    public DownloadStrategy(DataSource<? extends DataQuery, T> dataSource, String targetFolder, Properties properties) {
         this.dataSource = dataSource;
         this.destination = targetFolder;
         this.props = properties;
@@ -87,7 +87,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         this.downloadIfNotFound = "download".equalsIgnoreCase(this.props.getProperty(MISSING_ACTION, "none"));
     }
 
-    protected DownloadStrategy(DownloadStrategy other) {
+    protected DownloadStrategy(DownloadStrategy<T> other) {
         this.progressEnabled = other.progressEnabled;
         if (other.props != null) {
             this.props = new Properties();
@@ -207,7 +207,8 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
             throw new IOException("Invalid product name [null]");
         }
         activityStart(product.getName());
-        Path file = null;
+        Path file;
+        this.progressReportInterval = Long.parseLong(this.props.getProperty(PROGRESS_INTERVAL, "2000"));
         try {
             currentProduct = product;
             currentProductProgress = new ProductProgress(currentProduct.getApproximateSize(), adjustProductLength());
@@ -268,15 +269,11 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         return file;
     }
 
-    public abstract DownloadStrategy clone();
+    public abstract DownloadStrategy<T> clone();
 
     protected abstract Path fetchImpl(EOProduct product) throws IOException;
 
     protected abstract String getMetadataUrl(EOProduct descriptor);
-
-    protected String getAuthenticationToken() {
-        return NetUtils.getAuthToken(credentials.getUserName(), credentials.getPassword());
-    }
 
     protected boolean checkTileFilter(EOProduct product) {
         return this.filteredTiles == null || this.tileIdPattern.matcher(product.getName()).matches();
@@ -346,7 +343,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         return downloadFile(remoteUrl, file, null);
     }
 
-    protected Path downloadFile(String remoteUrl, Path file, String authToken) throws IOException, InterruptedException {
+    protected Path downloadFile(String remoteUrl, Path file, T authToken) throws IOException, InterruptedException {
         return downloadFile(remoteUrl, file, this.fetchMode, authToken);
     }
 
@@ -448,7 +445,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         return "";
     }
 
-    private Path downloadFile(String remoteUrl, Path file, FetchMode mode, String authToken) throws IOException, InterruptedException {
+    private Path downloadFile(String remoteUrl, Path file, FetchMode mode, T authToken) throws IOException, InterruptedException {
         checkCancelled();
         String subActivity = remoteUrl.substring(remoteUrl.lastIndexOf(ProductHelper.URL_SEPARATOR) + 1);
         if ("$value".equals(subActivity)) {
@@ -458,7 +455,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         try {
             logger.fine(String.format("Begin download for %s", subActivity));
             subActivityStart(subActivity);
-            connection = NetUtils.openConnection(remoteUrl, authToken);
+            connection = getConnection(remoteUrl, authToken);
             long remoteFileLength = connection.getContentLengthLong();
             if (currentProductProgress.needsAdjustment()) {
                 currentProductProgress.adjust(remoteFileLength);
@@ -470,7 +467,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
                 if (localFileLength != remoteFileLength) {
                     if (FetchMode.RESUME.equals(mode)) {
                         connection.disconnect();
-                        connection = NetUtils.openConnection(remoteUrl, authToken);
+                        connection = getConnection(remoteUrl, authToken);
                         connection.setRequestProperty("Range", "bytes=" + localFileLength + "-");
                     } else {
                         Files.delete(file);
@@ -535,6 +532,18 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         return FileUtilities.ensurePermissions(file);
     }
 
+    private HttpURLConnection getConnection(String url, T token) throws IOException {
+        HttpURLConnection connection;
+        if (token instanceof String) {
+            connection = NetUtils.openConnection(url, (String) token);
+        } else if (token instanceof Header) {
+            connection = NetUtils.openConnection(url, (Header) token);
+        } else {
+            throw new IOException("Unsupported download method");
+        }
+        return connection;
+    }
+
     private class TimedJob extends TimerTask {
         private double lastValue;
         @Override
@@ -548,7 +557,7 @@ public abstract class DownloadStrategy implements ProductFetchStrategy {
         }
     }
 
-    protected class ProductProgress {
+    protected static class ProductProgress {
         private double factor;
         private final DoubleAdder adder;
         private boolean needsAdjustment;
