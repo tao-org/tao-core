@@ -23,6 +23,7 @@ import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.services.model.datasource.DataSourceDescriptor;
 
 import java.util.List;
+import java.util.Map;
 import java.util.SortedSet;
 
 /**
@@ -35,6 +36,8 @@ public interface DataSourceService extends TAOService {
     List<String> getDatasourcesForSensor(String sensorName);
 
     List<DataSourceDescriptor> getDatasourceInstances();
+
+    Map<String, String[]> getDataSourceProviders();
 
     List<DataSourceParameter> getSupportedParameters(String sensorName, String dataSourceName);
 
