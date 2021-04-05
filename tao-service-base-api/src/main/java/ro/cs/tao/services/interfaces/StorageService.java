@@ -68,6 +68,15 @@ public interface StorageService<T> extends TAOService {
     void remove(String name) throws IOException;
 
     /**
+     * Moves a file from a source directory to a destination.
+     *
+     * @param source          The original path of the file
+     * @param destination     The new destination of the file
+     * @throws IOException if the file or folder cannot be moved
+     */
+    void move(String source, String destination) throws IOException;
+
+    /**
      * List the files uploaded in the shared workspace
      * @return  The list of shared uploaded files
      * @throws IOException if the content cannot be retrieved
