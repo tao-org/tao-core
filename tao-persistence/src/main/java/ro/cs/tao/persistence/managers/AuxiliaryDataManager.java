@@ -28,6 +28,11 @@ public class AuxiliaryDataManager extends EntityManager<AuxiliaryData, String, A
     }
 
     @Override
+    public AuxiliaryData getByLocation(String location) {
+        return repository.getByLocation(location);
+    }
+
+    @Override
     protected String identifier() { return "id"; }
 
     @Override

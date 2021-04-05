@@ -43,4 +43,9 @@ public interface AuxDataRepository extends PagingAndSortingRepository<AuxiliaryD
             nativeQuery = true)
     List<AuxiliaryData> getAuxiliaryDataByLocation(@Param("userName") String userName,
                                                    @Param("locations") Set<String> locations);
+
+    @Query(value = "SELECT * FROM product.auxiliary_data WHERE location = :location " +
+            "ORDER BY location",
+            nativeQuery = true)
+    AuxiliaryData getByLocation(@Param("location") String location);
 }
