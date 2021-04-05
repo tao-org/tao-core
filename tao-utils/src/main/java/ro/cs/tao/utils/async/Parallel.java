@@ -1,14 +1,19 @@
 package ro.cs.tao.utils.async;
 
+import ro.cs.tao.utils.executors.NamedThreadPoolExecutor;
+
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 /**
  * @author Cosmin Cara
  */
 public class Parallel {
     static final int PARALLELISM = Math.max(Runtime.getRuntime().availableProcessors() - 1, 2);
+    private static final NamedThreadPoolExecutor executor = new NamedThreadPoolExecutor("pexec", PARALLELISM);
     /**
      * The loop code wrapper
      */
@@ -36,6 +41,10 @@ public class Parallel {
         }
     }
 
+    public static void shutdown() {
+        executor.shutdown();
+    }
+
     /**
      * Iterates an Iterable collection in parallel.
      *
@@ -57,7 +66,9 @@ public class Parallel {
      * @param <T>       The type of items
      */
     public static <T> void ForEach(Iterable <T> params, int parallelism, final Runnable<T> code) {
-        ExecutorService executor = Executors.newFixedThreadPool(parallelism);
+        if (executor.getMaximumPoolSize() < parallelism) {
+            executor.setMaximumPoolSize(parallelism);
+        }
         List<Future<?>> tasks  = new LinkedList<>();
         for (final T param : params) {
             tasks.add(executor.submit(() -> code.run(param)));
@@ -66,7 +77,6 @@ public class Parallel {
             try   { task.get(); }
             catch (InterruptedException | ExecutionException ignored) { }
         });
-        executor.shutdown();
     }
 
     /**
@@ -89,7 +99,9 @@ public class Parallel {
      * @param code      The loop code
      */
     public static void For(int start, int stop, int parallelism, final Runnable<Integer> code) {
-        ExecutorService executor = Executors.newFixedThreadPool(parallelism);
+        if (executor.getMaximumPoolSize() < parallelism) {
+            executor.setMaximumPoolSize(parallelism);
+        }
         List<Future<?>> tasks  = new LinkedList<>();
         for (int i = start; i < stop; i++) {
             final Integer index = i;
@@ -99,7 +111,6 @@ public class Parallel {
             try   { task.get(); }
             catch (InterruptedException | ExecutionException ignored) { }
         });
-        executor.shutdown();
     }
 
     public static void For(int start, int stop, final Cancellable<Integer> code) {
@@ -107,7 +118,9 @@ public class Parallel {
     }
 
     public static void For(int start, int stop, int parallelism, final Cancellable<Integer> code) {
-        final ExecutorService executor = Executors.newFixedThreadPool(parallelism);
+        if (executor.getMaximumPoolSize() < parallelism) {
+            executor.setMaximumPoolSize(parallelism);
+        }
         final List<Future<?>> tasks  = new LinkedList<>();
         final Signal cancelSignal = new Signal(tasks);
         for (int i = start; i < stop; i++) {
@@ -118,6 +131,5 @@ public class Parallel {
             try   { task.get(); }
             catch (InterruptedException | ExecutionException | CancellationException ignored) { }
         });
-        executor.shutdown();
     }
 }
