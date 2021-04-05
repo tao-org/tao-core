@@ -127,7 +127,12 @@ public class FileUtilities {
             if (isPosixFileSystem()) {
                 Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxr-xr-x");
                 FileAttribute<Set<PosixFilePermission>> attrs = PosixFilePermissions.asFileAttribute(perms);
-                folder = Files.createDirectories(folder, attrs);
+                try {
+                    folder = Files.createDirectories(folder, attrs);
+                } catch (Exception e) {
+                    // Maybe just attributes cannot be set
+                    folder = Files.createDirectories(folder);
+                }
             } else {
                 folder = Files.createDirectories(folder);
             }
@@ -717,7 +722,7 @@ public class FileUtilities {
     }
 
     public static void createDirectories(Path path, ChannelSftp channel) throws IOException {
-        Path current = path.getName(0);
+        Path current = path.getRoot().resolve(path.getName(0));
         for (int i = 1; i < path.getNameCount(); i++) {
             current = current.resolve(path.getName(i));
             try {

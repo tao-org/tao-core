@@ -20,6 +20,8 @@ import ro.cs.tao.utils.ExceptionUtils;
 
 import java.io.*;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * Executor class based on JSch. It uses SSH2 for remote host connection and command invocation.
@@ -32,6 +34,7 @@ public class SSHExecutor extends Executor<Channel> {
     private final int port;
     private Session singleSession;
     private boolean keepAlive;
+    private Timer keepAliveTimer;
 
     public SSHExecutor(String host, List<String> args, boolean asSU) {
         super(host, args, asSU);
@@ -57,7 +60,26 @@ public class SSHExecutor extends Executor<Channel> {
         this.port = port;
     }
 
-    public void setKeepAlive(boolean value) { this.keepAlive = value; }
+    public void setKeepAlive(boolean value) {
+        this.keepAlive = value;
+        if (this.keepAlive) {
+            this.keepAliveTimer = new Timer();
+            this.keepAliveTimer.scheduleAtFixedRate(new TimerTask() {
+                @Override
+                public void run() {
+                    try {
+                        getSession();
+                    } catch (Exception e) {
+                        logger.severe(ExceptionUtils.getStackTrace(logger, e));
+                    }
+                }
+            }, 60000, 60000);
+        } else if (this.keepAliveTimer != null) {
+            this.keepAliveTimer.cancel();
+            this.keepAliveTimer.purge();
+            this.keepAliveTimer = null;
+        }
+    }
 
     private Session getSession() throws Exception {
         if (keepAlive) {
@@ -91,7 +113,8 @@ public class SSHExecutor extends Executor<Channel> {
             session.setPassword(password.getBytes());
         }
         session.setConfig("StrictHostKeyChecking", "no");
-        session.connect(1000);
+        session.connect(3000);
+        this.logger.finest(String.format("Session %d opened", session.hashCode()));
         return session;
     }
 
@@ -114,6 +137,7 @@ public class SSHExecutor extends Executor<Channel> {
             //resetChannel();
             if (session != null && !keepAlive) {
                 session.disconnect();
+                this.logger.finest(String.format("Session %d disconnected", session.hashCode()));
             }
         }
         return ret;
@@ -156,7 +180,7 @@ public class SSHExecutor extends Executor<Channel> {
 
     @Override
     public void suspend() {
-        if (!this.channel.isClosed() && this.channel.isConnected()) {
+        if (this.channel != null && !this.channel.isClosed() && this.channel.isConnected()) {
             try {
                 this.channel.sendSignal("19");
             } catch (Exception e) {
@@ -168,7 +192,7 @@ public class SSHExecutor extends Executor<Channel> {
 
     @Override
     public void resume() {
-        if (!this.channel.isClosed() && this.channel.isConnected()) {
+        if (this.channel != null && !this.channel.isClosed() && this.channel.isConnected()) {
             try {
                 this.channel.sendSignal("18");
             } catch (Exception e) {
@@ -192,9 +216,10 @@ public class SSHExecutor extends Executor<Channel> {
 
     public Channel open(SSHMode mode) throws IOException {
         Session session = null;
+        Channel channel = null;
         try {
             session = getSession();
-            final Channel channel = session.openChannel(mode.toString());
+            channel = session.openChannel(mode.toString());
             channel.setOutputStream(new ByteArrayOutputStream() {
                 @Override
                 public synchronized void write(byte[] b, int off, int len) {
@@ -205,11 +230,13 @@ public class SSHExecutor extends Executor<Channel> {
                 }
             });
             channel.connect();
+            this.logger.finest(String.format("Channel %d opened", channel.getId()));
             return channel;
         } catch (Exception e) {
-            resetChannel();
-            if (session != null) {
+            stop(channel);
+            if (session != null && !keepAlive) {
                 session.disconnect();
+                this.logger.finest(String.format("Session %d disconnected", session.hashCode()));
             }
             throw new IOException(e);
         }
@@ -218,6 +245,7 @@ public class SSHExecutor extends Executor<Channel> {
     public void close() {
         if (singleSession != null) {
             singleSession.disconnect();
+            this.logger.finest(String.format("Session %d disconnected", singleSession.hashCode()));
             singleSession = null;
         }
     }
@@ -225,12 +253,15 @@ public class SSHExecutor extends Executor<Channel> {
     private void stop(Channel channel) {
         if (channel != null && !channel.isClosed() && channel.isConnected()) {
             try {
-                channel.sendSignal("2");
+                //channel.sendSignal("2");
+                channel.disconnect();
+                this.logger.finest(String.format("Channel %d disconnected", channel.getId()));
             } catch (Exception e) {
                 this.logger.warning(e.getMessage());
             }
         }
         super.stop();
+        isStopped = !keepAlive;
     }
 
     private int executeSshCmd(boolean logMessages) throws Exception {
@@ -242,55 +273,64 @@ public class SSHExecutor extends Executor<Channel> {
         if (logMessages) {
             logger.fine("[" + host + "] " + cmdLine);
         }
-        ChannelExec channel = (ChannelExec) getSession().openChannel(SSHMode.EXEC.toString());
-        channel.setCommand(cmdLine);
-        channel.setInputStream(null);
-        channel.setPty(asSuperUser);
-        channel.setErrStream(new ByteArrayOutputStream() {
-            @Override
-            public synchronized void write(byte[] b, int off, int len) {
-                String message = new String(b, off, len).replaceAll("\n", "");
-                if (message.length() > 0) {
-                    if (outputConsumer != null) {
-                        outputConsumer.consume(message);
-                    }
-                    if (logMessages) {
-                        logger.fine("[" + host + "] " + message);
+        final Session session = getSession();
+        ChannelExec channel = (ChannelExec) session.openChannel(SSHMode.EXEC.toString());
+        try {
+            channel.setCommand(cmdLine);
+            channel.setInputStream(null);
+            channel.setPty(asSuperUser);
+            channel.setErrStream(new ByteArrayOutputStream() {
+                @Override
+                public synchronized void write(byte[] b, int off, int len) {
+                    String message = new String(b, off, len).replaceAll("\n", "");
+                    if (message.length() > 0) {
+                        if (outputConsumer != null) {
+                            outputConsumer.consume(message);
+                        }
+                        if (logMessages) {
+                            logger.fine("[" + host + "] " + message);
+                        }
                     }
                 }
+            });
+            InputStream inputStream = channel.getInputStream();
+            channel.connect();
+            if (asSuperUser) {
+                if (this.certificate != null) {
+                    this.password = "";
+                }
+                writeSudoPassword();
             }
-        });
-        InputStream inputStream = channel.getInputStream();
-        channel.connect();
-        if (asSuperUser) {
-            if (this.certificate != null) {
-                this.password = "";
+            BufferedReader outReader = new BufferedReader(new InputStreamReader(inputStream));
+            String line;
+            boolean ended = false;
+            while (!isStopped() && !ended) {
+                while (!isStopped && (line = outReader.readLine()) != null) {
+                    if (!"".equals(line.trim())) {
+                        if (this.outputConsumer != null && (this.password == null || !this.password.equals(line))) {
+                            this.outputConsumer.consume(line);
+                        }
+                        if (logMessages && !this.password.equals(line)) {
+                            this.logger.fine(line);
+                        }
+                    }
+                }
+                if (channel.isClosed()) {
+                    if (inputStream.available() > 0) {
+                        continue;
+                    }
+                    stop(channel);
+                    ended = true;
+                } else {
+                    Thread.yield();
+                }
             }
-            writeSudoPassword();
+        } finally {
+            if (!keepAlive) {
+                session.disconnect();
+                this.logger.finest(String.format("Session %d disconnected", session.hashCode()));
+            }
         }
-        BufferedReader outReader = new BufferedReader(new InputStreamReader(inputStream));
-        String line;
-        while (!isStopped()) {
-            while (!isStopped && (line = outReader.readLine()) != null) {
-                if (!"".equals(line.trim())) {
-                    if (this.outputConsumer != null && (this.password == null || !this.password.equals(line))) {
-                        this.outputConsumer.consume(line);
-                    }
-                    if (logMessages && !this.password.equals(line)) {
-                        this.logger.fine(line);
-                    }
-                }
-            }
-            if (channel.isClosed()) {
-                if (inputStream.available() > 0) {
-                    continue;
-                }
-                stop(channel);
-            } else {
-                Thread.yield();
-            }
-        }
-        this.isStopped = !keepAlive;
         return channel.getExitStatus();
     }
 
@@ -376,15 +416,6 @@ public class SSHExecutor extends Executor<Channel> {
                     recursiveFolderUpload(channelSftp, f.getAbsolutePath(), destinationPath + "/" + sourceFile.getName());
                 }
             }
-        }
-    }
-
-    private void resetChannel() {
-        if (this.channel != null) {
-            if (this.channel.isConnected()) {
-                this.channel.disconnect();
-            }
-            //this.channel = null;
         }
     }
 
