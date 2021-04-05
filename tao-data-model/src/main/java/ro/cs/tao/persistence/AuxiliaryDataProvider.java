@@ -8,4 +8,5 @@ public interface AuxiliaryDataProvider extends EntityProvider<AuxiliaryData, Str
 
     List<AuxiliaryData> list(String userName);
     List<AuxiliaryData> list(String userName, String...locations);
+    AuxiliaryData getByLocation(String location);
 }
