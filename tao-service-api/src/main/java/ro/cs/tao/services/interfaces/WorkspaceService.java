@@ -11,4 +11,6 @@ public interface WorkspaceService extends TAOService {
     void walkAndRegisterDirectories(Path path) throws IOException;
 
     void watch();
+
+    void updateUserInputQuota(String userName);
 }
