@@ -8,9 +8,7 @@ import java.nio.file.Path;
  */
 public interface WorkspaceService extends TAOService {
 
-    void walkAndRegisterDirectories(Path path) throws IOException;
+    void startWatching();
 
-    void watch();
-
-    void updateUserInputQuota(String userName);
+    void stopWatching();
 }
