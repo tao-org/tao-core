@@ -95,11 +95,15 @@ public class QueryManager extends EntityManager<Query, Long, QueryRepository> im
             query.setWorkflowNodeId(null);
         }
         query.setModified(timestamp);
-        if (query.getId() == null && existingQuery != null) {
-            query.setId(existingQuery.getId());
-            return super.update(query);
+        if (query.getId() == null) {
+            if (existingQuery != null) {
+                query.setId(existingQuery.getId());
+                return super.update(query);
+            } else {
+                return super.save(query);
+            }
         } else {
-            return super.save(query);
+            return super.update(query);
         }
     }
 
