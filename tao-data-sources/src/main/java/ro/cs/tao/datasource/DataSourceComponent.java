@@ -431,6 +431,15 @@ public class DataSourceComponent extends TaoComponent {
                     }
                     currentProduct = product;
                     ProductFetchStrategy templateFetcher = dataSource.getProductFetchStrategy(product.getProductType());
+                    if (templateFetcher == null) {
+                        final String collection = product.getAttributeValue("collection");
+                        if (collection != null) {
+                            templateFetcher = dataSource.getProductFetchStrategy(collection);
+                        }
+                    }
+                    if (templateFetcher == null) {
+                        throw new NoSuchElementException("Product type '" + product.getProductType() + "' doesn't have an associated download strategy!");
+                    }
                     if (templateFetcher instanceof DownloadStrategy) {
                         DownloadStrategy downloadStrategy = ((DownloadStrategy) templateFetcher).clone();
                         downloadStrategy.setDestination(destinationPath);
