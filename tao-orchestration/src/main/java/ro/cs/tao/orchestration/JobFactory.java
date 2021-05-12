@@ -96,8 +96,7 @@ public class JobFactory {
                                                             .filter(n -> n instanceof WorkflowNodeGroupDescriptor)
                                                             .map(n -> (WorkflowNodeGroupDescriptor)n)
                                                             .collect(Collectors.toSet());
-            for (int i = 0; i < nodes.size(); i++) {
-                WorkflowNodeDescriptor node = nodes.get(i);
+            for (WorkflowNodeDescriptor node : nodes) {
                 // A workflow contains also the nodes of a node group.
                 // Hence, in order not to duplicate the tasks, the nodes from group are temporary removed from workflow.
                 if (groups.stream().noneMatch(g -> g.getNodes().stream()
@@ -120,7 +119,7 @@ public class JobFactory {
                         taskProvider.update(task);
                     }
                     logger.finest(String.format("Created task %s.%s for node %s [id=%s, level %s]",
-                                              jobName, task.getId(), node.getName(), node.getId(), task.getLevel()));
+                            jobName, task.getId(), node.getName(), node.getId(), task.getLevel()));
                 }
             }
         }
