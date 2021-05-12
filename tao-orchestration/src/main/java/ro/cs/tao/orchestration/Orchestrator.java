@@ -166,31 +166,11 @@ public class Orchestrator extends Notifiable {
     public ExecutionJob startWorkflow(SessionContext context, long workflowId, String description,
                               Map<String, Map<String, String>> inputs, ExecutorService executorService) throws ExecutionException {
         try {
-            WorkflowDescriptor descriptor = workflowProvider.get(workflowId);
-            if (descriptor == null) {
-                throw new ExecutionException(String.format("Non-existent workflow [%s]", workflowId));
-            }
-            final Principal principal = context.getPrincipal();
-            // check if the user's disk quota is not reached
-            if (!checkProcessingQuota(principal)) {
-            	// do not create any job
-            	return null;
-            }
-
-            WorkflowDescriptor optimized = WorkflowOptimizer.getOptimizedWorkflow(descriptor);
-            final ExecutionJob executionJob;
-
-            // check if optimisation was successful and needed
-            if (optimized != null) {
-                executionJob = this.jobFactory.createJob(description, optimized, inputs);
-            } else {
-                executionJob = this.jobFactory.createJob(description, descriptor, inputs);
-            }
-
-            this.executors.put(principal.getName(), executorService);
+            final ExecutionJob executionJob = createJob(context, workflowId, description, inputs);
+            this.executors.put(context.getPrincipal().getName(), executorService);
             executorService.submit(() -> JobCommand.START.applyTo(executionJob));
             return executionJob;
-        } catch (QuotaException | PersistenceException e) {
+        } catch (Exception e) {
             logger.severe(e.getMessage());
             throw new ExecutionException(e.getMessage());
         }
@@ -217,6 +197,47 @@ public class Orchestrator extends Notifiable {
             }
             return executionJob;
         } catch (Exception e) {
+            logger.severe(e.getMessage());
+            throw new ExecutionException(e.getMessage());
+        }
+    }
+
+    /**
+     * Creates a job from a workflow without starting its execution.
+     *
+     * @param context 	 The session context
+     * @param workflowId The workflow identifier
+     * @param inputs     The overridden parameter values for workflow nodes
+     * @throws ExecutionException In case anything goes wrong
+     */
+    public ExecutionJob createJob(SessionContext context, long workflowId, String description,
+                                  Map<String, Map<String, String>> inputs)  throws ExecutionException {
+        return createJob(context, workflowId, description, inputs, false);
+    }
+
+
+    public ExecutionJob createJob(SessionContext context, long workflowId, String description,
+                                  Map<String, Map<String, String>> inputs, boolean optimize)  throws ExecutionException {
+        try {
+            WorkflowDescriptor descriptor = workflowProvider.get(workflowId);
+            if (descriptor == null) {
+                throw new ExecutionException(String.format("Non-existent workflow [%s]", workflowId));
+            }
+            final Principal principal = context.getPrincipal();
+            // check if the user's disk quota is not reached
+            if (!checkProcessingQuota(principal)) {
+                // do not create any job
+                return null;
+            }
+            WorkflowDescriptor optimized = descriptor;
+            if (optimize) {
+                optimized = WorkflowOptimizer.getOptimizedWorkflow(descriptor);
+                if (optimized == null) {
+                    optimized = descriptor;
+                }
+            }
+            return this.jobFactory.createJob(description, optimized, inputs);
+        } catch (QuotaException | PersistenceException e) {
             logger.severe(e.getMessage());
             throw new ExecutionException(e.getMessage());
         }
