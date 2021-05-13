@@ -57,6 +57,8 @@ public abstract class DataQuery extends StringIdentifiable {
     protected int pageNumber;
     protected int limit;
     protected long timeout;
+    /* Introduces a delay between consecutive queries, expressed in seconds */
+    protected int queryDelay;
     /* Maps parameter system name to a data source parameter (which has the remote name) */
     protected Map<String, DataSourceParameter> dataSourceParameters;
     /* Maps parameter system name to a query parameter (which has the same system name) */
@@ -90,6 +92,10 @@ public abstract class DataQuery extends StringIdentifiable {
     public void setSensorName(String sensorName) {
         this.sensorName = sensorName;
     }
+
+    public int getQueryDelay() { return queryDelay; }
+
+    public void setQueryDelay(int queryDelay) { this.queryDelay = queryDelay; }
 
     public QueryParameter<?> addParameter(QueryParameter<?> parameter) {
         if (parameter == null) {
@@ -328,6 +334,15 @@ public abstract class DataQuery extends StringIdentifiable {
             }
         }
         return value;
+    }
+
+    protected void sleep() {
+        if (this.queryDelay > 0) {
+            try {
+                Thread.sleep(this.queryDelay * 1000);
+            } catch (java.lang.InterruptedException ignored) {
+            }
+        }
     }
 
     private void initialize(DataSource<?, ?> source, String sensorName) {

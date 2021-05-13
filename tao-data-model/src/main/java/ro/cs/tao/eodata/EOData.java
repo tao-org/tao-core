@@ -26,13 +26,11 @@ import ro.cs.tao.serialization.CRSAdapter;
 import ro.cs.tao.serialization.GeometryAdapter;
 
 import javax.xml.bind.annotation.XmlElementWrapper;
+import javax.xml.bind.annotation.XmlTransient;
 import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Cosmin Cara
@@ -48,6 +46,8 @@ public abstract class EOData extends StringIdentifiable implements Serializable 
     private String entryPoint;
     private Visibility visibility;
     private ProductStatus productStatus;
+    @XmlTransient
+    private Set<String> files;
 
     public EOData() { super(); }
 
@@ -163,7 +163,7 @@ public abstract class EOData extends StringIdentifiable implements Serializable 
 
     //endregion
     public Map<String, String> toAttributeMap() {
-        Map<String, String> attributes = new HashMap<>();
+        final Map<String, String> attributes = new HashMap<>();
         attributes.put("id", safeValue(id));
         attributes.put("formatType", formatType != null ? formatType.name() : "n/a");
         attributes.put("geometry", safeValue(geometry));
@@ -174,6 +174,18 @@ public abstract class EOData extends StringIdentifiable implements Serializable 
             }
         }
         return attributes;
+    }
+
+    @XmlTransient
+    public Set<String> getFiles() {
+        return files;
+    }
+
+    public void addFile(String file)  throws URISyntaxException {
+        if (this.files == null) {
+            this.files = new LinkedHashSet<>();
+        }
+        this.files.add(file);
     }
 
     String safeValue(Object value) {
