@@ -285,9 +285,9 @@ public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
         }
     }
 
-    private static class Linux<R extends RuntimeInfo> extends OSRuntimeInfo<R> {
+    public static class Linux<R extends RuntimeInfo> extends OSRuntimeInfo<R> {
 
-        Linux(String host, String user, String password, boolean remote, Class<R> clazz) {
+        public Linux(String host, String user, String password, boolean remote, Class<R> clazz) {
             super(host, user, password, remote, clazz);
         }
 
