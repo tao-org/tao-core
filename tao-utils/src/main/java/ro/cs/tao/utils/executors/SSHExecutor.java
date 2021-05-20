@@ -104,6 +104,12 @@ public class SSHExecutor extends Executor<Channel> {
     }
 
     private Session createSession() throws JSchException {
+        Session session = openSession(3000);
+        this.logger.finest(String.format("Session %d opened", session.hashCode()));
+        return session;
+    }
+
+    private Session openSession(int connectTimeoutMilliseconds) throws JSchException {
         JSch jSch = new JSch();
         Session session = jSch.getSession(this.user, this.host, this.port);
         session.setUserInfo(new UserInfo(this.password));
@@ -113,8 +119,7 @@ public class SSHExecutor extends Executor<Channel> {
             session.setPassword(password.getBytes());
         }
         session.setConfig("StrictHostKeyChecking", "no");
-        session.connect(3000);
-        this.logger.finest(String.format("Session %d opened", session.hashCode()));
+        session.connect(connectTimeoutMilliseconds);
         return session;
     }
 
@@ -141,6 +146,23 @@ public class SSHExecutor extends Executor<Channel> {
             }
         }
         return ret;
+    }
+
+    public boolean canConnect(int connectTimeoutMilliseconds) throws JSchException {
+        if (!SSHMode.EXEC.equals(this.mode) && asSuperUser) {
+            throw new UnsupportedOperationException("Mode not permitted");
+        }
+        boolean result;
+        Session session = openSession(connectTimeoutMilliseconds);
+        try {
+            Channel channel = session.openChannel(this.mode.toString());
+            channel.connect(connectTimeoutMilliseconds);
+            channel.disconnect();
+            result = true;
+        } finally {
+            session.disconnect();
+        }
+        return result;
     }
 
     @Override

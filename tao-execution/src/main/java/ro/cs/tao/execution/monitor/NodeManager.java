@@ -9,9 +9,11 @@ import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.Notifiable;
 import ro.cs.tao.quota.QuotaException;
+import ro.cs.tao.quota.QuotaManager;
 import ro.cs.tao.quota.UserQuotaManager;
 import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.topology.*;
+import ro.cs.tao.utils.ExceptionUtils;
 import ro.cs.tao.utils.async.Parallel;
 import ro.cs.tao.utils.executors.NamedThreadPoolExecutor;
 
@@ -20,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 
 /**
  * Singleton than monitors registered topology nodes for resources availability.
@@ -40,8 +43,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     private NodeProvider nodeProvider;
     private ExecutionTaskProvider taskProvider;
     private DefaultNodeInfo defaultNodeInfo;
-    private final Map<String, NodeDescription> nodes;
-    private final Map<String, RuntimeInfo> runtimeInfo;
+    private final Map<String, NodeRuntimeWrapper> nodes;
     private Timer nodeInspectTimer;
     private Timer nodeRefreshTimer;
     private final Map<String, LocalDateTime> keepAliveMap;
@@ -72,12 +74,11 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
      */
     public static NodeManager getInstance() { return instance; }
 
-    private NodeManager() {
-        nodes = new HashMap<>();
-        runtimeInfo = new HashMap<>();
-        refreshInProgress = false;
-        nodeLimit = 0;
-        keepAliveMap = Collections.synchronizedMap(new HashMap<>());
+    protected NodeManager() {
+        this.nodes = new HashMap<>();
+        this.refreshInProgress = false;
+        this.nodeLimit = 0;
+        this.keepAliveMap = Collections.synchronizedMap(new HashMap<>());
     }
 
     public DefaultNodeInfo getDefaultNodeInfo() {
@@ -128,18 +129,20 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
             throw new RuntimeException("TaskProvider is not set");
         }
         if (this.nodeProvider != null) {
-            final List<NodeDescription> nodes = this.nodeProvider.listNodes();
+            final List<NodeDescription> nodes = listNodes();
             for (NodeDescription node : nodes) {
                 if (node.getActive()) {
-                    String host = node.getId();
-                    this.nodes.put(host, node);
-                    this.runtimeInfo.put(host, new RuntimeInfo());
+                    addNode(node, new RuntimeInfo());
                 }
             }
             new NodeInspectTask().run();
         } else {
             throw new RuntimeException("NodeProvider is not set");
         }
+    }
+
+    protected List<NodeDescription> listNodes() throws TopologyException {
+        return this.nodeProvider.listNodes();
     }
 
     /**
@@ -183,9 +186,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
             final String host = node.getId();
             switch (status.getStatus()) {
                 case INSTALLED:
-                    this.nodes.put(host, node);
-                    this.runtimeInfo.put(host, new RuntimeInfo());
-                    this.keepAliveMap.put(host, LocalDateTime.now().plusSeconds(DEFAULT_KEEP_ALIVE_SECONDS));
+                    addNewInstalledNode(node);
                     break;
                 case UNINSTALLED:
                     removeNode(host);
@@ -200,7 +201,12 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
      * Returns the currently monitored nodes.
      */
     public NodeDescription[] getCurrentNodes() {
-        return nodes.values().toArray(new NodeDescription[0]);
+        NodeDescription[] currentNodes = new NodeDescription[this.nodes.size()];
+        int index = 0;
+        for (Map.Entry<String, NodeRuntimeWrapper> entry : this.nodes.entrySet()) {
+            currentNodes[index++] = entry.getValue().getNode();
+        }
+        return currentNodes;
     }
 
     /**
@@ -209,7 +215,12 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
      * If there is just a single node (i.e. the master) registered, it returns immediately the master node description.
      */
     public NodeDescription getFirstAvailableNode() {
-        return nodes.size() == 1 ? nodes.values().iterator().next() : getAvailableNode(0, 0, 0).getNode();
+        if (this.nodes.size() == 1) {
+            NodeRuntimeWrapper firstValue = this.nodes.values().iterator().next();
+            return firstValue.getNode();
+        }
+        return getAvailableNode(0, 0, 0).getNode();
+        //return nodes.size() == 1 ? nodes.values().iterator().next() : getAvailableNode(0, 0, 0).getNode();
     }
 
     /**
@@ -225,76 +236,107 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
      * @param disk      The disk threshold
      */
     public NodeData getAvailableNode(int cpus, long memory, long disk) {
-        String nodeName = isDevMode ?
-                TopologyManager.getInstance().getMasterNodeInfo().getId() : null;
+        //String nodeName = isDevMode ? TopologyManager.getInstance().getMasterNodeInfo().getId() : null;
         final Principal principal = SessionStore.currentContext().getPrincipal();
+        QuotaManager userQuotaManager = UserQuotaManager.getInstance();
         int requestedCPUs = cpus;
-        while (nodeName == null) {
+        NodeDescription availableNode = null;
+        while (availableNode == null) {
             try {
             	// check if the user has any CPU limitation
-            	final int availableCpu = UserQuotaManager.getInstance().getAvailableCpus(principal);
-            	
-                if ((availableCpu == -1 || availableCpu > 0) && UserQuotaManager.getInstance().checkUserProcessingMemory(principal, (int)memory)) {
-                    requestedCPUs = availableCpu == -1 ? cpus : Math.min(cpus, availableCpu);
-                	
-                	nodeName = runtimeInfo.entrySet().stream()
-                            .filter(e -> e.getValue().getAvailableMemory() >= memory)
-                            //.filter(e -> (e.getValue().getDiskTotal() - e.getValue().getDiskUsed()) >= disk)
-                            .sorted(Comparator.comparingDouble(e -> computeLoad(nodes.get(e.getKey()),
-                                                                                e.getValue().getCpuTotal(),
-                                                                                e.getValue().getAvailableMemory())))
-                            //.sorted(Comparator.comparingDouble(o -> o.getValue().getCpuTotal() / (double) nodes.get(o.getKey()).getProcessorCount()))
-                            .map(Map.Entry::getKey).findFirst().orElse(null);
+            	int availableCpu = userQuotaManager.getAvailableCpus(principal);
+                if ((availableCpu == -1 || availableCpu > 0) && userQuotaManager.checkUserProcessingMemory(principal, (int)memory)) {
+                    requestedCPUs = (availableCpu == -1) ? cpus : Math.min(cpus, availableCpu);
+//                	String nodeName = runtimeInfo.entrySet().stream()
+//                            .filter(e -> e.getValue().getAvailableMemory() >= memory)
+//                            .sorted(Comparator.comparingDouble(e -> computeLoad(nodes.get(e.getKey()),
+//                                                                                e.getValue().getCpuTotal(),
+//                                                                                e.getValue().getAvailableMemory())))
+//                            .map(Map.Entry::getKey).findFirst().orElse(null);
+//                	if (nodeName != null) {
+//                        availableNode = this.nodes.get(nodeName);
+//                    }
+                    double previousLoadFactor = Double.NaN;
+                    for (Map.Entry<String, NodeRuntimeWrapper> entry : this.nodes.entrySet()) {
+                        RuntimeInfo runtimeInfo = entry.getValue().getRuntimeInfo();
+                        NodeDescription node = entry.getValue().getNode();
+                        if (runtimeInfo.getAvailableMemory() >= memory) {
+                            double loadFactor = computeLoad(node, runtimeInfo.getCpuTotal(), runtimeInfo.getAvailableMemory());
+                            if (Double.isNaN(previousLoadFactor) || previousLoadFactor > loadFactor) {
+                                previousLoadFactor = loadFactor;
+                                availableNode = node;
+                            }
+                        }
+                    }
                 }
-            	
             } catch (QuotaException e) {
     			logger.info(String.format("Error while computing the CPU and memory quota for the user %s. Error message: %s", principal.getName(), e.getMessage()));
-    			nodeName = null;
+                availableNode = null;
             }
-        	
-            if (nodeName == null) {
+            if (availableNode == null) {
                 if (canCreateNewNodes() && this.nodes.size() < this.nodeLimit) {
-                    final List<NodeFlavor> nodeFlavors = this.nodeProvider.listFlavors();
-                    final NodeFlavor matchingFlavor = nodeFlavors.stream()
-                                                                 .filter(f -> f.getCpu() >= 2 * cpus && f.getMemory() >= 4 * memory)
-                                                                 .min(Comparator.comparingInt(NodeFlavor::getCpu))
-                                                                 .orElse(null);
-                    if (matchingFlavor == null) {
+                    availableNode = createNodeIfMatchingFlavor(cpus, memory);
+                    if (availableNode == null) {
                         logger.fine("No processing node matching the request was found. Will retry in 10 seconds.");
-                        try {
-                            Thread.sleep(DEFAULT_NODE_WAIT_TIME);
-                        } catch (InterruptedException ignored) { }
+                        waitBeforeNextRetry(DEFAULT_NODE_WAIT_TIME);
                     } else {
-                        final DefaultNodeInfo nodeInfo = getDefaultNodeInfo();
-                        final Future<NodeDescription> future = executor.submit(() ->
-                                   this.nodeProvider.create(matchingFlavor,
-                                                            nodeInfo.getNamePrefix() + System.currentTimeMillis(),
-                                                            nodeInfo.getDescription(),
-                                                            nodeInfo.getUser(),
-                                                            nodeInfo.getPassword()));
-                        try {
-                            future.get(nodeCreationWaitTime, TimeUnit.SECONDS);
-                            // The new node should be added into this.nodes in onCompleted() method
-                        } catch (Exception e) {
-                            logger.severe(String.format("Node creation failed. Reason: %s", e.getMessage()));
-                        }
+                        // new node has been created
+                        addNewInstalledNode(availableNode);
                     }
                 } else {
                     logger.fine("No processing node was found to be available. Will retry in 10 seconds.");
-                    try {
-                        Thread.sleep(DEFAULT_NODE_WAIT_TIME);
-                    } catch (InterruptedException ignored) { }
+                    waitBeforeNextRetry(DEFAULT_NODE_WAIT_TIME);
                 }
             }
         }
         
-        final NodeDescription node = nodes.get(nodeName);
-        return new NodeData(node, Math.min(requestedCPUs, node.getFlavor().getCpu()), memory);
+        return new NodeData(availableNode, Math.min(requestedCPUs, availableNode.getFlavor().getCpu()), memory);
+    }
+
+    protected static void waitBeforeNextRetry(int timeToWaitMilliseconds) {
+        try {
+            Thread.sleep(timeToWaitMilliseconds);
+        } catch (InterruptedException ignored) {
+            // ignore
+        }
+    }
+
+    protected NodeDescription createNodeIfMatchingFlavor(int cpus, long memory) {
+        List<NodeFlavor> nodeFlavors = this.nodeProvider.listFlavors();
+        NodeFlavor matchingFlavor = nodeFlavors.stream()
+                .filter(f -> f.getCpu() >= 2 * cpus && f.getMemory() >= 4 * memory)
+                .min(Comparator.comparingInt(NodeFlavor::getCpu))
+                .orElse(null);
+        if (matchingFlavor != null) {
+            final DefaultNodeInfo nodeInfo = getDefaultNodeInfo();
+            final Future<NodeDescription> future = executor.submit(() ->
+                    this.nodeProvider.create(matchingFlavor,
+                            nodeInfo.getNamePrefix() + System.currentTimeMillis(),
+                            nodeInfo.getDescription(),
+                            nodeInfo.getUser(),
+                            nodeInfo.getPassword()));
+            try {
+                future.get(nodeCreationWaitTime, TimeUnit.SECONDS);
+                // The new node should be added into this.nodes in onCompleted() method
+            } catch (Exception e) {
+                logger.severe(String.format("Node creation failed. Reason: %s", e.getMessage()));
+            }
+            //TODO Jean return the created node
+            return null;
+        }
+        return null;
     }
 
     public NodeData getNode(String nodeName) {
-        final NodeDescription node = nodes.get(nodeName);
-        return node != null ? new NodeData(node, node.getFlavor().getCpu(), node.getFlavor().getMemory()) : null;
+        NodeRuntimeWrapper nodeRuntimeWrapper = this.nodes.get(nodeName);
+        if (nodeRuntimeWrapper == null) {
+            return null;
+        }
+        NodeDescription node = nodeRuntimeWrapper.getNode();
+        return new NodeData(node, node.getFlavor().getCpu(), node.getFlavor().getMemory());
+
+//        final NodeDescription node = nodes.get(nodeName);
+//        return node != null ? new NodeData(node, node.getFlavor().getCpu(), node.getFlavor().getMemory()) : null;
     }
 
     /**
@@ -303,11 +345,16 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
      * @param hostName  The node host name
      */
     public RuntimeInfo getNodeSnapshot(String hostName) {
-        return this.runtimeInfo.get(hostName);
+        NodeRuntimeWrapper nodeRuntimeWrapper = this.nodes.get(hostName);
+        return (nodeRuntimeWrapper == null) ? null : nodeRuntimeWrapper.getRuntimeInfo();
     }
 
     public Map<String, RuntimeInfo> getNodesSnapshot() {
-        return this.runtimeInfo;
+        Map<String, RuntimeInfo> runtimeInfoMap = new HashMap<>(this.nodes.size());
+        for (Map.Entry<String, NodeRuntimeWrapper> entry : this.nodes.entrySet()) {
+            runtimeInfoMap.put(entry.getKey(), entry.getValue().getRuntimeInfo());
+        }
+        return runtimeInfoMap;
     }
 
     @Override
@@ -328,32 +375,27 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         }
     }
 
-    private synchronized void updateNodeInfo(String host) {
-        NodeDescription node = nodes.get(host);
-        if (node == null) {
-            throw new NullPointerException("[no credentials]");
-        }
-        RuntimeInfo info = null;
-        try {
-            info = OSRuntimeInfo.createInspector(host, node.getUserName(), node.getUserPass(), RuntimeInfo.class)
-                    //Crypto.decrypt(node.getUserPass(), node.getUserName()))
-                    .getInfo();
-        } catch (Exception ignored) { }
-        if (info == null) {
-            info = new RuntimeInfo();
-            info.setAvailableMemory(-1);
-            info.setDiskTotal(node.getFlavor().getDisk());
-            info.setTotalMemory(node.getFlavor().getMemory());
-            info.setCpuTotal(node.getFlavor().getCpu());
-            info.setDiskUsed(-1);
-        }
-        this.runtimeInfo.put(host, info);
+    private void addNewInstalledNode(NodeDescription node) {
+        addNode(node, new RuntimeInfo());
+        this.keepAliveMap.put(node.getId(), LocalDateTime.now().plusSeconds(DEFAULT_KEEP_ALIVE_SECONDS));
     }
 
-    private synchronized void removeNode(String host) {
-        this.nodes.remove(host);
-        this.runtimeInfo.remove(host);
+    protected final void removeNode(String host) {
+        synchronized (this.nodes) {
+            this.nodes.remove(host);
+        }
         this.keepAliveMap.remove(host);
+    }
+
+    protected void uninstallNode(String host) {
+        removeNode(host);
+        TopologyManager.getInstance().removeNode(host);
+    }
+
+    private void addNode(NodeDescription node, RuntimeInfo runtimeInfo) {
+        synchronized (this.nodes) {
+            this.nodes.put(node.getId(), new NodeRuntimeWrapper(node, runtimeInfo));
+        }
     }
 
     /**
@@ -394,95 +436,152 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     }
 
     protected class NodeInspectTask extends TimerTask {
+
         private boolean inProgress;
-        NodeInspectTask() {
+
+        private NodeInspectTask() {
             this.inProgress = false;
         }
+
         @Override
         public void run() {
             try {
                 if (!this.inProgress && !refreshInProgress) {
                     this.inProgress = true;
-                    final Set<String> hosts = new HashSet<>(nodes.keySet());
+                    Set<String> hosts;
+                    synchronized (nodes) {
+                        hosts = new HashSet<>(nodes.keySet());
+                    }
                     Parallel.ForEach(hosts, concurrentCalls, (h) -> {
-                        if (nodes.containsKey(h)) {
-                            try {
-                                while (refreshInProgress) {
-                                    try {
-                                        Thread.sleep(500);
-                                    } catch (Throwable ignored) { }
+                        try {
+                            while (refreshInProgress) {
+                                try {
+                                    Thread.sleep(500);
+                                } catch (Throwable ignored) {
+                                    // ignore
                                 }
+                            }
+                            NodeRuntimeWrapper nodeRuntimeWrapper;
+                            synchronized (nodes) {
+                                nodeRuntimeWrapper = nodes.get(h);
+                            }
+                            if (nodeRuntimeWrapper != null) {
                                 final LocalDateTime time = keepAliveMap.get(h);
                                 if (time != null && time.compareTo(LocalDateTime.now()) >= 0) {
                                     final List<ExecutionTask> tasks = taskProvider.listByHost(h);
                                     if (tasks == null || tasks.size() == 0) {
-                                        removeNode(h);
-                                        TopologyManager.getInstance().removeNode(h);
+                                        uninstallNode(h);
                                         return;
                                     } else {
                                         keepAliveMap.replace(h, LocalDateTime.now().plusSeconds(DEFAULT_KEEP_ALIVE_SECONDS));
                                     }
                                 }
-                                updateNodeInfo(h);
-                            } catch (Exception e) {
-                                logger.severe(String.format("Cannot update node information [node=%s, error=%s]",
-                                                            h, e.getMessage()));
+
+                                RuntimeInfo runtimeInfo = readNodeRuntimeInfo(h, nodeRuntimeWrapper.getNode());
+                                nodeRuntimeWrapper.setRuntimeInfo(runtimeInfo);
                             }
+                        } catch (Exception exception) {
+                            logger.log(Level.SEVERE, "Cannot update node information '" + h + "': " + ExceptionUtils.getExceptionLoggingMessage(exception, 1));
                         }
                     });
                 }
-            } catch (Exception e) {
-                logger.severe("Error during monitoring nodes: " + e.getMessage());
+            } catch (Exception exception) {
+                logger.log(Level.SEVERE, "Error during monitoring nodes: " + ExceptionUtils.getExceptionLoggingMessage(exception, 1));
             } finally {
                 this.inProgress = false;
             }
-
         }
     }
 
     protected class NodeRefreshTask extends TimerTask {
+
+        private NodeRefreshTask() {
+        }
+
         @Override
         public void run() {
             refreshInProgress = true;
             try {
-                List<NodeDescription> allNodes = nodeProvider.listNodes();
-                Map<String, NodeDescription> allMap = new HashMap<>();
+                List<NodeDescription> allNodes = listNodes();
+                Set<String> allMap = new HashSet<>();
+                double cpuTotal = -1.0d;
                 for (NodeDescription node : allNodes) {
+                    NodeFlavor flavor = node.getFlavor();
                     String host = node.getId();
-                    if (nodes.containsKey(host)) {
-                        if (!node.getActive()) {
-                            runtimeInfo.put(host,
-                                            new RuntimeInfo() {{
-                                                setAvailableMemory(-1);
-                                                setDiskTotal(node.getFlavor().getDisk());
-                                                setTotalMemory(node.getFlavor().getMemory());
-                                                setCpuTotal(-1);
-                                                setDiskUsed(-1);
-                                            }});
-                        }
-                    } else {
-                        if (node.getActive()) {
-                            nodes.put(host, node);
-                            runtimeInfo.put(host,
-                                            new RuntimeInfo() {{
-                                                setAvailableMemory(-1);
-                                                setDiskTotal(node.getFlavor().getDisk());
-                                                setTotalMemory(node.getFlavor().getMemory());
-                                                setCpuTotal(-1);
-                                                setDiskUsed(-1);
-                                            }});
+                    synchronized (nodes) {
+                        NodeRuntimeWrapper nodeRuntimeWrapper = nodes.get(host);
+                        if (nodeRuntimeWrapper == null) {
+                            // the node does not exist in the list
+                            if (node.getActive()) {
+                                addNode(node, buildDefaultRuntimeInfo(flavor.getDisk(), flavor.getMemory(), cpuTotal));
+                            }
+                        } else {
+                            // the node already exists in the list
+                            if (!node.getActive()) {
+                                nodeRuntimeWrapper.setRuntimeInfo(buildDefaultRuntimeInfo(flavor.getDisk(), flavor.getMemory(), cpuTotal));
+                            }
                         }
                     }
-                    allMap.put(host, node);
+                    allMap.add(host);
                 }
-                nodes.entrySet().removeIf(current -> !allMap.containsKey(current.getKey()));
-                runtimeInfo.entrySet().removeIf(current -> !allMap.containsKey(current.getKey()));
-            } catch (Exception e) {
-                logger.severe("Error during refreshing nodes list from database: " + e.getMessage());
+                synchronized (nodes) {
+                    nodes.entrySet().removeIf(currentEntry -> !allMap.contains(currentEntry.getKey()));
+                }
+            } catch (Exception exception) {
+                logger.log(Level.SEVERE, "Error during refreshing nodes list from database: " + ExceptionUtils.getExceptionLoggingMessage(exception, 1));
             } finally {
                 refreshInProgress = false;
             }
         }
     }
 
+    private static RuntimeInfo buildDefaultRuntimeInfo(long diskTotal, long totalMemory, double cpuTotal) {
+        RuntimeInfo runtimeInfo = new RuntimeInfo();
+        runtimeInfo.setAvailableMemory(-1);
+        runtimeInfo.setDiskTotal(diskTotal);
+        runtimeInfo.setTotalMemory(totalMemory);
+        runtimeInfo.setCpuTotal(cpuTotal);
+        runtimeInfo.setDiskUsed(-1);
+        return runtimeInfo;
+    }
+
+    private static RuntimeInfo readNodeRuntimeInfo(String host, NodeDescription node) {
+        RuntimeInfo info = null;
+        try {
+            OSRuntimeInfo osRuntimeInfo = OSRuntimeInfo.createInspector(host, node.getUserName(), node.getUserPass(), RuntimeInfo.class);
+            info = osRuntimeInfo.getInfo();
+        } catch (Exception ignored) {
+            // ignore
+        }
+        if (info == null) {
+            info = buildDefaultRuntimeInfo(node.getFlavor().getDisk(), node.getFlavor().getMemory(), node.getFlavor().getCpu());
+        }
+        return info;
+    }
+
+    private static class NodeRuntimeWrapper {
+        private RuntimeInfo runtimeInfo;
+        private NodeDescription node;
+
+        public NodeRuntimeWrapper(NodeDescription node, RuntimeInfo runtimeInfo) {
+            this.node = node;
+            this.runtimeInfo = runtimeInfo;
+        }
+
+        public RuntimeInfo getRuntimeInfo() {
+            return runtimeInfo;
+        }
+
+        public void setRuntimeInfo(RuntimeInfo runtimeInfo) {
+            this.runtimeInfo = runtimeInfo;
+        }
+
+        public NodeDescription getNode() {
+            return node;
+        }
+
+        public void setNode(NodeDescription node) {
+            this.node = node;
+        }
+    }
 }
