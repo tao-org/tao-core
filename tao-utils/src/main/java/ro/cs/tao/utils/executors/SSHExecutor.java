@@ -321,7 +321,7 @@ public class SSHExecutor extends Executor<Channel> {
                 if (this.certificate != null) {
                     this.password = "";
                 }
-                writeSudoPassword();
+                writeSudoPassword(channel, this.password);
             }
             BufferedReader outReader = new BufferedReader(new InputStreamReader(inputStream));
             String line;
@@ -354,6 +354,16 @@ public class SSHExecutor extends Executor<Channel> {
             }
         }
         return channel.getExitStatus();
+    }
+
+    private static void writeSudoPassword(Channel channel, String password) throws IOException {
+        if (channel == null) {
+            throw new NullPointerException("The channel is null.");
+        }
+        try (OutputStream outputStream = channel.getOutputStream()) {
+            outputStream.write((password + "\n").getBytes());
+            outputStream.flush();
+        }
     }
 
     private int executeSftpCmd(boolean logMessages) throws Exception {
