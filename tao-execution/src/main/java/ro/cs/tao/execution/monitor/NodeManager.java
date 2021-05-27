@@ -483,7 +483,8 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                                 if (time != null && time.compareTo(LocalDateTime.now()) >= 0) {
                                     final List<ExecutionTask> tasks = taskProvider.listByHost(h);
                                     if (tasks == null || tasks.size() == 0) {
-                                        uninstallNode(nodeRuntimeWrapper.getNode());
+                                        //TODO Jean uncomment
+                                        //uninstallNode(nodeRuntimeWrapper.getNode());
                                         return;
                                     } else {
                                         keepAliveMap.replace(h, LocalDateTime.now().plusSeconds(DEFAULT_KEEP_ALIVE_SECONDS));
