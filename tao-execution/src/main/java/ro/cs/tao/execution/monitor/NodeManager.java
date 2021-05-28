@@ -261,17 +261,16 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
             	int availableCpu = userQuotaManager.getAvailableCpus(principal);
                 if ((availableCpu == -1 || availableCpu > 0) && userQuotaManager.checkUserProcessingMemory(principal, (int)memory)) {
                     requestedCPUs = (availableCpu == -1) ? cpus : Math.min(cpus, availableCpu);
-                    double previousLoadFactor = Double.NaN;
-                    for (Map.Entry<String, NodeRuntimeWrapper> entry : this.nodes.entrySet()) {
-                        RuntimeInfo runtimeInfo = entry.getValue().getRuntimeInfo();
-                        NodeDescription node = entry.getValue().getNode();
-                        if (runtimeInfo.getAvailableMemory() >= memory) {
-                            double loadFactor = computeLoad(node, runtimeInfo.getCpuTotal(), runtimeInfo.getAvailableMemory());
-                            if (Double.isNaN(previousLoadFactor) || previousLoadFactor > loadFactor) {
-                                previousLoadFactor = loadFactor;
-                                availableNode = node;
-                            }
-                        }
+                    NodeRuntimeWrapper result = this.nodes.entrySet().stream()
+                            .filter(e -> e.getValue().getRuntimeInfo().getAvailableMemory() >= memory)
+                            .sorted(Comparator.comparingDouble(e -> {
+                                NodeDescription node = nodes.get(e.getKey()).getNode();
+                                RuntimeInfo runtimeInfo = e.getValue().getRuntimeInfo();
+                                return computeLoad(node, runtimeInfo.getCpuTotal(), runtimeInfo.getAvailableMemory());
+                            }))
+                            .map(Map.Entry::getValue).findFirst().orElse(null);
+                    if (result != null) {
+                        availableNode = result.getNode();
                     }
                 }
             } catch (QuotaException e) {
@@ -370,13 +369,13 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         // do nothing
     }
 
-    private double computeLoad(NodeDescription node, double actualCPU, long freeMemory) {
+    private double computeLoad(NodeDescription node, double actualCPU, long availableMemory) {
         double result = 0.0d;
         try {
             final NodeFlavor flavor = node.getFlavor();
             double noCpus = flavor.getCpu();
             double totalMem = flavor.getMemory() * MemoryUnit.MEGABYTE.value();
-            result = (actualCPU / noCpus) * (1 - (freeMemory / totalMem));
+            result = (actualCPU / noCpus) * (1 - (availableMemory / totalMem));
         } finally {
             logger.finest(String.format("Processing pressure for %s: %f", node.getId(), result));
         }
@@ -483,8 +482,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                                 if (time != null && time.compareTo(LocalDateTime.now()) >= 0) {
                                     final List<ExecutionTask> tasks = taskProvider.listByHost(h);
                                     if (tasks == null || tasks.size() == 0) {
-                                        //TODO Jean uncomment
-                                        //uninstallNode(nodeRuntimeWrapper.getNode());
+                                        uninstallNode(nodeRuntimeWrapper.getNode());
                                         return;
                                     } else {
                                         keepAliveMap.replace(h, LocalDateTime.now().plusSeconds(DEFAULT_KEEP_ALIVE_SECONDS));
@@ -494,8 +492,8 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                                 RuntimeInfo runtimeInfo = null;
                                 try {
                                     runtimeInfo = readNodeRuntimeInfo(nodeRuntimeWrapper.getNode());
-                                } catch (Exception ignored) {
-                                    // ignore
+                                } catch (Exception exception) {
+                                    logger.log(Level.SEVERE, "Cannot read node information '" + h + "': " + ExceptionUtils.getExceptionLoggingMessage(exception, 1));
                                 }
                                 if (runtimeInfo == null) {
                                     NodeFlavor flavor = nodeRuntimeWrapper.getNode().getFlavor();
