@@ -17,6 +17,7 @@
 package ro.cs.tao.execution.monitor;
 
 import org.apache.commons.lang3.SystemUtils;
+import ro.cs.tao.utils.executors.AuthenticationType;
 import ro.cs.tao.utils.executors.Executor;
 import ro.cs.tao.utils.executors.ExecutorType;
 import ro.cs.tao.utils.executors.OutputConsumer;
@@ -287,20 +288,42 @@ public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
 
     public static class Linux<R extends RuntimeInfo> extends OSRuntimeInfo<R> {
 
+        private final AuthenticationType authenticationType;
+
         public Linux(String host, String user, String password, boolean remote, Class<R> clazz) {
-            super(host, user, password, remote, clazz);
+            this(host, AuthenticationType.PASSWORD, user, password, remote, clazz);
+        }
+
+        public Linux(String host, AuthenticationType authenticationType, String user, String authenticationToken, boolean remote, Class<R> clazz) {
+            super(host, user, authenticationToken, remote, clazz);
+
+            if (authenticationType == null) {
+                throw new NullPointerException("The authentication type is null.");
+            }
+            this.authenticationType = authenticationType;
+        }
+
+        private Executor<?> buildExecutor(List<String> arguments) {
+            Executor<?> executor = Executor.create(this.isRemote ? ExecutorType.SSH2 : ExecutorType.PROCESS, this.node, arguments);
+            executor.setUser(this.user);
+            switch (this.authenticationType) {
+                case PASSWORD:
+                    executor.setPassword(this.password);
+                    break;
+                case CERTIFICATE:
+                    executor.setCertificate(this.password);
+                    break;
+            }
+            return executor;
         }
 
         @Override
-        public R getInfo()  throws Exception{
+        public R getInfo() throws Exception {
             R runtimeInfo = this.runtimeClass.newInstance();
             try {
-                Executor<?> executor;
                 List<String> args = new ArrayList<>();
                 Collections.addAll(args, "uptime && cat /proc/meminfo && df -k --total".split(" "));
-                executor = Executor.create(this.isRemote ? ExecutorType.SSH2 : ExecutorType.PROCESS, this.node, args);
-                executor.setUser(this.user);
-                executor.setPassword(this.password);
+                Executor<?> executor = buildExecutor(args);
                 final Consumer consumer = new Consumer();
                 executor.setOutputConsumer(consumer);
                 final int code = executor.execute(false);
@@ -367,12 +390,9 @@ public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
         public double getProcessorUsage() throws IOException {
             double cpu = 0.0;
             try {
-                Executor<?> executor;
                 List<String> args = new ArrayList<>();
                 Collections.addAll(args, "uptime".split(" "));
-                executor = Executor.create(this.isRemote ? ExecutorType.SSH2 : ExecutorType.PROCESS, this.node, args);
-                executor.setUser(this.user);
-                executor.setPassword(this.password);
+                Executor<?> executor = buildExecutor(args);
                 Consumer consumer = new Consumer();
                 executor.setOutputConsumer(consumer);
                 if (executor.execute(false) == 0) {
@@ -397,12 +417,9 @@ public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
         public long getTotalMemoryMB() throws IOException{
             long mem = 0;
             try {
-                Executor<?> executor;
                 List<String> args = new ArrayList<>();
                 Collections.addAll(args, "cat /proc/meminfo".split(" "));
-                executor = Executor.create(this.isRemote ? ExecutorType.SSH2 : ExecutorType.PROCESS, this.node, args);
-                executor.setUser(this.user);
-                executor.setPassword(this.password);
+                Executor<?> executor = buildExecutor(args);
                 Consumer consumer = new Consumer();
                 executor.setOutputConsumer(consumer);
                 if (executor.execute(false) == 0) {
@@ -427,12 +444,9 @@ public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
         public long getAvailableMemoryMB() throws IOException {
             long mem = 0;
             try {
-                Executor<?> executor;
                 List<String> args = new ArrayList<>();
                 Collections.addAll(args, "cat /proc/meminfo".split(" "));
-                executor = Executor.create(this.isRemote ? ExecutorType.SSH2 : ExecutorType.PROCESS, this.node, args);
-                executor.setUser(this.user);
-                executor.setPassword(this.password);
+                Executor<?> executor = buildExecutor(args);
                 Consumer consumer = new Consumer();
                 executor.setOutputConsumer(consumer);
                 if (executor.execute(false) == 0) {
@@ -457,12 +471,9 @@ public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
         public long getTotalDiskGB() throws IOException {
             long mem = 0;
             try {
-                Executor<?> executor;
                 List<String> args = new ArrayList<>();
                 Collections.addAll(args, "df -k --total".split(" "));
-                executor = Executor.create(this.isRemote ? ExecutorType.SSH2 : ExecutorType.PROCESS, this.node, args);
-                executor.setUser(this.user);
-                executor.setPassword(this.password);
+                Executor<?> executor = buildExecutor(args);
                 Consumer consumer = new Consumer();
                 executor.setOutputConsumer(consumer);
                 if (executor.execute(false) == 0) {
@@ -490,12 +501,9 @@ public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
         public long getUsedDiskGB() throws IOException {
             long mem = 0;
             try {
-                Executor<?> executor;
                 List<String> args = new ArrayList<>();
                 Collections.addAll(args, "df -k --total".split(" "));
-                executor = Executor.create(this.isRemote ? ExecutorType.SSH2 : ExecutorType.PROCESS, this.node, args);
-                executor.setUser(this.user);
-                executor.setPassword(this.password);
+                Executor<?> executor = buildExecutor(args);
                 Consumer consumer = new Consumer();
                 executor.setOutputConsumer(consumer);
                 if (executor.execute(false) == 0) {
