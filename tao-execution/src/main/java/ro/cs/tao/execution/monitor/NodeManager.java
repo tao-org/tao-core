@@ -129,15 +129,19 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
             throw new RuntimeException("TaskProvider is not set");
         }
         if (this.nodeProvider != null) {
-            final List<NodeDescription> nodes = listNodes();
-            for (NodeDescription node : nodes) {
-                if (node.getActive()) {
-                    addNode(node, new RuntimeInfo());
-                }
-            }
+            addInitialActiveNodes();
             new NodeInspectTask().run();
         } else {
             throw new RuntimeException("NodeProvider is not set");
+        }
+    }
+
+    protected final void addInitialActiveNodes() {
+        List<NodeDescription> nodes = listNodes();
+        for (NodeDescription node : nodes) {
+            if (node.getActive()) {
+                addNode(node, new RuntimeInfo());
+            }
         }
     }
 
@@ -220,7 +224,18 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
             return firstValue.getNode();
         }
         return getAvailableNode(0, 0, 0).getNode();
-        //return nodes.size() == 1 ? nodes.values().iterator().next() : getAvailableNode(0, 0, 0).getNode();
+    }
+
+    protected NodeDescription getStartingAvailableNode() {
+        //String nodeName = isDevMode ? TopologyManager.getInstance().getMasterNodeInfo().getId() : null;
+        if (isDevMode) {
+            String nodeName = TopologyManager.getInstance().getMasterNodeInfo().getId();
+            NodeRuntimeWrapper value = this.nodes.get(nodeName);
+            if (value != null) {
+                return value.getNode();
+            }
+        }
+        return null;
     }
 
     /**
@@ -236,37 +251,26 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
      * @param disk      The disk threshold
      */
     public NodeData getAvailableNode(int cpus, long memory, long disk) {
-        //String nodeName = isDevMode ? TopologyManager.getInstance().getMasterNodeInfo().getId() : null;
         final Principal principal = SessionStore.currentContext().getPrincipal();
         QuotaManager userQuotaManager = UserQuotaManager.getInstance();
         int requestedCPUs = cpus;
-        NodeDescription availableNode = null;
+        NodeDescription availableNode = getStartingAvailableNode();
         while (availableNode == null) {
             try {
             	// check if the user has any CPU limitation
             	int availableCpu = userQuotaManager.getAvailableCpus(principal);
                 if ((availableCpu == -1 || availableCpu > 0) && userQuotaManager.checkUserProcessingMemory(principal, (int)memory)) {
                     requestedCPUs = (availableCpu == -1) ? cpus : Math.min(cpus, availableCpu);
-//                	String nodeName = runtimeInfo.entrySet().stream()
-//                            .filter(e -> e.getValue().getAvailableMemory() >= memory)
-//                            .sorted(Comparator.comparingDouble(e -> computeLoad(nodes.get(e.getKey()),
-//                                                                                e.getValue().getCpuTotal(),
-//                                                                                e.getValue().getAvailableMemory())))
-//                            .map(Map.Entry::getKey).findFirst().orElse(null);
-//                	if (nodeName != null) {
-//                        availableNode = this.nodes.get(nodeName);
-//                    }
-                    double previousLoadFactor = Double.NaN;
-                    for (Map.Entry<String, NodeRuntimeWrapper> entry : this.nodes.entrySet()) {
-                        RuntimeInfo runtimeInfo = entry.getValue().getRuntimeInfo();
-                        NodeDescription node = entry.getValue().getNode();
-                        if (runtimeInfo.getAvailableMemory() >= memory) {
-                            double loadFactor = computeLoad(node, runtimeInfo.getCpuTotal(), runtimeInfo.getAvailableMemory());
-                            if (Double.isNaN(previousLoadFactor) || previousLoadFactor > loadFactor) {
-                                previousLoadFactor = loadFactor;
-                                availableNode = node;
-                            }
-                        }
+                    NodeRuntimeWrapper result = this.nodes.entrySet().stream()
+                            .filter(e -> e.getValue().getRuntimeInfo().getAvailableMemory() >= memory)
+                            .sorted(Comparator.comparingDouble(e -> {
+                                NodeDescription node = nodes.get(e.getKey()).getNode();
+                                RuntimeInfo runtimeInfo = e.getValue().getRuntimeInfo();
+                                return computeLoad(node, runtimeInfo.getCpuTotal(), runtimeInfo.getAvailableMemory());
+                            }))
+                            .map(Map.Entry::getValue).findFirst().orElse(null);
+                    if (result != null) {
+                        availableNode = result.getNode();
                     }
                 }
             } catch (QuotaException e) {
@@ -275,7 +279,13 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
             }
             if (availableNode == null) {
                 if (canCreateNewNodes() && this.nodes.size() < this.nodeLimit) {
-                    availableNode = createNodeIfMatchingFlavor(cpus, memory);
+                    try {
+                        availableNode = createNodeIfMatchingFlavor(cpus, memory);
+                    } catch (RuntimeException exception) {
+                        throw exception;
+                    } catch (Exception exception) {
+                        throw new IllegalStateException("Failed to create node.", exception);
+                    }
                     if (availableNode == null) {
                         logger.fine("No processing node matching the request was found. Will retry in 10 seconds.");
                         waitBeforeNextRetry(DEFAULT_NODE_WAIT_TIME);
@@ -301,7 +311,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         }
     }
 
-    protected NodeDescription createNodeIfMatchingFlavor(int cpus, long memory) {
+    protected NodeDescription createNodeIfMatchingFlavor(int cpus, long memory) throws Exception {
         List<NodeFlavor> nodeFlavors = this.nodeProvider.listFlavors();
         NodeFlavor matchingFlavor = nodeFlavors.stream()
                 .filter(f -> f.getCpu() >= 2 * cpus && f.getMemory() >= 4 * memory)
@@ -334,9 +344,6 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         }
         NodeDescription node = nodeRuntimeWrapper.getNode();
         return new NodeData(node, node.getFlavor().getCpu(), node.getFlavor().getMemory());
-
-//        final NodeDescription node = nodes.get(nodeName);
-//        return node != null ? new NodeData(node, node.getFlavor().getCpu(), node.getFlavor().getMemory()) : null;
     }
 
     /**
@@ -359,20 +366,20 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
 
     @Override
     protected void onMessageReceived(Message message) {
-
+        // do nothing
     }
 
-    private double computeLoad(NodeDescription node, double actualCPU, long freeMemory) {
-        double result  = 0.0;
+    private double computeLoad(NodeDescription node, double actualCPU, long availableMemory) {
+        double result = 0.0d;
         try {
             final NodeFlavor flavor = node.getFlavor();
             double noCpus = flavor.getCpu();
             double totalMem = flavor.getMemory() * MemoryUnit.MEGABYTE.value();
-            result = (actualCPU / noCpus) * (1 - (freeMemory / totalMem));
-            return result;
+            result = (actualCPU / noCpus) * (1 - (availableMemory / totalMem));
         } finally {
             logger.finest(String.format("Processing pressure for %s: %f", node.getId(), result));
         }
+        return result;
     }
 
     private void addNewInstalledNode(NodeDescription node) {
@@ -387,15 +394,20 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         this.keepAliveMap.remove(host);
     }
 
-    protected void uninstallNode(String host) {
-        removeNode(host);
-        TopologyManager.getInstance().removeNode(host);
+    protected void uninstallNode(NodeDescription node) {
+        removeNode(node.getId());
+        TopologyManager.getInstance().removeNode(node.getId());
     }
 
     private void addNode(NodeDescription node, RuntimeInfo runtimeInfo) {
         synchronized (this.nodes) {
             this.nodes.put(node.getId(), new NodeRuntimeWrapper(node, runtimeInfo));
         }
+    }
+
+    protected RuntimeInfo readNodeRuntimeInfo(NodeDescription node) throws Exception {
+        OSRuntimeInfo osRuntimeInfo = OSRuntimeInfo.createInspector(node.getId(), node.getUserName(), node.getUserPass(), RuntimeInfo.class);
+        return osRuntimeInfo.getInfo();
     }
 
     /**
@@ -470,14 +482,23 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                                 if (time != null && time.compareTo(LocalDateTime.now()) >= 0) {
                                     final List<ExecutionTask> tasks = taskProvider.listByHost(h);
                                     if (tasks == null || tasks.size() == 0) {
-                                        uninstallNode(h);
+                                        uninstallNode(nodeRuntimeWrapper.getNode());
                                         return;
                                     } else {
                                         keepAliveMap.replace(h, LocalDateTime.now().plusSeconds(DEFAULT_KEEP_ALIVE_SECONDS));
                                     }
                                 }
 
-                                RuntimeInfo runtimeInfo = readNodeRuntimeInfo(h, nodeRuntimeWrapper.getNode());
+                                RuntimeInfo runtimeInfo = null;
+                                try {
+                                    runtimeInfo = readNodeRuntimeInfo(nodeRuntimeWrapper.getNode());
+                                } catch (Exception exception) {
+                                    logger.log(Level.SEVERE, "Cannot read node information '" + h + "': " + ExceptionUtils.getExceptionLoggingMessage(exception, 1));
+                                }
+                                if (runtimeInfo == null) {
+                                    NodeFlavor flavor = nodeRuntimeWrapper.getNode().getFlavor();
+                                    runtimeInfo = buildDefaultRuntimeInfo(flavor.getDisk(), flavor.getMemory(), flavor.getCpu());
+                                }
                                 nodeRuntimeWrapper.setRuntimeInfo(runtimeInfo);
                             }
                         } catch (Exception exception) {
@@ -545,21 +566,8 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         return runtimeInfo;
     }
 
-    private static RuntimeInfo readNodeRuntimeInfo(String host, NodeDescription node) {
-        RuntimeInfo info = null;
-        try {
-            OSRuntimeInfo osRuntimeInfo = OSRuntimeInfo.createInspector(host, node.getUserName(), node.getUserPass(), RuntimeInfo.class);
-            info = osRuntimeInfo.getInfo();
-        } catch (Exception ignored) {
-            // ignore
-        }
-        if (info == null) {
-            info = buildDefaultRuntimeInfo(node.getFlavor().getDisk(), node.getFlavor().getMemory(), node.getFlavor().getCpu());
-        }
-        return info;
-    }
-
     private static class NodeRuntimeWrapper {
+
         private RuntimeInfo runtimeInfo;
         private NodeDescription node;
 
