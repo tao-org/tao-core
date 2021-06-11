@@ -45,6 +45,7 @@
                 </collection-table>
             </element-collection>
 
+            <transient name="files"/>
         </attributes>
     </mapped-superclass>
 

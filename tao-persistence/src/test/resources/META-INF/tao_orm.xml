@@ -45,6 +45,7 @@
                 </collection-table>
             </element-collection>
 
+            <transient name="files"/>
         </attributes>
     </mapped-superclass>
 
@@ -782,7 +783,7 @@
     <entity class="ro.cs.tao.execution.model.ExecutionJob" access="PROPERTY">
         <table name="execution.job"/>
         <convert converter="ro.cs.tao.persistence.convert.ExecutionStatusConverter" attribute-name="executionStatus" />
-        <convert converter="ro.cs.tao.persistence.convert.JsonCallbackConverter" attribute-name="callback"/>
+        <convert converter="ro.cs.tao.persistence.convert.JsonCallbackConverter" attribute-name="callbackDescriptor"/>
         <attributes>
             <basic name="name">
                 <column name="name" nullable="false" column-definition="text not null"/>
@@ -1088,6 +1089,9 @@
 
     <entity class="ro.cs.tao.user.User" access="PROPERTY">
         <table name="usr.user"/>
+        <entity-listeners>
+            <entity-listener class="ro.cs.tao.persistence.audit.UserListener"/>
+        </entity-listeners>
         <convert converter="ro.cs.tao.persistence.convert.UserStatusConverter" attribute-name="status" />
         <attributes>
             <id name="id">
