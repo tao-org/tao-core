@@ -201,6 +201,11 @@ public class FileUtilities {
         }
     }
 
+    public static List<Path> listFiles(Path folder, String pattern) throws IOException {
+        final Pattern p = Pattern.compile(pattern);
+        return Files.walk(folder, 1).filter(f -> p.matcher(f.getFileName().toString()).find()).collect(Collectors.toList());
+    }
+
     public static List<Path> listFiles(Path folder, String pattern, LocalDateTime before) throws IOException {
         final Instant instant = before.atZone(ZoneOffset.systemDefault()).toInstant();
         final Pattern p = Pattern.compile(pattern);

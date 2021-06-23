@@ -375,4 +375,10 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
     public void downloadIgnored(EOProduct product, String reason) {
         //No-op
     }
+
+    @Override
+    public void downloadQueued(EOProduct product, String reason) {
+        product.setProductStatus(ProductStatus.QUEUED);
+        logger.warning(String.format("Product %s not downloaded. Reason: %s", product.getName(), reason));
+    }
 }

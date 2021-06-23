@@ -226,4 +226,31 @@ public class DataSourceManager {
     public Map<String, DataSourceParameter> getSupportedParameters(String sensorName, String dataSourceName) {
         return this.registeredSources.get(new AbstractMap.SimpleEntry<>(sensorName, dataSourceName));
     }
+
+    /**
+     * Returns a new instance of the first data source that matches the given remote URL (either the given URL starts
+     * with the data source remote root URL or the data source root URL starts with the given URL fragment).
+     *
+     * @param url   The URL or the URL fragment to be matched.
+     * @return      A data source instance if matched or <code>null</code> if not found.
+     */
+    public DataSource<?, ?> getMatchingDataSource(String url) {
+        DataSource<?, ?> match = url != null ? this.registry.getServices().stream().filter(d -> {
+            final String lowerUrl = url.toLowerCase();
+            String currentUrl = d.getConnectionString().toLowerCase();
+            if (currentUrl.startsWith(lowerUrl) || lowerUrl.startsWith(currentUrl)) {
+                return true;
+            }
+            currentUrl = d.getAlternateConnectionString();
+            return currentUrl != null && (currentUrl.toLowerCase().startsWith(lowerUrl) || lowerUrl.startsWith(currentUrl.toLowerCase()));
+        }).findFirst().orElse(null) : null;
+        if (match != null) {
+            try {
+                match = match.getClass().newInstance();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return match;
+    }
 }
