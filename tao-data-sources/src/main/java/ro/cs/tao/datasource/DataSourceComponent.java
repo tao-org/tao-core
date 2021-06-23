@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.datasource;
 
+import org.apache.http.HttpStatus;
 import ro.cs.tao.ProgressListener;
 import ro.cs.tao.component.DataDescriptor;
 import ro.cs.tao.component.SourceDescriptor;
@@ -38,7 +39,9 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -415,9 +418,10 @@ public class DataSourceComponent extends TaoComponent {
     }
 
     private List<EOProduct> doFetchImpl(List<EOProduct> products, Set<String> tiles, String destinationPath, String localRootPath, Properties additionalProperties) {
-        DataSource<?, ?> dataSource = createDataSource();
+        DataSource<?, ?> dataSource;
         String errorMessage;
         for (EOProduct product : products) {
+            dataSource = createDataSource(product);
             // add the attribute for max retries such that if the maxRetries is exceeded
             // to be set, on failure, to aborted state
             product.addAttribute("maxRetries", String.valueOf(this.maxRetries));
@@ -503,8 +507,10 @@ public class DataSourceComponent extends TaoComponent {
             } catch (Exception e) {
                 errorMessage = e.getMessage();
             } finally {
-                if (errorMessage != null) {
-                    if (this.productStatusListener != null) {
+                if (errorMessage != null && this.productStatusListener != null) {
+                    if(errorMessage.contains(""+ HttpStatus.SC_ACCEPTED)){
+                        this.productStatusListener.downloadQueued(product,"Product not ready for download now. Download was queued.");
+                    }else {
                         this.productStatusListener.downloadFailed(product, errorMessage);
                     }
                 }
@@ -520,10 +526,26 @@ public class DataSourceComponent extends TaoComponent {
     }
 
     private DataSource<?, ?> createDataSource() {
+        return createDataSource(null);
+    }
+
+    private DataSource<?, ?> createDataSource(EOProduct product) {
         DataSourceManager dsManager = DataSourceManager.getInstance();
-        DataSource<?, ?> dataSource = this.dataSourceName != null ?
-                dsManager.createInstance(this.sensorName, this.dataSourceName) :
-                dsManager.createInstance(this.sensorName);
+        DataSource<?, ?> dataSource = null;
+        if (product != null) {
+            try {
+                URL downloadURL = new URL(product.getLocation());
+                String url = downloadURL.getProtocol() + "://" + downloadURL.getAuthority();
+                dataSource = dsManager.getMatchingDataSource(url);
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+        }
+        if (dataSource == null) {
+            dataSource = this.dataSourceName != null ?
+                    dsManager.createInstance(this.sensorName, this.dataSourceName) :
+                    dsManager.createInstance(this.sensorName);
+        }
         if (this.userName != null) {
             dataSource.setCredentials(this.userName, this.password);
         }

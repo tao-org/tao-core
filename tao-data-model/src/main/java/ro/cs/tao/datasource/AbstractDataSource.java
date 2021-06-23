@@ -80,6 +80,13 @@ public abstract class AbstractDataSource<Q extends DataQuery, T> extends DataSou
         ProductFetchStrategy productFetchStrategy = null;
         if (this.parameterProvider != null) {
             productFetchStrategy = this.parameterProvider.getRegisteredProductFetchStrategies().get(sensorName);
+            if(productFetchStrategy == null){
+                for(String expectedSensorName:this.parameterProvider.getRegisteredProductFetchStrategies().keySet()){
+                    if(sensorName.toLowerCase().startsWith(expectedSensorName.toLowerCase()) || expectedSensorName.toLowerCase().startsWith(sensorName.toLowerCase())){
+                        productFetchStrategy = this.parameterProvider.getRegisteredProductFetchStrategies().get(expectedSensorName);
+                    }
+                }
+            }
             if (productFetchStrategy != null) {
                 productFetchStrategy.setCredentials(this.credentials);
             }
