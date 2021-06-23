@@ -43,7 +43,13 @@ public class BlockingQueueWorker<E> extends Thread {
         while (!stopped) {
             try {
                 E entry = this.monitoredQueue.take();
-                this.executor.submit(() -> this.work.apply(entry));
+                this.executor.submit(() -> {
+                    try {
+                        this.work.apply(entry);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                });
             } catch (InterruptedException e) {
                 Logger.getLogger(getClass().getName()).warning(e.getMessage());
             }

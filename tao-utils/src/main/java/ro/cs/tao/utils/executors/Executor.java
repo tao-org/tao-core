@@ -118,11 +118,12 @@ public abstract class Executor<T> implements Runnable {
         if (job == null) {
             throw new IllegalArgumentException("ExecutionUnit must not be null");
         }
-        Executor<?> executor = create(job.getType(),
-                                   job.getHost(),
-                                   job.getArguments(),
-                                   job.asSuperUser(),
-                                   job.getSshMode());
+        final Executor<?> executor;
+        if (job.getType() != ExecutorType.SCRIPT) {
+            executor = create(job.getType(), job.getHost(), job.getArguments(), job.asSuperUser(), job.getSshMode());
+        } else{
+            executor = new JsonExecutor(job);
+        }
         executor.setUser(job.getUser());
         executor.setPassword(job.getPassword());
         executor.setCertificate(job.getCertificate());

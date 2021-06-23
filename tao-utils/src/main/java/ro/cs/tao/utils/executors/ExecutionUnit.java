@@ -15,24 +15,32 @@
  */
 package ro.cs.tao.utils.executors;
 
+import ro.cs.tao.utils.executors.container.ContainerType;
+import ro.cs.tao.utils.executors.container.ContainerUnit;
+
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Structure holding information for a command to be executed
  *
  * @author Cosmin Cara
  */
-public final class ExecutionUnit {
-    private final ExecutorType type;
-    private final String host;
-    private final String user;
-    private final String password;
-    private String certificate;
-    private final List<String> arguments;
-    private final boolean asSuperUser;
-    private final SSHMode sshMode;
-    private Long minMemory;
-    private Long minDisk;
+public class ExecutionUnit {
+    protected final ExecutorType type;
+    protected final String host;
+    protected final String user;
+    protected final String password;
+    protected String certificate;
+    protected final List<String> arguments;
+    protected String workdingDirectory;
+    protected final boolean asSuperUser;
+    protected final SSHMode sshMode;
+    protected Long minMemory;
+    protected Long minDisk;
+    protected ContainerUnit containerUnit;
+    protected Map<String, Object> metadata;
 
     public ExecutionUnit(ExecutorType type, String host, String user, String password, List<String> arguments, boolean asSuperUser, SSHMode sshMode) {
         this.type = type;
@@ -82,10 +90,80 @@ public final class ExecutionUnit {
         this.certificate = certificate;
     }
 
+    public void setContainerType(ContainerType type) {
+        this.containerUnit = new ContainerUnit(type);
+    }
+
+    public String getWorkdingDirectory() {
+        return workdingDirectory;
+    }
+
+    public void setWorkdingDirectory(String workdingDirectory) {
+        this.workdingDirectory = workdingDirectory;
+    }
+
+    public boolean hasContainerArguments() {
+        return this.containerUnit != null;
+    }
+
+    public void addContainerVolumeMapping(String source, String target) {
+        containerUnit().addVolumeMapping(source, target);
+    }
+
+    public void addContainerEnvironmentVariable(String name, String value) {
+        containerUnit.addEnvironmentVariable(name, value);
+    }
+
+    public void addArgument(String name, String value) {
+        containerUnit().addArgument(name, value);
+    }
+
+    public Map<String, String> getVolumeMap() {
+        return containerUnit().getVolumeMap();
+    }
+
+    public List<String> getContainerArguments() {
+        return containerUnit().getArguments();
+    }
+
+    public Map<String, String> getContainerEnvironmentVariables() {
+        return containerUnit().getEnvironmentVariables();
+    }
+
+    public ContainerUnit getContainerUnit() {
+        return containerUnit;
+    }
+
+    public void setContainerUnit(ContainerUnit containerUnit) {
+        this.containerUnit = containerUnit;
+    }
+
+    public Map<String, Object> getMetadata() {
+        return metadata;
+    }
+
+    public void addMetadata(String key, Object value) {
+        if (this.metadata == null) {
+            this.metadata = new HashMap<>();
+        }
+        this.metadata.put(key, value);
+    }
+
+    public String getJsonPath() {
+        return this.metadata != null && this.metadata.containsKey("jsonPath") ? (String) this.metadata.get("jsonPath") : null;
+    }
+
     @Override
     public String toString() {
         return "ExecutionUnit {" +
                 "host='" + host + '\'' +
                 ", arguments=" + (arguments != null ? "'" + String.join(",", arguments) + "'" : "none") + "}";
+    }
+
+    private ContainerUnit containerUnit() {
+        if (this.containerUnit == null) {
+            throw new IllegalArgumentException("Container type not set");
+        }
+        return this.containerUnit;
     }
 }

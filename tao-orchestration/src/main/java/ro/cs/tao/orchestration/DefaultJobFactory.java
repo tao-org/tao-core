@@ -51,19 +51,19 @@ import java.util.stream.Collectors;
  *
  * @author Cosmin Cara
  */
-public class JobFactory {
+public class DefaultJobFactory {
 
-    private static final int DEFAULT_INSTANCE = 1;
-    private final ExecutionJobProvider jobProvider;
-    private final ExecutionTaskProvider taskProvider;
-    private final QueryProvider queryProvider;
-    private final ProcessingComponentProvider processingComponentProvider;
-    private final DataSourceComponentProvider dataSourceComponentProvider;
-    private final DataSourceComponentGroupProvider dataSourceComponentGroupProvider;
-    private final GroupComponentProvider groupComponentProvider;
-    private final Logger logger;
+    protected static final int DEFAULT_INSTANCE = 1;
+    protected final ExecutionJobProvider jobProvider;
+    protected final ExecutionTaskProvider taskProvider;
+    protected final QueryProvider queryProvider;
+    protected final ProcessingComponentProvider processingComponentProvider;
+    protected final DataSourceComponentProvider dataSourceComponentProvider;
+    protected final DataSourceComponentGroupProvider dataSourceComponentGroupProvider;
+    protected final GroupComponentProvider groupComponentProvider;
+    protected final Logger logger;
 
-    JobFactory() {
+    DefaultJobFactory() {
         this.jobProvider = SpringContextBridge.services().getService(ExecutionJobProvider.class);
         this.taskProvider = SpringContextBridge.services().getService(ExecutionTaskProvider.class);
         this.queryProvider = SpringContextBridge.services().getService(QueryProvider.class);
@@ -71,7 +71,7 @@ public class JobFactory {
         this.dataSourceComponentProvider = SpringContextBridge.services().getService(DataSourceComponentProvider.class);
         this.dataSourceComponentGroupProvider = SpringContextBridge.services().getService(DataSourceComponentGroupProvider.class);
         this.groupComponentProvider = SpringContextBridge.services().getService(GroupComponentProvider.class);
-        this.logger = Logger.getLogger(JobFactory.class.getName());
+        this.logger = Logger.getLogger(DefaultJobFactory.class.getName());
     }
 
     /**
@@ -81,7 +81,8 @@ public class JobFactory {
      * @param workflow  The workflow
      * @param inputs    The (possibly overridden) input parameter values
      */
-    public ExecutionJob createJob(String jobName, WorkflowDescriptor workflow, Map<String, Map<String, String>> inputs) throws PersistenceException {
+    public ExecutionJob createJob(String jobName, WorkflowDescriptor workflow, Map<String, Map<String, String>> inputs)
+            throws PersistenceException {
         ExecutionJob job = null;
         if (workflow != null && workflow.isActive()) {
             job = new ExecutionJob();
@@ -126,10 +127,9 @@ public class JobFactory {
         return job;
     }
 
-    private ExecutionTask createTaskGroup(ExecutionJob job,
-                                          WorkflowDescriptor workflow,
-                                          WorkflowNodeGroupDescriptor groupNode,
-                                          Map<String, String> inputs) throws PersistenceException {
+    protected ExecutionTask createTaskGroup(ExecutionJob job, WorkflowDescriptor workflow, WorkflowNodeGroupDescriptor groupNode,
+                                            Map<String, String> inputs)
+            throws PersistenceException {
         final ExecutionGroup group = new ExecutionGroup();
         group.setWorkflowNodeId(groupNode.getId());
         group.setExecutionStatus(ExecutionStatus.UNDETERMINED);
@@ -164,8 +164,8 @@ public class JobFactory {
         return group;
     }
 
-    private ExecutionTask createDataSourceGroupTask(ExecutionJob job,
-                                                    WorkflowNodeDescriptor groupNode) throws PersistenceException {
+    protected  ExecutionTask createDataSourceGroupTask(ExecutionJob job, WorkflowNodeDescriptor groupNode)
+            throws PersistenceException {
         ExecutionGroup group = new ExecutionGroup();
         group.setWorkflowNodeId(groupNode.getId());
         group.setExecutionStatus(ExecutionStatus.UNDETERMINED);
@@ -188,10 +188,9 @@ public class JobFactory {
         return group;
     }
 
-    private ExecutionTask createTask(ExecutionJob job,
-                                     WorkflowDescriptor workflow,
-                                     WorkflowNodeDescriptor workflowNode,
-                                     Map<String, String> inputs) throws PersistenceException {
+    protected ExecutionTask createTask(ExecutionJob job, WorkflowDescriptor workflow, WorkflowNodeDescriptor workflowNode,
+                                     Map<String, String> inputs)
+            throws PersistenceException {
         ExecutionTask task;
         if (workflowNode instanceof WorkflowNodeGroupDescriptor) {
             task = createTaskGroup(job, workflow, (WorkflowNodeGroupDescriptor) workflowNode, inputs);
@@ -218,12 +217,11 @@ public class JobFactory {
         return task;
     }
 
-    private ExecutionTask createProcessingExecutionTask(WorkflowNodeDescriptor workflowNode,
-                                                        Set<ComponentLink> incomingLinks,
+    protected ExecutionTask createProcessingExecutionTask(WorkflowNodeDescriptor workflowNode, Set<ComponentLink> incomingLinks,
                                                         Map<String, String> inputs) {
-        List<ParameterValue> customValues = workflowNode.getCustomValues();
-        ProcessingComponent component = processingComponentProvider.get(workflowNode.getComponentId());
-        ProcessingExecutionTask task = new ProcessingExecutionTask();
+        final List<ParameterValue> customValues = workflowNode.getCustomValues();
+        final ProcessingComponent component = processingComponentProvider.get(workflowNode.getComponentId());
+        final ProcessingExecutionTask task = new ProcessingExecutionTask();
         task.setComponent(component);
         // Placeholders for inputs of previous tasks
         if (incomingLinks != null) {
@@ -233,7 +231,7 @@ public class JobFactory {
             });
         }
         // Placeholders for outputs of this task
-        List<TargetDescriptor> targets = component.getTargets();
+        final List<TargetDescriptor> targets = component.getTargets();
         if (targets != null) {
             targets.forEach(t -> task.setOutputParameterValue(t.getName(), null));
         }
@@ -242,7 +240,7 @@ public class JobFactory {
                 task.setInputParameterValue(param.getParameterName(), param.getParameterValue());
             }
         }
-        String nodeAffinity = component.getNodeAffinity();
+        final String nodeAffinity = component.getNodeAffinity();
         if (nodeAffinity != null && !"Any".equals(nodeAffinity)) {
             task.setExecutionNodeHostName(nodeAffinity);
         }
@@ -258,9 +256,9 @@ public class JobFactory {
         return task;
     }
 
-    private ExecutionTask createDataSourceExecutionTask(ExecutionJob job,
-                                                        WorkflowNodeDescriptor workflowNode,
-                                                        Map<String, String> inputs) throws PersistenceException {
+    protected ExecutionTask createDataSourceExecutionTask(ExecutionJob job, WorkflowNodeDescriptor workflowNode,
+                                                        Map<String, String> inputs)
+            throws PersistenceException {
         DataSourceExecutionTask task = new DataSourceExecutionTask();
         final Map<String, String> taskInputs;
         List<ParameterValue> customValues = workflowNode.getCustomValues();
@@ -334,10 +332,9 @@ public class JobFactory {
         return task;
     }
 
-    private ExecutionTask createDataSourceExecutionTask(ExecutionJob job,
-                                                        WorkflowNodeDescriptor workflowNode,
-                                                        DataSourceComponent component,
-                                                        Query query) throws PersistenceException {
+    protected ExecutionTask createDataSourceExecutionTask(ExecutionJob job, WorkflowNodeDescriptor workflowNode,
+                                                          DataSourceComponent component, Query query)
+            throws PersistenceException {
         DataSourceExecutionTask task = new DataSourceExecutionTask();
         final Map<String, String> taskInputs;
         List<ParameterValue> customValues = workflowNode.getCustomValues();

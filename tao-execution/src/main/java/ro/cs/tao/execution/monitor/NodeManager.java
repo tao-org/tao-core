@@ -218,12 +218,8 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
      * This method blocks until a node is available.
      * If there is just a single node (i.e. the master) registered, it returns immediately the master node description.
      */
-    public NodeDescription getFirstAvailableNode() {
-        if (this.nodes.size() == 1) {
-            NodeRuntimeWrapper firstValue = this.nodes.values().iterator().next();
-            return firstValue.getNode();
-        }
-        return getAvailableNode(0, 0, 0).getNode();
+    public NodeData getMasterNode() {
+        return new NodeData(TopologyManager.getInstance().getMasterNodeInfo(), 0, 0);
     }
 
     protected NodeDescription getStartingAvailableNode() {

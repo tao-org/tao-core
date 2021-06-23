@@ -14,14 +14,16 @@
  * with this program; if not, see http://www.gnu.org/licenses/
  */
 
-package ro.cs.tao.orchestration.util;
+package ro.cs.tao.execution.util;
 
 import org.springframework.stereotype.Component;
 import ro.cs.tao.component.*;
 import ro.cs.tao.datasource.persistence.DataSourceComponentProvider;
+import ro.cs.tao.docker.Container;
 import ro.cs.tao.execution.ExecutionConfiguration;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
+import ro.cs.tao.persistence.ContainerProvider;
 import ro.cs.tao.persistence.GroupComponentProvider;
 import ro.cs.tao.persistence.ProcessingComponentProvider;
 import ro.cs.tao.persistence.WorkflowNodeProvider;
@@ -37,6 +39,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * Utility class for shortcutting various operations on ExecutionTasks.
@@ -51,6 +54,7 @@ public class TaskUtilities {
     private static final DataSourceComponentProvider dataSourceComponentProvider;
     private static final GroupComponentProvider groupComponentProvider;
     private static final ExecutionTaskProvider taskProvider;
+    private static final ContainerProvider containerProvider;
     private static final Logger logger = Logger.getLogger(TaskUtilities.class.getName());
     private static final String DOCKER_MOUNT_POINT;
 
@@ -71,6 +75,7 @@ public class TaskUtilities {
         processingComponentProvider = SpringContextBridge.services().getService(ProcessingComponentProvider.class);
         dataSourceComponentProvider = SpringContextBridge.services().getService(DataSourceComponentProvider.class);
         groupComponentProvider = SpringContextBridge.services().getService(GroupComponentProvider.class);
+        containerProvider = SpringContextBridge.services().getService(ContainerProvider.class);
     }
 
     public static WorkflowNodeDescriptor getWorkflowNode(ExecutionTask task) {
@@ -78,6 +83,11 @@ public class TaskUtilities {
             return null;
         }
         return workflowNodeProvider.get(task.getWorkflowNodeId());
+    }
+
+    public static Container getComponentContainer(WorkflowNodeDescriptor node) {
+        final ProcessingComponent component = processingComponentProvider.get(node.getComponentId());
+        return containerProvider.get(component.getContainerId());
     }
 
     public static TransitionBehavior getTransitionBehavior(ExecutionTask task) {
@@ -106,6 +116,16 @@ public class TaskUtilities {
             }
         }
         return component;
+    }
+
+    public static List<Long> getParentIds(ExecutionTask task) {
+        List<Long> ids = null;
+        final WorkflowNodeDescriptor node = getWorkflowNode(task);
+        final Set<ComponentLink> links = node.getIncomingLinks();
+        if (links != null) {
+            ids = links.stream().map(l -> taskProvider.getByJobAndNode(task.getJob().getId(), l.getSourceNodeId(), task.getInstanceId()).getId()).distinct().collect(Collectors.toList());
+        }
+        return ids;
     }
 
     /**

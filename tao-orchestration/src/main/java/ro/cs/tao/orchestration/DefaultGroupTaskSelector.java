@@ -20,7 +20,7 @@ import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.component.Variable;
 import ro.cs.tao.execution.model.*;
-import ro.cs.tao.orchestration.util.TaskUtilities;
+import ro.cs.tao.execution.util.TaskUtilities;
 import ro.cs.tao.utils.TriFunction;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
