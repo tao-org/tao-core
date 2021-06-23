@@ -6,7 +6,8 @@ import java.util.logging.Logger;
 public class ExceptionUtils {
 
     public static String getExceptionLoggingMessage(Throwable t, int stackFrameCount) {
-        String logExceptionValue = System.getProperty("log.exception.stack.trace");
+        //String logExceptionValue = System.getProperty("log.exception.stack.trace");
+        String logExceptionValue = "false";
         if (Boolean.parseBoolean(logExceptionValue)) {
             return org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace(t);
         } else {

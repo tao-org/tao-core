@@ -71,7 +71,11 @@ public class Parallel {
         }
         List<Future<?>> tasks  = new LinkedList<>();
         for (final T param : params) {
-            tasks.add(executor.submit(() -> code.run(param)));
+            tasks.add(executor.submit(() -> {
+                try {
+                    code.run(param);
+                } catch (Exception ignored) {}
+            }));
         }
         tasks.forEach(task -> {
             try   { task.get(); }

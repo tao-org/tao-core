@@ -739,6 +739,18 @@
         </attributes>
     </entity>
 
+    <entity class="ro.cs.tao.execution.model.ScriptTask" access="PROPERTY">
+
+        <discriminator-value>12</discriminator-value>
+
+        <attributes>
+            <many-to-one name="component" fetch="LAZY" target-entity="ro.cs.tao.component.ProcessingComponent">
+                <join-column name="component_id" nullable="false"/>
+            </many-to-one>
+            <!--<transient name="instanceTargetOutput"/>-->
+        </attributes>
+    </entity>
+
     <entity class="ro.cs.tao.execution.model.DataSourceExecutionTask" access="PROPERTY">
 
         <discriminator-value>31</discriminator-value>

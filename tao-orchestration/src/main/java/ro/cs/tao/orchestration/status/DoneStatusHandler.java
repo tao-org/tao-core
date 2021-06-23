@@ -21,6 +21,10 @@ public class DoneStatusHandler extends TaskStatusHandler {
             job.setExecutionStatus(ExecutionStatus.DONE);
             job.setEndTime(LocalDateTime.now());
             jobProvider.update(job);
+        } else if (job.getExecutionStatus() != ExecutionStatus.RUNNING &&
+                job.orderedTasks().stream().noneMatch(t -> t.getExecutionStatus() == ExecutionStatus.FAILED)) {
+            job.setExecutionStatus(ExecutionStatus.RUNNING);
+            jobProvider.update(job);
         }
     }
 }

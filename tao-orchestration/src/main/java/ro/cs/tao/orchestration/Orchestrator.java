@@ -36,6 +36,7 @@ import ro.cs.tao.execution.callback.EndpointDescriptor;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.execution.persistence.ExecutionJobProvider;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
+import ro.cs.tao.execution.util.TaskUtilities;
 import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.Notifiable;
@@ -45,7 +46,6 @@ import ro.cs.tao.optimization.WorkflowOptimizer;
 import ro.cs.tao.orchestration.commands.JobCommand;
 import ro.cs.tao.orchestration.commands.TaskCommand;
 import ro.cs.tao.orchestration.status.TaskStatusHandler;
-import ro.cs.tao.orchestration.util.TaskUtilities;
 import ro.cs.tao.persistence.*;
 import ro.cs.tao.quota.QuotaException;
 import ro.cs.tao.quota.UserQuotaManager;
@@ -117,7 +117,7 @@ public class Orchestrator extends Notifiable {
 
     private TaskSelector<ExecutionGroup> groupTaskSelector;
     private TaskSelector<ExecutionJob> jobTaskSelector;
-    private JobFactory jobFactory;
+    private DefaultJobFactory jobFactory;
     private Set<MetadataInspector> metadataServices;
     private final Map<String, ExecutorService> executors;
     private final Set<Long> runningTasks;
@@ -147,7 +147,7 @@ public class Orchestrator extends Notifiable {
         initializeJobSelector(workflowProvider, this.taskProvider::getByJobAndNode);
         initializeGroupSelector(workflowProvider, this.taskProvider::getByGroupAndNode);
         TaskStatusHandler.registerHandlers(jobProvider, taskProvider);
-        this.jobFactory = new JobFactory();
+        this.jobFactory = new DefaultJobFactory();
         this.metadataServices = ServiceRegistryManager.getInstance().getServiceRegistry(MetadataInspector.class).getServices();
         QueueMonitor monitor = new QueueMonitor();
         monitor.setName("orchestrator");
@@ -166,7 +166,7 @@ public class Orchestrator extends Notifiable {
     public ExecutionJob startWorkflow(SessionContext context, long workflowId, String description,
                               Map<String, Map<String, String>> inputs, ExecutorService executorService) throws ExecutionException {
         try {
-            final ExecutionJob executionJob = createJob(context, workflowId, description, inputs);
+            final ExecutionJob executionJob = createJob(context, workflowId, description, inputs, true);
             this.executors.put(context.getPrincipal().getName(), executorService);
             executorService.submit(() -> JobCommand.START.applyTo(executionJob));
             return executionJob;
@@ -211,15 +211,27 @@ public class Orchestrator extends Notifiable {
      * @throws ExecutionException In case anything goes wrong
      */
     public ExecutionJob createJob(SessionContext context, long workflowId, String description,
-                                  Map<String, Map<String, String>> inputs)  throws ExecutionException {
-        return createJob(context, workflowId, description, inputs, false);
+                                  Map<String, Map<String, String>> inputs, ExecutorService executorService)  throws ExecutionException {
+        try {
+            final WorkflowDescriptor descriptor = workflowProvider.get(workflowId);
+            if (descriptor == null) {
+                throw new ExecutionException(String.format("Non-existent workflow [%s]", workflowId));
+            }
+            final ExecutionJob job = new ScriptJobFactory().createJob(description, descriptor, inputs);
+            this.executors.put(context.getPrincipal().getName(), executorService);
+            executorService.submit(() -> JobCommand.START.applyTo(job));
+            return job;
+        } catch (PersistenceException e) {
+            logger.severe(e.getMessage());
+            throw new ExecutionException(e.getMessage());
+        }
     }
 
 
     public ExecutionJob createJob(SessionContext context, long workflowId, String description,
                                   Map<String, Map<String, String>> inputs, boolean optimize)  throws ExecutionException {
         try {
-            WorkflowDescriptor descriptor = workflowProvider.get(workflowId);
+            final WorkflowDescriptor descriptor = workflowProvider.get(workflowId);
             if (descriptor == null) {
                 throw new ExecutionException(String.format("Non-existent workflow [%s]", workflowId));
             }

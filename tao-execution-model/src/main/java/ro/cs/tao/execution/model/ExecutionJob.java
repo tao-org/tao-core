@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.execution.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import ro.cs.tao.component.LongIdentifiable;
 import ro.cs.tao.execution.callback.EndpointDescriptor;
 
@@ -39,6 +40,7 @@ public class ExecutionJob extends LongIdentifiable implements StatusChangeListen
     private ExecutionStatus executionStatus;
     private boolean external;
     private EndpointDescriptor callbackDescriptor;
+    @JsonManagedReference
     private List<ExecutionTask> tasks;
 
     public ExecutionJob() {}
@@ -95,6 +97,7 @@ public class ExecutionJob extends LongIdentifiable implements StatusChangeListen
     public void setTasks(List<ExecutionTask> tasks) {
         this.tasks = tasks;
     }
+    @JsonManagedReference
     public List<ExecutionTask> getTasks() {
         if (tasks == null) {
             tasks = new ArrayList<>();

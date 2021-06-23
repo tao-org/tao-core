@@ -20,13 +20,11 @@ import ro.cs.tao.component.validation.ValidationException;
 import ro.cs.tao.security.SessionContext;
 import ro.cs.tao.utils.FileUtilities;
 
+import javax.xml.bind.annotation.XmlTransient;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
@@ -43,6 +41,9 @@ public class ProcessingExecutionTask extends ExecutionTask {
 
     private String instanceTargetOutput;
 
+    @XmlTransient
+    protected Set<String> externalCommonParameters;
+
     public ProcessingExecutionTask() {
         super();
     }
@@ -53,6 +54,10 @@ public class ProcessingExecutionTask extends ExecutionTask {
 
     public void setComponent(ProcessingComponent component) {
         this.component = component;
+    }
+
+    public void setExternalCommonParameters(Set<String> parameterNames) {
+        this.externalCommonParameters = parameterNames;
     }
 
     @Override
@@ -80,8 +85,10 @@ public class ProcessingExecutionTask extends ExecutionTask {
             }
         }
         if (!descriptorExists) {
-            throw new ValidationException(String.format("The parameter ID [%s] does not exists in the component '%s'",
-                    parameterName, component.getLabel()));
+            if (this.externalCommonParameters == null || !this.externalCommonParameters.contains(parameterName)) {
+                throw new ValidationException(String.format("The parameter ID [%s] does not exists in the component '%s'",
+                                                            parameterName, component.getLabel()));
+            }
         }
         if (this.inputParameterValues == null) {
             this.inputParameterValues = new ArrayList<>();

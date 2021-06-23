@@ -16,8 +16,9 @@
 package ro.cs.tao.execution.local;
 
 import org.ggf.drmaa.*;
+import ro.cs.tao.component.SystemVariable;
 import ro.cs.tao.configuration.ConfigurationManager;
-import ro.cs.tao.execution.Constants;
+import ro.cs.tao.execution.DrmaaJobExtensions;
 import ro.cs.tao.execution.ExecutionConfiguration;
 import ro.cs.tao.execution.monitor.NodeManager;
 import ro.cs.tao.spi.ServiceRegistry;
@@ -25,9 +26,12 @@ import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.topology.NodeFlavor;
 import ro.cs.tao.utils.executors.*;
+import ro.cs.tao.utils.executors.container.ContainerCmdBuilder;
+import ro.cs.tao.utils.executors.container.ContainerUnit;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -43,6 +47,8 @@ import java.util.stream.Collectors;
  * @author Cosmin Cara
  */
 public class DefaultSession implements Session {
+    private final String localHost;
+    private final String localIp;
     private NodeDescription[] nodes;
     private volatile boolean initialized;
     private Map<String, JobTemplate> jobTemplates;
@@ -53,7 +59,19 @@ public class DefaultSession implements Session {
     private Set<String> cmdsToRunAsSu = new HashSet<String>() {{add("docker");}};
     private Logger logger = Logger.getLogger(DefaultSession.class.getName());
     private boolean canHaveNodeList;
-    private final boolean isDevMode = ExecutionConfiguration.developmentModeEnabled();
+    //private final boolean isDevMode = ExecutionConfiguration.developmentModeEnabled();
+
+
+    public DefaultSession() {
+        try {
+            final InetAddress localHost = InetAddress.getLocalHost();
+            this.localHost = localHost.getHostName();
+            this.localIp = localHost.getHostAddress();
+        } catch (UnknownHostException e) {
+            logger.severe(e.getMessage());
+            throw new RuntimeException(e);
+        }
+    }
 
     @Override
     public String serviceName() { return "NoCRM"; }
@@ -114,7 +132,7 @@ public class DefaultSession implements Session {
         if (canHaveNodeList) {
             this.nodes = NodeManager.getInstance().getCurrentNodes();
         }
-        JobTemplate jobTemplate = new SimpleJobTemplate() {
+        final JobTemplate jobTemplate = new SimpleJobTemplate() {
             private long softTimeLimit;
             @Override
             public void setSoftRunDurationLimit(long softRunDurationLimit) throws DrmaaException {
@@ -129,8 +147,15 @@ public class DefaultSession implements Session {
             @Override
             protected Set getOptionalAttributeNames() {
                 Set set = new HashSet();
-                set.add(Constants.MEMORY_REQUIREMENTS_ATTRIBUTE);
-                set.add(Constants.NODE_ATTRIBUTE);
+                set.add(DrmaaJobExtensions.MEMORY_REQUIREMENTS_ATTRIBUTE);
+                set.add(DrmaaJobExtensions.NODE_ATTRIBUTE);
+                set.add(DrmaaJobExtensions.CONTAINER_ATTRIBUTE);
+                set.add(DrmaaJobExtensions.SIMULATE_EXECUTION_ATTRIBUTE);
+                set.add(DrmaaJobExtensions.TASK_NAME);
+                set.add(DrmaaJobExtensions.TASK_ID);
+                set.add(DrmaaJobExtensions.TASK_ANCESTOR_ID);
+                set.add(DrmaaJobExtensions.TASK_OUTPUT);
+                set.add(DrmaaJobExtensions.JOB_ID);
                 return set;
             }
         };
@@ -166,28 +191,51 @@ public class DefaultSession implements Session {
         synchronized (this) {
             Long memConstraint = null;
             NodeDescription node = null;
+            final List<String> args = new ArrayList<>();
+            boolean simulate = false;
             if (jt instanceof JobTemplateExtension) {
                 JobTemplateExtension job = (JobTemplateExtension) jt;
-                if (job.hasAttribute(Constants.MEMORY_REQUIREMENTS_ATTRIBUTE)) {
-                    Object value = job.getAttribute(Constants.MEMORY_REQUIREMENTS_ATTRIBUTE);
+                if (job.hasAttribute(DrmaaJobExtensions.MEMORY_REQUIREMENTS_ATTRIBUTE)) {
+                    Object value = job.getAttribute(DrmaaJobExtensions.MEMORY_REQUIREMENTS_ATTRIBUTE);
                     memConstraint = value != null ? Long.parseLong(value.toString()) : null;
                 }
-                if (job.hasAttribute(Constants.NODE_ATTRIBUTE)) {
-                    String host = (String) job.getAttribute(Constants.NODE_ATTRIBUTE);
+                if (job.hasAttribute(DrmaaJobExtensions.NODE_ATTRIBUTE)) {
+                    String host = (String) job.getAttribute(DrmaaJobExtensions.NODE_ATTRIBUTE);
                     node = this.nodes != null ? Arrays.stream(this.nodes).filter(n -> host.equals(n.getId())).findFirst().orElse(null) : null;
                 }
+                if (job.hasAttribute(DrmaaJobExtensions.SIMULATE_EXECUTION_ATTRIBUTE)) {
+                    simulate = (Boolean) job.getAttribute(DrmaaJobExtensions.SIMULATE_EXECUTION_ATTRIBUTE);
+                }
+                if (job.hasAttribute(DrmaaJobExtensions.CONTAINER_ATTRIBUTE) && !simulate) {
+                    ContainerUnit unit = (ContainerUnit) job.getAttribute(DrmaaJobExtensions.CONTAINER_ATTRIBUTE);
+                    args.addAll(ContainerCmdBuilder.buildCommandLineArguments(unit));
+                }
             }
-            final List<String> args = new ArrayList<>();
             args.add(jt.getRemoteCommand());
             args.addAll(jt.getArgs());
             final ExecutionUnit unit;
-            if (isDevMode) {
-                unit = new ExecutionUnit(ExecutorType.MOCK, node.getId(), node.getUserName(), node.getUserPass(),
-                        //Crypto.decrypt(node.getUserPass(), node.getUserName()),
-                        args, false /*cmdsToRunAsSu.contains(jt.getRemoteCommand())*/, SSHMode.EXEC);
+            if (simulate) {
+                unit = new ExecutionUnit(ExecutorType.SCRIPT, node != null ? node.getId() : this.localHost,
+                                         node != null ? node.getUserName() : null,
+                                         node != null ? node.getUserPass() : null,
+                                         args, false, SSHMode.EXEC);
+                final JobTemplateExtension template = (JobTemplateExtension) jt;
+                unit.setContainerUnit((ContainerUnit) template.getAttribute(DrmaaJobExtensions.CONTAINER_ATTRIBUTE));
+                unit.addMetadata("id", template.getAttribute(DrmaaJobExtensions.TASK_ID));
+                unit.addMetadata("name", template.getAttribute(DrmaaJobExtensions.TASK_NAME));
+                unit.addMetadata("dependsOn", template.getAttribute(DrmaaJobExtensions.TASK_ANCESTOR_ID));
+                unit.addMetadata("canDelete", template.getAttribute(DrmaaJobExtensions.TASK_OUTPUT));
+                unit.addMetadata("jsonPath", Paths.get(SystemVariable.USER_FILES.value(), template.getAttribute(DrmaaJobExtensions.JOB_ID).toString() + ".json"));
+
+            } else if (ExecutionConfiguration.developmentModeEnabled()) {
+                unit = new ExecutionUnit(ExecutorType.MOCK, node != null ? node.getId() : this.localHost,
+                                         node != null ? node.getUserName() : null,
+                                         node != null ? node.getUserPass() : null,
+                                         //Crypto.decrypt(node.getUserPass(), node.getUserName()),
+                                         args, false /*cmdsToRunAsSu.contains(jt.getRemoteCommand())*/, SSHMode.EXEC);
             } else {
                 unit = node == null || isLocalHost(node.getId()) ?
-                        new ExecutionUnit(ExecutorType.PROCESS, node.getId(), node.getUserName(), node.getUserPass(),
+                        new ExecutionUnit(ExecutorType.PROCESS, this.localHost, null, null,
                                 args, false/*cmdsToRunAsSu.contains(jt.getRemoteCommand())*/, null) :
                         new ExecutionUnit(ExecutorType.SSH2, node.getId(), node.getUserName(), node.getUserPass(),
                                 //Crypto.decrypt(node.getUserPass(), node.getUserName()),
@@ -388,16 +436,7 @@ public class DefaultSession implements Session {
     }
 
     private boolean isLocalHost(String name) {
-        boolean ret = false;
-        try {
-            final InetAddress localHost = InetAddress.getLocalHost();
-            final String hostName = localHost.getHostName();
-            final String ipAddress = localHost.getHostAddress();
-            ret = hostName.equalsIgnoreCase(name) || ipAddress.equals(name);
-        } catch (UnknownHostException e) {
-            logger.severe(e.getMessage());
-        }
-        return ret;
+        return this.localHost.equalsIgnoreCase(name) || this.localIp.equals(name);
     }
 
     private void checkSession() throws NoActiveSessionException {

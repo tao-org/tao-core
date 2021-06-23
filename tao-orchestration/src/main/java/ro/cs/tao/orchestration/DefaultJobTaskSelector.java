@@ -17,7 +17,7 @@
 package ro.cs.tao.orchestration;
 
 import ro.cs.tao.execution.model.*;
-import ro.cs.tao.orchestration.util.TaskUtilities;
+import ro.cs.tao.execution.util.TaskUtilities;
 import ro.cs.tao.utils.TriFunction;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;

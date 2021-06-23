@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.execution.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import ro.cs.tao.component.LongIdentifiable;
 import ro.cs.tao.component.Variable;
 import ro.cs.tao.security.SessionContext;
@@ -44,6 +45,7 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
     private LocalDateTime endTime;
     private LocalDateTime lastUpdated;
     private String log;
+    @JsonBackReference
     private ExecutionJob job;
     private ExecutionStatus executionStatus = ExecutionStatus.UNDETERMINED;
     private SessionContext context;
@@ -175,6 +177,7 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
     public LocalDateTime getLastUpdated() { return lastUpdated; }
     public void setLastUpdated(LocalDateTime lastUpdated) { this.lastUpdated = lastUpdated; }
 
+    @JsonBackReference
     public ExecutionJob getJob() { return job; }
     public void setJob(ExecutionJob job) {
         this.job = job;

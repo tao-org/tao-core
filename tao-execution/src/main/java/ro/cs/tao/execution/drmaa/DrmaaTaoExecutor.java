@@ -26,7 +26,7 @@ import ro.cs.tao.component.enums.ProcessingComponentType;
 import ro.cs.tao.docker.Application;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.eodata.enums.DataFormat;
-import ro.cs.tao.execution.Constants;
+import ro.cs.tao.execution.DrmaaJobExtensions;
 import ro.cs.tao.execution.ExecutionConfiguration;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.Executor;
@@ -36,11 +36,14 @@ import ro.cs.tao.execution.model.*;
 import ro.cs.tao.execution.monitor.NodeManager;
 import ro.cs.tao.execution.monitor.NodeManager.NodeData;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
+import ro.cs.tao.execution.util.TaskUtilities;
 import ro.cs.tao.persistence.ContainerProvider;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.utils.executors.BlockingQueueWorker;
+import ro.cs.tao.utils.executors.container.ContainerType;
+import ro.cs.tao.utils.executors.container.ContainerUnit;
 
 import java.io.IOException;
 import java.net.Inet4Address;
@@ -49,6 +52,7 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -275,12 +279,12 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             task.setStartTime(LocalDateTime.now());
             if (jt instanceof JobTemplateExtension) {
                 JobTemplateExtension job = (JobTemplateExtension) jt;
-                if (job.hasAttribute(Constants.NODE_ATTRIBUTE)) {
-                    task.setExecutionNodeHostName((String) job.getAttribute(Constants.NODE_ATTRIBUTE));
+                if (job.hasAttribute(DrmaaJobExtensions.NODE_ATTRIBUTE)) {
+                    task.setExecutionNodeHostName((String) job.getAttribute(DrmaaJobExtensions.NODE_ATTRIBUTE));
                 }
             }
             changeTaskStatus(task,
-                             session instanceof DefaultSession ? ExecutionStatus.RUNNING : ExecutionStatus.QUEUED_ACTIVE);
+                             session instanceof DefaultSession ? task instanceof ScriptTask ? ExecutionStatus.DONE : ExecutionStatus.RUNNING : ExecutionStatus.QUEUED_ACTIVE);
             notifyExternalListeners(task, null, -1, null);
         } catch (DrmaaException | InternalException e) {
             final String message = String.format("Error submitting task with id %s: %s", task.getId(), e.getMessage());
@@ -296,41 +300,45 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         String[] pArgs = null;
         final ProcessingComponent component = task.getComponent();
         final Container container = containerProvider.get(component.getContainerId());
-        Application app = container.getApplications()
-                .stream()
-                .filter(a -> component.getId().endsWith(a.getName().toLowerCase()))
-                .findFirst().orElse(null);
+        final Application app = container.getApplications()
+                                         .stream()
+                                         .filter(a -> component.getId().endsWith(a.getName().toLowerCase()))
+                                         .findFirst().orElse(null);
         final JobTemplate jt = session.createJobTemplate();
         if (jt == null) {
             throw new ExecutionException("Error creating job template from the session!");
         }
-        final long memory = app != null ? app.getMemoryRequirements() : 0L;
-        if (jt instanceof JobTemplateExtension) {
-            JobTemplateExtension job = (JobTemplateExtension) jt;
-            if (job.hasAttribute(Constants.MEMORY_REQUIREMENTS_ATTRIBUTE) && app != null &&
-                    ExecutionConfiguration.forceMemoryConstraint()) {
-                job.setAttribute(Constants.MEMORY_REQUIREMENTS_ATTRIBUTE, memory);
+        if (jt instanceof JobTemplateExtension && task instanceof ScriptTask) {
+            final JobTemplateExtension template = (JobTemplateExtension) jt;
+            template.setAttribute(DrmaaJobExtensions.SIMULATE_EXECUTION_ATTRIBUTE, Boolean.TRUE);
+            template.setAttribute(DrmaaJobExtensions.TASK_ID, task.getId());
+            template.setAttribute(DrmaaJobExtensions.TASK_ANCESTOR_ID, TaskUtilities.getParentIds(task));
+            template.setAttribute(DrmaaJobExtensions.TASK_NAME, TaskUtilities.getComponentFor(task).getLabel());
+            template.setAttribute(DrmaaJobExtensions.JOB_ID, task.getJob().getId());
+            final List<Variable> values = task.getOutputParameterValues();
+            if (values != null) {
+                template.setAttribute(DrmaaJobExtensions.TASK_OUTPUT, values.stream().map(Variable::getValue).collect(Collectors.toList()));
             }
         }
+        final long memory = app != null ? app.getMemoryRequirements() : 0L;
+        setMemoryConstraint(jt, memory);
         final String preferredHostName = task.getExecutionNodeHostName();
         final NodeData nodeData;
         if (preferredHostName != null) {
             nodeData = getNode(preferredHostName);
         } else {
-            // the next call blocks until a node is available
-            nodeData = getAvailableNode(component.getParallelism(), memory);
+            if (task instanceof ScriptTask) {
+                nodeData = NodeManager.getInstance().getMasterNode();
+            } else {
+                // the next call blocks until a node is available
+                nodeData = getAvailableNode(component.getParallelism(), memory);
+            }
         }
         NodeDescription node = nodeData.getNode();
         if (node == null) {
             throw new TryLaterException("Cannot obtain an available node [null]");
         }
-
-        if (jt instanceof JobTemplateExtension) {
-            JobTemplateExtension job = (JobTemplateExtension) jt;
-            if (job.hasAttribute(Constants.NODE_ATTRIBUTE)) {
-                job.setAttribute(Constants.NODE_ATTRIBUTE, node.getId());
-            }
-        }
+        setHost(jt, node.getId());
         task.setExecutionNodeHostName(node.getId());
         final int cpu = nodeData.getCpu();
         final long mem = nodeData.getMemory();
@@ -361,16 +369,6 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             // Assemble the regular execution command, as produced by the processing component after applying values
             executionCmd = task.buildExecutionCommand();
             task.setCommand(executionCmd);
-            final List<String> dbSources = component.getSources().stream()
-                    .filter(s -> DataFormat.DB_CONNECTION == s.getDataDescriptor().getFormatType())
-                    .map(SourceDescriptor::getName).collect(Collectors.toList());
-            if (ExecutionConfiguration.useDocker()) {
-                // if using Docker and having some external DB connections, they will be passed to Docker
-                // as environment variables, not as arguments
-                for (String dbSource : dbSources) {
-                    executionCmd = executionCmd.replace("-" + dbSource, "-e " + dbSource);
-                }
-            }
             try {
                 taskProvider.update(task);
             } catch (PersistenceException e) {
@@ -420,54 +418,95 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             argsList.add(m.group(1)); // Add .replace("\"", "") to remove surrounding quotes.
         }
         final boolean isUtilityTask = task.getComponent().getComponentType() == ProcessingComponentType.UTILITY;
-        if (ExecutionConfiguration.useDocker() && !isUtilityTask) {
-            cmd = "docker";
-            final String dockerBindMount;
-            if (task.getExecutionNodeHostName().equals(masterHost)) {
-                dockerBindMount = ExecutionConfiguration.getDockerMasterBindMount();
-            } else {
-                dockerBindMount = ExecutionConfiguration.getDockerNodeBindMount();
-            }
-            final String dockerBindTempMount = ExecutionConfiguration.getDockerNodeTempMount();
-            final String dockerBindCfgMount = ExecutionConfiguration.getDockerNodeConfigMount();
-            final List<String> dockerArgsList = new ArrayList<String>() {{
-                add("run");
-                add("-i");              // Keep STDIN open even if not attached
-                //add("-t");            // Allocate a pseudo-TTY
-                add("--rm");            // Automatically remove the container when it exits
-                add("--volume-driver"); // Automatically remove the container when it exits
-                add("cifs");            // Automatically remove the container when it exits
-                add("-v");              // Bind mount a volume
-                add(dockerBindMount);
-                if (dockerBindTempMount != null) {
-                    add("-v");
-                    add(dockerBindTempMount);
+        final boolean useDocker = ExecutionConfiguration.useDocker() || task instanceof ScriptTask;
+        if (useDocker && !isUtilityTask) {
+            if (jt instanceof JobTemplateExtension) {
+                cmd = argsList.get(0);
+                argsList.remove(0);
+                final JobTemplateExtension template = (JobTemplateExtension) jt;
+                final Map<String, String> dbSources = component.getSources().stream()
+                        .filter(s -> DataFormat.DB_CONNECTION == s.getDataDescriptor().getFormatType())
+                        .collect(Collectors.toMap(SourceDescriptor::getName, d -> d.getDataDescriptor().getLocation()));
+                final ContainerUnit unit = new ContainerUnit(ContainerType.DOCKER);
+                unit.setArguments(new ArrayList<String>() {{
+                    add("-i"); add("--rm"); add("--volume-driver"); add("cifs");
+                }});
+                unit.setEnvironmentVariables(dbSources);
+                String[] volumeMount;
+                if (task.getExecutionNodeHostName().equals(masterHost)) {
+                    volumeMount = ExecutionConfiguration.getDockerMasterBindMount().split(":");
+                } else {
+                    volumeMount = ExecutionConfiguration.getDockerNodeBindMount().split(":");
                 }
-                if (dockerBindCfgMount != null) {
-                    add("-v");
-                    add(dockerBindCfgMount);
+                unit.addVolumeMapping(volumeMount[0], volumeMount[1]);
+                volumeMount = ExecutionConfiguration.getDockerNodeTempMount().split(":");
+                unit.addVolumeMapping(volumeMount[0], volumeMount[1]);
+                final String dockerCfgMount = ExecutionConfiguration.getDockerNodeConfigMount();
+                if (dockerCfgMount != null) {
+                    volumeMount = dockerCfgMount.split(":");
+                    unit.addVolumeMapping(volumeMount[0], volumeMount[1]);
                 }
+                unit.setContainerName(container.getName());
+                unit.setContainerRegistry(ExecutionConfiguration.getDockerRegistry());
                 if (cpu > 0) {
                     // Enforce the number of CPUs to be used
-                    add(SystemUtils.IS_OS_WINDOWS ? "--cpus" : "--cpus"); // TODO: this seems redundant...
-                    add(String.valueOf(cpu));
+                    unit.addArgument("--cpus", String.valueOf(cpu));
                     task.setUsedCPU(cpu);
                 }
                 if (mem > 0) {
-                    add("--memory");    // Enforce the memory limit to be used
-                    // memory, if not 0, is expressed in MB
-                    add(mem + "MB");
+                    unit.addArgument("--memory", mem + "MB");
                     task.setUsedRAM((int) mem);
                 }
-            }};
-            String value = ExecutionConfiguration.getDockerRegistry();
-            if (value != null) {
-                dockerArgsList.add(value + "/" + container.getName());
+                template.setAttribute(DrmaaJobExtensions.CONTAINER_ATTRIBUTE, unit);
             } else {
-                dockerArgsList.add(container.getId());
+                cmd = "docker";
+                final String dockerBindMount;
+                if (task.getExecutionNodeHostName().equals(masterHost)) {
+                    dockerBindMount = ExecutionConfiguration.getDockerMasterBindMount();
+                } else {
+                    dockerBindMount = ExecutionConfiguration.getDockerNodeBindMount();
+                }
+                final String dockerBindTempMount = ExecutionConfiguration.getDockerNodeTempMount();
+                final String dockerBindCfgMount = ExecutionConfiguration.getDockerNodeConfigMount();
+                final List<String> dockerArgsList = new ArrayList<String>() {{
+                    add("run");
+                    add("-i");              // Keep STDIN open even if not attached
+                    //add("-t");            // Allocate a pseudo-TTY
+                    add("--rm");            // Automatically remove the container when it exits
+                    add("--volume-driver"); // Automatically remove the container when it exits
+                    add("cifs");            // Automatically remove the container when it exits
+                    add("-v");              // Bind mount a volume
+                    add(dockerBindMount);
+                    if (dockerBindTempMount != null) {
+                        add("-v");
+                        add(dockerBindTempMount);
+                    }
+                    if (dockerBindCfgMount != null) {
+                        add("-v");
+                        add(dockerBindCfgMount);
+                    }
+                    if (cpu > 0) {
+                        // Enforce the number of CPUs to be used
+                        add(SystemUtils.IS_OS_WINDOWS ? "--cpus" : "--cpus"); // TODO: this seems redundant...
+                        add(String.valueOf(cpu));
+                        task.setUsedCPU(cpu);
+                    }
+                    if (mem > 0) {
+                        add("--memory");    // Enforce the memory limit to be used
+                        // memory, if not 0, is expressed in MB
+                        add(mem + "MB");
+                        task.setUsedRAM((int) mem);
+                    }
+                }};
+                String value = ExecutionConfiguration.getDockerRegistry();
+                if (value != null) {
+                    dockerArgsList.add(value + "/" + container.getName());
+                } else {
+                    dockerArgsList.add(container.getId());
+                }
+                dockerArgsList.addAll(argsList);
+                argsList = dockerArgsList;
             }
-            dockerArgsList.addAll(argsList);
-            argsList = dockerArgsList;
         } else {
             cmd = argsList.get(0);
             argsList.remove(0);
@@ -476,6 +515,25 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         jt.setArgs(argsList);
         logger.fine(String.format("[Task %s ]: %s %s", task.getId(), cmd, String.join(" ", argsList)));
         return jt;
+    }
+
+    private void setMemoryConstraint(JobTemplate jt, long memory) throws DrmaaException {
+        if (jt instanceof JobTemplateExtension) {
+            JobTemplateExtension job = (JobTemplateExtension) jt;
+            if (job.hasAttribute(DrmaaJobExtensions.MEMORY_REQUIREMENTS_ATTRIBUTE) &&
+                    ExecutionConfiguration.forceMemoryConstraint() && memory > 0) {
+                job.setAttribute(DrmaaJobExtensions.MEMORY_REQUIREMENTS_ATTRIBUTE, memory);
+            }
+        }
+    }
+
+    private void setHost(JobTemplate jt, String host) throws DrmaaException {
+        if (jt instanceof JobTemplateExtension) {
+            JobTemplateExtension job = (JobTemplateExtension) jt;
+            if (job.hasAttribute(DrmaaJobExtensions.NODE_ATTRIBUTE)) {
+                job.setAttribute(DrmaaJobExtensions.NODE_ATTRIBUTE, host);
+            }
+        }
     }
 
     private NodeData getAvailableNode(int cpus, long memory) throws DrmaaException {
