@@ -56,7 +56,7 @@
         <taoReleasesUrl>${project.deploy.root.path}/tao-core</taoReleasesUrl>
         <hibernatespatialUrl>https://mvnrepository.com/artifact/org.hibernate/hibernate-spatial/</hibernatespatialUrl>
         <springio-milestoneUrl>https://repo.spring.io/milestone/</springio-milestoneUrl>
-        <geotoolsUrl>https://download.osgeo.org/webdav/geotools/</geotoolsUrl>
+        <geotoolsUrl>http://maven.geomajas.org/</geotoolsUrl>
     </properties>
 
     <repositories>
