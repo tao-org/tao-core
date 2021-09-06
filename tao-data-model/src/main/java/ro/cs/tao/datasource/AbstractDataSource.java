@@ -128,6 +128,15 @@ public abstract class AbstractDataSource<Q extends DataQuery, T> extends DataSou
     }
 
     @Override
+    public Map<String, CollectionDescription> getSensorTypes() {
+        Map<String, CollectionDescription> types = null;
+        if (this.parameterProvider != null) {
+            types = this.parameterProvider.getSensorTypes();
+        }
+        return types;
+    }
+
+    @Override
     public long getTimeout() { return this.timeout; }
 
     @Override

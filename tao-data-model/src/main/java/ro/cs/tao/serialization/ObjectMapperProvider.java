@@ -15,11 +15,13 @@
  */
 package ro.cs.tao.serialization;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import ro.cs.tao.datasource.CollectionDescription;
 import ro.cs.tao.datasource.param.DataSourceParameter;
 
 import java.util.Map;
@@ -31,6 +33,7 @@ public class ObjectMapperProvider {
 
     public static final ObjectMapper JSON_OBJECT_MAPPER;
     public static final TypeReference<Map<String, Map<String, DataSourceParameter>>> JSON_DATA_SOURCE_PARAMETERS_TYPE_REFERENCE;
+    public static final TypeReference<Map<String, CollectionDescription>> JSON_SENSOR_TYPE_REFERENCE;
 
     static {
         JSON_OBJECT_MAPPER = new ObjectMapper()
@@ -42,6 +45,7 @@ public class ObjectMapperProvider {
                 .disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
 
         JSON_DATA_SOURCE_PARAMETERS_TYPE_REFERENCE = new TypeReference<Map<String, Map<String, DataSourceParameter>>>() {};
+        JSON_SENSOR_TYPE_REFERENCE = new TypeReference<Map<String, CollectionDescription>>() { };
     }
 
     private ObjectMapperProvider() {
