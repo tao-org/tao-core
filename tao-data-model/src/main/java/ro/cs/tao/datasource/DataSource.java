@@ -145,6 +145,12 @@ public abstract class DataSource<Q extends DataQuery, T> extends StringIdentifia
      * Returns the sensors (product types) supported by this data source
      */
     public abstract String[] getSupportedSensors();
+
+    /**
+     * Returns the supported sensor types of this data source
+     */
+    public abstract Map<String, CollectionDescription> getSensorTypes();
+
     /**
      * Returns a the query parameters for each sensor supported by this data source
      */

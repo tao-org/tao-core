@@ -15,6 +15,8 @@
  */
 package ro.cs.tao.datasource.util;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -106,5 +108,25 @@ public class Utilities {
             value = xmlLine.substring(start, xmlLine.indexOf("\"", start));
         }
         return value;
+    }
+
+    /**
+     * Extracts domain URL from given URL (eg: https://zipper.creodias.eu/ -> https://creodias.eu/)
+     * @param url the URL
+     * @return the domain URL
+     */
+    public static String getDomainURL(String url){
+        if (url != null) {
+            try {
+                final URI uri = new URI(url.toLowerCase());
+                if (uri.getHost() != null) {
+                    final String domain = uri.getHost().replaceAll(".*\\.(.*\\..*)", "$1");
+                    return uri.getScheme() + "://" + domain;
+                }
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
     }
 }

@@ -25,6 +25,7 @@ import ro.cs.tao.datasource.beans.Parameter;
 import ro.cs.tao.datasource.param.QueryParameter;
 import ro.cs.tao.datasource.remote.DownloadStrategy;
 import ro.cs.tao.datasource.remote.FetchMode;
+import ro.cs.tao.datasource.util.Utilities;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.messaging.ProgressNotifier;
@@ -39,9 +40,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.net.MalformedURLException;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -533,13 +532,8 @@ public class DataSourceComponent extends TaoComponent {
         DataSourceManager dsManager = DataSourceManager.getInstance();
         DataSource<?, ?> dataSource = null;
         if (product != null) {
-            try {
-                URL downloadURL = new URL(product.getLocation());
-                String url = downloadURL.getProtocol() + "://" + downloadURL.getAuthority();
-                dataSource = dsManager.getMatchingDataSource(url);
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            }
+            final String productLocationUrlDomain = Utilities.getDomainURL(product.getLocation());
+            dataSource = dsManager.getMatchingDataSource(productLocationUrlDomain);
         }
         if (dataSource == null) {
             dataSource = this.dataSourceName != null ?

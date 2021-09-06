@@ -17,6 +17,7 @@ package ro.cs.tao.datasource;
 
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.datasource.param.DataSourceParameter;
+import ro.cs.tao.datasource.util.Utilities;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.utils.NetUtils;
@@ -236,13 +237,12 @@ public class DataSourceManager {
      */
     public DataSource<?, ?> getMatchingDataSource(String url) {
         DataSource<?, ?> match = url != null ? this.registry.getServices().stream().filter(d -> {
-            final String lowerUrl = url.toLowerCase();
-            String currentUrl = d.getConnectionString().toLowerCase();
-            if (currentUrl.startsWith(lowerUrl) || lowerUrl.startsWith(currentUrl)) {
+            String connectionStringDomain = Utilities.getDomainURL(d.getConnectionString());
+            if (url.equals(connectionStringDomain)) {
                 return true;
             }
-            currentUrl = d.getAlternateConnectionString();
-            return currentUrl != null && (currentUrl.toLowerCase().startsWith(lowerUrl) || lowerUrl.startsWith(currentUrl.toLowerCase()));
+            connectionStringDomain = Utilities.getDomainURL(d.getAlternateConnectionString());
+            return url.equals(connectionStringDomain);
         }).findFirst().orElse(null) : null;
         if (match != null) {
             try {

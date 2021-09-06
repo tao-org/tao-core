@@ -1,5 +1,7 @@
 package ro.cs.tao.topology.docker;
 
+import ro.cs.tao.docker.Container;
+
 import java.io.IOException;
 
 /**
@@ -22,7 +24,7 @@ public interface StandaloneContainer {
     /**
      * Handles the container image installation
      */
-    void install() throws IOException;
+    Container install() throws IOException;
 
     /**
      * Starts the Docker container
