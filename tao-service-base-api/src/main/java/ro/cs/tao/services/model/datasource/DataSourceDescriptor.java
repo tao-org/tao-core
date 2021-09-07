@@ -26,15 +26,19 @@ import java.util.Map;
 public class DataSourceDescriptor {
     private String sensor;
     private String dataSourceName;
+    private String category;
+    private String description;
     private Map<String, DataSourceParameter> parameters;
 
     public DataSourceDescriptor() {
     }
 
-    public DataSourceDescriptor(String sensor, String dataSourceName, Map<String, DataSourceParameter> parameters) {
+    public DataSourceDescriptor(String sensor, String dataSourceName, String category, String description,
+                                Map<String, DataSourceParameter> parameters) {
         this.sensor = sensor;
         this.dataSourceName = dataSourceName;
         this.parameters = parameters;
+		this.category = category;
         if (this.parameters != null) {
             Iterator<String> iterator = parameters.keySet().iterator();
             int order = 1;
@@ -56,6 +60,22 @@ public class DataSourceDescriptor {
     }
     public void setDataSourceName(String dataSourceName) {
         this.dataSourceName = dataSourceName;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public Map<String, DataSourceParameter> getParameters() {
