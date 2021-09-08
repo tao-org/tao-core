@@ -81,9 +81,11 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
                 readParamDescriptors.put(clazz,
                         JSON_OBJECT_MAPPER.readValue(readDescriptor(PARAMETER_DESCRIPTOR_RESOURCE),
                                                      JSON_DATA_SOURCE_PARAMETERS_TYPE_REFERENCE));
-                readTypeDescriptors.put(clazz,
-                        JSON_OBJECT_MAPPER.readValue(readDescriptor(SENSOR_TYPE_RESOURCE),
-                                                     JSON_SENSOR_TYPE_REFERENCE));
+                final String sensorDescriptor = readDescriptor(SENSOR_TYPE_RESOURCE);
+                if (sensorDescriptor != null) {
+                    readTypeDescriptors.put(clazz,
+                            JSON_OBJECT_MAPPER.readValue(sensorDescriptor, JSON_SENSOR_TYPE_REFERENCE));
+                }
             }
             readParameters = readParamDescriptors.get(clazz);
             readSensorTypes = readTypeDescriptors.get(clazz);
@@ -140,7 +142,11 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
             }
         }
         if (currentResource == null) {
-            throw new IOException("No parameter descriptor found");
+            if (fileName.endsWith("parameters.json")) {
+                throw new IOException("No parameter descriptor found");
+            } else {
+                return null;
+            }
         }
         Path rPath;
         FileSystem fileSystem = null;
