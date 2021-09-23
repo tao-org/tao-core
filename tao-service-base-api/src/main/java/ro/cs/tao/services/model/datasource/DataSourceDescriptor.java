@@ -28,17 +28,23 @@ public class DataSourceDescriptor {
     private String dataSourceName;
     private String category;
     private String description;
+	private String temporalCoverage;
+	private String spatialCoverage;
     private Map<String, DataSourceParameter> parameters;
 
     public DataSourceDescriptor() {
     }
 
     public DataSourceDescriptor(String sensor, String dataSourceName, String category, String description,
-                                Map<String, DataSourceParameter> parameters) {
+								String temporalCoverage, String spatialCoverage,
+								Map<String, DataSourceParameter> parameters) {
         this.sensor = sensor;
         this.dataSourceName = dataSourceName;
         this.parameters = parameters;
 		this.category = category;
+		this.description = description;
+		this.temporalCoverage = temporalCoverage;
+		this.spatialCoverage = spatialCoverage;
         if (this.parameters != null) {
             Iterator<String> iterator = parameters.keySet().iterator();
             int order = 1;
@@ -77,6 +83,14 @@ public class DataSourceDescriptor {
     public void setDescription(String description) {
         this.description = description;
     }
+
+    public String getTemporalCoverage() { return temporalCoverage; }
+
+    public void setTemporalCoverage(String temporalCoverage) { this.temporalCoverage = temporalCoverage; }
+
+    public String getSpatialCoverage() { return spatialCoverage; }
+
+    public void setSpatialCoverage(String spatialCoverage) { this.spatialCoverage = spatialCoverage; }
 
     public Map<String, DataSourceParameter> getParameters() {
         return parameters;
