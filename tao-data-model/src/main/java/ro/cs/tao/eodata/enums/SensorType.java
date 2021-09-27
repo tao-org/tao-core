@@ -37,7 +37,9 @@ public enum SensorType implements TaoEnum<Integer> {
     @XmlEnumValue("4")
     ATMOSPHERIC(4, "Atmospheric"),
     @XmlEnumValue("5")
-    UNKNOWN(5, "Unknown");
+    UNKNOWN(5, "Unknown"),
+    @XmlEnumValue("6")
+    PASSIVE_MICROWAVE(6, "Passive Microwave");
 
     private final int value;
     private final String description;
