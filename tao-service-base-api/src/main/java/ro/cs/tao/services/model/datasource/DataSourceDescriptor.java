@@ -30,6 +30,8 @@ public class DataSourceDescriptor {
     private String description;
 	private String temporalCoverage;
 	private String spatialCoverage;
+    private String user;
+    private String pwd;
     private Map<String, DataSourceParameter> parameters;
 
     public DataSourceDescriptor() {
@@ -91,6 +93,22 @@ public class DataSourceDescriptor {
     public String getSpatialCoverage() { return spatialCoverage; }
 
     public void setSpatialCoverage(String spatialCoverage) { this.spatialCoverage = spatialCoverage; }
+
+    public String getUser() {
+        return user;
+    }
+
+    public void setUser(String user) {
+        this.user = user;
+    }
+
+    public String getPwd() {
+        return pwd;
+    }
+
+    public void setPwd(String pwd) {
+        this.pwd = pwd;
+    }
 
     public Map<String, DataSourceParameter> getParameters() {
         return parameters;

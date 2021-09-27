@@ -30,7 +30,7 @@ public class DataSourceParameter {
     private final String remoteName;
     private final String label;
     private final Class type;
-    private final Object defaultValue;
+    private Object defaultValue;
     private final boolean required;
     private Object[] valueSet;
     private int order;
@@ -96,6 +96,10 @@ public class DataSourceParameter {
     public boolean isRequired() { return required; }
 
     public Object getDefaultValue() { return defaultValue; }
+
+    public void setDefaultValue(Object defaultValue) {
+        this.defaultValue = defaultValue;
+    }
 
     public Object[] getValueSet() { return valueSet; }
 

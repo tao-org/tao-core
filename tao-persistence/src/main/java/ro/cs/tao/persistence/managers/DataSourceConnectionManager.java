@@ -17,20 +17,25 @@
 package ro.cs.tao.persistence.managers;
 
 import org.springframework.stereotype.Component;
-import ro.cs.tao.execution.model.DataSourceConnection;
+import ro.cs.tao.datasource.DataSourceCredentials;
+import ro.cs.tao.persistence.DataSourceCredentialsProvider;
 import ro.cs.tao.persistence.repository.DataSourceConnectionRepository;
 
 import java.util.List;
 
 @Component("dataSourceConnectionManager")
-public class DataSourceConnectionManager extends EntityManager<DataSourceConnection, Long, DataSourceConnectionRepository> {
+public class DataSourceConnectionManager
+        extends EntityManager<DataSourceCredentials, Long, DataSourceConnectionRepository>
+        implements DataSourceCredentialsProvider {
 
-    public List<DataSourceConnection> get(int userId) {
-        return repository.findByUserId(userId);
+    @Override
+    public List<DataSourceCredentials> getByUser(String user) {
+        return repository.findByUserId(user);
     }
 
-    public DataSourceConnection get(int userId, String dataSource) {
-        return repository.findByUserIdAndDataSource(userId, dataSource);
+    @Override
+    public DataSourceCredentials get(String user, String dataSource) {
+        return repository.findByUserIdAndDataSource(user, dataSource);
     }
 
     @Override
@@ -43,7 +48,7 @@ public class DataSourceConnectionManager extends EntityManager<DataSourceConnect
     }
 
     @Override
-    protected boolean checkEntity(DataSourceConnection entity) {
+    protected boolean checkEntity(DataSourceCredentials entity) {
         return true;
     }
 }

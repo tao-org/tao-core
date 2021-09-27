@@ -65,6 +65,9 @@ public class PersistenceManager {
     @Autowired
     private DataSourceGroupManager dataSourceGroupManager;
 
+    @Autowired
+    private DataSourceConnectionManager dataSourceConnectionManager;
+
     private SimpleCache.Cache<String, ProcessingComponent> componentCache;
 
     @Autowired
@@ -124,6 +127,8 @@ public class PersistenceManager {
     public DataSourceComponentManager dataSourceComponents() { return dataSourceComponentManager; }
 
     public DataSourceGroupManager dataSourceGroups() { return dataSourceGroupManager; }
+
+    public DataSourceConnectionManager dataSourceConnectionManager() { return dataSourceConnectionManager; }
 
     public SimpleCache.Cache<String, ProcessingComponent> getComponentCache() {
         return componentCache;
