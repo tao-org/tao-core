@@ -48,7 +48,7 @@ INSERT INTO product.pixel_type (type) VALUES
 
 -- Sensor types
 INSERT INTO product.sensor_type (type) VALUES
-('OPTICAL'), ('RADAR'), ('ALTIMETRIC'), ('ATMOSPHERIC'), ('UNKNOWN');
+('OPTICAL'), ('RADAR'), ('ALTIMETRIC'), ('ATMOSPHERIC'), ('UNKNOWN'), ('PASSIVE_MICROWAVE');
 
 -- Service status
 INSERT INTO  topology.service_status (status) VALUES
