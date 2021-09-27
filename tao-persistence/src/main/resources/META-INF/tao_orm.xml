@@ -613,8 +613,12 @@
         </attributes>
     </entity>
 
-    <entity class="ro.cs.tao.execution.model.DataSourceConnection" access="PROPERTY">
+    <entity class="ro.cs.tao.datasource.DataSourceCredentials" access="PROPERTY">
         <table name="execution.user_data_source_connection"/>
+        <entity-listeners>
+            <entity-listener class="ro.cs.tao.persistence.audit.DataSourceCredentialsListener"/>
+        </entity-listeners>
+        <convert converter="ro.cs.tao.persistence.convert.QueryValuesMapConverter" attribute-name="params" />
         <attributes>
             <basic name="userId">
                 <column name="user_id" nullable="false" column-definition="varchar(50) NOT NULL"/>
@@ -627,6 +631,9 @@
             </basic>
             <basic name="password">
                 <column name="password" nullable="true" column-definition="text NOT NULL"/>
+            </basic>
+            <basic name="params">
+                <column name="params" nullable="true" column-definition="varchar(512) NOT NULL"/>
             </basic>
             <basic name="created">
                 <column name="created" nullable="true" column-definition="timestamp without time zone DEFAULT now()"/>

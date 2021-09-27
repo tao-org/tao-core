@@ -613,8 +613,9 @@
         </attributes>
     </entity>
 
-    <entity class="ro.cs.tao.execution.model.DataSourceConnection" access="PROPERTY">
+    <entity class="ro.cs.tao.datasource.DataSourceCredentials" access="PROPERTY">
         <table name="execution.user_data_source_connection"/>
+        <convert converter="ro.cs.tao.persistence.convert.ConnectionParamsConverter" attribute-name="params" />
         <attributes>
             <basic name="userId">
                 <column name="user_id" nullable="false" column-definition="varchar(50) NOT NULL"/>
@@ -627,6 +628,9 @@
             </basic>
             <basic name="password">
                 <column name="password" nullable="true" column-definition="text NOT NULL"/>
+            </basic>
+            <basic name="params">
+                <column name="params" nullable="true" column-definition="varchar(512) NOT NULL"/>
             </basic>
             <basic name="created">
                 <column name="created" nullable="true" column-definition="timestamp without time zone DEFAULT now()"/>
@@ -736,6 +740,7 @@
                 <join-column name="component_id" nullable="false"/>
             </many-to-one>
             <!--<transient name="instanceTargetOutput"/>-->
+            <transient name="externalCommonParameters"/>
         </attributes>
     </entity>
 
@@ -747,7 +752,7 @@
             <many-to-one name="component" fetch="LAZY" target-entity="ro.cs.tao.component.ProcessingComponent">
                 <join-column name="component_id" nullable="false"/>
             </many-to-one>
-            <!--<transient name="instanceTargetOutput"/>-->
+            <transient name="externalCommonParameters"/>
         </attributes>
     </entity>
 

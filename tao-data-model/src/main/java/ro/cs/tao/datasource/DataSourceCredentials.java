@@ -14,18 +14,20 @@
  * with this program; if not, see http://www.gnu.org/licenses/
  */
 
-package ro.cs.tao.execution.model;
+package ro.cs.tao.datasource;
 
 import ro.cs.tao.component.LongIdentifiable;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
-public class DataSourceConnection extends LongIdentifiable {
+public class DataSourceCredentials extends LongIdentifiable {
 
     private String userId;
     private String dataSource;
     private String userName;
     private String password;
+    private Map<String, String> params;
     private LocalDateTime created;
     private LocalDateTime modified;
 
@@ -86,5 +88,13 @@ public class DataSourceConnection extends LongIdentifiable {
 
     public void setModified(LocalDateTime modified) {
         this.modified = modified;
+    }
+
+    public Map<String, String> getParams() {
+        return params;
+    }
+
+    public void setParams(Map<String, String> params) {
+        this.params = params;
     }
 }
