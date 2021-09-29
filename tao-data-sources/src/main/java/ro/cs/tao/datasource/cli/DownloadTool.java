@@ -11,10 +11,6 @@ import ro.cs.tao.datasource.param.DataSourceParameter;
 import ro.cs.tao.datasource.remote.FetchMode;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.Polygon2D;
-import ro.cs.tao.messaging.Message;
-import ro.cs.tao.messaging.Notifiable;
-import ro.cs.tao.messaging.TaskProgress;
-import ro.cs.tao.messaging.progress.*;
 import ro.cs.tao.utils.DateUtils;
 import ro.cs.tao.utils.NetUtils;
 
@@ -30,7 +26,7 @@ import java.util.stream.Collectors;
 public class DownloadTool {
     private static final Options options;
     private static final Set<String> specificArgs;
-    private static Notifiable progressMonitor;
+    //private static Notifiable progressMonitor;
 
     static {
         options = new Options();
@@ -53,7 +49,7 @@ public class DownloadTool {
             for (CliOption option : optionList) {
                 options.addOption(buildOption(option));
             }
-            progressMonitor = new ProgressMonitor();
+            //progressMonitor = new ProgressMonitor();
         } catch (IOException ex) {
             ex.printStackTrace();
             System.exit(-1);
@@ -64,7 +60,8 @@ public class DownloadTool {
     public static void main(String[] args) {
         if (args.length == 0) {
             HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp("download-tool", options);
+            formatter.setWidth(180);
+            formatter.printHelp("eo-search", options);
             System.exit(0);
         }
         CommandLineParser parser = new DefaultParser();
@@ -91,6 +88,9 @@ public class DownloadTool {
             case 1:
                 optionBuilder.hasArg(true);
                 break;
+            case 2:
+                //optionBuilder.hasArgs().numberOfArgs(option.getCardinality()).valueSeparator(option.getValueSeparator().charAt(0));
+                break;
             default:
                 optionBuilder.hasArgs().numberOfArgs(Option.UNLIMITED_VALUES).valueSeparator(option.getValueSeparator().charAt(0));
                 break;
@@ -102,9 +102,8 @@ public class DownloadTool {
         int retCode = ReturnCode.OK;
         try {
             if (commandLine.hasOption(Constants.HELP)) {
-                processHelp(commandLine.getOptionValues(Constants.HELP));
+                processHelp(commandLine.getArgs());
             } else {
-
                 specificArgs.addAll(Arrays.stream(commandLine.getOptions()).map(Option::getOpt).collect(Collectors.toSet()));
                 final ConfigurationProvider cfgManager = ConfigurationManager.getInstance();
                 final String targetFolder = getArgValue(commandLine, Constants.FOLDER, String.class,
@@ -169,8 +168,8 @@ public class DownloadTool {
                     tokens = parameter.split("=");
                     currentParameter = supportedParameters.get(tokens[0]);
                     if (currentParameter == null) {
-                        System.err.println(String.format("Parameter [%s] is not supported by the data source [%s - %s] and was ignored.",
-                                                         tokens[0], dataSourceName, satellite));
+                        System.err.printf("Parameter [%s] is not supported by the data source [%s - %s] and was ignored.%n",
+                                                         tokens[0], dataSourceName, satellite);
                         continue;
                     }
                     final Class<?> type = currentParameter.getType();
@@ -189,7 +188,7 @@ public class DownloadTool {
                         query.addParameter(tokens[0], tokens[1]);
                     }
                 }
-                final String format = getArgValue(commandLine, Constants.FORMAT, String.class, "text");
+                final String format = getArgValue(commandLine, Constants.FORMAT, String.class, "TEXT");
                 if (!("json".equalsIgnoreCase(format) || "text".equalsIgnoreCase(format))) {
                     System.err.println("Invalid value for parameter [format]");
                     System.exit(1);
@@ -341,11 +340,11 @@ public class DownloadTool {
                     for (String sensor : supportedSensors) {
                         System.out.println(sensor);
                     }
-                } else{
-                    final List<String> names = dataSourceManager.getNames(values[0]);
-                    System.out.println("Repositories for " + values[0]);
-                    for (String name : names) {
-                        System.out.println(name + " @ " + dataSourceManager.get(values[0], name).getConnectionString(values[0]));
+                } else if (Constants.REPOSITORY.equals(values[0])) {
+                    final Set<DataSource<?, ?>> dataSources = dataSourceManager.getRegisteredDataSources();
+                    System.out.println("Supported repositories:");
+                    for (DataSource<?, ?> ds : dataSources) {
+                        System.out.println(ds.getId() + " @ " + ds.getConnectionString());
                     }
                 }
                 break;
@@ -371,7 +370,7 @@ public class DownloadTool {
                     }
                     lineBuilder.append(" ");
                     line = "--" + parameter.getName() + " <" + parameter.getType().getSimpleName().toLowerCase() + ">";
-                    line = String.format("%1$-30s", line);
+                    line = String.format("%1$-60s", line);
                     descBuilder.append(line).append(parameter.getLabel()).append(".");
                     final Object[] valueSet = parameter.getValueSet();
                     if (valueSet != null) {
@@ -386,14 +385,14 @@ public class DownloadTool {
                     }
                     descBuilder.append("\n");
                 }
-                System.out.println(lineBuilder.toString());
-                System.out.println(descBuilder.toString());
+                System.out.println(lineBuilder);
+                System.out.println(descBuilder);
                 lineBuilder.setLength(0);
                 descBuilder.setLength(0);
         }
     }
 
-    private static class ProgressMonitor extends Notifiable {
+    /*private static class ProgressMonitor extends Notifiable {
         private final static String SIMPLE_MESSAGE = "%s: %.2f%%\r";
         private final static String MEDIUM_MESSAGE = "%s[%s]: %.2f%%\r";
         private final static String DETAIL_MESSAGE = "%s[%s]: %.2f%%[%.2f%%]\r";
@@ -413,7 +412,7 @@ public class DownloadTool {
                 ActivityStartMessage casted = (ActivityStartMessage) message;
                 taskName = ((ActivityStartMessage) message).getTaskName();
                 current = new TaskProgress(taskName, category, 0.0);
-                System.out.print(String.format(SIMPLE_MESSAGE, taskName, current.getProgress()));
+                System.out.printf(SIMPLE_MESSAGE, taskName, current.getProgress());
             } else if (message instanceof SubActivityStartMessage) {
                 SubActivityStartMessage casted = (SubActivityStartMessage) message;
                 taskName = casted.getTaskName();
@@ -423,38 +422,38 @@ public class DownloadTool {
                     current = new TaskProgress(taskName, category, current.getProgress(), casted.getSubTaskName(), 0.0);
                 }
                 if (Double.compare(current.getProgress(), 0.0) != 0) {
-                    System.out.print(String.format(DETAIL_MESSAGE, taskName, casted.getSubTaskName(), current.getProgress() * 100, 0.0));
+                    System.out.printf(DETAIL_MESSAGE, taskName, casted.getSubTaskName(), current.getProgress() * 100, 0.0);
                 } else {
-                    System.out.print(String.format(MEDIUM_MESSAGE, taskName, casted.getSubTaskName(), current.getProgress() * 100));
+                    System.out.printf(MEDIUM_MESSAGE, taskName, casted.getSubTaskName(), current.getProgress() * 100);
                 }
             } else if (message instanceof SubActivityEndMessage) {
                 SubActivityEndMessage casted = (SubActivityEndMessage) message;
                 taskName = casted.getTaskName();
                 current = new TaskProgress(taskName, category, current.getProgress(), casted.getSubTaskName(), 100.0);
                 if (Double.compare(current.getProgress(), 0.0) != 0) {
-                    System.out.print(String.format(DETAIL_MESSAGE, taskName, casted.getSubTaskName(), current.getProgress() * 100, 100.0));
+                    System.out.printf(DETAIL_MESSAGE, taskName, casted.getSubTaskName(), current.getProgress() * 100, 100.0);
                 } else {
-                    System.out.print(String.format(MEDIUM_MESSAGE, taskName, casted.getSubTaskName(), 100.0));
+                    System.out.printf(MEDIUM_MESSAGE, taskName, casted.getSubTaskName(), 100.0);
                 }
             } else if (message instanceof SubActivityProgressMessage) {
                 SubActivityProgressMessage casted = (SubActivityProgressMessage) message;
                 taskName = casted.getTaskName();
                 this.current = new TaskProgress(taskName, category, casted.getTaskProgress(), casted.getSubTaskName(), casted.getSubTaskProgress());
                 if (Double.compare(current.getProgress(), 0.0) != 0) {
-                    System.out.print(String.format(DETAIL_MESSAGE, taskName, casted.getSubTaskName(), current.getProgress() * 100, current.getSubTaskProgress().getValue() * 100));
+                    System.out.printf(DETAIL_MESSAGE, taskName, casted.getSubTaskName(), current.getProgress() * 100, current.getSubTaskProgress().getValue() * 100);
                 } else {
-                    System.out.print(String.format(MEDIUM_MESSAGE, taskName, casted.getSubTaskName(), current.getSubTaskProgress().getValue() * 100));
+                    System.out.printf(MEDIUM_MESSAGE, taskName, casted.getSubTaskName(), current.getSubTaskProgress().getValue() * 100);
                 }
             } else if (message instanceof ActivityProgressMessage) {
                 ActivityProgressMessage casted = (ActivityProgressMessage) message;
                 taskName = casted.getTaskName();
                 this.current = new TaskProgress(taskName, category, casted.getProgress());
-                System.out.print(String.format(SIMPLE_MESSAGE, taskName, current.getProgress() * 100));
+                System.out.printf(SIMPLE_MESSAGE, taskName, current.getProgress() * 100);
             } else if (message instanceof ActivityEndMessage) {
                 ActivityEndMessage casted = (ActivityEndMessage) message;
                 taskName = casted.getTaskName();
-                System.out.println(String.format(END_MESSAGE, taskName, 100.0));
+                System.out.printf((END_MESSAGE) + "%n", taskName, 100.0);
             }
         }
-    }
+    }*/
 }
