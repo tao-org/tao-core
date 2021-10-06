@@ -21,7 +21,6 @@ import ro.cs.tao.Tag;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.enums.TagType;
 import ro.cs.tao.configuration.ConfigurationManager;
-import ro.cs.tao.docker.Application;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.persistence.ContainerProvider;
 import ro.cs.tao.persistence.PersistenceException;
@@ -34,7 +33,10 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
+import java.util.Properties;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -65,7 +67,7 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
         }
     }
 
-    public static Container readCommonContainerDescriptor() throws IOException {
+    /*public static Container readCommonContainerDescriptor() throws IOException {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(BaseImageInstaller.class.getResourceAsStream("common_container.json")))) {
             final String str = reader.lines().collect(Collectors.joining(""));
             return JacksonUtil.fromString(str, Container.class);
@@ -77,7 +79,7 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
             final String str = reader.lines().collect(Collectors.joining(""));
             return JacksonUtil.OBJECT_MAPPER.readValue(str, ProcessingComponent[].class);
         }
-    }
+    }*/
 
     @Override
     public Container installImage() {
@@ -94,7 +96,7 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
                 // first try the container.properties file, maybe it is a container from Docker Hub
                 Path dockerfilePath = dockerImagesPath.resolve(getContainerName()).resolve("container.properties");
                 Files.createDirectories(dockerImagesPath.resolve(getContainerName()));
-                dockerfilePath = dockerfilePath.resolve("container.properties");
+                //dockerfilePath = dockerfilePath.resolve("container.properties");
                 final byte[] buffer = new byte[1024];
                 try (InputStream is = getClass().getResourceAsStream("container.properties");
                      OutputStream os = new BufferedOutputStream(Files.newOutputStream(dockerfilePath))) {
@@ -133,6 +135,10 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
                 if (container == null) {
                     this.logger.info(String.format("Image %s was not found in Docker registry. Registration starting.\n" +
                                                              "Until registration completes, the corresponding components will not be available.", getContainerName()));
+                    for (String resource : additionalResources()) {
+                        Files.write(dockerfilePath.getParent().resolve(Paths.get(resource).getFileName()),
+                                    readResource(resource));
+                    }
                     DockerManager.registerImage(dockerfilePath.toRealPath(), getContainerName(), getDescription());
                     this.logger.info(String.format("Registration completed for docker image %s.", getContainerName()));
                     container = DockerManager.getDockerImage(getContainerName());
@@ -167,12 +173,6 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
             final String str = reader.lines().collect(Collectors.joining(""));
             container = JacksonUtil.fromString(str, Container.class);
         }
-        if (container != null) {
-            final Container fakeContainer = readCommonContainerDescriptor();
-            for (Application app : fakeContainer.getApplications()) {
-                container.addApplication(app);
-            }
-        }
         return container;
     }
 
@@ -182,25 +182,13 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
             final String str = reader.lines().collect(Collectors.joining(""));
             components = JacksonUtil.OBJECT_MAPPER.readValue(str, ProcessingComponent[].class);
         }
-        if (components != null) {
-            final ProcessingComponent[] commons = readCommonComponentsDescriptors();
-            final int oldLength = components.length;
-            for (ProcessingComponent c : commons) {
-                if (c.getId() == null || c.getId().equals(c.defaultId())) {
-                    c.setId(UUID.randomUUID().toString());
-                    c.getSources().forEach(s -> s.setParentId(c.getId()));
-                    c.getTargets().forEach(t -> t.setParentId(c.getId()));
-                }
-            }
-            components = Arrays.copyOf(components, oldLength + commons.length);
-            System.arraycopy(commons, 0, components, oldLength, commons.length);
-        }
         return components;
     }
 
     protected String readContainerLogo(String fileName) throws IOException {
         try (InputStream in = getClass().getResourceAsStream(fileName)) {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
+            if (in == null) return null;
             int read;
             byte[] buffer = new byte[1024];
             while ((read = in.read(buffer)) != -1) {
@@ -210,6 +198,22 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
             return Base64.getEncoder().encodeToString(out.toByteArray());
         }
     }
+
+    protected byte[] readResource(String name) throws IOException {
+        try (InputStream in = getClass().getResourceAsStream(name)) {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            if (in == null) return null;
+            int read;
+            byte[] buffer = new byte[1024];
+            while ((read = in.read(buffer)) != -1) {
+                out.write(buffer, 0, read);
+            }
+            out.flush();
+            return out.toByteArray();
+        }
+    }
+
+    protected String[] additionalResources() { return new String[0]; }
 
     protected static Path findInPath(String executableName) {
         String systemPath = System.getenv("Path");

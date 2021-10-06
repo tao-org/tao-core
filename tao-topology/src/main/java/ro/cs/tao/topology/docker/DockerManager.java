@@ -157,7 +157,7 @@ public class DockerManager {
         sharedAccumulator.reset();
         int retCode;
         final Executor<?> executor = Executor.execute(sharedAccumulator, job);
-        waitFor(executor, 50, TimeUnit.SECONDS);
+        waitFor(executor, 300, TimeUnit.SECONDS);
         if ((retCode = executor.getReturnCode()) == 0) {
             container = get(name);
         } else {
@@ -188,7 +188,7 @@ public class DockerManager {
         Executor<?> executor = Executor.execute(sharedAccumulator, job);
         logger.fine("Executing " + String.join(" ", commands));
         String containerId = null;
-        waitFor(executor, 10, TimeUnit.MINUTES);
+        waitFor(executor, 20, TimeUnit.MINUTES);
         if ((retCode = executor.getReturnCode()) == 0) {
             Container image = getDockerImage(correctedName);
             containerId = image.getId();

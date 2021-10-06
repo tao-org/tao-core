@@ -31,7 +31,7 @@ public enum DataFormat implements TaoEnum<Integer> {
     @XmlEnumValue("1")
     RASTER(1, "Raster"),
     /**
-     * VECTOR image data format
+     * VECTOR data format
      */
     @XmlEnumValue("2")
     VECTOR(2, "Vector"),
@@ -41,10 +41,15 @@ public enum DataFormat implements TaoEnum<Integer> {
     @XmlEnumValue("3")
     OTHER(3, "Unknown"),
     /**
-     *
+     * Database connection
      */
     @XmlEnumValue("4")
-    DB_CONNECTION(4, "Database Connection");
+    DB_CONNECTION(4, "Database Connection"),
+    /**
+     * Folder
+     */
+    @XmlEnumValue("5")
+    FOLDER(5, "Folder");
 
     /**
      * Numerical value for enum constants
