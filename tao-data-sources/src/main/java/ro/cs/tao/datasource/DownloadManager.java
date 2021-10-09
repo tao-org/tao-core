@@ -85,10 +85,14 @@ public class DownloadManager {
             }
             final Future<List<EOProduct>> task = executor.submit(() ->
                          delegate.apply(products, tiles, destinationPath, localRootPath, additionalProperties));
-            instance.queuedDownloads.put(dsInstance.hashCode(), task);
-            logger.fine(String.format("Download queued for data source [%s-%s]. There are %d queued downloads for this source",
-                                      dsInstance.getDataSourceName(), dsInstance.getSensorName(), executor.getActiveCount()));
-            return task.get();
+            try {
+                instance.queuedDownloads.put(dsInstance.hashCode(), task);
+                logger.fine(String.format("Download queued for data source [%s-%s]. There are %d queued downloads for this source",
+                                          dsInstance.getDataSourceName(), dsInstance.getSensorName(), executor.getActiveCount()));
+                return task.get();
+            } finally {
+                instance.queuedDownloads.remove(dsInstance.hashCode());
+            }
         } catch (Exception e) {
             logger.severe(e.getMessage());
             return null;
@@ -107,7 +111,7 @@ public class DownloadManager {
         }
         final NamedThreadPoolExecutor executor = instance.downloadWorkers.get(dsInstance.defaultId());
         if (executor != null) {
-            final Future<?> task = instance.queuedDownloads.get(dsInstance.hashCode());
+            final Future<?> task = instance.queuedDownloads.remove(dsInstance.hashCode());
             if (task != null) {
                 task.cancel(true);
             } else {
