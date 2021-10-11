@@ -21,8 +21,8 @@
         </dependency>
         <dependency>
             <groupId>com.sun.mail</groupId>
-            <artifactId>javax.mail</artifactId>
-            <version>1.5.5</version>
+            <artifactId>jakarta.mail</artifactId>
+            <version>1.6.5</version>
         </dependency>
     </dependencies>
 
