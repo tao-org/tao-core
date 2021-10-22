@@ -16,9 +16,7 @@ import ro.cs.tao.utils.NetUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.text.DateFormat;
-import java.time.LocalDate;
-import java.time.ZoneId;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -173,11 +171,8 @@ public class DownloadTool {
                         continue;
                     }
                     final Class<?> type = currentParameter.getType();
-                    if (Date.class.isAssignableFrom(type)) {
-                        query.addParameter(tokens[0], Date.from(LocalDate.parse(tokens[1],
-                                                                                DateTimeFormatter.ofPattern("yyyy-MM-dd"))
-                                                                        .atStartOfDay().atZone(ZoneId.systemDefault())
-                                                                        .toInstant()));
+                    if (LocalDateTime.class.isAssignableFrom(type)) {
+                        query.addParameter(tokens[0], LocalDateTime.parse(tokens[1], DateTimeFormatter.ofPattern("yyyy-MM-dd")));
                     } else if (Polygon2D.class.isAssignableFrom(type)) {
                         query.addParameter(tokens[0], Polygon2D.fromWKT(tokens[1]));
                     } else if (Integer.class.isAssignableFrom(type)) {
@@ -198,7 +193,7 @@ public class DownloadTool {
                     if (results == null || results.size() == 0) {
                         System.out.println("No results");
                     } else {
-                        final DateFormat dateFormat = DateUtils.getFormatterAtUTC("yyyy-MM-dd");
+                        final DateTimeFormatter dateFormat = DateUtils.getFormatterAtUTC("yyyy-MM-dd");
                         if ("text".equalsIgnoreCase(format)) {
                             for (EOProduct result : results) {
                                 System.out.println("name=" + result.getName() + "; date=" + dateFormat.format(result.getAcquisitionDate()) + "; url=" + result.getLocation());

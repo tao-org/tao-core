@@ -2,7 +2,7 @@ package ro.cs.tao.persistence;
 
 import ro.cs.tao.eodata.EOProduct;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface EOProductProvider extends EntityProvider<EOProduct, String> {
@@ -17,6 +17,6 @@ public interface EOProductProvider extends EntityProvider<EOProduct, String> {
     List<EOProduct> getWorkflowOutputs(long workflowId);
     long getUserProductsSize(String user);
     long getUserInputProductsSize(String user, String location);
-    Date getNewestProductDateForUser(String user, String footprint);
+    LocalDateTime getNewestProductDateForUser(String user, String footprint);
     List<EOProduct> getJobOutputs(long jobId);
 }

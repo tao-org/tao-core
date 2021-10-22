@@ -20,7 +20,7 @@ import ro.cs.tao.eodata.Polygon2D;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,7 +37,7 @@ public class ConverterFactory {
 
     public ConverterFactory() {
         converters = new HashMap<>();
-        converters.put(Date.class, DateParameterConverter.class);
+        converters.put(LocalDateTime.class, DateParameterConverter.class);
         converters.put(Polygon2D.class, PolygonParameterConverter.class);
     }
 

@@ -18,31 +18,31 @@ package ro.cs.tao.component.converters;
 import ro.cs.tao.datasource.converters.ConversionException;
 import ro.cs.tao.utils.DateUtils;
 
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 /**
- * Converter between {@link Date} and {@link String} objects.
+ * Converter between {@link LocalDateTime} and {@link String} objects.
  *
  * @author Cosmin Cara
  */
-public class DateConverter extends DefaultConverter<Date> {
-    private static final DateFormat format = DateUtils.getFormatterAtUTC("yyyy-MM-dd");
+public class DateConverter extends DefaultConverter<LocalDateTime> {
+    private static final DateTimeFormatter format = DateUtils.getFormatterAtUTC("yyyy-MM-dd");
 
     public DateConverter() { }
 
     @Override
-    public Date fromString(String value) throws ConversionException {
+    public LocalDateTime fromString(String value) throws ConversionException {
         try {
-            return value != null ? format.parse(value) : null;
-        } catch (ParseException e) {
+            return value != null ? LocalDateTime.parse(value, format) : null;
+        } catch (DateTimeParseException e) {
             throw new ConversionException(e.getMessage());
         }
     }
 
     @Override
-    public String stringValue(Date value) throws ConversionException {
+    public String stringValue(LocalDateTime value) throws ConversionException {
         try {
             return value != null ? format.format(value) : null;
         } catch (Exception ex) {

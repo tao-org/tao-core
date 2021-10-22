@@ -18,22 +18,22 @@ package ro.cs.tao.serialization;
 import ro.cs.tao.utils.DateUtils;
 
 import javax.xml.bind.annotation.adapters.XmlAdapter;
-import java.text.DateFormat;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 /**
  * @author Cosmin Cara
  */
-public class DateAdapter extends XmlAdapter<String, Date> {
-    private final DateFormat dateFormat = DateUtils.getFormatterAtUTC("yyyy-MM-dd'T'HH:mm:sss");
+public class DateAdapter extends XmlAdapter<String, LocalDateTime> {
+    private final DateTimeFormatter dateFormat = DateUtils.getFormatterAtUTC("yyyy-MM-dd'T'HH:mm:sss");
 
     @Override
-    public Date unmarshal(String v) throws Exception {
-        return dateFormat.parse(v);
+    public LocalDateTime unmarshal(String v) throws Exception {
+        return LocalDateTime.parse(v, dateFormat);
     }
 
     @Override
-    public String marshal(Date v) throws Exception {
+    public String marshal(LocalDateTime v) throws Exception {
         return dateFormat.format(v);
     }
 }

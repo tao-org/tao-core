@@ -17,8 +17,10 @@ package ro.cs.tao.utils.logger;
 
 import ro.cs.tao.utils.DateUtils;
 
-import java.text.DateFormat;
-import java.util.Date;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
 
@@ -28,7 +30,7 @@ import java.util.logging.LogRecord;
  * @author COsmin Cara
  */
 public class LogFormatter extends Formatter {
-    private final DateFormat dateFormat = DateUtils.getFormatterAtLocal("yyyy-MM-dd HH:mm:ss.SSS");
+    private final DateTimeFormatter dateFormat = DateUtils.getFormatterAtLocal("yyyy-MM-dd HH:mm:ss.SSS");
 
     @Override
     public String format(LogRecord record) {
@@ -42,6 +44,6 @@ public class LogFormatter extends Formatter {
     }
 
     private String formatTime(long millis) {
-        return dateFormat.format(new Date(millis));
+        return dateFormat.format(LocalDateTime.ofInstant(Instant.ofEpochMilli(millis), ZoneId.systemDefault()));
     }
 }

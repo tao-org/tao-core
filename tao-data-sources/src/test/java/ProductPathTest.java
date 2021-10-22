@@ -4,8 +4,8 @@ import ro.cs.tao.eodata.EOProduct;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.Properties;
 
 public class ProductPathTest {
@@ -21,7 +21,7 @@ public class ProductPathTest {
         product.setName("S1A_IW_SLC__1SDV_20181105T174115_20181105T174142_024456_02AE49_5134.SAFE");
         Calendar calendar = Calendar.getInstance();
         calendar.set(2018, Calendar.NOVEMBER, 5);
-        product.setAcquisitionDate(Date.from(calendar.toInstant()));
+        product.setAcquisitionDate(LocalDateTime.of(2018, 11, 5, 17, 41, 15));
         ProductPathBuilder pathBuilder = new DefaultProductPathBuilder(repositoryPath, localPathFormat, properties, true);
         Path path = pathBuilder.getProductPath(repositoryPath, product);
         if (!path.toString().contains(product.getName()) &&

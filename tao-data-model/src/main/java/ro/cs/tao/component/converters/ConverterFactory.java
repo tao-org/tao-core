@@ -19,7 +19,7 @@ import ro.cs.tao.component.ParameterDescriptor;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -38,7 +38,7 @@ public class ConverterFactory {
         converters = new HashMap<>();
         converters.put(Boolean.class, BooleanConverter.class);
         converters.put(Byte.class, ByteConverter.class);
-        converters.put(Date.class, DateConverter.class);
+        converters.put(LocalDateTime.class, DateConverter.class);
         converters.put(Double.class, DoubleConverter.class);
         converters.put(Float.class, FloatConverter.class);
         converters.put(Integer.class, IntegerConverter.class);

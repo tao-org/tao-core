@@ -5,7 +5,6 @@ import ro.cs.tao.eodata.EOProduct;
 
 import java.time.LocalDate;
 import java.time.Period;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,8 +43,8 @@ public class ProductByDateOffsetAssociation extends Association<EOProduct> {
             first = source.get(i);
             for (int j = i + 1; j < sourceSize; j++) {
                 second = source.get(j);
-                LocalDate date1 = first.getAcquisitionDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                LocalDate date2 = second.getAcquisitionDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                LocalDate date1 = first.getAcquisitionDate().toLocalDate();
+                LocalDate date2 = second.getAcquisitionDate().toLocalDate();
                 int offset;
                 if (date1.compareTo(date2) >= 0) {
                     offset = Period.between(date2, date1).getDays() + 1;

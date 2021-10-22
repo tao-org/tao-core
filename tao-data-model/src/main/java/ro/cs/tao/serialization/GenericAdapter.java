@@ -16,7 +16,7 @@
 package ro.cs.tao.serialization;
 
 import javax.xml.bind.annotation.adapters.XmlAdapter;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
  * @author Cosmin Cara
@@ -34,7 +34,7 @@ public class GenericAdapter extends XmlAdapter<Object, String> {
 
     @Override
     public String unmarshal(Object v) throws Exception {
-        return !clazz.isAssignableFrom(Date.class) ? String.valueOf(v) : new DateAdapter().marshal((Date) v);
+        return !clazz.isAssignableFrom(LocalDateTime.class) ? String.valueOf(v) : new DateAdapter().marshal((LocalDateTime) v);
     }
 
     @Override
@@ -53,7 +53,7 @@ public class GenericAdapter extends XmlAdapter<Object, String> {
             return Float.parseFloat(v);
         } else if (clazz.isAssignableFrom(Double.class)) {
             return Double.parseDouble(v);
-        } else if (clazz.isAssignableFrom(Date.class)) {
+        } else if (clazz.isAssignableFrom(LocalDateTime.class)) {
             return new DateAdapter().unmarshal(v);
         } else {
             return null;

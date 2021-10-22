@@ -15,9 +15,11 @@
  */
 package ro.cs.tao.component;
 
+import ro.cs.tao.EnumUtils;
 import ro.cs.tao.component.enums.Condition;
 import ro.cs.tao.component.enums.ParameterType;
 import ro.cs.tao.component.validation.*;
+import ro.cs.tao.datasource.param.JavaType;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import java.lang.reflect.Array;
@@ -32,7 +34,7 @@ import java.util.*;
 public class ParameterDescriptor extends StringIdentifiable {
     private String name;
     private ParameterType type;
-    private Class<?> dataType;
+    private JavaType dataType;
     private String defaultValue;
     private String description;
     private String label;
@@ -53,7 +55,7 @@ public class ParameterDescriptor extends StringIdentifiable {
         super(id);
         this.name = name;
         this.type = type;
-        this.dataType = dataType;
+        this.dataType = EnumUtils.getEnumConstantByValue(JavaType.class, dataType);
         this.defaultValue = defaultValue;
         this.description = description;
         this.label = label;
@@ -80,11 +82,11 @@ public class ParameterDescriptor extends StringIdentifiable {
     }
 
     public Class<?> getDataType() {
-        return dataType;
+        return dataType != null ? dataType.value() : null;
     }
 
     public void setDataType(Class<?> dataType) {
-        this.dataType = dataType;
+        this.dataType = dataType != null ? EnumUtils.getEnumConstantByValue(JavaType.class, dataType) : null;
     }
 
     public String getDefaultValue() {
