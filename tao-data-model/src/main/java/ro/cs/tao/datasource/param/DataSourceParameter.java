@@ -17,6 +17,7 @@ package ro.cs.tao.datasource.param;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import ro.cs.tao.EnumUtils;
 
 import java.util.Objects;
 
@@ -29,7 +30,7 @@ public class DataSourceParameter {
     private final String name;
     private final String remoteName;
     private final String label;
-    private final Class type;
+    private final JavaType type;
     private Object defaultValue;
     private final boolean required;
     private Object[] valueSet;
@@ -51,7 +52,7 @@ public class DataSourceParameter {
         this.name = name;
         this.remoteName = remoteName;
         this.label = label;
-        this.type = type;
+        this.type = EnumUtils.getEnumConstantByValue(JavaType.class, type);
         this.defaultValue = defaultValue;
         this.required = required;
     }
@@ -60,7 +61,7 @@ public class DataSourceParameter {
         this.name = name;
         this.remoteName = remoteName;
         this.label = label;
-        this.type = type;
+        this.type = EnumUtils.getEnumConstantByValue(JavaType.class, type);;
         this.defaultValue = defaultValue;
         this.required = required;
         this.valueSet = valueSet;
@@ -70,7 +71,7 @@ public class DataSourceParameter {
     public DataSourceParameter(@JsonProperty("name") String name,
                                @JsonProperty("remoteName") String remoteName,
                                @JsonProperty("label") String label,
-                               @JsonProperty("type") Class type,
+                               @JsonProperty("type") JavaType type,
                                @JsonProperty("defaultValue") Object defaultValue,
                                @JsonProperty("required") boolean required,
                                @JsonProperty("valueSet") Object[] valueSet,
@@ -91,7 +92,7 @@ public class DataSourceParameter {
 
     public String getLabel() { return label; }
 
-    public Class getType() { return type; }
+    public Class getType() { return type != null ? type.value() : null; }
 
     public boolean isRequired() { return required; }
 

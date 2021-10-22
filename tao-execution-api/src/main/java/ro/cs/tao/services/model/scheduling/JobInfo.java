@@ -1,11 +1,10 @@
 package ro.cs.tao.services.model.scheduling;
 
 import ro.cs.tao.execution.model.ExecutionStatus;
+import ro.cs.tao.utils.DateUtils;
 
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Date;
+import java.time.format.DateTimeFormatter;
 
 /** Information related to a job.
  * 
@@ -13,7 +12,7 @@ import java.util.Date;
  *
  */
 public class JobInfo {
-	private static final SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+	private static final DateTimeFormatter df = DateUtils.getFormatterAtLocal("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 	
 	private long jobId;
 	private String startTime;
@@ -33,8 +32,7 @@ public class JobInfo {
 		if (startTime == null) {
 			this.startTime = "";
 		} else {
-			final Date d = Date.from(startTime.atZone(ZoneId.systemDefault()).toInstant());
-			this.startTime = df.format(d);
+			this.startTime = startTime.format(df);
 		}
 	}
 	public String getEndTime() {
@@ -44,8 +42,7 @@ public class JobInfo {
 		if (endTime == null) {
 			this.endTime = "";
 		} else {
-			final Date d = Date.from(endTime.atZone(ZoneId.systemDefault()).toInstant());
-			this.endTime = df.format(d);
+			this.endTime = endTime.format(df);
 		}
 	}
 	public ExecutionStatus getStatus() {

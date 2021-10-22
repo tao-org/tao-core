@@ -47,9 +47,10 @@ import ro.cs.tao.workflow.enums.Status;
 import java.awt.*;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Set;
 
 /**
  * Created by oana on 7/18/2017.
@@ -842,7 +843,7 @@ public class PersistenceManagerTest {
             EOProduct product = new EOProduct();
             product.setId("LC82010442017273LGN00");
             product.setName("LC08_L1TP_201044_20170930_20171013_01_T1");
-            product.setAcquisitionDate(Date.from(LocalDateTime.of(2017, 9, 30, 0, 0).atZone(ZoneId.systemDefault()).toInstant()));
+            product.setAcquisitionDate(LocalDateTime.of(2017, 9, 30, 0, 0));
             product.setSensorType(SensorType.OPTICAL);
             product.setProductType("Landsat8");
             product.setApproximateSize(1700000000);

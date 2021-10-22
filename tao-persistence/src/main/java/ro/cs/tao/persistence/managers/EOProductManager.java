@@ -8,7 +8,11 @@ import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.persistence.EOProductProvider;
 import ro.cs.tao.persistence.repository.EOProductRepository;
 
-import java.util.*;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Configuration
@@ -74,7 +78,7 @@ public class EOProductManager extends EntityManager<EOProduct, String, EOProduct
     }
 
     @Override
-    public Date getNewestProductDateForUser(String user, String footprint) {
+    public LocalDateTime getNewestProductDateForUser(String user, String footprint) {
         final EOProduct prod = repository.getNewestProductForUser(user, footprint);
         if (prod == null) {
             return null;

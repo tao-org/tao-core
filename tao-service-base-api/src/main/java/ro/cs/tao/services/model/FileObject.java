@@ -19,9 +19,9 @@ package ro.cs.tao.services.model;
 import java.util.Map;
 
 public class FileObject {
-    private String relativePath;
-    private boolean isFolder;
-    private long size;
+    private final String relativePath;
+    private final boolean isFolder;
+    private final long size;
     private String productName;
     private Map<String, String> attributes;
 

@@ -20,7 +20,6 @@ import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -86,8 +85,6 @@ public class GenericComparator implements Comparator<Object>  {
             retValue = Double.compare((Double)o1, (Double)o2);
         } else if (String.class.equals(o1.getClass())) {
             retValue = ((String)o1).compareTo((String)o2);
-        } else if (Date.class.equals(o1.getClass())) {
-            retValue = ((Date)o1).compareTo((Date)o2);
         } else if (LocalDate.class.equals(o1.getClass())) {
             retValue = ((LocalDate)o1).compareTo((LocalDate)o2);
         } else if (LocalDateTime.class.equals(o1.getClass())) {

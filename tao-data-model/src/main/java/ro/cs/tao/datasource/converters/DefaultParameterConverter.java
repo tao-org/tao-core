@@ -22,10 +22,10 @@ import ro.cs.tao.datasource.param.QueryParameter;
  *
  * @author Cosmin Cara
  */
-public class DefaultParameterConverter implements QueryParameterConverter {
-    protected QueryParameter parameter;
+public class DefaultParameterConverter<T> implements QueryParameterConverter {
+    protected QueryParameter<T> parameter;
 
-    public DefaultParameterConverter(QueryParameter parameter) {
+    public DefaultParameterConverter(QueryParameter<T> parameter) {
         this.parameter = parameter;
     }
 

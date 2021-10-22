@@ -29,8 +29,8 @@ import ro.cs.tao.utils.CompositeKey;
 import ro.cs.tao.utils.DateUtils;
 
 import java.lang.reflect.Array;
-import java.text.DateFormat;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -38,7 +38,7 @@ import java.util.logging.Logger;
  * @author Cosmin Cara
  */
 public class Query extends LongIdentifiable {
-    private static final DateFormat SIMPLE_DATE_FORMAT = DateUtils.getFormatterAtUTC("yyyy-MM-dd");
+    private static final DateTimeFormatter SIMPLE_DATE_FORMAT = DateUtils.getFormatterAtUTC("yyyy-MM-dd");
     private static final Map<CompositeKey, DataSourceComponent> componentPool = Collections.synchronizedMap(new HashMap<>());
     private String label;
     private String userId;
@@ -154,7 +154,7 @@ public class Query extends LongIdentifiable {
                     }
                     if (value != null && value.startsWith("[") & value.endsWith("]")) {
                         String[] elements = value.substring(1, value.length() - 1).split(",");
-                        if (Date.class.isAssignableFrom(type)) {
+                        if (LocalDateTime.class.isAssignableFrom(type)) {
                             query.addParameter(query.createParameter(paramName,
                                                                      type,
                                                                      SIMPLE_DATE_FORMAT.parse(elements[0]),
@@ -169,7 +169,7 @@ public class Query extends LongIdentifiable {
                             query.addParameter(query.createParameter(paramName, type, array));
                         }
                     } else {
-                        if (Date.class.isAssignableFrom(type)) {
+                        if (LocalDateTime.class.isAssignableFrom(type)) {
                             query.addParameter(paramName, type,
                                                SIMPLE_DATE_FORMAT.parse(String.valueOf(value)));
                         } else if (Polygon2D.class.isAssignableFrom(type)) {

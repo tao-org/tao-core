@@ -30,8 +30,10 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Interface to be implemented by all simple metadata inspectors.
@@ -152,9 +154,7 @@ public interface MetadataInspector {
         public EOProduct toProductDescriptor(Path productPath) throws URISyntaxException, IOException {
             EOProduct product = new EOProduct();
             String name = FileUtilities.getFilenameWithoutExtension(productPath.toFile());
-            if (this.aquisitionDate != null) {
-                product.setAcquisitionDate(Date.from(this.aquisitionDate.atZone(ZoneId.systemDefault()).toInstant()));
-            }
+            product.setAcquisitionDate(this.aquisitionDate);
             product.setId(name);
             product.setName(name);
             product.setProductType(this.productType);
