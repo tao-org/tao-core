@@ -92,7 +92,7 @@ public class ExecutionConfiguration {
 
     public static boolean useDocker() {
         if (useDocker == null) {
-            useDocker = Boolean.parseBoolean(ConfigurationManager.getInstance().getValue(Constants.PLUGINS_USE_DOCKER, "false"));
+            useDocker = "docker".equals(ConfigurationManager.getInstance().getValue(Constants.PLUGINS_USE_DOCKER, ""));
         }
         return useDocker;
     }

@@ -38,7 +38,7 @@ public class DockerManager {
     private static final String dockerListCmdTemplate;
     private static final String dockerListAllCmd;
     private static final String dockerPullCmd;
-    private static final OutputAccumulator sharedAccumulator;
+    //private static final OutputAccumulator sharedAccumulator;
     private static final DockerManager instance;
 
     private final ContainerProvider containerProvider;
@@ -53,7 +53,7 @@ public class DockerManager {
         dockerListAllCmd = "docker images --format {{.ID}}\\t{{.Tag}}\\t{{.Repository}}";
         dockerListCmdTemplate = "docker images %s --format {{.ID}}\\t{{.Tag}}\\t{{.Repository}}";
         dockerPullCmd = "docker pull %s";
-        sharedAccumulator = new OutputAccumulator();
+        //sharedAccumulator = new OutputAccumulator();
         instance = new DockerManager();
     }
 
@@ -114,12 +114,13 @@ public class DockerManager {
                                               masterNode.getUserName(),
                                               masterNode.getUserPass(),
                                               commands, false, SSHMode.EXEC);
-        sharedAccumulator.reset();
+        final OutputAccumulator accumulator = new OutputAccumulator();
+        accumulator.preserveLineSeparator(true);
         int retCode;
-        final Executor<?> executor = Executor.execute(sharedAccumulator, job);
+        final Executor<?> executor = Executor.execute(accumulator, job);
         waitFor(executor, 50, TimeUnit.SECONDS);
         if ((retCode = executor.getReturnCode()) == 0) {
-            String[] lines = sharedAccumulator.getOutput().split("\n");
+            String[] lines = accumulator.getOutput().split("\n");
             for (String line : lines) {
                 String[] tokens = line.split("[ \t]");
                 List<String> list = Arrays.stream(tokens).filter(item -> !item.trim().isEmpty()).
@@ -138,8 +139,7 @@ public class DockerManager {
             }
         } else {
             String message = String.format("Docker command failed wit code %s. Details: '%s'",
-                                           retCode, sharedAccumulator.getOutput());
-            sharedAccumulator.reset();
+                                           retCode, accumulator.getOutput());
             logger.severe(message);
         }
 
@@ -154,18 +154,18 @@ public class DockerManager {
                                               masterNode.getUserName(),
                                               masterNode.getUserPass(),
                                               commands, false, SSHMode.EXEC);
-        sharedAccumulator.reset();
+        final OutputAccumulator accumulator = new OutputAccumulator();
+        accumulator.preserveLineSeparator(true);
         int retCode;
-        final Executor<?> executor = Executor.execute(sharedAccumulator, job);
+        final Executor<?> executor = Executor.execute(accumulator, job);
         waitFor(executor, 300, TimeUnit.SECONDS);
         if ((retCode = executor.getReturnCode()) == 0) {
             container = get(name);
         } else {
             String message = String.format("Docker command failed wit code %s. Details: '%s'",
-                                           retCode, sharedAccumulator.getOutput());
+                                           retCode, accumulator.getOutput());
             logger.severe(message);
         }
-        sharedAccumulator.reset();
         return container;
     }
 
@@ -183,9 +183,10 @@ public class DockerManager {
                                               masterNode.getUserName(),
                                               masterNode.getUserPass(),
                                               commands, false, SSHMode.EXEC);
-        sharedAccumulator.reset();
+        final OutputAccumulator accumulator = new OutputAccumulator();
+        accumulator.preserveLineSeparator(true);
         int retCode;
-        Executor<?> executor = Executor.execute(sharedAccumulator, job);
+        Executor<?> executor = Executor.execute(accumulator, job);
         logger.fine("Executing " + String.join(" ", commands));
         String containerId = null;
         waitFor(executor, 20, TimeUnit.MINUTES);
@@ -200,8 +201,8 @@ public class DockerManager {
                                     masterNode.getUserName(),
                                     masterNode.getUserPass(),
                                     commands, false, SSHMode.EXEC);
-            sharedAccumulator.reset();
-            executor = Executor.execute(sharedAccumulator, job);
+            accumulator.reset();
+            executor = Executor.execute(accumulator, job);
             logger.fine("Executing " + String.join(" ", commands));
             waitFor(executor, 30, TimeUnit.SECONDS);
             if ((retCode = executor.getReturnCode()) == 0) {
@@ -212,8 +213,8 @@ public class DockerManager {
                                             masterNode.getUserName(),
                                             masterNode.getUserPass(),
                                             commands, false, SSHMode.EXEC);
-                    sharedAccumulator.reset();
-                    executor = Executor.execute(sharedAccumulator, job);
+                    accumulator.reset();
+                    executor = Executor.execute(accumulator, job);
                     logger.fine("Executing " + String.join(" ", commands));
                     waitFor(executor, 10, TimeUnit.MINUTES);
                     if ((retCode = executor.getReturnCode()) == 0) {
@@ -221,7 +222,7 @@ public class DockerManager {
                                        String.format("Docker image '%s' successfully registered", correctedName));
                         return containerId;
                     } else {
-                        logger.severe("Command output: " + sharedAccumulator.getOutput());
+                        logger.severe("Command output: " + accumulator.getOutput());
                     }
                 } else {
                     Messaging.send(principal, Topic.INFORMATION.value(), this,
@@ -231,12 +232,11 @@ public class DockerManager {
             } else {
                 logger.severe(String.format("Execution failed with code %s. Command output: %s",
                                             executor.getReturnCode(),
-                                            sharedAccumulator.getOutput()));
+                                            accumulator.getOutput()));
             }
         }
         String message = String.format("Registration for image '%s' failed with code %s. Details: '%s'",
-                                       correctedName, retCode, sharedAccumulator.getOutput());
-        sharedAccumulator.reset();
+                                       correctedName, retCode, accumulator.getOutput());
         logger.severe(message);
         Messaging.send(principal, Topic.ERROR.value(), this, message);
         return containerId;
@@ -254,20 +254,17 @@ public class DockerManager {
                                               masterNode.getUserName(),
                                               masterNode.getUserPass(),
                                               arguments, false, SSHMode.EXEC);
-        sharedAccumulator.reset();
-        try {
-            int retCode;
-            final Executor<?> executor = Executor.execute(sharedAccumulator, job);
-            waitFor(executor, timeoutMinutes, TimeUnit.MINUTES);
-            if ((retCode = executor.getReturnCode()) != 0) {
-                return sharedAccumulator.getOutput();
-            } else {
-                String message = String.format("Docker command failed wit code %s. Details: '%s'",
-                                               retCode, sharedAccumulator.getOutput());
-                throw new IOException(message);
-            }
-        } finally {
-            sharedAccumulator.reset();
+        final OutputAccumulator accumulator = new OutputAccumulator();
+        accumulator.preserveLineSeparator(true);
+        int retCode;
+        final Executor<?> executor = Executor.execute(accumulator, job);
+        waitFor(executor, timeoutMinutes, TimeUnit.MINUTES);
+        if ((retCode = executor.getReturnCode()) != 0) {
+            return accumulator.getOutput();
+        } else {
+            String message = String.format("Docker command failed wit code %s. Details: '%s'",
+                                           retCode, accumulator.getOutput());
+            throw new IOException(message);
         }
     }
 
@@ -284,9 +281,10 @@ public class DockerManager {
                                               masterNode.getUserName(),
                                               masterNode.getUserPass(),
                                               arguments, false, SSHMode.EXEC);
-        sharedAccumulator.reset();
+        final OutputAccumulator accumulator = new OutputAccumulator();
+        accumulator.preserveLineSeparator(true);
         this.daemonContainerExecutors.put(containerName,
-                                          Executor.execute(sharedAccumulator, job));
+                                          Executor.execute(accumulator, job));
     }
 
     private void stop(String containerName) throws IOException {
@@ -302,36 +300,33 @@ public class DockerManager {
                                                   masterNode.getUserPass(),
                                                   args, false, SSHMode.EXEC);
             this.daemonContainerExecutors.get(containerName).stop();
-            sharedAccumulator.reset();
-            try {
-                int retCode;
-                Executor<?> executor = Executor.execute(sharedAccumulator, job);
+            final OutputAccumulator accumulator = new OutputAccumulator();
+            accumulator.preserveLineSeparator(true);
+            int retCode;
+            Executor<?> executor = Executor.execute(accumulator, job);
+            waitFor(executor, 15, TimeUnit.SECONDS);
+            if ((retCode = executor.getReturnCode()) != 0) {
+                String message = String.format("Docker command failed wit code %s. Details: '%s'",
+                                               retCode, accumulator.getOutput());
+                throw new IOException(message);
+            } else {
+                accumulator.reset();
+                args.clear();
+                args.add("docker");
+                args.add("rm");
+                args.add(containerName);
+                job = new ExecutionUnit(ExecutorType.PROCESS,
+                                        masterNode.getId(),
+                                        masterNode.getUserName(),
+                                        masterNode.getUserPass(),
+                                        args, false, SSHMode.EXEC);
+                executor = Executor.execute(accumulator, job);
                 waitFor(executor, 15, TimeUnit.SECONDS);
                 if ((retCode = executor.getReturnCode()) != 0) {
                     String message = String.format("Docker command failed wit code %s. Details: '%s'",
-                                                   retCode, sharedAccumulator.getOutput());
+                                                   retCode, accumulator.getOutput());
                     throw new IOException(message);
-                } else {
-                    sharedAccumulator.reset();
-                    args.clear();
-                    args.add("docker");
-                    args.add("rm");
-                    args.add(containerName);
-                    job = new ExecutionUnit(ExecutorType.PROCESS,
-                                            masterNode.getId(),
-                                            masterNode.getUserName(),
-                                            masterNode.getUserPass(),
-                                            args, false, SSHMode.EXEC);
-                    executor = Executor.execute(sharedAccumulator, job);
-                    waitFor(executor, 15, TimeUnit.SECONDS);
-                    if ((retCode = executor.getReturnCode()) != 0) {
-                        String message = String.format("Docker command failed wit code %s. Details: '%s'",
-                                                       retCode, sharedAccumulator.getOutput());
-                        throw new IOException(message);
-                    }
                 }
-            } finally {
-                sharedAccumulator.reset();
             }
         }
     }
@@ -352,12 +347,12 @@ public class DockerManager {
                                               masterNode.getUserPass(),
                                               ProcessHelper.tokenizeCommands(dockerListAllCmd),
                                               false, SSHMode.EXEC);
-        sharedAccumulator.reset();
-        sharedAccumulator.preserveLineSeparator(true);
-        final Executor<?> executor = Executor.execute(sharedAccumulator, job);
+        final OutputAccumulator accumulator = new OutputAccumulator();
+        accumulator.preserveLineSeparator(true);
+        final Executor<?> executor = Executor.execute(accumulator, job);
         waitFor(executor, 3, TimeUnit.SECONDS);
         if (executor.getReturnCode() == 0) {
-            final String output = sharedAccumulator.getOutput();
+            final String output = accumulator.getOutput();
             //String[] lines = SystemUtils.IS_OS_WINDOWS ? output.split("\n") : output.replace("\n", "").split(";");
             String[] lines = output.split("[\n;]");
             for (String line : lines) {
@@ -378,11 +373,9 @@ public class DockerManager {
                 }
             }
         } else {
-            String message = String.format("Docker command failed. Details: '%s'", sharedAccumulator.getOutput());
-            sharedAccumulator.reset();
+            String message = String.format("Docker command failed. Details: '%s'", accumulator.getOutput());
             logger.severe(message);
         }
-        sharedAccumulator.preserveLineSeparator(false);
         return containers;
     }
 }

@@ -15,6 +15,8 @@
  */
 package ro.cs.tao.component;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.component.enums.Condition;
 import ro.cs.tao.component.enums.ParameterType;
@@ -48,6 +50,32 @@ public class ParameterDescriptor extends StringIdentifiable {
     private ParameterExpansionRule expansionRule;
 
     public ParameterDescriptor() { super(); }
+
+    @JsonCreator
+    public ParameterDescriptor(@JsonProperty("id") String id,
+                               @JsonProperty("name") String name,
+                               @JsonProperty("type") ParameterType type,
+                               @JsonProperty("dataType") JavaType dataType,
+                               @JsonProperty("defaultValue") String defaultValue,
+                               @JsonProperty("description") String description,
+                               @JsonProperty("label") String label,
+                               @JsonProperty("unit") String unit,
+                               @JsonProperty("valueSet") String[] valueSet,
+                               @JsonProperty("format") String format,
+                               @JsonProperty("expansionRule") ParameterExpansionRule rule,
+                               @JsonProperty("notNull") boolean notNull) {
+        super(id);
+        this.name = name;
+        this.type = type;
+        this.dataType = dataType;
+        this.defaultValue = defaultValue;
+        this.description = description;
+        this.label = label;
+        this.valueSet = valueSet;
+        this.format = format;
+        this.expansionRule = rule;
+        this.notNull = notNull;
+    }
 
     public ParameterDescriptor(String id, String name, ParameterType type, Class<?> dataType, String defaultValue,
                                String description, String label, String unit, String[] valueSet, String format,

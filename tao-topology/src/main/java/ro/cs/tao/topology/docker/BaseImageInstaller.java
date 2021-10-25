@@ -86,64 +86,68 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
         Container container = null;
         if (dockerPath != null) {
             try {
-                final String cfgValue = ConfigurationManager.getInstance().getValue("tao.docker.images");
-                if (cfgValue == null) {
-                    logger.warning("Invalid path for docker images");
-                    return null;
-                }
-                final Path dockerImagesPath = Paths.get(cfgValue);
-                Files.createDirectories(dockerImagesPath);
-                // first try the container.properties file, maybe it is a container from Docker Hub
-                Path dockerfilePath = dockerImagesPath.resolve(getContainerName()).resolve("container.properties");
-                Files.createDirectories(dockerImagesPath.resolve(getContainerName()));
-                //dockerfilePath = dockerfilePath.resolve("container.properties");
-                final byte[] buffer = new byte[1024];
-                try (InputStream is = getClass().getResourceAsStream("container.properties");
-                     OutputStream os = new BufferedOutputStream(Files.newOutputStream(dockerfilePath))) {
-                    if (is != null) {
-                        int read;
-                        while ((read = is.read(buffer)) != -1) {
-                            os.write(buffer, 0, read);
-                        }
-                        os.flush();
+                final String localRegistry = ConfigurationManager.getInstance().getValue("tao.docker.registry");
+                if ((container = DockerManager.getDockerImage(getContainerName())) == null &&
+                    (container = DockerManager.getDockerImage(localRegistry + "/" + getContainerName())) == null) {
+                    final String cfgValue = ConfigurationManager.getInstance().getValue("tao.docker.images");
+                    if (cfgValue == null) {
+                        logger.warning("Invalid path for docker images");
+                        return null;
                     }
-                } catch (Exception notFound) {
-                    logger.fine(String.format("Container %s doesn't have container.properties", getContainerName()));
-                }
-                Properties properties = new Properties();
-                if (Files.exists(dockerfilePath)) {
-                    properties.load(Files.newBufferedReader(dockerfilePath));
-                }
-                if (properties.size() > 0) {
-                    container = DockerManager.pullImage(properties.getProperty("docker.hub.name"));
-                } else {
-                    dockerfilePath = dockerImagesPath.resolve(getContainerName()).resolve("Dockerfile");
-                    if (!Files.exists(dockerfilePath)) {
-                        logger.finest(String.format("Extracting Dockerfile for image %s", getContainerName()));
-                        //Files.createDirectories(dockerfilePath.getParent());
-                        try (BufferedInputStream is = new BufferedInputStream(getClass().getResourceAsStream("Dockerfile"));
-                             OutputStream os = new BufferedOutputStream(Files.newOutputStream(dockerfilePath))) {
+                    final Path dockerImagesPath = Paths.get(cfgValue);
+                    Files.createDirectories(dockerImagesPath);
+                    // first try the container.properties file, maybe it is a container from Docker Hub
+                    Path dockerfilePath = dockerImagesPath.resolve(getContainerName()).resolve("container.properties");
+                    Files.createDirectories(dockerImagesPath.resolve(getContainerName()));
+                    //dockerfilePath = dockerfilePath.resolve("container.properties");
+                    final byte[] buffer = new byte[1024];
+                    try (InputStream is = getClass().getResourceAsStream("container.properties");
+                         OutputStream os = new BufferedOutputStream(Files.newOutputStream(dockerfilePath))) {
+                        if (is != null) {
                             int read;
                             while ((read = is.read(buffer)) != -1) {
                                 os.write(buffer, 0, read);
                             }
                             os.flush();
                         }
+                    } catch (Exception notFound) {
+                        logger.fine(String.format("Container %s doesn't have container.properties", getContainerName()));
                     }
-                    container = DockerManager.getDockerImage(getContainerName());
-                }
-                if (container == null) {
-                    this.logger.info(String.format("Image %s was not found in Docker registry. Registration starting.\n" +
-                                                             "Until registration completes, the corresponding components will not be available.", getContainerName()));
-                    for (String resource : additionalResources()) {
-                        Files.write(dockerfilePath.getParent().resolve(Paths.get(resource).getFileName()),
+                    Properties properties = new Properties();
+                    if (Files.exists(dockerfilePath)) {
+                        properties.load(Files.newBufferedReader(dockerfilePath));
+                    }
+                    if (properties.size() > 0) {
+                        container = DockerManager.pullImage(properties.getProperty("docker.hub.name"));
+                    } else {
+                        dockerfilePath = dockerImagesPath.resolve(getContainerName()).resolve("Dockerfile");
+                        if (!Files.exists(dockerfilePath)) {
+                            logger.finest(String.format("Extracting Dockerfile for image %s", getContainerName()));
+                            //Files.createDirectories(dockerfilePath.getParent());
+                            try (BufferedInputStream is = new BufferedInputStream(getClass().getResourceAsStream("Dockerfile"));
+                                 OutputStream os = new BufferedOutputStream(Files.newOutputStream(dockerfilePath))) {
+                                int read;
+                                while ((read = is.read(buffer)) != -1) {
+                                    os.write(buffer, 0, read);
+                                }
+                                os.flush();
+                            }
+                        }
+                        container = DockerManager.getDockerImage(getContainerName());
+                    }
+                    if (container == null) {
+                        this.logger.info(String.format("Image %s was not found in Docker registry. Registration starting.\n" +
+                                "Until registration completes, the corresponding components will not be available.", getContainerName()));
+                        for (String resource : additionalResources()) {
+                            Files.write(dockerfilePath.getParent().resolve(Paths.get(resource).getFileName()),
                                     readResource(resource));
+                        }
+                        DockerManager.registerImage(dockerfilePath.toRealPath(), getContainerName(), getDescription());
+                        this.logger.info(String.format("Registration completed for docker image %s.", getContainerName()));
+                        container = DockerManager.getDockerImage(getContainerName());
+                    } else {
+                        logger.finest(String.format("Image %s was found in Docker registry", getContainerName()));
                     }
-                    DockerManager.registerImage(dockerfilePath.toRealPath(), getContainerName(), getDescription());
-                    this.logger.info(String.format("Registration completed for docker image %s.", getContainerName()));
-                    container = DockerManager.getDockerImage(getContainerName());
-                } else {
-                    logger.finest(String.format("Image %s was found in Docker registry", getContainerName()));
                 }
             } catch (IOException e) {
                 logger.warning(String.format("Error occurred while registering %s: %s",
