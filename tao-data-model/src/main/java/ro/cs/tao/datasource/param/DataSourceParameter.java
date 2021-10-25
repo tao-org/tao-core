@@ -61,7 +61,7 @@ public class DataSourceParameter {
         this.name = name;
         this.remoteName = remoteName;
         this.label = label;
-        this.type = EnumUtils.getEnumConstantByValue(JavaType.class, type);;
+        this.type = EnumUtils.getEnumConstantByValue(JavaType.class, type);
         this.defaultValue = defaultValue;
         this.required = required;
         this.valueSet = valueSet;

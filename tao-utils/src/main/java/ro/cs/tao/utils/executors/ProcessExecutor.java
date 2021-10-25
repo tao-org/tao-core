@@ -79,7 +79,8 @@ public class ProcessExecutor extends Executor<Process> {
                 //redirect the error of the tool to the standard output
                 final Level parentLevel = this.logger.getParent().getLevel();
                 if (arguments.get(0).equals("docker") &&
-                        arguments.stream().noneMatch(a -> a.equals("gdalinfo")) &&
+                        arguments.stream().noneMatch(a -> a.equals("gdalinfo") || a.equals("build")
+                                || a.equals("tag") || a.equals("push") || a.equals("images")) &&
                         (parentLevel == null || parentLevel.intValue() <= Level.FINE.intValue())) {
                     pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
                     pb.redirectError(ProcessBuilder.Redirect.INHERIT);

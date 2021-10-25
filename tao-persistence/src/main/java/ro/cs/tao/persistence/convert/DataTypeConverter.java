@@ -15,6 +15,9 @@
  */
 package ro.cs.tao.persistence.convert;
 
+import ro.cs.tao.EnumUtils;
+import ro.cs.tao.datasource.param.JavaType;
+
 import javax.persistence.AttributeConverter;
 
 /**
@@ -25,37 +28,11 @@ public class DataTypeConverter implements AttributeConverter<Class<?>, String> {
 
     @Override
     public String convertToDatabaseColumn(Class<?> attribute) {
-        return attribute != null ? attribute.getCanonicalName() : null;
+        return attribute != null ? EnumUtils.getEnumConstantByValue(JavaType.class, attribute).friendlyName() : null;
     }
 
     @Override
     public Class<?> convertToEntityAttribute(String dbData) {
-        Class<?> clasz = null;
-        try {
-            if (dbData != null) {
-                if (!dbData.endsWith("[]")) {
-                    clasz = ClassLoader.getSystemClassLoader().loadClass(dbData);
-                } else {
-                    switch (dbData) {
-                        case "java.lang.Integer[]":
-                            clasz = Integer[].class;
-                            break;
-                        case "java.lang.Float[]":
-                            clasz = Float[].class;
-                            break;
-                        case "java.lang.Boolean[]":
-                            clasz = Boolean[].class;
-                            break;
-                        case "java.lang.String[]":
-                        default:
-                            clasz = String[].class;
-                            break;
-                    }
-                }
-            }
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-        return clasz;
+        return dbData != null ? EnumUtils.getEnumConstantByFriendlyName(JavaType.class, dbData).value() : null;
     }
 }

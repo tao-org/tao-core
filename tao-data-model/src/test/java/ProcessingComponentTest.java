@@ -48,12 +48,12 @@ public class ProcessingComponentTest extends BaseSerializationTest<ProcessingCom
 //                "      \"parameters\" : {\n" +
                 "         \"parameterDescriptors\" : [ {\n" +
                 "            \"id\" : \"outmode_string\",\n" +
-                "            \"dataType\" : \"java.lang.String\",\n" +
+                "            \"dataType\" : \"string\",\n" +
                 "            \"defaultValue\" : \"ulco\",\n" +
                 "            \"description\" : \"This allows setting the writing behaviour for the output vector file. Please note that the actual behaviour depends on the file format.\"\n" +
                 "         }, {\n" +
                 "            \"id\" : \"neighbor_bool\",\n" +
-                "            \"dataType\" : \"java.lang.Boolean\",\n" +
+                "            \"dataType\" : \"bool\",\n" +
                 "            \"defaultValue\" : \"true\",\n" +
                 "            \"description\" : \"Activate 8-Neighborhood connectivity (default is 4).\"\n" +
                 "         } ],\n" +
