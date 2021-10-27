@@ -648,6 +648,22 @@
         </attributes>
     </entity>
 
+    <entity class="ro.cs.tao.datasource.DataSourceConfiguration" access="PROPERTY">
+        <table name="component.data_source_configuration"/>
+        <convert converter="ro.cs.tao.persistence.convert.FetchModeConverter" attribute-name="fetchMode" />
+        <attributes>
+            <id name="id">
+                <column name="data_source_component_id" nullable="false" column-definition="varchar(512) NOT NULL"/>
+            </id>
+            <basic name="fetchMode">
+                <column name="fetch_mode" nullable="false" column-definition="smallint NOT NULL"/>
+            </basic>
+            <basic name="localRepositoryPath">
+                <column name="local_repository_root" nullable="true" column-definition="varchar(255)"/>
+            </basic>
+        </attributes>
+    </entity>
+
     <entity class="ro.cs.tao.execution.model.ExecutionTask" access="PROPERTY">
         <table name="execution.task"/>
         <!-- set inheritance to single table, since ExecutionGroup           inherits from ExecutionTask,

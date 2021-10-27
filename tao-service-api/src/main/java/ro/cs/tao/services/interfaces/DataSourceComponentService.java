@@ -18,6 +18,7 @@ package ro.cs.tao.services.interfaces;
 
 import ro.cs.tao.Tag;
 import ro.cs.tao.datasource.DataSourceComponent;
+import ro.cs.tao.datasource.DataSourceConfiguration;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.persistence.PersistenceException;
 
@@ -53,4 +54,8 @@ public interface DataSourceComponentService extends CRUDService<DataSourceCompon
                                               String label, Principal principal) throws PersistenceException;
 
     List<Tag> getDatasourceTags();
+
+    DataSourceConfiguration getConfiguration(String dataSourceId) throws PersistenceException;
+
+    void saveConfiguration(DataSourceConfiguration configuration) throws PersistenceException;
 }

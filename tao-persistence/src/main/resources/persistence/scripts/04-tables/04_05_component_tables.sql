@@ -561,3 +561,16 @@ ALTER TABLE component.data_source_component_group_queries ADD CONSTRAINT PK_data
 	PRIMARY KEY (data_source_component_group_id, query_id);
 ALTER TABLE component.data_source_component_group_queries ADD CONSTRAINT FK_data_source_component_group_queries_1
 	FOREIGN KEY (data_source_component_group_id) REFERENCES component.data_source_component_group (id) ON DELETE No Action ON UPDATE No Action;
+
+-- table: component.data_source_configuration
+DROP TABLE IF EXISTS component.data_source_configuration CASCADE;
+CREATE TABLE component.data_source_configuration
+(
+	data_source_component_id varchar(512) NOT NULL,
+	fetch_mode smallint NOT NULL,
+	local_repository_root varchar(255)
+);
+ALTER TABLE component.data_source_configuration ADD CONSTRAINT PK_data_source_configuration
+	PRIMARY KEY (data_source_component_id);
+ALTER TABLE component.data_source_configuration ADD CONSTRAINT FK_data_source_configuration_data_source_component
+    FOREIGN KEY (data_source_component_id) REFERENCES component.data_source_component (id) ON DELETE No Action ON UPDATE No Action;
