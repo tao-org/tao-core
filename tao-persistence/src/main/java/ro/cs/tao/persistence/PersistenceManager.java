@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import ro.cs.tao.component.ProcessingComponent;
+import ro.cs.tao.datasource.persistence.DataSourceConfigurationProvider;
 import ro.cs.tao.persistence.managers.*;
 
 import javax.annotation.PostConstruct;
@@ -67,6 +68,9 @@ public class PersistenceManager {
 
     @Autowired
     private DataSourceConnectionManager dataSourceConnectionManager;
+
+    @Autowired
+    private DataSourceConfigurationManager dataSourceConfigurationManager;
 
     private SimpleCache.Cache<String, ProcessingComponent> componentCache;
 
@@ -129,6 +133,8 @@ public class PersistenceManager {
     public DataSourceGroupManager dataSourceGroups() { return dataSourceGroupManager; }
 
     public DataSourceConnectionManager dataSourceConnectionManager() { return dataSourceConnectionManager; }
+
+    public DataSourceConfigurationProvider dataSourceConfigurationProvider() { return dataSourceConfigurationManager; }
 
     public SimpleCache.Cache<String, ProcessingComponent> getComponentCache() {
         return componentCache;
