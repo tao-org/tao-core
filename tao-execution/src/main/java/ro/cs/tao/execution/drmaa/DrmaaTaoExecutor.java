@@ -487,7 +487,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                     }
                     if (cpu > 0) {
                         // Enforce the number of CPUs to be used
-                        add(SystemUtils.IS_OS_WINDOWS ? "--cpus" : "--cpus"); // TODO: this seems redundant...
+                        add("--cpus");
                         add(String.valueOf(cpu));
                         task.setUsedCPU(cpu);
                     }

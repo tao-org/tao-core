@@ -21,8 +21,10 @@ import ro.cs.tao.component.*;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.datasource.DataQuery;
 import ro.cs.tao.datasource.DataSourceComponent;
+import ro.cs.tao.datasource.DataSourceConfiguration;
 import ro.cs.tao.datasource.ProductStatusListener;
 import ro.cs.tao.datasource.beans.Query;
+import ro.cs.tao.datasource.persistence.DataSourceConfigurationProvider;
 import ro.cs.tao.eodata.EOData;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.enums.ProductStatus;
@@ -64,10 +66,11 @@ import java.util.stream.Collectors;
 public class QueryExecutor extends Executor<DataSourceExecutionTask> implements ProductStatusListener {
 
     private static final String LOCAL_DATABASE = "Local Database";
-    private ExecutorService backgroundWorker = new NamedThreadPoolExecutor("query-thread", 1);//Executors.newSingleThreadExecutor();
+    private final ExecutorService backgroundWorker = new NamedThreadPoolExecutor("query-thread", 1);//Executors.newSingleThreadExecutor();
     private DataSourceComponent dataSourceComponent;
     private static EOProductProvider productProvider;
     private static WorkflowProvider workflowProvider;
+    private static DataSourceConfigurationProvider configurationProvider;
     @Override
     public boolean supports(TaoComponent component) { return component instanceof DataSourceComponent; }
 
@@ -76,6 +79,8 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
     }
 
     public static void setWorkflowProvider(WorkflowProvider provider) { workflowProvider = provider; }
+
+    public static void setDataSourceConfigurationProvider(DataSourceConfigurationProvider provider) { configurationProvider = provider; }
 
     public QueryExecutor() {
         super();
@@ -110,9 +115,9 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
             if (primaryQuery == null) {
                 throw new ExecutionException(String.format("Invalid input data for the task %s", task.getId()));
             }
-            DataQuery dataQuery = Query.toDataQuery(primaryQuery);
-            Future<List<EOProduct>> future = backgroundWorker.submit(dataQuery::execute);
-            List<EOProduct> results = future.get();
+            final DataQuery dataQuery = Query.toDataQuery(primaryQuery);
+            final Future<List<EOProduct>> future = backgroundWorker.submit(dataQuery::execute);
+            final List<EOProduct> results = future.get();
             ExecutionStatus status;
             if (results != null && results.size() > 0) {
                 int cardinality = dataSourceComponent.getSources().get(0).getCardinality();
@@ -132,7 +137,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                                                   task.getId(), rSize, rSize - results.size()));
                     }
                 }
-                String sensorName = dataSourceComponent.getSensorName().toLowerCase().replace(" ", "-");
+                final String sensorName = dataSourceComponent.getSensorName().toLowerCase().replace(" ", "-");
                 dataSourceComponent.setProductStatusListener(this);
                 List<EOProduct> products = new ArrayList<>();
                 if (!dataSourceComponent.getId().contains(LOCAL_DATABASE)) {
@@ -146,10 +151,18 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                         results.removeIf(p -> ids.contains(p.getId()));
                     }
                 }
+                final DataSourceConfiguration dataSourceConfiguration = configurationProvider.get(dataSourceComponent.getId());
+                String localRepositoryRoot;
+                if (dataSourceConfiguration != null) {
+                    dataSourceComponent.setFetchMode(dataSourceConfiguration.getFetchMode());
+                    localRepositoryRoot = dataSourceConfiguration.getLocalRepositoryPath();
+                } else {
+                    localRepositoryRoot = ConfigurationManager.getInstance().getValue(String.format("local.%s.path", sensorName));
+                }
                 final List<EOProduct> remoteProducts = dataSourceComponent.doFetch(results,
                                                                                    null,
                                                                                    SystemVariable.SHARED_WORKSPACE.value(),
-                        ConfigurationManager.getInstance().getValue(String.format("local.%s.path", sensorName)),
+                                                                                   localRepositoryRoot,
                                                                                    null);
                 if (remoteProducts != null) {
                     if (!dataSourceComponent.getId().contains(LOCAL_DATABASE)) {
