@@ -29,6 +29,7 @@ import ro.cs.tao.utils.CompositeKey;
 import ro.cs.tao.utils.DateUtils;
 
 import java.lang.reflect.Array;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -157,8 +158,12 @@ public class Query extends LongIdentifiable {
                         if (LocalDateTime.class.isAssignableFrom(type)) {
                             query.addParameter(query.createParameter(paramName,
                                                                      type,
-                                                                     SIMPLE_DATE_FORMAT.parse(elements[0]),
-                                                                     SIMPLE_DATE_FORMAT.parse(elements[1])));
+                                                                     elements[0].length() > 10 ?
+                                                                        LocalDateTime.parse(elements[0], SIMPLE_DATE_FORMAT) :
+                                                                        LocalDate.parse(elements[0], SIMPLE_DATE_FORMAT).atStartOfDay(),
+                                                                     elements[1].length() > 10 ?
+                                                                        LocalDateTime.parse(elements[1], SIMPLE_DATE_FORMAT) :
+                                                                        LocalDate.parse(elements[1], SIMPLE_DATE_FORMAT).plusDays(1).atStartOfDay().minusSeconds(1)));
                         } else {
                             final Class arrayType = type.isArray() ? type.getComponentType() : type;
                             Object array = Array.newInstance(arrayType, elements.length);
@@ -170,8 +175,11 @@ public class Query extends LongIdentifiable {
                         }
                     } else {
                         if (LocalDateTime.class.isAssignableFrom(type)) {
+                            final String stringValue = String.valueOf(value);
                             query.addParameter(paramName, type,
-                                               SIMPLE_DATE_FORMAT.parse(String.valueOf(value)));
+                                               stringValue.length() > 10 ?
+                                                       LocalDateTime.parse(stringValue, SIMPLE_DATE_FORMAT) :
+                                                       LocalDate.parse(stringValue, SIMPLE_DATE_FORMAT).atStartOfDay());
                         } else if (Polygon2D.class.isAssignableFrom(type)) {
                             query.addParameter(paramName, type, Polygon2D.fromWKT(String.valueOf(value)));
                         } else {
