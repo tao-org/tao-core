@@ -30,7 +30,7 @@ public class DataSourceParameter {
     private final String name;
     private final String remoteName;
     private final String label;
-    private final JavaType type;
+    final JavaType type;
     private Object defaultValue;
     private final boolean required;
     private Object[] valueSet;
