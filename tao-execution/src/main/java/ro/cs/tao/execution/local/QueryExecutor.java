@@ -161,7 +161,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                 }
                 final List<EOProduct> remoteProducts = dataSourceComponent.doFetch(results,
                                                                                    null,
-                                                                                   SystemVariable.SHARED_WORKSPACE.value(),
+                                                                                   SystemVariable.USER_WORKSPACE.value(),
                                                                                    localRepositoryRoot,
                                                                                    null);
                 if (remoteProducts != null) {
