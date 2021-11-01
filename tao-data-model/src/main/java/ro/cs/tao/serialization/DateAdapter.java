@@ -25,7 +25,7 @@ import java.time.format.DateTimeFormatter;
  * @author Cosmin Cara
  */
 public class DateAdapter extends XmlAdapter<String, LocalDateTime> {
-    private final DateTimeFormatter dateFormat = DateUtils.getFormatterAtUTC("yyyy-MM-dd'T'HH:mm:sss");
+    private final DateTimeFormatter dateFormat = DateUtils.getFormatterAtUTC("yyyy-MM-dd'T'HH:mm:ss");
 
     @Override
     public LocalDateTime unmarshal(String v) throws Exception {
