@@ -43,8 +43,7 @@ public class DataSourceConnectionManager
 
     @Override
     protected boolean checkId(Long entityId, boolean existingEntity) {
-        return (!existingEntity && (entityId == null || entityId == 0)) ||
-                (existingEntity && entityId != null && entityId > 0);
+        return entityId != null && entityId >= 0;
     }
 
     @Override
