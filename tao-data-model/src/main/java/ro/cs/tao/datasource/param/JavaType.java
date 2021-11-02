@@ -3,6 +3,8 @@ package ro.cs.tao.datasource.param;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import ro.cs.tao.TaoEnum;
 import ro.cs.tao.eodata.Polygon2D;
+import ro.cs.tao.eodata.enums.DataFormat;
+import ro.cs.tao.eodata.enums.SensorType;
 import ro.cs.tao.serialization.JavaTypeDeserializer;
 
 import javax.xml.bind.annotation.XmlEnum;
@@ -29,7 +31,9 @@ public enum JavaType implements TaoEnum<Class<?>> {
     DATE_ARRAY(LocalDateTime[].class, "date[]"),
     BOOLEAN(boolean.class, "bool"),
     BOOLEAN_ARRAY(boolean[].class, "bool[]"),
-    POLYGON(Polygon2D.class, "polygon");
+    POLYGON(Polygon2D.class, "polygon"),
+    DATA_FORMAT(DataFormat.class, "format"),
+    SENSOR_TYPE(SensorType.class, "sensor");
 
     private final Class<?> clazz;
     private final String description;

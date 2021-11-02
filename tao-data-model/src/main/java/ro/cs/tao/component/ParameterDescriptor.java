@@ -36,7 +36,7 @@ import java.util.*;
 public class ParameterDescriptor extends StringIdentifiable {
     private String name;
     private ParameterType type;
-    private JavaType dataType;
+    JavaType dataType;
     private String defaultValue;
     private String description;
     private String label;

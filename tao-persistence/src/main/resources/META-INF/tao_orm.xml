@@ -1308,7 +1308,7 @@
                 <column name="key" nullable="false" column-definition="varchar(512) NOT NULL"/>
             </basic>
             <basic name="value">
-                <column name="value" nullable="false" column-definition="varchar(512) NOT NULL"/>
+                <column name="value" nullable="true" column-definition="varchar(512)"/>
             </basic>
         </attributes>
     </embeddable>
