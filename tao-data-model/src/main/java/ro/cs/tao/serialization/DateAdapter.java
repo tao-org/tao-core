@@ -26,10 +26,17 @@ import java.time.format.DateTimeFormatter;
  */
 public class DateAdapter extends XmlAdapter<String, LocalDateTime> {
     private final DateTimeFormatter dateFormat = DateUtils.getFormatterAtUTC("yyyy-MM-dd'T'HH:mm:ss");
+    private final DateTimeFormatter dateFormatZ = DateUtils.getFormatterAtUTC("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
     @Override
     public LocalDateTime unmarshal(String v) throws Exception {
-        return LocalDateTime.parse(v, dateFormat);
+        LocalDateTime result;
+        try {
+            result = LocalDateTime.parse(v, dateFormat);
+        } catch (Exception e) {
+            result = LocalDateTime.parse(v, dateFormatZ);
+        }
+        return result;
     }
 
     @Override

@@ -204,7 +204,8 @@ public class DefaultSession implements Session {
                     node = this.nodes != null ? Arrays.stream(this.nodes).filter(n -> host.equals(n.getId())).findFirst().orElse(null) : null;
                 }
                 if (job.hasAttribute(DrmaaJobExtensions.SIMULATE_EXECUTION_ATTRIBUTE)) {
-                    simulate = (Boolean) job.getAttribute(DrmaaJobExtensions.SIMULATE_EXECUTION_ATTRIBUTE);
+                    final Object attrValue = job.getAttribute(DrmaaJobExtensions.SIMULATE_EXECUTION_ATTRIBUTE);
+                    simulate = attrValue != null ? (Boolean) attrValue : false;
                 }
                 if (job.hasAttribute(DrmaaJobExtensions.CONTAINER_ATTRIBUTE) && !simulate) {
                     ContainerUnit unit = (ContainerUnit) job.getAttribute(DrmaaJobExtensions.CONTAINER_ATTRIBUTE);
