@@ -31,6 +31,7 @@ import ro.cs.tao.utils.StringUtilities;
 import javax.xml.bind.annotation.XmlTransient;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -309,7 +310,10 @@ public abstract class DataQuery extends StringIdentifiable {
     }
 
     protected String getParameterValue(QueryParameter<?> parameter) throws ConversionException {
-        return getRemoteMappedValue(parameter.getName(), converterFactory.get(getClass()).create(parameter).stringValue());
+        return getRemoteMappedValue(parameter.getName(),
+                                    parameter.getType().isArray() && LocalDateTime.class.equals(parameter.getType().getComponentType()) ?
+                                            converterFactory.get(getClass()).simple((QueryParameter<LocalDateTime[]>) parameter).stringValue() :
+                                            converterFactory.get(getClass()).create(parameter).stringValue());
     }
 
     protected String getRemoteMappedValue(String parameterName, String mappedValue) {

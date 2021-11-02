@@ -66,4 +66,24 @@ public class ConverterFactory {
         }
         return instance;
     }
+
+    public <T> QueryParameterConverter simple(QueryParameter<T[]> parameter) {
+        Class<T> parameterType = (Class<T>) parameter.getType().getComponentType();
+        Class<? extends QueryParameterConverter> converterClass = converters.get(parameterType);
+        if (converterClass == null) {
+            converterClass = DefaultParameterConverter.class;
+        }
+        Constructor<? extends QueryParameterConverter> ctor;
+        QueryParameterConverter instance = null;
+        try {
+            QueryParameter<T> sParameter = new QueryParameter(parameterType, parameter.getName(),
+                                                                parameter.getMinValue(), parameter.getMaxValue());
+            ctor = converterClass.getConstructor(QueryParameter.class);
+            instance = ctor.newInstance(sParameter);
+        } catch (NoSuchMethodException | IllegalAccessException |
+                InstantiationException | InvocationTargetException e) {
+            e.printStackTrace();
+        }
+        return instance;
+    }
 }

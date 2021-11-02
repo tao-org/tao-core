@@ -39,7 +39,7 @@ import java.util.logging.Logger;
  * @author Cosmin Cara
  */
 public class Query extends LongIdentifiable {
-    private static final DateTimeFormatter SIMPLE_DATE_FORMAT = DateUtils.getFormatterAtUTC("yyyy-MM-dd");
+    private static final DateTimeFormatter dateFormat = DateUtils.getFormatterAtUTC("yyyy-MM-dd");
     private static final Map<CompositeKey, DataSourceComponent> componentPool = Collections.synchronizedMap(new HashMap<>());
     private String label;
     private String userId;
@@ -124,9 +124,9 @@ public class Query extends LongIdentifiable {
         DataQuery query = null;
         if (webQuery != null) {
             try {
-                CompositeKey key = new CompositeKey(webQuery.getSensor(),
-                                                    webQuery.getDataSource(),
-                                                    webQuery.getUser());
+                final CompositeKey key = new CompositeKey(webQuery.getSensor(),
+                                                          webQuery.getDataSource(),
+                                                          webQuery.getUser());
                 if (!componentPool.containsKey(key)) {
                     componentPool.put(key, new DataSourceComponent(webQuery.getSensor(), webQuery.getDataSource()));
                 }
@@ -154,20 +154,24 @@ public class Query extends LongIdentifiable {
                         value = null;
                     }
                     if (value != null && value.startsWith("[") & value.endsWith("]")) {
+                        if (!type.isArray()) {
+                            throw new IllegalArgumentException(String.format("[%s] parameter type is not an array", paramName));
+                        }
                         String[] elements = value.substring(1, value.length() - 1).split(",");
-                        if (LocalDateTime.class.isAssignableFrom(type)) {
+                        final Class arrayType = type.isArray() ? type.getComponentType() : type;
+                        if (LocalDateTime.class.isAssignableFrom(arrayType)) {
+                            // date[] values are not an actual array, but represent [min,max] pairs
                             query.addParameter(query.createParameter(paramName,
                                                                      type,
                                                                      elements[0].length() > 10 ?
-                                                                        LocalDateTime.parse(elements[0], SIMPLE_DATE_FORMAT) :
-                                                                        LocalDate.parse(elements[0], SIMPLE_DATE_FORMAT).atStartOfDay(),
+                                                                        LocalDateTime.parse(elements[0], dateFormat) :
+                                                                        LocalDate.parse(elements[0], dateFormat).atStartOfDay(),
                                                                      elements[1].length() > 10 ?
-                                                                        LocalDateTime.parse(elements[1], SIMPLE_DATE_FORMAT) :
-                                                                        LocalDate.parse(elements[1], SIMPLE_DATE_FORMAT).plusDays(1).atStartOfDay().minusSeconds(1)));
+                                                                        LocalDateTime.parse(elements[1], dateFormat) :
+                                                                        LocalDate.parse(elements[1], dateFormat).plusDays(1).atStartOfDay().minusSeconds(1)));
                         } else {
-                            final Class arrayType = type.isArray() ? type.getComponentType() : type;
-                            Object array = Array.newInstance(arrayType, elements.length);
-                            GenericAdapter adapter = new GenericAdapter(arrayType.getName());
+                            final Object array = Array.newInstance(arrayType, elements.length);
+                            final GenericAdapter adapter = new GenericAdapter(arrayType.getName());
                             for (int i = 0; i < elements.length; i++) {
                                 Array.set(array, i, adapter.marshal(elements[i]));
                             }
@@ -178,8 +182,8 @@ public class Query extends LongIdentifiable {
                             final String stringValue = String.valueOf(value);
                             query.addParameter(paramName, type,
                                                stringValue.length() > 10 ?
-                                                       LocalDateTime.parse(stringValue, SIMPLE_DATE_FORMAT) :
-                                                       LocalDate.parse(stringValue, SIMPLE_DATE_FORMAT).atStartOfDay());
+                                                       LocalDateTime.parse(stringValue, dateFormat) :
+                                                       LocalDate.parse(stringValue, dateFormat).atStartOfDay());
                         } else if (Polygon2D.class.isAssignableFrom(type)) {
                             query.addParameter(paramName, type, Polygon2D.fromWKT(String.valueOf(value)));
                         } else {
