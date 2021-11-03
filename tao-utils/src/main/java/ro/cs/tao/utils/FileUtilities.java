@@ -19,6 +19,8 @@ package ro.cs.tao.utils;
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.SftpATTRS;
 import com.jcraft.jsch.SftpException;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
 
 import java.io.*;
 import java.net.URI;
@@ -39,7 +41,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class FileUtilities {
-
+    private static final String[] WIN_TO_UNIX_TOKENS = new String[] {":", "\\"};
+    private static final String[] WIN_TO_UNIX_REPLACEMENTS = new String[] {"", "/" };
     private static final Logger logger = Logger.getLogger(FileUtilities.class.getName());
 
     public static String getExtension(Path path) {
@@ -325,6 +328,23 @@ public class FileUtilities {
             throw new IOException(target + " is not a directory");
         }
         return linkFile(sourcePath, target);
+    }
+
+    public static String asUnixPath(Path path, boolean insideDocker) {
+        if (SystemUtils.IS_OS_UNIX) {
+            return path.toString();
+        } else {
+            String strPath = "/" + StringUtils.replaceEach(path.toAbsolutePath().toString(),
+                                                           WIN_TO_UNIX_TOKENS,
+                                                           WIN_TO_UNIX_REPLACEMENTS);
+            if (insideDocker && strPath.charAt(2) == '/') {
+                strPath = strPath.substring(2);
+            }
+            if (Files.isDirectory(path)) {
+                strPath += "/";
+            }
+            return strPath;
+        }
     }
 
     public static int copy(Path source, Path destination) throws IOException {

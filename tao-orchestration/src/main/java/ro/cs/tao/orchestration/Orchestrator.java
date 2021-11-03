@@ -57,6 +57,7 @@ import ro.cs.tao.services.utils.WorkflowUtilities;
 import ro.cs.tao.spi.OutputDataHandlerManager;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.user.UserPreference;
+import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.TriFunction;
 import ro.cs.tao.workflow.ParameterValue;
 import ro.cs.tao.workflow.WorkflowDescriptor;
@@ -968,7 +969,7 @@ public class Orchestrator extends Notifiable {
         EOProduct product = null;
         try {
             if (descriptor.getDataDescriptor().getFormatType() == DataFormat.RASTER) {
-                String netPath = context.getNetSpace().toString().replace('\\', '/');
+                String netPath = FileUtilities.asUnixPath(context.getNetSpace(), true);
                 Path path;
                 if (outValue.startsWith(netPath)) {
                     path = Paths.get(outValue.replace(netPath, context.getWorkspace().toString()));
@@ -984,7 +985,12 @@ public class Orchestrator extends Notifiable {
                         product = metadata.toProductDescriptor(path);
                         product.addReference(context.getPrincipal().getName());
                         product.setVisibility(Visibility.PRIVATE);
+                        product.setAcquisitionDate(LocalDateTime.now());
+                    } else {
+                        throw new ExecutionException(String.format("Metadata for output %s could not be extracted", outValue));
                     }
+                } else {
+                    throw new ExecutionException(String.format("No suitable metadata inspector found for output %s", outValue));
                 }
             }
         } catch (Exception e2) {

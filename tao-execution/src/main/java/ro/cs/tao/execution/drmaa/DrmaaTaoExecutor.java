@@ -137,7 +137,9 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
     @Override
     public void stop(ProcessingExecutionTask task)  throws ExecutionException {
         try {
-            session.control(task.getResourceId(), Session.TERMINATE);
+            if (task.getResourceId() != null) {
+                session.control(task.getResourceId(), Session.TERMINATE);
+            }
             markTaskFinished(task, ExecutionStatus.CANCELLED);
         } catch (DrmaaException e) {
             throw new ExecutionException("Error executing DRMAA session terminate for task with id " + task.getId(), e);
@@ -147,7 +149,9 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
     @Override
     public void suspend(ProcessingExecutionTask task) throws ExecutionException {
         try {
-            session.control(task.getResourceId(), Session.SUSPEND);
+            if (task.getResourceId() != null) {
+                session.control(task.getResourceId(), Session.SUSPEND);
+            }
             changeTaskStatus(task, ExecutionStatus.SUSPENDED);
         } catch (DrmaaException e) {
             throw new ExecutionException("Error executing DRMAA session suspend for task with id " + task.getId(), e);
@@ -157,7 +161,9 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
     @Override
     public void resume(ProcessingExecutionTask task) throws ExecutionException {
         try {
-            session.control(task.getResourceId(), Session.RESUME);
+            if (task.getResourceId() != null) {
+                session.control(task.getResourceId(), Session.RESUME);
+            }
             changeTaskStatus(task, ExecutionStatus.QUEUED_ACTIVE);
         } catch (DrmaaException e) {
             // maybe we got here because the task came from an interrupted job

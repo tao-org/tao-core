@@ -227,14 +227,8 @@ public class ProcessingExecutionTask extends ExecutionTask {
                                              this.getId(),
                                              this.internalState == null ? "" : this.internalState + "-",
                                              path.getFileName().toString());
-//                    folderName = FileUtilities.getFilenameWithoutExtension(fileName);
                 } else {
                     fileName = path.getFileName().toString();
-//                    folderName = String.format(nameTemplate,
-//                                               this.getJob().getId(),
-//                                               this.getId(),
-//                                               this.internalState == null ? "" : this.internalState + "-",
-//                                               FileUtilities.getFilenameWithoutExtension(fileName));
                 }
                 final String folderName = String.format(nameTemplate,
                                                         this.getJob().getId(),
@@ -246,7 +240,7 @@ public class ProcessingExecutionTask extends ExecutionTask {
                 } catch (IOException e) {
                     Logger.getLogger(ProcessingExecutionTask.class.getName()).severe(e.getMessage());
                 }
-                this.instanceTargetOutput = path.getParent().resolve(folderName).resolve(fileName).toString().replace('\\', '/');
+                this.instanceTargetOutput = FileUtilities.asUnixPath(path.getParent().resolve(folderName).resolve(fileName), true);
             }
         }
         return this.instanceTargetOutput;
@@ -277,8 +271,10 @@ public class ProcessingExecutionTask extends ExecutionTask {
                                               this.getId(),
                                               this.internalState == null ? "" : this.internalState + "-",
                                               FileUtilities.getFilenameWithoutExtension(fileName));
-            outPath = new String[] { context.getWorkspace().resolve(folderName).toString().replace('\\', '/'),
-                                     path.getParent().resolve(folderName).toString().replace('\\', '/') };
+            outPath = new String[] {
+                    FileUtilities.asUnixPath(context.getWorkspace().resolve(folderName), false),
+                    FileUtilities.asUnixPath(path.getParent().resolve(folderName), true)
+            };
         }
         return outPath;
     }
