@@ -264,8 +264,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
         String json = null;
         try {
             StringListAdapter adapter = new StringListAdapter();
-            json = adapter.unmarshal(results.stream().map(EOProduct::getLocation)
-                            .collect(Collectors.toList()));
+            json = adapter.unmarshal(results.stream().map(p -> p.getLocation() + (p.getEntryPoint() != null ? p.getEntryPoint() : "")).collect(Collectors.toList()));
         } catch (Exception e) {
             logger.severe("Serialization of results failed: " + e.getMessage());
         }

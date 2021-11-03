@@ -5,7 +5,6 @@ import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.StringUtilities;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class ExecutionConfiguration {
@@ -39,18 +38,21 @@ public class ExecutionConfiguration {
             dockerMasterBindMount = ConfigurationManager.getInstance()
                                                         .getValue(Constants.DOCKER_BIND_MOUNT_MASTER_CONFIG_KEY,
                                                                   "/mnt/tao/working_dir:/mnt").trim();
+            final String[] paths = dockerMasterBindMount.split(":");
             // At least on Windows, docker doesn't handle well folder symlinks in the path
-            Path path = Paths.get(dockerMasterBindMount.substring(0, dockerMasterBindMount.indexOf(':')));
-            Path realPath = FileUtilities.resolveSymLinks(path);
-            dockerMasterBindMount = realPath.toString().replace("\\", "/") + dockerMasterBindMount.substring(dockerMasterBindMount.indexOf(':'));
+            paths[0] = FileUtilities.asUnixPath(FileUtilities.resolveSymLinks(Paths.get(paths[0])), false);
+            paths[1] = FileUtilities.asUnixPath(FileUtilities.resolveSymLinks(Paths.get(paths[1])), true);
+            dockerMasterBindMount = paths[0] + ":" + paths[1];
         }
         return dockerMasterBindMount;
     }
 
     public static String getDockerNodeBindMount() throws IOException {
         if (dockerNodeBindMount == null) {
-            dockerNodeBindMount = ConfigurationManager.getInstance().getValue(Constants.DOCKER_BIND_MOUNT_SLAVE_CONFIG_KEY).trim()
-                                + ":" + getContainerMount();
+            final String value = ConfigurationManager.getInstance().getValue(Constants.DOCKER_BIND_MOUNT_SLAVE_CONFIG_KEY, null);
+            if (!StringUtilities.isNullOrEmpty(value)) {
+                dockerNodeBindMount = FileUtilities.asUnixPath(Paths.get(value), false) + ":" + getContainerMount();
+            }
         }
         return dockerNodeBindMount;
     }
@@ -59,7 +61,11 @@ public class ExecutionConfiguration {
         if (dockerTempMount == null) {
             final String value = ConfigurationManager.getInstance().getValue(Constants.DOCKER_BIND_MOUNT_TEMP_CONFIG_KEY);
             if (!StringUtilities.isNullOrEmpty(value)) {
-                dockerTempMount = value.trim() + ":/tmp_workspace";
+                try {
+                    dockerTempMount = FileUtilities.asUnixPath(FileUtilities.resolveSymLinks(Paths.get(value.trim())), false) + ":/tmp_workspace";
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
         return dockerTempMount;
@@ -69,7 +75,11 @@ public class ExecutionConfiguration {
         if (dockerCfgMount == null) {
             final String value = ConfigurationManager.getInstance().getValue(Constants.DOCKER_BIND_MOUNT_CFG_CONFIG_KEY);
             if (!StringUtilities.isNullOrEmpty(value)) {
-                dockerCfgMount = value.trim() + ":/cfg";
+                try {
+                    dockerCfgMount = FileUtilities.asUnixPath(FileUtilities.resolveSymLinks(Paths.get(value.trim())), false) + ":/cfg";
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
         return dockerCfgMount;

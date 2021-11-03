@@ -51,7 +51,8 @@ public class ProcessExecutor extends Executor<Process> {
         try {
             resetProcess();
             if (arguments.size() > 2 && arguments.get(0).equals("docker") && arguments.get(1).equals("run") &&
-                    arguments.stream().anyMatch(a -> a.equals("-it") || a.equals("-t"))) {
+                    arguments.stream().anyMatch(a -> a.equals("-it") || a.equals("-t")) &&
+                    arguments.stream().noneMatch(a -> a.equals("gdalinfo"))) {
                 final String[] command = formatArguments().toArray(new String[0]);
                 final PtyProcessBuilder pb = new PtyProcessBuilder(command);
                 if (this.workingDirectory != null) {
