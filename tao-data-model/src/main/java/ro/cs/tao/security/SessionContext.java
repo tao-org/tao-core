@@ -54,7 +54,7 @@ public abstract class SessionContext {
      */
     public Path getWorkspace() { return workspaceRoot.resolve(getPrincipal().getName()); }
 
-    public Path getNetSpace() { return netSpaceRoot.getParent().resolve(getPrincipal().getName()); }
+    public Path getNetSpace() { return netSpaceRoot.resolve(getPrincipal().getName()); }
 
     /**
      * Returns the location where the current principal can upload files

@@ -92,6 +92,8 @@ public class DownloadManager {
                 return task.get();
             } finally {
                 instance.queuedDownloads.remove(dsInstance.hashCode());
+                logger.fine(String.format("One download completed for data source [%s-%s]. There are %d queued downloads for this source",
+                        dsInstance.getDataSourceName(), dsInstance.getSensorName(), executor.getActiveCount()));
             }
         } catch (Exception e) {
             logger.severe(e.getMessage());

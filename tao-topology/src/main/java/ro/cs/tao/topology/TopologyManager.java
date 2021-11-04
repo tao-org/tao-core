@@ -17,6 +17,7 @@ package ro.cs.tao.topology;
 
 import org.apache.commons.lang3.SystemUtils;
 import ro.cs.tao.configuration.ConfigurationManager;
+import ro.cs.tao.docker.ExecutionConfiguration;
 import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.Topic;
@@ -281,7 +282,7 @@ public class TopologyManager {
     public ServiceInstallStatus checkMasterShare() {
         ServiceInstallStatus status = new ServiceInstallStatus();
         status.setServiceName("Local Share");
-        String path = ConfigurationManager.getInstance().getValue("workspace.location", "/mnt/tao/working_dir");
+        String path = ExecutionConfiguration.getMasterContainerVolumeMap().getHostWorkspaceFolder();
         String share = ConfigurationManager.getInstance().getValue("master.share.name", "/tao");
         status.setStatus(ServiceStatus.INSTALLED);
         if (!(share.startsWith("\\\\") || share.startsWith("//"))) {

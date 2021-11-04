@@ -1,6 +1,6 @@
 package ro.cs.tao.transfer;
 
-import ro.cs.tao.execution.ExecutionConfiguration;
+import ro.cs.tao.docker.ExecutionConfiguration;
 import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.utils.executors.*;

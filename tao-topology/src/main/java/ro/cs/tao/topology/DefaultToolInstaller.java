@@ -18,6 +18,7 @@ package ro.cs.tao.topology;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.SystemUtils;
 import ro.cs.tao.configuration.ConfigurationManager;
+import ro.cs.tao.docker.ExecutionConfiguration;
 import ro.cs.tao.topology.xml.ToolInstallersConfigHandler;
 import ro.cs.tao.topology.xml.ToolInstallersConfigParser;
 import ro.cs.tao.utils.executors.*;
@@ -42,8 +43,8 @@ import java.util.regex.Pattern;
  * @author Cosmin Udroiu
  */
 public class DefaultToolInstaller extends TopologyToolInstaller {
-    private List<ToolInstallConfig> toolInstallConfigs;
-    private String installToolsRootPath;
+    private final List<ToolInstallConfig> toolInstallConfigs;
+    private final String installToolsRootPath;
     private NodeDescription masterNodeInfo;
     protected static Logger logger = Logger.getLogger(DefaultToolInstaller.class.getName());
 
@@ -218,7 +219,7 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
                         replacementStr = info.getUserPass();
                         break;
                     case ToolCommandsTokens.NODE_SHARE:
-                        replacementStr = ConfigurationManager.getInstance().getValue("node.mount.folder", "/mnt/tao");
+                        replacementStr = ExecutionConfiguration.getWorkerContainerVolumeMap().getHostWorkspaceFolder();
                         break;
                     case ToolCommandsTokens.NODE_PROCESSORS_CNT:
                         replacementStr = String.valueOf(info.getFlavor().getCpu());
