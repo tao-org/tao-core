@@ -25,9 +25,10 @@ import ro.cs.tao.component.Variable;
 import ro.cs.tao.component.enums.ProcessingComponentType;
 import ro.cs.tao.docker.Application;
 import ro.cs.tao.docker.Container;
+import ro.cs.tao.docker.DockerVolumeMap;
+import ro.cs.tao.docker.ExecutionConfiguration;
 import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.execution.DrmaaJobExtensions;
-import ro.cs.tao.execution.ExecutionConfiguration;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.Executor;
 import ro.cs.tao.execution.callback.EndpointDescriptor;
@@ -42,6 +43,7 @@ import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.utils.executors.BlockingQueueWorker;
+import ro.cs.tao.utils.executors.container.ContainerCmdBuilder;
 import ro.cs.tao.utils.executors.container.ContainerType;
 import ro.cs.tao.utils.executors.container.ContainerUnit;
 
@@ -425,6 +427,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         }
         final boolean isUtilityTask = task.getComponent().getComponentType() == ProcessingComponentType.UTILITY;
         final boolean useDocker = ExecutionConfiguration.useDocker() || task instanceof ScriptTask;
+        ContainerUnit unit = null;
         if (useDocker && !isUtilityTask) {
             if (jt instanceof JobTemplateExtension) {
                 cmd = argsList.get(0);
@@ -433,25 +436,20 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                 final Map<String, String> dbSources = component.getSources().stream()
                         .filter(s -> DataFormat.DB_CONNECTION == s.getDataDescriptor().getFormatType())
                         .collect(Collectors.toMap(SourceDescriptor::getName, d -> d.getDataDescriptor().getLocation()));
-                final ContainerUnit unit = new ContainerUnit(ContainerType.DOCKER);
+                unit = new ContainerUnit(ContainerType.DOCKER);
                 unit.setArguments(new ArrayList<String>() {{
                     add("-i"); add("--rm"); add("--volume-driver"); add("cifs");
                 }});
                 unit.setEnvironmentVariables(dbSources);
-                String[] volumeMount;
+                final DockerVolumeMap volumeMount;
                 if (task.getExecutionNodeHostName().equals(masterHost)) {
-                    volumeMount = ExecutionConfiguration.getDockerMasterBindMount().split(":");
+                    volumeMount = ExecutionConfiguration.getMasterContainerVolumeMap();
                 } else {
-                    volumeMount = ExecutionConfiguration.getDockerNodeBindMount().split(":");
+                    volumeMount = ExecutionConfiguration.getWorkerContainerVolumeMap();
                 }
-                unit.addVolumeMapping(volumeMount[0], volumeMount[1]);
-                volumeMount = ExecutionConfiguration.getDockerNodeTempMount().split(":");
-                unit.addVolumeMapping(volumeMount[0], volumeMount[1]);
-                final String dockerCfgMount = ExecutionConfiguration.getDockerNodeConfigMount();
-                if (dockerCfgMount != null) {
-                    volumeMount = dockerCfgMount.split(":");
-                    unit.addVolumeMapping(volumeMount[0], volumeMount[1]);
-                }
+                unit.addVolumeMapping(volumeMount.getHostWorkspaceFolder(), volumeMount.getContainerWorkspaceFolder());
+                unit.addVolumeMapping(volumeMount.getHostConfigurationFolder(), volumeMount.getContainerConfigurationFolder());
+                unit.addVolumeMapping(volumeMount.getHostTemporaryFolder(), volumeMount.getContainerTemporaryFolder());
                 unit.setContainerName(container.getName());
                 unit.setContainerRegistry(ExecutionConfiguration.getDockerRegistry());
                 if (cpu > 0) {
@@ -466,14 +464,12 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                 template.setAttribute(DrmaaJobExtensions.CONTAINER_ATTRIBUTE, unit);
             } else {
                 cmd = "docker";
-                final String dockerBindMount;
+                final DockerVolumeMap volumeMap;
                 if (task.getExecutionNodeHostName().equals(masterHost)) {
-                    dockerBindMount = ExecutionConfiguration.getDockerMasterBindMount();
+                    volumeMap = ExecutionConfiguration.getMasterContainerVolumeMap();
                 } else {
-                    dockerBindMount = ExecutionConfiguration.getDockerNodeBindMount();
+                    volumeMap = ExecutionConfiguration.getWorkerContainerVolumeMap();
                 }
-                final String dockerBindTempMount = ExecutionConfiguration.getDockerNodeTempMount();
-                final String dockerBindCfgMount = ExecutionConfiguration.getDockerNodeConfigMount();
                 final List<String> dockerArgsList = new ArrayList<String>() {{
                     add("run");
                     add("-i");              // Keep STDIN open even if not attached
@@ -481,16 +477,12 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                     add("--rm");            // Automatically remove the container when it exits
                     add("--volume-driver"); // Automatically remove the container when it exits
                     add("cifs");            // Automatically remove the container when it exits
-                    add("-v");              // Bind mount a volume
-                    add(dockerBindMount);
-                    if (dockerBindTempMount != null) {
-                        add("-v");
-                        add(dockerBindTempMount);
-                    }
-                    if (dockerBindCfgMount != null) {
-                        add("-v");
-                        add(dockerBindCfgMount);
-                    }
+                    add("-v");
+                    add(volumeMap.getHostWorkspaceFolder() + ":" + volumeMap.getContainerWorkspaceFolder());
+                    add("-v");
+                    add(volumeMap.getHostTemporaryFolder() + ":" + volumeMap.getContainerTemporaryFolder());
+                    add("-v");
+                    add(volumeMap.getHostConfigurationFolder() + ":" + volumeMap.getContainerConfigurationFolder());
                     if (cpu > 0) {
                         // Enforce the number of CPUs to be used
                         add("--cpus");
@@ -519,7 +511,11 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         }
         jt.setRemoteCommand(cmd);
         jt.setArgs(argsList);
-        logger.fine(String.format("[Task %s ]: %s %s", task.getId(), cmd, String.join(" ", argsList)));
+        logger.fine(String.format("Task %s: %s%s %s",
+                                  task.getId(),
+                                  unit != null ? String.join(" ", ContainerCmdBuilder.buildCommandLineArguments(unit)) + " " : "",
+                                  cmd,
+                                  String.join(" ", argsList)));
         return jt;
     }
 

@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 import ro.cs.tao.component.*;
 import ro.cs.tao.datasource.persistence.DataSourceComponentProvider;
 import ro.cs.tao.docker.Container;
-import ro.cs.tao.execution.ExecutionConfiguration;
+import ro.cs.tao.docker.ExecutionConfiguration;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.persistence.ContainerProvider;
@@ -33,7 +33,6 @@ import ro.cs.tao.workflow.ParameterValue;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.enums.TransitionBehavior;
 
-import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -59,17 +58,7 @@ public class TaskUtilities {
     private static final String DOCKER_MOUNT_POINT;
 
     static {
-        String value = "/";
-        try {
-            value = ExecutionConfiguration.getContainerMount();
-            value = value.substring(value.indexOf(':') + 1);
-            if (!value.endsWith("/")) {
-                value += "/";
-            }
-        } catch (IOException e) {
-            logger.severe(e.getMessage());
-        }
-        DOCKER_MOUNT_POINT = value;
+        DOCKER_MOUNT_POINT = ExecutionConfiguration.getMasterContainerVolumeMap().getContainerWorkspaceFolder() + "/";
         workflowNodeProvider = SpringContextBridge.services().getService(WorkflowNodeProvider.class);
         taskProvider = SpringContextBridge.services().getService(ExecutionTaskProvider.class);
         processingComponentProvider = SpringContextBridge.services().getService(ProcessingComponentProvider.class);

@@ -22,6 +22,7 @@ import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.component.Variable;
 import ro.cs.tao.configuration.ConfigurationManager;
+import ro.cs.tao.docker.ExecutionConfiguration;
 import ro.cs.tao.eodata.DataHandlingException;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.enums.DataFormat;
@@ -30,7 +31,6 @@ import ro.cs.tao.eodata.metadata.DecodeStatus;
 import ro.cs.tao.eodata.metadata.MetadataInspector;
 import ro.cs.tao.eodata.naming.NameExpressionParser;
 import ro.cs.tao.eodata.naming.NamingRule;
-import ro.cs.tao.execution.ExecutionConfiguration;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.callback.EndpointDescriptor;
 import ro.cs.tao.execution.model.*;
@@ -382,7 +382,8 @@ public class Orchestrator extends Notifiable {
         ExecutionTask task = null;
         try {
             final String taskId = message.getItem(Message.SOURCE_KEY);
-            final ExecutionStatus status = EnumUtils.getEnumConstantByName(ExecutionStatus.class, message.getItem(Message.PAYLOAD_KEY));
+            final ExecutionStatus status = EnumUtils.getEnumConstantByName(ExecutionStatus.class,
+                                                                           message.getItem(Message.PAYLOAD_KEY));
             task = taskProvider.get(Long.parseLong(taskId));
             task.setContext(currentContext);
             logger.fine(String.format("Status change for task %s [node %s]: %s", taskId, task.getWorkflowNodeId(), status.name()));
@@ -669,6 +670,7 @@ public class Orchestrator extends Notifiable {
                                     }
                                     final String key = overriddenOutParam.getKey();
                                     nextTask.setOutputParameterValue(key, parser.resolve(targetOutput, oValuesList.toArray(new String[0])));
+                                    //TODO: Handle the case when parser fails to resolve
                                     nextTask.getInputParameterValues().removeIf(v -> v.getKey().equals(key));
                                 }
                             }
@@ -676,7 +678,7 @@ public class Orchestrator extends Notifiable {
                     }
                 } else { // nextTask accepts a list
                     Map<String, String> connectedInputs = TaskUtilities.getConnectedInputs(task, nextTask);
-                    if (theOnlyValue != null && connectedInputs != null) {
+                    if (theOnlyValue != null) {
                         for (Variable var : nextInputParameters) {
                             if (theOnlyValue.getKey().equals(connectedInputs.get(var.getKey()))) {
                                 nextTask.setInputParameterValue(var.getKey(), theOnlyValue.getValue());
@@ -689,11 +691,9 @@ public class Orchestrator extends Notifiable {
         } else {
             Map<String, String> connectedInputs = TaskUtilities.getConnectedInputs(task, nextTask);
             final List<Variable> nextInputParameters = nextTask.getInputParameterValues();
-            if (connectedInputs != null) {
-                for (Map.Entry<String, String> entry : connectedInputs.entrySet()) {
-                    nextTask.setInputParameterValue(entry.getKey(),
-                                                    values.stream().filter(v -> v.getKey().equals(entry.getValue())).findFirst().get().getValue());
-                }
+            for (Map.Entry<String, String> entry : connectedInputs.entrySet()) {
+                nextTask.setInputParameterValue(entry.getKey(),
+                                                values.stream().filter(v -> v.getKey().equals(entry.getValue())).findFirst().get().getValue());
             }
             final Set<String> outParams = nextTask.getOutputParameterValues().stream().map(Variable::getKey).collect(Collectors.toSet());
             Variable overriddenOutParam = null;
@@ -950,8 +950,8 @@ public class Orchestrator extends Notifiable {
         TargetDescriptor descriptor = targets.stream()
                 .filter(t -> t.getName().equals(outParam.getKey()))
                 .findFirst()
-                .get();
-        if (value != null) {
+                .orElse(null);
+        if (value != null && descriptor != null) {
             try {
                 // first try to see if it's a list
                 List<String> list = this.listAdapter.marshal(value);
@@ -1065,7 +1065,11 @@ public class Orchestrator extends Notifiable {
                     AbstractMap.SimpleEntry<Message, SessionContext> entry = queue.take();
                     ExecutorService service = Orchestrator.this.executors.get(entry.getValue().getPrincipal().getName());
                     if (service != null) {
-                        service.submit(() -> processMessage(entry.getKey(), entry.getValue()));
+                        if (service.isShutdown() || service.isTerminated()) {
+                            logger.warning("Executor for " + entry.getKey() + " was shutdown. Further tasks cannot be processed");
+                        } else {
+                            service.submit(() -> processMessage(entry.getKey(), entry.getValue()));
+                        }
                     }/* else {
                         logger.warning("No executor found for " + entry.getKey());
                     }*/

@@ -2,7 +2,7 @@ package ro.cs.tao.execution.monitor;
 
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.configuration.ConfigurationProvider;
-import ro.cs.tao.execution.ExecutionConfiguration;
+import ro.cs.tao.docker.ExecutionConfiguration;
 import ro.cs.tao.execution.local.DefaultSessionFactory;
 import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;

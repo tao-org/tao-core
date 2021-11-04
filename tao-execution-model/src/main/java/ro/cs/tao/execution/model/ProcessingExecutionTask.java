@@ -17,6 +17,7 @@ package ro.cs.tao.execution.model;
 
 import ro.cs.tao.component.*;
 import ro.cs.tao.component.validation.ValidationException;
+import ro.cs.tao.docker.ExecutionConfiguration;
 import ro.cs.tao.security.SessionContext;
 import ro.cs.tao.utils.FileUtilities;
 
@@ -217,7 +218,9 @@ public class ProcessingExecutionTask extends ExecutionTask {
                 Path path = Paths.get(this.instanceTargetOutput);
                 SessionContext context = getContext();
                 if (!path.isAbsolute()) {
-                    path = context.getNetSpace().resolve(path);
+                    //path = context.getNetSpace().resolve(path);
+                    path = Paths.get(ExecutionConfiguration.getWorkerContainerVolumeMap().getContainerWorkspaceFolder())
+                            .resolve(context.getPrincipal().getName()).resolve(path);
                 }
                 final String fileName;
                 if (this.component.getTargets().stream().anyMatch(t -> t.getDataDescriptor().getLocation() != null &&
@@ -263,7 +266,8 @@ public class ProcessingExecutionTask extends ExecutionTask {
             Path path = Paths.get(location);
             SessionContext context = getContext();
             if (!path.isAbsolute()) {
-                path = context.getNetSpace().resolve(path);
+                path = Paths.get(ExecutionConfiguration.getWorkerContainerVolumeMap().getContainerWorkspaceFolder())
+                        .resolve(context.getPrincipal().getName()).resolve(path); //context.getNetSpace().resolve(path);
             }
             String fileName = path.getFileName().toString();
             String folderName = String.format(nameTemplate,

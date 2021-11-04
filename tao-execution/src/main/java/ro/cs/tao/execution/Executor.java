@@ -211,6 +211,19 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
                 context = SystemSessionContext.instance();
             }
             Messaging.send(context.getPrincipal(), Topic.EXECUTION.value(), task.getId(), status.name());
+            /*final String message;
+            if (task instanceof ProcessingExecutionTask) {
+                message = "Task " + ((ProcessingExecutionTask) task).getComponent().getId()
+                        + " on node " + task.getExecutionNodeHostName()
+                        + " changed to " + status.friendlyName();
+            } else if (task instanceof DataSourceExecutionTask) {
+                message = "Query on " + ((DataSourceExecutionTask) task).getComponent().getDataSourceName()
+                        + " for " + ((DataSourceExecutionTask) task).getComponent().getSensorName()
+                        + " changed to " + status.friendlyName();
+            } else {
+                message = "Task " + task.getId() + " on node " + task.getExecutionNodeHostName() + " changed to " + status.friendlyName();
+            }
+            Messaging.send(context.getPrincipal(), Topic.EXECUTION.value(), task.getId(), message, status.name());*/
         }
     }
 
