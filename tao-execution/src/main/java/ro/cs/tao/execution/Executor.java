@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.execution;
 
+import org.apache.commons.lang3.StringUtils;
 import ro.cs.tao.Tuple;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.StringIdentifiable;
@@ -217,14 +218,15 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
             final String message;
             if (task instanceof ProcessingExecutionTask) {
                 message = "Task " + ((ProcessingExecutionTask) task).getComponent().getId()
-                        + " on node " + task.getExecutionNodeHostName()
+                        + (StringUtils.isNotEmpty(task.getExecutionNodeHostName()) ? " on node " + task.getExecutionNodeHostName() : "")
                         + " changed to " + status.friendlyName();
             } else if (task instanceof DataSourceExecutionTask) {
                 message = "Query on " + ((DataSourceExecutionTask) task).getComponent().getDataSourceName()
                         + " for " + ((DataSourceExecutionTask) task).getComponent().getSensorName()
                         + " changed to " + status.friendlyName();
             } else {
-                message = "Task " + task.getId() + " on node " + task.getExecutionNodeHostName() + " changed to " + status.friendlyName();
+                message = "Task " + task.getId() + " on node " + (StringUtils.isNotEmpty(task.getExecutionNodeHostName()) ? " on node " + task.getExecutionNodeHostName() : "")
+                        + " changed to " + status.friendlyName();
             }
             Messaging.send(context.getPrincipal(), Topic.EXECUTION.value(), task.getId(), message, status.name());
         }

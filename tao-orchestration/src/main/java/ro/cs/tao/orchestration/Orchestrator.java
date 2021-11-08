@@ -31,6 +31,7 @@ import ro.cs.tao.eodata.metadata.DecodeStatus;
 import ro.cs.tao.eodata.metadata.MetadataInspector;
 import ro.cs.tao.eodata.naming.NameExpressionParser;
 import ro.cs.tao.eodata.naming.NamingRule;
+import ro.cs.tao.eodata.naming.ParseException;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.callback.EndpointDescriptor;
 import ro.cs.tao.execution.model.*;
@@ -674,9 +675,14 @@ public class Orchestrator extends Notifiable {
                                         }
                                     }
                                     final String key = overriddenOutParam.getKey();
-                                    nextTask.setOutputParameterValue(key, parser.resolve(targetOutput, oValuesList.toArray(new String[0])));
-                                    //TODO: Handle the case when parser fails to resolve
-                                    nextTask.getInputParameterValues().removeIf(v -> v.getKey().equals(key));
+                                    try {
+                                        nextTask.setOutputParameterValue(key, parser.resolve(targetOutput, oValuesList.toArray(new String[0])));
+                                        nextTask.getInputParameterValues().removeIf(v -> v.getKey().equals(key));
+                                    } catch (ParseException ex) {
+                                        logger.severe(ex.getMessage());
+                                        nextTask.setExecutionStatus(ExecutionStatus.FAILED);
+                                        statusChanged(nextTask, ex.getMessage());
+                                    }
                                 }
                             }
                         }
@@ -731,8 +737,14 @@ public class Orchestrator extends Notifiable {
                                 }
                             }
                             final String key = overriddenOutParam.getKey();
-                            nextTask.setOutputParameterValue(key, parser.resolve(targetOutput, oValuesList.toArray(new String[0])));
-                            nextTask.getInputParameterValues().removeIf(v -> v.getKey().equals(key));
+                            try {
+                                nextTask.setOutputParameterValue(key, parser.resolve(targetOutput, oValuesList.toArray(new String[0])));
+                                nextTask.getInputParameterValues().removeIf(v -> v.getKey().equals(key));
+                            } catch (ParseException ex) {
+                                logger.severe(ex.getMessage());
+                                nextTask.setExecutionStatus(ExecutionStatus.FAILED);
+                                statusChanged(nextTask, ex.getMessage());
+                            }
                         }
                     }
                 }
