@@ -59,7 +59,18 @@ public class Message extends LongIdentifiable {
     public static Message create(String user, Object source, String message, boolean persistent) {
         HashMap<String, String> data = new HashMap<>();
         data.put(PRINCIPAL_KEY, user);
-        data.put(PAYLOAD_KEY, message);
+        data.put(MESSAGE_KEY, message);
+        if (source != null) {
+            data.put(SOURCE_KEY, source.toString());
+        }
+        return new Message(System.currentTimeMillis(), data, persistent);
+    }
+
+    public static Message create(String user, Object source, String message, String additional, boolean persistent) {
+        HashMap<String, String> data = new HashMap<>();
+        data.put(PRINCIPAL_KEY, user);
+        data.put(MESSAGE_KEY, message);
+        data.put(PAYLOAD_KEY, additional);
         if (source != null) {
             data.put(SOURCE_KEY, source.toString());
         }

@@ -61,7 +61,12 @@ public enum ExecutionStatus implements TaoEnum<Integer> {
      * Job cancelled.
      */
     @XmlEnumValue("6")
-    CANCELLED(6, "Cancelled");
+    CANCELLED(6, "Cancelled"),
+    /**
+     * Job finished execution, but is not yet prepared for persistence.
+     */
+    @XmlEnumValue("7")
+    PENDING_FINALISATION(7, "Pending finalisation");
 
     private final int value;
     private final String description;

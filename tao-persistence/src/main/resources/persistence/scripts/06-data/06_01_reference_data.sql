@@ -28,7 +28,7 @@ INSERT INTO product.product_status (status) VALUES
 
 -- Execution status
 INSERT INTO execution.status (description) VALUES
-('UNDETERMINED'), ('QUEUED_ACTIVE'), ('RUNNING'), ('SUSPENDED'), ('DONE'), ('FAILED'), ('CANCELLED');
+('UNDETERMINED'), ('QUEUED_ACTIVE'), ('RUNNING'), ('SUSPENDED'), ('DONE'), ('FAILED'), ('CANCELLED'), ('PENDING_FINALISATION');
 
 -- Fetch mode
 INSERT INTO component.fetch_mode (fetch_mode) VALUES

@@ -22,6 +22,7 @@ import ro.cs.tao.datasource.persistence.DataSourceComponentProvider;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.docker.ExecutionConfiguration;
 import ro.cs.tao.execution.model.*;
+import ro.cs.tao.execution.persistence.ExecutionJobProvider;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.persistence.ContainerProvider;
 import ro.cs.tao.persistence.GroupComponentProvider;
@@ -52,6 +53,7 @@ public class TaskUtilities {
     private static final ProcessingComponentProvider processingComponentProvider;
     private static final DataSourceComponentProvider dataSourceComponentProvider;
     private static final GroupComponentProvider groupComponentProvider;
+    private static final ExecutionJobProvider jobProvider;
     private static final ExecutionTaskProvider taskProvider;
     private static final ContainerProvider containerProvider;
     private static final Logger logger = Logger.getLogger(TaskUtilities.class.getName());
@@ -60,6 +62,7 @@ public class TaskUtilities {
     static {
         DOCKER_MOUNT_POINT = ExecutionConfiguration.getMasterContainerVolumeMap().getContainerWorkspaceFolder() + "/";
         workflowNodeProvider = SpringContextBridge.services().getService(WorkflowNodeProvider.class);
+        jobProvider = SpringContextBridge.services().getService(ExecutionJobProvider.class);
         taskProvider = SpringContextBridge.services().getService(ExecutionTaskProvider.class);
         processingComponentProvider = SpringContextBridge.services().getService(ProcessingComponentProvider.class);
         dataSourceComponentProvider = SpringContextBridge.services().getService(DataSourceComponentProvider.class);
@@ -191,9 +194,22 @@ public class TaskUtilities {
      * @param task  The task whose parents are to be checked
      */
     public static boolean haveParentsCompleted(ExecutionTask task) {
-        boolean completed = true;
-        final WorkflowNodeDescriptor node = workflowNodeProvider.get(task.getWorkflowNodeId());
-        final ExecutionJob job = task.getJob();
+        boolean completed = false;
+        final ExecutionJob job = jobProvider.get(task.getJob().getId()); // make sure job tasks are in the latest state from DB
+        final List<String> strPIds = job.getTaskDependencies().get(String.valueOf(task.getId()));
+        if (strPIds != null) {
+            Set<Long> ids = strPIds.stream().map(Long::parseLong).collect(Collectors.toSet());
+            completed = job.getTasks()
+                    .stream().filter(t -> ids.contains(t.getId()))
+                    .allMatch(t -> t.getExecutionStatus() == ExecutionStatus.DONE ||
+                                  (t.getExecutionStatus() == ExecutionStatus.FAILED &&
+                                   workflowNodeProvider.get(t.getWorkflowNodeId()).getBehavior() == TransitionBehavior.CONTINUE_ON_ERROR));
+            if (!completed) {
+                logger.fine(String.format("Not all the ancestors of the task %s have completed", task.getId()));
+            }
+        }
+        /*final WorkflowNodeDescriptor node = workflowNodeProvider.get(task.getWorkflowNodeId());
+        final ExecutionJob job = job;
         final Set<ComponentLink> links = node.getIncomingLinks();
         if (links != null && links.size() > 0) {
             for (ComponentLink link : links) {
@@ -209,7 +225,7 @@ public class TaskUtilities {
                     break;
                 }
             }
-        }
+        }*/
         return completed;
     }
 
@@ -231,11 +247,12 @@ public class TaskUtilities {
             throw new IllegalArgumentException("DataSourceExecutionTask cannot accept incoming links");
         }
         final WorkflowNodeDescriptor node = workflowNodeProvider.get(toTask.getWorkflowNodeId());
-        final ExecutionJob job = toTask.getJob();
+        //final ExecutionJob job = toTask.getJob();
         final Set<ComponentLink> links = node.getIncomingLinks();
         if (links != null && links.size() > 0) {
             for (ComponentLink link : links) {
-                final ExecutionTask parentTask = taskProvider.getByJobAndNode(job.getId(), link.getSourceNodeId(), toTask.getInstanceId());
+                final ExecutionTask parentTask = taskProvider.getByJobAndNode(toTask.getJob().getId(),
+                                                                              link.getSourceNodeId(), toTask.getInstanceId());
                 final Variable out = parentTask.getOutputParameterValues()
                         .stream().filter(o -> o.getKey().equals(link.getInput().getName()))
                         .findFirst().orElse(null);
@@ -251,9 +268,7 @@ public class TaskUtilities {
                     } else {
                         logger.finest(String.format("Output [%s] of task %s was NOT transferred to task %s [%s]",
                                                     toSourceName, parentTask.getId(), toTask.getId(),
-                                                    !isExternal ?
-                                                            String.format("task %s is not external", parentTask.getId()) :
-                                                            String.format("link destination %s already set", toSourceName)));
+                                String.format("link destination %s already set", toSourceName)));
                     }
                 } else {
                     logger.severe(String.format("No output was set for task %s", parentTask.getId()));

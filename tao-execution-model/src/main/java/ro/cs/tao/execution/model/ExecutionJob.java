@@ -20,9 +20,7 @@ import ro.cs.tao.component.LongIdentifiable;
 import ro.cs.tao.execution.callback.EndpointDescriptor;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -40,6 +38,7 @@ public class ExecutionJob extends LongIdentifiable implements StatusChangeListen
     private ExecutionStatus executionStatus;
     private boolean external;
     private EndpointDescriptor callbackDescriptor;
+    private Map<String, List<String>> taskDependencies;
     @JsonManagedReference
     private List<ExecutionTask> tasks;
 
@@ -94,6 +93,25 @@ public class ExecutionJob extends LongIdentifiable implements StatusChangeListen
     public EndpointDescriptor getCallbackDescriptor() { return callbackDescriptor; }
     public void setCallbackDescriptor(EndpointDescriptor descriptor) { this.callbackDescriptor = descriptor; }
 
+    public Map<String, List<String>> getTaskDependencies() {
+        return taskDependencies;
+    }
+
+    public void setTaskDependencies(Map<String, List<String>> taskDependencies) {
+        this.taskDependencies = taskDependencies;
+    }
+
+    public void addTaskDependency(long taskId, long parentTaskId) {
+        if (this.taskDependencies == null) {
+            this.taskDependencies = new HashMap<>();
+        }
+        final String key = String.valueOf(taskId);
+        if (!this.taskDependencies.containsKey(key)) {
+            this.taskDependencies.put(key, new ArrayList<>());
+        }
+        this.taskDependencies.get(key).add(String.valueOf(parentTaskId));
+    }
+
     public void setTasks(List<ExecutionTask> tasks) {
         this.tasks = tasks;
     }
@@ -102,7 +120,7 @@ public class ExecutionJob extends LongIdentifiable implements StatusChangeListen
         if (tasks == null) {
             tasks = new ArrayList<>();
         }
-        return tasks;
+        return tasks.stream().distinct().collect(Collectors.toList());
     }
 
     public List<ExecutionTask> orderedTasks() {

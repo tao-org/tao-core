@@ -334,14 +334,12 @@ public class FileUtilities {
         if (SystemUtils.IS_OS_UNIX) {
             return path.toString();
         } else {
+            final boolean isDirectory = Files.isDirectory(path);
             String strPath = "/" + StringUtils.replaceEach(path.toAbsolutePath().toString(),
                                                            WIN_TO_UNIX_TOKENS,
-                                                           WIN_TO_UNIX_REPLACEMENTS);
+                                                           WIN_TO_UNIX_REPLACEMENTS) + (isDirectory ? "/" : "");
             if (insideDocker && strPath.charAt(2) == '/') {
                 strPath = strPath.substring(2);
-            }
-            if (Files.isDirectory(path)) {
-                strPath += "/";
             }
             return strPath;
         }

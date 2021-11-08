@@ -403,7 +403,7 @@ public class ProcessingComponent extends TaoComponent {
         }
         for (ParameterDescriptor parameterDescriptor : this.parameters) {
             if (!clonedMap.containsKey(parameterDescriptor.getName())) {
-                if (parameterDescriptor.getDefaultValue() != null) {
+                if (!"null".equals(String.valueOf(parameterDescriptor.getDefaultValue()))) {
                     clonedMap.put(parameterDescriptor.getName(), parameterDescriptor.getDefaultValue());
                 } else {
                     removeEmptyParameter(parameterDescriptor);

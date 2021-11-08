@@ -91,6 +91,12 @@ public class Orchestrator extends Notifiable {
 
     private static final String GROUP_TASK_SELECTOR_KEY = "group.task.selector";
     private static final String JOB_TASK_SELECTOR_KEY = "job.task.selector";
+    private static final Set<ExecutionStatus> notFurtherRunnableStatuses = new HashSet<ExecutionStatus>() {{
+       add(ExecutionStatus.DONE); add(ExecutionStatus.PENDING_FINALISATION); add(ExecutionStatus.CANCELLED); add(ExecutionStatus.FAILED);
+    }};
+    private static final Set<ExecutionStatus> completedOkStatuses = new HashSet<ExecutionStatus>() {{
+        add(ExecutionStatus.DONE); add(ExecutionStatus.PENDING_FINALISATION);
+    }};
 
     private static final Orchestrator instance;
     private final Map<Long, InternalStateHandler<?>> groupStateHandlers;
@@ -291,6 +297,7 @@ public class Orchestrator extends Notifiable {
 
     @Override
     protected void onMessageReceived(Message message) {
+        logger.finest("Received message " + message);
         if (message instanceof StartupCompletedMessage) {
             final List<ExecutionJob> jobs = prepareStalledJobs();
             if (jobs != null) {
@@ -378,21 +385,21 @@ public class Orchestrator extends Notifiable {
         this.jobTaskSelector.setTaskByNodeProvider(nodeProvider);
     }
 
-    private void processMessage(Message message, SessionContext currentContext) {
+    private synchronized void processMessage(Message message, SessionContext currentContext) {
         ExecutionTask task = null;
         try {
             final String taskId = message.getItem(Message.SOURCE_KEY);
             final ExecutionStatus status = EnumUtils.getEnumConstantByName(ExecutionStatus.class,
-                                                                           message.getItem(Message.PAYLOAD_KEY));
+                                                                           message.getPayload());
             task = taskProvider.get(Long.parseLong(taskId));
             task.setContext(currentContext);
             logger.fine(String.format("Status change for task %s [node %s]: %s", taskId, task.getWorkflowNodeId(), status.name()));
             statusChanged(task, message.getMessage());
-            if (status == ExecutionStatus.DONE || status == ExecutionStatus.CANCELLED || status == ExecutionStatus.FAILED) {
+            if (notFurtherRunnableStatuses.contains(status)) {
                 this.runningTasks.remove(task.getId());
                 logger.fine(String.format("Active or pending tasks: %d", this.runningTasks.size()));
             }
-            if (status == ExecutionStatus.DONE) {
+            if (completedOkStatuses.contains(status)) {
                 WorkflowNodeDescriptor taskNode = workflowNodeProvider.get(task.getWorkflowNodeId());
                 // For DataSourceExecutionTask, it is the executor that sets the outputs,
                 // hence we need to "confirm" here the outputs of a processing task.
@@ -429,7 +436,7 @@ public class Orchestrator extends Notifiable {
                         }
                     }
                 } else {
-                    ExecutionJob job = task.getJob();
+                    ExecutionJob job = jobProvider.get(task.getJob().getId());
                     if (TaskUtilities.haveAllTasksCompleted(job)) {
                         logger.fine("No more child tasks to execute after the current task");
 
@@ -570,14 +577,12 @@ public class Orchestrator extends Notifiable {
                 }
             }
         });
-        ExecutionTask task;
+        pcTask.setExecutionStatus(ExecutionStatus.DONE);
+        taskProvider.update(pcTask);
         if (lastFromGroup) {
             taskProvider.update(groupTask);
-            task = pcTask;
-        } else {
-            task = taskProvider.update(pcTask);
         }
-        return task;
+        return pcTask;
     }
 
     private void flowOutputs(ExecutionTask task, ExecutionTask nextTask) throws PersistenceException {
@@ -898,7 +903,7 @@ public class Orchestrator extends Notifiable {
 
     private List<ExecutionTask> findNextTasks(ExecutionTask task) {
         ExecutionGroup groupTask = task instanceof ExecutionGroup ? (ExecutionGroup) task : task.getGroupTask();
-        ExecutionJob job = task.getJob();
+        ExecutionJob job = jobProvider.get(task.getJob().getId()); // refresh object from DB
         if (groupTask != null) {
             if (groupTask.getExecutionStatus() != ExecutionStatus.DONE) {
                 return this.groupTaskSelector.chooseNext(groupTask, task);
@@ -1063,7 +1068,8 @@ public class Orchestrator extends Notifiable {
             while (true) {
                 try {
                     AbstractMap.SimpleEntry<Message, SessionContext> entry = queue.take();
-                    ExecutorService service = Orchestrator.this.executors.get(entry.getValue().getPrincipal().getName());
+                    logger.finest("Dequeueud message " + entry.getKey().toString());
+                    final ExecutorService service = Orchestrator.this.executors.get(entry.getValue().getPrincipal().getName());
                     if (service != null) {
                         if (service.isShutdown() || service.isTerminated()) {
                             logger.warning("Executor for " + entry.getKey() + " was shutdown. Further tasks cannot be processed");
