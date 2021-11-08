@@ -87,6 +87,18 @@ public interface EventBus<T extends Serializable> {
      * @param topic The topic
      * @param source    The source of the message
      * @param message   The message
+     * @param data      Additional data
+     */
+    default void send(Principal principal, String topic, Object source, String message, String data) {
+        send(principal, topic, Message.create(principal.getName(), source, message, data, true));
+    }
+
+    /**
+     * Sends a message on a topic indicating also the source of the message.
+     * @param principal The user under which identity the event is send.
+     * @param topic The topic
+     * @param source    The source of the message
+     * @param message   The message
      * @param persistent If the message should be persisted in the message store or not
      */
     default void send(Principal principal, String topic, Object source, String message, boolean persistent) {

@@ -118,6 +118,18 @@ public class DefaultJobTaskSelector implements TaskSelector<ExecutionJob> {
         if (task == null || task.getExecutionStatus() != ExecutionStatus.DONE) {
             return null;
         }
+        final List<Long> candidates = new ArrayList<>();
+        job.getTaskDependencies().forEach((key, value) -> {
+            if (value.contains(String.valueOf(task.getId()))) {
+                if (value.stream()
+                         .map(v -> job.getTasks().stream().filter(t -> t.getId().equals(Long.parseLong(v))).findFirst().get())
+                         .allMatch(t -> t.getExecutionStatus() == ExecutionStatus.DONE &&
+                                        t.getOutputParameterValues() != null)) {
+                    candidates.add(Long.parseLong(key));
+                }
+            }
+        });
+        /*
         WorkflowNodeDescriptor workflowNode = this.workflowProvider.apply(task.getWorkflowNodeId());
         if (workflowNode == null) {
             logger.severe(String.format("No workflow node with id %s was found in the database", task.getWorkflowNodeId()));
@@ -128,14 +140,14 @@ public class DefaultJobTaskSelector implements TaskSelector<ExecutionJob> {
         if (childNodes == null || childNodes.size() == 0) {
             //System.out.println("No children for current node " + workflowNode.getComponentId());
             return null;
-        }
+        }*/
         List<ExecutionTask> nextOnes = new ArrayList<>();
-        for (WorkflowNodeDescriptor node : childNodes) {
-            ExecutionTask t = this.taskByNodeProvider.apply(job.getId(), node.getId(), task.getInstanceId());
-            if (t.getExecutionStatus() != ExecutionStatus.QUEUED_ACTIVE && t.getExecutionStatus() != ExecutionStatus.RUNNING) {
-                if (TaskUtilities.haveParentsCompleted(t)) {
-                    nextOnes.add(TaskUtilities.transferParentOutputs(t));
-                }
+        for (Long id : candidates) {
+            ExecutionTask n = job.getTasks().stream().filter(t -> id.equals(t.getId())).findFirst().get();
+            if (n.getExecutionStatus() != ExecutionStatus.QUEUED_ACTIVE && n.getExecutionStatus() != ExecutionStatus.RUNNING) {
+                //if (TaskUtilities.haveParentsCompleted(n)) {
+                    nextOnes.add(TaskUtilities.transferParentOutputs(n));
+                //}
             }
         }
         return nextOnes;

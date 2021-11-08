@@ -28,6 +28,7 @@ public abstract class TaskStatusHandler {
         handlers.put(ExecutionStatus.UNDETERMINED, new IgnoredStatusHandler(jobProvider, taskProvider));
         handlers.put(ExecutionStatus.QUEUED_ACTIVE, new IgnoredStatusHandler(jobProvider, taskProvider));
         handlers.put(ExecutionStatus.RUNNING, new RunningStatusHandler(jobProvider, taskProvider));
+        handlers.put(ExecutionStatus.PENDING_FINALISATION, new PendingFinalisationStatusHandler(jobProvider, taskProvider));
         handlers.put(ExecutionStatus.DONE, new DoneStatusHandler(jobProvider, taskProvider));
         handlers.put(ExecutionStatus.FAILED, new FailedStatusHandler(jobProvider, taskProvider));
         handlers.put(ExecutionStatus.SUSPENDED, new SuspendedStatusHandler(jobProvider, taskProvider));

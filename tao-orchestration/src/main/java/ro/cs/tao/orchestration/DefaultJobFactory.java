@@ -28,6 +28,7 @@ import ro.cs.tao.datasource.persistence.QueryProvider;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.execution.persistence.ExecutionJobProvider;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
+import ro.cs.tao.execution.util.TaskUtilities;
 import ro.cs.tao.persistence.GroupComponentProvider;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.ProcessingComponentProvider;
@@ -122,6 +123,19 @@ public class DefaultJobFactory {
                     logger.finest(String.format("Created task %s.%s for node %s [id=%s, level %s]",
                             jobName, task.getId(), node.getName(), node.getId(), task.getLevel()));
                 }
+            }
+            // re-iterate to determine task dependencies
+            final List<ExecutionTask> tasks = job.getTasks();
+            if (tasks != null) {
+                for (ExecutionTask task : tasks) {
+                    final List<Long> parentIds = TaskUtilities.getParentIds(task);
+                    if (parentIds != null) {
+                        for (Long parentId : parentIds) {
+                            job.addTaskDependency(task.getId(), parentId);
+                        }
+                    }
+                }
+                jobProvider.update(job);
             }
         }
         return job;

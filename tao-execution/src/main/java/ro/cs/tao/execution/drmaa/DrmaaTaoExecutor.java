@@ -227,11 +227,11 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                             // Just mark the task as finished with success status
                             if (task.getExecutionStatus() == ExecutionStatus.RUNNING) {
                                 // Only a running task can complete
-                                markTaskFinished(task, ExecutionStatus.DONE);
+                                markTaskFinished(task, ExecutionStatus.PENDING_FINALISATION);
                             }
-                            logger.fine(String.format("Task %s DONE", task.getId()));
+                            logger.fine(String.format("Task %s PENDING_FINALISATION", task.getId()));
                             if (task instanceof ProcessingExecutionTask) {
-                                notifyExternalListeners((ProcessingExecutionTask) task, ExecutionStatus.DONE.friendlyName(), 0, null);
+                                notifyExternalListeners((ProcessingExecutionTask) task, ExecutionStatus.PENDING_FINALISATION.friendlyName(), 0, null);
                             }
                             break;
                         case Session.FAILED:
@@ -305,217 +305,227 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
 
     private JobTemplate createJobTemplate(ProcessingExecutionTask task) throws DrmaaException, IOException {
         // Get from the component the execution command
-        String[] pArgs = null;
-        final ProcessingComponent component = task.getComponent();
-        final Container container = containerProvider.get(component.getContainerId());
-        final Application app = container.getApplications()
-                                         .stream()
-                                         .filter(a -> component.getId().endsWith(a.getName().toLowerCase()))
-                                         .findFirst().orElse(null);
-        final JobTemplate jt = session.createJobTemplate();
-        if (jt == null) {
-            throw new ExecutionException("Error creating job template from the session!");
-        }
-        if (jt instanceof JobTemplateExtension && task instanceof ScriptTask) {
-            final JobTemplateExtension template = (JobTemplateExtension) jt;
-            template.setAttribute(DrmaaJobExtensions.SIMULATE_EXECUTION_ATTRIBUTE, Boolean.TRUE);
-            template.setAttribute(DrmaaJobExtensions.TASK_ID, task.getId());
-            template.setAttribute(DrmaaJobExtensions.TASK_ANCESTOR_ID, TaskUtilities.getParentIds(task));
-            template.setAttribute(DrmaaJobExtensions.TASK_NAME, TaskUtilities.getComponentFor(task).getLabel());
-            template.setAttribute(DrmaaJobExtensions.JOB_ID, task.getJob().getId());
-            final List<Variable> values = task.getOutputParameterValues();
-            if (values != null) {
-                template.setAttribute(DrmaaJobExtensions.TASK_OUTPUT, values.stream().map(Variable::getValue).collect(Collectors.toList()));
+        JobTemplate jt = null;
+        try {
+            logger.entering(getClass().getSimpleName(), "createJobTemplate(" + task.getId() + ")");
+            String[] pArgs = null;
+            final ProcessingComponent component = task.getComponent();
+            final Container container = containerProvider.get(component.getContainerId());
+            final Application app = container.getApplications()
+                    .stream()
+                    .filter(a -> component.getId().endsWith(a.getName().toLowerCase()))
+                    .findFirst().orElse(null);
+            jt = session.createJobTemplate();
+            if (jt == null) {
+                throw new ExecutionException("Error creating job template from the session!");
             }
-        }
-        final long memory = app != null ? app.getMemoryRequirements() : 0L;
-        setMemoryConstraint(jt, memory);
-        final String preferredHostName = task.getExecutionNodeHostName();
-        final NodeData nodeData;
-        if (preferredHostName != null) {
-            nodeData = getNode(preferredHostName);
-        } else {
-            if (task instanceof ScriptTask) {
-                nodeData = NodeManager.getInstance().getMasterNode();
-            } else {
-                // the next call blocks until a node is available
-                nodeData = getAvailableNode(component.getParallelism(), memory);
-            }
-        }
-        NodeDescription node = nodeData.getNode();
-        if (node == null) {
-            throw new TryLaterException("Cannot obtain an available node [null]");
-        }
-        setHost(jt, node.getId());
-        task.setExecutionNodeHostName(node.getId());
-        final int cpu = nodeData.getCpu();
-        final long mem = nodeData.getMemory();
-        String location = task.getComponent().getFileLocation();
-        if ((SystemUtils.IS_OS_WINDOWS && !location.startsWith("/") && !Paths.get(location).isAbsolute()) ||
-            (SystemUtils.IS_OS_LINUX && !Paths.get(location).isAbsolute())) {
-            String path = container.getApplicationPath();
-            path = path == null ? "" : path;
-            if (!path.endsWith("/")) {
-                path += "/";
-            }
-            path += location;
-            task.getComponent().setExpandedFileLocation(path);
-        }
-        // if parallel flags are defined, use them
-        if (app != null && app.hasParallelFlag()) {
-            Class<?> type = app.parallelArgumentType();
-            if (type.isAssignableFrom(Integer.class)) {
-                pArgs = app.parallelArguments(Integer.class, Runtime.getRuntime().availableProcessors() / 2);
-            } else if (type.isAssignableFrom(Long.class)) {
-                pArgs = app.parallelArguments(Integer.class, Runtime.getRuntime().availableProcessors() / 2);
-            } else {
-                pArgs = app.parallelArguments(Boolean.class, true);
-            }
-        }
-        String executionCmd = task.getCommand();
-        if (executionCmd == null) {
-            // Assemble the regular execution command, as produced by the processing component after applying values
-            executionCmd = task.buildExecutionCommand();
-            task.setCommand(executionCmd);
-            try {
-                taskProvider.update(task);
-            } catch (PersistenceException e) {
-                e.printStackTrace();
-            }
-        }
-        // Insert parallel arguments, if any
-        if (pArgs != null) {
-            int idx = executionCmd.indexOf('\n');
-            executionCmd = executionCmd.substring(0, idx) + "\n" + String.join("\n", pArgs) +
-                    executionCmd.substring(idx);
-        }
-        // Insert common parameters, if defined at container level
-        final String commonParameters = container.getCommonParameters();
-        if (commonParameters != null) {
-            int idx = executionCmd.indexOf('\n');
-            executionCmd = executionCmd.substring(0, idx) + "\n" + String.join("\n", commonParameters.split(" ")) +
-                    executionCmd.substring(idx);
-        }
-        // Insert output format name, if supported by the container and defined in component or by user
-        final String formatNameParameter = container.getFormatNameParameter();
-        if (formatNameParameter != null) {
-            final Set<String> formats = container.getFormat();
-            // check if the format name was given by user
-            Variable formatVariable = task.getOutputParameterValues().stream()
-                    .filter(v -> "formatName".equals(v.getKey())).findFirst().orElse(null);
-            if (formatVariable == null) {
-                // then check if the format name was defined in the component
-                TargetDescriptor target = component.getTargets().stream()
-                                                    .filter(t -> t.getDataDescriptor().getFormatName() != null).findFirst().orElse(null);
-                if (target != null) {
-                    formatVariable = new Variable("formatName", target.getDataDescriptor().getFormatName());
-                }
-            }
-            if (formatVariable != null && (formats == null || formats.contains(formatVariable.getValue()))) {
-                int idx = executionCmd.indexOf('\n');
-                executionCmd = executionCmd.substring(0, idx) + "\n" + String.join("\n", formatNameParameter, formatVariable.getValue()) +
-                                executionCmd.substring(idx);
-            }
-        }
-        List<String> argsList = new ArrayList<>();
-        final String cmd;
-
-        // split the execution command but preserving the entities between double quotes
-        final Matcher m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(executionCmd);
-        while (m.find()) {
-            argsList.add(m.group(1)); // Add .replace("\"", "") to remove surrounding quotes.
-        }
-        final boolean isUtilityTask = task.getComponent().getComponentType() == ProcessingComponentType.UTILITY;
-        final boolean useDocker = ExecutionConfiguration.useDocker() || task instanceof ScriptTask;
-        ContainerUnit unit = null;
-        if (useDocker && !isUtilityTask) {
-            if (jt instanceof JobTemplateExtension) {
-                cmd = argsList.get(0);
-                argsList.remove(0);
+            if (jt instanceof JobTemplateExtension && task instanceof ScriptTask) {
                 final JobTemplateExtension template = (JobTemplateExtension) jt;
-                final Map<String, String> dbSources = component.getSources().stream()
-                        .filter(s -> DataFormat.DB_CONNECTION == s.getDataDescriptor().getFormatType())
-                        .collect(Collectors.toMap(SourceDescriptor::getName, d -> d.getDataDescriptor().getLocation()));
-                unit = new ContainerUnit(ContainerType.DOCKER);
-                unit.setArguments(new ArrayList<String>() {{
-                    add("-i"); add("--rm"); add("--volume-driver"); add("cifs");
-                }});
-                unit.setEnvironmentVariables(dbSources);
-                final DockerVolumeMap volumeMount;
-                if (task.getExecutionNodeHostName().equals(masterHost)) {
-                    volumeMount = ExecutionConfiguration.getMasterContainerVolumeMap();
-                } else {
-                    volumeMount = ExecutionConfiguration.getWorkerContainerVolumeMap();
+                template.setAttribute(DrmaaJobExtensions.SIMULATE_EXECUTION_ATTRIBUTE, Boolean.TRUE);
+                template.setAttribute(DrmaaJobExtensions.TASK_ID, task.getId());
+                template.setAttribute(DrmaaJobExtensions.TASK_ANCESTOR_ID, TaskUtilities.getParentIds(task));
+                template.setAttribute(DrmaaJobExtensions.TASK_NAME, TaskUtilities.getComponentFor(task).getLabel());
+                template.setAttribute(DrmaaJobExtensions.JOB_ID, task.getJob().getId());
+                final List<Variable> values = task.getOutputParameterValues();
+                if (values != null) {
+                    template.setAttribute(DrmaaJobExtensions.TASK_OUTPUT, values.stream().map(Variable::getValue).collect(Collectors.toList()));
                 }
-                unit.addVolumeMapping(volumeMount.getHostWorkspaceFolder(), volumeMount.getContainerWorkspaceFolder());
-                unit.addVolumeMapping(volumeMount.getHostConfigurationFolder(), volumeMount.getContainerConfigurationFolder());
-                unit.addVolumeMapping(volumeMount.getHostTemporaryFolder(), volumeMount.getContainerTemporaryFolder());
-                unit.setContainerName(container.getName());
-                unit.setContainerRegistry(ExecutionConfiguration.getDockerRegistry());
-                if (cpu > 0) {
-                    // Enforce the number of CPUs to be used
-                    unit.addArgument("--cpus", String.valueOf(cpu));
-                    task.setUsedCPU(cpu);
-                }
-                if (mem > 0) {
-                    unit.addArgument("--memory", mem + "MB");
-                    task.setUsedRAM((int) mem);
-                }
-                template.setAttribute(DrmaaJobExtensions.CONTAINER_ATTRIBUTE, unit);
+            }
+            final long memory = app != null ? app.getMemoryRequirements() : 0L;
+            setMemoryConstraint(jt, memory);
+            final String preferredHostName = task.getExecutionNodeHostName();
+            final NodeData nodeData;
+            if (preferredHostName != null) {
+                nodeData = getNode(preferredHostName);
             } else {
-                cmd = "docker";
-                final DockerVolumeMap volumeMap;
-                if (task.getExecutionNodeHostName().equals(masterHost)) {
-                    volumeMap = ExecutionConfiguration.getMasterContainerVolumeMap();
+                if (task instanceof ScriptTask) {
+                    nodeData = NodeManager.getInstance().getMasterNode();
                 } else {
-                    volumeMap = ExecutionConfiguration.getWorkerContainerVolumeMap();
+                    // the next call blocks until a node is available
+                    nodeData = getAvailableNode(component.getParallelism(), memory);
                 }
-                final List<String> dockerArgsList = new ArrayList<String>() {{
-                    add("run");
-                    add("-i");              // Keep STDIN open even if not attached
-                    //add("-t");            // Allocate a pseudo-TTY
-                    add("--rm");            // Automatically remove the container when it exits
-                    add("--volume-driver"); // Automatically remove the container when it exits
-                    add("cifs");            // Automatically remove the container when it exits
-                    add("-v");
-                    add(volumeMap.getHostWorkspaceFolder() + ":" + volumeMap.getContainerWorkspaceFolder());
-                    add("-v");
-                    add(volumeMap.getHostTemporaryFolder() + ":" + volumeMap.getContainerTemporaryFolder());
-                    add("-v");
-                    add(volumeMap.getHostConfigurationFolder() + ":" + volumeMap.getContainerConfigurationFolder());
+            }
+            NodeDescription node = nodeData.getNode();
+            if (node == null) {
+                throw new TryLaterException("Cannot obtain an available node [null]");
+            }
+            setHost(jt, node.getId());
+            task.setExecutionNodeHostName(node.getId());
+            final int cpu = nodeData.getCpu();
+            final long mem = nodeData.getMemory();
+            String location = task.getComponent().getFileLocation();
+            if ((SystemUtils.IS_OS_WINDOWS && !location.startsWith("/") && !Paths.get(location).isAbsolute()) ||
+                    (SystemUtils.IS_OS_LINUX && !Paths.get(location).isAbsolute())) {
+                String path = container.getApplicationPath();
+                path = path == null ? "" : path;
+                if (!path.endsWith("/")) {
+                    path += "/";
+                }
+                path += location;
+                task.getComponent().setExpandedFileLocation(path);
+            }
+            // if parallel flags are defined, use them
+            if (app != null && app.hasParallelFlag()) {
+                Class<?> type = app.parallelArgumentType();
+                if (type.isAssignableFrom(Integer.class)) {
+                    pArgs = app.parallelArguments(Integer.class, Runtime.getRuntime().availableProcessors() / 2);
+                } else if (type.isAssignableFrom(Long.class)) {
+                    pArgs = app.parallelArguments(Integer.class, Runtime.getRuntime().availableProcessors() / 2);
+                } else {
+                    pArgs = app.parallelArguments(Boolean.class, true);
+                }
+            }
+            String executionCmd = task.getCommand();
+            if (executionCmd == null) {
+                // Assemble the regular execution command, as produced by the processing component after applying values
+                executionCmd = task.buildExecutionCommand();
+                task.setCommand(executionCmd);
+                try {
+                    taskProvider.update(task);
+                } catch (PersistenceException e) {
+                    e.printStackTrace();
+                }
+            }
+            // Insert parallel arguments, if any
+            if (pArgs != null) {
+                int idx = executionCmd.indexOf('\n');
+                executionCmd = executionCmd.substring(0, idx) + "\n" + String.join("\n", pArgs) +
+                        executionCmd.substring(idx);
+            }
+            // Insert common parameters, if defined at container level
+            final String commonParameters = container.getCommonParameters();
+            if (commonParameters != null) {
+                int idx = executionCmd.indexOf('\n');
+                executionCmd = executionCmd.substring(0, idx) + "\n" + String.join("\n", commonParameters.split(" ")) +
+                        executionCmd.substring(idx);
+            }
+            // Insert output format name, if supported by the container and defined in component or by user
+            final String formatNameParameter = container.getFormatNameParameter();
+            if (formatNameParameter != null) {
+                final Set<String> formats = container.getFormat();
+                // check if the format name was given by user
+                Variable formatVariable = task.getOutputParameterValues().stream()
+                        .filter(v -> "formatName".equals(v.getKey())).findFirst().orElse(null);
+                if (formatVariable == null) {
+                    // then check if the format name was defined in the component
+                    TargetDescriptor target = component.getTargets().stream()
+                            .filter(t -> t.getDataDescriptor().getFormatName() != null).findFirst().orElse(null);
+                    if (target != null) {
+                        formatVariable = new Variable("formatName", target.getDataDescriptor().getFormatName());
+                    }
+                }
+                if (formatVariable != null && (formats == null || formats.contains(formatVariable.getValue()))) {
+                    int idx = executionCmd.indexOf('\n');
+                    executionCmd = executionCmd.substring(0, idx) + "\n" + String.join("\n", formatNameParameter, formatVariable.getValue()) +
+                            executionCmd.substring(idx);
+                }
+            }
+            List<String> argsList = new ArrayList<>();
+            final String cmd;
+
+            // split the execution command but preserving the entities between double quotes
+            final Matcher m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(executionCmd);
+            while (m.find()) {
+                argsList.add(m.group(1)); // Add .replace("\"", "") to remove surrounding quotes.
+            }
+            final boolean isUtilityTask = task.getComponent().getComponentType() == ProcessingComponentType.UTILITY;
+            final boolean useDocker = ExecutionConfiguration.useDocker() || task instanceof ScriptTask;
+            ContainerUnit unit = null;
+            if (useDocker && !isUtilityTask) {
+                if (jt instanceof JobTemplateExtension) {
+                    cmd = argsList.get(0);
+                    argsList.remove(0);
+                    final JobTemplateExtension template = (JobTemplateExtension) jt;
+                    final Map<String, String> dbSources = component.getSources().stream()
+                            .filter(s -> DataFormat.DB_CONNECTION == s.getDataDescriptor().getFormatType())
+                            .collect(Collectors.toMap(SourceDescriptor::getName, d -> d.getDataDescriptor().getLocation()));
+                    unit = new ContainerUnit(ContainerType.DOCKER);
+                    unit.setArguments(new ArrayList<String>() {{
+                        add("-i");
+                        add("--rm");
+                        add("--volume-driver");
+                        add("cifs");
+                    }});
+                    unit.setEnvironmentVariables(dbSources);
+                    final DockerVolumeMap volumeMount;
+                    if (task.getExecutionNodeHostName().equals(masterHost)) {
+                        volumeMount = ExecutionConfiguration.getMasterContainerVolumeMap();
+                    } else {
+                        volumeMount = ExecutionConfiguration.getWorkerContainerVolumeMap();
+                    }
+                    unit.addVolumeMapping(volumeMount.getHostWorkspaceFolder(), volumeMount.getContainerWorkspaceFolder());
+                    unit.addVolumeMapping(volumeMount.getHostConfigurationFolder(), volumeMount.getContainerConfigurationFolder());
+                    unit.addVolumeMapping(volumeMount.getHostTemporaryFolder(), volumeMount.getContainerTemporaryFolder());
+                    unit.setContainerName(container.getName());
+                    unit.setContainerRegistry(ExecutionConfiguration.getDockerRegistry());
                     if (cpu > 0) {
                         // Enforce the number of CPUs to be used
-                        add("--cpus");
-                        add(String.valueOf(cpu));
+                        unit.addArgument("--cpus", String.valueOf(cpu));
                         task.setUsedCPU(cpu);
                     }
                     if (mem > 0) {
-                        add("--memory");    // Enforce the memory limit to be used
-                        // memory, if not 0, is expressed in MB
-                        add(mem + "MB");
+                        unit.addArgument("--memory", mem + "MB");
                         task.setUsedRAM((int) mem);
                     }
-                }};
-                String value = ExecutionConfiguration.getDockerRegistry();
-                if (value != null) {
-                    dockerArgsList.add(value + "/" + container.getName());
+                    template.setAttribute(DrmaaJobExtensions.CONTAINER_ATTRIBUTE, unit);
                 } else {
-                    dockerArgsList.add(container.getId());
+                    cmd = "docker";
+                    final DockerVolumeMap volumeMap;
+                    if (task.getExecutionNodeHostName().equals(masterHost)) {
+                        volumeMap = ExecutionConfiguration.getMasterContainerVolumeMap();
+                    } else {
+                        volumeMap = ExecutionConfiguration.getWorkerContainerVolumeMap();
+                    }
+                    final List<String> dockerArgsList = new ArrayList<String>() {{
+                        add("run");
+                        add("-i");              // Keep STDIN open even if not attached
+                        //add("-t");            // Allocate a pseudo-TTY
+                        add("--rm");            // Automatically remove the container when it exits
+                        add("--volume-driver"); // Automatically remove the container when it exits
+                        add("cifs");            // Automatically remove the container when it exits
+                        add("-v");
+                        add(volumeMap.getHostWorkspaceFolder() + ":" + volumeMap.getContainerWorkspaceFolder());
+                        add("-v");
+                        add(volumeMap.getHostTemporaryFolder() + ":" + volumeMap.getContainerTemporaryFolder());
+                        add("-v");
+                        add(volumeMap.getHostConfigurationFolder() + ":" + volumeMap.getContainerConfigurationFolder());
+                        if (cpu > 0) {
+                            // Enforce the number of CPUs to be used
+                            add("--cpus");
+                            add(String.valueOf(cpu));
+                            task.setUsedCPU(cpu);
+                        }
+                        if (mem > 0) {
+                            add("--memory");    // Enforce the memory limit to be used
+                            // memory, if not 0, is expressed in MB
+                            add(mem + "MB");
+                            task.setUsedRAM((int) mem);
+                        }
+                    }};
+                    String value = ExecutionConfiguration.getDockerRegistry();
+                    if (value != null) {
+                        dockerArgsList.add(value + "/" + container.getName());
+                    } else {
+                        dockerArgsList.add(container.getId());
+                    }
+                    dockerArgsList.addAll(argsList);
+                    argsList = dockerArgsList;
                 }
-                dockerArgsList.addAll(argsList);
-                argsList = dockerArgsList;
+            } else {
+                cmd = argsList.get(0);
+                argsList.remove(0);
             }
-        } else {
-            cmd = argsList.get(0);
-            argsList.remove(0);
+            jt.setRemoteCommand(cmd);
+            jt.setArgs(argsList);
+            logger.finest(String.format("Task %s: %s%s %s",
+                    task.getId(),
+                    unit != null ? String.join(" ", ContainerCmdBuilder.buildCommandLineArguments(unit)) + " " : "",
+                    cmd,
+                    String.join(" ", argsList)));
+        } catch (Throwable t) {
+            logger.severe(t.getMessage());
+            throw t;
         }
-        jt.setRemoteCommand(cmd);
-        jt.setArgs(argsList);
-        logger.fine(String.format("Task %s: %s%s %s",
-                                  task.getId(),
-                                  unit != null ? String.join(" ", ContainerCmdBuilder.buildCommandLineArguments(unit)) + " " : "",
-                                  cmd,
-                                  String.join(" ", argsList)));
         return jt;
     }
 
@@ -542,7 +552,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
     	NodeData nodeData = null;
         if (NodeManager.isAvailable() && NodeManager.getInstance() != null) {
         	nodeData = NodeManager.getInstance().getAvailableNode(cpus, memory, 0);
-            logger.fine(String.format("Node [%s] was chosen for next execution", nodeData.getNode().getId()));
+            logger.finest(String.format("Node [%s] was chosen for next execution", nodeData.getNode().getId()));
         }
         if (nodeData == null) {
             throw new DeniedByDrmException("No node was found for execution");

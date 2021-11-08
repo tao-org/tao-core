@@ -8,22 +8,19 @@ public class BlockingQueueWorker<E> extends Thread {
     private final BlockingQueue<E> monitoredQueue;
     private final Function<E, Void> work;
     private final NamedThreadPoolExecutor executor;
+    private final Logger logger;
     private volatile boolean stopped;
 
     public BlockingQueueWorker(BlockingQueue<E> monitoredQueue, Function<E, Void> runnable) {
-        this.monitoredQueue = monitoredQueue;
-        this.work = runnable;
-        this.executor = new NamedThreadPoolExecutor("queue-worker", 1);
-        this.stopped = false;
+        this(monitoredQueue, runnable, 1);
     }
 
     public BlockingQueueWorker(BlockingQueue<E> monitoredQueue, Function<E, Void> runnable, int parallelism) {
         this.monitoredQueue = monitoredQueue;
         this.work = runnable;
-        this.executor = parallelism == 1 ?
-                new NamedThreadPoolExecutor("queue-worker", 1) :
-                new NamedThreadPoolExecutor("queue-worker", parallelism);
+        this.executor = new NamedThreadPoolExecutor("queue-worker", parallelism);
         this.stopped = false;
+        this.logger = Logger.getLogger(getClass().getName());
     }
 
     @Override
@@ -43,15 +40,16 @@ public class BlockingQueueWorker<E> extends Thread {
         while (!stopped) {
             try {
                 E entry = this.monitoredQueue.take();
+                logger.finest("Dequeued " + entry.toString());
                 this.executor.submit(() -> {
                     try {
                         this.work.apply(entry);
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        logger.severe(e.getMessage());
                     }
                 });
             } catch (InterruptedException e) {
-                Logger.getLogger(getClass().getName()).warning(e.getMessage());
+                logger.warning(e.getMessage());
             }
         }
     }

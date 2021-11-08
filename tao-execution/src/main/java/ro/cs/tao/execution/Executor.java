@@ -20,8 +20,10 @@ import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.StringIdentifiable;
 import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.configuration.ConfigurationManager;
+import ro.cs.tao.execution.model.DataSourceExecutionTask;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
+import ro.cs.tao.execution.model.ProcessingExecutionTask;
 import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.Topic;
 import ro.cs.tao.security.SessionContext;
@@ -186,6 +188,7 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
                     increment(userName, cpu, memory);
                 } else {
                     switch (status) {
+                        case PENDING_FINALISATION:
                         case DONE:
                             task.setExecutionStatus(status);
                             task.setLastUpdated(LocalDateTime.now());
@@ -210,8 +213,8 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
             if (context == null) {
                 context = SystemSessionContext.instance();
             }
-            Messaging.send(context.getPrincipal(), Topic.EXECUTION.value(), task.getId(), status.name());
-            /*final String message;
+            //Messaging.send(context.getPrincipal(), Topic.EXECUTION.value(), task.getId(), status.name());
+            final String message;
             if (task instanceof ProcessingExecutionTask) {
                 message = "Task " + ((ProcessingExecutionTask) task).getComponent().getId()
                         + " on node " + task.getExecutionNodeHostName()
@@ -223,7 +226,7 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
             } else {
                 message = "Task " + task.getId() + " on node " + task.getExecutionNodeHostName() + " changed to " + status.friendlyName();
             }
-            Messaging.send(context.getPrincipal(), Topic.EXECUTION.value(), task.getId(), message, status.name());*/
+            Messaging.send(context.getPrincipal(), Topic.EXECUTION.value(), task.getId(), message, status.name());
         }
     }
 
