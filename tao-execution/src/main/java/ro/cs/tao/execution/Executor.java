@@ -171,7 +171,7 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
     }
 
     protected void changeTaskStatus(ExecutionTask task, ExecutionStatus status, boolean firstTime) {
-        if(status != task.getExecutionStatus()) {
+        if (status != task.getExecutionStatus()) {
             try {
                 if (!this.contextMap.containsKey(task.getId())) {
                     if (task.getContext() == null) {

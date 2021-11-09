@@ -985,7 +985,7 @@ public class Orchestrator extends Notifiable {
     private EOProduct createProduct(TargetDescriptor descriptor, String outValue, SessionContext context) {
         EOProduct product = null;
         try {
-            if (descriptor.getDataDescriptor().getFormatType() == DataFormat.RASTER) {
+            if (descriptor.getDataDescriptor().getFormatType() != DataFormat.VECTOR) {
                 String netPath = FileUtilities.asUnixPath(context.getNetSpace(), true);
                 Path path;
                 if (outValue.startsWith(netPath)) {
@@ -994,8 +994,13 @@ public class Orchestrator extends Notifiable {
                     path = Paths.get(outValue);
                 }
                 MetadataInspector metadataInspector = this.metadataServices.stream()
-                        .filter(s -> s.decodeQualification(path) == DecodeStatus.SUITABLE)
+                        .filter(s -> s.decodeQualification(path) == DecodeStatus.INTENDED)
                         .findFirst().orElse(null);
+                if (metadataInspector == null) {
+                    metadataInspector = this.metadataServices.stream()
+                            .filter(s -> s.decodeQualification(path) == DecodeStatus.SUITABLE)
+                            .findFirst().orElse(null);
+                }
                 if (metadataInspector != null) {
                     MetadataInspector.Metadata metadata = metadataInspector.getMetadata(path);
                     if (metadata != null) {
