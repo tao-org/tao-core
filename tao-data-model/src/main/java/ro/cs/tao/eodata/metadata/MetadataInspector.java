@@ -161,7 +161,7 @@ public interface MetadataInspector {
             product.setSensorType(this.sensorType != null ? this.sensorType : SensorType.UNKNOWN);
             product.setFormatType(DataFormat.RASTER);
             product.setPixelType(this.pixelType);
-            product.setGeometry(this.footprint);
+            product.setGeometry(this.crs != null ? this.footprint : this.wgs84footprint);
             product.setCrs(this.crs);
             product.setWidth(this.width);
             product.setHeight(this.height);
