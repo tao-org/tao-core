@@ -1,6 +1,5 @@
 package ro.cs.tao.datasource.cli;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import org.apache.commons.cli.*;
 import ro.cs.tao.ProgressListener;
@@ -11,6 +10,7 @@ import ro.cs.tao.datasource.param.DataSourceParameter;
 import ro.cs.tao.datasource.remote.FetchMode;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.Polygon2D;
+import ro.cs.tao.serialization.JsonMapper;
 import ro.cs.tao.utils.DateUtils;
 import ro.cs.tao.utils.NetUtils;
 
@@ -28,8 +28,7 @@ public class DownloadTool {
 
     static {
         options = new Options();
-        ObjectMapper objectMapper = new ObjectMapper();
-        final ObjectReader jsonReader = objectMapper.readerFor(CliDescriptor.class);
+        final ObjectReader jsonReader = JsonMapper.instance().readerFor(CliDescriptor.class);
         try (InputStream inputStream = DownloadTool.class.getResourceAsStream("arguments.json")) {
             CliDescriptor descriptor = jsonReader.readValue(inputStream);
             final List<CliOptionGroup> groups = descriptor.getGroups();
@@ -199,7 +198,7 @@ public class DownloadTool {
                                 System.out.println("name=" + result.getName() + "; date=" + dateFormat.format(result.getAcquisitionDate()) + "; url=" + result.getLocation());
                             }
                         } else if ("json".equalsIgnoreCase(format)) {
-                            System.out.println(new ObjectMapper().writer().writeValueAsString(results));
+                            System.out.println(JsonMapper.instance().writer().writeValueAsString(results));
                         }
                     }
                 } else {

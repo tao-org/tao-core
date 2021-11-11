@@ -27,7 +27,7 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.logging.Logger;
 
-import static ro.cs.tao.serialization.ObjectMapperProvider.*;
+import static ro.cs.tao.serialization.JsonMapper.*;
 
 /**
  * Base class for data source parameter providers.
@@ -79,12 +79,12 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
             final Class<? extends AbstractParameterProvider> clazz = getClass();
             if (!readParamDescriptors.containsKey(clazz)) {
                 readParamDescriptors.put(clazz,
-                        JSON_OBJECT_MAPPER.readValue(readDescriptor(PARAMETER_DESCRIPTOR_RESOURCE),
+                        instance.readValue(readDescriptor(PARAMETER_DESCRIPTOR_RESOURCE),
                                                      JSON_DATA_SOURCE_PARAMETERS_TYPE_REFERENCE));
                 final String sensorDescriptor = readDescriptor(SENSOR_TYPE_RESOURCE);
                 if (sensorDescriptor != null) {
                     readTypeDescriptors.put(clazz,
-                            JSON_OBJECT_MAPPER.readValue(sensorDescriptor, JSON_SENSOR_TYPE_REFERENCE));
+                            instance.readValue(sensorDescriptor, JSON_SENSOR_TYPE_REFERENCE));
                 }
             }
             readParameters = readParamDescriptors.get(clazz);

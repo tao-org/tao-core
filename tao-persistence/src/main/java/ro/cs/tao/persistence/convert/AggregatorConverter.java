@@ -1,8 +1,8 @@
 package ro.cs.tao.persistence.convert;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import ro.cs.tao.component.Aggregator;
+import ro.cs.tao.serialization.JsonMapper;
 
 import javax.persistence.AttributeConverter;
 import java.io.IOException;
@@ -12,7 +12,7 @@ public class AggregatorConverter implements AttributeConverter<Aggregator, Strin
     public String convertToDatabaseColumn(Aggregator aggregator) {
         try {
             return aggregator != null ?
-                    new ObjectMapper().writeValueAsString(aggregator) : null;
+                    JsonMapper.instance().writeValueAsString(aggregator) : null;
         } catch (JsonProcessingException e) {
             e.printStackTrace();
             return null;
@@ -23,7 +23,7 @@ public class AggregatorConverter implements AttributeConverter<Aggregator, Strin
     public Aggregator convertToEntityAttribute(String s) {
         try {
             return s != null ?
-                    new ObjectMapper().readerFor(Aggregator.class).readValue(s) : null;
+                    JsonMapper.instance().readerFor(Aggregator.class).readValue(s) : null;
         } catch (IOException e) {
             e.printStackTrace();
             return null;

@@ -1,8 +1,8 @@
 package ro.cs.tao.docker;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import ro.cs.tao.configuration.ConfigurationManager;
+import ro.cs.tao.serialization.JsonMapper;
 import ro.cs.tao.utils.FileUtilities;
 
 import java.nio.file.Paths;
@@ -41,7 +41,7 @@ public class ExecutionConfiguration {
             }
             Map<String, String> map = new HashMap<>();
             try {
-                map = new ObjectMapper().readerFor(map.getClass()).readValue(value);
+                map = JsonMapper.instance().readerFor(map.getClass()).readValue(value);
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
@@ -64,7 +64,7 @@ public class ExecutionConfiguration {
             }
             Map<String, String> map = new HashMap<>();
             try {
-                map = new ObjectMapper().readerFor(map.getClass()).readValue(value);
+                map = JsonMapper.instance().readerFor(map.getClass()).readValue(value);
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
