@@ -15,8 +15,6 @@
  */
 package ro.cs.tao.datasource.beans;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import ro.cs.tao.component.LongIdentifiable;
 import ro.cs.tao.datasource.DataQuery;
 import ro.cs.tao.datasource.DataSourceComponent;
@@ -24,6 +22,7 @@ import ro.cs.tao.datasource.DataSourceManager;
 import ro.cs.tao.datasource.param.DataSourceParameter;
 import ro.cs.tao.eodata.Polygon2D;
 import ro.cs.tao.serialization.GenericAdapter;
+import ro.cs.tao.serialization.JsonMapper;
 import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.utils.CompositeKey;
 import ro.cs.tao.utils.DateUtils;
@@ -250,9 +249,7 @@ public class Query extends LongIdentifiable {
     @Override
     public String toString() {
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.registerModule(new JavaTimeModule());
-            return mapper.writeValueAsString(this);
+            return JsonMapper.instance().writeValueAsString(this);
         } catch (Exception ex) {
             Logger.getLogger(Query.class.getName()).severe(ex.getMessage());
             return super.toString();
@@ -261,9 +258,7 @@ public class Query extends LongIdentifiable {
 
     public static Query fromString(String jsonValue) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.registerModule(new JavaTimeModule());
-            return mapper.readValue(jsonValue, Query.class);
+            return JsonMapper.instance().readValue(jsonValue, Query.class);
         } catch (Exception ex) {
             Logger.getLogger(Query.class.getName()).severe(ex.getMessage());
             return null;

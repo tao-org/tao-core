@@ -21,6 +21,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import ro.cs.tao.datasource.CollectionDescription;
 import ro.cs.tao.datasource.param.DataSourceParameter;
 
@@ -29,26 +30,30 @@ import java.util.Map;
 /**
  * @author Valentin Netoiu on 10/17/2019.
  */
-public class ObjectMapperProvider {
+public class JsonMapper {
 
-    public static final ObjectMapper JSON_OBJECT_MAPPER;
+    private static final ObjectMapper instance;
     public static final TypeReference<Map<String, Map<String, DataSourceParameter>>> JSON_DATA_SOURCE_PARAMETERS_TYPE_REFERENCE;
     public static final TypeReference<Map<String, CollectionDescription>> JSON_SENSOR_TYPE_REFERENCE;
 
     static {
-        JSON_OBJECT_MAPPER = new ObjectMapper()
+        instance = new ObjectMapper()
                 .findAndRegisterModules()
                 .configure(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_AS_NULL, true)
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
                 .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+                .configure(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT, true)
                 .disable(JsonParser.Feature.AUTO_CLOSE_SOURCE)
-                .disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
+                .disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
+                .registerModule(new JavaTimeModule());
 
         JSON_DATA_SOURCE_PARAMETERS_TYPE_REFERENCE = new TypeReference<Map<String, Map<String, DataSourceParameter>>>() {};
         JSON_SENSOR_TYPE_REFERENCE = new TypeReference<Map<String, CollectionDescription>>() { };
     }
 
-    private ObjectMapperProvider() {
+    public static ObjectMapper instance() { return instance; }
+
+    private JsonMapper() {
 
     }
 }

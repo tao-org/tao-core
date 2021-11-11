@@ -16,8 +16,8 @@
 
 package ro.cs.tao.execution.model;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import ro.cs.tao.component.Variable;
+import ro.cs.tao.serialization.JsonMapper;
 import ro.cs.tao.serialization.SerializationException;
 
 import java.util.ArrayList;
@@ -30,12 +30,10 @@ import java.util.List;
  */
 public class LoopStateHandler implements InternalStateHandler<LoopState> {
     private LoopState loopState;
-    private ObjectMapper serializer;
     private ExecutionGroup handledTask;
 
     public LoopStateHandler(LoopState loopState) {
         this.loopState = loopState;
-        this.serializer = new ObjectMapper();
     }
 
     @Override
@@ -53,7 +51,7 @@ public class LoopStateHandler implements InternalStateHandler<LoopState> {
     public void setCurrentState(String serializedState) throws SerializationException {
         try {
             if (serializedState != null) {
-                this.loopState = this.serializer.readValue(serializedState, LoopState.class);
+                this.loopState = JsonMapper.instance().readValue(serializedState, LoopState.class);
             }
         } catch (Exception ex) {
             throw new SerializationException(ex);
@@ -77,7 +75,7 @@ public class LoopStateHandler implements InternalStateHandler<LoopState> {
     public String serializeState() throws SerializationException {
         try {
             if (this.loopState != null) {
-                return this.serializer.writeValueAsString(this.loopState);
+                return JsonMapper.instance().writeValueAsString(this.loopState);
             } else {
                 return null;
             }
