@@ -184,10 +184,12 @@ public abstract class Executor<T> implements Runnable {
     public static int execute(OutputConsumer outputConsumer, long timeout, ExecutionUnit job, ActivityListener monitor) {
         Executor<?> executor = execute(outputConsumer, job, monitor);
         try {
-            executor.getWaitObject().await(timeout, TimeUnit.SECONDS);
-        } catch (InterruptedException ignored) {
-            staticLogger.severe(String.format("The job %s failed to complete within the allocated time [%s s] and is being terminated",
-                                              job, timeout));
+            if (!executor.getWaitObject().await(timeout, TimeUnit.SECONDS)) {
+                staticLogger.severe(String.format("The job %s failed to complete within the allocated time [%s s] and is being terminated",
+                                                  job, timeout));    
+            }
+        } catch (InterruptedException e) {
+            staticLogger.severe(String.format("The job %s was interrupted", job));
         } finally {
             executor.stop();
             printQueue();

@@ -145,7 +145,7 @@ public class Parallel {
      * @param code      The loop code
      */
     public static void For(String name, int start, int stop, int parallelism, final Runnable<Integer> code) {
-        final NamedThreadPoolExecutor executor = new NamedThreadPoolExecutor("pf" + (name == null ? "" : "-" + name),
+        final NamedThreadPoolExecutor executor = new NamedThreadPoolExecutor((name == null ? "" : name + "-") + "pf",
                                                                              Math.max(PARALLELISM, parallelism));
         try {
             List<Future<?>> tasks  = new LinkedList<>();
