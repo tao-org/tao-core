@@ -18,6 +18,7 @@ package ro.cs.tao.datasource.param;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import ro.cs.tao.datasource.CollectionDescription;
 import ro.cs.tao.datasource.ProductFetchStrategy;
+import ro.cs.tao.serialization.JsonMapper;
 
 import java.io.IOException;
 import java.net.URI;
@@ -27,7 +28,8 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.logging.Logger;
 
-import static ro.cs.tao.serialization.JsonMapper.*;
+import static ro.cs.tao.serialization.JsonMapper.JSON_DATA_SOURCE_PARAMETERS_TYPE_REFERENCE;
+import static ro.cs.tao.serialization.JsonMapper.JSON_SENSOR_TYPE_REFERENCE;
 
 /**
  * Base class for data source parameter providers.
@@ -79,12 +81,12 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
             final Class<? extends AbstractParameterProvider> clazz = getClass();
             if (!readParamDescriptors.containsKey(clazz)) {
                 readParamDescriptors.put(clazz,
-                        instance.readValue(readDescriptor(PARAMETER_DESCRIPTOR_RESOURCE),
-                                                     JSON_DATA_SOURCE_PARAMETERS_TYPE_REFERENCE));
+                                         JsonMapper.instance().readValue(readDescriptor(PARAMETER_DESCRIPTOR_RESOURCE),
+                                                               JSON_DATA_SOURCE_PARAMETERS_TYPE_REFERENCE));
                 final String sensorDescriptor = readDescriptor(SENSOR_TYPE_RESOURCE);
                 if (sensorDescriptor != null) {
                     readTypeDescriptors.put(clazz,
-                            instance.readValue(sensorDescriptor, JSON_SENSOR_TYPE_REFERENCE));
+                                            JsonMapper.instance().readValue(sensorDescriptor, JSON_SENSOR_TYPE_REFERENCE));
                 }
             }
             readParameters = readParamDescriptors.get(clazz);
