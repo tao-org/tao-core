@@ -25,7 +25,6 @@ import org.apache.commons.lang3.SystemUtils;
 import java.io.*;
 import java.net.URI;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.*;
 import java.nio.file.attribute.*;
@@ -653,34 +652,6 @@ public class FileUtilities {
         }
     }
 
-    private static boolean wasSymlink(ZipFile zipFile, ZipEntry zipEntry) {
-        if (!zipEntry.isDirectory() && zipEntry.getSize() < 4096) {
-            try (InputStream inputStream = zipFile.getInputStream(zipEntry)) {
-                try (InputStreamReader inputStreamReader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
-                    try (BufferedReader bufferedReader = new BufferedReader(inputStreamReader)) {
-                        String fileContent = bufferedReader.readLine();
-                        if(fileContent.replaceAll("[\\d\\w\\\\/.\\-+]*","").isEmpty()) {
-                            Path target = Paths.get(fileContent);
-                            Path zipDir = Paths.get(zipFile.getName()).getParent();
-                            Path zipEntryPath = Paths.get(zipEntry.getName());
-                            Path zipEntryDir = zipEntryPath.getParent();
-                            Path zipEntryAbsolutePath = zipDir.resolve(zipEntryDir);
-                            String targetAbsolutePath = new File(zipEntryAbsolutePath.resolve(target).toString()).getCanonicalPath();
-                            Path linkPath = zipEntryAbsolutePath.resolve(zipEntryPath.getFileName());
-                            if (targetAbsolutePath.startsWith(zipDir.toString())) {
-                                Files.createSymbolicLink(linkPath, target);
-                                return true;
-                            }
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                //ignore
-            }
-        }
-        return false;
-    }
-
     public static void unzip(Path sourceFile, Path destination, boolean keepFolderStructure) throws IOException {
         if (sourceFile == null || destination == null) {
             throw new IllegalArgumentException("One of the arguments is null");
@@ -708,7 +679,7 @@ public class FileUtilities {
                 if (!Files.exists(filePath)) {
                     if (entry.isDirectory()) {
                         Files.createDirectories(filePath);
-                    } else if(!wasSymlink(zipFile, entry)) {
+                    } else {
                         int read;
                         try (InputStream inputStream = zipFile.getInputStream(entry)) {
                             Files.createDirectories(keepFolderStructure ? filePath.getParent() : strippedFilePath.getParent());
