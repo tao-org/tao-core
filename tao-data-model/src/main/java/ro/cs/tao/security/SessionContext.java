@@ -37,7 +37,8 @@ public abstract class SessionContext {
     protected SessionContext() {
         this.principal = setPrincipal();
         this.workspaceRoot = Paths.get(SystemVariable.ROOT.value());
-        this.netSpaceRoot = Paths.get(SystemVariable.SHARE.value());
+        final String value = SystemVariable.SHARE.value();
+        this.netSpaceRoot = value != null ? Paths.get(value) : null;
         this.preferences = setPreferences();
     }
 
@@ -54,7 +55,7 @@ public abstract class SessionContext {
      */
     public Path getWorkspace() { return workspaceRoot.resolve(getPrincipal().getName()); }
 
-    public Path getNetSpace() { return netSpaceRoot.resolve(getPrincipal().getName()); }
+    public Path getNetSpace() { return netSpaceRoot != null ? netSpaceRoot.resolve(getPrincipal().getName()) : null; }
 
     /**
      * Returns the location where the current principal can upload files

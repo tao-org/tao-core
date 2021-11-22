@@ -32,6 +32,7 @@ import ro.cs.tao.eodata.metadata.MetadataInspector;
 import ro.cs.tao.eodata.naming.NameExpressionParser;
 import ro.cs.tao.eodata.naming.NamingRule;
 import ro.cs.tao.eodata.naming.ParseException;
+import ro.cs.tao.eodata.util.ProductHelper;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.callback.EndpointDescriptor;
 import ro.cs.tao.execution.model.*;
@@ -398,7 +399,7 @@ public class Orchestrator extends Notifiable {
             statusChanged(task, message.getMessage());
             if (notFurtherRunnableStatuses.contains(status)) {
                 this.runningTasks.remove(task.getId());
-                logger.fine(String.format("Active or pending tasks: %d", this.runningTasks.size()));
+                logger.finest(String.format("Active or pending tasks: %d", this.runningTasks.size()));
             }
             if (completedOkStatuses.contains(status)) {
                 WorkflowNodeDescriptor taskNode = workflowNodeProvider.get(task.getWorkflowNodeId());
@@ -583,6 +584,8 @@ public class Orchestrator extends Notifiable {
         if (lastFromGroup) {
             taskProvider.update(groupTask);
         }
+        logger.fine(String.format("Status change for task %s [node %s]: %s",
+                                  pcTask.getId(), pcTask.getWorkflowNodeId(), ExecutionStatus.DONE.name()));
         return pcTask;
     }
 
@@ -606,7 +609,16 @@ public class Orchestrator extends Notifiable {
                 statusChanged(nextTask, null);
             }
             for (int i = 0; i < cardinality; i++) {
+                String file = valuesList.get(i);
+                ProductHelper helper = null;
+                try {
+                    helper = ProductHelper.getHelper(Paths.get(URI.create(file)).getFileName().toString());
+                } catch (Exception ignored) { }
+                if (helper != null) {
+                    valuesList.set(i, valuesList.get(i) + (valuesList.get(i).endsWith("/") ? "" : "/") + helper.getMetadataFileName());
+                }
                 valuesList.set(i, TaskUtilities.relativizePathForExecution(valuesList.get(i)));
+
             }
             if (nextTask instanceof ExecutionGroup) {
                 ExecutionGroup groupTask = (ExecutionGroup) nextTask;

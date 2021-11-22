@@ -155,6 +155,10 @@ public class WorkflowOptimizer {
 
             /* make empty workflow */
             WorkflowDescriptor workflow = builder.createWorkflowDescriptor();
+            if (workflow.getNodes().size() > 0) {
+                // already done this
+                return workflow;
+            }
 
             /* for every optimization node make a workflow node */
             for (OptimizationNode node : graph.getNodes()) {
