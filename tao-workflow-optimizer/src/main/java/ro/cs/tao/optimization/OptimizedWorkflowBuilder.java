@@ -125,26 +125,27 @@ public class OptimizedWorkflowBuilder extends WorkflowBuilderBase {
                                                               dsComponent.getSensorName(),
                                                               dsComponent.getDataSourceName(),
                                                               oldNode.getId());
+            if (oldQuery != null) {
+                Query newQuery = new Query();
 
-            Query newQuery = new Query();
+                newQuery.setLabel(oldQuery.getLabel() + UUID.randomUUID().toString());
 
-            newQuery.setLabel(oldQuery.getLabel() + UUID.randomUUID().toString());
+                newQuery.setUserId(oldQuery.getUserId());
+                newQuery.setSensor(oldQuery.getSensor());
+                newQuery.setDataSource(dsComponent.getDataSourceName());
+                newQuery.setPageNumber(oldQuery.getPageNumber());
+                newQuery.setPageSize(oldQuery.getPageSize());
+                newQuery.setLimit(oldQuery.getLimit());
+                newQuery.setValues(oldQuery.getValues());
+                newQuery.setWorkflowNodeId(newNode.getId());
 
-            newQuery.setUserId(oldQuery.getUserId());
-            newQuery.setSensor(oldQuery.getSensor());
-            newQuery.setDataSource(dsComponent.getDataSourceName());
-            newQuery.setPageNumber(oldQuery.getPageNumber());
-            newQuery.setPageSize(oldQuery.getPageSize());
-            newQuery.setLimit(oldQuery.getLimit());
-            newQuery.setValues(oldQuery.getValues());
-            newQuery.setWorkflowNodeId(newNode.getId());
+                newQuery.setUser(oldQuery.getUser());
+                newQuery.setPassword(oldQuery.getPassword());
 
-            newQuery.setUser(oldQuery.getUser());
-            newQuery.setPassword(oldQuery.getPassword());
+                newQuery = persistenceManager.queries().save(newQuery);
 
-            newQuery = persistenceManager.queries().save(newQuery);
-
-            cache.add(newQuery);
+                cache.add(newQuery);
+            }
         }
 
         return persistenceManager.workflowNodes().update(newNode);

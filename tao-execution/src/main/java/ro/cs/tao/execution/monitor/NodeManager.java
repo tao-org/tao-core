@@ -50,6 +50,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     private NodeInspectTask nodeInspectTask;
     private NodeRefreshTask nodeRefreshTask;
     private volatile boolean refreshInProgress;
+    private NodeRuntimeWrapper lastUsedNode;
 
     static {
         concurrentCalls = Math.max(2, java.lang.Runtime.getRuntime().availableProcessors() / 4);
@@ -258,20 +259,33 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                 if ((availableCpu == -1 || availableCpu > 0) && userQuotaManager.checkUserProcessingMemory(principal, (int)memory)) {
                     requestedCPUs = (availableCpu == -1) ? cpus : Math.min(cpus, availableCpu);
                     NodeRuntimeWrapper result = this.nodes.entrySet().stream()
-                            .filter(e -> e.getValue().getRuntimeInfo().getAvailableMemory() >= memory)
-                            .sorted(Comparator.comparingDouble(e -> {
+                            // First try to find a node different from the last one used
+                            .filter(e -> {
+                                final NodeRuntimeWrapper nrw = e.getValue();
+                                return !nrw.equals(lastUsedNode) && nrw.getRuntimeInfo().getAvailableMemory() >= memory;
+                            })
+                            .min(Comparator.comparingDouble(e -> {
                                 NodeDescription node = nodes.get(e.getKey()).getNode();
                                 RuntimeInfo runtimeInfo = e.getValue().getRuntimeInfo();
                                 return computeLoad(node, runtimeInfo.getCpuTotal(), runtimeInfo.getAvailableMemory());
                             }))
-                            .map(Map.Entry::getValue).findFirst().orElse(null);
+                            .map(Map.Entry::getValue).orElse(
+                                    this.nodes.entrySet().stream()
+                                            // And if not available, the first suitable one (may also be the last one used)
+                                            .filter(e -> e.getValue().getRuntimeInfo().getAvailableMemory() >= memory)
+                                            .min(Comparator.comparingDouble(e -> {
+                                                NodeDescription node = nodes.get(e.getKey()).getNode();
+                                                RuntimeInfo runtimeInfo = e.getValue().getRuntimeInfo();
+                                                return computeLoad(node, runtimeInfo.getCpuTotal(), runtimeInfo.getAvailableMemory());
+                                            }))
+                                            .map(Map.Entry::getValue).orElse(null));
                     if (result != null) {
                         availableNode = result.getNode();
+                        lastUsedNode = result;
                     }
                 }
             } catch (QuotaException e) {
     			logger.info(String.format("Error while computing the CPU and memory quota for the user %s. Error message: %s", principal.getName(), e.getMessage()));
-                availableNode = null;
             }
             if (availableNode == null) {
                 if (canCreateNewNodes() && this.nodes.size() < this.nodeLimit) {
@@ -284,14 +298,14 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                     }
                     if (availableNode == null) {
                         logger.fine("No processing node matching the request was found. Will retry in 10 seconds.");
-                        waitBeforeNextRetry(DEFAULT_NODE_WAIT_TIME);
+                        waitBeforeNextRetry();
                     } else {
                         // new node has been created
                         addNewInstalledNode(availableNode);
                     }
                 } else {
                     logger.fine("No processing node was found to be available. Will retry in 10 seconds.");
-                    waitBeforeNextRetry(DEFAULT_NODE_WAIT_TIME);
+                    waitBeforeNextRetry();
                 }
             }
         }
@@ -299,9 +313,9 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         return new NodeData(availableNode, Math.min(requestedCPUs, availableNode.getFlavor().getCpu()), memory);
     }
 
-    protected static void waitBeforeNextRetry(int timeToWaitMilliseconds) {
+    protected static void waitBeforeNextRetry() {
         try {
-            Thread.sleep(timeToWaitMilliseconds);
+            Thread.sleep(NodeManager.DEFAULT_NODE_WAIT_TIME);
         } catch (InterruptedException ignored) {
             // ignore
         }

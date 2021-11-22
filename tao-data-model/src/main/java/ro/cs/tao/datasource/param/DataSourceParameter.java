@@ -110,6 +110,8 @@ public class DataSourceParameter {
 
     public void setOrder(int order) { this.order = order; }
 
+    public String typeFriendlyName() { return type != null ? type.friendlyName() : null; }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

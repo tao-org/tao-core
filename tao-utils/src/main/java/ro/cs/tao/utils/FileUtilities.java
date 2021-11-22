@@ -335,11 +335,19 @@ public class FileUtilities {
             return path.toString();
         } else {
             final boolean isDirectory = Files.isDirectory(path);
-            String strPath = "/" + StringUtils.replaceEach(path.toAbsolutePath().toString(),
-                                                           WIN_TO_UNIX_TOKENS,
-                                                           WIN_TO_UNIX_REPLACEMENTS) + (isDirectory ? "/" : "");
-            if (insideDocker && strPath.charAt(2) == '/') {
-                strPath = strPath.substring(2);
+            String strPath;
+            final String stringValue = path.toAbsolutePath().toString();
+            if (path.isAbsolute()) {
+                strPath = (stringValue.startsWith("/") ? "" : '/') +
+                        StringUtils.replaceEach(stringValue, WIN_TO_UNIX_TOKENS, WIN_TO_UNIX_REPLACEMENTS) +
+                        (isDirectory ? "/" : "");
+                if (insideDocker && strPath.charAt(2) == '/') {
+                    strPath = strPath.substring(2);
+                }
+            } else {
+                strPath = "/" +
+                        StringUtils.replaceEach(path.toString(), WIN_TO_UNIX_TOKENS, WIN_TO_UNIX_REPLACEMENTS) +
+                        (isDirectory ? "/" : "");
             }
             return strPath;
         }

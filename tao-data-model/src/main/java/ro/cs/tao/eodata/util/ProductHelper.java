@@ -15,8 +15,12 @@
  */
 package ro.cs.tao.eodata.util;
 
+import org.reflections.Reflections;
+
+import java.lang.reflect.Constructor;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -35,6 +39,20 @@ public abstract class ProductHelper {
     protected String processingDate;
     protected String version;
     protected String[] tokens;
+
+    public static ProductHelper getHelper(String productName) {
+        final Reflections reflections = new Reflections("ro.cs.tao");
+        final Set<Class<? extends ProductHelper>> types = reflections.getSubTypesOf(ProductHelper.class);
+        for (Class<? extends ProductHelper> type : types) {
+            try {
+                final Constructor<? extends ProductHelper> ctor = type.getDeclaredConstructor(String.class);
+                ctor.setAccessible(true);
+                return ctor.newInstance(productName);
+            } catch (Exception ignored) {
+            }
+        }
+        return null;
+    }
 
     public ProductHelper() {}
 

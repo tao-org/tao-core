@@ -29,7 +29,9 @@ import ro.cs.tao.component.template.TemplateType;
 import ro.cs.tao.component.template.engine.EngineFactory;
 import ro.cs.tao.component.template.engine.TemplateEngine;
 import ro.cs.tao.component.validation.ValidationException;
+import ro.cs.tao.docker.ExecutionConfiguration;
 import ro.cs.tao.security.SessionStore;
+import ro.cs.tao.utils.FileUtilities;
 
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -449,11 +451,26 @@ public class ProcessingComponent extends TaoComponent {
                 break;
             case AGGREGATE:
                 try {
-                    Path scriptPath = SessionStore.currentContext().getWorkspace().resolve("scripts");
+                    final Path scriptPath = SessionStore.currentContext().getWorkspace().resolve("scripts");
                     Files.createDirectories(scriptPath);
-                    Path scriptFile = scriptPath.resolve(System.currentTimeMillis() + "-" + this.template.getName());
+                    String scriptFileName = this.template.getName().replace(" ", "_") + "-" + System.currentTimeMillis();
+                    if (this.templateType == TemplateType.VELOCITY) {
+                        // OTB aggregation
+                        scriptFileName += ".py";
+                    } else {
+                        // SNAP aggregation
+                        scriptFileName += ".xml";
+                    }
+                    final Path scriptFile = scriptPath.resolve(scriptFileName);
                     Files.write(scriptFile, transformedTemplate.getBytes());
-                    cmdBuilder.append(scriptFile.toString()).append("\n");
+                    String relScriptFile = ExecutionConfiguration.getWorkerContainerVolumeMap().getContainerWorkspaceFolder() +
+                            "/" + FileUtilities.asUnixPath(scriptFile, true)
+                                               .replace(FileUtilities.asUnixPath(Paths.get(SystemVariable.ROOT.value()), true), "");
+                    cmdBuilder.append(relScriptFile).append("\n");
+                    for (SourceDescriptor sourceDescriptor : this.sources) {
+                        cmdBuilder.append("-" + sourceDescriptor.getName()).append("\n");
+                        cmdBuilder.append(sourceDescriptor.getDataDescriptor().getLocation()).append("\n");
+                    }
                 } catch (IOException e) {
                     Logger.getLogger(ProcessingComponent.class.getName()).severe("Cannot persist aggregated template file");
                     throw new TemplateException(e);
@@ -524,9 +541,22 @@ public class ProcessingComponent extends TaoComponent {
         if (this.template != null) {
             String templateContents = this.template.getContents();
             int idx = templateContents.indexOf(descriptor.getLabel());
-            int beforeSeparator = templateContents.lastIndexOf('\n', idx);
-            int afterSeparator = templateContents.indexOf('\n', idx);
-            this.template.setContents(templateContents.substring(0, beforeSeparator) + templateContents.substring(afterSeparator), false);
+            int beforeSeparator, afterSeparator;
+            // idx should not be -1 for Velocity templates, but it may be for XSLT ones
+            if (idx == -1) {
+                idx = templateContents.indexOf(descriptor.getName());
+                beforeSeparator = templateContents.lastIndexOf('\n', idx);
+                afterSeparator = templateContents.indexOf('\n', idx);
+                this.template.setContents(templateContents.substring(0, beforeSeparator) + templateContents.substring(afterSeparator), false);
+                idx = templateContents.indexOf(descriptor.getName(), idx + 1);
+                beforeSeparator = templateContents.lastIndexOf('\n', idx);
+                afterSeparator = templateContents.indexOf('\n', idx);
+                this.template.setContents(templateContents.substring(0, beforeSeparator) + templateContents.substring(afterSeparator), false);
+            } else {
+                beforeSeparator = templateContents.lastIndexOf('\n', idx);
+                afterSeparator = templateContents.indexOf('\n', idx);
+                this.template.setContents(templateContents.substring(0, beforeSeparator) + templateContents.substring(afterSeparator), false);
+            }
         }
     }
 }

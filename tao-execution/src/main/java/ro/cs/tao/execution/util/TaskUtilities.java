@@ -291,13 +291,15 @@ public class TaskUtilities {
         try {
             Path p = FileUtilities.resolveSymLinks(Paths.get(URI.create(path)).toAbsolutePath());
             Path root = FileUtilities.resolveSymLinks(Paths.get(SystemVariable.ROOT.value()).toAbsolutePath());
-            result = DOCKER_MOUNT_POINT + root.relativize(p).toString().replace("\\", "/");
+            final String unixPath = FileUtilities.asUnixPath(root.relativize(p), true);
+            result = DOCKER_MOUNT_POINT + (unixPath.startsWith("/") ? unixPath.substring(1) : unixPath);
         } catch (Exception e1) {
             e1.printStackTrace();
             try {
                 Path p = FileUtilities.resolveSymLinks(Paths.get(path).toAbsolutePath());
                 Path root = FileUtilities.resolveSymLinks(Paths.get(SystemVariable.ROOT.value()).toAbsolutePath());
-                result = DOCKER_MOUNT_POINT + root.relativize(p).toString().replace("\\", "/");
+                final String unixPath = FileUtilities.asUnixPath(root.relativize(p), true);
+                result = DOCKER_MOUNT_POINT + (unixPath.startsWith("/") ? unixPath.substring(1) : unixPath);
             } catch (Exception e2) {
                 e2.printStackTrace();
                 result = path;
