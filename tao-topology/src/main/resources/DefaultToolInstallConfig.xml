@@ -15,13 +15,13 @@
             #scripts_root_path#
             #step_output#
     -->
-    <tool_install_config>
+    <!--<tool_install_config>
         <name>Torque installer</name>
         <description>Installs Torque on the executin nodes</description>
         <version>1.0</version>
         <priority>1</priority>
         <install_steps>
-            <!-- ============ STEPS TO UPDATE THE MASTER NODE ================ -->
+            &lt;!&ndash; ============ STEPS TO UPDATE THE MASTER NODE ================ &ndash;&gt;
             <step>
                 <order_id>10</order_id>
                 <invocation_type>process</invocation_type>
@@ -56,16 +56,16 @@
             <step>
                 <order_id>40</order_id>
                 <invocation_type>process</invocation_type>
-                <!-- echo #master_password# | sudo #scripts_root_path#/torque/torque_add_node.sh -s #node_hostname# -p #procs_cnt# -->
+                &lt;!&ndash; echo #master_password# | sudo #scripts_root_path#/torque/torque_add_node.sh -s #node_hostname# -p #procs_cnt# &ndash;&gt;
                 <command>
                     <![CDATA[
                         #scripts_root_path#/torque/torque_add_node.sh -s #node_hostname# -n #procs_cnt# -u #master_user# -p #master_pass#
                     ]]>
                 </command>
             </step>
-            <!-- ============ END-OF STEPS TO UPDATE THE MASTER NODE -->
+            &lt;!&ndash; ============ END-OF STEPS TO UPDATE THE MASTER NODE &ndash;&gt;
 
-            <!-- ============ STEPS TO UPDATE THE EXECUTION NODE -->
+            &lt;!&ndash; ============ STEPS TO UPDATE THE EXECUTION NODE &ndash;&gt;
             <step>
                 <order_id>50</order_id>
                 <invocation_type>ssh2</invocation_type>
@@ -95,7 +95,7 @@
                     ]]>
                 </command>
             </step>
-            <!-- ============ END-OF STEPS TO UPDATE THE EXECUTION NODE -->
+            &lt;!&ndash; ============ END-OF STEPS TO UPDATE THE EXECUTION NODE &ndash;&gt;
         </install_steps>
 
         <uninstall_steps>
@@ -123,7 +123,7 @@
                 <execution_mode>superuser</execution_mode>
                 <command>
                     <![CDATA[
-                        rpm --import https://mirror.go-repo.io/centos/RPM-GPG-KEY-GO-REPO
+                        rpm &#45;&#45;import https://mirror.go-repo.io/centos/RPM-GPG-KEY-GO-REPO
                     ]]>
                 </command>
             </step>
@@ -330,7 +330,7 @@
                 <ignore_err>true</ignore_err>
                 <command>
                     <![CDATA[
-                        firewall-cmd --zone:public --add-port:4200/tcp
+                        firewall-cmd &#45;&#45;zone=public &#45;&#45;add-port 4200/tcp
                     ]]>
                 </command>
             </step>
@@ -341,7 +341,7 @@
                 <ignore_err>true</ignore_err>
                 <command>
                     <![CDATA[
-                        firewall-cmd --reload
+                        firewall-cmd &#45;&#45;reload
                     ]]>
                 </command>
             </step>
@@ -351,7 +351,7 @@
                 <execution_mode>superuser</execution_mode>
                 <command>
                     <![CDATA[
-                        docker run -d --name shellinabox -p 4200:4200 -e SHELLINABOX_ALLOW_SUDO=1 -e SHELLINABOX_SERVICE_HOST=#node_hostname# -e SHELLINABOX_USER=#node_user# -e SHELLINABOX_DEFAULT=#node_hostname# -e SHELLINABOX_DISABLE_SSL=1 spali/shellinabox
+                        docker run -d &#45;&#45;name shellinabox -p 4200:4200 -e SHELLINABOX_ALLOW_SUDO=1 -e SHELLINABOX_SERVICE_HOST=#node_hostname# -e SHELLINABOX_USER=#node_user# -e SHELLINABOX_DEFAULT=#node_hostname# -e SHELLINABOX_DISABLE_SSL=1 spali/shellinabox
                     ]]>
                 </command>
             </step>
@@ -378,6 +378,6 @@
                 </command>
             </step>
         </uninstall_steps>
-    </tool_install_config>
+    </tool_install_config>-->
 </tool_install_configurations>
 

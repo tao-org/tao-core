@@ -140,7 +140,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     protected final void addInitialActiveNodes() {
         List<NodeDescription> nodes = listNodes();
         for (NodeDescription node : nodes) {
-            if (node.getActive()) {
+            if (node.getActive() != null && node.getActive()) {
                 addNode(node, new RuntimeInfo());
             }
         }
@@ -148,6 +148,10 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
 
     protected List<NodeDescription> listNodes() throws TopologyException {
         return this.nodeProvider.listNodes();
+    }
+
+    public int getActiveNodes() throws TopologyException {
+        return this.nodeProvider.listNodes().size();
     }
 
     /**

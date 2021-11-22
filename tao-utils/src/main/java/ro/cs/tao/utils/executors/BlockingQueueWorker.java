@@ -40,7 +40,7 @@ public class BlockingQueueWorker<E> extends Thread {
         while (!stopped) {
             try {
                 E entry = this.monitoredQueue.take();
-                logger.finest("Dequeued " + entry.toString());
+                logger.finest("Dequeued " + entry);
                 this.executor.submit(() -> {
                     try {
                         this.work.apply(entry);
@@ -56,5 +56,10 @@ public class BlockingQueueWorker<E> extends Thread {
 
     public int count() {
         return this.executor.getActiveCount();
+    }
+
+    public void setParallelism(int value) {
+        this.executor.setCorePoolSize(value);
+        this.executor.setMaximumPoolSize(value);
     }
 }

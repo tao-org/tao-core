@@ -91,7 +91,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             throw new ExecutionException("A ContainerProvider is required to use this executor");
         }
         this.queue = new LinkedBlockingDeque<>();
-        this.queueWorker = new BlockingQueueWorker<>(this.queue, this::executeImpl);
+        this.queueWorker = new BlockingQueueWorker<>(this.queue, this::executeImpl, NodeManager.getInstance().getActiveNodes());
         final Set<TaskListener> services = ServiceRegistryManager.getInstance().getServiceRegistry(TaskListener.class).getServices();
         this.taskListeners = new ArrayList<>();
         if (services != null) {
@@ -368,9 +368,11 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             if (app != null && app.hasParallelFlag()) {
                 Class<?> type = app.parallelArgumentType();
                 if (type.isAssignableFrom(Integer.class)) {
-                    pArgs = app.parallelArguments(Integer.class, Runtime.getRuntime().availableProcessors() / 2);
+                    pArgs = app.parallelArguments(Integer.class,
+                                                  masterHost.equals(node.getId()) ? Runtime.getRuntime().availableProcessors() / 2 : cpu);
                 } else if (type.isAssignableFrom(Long.class)) {
-                    pArgs = app.parallelArguments(Integer.class, Runtime.getRuntime().availableProcessors() / 2);
+                    pArgs = app.parallelArguments(Integer.class,
+                                                  masterHost.equals(node.getId()) ? Runtime.getRuntime().availableProcessors() / 2 : cpu);
                 } else {
                     pArgs = app.parallelArguments(Boolean.class, true);
                 }

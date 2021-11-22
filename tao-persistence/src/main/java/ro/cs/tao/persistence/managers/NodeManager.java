@@ -51,7 +51,7 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
     public List<NodeDescription> list(boolean active) {
         return list(ro.cs.tao.Sort.by(identifier(), SortDirection.ASC))
                 .stream()
-                .filter(n -> n.getActive() == active)
+                .filter(n -> n.getActive() != null && n.getActive() == active)
                 .collect(Collectors.toList());
     }
 
