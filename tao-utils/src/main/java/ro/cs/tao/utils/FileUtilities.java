@@ -334,20 +334,18 @@ public class FileUtilities {
         if (SystemUtils.IS_OS_UNIX) {
             return path.toString();
         } else {
-            final boolean isDirectory = Files.isDirectory(path);
             String strPath;
-            final String stringValue = path.toAbsolutePath().toString();
-            if (path.isAbsolute()) {
-                strPath = (stringValue.startsWith("/") ? "" : '/') +
-                        StringUtils.replaceEach(stringValue, WIN_TO_UNIX_TOKENS, WIN_TO_UNIX_REPLACEMENTS) +
-                        (isDirectory ? "/" : "");
+            if (path.isAbsolute() || path.startsWith("\\")) {
+                final URI uri = path.toAbsolutePath().toUri();
+                final String stringValue = uri.getRawPath();
+                strPath = StringUtils.replaceEach(stringValue, WIN_TO_UNIX_TOKENS, WIN_TO_UNIX_REPLACEMENTS);
                 if (insideDocker && strPath.charAt(2) == '/') {
                     strPath = strPath.substring(2);
                 }
             } else {
                 strPath = "/" +
                         StringUtils.replaceEach(path.toString(), WIN_TO_UNIX_TOKENS, WIN_TO_UNIX_REPLACEMENTS) +
-                        (isDirectory ? "/" : "");
+                        (Files.isDirectory(path) ? "/" : "");
             }
             return strPath;
         }

@@ -40,13 +40,13 @@ public abstract class Executor<T> implements Runnable {
     private static final String SHELL_COMMAND_SEPARATOR_BAR = "||";
     private static final NamedThreadPoolExecutor executorService;
     private static final Logger staticLogger;
-    private static final AtomicLong requestedMemory;
+    private static final Map<String, AtomicLong> requestedMemory;
     private static final Map<Executor<?>, Long> memoryRequirements;
 
     static {
         executorService = new NamedThreadPoolExecutor("process-exec", Runtime.getRuntime().availableProcessors());
         staticLogger = Logger.getLogger(Executor.class.getName());
-        requestedMemory = new AtomicLong(0L);
+        requestedMemory = Collections.synchronizedMap(new HashMap<>());
         memoryRequirements = Collections.synchronizedMap(new HashMap<>());
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
@@ -344,11 +344,11 @@ public abstract class Executor<T> implements Runnable {
                 RuntimeInfo runtimeInfo = RuntimeInfo.createInspector(executionUnit.getHost(), authenticationType,
                                                                       executionUnit.getUser(), executionUnit.getPassword());
                 final long availMem = runtimeInfo.getAvailableMemoryMB();
-                final long requested = requestedMemory.get();
+                final long requested = requestedMemory.computeIfAbsent(executionUnit.getHost(), h -> new AtomicLong(0L)).get();
                 retVal = (availMem - requested) >= minMemory;
                 Logger.getLogger(Executor.class.getName())
-                        .fine(String.format("Job %s requires %dMB of RAM, system has %dMB available (of which %dMB requested by other jobs)",
-                                            executionUnit.hashCode(), minMemory, availMem, requested));
+                        .fine(String.format("Job %s requires %dMB of RAM, %s has %dMB available (of which %dMB requested by other jobs)",
+                                            executionUnit.hashCode(), minMemory, executionUnit.getHost(), availMem, requested));
             } catch (Exception e) {
                 Logger.getLogger(Executor.class.getName()).warning(e.getMessage());
                 retVal = true;
@@ -434,7 +434,7 @@ public abstract class Executor<T> implements Runnable {
     public void run() {
         try {
             isStopped = isSuspended = false;
-            requestedMemory.getAndAdd(memoryRequirements.get(this));
+            requestedMemory.get(this.host).getAndAdd(memoryRequirements.get(this));
             retCode = execute(true);
         } catch (Exception e) {
             retCode = -255;
@@ -443,7 +443,7 @@ public abstract class Executor<T> implements Runnable {
             if (this.counter != null) {
                 counter.countDown();
             }
-            requestedMemory.getAndAdd(-memoryRequirements.remove(this));
+            requestedMemory.get(this.host).getAndAdd(-memoryRequirements.remove(this));
             isStopped = true;
         }
     }
