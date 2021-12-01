@@ -305,7 +305,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
 
     private JobTemplate createJobTemplate(ProcessingExecutionTask task) throws DrmaaException, IOException {
         // Get from the component the execution command
-        JobTemplate jt = null;
+        JobTemplate jt;
         try {
             logger.entering(getClass().getSimpleName(), "createJobTemplate(" + task.getId() + ")");
             String[] pArgs = null;
@@ -345,9 +345,11 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                     nodeData = getAvailableNode(component.getParallelism(), memory);
                 }
             }
-            NodeDescription node = nodeData.getNode();
+            final NodeDescription node = nodeData.getNode();
             if (node == null) {
                 throw new TryLaterException("Cannot obtain an available node [null]");
+            } else {
+                logger.info("Task " + task.getId() + " will be submitted to host " + node.getId());
             }
             setHost(jt, node.getId());
             task.setExecutionNodeHostName(node.getId());
@@ -423,7 +425,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                 }
             }
             List<String> argsList = new ArrayList<>();
-            final String cmd;
+            String cmd;
 
             // split the execution command but preserving the entities between double quotes
             final Matcher m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(executionCmd);
@@ -433,6 +435,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             final boolean isUtilityTask = task.getComponent().getComponentType() == ProcessingComponentType.UTILITY;
             final boolean useDocker = ExecutionConfiguration.useDocker() || task instanceof ScriptTask;
             ContainerUnit unit = null;
+            final boolean isLocal = task.getExecutionNodeHostName().equals(masterHost);
             if (useDocker && !isUtilityTask) {
                 if (jt instanceof JobTemplateExtension) {
                     cmd = argsList.get(0);
@@ -444,13 +447,14 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                     unit = new ContainerUnit(ContainerType.DOCKER);
                     unit.setArguments(new ArrayList<String>() {{
                         add("-i");
+                        add("--sig-proxy=true");
                         add("--rm");
                         add("--volume-driver");
                         add("cifs");
                     }});
                     unit.setEnvironmentVariables(dbSources);
                     final DockerVolumeMap volumeMount;
-                    if (task.getExecutionNodeHostName().equals(masterHost)) {
+                    if (isLocal) {
                         volumeMount = ExecutionConfiguration.getMasterContainerVolumeMap();
                     } else {
                         volumeMount = ExecutionConfiguration.getWorkerContainerVolumeMap();
@@ -470,10 +474,15 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                         task.setUsedRAM((int) mem);
                     }
                     template.setAttribute(DrmaaJobExtensions.CONTAINER_ATTRIBUTE, unit);
+                    if (task.getInstanceTemporaryOutput() != null) {
+                        // replace the original command with /bin/bash since we're going to execute
+                        // multiple commands inside docker run
+                        cmd = wrapShellInvocation(argsList, cmd, task.getInstanceTemporaryOutput(), task.getInstanceTargetOutput());
+                    }
                 } else {
                     cmd = "docker";
                     final DockerVolumeMap volumeMap;
-                    if (task.getExecutionNodeHostName().equals(masterHost)) {
+                    if (isLocal) {
                         volumeMap = ExecutionConfiguration.getMasterContainerVolumeMap();
                     } else {
                         volumeMap = ExecutionConfiguration.getWorkerContainerVolumeMap();
@@ -481,10 +490,10 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                     final List<String> dockerArgsList = new ArrayList<String>() {{
                         add("run");
                         add("-i");              // Keep STDIN open even if not attached
-                        //add("-t");            // Allocate a pseudo-TTY
                         add("--rm");            // Automatically remove the container when it exits
-                        add("--volume-driver"); // Automatically remove the container when it exits
-                        add("cifs");            // Automatically remove the container when it exits
+                        add("--sig-proxy=true");// Proxy all received signals to the process
+                        add("--volume-driver");
+                        add("cifs");
                         add("-v");
                         add(volumeMap.getHostWorkspaceFolder() + ":" + volumeMap.getContainerWorkspaceFolder());
                         add("-v");
@@ -529,6 +538,23 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             throw t;
         }
         return jt;
+    }
+
+    private String wrapShellInvocation(final List<String> argsList, String initialCmd, final String tempOutput, final String finalOutput) {
+        argsList.add(0, initialCmd);
+        argsList.add("&&");
+        argsList.add("cp");
+        argsList.add(tempOutput);
+        argsList.add(finalOutput);
+        argsList.add("&&");
+        argsList.add("rm");
+        argsList.add(tempOutput);
+        // all the existing args are merged into a single string as argument to -c
+        final String singleArg = "\"" + String.join(" ", argsList) + "\"";
+        argsList.clear();
+        argsList.add("-c");
+        argsList.add(singleArg);
+        return "/bin/bash";
     }
 
     private void setMemoryConstraint(JobTemplate jt, long memory) throws DrmaaException {

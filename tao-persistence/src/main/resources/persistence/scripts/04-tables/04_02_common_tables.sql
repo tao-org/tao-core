@@ -41,7 +41,7 @@ CREATE TABLE common.notification
 	data character varying NOT NULL,
 	discriminator integer NOT NULL
 );
-ALTER TABLE common.notification ADD CONSTRAINT PK_notification PRIMARY KEY (timestamp, username);
+ALTER TABLE common.notification ADD CONSTRAINT PK_notification PRIMARY KEY (id);
 DROP SEQUENCE IF EXISTS common.notification_id_seq CASCADE;
 CREATE SEQUENCE common.notification_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
 ALTER TABLE common.notification ALTER COLUMN id SET DEFAULT nextval('common.notification_id_seq');

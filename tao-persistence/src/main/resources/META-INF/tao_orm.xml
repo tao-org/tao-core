@@ -713,6 +713,12 @@
             <basic name="usedRAM">
                 <column name="used_ram" nullable="true" column-definition="integer NULL"/>
             </basic>
+            <basic name="instanceTemporaryOutput">
+                <column name="temp_target" nullable="true" column-definition="character varying(512) NULL"/>
+            </basic>
+            <basic name="instanceTargetOutput">
+                <column name="actual_target" nullable="true" column-definition="character varying(512) NULL"/>
+            </basic>
             <basic name="level">
                 <column name="execution_level" nullable="false" column-definition="integer NOT NULL"/>
             </basic>

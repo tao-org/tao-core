@@ -565,12 +565,18 @@ public class Orchestrator extends Notifiable {
             }
             if (variable != null) {
                 String targetOutput = variable.getValue();
-                pcTask.setOutputParameterValue(t.getName(), targetOutput);
-                logger.finest(String.format("Output [%s] of task [id=%d] was set to '%s'",
-                                            t.getName(), pcTask.getId(), targetOutput));
+                /*pcTask.setOutputParameterValue(t.getName(),
+                                               pcTask.getInstanceTemporaryOutput() != null && pcTask.getInstanceTemporaryOutput().equals(targetOutput) ?
+                                                       pcTask.getInstanceTargetOuptut(null) : targetOutput);*/
+                final String instanceTargetOuptut = pcTask.getInstanceTargetOutput();
                 if (targetOutput == null) {
                     logger.severe(String.format("NULL TARGET [task %s, parameter %s]", pcTask.getId(), t.getName()));
+                } else if (!targetOutput.equals(instanceTargetOuptut)) {
+                    logger.severe(String.format("Value %s different than expected [%s]", targetOutput, instanceTargetOuptut));
                 }
+                pcTask.setOutputParameterValue(t.getName(), instanceTargetOuptut);
+                logger.finest(String.format("Output [%s] of task [id=%d] was set to '%s'",
+                                            t.getName(), pcTask.getId(), targetOutput));
                 if (keepOutput) {
                     persistOutputProducts(pcTask);
                 }
