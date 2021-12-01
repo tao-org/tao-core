@@ -347,7 +347,7 @@ public abstract class Executor<T> implements Runnable {
                 final long requested = requestedMemory.computeIfAbsent(executionUnit.getHost(), h -> new AtomicLong(0L)).get();
                 retVal = (availMem - requested) >= minMemory;
                 Logger.getLogger(Executor.class.getName())
-                        .fine(String.format("Job %s requires %dMB of RAM, %s has %dMB available (of which %dMB requested by other jobs)",
+                        .finest(String.format("Job %s requires %dMB of RAM, %s has %dMB available (of which %dMB requested by other jobs)",
                                             executionUnit.hashCode(), minMemory, executionUnit.getHost(), availMem, requested));
             } catch (Exception e) {
                 Logger.getLogger(Executor.class.getName()).warning(e.getMessage());
@@ -434,7 +434,8 @@ public abstract class Executor<T> implements Runnable {
     public void run() {
         try {
             isStopped = isSuspended = false;
-            requestedMemory.get(this.host).getAndAdd(memoryRequirements.get(this));
+            requestedMemory.computeIfAbsent(this.host, h -> new AtomicLong(0L))
+                           .getAndAdd(memoryRequirements.computeIfAbsent(this, k -> 0L));
             retCode = execute(true);
         } catch (Exception e) {
             retCode = -255;

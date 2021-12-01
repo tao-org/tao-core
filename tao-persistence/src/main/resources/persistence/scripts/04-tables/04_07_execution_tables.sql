@@ -70,6 +70,8 @@ CREATE TABLE execution.task
 	used_CPU integer NULL,
     used_RAM integer NULL,
     used_HDD integer NULL,
+    temp_target varchar(512) NULL,
+    actual_target varchar(512) NULL,
     -- special column used by JPA to distinguish which type of object is stored in one row (since this table holds 2 types of entities)
     discriminator integer NOT NULL
 );

@@ -40,8 +40,6 @@ public class ProcessingExecutionTask extends ExecutionTask {
 
     private ProcessingComponent component;
 
-    private String instanceTargetOutput;
-
     @XmlTransient
     protected Set<String> externalCommonParameters;
 
@@ -186,9 +184,10 @@ public class ProcessingExecutionTask extends ExecutionTask {
             if (variable != null) {
                 String location = variable.getValue() != null ? variable.getValue() : descriptor.getDataDescriptor().getLocation();
                 if (location != null && !this.getJob().isExternal()) {
-                    this.instanceTargetOutput = getInstanceTargetOuptut(location);
-                    inputParams.put(descriptor.getName(), this.instanceTargetOutput);
-                    setInputParameterValue(descriptor.getName(), this.instanceTargetOutput);
+                    this.instanceTargetOutput = computeTargetOutput(location);
+                    final String output = getInstanceTemporaryOutput() != null ? getInstanceTemporaryOutput() : this.instanceTargetOutput;
+                    inputParams.put(descriptor.getName(), output);
+                    setInputParameterValue(descriptor.getName(), output);
                 }
             }
         }
@@ -211,16 +210,18 @@ public class ProcessingExecutionTask extends ExecutionTask {
      * it may represent a name expression that will be externally parsed.
      * @param location  The template value of the target of this task.
      */
-    public String getInstanceTargetOuptut(String location) {
+    private String computeTargetOutput(String location) {
         if (this.instanceTargetOutput == null) {
-            this.instanceTargetOutput = location;
+            if (location != null) {
+                this.instanceTargetOutput = location;
+            }
             if (this.instanceTargetOutput != null) {
                 Path path = Paths.get(this.instanceTargetOutput);
                 SessionContext context = getContext();
                 if (!path.isAbsolute()) {
                     //path = context.getNetSpace().resolve(path);
                     path = Paths.get(ExecutionConfiguration.getWorkerContainerVolumeMap().getContainerWorkspaceFolder())
-                            .resolve(context.getPrincipal().getName()).resolve(path);
+                                .resolve(context.getPrincipal().getName()).resolve(path);
                 }
                 final String fileName;
                 if (this.component.getTargets().stream().anyMatch(t -> t.getDataDescriptor().getLocation() != null &&
@@ -243,7 +244,8 @@ public class ProcessingExecutionTask extends ExecutionTask {
                 } catch (IOException e) {
                     Logger.getLogger(ProcessingExecutionTask.class.getName()).severe(e.getMessage());
                 }
-                this.instanceTargetOutput = FileUtilities.asUnixPath(path.getParent().resolve(folderName).resolve(fileName), true);
+                setInstanceTargetOutput(FileUtilities.asUnixPath(path.getParent().resolve(folderName).resolve(fileName), true));
+                setInstanceTemporaryOutput(ExecutionConfiguration.getWorkerContainerVolumeMap().getContainerTemporaryFolder() + "/" + fileName);
             }
         }
         return this.instanceTargetOutput;

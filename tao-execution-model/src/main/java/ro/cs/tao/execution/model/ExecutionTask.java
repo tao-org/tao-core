@@ -53,6 +53,8 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
     private int instanceId;
     private Integer usedCPU;
     private Integer usedRAM;
+    protected String instanceTemporaryOutput;
+    protected String instanceTargetOutput;
     protected String internalState;
     List<Variable> inputParameterValues = new ArrayList<>();
     List<Variable> outputParameterValues = new ArrayList<>();
@@ -204,6 +206,22 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
         return usedRAM;
     }
     public void setUsedRAM(Integer usedRAM) { this.usedRAM = usedRAM; }
+
+    public String getInstanceTemporaryOutput() {
+        return instanceTemporaryOutput;
+    }
+
+    public void setInstanceTemporaryOutput(String instanceTemporaryOutput) {
+        this.instanceTemporaryOutput = instanceTemporaryOutput;
+    }
+
+    public String getInstanceTargetOutput() {
+        return instanceTargetOutput;
+    }
+
+    public void setInstanceTargetOutput(String instanceTargetOutput) {
+        this.instanceTargetOutput = instanceTargetOutput;
+    }
 
     public abstract String buildExecutionCommand();
 
