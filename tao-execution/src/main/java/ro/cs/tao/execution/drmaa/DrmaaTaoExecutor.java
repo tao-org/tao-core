@@ -371,10 +371,10 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                 Class<?> type = app.parallelArgumentType();
                 if (type.isAssignableFrom(Integer.class)) {
                     pArgs = app.parallelArguments(Integer.class,
-                                                  masterHost.equals(node.getId()) ? Runtime.getRuntime().availableProcessors() / 2 : cpu);
+                                                  masterHost.equals(node.getId()) ? Runtime.getRuntime().availableProcessors() / 2 + 2 : cpu);
                 } else if (type.isAssignableFrom(Long.class)) {
                     pArgs = app.parallelArguments(Integer.class,
-                                                  masterHost.equals(node.getId()) ? Runtime.getRuntime().availableProcessors() / 2 : cpu);
+                                                  masterHost.equals(node.getId()) ? Runtime.getRuntime().availableProcessors() / 2 + 2 : cpu);
                 } else {
                     pArgs = app.parallelArguments(Boolean.class, true);
                 }

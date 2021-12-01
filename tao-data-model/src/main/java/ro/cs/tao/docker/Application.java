@@ -15,6 +15,8 @@
  */
 package ro.cs.tao.docker;
 
+import org.apache.commons.lang.StringUtils;
+
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -48,7 +50,7 @@ public class Application {
     public void setMemoryRequirements(int memoryRequirements) { this.memoryRequirements = memoryRequirements; }
 
     public boolean hasParallelFlag() {
-        return this.parallelFlagTemplate != null;
+        return StringUtils.isNotEmpty(this.parallelFlagTemplate);
     }
 
     public Class<?> parallelArgumentType() {
