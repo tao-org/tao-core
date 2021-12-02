@@ -27,12 +27,10 @@ import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.WorkflowProvider;
 import ro.cs.tao.persistence.repository.WorkflowDescriptorRepository;
 import ro.cs.tao.utils.StringUtilities;
-import ro.cs.tao.workflow.ParameterValue;
-import ro.cs.tao.workflow.WorkflowDescriptor;
-import ro.cs.tao.workflow.WorkflowNodeDescriptor;
-import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
+import ro.cs.tao.workflow.*;
 import ro.cs.tao.workflow.enums.ComponentType;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -90,6 +88,8 @@ public class WorkflowManager extends EntityManager<WorkflowDescriptor, Long, Wor
                                 }
                             }
                         });
+                workflow.getNodes().sort(Comparator.comparingInt(WorkflowNodeDescriptor::getLevel)
+                                                   .thenComparing(GraphObject::getName));
             }
         } else {
             workflow = get(identifier);
