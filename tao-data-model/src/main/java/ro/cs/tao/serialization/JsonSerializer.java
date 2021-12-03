@@ -38,6 +38,7 @@ class JsonSerializer<T> extends BaseSerializer<T> {
         if (this.formatOutput) {
             mapper.enable(SerializationFeature.INDENT_OUTPUT);
         }
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         mapper.enable(SerializationFeature.WRITE_ENUMS_USING_TO_STRING);
         mapper.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
         return mapper;
