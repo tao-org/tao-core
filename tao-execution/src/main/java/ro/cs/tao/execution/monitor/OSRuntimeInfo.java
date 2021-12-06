@@ -17,10 +17,7 @@
 package ro.cs.tao.execution.monitor;
 
 import org.apache.commons.lang3.SystemUtils;
-import ro.cs.tao.utils.executors.AuthenticationType;
-import ro.cs.tao.utils.executors.Executor;
-import ro.cs.tao.utils.executors.ExecutorType;
-import ro.cs.tao.utils.executors.OutputConsumer;
+import ro.cs.tao.utils.executors.*;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -320,10 +317,11 @@ public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
         @Override
         public R getInfo() throws Exception {
             R runtimeInfo = this.runtimeClass.newInstance();
+            Executor<?> executor = null;
             try {
                 List<String> args = new ArrayList<>();
                 Collections.addAll(args, "uptime && cat /proc/meminfo && df -k --total".split(" "));
-                Executor<?> executor = buildExecutor(args);
+                executor = buildExecutor(args);
                 final Consumer consumer = new Consumer();
                 executor.setOutputConsumer(consumer);
                 final int code = executor.execute(false);
@@ -382,6 +380,10 @@ public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
             } catch (Exception ex) {
                 logger.severe(ex.getMessage());
                 throw new IOException(ex);
+            } finally {
+                if (this.isRemote && executor != null) {
+                    ((SSHExecutor) executor).close();
+                }
             }
             return runtimeInfo;
         }
