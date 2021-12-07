@@ -468,8 +468,10 @@ public class ProcessingComponent extends TaoComponent {
                                                .replace(FileUtilities.asUnixPath(Paths.get(SystemVariable.ROOT.value()), true), "");
                     cmdBuilder.append(relScriptFile).append("\n");
                     for (SourceDescriptor sourceDescriptor : this.sources) {
-                        cmdBuilder.append("-" + sourceDescriptor.getName()).append("\n");
-                        cmdBuilder.append(sourceDescriptor.getDataDescriptor().getLocation()).append("\n");
+                        if (parameterValues.containsKey(sourceDescriptor.getName())) {
+                            cmdBuilder.append("-" + sourceDescriptor.getName()).append("\n");
+                            cmdBuilder.append(parameterValues.get(sourceDescriptor.getName())).append("\n");
+                        }
                     }
                 } catch (IOException e) {
                     Logger.getLogger(ProcessingComponent.class.getName()).severe("Cannot persist aggregated template file");
