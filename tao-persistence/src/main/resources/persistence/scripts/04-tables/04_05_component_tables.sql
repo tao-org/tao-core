@@ -574,3 +574,57 @@ ALTER TABLE component.data_source_configuration ADD CONSTRAINT PK_data_source_co
 	PRIMARY KEY (id);
 ALTER TABLE component.data_source_configuration ADD CONSTRAINT FK_data_source_configuration_data_source_component
     FOREIGN KEY (id) REFERENCES component.data_source_component (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: component.wps_component
+DROP TABLE IF EXISTS component.wps_component CASCADE;
+CREATE TABLE component.wps_component
+(
+	id varchar(512) NOT NULL,
+	label varchar(250) NOT NULL,
+	version varchar(50) NOT NULL,
+	description text NOT NULL,
+	authors varchar(1024) NOT NULL,
+	copyright text NOT NULL,
+	node_affinity varchar(250) NULL,
+    remote_address varchar(1024) NOT NULL,
+	capability  varchar(512) NOT NULL,
+	visibility_id integer NOT NULL,
+	owner_user varchar NULL,
+    active boolean NULL DEFAULT true,
+	tags text NULL,
+	created timestamp NULL DEFAULT now(),
+    modified timestamp NULL
+);
+ALTER TABLE component.wps_component ADD CONSTRAINT PK_wps_component
+	PRIMARY KEY (id);
+
+-------------------------------------------------------------------------------
+-- table: component.wps_component_sources
+DROP TABLE IF EXISTS component.wps_component_sources CASCADE;
+CREATE TABLE component.wps_component_sources
+(
+	wps_component_id varchar(512) NOT NULL,
+	source_descriptor_id varchar(512) NOT NULL
+);
+ALTER TABLE component.wps_component_sources ADD CONSTRAINT PK_wps_component_sources
+	PRIMARY KEY (wps_component_id, source_descriptor_id);
+ALTER TABLE component.wps_component_sources ADD CONSTRAINT FK_wps_component_sources_wps_component
+	FOREIGN KEY (wps_component_id) REFERENCES component.wps_component (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE component.wps_component_sources ADD CONSTRAINT FK_wps_component_source_descriptor
+	FOREIGN KEY (source_descriptor_id) REFERENCES component.source_descriptor (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: component.wps_component_targets
+DROP TABLE IF EXISTS component.wps_component_targets CASCADE;
+CREATE TABLE component.wps_component_targets
+(
+	wps_component_id varchar(512) NOT NULL,
+	target_descriptor_id varchar(512) NOT NULL
+);
+ALTER TABLE component.wps_component_targets ADD CONSTRAINT PK_wps_component_targets
+	PRIMARY KEY (wps_component_id, target_descriptor_id);
+ALTER TABLE component.wps_component_targets ADD CONSTRAINT FK_wps_component_targets_wps_component
+	FOREIGN KEY (wps_component_id) REFERENCES component.wps_component (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE component.dwps_component_targets ADD CONSTRAINT FK_wps_component_targets_target_descriptor
+	FOREIGN KEY (target_descriptor_id) REFERENCES component.target_descriptor (id) ON DELETE No Action ON UPDATE No Action;

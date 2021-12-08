@@ -454,12 +454,14 @@ public class ProcessingComponent extends TaoComponent {
                     final Path scriptPath = SessionStore.currentContext().getWorkspace().resolve("scripts");
                     Files.createDirectories(scriptPath);
                     String scriptFileName = this.template.getName().replace(" ", "_") + "-" + System.currentTimeMillis();
-                    if (this.templateType == TemplateType.VELOCITY) {
+                    final boolean velocityTemplate = this.templateType == TemplateType.VELOCITY;
+                    if (velocityTemplate) {
                         // OTB aggregation
                         scriptFileName += ".py";
                     } else {
                         // SNAP aggregation
                         scriptFileName += ".xml";
+                        transformedTemplate = transformedTemplate.replace("[", "{").replace("]", "}");
                     }
                     final Path scriptFile = scriptPath.resolve(scriptFileName);
                     Files.write(scriptFile, transformedTemplate.getBytes());
@@ -468,8 +470,8 @@ public class ProcessingComponent extends TaoComponent {
                                                .replace(FileUtilities.asUnixPath(Paths.get(SystemVariable.ROOT.value()), true), "");
                     cmdBuilder.append(relScriptFile).append("\n");
                     for (SourceDescriptor sourceDescriptor : this.sources) {
-                        if (parameterValues.containsKey(sourceDescriptor.getName())) {
-                            cmdBuilder.append("-" + sourceDescriptor.getName()).append("\n");
+                        if (parameterValues != null && parameterValues.containsKey(sourceDescriptor.getName())) {
+                            cmdBuilder.append("-").append(sourceDescriptor.getName()).append(velocityTemplate ? "\n" : "=");
                             cmdBuilder.append(parameterValues.get(sourceDescriptor.getName())).append("\n");
                         }
                     }
