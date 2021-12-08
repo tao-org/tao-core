@@ -83,7 +83,7 @@ public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
         this.destination = targetFolder;
         this.props = properties;
         this.progressEnabled = Boolean.parseBoolean(this.props.getProperty(PROGRESS_KEY, "true"));
-        this.progressReportInterval = Long.parseLong(this.props.getProperty(PROGRESS_INTERVAL, "2000"));
+        this.progressReportInterval = Long.parseLong(this.props.getProperty(PROGRESS_INTERVAL, "5000"));
         this.downloadIfNotFound = "download".equalsIgnoreCase(this.props.getProperty(MISSING_ACTION, "none"));
     }
 
@@ -208,7 +208,7 @@ public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
         }
         activityStart(product.getName());
         Path file;
-        this.progressReportInterval = Long.parseLong(this.props.getProperty(PROGRESS_INTERVAL, "2000"));
+        this.progressReportInterval = Long.parseLong(this.props.getProperty(PROGRESS_INTERVAL, "5000"));
         try {
             currentProduct = product;
             currentProductProgress = new ProductProgress(currentProduct.getApproximateSize(), adjustProductLength());
