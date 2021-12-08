@@ -27,9 +27,9 @@ import java.util.logging.Logger;
  * @author Alexandru Pirlea
  */
 public class OptimizedWorkflowBuilder extends WorkflowBuilderBase {
-    private List<Object> cache = new ArrayList<>();
-    private String name;
-    private Logger logger = Logger.getLogger(getClass().getName());
+    private final List<Object> cache = new ArrayList<>();
+    private final String name;
+    private final Logger logger = Logger.getLogger(getClass().getName());
 
     public OptimizedWorkflowBuilder(String name) {
         this.name = "Optimized " + name;
@@ -50,6 +50,11 @@ public class OptimizedWorkflowBuilder extends WorkflowBuilderBase {
         super.addLink(parent, child);
     }
 
+    @Override
+    public void addLink(WorkflowNodeDescriptor parent, String fromParentPort, WorkflowNodeDescriptor child, String toChildPort) throws PersistenceException {
+        super.addLink(parent, fromParentPort, child, toChildPort);
+    }
+
     protected WorkflowDescriptor updateWorkflowDescriptor(WorkflowDescriptor wf) {
         return persistenceManager.workflows().get(wf.getId());
     }
@@ -62,11 +67,11 @@ public class OptimizedWorkflowBuilder extends WorkflowBuilderBase {
      * @return created node
      */
     protected WorkflowNodeDescriptor createOptimizedNode(OptimizationNode node, WorkflowDescriptor workflow) throws PersistenceException {
-        WorkflowNodeDescriptor optimizedNode = null;
+        WorkflowNodeDescriptor optimizedNode;
 
         if (node.getNodeIds().size() == 0) {
             /* error: an optimization node cannot exit without a component */
-
+            throw new IllegalArgumentException("Empty nodes collection");
         } else if (node.getNodeIds().size() == 1) {
             /* one node in list */
             optimizedNode = getNodeClone(node, workflow);
@@ -128,7 +133,7 @@ public class OptimizedWorkflowBuilder extends WorkflowBuilderBase {
             if (oldQuery != null) {
                 Query newQuery = new Query();
 
-                newQuery.setLabel(oldQuery.getLabel() + UUID.randomUUID().toString());
+                newQuery.setLabel(oldQuery.getLabel() + UUID.randomUUID());
 
                 newQuery.setUserId(oldQuery.getUserId());
                 newQuery.setSensor(oldQuery.getSensor());
