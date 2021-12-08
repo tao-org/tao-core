@@ -475,6 +475,12 @@ public class ProcessingComponent extends TaoComponent {
                             cmdBuilder.append(parameterValues.get(sourceDescriptor.getName())).append("\n");
                         }
                     }
+                    for (TargetDescriptor targetDescriptor : this.targets) {
+                        if (parameterValues != null && parameterValues.containsKey(targetDescriptor.getName())) {
+                            cmdBuilder.append("-").append(targetDescriptor.getName()).append("\n");
+                            cmdBuilder.append(parameterValues.get(targetDescriptor.getName())).append("\n");
+                        }
+                    }
                 } catch (IOException e) {
                     Logger.getLogger(ProcessingComponent.class.getName()).severe("Cannot persist aggregated template file");
                     throw new TemplateException(e);
