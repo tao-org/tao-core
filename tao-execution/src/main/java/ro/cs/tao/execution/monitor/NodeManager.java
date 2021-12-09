@@ -420,7 +420,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     }
 
     protected RuntimeInfo readNodeRuntimeInfo(NodeDescription node) throws Exception {
-        OSRuntimeInfo osRuntimeInfo = OSRuntimeInfo.createInspector(node.getId(), node.getUserName(), node.getUserPass(), RuntimeInfo.class);
+        OSRuntimeInfo<RuntimeInfo> osRuntimeInfo = OSRuntimeInfo.createInspector(node.getId(), node.getUserName(), node.getUserPass(), RuntimeInfo.class);
         return osRuntimeInfo.getInfo();
     }
 
