@@ -38,6 +38,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     private static final NamedThreadPoolExecutor executor;
     private static final int DEFAULT_NODE_WAIT_TIME = 10000;
     private static final int DEFAULT_KEEP_ALIVE_SECONDS = 1800;
+    private static final int POLLING_NODE_WITHOUT_TASKS_SECONDS = 5 * 60;
     private static final boolean isDevMode;
     private int nodeLimit;
     private NodeProvider nodeProvider;
@@ -492,10 +493,11 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                                 nodeRuntimeWrapper = nodes.get(h);
                             }
                             if (nodeRuntimeWrapper != null) {
+                                final List<ExecutionTask> tasks = taskProvider.listByHost(h);
+                                boolean isNodeWithoutTasks = (tasks == null || tasks.size() == 0);
                                 final LocalDateTime time = keepAliveMap.get(h);
                                 if (time != null && time.compareTo(LocalDateTime.now()) >= 0) {
-                                    final List<ExecutionTask> tasks = taskProvider.listByHost(h);
-                                    if (tasks == null || tasks.size() == 0) {
+                                    if (isNodeWithoutTasks) {
                                         uninstallNode(nodeRuntimeWrapper.getNode());
                                         return;
                                     } else {
@@ -503,17 +505,30 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                                     }
                                 }
 
-                                RuntimeInfo runtimeInfo = null;
-                                try {
-                                    runtimeInfo = readNodeRuntimeInfo(nodeRuntimeWrapper.getNode());
-                                } catch (Exception exception) {
-                                    logger.log(Level.SEVERE, "Cannot read node information '" + h + "': " + ExceptionUtils.getExceptionLoggingMessage(exception, 1));
+                                boolean canReadNodeInfo = true;
+                                if (isNodeWithoutTasks) {
+                                    if (nodeRuntimeWrapper.getLastUpdatedTimeMilliseconds() > 0) {
+                                        // the node has been updated at least one time
+                                        long elapsedTimeInSeconds = (System.currentTimeMillis() - nodeRuntimeWrapper.getLastUpdatedTimeMilliseconds()) / 1000;
+                                        if (elapsedTimeInSeconds < POLLING_NODE_WITHOUT_TASKS_SECONDS) {
+                                            canReadNodeInfo = false;
+                                        }
+                                    }
                                 }
-                                if (runtimeInfo == null) {
-                                    NodeFlavor flavor = nodeRuntimeWrapper.getNode().getFlavor();
-                                    runtimeInfo = buildDefaultRuntimeInfo(flavor.getDisk(), flavor.getMemory(), flavor.getCpu());
+                                if (canReadNodeInfo) {
+                                    RuntimeInfo runtimeInfo = null;
+                                    try {
+                                        runtimeInfo = readNodeRuntimeInfo(nodeRuntimeWrapper.getNode());
+                                    } catch (Exception exception) {
+                                        logger.log(Level.SEVERE, "Cannot read node information '" + h + "': " + ExceptionUtils.getExceptionLoggingMessage(exception, 1));
+                                    }
+                                    if (runtimeInfo == null) {
+                                        NodeFlavor flavor = nodeRuntimeWrapper.getNode().getFlavor();
+                                        runtimeInfo = buildDefaultRuntimeInfo(flavor.getDisk(), flavor.getMemory(), flavor.getCpu());
+                                    }
+                                    nodeRuntimeWrapper.setRuntimeInfo(runtimeInfo);
+                                    nodeRuntimeWrapper.setLastUpdatedTimeMilliseconds(System.currentTimeMillis());
                                 }
-                                nodeRuntimeWrapper.setRuntimeInfo(runtimeInfo);
                             }
                         } catch (Exception exception) {
                             logger.log(Level.SEVERE, "Cannot update node information '" + h + "': " + ExceptionUtils.getExceptionLoggingMessage(exception, 1));
@@ -583,11 +598,21 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     private static class NodeRuntimeWrapper {
 
         private RuntimeInfo runtimeInfo;
-        private NodeDescription node;
+        private final NodeDescription node;
+        private long lastUpdatedTimeMilliseconds;
 
         public NodeRuntimeWrapper(NodeDescription node, RuntimeInfo runtimeInfo) {
             this.node = node;
             this.runtimeInfo = runtimeInfo;
+            this.lastUpdatedTimeMilliseconds = 0L;
+        }
+
+        public long getLastUpdatedTimeMilliseconds() {
+            return lastUpdatedTimeMilliseconds;
+        }
+
+        public void setLastUpdatedTimeMilliseconds(long lastUpdatedTimeMilliseconds) {
+            this.lastUpdatedTimeMilliseconds = lastUpdatedTimeMilliseconds;
         }
 
         public RuntimeInfo getRuntimeInfo() {
@@ -600,10 +625,6 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
 
         public NodeDescription getNode() {
             return node;
-        }
-
-        public void setNode(NodeDescription node) {
-            this.node = node;
         }
     }
 }
