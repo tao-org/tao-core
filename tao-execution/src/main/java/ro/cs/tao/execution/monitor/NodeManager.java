@@ -509,8 +509,11 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                                 if (isNodeWithoutTasks) {
                                     if (nodeRuntimeWrapper.getLastUpdatedTimeMilliseconds() > 0) {
                                         // the node has been updated at least one time
+                                        ConfigurationProvider cfgManager = ConfigurationManager.getInstance();
+                                        String value = cfgManager.getValue("topology.node.without.tasks.polling.interval");
+                                        int pollingInterval = (value == null) ? POLLING_NODE_WITHOUT_TASKS_SECONDS : Integer.parseInt(value);
                                         long elapsedTimeInSeconds = (System.currentTimeMillis() - nodeRuntimeWrapper.getLastUpdatedTimeMilliseconds()) / 1000;
-                                        if (elapsedTimeInSeconds < POLLING_NODE_WITHOUT_TASKS_SECONDS) {
+                                        if (elapsedTimeInSeconds < pollingInterval) {
                                             canReadNodeInfo = false;
                                         }
                                     }
