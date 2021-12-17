@@ -24,6 +24,7 @@ import java.util.Map;
  * @author Cosmin Cara
  */
 public class DataSourceDescriptor {
+    private String mission;
     private String sensor;
     private String dataSourceName;
     private String category;
@@ -37,9 +38,10 @@ public class DataSourceDescriptor {
     public DataSourceDescriptor() {
     }
 
-    public DataSourceDescriptor(String sensor, String dataSourceName, String category, String description,
+    public DataSourceDescriptor(String mission, String sensor, String dataSourceName, String category, String description,
 								String temporalCoverage, String spatialCoverage,
 								Map<String, DataSourceParameter> parameters) {
+        this.mission = mission;
         this.sensor = sensor;
         this.dataSourceName = dataSourceName;
         this.parameters = parameters;
@@ -54,6 +56,14 @@ public class DataSourceDescriptor {
                 parameters.get(iterator.next()).setOrder(order++);
             }
         }
+    }
+
+    public String getMission() {
+        return mission;
+    }
+
+    public void setMission(String mission) {
+        this.mission = mission;
     }
 
     public String getSensor() {
