@@ -626,5 +626,5 @@ ALTER TABLE component.wps_component_targets ADD CONSTRAINT PK_wps_component_targ
 	PRIMARY KEY (wps_component_id, target_descriptor_id);
 ALTER TABLE component.wps_component_targets ADD CONSTRAINT FK_wps_component_targets_wps_component
 	FOREIGN KEY (wps_component_id) REFERENCES component.wps_component (id) ON DELETE No Action ON UPDATE No Action;
-ALTER TABLE component.dwps_component_targets ADD CONSTRAINT FK_wps_component_targets_target_descriptor
+ALTER TABLE component.wps_component_targets ADD CONSTRAINT FK_wps_component_targets_target_descriptor
 	FOREIGN KEY (target_descriptor_id) REFERENCES component.target_descriptor (id) ON DELETE No Action ON UPDATE No Action;

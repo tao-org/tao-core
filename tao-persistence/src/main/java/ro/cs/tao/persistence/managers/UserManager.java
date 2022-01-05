@@ -124,6 +124,7 @@ public class UserManager extends EntityManager<User, Long, UserRepository> imple
         else {
             user.setStatus(UserStatus.PENDING);
         }
+        user.setPassword(newUserInfo.getPassword());
 
         // save the new user and return it
         return repository.save(user);

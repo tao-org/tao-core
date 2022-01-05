@@ -38,7 +38,7 @@ public class JsonMapper {
 
     static {
         instance = new ObjectMapper()
-                .findAndRegisterModules()
+                //.findAndRegisterModules()
                 .configure(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_AS_NULL, true)
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
                 .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
