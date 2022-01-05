@@ -1,5 +1,7 @@
 package ro.cs.tao.security;
 
+import ro.cs.tao.EnumUtils;
+import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.persistence.UserProvider;
 import ro.cs.tao.user.User;
 import ro.cs.tao.utils.Crypto;
@@ -30,11 +32,17 @@ public abstract class TaoLoginModule implements LoginModule {
     protected String username;
     protected String password;
     protected final Logger logger;
+    protected final AuthenticationMode configuredAuthMode;
 
-    public static void setUserProvider(UserProvider provider) {  userProvider = provider; }
+    public static void setUserProvider(UserProvider provider) { userProvider = provider; }
 
     public TaoLoginModule() {
         logger = Logger.getLogger(getClass().getName());
+        this.configuredAuthMode =
+                EnumUtils.getEnumConstantByName(AuthenticationMode.class,
+                                                ConfigurationManager.getInstance()
+                                                                    .getValue("authentication.mode", "any")
+                                                                    .toUpperCase());
     }
 
     @Override
@@ -48,6 +56,8 @@ public abstract class TaoLoginModule implements LoginModule {
 
     @Override
     public boolean login() throws LoginException {
+        if ((this.configuredAuthMode.value() & intendedFor().value()) == 0)
+            return false;
         if (callbackHandler == null) {
             throw new LoginException("CallbackHandler null!");
         }
@@ -147,6 +157,8 @@ public abstract class TaoLoginModule implements LoginModule {
         }
         return true;
     }
+
+    protected abstract AuthenticationMode intendedFor();
 
     protected abstract boolean shouldEncryptPassword();
 
