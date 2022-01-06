@@ -41,7 +41,7 @@ public abstract class TaoLoginModule implements LoginModule {
         this.configuredAuthMode =
                 EnumUtils.getEnumConstantByName(AuthenticationMode.class,
                                                 ConfigurationManager.getInstance()
-                                                                    .getValue("authentication.mode", "any")
+                                                                    .getValue("authentication.mode", "local")
                                                                     .toUpperCase());
     }
 
@@ -56,8 +56,9 @@ public abstract class TaoLoginModule implements LoginModule {
 
     @Override
     public boolean login() throws LoginException {
-        if ((this.configuredAuthMode.value() & intendedFor().value()) == 0)
+        if (!this.configuredAuthMode.equals(intendedFor())) {
             return false;
+        }
         if (callbackHandler == null) {
             throw new LoginException("CallbackHandler null!");
         }
