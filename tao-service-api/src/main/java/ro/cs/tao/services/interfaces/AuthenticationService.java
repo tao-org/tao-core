@@ -30,7 +30,7 @@ public interface AuthenticationService extends TAOService {
      * @param credentials      User credentials
      * @return              authentication result
      */
-    AuthInfo login(String credentials);
+    AuthInfo login(String user, String password);
 
     /**
      * Logout user
