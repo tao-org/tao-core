@@ -3,6 +3,7 @@ package ro.cs.tao.security;
 import java.util.UUID;
 
 public interface TokenProvider {
-    default String newToken(String user, String password) { return UUID.randomUUID().toString(); }
-    default boolean validateToken(String token) { return true; }
+    default Token newToken(String user, String password) { return new Token(UUID.randomUUID().toString(), null, 1800); }
+    default Token newToken(String refreshToken) { return new Token(UUID.randomUUID().toString(), null, 1800); }
+    default boolean validate(String token) { return true; }
 }
