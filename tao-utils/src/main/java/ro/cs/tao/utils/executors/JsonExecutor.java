@@ -35,10 +35,10 @@ public class JsonExecutor extends Executor<Object> {
                 try {
                     final Path path = Paths.get(unit.getJsonPath());
                     if (!Files.exists(path)) {
-                        Files.write(path, ("{" + json + "}").getBytes(), StandardOpenOption.CREATE);
+                        Files.write(path, ("[" + json + "]").getBytes(), StandardOpenOption.CREATE);
                     } else {
                         String previous = new String(Files.readAllBytes(path));
-                        Files.write(path, (previous.substring(0, previous.length() - 1) + "," + json + "}").getBytes(), StandardOpenOption.TRUNCATE_EXISTING);
+                        Files.write(path, (previous.substring(0, previous.length() - 1) + "," + json + "]").getBytes(), StandardOpenOption.TRUNCATE_EXISTING);
                     }
                 } catch (IOException e) {
                     logger.severe(ExceptionUtils.getStackTrace(logger, e));
