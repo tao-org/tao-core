@@ -226,8 +226,7 @@ public class DefaultSession implements Session {
                 unit.addMetadata("name", template.getAttribute(DrmaaJobExtensions.TASK_NAME));
                 unit.addMetadata("dependsOn", template.getAttribute(DrmaaJobExtensions.TASK_ANCESTOR_ID));
                 unit.addMetadata("canDelete", template.getAttribute(DrmaaJobExtensions.TASK_OUTPUT));
-                unit.addMetadata("jsonPath", Paths.get(SystemVariable.USER_FILES.value(), template.getAttribute(DrmaaJobExtensions.JOB_ID).toString() + ".json"));
-
+                unit.addMetadata("jsonPath", Paths.get(SystemVariable.USER_FILES.value(), template.getAttribute(DrmaaJobExtensions.JOB_ID).toString() + ".json").toString());
             } else if (ExecutionConfiguration.developmentModeEnabled()) {
                 unit = new ExecutionUnit(ExecutorType.MOCK, node != null ? node.getId() : this.localHost,
                                          node != null ? node.getUserName() : null,
