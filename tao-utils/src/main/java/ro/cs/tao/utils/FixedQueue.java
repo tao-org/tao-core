@@ -21,16 +21,12 @@ public class FixedQueue<T> {
      * @param value The element to add
      */
     public T enqueue(T value) {
-        T head = null;
+        T head;
         if (elements.length == 1) {
             head = elements[0];
         } else {
-            for (int i = elements.length - 1; i > 0; i--) {
-                if (i == elements.length - 1) {
-                    head = elements[i];
-                }
-                elements[i] = elements[i - 1];
-            }
+            head = elements[elements.length - 1];
+            System.arraycopy(elements, 0, elements, 1, elements.length - 1);
         }
         elements[0] = value;
         return head;

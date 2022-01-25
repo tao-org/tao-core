@@ -17,6 +17,7 @@ public class WPSComponent extends TaoComponent {
     private ProcessingComponentVisibility visibility;
     private boolean active;
     private String owner;
+    private WPSAuthentication authentication;
 
     public WPSComponent() { }
 
@@ -69,6 +70,14 @@ public class WPSComponent extends TaoComponent {
 
     public void setOwner(String owner) {
         this.owner = owner;
+    }
+
+    public WPSAuthentication getAuthentication() {
+        return authentication;
+    }
+
+    public void setAuthentication(WPSAuthentication authentication) {
+        this.authentication = authentication;
     }
 
     /**
