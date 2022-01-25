@@ -423,7 +423,7 @@
         </association-override>
 
         <convert converter="ro.cs.tao.persistence.convert.ProcessingComponentVisibilityConverter" attribute-name="visibility" />
-
+        <convert converter="ro.cs.tao.persistence.convert.AuthenticationTypeConverter" attribute-name="authentication" />
         <attributes>
             <basic name="remoteAddress">
                 <column name="remote_address" nullable="false" column-definition="character varying(1024) NOT NULL"/>
@@ -442,6 +442,9 @@
             </basic>
             <basic name="owner">
                 <column name="owner_user" nullable="true" column-definition="varchar NULL"/>
+            </basic>
+            <basic name="authentication">
+                <column name="auth_info" nullable="true" column-definition="json NULL"/>
             </basic>
 
             <many-to-many name="parameters" fetch="EAGER">
