@@ -17,6 +17,7 @@
 package ro.cs.tao.services.model;
 
 import java.util.Map;
+import java.util.TreeMap;
 
 public class FileObject {
     private final String relativePath;
@@ -44,4 +45,11 @@ public class FileObject {
     public Map<String, String> getAttributes() { return attributes; }
 
     public void setAttributes(Map<String, String> attributes) { this.attributes = attributes; }
+
+    public void addAttribute(String key, String value) {
+        if (this.attributes == null) {
+            this.attributes = new TreeMap<>();
+        }
+        this.attributes.put(key, value);
+    }
 }
