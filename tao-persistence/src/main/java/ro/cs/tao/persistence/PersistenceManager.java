@@ -58,6 +58,9 @@ public class PersistenceManager {
     private ProcessingComponentManager processingComponentManager;
 
     @Autowired
+    private WPSComponentManager wpsComponentManager;
+
+    @Autowired
     private GroupComponentManager groupComponentManager;
 
     @Autowired
@@ -157,4 +160,6 @@ public class PersistenceManager {
     public NamingRuleManager namingRules() { return namingRuleManager; }
 
     public TagManager tags() { return tagManager; }
+
+    public WPSComponentManager wpsComponents() { return wpsComponentManager; }
 }

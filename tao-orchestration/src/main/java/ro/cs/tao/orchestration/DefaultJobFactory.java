@@ -32,6 +32,7 @@ import ro.cs.tao.execution.util.TaskUtilities;
 import ro.cs.tao.persistence.GroupComponentProvider;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.ProcessingComponentProvider;
+import ro.cs.tao.persistence.WPSComponentProvider;
 import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.workflow.ParameterValue;
@@ -59,6 +60,7 @@ public class DefaultJobFactory {
     protected final ExecutionTaskProvider taskProvider;
     protected final QueryProvider queryProvider;
     protected final ProcessingComponentProvider processingComponentProvider;
+    protected final WPSComponentProvider wpsComponentProvider;
     protected final DataSourceComponentProvider dataSourceComponentProvider;
     protected final DataSourceComponentGroupProvider dataSourceComponentGroupProvider;
     protected final GroupComponentProvider groupComponentProvider;
@@ -69,6 +71,7 @@ public class DefaultJobFactory {
         this.taskProvider = SpringContextBridge.services().getService(ExecutionTaskProvider.class);
         this.queryProvider = SpringContextBridge.services().getService(QueryProvider.class);
         this.processingComponentProvider = SpringContextBridge.services().getService(ProcessingComponentProvider.class);
+        this.wpsComponentProvider = SpringContextBridge.services().getService(WPSComponentProvider.class);
         this.dataSourceComponentProvider = SpringContextBridge.services().getService(DataSourceComponentProvider.class);
         this.dataSourceComponentGroupProvider = SpringContextBridge.services().getService(DataSourceComponentGroupProvider.class);
         this.groupComponentProvider = SpringContextBridge.services().getService(GroupComponentProvider.class);
@@ -213,6 +216,9 @@ public class DefaultJobFactory {
             switch (workflowNode.getComponentType()) {
                 case PROCESSING:
                     task = createProcessingExecutionTask(workflowNode, links, inputs);
+                    break;
+                case WPS_COMPONENT:
+                    task = createWPSComponentExecutionTask(workflowNode, links, inputs);
                     break;
                 case DATASOURCE:
                     task = createDataSourceExecutionTask(job, workflowNode, inputs);
@@ -412,6 +418,41 @@ public class DefaultJobFactory {
         task.setComponent(component);
         task.setInputParameterValue("local.query", localQuery.toString());
         task.setInputParameterValue("remote.query", query.toString());
+        return task;
+    }
+
+    protected WPSExecutionTask createWPSComponentExecutionTask(WorkflowNodeDescriptor workflowNode, Set<ComponentLink> incomingLinks,
+                                                               Map<String, String> inputs) {
+        final List<ParameterValue> customValues = workflowNode.getCustomValues();
+        final WPSComponent component = wpsComponentProvider.get(workflowNode.getComponentId());
+        final WPSExecutionTask task = new WPSExecutionTask();
+        task.setComponent(component);
+        // Placeholders for inputs of previous tasks
+        if (incomingLinks != null) {
+            incomingLinks.forEach(link -> {
+                String name = link.getOutput().getName();
+                task.setInputParameterValue(name, null);
+            });
+        }
+        // Placeholders for outputs of this task
+        final List<TargetDescriptor> targets = component.getTargets();
+        if (targets != null) {
+            targets.forEach(t -> task.setOutputParameterValue(t.getName(), null));
+        }
+        if (customValues != null) {
+            for (ParameterValue param : customValues) {
+                task.setInputParameterValue(param.getParameterName(), param.getParameterValue());
+            }
+        }
+        final String nodeAffinity = component.getNodeAffinity();
+        if (nodeAffinity != null && !"Any".equals(nodeAffinity)) {
+            task.setExecutionNodeHostName(nodeAffinity);
+        }
+        if (inputs != null) {
+            for (Map.Entry<String, String> entry : inputs.entrySet()) {
+                task.setInputParameterValue(entry.getKey(), entry.getValue());
+            }
+        }
         return task;
     }
 }
