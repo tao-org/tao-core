@@ -25,6 +25,10 @@ import org.apache.commons.lang3.SystemUtils;
 import java.io.*;
 import java.net.URI;
 import java.net.URL;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.WritableByteChannel;
 import java.nio.file.FileSystem;
 import java.nio.file.*;
 import java.nio.file.attribute.*;
@@ -830,6 +834,38 @@ public class FileUtilities {
             }
         } catch (SftpException e) {
             throw new IOException(e);
+        }
+    }
+
+    public static void copyStream(InputStream input, OutputStream output) throws IOException {
+        try (ReadableByteChannel inputChannel = Channels.newChannel(input);
+             WritableByteChannel outputChannel = Channels.newChannel(output)) {
+            final ByteBuffer buffer = ByteBuffer.allocateDirect(65536);
+            while (inputChannel.read(buffer) != -1) {
+                buffer.flip();
+                outputChannel.write(buffer);
+                buffer.compact();
+            }
+            buffer.flip();
+            while (buffer.hasRemaining()) {
+                outputChannel.write(buffer);
+            }
+        }
+    }
+
+    public static void appendToStream(InputStream input, OutputStream output) throws IOException {
+        WritableByteChannel outputChannel = Channels.newChannel(output);
+        try (ReadableByteChannel inputChannel = Channels.newChannel(input)) {
+            final ByteBuffer buffer = ByteBuffer.allocateDirect(65536);
+            while (inputChannel.read(buffer) != -1) {
+                buffer.flip();
+                outputChannel.write(buffer);
+                buffer.compact();
+            }
+            buffer.flip();
+            while (buffer.hasRemaining()) {
+                outputChannel.write(buffer);
+            }
         }
     }
 }
