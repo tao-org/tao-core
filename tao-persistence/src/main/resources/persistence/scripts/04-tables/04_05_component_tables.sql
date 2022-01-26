@@ -247,6 +247,22 @@ ALTER TABLE component.component_parameters ADD CONSTRAINT FK_component_parameter
 	FOREIGN KEY (processing_parameter_id) REFERENCES component.processing_parameter (id) ON DELETE No Action ON UPDATE No Action;
 
 -------------------------------------------------------------------------------
+-- table: wps_component_parameters
+DROP TABLE IF EXISTS component.wps_component_parameters CASCADE;
+CREATE TABLE component.wps_component_parameters
+(
+    wps_component_id varchar(512) NOT NULL,
+    wps_processing_parameter_id varchar(512) NOT NULL
+);
+ALTER TABLE component.wps_component_parameters ADD CONSTRAINT PK_wps_component_parameters
+    PRIMARY KEY (wps_component_id, wps_processing_parameter_id);
+ALTER TABLE component.wps_component_parameters ADD CONSTRAINT FK_wps_component_parameters_processing_component
+    FOREIGN KEY (wps_component_id) REFERENCES component.wps_component (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE component.wps_component_parameters ADD CONSTRAINT FK_wps_component_parameters_processing_parameter
+    FOREIGN KEY (wps_processing_parameter_id) REFERENCES component.processing_parameter (id) ON DELETE No Action ON UPDATE No Action;
+
+
+-------------------------------------------------------------------------------
 -- table: template_parameter_parameters
 DROP TABLE IF EXISTS component.template_parameter_parameters CASCADE;
 CREATE TABLE component.template_parameter_parameters

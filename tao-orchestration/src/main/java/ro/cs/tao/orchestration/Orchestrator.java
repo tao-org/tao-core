@@ -213,6 +213,8 @@ public class Orchestrator extends Notifiable {
 
     /**
      * Creates a job from a workflow without starting its execution.
+     * The method is intended for operations that convert/export a TAO workflow
+     * into another format (such as JSON, CWL)
      *
      * @param context 	 The session context
      * @param workflowId The workflow identifier
@@ -236,7 +238,16 @@ public class Orchestrator extends Notifiable {
         }
     }
 
-
+    /**
+     * Creates a job from a workflow, intended for execution.
+     *
+     * @param context 	 The session context
+     * @param workflowId The workflow identifier
+     * @param description A description of the execution (workflow instance)
+     * @param inputs     The overridden parameter values for workflow nodes,
+     * @param optimize  If <code>true</code>, the workflow will be optimized if possible
+     * @throws ExecutionException In case anything goes wrong
+     */
     public ExecutionJob createJob(SessionContext context, long workflowId, String description,
                                   Map<String, Map<String, String>> inputs, boolean optimize)  throws ExecutionException {
         try {
