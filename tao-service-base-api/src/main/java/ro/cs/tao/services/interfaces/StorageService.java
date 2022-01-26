@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Service interface for manipulation of files and folders (server-side).
@@ -127,4 +128,8 @@ public interface StorageService<T> extends TAOService {
      * @param jobId         The job identifier.
      */
     List<FileObject> getJobResults(long jobId) throws IOException;
+
+    Object download(Path path) throws IOException;
+
+    void streamToZip(Path root, ZipOutputStream stream) throws IOException;
 }
