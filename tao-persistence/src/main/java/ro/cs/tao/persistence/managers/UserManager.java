@@ -25,6 +25,7 @@ import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.UserProvider;
 import ro.cs.tao.persistence.repository.GroupRepository;
 import ro.cs.tao.persistence.repository.UserRepository;
+import ro.cs.tao.security.SystemPrincipal;
 import ro.cs.tao.user.Group;
 import ro.cs.tao.user.User;
 import ro.cs.tao.user.UserPreference;
@@ -132,7 +133,9 @@ public class UserManager extends EntityManager<User, Long, UserRepository> imple
 
     @Override
     public List<User> list(UserStatus userStatus) {
-        return repository.findByStatus(userStatus);
+        final List<User> users = repository.findByStatus(userStatus);
+        users.removeIf(u -> SystemPrincipal.instance().getName().equals(u.getUsername()));
+        return users;
     }
 
     @Override
@@ -163,7 +166,9 @@ public class UserManager extends EntityManager<User, Long, UserRepository> imple
 
     @Override
     public List<User> listAdministrators() {
-        return repository.getAdministrators();
+        final List<User> administrators = repository.getAdministrators();
+        administrators.removeIf(a -> SystemPrincipal.instance().getName().equals(a.getUsername()));
+        return administrators;
     }
 
     @Override
