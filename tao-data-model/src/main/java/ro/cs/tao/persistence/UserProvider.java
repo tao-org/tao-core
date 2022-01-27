@@ -29,4 +29,6 @@ public interface UserProvider extends EntityProvider<User, Long> {
     int updateInputQuota(String userName, int value) throws PersistenceException;
     int updateProcessingQuota(String userName, int value) throws PersistenceException;
     Map<String, String[]> listUnicityInfo();
+    default int defaultCPUQuota() { return 8; }
+    default int defaultMemoryQuota() { return 16; }
 }

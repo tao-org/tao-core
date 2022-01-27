@@ -168,8 +168,6 @@ ALTER TABLE execution.user_data_source_connection ADD CONSTRAINT PK_user_data_so
 ALTER TABLE execution.user_data_source_connection ADD CONSTRAINT U_user_data_source_connection UNIQUE (user_id, data_source_id);
 ALTER TABLE execution.user_data_source_connection ADD CONSTRAINT FK_user_data_source_connection_user
 	FOREIGN KEY (user_id) REFERENCES usr."user" (username) ON DELETE No Action ON UPDATE No Action;
-ALTER TABLE execution.user_data_source_connection ADD CONSTRAINT FK_user_data_source_connection_data_source
-	FOREIGN KEY (data_source_id) REFERENCES component.data_source_component(id) ON DELETE No Action ON UPDATE No Action;
 DROP SEQUENCE IF EXISTS execution.user_data_source_connection_id_seq CASCADE;
 CREATE SEQUENCE execution.user_data_source_connection_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
 ALTER TABLE execution.user_data_source_connection ALTER COLUMN id SET DEFAULT nextval('execution.user_data_source_connection_id_seq');

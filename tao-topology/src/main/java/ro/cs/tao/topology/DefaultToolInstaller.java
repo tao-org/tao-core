@@ -70,7 +70,7 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
 
     @Override
     public ServiceInstallStatus installNewNode(NodeDescription info) throws TopologyException {
-        ServiceInstallStatus installStatus = new ServiceInstallStatus();
+        ServiceInstallStatus installStatus = ServiceInstallStatus.NODE_ADDED;
         for (ToolInstallConfig toolCfg : toolInstallConfigs) {
             try {
                 installStatus.setServiceName(toolCfg.getName());
@@ -90,7 +90,7 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
 
     @Override
     public ServiceInstallStatus uninstallNode(NodeDescription info) throws TopologyException {
-        ServiceInstallStatus installStatus = new ServiceInstallStatus();
+        ServiceInstallStatus installStatus = ServiceInstallStatus.NODE_REMOVED;
         for (ToolInstallConfig toolCfg : toolInstallConfigs) {
             try {
                 installStatus.setServiceName(toolCfg.getName());
