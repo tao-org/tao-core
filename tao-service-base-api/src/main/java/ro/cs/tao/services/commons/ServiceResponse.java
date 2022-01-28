@@ -21,6 +21,10 @@ public class ServiceResponse<T> {
     private String message;
     private ResponseStatus status;
 
+    public ServiceResponse() {
+
+    }
+
     public ServiceResponse(T data) {
         this.data = data;
         this.status = ResponseStatus.SUCCEEDED;
