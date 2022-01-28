@@ -23,12 +23,12 @@ import ro.cs.tao.workflow.enums.Status;
 public class WorkflowInfo {
 
     protected Long id;
-    private String name;
-    private String userName;
-    private Visibility visibility;
-    protected Status status;
-    private String path;
-    private boolean active;
+    private final String name;
+    private final String userName;
+    private final Visibility visibility;
+    protected final Status status;
+    private final String path;
+    private final boolean active;
 
     public WorkflowInfo(WorkflowDescriptor workflow) {
         this.id = workflow.getId();
