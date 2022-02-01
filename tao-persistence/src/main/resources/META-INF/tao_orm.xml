@@ -448,9 +448,9 @@
             </basic>
 
             <many-to-many name="parameters" fetch="EAGER">
-                <join-table name="component.component_parameters">
-                    <join-column name="processing_component_id" referenced-column-name="id"/>
-                    <inverse-join-column name="processing_parameter_id" referenced-column-name="id"/>
+                <join-table name="component.wps_component_parameters">
+                    <join-column name="wps_component_id" referenced-column-name="id"/>
+                    <inverse-join-column name="wps_processing_parameter_id" referenced-column-name="id"/>
                 </join-table>
                 <cascade>
                     <cascade-all/>
