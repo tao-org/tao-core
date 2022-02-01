@@ -108,6 +108,10 @@ public class TopologyManager {
         masterNodeInfo = master;
     }
 
+    public boolean isExternalProviderAvailable() {
+        return this.externalNodeProvider != null;
+    }
+
     public void setLocalNodeProvider(NodeProvider provider) {
         this.localNodeProvider = provider;
         // Set the auto-determined master node info

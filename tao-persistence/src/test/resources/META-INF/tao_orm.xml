@@ -405,6 +405,61 @@
         </attributes>
     </entity>
 
+    <entity class="ro.cs.tao.component.WPSComponent" access="PROPERTY">
+        <table name="component.wps_component"/>
+
+        <association-override name="sources">
+            <join-table name="component.wps_component_sources">
+                <join-column name="wps_component_id" referenced-column-name="id"/>
+                <inverse-join-column name="source_descriptor_id" referenced-column-name="id"/>
+            </join-table>
+        </association-override>
+
+        <association-override name="targets">
+            <join-table name="component.wps_component_targets">
+                <join-column name="wps_component_id" referenced-column-name="id"/>
+                <inverse-join-column name="target_descriptor_id" referenced-column-name="id"/>
+            </join-table>
+        </association-override>
+
+        <convert converter="ro.cs.tao.persistence.convert.ProcessingComponentVisibilityConverter" attribute-name="visibility" />
+        <convert converter="ro.cs.tao.persistence.convert.AuthenticationTypeConverter" attribute-name="authentication" />
+        <attributes>
+            <basic name="remoteAddress">
+                <column name="remote_address" nullable="false" column-definition="character varying(1024) NOT NULL"/>
+            </basic>
+            <basic name="capabilityName">
+                <column name="capability" nullable="false" column-definition="character varying(512) NOT NULL"/>
+            </basic>
+            <basic name="templateType">
+                <column name="template_type_id" nullable="false" column-definition="integer not null"/>
+            </basic>
+            <basic name="visibility">
+                <column name="visibility_id" nullable="false" column-definition="integer not null"/>
+            </basic>
+            <basic name="active">
+                <column name="active" nullable="true" column-definition="boolean NULL DEFAULT true"/>
+            </basic>
+            <basic name="owner">
+                <column name="owner_user" nullable="true" column-definition="varchar NULL"/>
+            </basic>
+            <basic name="authentication">
+                <column name="auth_info" nullable="true" column-definition="json NULL"/>
+            </basic>
+
+            <many-to-many name="parameters" fetch="EAGER">
+                <join-table name="component.component_parameters">
+                    <join-column name="processing_component_id" referenced-column-name="id"/>
+                    <inverse-join-column name="processing_parameter_id" referenced-column-name="id"/>
+                </join-table>
+                <cascade>
+                    <cascade-all/>
+                </cascade>
+            </many-to-many>
+
+        </attributes>
+    </entity>
+
     <entity class="ro.cs.tao.component.GroupComponent" access="PROPERTY">
         <table name="component.group_component"/>
 
@@ -814,7 +869,7 @@
         </attributes>
     </entity>
 
-    <!--<entity class="ro.cs.tao.execution.model.WPSExecutionTask" access="PROPERTY">
+    <entity class="ro.cs.tao.execution.model.WPSExecutionTask" access="PROPERTY">
 
         <discriminator-value>33</discriminator-value>
 
@@ -822,9 +877,9 @@
             <many-to-one name="component" fetch="LAZY" target-entity="ro.cs.tao.component.WPSComponent">
                 <join-column name="component_id" nullable="false"/>
             </many-to-one>
-            &lt;!&ndash;<transient name="instanceTargetOutput"/>&ndash;&gt;
+            <transient name="externalCommonParameters"/>
         </attributes>
-    </entity>-->
+    </entity>
 
     <entity class="ro.cs.tao.execution.model.ExecutionJob" access="PROPERTY">
         <table name="execution.job"/>
