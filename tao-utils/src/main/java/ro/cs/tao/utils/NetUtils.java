@@ -564,7 +564,7 @@ public class NetUtils {
     }
 
     public static NetStreamResponse getResponseAsStream(String url, Credentials credentials) throws IOException {
-        NetStreamResponse result = null;
+        NetStreamResponse result;
         try (CloseableHttpResponse response = NetUtils.openConnection(HttpMethod.GET, url, credentials)) {
             if (response != null) {
                 StatusLine statusLine = response.getStatusLine();
@@ -573,14 +573,17 @@ public class NetUtils {
                         HttpEntity entity = response.getEntity();
                         Header contentType = entity.getContentType();
                         Header[] headers = response.getHeaders("Content-Disposition");
-                        String name = null;
+                        String name;
                         if (headers.length > 0) {
                             name = headers[0].getValue();
                             if (name.toLowerCase().contains("filename")) {
                                 name = name.toLowerCase().substring(name.lastIndexOf("=") + 1).replace("\"", "");
                             }
+                        } else {
+                            name = url.substring(url.lastIndexOf("/") + 1);
                         }
-                        result = new NetStreamResponse(name, entity.getContentLength(), contentType.getValue(),
+                        result = new NetStreamResponse(name, entity.getContentLength(),
+                                                       contentType != null ? contentType.getValue() : "applicaiton/otctet-stream",
                                                        EntityUtils.toByteArray(entity));
 
                         break;
