@@ -13,11 +13,14 @@ import org.springframework.context.annotation.ImportResource;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import ro.cs.tao.component.*;
+import ro.cs.tao.component.enums.AuthenticationType;
 import ro.cs.tao.component.enums.ParameterType;
 import ro.cs.tao.component.enums.ProcessingComponentVisibility;
 import ro.cs.tao.component.template.BasicTemplate;
 import ro.cs.tao.component.template.Template;
 import ro.cs.tao.component.template.TemplateType;
+import ro.cs.tao.configuration.ConfigurationManager;
+import ro.cs.tao.configuration.ConfigurationProvider;
 import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.datasource.beans.Query;
 import ro.cs.tao.datasource.remote.FetchMode;
@@ -61,7 +64,7 @@ import java.util.Set;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class PersistenceManagerTest {
 
-    private static Log logger = LogFactory.getLog(PersistenceManagerTest.class);
+    private static final Log logger = LogFactory.getLog(PersistenceManagerTest.class);
 
     /**
      * Instance of the persistence manager
@@ -1922,5 +1925,96 @@ public class PersistenceManagerTest {
         }
     }
 
+    @Test
+    public void TC_13_save_new_wps_component()
+    {
+        logger.info("TC_13_save_new_wps_component");
+        try
+        {
+            WPSComponent component = createNewWPSComponent("wps01");
 
+            component = persistenceManager.wpsComponents().save(component);
+            // check persisted component
+            Assert.assertTrue(component != null && component.getId() != null);
+        }
+        catch (PersistenceException e)
+        {
+            logger.error(ExceptionUtils.getStackTrace(e));
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    private WPSComponent createNewWPSComponent(String componentId) {
+        // add a new processing component for test
+        WPSComponent component = new WPSComponent();
+        component.setId(componentId);
+        component.setLabel("component label");
+        component.setVersion("component version");
+        component.setDescription("component description");
+        component.setAuthors("component authors");
+        component.setCopyright("component copyright");
+        component.setVisibility(ProcessingComponentVisibility.CONTRIBUTOR);
+        component.setNodeAffinity("Any");
+        component.setCapabilityName("remote name");
+        component.setOwner("avl1");
+        component.setRemoteAddress("http://localhost/wps");
+        WPSAuthentication auth = new WPSAuthentication();
+        auth.setLoginUrl("http://localhost/login");
+        auth.setUser("user");
+        auth.setPassword("password");
+        auth.setType(AuthenticationType.BASIC);
+        auth.setAuthHeader("Authorization");
+        component.setAuthentication(auth);
+        component.setActive(true);
+        List<ParameterDescriptor> parameters = new ArrayList<>();
+
+        final ParameterDescriptor param1 = new ParameterDescriptor();
+        param1.setId("testParam1");
+        param1.setType(ParameterType.REGULAR);
+        param1.setDataType(String.class);
+        param1.setLabel("Test Param 1");
+        parameters.add(param1);
+
+        final ParameterDescriptor param2 = new ParameterDescriptor();
+        param2.setId("testParam2");
+        param2.setType(ParameterType.REGULAR);
+        param2.setDataType(Integer.class);
+        param2.setLabel("Test Param 2");
+        parameters.add(param2);
+
+        // add also a template parameter, which regular parameter(s) inside
+        final TemplateParameterDescriptor tParam = new TemplateParameterDescriptor();
+        List<ParameterDescriptor> templateParamParameters = new ArrayList<>();
+        tParam.setId("templateParam");
+        tParam.setType(ParameterType.TEMPLATE);
+        tParam.setDataType(Integer.class);
+        tParam.setLabel("Test TemplateParam");
+
+        final ParameterDescriptor param3 = new ParameterDescriptor();
+        param3.setId("testParam3");
+        param3.setType(ParameterType.REGULAR);
+        param3.setDataType(Integer.class);
+        param3.setLabel("Test Param 3");
+        templateParamParameters.add(param3);
+
+        final ParameterDescriptor param4 = new ParameterDescriptor();
+        param4.setId("testParam4");
+        param4.setType(ParameterType.REGULAR);
+        param4.setDataType(Integer.class);
+        param4.setLabel("Test Param 4");
+        templateParamParameters.add(param4);
+
+        tParam.setParameters(templateParamParameters);
+        parameters.add(tParam);
+
+        component.setParameters(parameters);
+        return component;
+    }
+
+    private static void setupDB() {
+        final ConfigurationProvider provider = ConfigurationManager.getInstance();
+        provider.setValue("spring.datasource.url", "jdbc:postgresql://localhost:5432/taodata?stringtype=unspecified");
+        provider.setValue("spring.datasource.username", "tao");
+        provider.setValue("spring.datasource.password", "tao");
+    }
 }
