@@ -424,6 +424,7 @@
 
         <convert converter="ro.cs.tao.persistence.convert.ProcessingComponentVisibilityConverter" attribute-name="visibility" />
         <convert converter="ro.cs.tao.persistence.convert.AuthenticationTypeConverter" attribute-name="authentication" />
+        <convert converter="ro.cs.tao.persistence.convert.ParameterDescriptorListConverter" attribute-name="parameters" />
         <attributes>
             <basic name="remoteAddress">
                 <column name="remote_address" nullable="false" column-definition="character varying(1024) NOT NULL"/>
@@ -446,17 +447,9 @@
             <basic name="authentication">
                 <column name="auth_info" nullable="true" column-definition="json NULL"/>
             </basic>
-
-            <many-to-many name="parameters" fetch="EAGER">
-                <join-table name="component.wps_component_parameters">
-                    <join-column name="wps_component_id" referenced-column-name="id"/>
-                    <inverse-join-column name="wps_processing_parameter_id" referenced-column-name="id"/>
-                </join-table>
-                <cascade>
-                    <cascade-all/>
-                </cascade>
-            </many-to-many>
-
+            <basic name="parameters">
+                <column name="parameters" nullable="true" column-definition="json NULL" />
+            </basic>
         </attributes>
     </entity>
 

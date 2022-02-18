@@ -15,7 +15,6 @@
  */
 package ro.cs.tao.serialization;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -57,7 +56,6 @@ public abstract class BaseSerializer<T> implements Serializer<T, String> {
         }
         try {
             ObjectMapper mapper = createMapper();
-            TypeReference<List<T>> typeRef = new TypeReference<List<T>>() { };
             final JsonNode jsonNode = mapper.readTree(source);
             final List<T> results = new ArrayList<>();
             jsonNode.fields().forEachRemaining(entry -> {

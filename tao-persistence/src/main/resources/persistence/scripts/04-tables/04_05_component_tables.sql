@@ -608,6 +608,7 @@ CREATE TABLE component.wps_component
 	visibility_id integer NOT NULL,
 	owner_user varchar NULL,
 	auth_info json NULL,
+	parameters json NULL,
     active boolean NULL DEFAULT true,
 	tags text NULL,
 	created timestamp NULL DEFAULT now(),
