@@ -53,4 +53,16 @@ public class WorkflowInfo {
     public String getPath() { return path; }
 
     public boolean isActive() { return active; }
+
+    public WorkflowDescriptor toWorkflowDescriptor() {
+        final WorkflowDescriptor descriptor = new WorkflowDescriptor();
+        descriptor.setId(this.id);
+        descriptor.setUserName(this.userName);
+        descriptor.setVisibility(this.visibility);
+        descriptor.setStatus(this.status);
+        descriptor.setPath(this.path);
+        descriptor.setActive(this.active);
+        descriptor.setName(this.name);
+        return descriptor;
+    }
 }
