@@ -31,6 +31,11 @@ import java.util.zip.ZipOutputStream;
  */
 public interface StorageService<T> extends TAOService {
     /**
+     * Indicates if this storage service implementation is intended for the given protocol
+     * @param protocol  The protocol
+     */
+    boolean isIntendedFor(String protocol);
+    /**
      * Creates a folder.
      *
      * @param folderRelativePath    The folder path, relative to the current workspace
