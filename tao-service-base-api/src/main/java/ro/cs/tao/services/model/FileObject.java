@@ -20,16 +20,22 @@ import java.util.Map;
 import java.util.TreeMap;
 
 public class FileObject {
+    private final String protocol;
     private final String relativePath;
     private final boolean isFolder;
     private final long size;
     private String productName;
     private Map<String, String> attributes;
 
-    public FileObject(String relativePath, boolean isFolder, long size) {
+    public FileObject(String protocol, String relativePath, boolean isFolder, long size) {
+        this.protocol = protocol;
         this.relativePath = relativePath;
         this.isFolder = isFolder;
         this.size = this.isFolder ? 0 : size;
+    }
+
+    public String getProtocol() {
+        return protocol;
     }
 
     public String getRelativePath() { return relativePath; }

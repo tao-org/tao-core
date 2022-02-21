@@ -26,7 +26,7 @@ public class Token {
     }
 
     public boolean isExpired() {
-        return this.expiration - System.currentTimeMillis() <= 0;
+        return this.expiration < System.currentTimeMillis();
     }
 
 }
