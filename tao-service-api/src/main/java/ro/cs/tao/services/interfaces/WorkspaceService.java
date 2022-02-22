@@ -1,8 +1,5 @@
 package ro.cs.tao.services.interfaces;
 
-import java.io.IOException;
-import java.nio.file.Path;
-
 /**
  * Service for managing the user workspaces
  */
@@ -11,4 +8,8 @@ public interface WorkspaceService extends TAOService {
     void startWatching();
 
     void stopWatching();
+
+    void registerUser(String userName);
+
+    void unregisterUser(String userName);
 }

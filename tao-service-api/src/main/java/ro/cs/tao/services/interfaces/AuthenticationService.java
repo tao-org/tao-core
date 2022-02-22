@@ -27,8 +27,9 @@ public interface AuthenticationService extends TAOService {
     /**
      * Login user using its credentials
      *
-     * @param credentials      User credentials
-     * @return              authentication result
+     * @param user  User login
+     * @param password User password
+     * @return authentication result
      */
     AuthInfo login(String user, String password);
 
@@ -38,4 +39,12 @@ public interface AuthenticationService extends TAOService {
      * @param authenticationToken User authentication token
      */
     boolean logout(String authenticationToken);
+
+    /**
+     * Retrieves a new access token (if supported by the token provider).
+     *
+     * @param user          The user login
+     * @param refreshToken  The token used to get a new access token
+     */
+    String getNewToken(String user, String refreshToken);
 }
