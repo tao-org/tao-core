@@ -23,7 +23,6 @@ import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.component.Variable;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.docker.ExecutionConfiguration;
-import ro.cs.tao.eodata.DataHandlingException;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.eodata.enums.Visibility;
@@ -94,7 +93,7 @@ public class Orchestrator extends Notifiable {
     private static final String GROUP_TASK_SELECTOR_KEY = "group.task.selector";
     private static final String JOB_TASK_SELECTOR_KEY = "job.task.selector";
     private static final Set<ExecutionStatus> notFurtherRunnableStatuses = new HashSet<ExecutionStatus>() {{
-       add(ExecutionStatus.DONE); add(ExecutionStatus.PENDING_FINALISATION); add(ExecutionStatus.CANCELLED); add(ExecutionStatus.FAILED);
+       add(ExecutionStatus.DONE); add(ExecutionStatus.CANCELLED); add(ExecutionStatus.FAILED);
     }};
     private static final Set<ExecutionStatus> completedOkStatuses = new HashSet<ExecutionStatus>() {{
         add(ExecutionStatus.DONE); add(ExecutionStatus.PENDING_FINALISATION);
@@ -583,7 +582,7 @@ public class Orchestrator extends Notifiable {
                 if (targetOutput == null) {
                     logger.severe(String.format("NULL TARGET [task %s, parameter %s]", pcTask.getId(), t.getName()));
                 } else if (!targetOutput.equals(instanceTargetOuptut)) {
-                    logger.severe(String.format("Value %s different than expected [%s]", targetOutput, instanceTargetOuptut));
+                    logger.warning(String.format("Value %s different than expected [%s]", targetOutput, instanceTargetOuptut));
                 }
                 pcTask.setOutputParameterValue(t.getName(), instanceTargetOuptut);
                 logger.finest(String.format("Output [%s] of task [id=%d] was set to '%s'",
@@ -966,24 +965,24 @@ public class Orchestrator extends Notifiable {
     }
 
     private void persistOutputProducts(ExecutionTask task) {
-        if (ExecutionConfiguration.developmentModeEnabled()) {
-            return;
-        }
-        List<Variable> values = task.getOutputParameterValues();
-        WorkflowNodeDescriptor node = workflowNodeProvider.get(task.getWorkflowNodeId());
-        TaoComponent component;
-        if (node instanceof WorkflowNodeGroupDescriptor) {
-            component = groupComponentProvider.get(node.getComponentId());
-        } else {
-            component = processingComponentProvider.get(node.getComponentId());
-        }
-        List<EOProduct> products = new ArrayList<>();
-        for (Variable value : values) {
-            products.addAll(createProducts(component, value, task.getContext()));
-        }
         try {
+            if (ExecutionConfiguration.developmentModeEnabled()) {
+                return;
+            }
+            List<Variable> values = task.getOutputParameterValues();
+            WorkflowNodeDescriptor node = workflowNodeProvider.get(task.getWorkflowNodeId());
+            TaoComponent component;
+            if (node instanceof WorkflowNodeGroupDescriptor) {
+                component = groupComponentProvider.get(node.getComponentId());
+            } else {
+                component = processingComponentProvider.get(node.getComponentId());
+            }
+            List<EOProduct> products = new ArrayList<>();
+            for (Variable value : values) {
+                products.addAll(createProducts(component, value, task.getContext()));
+            }
             OutputDataHandlerManager.getInstance().applyHandlers(products);
-        } catch (DataHandlingException ex) {
+        } catch (Exception ex) {
             logger.severe(String.format("Error persisting products: %s", ex.getMessage()));
         }
 
@@ -1031,6 +1030,7 @@ public class Orchestrator extends Notifiable {
                             .findFirst().orElse(null);
                 }
                 if (metadataInspector != null) {
+                    logger.fine("Creating metadata for " + path);
                     MetadataInspector.Metadata metadata = metadataInspector.getMetadata(path);
                     if (metadata != null) {
                         product = metadata.toProductDescriptor(path);

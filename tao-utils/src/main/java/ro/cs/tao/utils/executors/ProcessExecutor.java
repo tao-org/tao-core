@@ -15,7 +15,6 @@
  */
 package ro.cs.tao.utils.executors;
 
-import com.pty4j.PtyProcessBuilder;
 import org.apache.commons.lang3.SystemUtils;
 
 import java.io.*;
@@ -50,50 +49,29 @@ public class ProcessExecutor extends Executor<Process> {
         int ret = 0x80000000;
         try {
             resetProcess();
-            if (arguments.size() > 2 && arguments.get(0).equals("docker") && arguments.get(1).equals("run") &&
-                    arguments.stream().anyMatch(a -> a.equals("-it") || a.equals("-t")) &&
-                    arguments.stream().noneMatch(a -> a.equals("gdalinfo") || a.equals("&&"))) {
-                final String[] command = formatArguments().toArray(new String[0]);
-                final PtyProcessBuilder pb = new PtyProcessBuilder(command);
-                if (this.workingDirectory != null) {
-                    pb.setDirectory(this.workingDirectory.toString());
-                }
-                if (logMessages) {
-                    this.logger.finest("[" + this.host + "] " + String.join(" ", command));
-                }
-                //redirect the error of the tool to the standard output
-                pb.setRedirectErrorStream(true);
-                pb.setEnvironment(System.getenv());
-                if (asSuperUser) {
-                    insertSudoParams();
-                }
-                //start the process
-                this.channel = pb.start();
-            } else {
-                final ProcessBuilder pb = new ProcessBuilder(formatArguments());
-                if (this.workingDirectory != null) {
-                    pb.directory(this.workingDirectory);
-                }
-                if (logMessages) {
-                    this.logger.finest("[" + this.host + "] " + String.join(" ", pb.command()));
-                }
-                //redirect the error of the tool to the standard output
-                final Level parentLevel = this.logger.getParent().getLevel();
-                if (arguments.get(0).equals("docker") &&
-                        arguments.stream().noneMatch(a -> a.equals("gdalinfo") || a.equals("build")
-                                || a.equals("tag") || a.equals("push") || a.equals("images")) &&
-                        (parentLevel == null || parentLevel.intValue() <= Level.FINE.intValue())) {
-                    pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
-                    pb.redirectError(ProcessBuilder.Redirect.INHERIT);
-                }
-                pb.redirectErrorStream(true);
-                pb.environment().putAll(System.getenv());
-                if (asSuperUser) {
-                    insertSudoParams();
-                }
-                //start the process
-                this.channel = pb.start();
+            final ProcessBuilder pb = new ProcessBuilder(formatArguments());
+            if (this.workingDirectory != null) {
+                pb.directory(this.workingDirectory);
             }
+            if (logMessages) {
+                this.logger.finest("[" + this.host + "] " + String.join(" ", pb.command()));
+            }
+            //redirect the error of the tool to the standard output
+            final Level parentLevel = this.logger.getParent().getLevel();
+            if (arguments.get(0).equals("docker") &&
+                    arguments.stream().noneMatch(a -> a.equals("gdalinfo") || a.equals("build")
+                            || a.equals("tag") || a.equals("push") || a.equals("images")) &&
+                    (parentLevel == null || parentLevel.intValue() <= Level.FINE.intValue())) {
+                pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+                pb.redirectError(ProcessBuilder.Redirect.INHERIT);
+            }
+            pb.redirectErrorStream(true);
+            pb.environment().putAll(System.getenv());
+            if (asSuperUser) {
+                insertSudoParams();
+            }
+            //start the process
+            this.channel = pb.start();
             if (asSuperUser) {
                 writeSudoPassword();
             }
@@ -138,7 +116,6 @@ public class ProcessExecutor extends Executor<Process> {
         } catch (Exception e) {
             this.isStopped = true;
             final String message = ro.cs.tao.utils.ExceptionUtils.getStackTrace(logger, e);
-            //message = message.substring(0, message.indexOf("\tat "));
             throw new IOException(String.format("[%s] failed: %s", host, message));
         } finally {
             closeStream(outReader);

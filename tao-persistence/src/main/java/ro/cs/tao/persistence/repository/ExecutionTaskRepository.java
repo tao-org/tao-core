@@ -47,7 +47,7 @@ public interface ExecutionTaskRepository extends PagingAndSortingRepository<Exec
     @Query(value = "SELECT * FROM execution.task WHERE discriminator = 33 AND execution_status_id = 2 AND resource_id IS NOT NULL", nativeQuery = true)
     List<ExecutionTask> getRemoteExecutingTasks();
 
-    @Query(value = "SELECT * FROM execution.task WHERE execution_status_id NOT IN (1, 2) AND execution_node_host_name = :host", nativeQuery = true)
+    @Query(value = "SELECT * FROM execution.task WHERE execution_status_id IN (1, 2) AND execution_node_host_name = :host", nativeQuery = true)
     List<ExecutionTask> getTasksByHost(@Param("host") String host);
 
     @Query(value = "SELECT COALESCE(SUM(t.used_cpu), 0) FROM execution.task as t JOIN execution.job AS j ON j.id = t.job_id WHERE t.execution_status_id IN (1, 2) AND j.username = :userName", nativeQuery = true)
