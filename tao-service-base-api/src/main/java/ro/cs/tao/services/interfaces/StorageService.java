@@ -21,6 +21,7 @@ import ro.cs.tao.services.model.FileObject;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipOutputStream;
 
@@ -35,6 +36,12 @@ public interface StorageService<T> extends TAOService {
      * @param protocol  The protocol
      */
     boolean isIntendedFor(String protocol);
+
+    /**
+     * Pass any needed parameter values to be able to connect to the storage
+     * @param parameters    A map with name-value pairs
+     */
+    default void setup(Map<String, String> parameters) { };
     /**
      * Creates a folder.
      *

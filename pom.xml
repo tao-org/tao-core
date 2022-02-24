@@ -7,7 +7,7 @@
     <groupId>ro.cs.tao</groupId>
     <artifactId>tao-core</artifactId>
     <packaging>pom</packaging>
-    <version>1.2.5</version>
+    <version>1.3.0</version>
     <name>TAO Core</name>
 
     <modules>

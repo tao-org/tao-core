@@ -424,6 +424,7 @@
 
         <convert converter="ro.cs.tao.persistence.convert.ProcessingComponentVisibilityConverter" attribute-name="visibility" />
         <convert converter="ro.cs.tao.persistence.convert.AuthenticationTypeConverter" attribute-name="authentication" />
+        <convert converter="ro.cs.tao.persistence.convert.ParameterDescriptorListConverter" attribute-name="parameters" />
         <attributes>
             <basic name="remoteAddress">
                 <column name="remote_address" nullable="false" column-definition="character varying(1024) NOT NULL"/>
@@ -446,17 +447,9 @@
             <basic name="authentication">
                 <column name="auth_info" nullable="true" column-definition="json NULL"/>
             </basic>
-
-            <many-to-many name="parameters" fetch="EAGER">
-                <join-table name="component.component_parameters">
-                    <join-column name="processing_component_id" referenced-column-name="id"/>
-                    <inverse-join-column name="processing_parameter_id" referenced-column-name="id"/>
-                </join-table>
-                <cascade>
-                    <cascade-all/>
-                </cascade>
-            </many-to-many>
-
+            <basic name="parameters">
+                <column name="parameters" nullable="true" column-definition="json NULL" />
+            </basic>
         </attributes>
     </entity>
 
@@ -673,7 +666,7 @@
         <entity-listeners>
             <entity-listener class="ro.cs.tao.persistence.audit.DataSourceCredentialsListener"/>
         </entity-listeners>
-        <convert converter="ro.cs.tao.persistence.convert.QueryValuesMapConverter" attribute-name="params" />
+        <convert converter="ro.cs.tao.persistence.convert.MapConverter" attribute-name="params" />
         <attributes>
             <id name="id">
                 <column name="id" nullable="false" column-definition="bigint NOT NULL"/>
@@ -1138,7 +1131,7 @@
         <entity-listeners>
             <entity-listener class="ro.cs.tao.persistence.audit.QueryListener"/>
         </entity-listeners>
-        <convert converter="ro.cs.tao.persistence.convert.QueryValuesMapConverter" attribute-name="values"/>
+        <convert converter="ro.cs.tao.persistence.convert.MapConverter" attribute-name="values"/>
         <attributes>
             <id name="id">
                 <column name="id" nullable="false" column-definition="bigserial NOT NULL"/>
@@ -1320,7 +1313,7 @@
         <table name="product.naming_rule"/>
         <attributes>
             <id name="id">
-                <column name="id" nullable="false" column-definition="integr NOT NULL"/>
+                <column name="id" nullable="false" column-definition="integer NOT NULL"/>
                 <generated-value strategy="IDENTITY" generator="rule_identifier"/>
             </id>
             <basic name="sensor">
@@ -1351,6 +1344,32 @@
             </basic>
             <basic name="separator">
                 <column name="separator" nullable="false" column-definition="char(1) NOT NULL DEFAULT ' '"/>
+            </basic>
+        </attributes>
+    </entity>
+
+    <entity class="ro.cs.tao.topology.Workspace" access="PROPERTY">
+        <table name="topology.workspace"/>
+        <convert converter="ro.cs.tao.persistence.convert.WorkspaceTypeConverter" attribute-name="type" />
+        <attributes>
+            <id name="id">
+                <column name="id" nullable="false" column-definition="integer NOT NULL"/>
+                <generated-value strategy="IDENTITY" generator="workspace_identifier"/>
+            </id>
+            <basic name="name">
+                <column name="name" nullable="false" column-definition="varchar(250) NOT NULL"/>
+            </basic>
+            <basic name="description">
+                <column name="description" nullable="false" column-definition="text NOT NULL"/>
+            </basic>
+            <basic name="urlPrefix">
+                <column name="url_prefix" nullable="false" column-definition="varchar(20) NOT NULL"/>
+            </basic>
+            <basic name="type">
+                <column name="workspace_type_id" nullable="false" column-definition="int NOT NULL"/>
+            </basic>
+            <basic name="parameters">
+                <column name="params" nullable="true" column-definition="json"/>
             </basic>
         </attributes>
     </entity>
@@ -1539,7 +1558,8 @@
     <converter class="ro.cs.tao.persistence.convert.ConstraintsConverter" />
     <converter class="ro.cs.tao.persistence.convert.DimensionConverter" />
     <converter class="ro.cs.tao.persistence.convert.ParameterValueListConverter"/>
-    <converter class="ro.cs.tao.persistence.convert.QueryValuesMapConverter"/>
+    <converter class="ro.cs.tao.persistence.convert.MapConverter"/>
+    <converter class="ro.cs.tao.persistence.convert.SetConverter"/>
     <converter class="ro.cs.tao.persistence.convert.UserStatusConverter"/>
     <converter class="ro.cs.tao.persistence.convert.ConditionConverter" />
     <converter class="ro.cs.tao.persistence.convert.StringListConverter" />
