@@ -1379,6 +1379,9 @@
             <basic name="urlPrefix">
                 <column name="url_prefix" nullable="false" column-definition="varchar(20) NOT NULL"/>
             </basic>
+            <basic name="userName">
+                <column name="username" nullable="false" column-definition="varchar(50)"/>
+            </basic>
             <basic name="type">
                 <column name="workspace_type_id" nullable="false" column-definition="int NOT NULL"/>
             </basic>
