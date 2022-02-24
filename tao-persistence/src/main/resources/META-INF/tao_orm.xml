@@ -61,6 +61,19 @@
         </attributes>
     </mapped-superclass>
 
+    <mapped-superclass class="ro.cs.tao.component.IntIdentifiable" access="PROPERTY">
+        <attributes>
+            <id name="id">
+                <!-- ! IMPORTANT NOTICE:
+                Because Identifiable class is extended by several other classes,
+                but the mapping to a column name can be only done once (here!),
+                all correspondant columns must have the same name (and definition) defined here  -->
+                <column name="id" nullable="false" column-definition="int NOT NULL"/>
+                <generated-value strategy="IDENTITY" generator="dsc_identifier"/>
+            </id>
+        </attributes>
+    </mapped-superclass>
+
     <mapped-superclass class="ro.cs.tao.component.LongIdentifiable" access="PROPERTY">
         <attributes>
             <id name="id">
@@ -1350,6 +1363,7 @@
 
     <entity class="ro.cs.tao.topology.Workspace" access="PROPERTY">
         <table name="topology.workspace"/>
+        <convert converter="ro.cs.tao.persistence.convert.MapConverter" attribute-name="parameters" />
         <convert converter="ro.cs.tao.persistence.convert.WorkspaceTypeConverter" attribute-name="type" />
         <attributes>
             <id name="id">
@@ -1568,5 +1582,6 @@
     <converter class="ro.cs.tao.persistence.convert.AggregatorConverter" />
     <converter class="ro.cs.tao.persistence.convert.NodeRoleConverter" />
     <converter class="ro.cs.tao.persistence.convert.JsonCallbackConverter" />
+    <converter class="ro.cs.tao.persistence.convert.WorkspaceTypeConverter"/>
 
 </entity-mappings>
