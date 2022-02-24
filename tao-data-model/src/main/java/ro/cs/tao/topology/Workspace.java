@@ -2,7 +2,7 @@ package ro.cs.tao.topology;
 
 import ro.cs.tao.component.IntIdentifiable;
 
-import java.util.Map;
+import java.util.HashMap;
 import java.util.Objects;
 
 public class Workspace extends IntIdentifiable {
@@ -10,7 +10,7 @@ public class Workspace extends IntIdentifiable {
     private String description;
     private String urlPrefix;
     private WorkspaceType type;
-    private Map<String, String> parameters;
+    private HashMap<String, String> parameters;
 
     public String getName() {
         return name;
@@ -44,11 +44,11 @@ public class Workspace extends IntIdentifiable {
         this.type = type;
     }
 
-    public Map<String, String> getParameters() {
+    public HashMap<String, String> getParameters() {
         return parameters;
     }
 
-    public void setParameters(Map<String, String> parameters) {
+    public void setParameters(HashMap<String, String> parameters) {
         this.parameters = parameters;
     }
 
