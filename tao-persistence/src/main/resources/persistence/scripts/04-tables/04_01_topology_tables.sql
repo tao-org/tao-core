@@ -105,6 +105,7 @@ CREATE TABLE topology.workspace
 	name varchar(250) NOT NULL,
 	description text NOT NULL,
 	url_prefix varchar(20) NOT NULL,
+	username varchar(50),
 	workspace_type_id int NOT NULL,
 	params json NULL
 );

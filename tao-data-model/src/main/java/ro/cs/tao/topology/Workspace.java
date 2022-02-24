@@ -9,6 +9,7 @@ public class Workspace extends IntIdentifiable {
     private String name;
     private String description;
     private String urlPrefix;
+    private String userName;
     private WorkspaceType type;
     private HashMap<String, String> parameters;
 
@@ -34,6 +35,14 @@ public class Workspace extends IntIdentifiable {
 
     public void setUrlPrefix(String urlPrefix) {
         this.urlPrefix = urlPrefix;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 
     public WorkspaceType getType() {
