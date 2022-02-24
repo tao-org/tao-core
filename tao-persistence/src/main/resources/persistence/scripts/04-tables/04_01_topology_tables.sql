@@ -84,3 +84,35 @@ ALTER TABLE topology.node_service ADD CONSTRAINT FK_execution_node_service_servi
     FOREIGN KEY (service_id) REFERENCES topology.service (id) ON DELETE No Action ON UPDATE No Action;
 ALTER TABLE topology.node_service ADD CONSTRAINT FK_execution_node_service_service_status
 	FOREIGN KEY (service_status_id) REFERENCES topology.service_status (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: topology.workspace_type
+DROP TABLE IF EXISTS topology.workspace_type CASCADE;
+CREATE TABLE topology.workspace_type
+(
+    id integer NOT NULL,
+	name varchar(250) NOT NULL,
+	params json NULL
+);
+ALTER TABLE topology.workspace_type ADD CONSTRAINT PK_workspace_type PRIMARY KEY (id);
+
+-------------------------------------------------------------------------------
+-- table: topology.workspace
+DROP TABLE IF EXISTS topology.workspace CASCADE;
+CREATE TABLE topology.workspace
+(
+    id integer NOT NULL,
+	name varchar(250) NOT NULL,
+	description text NOT NULL,
+	url_prefix varchar(20) NOT NULL,
+	workspace_type_id int NOT NULL,
+	params json NULL
+);
+ALTER TABLE topology.workspace ADD CONSTRAINT PK_workspace PRIMARY KEY (id);
+DROP SEQUENCE IF EXISTS topology.workspace_id_seq CASCADE;
+CREATE SEQUENCE topology.workspace_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE topology.workspace ALTER COLUMN id SET DEFAULT nextval('topology.workspace_id_seq');
+ALTER SEQUENCE topology.workspace_id_seq OWNED BY topology.workspace.id;
+ALTER TABLE topology.workspace ADD CONSTRAINT FK_workspace_workspace_type
+    FOREIGN KEY (workspace_type_id) REFERENCES topology.workspace_type (id) ON DELETE No Action ON UPDATE No Action;
+

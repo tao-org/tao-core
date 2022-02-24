@@ -1,15 +1,6 @@
 package ro.cs.tao.services.interfaces;
 
-/**
- * Service for managing the user workspaces
- */
-public interface WorkspaceService extends TAOService {
+import ro.cs.tao.topology.Workspace;
 
-    void startWatching();
-
-    void stopWatching();
-
-    void registerUser(String userName);
-
-    void unregisterUser(String userName);
+public interface WorkspaceService extends CRUDService<Workspace, Integer> {
 }

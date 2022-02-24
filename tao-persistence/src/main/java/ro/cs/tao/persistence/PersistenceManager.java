@@ -107,6 +107,9 @@ public class PersistenceManager {
     @Autowired
     private NamingRuleManager namingRuleManager;
 
+    @Autowired
+    private WorkspaceManager workspaceManager;
+
     @PostConstruct
     public void initialize() {
         componentCache = SimpleCache.create(String.class, ProcessingComponent.class,
@@ -162,4 +165,6 @@ public class PersistenceManager {
     public TagManager tags() { return tagManager; }
 
     public WPSComponentManager wpsComponents() { return wpsComponentManager; }
+
+    public WorkspaceManager workspaces() { return workspaceManager; }
 }

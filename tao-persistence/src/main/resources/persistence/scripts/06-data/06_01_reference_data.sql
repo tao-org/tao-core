@@ -112,6 +112,16 @@ VALUES ('master', 8, 32, 1024, 32, 1.0);
 INSERT INTO topology.node (id, username, password, flavor_id, description, role)
 VALUES ('localhost', '', '', 'master', 'Master Node', 'master');
 
+-- Workspace types
+INSERT INTO topology.workspace_type (id, name, params) VALUES
+(1, 'Local repository', null),
+(2, 'AWS S3 repository', '["aws.region","aws.access.key","aws.secret.key","aws.bucket"]'),
+(3, 'OpenStack Swift S3 repository', '["openstack.auth.url","openstack.tenantId","openstack.domain","openstack.user","openstack.password","openstack.bucket"]');
+
+-- Workspaces
+INSERT INTO topology.workspace (id, name, description, url_prefix, workspace_type_id, params) VALUES
+(1, 'Local files', 'Local folder for products and files', 'file', 1, null);
+
 -- Naming rules
 INSERT INTO product.naming_rule (id, sensor, regex, description) VALUES
 (1, 'Sentinel2', '(S2[A-B])_(MSIL1C|MSIL2A)_(\d{8})T(\d{6})_(N\d{4})_R(\d{3})_T(\d{2}\w{3})_(\d{8}T\d{6})(?:.SAFE)?', 'Sentinel-2 L1C and L2A product naming'),

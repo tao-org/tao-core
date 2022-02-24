@@ -23,7 +23,7 @@ import java.util.Map;
 /**
  * @author Oana H.
  */
-public class QueryValuesMapConverter implements AttributeConverter<Map<String, String>, String> {
+public class MapConverter implements AttributeConverter<Map<String, String>, String> {
 
     @Override
     public String convertToDatabaseColumn(Map<String, String> attribute) {
