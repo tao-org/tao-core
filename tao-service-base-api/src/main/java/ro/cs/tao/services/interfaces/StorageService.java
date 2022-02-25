@@ -123,7 +123,7 @@ public interface StorageService<T> extends TAOService {
      * @return The subtree of the given path
      * @throws IOException if the content cannot be retrieved
      */
-    List<FileObject> listFiles(Path fromPath, Set<Path> exclusions) throws IOException;
+    List<FileObject> listFiles(Path fromPath, Set<Path> exclusions, Path lastItem) throws IOException;
 
     /**
      * Lists the results of the given workflow, regardless of the execution job.
