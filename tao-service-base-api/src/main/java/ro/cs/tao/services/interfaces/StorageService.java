@@ -19,6 +19,7 @@ package ro.cs.tao.services.interfaces;
 import ro.cs.tao.services.model.FileObject;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -30,7 +31,7 @@ import java.util.zip.ZipOutputStream;
  *
  * @author Cosmin Cara
  */
-public interface StorageService<T> extends TAOService {
+public interface StorageService<T, U> extends TAOService {
     /**
      * Indicates if this storage service implementation is intended for the given protocol
      * @param protocol  The protocol
@@ -62,6 +63,16 @@ public interface StorageService<T> extends TAOService {
      * @throws  Exception if the file cannot be stored
      */
     void storeUserFile(T object, String relativeFolder, String description) throws Exception;
+    /**
+     * Stores a file in the given folder, in the user workspace
+     *
+     * @param stream            The input stream of the file object
+     * @param length            The file length. If unknown, pass a value <= 0
+     * @param relativeFolder    The folder path, relative to the workspace of the calling user
+     * @param description       A description for the file
+     * @throws  Exception if the file cannot be stored
+     */
+    void storeFile(InputStream stream, long length, String relativeFolder, String description) throws Exception;
     /**
      * Stores a file in the given folder, in the shared workspace
      *
@@ -141,7 +152,7 @@ public interface StorageService<T> extends TAOService {
      */
     List<FileObject> getJobResults(long jobId) throws IOException;
 
-    Object download(Path path) throws IOException;
+    U download(Path path) throws IOException;
 
     void streamToZip(Path root, ZipOutputStream stream) throws IOException;
 }
