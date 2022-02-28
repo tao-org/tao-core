@@ -107,7 +107,7 @@ public class FileTransferService {
             try {
                 final OutputAccumulator consumer = new OutputAccumulator();
                 if (Executor.execute(consumer, TIMEOUT, unit) != 0) {
-                    System.err.println(String.format("Transfer to %s failed: %s", nodeName, consumer.getOutput()));
+                    System.err.printf("Transfer to %s failed: %s%n", nodeName, consumer.getOutput());
                 } else {
                     final Map<String, String> files = new LinkedHashMap<>();
                     for (String srcFile : sourceFiles) {
