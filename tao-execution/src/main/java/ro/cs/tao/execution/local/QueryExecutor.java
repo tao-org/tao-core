@@ -49,6 +49,7 @@ import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 
 import java.net.InetAddress;
 import java.security.Principal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -105,7 +106,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
             if (values == null || values.size() == 0) {
                 throw new ExecutionException(String.format("No input data for the task %s", task.getId()));
             }
-            Variable variable  = values.stream().filter(v -> "query".equals(v.getKey()) ||
+            Variable variable  = values.stream().filter(v -> DataSourceComponent.QUERY_PARAMETER.equals(v.getKey()) ||
                                                              "local.query".equals(v.getKey()))
                                                 .findFirst().orElse(null);
             if (variable == null) {
@@ -136,6 +137,13 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                         logger.info(String.format("Task %s expects %d inputs, but only %d are locally available. Download for the missing will start",
                                                   task.getId(), rSize, rSize - results.size()));
                     }
+                }
+                variable  = values.stream().filter(v -> DataSourceComponent.SYNC_PARAMETER.equals(v.getKey()))
+                        .findFirst().orElse(null);
+                if (variable != null && variable.getValue() != null) {
+                    // The current resultset must be synchronized with the one received in this parameter
+                    // Synchronization means filtering by dates of the previous resultset
+                    filterByOtherList(results, variable.getValue());
                 }
                 final String sensorName = dataSourceComponent.getSensorName().toLowerCase().replace(" ", "-");
                 dataSourceComponent.setProductStatusListener(this);
@@ -271,6 +279,17 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
         return json;
     }
 
+    private List<String> deserializeResults(String list) {
+        List<String> names = null;
+        try {
+            StringListAdapter adapter = new StringListAdapter();
+            names = adapter.marshal(list);
+        } catch (Exception e) {
+            logger.severe("Deserialization of list failed: " + e.getMessage());
+        }
+        return names;
+    }
+
     private String serializeGroups(List<Tuple<EOProduct, EOProduct>> results) {
         String json = null;
         try {
@@ -285,6 +304,13 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
             logger.severe("Serialization of results failed: " + e.getMessage());
         }
         return json;
+    }
+
+    private void filterByOtherList(List<EOProduct> products, String otherProductsList) {
+        final List<String> names = deserializeResults(otherProductsList);
+        final List<EOProduct> otherProducts = productProvider.getProductsByNames(names.toArray(new String[0]));
+        final Set<LocalDate> otherDates = otherProducts.stream().map(p -> p.getAcquisitionDate().toLocalDate()).collect(Collectors.toSet());
+        products.removeIf(p -> !otherDates.contains(p.getAcquisitionDate().toLocalDate()));
     }
 
     @Override

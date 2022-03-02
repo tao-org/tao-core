@@ -54,6 +54,8 @@ import java.util.logging.Logger;
  */
 @XmlRootElement(name = "dataSourceComponent")
 public class DataSourceComponent extends TaoComponent {
+    public static final String QUERY_PARAMETER = "query";
+    public static final String SYNC_PARAMETER = "dateSync";
 
     @XmlElement
     private String sensorName;
@@ -98,9 +100,18 @@ public class DataSourceComponent extends TaoComponent {
         this.logger = Logger.getLogger(DataSourceComponent.class.getName());
         SourceDescriptor sourceDescriptor = new SourceDescriptor();
         sourceDescriptor.setParentId(this.id);
-        sourceDescriptor.setName("query");
+        sourceDescriptor.setName(QUERY_PARAMETER);
         DataDescriptor srcData = new DataDescriptor();
         srcData.setFormatType(DataFormat.OTHER);
+        sourceDescriptor.setDataDescriptor(srcData);
+        sourceDescriptor.setCardinality(0);
+        addSource(sourceDescriptor);
+
+        sourceDescriptor = new SourceDescriptor();
+        sourceDescriptor.setParentId(this.id);
+        sourceDescriptor.setName(SYNC_PARAMETER);
+        srcData = new DataDescriptor();
+        srcData.setFormatType(DataFormat.RASTER);
         sourceDescriptor.setDataDescriptor(srcData);
         sourceDescriptor.setCardinality(0);
         addSource(sourceDescriptor);
@@ -209,8 +220,8 @@ public class DataSourceComponent extends TaoComponent {
 
     @Override
     public void addSource(SourceDescriptor source) {
-        if (this.sources != null && this.sources.size() == 1) {
-            throw new RuntimeException("A data source component should have only one source descriptor");
+        if (this.sources != null && this.sources.size() == 2) {
+            throw new RuntimeException("A data source component should have exactly two source descriptors");
         }
         super.addSource(source);
     }

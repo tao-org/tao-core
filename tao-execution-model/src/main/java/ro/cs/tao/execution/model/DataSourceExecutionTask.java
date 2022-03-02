@@ -54,7 +54,8 @@ public class DataSourceExecutionTask extends ExecutionTask {
                 break;
             }
         }*/
-        if (!"query".equals(parameterId)) {
+        if (!DataSourceComponent.QUERY_PARAMETER.equals(parameterId) &&
+            !DataSourceComponent.SYNC_PARAMETER.equals(parameterId)) {
             throw new ValidationException(String.format("The parameter ID [%s] does not exists in the component '%s'",
                     parameterId, component.getLabel()));
         }
