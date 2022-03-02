@@ -454,8 +454,19 @@ public class FileProcessFactory implements AutoCloseable {
             final String out = execute("df", "-h", folder.toString());
             if (StringUtils.isNotEmpty(out)) {
                 final List<String> lines = Arrays.stream(out.split(" ")).filter(e -> e.length() > 0).collect(Collectors.toList());
-                final String value = lines.get(9).substring(0, lines.get(9).indexOf('G')).trim();
-                return Long.parseLong(value) << 30;
+                int shift = 30;
+                int idx = lines.get(9).indexOf('G');
+                if (idx < 0) {
+                    idx = lines.get(9).indexOf('T');
+                    if (idx < 0) {
+                        idx = lines.get(9).indexOf('P');
+                        shift += 20;
+                    } else {
+                        shift += 10;
+                    }
+                }
+                final String value = lines.get(9).substring(0, idx).trim();
+                return (value.contains(".") ? (long) Double.parseDouble(value) : Long.parseLong(value)) << shift;
             } else {
                 return 0;
             }

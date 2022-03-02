@@ -16,6 +16,7 @@ import ro.cs.tao.utils.NetUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -170,8 +171,10 @@ public class DownloadTool {
                         continue;
                     }
                     final Class<?> type = currentParameter.getType();
-                    if (LocalDateTime.class.isAssignableFrom(type)) {
-                        query.addParameter(tokens[0], LocalDateTime.parse(tokens[1], DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+                    if (LocalDate.class.isAssignableFrom(type)) {
+                        query.addParameter(tokens[0], LocalDate.parse(tokens[1], DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+                    } else if (LocalDateTime.class.isAssignableFrom(type)) {
+                        query.addParameter(tokens[0], LocalDateTime.parse(tokens[1], DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
                     } else if (Polygon2D.class.isAssignableFrom(type)) {
                         query.addParameter(tokens[0], Polygon2D.fromWKT(tokens[1]));
                     } else if (Integer.class.isAssignableFrom(type)) {
@@ -266,17 +269,29 @@ public class DownloadTool {
             if (!cmd.hasOption(argName)) {
                 return null;
             } else {
-                final String value = String.join(" ", cmd.getOptionValues(argName));
+                final String value = String.join(" ", cmd.getOptionValues(argName)).trim();
                 final List<String> optionValues = new ArrayList<>();
                 final List<Integer> indices = new ArrayList<>();
-                int currentIdx = value.indexOf('=');
+                /*int currentIdx = value.indexOf('=');
                 while (currentIdx > 0) {
                     indices.add(Math.max(value.lastIndexOf(' ', currentIdx), 0));
                     currentIdx = value.indexOf('=', currentIdx + 1);
+                }*/
+                int currentIdx = value.lastIndexOf('=');
+                indices.add(value.length());
+                while (currentIdx > 0) {
+                    if (value.lastIndexOf(' ', currentIdx) > 0) {
+                        indices.add(value.lastIndexOf(' ', currentIdx));
+                    }
+                    currentIdx = value.lastIndexOf('=', currentIdx - 1);
                 }
+                indices.add(0);
                 for (int i = 1; i < indices.size(); i++) {
-                    optionValues.add(value.substring(indices.get(i -1), indices.get(i)).trim());
+                    optionValues.add(value.substring(indices.get(i), indices.get(i - 1)).trim());
                 }
+                /*for (int i = 0; i < tokens.length; i++) {
+                    optionValues
+                }*/
                 //optionValues.add(value.substring(indices.size() - 1).trim());
                 if (Boolean.class.isAssignableFrom(elementClass)) {
                     return optionValues.stream().map(v -> elementClass.cast(Boolean.parseBoolean(v))).collect(Collectors.toList());

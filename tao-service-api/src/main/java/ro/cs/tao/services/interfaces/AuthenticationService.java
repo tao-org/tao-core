@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.services.interfaces;
 
+import ro.cs.tao.security.Token;
 import ro.cs.tao.services.model.auth.AuthInfo;
 
 /**
@@ -46,5 +47,5 @@ public interface AuthenticationService extends TAOService {
      * @param user          The user login
      * @param refreshToken  The token used to get a new access token
      */
-    String getNewToken(String user, String refreshToken);
+    Token getNewToken(String user, String refreshToken);
 }

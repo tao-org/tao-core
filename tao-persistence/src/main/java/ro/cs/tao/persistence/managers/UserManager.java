@@ -25,7 +25,10 @@ import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.UserProvider;
 import ro.cs.tao.persistence.repository.GroupRepository;
 import ro.cs.tao.persistence.repository.UserRepository;
+import ro.cs.tao.persistence.repository.WorkspaceRepository;
 import ro.cs.tao.security.SystemPrincipal;
+import ro.cs.tao.topology.WorkspaceFactory;
+import ro.cs.tao.topology.WorkspaceType;
 import ro.cs.tao.user.Group;
 import ro.cs.tao.user.User;
 import ro.cs.tao.user.UserPreference;
@@ -45,6 +48,8 @@ public class UserManager extends EntityManager<User, Long, UserRepository> imple
     /** CRUD Repository for Group entities */
     @Autowired
     private GroupRepository groupRepository;
+    @Autowired
+    private WorkspaceRepository workspaceRepository;
 
     @Override
     public boolean login(String user, String password) {
@@ -86,7 +91,7 @@ public class UserManager extends EntityManager<User, Long, UserRepository> imple
         }*/
 
         // create new User entity
-        final User user = new User();
+        User user = new User();
         user.setUsername(newUserInfo.getUsername());
         user.setEmail(newUserInfo.getEmail());
         if (!StringUtilities.isNullOrEmpty(newUserInfo.getAlternativeEmail())) {
@@ -128,7 +133,9 @@ public class UserManager extends EntityManager<User, Long, UserRepository> imple
         user.setPassword(newUserInfo.getPassword());
 
         // save the new user and return it
-        return repository.save(user);
+        user = repository.save(user);
+        createWorkspaces(user.getUsername());
+        return user;
     }
 
     @Override
@@ -537,5 +544,15 @@ public class UserManager extends EntityManager<User, Long, UserRepository> imple
     	return newUser.getActualProcessingQuota();
     }
     // End Quota related methods
+
+    @Override
+    public void createWorkspaces(String user) {
+        workspaceRepository.save(WorkspaceFactory.create(WorkspaceType.LOCAL, user));
+        try {
+            workspaceRepository.save(WorkspaceFactory.create(WorkspaceType.AWS, user));
+        } catch (Exception ignored) { }
+    }
+
+
     //endregion
 }

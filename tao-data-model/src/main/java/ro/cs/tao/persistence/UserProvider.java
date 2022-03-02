@@ -31,4 +31,5 @@ public interface UserProvider extends EntityProvider<User, Long> {
     Map<String, String[]> listUnicityInfo();
     default int defaultCPUQuota() { return 8; }
     default int defaultMemoryQuota() { return 16; }
+    default void createWorkspaces(String user) { }
 }
