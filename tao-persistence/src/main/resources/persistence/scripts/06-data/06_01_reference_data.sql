@@ -14,6 +14,10 @@ INSERT INTO common.tag_type (id, description) VALUES
 INSERT INTO component.condition (id, description) VALUES
 (1, 'Equals'), (2, 'Not equals'), (3, 'Less than'), (4, 'Less than or equal'), (5, 'Greater than'), (6, 'Greater than or equals'), (7, 'In'), (8, 'Not in');
 
+-- Container type
+INSERT INTO component.container_type (id, description) VALUES
+(1, 'DOCKER'), (2, 'WPS');
+
 -- Data formats
 INSERT INTO product.data_format (type) VALUES
 ('RASTER'), ('VECTOR'), ('OTHER'), ('DB_CONNECTION'), ('FOLDER');
@@ -114,13 +118,9 @@ VALUES ('localhost', '', '', 'master', 'Master Node', 'master');
 
 -- Workspace types
 INSERT INTO topology.workspace_type (id, name, params) VALUES
-(1, 'Local repository', null),
+(1, 'Local repository', '["root"]'),
 (2, 'AWS S3 repository', '["aws.region","aws.access.key","aws.secret.key","aws.bucket"]'),
 (3, 'OpenStack Swift S3 repository', '["openstack.auth.url","openstack.tenantId","openstack.domain","openstack.user","openstack.password","openstack.bucket"]');
-
--- Workspaces
-INSERT INTO topology.workspace (id, name, description, url_prefix, workspace_type_id, params) VALUES
-(1, 'Local files', 'Local folder for products and files', 'file', 1, null);
 
 -- Naming rules
 INSERT INTO product.naming_rule (id, sensor, regex, description) VALUES

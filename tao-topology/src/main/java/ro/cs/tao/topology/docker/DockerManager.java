@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.docker.Container;
+import ro.cs.tao.docker.ContainerType;
 import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.Topic;
 import ro.cs.tao.persistence.ContainerProvider;
@@ -97,7 +98,7 @@ public class DockerManager {
 
     private List<Container> listAvailableDockerImages() {
         List<Container> containers = getDockerImages();
-        List<Container> dbContainers = containerProvider.list();
+        List<Container> dbContainers = containerProvider.getByType(ContainerType.DOCKER);
         if (containers.size() == 0) {
             logger.warning("Docker execution failed. Check that Docker is installed and the sudo credentials are valid");
         } else {

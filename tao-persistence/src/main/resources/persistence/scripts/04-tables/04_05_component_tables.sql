@@ -71,6 +71,21 @@ ALTER TABLE component.fetch_mode ALTER COLUMN id SET DEFAULT nextval('component.
 ALTER SEQUENCE component.fetch_mode_id_seq OWNED BY component.fetch_mode.id;
 
 -------------------------------------------------------------------------------
+-- table: component.container_type
+DROP TABLE IF EXISTS component.container_type CASCADE;
+CREATE TABLE component.container_type
+(
+	id integer NOT NULL,
+	description varchar(50) NOT NULL
+);
+ALTER TABLE component.container_type ADD CONSTRAINT PK_container_type
+	PRIMARY KEY (id);
+DROP SEQUENCE IF EXISTS component.container_type_id_seq CASCADE;
+CREATE SEQUENCE component.container_type_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE component.container_type ALTER COLUMN id SET DEFAULT nextval('component.container_type_id_seq');
+ALTER SEQUENCE component.container_type_id_seq OWNED BY component.container_type.id;
+
+-------------------------------------------------------------------------------
 -- table: container
 DROP TABLE IF EXISTS component.container CASCADE;
 CREATE TABLE component.container
@@ -78,6 +93,7 @@ CREATE TABLE component.container
 	id varchar(1024) NOT NULL,
 	name varchar(1024) NOT NULL,
 	description varchar(1024) NOT NULL,
+	type_id int NULL DEFAULT 1,
 	tag varchar(1024) NOT NULL,
 	application_path varchar(1024) NULL,
 	logo_image varchar NULL,
@@ -88,6 +104,8 @@ CREATE TABLE component.container
 );
 ALTER TABLE component.container ADD CONSTRAINT PK_container
 	PRIMARY KEY (id);
+ALTER TABLE component.container ADD CONSTRAINT FK_container_container_type
+	FOREIGN KEY (type_id) REFERENCES component.container_type (id) ON DELETE No Action ON UPDATE No Action;
 
 -------------------------------------------------------------------------------
 -- table: container_applications

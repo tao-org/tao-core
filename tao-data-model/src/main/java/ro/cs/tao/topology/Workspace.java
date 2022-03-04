@@ -65,6 +65,9 @@ public class Workspace extends IntIdentifiable {
         if (!this.type.getParameters().contains(key)) {
             throw new IllegalArgumentException("[" + key + "] not supported");
         }
+        if (this.parameters == null) {
+            this.parameters = new HashMap<>();
+        }
         this.parameters.put(key, value);
     }
 
@@ -72,7 +75,7 @@ public class Workspace extends IntIdentifiable {
         if (!this.type.getParameters().contains(key)) {
             throw new IllegalArgumentException("[" + key + "] not supported");
         }
-        return this.parameters.get(key);
+        return this.parameters != null ? this.parameters.get(key) : null;
     }
 
     @Override

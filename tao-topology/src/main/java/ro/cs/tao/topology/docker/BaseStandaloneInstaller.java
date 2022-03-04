@@ -1,5 +1,7 @@
 package ro.cs.tao.topology.docker;
 
+import ro.cs.tao.docker.Container;
+import ro.cs.tao.docker.ContainerType;
 import ro.cs.tao.utils.DockerHelper;
 
 import java.io.IOException;
@@ -18,6 +20,13 @@ public abstract class BaseStandaloneInstaller extends BaseUtilityInstaller
             throw new IOException("This plugin requires Docker to be installed");
         }
         DockerManager.runDaemon(getContainerName(), startupArguments());
+    }
+
+    @Override
+    public Container install() throws IOException {
+        final Container container = super.install();
+        container.setType(ContainerType.UTILITY);
+        return container;
     }
 
     @Override
