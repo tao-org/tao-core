@@ -22,6 +22,7 @@ import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.enums.TagType;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.docker.Container;
+import ro.cs.tao.docker.ContainerType;
 import ro.cs.tao.persistence.ContainerProvider;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.ProcessingComponentProvider;
@@ -161,6 +162,7 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
             dbContainer.setId(container != null ? container.getId() : getContainerName());
             dbContainer.setName(getContainerName());
             dbContainer.setTag(container != null ? container.getTag() : getContainerName());
+            dbContainer.setType(ContainerType.DOCKER);
             dbContainer = initializeContainer(dbContainer, dockerPath != null ? getPathInContainer() : getPathInSystem());
             if (dbContainer == null) {
                 logger.severe(String.format("Container %s failed to register", getContainerName()));
@@ -177,6 +179,7 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
             final String str = reader.lines().collect(Collectors.joining(""));
             container = JacksonUtil.fromString(str, Container.class);
         }
+        container.setType(ContainerType.DOCKER);
         return container;
     }
 

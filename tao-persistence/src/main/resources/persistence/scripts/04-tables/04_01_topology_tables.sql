@@ -101,7 +101,7 @@ ALTER TABLE topology.workspace_type ADD CONSTRAINT PK_workspace_type PRIMARY KEY
 DROP TABLE IF EXISTS topology.workspace CASCADE;
 CREATE TABLE topology.workspace
 (
-    id integer NOT NULL,
+    id serial NOT NULL,
 	name varchar(250) NOT NULL,
 	description text NOT NULL,
 	url_prefix varchar(20) NOT NULL,
