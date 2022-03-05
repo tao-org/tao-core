@@ -10,6 +10,7 @@ public class BlockingQueueWorker<E> extends Thread {
     private final NamedThreadPoolExecutor executor;
     private final Logger logger;
     private volatile boolean stopped;
+    private volatile boolean paused;
 
     public BlockingQueueWorker(BlockingQueue<E> monitoredQueue, Function<E, Void> runnable) {
         this(monitoredQueue, runnable, 1);
@@ -39,15 +40,19 @@ public class BlockingQueueWorker<E> extends Thread {
     public void run() {
         while (!stopped) {
             try {
-                E entry = this.monitoredQueue.take();
-                logger.finest("Dequeued " + entry);
-                this.executor.submit(() -> {
-                    try {
-                        this.work.apply(entry);
-                    } catch (Exception e) {
-                        logger.severe(e.getMessage());
-                    }
-                });
+                if (this.paused) {
+                    Thread.sleep(10000);
+                } else {
+                    E entry = this.monitoredQueue.take();
+                    logger.finest("Dequeued " + entry);
+                    this.executor.submit(() -> {
+                        try {
+                            this.work.apply(entry);
+                        } catch (Exception e) {
+                            logger.severe(e.getMessage());
+                        }
+                    });
+                }
             } catch (InterruptedException e) {
                 logger.warning(e.getMessage());
             }
@@ -61,5 +66,13 @@ public class BlockingQueueWorker<E> extends Thread {
     public void setParallelism(int value) {
         this.executor.setCorePoolSize(value);
         this.executor.setMaximumPoolSize(value);
+    }
+
+    public boolean isPaused() {
+        return paused;
+    }
+
+    public void setPaused(boolean paused) {
+        this.paused = paused;
     }
 }
