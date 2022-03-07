@@ -136,6 +136,8 @@ public interface StorageService<T, U> extends TAOService {
      */
     List<FileObject> listFiles(Path fromPath, Set<Path> exclusions, Path lastItem) throws IOException;
 
+    List<FileObject> listTree(Path fromPath) throws IOException;
+
     /**
      * Lists the results of the given workflow, regardless of the execution job.
      * The results come as a combination of file information and product information.

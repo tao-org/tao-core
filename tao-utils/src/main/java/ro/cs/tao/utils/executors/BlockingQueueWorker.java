@@ -40,7 +40,7 @@ public class BlockingQueueWorker<E> extends Thread {
     public void run() {
         while (!stopped) {
             try {
-                if (this.paused) {
+                if (this.paused || this.executor.getRunningTasks() >= this.executor.getMaximumPoolSize()) {
                     Thread.sleep(10000);
                 } else {
                     E entry = this.monitoredQueue.take();
