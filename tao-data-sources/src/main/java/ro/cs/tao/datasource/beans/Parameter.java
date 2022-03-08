@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.datasource.beans;
 
+import ro.cs.tao.EnumUtils;
 import ro.cs.tao.component.ParameterDescriptor;
 import ro.cs.tao.component.enums.ParameterType;
 import ro.cs.tao.datasource.param.JavaType;
@@ -88,11 +89,16 @@ public class Parameter {
 
     public ParameterDescriptor toParameterDescriptor() {
         final ParameterDescriptor descriptor = new ParameterDescriptor();
+        descriptor.setId(this.name);
         descriptor.setName(this.name);
         descriptor.setDefaultValue(this.value);
         descriptor.setValueSet(this.valueSet);
         descriptor.setType(ParameterType.REGULAR);
-        descriptor.setDataType(JavaType.valueOf(this.type).value());
+        JavaType jType = EnumUtils.getEnumConstantByFriendlyName(JavaType.class, this.type);
+        if (jType == null) {
+            jType = JavaType.STRING;
+        }
+        descriptor.setDataType(jType.value());
         descriptor.setDescription(this.name);
         return descriptor;
     }
