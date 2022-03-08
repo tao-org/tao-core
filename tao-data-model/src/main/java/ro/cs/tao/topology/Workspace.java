@@ -12,6 +12,7 @@ public class Workspace extends IntIdentifiable {
     private String userName;
     private WorkspaceType type;
     private HashMap<String, String> parameters;
+    private boolean readOnly;
 
     public String getName() {
         return name;
@@ -59,6 +60,14 @@ public class Workspace extends IntIdentifiable {
 
     public void setParameters(HashMap<String, String> parameters) {
         this.parameters = parameters;
+    }
+
+    public boolean isReadOnly() {
+        return readOnly;
+    }
+
+    public void setReadOnly(boolean readOnly) {
+        this.readOnly = readOnly;
     }
 
     public void addParameter(String key, String value) {

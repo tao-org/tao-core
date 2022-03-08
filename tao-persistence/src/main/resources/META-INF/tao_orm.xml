@@ -1389,6 +1389,9 @@
             <basic name="type">
                 <column name="workspace_type_id" nullable="false" column-definition="int NOT NULL"/>
             </basic>
+            <basic name="readOnly">
+                <column name="read_only" nullable="false" column-definition="boolean NOT NULL"/>
+            </basic>
             <basic name="parameters">
                 <column name="params" nullable="true" column-definition="json"/>
             </basic>
