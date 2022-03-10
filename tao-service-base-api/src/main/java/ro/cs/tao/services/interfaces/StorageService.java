@@ -83,6 +83,8 @@ public interface StorageService<T, U> extends TAOService {
      */
     void storePublicFile(T object, String relativeFolder, String description) throws Exception;
 
+    boolean exists(String path) throws Exception;
+
     /**
      * Removes the file or folder with the given name.
      *
