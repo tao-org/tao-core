@@ -1,18 +1,17 @@
 package ro.cs.tao.persistence.convert;
 
-import ro.cs.tao.component.WPSAuthentication;
-import ro.cs.tao.utils.JacksonUtil;
+import ro.cs.tao.component.enums.AuthenticationType;
 
 import javax.persistence.AttributeConverter;
 
-public class AuthenticationTypeConverter implements AttributeConverter<WPSAuthentication, String> {
+public class AuthenticationTypeConverter implements AttributeConverter<AuthenticationType, String> {
     @Override
-    public String convertToDatabaseColumn(WPSAuthentication wpsAuthentication) {
-        return wpsAuthentication != null ? JacksonUtil.toString(wpsAuthentication) : null;
+    public String convertToDatabaseColumn(AuthenticationType type) {
+        return type != null ? type.name() : null;
     }
 
     @Override
-    public WPSAuthentication convertToEntityAttribute(String value) {
-        return value != null ? JacksonUtil.fromString(value, WPSAuthentication.class) : null;
+    public AuthenticationType convertToEntityAttribute(String value) {
+        return value != null ? AuthenticationType.valueOf(value) : null;
     }
 }

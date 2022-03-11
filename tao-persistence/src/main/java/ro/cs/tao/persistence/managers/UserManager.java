@@ -547,9 +547,9 @@ public class UserManager extends EntityManager<User, Long, UserRepository> imple
 
     @Override
     public void createWorkspaces(String user) {
-        workspaceRepository.save(WorkspaceFactory.create(WorkspaceType.LOCAL, user));
+        workspaceRepository.save(WorkspaceFactory.createDefault(WorkspaceType.LOCAL, user));
         try {
-            workspaceRepository.save(WorkspaceFactory.create(WorkspaceType.AWS, user));
+            workspaceRepository.save(WorkspaceFactory.createDefault(WorkspaceType.AWS, user));
         } catch (Exception ignored) { }
     }
 

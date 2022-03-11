@@ -37,7 +37,7 @@ public class WorkspaceFactory {
         }
     }
 
-    public static Workspace create(WorkspaceType type, String user) {
+    public static Workspace createDefault(WorkspaceType type, String user) {
         final Workspace workspace = instance.templates.get(type);
         if (workspace == null) {
             throw new IllegalArgumentException("Workspace type " + type.name() + " is disabled");
@@ -46,16 +46,20 @@ public class WorkspaceFactory {
         final ConfigurationProvider cfgProvider = ConfigurationManager.getInstance();
         switch (type) {
             case LOCAL:
-                workspace.getParameters().replace("root",
+                workspace.getParameters().replace(type.rootKey(),
                                                   cfgProvider.getValue("workspace.location") + "/" + user);
                 break;
             case AWS:
-                workspace.getParameters().replace("aws.bucket",
-                                                  cfgProvider.getValue("aws.bucket") + "/user");
-                workspace.getParameters().replace("aws.secret.key", cfgProvider.getValue("aws.secret.key"));
-                workspace.getParameters().replace("aws.access.key", cfgProvider.getValue("aws.access.key"));
-                break;
             case SWIFT:
+                final HashMap<String, String> parameters = workspace.getParameters();
+                for (String key : parameters.keySet()) {
+                    if (type.rootKey().equals(key)) {
+                        parameters.replace(key, cfgProvider.getValue(type.rootKey()) + "/" + user);
+                    } else {
+                        parameters.replace(key, cfgProvider.getValue(key));
+                    }
+                }
+                break;
             default:
                 break;
         }

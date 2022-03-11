@@ -2,6 +2,7 @@ package ro.cs.tao.component;
 
 import ro.cs.tao.component.enums.ProcessingComponentVisibility;
 import ro.cs.tao.component.validation.ValidationException;
+import ro.cs.tao.docker.Container;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.ArrayList;
@@ -17,7 +18,7 @@ public class WPSComponent extends TaoComponent {
     private ProcessingComponentVisibility visibility;
     private boolean active;
     private String owner;
-    private WPSAuthentication authentication;
+    private Container service;
 
     public WPSComponent() { }
 
@@ -72,12 +73,12 @@ public class WPSComponent extends TaoComponent {
         this.owner = owner;
     }
 
-    public WPSAuthentication getAuthentication() {
-        return authentication;
+    public Container getService() {
+        return service;
     }
 
-    public void setAuthentication(WPSAuthentication authentication) {
-        this.authentication = authentication;
+    public void setService(Container service) {
+        this.service = service;
     }
 
     /**
@@ -115,6 +116,7 @@ public class WPSComponent extends TaoComponent {
         cloned.visibility = this.visibility;
         cloned.active = this.active;
         cloned.owner = this.owner;
+        cloned.service = this.service;
         if (this.sources != null) {
             List<SourceDescriptor> clonedSources = new ArrayList<>(this.sources.size());
             for (SourceDescriptor sourceDescriptor : this.sources) {

@@ -609,6 +609,24 @@ ALTER TABLE component.data_source_configuration ADD CONSTRAINT PK_data_source_co
 ALTER TABLE component.data_source_configuration ADD CONSTRAINT FK_data_source_configuration_data_source_component
     FOREIGN KEY (id) REFERENCES component.data_source_component (id) ON DELETE No Action ON UPDATE No Action;
 
+
+-------------------------------------------------------------------------------
+-- table: component.wps_authentication
+DROP TABLE IF EXISTS component.wps_authentication CASCADE;
+CREATE TABLE component.wps_authentication
+(
+	id varchar(1024) NOT NULL,
+	auth_type varchar(20) NOT NULL,
+    username varchar(50),
+	password text,
+	login_url varchar(1024),
+	header_name varchar(50)
+);
+ALTER TABLE component.wps_authentication ADD CONSTRAINT PK_wps_authentication
+	PRIMARY KEY (id);
+ALTER TABLE component.wps_authentication ADD CONSTRAINT FK_wps_authentication_container
+	FOREIGN KEY (id) REFERENCES component.container (id) ON DELETE No Action ON UPDATE No Action;
+
 -------------------------------------------------------------------------------
 -- table: component.wps_component
 DROP TABLE IF EXISTS component.wps_component CASCADE;
@@ -625,7 +643,7 @@ CREATE TABLE component.wps_component
 	capability  varchar(512) NOT NULL,
 	visibility_id integer NOT NULL,
 	owner_user varchar NULL,
-	auth_info json NULL,
+	container_id varchar(1024) NOT NULL,
 	parameters json NULL,
     active boolean NULL DEFAULT true,
 	tags text NULL,
@@ -634,6 +652,8 @@ CREATE TABLE component.wps_component
 );
 ALTER TABLE component.wps_component ADD CONSTRAINT PK_wps_component
 	PRIMARY KEY (id);
+ALTER TABLE component.wps_component ADD CONSTRAINT FK_wps_component_container
+	FOREIGN KEY (container_id) REFERENCES component.container (id) ON DELETE No Action ON UPDATE No Action;
 
 -------------------------------------------------------------------------------
 -- table: component.wps_component_sources

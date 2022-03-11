@@ -2,6 +2,7 @@ package ro.cs.tao.services.model.component;
 
 import ro.cs.tao.component.WPSComponent;
 import ro.cs.tao.component.enums.ProcessingComponentVisibility;
+import ro.cs.tao.docker.Container;
 
 import java.util.List;
 
@@ -14,6 +15,7 @@ public class WPSComponentInfo {
     private String authors;
     private String copyright;
     private String nodeAffinity;
+    private String containerId;
     private List<String> tags;
 
     private ProcessingComponentVisibility visibility;
@@ -28,6 +30,10 @@ public class WPSComponentInfo {
         this.nodeAffinity = component.getNodeAffinity();
         this.tags = component.getTags();
         this.visibility = component.getVisibility();
+        final Container service = component.getService();
+        if (service != null) {
+            this.containerId = service.getId();
+        }
     }
 
     public String getId() {
@@ -100,5 +106,13 @@ public class WPSComponentInfo {
 
     public void setVisibility(ProcessingComponentVisibility visibility) {
         this.visibility = visibility;
+    }
+
+    public String getContainerId() {
+        return containerId;
+    }
+
+    public void setContainerId(String containerId) {
+        this.containerId = containerId;
     }
 }

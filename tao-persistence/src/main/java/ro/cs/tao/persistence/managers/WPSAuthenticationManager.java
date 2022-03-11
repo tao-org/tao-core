@@ -1,0 +1,58 @@
+package ro.cs.tao.persistence.managers;
+
+import org.springframework.stereotype.Component;
+import ro.cs.tao.component.WPSAuthentication;
+import ro.cs.tao.component.enums.AuthenticationType;
+import ro.cs.tao.persistence.PersistenceException;
+import ro.cs.tao.persistence.WPSAuthenticationProvider;
+import ro.cs.tao.persistence.repository.WPSAuthenticationRepository;
+import ro.cs.tao.utils.Crypto;
+import ro.cs.tao.utils.StringUtilities;
+
+@Component("wpsAuthenticationManager")
+public class WPSAuthenticationManager
+        extends EntityManager<WPSAuthentication, String, WPSAuthenticationRepository>
+        implements WPSAuthenticationProvider {
+
+    @Override
+    public WPSAuthentication get(String id) {
+        final WPSAuthentication authentication = super.get(id);
+        if (authentication.getUser() != null) {
+            authentication.setPassword(Crypto.decrypt(authentication.getPassword(), authentication.getUser()));
+        }
+        return authentication;
+    }
+
+    @Override
+    public WPSAuthentication save(WPSAuthentication entity) throws PersistenceException {
+        if (entity.getUser() != null) {
+            entity.setPassword(Crypto.encrypt(entity.getPassword(), entity.getUser()));
+        }
+        return super.save(entity);
+    }
+
+    @Override
+    public WPSAuthentication update(WPSAuthentication entity) throws PersistenceException {
+        if (entity.getUser() != null) {
+            entity.setPassword(Crypto.encrypt(entity.getPassword(), entity.getUser()));
+        }
+        return super.update(entity);
+    }
+
+    @Override
+    protected String identifier() {
+        return "id";
+    }
+
+    @Override
+    protected boolean checkEntity(WPSAuthentication entity) {
+        return !StringUtilities.isNullOrEmpty(entity.getId())
+                && entity.getType() != null
+                && (entity.getType() == AuthenticationType.NONE ||
+                    (!StringUtilities.isNullOrEmpty(entity.getUser())
+                            && !StringUtilities.isNullOrEmpty(entity.getPassword())
+                            && !StringUtilities.isNullOrEmpty(entity.getLoginUrl())
+                            && (entity.getType() == AuthenticationType.BASIC
+                                || !StringUtilities.isNullOrEmpty(entity.getAuthHeader()))));
+    }
+}
