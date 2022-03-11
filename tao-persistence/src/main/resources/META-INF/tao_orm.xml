@@ -351,6 +351,28 @@
         </attributes>
     </entity>
 
+    <entity class="ro.cs.tao.component.WPSAuthentication" access="PROPERTY">
+        <table name="component.wps_authentication"/>
+        <convert converter="ro.cs.tao.persistence.convert.AuthenticationTypeConverter" attribute-name="type" />
+        <attributes>
+            <basic name="type">
+                <column name="auth_type" nullable="false" column-definition="varchar(20) NOT NULL"/>
+            </basic>
+            <basic name="user">
+                <column name="username" nullable="true" column-definition="varchar(50)"/>
+            </basic>
+            <basic name="password">
+                <column name="password" nullable="true" column-definition="text"/>
+            </basic>
+            <basic name="loginUrl">
+                <column name="login_url" nullable="true" column-definition="varchar(1024)"/>
+            </basic>
+            <basic name="authHeader">
+                <column name="header_name" nullable="true" column-definition="varchar(20)"/>
+            </basic>
+        </attributes>
+    </entity>
+
     <entity class="ro.cs.tao.component.ProcessingComponent" access="PROPERTY">
         <table name="component.processing_component"/>
 
@@ -440,7 +462,6 @@
         </association-override>
 
         <convert converter="ro.cs.tao.persistence.convert.ProcessingComponentVisibilityConverter" attribute-name="visibility" />
-        <convert converter="ro.cs.tao.persistence.convert.AuthenticationTypeConverter" attribute-name="authentication" />
         <convert converter="ro.cs.tao.persistence.convert.ParameterDescriptorListConverter" attribute-name="parameters" />
         <attributes>
             <basic name="remoteAddress">
@@ -467,6 +488,9 @@
             <basic name="parameters">
                 <column name="parameters" nullable="true" column-definition="json NULL" />
             </basic>
+            <many-to-one name="authentication" fetch="EAGER" target-entity="ro.cs.tao.docker.Container">
+                <join-column name="container_id" nullable="true"/>
+            </many-to-one>
         </attributes>
     </entity>
 

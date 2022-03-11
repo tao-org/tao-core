@@ -13,7 +13,6 @@ import org.springframework.context.annotation.ImportResource;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import ro.cs.tao.component.*;
-import ro.cs.tao.component.enums.AuthenticationType;
 import ro.cs.tao.component.enums.ParameterType;
 import ro.cs.tao.component.enums.ProcessingComponentVisibility;
 import ro.cs.tao.component.template.BasicTemplate;
@@ -1958,13 +1957,13 @@ public class PersistenceManagerTest {
         component.setCapabilityName("remote name");
         component.setOwner("avl1");
         component.setRemoteAddress("http://localhost/wps");
-        WPSAuthentication auth = new WPSAuthentication();
+        /*WPSAuthentication auth = new WPSAuthentication();
         auth.setLoginUrl("http://localhost/login");
         auth.setUser("user");
         auth.setPassword("password");
         auth.setType(AuthenticationType.BASIC);
         auth.setAuthHeader("Authorization");
-        component.setAuthentication(auth);
+        component.setAuthentication(auth);*/
         component.setActive(true);
         List<ParameterDescriptor> parameters = new ArrayList<>();
 

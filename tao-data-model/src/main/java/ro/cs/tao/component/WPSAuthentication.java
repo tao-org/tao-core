@@ -2,12 +2,16 @@ package ro.cs.tao.component;
 
 import ro.cs.tao.component.enums.AuthenticationType;
 
-public class WPSAuthentication {
+public class WPSAuthentication extends StringIdentifiable {
     private AuthenticationType type;
     private String user;
     private String password;
     private String loginUrl;
     private String authHeader;
+
+    public WPSAuthentication() {
+        super();
+    }
 
     public AuthenticationType getType() {
         return type;

@@ -110,6 +110,9 @@ public class PersistenceManager {
     @Autowired
     private WorkspaceManager workspaceManager;
 
+    @Autowired
+    private WPSAuthenticationManager wpsAuthenticationManager;
+
     @PostConstruct
     public void initialize() {
         componentCache = SimpleCache.create(String.class, ProcessingComponent.class,
@@ -167,4 +170,6 @@ public class PersistenceManager {
     public WPSComponentManager wpsComponents() { return wpsComponentManager; }
 
     public WorkspaceManager workspaces() { return workspaceManager; }
+
+    public WPSAuthenticationManager wpsAuthentication() { return wpsAuthenticationManager; }
 }
