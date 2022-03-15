@@ -38,6 +38,7 @@ import ro.cs.tao.utils.StringUtilities;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.logging.Logger;
 
 @Configuration
 @EnableTransactionManagement
@@ -550,9 +551,9 @@ public class UserManager extends EntityManager<User, Long, UserRepository> imple
         workspaceRepository.save(WorkspaceFactory.createDefault(WorkspaceType.LOCAL, user));
         try {
             workspaceRepository.save(WorkspaceFactory.createDefault(WorkspaceType.AWS, user));
-        } catch (Exception ignored) { }
+        } catch (Exception e) {
+            Logger.getLogger(UserManager.class.getName()).warning(e.getMessage());
+        }
     }
-
-
     //endregion
 }
