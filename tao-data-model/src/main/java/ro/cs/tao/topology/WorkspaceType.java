@@ -47,4 +47,13 @@ public enum WorkspaceType implements TaoEnum<Integer> {
     public String rootKey() { return this.rootKey; }
 
     public Set<String> getParameters() { return new HashSet<>(parameters); }
+    
+    public static WorkspaceType fromPrefix(String prefix) {
+        for (WorkspaceType type : WorkspaceType.values()) {
+            if (type.prefix.equals(prefix)) {
+                return type;
+            }
+        }
+        return null;
+    }
 }

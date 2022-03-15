@@ -52,12 +52,20 @@ public class WorkspaceFactory {
             case AWS:
             case SWIFT:
                 final HashMap<String, String> parameters = workspace.getParameters();
+                String value;
                 for (String key : parameters.keySet()) {
                     if (type.rootKey().equals(key)) {
-                        parameters.replace(key, cfgProvider.getValue(type.rootKey()) + "/" + user);
+                        value = cfgProvider.getValue(type.rootKey());
+                        if (value != null) {
+                            value += "/" + user;
+                        }
                     } else {
-                        parameters.replace(key, cfgProvider.getValue(key));
+                        value = cfgProvider.getValue(key);
                     }
+                    if (value == null) {
+                        throw new TopologyException("Values for default workspace of type" + type.name() + " not configured");
+                    }
+                    parameters.replace(key, value);
                 }
                 break;
             default:
