@@ -32,4 +32,9 @@ public class WPSComponentManager extends TaoComponentManager<WPSComponent, WPSCo
     protected boolean checkEntity(WPSComponent entity) {
         return checkComponent(entity);
     }
+
+    @Override
+    protected boolean checkComponent(TaoComponent component) {
+        return component.getLabel() != null && component.getVersion() != null;
+    }
 }
