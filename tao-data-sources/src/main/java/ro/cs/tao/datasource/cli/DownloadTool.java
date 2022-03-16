@@ -195,13 +195,7 @@ public class DownloadTool {
                     System.exit(1);
                 }
                 final List<EOProduct> results = query.execute();
-                if (getArgValue(commandLine, Constants.LATEST, Boolean.class, false)) {
-                    if (results != null && results.size() > 0) {
-                        EOProduct last = results.get(results.size() - 1);
-                        results.clear();
-                        results.add(last);
-                    }
-                }
+                // If flagged, remove products that not fully cover the AOI
                 if (getArgValue(commandLine, Constants.FULL_COVERAGE, Boolean.class, false)) {
                     final QueryParameter<Polygon2D> footprintParam = (QueryParameter<Polygon2D>) query.getParameters().get(CommonParameterNames.FOOTPRINT);
                     if (footprintParam != null) {
@@ -218,6 +212,14 @@ public class DownloadTool {
                                 }
                             });
                         }
+                    }
+                }
+                // If flagged, keep only the latest product from the results
+                if (getArgValue(commandLine, Constants.LATEST, Boolean.class, false)) {
+                    if (results != null && results.size() > 0) {
+                        EOProduct last = results.get(results.size() - 1);
+                        results.clear();
+                        results.add(last);
                     }
                 }
                 if (queryOnly) {
