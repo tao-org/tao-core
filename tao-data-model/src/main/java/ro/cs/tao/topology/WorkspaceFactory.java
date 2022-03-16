@@ -71,6 +71,7 @@ public class WorkspaceFactory {
             default:
                 break;
         }
+        workspace.setSystem(true);
         return workspace;
     }
 }

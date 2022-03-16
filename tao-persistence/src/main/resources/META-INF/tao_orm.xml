@@ -1410,6 +1410,9 @@
             <basic name="readOnly">
                 <column name="read_only" nullable="false" column-definition="boolean NOT NULL"/>
             </basic>
+            <basic name="system">
+                <column name="system" nullable="true" column-definition="boolean DEFAULT false"/>
+            </basic>
             <basic name="parameters">
                 <column name="params" nullable="true" column-definition="json"/>
             </basic>

@@ -108,6 +108,7 @@ CREATE TABLE topology.workspace
 	username varchar(50),
 	workspace_type_id int NOT NULL,
 	read_only boolean NOT NULL,
+	system boolean DEFAULT false,
 	params json NULL
 );
 ALTER TABLE topology.workspace ADD CONSTRAINT PK_workspace PRIMARY KEY (id);
