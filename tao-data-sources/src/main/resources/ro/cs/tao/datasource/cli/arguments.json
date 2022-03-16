@@ -49,6 +49,14 @@
       "options": ["output"]
     },
     {
+      "name": "latestOnly",
+      "options": ["latestOnly"]
+    },
+    {
+      "name": "fullCoverage",
+      "options": ["fullCoverage"]
+    },
+    {
       "name": "proxyType",
       "options": ["proxyType"]
     },
@@ -159,6 +167,26 @@
       "valueSeparator": null,
       "required": false,
       "description": "Maximum number of products. Default is 20."
+    },
+    {
+      "name": "latestOnly",
+      "opt": "latest",
+      "longOpt": "latestOnly",
+      "cardinality": 0,
+      "hint": null,
+      "valueSeparator": null,
+      "required": false,
+      "description": "Return only the most recent product."
+    },
+    {
+      "name": "fullCoverage",
+      "opt": "full",
+      "longOpt": "fullCoverage",
+      "cardinality": 0,
+      "hint": null,
+      "valueSeparator": null,
+      "required": false,
+      "description": "Return only the products that fully cover the given footprint."
     },
     {
       "name": "mode",

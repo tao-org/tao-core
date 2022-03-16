@@ -2,14 +2,18 @@ package ro.cs.tao.datasource.cli;
 
 import com.fasterxml.jackson.databind.ObjectReader;
 import org.apache.commons.cli.*;
+import org.locationtech.jts.geom.Geometry;
 import ro.cs.tao.ProgressListener;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.configuration.ConfigurationProvider;
 import ro.cs.tao.datasource.*;
+import ro.cs.tao.datasource.param.CommonParameterNames;
 import ro.cs.tao.datasource.param.DataSourceParameter;
+import ro.cs.tao.datasource.param.QueryParameter;
 import ro.cs.tao.datasource.remote.FetchMode;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.Polygon2D;
+import ro.cs.tao.serialization.GeometryAdapter;
 import ro.cs.tao.serialization.JsonMapper;
 import ro.cs.tao.utils.DateUtils;
 import ro.cs.tao.utils.NetUtils;
@@ -191,6 +195,31 @@ public class DownloadTool {
                     System.exit(1);
                 }
                 final List<EOProduct> results = query.execute();
+                if (getArgValue(commandLine, Constants.LATEST, Boolean.class, false)) {
+                    if (results != null && results.size() > 0) {
+                        EOProduct last = results.get(results.size() - 1);
+                        results.clear();
+                        results.add(last);
+                    }
+                }
+                if (getArgValue(commandLine, Constants.FULL_COVERAGE, Boolean.class, false)) {
+                    final QueryParameter<Polygon2D> footprintParam = (QueryParameter<Polygon2D>) query.getParameters().get(CommonParameterNames.FOOTPRINT);
+                    if (footprintParam != null) {
+                        final GeometryAdapter geometryAdapter = new GeometryAdapter();
+                        final Geometry footprint = geometryAdapter.marshal(footprintParam.getValue().toWKT());
+                        if (results != null) {
+                            results.removeIf(p -> {
+                                try {
+                                    final String geometry = p.getGeometry();
+                                    return geometry != null && !geometryAdapter.marshal(geometry).contains(footprint);
+                                } catch (Exception e) {
+                                    System.err.printf("Geometry error for product %s: %s%n", p.getName(), e.getMessage());
+                                    return false;
+                                }
+                            });
+                        }
+                    }
+                }
                 if (queryOnly) {
                     if (results == null || results.size() == 0) {
                         System.out.println("No results");
@@ -210,7 +239,7 @@ public class DownloadTool {
                         @Override
                         public void started(String taskName) {
                             current = taskName;
-                            System.out.print("Started " + current);
+                            System.out.print("\r" + current + ": 0.00%");
                         }
 
                         @Override
@@ -223,7 +252,7 @@ public class DownloadTool {
 
                         @Override
                         public void ended() {
-                            System.out.print("\rCompleted " + current);
+                            System.out.print("\rCompleted " + current + "\r\n");
                         }
 
                         @Override
@@ -239,10 +268,10 @@ public class DownloadTool {
                         public void notifyProgress(String subTaskName, double subTaskProgress, double overallProgress) {
                         }
                     });
-                    System.out.printf("Found %d products%n", results.size());
+                    System.out.printf("Retained %d products%n", results.size());
                     final Properties properties = new Properties();
                     properties.put("auto.uncompress", "false");
-                    properties.put("progress.interval", "10000");
+                    properties.put("progress.interval", "3000");
                     dataSource.getProductFetchStrategy(satellite).addProperties(properties);
                     dsComponent.doFetch(results, null, targetFolder, null, properties);
                 }
