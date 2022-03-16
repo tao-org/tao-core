@@ -470,9 +470,6 @@
             <basic name="capabilityName">
                 <column name="capability" nullable="false" column-definition="character varying(512) NOT NULL"/>
             </basic>
-            <basic name="templateType">
-                <column name="template_type_id" nullable="false" column-definition="integer not null"/>
-            </basic>
             <basic name="visibility">
                 <column name="visibility_id" nullable="false" column-definition="integer not null"/>
             </basic>
@@ -482,13 +479,10 @@
             <basic name="owner">
                 <column name="owner_user" nullable="true" column-definition="varchar NULL"/>
             </basic>
-            <basic name="authentication">
-                <column name="auth_info" nullable="true" column-definition="json NULL"/>
-            </basic>
             <basic name="parameters">
                 <column name="parameters" nullable="true" column-definition="json NULL" />
             </basic>
-            <many-to-one name="authentication" fetch="EAGER" target-entity="ro.cs.tao.docker.Container">
+            <many-to-one name="service" fetch="EAGER" target-entity="ro.cs.tao.docker.Container">
                 <join-column name="container_id" nullable="true"/>
             </many-to-one>
         </attributes>
