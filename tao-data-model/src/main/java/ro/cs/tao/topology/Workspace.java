@@ -2,7 +2,7 @@ package ro.cs.tao.topology;
 
 import ro.cs.tao.component.IntIdentifiable;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Objects;
 
 public class Workspace extends IntIdentifiable {
@@ -11,7 +11,7 @@ public class Workspace extends IntIdentifiable {
     private String urlPrefix;
     private String userName;
     private WorkspaceType type;
-    private HashMap<String, String> parameters;
+    private LinkedHashMap<String, String> parameters;
     private boolean readOnly;
     private boolean system;
 
@@ -55,11 +55,11 @@ public class Workspace extends IntIdentifiable {
         this.type = type;
     }
 
-    public HashMap<String, String> getParameters() {
+    public LinkedHashMap<String, String> getParameters() {
         return parameters;
     }
 
-    public void setParameters(HashMap<String, String> parameters) {
+    public void setParameters(LinkedHashMap<String, String> parameters) {
         this.parameters = parameters;
     }
 
@@ -84,7 +84,7 @@ public class Workspace extends IntIdentifiable {
             throw new IllegalArgumentException("[" + key + "] not supported");
         }
         if (this.parameters == null) {
-            this.parameters = new HashMap<>();
+            this.parameters = new LinkedHashMap<>();
         }
         this.parameters.put(key, value);
     }
