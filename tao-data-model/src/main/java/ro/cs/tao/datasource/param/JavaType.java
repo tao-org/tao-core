@@ -52,4 +52,29 @@ public enum JavaType implements TaoEnum<Class<?>> {
     public Class<?> value() {
         return this.clazz;
     }
+
+    public static JavaType fromClass(Class<?> clazz) {
+        for (JavaType type : JavaType.values()) {
+            if (type.clazz.equals(clazz)) {
+                return type;
+            }
+        }
+        return STRING;
+    }
+
+    public static JavaType fromClassName(String className) {
+        final Class<?> clazz;
+        try {
+            clazz = Class.forName(className);
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+            return null;
+        }
+        for (JavaType type : JavaType.values()) {
+            if (type.clazz.equals(clazz)) {
+                return type;
+            }
+        }
+        return STRING;
+    }
 }

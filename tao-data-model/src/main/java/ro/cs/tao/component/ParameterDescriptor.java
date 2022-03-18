@@ -114,7 +114,14 @@ public class ParameterDescriptor extends StringIdentifiable {
     }
 
     public void setDataType(Class<?> dataType) {
-        this.dataType = dataType != null ? EnumUtils.getEnumConstantByValue(JavaType.class, dataType) : null;
+        if (dataType != null) {
+            // first try to match by simple types
+            this.dataType = EnumUtils.getEnumConstantByValue(JavaType.class, dataType);
+            if (this.dataType == null) {
+                // next try with a java class name
+                this.dataType = EnumUtils.getEnumConstantByFriendlyName(JavaType.class, dataType.getName());
+            }
+        }
     }
 
     public String getDefaultValue() {

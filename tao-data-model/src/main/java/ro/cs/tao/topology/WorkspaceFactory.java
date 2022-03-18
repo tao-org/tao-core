@@ -5,8 +5,8 @@ import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.configuration.ConfigurationProvider;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class WorkspaceFactory {
     private static final WorkspaceFactory instance;
@@ -28,7 +28,7 @@ public class WorkspaceFactory {
                 workspace.setName(type.name());
                 workspace.setDescription(type.friendlyName());
                 workspace.setUrlPrefix(type.prefix());
-                final Set<String> parameters = type.getParameters();
+                final List<String> parameters = type.getParameters();
                 for (String param : parameters) {
                     workspace.addParameter(param, "");
                 }
