@@ -77,4 +77,13 @@ public enum JavaType implements TaoEnum<Class<?>> {
         }
         return STRING;
     }
+
+    public static JavaType fromFriendlyName(String name) {
+        for (JavaType type : JavaType.values()) {
+            if (type.description.equals(name) || type.clazz.getName().equals(name)) {
+                return type;
+            }
+        }
+        return STRING;
+    }
 }

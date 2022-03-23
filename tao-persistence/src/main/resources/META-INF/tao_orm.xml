@@ -462,7 +462,7 @@
         </association-override>
 
         <convert converter="ro.cs.tao.persistence.convert.ProcessingComponentVisibilityConverter" attribute-name="visibility" />
-        <convert converter="ro.cs.tao.persistence.convert.ParameterDescriptorListConverter" attribute-name="parameters" />
+        <convert converter="ro.cs.tao.persistence.convert.WPSParameterDescriptorListConverter" attribute-name="parameters" />
         <attributes>
             <basic name="remoteAddress">
                 <column name="remote_address" nullable="false" column-definition="character varying(1024) NOT NULL"/>
@@ -1615,5 +1615,6 @@
     <converter class="ro.cs.tao.persistence.convert.JsonCallbackConverter" />
     <converter class="ro.cs.tao.persistence.convert.WorkspaceTypeConverter"/>
     <converter class="ro.cs.tao.persistence.convert.ContainerTypeConverter"/>
+    <converter class="ro.cs.tao.persistence.convert.WPSParameterDescriptorListConverter"/>
 
 </entity-mappings>

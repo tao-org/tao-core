@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.component;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import ro.cs.tao.EnumUtils;
@@ -33,6 +34,7 @@ import java.util.*;
  * @author Cosmin Cara
  */
 @XmlRootElement(name = "parameter")
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class ParameterDescriptor extends StringIdentifiable {
     private String name;
     private ParameterType type;
