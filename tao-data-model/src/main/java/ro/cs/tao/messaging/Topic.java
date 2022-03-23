@@ -53,6 +53,10 @@ public class Topic {
      * Special topic for signaling that a topology node was added or removed.
      */
     public static final Topic TOPOLOGY = Topic.create("topology");
+    /**
+     * Topic for signaling the progress of a transfer of files between workspaces
+     */
+    public static final Topic TRANSFER_PROGRESS = Topic.create("transfer");
 
     public static Topic create(String category) {
         if (!topicRegistry.containsKey(category)) {

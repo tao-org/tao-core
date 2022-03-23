@@ -16,7 +16,9 @@
 
 package ro.cs.tao.services.interfaces;
 
+import ro.cs.tao.ProgressListener;
 import ro.cs.tao.services.model.FileObject;
+import ro.cs.tao.topology.Workspace;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -159,4 +161,14 @@ public interface StorageService<T, U> extends TAOService {
     U download(Path path) throws IOException;
 
     void streamToZip(Path root, ZipOutputStream stream) throws IOException;
+
+    default void setProgressListener(ProgressListener listener) { };
+
+    default FileObject getRootObject(Workspace workspace) {
+        return workspace.getParameters() != null && workspace.getType() != null
+                ? new FileObject(workspace.getUrlPrefix(),
+                                 workspace.getParameters().get(workspace.getType().rootKey()),
+                                 true, 0, "(root)")
+                : null;
+    }
 }
