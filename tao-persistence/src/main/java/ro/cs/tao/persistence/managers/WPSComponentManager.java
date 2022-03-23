@@ -25,8 +25,7 @@ public class WPSComponentManager extends TaoComponentManager<WPSComponent, WPSCo
                 throw new PersistenceException("There is already another entity with the identifier: " + entity.getId());
             }
         }
-        repository.save(entity);
-        return entity;
+        return repository.save(entity);
     }
 
     @Override
