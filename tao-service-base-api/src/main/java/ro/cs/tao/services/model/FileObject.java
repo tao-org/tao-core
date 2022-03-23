@@ -25,16 +25,22 @@ public class FileObject {
     private boolean folder;
     private long size;
     private String productName;
+    private String displayName;
     private Map<String, String> attributes;
 
     public FileObject() {
     }
 
     public FileObject(String protocol, String relativePath, boolean isFolder, long size) {
+        this(protocol, relativePath, isFolder, size, relativePath);
+    }
+
+    public FileObject(String protocol, String relativePath, boolean folder, long size, String displayName) {
         this.protocol = protocol;
         this.relativePath = relativePath;
-        this.folder = isFolder;
+        this.folder = folder;
         this.size = this.folder ? 0 : size;
+        this.displayName = displayName;
     }
 
     public String getProtocol() {
@@ -67,6 +73,14 @@ public class FileObject {
 
     public void setProductName(String productName) { this.productName = productName; }
 
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
     public Map<String, String> getAttributes() { return attributes; }
 
     public void setAttributes(Map<String, String> attributes) { this.attributes = attributes; }
@@ -76,5 +90,12 @@ public class FileObject {
             this.attributes = new TreeMap<>();
         }
         this.attributes.put(key, value);
+    }
+
+    @Override
+    public String toString() {
+        return "FileObject{" +
+                "relativePath='" + relativePath + '\'' +
+                '}';
     }
 }

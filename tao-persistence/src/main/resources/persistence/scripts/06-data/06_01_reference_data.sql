@@ -20,7 +20,7 @@ INSERT INTO component.container_type (id, description) VALUES
 
 -- Data formats
 INSERT INTO product.data_format (type) VALUES
-('RASTER'), ('VECTOR'), ('OTHER'), ('DB_CONNECTION'), ('FOLDER');
+('RASTER'), ('VECTOR'), ('OTHER'), ('DB_CONNECTION'), ('FOLDER'),('JSON');
 
 -- Data types
 INSERT INTO product.data_type (type) VALUES

@@ -17,7 +17,7 @@ public class WPSAuthenticationManager
     @Override
     public WPSAuthentication get(String id) {
         final WPSAuthentication authentication = super.get(id);
-        if (authentication.getUser() != null) {
+        if (authentication != null && authentication.getUser() != null) {
             authentication.setPassword(Crypto.decrypt(authentication.getPassword(), authentication.getUser()));
         }
         return authentication;

@@ -49,7 +49,12 @@ public enum DataFormat implements TaoEnum<Integer> {
      * Folder
      */
     @XmlEnumValue("5")
-    FOLDER(5, "Folder");
+    FOLDER(5, "Folder"),
+    /**
+     *  JSON
+     */
+    @XmlEnumValue("6")
+    JSON(6, "JSON");
 
     /**
      * Numerical value for enum constants
