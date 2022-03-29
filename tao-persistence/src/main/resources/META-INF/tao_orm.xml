@@ -994,6 +994,20 @@
         </attributes>
     </entity>
 
+    <entity class="ro.cs.tao.messaging.progress.TransferStart" access="PROPERTY">
+        <discriminator-value>4</discriminator-value>
+        <attributes>
+            <transient name="taskName"/>
+        </attributes>
+    </entity>
+
+    <entity class="ro.cs.tao.messaging.progress.TransferEnd" access="PROPERTY">
+        <discriminator-value>5</discriminator-value>
+        <attributes>
+            <transient name="taskName"/>
+        </attributes>
+    </entity>
+
     <entity class="ro.cs.tao.workflow.WorkflowDescriptor" access="PROPERTY">
         <table name="workflow.graph"/>
         <convert converter="ro.cs.tao.persistence.convert.WorkflowGraphStatusConverter" attribute-name="status" />
