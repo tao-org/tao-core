@@ -121,6 +121,7 @@ INSERT INTO topology.workspace_type (id, name, params) VALUES
 (1, 'Local repository', '["root"]'),
 (2, 'AWS S3 repository', '["aws.region","aws.access.key","aws.secret.key","aws.bucket"]'),
 (3, 'OpenStack Swift S3 repository', '["openstack.auth.url","openstack.tenantId","openstack.domain","openstack.user","openstack.password","openstack.bucket"]');
+(4, 'STAC repository', '["stac.url"]');
 
 -- Naming rules
 INSERT INTO product.naming_rule (id, sensor, regex, description) VALUES

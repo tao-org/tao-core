@@ -837,6 +837,59 @@ public class FileUtilities {
         }
     }
 
+    /**
+     * Finds the common part of two paths. At least the second path must be relative.
+     *
+     * @param path1 The first path (it may be absolute or relative)
+     * @param path2 The second path (it must be relative)
+     * @return
+     */
+    public static Path findCommonPath(Path path1, Path path2) {
+        if (path1 == null || path2 == null || path2.isAbsolute()) {
+            return null;
+        }
+        final int names = path1.getNameCount();
+        Path common = null;
+        for (int i = 0; i < names; i++) {
+            if (common == null) {
+                if (path1.getName(i).equals(path2.getName(0))) {
+                    common = path1.getName(i);
+                }
+            } else {
+                if (path2.startsWith(common.resolve(path1.getName(i)))) {
+                    common = common.resolve(path1.getName(i));
+                } else {
+                    break;
+                }
+            }
+        }
+        return common;
+    }
+
+    public static String findCommonPath(String strPath1, String strPath2) {
+        if (StringUtilities.isNullOrEmpty(strPath1) || StringUtilities.isNullOrEmpty(strPath2)) {
+            return null;
+        }
+        final Path path1 = Paths.get(strPath1);
+        final Path path2 = Paths.get(strPath2);
+        final int names = path1.getNameCount();
+        Path common = null;
+        for (int i = 0; i < names; i++) {
+            if (common == null) {
+                if (path1.getName(i).equals(path2.getName(0))) {
+                    common = path1.getName(i);
+                }
+            } else {
+                if (path2.startsWith(common.resolve(path1.getName(i)))) {
+                    common = common.resolve(path1.getName(i));
+                } else {
+                    break;
+                }
+            }
+        }
+        return common != null ? common.toString() : null;
+    }
+
     public static void copyStream(InputStream input, OutputStream output) throws IOException {
         try (ReadableByteChannel inputChannel = Channels.newChannel(input);
              WritableByteChannel outputChannel = Channels.newChannel(output)) {

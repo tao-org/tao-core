@@ -1,7 +1,7 @@
 package ro.cs.tao.persistence.convert;
 
 import ro.cs.tao.EnumUtils;
-import ro.cs.tao.topology.WorkspaceType;
+import ro.cs.tao.workspaces.WorkspaceType;
 
 import javax.persistence.AttributeConverter;
 

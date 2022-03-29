@@ -5,14 +5,14 @@ import ro.cs.tao.messaging.Message;
 import java.beans.Transient;
 import java.util.Objects;
 
-public class ActivityEndMessage extends Message {
-    private String taskName;
+public class ActivityEnd extends Message {
+    protected String taskName;
 
-    public ActivityEndMessage() {
+    public ActivityEnd() {
         super();
     }
 
-    public ActivityEndMessage(String taskName) {
+    public ActivityEnd(String taskName) {
         this();
         this.taskName = taskName;
         setPayload("Completed " + this.taskName);
@@ -25,7 +25,7 @@ public class ActivityEndMessage extends Message {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        ActivityEndMessage that = (ActivityEndMessage) o;
+        ActivityEnd that = (ActivityEnd) o;
         return taskName.equals(that.taskName);
     }
 

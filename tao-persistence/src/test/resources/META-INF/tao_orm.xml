@@ -962,14 +962,14 @@
         </attributes>
     </entity>
 
-    <entity class="ro.cs.tao.messaging.progress.ActivityStartMessage" access="PROPERTY">
+    <entity class="ro.cs.tao.messaging.progress.ActivityStart" access="PROPERTY">
         <discriminator-value>2</discriminator-value>
         <attributes>
             <transient name="taskName"/>
         </attributes>
     </entity>
 
-    <entity class="ro.cs.tao.messaging.progress.ActivityEndMessage" access="PROPERTY">
+    <entity class="ro.cs.tao.messaging.progress.ActivityEnd" access="PROPERTY">
         <discriminator-value>3</discriminator-value>
         <attributes>
             <transient name="taskName"/>
@@ -1365,7 +1365,7 @@
         </attributes>
     </entity>
 
-    <entity class="ro.cs.tao.topology.Workspace" access="PROPERTY">
+    <entity class="ro.cs.tao.workspaces.Workspace" access="PROPERTY">
         <table name="topology.workspace"/>
         <convert converter="ro.cs.tao.persistence.convert.MapConverter" attribute-name="parameters" />
         <convert converter="ro.cs.tao.persistence.convert.WorkspaceTypeConverter" attribute-name="type" />

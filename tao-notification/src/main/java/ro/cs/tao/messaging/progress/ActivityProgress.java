@@ -6,11 +6,11 @@ import java.beans.Transient;
 import java.util.Locale;
 import java.util.Objects;
 
-public class ActivityProgressMessage extends Message {
+public class ActivityProgress extends Message {
     private final String taskName;
     private final double progress;
 
-    public ActivityProgressMessage(String taskName, double progress) {
+    public ActivityProgress(String taskName, double progress) {
         super();
         this.taskName = taskName;
         this.progress = progress;
@@ -30,7 +30,7 @@ public class ActivityProgressMessage extends Message {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        ActivityProgressMessage that = (ActivityProgressMessage) o;
+        ActivityProgress that = (ActivityProgress) o;
         return Double.compare(that.progress, progress) == 0 &&
                 taskName.equals(that.taskName);
     }

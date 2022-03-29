@@ -56,25 +56,25 @@ public class ProgressNotifier implements ProgressListener {
     public void started(String taskName) {
         this.taskCounter = 0;
         this.taskName = taskName;
-        sendMessage(new ActivityStartMessage(taskName));
+        sendMessage(createStartMessage());
     }
 
     @Override
     public void subActivityStarted(String subTaskName) {
         this.subTaskCounter = 0;
-        sendTransientMessage(new SubActivityStartMessage(taskName, subTaskName));
+        sendTransientMessage(createSubStartMessage(subTaskName));
     }
 
     @Override
     public void subActivityEnded(String subTaskName) {
         this.subTaskCounter = 1;
-        sendTransientMessage(new SubActivityEndMessage(taskName, subTaskName));
+        sendTransientMessage(createSubEndMessage(subTaskName));
     }
 
     @Override
     public void ended() {
         this.taskCounter = 1;
-        sendMessage(new ActivityEndMessage(taskName));
+        sendMessage(createEndMessage());
     }
 
     @Override
@@ -86,7 +86,7 @@ public class ProgressNotifier implements ProgressListener {
         }
         taskCounter = progressValue;
         if (taskCounter < 1) {
-            sendTransientMessage(new ActivityProgressMessage(taskName, progressValue));
+            sendTransientMessage(new ActivityProgress(taskName, progressValue));
         } else {
             ended();
         }
@@ -107,7 +107,7 @@ public class ProgressNotifier implements ProgressListener {
         subTaskCounter = subTaskProgress;
         taskCounter = overallProgress;
         if (subTaskCounter < 1) {
-            sendTransientMessage(new SubActivityProgressMessage(taskName, subTaskName, taskCounter, subTaskCounter));
+            sendTransientMessage(new SubActivityProgress(taskName, subTaskName, taskCounter, subTaskCounter));
         } else {
             subActivityEnded(subTaskName);
         }
@@ -128,4 +128,49 @@ public class ProgressNotifier implements ProgressListener {
         }
         Messaging.send(this.principal, this.topic.value(), message, false);
     }
+
+    private ActivityStart createStartMessage() {
+        ActivityStart message;
+        if (this.topic.equals(Topic.TRANSFER_PROGRESS)) {
+            message = new TransferStart(this.taskName);
+        } else {
+            message = new ActivityStart(this.taskName);
+        }
+        message.setUser(this.principal.getName());
+        return message;
+    }
+
+    private ActivityEnd createEndMessage() {
+        ActivityEnd message;
+        if (this.topic.equals(Topic.TRANSFER_PROGRESS)) {
+            message = new TransferEnd(this.taskName);
+        } else {
+            message = new ActivityEnd(this.taskName);
+        }
+        message.setUser(this.principal.getName());
+        return message;
+    }
+
+    private SubActivityStart createSubStartMessage(String subTask) {
+        SubActivityStart message;
+        if (this.topic.equals(Topic.TRANSFER_PROGRESS)) {
+            message = new SubTransferStart(this.taskName, subTask);
+        } else {
+            message = new SubActivityStart(this.taskName, subTask);
+        }
+        message.setUser(this.principal.getName());
+        return message;
+    }
+
+    private SubActivityEnd createSubEndMessage(String subTask) {
+        SubActivityEnd message;
+        if (this.topic.equals(Topic.TRANSFER_PROGRESS)) {
+            message = new SubTransferEnd(this.taskName, subTask);
+        } else {
+            message = new SubActivityEnd(this.taskName, subTask);
+        }
+        message.setUser(this.principal.getName());
+        return message;
+    }
+
 }

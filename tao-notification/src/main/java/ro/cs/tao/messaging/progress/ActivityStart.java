@@ -5,14 +5,14 @@ import ro.cs.tao.messaging.Message;
 import java.beans.Transient;
 import java.util.Objects;
 
-public class ActivityStartMessage extends Message {
-    private String taskName;
+public class ActivityStart extends Message {
+    protected String taskName;
 
-    public ActivityStartMessage() {
+    public ActivityStart() {
         super();
     }
 
-    public ActivityStartMessage(String taskName) {
+    public ActivityStart(String taskName) {
         this();
         this.taskName = taskName;
         setPayload("Started " + this.taskName);
@@ -25,7 +25,7 @@ public class ActivityStartMessage extends Message {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        ActivityStartMessage that = (ActivityStartMessage) o;
+        ActivityStart that = (ActivityStart) o;
         return taskName.equals(that.taskName);
     }
 

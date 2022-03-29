@@ -27,13 +27,13 @@ import ro.cs.tao.persistence.repository.GroupRepository;
 import ro.cs.tao.persistence.repository.UserRepository;
 import ro.cs.tao.persistence.repository.WorkspaceRepository;
 import ro.cs.tao.security.SystemPrincipal;
-import ro.cs.tao.topology.WorkspaceFactory;
-import ro.cs.tao.topology.WorkspaceType;
 import ro.cs.tao.user.Group;
 import ro.cs.tao.user.User;
 import ro.cs.tao.user.UserPreference;
 import ro.cs.tao.user.UserStatus;
 import ro.cs.tao.utils.StringUtilities;
+import ro.cs.tao.workspaces.WorkspaceFactory;
+import ro.cs.tao.workspaces.WorkspaceType;
 
 import java.time.Clock;
 import java.time.LocalDateTime;

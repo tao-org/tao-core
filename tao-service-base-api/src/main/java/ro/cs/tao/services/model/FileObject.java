@@ -32,7 +32,16 @@ public class FileObject {
     }
 
     public FileObject(String protocol, String relativePath, boolean isFolder, long size) {
-        this(protocol, relativePath, isFolder, size, relativePath);
+        this.protocol = protocol;
+        this.relativePath = relativePath;
+        this.folder = isFolder;
+        this.size = this.folder ? 0 : size;
+        final int idx = relativePath.lastIndexOf('/', relativePath.length() - 2);
+        this.displayName = idx > 0
+                ? relativePath.substring(idx + 1)
+                : relativePath.endsWith("/")
+                    ? relativePath.substring(1, relativePath.length() - 2)
+                    : relativePath;
     }
 
     public FileObject(String protocol, String relativePath, boolean folder, long size, String displayName) {
