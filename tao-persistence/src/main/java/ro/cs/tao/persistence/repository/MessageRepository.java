@@ -3,6 +3,7 @@ package ro.cs.tao.persistence.repository;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
@@ -35,4 +36,8 @@ public interface MessageRepository extends PagingAndSortingRepository<Message, L
 
     @Query(value = "SELECT * FROM common.notification WHERE username = :user AND timestamp = :timestamp", nativeQuery = true)
     Message get(@Param("user") String userName, @Param("timestamp") long timestamp);
+
+    @Modifying
+    @Query(value = "UPDATE common.notification SET read = true WHERE id IN (:ids)", nativeQuery = true)
+    void markAsRead(@Param("ids") List<Long> ids);
 }

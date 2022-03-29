@@ -5,15 +5,15 @@ import ro.cs.tao.messaging.Message;
 import java.beans.Transient;
 import java.util.Objects;
 
-public class SubActivityEndMessage extends Message {
-    private final String taskName;
-    private final String subTaskName;
+public class SubActivityEnd extends Message {
+    protected final String taskName;
+    protected final String subTaskName;
 
-    public SubActivityEndMessage(String taskName, String subTaskName) {
+    public SubActivityEnd(String taskName, String subTaskName) {
         super();
         this.taskName = taskName;
         this.subTaskName = subTaskName;
-        setPayload("Started " + this.taskName + ":" + this.subTaskName);
+        setPayload("[" + this.taskName + "] Completed " + this.subTaskName);
     }
 
     @Transient
@@ -26,7 +26,7 @@ public class SubActivityEndMessage extends Message {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        SubActivityEndMessage that = (SubActivityEndMessage) o;
+        SubActivityEnd that = (SubActivityEnd) o;
         return taskName.equals(that.taskName) &&
                 subTaskName.equals(that.subTaskName);
     }

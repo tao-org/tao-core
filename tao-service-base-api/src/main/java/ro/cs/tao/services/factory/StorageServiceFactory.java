@@ -3,7 +3,7 @@ package ro.cs.tao.services.factory;
 import ro.cs.tao.services.interfaces.StorageService;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
-import ro.cs.tao.topology.Workspace;
+import ro.cs.tao.workspaces.Workspace;
 
 import java.lang.ref.WeakReference;
 import java.util.Collections;

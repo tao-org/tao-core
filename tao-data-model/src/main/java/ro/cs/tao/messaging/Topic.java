@@ -17,6 +17,7 @@ package ro.cs.tao.messaging;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 /**
@@ -110,4 +111,17 @@ public class Topic {
 
     @Override
     public String toString() { return value(); }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Topic topic = (Topic) o;
+        return category.equals(topic.category) && Objects.equals(tag, topic.tag);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(category, tag);
+    }
 }

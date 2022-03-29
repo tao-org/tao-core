@@ -52,6 +52,11 @@ public class NotificationManager extends EntityManager<Message, Long, MessageRep
     }
 
     @Override
+    public void acknowledge(List<Long> messageIds) {
+        repository.markAsRead(messageIds);
+    }
+
+    @Override
     protected String identifier() { return "id"; }
 
     @Override

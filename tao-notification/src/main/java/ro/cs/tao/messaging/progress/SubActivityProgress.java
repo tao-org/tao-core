@@ -6,13 +6,13 @@ import java.beans.Transient;
 import java.util.Locale;
 import java.util.Objects;
 
-public class SubActivityProgressMessage extends Message {
-    private final String taskName;
-    private final double taskProgress;
-    private final String subTaskName;
-    private final double subTaskProgress;
+public class SubActivityProgress extends Message {
+    protected final String taskName;
+    protected final double taskProgress;
+    protected final String subTaskName;
+    protected final double subTaskProgress;
 
-    public SubActivityProgressMessage(String taskName, String subTaskName, double taskProgress, double subTaskProgress) {
+    public SubActivityProgress(String taskName, String subTaskName, double taskProgress, double subTaskProgress) {
         this.taskName = taskName;
         this.taskProgress = taskProgress;
         this.subTaskName = subTaskName;
@@ -44,7 +44,7 @@ public class SubActivityProgressMessage extends Message {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        SubActivityProgressMessage that = (SubActivityProgressMessage) o;
+        SubActivityProgress that = (SubActivityProgress) o;
         return Double.compare(that.taskProgress, taskProgress) == 0 &&
                 Double.compare(that.subTaskProgress, subTaskProgress) == 0 &&
                 taskName.equals(that.taskName) &&

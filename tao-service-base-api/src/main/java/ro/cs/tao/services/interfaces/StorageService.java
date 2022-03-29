@@ -18,7 +18,9 @@ package ro.cs.tao.services.interfaces;
 
 import ro.cs.tao.ProgressListener;
 import ro.cs.tao.services.model.FileObject;
-import ro.cs.tao.topology.Workspace;
+import ro.cs.tao.utils.FileUtilities;
+import ro.cs.tao.utils.StringUtilities;
+import ro.cs.tao.workspaces.Workspace;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,6 +36,10 @@ import java.util.zip.ZipOutputStream;
  * @author Cosmin Cara
  */
 public interface StorageService<T, U> extends TAOService {
+
+    String AVLFOLDER = ".avlfolder";
+    String CONTENTS_ATTRIBUTE = "contents";
+
     /**
      * Indicates if this storage service implementation is intended for the given protocol
      * @param protocol  The protocol
@@ -44,65 +50,77 @@ public interface StorageService<T, U> extends TAOService {
      * Pass any needed parameter values to be able to connect to the storage
      * @param parameters    A map with name-value pairs
      */
-    default void setup(Map<String, String> parameters) { };
+    default void setup(Map<String, String> parameters) { }
     /**
      * Creates a folder.
      *
-     * @param folderRelativePath    The folder path, relative to the current workspace
+     * @param workspace             The workspace
+     * @param relativePath    The folder path, relative to the current workspace
      * @param userOnly              If <code>true</code>, the folder is created in the workspace of the calling user.
      *                              Otherwise, it is created in the shared workspace.
      * @return  The path in the user workspace
      * @throws  IOException if the path cannot be created
      */
-    Path createFolder(String folderRelativePath, boolean userOnly) throws IOException;
+    Path createFolder(Workspace workspace, String relativePath, boolean userOnly) throws IOException;
 
     /**
      * Stores a file in the given folder, in the user workspace
      *
+     * @param workspace         The workspace
      * @param object            The file object
      * @param relativeFolder    The folder path, relative to the workspace of the calling user
      * @param description       A description for the file
      * @throws  Exception if the file cannot be stored
      */
-    void storeUserFile(T object, String relativeFolder, String description) throws Exception;
+    void storeUserFile(T object, Workspace workspace, String relativeFolder, String description) throws Exception;
     /**
      * Stores a file in the given folder, in the user workspace
      *
      * @param stream            The input stream of the file object
      * @param length            The file length. If unknown, pass a value <= 0
+     * @param workspace         The workspace
      * @param relativeFolder    The folder path, relative to the workspace of the calling user
      * @param description       A description for the file
      * @throws  Exception if the file cannot be stored
      */
-    void storeFile(InputStream stream, long length, String relativeFolder, String description) throws Exception;
+    void storeFile(InputStream stream, long length, Workspace workspace, String relativeFolder, String description) throws Exception;
     /**
      * Stores a file in the given folder, in the shared workspace
      *
      * @param object            The file object
+     * @param workspace         The workspace
      * @param relativeFolder    The folder path, relative to the shared workspace
      * @param description       A description for the file
      * @throws  Exception if the file cannot be stored
      */
-    void storePublicFile(T object, String relativeFolder, String description) throws Exception;
+    void storePublicFile(T object, Workspace workspace, String relativeFolder, String description) throws Exception;
 
-    boolean exists(String path) throws Exception;
+    /**
+     * Checks if the given relative path exists in the workspace
+     *
+     * @param workspace     The workspace
+     * @param path          The path to check in the workspace
+     */
+    boolean exists(Workspace workspace, String path) throws Exception;
 
     /**
      * Removes the file or folder with the given name.
      *
-     * @param name          The name of the file or folder
+     * @param workspace     The workspace
+     * @param path          The relative path of the file or folder
      * @throws IOException if the file or folder cannot be removed
      */
-    void remove(String name) throws IOException;
+    void remove(Workspace workspace, String path) throws IOException;
 
     /**
-     * Moves a file from a source directory to a destination.
+     * Moves a file from a source directory to a destination in the same workspace
      *
-     * @param source          The original path of the file
-     * @param destination     The new destination of the file
+     * @param workspace       The workspace
+     * @param source          The original relative path of the file
+     * @param destination     The new relative destination of the file
      * @throws IOException if the file or folder cannot be moved
      */
-    void move(String source, String destination) throws IOException;
+    void move(Workspace workspace, String source, String destination) throws IOException;
 
     /**
      * List the files uploaded in the shared workspace
@@ -134,13 +152,14 @@ public interface StorageService<T, U> extends TAOService {
     /**
      * List the children files starting from the given path.
      *
-     * @param fromPath  The path to look into.
-     * @return The subtree of the given path
+     * @param workspace      The root of the workspace
+     * @param fromPath       The path to look into.
+     * @return               The subtree of the given path
      * @throws IOException if the content cannot be retrieved
      */
-    List<FileObject> listFiles(Path fromPath, Set<Path> exclusions, Path lastItem) throws IOException;
+    List<FileObject> listFiles(Workspace workspace, String fromPath, Set<String> exclusions, String lastItem) throws IOException;
 
-    List<FileObject> listTree(Path fromPath) throws IOException;
+    List<FileObject> listTree(Workspace workspace, String fromPath) throws IOException;
 
     /**
      * Lists the results of the given workflow, regardless of the execution job.
@@ -160,15 +179,29 @@ public interface StorageService<T, U> extends TAOService {
 
     U download(Path path) throws IOException;
 
-    void streamToZip(Path root, ZipOutputStream stream) throws IOException;
+    void streamToZip(Path zipRoot, ZipOutputStream stream) throws IOException;
 
-    default void setProgressListener(ProgressListener listener) { };
+    default void setProgressListener(ProgressListener listener) { }
 
-    default FileObject getRootObject(Workspace workspace) {
-        return workspace.getParameters() != null && workspace.getType() != null
-                ? new FileObject(workspace.getUrlPrefix(),
-                                 workspace.getParameters().get(workspace.getType().rootKey()),
-                                 true, 0, "(root)")
-                : null;
+    /**
+     * Returns a placeholder "file" to be used for S3-like storgaes when creating a "folder"
+     */
+    default FileObject fakeRoot() {
+        final FileObject object = new FileObject("", AVLFOLDER, false, 0, AVLFOLDER);
+        object.addAttribute(CONTENTS_ATTRIBUTE, ".");
+        return object;
+    }
+
+    default String resolve(Workspace workspace, String path) {
+        if (StringUtilities.isNullOrEmpty(path)) {
+            return workspace.root();
+        }
+        if (path.startsWith("/")) {
+            return workspace.root() + path;
+        }
+        final String commonPath = FileUtilities.findCommonPath(workspace.root(), path);
+        return commonPath != null
+                ? workspace.root() + "/" + path.replace(commonPath, "")
+                : workspace.root() + "/" + path;
     }
 }

@@ -1,6 +1,6 @@
 package ro.cs.tao.persistence;
 
-import ro.cs.tao.topology.Workspace;
+import ro.cs.tao.workspaces.Workspace;
 
 import java.util.List;
 

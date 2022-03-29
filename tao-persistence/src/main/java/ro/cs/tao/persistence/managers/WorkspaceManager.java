@@ -6,8 +6,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import ro.cs.tao.persistence.WorkspaceProvider;
 import ro.cs.tao.persistence.repository.WorkspaceRepository;
-import ro.cs.tao.topology.Workspace;
 import ro.cs.tao.utils.StringUtilities;
+import ro.cs.tao.workspaces.Workspace;
 
 import java.util.List;
 

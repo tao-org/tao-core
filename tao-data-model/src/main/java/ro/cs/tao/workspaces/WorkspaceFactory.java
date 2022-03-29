@@ -1,11 +1,11 @@
-package ro.cs.tao.topology;
+package ro.cs.tao.workspaces;
 
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.configuration.ConfigurationProvider;
+import ro.cs.tao.topology.TopologyException;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class WorkspaceFactory {
@@ -28,9 +28,9 @@ public class WorkspaceFactory {
                 workspace.setName(type.name());
                 workspace.setDescription(type.friendlyName());
                 workspace.setUrlPrefix(type.prefix());
-                final List<String> parameters = type.getParameters();
-                for (String param : parameters) {
-                    workspace.addParameter(param, "");
+                final Map<String, Boolean> parameters = type.getParameters();
+                for (Map.Entry<String, Boolean> entry : parameters.entrySet()) {
+                    workspace.addParameter(entry.getKey(), "");
                 }
                 this.templates.put(type, workspace);
             }

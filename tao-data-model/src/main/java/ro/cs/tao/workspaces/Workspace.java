@@ -1,4 +1,4 @@
-package ro.cs.tao.topology;
+package ro.cs.tao.workspaces;
 
 import ro.cs.tao.component.IntIdentifiable;
 
@@ -79,8 +79,12 @@ public class Workspace extends IntIdentifiable {
         this.system = system;
     }
 
+    public String root() {
+        return this.type != null && this.parameters != null ? this.parameters.get(this.type.rootKey()) : null;
+    }
+
     public void addParameter(String key, String value) {
-        if (!this.type.getParameters().contains(key)) {
+        if (!this.type.getParameters().containsKey(key)) {
             throw new IllegalArgumentException("[" + key + "] not supported");
         }
         if (this.parameters == null) {
@@ -90,7 +94,7 @@ public class Workspace extends IntIdentifiable {
     }
 
     public String getValue(String key) {
-        if (!this.type.getParameters().contains(key)) {
+        if (!this.type.getParameters().containsKey(key)) {
             throw new IllegalArgumentException("[" + key + "] not supported");
         }
         return this.parameters != null ? this.parameters.get(key) : null;
