@@ -183,6 +183,26 @@ public class Orchestrator extends Notifiable {
             throw new ExecutionException(e.getMessage());
         }
     }
+    /**
+     * Creates a job from a workflow definition and starts its execution.
+     *
+     * @param context 	 The session context
+     * @param inputs     The overridden parameter values for workflow nodes
+     * @throws ExecutionException In case anything goes wrong or a job for this workflow was already created
+     */
+    public ExecutionJob startExecution(SessionContext context, String wpsId,
+                                       Map<String, Map<String, String>> inputs, ExecutorService executorService) throws ExecutionException {
+        try {
+            final ExecutionJob executionJob = createJob(wpsId, inputs);
+            this.executors.put(context.getPrincipal().getName(), executorService);
+            executorService.submit(() -> JobCommand.START.applyTo(executionJob));
+            return executionJob;
+        } catch (Exception e) {
+            logger.severe(e.getMessage());
+            throw new ExecutionException(e.getMessage());
+        }
+    }
+
 
     /**
      * Creates a job from an externally-defined workflow and starts its execution.
@@ -269,6 +289,22 @@ public class Orchestrator extends Notifiable {
             }
             return this.jobFactory.createJob(description, optimized, inputs);
         } catch (QuotaException | PersistenceException e) {
+            logger.severe(e.getMessage());
+            throw new ExecutionException(e.getMessage());
+        }
+    }
+
+    /**
+     * Creates a job for a WPS, intended for execution.
+     *
+     * @param wpsId     The WPS identifier
+     * @param inputs     The overridden parameter values,
+     * @throws ExecutionException In case anything goes wrong
+     */
+    public ExecutionJob createJob(String wpsId, Map<String, Map<String, String>> inputs)  throws ExecutionException {
+        try {
+            return this.jobFactory.createJob(wpsId, inputs);
+        } catch (PersistenceException e) {
             logger.severe(e.getMessage());
             throw new ExecutionException(e.getMessage());
         }
