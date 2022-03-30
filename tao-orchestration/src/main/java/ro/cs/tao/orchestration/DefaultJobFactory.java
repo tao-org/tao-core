@@ -81,9 +81,9 @@ public class DefaultJobFactory {
     /**
      * Creates an execution job for the given workflow, with the given input parameter values
      *
-     * @param jobName   The name of the new job
-     * @param workflow  The workflow
-     * @param inputs    The (possibly overridden) input parameter values
+     * @param jobName  The name of the new job
+     * @param workflow The workflow
+     * @param inputs   The (possibly overridden) input parameter values
      */
     public ExecutionJob createJob(String jobName, WorkflowDescriptor workflow, Map<String, Map<String, String>> inputs)
             throws PersistenceException {
@@ -98,9 +98,9 @@ public class DefaultJobFactory {
             job = jobProvider.save(job);
             List<WorkflowNodeDescriptor> nodes = workflow.getOrderedNodes();
             Set<WorkflowNodeGroupDescriptor> groups = nodes.stream()
-                                                            .filter(n -> n instanceof WorkflowNodeGroupDescriptor)
-                                                            .map(n -> (WorkflowNodeGroupDescriptor)n)
-                                                            .collect(Collectors.toSet());
+                    .filter(n -> n instanceof WorkflowNodeGroupDescriptor)
+                    .map(n -> (WorkflowNodeGroupDescriptor) n)
+                    .collect(Collectors.toSet());
             for (WorkflowNodeDescriptor node : nodes) {
                 // A workflow contains also the nodes of a node group.
                 // Hence, in order not to duplicate the tasks, the nodes from group are temporary removed from workflow.
@@ -124,7 +124,7 @@ public class DefaultJobFactory {
                         taskProvider.update(task);
                     }
                     logger.finest(String.format("Created task %s.%s for node %s [id=%s, level %s]",
-                            jobName, task.getId(), node.getName(), node.getId(), task.getLevel()));
+                                                jobName, task.getId(), node.getName(), node.getId(), task.getLevel()));
                 }
             }
             // re-iterate to determine task dependencies
@@ -140,6 +140,27 @@ public class DefaultJobFactory {
                 }
                 jobProvider.update(job);
             }
+        }
+        return job;
+    }
+
+    public ExecutionJob createJob(String jobName, Map<String, Map<String, String>> inputs)
+            throws PersistenceException {
+        ExecutionJob job = new ExecutionJob();
+        job.setName(jobName);
+        job.setUserName(SessionStore.currentContext().getPrincipal().getName());
+        job.setStartTime(LocalDateTime.now());
+        job.setExecutionStatus(ExecutionStatus.UNDETERMINED);
+        job = jobProvider.save(job);
+        for (Map.Entry<String, Map<String, String>> entry : inputs.entrySet()) {
+            ExecutionTask task = createWPSComponentExecutionTask(entry.getKey(), entry.getValue());
+            task.setLevel(1);
+            if (task.getId() == null) {
+                taskProvider.save(task, job);
+            } else {
+                taskProvider.update(task);
+            }
+            logger.finest(String.format("Created WPS task %s.%s", jobName, task.getId()));
         }
         return job;
     }
@@ -443,6 +464,27 @@ public class DefaultJobFactory {
             for (ParameterValue param : customValues) {
                 task.setInputParameterValue(param.getParameterName(), param.getParameterValue());
             }
+        }
+        final String nodeAffinity = component.getNodeAffinity();
+        if (nodeAffinity != null && !"Any".equals(nodeAffinity)) {
+            task.setExecutionNodeHostName(nodeAffinity);
+        }
+        if (inputs != null) {
+            for (Map.Entry<String, String> entry : inputs.entrySet()) {
+                task.setInputParameterValue(entry.getKey(), entry.getValue());
+            }
+        }
+        return task;
+    }
+
+    protected WPSExecutionTask createWPSComponentExecutionTask(String wpsComponentId, Map<String, String> inputs) {
+        final WPSComponent component = wpsComponentProvider.get(wpsComponentId);
+        final WPSExecutionTask task = new WPSExecutionTask();
+        task.setComponent(component);
+        // Placeholders for outputs of this task
+        final List<TargetDescriptor> targets = component.getTargets();
+        if (targets != null) {
+            targets.forEach(t -> task.setOutputParameterValue(t.getName(), null));
         }
         final String nodeAffinity = component.getNodeAffinity();
         if (nodeAffinity != null && !"Any".equals(nodeAffinity)) {

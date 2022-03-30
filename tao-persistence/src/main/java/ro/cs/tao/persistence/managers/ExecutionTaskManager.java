@@ -145,7 +145,7 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
         }
 
         if (task instanceof ProcessingExecutionTask || task instanceof DataSourceExecutionTask ||
-                task instanceof ExecutionGroup) {
+                task instanceof ExecutionGroup || task instanceof WPSExecutionTask) {
 
             // set the task parent job
             task.setJob(job);

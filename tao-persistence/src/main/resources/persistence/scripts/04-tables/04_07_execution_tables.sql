@@ -21,7 +21,7 @@ CREATE TABLE execution.job
 	name text NOT NULL,
 	start_time timestamp without time zone NULL,
 	end_time timestamp without time zone NULL,
-	workflow_id bigint NOT NULL,
+	workflow_id bigint,
 	username varchar(50) NOT NULL,
 	query_id bigint NULL,
 	execution_status_id integer NOT NULL,

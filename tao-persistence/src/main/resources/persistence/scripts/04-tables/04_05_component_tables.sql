@@ -666,9 +666,9 @@ CREATE TABLE component.wps_component_sources
 ALTER TABLE component.wps_component_sources ADD CONSTRAINT PK_wps_component_sources
 	PRIMARY KEY (wps_component_id, source_descriptor_id);
 ALTER TABLE component.wps_component_sources ADD CONSTRAINT FK_wps_component_sources_wps_component
-	FOREIGN KEY (wps_component_id) REFERENCES component.wps_component (id) ON DELETE No Action ON UPDATE No Action;
+	FOREIGN KEY (wps_component_id) REFERENCES component.wps_component (id) ON DELETE CASCADE ON UPDATE No Action;
 ALTER TABLE component.wps_component_sources ADD CONSTRAINT FK_wps_component_source_descriptor
-	FOREIGN KEY (source_descriptor_id) REFERENCES component.source_descriptor (id) ON DELETE No Action ON UPDATE No Action;
+	FOREIGN KEY (source_descriptor_id) REFERENCES component.source_descriptor (id) ON DELETE CASCADE ON UPDATE No Action;
 
 -------------------------------------------------------------------------------
 -- table: component.wps_component_targets
@@ -681,6 +681,6 @@ CREATE TABLE component.wps_component_targets
 ALTER TABLE component.wps_component_targets ADD CONSTRAINT PK_wps_component_targets
 	PRIMARY KEY (wps_component_id, target_descriptor_id);
 ALTER TABLE component.wps_component_targets ADD CONSTRAINT FK_wps_component_targets_wps_component
-	FOREIGN KEY (wps_component_id) REFERENCES component.wps_component (id) ON DELETE No Action ON UPDATE No Action;
+	FOREIGN KEY (wps_component_id) REFERENCES component.wps_component (id) ON DELETE CASCADE ON UPDATE No Action;
 ALTER TABLE component.wps_component_targets ADD CONSTRAINT FK_wps_component_targets_target_descriptor
-	FOREIGN KEY (target_descriptor_id) REFERENCES component.target_descriptor (id) ON DELETE No Action ON UPDATE No Action;
+	FOREIGN KEY (target_descriptor_id) REFERENCES component.target_descriptor (id) ON DELETE CASCADE ON UPDATE No Action;
