@@ -41,7 +41,7 @@
         <class>ro.cs.tao.workflow.WorkflowNodeGroupDescriptor</class>
 
         <class>ro.cs.tao.datasource.beans.Query</class>
-        <class>ro.cs.tao.workspaces.Workspace</class>
+        <class>ro.cs.tao.workspaces.Repository</class>
 
         <exclude-unlisted-classes>false</exclude-unlisted-classes>
 

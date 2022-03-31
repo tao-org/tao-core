@@ -3,7 +3,7 @@ package ro.cs.tao.services.interfaces;
 /**
  * Service for managing the user workspaces
  */
-public interface WorkspaceWatcherService extends TAOService {
+public interface RepositoryWatcherService extends TAOService {
 
     void startWatching();
 

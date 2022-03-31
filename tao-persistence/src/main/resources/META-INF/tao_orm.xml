@@ -1397,10 +1397,10 @@
         </attributes>
     </entity>
 
-    <entity class="ro.cs.tao.workspaces.Workspace" access="PROPERTY">
-        <table name="topology.workspace"/>
+    <entity class="ro.cs.tao.workspaces.Repository" access="PROPERTY">
+        <table name="workspace.repository"/>
         <convert converter="ro.cs.tao.persistence.convert.MapConverter" attribute-name="parameters" />
-        <convert converter="ro.cs.tao.persistence.convert.WorkspaceTypeConverter" attribute-name="type" />
+        <convert converter="ro.cs.tao.persistence.convert.RepositoryTypeConverter" attribute-name="type" />
         <attributes>
             <id name="id">
                 <column name="id" nullable="false" column-definition="serial NOT NULL"/>
@@ -1419,7 +1419,7 @@
                 <column name="username" nullable="false" column-definition="varchar(50)"/>
             </basic>
             <basic name="type">
-                <column name="workspace_type_id" nullable="false" column-definition="int NOT NULL"/>
+                <column name="repository_type_id" nullable="false" column-definition="int NOT NULL"/>
             </basic>
             <basic name="readOnly">
                 <column name="read_only" nullable="false" column-definition="boolean NOT NULL"/>
@@ -1429,6 +1429,34 @@
             </basic>
             <basic name="parameters">
                 <column name="params" nullable="true" column-definition="json"/>
+            </basic>
+        </attributes>
+    </entity>
+
+    <entity class="ro.cs.tao.workspaces.Site" access="PROPERTY">
+        <table name="workspace.site"/>
+        <attributes>
+            <id name="id">
+                <column name="id" nullable="false" column-definition="serial NOT NULL"/>
+                <generated-value strategy="IDENTITY" generator="site_identifier"/>
+            </id>
+            <basic name="name">
+                <column name="name" nullable="false" column-definition="varchar(250) NOT NULL"/>
+            </basic>
+            <basic name="description">
+                <column name="description" nullable="false" column-definition="text NOT NULL"/>
+            </basic>
+            <basic name="footprint">
+                <column name="footprint" nullable="false" column-definition="geography(Polygon,4326) not null"/>
+            </basic>
+            <basic name="startDate">
+                <column name="start_date" nullable="false" column-definition="timestamp NOT NULL"/>
+            </basic>
+            <basic name="endDate">
+                <column name="end_date" nullable="false" column-definition="timestamp NOT NULL"/>
+            </basic>
+            <basic name="user">
+                <column name="username" nullable="false" column-definition="varchar(50)"/>
             </basic>
         </attributes>
     </entity>
@@ -1627,7 +1655,7 @@
     <converter class="ro.cs.tao.persistence.convert.AggregatorConverter" />
     <converter class="ro.cs.tao.persistence.convert.NodeRoleConverter" />
     <converter class="ro.cs.tao.persistence.convert.JsonCallbackConverter" />
-    <converter class="ro.cs.tao.persistence.convert.WorkspaceTypeConverter"/>
+    <converter class="ro.cs.tao.persistence.convert.RepositoryTypeConverter"/>
     <converter class="ro.cs.tao.persistence.convert.ContainerTypeConverter"/>
     <converter class="ro.cs.tao.persistence.convert.WPSParameterDescriptorListConverter"/>
 

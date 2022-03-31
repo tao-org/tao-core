@@ -20,7 +20,7 @@ import ro.cs.tao.ProgressListener;
 import ro.cs.tao.services.model.FileObject;
 import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.StringUtilities;
-import ro.cs.tao.workspaces.Workspace;
+import ro.cs.tao.workspaces.Repository;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -61,7 +61,7 @@ public interface StorageService<T, U> extends TAOService {
      * @return  The path in the user workspace
      * @throws  IOException if the path cannot be created
      */
-    Path createFolder(Workspace workspace, String relativePath, boolean userOnly) throws IOException;
+    Path createFolder(Repository workspace, String relativePath, boolean userOnly) throws IOException;
 
     /**
      * Stores a file in the given folder, in the user workspace
@@ -72,7 +72,7 @@ public interface StorageService<T, U> extends TAOService {
      * @param description       A description for the file
      * @throws  Exception if the file cannot be stored
      */
-    void storeUserFile(T object, Workspace workspace, String relativeFolder, String description) throws Exception;
+    void storeUserFile(T object, Repository workspace, String relativeFolder, String description) throws Exception;
     /**
      * Stores a file in the given folder, in the user workspace
      *
@@ -83,7 +83,7 @@ public interface StorageService<T, U> extends TAOService {
      * @param description       A description for the file
      * @throws  Exception if the file cannot be stored
      */
-    void storeFile(InputStream stream, long length, Workspace workspace, String relativeFolder, String description) throws Exception;
+    void storeFile(InputStream stream, long length, Repository workspace, String relativeFolder, String description) throws Exception;
     /**
      * Stores a file in the given folder, in the shared workspace
      *
@@ -93,7 +93,7 @@ public interface StorageService<T, U> extends TAOService {
      * @param description       A description for the file
      * @throws  Exception if the file cannot be stored
      */
-    void storePublicFile(T object, Workspace workspace, String relativeFolder, String description) throws Exception;
+    void storePublicFile(T object, Repository workspace, String relativeFolder, String description) throws Exception;
 
     /**
      * Checks if the given relative path exists in the workspace
@@ -101,7 +101,7 @@ public interface StorageService<T, U> extends TAOService {
      * @param workspace     The workspace
      * @param path          The path to check in the workspace
      */
-    boolean exists(Workspace workspace, String path) throws Exception;
+    boolean exists(Repository workspace, String path) throws Exception;
 
     /**
      * Removes the file or folder with the given name.
@@ -110,7 +110,7 @@ public interface StorageService<T, U> extends TAOService {
      * @param path          The relative path of the file or folder
      * @throws IOException if the file or folder cannot be removed
      */
-    void remove(Workspace workspace, String path) throws IOException;
+    void remove(Repository workspace, String path) throws IOException;
 
     /**
      * Moves a file from a source directory to a destination in the same workspace
@@ -120,7 +120,7 @@ public interface StorageService<T, U> extends TAOService {
      * @param destination     The new relative destination of the file
      * @throws IOException if the file or folder cannot be moved
      */
-    void move(Workspace workspace, String source, String destination) throws IOException;
+    void move(Repository workspace, String source, String destination) throws IOException;
 
     /**
      * List the files uploaded in the shared workspace
@@ -157,9 +157,9 @@ public interface StorageService<T, U> extends TAOService {
      * @return               The subtree of the given path
      * @throws IOException if the content cannot be retrieved
      */
-    List<FileObject> listFiles(Workspace workspace, String fromPath, Set<String> exclusions, String lastItem) throws IOException;
+    List<FileObject> listFiles(Repository workspace, String fromPath, Set<String> exclusions, String lastItem) throws IOException;
 
-    List<FileObject> listTree(Workspace workspace, String fromPath) throws IOException;
+    List<FileObject> listTree(Repository workspace, String fromPath) throws IOException;
 
     /**
      * Lists the results of the given workflow, regardless of the execution job.
@@ -192,7 +192,7 @@ public interface StorageService<T, U> extends TAOService {
         return object;
     }
 
-    default String resolve(Workspace workspace, String path) {
+    default String resolve(Repository workspace, String path) {
         if (StringUtilities.isNullOrEmpty(path)) {
             return workspace.root();
         }

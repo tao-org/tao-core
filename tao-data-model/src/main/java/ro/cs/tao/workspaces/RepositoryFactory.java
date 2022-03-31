@@ -8,22 +8,22 @@ import ro.cs.tao.topology.TopologyException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class WorkspaceFactory {
-    private static final WorkspaceFactory instance;
-    private final Map<WorkspaceType, Workspace> templates;
+public class RepositoryFactory {
+    private static final RepositoryFactory instance;
+    private final Map<RepositoryType, Repository> templates;
 
     static {
-        instance = new WorkspaceFactory();
+        instance = new RepositoryFactory();
     }
 
-    private WorkspaceFactory() {
+    private RepositoryFactory() {
         this.templates = new HashMap<>();
         final String values = ConfigurationManager.getInstance().getValue("workspace.enabled");
         if (values != null) {
             final String[] workspaces = values.toUpperCase().split(",");
             for (String w : workspaces) {
-                WorkspaceType type = EnumUtils.getEnumConstantByName(WorkspaceType.class, w);
-                Workspace workspace = new Workspace();
+                RepositoryType type = EnumUtils.getEnumConstantByName(RepositoryType.class, w);
+                Repository workspace = new Repository();
                 workspace.setType(type);
                 workspace.setName(type.name());
                 workspace.setDescription(type.friendlyName());
@@ -37,8 +37,8 @@ public class WorkspaceFactory {
         }
     }
 
-    public static Workspace createDefault(WorkspaceType type, String user) {
-        final Workspace workspace = instance.templates.get(type);
+    public static Repository createDefault(RepositoryType type, String user) {
+        final Repository workspace = instance.templates.get(type);
         if (workspace == null) {
             throw new IllegalArgumentException("Workspace type " + type.name() + " is disabled");
         }

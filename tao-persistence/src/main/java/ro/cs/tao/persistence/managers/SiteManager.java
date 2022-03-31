@@ -4,22 +4,22 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-import ro.cs.tao.persistence.WorkspaceProvider;
-import ro.cs.tao.persistence.repository.WorkspaceRepository;
+import ro.cs.tao.persistence.SiteProvider;
+import ro.cs.tao.persistence.repository.SiteRepository;
 import ro.cs.tao.utils.StringUtilities;
-import ro.cs.tao.workspaces.Workspace;
+import ro.cs.tao.workspaces.Site;
 
 import java.util.List;
 
 @Configuration
 @EnableTransactionManagement
 @EnableJpaRepositories(basePackages = { "ro.cs.tao.persistence.repository" })
-@Component("workspaceManager")
-public class WorkspaceManager extends EntityManager<Workspace, Integer, WorkspaceRepository>
-                                implements WorkspaceProvider {
+@Component("siteManager")
+public class SiteManager extends EntityManager<Site, Integer, SiteRepository>
+        implements SiteProvider {
 
     @Override
-    public List<Workspace> getByUser(String userName) {
+    public List<Site> getByUser(String userName) {
         return this.repository.getByUser(userName);
     }
 
@@ -29,8 +29,9 @@ public class WorkspaceManager extends EntityManager<Workspace, Integer, Workspac
     }
 
     @Override
-    protected boolean checkEntity(Workspace entity) {
-        return entity != null && !StringUtilities.isNullOrEmpty(entity.getName()) &&
-                !StringUtilities.isNullOrEmpty(entity.getDescription()) && entity.getType() != null;
+    protected boolean checkEntity(Site entity) {
+        return entity != null && !StringUtilities.isNullOrEmpty(entity.getName())
+                && entity.getFootprint() != null && entity.getStartDate() != null && entity.getEndDate() != null
+                && entity.getStartDate().isBefore(entity.getEndDate());
     }
 }

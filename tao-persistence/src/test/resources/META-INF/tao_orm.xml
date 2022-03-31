@@ -351,6 +351,28 @@
         </attributes>
     </entity>
 
+    <entity class="ro.cs.tao.component.WPSAuthentication" access="PROPERTY">
+        <table name="component.wps_authentication"/>
+        <convert converter="ro.cs.tao.persistence.convert.AuthenticationTypeConverter" attribute-name="type" />
+        <attributes>
+            <basic name="type">
+                <column name="auth_type" nullable="false" column-definition="varchar(20) NOT NULL"/>
+            </basic>
+            <basic name="user">
+                <column name="username" nullable="true" column-definition="varchar(50)"/>
+            </basic>
+            <basic name="password">
+                <column name="password" nullable="true" column-definition="text"/>
+            </basic>
+            <basic name="loginUrl">
+                <column name="login_url" nullable="true" column-definition="varchar(1024)"/>
+            </basic>
+            <basic name="authHeader">
+                <column name="header_name" nullable="true" column-definition="varchar(20)"/>
+            </basic>
+        </attributes>
+    </entity>
+
     <entity class="ro.cs.tao.component.ProcessingComponent" access="PROPERTY">
         <table name="component.processing_component"/>
 
@@ -440,17 +462,13 @@
         </association-override>
 
         <convert converter="ro.cs.tao.persistence.convert.ProcessingComponentVisibilityConverter" attribute-name="visibility" />
-        <convert converter="ro.cs.tao.persistence.convert.AuthenticationTypeConverter" attribute-name="authentication" />
-        <convert converter="ro.cs.tao.persistence.convert.ParameterDescriptorListConverter" attribute-name="parameters" />
+        <convert converter="ro.cs.tao.persistence.convert.WPSParameterDescriptorListConverter" attribute-name="parameters" />
         <attributes>
             <basic name="remoteAddress">
                 <column name="remote_address" nullable="false" column-definition="character varying(1024) NOT NULL"/>
             </basic>
             <basic name="capabilityName">
                 <column name="capability" nullable="false" column-definition="character varying(512) NOT NULL"/>
-            </basic>
-            <basic name="templateType">
-                <column name="template_type_id" nullable="false" column-definition="integer not null"/>
             </basic>
             <basic name="visibility">
                 <column name="visibility_id" nullable="false" column-definition="integer not null"/>
@@ -461,12 +479,12 @@
             <basic name="owner">
                 <column name="owner_user" nullable="true" column-definition="varchar NULL"/>
             </basic>
-            <basic name="authentication">
-                <column name="auth_info" nullable="true" column-definition="json NULL"/>
-            </basic>
             <basic name="parameters">
                 <column name="parameters" nullable="true" column-definition="json NULL" />
             </basic>
+            <many-to-one name="service" fetch="EAGER" target-entity="ro.cs.tao.docker.Container">
+                <join-column name="container_id" nullable="true"/>
+            </many-to-one>
         </attributes>
     </entity>
 
@@ -976,6 +994,20 @@
         </attributes>
     </entity>
 
+    <entity class="ro.cs.tao.messaging.progress.TransferStart" access="PROPERTY">
+        <discriminator-value>4</discriminator-value>
+        <attributes>
+            <transient name="taskName"/>
+        </attributes>
+    </entity>
+
+    <entity class="ro.cs.tao.messaging.progress.TransferEnd" access="PROPERTY">
+        <discriminator-value>5</discriminator-value>
+        <attributes>
+            <transient name="taskName"/>
+        </attributes>
+    </entity>
+
     <entity class="ro.cs.tao.workflow.WorkflowDescriptor" access="PROPERTY">
         <table name="workflow.graph"/>
         <convert converter="ro.cs.tao.persistence.convert.WorkflowGraphStatusConverter" attribute-name="status" />
@@ -1365,10 +1397,10 @@
         </attributes>
     </entity>
 
-    <entity class="ro.cs.tao.workspaces.Workspace" access="PROPERTY">
+    <entity class="ro.cs.tao.workspaces.Repository" access="PROPERTY">
         <table name="topology.workspace"/>
         <convert converter="ro.cs.tao.persistence.convert.MapConverter" attribute-name="parameters" />
-        <convert converter="ro.cs.tao.persistence.convert.WorkspaceTypeConverter" attribute-name="type" />
+        <convert converter="ro.cs.tao.persistence.convert.RepositoryTypeConverter" attribute-name="type" />
         <attributes>
             <id name="id">
                 <column name="id" nullable="false" column-definition="serial NOT NULL"/>
@@ -1391,6 +1423,9 @@
             </basic>
             <basic name="readOnly">
                 <column name="read_only" nullable="false" column-definition="boolean NOT NULL"/>
+            </basic>
+            <basic name="system">
+                <column name="system" nullable="true" column-definition="boolean DEFAULT false"/>
             </basic>
             <basic name="parameters">
                 <column name="params" nullable="true" column-definition="json"/>
@@ -1592,7 +1627,8 @@
     <converter class="ro.cs.tao.persistence.convert.AggregatorConverter" />
     <converter class="ro.cs.tao.persistence.convert.NodeRoleConverter" />
     <converter class="ro.cs.tao.persistence.convert.JsonCallbackConverter" />
-    <converter class="ro.cs.tao.persistence.convert.WorkspaceTypeConverter"/>
+    <converter class="ro.cs.tao.persistence.convert.RepositoryTypeConverter"/>
     <converter class="ro.cs.tao.persistence.convert.ContainerTypeConverter"/>
+    <converter class="ro.cs.tao.persistence.convert.WPSParameterDescriptorListConverter"/>
 
 </entity-mappings>

@@ -108,7 +108,10 @@ public class PersistenceManager {
     private NamingRuleManager namingRuleManager;
 
     @Autowired
-    private WorkspaceManager workspaceManager;
+    private RepositoryManager repositoryManager;
+
+    @Autowired
+    private SiteManager siteManager;
 
     @Autowired
     private WPSAuthenticationManager wpsAuthenticationManager;
@@ -169,7 +172,9 @@ public class PersistenceManager {
 
     public WPSComponentManager wpsComponents() { return wpsComponentManager; }
 
-    public WorkspaceManager workspaces() { return workspaceManager; }
+    public RepositoryManager repositories() { return repositoryManager; }
+
+    public SiteManager sites() { return siteManager; }
 
     public WPSAuthenticationManager wpsAuthentication() { return wpsAuthenticationManager; }
 }
