@@ -5,12 +5,12 @@ import ro.cs.tao.component.IntIdentifiable;
 import java.util.LinkedHashMap;
 import java.util.Objects;
 
-public class Workspace extends IntIdentifiable {
+public class Repository extends IntIdentifiable {
     private String name;
     private String description;
     private String urlPrefix;
     private String userName;
-    private WorkspaceType type;
+    private RepositoryType type;
     private LinkedHashMap<String, String> parameters;
     private boolean readOnly;
     private boolean system;
@@ -47,11 +47,11 @@ public class Workspace extends IntIdentifiable {
         this.userName = userName;
     }
 
-    public WorkspaceType getType() {
+    public RepositoryType getType() {
         return type;
     }
 
-    public void setType(WorkspaceType type) {
+    public void setType(RepositoryType type) {
         this.type = type;
     }
 
@@ -103,9 +103,9 @@ public class Workspace extends IntIdentifiable {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Workspace)) return false;
+        if (!(o instanceof Repository)) return false;
         if (!super.equals(o)) return false;
-        Workspace workspace = (Workspace) o;
+        Repository workspace = (Repository) o;
         return name.equals(workspace.name) && description.equals(workspace.description) && urlPrefix.equals(workspace.urlPrefix) && type == workspace.type && Objects.equals(parameters, workspace.parameters);
     }
 

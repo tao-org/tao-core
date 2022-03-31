@@ -116,13 +116,6 @@ VALUES ('master', 8, 32, 1024, 32, 1.0);
 INSERT INTO topology.node (id, username, password, flavor_id, description, role)
 VALUES ('localhost', '', '', 'master', 'Master Node', 'master');
 
--- Workspace types
-INSERT INTO topology.workspace_type (id, name, params) VALUES
-(1, 'Local repository', '["root"]'),
-(2, 'AWS S3 repository', '["aws.region","aws.access.key","aws.secret.key","aws.bucket"]'),
-(3, 'OpenStack Swift S3 repository', '["openstack.auth.url","openstack.tenantId","openstack.domain","openstack.user","openstack.password","openstack.bucket"]');
-(4, 'STAC repository', '["stac.url"]');
-
 -- Naming rules
 INSERT INTO product.naming_rule (id, sensor, regex, description) VALUES
 (1, 'Sentinel2', '(S2[A-B])_(MSIL1C|MSIL2A)_(\d{8})T(\d{6})_(N\d{4})_R(\d{3})_T(\d{2}\w{3})_(\d{8}T\d{6})(?:.SAFE)?', 'Sentinel-2 L1C and L2A product naming'),
@@ -164,3 +157,10 @@ INSERT INTO product.naming_rule_token (naming_rule_id, token_name, matching_grou
 (3, 'PDATE', 6, 'Processing date'),
 (3, 'COLLECTION', 7, 'Collection number'),
 (3, 'CATEGORY', 8, 'Collection category');
+
+-- Workspace types
+INSERT INTO workspace.repository_type (id, name, params) VALUES
+(1, 'Local repository', '{"root":true}'),
+(2, 'AWS S3 repository', '{"aws.region":true,"aws.access.key":false,"aws.secret.key":false,"aws.bucket":true}'),
+(3, 'OpenStack Swift S3 repository', '{"openstack.auth.url":true,"openstack.tenantId":true,"openstack.domain":true,"openstack.user":true,"openstack.password":true,"openstack.bucket":true}');
+(4, 'STAC repository', '{"stac.url":true}');

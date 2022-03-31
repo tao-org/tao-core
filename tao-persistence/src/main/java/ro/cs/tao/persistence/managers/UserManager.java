@@ -24,16 +24,16 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.UserProvider;
 import ro.cs.tao.persistence.repository.GroupRepository;
+import ro.cs.tao.persistence.repository.RepositoryJPARepository;
 import ro.cs.tao.persistence.repository.UserRepository;
-import ro.cs.tao.persistence.repository.WorkspaceRepository;
 import ro.cs.tao.security.SystemPrincipal;
 import ro.cs.tao.user.Group;
 import ro.cs.tao.user.User;
 import ro.cs.tao.user.UserPreference;
 import ro.cs.tao.user.UserStatus;
 import ro.cs.tao.utils.StringUtilities;
-import ro.cs.tao.workspaces.WorkspaceFactory;
-import ro.cs.tao.workspaces.WorkspaceType;
+import ro.cs.tao.workspaces.RepositoryFactory;
+import ro.cs.tao.workspaces.RepositoryType;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
@@ -50,7 +50,7 @@ public class UserManager extends EntityManager<User, Long, UserRepository> imple
     @Autowired
     private GroupRepository groupRepository;
     @Autowired
-    private WorkspaceRepository workspaceRepository;
+    private RepositoryJPARepository repositoryJPARepository;
 
     @Override
     public boolean login(String user, String password) {
@@ -548,9 +548,9 @@ public class UserManager extends EntityManager<User, Long, UserRepository> imple
 
     @Override
     public void createWorkspaces(String user) {
-        workspaceRepository.save(WorkspaceFactory.createDefault(WorkspaceType.LOCAL, user));
+        repositoryJPARepository.save(RepositoryFactory.createDefault(RepositoryType.LOCAL, user));
         try {
-            workspaceRepository.save(WorkspaceFactory.createDefault(WorkspaceType.AWS, user));
+            repositoryJPARepository.save(RepositoryFactory.createDefault(RepositoryType.AWS, user));
         } catch (Exception e) {
             Logger.getLogger(UserManager.class.getName()).warning(e.getMessage());
         }

@@ -8,7 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 @XmlEnum(Integer.class)
-public enum WorkspaceType implements TaoEnum<Integer> {
+public enum RepositoryType implements TaoEnum<Integer> {
     @XmlEnumValue("1")
     LOCAL(1, "Local repository", "file", "root",
           new LinkedHashMap<String, Boolean>(){{
@@ -38,7 +38,7 @@ public enum WorkspaceType implements TaoEnum<Integer> {
     private final String rootKey;
     private final boolean singleton;
 
-    WorkspaceType(int value, String description, String prefix, String rootKey, LinkedHashMap<String, Boolean> parameters, boolean singleton) {
+    RepositoryType(int value, String description, String prefix, String rootKey, LinkedHashMap<String, Boolean> parameters, boolean singleton) {
         this.value = value;
         this.description = description;
         this.prefix = prefix;
@@ -61,8 +61,8 @@ public enum WorkspaceType implements TaoEnum<Integer> {
 
     public boolean singleton() {return this.singleton; }
     
-    public static WorkspaceType fromPrefix(String prefix) {
-        for (WorkspaceType type : WorkspaceType.values()) {
+    public static RepositoryType fromPrefix(String prefix) {
+        for (RepositoryType type : RepositoryType.values()) {
             if (type.prefix.equals(prefix)) {
                 return type;
             }

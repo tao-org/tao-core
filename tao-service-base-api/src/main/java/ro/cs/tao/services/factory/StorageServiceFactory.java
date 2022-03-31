@@ -3,7 +3,7 @@ package ro.cs.tao.services.factory;
 import ro.cs.tao.services.interfaces.StorageService;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
-import ro.cs.tao.workspaces.Workspace;
+import ro.cs.tao.workspaces.Repository;
 
 import java.lang.ref.WeakReference;
 import java.util.Collections;
@@ -13,9 +13,9 @@ import java.util.Set;
 
 public class StorageServiceFactory {
 
-    private final static Map<Workspace, WeakReference<StorageService>> cachedServices = Collections.synchronizedMap(new HashMap<>());
+    private final static Map<Repository, WeakReference<StorageService>> cachedServices = Collections.synchronizedMap(new HashMap<>());
 
-    public static final StorageService getInstance(Workspace workspace) {
+    public static final StorageService getInstance(Repository workspace) {
         StorageService service;
         if (!cachedServices.containsKey(workspace) || (service = cachedServices.get(workspace).get()) == null) {
             final ServiceRegistry<StorageService> registry = ServiceRegistryManager.getInstance().getServiceRegistry(StorageService.class);
