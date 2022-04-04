@@ -887,7 +887,7 @@ public class FileUtilities {
                 }
             }
         }
-        return common != null ? common.toString() : null;
+        return common != null ? common.toString().replace("\\", "/") : null;
     }
 
     public static void copyStream(InputStream input, OutputStream output) throws IOException {
