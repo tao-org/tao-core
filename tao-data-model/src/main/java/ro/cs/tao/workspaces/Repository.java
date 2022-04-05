@@ -1,6 +1,8 @@
 package ro.cs.tao.workspaces;
 
 import ro.cs.tao.component.IntIdentifiable;
+import ro.cs.tao.utils.FileUtilities;
+import ro.cs.tao.utils.StringUtilities;
 
 import java.util.LinkedHashMap;
 import java.util.Objects;
@@ -79,8 +81,84 @@ public class Repository extends IntIdentifiable {
         this.system = system;
     }
 
+    /**
+     * Returns the root of this workspace
+     */
     public String root() {
         return this.type != null && this.parameters != null ? this.parameters.get(this.type.rootKey()) : null;
+    }
+
+    /**
+     * Returns the bucket of this workspace (if the workspace is not local) or the root folder (if the workspace is local)
+     */
+    public String bucketName() {
+        final String root = root();
+        final int idx = root.lastIndexOf('/');
+        return idx > 0 ? root.substring(0, idx) : root;
+    }
+
+    /**
+     * Returns the full path of the given relative path.
+     *
+     * @param relativePath The path
+     */
+    public String resolve(String relativePath) {
+        if (StringUtilities.isNullOrEmpty(relativePath) || "/".equals(relativePath)) {
+            return root();
+        }
+        return relativePath.startsWith("/") ? root() + relativePath : root() + "/" + relativePath;
+    }
+
+    /**
+     * Relativize the given path to the bucket of the workspace (full path minus the bucket)
+     *
+     * @param path  The path
+     */
+    public String relativizeToBucket(String path) {
+        final String bucketName = bucketName();
+        if (StringUtilities.isNullOrEmpty(path) || path.equals(bucketName) || path.equals(bucketName + "/")) {
+            return "";
+        }
+        final String relPath = ("/".equals(path) ? root() : path).replaceFirst(bucketName, "");
+        return relPath.startsWith("/") ? relPath.substring(1) : relPath;
+    }
+
+    /**
+     * Relativize the given path to the root of the workspace
+     *
+     * @param path  The path
+     */
+    public String relativizeToRoot(String path) {
+        if (StringUtilities.isNullOrEmpty(path)) {
+            return root();
+        }
+        if (path.startsWith("/")) {
+            return path;
+        }
+        final String commonPath = FileUtilities.findCommonPath(root(), path);
+        return commonPath != null ? path.replace(commonPath + "/", "") : path;
+    }
+
+    /**
+     * Relativize the second path to the first path.
+     * @param refPath       The reference path
+     * @param otherPath     The path to relativize
+     */
+    public String relativize(String refPath, String otherPath) {
+        if (StringUtilities.isNullOrEmpty(otherPath) || otherPath.startsWith("/")) {
+            return "";
+        }
+        final String commonPath = FileUtilities.findCommonPath(refPath, otherPath);
+        return commonPath != null ? otherPath.replace(commonPath + "/", "") : otherPath;
+    }
+
+    /**
+     * Returns the file name (the last element of the path)
+     * @param path  The path
+     */
+    public String fileName(String path) {
+        final int lastSlashIdx = path.lastIndexOf('/', path.length() - 2);
+        return lastSlashIdx > 0 ? path.substring(lastSlashIdx + 1) : path.replace("/", "");
     }
 
     public void addParameter(String key, String value) {
@@ -106,7 +184,7 @@ public class Repository extends IntIdentifiable {
         if (!(o instanceof Repository)) return false;
         if (!super.equals(o)) return false;
         Repository workspace = (Repository) o;
-        return name.equals(workspace.name) && description.equals(workspace.description) && urlPrefix.equals(workspace.urlPrefix) && type == workspace.type && Objects.equals(parameters, workspace.parameters);
+        return Objects.equals(id, workspace.id) || (name.equals(workspace.name) && description.equals(workspace.description) && urlPrefix.equals(workspace.urlPrefix) && type == workspace.type && Objects.equals(parameters, workspace.parameters));
     }
 
     @Override
