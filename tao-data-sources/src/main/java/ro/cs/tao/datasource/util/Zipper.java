@@ -161,7 +161,7 @@ public class Zipper {
                 }
             }
         }
-        return root;
+        return target;
     }
 
     public static Path decompressTarGz(Path source, Path target, boolean deleteAfterDecompress) throws IOException {

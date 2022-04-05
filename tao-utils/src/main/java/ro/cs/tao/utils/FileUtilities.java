@@ -842,7 +842,6 @@ public class FileUtilities {
      *
      * @param path1 The first path (it may be absolute or relative)
      * @param path2 The second path (it must be relative)
-     * @return
      */
     public static Path findCommonPath(Path path1, Path path2) {
         if (path1 == null || path2 == null || path2.isAbsolute()) {
@@ -865,7 +864,12 @@ public class FileUtilities {
         }
         return common;
     }
-
+    /**
+     * Finds the common part of two paths given as strings. At least the second path must be relative.
+     *
+     * @param strPath1 The first path (it may be absolute or relative)
+     * @param strPath2 The second path (it must be relative)
+     */
     public static String findCommonPath(String strPath1, String strPath2) {
         if (StringUtilities.isNullOrEmpty(strPath1) || StringUtilities.isNullOrEmpty(strPath2)) {
             return null;
@@ -888,6 +892,16 @@ public class FileUtilities {
             }
         }
         return common != null ? common.toString().replace("\\", "/") : null;
+    }
+
+    public static String resolve(String parent, String child) {
+        if (StringUtilities.isNullOrEmpty(child)) {
+            return parent;
+        } else {
+            final String p = parent.replace("\\", "/");
+            final String c = child.replace("\\", "/");
+            return p.endsWith("/") ? p + c : p + "/" + c;
+        }
     }
 
     public static void copyStream(InputStream input, OutputStream output) throws IOException {

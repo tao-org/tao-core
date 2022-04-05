@@ -32,7 +32,7 @@ public class ExecutionJob extends LongIdentifiable implements StatusChangeListen
     private String name;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
-    private long workflowId;
+    private Long workflowId;
     private String queryId;
     private String userName;
     private ExecutionStatus executionStatus;
@@ -63,8 +63,8 @@ public class ExecutionJob extends LongIdentifiable implements StatusChangeListen
     public String getUserName() { return userName; }
     public void setUserName(String userName) { this.userName = userName; }
 
-    public long getWorkflowId() { return workflowId; }
-    public void setWorkflowId(long workflowId) { this.workflowId = workflowId; }
+    public Long getWorkflowId() { return workflowId; }
+    public void setWorkflowId(Long workflowId) { this.workflowId = workflowId; }
 
     public void setStartTime(LocalDateTime startTime) {
         this.startTime = startTime;

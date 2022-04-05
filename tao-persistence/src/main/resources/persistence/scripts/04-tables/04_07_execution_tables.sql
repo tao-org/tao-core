@@ -53,7 +53,7 @@ CREATE TABLE execution.task
 	-- Also nullable, because execution group doesn't have a component
 	component_id varchar(512) NULL,
 	resource_id varchar(512) NULL,
-	graph_node_id bigint NOT NULL,
+	graph_node_id bigint,
 	start_time timestamp without time zone NULL,
 	end_time timestamp without time zone NULL,
 	last_updated timestamp without time zone NULL,
