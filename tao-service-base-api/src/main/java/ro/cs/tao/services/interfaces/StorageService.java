@@ -18,7 +18,6 @@ package ro.cs.tao.services.interfaces;
 
 import ro.cs.tao.ProgressListener;
 import ro.cs.tao.services.model.FileObject;
-import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.StringUtilities;
 import ro.cs.tao.workspaces.Repository;
 
@@ -196,17 +195,6 @@ public interface StorageService<T, U> extends TAOService {
         if (StringUtilities.isNullOrEmpty(path)) {
             return workspace.root();
         }
-        String outPath = path;
-        if (outPath.startsWith("/")) {
-            return workspace.root() + outPath;
-        }
-        String commonPath = FileUtilities.findCommonPath(workspace.root(), outPath);
-        if (commonPath != null) {
-            outPath = outPath.replace(commonPath, "");
-            if (outPath.startsWith("/")) {
-                outPath = outPath.substring(1);
-            }
-        }
-        return workspace.root() + "/" + outPath;
+        return path.startsWith("/") ? workspace.root() + path : workspace.root() + "/" + path;
     }
 }

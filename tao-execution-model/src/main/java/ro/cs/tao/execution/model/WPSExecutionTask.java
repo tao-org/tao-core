@@ -1,9 +1,10 @@
 package ro.cs.tao.execution.model;
 
-import ro.cs.tao.component.Variable;
-import ro.cs.tao.component.WPSComponent;
+import ro.cs.tao.component.*;
+import ro.cs.tao.component.validation.ValidationException;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class WPSExecutionTask extends ExecutionTask {
 
@@ -17,7 +18,60 @@ public class WPSExecutionTask extends ExecutionTask {
 
     @Override
     public void setInputParameterValue(String parameterId, String value) {
-
+        boolean descriptorExists = false;
+        List<ParameterDescriptor> descriptorList = this.component.getParameters();
+        for (ParameterDescriptor descriptor : descriptorList) {
+            if (descriptor.getName().equals(parameterId)) {
+                descriptorExists = true;
+                break;
+            }
+        }
+        List<SourceDescriptor> sources = this.component.getSources();
+        for (SourceDescriptor source : sources) {
+            if (source.getName().equals(parameterId)) {
+                descriptorExists = true;
+                break;
+            }
+        }
+        List<TargetDescriptor> targets = this.component.getTargets();
+        for (TargetDescriptor target : targets) {
+            if (target.getName().equals(parameterId)) {
+                descriptorExists = true;
+                break;
+            }
+        }
+        if (!descriptorExists) {
+            throw new ValidationException(String.format("The parameter ID [%s] does not exists in the component '%s'",
+                                                        parameterId, component.getLabel()));
+        }
+        if (this.inputParameterValues == null) {
+            this.inputParameterValues = new ArrayList<>();
+        }
+        Variable variable = this.inputParameterValues.stream()
+                .filter(v -> v.getKey().equals(parameterId))
+                .findFirst()
+                .orElse(null);
+        SourceDescriptor sourceDescriptor = this.component.getSources().stream()
+                .filter(s -> s.getName().equals(parameterId))
+                .findFirst()
+                .orElse(null);
+        final int cardinality = sourceDescriptor != null ? sourceDescriptor.getCardinality() : 1;
+        if (variable != null) {
+            if (cardinality == 1) {
+                variable.setValue(value);
+            } else {
+                variable.setValue(appendValueToList(variable.getValue(), value));
+            }
+        } else {
+            Variable var;
+            if (cardinality == 1) {
+                var = new Variable(parameterId, value);
+            } else {
+                String newValue = appendValueToList(null, value);
+                var = new Variable(parameterId, newValue);
+            }
+            this.inputParameterValues.add(var);
+        }
     }
 
     @Override

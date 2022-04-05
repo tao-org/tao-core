@@ -43,6 +43,7 @@ import ro.cs.tao.quota.UserQuotaManager;
 import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.serialization.StringListAdapter;
 import ro.cs.tao.spi.OutputDataHandlerManager;
+import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.executors.NamedThreadPoolExecutor;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
@@ -272,7 +273,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
         String json = null;
         try {
             StringListAdapter adapter = new StringListAdapter();
-            json = adapter.unmarshal(results.stream().map(p -> p.getLocation() + (p.getEntryPoint() != null ? p.getEntryPoint() : "")).collect(Collectors.toList()));
+            json = adapter.unmarshal(results.stream().map(p -> FileUtilities.resolve(p.getLocation(), p.getEntryPoint())).collect(Collectors.toList()));
         } catch (Exception e) {
             logger.severe("Serialization of results failed: " + e.getMessage());
         }
