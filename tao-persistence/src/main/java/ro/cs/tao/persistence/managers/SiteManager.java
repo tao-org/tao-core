@@ -15,7 +15,7 @@ import java.util.List;
 @EnableTransactionManagement
 @EnableJpaRepositories(basePackages = { "ro.cs.tao.persistence.repository" })
 @Component("siteManager")
-public class SiteManager extends EntityManager<Site, Integer, SiteRepository>
+public class SiteManager extends EntityManager<Site, String, SiteRepository>
         implements SiteProvider {
 
     @Override

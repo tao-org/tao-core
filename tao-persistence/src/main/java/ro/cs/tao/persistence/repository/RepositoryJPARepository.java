@@ -12,9 +12,9 @@ import java.util.List;
 @org.springframework.stereotype.Repository
 @Qualifier(value = "repositoryJPARepository")
 @Transactional
-public interface RepositoryJPARepository extends PagingAndSortingRepository<Repository, Integer> {
+public interface RepositoryJPARepository extends PagingAndSortingRepository<Repository, String> {
 
-    @Query(value = "SELECT * FROM workspace.repository WHERE username = :userName", nativeQuery = true)
+    @Query(value = "SELECT * FROM workspace.repository WHERE username = :userName ORDER BY created", nativeQuery = true)
     List<Repository> getByUser(@Param("userName") String userName);
 
 }

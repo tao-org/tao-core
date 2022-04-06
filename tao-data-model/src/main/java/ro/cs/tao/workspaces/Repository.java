@@ -1,13 +1,14 @@
 package ro.cs.tao.workspaces;
 
-import ro.cs.tao.component.IntIdentifiable;
+import ro.cs.tao.component.StringIdentifiable;
 import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.StringUtilities;
 
+import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Objects;
 
-public class Repository extends IntIdentifiable {
+public class Repository extends StringIdentifiable {
     private String name;
     private String description;
     private String urlPrefix;
@@ -16,6 +17,7 @@ public class Repository extends IntIdentifiable {
     private LinkedHashMap<String, String> parameters;
     private boolean readOnly;
     private boolean system;
+    private LocalDateTime created;
 
     public String getName() {
         return name;
@@ -81,6 +83,14 @@ public class Repository extends IntIdentifiable {
         this.system = system;
     }
 
+    public LocalDateTime getCreated() {
+        return created;
+    }
+
+    public void setCreated(LocalDateTime created) {
+        this.created = created;
+    }
+
     /**
      * Returns the root of this workspace
      */
@@ -103,10 +113,15 @@ public class Repository extends IntIdentifiable {
      * @param relativePath The path
      */
     public String resolve(String relativePath) {
+        final String workspaceRoot = root();
         if (StringUtilities.isNullOrEmpty(relativePath) || "/".equals(relativePath)) {
-            return root();
+            return workspaceRoot;
         }
-        return relativePath.startsWith("/") ? root() + relativePath : root() + "/" + relativePath;
+        return relativePath.startsWith(workspaceRoot)
+                ? relativePath
+                : relativePath.startsWith("/")
+                    ? workspaceRoot + relativePath
+                    : workspaceRoot + "/" + relativePath;
     }
 
     /**
@@ -119,7 +134,7 @@ public class Repository extends IntIdentifiable {
         if (StringUtilities.isNullOrEmpty(path) || path.equals(bucketName) || path.equals(bucketName + "/")) {
             return "";
         }
-        final String relPath = ("/".equals(path) ? root() : path).replaceFirst(bucketName, "");
+        final String relPath = ("/".equals(path) ? root() : resolve(path)).replaceFirst(bucketName, "");
         return relPath.startsWith("/") ? relPath.substring(1) : relPath;
     }
 
