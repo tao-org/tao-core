@@ -4,7 +4,7 @@ import ro.cs.tao.workspaces.Repository;
 
 import java.util.List;
 
-public interface RepositoryProvider extends EntityProvider<Repository, Integer> {
+public interface RepositoryProvider extends EntityProvider<Repository, String> {
 
     List<Repository> getByUser(String userName);
 }

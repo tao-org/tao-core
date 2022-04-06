@@ -2,12 +2,12 @@ package ro.cs.tao.workspaces;
 
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.MultiPolygon;
-import ro.cs.tao.component.IntIdentifiable;
+import ro.cs.tao.component.StringIdentifiable;
 import ro.cs.tao.serialization.GeometryAdapter;
 
 import java.time.LocalDateTime;
 
-public class Site extends IntIdentifiable {
+public class Site extends StringIdentifiable {
     private String name;
     private String description;
     private String user;

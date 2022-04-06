@@ -4,7 +4,7 @@ import ro.cs.tao.workspaces.Repository;
 
 import java.util.List;
 
-public interface RepositoryService extends CRUDService<Repository, Integer> {
+public interface RepositoryService extends CRUDService<Repository, String> {
 
     List<Repository> getByUser(String userName);
 }

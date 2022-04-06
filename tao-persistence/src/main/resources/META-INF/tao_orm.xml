@@ -1403,8 +1403,7 @@
         <convert converter="ro.cs.tao.persistence.convert.RepositoryTypeConverter" attribute-name="type" />
         <attributes>
             <id name="id">
-                <column name="id" nullable="false" column-definition="serial NOT NULL"/>
-                <generated-value strategy="IDENTITY" generator="workspace_identifier"/>
+                <column name="id" nullable="false" column-definition="varchar(40) DEFAULT uuid_generate_v4()"/>
             </id>
             <basic name="name">
                 <column name="name" nullable="false" column-definition="varchar(250) NOT NULL"/>
@@ -1430,6 +1429,9 @@
             <basic name="parameters">
                 <column name="params" nullable="true" column-definition="json"/>
             </basic>
+            <basic name="created">
+                <column name="created" nullable="true" column-definition="timestamp DEFAULT now()"/>
+            </basic>
         </attributes>
     </entity>
 
@@ -1437,8 +1439,7 @@
         <table name="workspace.site"/>
         <attributes>
             <id name="id">
-                <column name="id" nullable="false" column-definition="serial NOT NULL"/>
-                <generated-value strategy="IDENTITY" generator="site_identifier"/>
+                <column name="id" nullable="false" column-definition="varchar(40) DEFAULT uuid_generate_v4()"/>
             </id>
             <basic name="name">
                 <column name="name" nullable="false" column-definition="varchar(250) NOT NULL"/>

@@ -7,6 +7,7 @@ import ro.cs.tao.topology.TopologyException;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public class RepositoryFactory {
     private static final RepositoryFactory instance;
@@ -42,6 +43,7 @@ public class RepositoryFactory {
         if (workspace == null) {
             throw new IllegalArgumentException("Workspace type " + type.name() + " is disabled");
         }
+        workspace.setId(UUID.randomUUID().toString());
         workspace.setUserName(user);
         final ConfigurationProvider cfgProvider = ConfigurationManager.getInstance();
         switch (type) {

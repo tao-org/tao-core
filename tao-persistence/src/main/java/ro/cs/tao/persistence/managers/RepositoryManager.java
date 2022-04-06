@@ -15,7 +15,7 @@ import java.util.List;
 @EnableTransactionManagement
 @EnableJpaRepositories(basePackages = { "ro.cs.tao.persistence.repository" })
 @Component("repositoryManager")
-public class RepositoryManager extends EntityManager<Repository, Integer, RepositoryJPARepository>
+public class RepositoryManager extends EntityManager<Repository, String, RepositoryJPARepository>
                                 implements RepositoryProvider {
 
     @Override

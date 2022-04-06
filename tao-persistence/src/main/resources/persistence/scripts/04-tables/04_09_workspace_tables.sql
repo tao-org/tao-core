@@ -14,7 +14,7 @@ ALTER TABLE workspace.repository_type ADD CONSTRAINT PK_repository_type PRIMARY 
 DROP TABLE IF EXISTS workspace.repository CASCADE;
 CREATE TABLE workspace.repository
 (
-    id serial NOT NULL,
+    id varchar(40) DEFAULT uuid_generate_v4(),
 	name varchar(250) NOT NULL,
 	description text NOT NULL,
 	url_prefix varchar(20) NOT NULL,
@@ -22,13 +22,11 @@ CREATE TABLE workspace.repository
 	repository_type_id int NOT NULL,
 	read_only boolean NOT NULL,
 	system boolean DEFAULT false,
-	params json NULL
+	params json NULL,
+	created timestamp DEFAULT now()
 );
 ALTER TABLE workspace.repository ADD CONSTRAINT PK_repository PRIMARY KEY (id);
 DROP SEQUENCE IF EXISTS workspace.repository_id_seq CASCADE;
-CREATE SEQUENCE workspace.repository_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
-ALTER TABLE workspace.repository ALTER COLUMN id SET DEFAULT nextval('workspace.repository_id_seq');
-ALTER SEQUENCE workspace.repository_id_seq OWNED BY workspace.repository.id;
 ALTER TABLE workspace.repository ADD CONSTRAINT FK_workspace_repository_type
     FOREIGN KEY (repository_type_id) REFERENCES workspace.repository_type (id) ON DELETE No Action ON UPDATE No Action;
 
@@ -37,7 +35,7 @@ ALTER TABLE workspace.repository ADD CONSTRAINT FK_workspace_repository_type
 DROP TABLE IF EXISTS workspace.site CASCADE;
 CREATE TABLE workspace.site
 (
-    id serial NOT NULL,
+    id varchar(40) DEFAULT uuid_generate_v4(),
 	name varchar(250) NOT NULL,
 	description text NOT NULL,
 	footprint geography(POLYGON, 4326) NOT NULL,
@@ -47,5 +45,3 @@ CREATE TABLE workspace.site
 );
 ALTER TABLE workspace.site ADD CONSTRAINT PK_site PRIMARY KEY (id);
 DROP SEQUENCE IF EXISTS workspace.site_id_seq CASCADE;
-CREATE SEQUENCE workspace.site_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
-ALTER TABLE workspace.site ALTER COLUMN id SET DEFAULT nextval('workspace.site_id_seq');
