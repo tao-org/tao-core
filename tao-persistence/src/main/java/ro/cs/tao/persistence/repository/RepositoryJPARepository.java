@@ -14,7 +14,7 @@ import java.util.List;
 @Transactional
 public interface RepositoryJPARepository extends PagingAndSortingRepository<Repository, String> {
 
-    @Query(value = "SELECT * FROM workspace.repository WHERE username = :userName ORDER BY created", nativeQuery = true)
+    @Query(value = "SELECT * FROM workspace.repository WHERE username = :userName ORDER BY system desc, created", nativeQuery = true)
     List<Repository> getByUser(@Param("userName") String userName);
 
 }

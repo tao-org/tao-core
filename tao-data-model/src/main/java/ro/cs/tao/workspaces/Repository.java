@@ -98,6 +98,10 @@ public class Repository extends StringIdentifiable {
         return this.type != null && this.parameters != null ? this.parameters.get(this.type.rootKey()) : null;
     }
 
+    public boolean isRoot(String path) {
+        return StringUtilities.isNullOrEmpty(path) || "/".equals(path);
+    }
+
     /**
      * Returns the bucket of this workspace (if the workspace is not local) or the root folder (if the workspace is local)
      */
