@@ -276,12 +276,19 @@ public class DefaultJobFactory {
         if (targets != null) {
             targets.forEach(t -> task.setOutputParameterValue(t.getName(), null));
         }
+        ParameterValue affinityParam = null;
         if (customValues != null) {
             for (ParameterValue param : customValues) {
-                task.setInputParameterValue(param.getParameterName(), param.getParameterValue());
+                if (!"nodeAffinity".equals(param.getParameterName())) {
+                    task.setInputParameterValue(param.getParameterName(), param.getParameterValue());
+                } else {
+                    affinityParam = param;
+                }
             }
         }
-        final String nodeAffinity = component.getNodeAffinity();
+        final String nodeAffinity = affinityParam != null
+                ? affinityParam.getParameterValue()
+                : component.getNodeAffinity();
         if (nodeAffinity != null && !"Any".equals(nodeAffinity)) {
             task.setExecutionNodeHostName(nodeAffinity);
         }
@@ -460,12 +467,19 @@ public class DefaultJobFactory {
         if (targets != null) {
             targets.forEach(t -> task.setOutputParameterValue(t.getName(), null));
         }
+        ParameterValue affinityParam = null;
         if (customValues != null) {
             for (ParameterValue param : customValues) {
-                task.setInputParameterValue(param.getParameterName(), param.getParameterValue());
+                if (!"nodeAffinity".equals(param.getParameterName())) {
+                    task.setInputParameterValue(param.getParameterName(), param.getParameterValue());
+                } else {
+                    affinityParam = param;
+                }
             }
         }
-        final String nodeAffinity = component.getNodeAffinity();
+        final String nodeAffinity = affinityParam != null
+                ? affinityParam.getParameterValue()
+                : component.getNodeAffinity();
         if (nodeAffinity != null && !"Any".equals(nodeAffinity)) {
             task.setExecutionNodeHostName(nodeAffinity);
         }
