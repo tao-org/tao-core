@@ -148,9 +148,9 @@ public interface StorageService<T, U> extends TAOService {
      */
     List<FileObject> getJobResults(long jobId) throws IOException;
 
-    U download(Path path) throws IOException;
+    U download(String path) throws IOException;
 
-    void streamToZip(Path zipRoot, ZipOutputStream stream) throws IOException;
+    void streamToZip(String zipRoot, ZipOutputStream stream) throws IOException;
 
     default void setProgressListener(ProgressListener listener) { }
 

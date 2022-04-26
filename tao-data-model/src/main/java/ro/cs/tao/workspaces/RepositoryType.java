@@ -32,9 +32,10 @@ public enum RepositoryType implements TaoEnum<Integer> {
              put("stac.url", true);
     }}, false),
     @XmlEnumValue("5")
-    SMB(5, "Network share repository", "smb", "smb.url", "smb.user", "smb.password",
+    SMB(5, "Network share repository", "smb", "smb.share", "smb.user", "smb.password",
                  new LinkedHashMap<String, Boolean>() {{
-        put("smb.url", true);
+        put("smb.server", true);
+        put("smb.share", true);
         put("smb.domain", false);
         put("smb.user", false);
         put("smb.password", false);

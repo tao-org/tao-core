@@ -23,6 +23,8 @@ public class Repository extends StringIdentifiable {
 
     @XmlTransient
     private Callable<String> rootFunctor;
+    @XmlTransient
+    private Callable<String> bucketFunctor;
 
     public String getName() {
         return name;
@@ -100,6 +102,10 @@ public class Repository extends StringIdentifiable {
         this.rootFunctor = rootFunctor;
     }
 
+    public void setBucketFunctor(Callable<String> bucketFunctor) {
+        this.bucketFunctor = bucketFunctor;
+    }
+
     /**
      * Returns the root of this workspace
      */
@@ -121,6 +127,13 @@ public class Repository extends StringIdentifiable {
      * Returns the bucket of this workspace (if the workspace is not local) or the root folder (if the workspace is local)
      */
     public String bucketName() {
+        if (this.bucketFunctor != null) {
+            try {
+                return this.bucketFunctor.call();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
         final String root = root();
         final int idx = root.lastIndexOf('/');
         return idx > 0 ? root.substring(0, idx) : root;
@@ -152,6 +165,11 @@ public class Repository extends StringIdentifiable {
         final String bucketName = bucketName();
         if (StringUtilities.isNullOrEmpty(path) || path.equals(bucketName) || path.equals(bucketName + "/")) {
             return "";
+        }
+        if (path.startsWith(bucketName)) {
+            return path.substring(bucketName.length() + 1);
+        } else if (!path.startsWith("/")) {
+            return path;
         }
         final String relPath = ("/".equals(path) ? root() : resolve(path)).replaceFirst(bucketName, "");
         return relPath.startsWith("/") ? relPath.substring(1) : relPath;

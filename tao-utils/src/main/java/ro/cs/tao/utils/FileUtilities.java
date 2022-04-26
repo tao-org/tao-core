@@ -874,24 +874,29 @@ public class FileUtilities {
         if (StringUtilities.isNullOrEmpty(strPath1) || StringUtilities.isNullOrEmpty(strPath2)) {
             return null;
         }
-        final Path path1 = Paths.get(strPath1);
-        final Path path2 = Paths.get(strPath2);
-        final int names = path1.getNameCount();
-        Path common = null;
-        for (int i = 0; i < names; i++) {
+        final String[] path1 = strPath1.split("/");
+        final String[] path2 = strPath2.split("/");
+        List<String> common = null;
+        int idx = 0;
+        for (String s : path1) {
             if (common == null) {
-                if (path1.getName(i).equals(path2.getName(0))) {
-                    common = path1.getName(i);
+                if (idx == path2.length - 1) {
+                    break;
+                }
+                if (s.equals(path2[idx++])) {
+                    common = new ArrayList<>();
+                    common.add(s);
                 }
             } else {
-                if (path2.startsWith(common.resolve(path1.getName(i)))) {
-                    common = common.resolve(path1.getName(i));
+                if (s.equals(path2[idx++])) {
+                    common.add(s);
                 } else {
+                    common.clear();
                     break;
                 }
             }
         }
-        return common != null ? common.toString().replace("\\", "/") : null;
+        return common != null ? String.join("/", common) : null;
     }
 
     public static String resolve(String parent, String child) {
