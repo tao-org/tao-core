@@ -4,9 +4,11 @@ import ro.cs.tao.component.StringIdentifiable;
 import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.StringUtilities;
 
+import javax.xml.bind.annotation.XmlTransient;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Objects;
+import java.util.concurrent.Callable;
 
 public class Repository extends StringIdentifiable {
     private String name;
@@ -18,6 +20,9 @@ public class Repository extends StringIdentifiable {
     private boolean readOnly;
     private boolean system;
     private LocalDateTime created;
+
+    @XmlTransient
+    private Callable<String> rootFunctor;
 
     public String getName() {
         return name;
@@ -91,11 +96,21 @@ public class Repository extends StringIdentifiable {
         this.created = created;
     }
 
+    public void setRootFunctor(Callable<String> rootFunctor) {
+        this.rootFunctor = rootFunctor;
+    }
+
     /**
      * Returns the root of this workspace
      */
     public String root() {
-        return this.type != null && this.parameters != null ? this.parameters.get(this.type.rootKey()) : null;
+        try {
+            return this.rootFunctor == null
+                    ? this.type != null && this.parameters != null ? this.parameters.get(this.type.rootKey()) : null
+                    : this.rootFunctor.call();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public boolean isRoot(String path) {

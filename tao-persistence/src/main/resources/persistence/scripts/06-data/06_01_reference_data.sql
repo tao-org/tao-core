@@ -163,4 +163,5 @@ INSERT INTO workspace.repository_type (id, name, params) VALUES
 (1, 'Local repository', '{"root":true}'),
 (2, 'AWS S3 repository', '{"aws.region":true,"aws.access.key":false,"aws.secret.key":false,"aws.bucket":true}'),
 (3, 'OpenStack Swift S3 repository', '{"openstack.auth.url":true,"openstack.tenantId":true,"openstack.domain":true,"openstack.user":true,"openstack.password":true,"openstack.bucket":true}');
-(4, 'STAC repository', '{"stac.url":true}');
+(4, 'STAC repository', '{"stac.url":true}'),
+(5, 'Network share repository', '{"smb.url":true,"smb.domain":false,"smb.user":false,"smb.password":false}');
