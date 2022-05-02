@@ -75,7 +75,7 @@ public class Topic {
     }
 
     public static Pattern getCategoryPattern(Topic topic) {
-        return Pattern.compile(topic.getTag() == null ? "(.+)" + topic.getCategory() : topic.value());
+        return Pattern.compile(topic.getTag() == null ? "(.*)" + topic.getCategory() : topic.value());
     }
 
     private final String category;
