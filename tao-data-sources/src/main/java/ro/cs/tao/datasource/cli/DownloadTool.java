@@ -18,6 +18,7 @@ import ro.cs.tao.serialization.JsonMapper;
 import ro.cs.tao.utils.DateUtils;
 import ro.cs.tao.utils.NetUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDate;
@@ -195,20 +196,37 @@ public class DownloadTool {
                     System.exit(1);
                 }
                 final List<EOProduct> results = query.execute();
-                // If flagged, remove products that not fully cover the AOI
+                // If flagged, keep only products that cover the most of the AOI
                 if (getArgValue(commandLine, Constants.FULL_COVERAGE, Boolean.class, false)) {
                     final QueryParameter<Polygon2D> footprintParam = (QueryParameter<Polygon2D>) query.getParameters().get(CommonParameterNames.FOOTPRINT);
                     if (footprintParam != null) {
                         final GeometryAdapter geometryAdapter = new GeometryAdapter();
                         final Geometry footprint = geometryAdapter.marshal(footprintParam.getValue().toWKT());
-                        if (results != null) {
+                        if (results != null && results.size() > 0) {
+                            int maxIntersection = results.stream().mapToInt(p -> {
+                                try {
+                                    final String geometry = p.getGeometry();
+                                    if (geometry != null) {
+                                        Geometry productGeometry = geometryAdapter.marshal(geometry);
+                                        return (int) (productGeometry.intersection(footprint).getArea() / productGeometry.getArea() * 100);
+                                    }
+                                    return 0;
+                                } catch (Exception e) {
+                                    System.err.printf("Geometry error for product %s: %s%n", p.getName(), e.getMessage());
+                                    return 0;
+                                }
+                            }).max().getAsInt();
                             results.removeIf(p -> {
                                 try {
                                     final String geometry = p.getGeometry();
-                                    return geometry != null && !geometryAdapter.marshal(geometry).contains(footprint);
+                                    if (geometry != null) {
+                                        Geometry productGeometry = geometryAdapter.marshal(geometry);
+                                        return (int) (productGeometry.intersection(footprint).getArea() / productGeometry.getArea() * 100) < maxIntersection;
+                                    }
+                                    return true;
                                 } catch (Exception e) {
                                     System.err.printf("Geometry error for product %s: %s%n", p.getName(), e.getMessage());
-                                    return false;
+                                    return true;
                                 }
                             });
                         }
@@ -254,7 +272,7 @@ public class DownloadTool {
 
                         @Override
                         public void ended() {
-                            System.out.print("\rCompleted " + current + "\r\n");
+                            System.out.print("\rCompleted " + targetFolder + File.separator +  current + "\r\n");
                         }
 
                         @Override

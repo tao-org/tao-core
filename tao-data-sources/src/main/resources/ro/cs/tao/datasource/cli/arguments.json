@@ -53,8 +53,8 @@
       "options": ["latestOnly"]
     },
     {
-      "name": "fullCoverage",
-      "options": ["fullCoverage"]
+      "name": "maxCoverage",
+      "options": ["maxCoverage"]
     },
     {
       "name": "proxyType",
@@ -179,9 +179,9 @@
       "description": "Return only the most recent product."
     },
     {
-      "name": "fullCoverage",
-      "opt": "full",
-      "longOpt": "fullCoverage",
+      "name": "maxCoverage",
+      "opt": "max",
+      "longOpt": "maxCoverage",
       "cardinality": 0,
       "hint": null,
       "valueSeparator": null,

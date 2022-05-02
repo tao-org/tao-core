@@ -13,7 +13,7 @@ public class Constants {
     final static String FORMAT = "output";
     final static String QUERY = "query";
     final static String LATEST = "latest";
-    final static String FULL_COVERAGE = "fullCoverage";
+    final static String FULL_COVERAGE = "maxCoverage";
     final static String TIMEOUT = "timeout";
     static final String PROXY_TYPE = "proxyType";
     static final String PROXY_HOST = "proxyHost";
