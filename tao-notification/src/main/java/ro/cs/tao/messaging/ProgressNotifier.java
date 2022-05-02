@@ -137,6 +137,7 @@ public class ProgressNotifier implements ProgressListener {
             message = new ActivityStart(this.taskName);
         }
         message.setUser(this.principal.getName());
+        message.setTopic(this.topic.value());
         return message;
     }
 
@@ -148,6 +149,7 @@ public class ProgressNotifier implements ProgressListener {
             message = new ActivityEnd(this.taskName);
         }
         message.setUser(this.principal.getName());
+        message.setTopic(this.topic.value());
         return message;
     }
 
@@ -159,6 +161,7 @@ public class ProgressNotifier implements ProgressListener {
             message = new SubActivityStart(this.taskName, subTask);
         }
         message.setUser(this.principal.getName());
+        message.setTopic(this.topic.value());
         return message;
     }
 
@@ -170,6 +173,7 @@ public class ProgressNotifier implements ProgressListener {
             message = new SubActivityEnd(this.taskName, subTask);
         }
         message.setUser(this.principal.getName());
+        message.setTopic(this.topic.value());
         return message;
     }
 
