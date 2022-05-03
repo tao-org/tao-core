@@ -76,4 +76,8 @@ public interface ProgressListener {
     default void notifyProgress(String subTaskName, double subTaskProgress, double overallProgress) {
         System.out.printf("[Overall progress: %.2f%%, %s progress: %.2f%%]\r", overallProgress * 100, subTaskName, subTaskProgress * 100);
     }
+
+    default ProgressListener subProgressListener() {
+        return null;
+    }
 }

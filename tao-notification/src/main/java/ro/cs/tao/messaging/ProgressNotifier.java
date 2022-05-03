@@ -36,6 +36,7 @@ public class ProgressNotifier implements ProgressListener {
     private String taskName;
     private double taskCounter;
     private double subTaskCounter;
+    private ProgressListener subListener;
 
     public ProgressNotifier(Object source, Topic topic) {
         this(SessionStore.currentContext().getPrincipal(), source, topic);
@@ -50,6 +51,7 @@ public class ProgressNotifier implements ProgressListener {
         this.topic = topic;
         this.principal = principal;
         this.additionalInfo = additionalInfo;
+        this.subListener = new SubListener();
     }
 
     @Override
@@ -111,6 +113,11 @@ public class ProgressNotifier implements ProgressListener {
         } else {
             subActivityEnded(subTaskName);
         }
+    }
+
+    @Override
+    public ProgressListener subProgressListener() {
+        return this.subListener;
     }
 
     private void sendMessage(Message message) {
@@ -177,4 +184,22 @@ public class ProgressNotifier implements ProgressListener {
         return message;
     }
 
+    private class SubListener implements ProgressListener {
+        private String subTask;
+        @Override
+        public void started(String taskName) {
+            this.subTask = taskName;
+            ProgressNotifier.this.subActivityStarted(taskName);
+        }
+
+        @Override
+        public void ended() {
+            ProgressNotifier.this.subActivityEnded(subTask);
+        }
+
+        @Override
+        public void notifyProgress(double progressValue) {
+            ProgressNotifier.this.notifyProgress(subTask, progressValue);
+        }
+    }
 }
