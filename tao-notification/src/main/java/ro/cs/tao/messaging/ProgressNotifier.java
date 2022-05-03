@@ -201,5 +201,21 @@ public class ProgressNotifier implements ProgressListener {
         public void notifyProgress(double progressValue) {
             ProgressNotifier.this.notifyProgress(subTask, progressValue);
         }
+
+        @Override
+        public void subActivityStarted(String subTaskName) {
+        }
+
+        @Override
+        public void subActivityEnded(String subTaskName) {
+        }
+
+        @Override
+        public void notifyProgress(String subTaskName, double subTaskProgress) {
+        }
+
+        @Override
+        public void notifyProgress(String subTaskName, double subTaskProgress, double overallProgress) {
+        }
     }
 }
