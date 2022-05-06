@@ -140,8 +140,9 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
                         this.logger.info(String.format("Image %s was not found in Docker registry. Registration starting.\n" +
                                 "Until registration completes, the corresponding components will not be available.", getContainerName()));
                         for (String resource : additionalResources()) {
-                            Files.write(dockerfilePath.getParent().resolve(Paths.get(resource).getFileName()),
-                                    readResource(resource));
+                            //Files.write(dockerfilePath.getParent().resolve(Paths.get(resource).getFileName()), readResource(resource));
+                            Files.write(dockerfilePath.getParent().resolve(Paths.get(resource)),
+                                        readResource(resource));
                         }
                         DockerManager.registerImage(dockerfilePath.toRealPath(), getContainerName(), getDescription());
                         this.logger.info(String.format("Registration completed for docker image %s.", getContainerName()));

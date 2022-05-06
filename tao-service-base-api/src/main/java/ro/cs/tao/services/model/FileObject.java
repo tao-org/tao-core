@@ -40,7 +40,7 @@ public class FileObject {
         this.displayName = idx > 0
                 ? relativePath.substring(idx + 1)
                 : relativePath.endsWith("/")
-                    ? relativePath.substring(1, relativePath.length() - 2)
+                    ? relativePath.substring(relativePath.startsWith("/") ? 1 : 0, relativePath.length() - 1)
                     : relativePath;
     }
 

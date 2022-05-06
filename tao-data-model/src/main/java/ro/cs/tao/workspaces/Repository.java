@@ -145,7 +145,10 @@ public class Repository extends StringIdentifiable {
      * @param relativePath The path
      */
     public String resolve(String relativePath) {
-        final String workspaceRoot = root();
+        String workspaceRoot = root();
+        if (workspaceRoot.endsWith("/")) {
+            workspaceRoot = workspaceRoot.substring(0, workspaceRoot.length() - 1);
+        }
         if (StringUtilities.isNullOrEmpty(relativePath) || "/".equals(relativePath)) {
             return workspaceRoot;
         }
@@ -163,15 +166,16 @@ public class Repository extends StringIdentifiable {
      */
     public String relativizeToBucket(String path) {
         final String bucketName = bucketName();
-        if (StringUtilities.isNullOrEmpty(path) || path.equals(bucketName) || path.equals(bucketName + "/")) {
+        if (StringUtilities.isNullOrEmpty(path) || path.equals(bucketName)) {
             return "";
         }
-        if (path.startsWith(bucketName)) {
+        String relPath = resolve(path).replaceFirst(bucketName, "");
+        /*if (path.startsWith(bucketName)) {
             return path.substring(bucketName.length() + 1);
         } else if (!path.startsWith("/")) {
             return path;
         }
-        final String relPath = ("/".equals(path) ? root() : resolve(path)).replaceFirst(bucketName, "");
+        final String relPath = ("/".equals(path) ? root() : resolve(path)).replaceFirst(root(), "").replaceFirst(bucketName + "/", "");*/
         return relPath.startsWith("/") ? relPath.substring(1) : relPath;
     }
 
@@ -185,10 +189,22 @@ public class Repository extends StringIdentifiable {
             return root();
         }
         if (path.startsWith("/")) {
-            return path;
+            return path.substring(1);
         }
-        final String commonPath = FileUtilities.findCommonPath(root(), path);
-        return commonPath != null ? path.replace(commonPath + "/", "") : path;
+        String commonPath = FileUtilities.findCommonPath(root(), path);
+        boolean wasNull = false;
+        if (commonPath == null) {
+            wasNull = true;
+            if (root().contains("/") && root().startsWith(bucketName())) {
+                commonPath = root().replace(bucketName() + "/", "");
+                if (!commonPath.endsWith("/")) {
+                    commonPath += "/";
+                }
+            } else {
+                commonPath = "";
+            }
+        }
+        return wasNull ? commonPath + path : path.replace(commonPath + "/", "");
     }
 
     /**
@@ -197,10 +213,10 @@ public class Repository extends StringIdentifiable {
      * @param otherPath     The path to relativize
      */
     public String relativize(String refPath, String otherPath) {
-        if (StringUtilities.isNullOrEmpty(otherPath) || otherPath.startsWith("/")) {
+        if (StringUtilities.isNullOrEmpty(otherPath) || (refPath.charAt(0) != '/' && otherPath.charAt(0) == '/')) {
             return "";
         }
-        final String commonPath = FileUtilities.findCommonPath(refPath, otherPath);
+        final String commonPath = FileUtilities.findCommonPath(refPath.charAt(0) == '/' ? refPath.substring(1) : refPath, otherPath);
         return commonPath != null ? otherPath.replace(commonPath + "/", "") : otherPath;
     }
 
