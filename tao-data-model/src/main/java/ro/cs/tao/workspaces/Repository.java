@@ -195,14 +195,14 @@ public class Repository extends StringIdentifiable {
         boolean wasNull = false;
         if (commonPath == null) {
             wasNull = true;
-            if (root().contains("/") && root().startsWith(bucketName())) {
+            /*if (root().contains("/") && root().startsWith(bucketName())) {
                 commonPath = root().replace(bucketName() + "/", "");
                 if (!commonPath.endsWith("/")) {
                     commonPath += "/";
                 }
-            } else {
+            } else {*/
                 commonPath = "";
-            }
+            //}
         }
         return wasNull ? commonPath + path : path.replace(commonPath + "/", "");
     }

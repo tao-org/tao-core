@@ -156,7 +156,7 @@ public interface StorageService<T, U> extends TAOService {
     default void setProgressListener(ProgressListener listener) { }
 
     default FileObject repositoryRootNode(Repository repository) {
-        final FileObject object = new FileObject(repository.getUrlPrefix(), "/", true, 0, "<root>");
+        final FileObject object = new FileObject(repository.getUrlPrefix(), "/", true, 0, "__root");
         object.addAttribute(REMOTE_PATH_ATTRIBUTE, repository.root());
         return object;
     }
