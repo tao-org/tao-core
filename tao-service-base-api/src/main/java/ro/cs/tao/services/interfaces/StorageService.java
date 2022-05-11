@@ -119,7 +119,7 @@ public interface StorageService<T, U> extends TAOService {
      * @throws IOException if the content cannot be retrieved
      */
     default List<FileObject> listUserWorkspace() throws IOException {
-        return listFiles("/", null, null);
+        return listFiles("/", null, null, 1);
     }
 
     /**
@@ -129,7 +129,7 @@ public interface StorageService<T, U> extends TAOService {
      * @return               The subtree of the given path
      * @throws IOException if the content cannot be retrieved
      */
-    List<FileObject> listFiles(String fromPath, Set<String> exclusions, String lastItem) throws IOException;
+    List<FileObject> listFiles(String fromPath, Set<String> exclusions, String lastItem, int depth) throws IOException;
 
     List<FileObject> listTree(String fromPath) throws IOException;
 

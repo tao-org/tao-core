@@ -9,6 +9,6 @@ public class TransferStart extends ActivityStart {
     public TransferStart(String taskName) {
         this();
         this.taskName = taskName;
-        setPayload("Star transferring " + this.taskName);
+        setPayload("Start transferring " + this.taskName);
     }
 }
