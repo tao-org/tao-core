@@ -18,14 +18,14 @@ package ro.cs.tao.services.interfaces;
 
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.quota.QuotaException;
+import ro.cs.tao.workspaces.Repository;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.List;
 
 public interface ProductService extends CRUDService<EOProduct, String> {
 
-    List<EOProduct> inspect(Path sourcePath) throws IOException;
+    List<EOProduct> inspect(Repository repository, String sourcePath) throws IOException;
     List<EOProduct> getByNames(String... names);
     int importProducts(List<EOProduct> products);
     int importProducts(String sourcePath, boolean linkOnly) throws IOException, QuotaException;
