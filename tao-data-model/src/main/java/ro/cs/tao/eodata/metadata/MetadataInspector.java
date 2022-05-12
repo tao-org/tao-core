@@ -169,11 +169,11 @@ public interface MetadataInspector {
             if (this.orbitDirection != null) {
                 product.addAttribute("orbitdirection", this.orbitDirection.name());
             }
-            URI productUri = productPath.toUri();
+            URI productUri = productPath.toAbsolutePath().toUri();
             if (Files.isDirectory(productPath)) {
                 product.setLocation(productUri.toString());
             } else {
-                product.setLocation(productPath.getParent().toUri().toString());
+                product.setLocation(productPath.getParent().toAbsolutePath().toUri().toString());
             }
             //product.setLocation(productUri.toString());
             product.setApproximateSize(Files.size(productPath));

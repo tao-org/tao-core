@@ -413,9 +413,7 @@ public class ProcessingComponent extends TaoComponent {
             }
         }
         if (variables != null) {
-            for (Map.Entry<String, String> variable : variables.entrySet()) {
-                clonedMap.put(variable.getKey(), variable.getValue());
-            }
+            clonedMap.putAll(variables);
         }
         StringBuilder cmdBuilder = new StringBuilder();
         if (this.expandedFileLocation != null) {
