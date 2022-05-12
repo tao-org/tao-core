@@ -42,6 +42,7 @@ public class Query extends LongIdentifiable {
     private static final Map<CompositeKey, DataSourceComponent> componentPool = Collections.synchronizedMap(new HashMap<>());
     private String label;
     private String userId;
+    private String siteId;
     private Long workflowNodeId;
     private String sensor;
     private String dataSource;
@@ -64,6 +65,9 @@ public class Query extends LongIdentifiable {
 
     public String getUserId() { return userId; }
     public void setUserId(String userId) { this.userId = userId; }
+
+    public String getSiteId() { return siteId; }
+    public void setSiteId(String siteId) { this.siteId = siteId; }
 
     public Long getWorkflowNodeId() { return workflowNodeId; }
     public void setWorkflowNodeId(Long workflowNodeId) { this.workflowNodeId = workflowNodeId; }
@@ -206,6 +210,7 @@ public class Query extends LongIdentifiable {
                 for (String val : vals) {
                     Query subQuery = new Query();
                     subQuery.userId = this.userId;
+                    subQuery.siteId = this.siteId;
                     subQuery.dataSource = this.dataSource;
                     subQuery.sensor = this.sensor;
                     subQuery.user = this.user;
