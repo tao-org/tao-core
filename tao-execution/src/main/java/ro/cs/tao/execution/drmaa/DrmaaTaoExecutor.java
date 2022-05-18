@@ -462,6 +462,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                     unit.addVolumeMapping(volumeMount.getHostWorkspaceFolder(), volumeMount.getContainerWorkspaceFolder());
                     unit.addVolumeMapping(volumeMount.getHostConfigurationFolder(), volumeMount.getContainerConfigurationFolder());
                     unit.addVolumeMapping(volumeMount.getHostTemporaryFolder(), volumeMount.getContainerTemporaryFolder());
+                    unit.addVolumeMapping(volumeMount.getHostEODataFolder(), volumeMount.getContainerEoDataFolder());
                     unit.setContainerName(container.getName());
                     unit.setContainerRegistry(ExecutionConfiguration.getDockerRegistry());
                     if (cpu > 0) {
@@ -550,7 +551,8 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         argsList.add("rm");
         argsList.add(tempOutput);
         // all the existing args are merged into a single string as argument to -c
-        final String singleArg = "\"" + String.join(" ", argsList) + "\"";
+        final String quoteChar = SystemUtils.IS_OS_WINDOWS ? "\"" : "";
+        final String singleArg = quoteChar + String.join(" ", argsList) + quoteChar;
         argsList.clear();
         argsList.add("-c");
         argsList.add(singleArg);
