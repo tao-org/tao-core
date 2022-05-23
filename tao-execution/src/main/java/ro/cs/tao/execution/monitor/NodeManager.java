@@ -38,7 +38,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     private static final NamedThreadPoolExecutor executor;
     private static final int DEFAULT_NODE_WAIT_TIME = 10000;
     private static final int DEFAULT_KEEP_ALIVE_SECONDS = 1800;
-    private static final int POLLING_NODE_WITHOUT_TASKS_SECONDS = 5 * 60;
+    private static final int POLLING_NODE_WITHOUT_TASKS_SECONDS = 20;
     private static final boolean isDevMode;
     private int nodeLimit;
     private NodeProvider nodeProvider;
@@ -230,11 +230,17 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
 
     protected NodeDescription getStartingAvailableNode() {
         //String nodeName = isDevMode ? TopologyManager.getInstance().getMasterNodeInfo().getId() : null;
+        final String nodeName = TopologyManager.getInstance().getMasterNodeInfo().getId();
         if (isDevMode) {
-            String nodeName = TopologyManager.getInstance().getMasterNodeInfo().getId();
             NodeRuntimeWrapper value = this.nodes.get(nodeName);
             if (value != null) {
                 return value.getNode();
+            }
+        } else {
+            if (this.nodes.size() > 1) {
+                return this.nodes.entrySet().stream().filter(w -> !w.getKey().equals(nodeName)).findFirst().get().getValue().getNode();
+            } else {
+                return null;
             }
         }
         return null;
@@ -256,8 +262,8 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         final Principal principal = SessionStore.currentContext().getPrincipal();
         QuotaManager userQuotaManager = UserQuotaManager.getInstance();
         int requestedCPUs = cpus;
-        NodeDescription availableNode = getStartingAvailableNode();
-        while (availableNode == null) {
+        NodeDescription availableNode = null;//getStartingAvailableNode();
+        do {
             try {
             	// check if the user has any CPU limitation
             	int availableCpu = userQuotaManager.getAvailableCpus(principal);
@@ -313,7 +319,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                     waitBeforeNextRetry();
                 }
             }
-        }
+        } while (availableNode == null);
         
         return new NodeData(availableNode, Math.min(requestedCPUs, availableNode.getFlavor().getCpu()), memory);
     }
@@ -497,7 +503,8 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                                 boolean isNodeWithoutTasks = (tasks == null || tasks.size() == 0);
                                 final LocalDateTime time = keepAliveMap.get(h);
                                 if (time != null && time.compareTo(LocalDateTime.now()) >= 0) {
-                                    if (isNodeWithoutTasks) {
+                                    Boolean isVolatile = nodeRuntimeWrapper.getNode().getVolatile();
+                                    if (isNodeWithoutTasks && (isVolatile != null && isVolatile)) {
                                         uninstallNode(nodeRuntimeWrapper.getNode());
                                         return;
                                     } else {
