@@ -58,9 +58,13 @@ public class TaskUtilities {
     private static final ContainerProvider containerProvider;
     private static final Logger logger = Logger.getLogger(TaskUtilities.class.getName());
     private static final String DOCKER_MOUNT_POINT;
+    private static final String DOCKER_EODATA_MOUNT_POINT;
+    private static final String DOCKER_EODATA_HOST_POINT;
 
     static {
         DOCKER_MOUNT_POINT = ExecutionConfiguration.getMasterContainerVolumeMap().getContainerWorkspaceFolder() + "/";
+        DOCKER_EODATA_HOST_POINT = ExecutionConfiguration.getMasterContainerVolumeMap().getHostEODataFolder();
+        DOCKER_EODATA_MOUNT_POINT = ExecutionConfiguration.getMasterContainerVolumeMap().getContainerEoDataFolder();
         workflowNodeProvider = SpringContextBridge.services().getService(WorkflowNodeProvider.class);
         jobProvider = SpringContextBridge.services().getService(ExecutionJobProvider.class);
         taskProvider = SpringContextBridge.services().getService(ExecutionTaskProvider.class);
@@ -290,16 +294,28 @@ public class TaskUtilities {
         String result;
         try {
             Path p = FileUtilities.resolveSymLinks(Paths.get(URI.create(path)).toAbsolutePath());
-            Path root = FileUtilities.resolveSymLinks(Paths.get(SystemVariable.ROOT.value()).toAbsolutePath());
-            final String unixPath = FileUtilities.asUnixPath(root.relativize(p), true);
-            result = DOCKER_MOUNT_POINT + (unixPath.startsWith("/") ? unixPath.substring(1) : unixPath);
-        } catch (Exception e1) {
-            e1.printStackTrace();
-            try {
-                Path p = FileUtilities.resolveSymLinks(Paths.get(path).toAbsolutePath());
+            if (DOCKER_EODATA_HOST_POINT != null && p.startsWith(DOCKER_EODATA_HOST_POINT)) {
+                Path root = Paths.get(DOCKER_EODATA_HOST_POINT);
+                final String unixPath = FileUtilities.asUnixPath(root.relativize(p), true);
+                result = DOCKER_EODATA_MOUNT_POINT + "/" + (unixPath.startsWith("/") ? unixPath.substring(1) : unixPath);
+            } else {
                 Path root = FileUtilities.resolveSymLinks(Paths.get(SystemVariable.ROOT.value()).toAbsolutePath());
                 final String unixPath = FileUtilities.asUnixPath(root.relativize(p), true);
                 result = DOCKER_MOUNT_POINT + (unixPath.startsWith("/") ? unixPath.substring(1) : unixPath);
+            }
+        } catch (Exception e1) {
+            //e1.printStackTrace();
+            try {
+                Path p = FileUtilities.resolveSymLinks(Paths.get(path).toAbsolutePath());
+                if (DOCKER_EODATA_HOST_POINT != null && p.startsWith(DOCKER_EODATA_HOST_POINT)) {
+                    Path root = Paths.get(DOCKER_EODATA_HOST_POINT);
+                    final String unixPath = FileUtilities.asUnixPath(root.relativize(p), true);
+                    result = DOCKER_EODATA_MOUNT_POINT + "/" + (unixPath.startsWith("/") ? unixPath.substring(1) : unixPath);
+                } else {
+                    Path root = FileUtilities.resolveSymLinks(Paths.get(SystemVariable.ROOT.value()).toAbsolutePath());
+                    final String unixPath = FileUtilities.asUnixPath(root.relativize(p), true);
+                    result = DOCKER_MOUNT_POINT + (unixPath.startsWith("/") ? unixPath.substring(1) : unixPath);
+                }
             } catch (Exception e2) {
                 e2.printStackTrace();
                 result = path;
