@@ -8,12 +8,15 @@ public class DockerVolumeMap {
     private static final String DOCKER_WORKSPACE_MOUNT_KEY = "workspace.mount";
     private static final String DOCKER_TEMP_MOUNT_KEY = "temp.mount";
     private static final String DOCKER_CFG_MOUNT_KEY = "cfg.mount";
+    private static final String DOCKER_EODATA_MOUNT_KEY = "eodata.mount";
     private final String hostWorkspaceFolder;
     private final String containerWorkspaceFolder;
     private final String hostTemporaryFolder;
     private final String containerTemporaryFolder;
     private final String hostConfigurationFolder;
     private final String containerConfigurationFolder;
+    private String hostEoDataFolder;
+    private String containerEoDataFolder;
 
     public DockerVolumeMap(Map<String, String> volumeMap) {
         String value = volumeMap.get(DOCKER_WORKSPACE_MOUNT_KEY);
@@ -37,6 +40,12 @@ public class DockerVolumeMap {
         values = value.split(":");
         this.hostConfigurationFolder = values[0];
         this.containerConfigurationFolder = values[1];
+        value = volumeMap.get(DOCKER_EODATA_MOUNT_KEY);
+        if (StringUtils.isNotEmpty(value)) {
+            values = value.split(":");
+            this.hostEoDataFolder = values[0];
+            this.containerEoDataFolder = values[1];
+        }
     }
 
     public String getHostWorkspaceFolder() {
@@ -62,4 +71,8 @@ public class DockerVolumeMap {
     public String getContainerConfigurationFolder() {
         return containerConfigurationFolder;
     }
+
+    public String getHostEODataFolder() { return hostEoDataFolder; }
+
+    public String getContainerEoDataFolder() { return containerEoDataFolder; }
 }
