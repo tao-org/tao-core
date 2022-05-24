@@ -22,6 +22,7 @@ import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.component.Variable;
 import ro.cs.tao.configuration.ConfigurationManager;
+import ro.cs.tao.docker.DockerVolumeMap;
 import ro.cs.tao.docker.ExecutionConfiguration;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.enums.DataFormat;
@@ -58,7 +59,6 @@ import ro.cs.tao.services.utils.WorkflowUtilities;
 import ro.cs.tao.spi.OutputDataHandlerManager;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.user.UserPreference;
-import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.TriFunction;
 import ro.cs.tao.workflow.ParameterValue;
 import ro.cs.tao.workflow.WorkflowDescriptor;
@@ -622,7 +622,7 @@ public class Orchestrator extends Notifiable {
                 }
                 pcTask.setOutputParameterValue(t.getName(), instanceTargetOuptut);
                 logger.finest(String.format("Output [%s] of task [id=%d] was set to '%s'",
-                                            t.getName(), pcTask.getId(), targetOutput));
+                                            t.getName(), pcTask.getId(), instanceTargetOuptut));
                 if (keepOutput) {
                     persistOutputProducts(pcTask);
                 }
@@ -1050,12 +1050,14 @@ public class Orchestrator extends Notifiable {
         EOProduct product = null;
         try {
             if (descriptor.getDataDescriptor().getFormatType() != DataFormat.VECTOR) {
-                String netPath = FileUtilities.asUnixPath(context.getNetSpace(), true);
+                //String netPath = FileUtilities.asUnixPath(context.getNetSpace(), true);
+                DockerVolumeMap masterMap = ExecutionConfiguration.getMasterContainerVolumeMap();
+                DockerVolumeMap workerMap = ExecutionConfiguration.getWorkerContainerVolumeMap();
                 Path path;
-                if (outValue.startsWith(netPath)) {
-                    path = Paths.get(outValue.replace(netPath, context.getWorkspace().toString()));
+                if (outValue.startsWith(masterMap.getContainerWorkspaceFolder())) {
+                    path = Paths.get(outValue.replace(masterMap.getContainerWorkspaceFolder(), masterMap.getHostWorkspaceFolder()));
                 } else {
-                    path = Paths.get(outValue);
+                    path = Paths.get(outValue.replace(workerMap.getContainerWorkspaceFolder(), masterMap.getHostWorkspaceFolder()));
                 }
                 MetadataInspector metadataInspector = this.metadataServices.stream()
                         .filter(s -> s.decodeQualification(path) == DecodeStatus.INTENDED)
