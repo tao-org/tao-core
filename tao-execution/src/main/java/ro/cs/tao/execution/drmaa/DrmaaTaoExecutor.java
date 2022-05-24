@@ -478,7 +478,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                     if (task.getInstanceTemporaryOutput() != null) {
                         // replace the original command with /bin/bash since we're going to execute
                         // multiple commands inside docker run
-                        cmd = wrapShellInvocation(argsList, cmd, task.getInstanceTemporaryOutput(), task.getInstanceTargetOutput());
+                        cmd = wrapShellInvocation(argsList, cmd, task.getInstanceTemporaryOutput(), task.getInstanceTargetOutput(), isLocal);
                     }
                 } else {
                     cmd = "docker";
@@ -541,7 +541,8 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         return jt;
     }
 
-    private String wrapShellInvocation(final List<String> argsList, String initialCmd, final String tempOutput, final String finalOutput) {
+    private String wrapShellInvocation(final List<String> argsList, String initialCmd,
+                                       final String tempOutput, final String finalOutput, final boolean isLocal) {
         argsList.add(0, initialCmd);
         argsList.add("&&");
         argsList.add("cp");
@@ -551,7 +552,11 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         argsList.add("rm");
         argsList.add(tempOutput);
         // all the existing args are merged into a single string as argument to -c
-        final String quoteChar = SystemUtils.IS_OS_WINDOWS ? "\"" : "";
+        final String quoteChar = isLocal
+                ? SystemUtils.IS_OS_WINDOWS
+                    ? "\""
+                    : ""
+                : "\"";
         final String singleArg = quoteChar + String.join(" ", argsList) + quoteChar;
         argsList.clear();
         argsList.add("-c");
