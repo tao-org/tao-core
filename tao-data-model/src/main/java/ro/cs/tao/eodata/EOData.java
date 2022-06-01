@@ -72,6 +72,9 @@ public abstract class EOData extends StringIdentifiable implements Serializable 
             return null;
         }
     }
+
+    public Geometry geometryObject() { return this.geometry; }
+
     public void setGeometry(String geometryAsText) {
         try {
             this.geometry = new GeometryAdapter().marshal(geometryAsText);

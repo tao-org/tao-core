@@ -15,17 +15,17 @@
  */
 package ro.cs.tao.datasource;
 
+import org.locationtech.jts.geom.Geometry;
 import ro.cs.tao.component.StringIdentifiable;
 import ro.cs.tao.datasource.converters.ConversionException;
 import ro.cs.tao.datasource.converters.ConverterFactory;
+import ro.cs.tao.datasource.param.CommonParameterNames;
 import ro.cs.tao.datasource.param.DataSourceParameter;
 import ro.cs.tao.datasource.param.QueryParameter;
 import ro.cs.tao.eodata.EOProduct;
+import ro.cs.tao.eodata.Polygon2D;
 import ro.cs.tao.eodata.enums.Visibility;
-import ro.cs.tao.serialization.BaseSerializer;
-import ro.cs.tao.serialization.MediaType;
-import ro.cs.tao.serialization.SerializationException;
-import ro.cs.tao.serialization.SerializerFactory;
+import ro.cs.tao.serialization.*;
 import ro.cs.tao.utils.StringUtilities;
 
 import javax.xml.bind.annotation.XmlTransient;
@@ -57,6 +57,7 @@ public abstract class DataQuery extends StringIdentifiable {
     protected int pageSize;
     protected int pageNumber;
     protected int limit;
+    protected double coverage;
     protected long timeout;
     /* Introduces a delay between consecutive queries, expressed in seconds */
     protected int queryDelay;
@@ -142,6 +143,10 @@ public abstract class DataQuery extends StringIdentifiable {
 
     public void setMaxResults(int value) { this.limit = value; }
 
+    public void setCoverage(double coverage) {
+        this.coverage = coverage;
+    }
+
     public boolean supportsPaging() { return true; }
 
     public List<EOProduct> execute() {
@@ -159,6 +164,26 @@ public abstract class DataQuery extends StringIdentifiable {
                 .forEach(e -> addParameter(e.getKey(), e.getValue().getType(), e.getValue().getDefaultValue()));
         Instant start = Instant.now();
         List<EOProduct> retList = executeImpl();
+        final QueryParameter<?> footprintParam = actualParameters.get(CommonParameterNames.FOOTPRINT);
+        if (this.coverage > 0.0 && footprintParam != null) {
+            // If coverage parameter is set, then keep only those products
+            // that intersect at least <coverage>% (of the given footprint) the area of interest
+            final Polygon2D polygon2D = (Polygon2D) footprintParam.getValue();
+            try {
+                final Geometry footprint = new GeometryAdapter().marshal(polygon2D.toWKT());
+                retList.removeIf(p -> {
+                    final Geometry intersection = footprint.intersection(p.geometryObject());
+                    final double areaPercentage = intersection.getArea() / footprint.getArea();
+                    final boolean toRemove = areaPercentage < this.coverage;
+                    if (toRemove) {
+                        logger.finest(String.format("Product %s removed due to coverage (%.2f%%)", p.getName(), areaPercentage));
+                    }
+                    return toRemove;
+                });
+            } catch (Exception e) {
+                logger.warning(e.getMessage());
+            }
+        }
         logger.finest(String.format("Data query completed in %d ms.", Duration.between(start, Instant.now()).toMillis()));
 
         boolean canSortAcqDate = true;
