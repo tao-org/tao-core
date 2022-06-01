@@ -141,6 +141,7 @@ CREATE TABLE workflow.query
     id bigserial NOT NULL,
     label text,
 	user_id varchar(50) NOT NULL,
+	siteid varchar,
 	graph_node_id bigint,
 	component_id varchar(512),
 	sensor_name varchar(512) NOT NULL,
