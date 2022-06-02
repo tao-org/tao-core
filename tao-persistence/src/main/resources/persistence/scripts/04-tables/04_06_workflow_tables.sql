@@ -151,6 +151,7 @@ CREATE TABLE workflow.query
 	page_size integer NULL,
 	page_number integer NULL,
 	_limit integer NULL,  -- reserved word
+	coverage real NULL,
 	"values" json NULL,    -- reserved word
 	created timestamp NULL DEFAULT now(),
     modified timestamp NULL
