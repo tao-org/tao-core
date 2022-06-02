@@ -51,6 +51,7 @@ public class Query extends LongIdentifiable {
     private int pageSize;
     private int pageNumber;
     private int limit;
+    private Double coverage;
     private Map<String, String> values;
     private LocalDateTime created;
     private LocalDateTime modified;
@@ -123,6 +124,9 @@ public class Query extends LongIdentifiable {
     public String getGroupLabel() { return groupLabel; }
     public void setGroupLabel(String groupLabel) { this.groupLabel = groupLabel; }
 
+    public double getCoverage() { return coverage != null ? coverage : 0.0; }
+    public void setCoverage(double coverage) { this.coverage = coverage; }
+
     public static DataQuery toDataQuery(Query webQuery) throws SerializationException {
         DataQuery query = null;
         if (webQuery != null) {
@@ -143,6 +147,7 @@ public class Query extends LongIdentifiable {
                 query.setMaxResults(webQuery.getLimit() > 0 ? webQuery.getLimit() : 10);
                 query.setPageNumber(webQuery.getPageNumber() > 0 ? webQuery.getPageNumber() : 1);
                 query.setPageSize(webQuery.getPageSize() > 0 ? webQuery.getPageSize() : 10);
+                query.setCoverage(webQuery.getCoverage());
                 Map<String, String> paramValues = webQuery.getValues();
                 for (Map.Entry<String, String> entry : paramValues.entrySet()) {
                     String paramName = entry.getKey();
