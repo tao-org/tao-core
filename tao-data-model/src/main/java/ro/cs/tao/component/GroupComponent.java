@@ -67,6 +67,15 @@ public class GroupComponent extends TaoComponent {
         return component;
     }
 
+    public static void cloneIndex(GroupComponent source, GroupComponent target) {
+        if (source.descriptorIndex != null) {
+            if (target.descriptorIndex == null) {
+                target.descriptorIndex = new HashMap<>();
+            }
+            target.descriptorIndex.putAll(source.descriptorIndex);
+        }
+    }
+
     public GroupComponent() {
         super();
     }
