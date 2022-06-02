@@ -125,7 +125,7 @@ public class Query extends LongIdentifiable {
     public void setGroupLabel(String groupLabel) { this.groupLabel = groupLabel; }
 
     public double getCoverage() { return coverage != null ? coverage : 0.0; }
-    public void setCoverage(double coverage) { this.coverage = coverage; }
+    public void setCoverage(Double coverage) { this.coverage = coverage; }
 
     public static DataQuery toDataQuery(Query webQuery) throws SerializationException {
         DataQuery query = null;
