@@ -1219,6 +1219,9 @@
             <basic name="limit">
                 <column name="_limit" nullable="true" column-definition="integer NULL"/>
             </basic>
+            <basic name="coverage">
+                <column name="coverage" nullable="true" column-definition="real NULL"/>
+            </basic>
             <basic name="values">
                 <column name="values" nullable="true" column-definition="json NULL"/>
             </basic>
