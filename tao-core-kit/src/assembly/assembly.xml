@@ -58,7 +58,9 @@
                 <!-- Unwanted dependencies -->
                 <exclude>org.checkerframework:checker-qual:jar:2.0.0</exclude>
                 <exclude>commons-codec:commons-codec:jar:1.11</exclude>
+                <exclude>commons-codec:commons-codec:jar:1.13</exclude>
                 <exclude>org.apache.commons:commons-lang3:jar:3.8.1</exclude>
+                <exclude>org.apache.commons:commons-lang3:jar:3.9</exclude>
                 <exclude>org.apache.httpcomponents:httpclient:jar:4.5.1</exclude>
                 <!--<exclude>com.google.guava:guava:jar:24.1.1-jre</exclude>-->
                 <exclude>com.google.guava:guava:jar:25.1-jre</exclude>

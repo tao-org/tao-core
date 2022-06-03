@@ -238,7 +238,9 @@ CREATE TABLE component.processing_parameter_dependencies
     parameter_id varchar(512) NOT NULL,
     dependant_parameter_id varchar(512) NOT NULL,
     dependency_condition_id integer NOT NULL,
-    dependant_parameter_value varchar(250) NULL
+    dependant_parameter_value varchar(250) NULL,
+    dependency_type_id integer NOT NULL,
+    allowed_values character varying
 );
 ALTER TABLE component.processing_parameter_dependencies ADD CONSTRAINT PK_processing_parameter_dependencies
     PRIMARY KEY (parameter_id, dependant_parameter_id);

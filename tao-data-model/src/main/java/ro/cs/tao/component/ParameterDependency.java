@@ -1,21 +1,22 @@
 package ro.cs.tao.component;
 
 import ro.cs.tao.component.enums.Condition;
+import ro.cs.tao.component.enums.DependencyType;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class ParameterDependency {
+    private DependencyType dependencyType;
     private String referencedParameterId;
     private Condition condition;
     private String expectedValue;
+    private String allowedValues;
 
     public ParameterDependency() { }
 
-    public ParameterDependency(String referencedParameterId, Condition condition, String... expectedValue) {
+    public ParameterDependency(DependencyType type, String referencedParameterId, Condition condition, String... expectedValue) {
+        this.dependencyType = type;
         this.referencedParameterId = referencedParameterId;
         this.condition = condition;
         if (condition == Condition.IN || condition == Condition.NOTIN) {
@@ -28,6 +29,9 @@ public class ParameterDependency {
         }
     }
 
+    public DependencyType getDependencyType() { return dependencyType; }
+    public void setDependencyType(DependencyType dependencyType) { this.dependencyType = dependencyType; }
+
     public String getReferencedParameterId() { return referencedParameterId; }
     public void setReferencedParameterId(String referencedParameterId) { this.referencedParameterId = referencedParameterId; }
 
@@ -37,13 +41,18 @@ public class ParameterDependency {
     public String getExpectedValue() { return expectedValue; }
     public void setExpectedValue(String expectedValue) { this.expectedValue = expectedValue; }
 
+    public String getAllowedValues() { return allowedValues; }
+    public void setAllowedValues(String allowedValues) { this.allowedValues = allowedValues; }
+
+    public List<String> allowedValues() { return allowedValues != null ? Arrays.stream(allowedValues.split(",")).collect(Collectors.toList()) : null; }
+
     public Set<String> expectedValues() {
         if (this.expectedValue == null) {
             return null;
         }
         Set<String> values;
         if (condition == Condition.IN || condition == Condition.NOTIN) {
-            values = Arrays.stream(this.expectedValue.split(",")).distinct().collect(Collectors.toSet());
+            values = Arrays.stream(this.expectedValue.split(",")).collect(Collectors.toSet());
         } else {
             values = new HashSet<>();
             values.add(this.expectedValue);
@@ -56,11 +65,11 @@ public class ParameterDependency {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ParameterDependency that = (ParameterDependency) o;
-        return Objects.equals(referencedParameterId, that.referencedParameterId);
+        return dependencyType == that.dependencyType && referencedParameterId.equals(that.referencedParameterId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(referencedParameterId);
+        return Objects.hash(dependencyType, referencedParameterId);
     }
 }
