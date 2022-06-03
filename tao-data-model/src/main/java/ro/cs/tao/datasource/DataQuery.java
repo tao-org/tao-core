@@ -16,7 +16,9 @@
 package ro.cs.tao.datasource;
 
 import org.locationtech.jts.geom.Geometry;
+import ro.cs.tao.component.ParameterDependency;
 import ro.cs.tao.component.StringIdentifiable;
+import ro.cs.tao.component.enums.Condition;
 import ro.cs.tao.datasource.converters.ConversionException;
 import ro.cs.tao.datasource.converters.ConverterFactory;
 import ro.cs.tao.datasource.param.CommonParameterNames;
@@ -152,16 +154,19 @@ public abstract class DataQuery extends StringIdentifiable {
     public List<EOProduct> execute() {
         final Set<String> mandatoryParams = getMandatoryParams();
         final Map<String, QueryParameter<?>> actualParameters = getParameters();
-        List<String> missing = mandatoryParams.stream()
-                .filter(p -> !actualParameters.containsKey(p)).collect(Collectors.toList());
-        if (missing.size() > 0) {
+        final List<String> errors = mandatoryParams.stream()
+                                                   .filter(p -> !actualParameters.containsKey(p)).collect(Collectors.toList());
+        if (errors.size() > 0) {
             QueryException ex = new QueryException("Mandatory parameter(s) not supplied");
-            ex.addAdditionalInfo("Missing", String.join(",", missing));
+            ex.addAdditionalInfo("Missing", String.join(",", errors));
             throw ex;
         }
-        this.dataSourceParameters.entrySet().stream()
-                .filter(entry -> entry.getValue().getDefaultValue() != null && !actualParameters.containsKey(entry.getKey()))
-                .forEach(e -> addParameter(e.getKey(), e.getValue().getType(), e.getValue().getDefaultValue()));
+        errors.addAll(checkDependencies(actualParameters));
+        if (errors.size() > 0) {
+            QueryException ex = new QueryException("Some parameter(s) dependencies are not satisfied");
+            ex.addAdditionalInfo("Dependencies", String.join(",", errors));
+            throw ex;
+        }
         Instant start = Instant.now();
         List<EOProduct> retList = executeImpl();
         final QueryParameter<?> footprintParam = actualParameters.get(CommonParameterNames.FOOTPRINT);
@@ -270,7 +275,7 @@ public abstract class DataQuery extends StringIdentifiable {
     public DataQuery clone() throws CloneNotSupportedException {
         DataQuery newQuery = (DataQuery) super.clone();
         newQuery.initialize(this.source, this.sensorName);
-        this.parameters.forEach((key, value) -> newQuery.parameters.put(key, value));
+        newQuery.parameters.putAll(this.parameters);
         return newQuery;
     }
 
@@ -368,10 +373,87 @@ public abstract class DataQuery extends StringIdentifiable {
     protected void sleep() {
         if (this.queryDelay > 0) {
             try {
-                Thread.sleep(this.queryDelay * 1000);
+                Thread.sleep(this.queryDelay * 1000L);
             } catch (java.lang.InterruptedException ignored) {
             }
         }
+    }
+
+    protected List<String> checkDependencies(Map<String, QueryParameter<?>> actualParameters) {
+        final List<String> errors = new ArrayList<>();
+        for (Map.Entry<String, DataSourceParameter> entry : this.dataSourceParameters.entrySet()) {
+            final DataSourceParameter dataSourceParameter = entry.getValue();
+            if (!actualParameters.containsKey(entry.getKey())) {
+                // Parameters not supplied that have defined a default value will be added with the default value
+                if (dataSourceParameter.getDefaultValue() != null) {
+                    addParameter(entry.getKey(), dataSourceParameter.getType(), dataSourceParameter.getDefaultValue());
+                }
+            } else {
+                // Check the supplied parameters for satisfying any defined dependency
+                final List<ParameterDependency> dependencies = dataSourceParameter.getDependencies();
+                if (dependencies != null) {
+                    for (ParameterDependency dependency : dependencies) {
+                        QueryParameter<?> refParam = actualParameters.get(dependency.getReferencedParameterId());
+                        QueryParameter<?> currentParam = actualParameters.get(entry.getKey());
+                        switch (dependency.getDependencyType()) {
+                            case EXCLUSIVE:
+                                if (refParam == null) {
+                                    errors.add(entry.getKey() + " cannot be set if " + dependency.getReferencedParameterId() + " is not set");
+                                }
+                                break;
+                            case FILTER:
+                                if (refParam != null) {
+                                    final String expectedValue = dependency.getExpectedValue();
+                                    String allowedValues = dependency.getAllowedValues();
+                                    final Set<String> aValues = allowedValues != null ? Arrays.stream(allowedValues.split(",")).collect(Collectors.toSet()) : new HashSet<>();
+                                    final Set<String> expValues = Arrays.stream(expectedValue.split(",")).collect(Collectors.toSet());
+                                    Condition condition = dependency.getCondition();
+                                    boolean hasError = false;
+                                    switch (condition) {
+                                        case EQ:
+                                            hasError = !expectedValue.equals(refParam.getValueAsString());
+                                            break;
+                                        case NEQ:
+                                            hasError = expectedValue.equals(refParam.getValueAsString());
+                                            break;
+                                        case IN:
+                                            hasError = !expValues.contains(refParam.getValueAsString());
+                                            break;
+                                        case NOTIN:
+                                            hasError = expValues.contains(refParam.getValueAsString());
+                                            break;
+                                        case GT:
+                                            hasError = compare(refParam.getType(), expectedValue, refParam.getValue()) <= 0;
+                                            break;
+                                        case GTE:
+                                            hasError = compare(refParam.getType(), expectedValue, refParam.getValue()) < 0;
+                                            break;
+                                        case LT:
+                                            hasError = compare(refParam.getType(), expectedValue, refParam.getValue()) >= 0;
+                                            break;
+                                        case LTE:
+                                            hasError = compare(refParam.getType(), expectedValue, refParam.getValue()) > 0;
+                                            break;
+                                    }
+                                    if (hasError) {
+                                        errors.add(String.format("%s cannot be set to %s if %s %s %s",
+                                                entry.getKey(), currentParam.getValueAsString(),
+                                                refParam.getName(), condition.friendlyName().toLowerCase(), refParam.getValue()));
+                                    }
+                                    if (!aValues.contains(currentParam.getValueAsString())) {
+                                        errors.add(String.format("Value %s of %s not allowed when %s %s %s",
+                                                currentParam.getValueAsString(), entry.getKey(),
+                                                refParam.getName(), condition.friendlyName().toLowerCase(), refParam.getValue()));
+                                    }
+                                }
+                            default:
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+        return errors;
     }
 
     private void initialize(DataSource<?, ?> source, String sensorName) {
@@ -391,5 +473,23 @@ public abstract class DataQuery extends StringIdentifiable {
                 .filter(e -> e.getValue().isRequired() && e.getValue().getDefaultValue() == null)
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toSet());
+    }
+
+    private int compare(Class<?> type, String val1, Object val2) {
+        if (type.equals(byte.class) || type.equals(Byte.class)) {
+            return Byte.compare(Byte.parseByte(val1), (byte) val2);
+        } else if (type.equals(short.class) || type.equals(Short.class)) {
+            return Short.compare(Short.parseShort(val1), (short) val2);
+        } else if (type.equals(int.class) || type.equals(Integer.class)) {
+            return Integer.compare(Integer.parseInt(val1), (int) val2);
+        } else if (type.equals(long.class) || type.equals(Long.class)) {
+            return Long.compare(Long.parseLong(val1), (long) val2);
+        } else if (type.equals(float.class) || type.equals(Float.class)) {
+            return Float.compare(Float.parseFloat(val1), (float) val2);
+        } else if (type.equals(double.class) || type.equals(Double.class)) {
+            return Double.compare(Double.parseDouble(val1), (double) val2);
+        } else {
+            return val1.compareTo(val2.toString());
+        }
     }
 }
