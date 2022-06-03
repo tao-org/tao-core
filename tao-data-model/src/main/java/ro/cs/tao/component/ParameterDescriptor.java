@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.component.enums.Condition;
+import ro.cs.tao.component.enums.DependencyType;
 import ro.cs.tao.component.enums.ParameterType;
 import ro.cs.tao.component.validation.*;
 import ro.cs.tao.datasource.param.JavaType;
@@ -197,11 +198,11 @@ public class ParameterDescriptor extends StringIdentifiable {
 
     public void setDependencies(List<ParameterDependency> dependencies) { this.dependencies = dependencies; }
 
-    public void addDependency(String parameterId, Condition condition, String... values) {
+    public void addDependency(DependencyType type, String parameterId, Condition condition, String... values) {
         if (this.dependencies == null) {
             this.dependencies = new ArrayList<>();
         }
-        ParameterDependency dependency = new ParameterDependency(parameterId, condition, values);
+        ParameterDependency dependency = new ParameterDependency(type, parameterId, condition, values);
         if (!this.dependencies.contains(dependency)) {
             this.dependencies.add(dependency);
         }

@@ -18,7 +18,12 @@ package ro.cs.tao.datasource.param;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import ro.cs.tao.EnumUtils;
+import ro.cs.tao.component.ParameterDependency;
+import ro.cs.tao.component.enums.Condition;
+import ro.cs.tao.component.enums.DependencyType;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -35,6 +40,7 @@ public class DataSourceParameter {
     private final boolean required;
     private Object[] valueSet;
     private int order;
+    private List<ParameterDependency> dependencies;
 
     public DataSourceParameter(String name, String remoteName, Class type, String label) {
         this(name, remoteName, type, null, false);
@@ -109,6 +115,20 @@ public class DataSourceParameter {
     public int getOrder() { return order; }
 
     public void setOrder(int order) { this.order = order; }
+
+    public List<ParameterDependency> getDependencies() { return dependencies; }
+
+    public void setDependencies(List<ParameterDependency> dependencies) { this.dependencies = dependencies; }
+
+    public void addDependency(DependencyType type, String parameterId, Condition condition, String... values) {
+        if (this.dependencies == null) {
+            this.dependencies = new ArrayList<>();
+        }
+        ParameterDependency dependency = new ParameterDependency(type, parameterId, condition, values);
+        if (!this.dependencies.contains(dependency)) {
+            this.dependencies.add(dependency);
+        }
+    }
 
     public String typeFriendlyName() { return type != null ? type.friendlyName() : null; }
 

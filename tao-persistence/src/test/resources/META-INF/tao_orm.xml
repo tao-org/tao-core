@@ -1584,6 +1584,10 @@
 
     <embeddable class="ro.cs.tao.component.ParameterDependency" access="PROPERTY">
         <attributes>
+            <basic name="dependencyType">
+                <column name="dependency_type_id" nullable="false" column-definition="integer NOT NULL"/>
+                <convert converter="ro.cs.tao.persistence.convert.ParameterTypeConverter"/>
+            </basic>
             <basic name="expectedValue">
                 <column name="dependant_parameter_value" nullable="true" column-definition="varchar(250) NULL"/>
             </basic>
@@ -1662,5 +1666,6 @@
     <converter class="ro.cs.tao.persistence.convert.RepositoryTypeConverter"/>
     <converter class="ro.cs.tao.persistence.convert.ContainerTypeConverter"/>
     <converter class="ro.cs.tao.persistence.convert.WPSParameterDescriptorListConverter"/>
+    <converter class="ro.cs.tao.persistence.convert.ParameterTypeConverter"/>
 
 </entity-mappings>
