@@ -176,9 +176,17 @@ public abstract class DataQuery extends StringIdentifiable {
             final Polygon2D polygon2D = (Polygon2D) footprintParam.getValue();
             try {
                 final Geometry footprint = new GeometryAdapter().marshal(polygon2D.toWKT());
+                final double footprintArea = footprint.getArea();
                 retList.removeIf(p -> {
-                    final Geometry intersection = footprint.intersection(p.geometryObject());
-                    final double areaPercentage = intersection.getArea() / footprint.getArea();
+                    Geometry product = p.geometryObject();
+                    final Geometry intersection = footprint.intersection(product);
+                    if (intersection.isEmpty()) {
+                        return true;
+                    }
+                    final double productArea = product.getArea();
+                    final double areaPercentage = productArea > footprintArea
+                                                  ? intersection.getArea() / footprintArea
+                                                  : intersection.getArea() / productArea;
                     final boolean toRemove = areaPercentage < this.coverage;
                     if (toRemove) {
                         logger.finest(String.format("Product %s removed due to coverage (%.2f%%)", p.getName(), areaPercentage));
@@ -229,9 +237,6 @@ public abstract class DataQuery extends StringIdentifiable {
                 }
             }
         }
-        /*this.dataSourceParameters.entrySet().stream()
-                .filter(entry -> entry.getValue().getDefaultValue() != null && !parameters.containsKey(entry.getKey()))
-                .forEach(e -> addParameter(e.getKey(), e.getValue().getType(), e.getValue().getDefaultValue()));*/
         Instant start = Instant.now();
         final long count = getCountImpl();
         logger.finest(String.format("Count query completed in %d ms.", Duration.between(start, Instant.now()).toMillis()));
