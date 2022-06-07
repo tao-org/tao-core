@@ -25,6 +25,7 @@ import java.util.List;
  * @author Cosmin Cara
  */
 public class ExecutionJobSummary {
+    private long id;
     private String workflowName;
     private String jobName;
     private LocalDateTime jobStart;
@@ -32,6 +33,10 @@ public class ExecutionJobSummary {
     private String user;
     private ExecutionStatus jobStatus;
     private List<ExecutionTaskSummary> taskSummaries;
+
+    public long getId() { return id; }
+
+    public void setId(long id) { this.id = id; }
 
     public String getJobName() { return jobName; }
 
