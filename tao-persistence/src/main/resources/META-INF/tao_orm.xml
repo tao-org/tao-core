@@ -1147,6 +1147,9 @@
             <basic name="constraints">
                 <column name="constraints" nullable="true" column-definition="text NULL"/>
             </basic>
+            <basic name="referencedSourceDescriptorId">
+                <column name="ref_source_descriptor_id" nullable="true" column-definition="varchar"/>
+            </basic>
 
             <embedded name="dataDescriptor" />
 
@@ -1168,6 +1171,9 @@
             </basic>
             <basic name="constraints">
                 <column name="constraints" nullable="true" column-definition="text NULL"/>
+            </basic>
+            <basic name="referencedTargetDescriptorId">
+                <column name="ref_target_descriptor_id" nullable="true" column-definition="varchar"/>
             </basic>
 
             <embedded name="dataDescriptor" />

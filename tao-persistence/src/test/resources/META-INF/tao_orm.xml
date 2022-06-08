@@ -1147,6 +1147,9 @@
             <basic name="constraints">
                 <column name="constraints" nullable="true" column-definition="text NULL"/>
             </basic>
+            <basic name="referencedSourceDescriptorId">
+                <column name="ref_source_descriptor_id" nullable="true" column-definition="varchar"/>
+            </basic>
 
             <embedded name="dataDescriptor" />
 
@@ -1168,6 +1171,9 @@
             </basic>
             <basic name="constraints">
                 <column name="constraints" nullable="true" column-definition="text NULL"/>
+            </basic>
+            <basic name="referencedTargetDescriptorId">
+                <column name="ref_target_descriptor_id" nullable="true" column-definition="varchar"/>
             </basic>
 
             <embedded name="dataDescriptor" />
@@ -1598,6 +1604,9 @@
             <basic name="referencedParameterId">
                 <column name="dependant_parameter_id" nullable="false" column-definition="varchar(512) NOT NULL" />
             </basic>
+            <basic name="allowedValues">
+                <column name="allowed_values" nullable="true" column-definition="varchar NULL"/>
+            </basic>
         </attributes>
     </embeddable>
 
@@ -1666,6 +1675,6 @@
     <converter class="ro.cs.tao.persistence.convert.RepositoryTypeConverter"/>
     <converter class="ro.cs.tao.persistence.convert.ContainerTypeConverter"/>
     <converter class="ro.cs.tao.persistence.convert.WPSParameterDescriptorListConverter"/>
-    <converter class="ro.cs.tao.persistence.convert.ParameterTypeConverter"/>
+    <converter class="ro.cs.tao.persistence.convert.DependencyTypeConverter"/>
 
 </entity-mappings>
