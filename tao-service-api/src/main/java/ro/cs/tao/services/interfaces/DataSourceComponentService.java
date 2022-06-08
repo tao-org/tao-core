@@ -53,6 +53,14 @@ public interface DataSourceComponentService extends CRUDService<DataSourceCompon
     DataSourceComponent createForProductNames(List<String> productNames, String sensor, String dataSource, Long queryId,
                                               String label, Principal principal) throws PersistenceException;
 
+    /**
+     * Creates a user data source component that wraps the given list of products (a product set)
+     * @param productNames      The list of names of products
+     * @param label             The label of the custom data source component
+     * @param principal         The principal to create the component for
+     */
+    DataSourceComponent createForProductNames(List<String> productNames, String label, Principal principal) throws PersistenceException;
+
     List<Tag> getDatasourceTags();
 
     DataSourceConfiguration getConfiguration(String dataSourceId) throws PersistenceException;

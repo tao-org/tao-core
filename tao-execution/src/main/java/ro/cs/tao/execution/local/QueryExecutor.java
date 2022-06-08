@@ -19,10 +19,7 @@ package ro.cs.tao.execution.local;
 import ro.cs.tao.Tuple;
 import ro.cs.tao.component.*;
 import ro.cs.tao.configuration.ConfigurationManager;
-import ro.cs.tao.datasource.DataQuery;
-import ro.cs.tao.datasource.DataSourceComponent;
-import ro.cs.tao.datasource.DataSourceConfiguration;
-import ro.cs.tao.datasource.ProductStatusListener;
+import ro.cs.tao.datasource.*;
 import ro.cs.tao.datasource.beans.Query;
 import ro.cs.tao.datasource.persistence.DataSourceConfigurationProvider;
 import ro.cs.tao.eodata.EOData;
@@ -44,6 +41,7 @@ import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.serialization.StringListAdapter;
 import ro.cs.tao.spi.OutputDataHandlerManager;
 import ro.cs.tao.utils.FileUtilities;
+import ro.cs.tao.utils.StringUtilities;
 import ro.cs.tao.utils.executors.NamedThreadPoolExecutor;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
@@ -100,129 +98,145 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
             task.setStartTime(LocalDateTime.now());
             changeTaskStatus(task, ExecutionStatus.RUNNING);
             dataSourceComponent = task.getComponent();
-            List<Variable> values = task.getInputParameterValues();
-            if (values == null || values.size() == 0) {
-                throw new ExecutionException(String.format("No input data for the task %s", task.getId()));
-            }
-            Variable variable  = values.stream().filter(v -> DataSourceComponent.QUERY_PARAMETER.equals(v.getKey()) ||
-                                                             "local.query".equals(v.getKey()))
-                                                .findFirst().orElse(null);
-            if (variable == null) {
-                throw new ExecutionException("Expected parameter [query] not found");
-            }
-            Query primaryQuery = Query.fromString(variable.getValue());
-            if (primaryQuery == null) {
-                throw new ExecutionException(String.format("Invalid input data for the task %s", task.getId()));
-            }
-            final DataQuery dataQuery = Query.toDataQuery(primaryQuery);
-            final Future<List<EOProduct>> future = backgroundWorker.submit(dataQuery::execute);
-            final List<EOProduct> results = future.get();
+            // DSComponents having the id starting with 'product-set-' don't need to execute
+            // a query. Instead, they should already contain a list of paths.
             ExecutionStatus status;
-            if (results != null && results.size() > 0) {
-                int cardinality = dataSourceComponent.getSources().get(0).getCardinality();
-                int rSize = results.size();
-                if (cardinality > 0 && cardinality != rSize) {
-                    variable = values.stream().filter(v -> "remote.query".equals(v.getKey()))
-                                               .findFirst().orElse(null);
-                    if (variable == null) {
-                        logger.warning(String.format("Task %s expected %s inputs, but received %s. Execution is cancelled",
-                                                     task.getId(), cardinality, results.size()));
-                        markTaskFinished(task, ExecutionStatus.CANCELLED);
-                        return;
-                    } else {
-                        results.removeIf(r -> r.getProductStatus() == ProductStatus.DOWNLOADING ||
-                                              r.getProductStatus() == ProductStatus.DOWNLOADED);
-                        logger.info(String.format("Task %s expects %d inputs, but only %d are locally available. Download for the missing will start",
-                                                  task.getId(), rSize, rSize - results.size()));
+            if (!dataSourceComponent.getId().startsWith("product-set-")) {
+                List<Variable> values = task.getInputParameterValues();
+                if (values == null || values.size() == 0) {
+                    throw new ExecutionException(String.format("No input data for the task %s", task.getId()));
+                }
+                Variable variable = values.stream().filter(v -> DataSourceComponent.QUERY_PARAMETER.equals(v.getKey()) ||
+                                                  "local.query".equals(v.getKey()))
+                                          .findFirst().orElse(null);
+                if (variable == null) {
+                    throw new ExecutionException("Expected parameter [query] not found");
+                }
+                Query primaryQuery = Query.fromString(variable.getValue());
+                if (primaryQuery == null) {
+                    throw new ExecutionException(String.format("Invalid input data for the task %s", task.getId()));
+                }
+                final DataQuery dataQuery = Query.toDataQuery(primaryQuery);
+                final Future<List<EOProduct>> future = backgroundWorker.submit(dataQuery::execute);
+                final List<EOProduct> results = future.get();
+                if (results != null && results.size() > 0) {
+                    int cardinality = dataSourceComponent.getSources().get(0).getCardinality();
+                    int rSize = results.size();
+                    if (cardinality > 0 && cardinality != rSize) {
+                        variable = values.stream().filter(v -> "remote.query".equals(v.getKey()))
+                                         .findFirst().orElse(null);
+                        if (variable == null) {
+                            logger.warning(String.format("Task %s expected %s inputs, but received %s. Execution is cancelled",
+                                                         task.getId(), cardinality, results.size()));
+                            markTaskFinished(task, ExecutionStatus.CANCELLED);
+                            return;
+                        } else {
+                            results.removeIf(r -> r.getProductStatus() == ProductStatus.DOWNLOADING ||
+                                    r.getProductStatus() == ProductStatus.DOWNLOADED);
+                            logger.info(String.format("Task %s expects %d inputs, but only %d are locally available. Download for the missing will start",
+                                                      task.getId(), rSize, rSize - results.size()));
+                        }
                     }
-                }
-                variable  = values.stream().filter(v -> DataSourceComponent.SYNC_PARAMETER.equals(v.getKey()))
-                        .findFirst().orElse(null);
-                if (variable != null && variable.getValue() != null) {
-                    // The current resultset must be synchronized with the one received in this parameter
-                    // Synchronization means filtering by dates of the previous resultset
-                    filterByOtherList(results, variable.getValue());
-                }
-                final String sensorName = dataSourceComponent.getSensorName().toLowerCase().replace(" ", "-");
-                dataSourceComponent.setProductStatusListener(this);
-                List<EOProduct> products = new ArrayList<>();
-                if (!dataSourceComponent.getId().contains(LOCAL_DATABASE)) {
-                    // first try to retrieve the products that have already been downloaded locally
-                    List<EOProduct> localProducts = productProvider.list(results.stream().map(EOData::getId).collect(Collectors.toList()));
-                    if (localProducts != null) {
-                        localProducts.removeIf(p -> p.getProductStatus() != ProductStatus.DOWNLOADED);
-                        localProducts.forEach(this::downloadCompleted);
-                        products.addAll(localProducts);
-                        Set<String> ids = localProducts.stream().map(EOData::getId).collect(Collectors.toSet());
-                        results.removeIf(p -> ids.contains(p.getId()));
+                    variable = values.stream().filter(v -> DataSourceComponent.SYNC_PARAMETER.equals(v.getKey()))
+                                     .findFirst().orElse(null);
+                    if (variable != null && variable.getValue() != null) {
+                        // The current resultset must be synchronized with the one received in this parameter
+                        // Synchronization means filtering by dates of the previous resultset
+                        filterByOtherList(results, variable.getValue());
                     }
-                }
-                final DataSourceConfiguration dataSourceConfiguration = configurationProvider.get(dataSourceComponent.getId());
-                String localRepositoryRoot;
-                if (dataSourceConfiguration != null) {
-                    dataSourceComponent.setFetchMode(dataSourceConfiguration.getFetchMode());
-                    localRepositoryRoot = dataSourceConfiguration.getLocalRepositoryPath();
-                } else {
-                    localRepositoryRoot = ConfigurationManager.getInstance().getValue(String.format("local.%s.path", sensorName));
-                }
-                final List<EOProduct> remoteProducts = dataSourceComponent.doFetch(results,
-                                                                                   null,
-                                                                                   SystemVariable.USER_WORKSPACE.value(),
-                                                                                   localRepositoryRoot,
-                                                                                   null);
-                if (remoteProducts != null) {
+                    final String sensorName = dataSourceComponent.getSensorName().toLowerCase().replace(" ", "-");
+                    dataSourceComponent.setProductStatusListener(this);
+                    List<EOProduct> products = new ArrayList<>();
                     if (!dataSourceComponent.getId().contains(LOCAL_DATABASE)) {
-                        backgroundWorker.submit(() -> persistResults(remoteProducts));
+                        // first try to retrieve the products that have already been downloaded locally
+                        List<EOProduct> localProducts = productProvider.list(results.stream().map(EOData::getId).collect(Collectors.toList()));
+                        if (localProducts != null) {
+                            localProducts.removeIf(p -> p.getProductStatus() != ProductStatus.DOWNLOADED);
+                            localProducts.forEach(this::downloadCompleted);
+                            products.addAll(localProducts);
+                            Set<String> ids = localProducts.stream().map(EOData::getId).collect(Collectors.toSet());
+                            results.removeIf(p -> ids.contains(p.getId()));
+                        }
                     }
-                    products.addAll(remoteProducts);
-                }
-                task.getComponent().setTargetCardinality(products.size());
-                Long workflowNodeId = task.getWorkflowNodeId();
-                List<Tuple<EOProduct, EOProduct>> tuples = null;
+                    final DataSourceConfiguration dataSourceConfiguration = configurationProvider.get(dataSourceComponent.getId());
+                    String localRepositoryRoot;
+                    if (dataSourceConfiguration != null) {
+                        dataSourceComponent.setFetchMode(dataSourceConfiguration.getFetchMode());
+                        localRepositoryRoot = dataSourceConfiguration.getLocalRepositoryPath();
+                    } else {
+                        localRepositoryRoot = ConfigurationManager.getInstance().getValue(String.format("local.%s.path", sensorName));
+                    }
+                    final List<EOProduct> remoteProducts = dataSourceComponent.doFetch(results,
+                                                                                       null,
+                                                                                       SystemVariable.USER_WORKSPACE.value(),
+                                                                                       localRepositoryRoot,
+                                                                                       null);
+                    if (remoteProducts != null) {
+                        if (!dataSourceComponent.getId().contains(LOCAL_DATABASE)) {
+                            backgroundWorker.submit(() -> persistResults(remoteProducts));
+                        }
+                        products.addAll(remoteProducts);
+                    }
+                    task.getComponent().setTargetCardinality(products.size());
+                    Long workflowNodeId = task.getWorkflowNodeId();
+                    List<Tuple<EOProduct, EOProduct>> tuples = null;
 
-                WorkflowDescriptor workflow = workflowProvider.get(task.getJob().getWorkflowId());
-                List<WorkflowNodeDescriptor> linkedNodes =
-                        workflow.getNodes().stream().filter(n -> n.getIncomingLinks() != null &&
-                                n.getIncomingLinks().stream().anyMatch(l -> l.getSourceNodeId() == workflowNodeId))
-                                .collect(Collectors.toList());
-                Aggregator aggregator;
-                for (WorkflowNodeDescriptor linkedNode : linkedNodes) {
-                    Set<ComponentLink> links = linkedNode.getIncomingLinks();
-                    for (ComponentLink link : links) {
-                        if (link.getSourceNodeId() == workflowNodeId && (aggregator = link.getAggregator()) != null) {
-                            String[] sort = aggregator.getSorter();
-                            if (sort != null) {
-                                DataSorter<EOProduct> sorter = ProductSortingFactory.getSorter(sort[0]);
-                                products = sorter.sort(products, sort[1] == null || sort[1].equalsIgnoreCase("asc"));
-                            }
-                            String[] group = aggregator.getAssociator();
-                            if (group != null) {
-                                Association<EOProduct> association;
-                                if (group.length == 1) {
-                                    association = ProductAssociationFactory.getAssociation(group[0]);
-                                } else {
-                                    if (group[1] == null) {
-                                        group[1] = "0";
-                                    }
-                                    association = ProductAssociationFactory.getAssociation(group[0],
-                                                                                           Integer.parseInt(group[1]));
+                    WorkflowDescriptor workflow = workflowProvider.get(task.getJob().getWorkflowId());
+                    List<WorkflowNodeDescriptor> linkedNodes =
+                            workflow.getNodes().stream().filter(n -> n.getIncomingLinks() != null &&
+                                            n.getIncomingLinks().stream().anyMatch(l -> l.getSourceNodeId() == workflowNodeId))
+                                    .collect(Collectors.toList());
+                    Aggregator aggregator;
+                    for (WorkflowNodeDescriptor linkedNode : linkedNodes) {
+                        Set<ComponentLink> links = linkedNode.getIncomingLinks();
+                        for (ComponentLink link : links) {
+                            if (link.getSourceNodeId() == workflowNodeId && (aggregator = link.getAggregator()) != null) {
+                                String[] sort = aggregator.getSorter();
+                                if (sort != null) {
+                                    DataSorter<EOProduct> sorter = ProductSortingFactory.getSorter(sort[0]);
+                                    products = sorter.sort(products, sort[1] == null || sort[1].equalsIgnoreCase("asc"));
                                 }
-                                tuples = association.associate(products);
+                                String[] group = aggregator.getAssociator();
+                                if (group != null) {
+                                    Association<EOProduct> association;
+                                    if (group.length == 1) {
+                                        association = ProductAssociationFactory.getAssociation(group[0]);
+                                    } else {
+                                        if (group[1] == null) {
+                                            group[1] = "0";
+                                        }
+                                        association = ProductAssociationFactory.getAssociation(group[0],
+                                                                                               Integer.parseInt(group[1]));
+                                    }
+                                    tuples = association.associate(products);
+                                }
                             }
                         }
                     }
-                }
-                if (tuples != null) {
-                    task.setOutputParameterValue(dataSourceComponent.getTargets().get(0).getName(),
-                                                 serializeGroups(tuples));
+                    if (tuples != null) {
+                        task.setOutputParameterValue(dataSourceComponent.getTargets().get(0).getName(),
+                                                     serializeGroups(tuples));
+                    } else {
+                        task.setOutputParameterValue(dataSourceComponent.getTargets().get(0).getName(),
+                                                     serializeResults(products));
+                    }
+                    status = ExecutionStatus.DONE;
                 } else {
-                    task.setOutputParameterValue(dataSourceComponent.getTargets().get(0).getName(),
-                                                 serializeResults(products));
+                    logger.info("Query returned no results");
+                    status = ExecutionStatus.CANCELLED;
                 }
-                status = ExecutionStatus.DONE;
             } else {
-                logger.info("Query returned no results");
-                status = ExecutionStatus.CANCELLED;
+                final SourceDescriptor descriptor = dataSourceComponent.getSources().stream()
+                                                                       .filter(s -> s.getName().equals(DataSourceComponent.QUERY_PARAMETER))
+                                                                       .findFirst().get();
+                final String strList = descriptor.getDataDescriptor().getLocation();
+                if (StringUtilities.isNullOrEmpty(strList)) {
+                    throw new QueryException("Empty product set");
+                }
+                task.getComponent().setTargetCardinality(descriptor.getCardinality());
+                task.setOutputParameterValue(dataSourceComponent.getTargets().get(0).getName(),
+                                             jsonifyResults(Arrays.asList(strList.split(","))));
+                status = ExecutionStatus.DONE;
             }
             markTaskFinished(task, status);
         } catch (Exception ex) {
@@ -266,11 +280,26 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
         OutputDataHandlerManager.getInstance().applyHandlers(results);
     }
 
+    /**
+     * Transforms a list of products in a string containing a list of product names
+     * @param results   The list of products
+     */
     private String serializeResults(List<EOProduct> results) {
         String json = null;
         try {
             StringListAdapter adapter = new StringListAdapter();
             json = adapter.unmarshal(results.stream().map(p -> FileUtilities.resolve(p.getLocation(), p.getEntryPoint())).collect(Collectors.toList()));
+        } catch (Exception e) {
+            logger.severe("Serialization of results failed: " + e.getMessage());
+        }
+        return json;
+    }
+
+    private String jsonifyResults(List<String> results) {
+        String json = null;
+        try {
+            StringListAdapter adapter = new StringListAdapter();
+            json = adapter.unmarshal(results);
         } catch (Exception e) {
             logger.severe("Serialization of results failed: " + e.getMessage());
         }
