@@ -40,6 +40,7 @@ public class SourceDescriptor extends StringIdentifiable {
     private DataDescriptor dataDescriptor;
     private List<String> constraints;
     private int cardinality;
+    private String referencedSourceDescriptorId;
 
     public SourceDescriptor() { }
 
@@ -114,6 +115,14 @@ public class SourceDescriptor extends StringIdentifiable {
         this.constraints = constraints;
     }
 
+    public String getReferencedSourceDescriptorId() {
+        return referencedSourceDescriptorId;
+    }
+
+    public void setReferencedSourceDescriptorId(String referencedSourceDescriptorId) {
+        this.referencedSourceDescriptorId = referencedSourceDescriptorId;
+    }
+
     /**
      * Verifies if all the constraints defined on this instance are satisfied by the target descriptor.
      *
@@ -160,6 +169,7 @@ public class SourceDescriptor extends StringIdentifiable {
             clone.constraints = new ArrayList<>(this.constraints);
         }
         clone.cardinality = this.cardinality;
+        clone.referencedSourceDescriptorId = this.referencedSourceDescriptorId;
         return clone;
     }
 }

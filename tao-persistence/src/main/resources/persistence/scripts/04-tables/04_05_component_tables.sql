@@ -370,7 +370,8 @@ CREATE TABLE component.source_descriptor
     coordinate_reference_system text NULL,
     sensor_type_id integer NULL,
     dimension json NULL,
-    location varchar NULL
+    location varchar NULL,
+    ref_source_descriptor_id varchar NULL
 );
 ALTER TABLE component.source_descriptor ADD CONSTRAINT PK_source_descriptor PRIMARY KEY (id);
 ALTER TABLE component.source_descriptor ADD CONSTRAINT FK_data_descriptor_data_format
@@ -394,7 +395,8 @@ CREATE TABLE component.target_descriptor
     coordinate_reference_system text NULL,
     sensor_type_id integer NULL,
     dimension json NULL,
-    location varchar NULL
+    location varchar NULL,
+    ref_target_descriptor_id varchar NULL
 );
 ALTER TABLE component.target_descriptor ADD CONSTRAINT PK_target_descriptor PRIMARY KEY (id);
 ALTER TABLE component.target_descriptor ADD CONSTRAINT FK_data_descriptor_data_format
