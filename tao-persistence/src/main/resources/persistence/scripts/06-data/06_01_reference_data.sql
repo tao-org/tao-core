@@ -6,6 +6,10 @@ INSERT INTO component.component_visibility (visibility) VALUES
 INSERT INTO component.processing_component_type (id, type) VALUES
 (1, 'EXECUTABLE'), (2, 'SCRIPT'), (3, 'AGGREGATE'), (4, 'EXTERNAL'), (5, 'UTILITY');
 
+-- Processing components category
+INSERT INTO component.component_category (id, category) VALUES
+(1, 'RASTER'), (2, 'VECTOR'), (3, 'OPTICAL'), (4, 'RADAR'), (5, 'MISC');
+
 -- Tag type
 INSERT INTO common.tag_type (id, description) VALUES
 (1, 'TOPOLOGY_NODE'), (2, 'COMPONENT'), (3, 'DATASOURCE'), (4, 'WORKFLOW');
