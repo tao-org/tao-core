@@ -383,6 +383,7 @@
         <convert converter="ro.cs.tao.persistence.convert.TemplateTypeConverter" attribute-name="templateType" />
         <convert converter="ro.cs.tao.persistence.convert.ProcessingComponentVisibilityConverter" attribute-name="visibility" />
         <convert converter="ro.cs.tao.persistence.convert.ProcessingComponentTypeConverter" attribute-name="componentType" />
+        <convert converter="ro.cs.tao.persistence.convert.ComponentCategoryConverter" attribute-name="category" />
 
         <attributes>
             <basic name="fileLocation">
@@ -408,6 +409,9 @@
             </basic>
             <basic name="componentType">
                 <column name="component_type_id" nullable="true" column-definition="integer NULL DEFAULT 1"/>
+            </basic>
+            <basic name="category">
+                <column name="category_id" nullable="true" column-definition="integer NULL DEFAULT 5"/>
             </basic>
             <basic name="containerId">
                 <column name="container_id" nullable="false" column-definition="varchar(1024) NOT NULL"/>
@@ -1676,5 +1680,6 @@
     <converter class="ro.cs.tao.persistence.convert.ContainerTypeConverter"/>
     <converter class="ro.cs.tao.persistence.convert.WPSParameterDescriptorListConverter"/>
     <converter class="ro.cs.tao.persistence.convert.DependencyTypeConverter"/>
+    <converter class="ro.cs.tao.persistence.convert.ComponentCategoryConverter"/>
 
 </entity-mappings>

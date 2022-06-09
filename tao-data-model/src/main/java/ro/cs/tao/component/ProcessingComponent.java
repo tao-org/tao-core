@@ -18,10 +18,7 @@ package ro.cs.tao.component;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
-import ro.cs.tao.component.enums.Condition;
-import ro.cs.tao.component.enums.ParameterType;
-import ro.cs.tao.component.enums.ProcessingComponentType;
-import ro.cs.tao.component.enums.ProcessingComponentVisibility;
+import ro.cs.tao.component.enums.*;
 import ro.cs.tao.component.template.BasicTemplate;
 import ro.cs.tao.component.template.Template;
 import ro.cs.tao.component.template.TemplateException;
@@ -55,6 +52,7 @@ import java.util.stream.Collectors;
 public class ProcessingComponent extends TaoComponent {
 
     private String containerId;
+    private ComponentCategory category;
     private String fileLocation;
     private String expandedFileLocation;
     private String workingDirectory;
@@ -284,6 +282,20 @@ public class ProcessingComponent extends TaoComponent {
      */
     public void setParallelism(int parallelism) {
         this.parallelism = parallelism;
+    }
+
+    /**
+     * Returns the component category
+     */
+    public ComponentCategory getCategory() {
+        return category;
+    }
+
+    /**
+     * Sets the component category
+     */
+    public void setCategory(ComponentCategory category) {
+        this.category = category;
     }
 
     /**

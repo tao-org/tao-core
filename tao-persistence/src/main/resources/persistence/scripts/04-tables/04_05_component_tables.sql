@@ -1,4 +1,19 @@
 -------------------------------------------------------------------------------
+-- table: component_category
+DROP TABLE IF EXISTS component.component_category CASCADE;
+CREATE TABLE component.component_category
+(
+	id integer NOT NULL,
+	category varchar(250) NOT NULL
+);
+ALTER TABLE component.component_category ADD CONSTRAINT PK_component_category
+	PRIMARY KEY (id);
+DROP SEQUENCE IF EXISTS component.component_category_id_seq CASCADE;
+CREATE SEQUENCE component.component_category_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE component.component_category ALTER COLUMN id SET DEFAULT nextval('component.component_category_id_seq');
+ALTER SEQUENCE component.component_category_id_seq OWNED BY component.component_category.id;
+
+-------------------------------------------------------------------------------
 -- table: parameter_type
 DROP TABLE IF EXISTS component.parameter_type CASCADE;
 CREATE TABLE component.parameter_type
@@ -149,6 +164,7 @@ CREATE TABLE component.processing_component
 	copyright text NOT NULL,
 	node_affinity varchar(250) NULL,
     container_id varchar(1024) NULL,
+    category_id int NULL DEFAULT 5,
 	main_tool_file_location varchar(512) NOT NULL,
 	working_directory varchar(512) NULL,
 	template_type_id integer NOT NULL,
@@ -176,6 +192,8 @@ ALTER TABLE component.processing_component ADD CONSTRAINT FK_processing_componen
 	FOREIGN KEY (component_type_id) REFERENCES component.processing_component_type (id) ON DELETE No Action ON UPDATE No Action;
 ALTER TABLE component.processing_component ADD CONSTRAINT FK_processing_component_container
 	FOREIGN KEY (container_id) REFERENCES component.container (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE component.processing_component ADD CONSTRAINT FK_processing_component_component_category
+	FOREIGN KEY (category_id) REFERENCES component.component_category (id) ON DELETE No Action ON UPDATE No Action;
 DROP SEQUENCE IF EXISTS component.processing_component_id_seq CASCADE;
 CREATE SEQUENCE component.processing_component_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
 ALTER TABLE component.processing_component ALTER COLUMN id SET DEFAULT nextval('component.processing_component_id_seq');
