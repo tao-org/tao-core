@@ -1,6 +1,7 @@
 package ro.cs.tao.services.model.component;
 
 import ro.cs.tao.component.ProcessingComponent;
+import ro.cs.tao.component.enums.ComponentCategory;
 import ro.cs.tao.component.enums.ProcessingComponentType;
 import ro.cs.tao.component.enums.ProcessingComponentVisibility;
 
@@ -19,6 +20,7 @@ public class ProcessingComponentInfo {
     private ProcessingComponentVisibility visibility;
     private boolean active;
     private ProcessingComponentType componentType;
+    private ComponentCategory category;
     private List<String> tags;
 
     public ProcessingComponentInfo(ProcessingComponent component) {
@@ -33,6 +35,7 @@ public class ProcessingComponentInfo {
         this.visibility = component.getVisibility();
         this.active = component.getActive();
         this.componentType = component.getComponentType();
+        this.category = component.getCategory();
         this.tags = component.getTags();
     }
 
@@ -57,6 +60,10 @@ public class ProcessingComponentInfo {
     public boolean isActive() { return active; }
 
     public ProcessingComponentType getComponentType() { return componentType; }
+
+    public ComponentCategory getCategory() {
+        return category;
+    }
 
     public List<String> getTags() { return tags; }
 }
