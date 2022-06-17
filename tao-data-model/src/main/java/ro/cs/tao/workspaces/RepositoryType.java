@@ -29,7 +29,7 @@ public enum RepositoryType implements TaoEnum<Integer> {
     @XmlEnumValue("4")
     STAC(4, "STAC repository", "stac", "stac.url", null, null,
          new LinkedHashMap<String, Boolean>() {{
-             put("stac.url", true);
+             put("stac.url", true); put("page.size", false);
     }}, false),
     @XmlEnumValue("5")
     SMB(5, "Network share repository", "smb", "smb.share", "smb.user", "smb.password",
