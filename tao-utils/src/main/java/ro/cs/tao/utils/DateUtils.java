@@ -19,6 +19,9 @@ package ro.cs.tao.utils;
 import java.time.Duration;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.SignStyle;
+import java.time.temporal.ChronoField;
 
 /**
  * Utility class for various operations (such as formatting) on date types.
@@ -38,10 +41,47 @@ public class DateUtils {
     }
 
     public static DateTimeFormatter getFormatterAtUTC(String format) {
-        return DateTimeFormatter.ofPattern(format).withZone(ZoneId.of("UTC"));
+        //return DateTimeFormatter.ofPattern(format).withZone(ZoneId.of("UTC"));
+        final DateTimeFormatterBuilder builder = new DateTimeFormatterBuilder()
+                .appendPattern("yyyy-MM-dd'T'HH:mm:ss").appendFraction(ChronoField.NANO_OF_SECOND, 0, 6, true);
+        if (format.endsWith("Z")) {
+            builder.appendLiteral("Z");
+        }
+        return builder.toFormatter().withZone(ZoneId.of("UTC"));
     }
 
     public static DateTimeFormatter getFormatterAtLocal(String format) {
-        return DateTimeFormatter.ofPattern(format).withZone(ZoneId.systemDefault());
+        //return DateTimeFormatter.ofPattern(format).withZone(ZoneId.systemDefault());
+        final DateTimeFormatterBuilder builder = new DateTimeFormatterBuilder()
+                .appendPattern("yyyy-MM-dd'T'HH:mm:ss").appendFraction(ChronoField.NANO_OF_SECOND, 0, 6, true);
+        if (format.endsWith("Z") || format.endsWith("Z'")) {
+            builder.appendLiteral("Z");
+        }
+        return builder.toFormatter().withZone(ZoneId.systemDefault());
+    }
+
+    public static DateTimeFormatter getResilientFormatterAtUTC() {
+        final DateTimeFormatterBuilder builder = new DateTimeFormatterBuilder()
+                .appendPattern("yyyy-").appendValue(ChronoField.MONTH_OF_YEAR, 1, 2, SignStyle.NOT_NEGATIVE)
+                .appendLiteral("-").appendValue(ChronoField.DAY_OF_MONTH, 1, 2, SignStyle.NOT_NEGATIVE)
+                .optionalStart()
+                    .appendLiteral("T")
+                .optionalEnd()
+                .optionalStart()
+                    .appendLiteral(" ")
+                .optionalEnd()
+                .optionalStart()
+                    .appendValue(ChronoField.HOUR_OF_DAY, 1, 2, SignStyle.NOT_NEGATIVE)
+                    .appendLiteral(":").appendValue(ChronoField.MINUTE_OF_HOUR, 1, 2, SignStyle.NOT_NEGATIVE)
+                    .appendLiteral(":").appendValue(ChronoField.SECOND_OF_MINUTE, 1, 2, SignStyle.NOT_NEGATIVE)
+                    .appendFraction(ChronoField.NANO_OF_SECOND, 0, 6, true)
+                    .optionalStart()
+                        .appendZoneOrOffsetId()
+                    .optionalEnd()
+                    .optionalStart()
+                        .appendLiteral("Z")
+                    .optionalEnd()
+                .optionalEnd();
+        return builder.toFormatter().withZone(ZoneId.of("UTC"));
     }
 }
