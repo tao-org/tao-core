@@ -38,7 +38,7 @@ import java.util.logging.Logger;
  * @author Cosmin Cara
  */
 public class Query extends LongIdentifiable {
-    private static final DateTimeFormatter dateFormat = DateUtils.getFormatterAtUTC("yyyy-MM-dd");
+    private static final DateTimeFormatter dateFormat = DateUtils.getResilientFormatterAtUTC();//DateUtils.getFormatterAtUTC("yyyy-MM-dd");
     private static final Map<CompositeKey, DataSourceComponent> componentPool = Collections.synchronizedMap(new HashMap<>());
     private String label;
     private String userId;
