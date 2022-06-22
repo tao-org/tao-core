@@ -7,4 +7,5 @@ import java.util.List;
 public interface RepositoryService extends CRUDService<Repository, String> {
 
     List<Repository> getByUser(String userName);
+    Repository getByUserAndName(String userName, String repositoryName);
 }
