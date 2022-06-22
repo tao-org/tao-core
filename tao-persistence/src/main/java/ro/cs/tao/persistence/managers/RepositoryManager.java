@@ -24,6 +24,11 @@ public class RepositoryManager extends EntityManager<Repository, String, Reposit
     }
 
     @Override
+    public Repository getByUserAndName(String userName, String repoName) {
+        return this.repository.getByUserAndName(userName, repoName);
+    }
+
+    @Override
     protected String identifier() {
         return "id";
     }

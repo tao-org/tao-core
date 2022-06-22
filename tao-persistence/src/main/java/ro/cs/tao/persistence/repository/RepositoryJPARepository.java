@@ -17,4 +17,7 @@ public interface RepositoryJPARepository extends PagingAndSortingRepository<Repo
     @Query(value = "SELECT * FROM workspace.repository WHERE username = :userName ORDER BY system desc, created", nativeQuery = true)
     List<Repository> getByUser(@Param("userName") String userName);
 
+    @Query(value = "SELECT * FROM workspace.repository WHERE username = :userName and name = :repoName ORDER BY system desc, created", nativeQuery = true)
+    Repository getByUserAndName(@Param("userName") String userName, @Param("repoName") String repoName);
+
 }
