@@ -41,8 +41,7 @@ public class User extends LongIdentifiable {
 
     private String organization;
     private UserStatus status;
-    // flag that indicates if the user is external (it uses an external auth method); for external users, TAO does'nt store passwords
-    private boolean external;
+    private UserType userType;
     // key used for 1st time password set for TAO internal users, or for future password resets requested by TAO internal users
     private String passwordResetKey;
 
@@ -157,12 +156,12 @@ public class User extends LongIdentifiable {
         this.status = status;
     }
 
-    public boolean isExternal() {
-        return external;
+    public UserType getUserType() {
+        return userType;
     }
 
-    public void setExternal(boolean external) {
-        this.external = external;
+    public void setUserType(UserType userType) {
+        this.userType = userType;
     }
 
     public String getPasswordResetKey() {

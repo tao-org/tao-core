@@ -1252,6 +1252,7 @@
             <entity-listener class="ro.cs.tao.persistence.audit.UserListener"/>
         </entity-listeners>
         <convert converter="ro.cs.tao.persistence.convert.UserStatusConverter" attribute-name="status" />
+        <convert converter="ro.cs.tao.persistence.convert.UserTypeConverter" attribute-name="userTYpe" />
         <attributes>
             <id name="id">
                 <column name="id" nullable="false" column-definition="serial NOT NULL"/>
@@ -1305,8 +1306,11 @@
             <basic name="status">
                 <column name="status_id" nullable="false" column-definition="integer NOT NULL"/>
             </basic>
-            <basic name="external">
+            <!--<basic name="external">
                 <column name="external" nullable="true" column-definition="boolean NULL DEFAULT false"/>
+            </basic>-->
+            <basic name="userType">
+                <column name="user_type_id" nullable="false" column-definition="integer NOT NULL"/>
             </basic>
             <basic name="passwordResetKey">
                 <column name="password_reset_key" nullable="true" column-definition="character varying(255) NULL"/>
@@ -1681,5 +1685,5 @@
     <converter class="ro.cs.tao.persistence.convert.WPSParameterDescriptorListConverter"/>
     <converter class="ro.cs.tao.persistence.convert.DependencyTypeConverter"/>
     <converter class="ro.cs.tao.persistence.convert.ComponentCategoryConverter"/>
-
+    <converter class="ro.cs.tao.persistence.convert.UserTypeConverter"/>
 </entity-mappings>
