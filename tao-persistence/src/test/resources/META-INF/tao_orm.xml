@@ -1252,7 +1252,7 @@
             <entity-listener class="ro.cs.tao.persistence.audit.UserListener"/>
         </entity-listeners>
         <convert converter="ro.cs.tao.persistence.convert.UserStatusConverter" attribute-name="status" />
-        <convert converter="ro.cs.tao.persistence.convert.UserTypeConverter" attribute-name="userTYpe" />
+        <convert converter="ro.cs.tao.persistence.convert.UserTypeConverter" attribute-name="userType" />
         <attributes>
             <id name="id">
                 <column name="id" nullable="false" column-definition="serial NOT NULL"/>
