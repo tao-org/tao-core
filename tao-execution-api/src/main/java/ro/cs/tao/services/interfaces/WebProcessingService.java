@@ -50,6 +50,10 @@ public interface WebProcessingService<W, T> extends TAOService {
      */
     long execute(long identifier, Map<String, Map<String, String>> parameters);
 
+    default long execute(String user, long identifier, Map<String, Map<String, String>> parameters) {
+        return execute(identifier, parameters);
+    }
+
     /**
      * Returns information about the execution job having the given identifier
      * @param executionJobId    The execution job identifier
