@@ -355,6 +355,28 @@ public class FileUtilities {
         }
     }
 
+    public static String asUnixPath(String path, boolean insideDocker) {
+        if (SystemUtils.IS_OS_UNIX) {
+            return path;
+        } else {
+            String strPath;
+            Path pPath = Paths.get(path);
+            if (pPath.isAbsolute() || pPath.startsWith("\\")) {
+                final URI uri = pPath.toAbsolutePath().toUri();
+                final String stringValue = uri.getRawPath();
+                strPath = StringUtils.replaceEach(stringValue, WIN_TO_UNIX_TOKENS, WIN_TO_UNIX_REPLACEMENTS);
+                if (insideDocker && strPath.charAt(2) == '/') {
+                    strPath = strPath.substring(2);
+                }
+            } else {
+                strPath = "/" +
+                        StringUtils.replaceEach(path, WIN_TO_UNIX_TOKENS, WIN_TO_UNIX_REPLACEMENTS) +
+                        (Files.isDirectory(pPath) ? "/" : "");
+            }
+            return strPath;
+        }
+    }
+
     public static int copy(Path source, Path destination) throws IOException {
         final AtomicInteger copied = new AtomicInteger(0);
         if (source != null && destination != null) {
