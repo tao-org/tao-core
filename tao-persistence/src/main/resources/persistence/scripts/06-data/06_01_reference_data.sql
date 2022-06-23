@@ -100,13 +100,16 @@ INSERT INTO usr.grp (name, input_quota, processing_quota) VALUES ('USER', 100, 1
 -- User status
 INSERT INTO usr.user_status (status) VALUES
 ('PENDING'), ('ACTIVE'), ('DISABLED');
+-- User type
+INSERT INTO usr.user_type (id, type) VALUES
+(1, 'LOCAL'), (2, 'LDAP'), (3, 'KEYCLOAK');
 
 -- Users
-INSERT INTO usr."user" (username, password, email, alternative_email, last_name, first_name, input_quota, actual_input_quota, processing_quota, actual_processing_quota, cpu_quota, memory_quota, organization, status_id, created)
-VALUES ('admin', 'QxdxrJkXAQMN5nT9+dBWLg==', 'kraftek@c-s.ro', 'oana.hogoiu@c-s.ro', 'Administrator', 'Account', -1, -1, -1, -1, -1, -1, 'TAO', 2, CURRENT_TIMESTAMP);
+INSERT INTO usr."user" (username, password, email, alternative_email, last_name, first_name, input_quota, actual_input_quota, processing_quota, actual_processing_quota, cpu_quota, memory_quota, organization, status_id, user_type_id, created)
+VALUES ('admin', 'QxdxrJkXAQMN5nT9+dBWLg==', 'kraftek@c-s.ro', 'oana.hogoiu@c-s.ro', 'Administrator', 'Account', -1, -1, -1, -1, -1, -1, 'TAO', 2, 1, CURRENT_TIMESTAMP);
 
-INSERT INTO usr."user" (username, password, email, alternative_email, last_name, first_name, input_quota, actual_input_quota, processing_quota, actual_processing_quota, cpu_quota, memory_quota, organization, status_id, created)
-VALUES ('SystemAccount', 'TSEBHrrH9Uo+O69A5nzq9A==', 'kraftek@c-s.ro', 'oana.hogoiu@c-s.ro', 'Cosmin', 'Cara', -1, -1, -1, -1, -1, -1, 'CSRO', 2, CURRENT_TIMESTAMP);
+INSERT INTO usr."user" (username, password, email, alternative_email, last_name, first_name, input_quota, actual_input_quota, processing_quota, actual_processing_quota, cpu_quota, memory_quota, organization, status_id, user_type_id, created)
+VALUES ('SystemAccount', 'TSEBHrrH9Uo+O69A5nzq9A==', 'kraftek@c-s.ro', 'oana.hogoiu@c-s.ro', 'Cosmin', 'Cara', -1, -1, -1, -1, -1, -1, 'CSRO', 2, 1, CURRENT_TIMESTAMP);
 
 -- User groups
 INSERT INTO usr.user_group (user_id, group_id) VALUES (1, 1);

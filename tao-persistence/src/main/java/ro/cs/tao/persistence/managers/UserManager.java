@@ -27,10 +27,7 @@ import ro.cs.tao.persistence.repository.GroupRepository;
 import ro.cs.tao.persistence.repository.RepositoryJPARepository;
 import ro.cs.tao.persistence.repository.UserRepository;
 import ro.cs.tao.security.SystemPrincipal;
-import ro.cs.tao.user.Group;
-import ro.cs.tao.user.User;
-import ro.cs.tao.user.UserPreference;
-import ro.cs.tao.user.UserStatus;
+import ro.cs.tao.user.*;
 import ro.cs.tao.utils.StringUtilities;
 import ro.cs.tao.workspaces.RepositoryFactory;
 import ro.cs.tao.workspaces.RepositoryType;
@@ -123,8 +120,8 @@ public class UserManager extends EntityManager<User, Long, UserRepository> imple
         
         user.setOrganization(newUserInfo.getOrganization());
         user.setGroups(groups);
-        user.setExternal(newUserInfo.isExternal());
-        if (user.isExternal()) {
+        user.setUserType(newUserInfo.getUserType());
+        if (user.getUserType() != UserType.INTERNAL) {
             // external users don't need pending activation
             user.setStatus(UserStatus.ACTIVE);
         }
@@ -332,7 +329,7 @@ public class UserManager extends EntityManager<User, Long, UserRepository> imple
             throw new PersistenceException("There is no user with the given username: " + String.valueOf(userName));
         }
         // only for an internal user the password can be reset
-        if (user.isExternal()) {
+        if (user.getUserType() != UserType.INTERNAL) {
             throw new PersistenceException("Cannot handle password for external user: " + String.valueOf(userName));
         }
 
