@@ -449,8 +449,8 @@ public class Orchestrator extends Notifiable {
             }
             if (completedOkStatuses.contains(status)) {
                 WorkflowNodeDescriptor taskNode = workflowNodeProvider.get(task.getWorkflowNodeId());
-                // For DataSourceExecutionTask, it is the executor that sets the outputs,
-                // hence we need to "confirm" here the outputs of a processing task.
+                // For DataSourceExecutionTask, it is the Query executor that sets the outputs.
+                // Hence, we need to "confirm" here the outputs of a processing task.
                 if (task instanceof ProcessingExecutionTask) {
                     task = handleProcessingTask((ProcessingExecutionTask) task,
                                                 taskNode == null || taskNode.getPreserveOutput());
@@ -641,11 +641,16 @@ public class Orchestrator extends Notifiable {
         return pcTask;
     }
 
+    /**
+     * Propagates output descriptors of the task to the next one to be executed
+     * @param task      The task that just finished
+     * @param nextTask  The task that follows in execution
+     */
     private void flowOutputs(ExecutionTask task, ExecutionTask nextTask) throws PersistenceException {
         final List<Variable> values = task.getOutputParameterValues();
         if (task instanceof DataSourceExecutionTask) {
             final int cardinality;
-            // A DataSourceExecutionTask outputs the list of results as a JSON
+            // A DataSourceExecutionTask outputs the list of results as a JSON-ified string array
             Variable theOnlyValue = null;
             final List<String> valuesList;
             if (values != null && values.size() > 0) {

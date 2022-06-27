@@ -16,6 +16,7 @@
 
 package ro.cs.tao.orchestration;
 
+import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.component.*;
 import ro.cs.tao.component.enums.ProcessingComponentType;
 import ro.cs.tao.datasource.DataSourceComponent;
@@ -29,11 +30,9 @@ import ro.cs.tao.execution.model.*;
 import ro.cs.tao.execution.persistence.ExecutionJobProvider;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.execution.util.TaskUtilities;
-import ro.cs.tao.persistence.GroupComponentProvider;
-import ro.cs.tao.persistence.PersistenceException;
-import ro.cs.tao.persistence.ProcessingComponentProvider;
-import ro.cs.tao.persistence.WPSComponentProvider;
+import ro.cs.tao.persistence.*;
 import ro.cs.tao.security.SessionStore;
+import ro.cs.tao.serialization.StringListAdapter;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.workflow.ParameterValue;
 import ro.cs.tao.workflow.WorkflowDescriptor;
@@ -41,10 +40,7 @@ import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -64,6 +60,7 @@ public class DefaultJobFactory {
     protected final DataSourceComponentProvider dataSourceComponentProvider;
     protected final DataSourceComponentGroupProvider dataSourceComponentGroupProvider;
     protected final GroupComponentProvider groupComponentProvider;
+    protected final WorkflowNodeProvider workflowNodeProvider;
     protected final Logger logger;
 
     DefaultJobFactory() {
@@ -75,6 +72,7 @@ public class DefaultJobFactory {
         this.dataSourceComponentProvider = SpringContextBridge.services().getService(DataSourceComponentProvider.class);
         this.dataSourceComponentGroupProvider = SpringContextBridge.services().getService(DataSourceComponentGroupProvider.class);
         this.groupComponentProvider = SpringContextBridge.services().getService(GroupComponentProvider.class);
+        this.workflowNodeProvider = SpringContextBridge.services().getService(WorkflowNodeProvider.class);
         this.logger = Logger.getLogger(DefaultJobFactory.class.getName());
     }
 
@@ -510,5 +508,102 @@ public class DefaultJobFactory {
             }
         }
         return task;
+    }
+
+    /**
+     * Creates a list of execution jobs from a job based on the list of values of the entry data source task.
+     * The first value is discarded, assuming it is taken by the original job.
+     *
+     * @param job       The job to be split
+     *
+     */
+    public List<ExecutionJob> splitJob(ExecutionJob job) throws PersistenceException, CloneNotSupportedException {
+        final List<ExecutionJob> jobs = new ArrayList<>();
+        List<ExecutionTask> tasks = job.getTasks();
+        if (tasks != null) {
+            DataSourceExecutionTask dataTask = (DataSourceExecutionTask) tasks.stream().filter(t -> t instanceof DataSourceExecutionTask).findFirst().orElse(null);
+            if (dataTask != null) {
+                DataSourceComponent dataSourceComponent = dataTask.getComponent();
+                String outPort = dataSourceComponent.getTargets().get(0).getName();
+                Variable outValues = dataTask.getOutputParameterValues().stream().filter(v -> v.getKey().equals(outPort)).findFirst().orElse(null);
+                if (outValues != null) {
+                    List<String> list = deserializeResults(outValues.getValue());
+                    if (list != null && list.size() > 1) {
+                        for (int i = 1; i < list.size(); i++) {
+                            ExecutionJob clonedJob = cloneJob(job);
+                            ExecutionTask clonedDataTask = clonedJob.getTasks().stream().filter(t -> t instanceof DataSourceExecutionTask).findFirst().orElse(null);
+                            if (clonedDataTask == null) {
+                                throw new CloneNotSupportedException("DataSourceExecutionTask was not cloned");
+                            }
+                            clonedDataTask.setOutputParameterValue(outPort, list.get(i));
+                        }
+                        dataTask.setOutputParameterValue(outPort, list.get(0));
+                    }
+                }
+            }
+        }
+        return jobs;
+    }
+
+    @Transactional
+    public ExecutionJob cloneJob(ExecutionJob original) throws CloneNotSupportedException, PersistenceException {
+        ExecutionJob clone = new ExecutionJob();
+        clone.setName(original.getName() + " cloned @ " + System.currentTimeMillis());
+        clone.setWorkflowId(original.getWorkflowId());
+        clone.setExternal(original.isExternal());
+        clone.setQueryId(original.getQueryId());
+        clone.setUserName(original.getUserName());
+        clone = jobProvider.save(clone);
+        final List<ExecutionTask> originalTasks = original.getTasks();
+        final Map<String, String> cloneTaskMap = new HashMap<>();
+        for (ExecutionTask originalTask : originalTasks) {
+            ExecutionTask task = cloneTask(clone, originalTask);
+            cloneTaskMap.put(String.valueOf(originalTask.getId()), String.valueOf(task.getId()));
+        }
+        Map<String, List<String>> originalDependencies = original.getTaskDependencies();
+        Map<String, List<String>> clonedDependencies = new HashMap<>();
+        if (originalDependencies != null) {
+            for (Map.Entry<String, List<String>> entry : originalDependencies.entrySet()) {
+                String key = entry.getKey();
+                clonedDependencies.put(cloneTaskMap.get(key),
+                                       entry.getValue().stream().map(cloneTaskMap::get).collect(Collectors.toList()));
+            }
+            clone.setTaskDependencies(clonedDependencies);
+        }
+        return jobProvider.save(clone);
+    }
+
+    public ExecutionTask cloneTask(ExecutionJob clonedJob, ExecutionTask original) throws CloneNotSupportedException, PersistenceException {
+        ExecutionTask clone = null;
+        WorkflowNodeDescriptor node = workflowNodeProvider.get(original.getWorkflowNodeId());
+        final Map<String, String> params = new HashMap<>();
+        List<Variable> values = original.getInputParameterValues();
+        if (values != null) {
+            values.forEach(v -> params.put(v.getKey(), v.getValue()));
+        }
+        if (original instanceof ProcessingExecutionTask) {
+            clone = createProcessingExecutionTask(node, node.getIncomingLinks(), params);
+        } else if (original instanceof WPSExecutionTask) {
+            clone = createWPSComponentExecutionTask(node, node.getIncomingLinks(), params);
+        } else if (original instanceof DataSourceExecutionTask) {
+            throw new CloneNotSupportedException(DataSourceExecutionTask.class.getSimpleName());
+        } else if (original instanceof ExecutionGroup) {
+            clone = createTaskGroup(clonedJob, node.getWorkflow(), (WorkflowNodeGroupDescriptor) node, params);
+        }
+        if (clone == null) {
+            throw new CloneNotSupportedException(String.valueOf(original.getId()));
+        }
+        return taskProvider.save(clone, clonedJob);
+    }
+
+    private List<String> deserializeResults(String list) {
+        List<String> names = null;
+        try {
+            StringListAdapter adapter = new StringListAdapter();
+            names = adapter.marshal(list);
+        } catch (Exception e) {
+            logger.severe("Deserialization of list failed: " + e.getMessage());
+        }
+        return names;
     }
 }
