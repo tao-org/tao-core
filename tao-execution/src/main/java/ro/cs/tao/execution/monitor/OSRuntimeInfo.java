@@ -22,9 +22,11 @@ import ro.cs.tao.utils.executors.*;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
 
@@ -337,12 +339,12 @@ public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
                                 message = message.replace("MemAvailable:", "").trim();
                                 String value = message.substring(0, message.indexOf(" kB"));
                                 runtimeInfo.setAvailableMemory(Long.parseLong(value) / MemoryUnit.KILOBYTE.value());
-                                break;
-                            } else if (message.startsWith("/dev/sd")) {
-                                String[] values = message.replace(message.substring(0, message.indexOf(' ')), "").trim().split(" ");
-                                runtimeInfo.setDiskTotal(runtimeInfo.getDiskTotal() + Long.parseLong(values[0]) / MemoryUnit.MEGABYTE.value());
-                                runtimeInfo.setDiskUsed(runtimeInfo.getDiskUsed() + Long.parseLong(values[1]) / MemoryUnit.MEGABYTE.value());
-                                break;
+                                //break;
+                            } else if (message.startsWith("/dev/mapper/centos-home")) {
+                                List<String> values = Arrays.stream(message.replace(message.substring(0, message.indexOf(' ')), "").trim().split(" ")).filter(v -> !v.isEmpty()).collect(Collectors.toList());
+                                runtimeInfo.setDiskTotal(runtimeInfo.getDiskTotal() + Long.parseLong(values.get(0)) / MemoryUnit.MEGABYTE.value());
+                                runtimeInfo.setDiskUsed(runtimeInfo.getDiskUsed() + Long.parseLong(values.get(1)) / MemoryUnit.MEGABYTE.value());
+                                //break;
                             } else if (message.contains("load average")) {
                                 int idx = message.indexOf("load average");
                                 String value = message.substring(idx + 14, message.indexOf(",", idx));
@@ -358,17 +360,17 @@ public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
                                     message = message.replace("Cached:", "").trim();
                                     String value = message.substring(0, message.indexOf(" kB"));
                                     rex.setCached(Long.parseLong(value) / MemoryUnit.KILOBYTE.value());
-                                    break;
+                                    //break;
                                 } else if (message.startsWith("SwapTotal")) {
                                     message = message.replace("SwapTotal:", "").trim();
                                     String value = message.substring(0, message.indexOf(" kB"));
                                     rex.setSwapTotal(Long.parseLong(value) / MemoryUnit.KILOBYTE.value());
-                                    break;
+                                    //break;
                                 } else if (message.startsWith("SwapFree")) {
                                     message = message.replace("SwapFree:", "").trim();
                                     String value = message.substring(0, message.indexOf(" kB"));
                                     rex.setSwapFree(Long.parseLong(value) / MemoryUnit.KILOBYTE.value());
-                                    break;
+                                    //break;
                                 }
                             }
                         }
