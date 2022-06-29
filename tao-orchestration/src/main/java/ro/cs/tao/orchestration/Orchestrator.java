@@ -92,6 +92,7 @@ public class Orchestrator extends Notifiable {
 
     private static final String GROUP_TASK_SELECTOR_KEY = "group.task.selector";
     private static final String JOB_TASK_SELECTOR_KEY = "job.task.selector";
+    private static final String USER_JOB_LIMIT_KEY = "tao.user.jobs.limit";
     private static final Set<ExecutionStatus> notFurtherRunnableStatuses = new HashSet<ExecutionStatus>() {{
        add(ExecutionStatus.DONE); add(ExecutionStatus.CANCELLED); add(ExecutionStatus.FAILED);
     }};
@@ -102,6 +103,7 @@ public class Orchestrator extends Notifiable {
     private static final Orchestrator instance;
     private final Map<Long, InternalStateHandler<?>> groupStateHandlers;
     private final BlockingQueue<AbstractMap.SimpleEntry<Message, SessionContext>> queue;
+    private final Map<String, List<ExecutionJob>> waitingJobs;
 
     static {
         instance = new Orchestrator();
@@ -135,6 +137,7 @@ public class Orchestrator extends Notifiable {
         this.queue = new LinkedBlockingDeque<>();
         this.executors = Collections.synchronizedMap(new HashMap<>());
         this.runningTasks = Collections.synchronizedSet(new HashSet<>());
+        this.waitingJobs = Collections.synchronizedMap(new HashMap<>());
         this.listAdapter = new StringListAdapter();
         this.jobProvider = SpringContextBridge.services().getService(ExecutionJobProvider.class);
         this.taskProvider = SpringContextBridge.services().getService(ExecutionTaskProvider.class);
@@ -174,13 +177,18 @@ public class Orchestrator extends Notifiable {
     public ExecutionJob startWorkflow(SessionContext context, long workflowId, String description,
                               Map<String, Map<String, String>> inputs, ExecutorService executorService) throws ExecutionException {
         try {
-            final ExecutionJob executionJob = createJob(context, workflowId, description, inputs, true);
-            this.executors.put(context.getPrincipal().getName(), executorService);
-            executorService.submit(() -> JobCommand.START.applyTo(executionJob));
-            return executionJob;
+            final String user = context.getPrincipal().getName();
+            final ExecutionJob job = tryCreateJob(user, context, workflowId, description, inputs);
+            if (job == null) {
+                throw new ExecutionException("Another job is running or queued for user '" + user + "'. New job will be queued");
+            } else {
+                this.executors.put(user, executorService);
+                executorService.submit(() -> JobCommand.START.applyTo(job));
+            }
+            return job;
         } catch (Exception e) {
             logger.severe(e.getMessage());
-            throw new ExecutionException(e.getMessage());
+            throw e instanceof ExecutionException ? (ExecutionException) e : new ExecutionException(e.getMessage());
         }
     }
     /**
@@ -193,13 +201,18 @@ public class Orchestrator extends Notifiable {
     public ExecutionJob startExecution(SessionContext context, String wpsId,
                                        Map<String, Map<String, String>> inputs, ExecutorService executorService) throws ExecutionException {
         try {
-            final ExecutionJob executionJob = createJob(wpsId, inputs);
-            this.executors.put(context.getPrincipal().getName(), executorService);
-            executorService.submit(() -> JobCommand.START.applyTo(executionJob));
+            final String user = context.getPrincipal().getName();
+            final ExecutionJob executionJob = tryCreateJob(user, wpsId, inputs);
+            if (executionJob == null) {
+                throw new ExecutionException("Another WPS job is running or queued for user '" + user + "'. New job will be queued");
+            } else {
+                this.executors.put(context.getPrincipal().getName(), executorService);
+                executorService.submit(() -> JobCommand.START.applyTo(executionJob));
+            }
             return executionJob;
         } catch (Exception e) {
             logger.severe(e.getMessage());
-            throw new ExecutionException(e.getMessage());
+            throw e instanceof ExecutionException ? (ExecutionException) e : new ExecutionException(e.getMessage());
         }
     }
 
@@ -226,7 +239,7 @@ public class Orchestrator extends Notifiable {
             return executionJob;
         } catch (Exception e) {
             logger.severe(e.getMessage());
-            throw new ExecutionException(e.getMessage());
+            throw e instanceof ExecutionException ? (ExecutionException) e : new ExecutionException(e.getMessage());
         }
     }
 
@@ -513,7 +526,18 @@ public class Orchestrator extends Notifiable {
                                                    job.getId(), workflow.getName(), time != null ? time.getSeconds() : "<unknown>");
                         logger.info(msg);
                         Messaging.send(currentContext.getPrincipal(), Topic.EXECUTION.value(), this, msg);
-                        shutDownExecutor(currentContext);
+                        // If there are waiting jobs for this user, let's trigger the execution of the first one
+                        String user = currentContext.getPrincipal().getName();
+                        List<ExecutionJob> nextJobs;
+                        if ((nextJobs = this.waitingJobs.get(user)) != null && nextJobs.size() > 0) {
+                            ExecutionJob nextJob = nextJobs.remove(0);
+                            if (nextJobs.size() == 0) {
+                                this.waitingJobs.remove(user);
+                            }
+                            this.executors.get(user).submit(() -> JobCommand.START.applyTo(nextJob));
+                        } else {
+                            shutDownExecutor(currentContext);
+                        }
                         cleanupTransientComponents(job);
                     } else {
                         logger.fine("Job has still tasks to complete");
@@ -1107,6 +1131,44 @@ public class Orchestrator extends Notifiable {
         UserQuotaManager.getInstance().updateUserProcessingQuota(user);
         
         return UserQuotaManager.getInstance().checkUserProcessingQuota(user);
+    }
+
+    private ExecutionJob tryCreateJob(String user, SessionContext context, long workflowId, String description,
+                                      Map<String, Map<String, String>> inputs) {
+        final List<ExecutionJob> runnableJobs = this.jobProvider.list(user, new HashSet<ExecutionStatus>() {{
+            add(ExecutionStatus.QUEUED_ACTIVE);
+            add(ExecutionStatus.RUNNING);
+        }});
+        final int limit = Integer.parseInt(ConfigurationManager.getInstance().getValue(USER_JOB_LIMIT_KEY, "1"));
+        final ExecutionJob executionJob = createJob(context, workflowId, description, inputs, true);
+        if (runnableJobs != null && runnableJobs.size() > limit - 1) {
+            if (!this.waitingJobs.containsKey(user)) {
+                this.waitingJobs.put(user, new ArrayList<>());
+            }
+            this.waitingJobs.get(user).add(executionJob);
+            logger.warning("Job " + executionJob.getId() + " was put in the waiting list");
+            return null;
+        } else {
+            return executionJob;
+        }
+    }
+
+    private ExecutionJob tryCreateJob(String user, String wpsId, Map<String, Map<String, String>> inputs) {
+        final List<ExecutionJob> runnableJobs = this.jobProvider.list(user, new HashSet<ExecutionStatus>() {{
+            add(ExecutionStatus.QUEUED_ACTIVE);
+            add(ExecutionStatus.RUNNING);
+        }});
+        final ExecutionJob executionJob = createJob(wpsId, inputs);
+        if (runnableJobs != null && runnableJobs.stream().anyMatch(j -> j.getWorkflowId() == null)) {
+            if (!this.waitingJobs.containsKey(user)) {
+                this.waitingJobs.put(user, new ArrayList<>());
+            }
+            this.waitingJobs.get(user).add(executionJob);
+            logger.warning("Job " + executionJob.getId() + " was put in the waiting list");
+            return null;
+        } else {
+            return executionJob;
+        }
     }
 
     private class MessageContext extends SessionContext {

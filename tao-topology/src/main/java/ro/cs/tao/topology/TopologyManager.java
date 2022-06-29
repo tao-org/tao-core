@@ -154,6 +154,7 @@ public class TopologyManager {
         if (this.externalNodeProvider != null) {
             info = this.externalNodeProvider.create(info);
         }
+        info.setActive(false);
         this.localNodeProvider.create(info);
         /*// make sure the common share is mounted on the node
         final ServiceInstallStatus mountStatus = checkMount(info);
@@ -169,6 +170,7 @@ public class TopologyManager {
                 public ServiceInstallStatus execute(NodeDescription node) {
                     ServiceInstallStatus status = installer.installNewNode(node);
                     try {
+                        node.setActive(true);
                         node = localNodeProvider.update(node);
                     } catch (Exception e) {
                         logger.severe(String.format("Cannot update service status for '%s' on node [%s]",
