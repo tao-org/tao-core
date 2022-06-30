@@ -21,6 +21,7 @@ import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.datasource.DataSourceConfiguration;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.persistence.PersistenceException;
+import ro.cs.tao.services.model.component.ProductSetInfo;
 
 import java.security.Principal;
 import java.util.List;
@@ -66,4 +67,9 @@ public interface DataSourceComponentService extends CRUDService<DataSourceCompon
     DataSourceConfiguration getConfiguration(String dataSourceId) throws PersistenceException;
 
     void saveConfiguration(DataSourceConfiguration configuration) throws PersistenceException;
+
+    List<DataSourceComponent> getProductSets(String userName) throws PersistenceException;
+
+    DataSourceComponent updateProductSet(ProductSetInfo productSet) throws PersistenceException;
+
 }
