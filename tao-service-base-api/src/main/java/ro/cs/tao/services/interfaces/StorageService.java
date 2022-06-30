@@ -40,6 +40,7 @@ public interface StorageService<T, U> extends TAOService {
     String AVLFOLDER = ".avlfolder";
     String CONTENTS_ATTRIBUTE = "contents";
     String REMOTE_PATH_ATTRIBUTE = "remotePath";
+    String ROOT_TITLE = "__root";
 
     /**
      * Indicates if this storage service implementation is intended for the given protocol
@@ -156,7 +157,7 @@ public interface StorageService<T, U> extends TAOService {
     default void setProgressListener(ProgressListener listener) { }
 
     default FileObject repositoryRootNode(Repository repository) {
-        final FileObject object = new FileObject(repository.getUrlPrefix(), "/", true, 0, "__root");
+        final FileObject object = new FileObject(repository.getUrlPrefix(), "/", true, 0, ROOT_TITLE);
         object.addAttribute(REMOTE_PATH_ATTRIBUTE, repository.root());
         return object;
     }
