@@ -471,7 +471,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                         task.setUsedCPU(cpu);
                     }
                     if (mem > 0) {
-                        unit.addArgument("--memory", mem + "MB");
+                        unit.addArgument("--memory", Math.min(8, mem) + "GB");
                         task.setUsedRAM((int) mem);
                     }
                     template.setAttribute(DrmaaJobExtensions.CONTAINER_ATTRIBUTE, unit);

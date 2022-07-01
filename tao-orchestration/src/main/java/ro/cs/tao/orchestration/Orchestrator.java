@@ -17,10 +17,7 @@ package ro.cs.tao.orchestration;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import ro.cs.tao.EnumUtils;
-import ro.cs.tao.component.ProcessingComponent;
-import ro.cs.tao.component.TaoComponent;
-import ro.cs.tao.component.TargetDescriptor;
-import ro.cs.tao.component.Variable;
+import ro.cs.tao.component.*;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.docker.DockerVolumeMap;
 import ro.cs.tao.docker.ExecutionConfiguration;
@@ -59,6 +56,7 @@ import ro.cs.tao.services.utils.WorkflowUtilities;
 import ro.cs.tao.spi.OutputDataHandlerManager;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.user.UserPreference;
+import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.TriFunction;
 import ro.cs.tao.workflow.ParameterValue;
 import ro.cs.tao.workflow.WorkflowDescriptor;
@@ -638,7 +636,8 @@ public class Orchestrator extends Notifiable {
                 /*pcTask.setOutputParameterValue(t.getName(),
                                                pcTask.getInstanceTemporaryOutput() != null && pcTask.getInstanceTemporaryOutput().equals(targetOutput) ?
                                                        pcTask.getInstanceTargetOuptut(null) : targetOutput);*/
-                final String instanceTargetOuptut = pcTask.getInstanceTargetOutput();
+                final String instanceTargetOuptut = translateToMasterPath(pcTask.getInstanceTargetOutput());
+                // if the output came from a remote note, we need to translate the node volumes to master volumes
                 if (targetOutput == null) {
                     logger.severe(String.format("NULL TARGET [task %s, parameter %s]", pcTask.getId(), t.getName()));
                 } else if (!targetOutput.equals(instanceTargetOuptut)) {
@@ -651,7 +650,8 @@ public class Orchestrator extends Notifiable {
                     persistOutputProducts(pcTask);
                 }
                 if (lastFromGroup) {
-                    groupTask.setOutputParameterValue(t.getName(), targetOutput);
+                    //groupTask.setOutputParameterValue(t.getName(), targetOutput);
+                    pcTask.setOutputParameterValue(t.getName(), instanceTargetOuptut);
                 }
             }
         });
@@ -785,7 +785,10 @@ public class Orchestrator extends Notifiable {
                     if (theOnlyValue != null) {
                         for (Variable var : nextInputParameters) {
                             if (theOnlyValue.getKey().equals(connectedInputs.get(var.getKey()))) {
-                                nextTask.setInputParameterValue(var.getKey(), theOnlyValue.getValue());
+                                for (String value : valuesList) {
+                                    //nextTask.setInputParameterValue(var.getKey(), theOnlyValue.getValue());
+                                    nextTask.setInputParameterValue(var.getKey(), value);
+                                }
                                 break;
                             }
                         }
@@ -1169,6 +1172,12 @@ public class Orchestrator extends Notifiable {
         } else {
             return executionJob;
         }
+    }
+
+    private String translateToMasterPath(String path) {
+        final DockerVolumeMap workerVolumeMap = ExecutionConfiguration.getWorkerContainerVolumeMap();
+        return path.replace(workerVolumeMap.getContainerWorkspaceFolder(),
+                            FileUtilities.asUnixPath(SystemVariable.ROOT.value(), false));
     }
 
     private class MessageContext extends SessionContext {

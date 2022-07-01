@@ -17,7 +17,6 @@
 package ro.cs.tao.orchestration;
 
 import ro.cs.tao.execution.model.*;
-import ro.cs.tao.execution.util.TaskUtilities;
 import ro.cs.tao.utils.TriFunction;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
@@ -144,11 +143,12 @@ public class DefaultJobTaskSelector implements TaskSelector<ExecutionJob> {
         List<ExecutionTask> nextOnes = new ArrayList<>();
         for (Long id : candidates) {
             ExecutionTask n = job.getTasks().stream().filter(t -> id.equals(t.getId())).findFirst().get();
-            if (n.getExecutionStatus() != ExecutionStatus.QUEUED_ACTIVE && n.getExecutionStatus() != ExecutionStatus.RUNNING) {
+            //if (n.getExecutionStatus() != ExecutionStatus.QUEUED_ACTIVE && n.getExecutionStatus() != ExecutionStatus.RUNNING) {
                 //if (TaskUtilities.haveParentsCompleted(n)) {
-                    nextOnes.add(TaskUtilities.transferParentOutputs(n));
+                    //nextOnes.add(TaskUtilities.transferParentOutputs(n));
                 //}
-            }
+            //}
+            nextOnes.add(n);
         }
         return nextOnes;
     }
