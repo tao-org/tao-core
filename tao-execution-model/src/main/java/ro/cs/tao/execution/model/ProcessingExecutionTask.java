@@ -61,28 +61,10 @@ public class ProcessingExecutionTask extends ExecutionTask {
 
     @Override
     public void setInputParameterValue(String parameterName, String value) {
-        boolean descriptorExists = false;
-        List<ParameterDescriptor> descriptorList = this.component.getParameterDescriptors();
-        for (ParameterDescriptor descriptor : descriptorList) {
-            if (descriptor.getName().equals(parameterName)) {
-                descriptorExists = true;
-                break;
-            }
-        }
-        List<SourceDescriptor> sources = this.component.getSources();
-        for (SourceDescriptor source : sources) {
-            if (source.getName().equals(parameterName)) {
-                descriptorExists = true;
-                break;
-            }
-        }
-        List<TargetDescriptor> targets = this.component.getTargets();
-        for (TargetDescriptor target : targets) {
-            if (target.getName().equals(parameterName)) {
-                descriptorExists = true;
-                break;
-            }
-        }
+        final boolean descriptorExists =
+                this.component.getParameterDescriptors().stream().anyMatch(d -> d.getName().equals(parameterName)) ||
+                this.component.getSources().stream().anyMatch(s -> s.getName().equals(parameterName)) ||
+                this.component.getTargets().stream().anyMatch(t -> t.getName().equals(parameterName));
         if (!descriptorExists) {
             if (this.externalCommonParameters == null || !this.externalCommonParameters.contains(parameterName)) {
                 throw new ValidationException(String.format("The parameter ID [%s] does not exists in the component '%s'",
@@ -105,15 +87,14 @@ public class ProcessingExecutionTask extends ExecutionTask {
             if (cardinality == 1) {
                 variable.setValue(value);
             } else {
-                variable.setValue(appendValueToList(variable.getValue(), value));
+                variable.setValue(value != null ? appendValueToList(variable.getValue(), value) : value);
             }
         } else {
             Variable var;
             if (cardinality == 1) {
                 var = new Variable(parameterName, value);
             } else {
-                String newValue = appendValueToList(null, value);
-                var = new Variable(parameterName, newValue);
+                var = new Variable(parameterName, value != null ? appendValueToList(null, value) : value);
             }
             this.inputParameterValues.add(var);
         }
