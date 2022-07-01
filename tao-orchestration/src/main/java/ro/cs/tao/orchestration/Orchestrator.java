@@ -722,6 +722,22 @@ public class Orchestrator extends Notifiable {
                     nextTask.setExecutionStatus(ExecutionStatus.CANCELLED);
                     statusChanged(nextTask, message);
                 }
+                if (cardinality > 1 && expectedCardinality == 1) {
+                    // Since the next component can handle only 1 input, we split the current job in as
+                    // many jobs as the number of inputs. The current job remains the same, with only 1st input
+                    try {
+                        List<ExecutionJob> jobs = this.jobFactory.splitJob(task.getJob());
+                        final String user = task.getContext().getPrincipal().getName();
+                        final ExecutorService executorService = this.executors.get(user);
+                        for (ExecutionJob job : jobs) {
+                            if (canSubmitJob(user, job)) {
+                                executorService.submit(() -> JobCommand.START.applyTo(job));
+                            }
+                        }
+                    } catch (Exception e) {
+                        logger.warning(ro.cs.tao.utils.ExceptionUtils.getStackTrace(logger, e));
+                    }
+                }
                 final List<Variable> nextInputParameters = nextTask.getInputParameterValues();
                 if (expectedCardinality != 0) {
                     if (cardinality < expectedCardinality) {
@@ -747,38 +763,7 @@ public class Orchestrator extends Notifiable {
                     }
                     // If there is an overridden output parameter, it may be that we have a name expression
                     if (overriddenOutParam != null) {
-                        DataSourceExecutionTask originatingTask = findOriginatingTask(nextTask);
-                        if (originatingTask != null) {
-                            String targetOutput = overriddenOutParam.getValue();
-                            String sensor = originatingTask.getComponent().getSensorName().replace("-", "");
-                            List<NamingRule> rules = namingRuleProvider.listBySensor(sensor);
-                            if (rules.size() > 0) {
-                                NameExpressionParser parser = new NameExpressionParser(rules.get(0));
-                                final List<Variable> oValues = originatingTask.getOutputParameterValues();
-                                if (oValues != null && oValues.size() > 0) {
-                                    final List<String> oValuesList;
-                                    oValuesList = this.listAdapter.marshal(oValues.get(0).getValue());
-                                    final int size = oValuesList.size();
-                                    for (int i = 0; i < size; i++) {
-                                        try {
-                                            Path path = Paths.get(new URI(oValuesList.get(i)));
-                                            oValuesList.set(i, path.getName(path.getNameCount() - 1).toString());
-                                        } catch (Exception e) {
-                                            logger.warning(e.getMessage());
-                                        }
-                                    }
-                                    final String key = overriddenOutParam.getKey();
-                                    try {
-                                        nextTask.setOutputParameterValue(key, parser.resolve(targetOutput, oValuesList.toArray(new String[0])));
-                                        nextTask.getInputParameterValues().removeIf(v -> v.getKey().equals(key));
-                                    } catch (ParseException ex) {
-                                        logger.severe(ex.getMessage());
-                                        nextTask.setExecutionStatus(ExecutionStatus.FAILED);
-                                        statusChanged(nextTask, ex.getMessage());
-                                    }
-                                }
-                            }
-                        }
+                        resolveTargetName(nextTask, overriddenOutParam);
                     }
                 } else { // nextTask accepts a list
                     Map<String, String> connectedInputs = TaskUtilities.getConnectedInputs(task, nextTask);
@@ -786,7 +771,6 @@ public class Orchestrator extends Notifiable {
                         for (Variable var : nextInputParameters) {
                             if (theOnlyValue.getKey().equals(connectedInputs.get(var.getKey()))) {
                                 for (String value : valuesList) {
-                                    //nextTask.setInputParameterValue(var.getKey(), theOnlyValue.getValue());
                                     nextTask.setInputParameterValue(var.getKey(), value);
                                 }
                                 break;
@@ -812,38 +796,7 @@ public class Orchestrator extends Notifiable {
             }
             // If there is an overridden output parameter, it may be that we have a name expression
             if (overriddenOutParam != null) {
-                DataSourceExecutionTask originatingTask = findOriginatingTask(nextTask);
-                if (originatingTask != null) {
-                    String targetOutput = overriddenOutParam.getValue();
-                    String sensor = originatingTask.getComponent().getSensorName().replace("-", "");
-                    List<NamingRule> rules = namingRuleProvider.listBySensor(sensor);
-                    if (rules.size() > 0) {
-                        NameExpressionParser parser = new NameExpressionParser(rules.get(0));
-                        final List<Variable> oValues = originatingTask.getOutputParameterValues();
-                        if (oValues != null && oValues.size() > 0) {
-                            final List<String> oValuesList;
-                            oValuesList = this.listAdapter.marshal(oValues.get(0).getValue());
-                            final int size = oValuesList.size();
-                            for (int i = 0; i < size; i++) {
-                                try {
-                                    Path path = Paths.get(new URI(oValuesList.get(i)));
-                                    oValuesList.set(i, path.getName(path.getNameCount() - 1).toString());
-                                } catch (URISyntaxException e) {
-                                    logger.warning(e.getMessage());
-                                }
-                            }
-                            final String key = overriddenOutParam.getKey();
-                            try {
-                                nextTask.setOutputParameterValue(key, parser.resolve(targetOutput, oValuesList.toArray(new String[0])));
-                                nextTask.getInputParameterValues().removeIf(v -> v.getKey().equals(key));
-                            } catch (ParseException ex) {
-                                logger.severe(ex.getMessage());
-                                nextTask.setExecutionStatus(ExecutionStatus.FAILED);
-                                statusChanged(nextTask, ex.getMessage());
-                            }
-                        }
-                    }
-                }
+                resolveTargetName(nextTask, overriddenOutParam);
             }
         }
     }
@@ -1032,6 +985,41 @@ public class Orchestrator extends Notifiable {
         }
     }
 
+    private void resolveTargetName(ExecutionTask nextTask, Variable overriddenOutParam) {
+        DataSourceExecutionTask originatingTask = findOriginatingTask(nextTask);
+        if (originatingTask != null) {
+            String targetOutput = overriddenOutParam.getValue();
+            String sensor = originatingTask.getComponent().getSensorName().replace("-", "");
+            List<NamingRule> rules = namingRuleProvider.listBySensor(sensor);
+            if (rules.size() > 0) {
+                NameExpressionParser parser = new NameExpressionParser(rules.get(0));
+                final List<Variable> oValues = originatingTask.getOutputParameterValues();
+                if (oValues != null && oValues.size() > 0) {
+                    final List<String> oValuesList;
+                    oValuesList = this.listAdapter.marshal(oValues.get(0).getValue());
+                    final int size = oValuesList.size();
+                    for (int i = 0; i < size; i++) {
+                        try {
+                            Path path = Paths.get(new URI(oValuesList.get(i)));
+                            oValuesList.set(i, path.getName(path.getNameCount() - 1).toString());
+                        } catch (URISyntaxException e) {
+                            logger.warning(e.getMessage());
+                        }
+                    }
+                    final String key = overriddenOutParam.getKey();
+                    try {
+                        nextTask.setOutputParameterValue(key, parser.resolve(targetOutput, oValuesList.toArray(new String[0])));
+                        nextTask.getInputParameterValues().removeIf(v -> v.getKey().equals(key));
+                    } catch (ParseException ex) {
+                        logger.severe(ex.getMessage());
+                        nextTask.setExecutionStatus(ExecutionStatus.FAILED);
+                        statusChanged(nextTask, ex.getMessage());
+                    }
+                }
+            }
+        }
+    }
+
     private void persistOutputProducts(ExecutionTask task) {
         try {
             if (ExecutionConfiguration.developmentModeEnabled()) {
@@ -1136,42 +1124,32 @@ public class Orchestrator extends Notifiable {
         return UserQuotaManager.getInstance().checkUserProcessingQuota(user);
     }
 
-    private ExecutionJob tryCreateJob(String user, SessionContext context, long workflowId, String description,
-                                      Map<String, Map<String, String>> inputs) {
+    private boolean canSubmitJob(String user, ExecutionJob job) {
         final List<ExecutionJob> runnableJobs = this.jobProvider.list(user, new HashSet<ExecutionStatus>() {{
             add(ExecutionStatus.QUEUED_ACTIVE);
             add(ExecutionStatus.RUNNING);
         }});
         final int limit = Integer.parseInt(ConfigurationManager.getInstance().getValue(USER_JOB_LIMIT_KEY, "1"));
-        final ExecutionJob executionJob = createJob(context, workflowId, description, inputs, true);
         if (runnableJobs != null && runnableJobs.size() > limit - 1) {
             if (!this.waitingJobs.containsKey(user)) {
                 this.waitingJobs.put(user, new ArrayList<>());
             }
-            this.waitingJobs.get(user).add(executionJob);
-            logger.warning("Job " + executionJob.getId() + " was put in the waiting list");
-            return null;
-        } else {
-            return executionJob;
+            this.waitingJobs.get(user).add(job);
+            logger.warning("Job " + job.getId() + " was put in the waiting list");
+            return false;
         }
+        return true;
+    }
+
+    private ExecutionJob tryCreateJob(String user, SessionContext context, long workflowId, String description,
+                                      Map<String, Map<String, String>> inputs) {
+        final ExecutionJob executionJob = createJob(context, workflowId, description, inputs, true);
+        return canSubmitJob(user, executionJob) ? executionJob : null;
     }
 
     private ExecutionJob tryCreateJob(String user, String wpsId, Map<String, Map<String, String>> inputs) {
-        final List<ExecutionJob> runnableJobs = this.jobProvider.list(user, new HashSet<ExecutionStatus>() {{
-            add(ExecutionStatus.QUEUED_ACTIVE);
-            add(ExecutionStatus.RUNNING);
-        }});
         final ExecutionJob executionJob = createJob(wpsId, inputs);
-        if (runnableJobs != null && runnableJobs.stream().anyMatch(j -> j.getWorkflowId() == null)) {
-            if (!this.waitingJobs.containsKey(user)) {
-                this.waitingJobs.put(user, new ArrayList<>());
-            }
-            this.waitingJobs.get(user).add(executionJob);
-            logger.warning("Job " + executionJob.getId() + " was put in the waiting list");
-            return null;
-        } else {
-            return executionJob;
-        }
+        return canSubmitJob(user, executionJob) ? executionJob : null;
     }
 
     private String translateToMasterPath(String path) {

@@ -36,6 +36,9 @@ public class ProcessingComponentInfo {
         this.active = component.getActive();
         this.componentType = component.getComponentType();
         this.category = component.getCategory();
+        if (this.category == null) {
+            this.category = ComponentCategory.MISC;
+        }
         this.tags = component.getTags();
     }
 
