@@ -126,6 +126,11 @@ public class WorkflowManager extends EntityManager<WorkflowDescriptor, Long, Wor
     }
 
     @Override
+    public List<WorkflowDescriptor> listUserVisible(String user) {
+        return repository.getUserVisibleWorkflows(user);
+    }
+
+    @Override
     public WorkflowDescriptor save(WorkflowDescriptor workflow) throws PersistenceException {
         // check method parameters
         if(!checkEntity(workflow, false)) {

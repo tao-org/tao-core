@@ -13,5 +13,6 @@ public interface WorkflowProvider extends EntityProvider<WorkflowDescriptor, Lon
     List<WorkflowDescriptor> listUserWorkflowsByStatus(String user, int statusId);
     List<WorkflowDescriptor> listUserPublishedWorkflowsByVisibility(String user, int visibilityId);
     List<WorkflowDescriptor> listOtherPublicWorkflows(String user);
+    List<WorkflowDescriptor> listUserVisible(String user);
 
 }
