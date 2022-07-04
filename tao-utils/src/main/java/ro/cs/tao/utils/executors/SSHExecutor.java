@@ -290,10 +290,11 @@ public class SSHExecutor extends Executor<Channel> {
         String cmdLine = String.join(" ", arguments);
         if (asSuperUser) {
             insertSudoParams();
-            cmdLine = "sudo -S -p '' " + String.join(" ", arguments);
+            //cmdLine = "sudo -S -p '' " + String.join(" ", arguments);
+            cmdLine = String.join(" ", arguments);
         }
         if (logMessages) {
-            logger.fine("[" + host + "] " + cmdLine);
+            logger.finest("[" + host + "] " + cmdLine);
         }
         final Session session = getSession();
         ChannelExec channel = (ChannelExec) session.openChannel(SSHMode.EXEC.toString());

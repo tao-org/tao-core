@@ -17,6 +17,8 @@
 package ro.cs.tao.utils;
 
 import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
@@ -83,5 +85,13 @@ public class DateUtils {
                     .optionalEnd()
                 .optionalEnd();
         return builder.toFormatter().withZone(ZoneId.of("UTC"));
+    }
+
+    public static LocalDate parseDate(String date) {
+        return LocalDate.parse(date, getResilientFormatterAtUTC());
+    }
+
+    public static LocalDateTime parseDateTime(String date) {
+        return LocalDateTime.parse(date, getResilientFormatterAtUTC());
     }
 }
