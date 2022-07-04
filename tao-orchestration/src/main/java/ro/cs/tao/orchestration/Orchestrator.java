@@ -56,7 +56,6 @@ import ro.cs.tao.services.utils.WorkflowUtilities;
 import ro.cs.tao.spi.OutputDataHandlerManager;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.user.UserPreference;
-import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.TriFunction;
 import ro.cs.tao.workflow.ParameterValue;
 import ro.cs.tao.workflow.WorkflowDescriptor;
@@ -472,9 +471,13 @@ public class Orchestrator extends Notifiable {
                     for (ExecutionTask nextTask : nextTasks) {
                         final WorkflowNodeDescriptor nextNode = workflowNodeProvider.get(nextTask.getWorkflowNodeId());
                         final List<ParameterValue> additionalInfo = taskNode != null ? taskNode.getAdditionalInfo() : null;
+                        final Set<ComponentLink> links = nextNode.getIncomingLinks();
+                        final boolean manyParents = links.size() > 1;
                         if (!(additionalInfo != null && additionalInfo.stream().anyMatch(p -> "externalTaskId".equals(p.getParameterName())) &&
-                            nextNode != null && nextNode.getAdditionalInfo() == null)) {
-                            flowOutputs(task, nextTask);
+                            nextNode.getAdditionalInfo() == null)) {
+                            if (!manyParents) {
+                                flowOutputs(task, nextTask);
+                            }
                         }
                         logger.finest(String.format("Task %s about to start.", nextTask.getId()));
                         nextTask.getInputParameterValues().forEach(
@@ -488,11 +491,25 @@ public class Orchestrator extends Notifiable {
                                 nextTask.setInternalState(String.valueOf(((LoopState) handler.currentState()).getCurrent()));
                             }
                         }
-                        nextTask.setContext(currentContext);
-                        if (!this.runningTasks.contains(nextTask.getId())) {
-                            this.runningTasks.add(nextTask.getId());
-                            TaskCommand.START.applyTo(nextTask);
+                        if (manyParents) {
+                            if (TaskUtilities.haveParentsCompleted(nextTask)) {
+                                TaskUtilities.transferParentOutputs(nextTask);
+                                nextTask.setContext(currentContext);
+                                if (!this.runningTasks.contains(nextTask.getId())) {
+                                    this.runningTasks.add(nextTask.getId());
+                                    TaskCommand.START.applyTo(nextTask);
+                                }
+                            } else {
+                                logger.fine("Task " + nextTask.getId() + " has still predecessors that did not complete");
+                            }
+                        } else {
+                            nextTask.setContext(currentContext);
+                            if (!this.runningTasks.contains(nextTask.getId())) {
+                                this.runningTasks.add(nextTask.getId());
+                                TaskCommand.START.applyTo(nextTask);
+                            }
                         }
+
                     }
                 } else {
                     ExecutionJob job = jobProvider.get(task.getJob().getId());
@@ -1074,11 +1091,24 @@ public class Orchestrator extends Notifiable {
                 DockerVolumeMap masterMap = ExecutionConfiguration.getMasterContainerVolumeMap();
                 DockerVolumeMap workerMap = ExecutionConfiguration.getWorkerContainerVolumeMap();
                 Path path;
-                if (outValue.startsWith(masterMap.getContainerWorkspaceFolder())) {
-                    path = Paths.get(outValue.replace(masterMap.getContainerWorkspaceFolder(), masterMap.getHostWorkspaceFolder()));
+                String strPath;
+                if (outValue.startsWith(SystemVariable.ROOT.value().replace("\\", "/"))) {
+                    strPath = outValue;
                 } else {
-                    path = Paths.get(outValue.replace(workerMap.getContainerWorkspaceFolder(), masterMap.getHostWorkspaceFolder()));
+                    if (outValue.startsWith(masterMap.getContainerWorkspaceFolder())) {
+                        strPath = outValue.replace(masterMap.getContainerWorkspaceFolder(), masterMap.getHostWorkspaceFolder());
+                    } else {
+                        strPath = outValue.replace(workerMap.getContainerWorkspaceFolder(), masterMap.getHostWorkspaceFolder());
+                    }
+                    if (strPath.endsWith("/")) {
+                        strPath = strPath.substring(0, strPath.length() - 2);
+                    }
+                    if (strPath.charAt(2) == '/') {
+                        // This is a windows path (eg. /D/something)
+                        strPath = strPath.substring(2);
+                    }
                 }
+                path = Paths.get(strPath).toAbsolutePath();
                 MetadataInspector metadataInspector = this.metadataServices.stream()
                         .filter(s -> s.decodeQualification(path) == DecodeStatus.INTENDED)
                         .findFirst().orElse(null);
@@ -1155,7 +1185,8 @@ public class Orchestrator extends Notifiable {
     private String translateToMasterPath(String path) {
         final DockerVolumeMap workerVolumeMap = ExecutionConfiguration.getWorkerContainerVolumeMap();
         return path.replace(workerVolumeMap.getContainerWorkspaceFolder(),
-                            FileUtilities.asUnixPath(SystemVariable.ROOT.value(), false));
+                            //FileUtilities.asUnixPath(SystemVariable.ROOT.value(), false));
+                            SystemVariable.ROOT.value().replace("\\", "/"));
     }
 
     private class MessageContext extends SessionContext {

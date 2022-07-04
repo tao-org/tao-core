@@ -266,7 +266,7 @@ public class TaskUtilities {
                     final Variable inputVar = toTask.getInputParameterValues().stream().filter(p -> p.getKey().equals(toSourceName)).findFirst().get();
                     final boolean isExternal = isExternal(parentTask);
                     if (!isExternal || inputVar.getValue() == null) {
-                        toTask.setInputParameterValue(toSourceName, outValue);
+                        toTask.setInputParameterValue(toSourceName, relativizePathForExecution(outValue));
                         logger.finest(String.format("Transferred output [%s] of task %s to task %s",
                                                     toSourceName, parentTask.getId(), toTask.getId()));
                     } else {
