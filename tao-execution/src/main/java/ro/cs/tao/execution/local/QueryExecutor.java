@@ -68,6 +68,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
     private static EOProductProvider productProvider;
     private static WorkflowProvider workflowProvider;
     private static DataSourceConfigurationProvider configurationProvider;
+
     @Override
     public boolean supports(TaoComponent component) { return component instanceof DataSourceComponent; }
 
@@ -93,10 +94,11 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
     public void execute(DataSourceExecutionTask task) throws ExecutionException {
         try {
             task.setResourceId(UUID.randomUUID().toString());
-            logger.fine(String.format("Successfully submitted task with id %s", task.getId()));
+            logger.fine(String.format("Received task %s", task.getComponent().getId()));
             task.setExecutionNodeHostName(InetAddress.getLocalHost().getHostName());
             task.setStartTime(LocalDateTime.now());
-            changeTaskStatus(task, ExecutionStatus.RUNNING);
+            //changeTaskStatus(task, ExecutionStatus.RUNNING);
+            task.setExecutionStatus(ExecutionStatus.RUNNING);
             dataSourceComponent = task.getComponent();
             // DSComponents having the id starting with 'product-set-' don't need to execute
             // a query. Instead, they should already contain a list of paths.
@@ -226,16 +228,23 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                     status = ExecutionStatus.CANCELLED;
                 }
             } else {
-                final SourceDescriptor descriptor = dataSourceComponent.getSources().stream()
-                                                                       .filter(s -> s.getName().equals(DataSourceComponent.QUERY_PARAMETER))
-                                                                       .findFirst().get();
-                final String strList = descriptor.getDataDescriptor().getLocation();
+                final String outPort = dataSourceComponent.getTargets().get(0).getName();
+                List<Variable> values = task.getOutputParameterValues();
+                final String strList;
+                if (values != null && values.size() > 0 && values.stream().anyMatch(v -> outPort.equals(v.getKey()))) {
+                    strList = values.stream().filter(v -> outPort.equals(v.getKey())).findFirst().get().getValue();
+                } else {
+                    final SourceDescriptor descriptor = dataSourceComponent.getSources().stream()
+                                                                           .filter(s -> s.getName().equals(DataSourceComponent.QUERY_PARAMETER))
+                                                                           .findFirst().get();
+                    strList = descriptor.getDataDescriptor().getLocation();
+                    task.setOutputParameterValue(outPort,
+                                                 jsonifyResults(Arrays.asList(strList.split(","))));
+                    task.getComponent().setTargetCardinality(descriptor.getCardinality());
+                }
                 if (StringUtilities.isNullOrEmpty(strList)) {
                     throw new QueryException("Empty product set");
                 }
-                task.getComponent().setTargetCardinality(descriptor.getCardinality());
-                task.setOutputParameterValue(dataSourceComponent.getTargets().get(0).getName(),
-                                             jsonifyResults(Arrays.asList(strList.split(","))));
                 status = ExecutionStatus.DONE;
             }
             markTaskFinished(task, status);

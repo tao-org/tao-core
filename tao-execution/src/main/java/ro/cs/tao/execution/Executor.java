@@ -25,6 +25,7 @@ import ro.cs.tao.execution.model.DataSourceExecutionTask;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.execution.model.ProcessingExecutionTask;
+import ro.cs.tao.execution.util.TaskUtilities;
 import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.Topic;
 import ro.cs.tao.security.SessionContext;
@@ -172,10 +173,11 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
 
     protected void changeTaskStatus(ExecutionTask task, ExecutionStatus status, boolean firstTime) {
         if (status != task.getExecutionStatus()) {
+            final String name = TaskUtilities.getTaskName(task);
             try {
                 if (!this.contextMap.containsKey(task.getId())) {
                     if (task.getContext() == null) {
-                        logger.warning(String.format("Context for task %s is null!", task.getId()));
+                        logger.warning(String.format("Context for task %s is null!", name));
                     }
                     this.contextMap.put(task.getId(), task.getContext());
                 }
@@ -203,7 +205,9 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
                             decrement(userName, cpu, memory);
                             break;
                         case RUNNING:
-                            notifyStatusListener(task, status);
+                            if (task.getExecutionStatus() != status) {
+                                notifyStatusListener(task, status);
+                            }
                             break;
                     }
                 }
@@ -217,7 +221,7 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
             //Messaging.send(context.getPrincipal(), Topic.EXECUTION.value(), task.getId(), status.name());
             final String message;
             if (task instanceof ProcessingExecutionTask) {
-                message = "Task " + ((ProcessingExecutionTask) task).getComponent().getId()
+                message = "Task " + name
                         + (StringUtils.isNotEmpty(task.getExecutionNodeHostName()) ? " on node " + task.getExecutionNodeHostName() : "")
                         + " changed to " + status.friendlyName();
             } else if (task instanceof DataSourceExecutionTask) {

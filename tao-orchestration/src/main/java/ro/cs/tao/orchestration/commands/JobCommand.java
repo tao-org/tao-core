@@ -23,6 +23,7 @@ import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -78,6 +79,9 @@ public abstract class JobCommand {
             }
             try {
                 job.setExecutionStatus(this.requestedStatus);
+                if (job.getStartTime() == null) {
+                    job.setStartTime(LocalDateTime.now());
+                }
                 job = persistenceManager.jobs().update(job);
                 doAction(job);
             } catch (Exception ex) {
@@ -111,6 +115,9 @@ public abstract class JobCommand {
             }
             //ExecutionTask firstTask = tasks.get(0);
             List<ExecutionTask> rootTasks = job.rootTasks();
+            if (rootTasks.isEmpty()) {
+                throw new ExecutionException(String.format("Job %s doesn't contain any first level tasks", job.getId()));
+            }
             for (ExecutionTask firstTask : rootTasks) {
                 firstTask.setContext(SessionStore.currentContext());
                 TaskCommand.START.applyTo(firstTask);

@@ -32,6 +32,9 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @Component("executionManager")
 public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, ExecutionTaskRepository>
@@ -39,23 +42,48 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
 
     @Autowired
     private ExecutionJobManager executionJobManager;
-
     @Autowired
     private DataSource dataSource;
+    private final Logger logger = Logger.getLogger(ExecutionTaskManager.class.getName());
 
-    public ExecutionTask updateStatus(ExecutionTask task, ExecutionStatus newStatus) throws PersistenceException {
-        task.setLastUpdated(LocalDateTime.now());
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        jdbcTemplate.update("UPDATE execution.task SET execution_status_id = ?, resource_id = ?, start_time = ? WHERE id = ?",
-                            newStatus.value(), task.getResourceId(), task.getLastUpdated(), task.getId());
-        return get(task.getId());
+    private final ReentrantLock lock = new ReentrantLock();
+
+    public ExecutionTask updateStatus(ExecutionTask task, ExecutionStatus newStatus, String reason) throws PersistenceException {
+        lock.lock();
+        try {
+            task.setLastUpdated(LocalDateTime.now());
+            final ExecutionStatus oldStatus = task.getExecutionStatus();
+            JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+            jdbcTemplate.update("UPDATE execution.task SET execution_status_id = ?, resource_id = ?, last_updated = ? WHERE id = ?",
+                                newStatus.value(), task.getResourceId(), task.getLastUpdated(), task.getId());
+            logger.log(newStatus == ExecutionStatus.FAILED ? Level.SEVERE : newStatus == ExecutionStatus.CANCELLED ? Level.WARNING : Level.FINE,
+                       String.format("Task %s status change [%s -> %s]. Reason: %s", task.getId(), oldStatus, newStatus, reason));
+            task = get(task.getId());
+            return task;
+        } finally {
+            lock.unlock();
+        }
     }
 
     @Override
-    public List<ExecutionTask> listRunning() { return repository.getRunningTasks(); }
+    public List<ExecutionTask> listRunning() {
+        lock.lock();
+        try {
+            return repository.getRunningTasks();
+        } finally {
+            lock.unlock();
+        }
+    }
 
     @Override
-    public List<ExecutionTask> listExecuting() { return repository.getExecutingTasks(); }
+    public List<ExecutionTask> listExecuting() {
+        lock.lock();
+        try {
+            return repository.getExecutingTasks();
+        } finally {
+            lock.unlock();
+        }
+    }
 
     @Override
     public List<ExecutionTask> listRemoteExecuting() { return repository.getRemoteExecutingTasks(); }
@@ -131,81 +159,90 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
      */
     @Transactional
     public ExecutionTask save(ExecutionTask task, ExecutionJob job) throws PersistenceException {
-        // check method parameters
-        if (!checkExecutionTask(task, job, task.getId() != null)) {
-            throw new PersistenceException("Invalid parameters were provided for adding new execution task !");
-        }
-
-        // check if there is already task with the same resource identifier
-        if (task.getResourceId() != null) {
-            final ExecutionTask taskWithSameResourceId = repository.findByResourceId(task.getResourceId());
-            if (taskWithSameResourceId != null) {
-                throw new PersistenceException("There is already another task with the resource identifier: " + task.getResourceId());
-            }
-        }
-
-        if (task instanceof ProcessingExecutionTask || task instanceof DataSourceExecutionTask ||
-                task instanceof ExecutionGroup || task instanceof WPSExecutionTask) {
-
-            // set the task parent job
-            task.setJob(job);
-
-            // save the new ExecutionTask entity
-            final ExecutionTask savedExecutionTask =  repository.save(task);
-
-            // add the task to job tasks collection
-            List<ExecutionTask> jobTasks = job.orderedTasks();
-            if (jobTasks.stream().noneMatch(t -> t.getId().equals(task.getId()))) {
-                jobTasks.add(task);
-                job.setTasks(jobTasks);
-                executionJobManager.update(job);
+        lock.lock();
+        try {
+            // check method parameters
+            if (!checkExecutionTask(task, job, task.getId() != null)) {
+                throw new PersistenceException("Invalid parameters were provided for adding new execution task !");
             }
 
-            return savedExecutionTask;
-        }
+            // check if there is already task with the same resource identifier
+            if (task.getResourceId() != null) {
+                final ExecutionTask taskWithSameResourceId = repository.findByResourceId(task.getResourceId());
+                if (taskWithSameResourceId != null) {
+                    throw new PersistenceException("There is already another task with the resource identifier: " + task.getResourceId());
+                }
+            }
 
-        return null;
+            if (task instanceof ProcessingExecutionTask || task instanceof DataSourceExecutionTask ||
+                    task instanceof ExecutionGroup || task instanceof WPSExecutionTask) {
+
+                // set the task parent job
+                task.setJob(job);
+
+                // save the new ExecutionTask entity
+                final ExecutionTask savedExecutionTask = repository.save(task);
+
+                // add the task to job tasks collection
+                List<ExecutionTask> jobTasks = job.orderedTasks();
+                if (jobTasks.stream().noneMatch(t -> t.getId().equals(task.getId()))) {
+                    jobTasks.add(task);
+                    job.setTasks(jobTasks);
+                    executionJobManager.update(job);
+                }
+
+                return savedExecutionTask;
+            }
+
+            return null;
+        } finally {
+            lock.unlock();
+        }
     }
 
     @Override
     public ExecutionTask save(ExecutionTask task, ExecutionGroup taskGroup) throws PersistenceException {
-
-        // check method parameters
-        if (!checkExecutionGroupTask(task, taskGroup, false)) {
-            throw new PersistenceException("Invalid parameters were provided for adding new execution task within task group " + taskGroup.getId() + "!");
-        }
-
-        // check if there is already task with the same resource identifier
-        if (task.getResourceId() != null) {
-            final ExecutionTask taskWithSameResourceId = repository.findByResourceId(task.getResourceId());
-            if (taskWithSameResourceId != null) {
-                throw new PersistenceException("There is already another task with the resource identifier: " + task.getResourceId());
-            }
-        }
-
-        if (task instanceof ProcessingExecutionTask || task instanceof DataSourceExecutionTask) {
-
-            // set the task parent group
-            task.setGroupTask(taskGroup);
-
-            // save the new ExecutionTask entity
-            final ExecutionTask savedExecutionTask =  repository.save(task);
-
-            // add the task to job tasks collection
-            List<ExecutionTask> groupTasks = taskGroup.getTasks();
-            if (groupTasks == null){
-                groupTasks = new ArrayList<>();
-            }
-            if (groupTasks.stream().noneMatch(t -> t.getId().equals(task.getId()))) {
-                groupTasks.add(task);
-                taskGroup.setTasks(groupTasks);
-                repository.save(taskGroup);
+        lock.lock();
+        try {
+            // check method parameters
+            if (!checkExecutionGroupTask(task, taskGroup, false)) {
+                throw new PersistenceException("Invalid parameters were provided for adding new execution task within task group " + taskGroup.getId() + "!");
             }
 
-            return savedExecutionTask;
-        }
+            // check if there is already task with the same resource identifier
+            if (task.getResourceId() != null) {
+                final ExecutionTask taskWithSameResourceId = repository.findByResourceId(task.getResourceId());
+                if (taskWithSameResourceId != null) {
+                    throw new PersistenceException("There is already another task with the resource identifier: " + task.getResourceId());
+                }
+            }
 
-        return null;
+            if (task instanceof ProcessingExecutionTask || task instanceof DataSourceExecutionTask) {
+
+                // set the task parent group
+                task.setGroupTask(taskGroup);
+
+                // save the new ExecutionTask entity
+                final ExecutionTask savedExecutionTask = repository.save(task);
+
+                // add the task to job tasks collection
+                List<ExecutionTask> groupTasks = taskGroup.getTasks();
+                if (groupTasks == null) {
+                    groupTasks = new ArrayList<>();
+                }
+                if (groupTasks.stream().noneMatch(t -> t.getId().equals(task.getId()))) {
+                    groupTasks.add(task);
+                    taskGroup.setTasks(groupTasks);
+                    repository.save(taskGroup);
+                }
+
+                return savedExecutionTask;
+            }
+
+            return null;
+        } finally {
+            lock.unlock();
+        }
     }
 
     @Override

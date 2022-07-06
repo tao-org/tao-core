@@ -63,8 +63,7 @@ public abstract class TaskStatusHandler {
         tasks.forEach(t -> {
             t.setExecutionStatus(status);
             try {
-                taskProvider.updateStatus(t, status);
-                logger.fine(String.format("Task %s was put into status %s", t.getId(), status));
+                taskProvider.updateStatus(t, status, "Bulk set");
             } catch (PersistenceException e) {
                 logger.severe(e.getMessage());
             }

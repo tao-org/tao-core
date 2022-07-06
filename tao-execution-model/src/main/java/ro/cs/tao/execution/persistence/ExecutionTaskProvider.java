@@ -17,7 +17,7 @@ public interface ExecutionTaskProvider extends EntityProvider<ExecutionTask, Lon
     ExecutionTask getByGroupAndNode(long groupId, long nodeId, int instanceId);
     ExecutionTask getByResourceId(String id);
     ExecutionTask save(ExecutionTask task, ExecutionJob job) throws PersistenceException;
-    ExecutionTask updateStatus(ExecutionTask task, ExecutionStatus newStatus) throws PersistenceException;
+    ExecutionTask updateStatus(ExecutionTask task, ExecutionStatus newStatus, String reason) throws PersistenceException;
     ExecutionTask save(ExecutionTask task, ExecutionGroup taskGroup) throws PersistenceException;
     ExecutionTask saveWithSubTasks(ExecutionGroup taskGroup, ExecutionJob job) throws PersistenceException;
     int getCPUsForUser(String userName);

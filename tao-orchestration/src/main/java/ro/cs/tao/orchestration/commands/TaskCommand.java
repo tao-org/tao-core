@@ -77,6 +77,7 @@ public abstract class TaskCommand {
                 /*task.setExecutionStatus(this.requestedStatus);
                 persistenceManager.updateExecutionTask(task);*/
             } catch (Exception ex) {
+                ex.printStackTrace();
                 task.setExecutionStatus(ExecutionStatus.FAILED);
                 throw new ExecutionException(ex);
             }
