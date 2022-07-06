@@ -290,6 +290,18 @@ public class TaskUtilities {
         return false;
     }
 
+    public static String getTaskName(ExecutionTask task) {
+        final String component;
+        if (task instanceof DataSourceExecutionTask) {
+            component = ((DataSourceExecutionTask) task).getComponent().getId();
+        } else if (task instanceof ProcessingExecutionTask) {
+            component = ((ProcessingExecutionTask) task).getComponent().getId();
+        } else {
+            component = "";
+        }
+        return task.getId() + " (" + component + ", job " + task.getJob().getId() + ")";
+    }
+
     public static String relativizePathForExecution(String path) {
         String result;
         try {

@@ -16,7 +16,6 @@
 
 package ro.cs.tao.orchestration;
 
-import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.component.*;
 import ro.cs.tao.component.enums.ProcessingComponentType;
 import ro.cs.tao.datasource.DataSourceComponent;
@@ -520,24 +519,36 @@ public class DefaultJobFactory {
     public List<ExecutionJob> splitJob(ExecutionJob job) throws PersistenceException, CloneNotSupportedException {
         final List<ExecutionJob> jobs = new ArrayList<>();
         List<ExecutionTask> tasks = job.getTasks();
+        //jobs.add(job);
         if (tasks != null) {
             DataSourceExecutionTask dataTask = (DataSourceExecutionTask) tasks.stream().filter(t -> t instanceof DataSourceExecutionTask).findFirst().orElse(null);
             if (dataTask != null) {
                 DataSourceComponent dataSourceComponent = dataTask.getComponent();
-                String outPort = dataSourceComponent.getTargets().get(0).getName();
-                Variable outValues = dataTask.getOutputParameterValues().stream().filter(v -> v.getKey().equals(outPort)).findFirst().orElse(null);
-                if (outValues != null) {
-                    List<String> list = deserializeResults(outValues.getValue());
+                final String outPort = dataSourceComponent.getTargets().get(0).getName();
+                Variable values = dataTask.getOutputParameterValues()
+                                          .stream()
+                                          .filter(v -> v.getKey().equals(outPort))
+                                          .findFirst().orElse(null);
+                if (values != null) {
+                    List<String> list = deserializeResults(values.getValue());
                     if (list != null && list.size() > 1) {
                         for (int i = 1; i < list.size(); i++) {
-                            ExecutionJob clonedJob = cloneJob(job);
+                            ExecutionJob clonedJob = cloneJob(job, i);
                             ExecutionTask clonedDataTask = clonedJob.getTasks().stream().filter(t -> t instanceof DataSourceExecutionTask).findFirst().orElse(null);
                             if (clonedDataTask == null) {
                                 throw new CloneNotSupportedException("DataSourceExecutionTask was not cloned");
                             }
+                            // Reset the output values to prevent appending to any existing value
+                            clonedDataTask.setOutputParameterValues(null);
                             clonedDataTask.setOutputParameterValue(outPort, list.get(i));
+                            clonedDataTask.setContext(dataTask.getContext());
+                            taskProvider.update(clonedDataTask);
+                            jobs.add(clonedJob);
                         }
+                        // Reset the output values to prevent appending to any existing value
+                        dataTask.setOutputParameterValues(null);
                         dataTask.setOutputParameterValue(outPort, list.get(0));
+                        taskProvider.update(dataTask);
                     }
                 }
             }
@@ -545,32 +556,34 @@ public class DefaultJobFactory {
         return jobs;
     }
 
-    @Transactional
-    public ExecutionJob cloneJob(ExecutionJob original) throws CloneNotSupportedException, PersistenceException {
-        ExecutionJob clone = new ExecutionJob();
-        clone.setName(original.getName() + " cloned @ " + System.currentTimeMillis());
-        clone.setWorkflowId(original.getWorkflowId());
-        clone.setExternal(original.isExternal());
-        clone.setQueryId(original.getQueryId());
-        clone.setUserName(original.getUserName());
-        clone = jobProvider.save(clone);
-        final List<ExecutionTask> originalTasks = original.getTasks();
-        final Map<String, String> cloneTaskMap = new HashMap<>();
-        for (ExecutionTask originalTask : originalTasks) {
-            ExecutionTask task = cloneTask(clone, originalTask);
-            cloneTaskMap.put(String.valueOf(originalTask.getId()), String.valueOf(task.getId()));
-        }
-        Map<String, List<String>> originalDependencies = original.getTaskDependencies();
-        Map<String, List<String>> clonedDependencies = new HashMap<>();
-        if (originalDependencies != null) {
-            for (Map.Entry<String, List<String>> entry : originalDependencies.entrySet()) {
-                String key = entry.getKey();
-                clonedDependencies.put(cloneTaskMap.get(key),
-                                       entry.getValue().stream().map(cloneTaskMap::get).collect(Collectors.toList()));
+    public ExecutionJob cloneJob(ExecutionJob original, int cloneNumber) throws CloneNotSupportedException, PersistenceException {
+        return TransactionalMethod.withExceptionType(PersistenceException.class).execute(() -> {
+            ExecutionJob clone = new ExecutionJob();
+            clone.setName(original.getName() + " (" + cloneNumber + ")");
+            clone.setWorkflowId(original.getWorkflowId());
+            clone.setExternal(original.isExternal());
+            clone.setQueryId(original.getQueryId());
+            clone.setUserName(original.getUserName());
+            clone.setExecutionStatus(ExecutionStatus.UNDETERMINED);
+            clone = jobProvider.save(clone);
+            final List<ExecutionTask> originalTasks = original.getTasks();
+            final Map<String, String> cloneTaskMap = new HashMap<>();
+            for (ExecutionTask originalTask : originalTasks) {
+                ExecutionTask task = cloneTask(clone, originalTask);
+                cloneTaskMap.put(String.valueOf(originalTask.getId()), String.valueOf(task.getId()));
             }
-            clone.setTaskDependencies(clonedDependencies);
-        }
-        return jobProvider.save(clone);
+            Map<String, List<String>> originalDependencies = original.getTaskDependencies();
+            Map<String, List<String>> clonedDependencies = new HashMap<>();
+            if (originalDependencies != null) {
+                for (Map.Entry<String, List<String>> entry : originalDependencies.entrySet()) {
+                    String key = entry.getKey();
+                    clonedDependencies.put(cloneTaskMap.get(key),
+                                           entry.getValue().stream().map(cloneTaskMap::get).collect(Collectors.toList()));
+                }
+                clone.setTaskDependencies(clonedDependencies);
+            }
+            return jobProvider.update(clone);
+        });
     }
 
     public ExecutionTask cloneTask(ExecutionJob clonedJob, ExecutionTask original) throws CloneNotSupportedException, PersistenceException {
@@ -586,13 +599,18 @@ public class DefaultJobFactory {
         } else if (original instanceof WPSExecutionTask) {
             clone = createWPSComponentExecutionTask(node, node.getIncomingLinks(), params);
         } else if (original instanceof DataSourceExecutionTask) {
-            throw new CloneNotSupportedException(DataSourceExecutionTask.class.getSimpleName());
+            //throw new CloneNotSupportedException(DataSourceExecutionTask.class.getSimpleName());
+            clone = createDataSourceExecutionTask(clonedJob, node, params);
+            clone.setInputParameterValues(null);
         } else if (original instanceof ExecutionGroup) {
             clone = createTaskGroup(clonedJob, node.getWorkflow(), (WorkflowNodeGroupDescriptor) node, params);
         }
         if (clone == null) {
             throw new CloneNotSupportedException(String.valueOf(original.getId()));
         }
+        clone.setLevel(original.getLevel());
+        clone.setWorkflowNodeId(node.getId());
+        clone.setContext(original.getContext());
         return taskProvider.save(clone, clonedJob);
     }
 

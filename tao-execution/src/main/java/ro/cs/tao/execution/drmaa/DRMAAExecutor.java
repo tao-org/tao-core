@@ -69,7 +69,7 @@ import java.util.stream.Collectors;
  * @author Cosmin Cara
  * @author Cosmin Udroiu
  */
-public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
+public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
     private static String masterHost;
     private static ExecutionTaskProvider taskProvider;
     private static ContainerProvider containerProvider;
@@ -82,7 +82,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
 
     public static void setContainerProvider(ContainerProvider provider) { containerProvider = provider; }
 
-    public DrmaaTaoExecutor() {
+    public DRMAAExecutor() {
         super();
         if (taskProvider == null) {
             throw new ExecutionException("A TaskProvider is required to use this executor");
@@ -186,6 +186,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         if (tasks != null) {
             // For each job, get its status from DRMAA
             for (ExecutionTask task : tasks) {
+                final String taskName = TaskUtilities.getTaskName(task);
                 try {
                     int jobStatus = session.getJobProgramStatus(task.getResourceId());
                     switch (jobStatus) {
@@ -199,7 +200,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                                 notifyStatusListener(task, ExecutionStatus.SUSPENDED);
                             } catch (Exception e) {
                                 logger.severe(String.format("Status update for task %s failed. Reason: %s",
-                                                            task.getId(), e.getMessage()));
+                                                            taskName, e.getMessage()));
                             }
                             String out;
                             if (session instanceof DefaultSession) {
@@ -216,11 +217,13 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                             // nothing to do
                             break;
                         case Session.RUNNING:
-                            try {
-                                notifyStatusListener(task, ExecutionStatus.RUNNING);
-                            } catch (Exception e) {
-                                logger.severe(String.format("Status update for task %s failed. Reason: %s",
-                                                            task.getId(), e.getMessage()));
+                            if (task.getExecutionStatus() != ExecutionStatus.RUNNING) {
+                                try {
+                                    notifyStatusListener(task, ExecutionStatus.RUNNING);
+                                } catch (Exception e) {
+                                    logger.severe(String.format("Status update for task %s failed. Reason: %s",
+                                                                taskName, e.getMessage()));
+                                }
                             }
                             break;
                         case Session.DONE:
@@ -229,7 +232,6 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                                 // Only a running task can complete
                                 markTaskFinished(task, ExecutionStatus.PENDING_FINALISATION);
                             }
-                            logger.fine(String.format("Task %s PENDING_FINALISATION", task.getId()));
                             if (task instanceof ProcessingExecutionTask) {
                                 notifyExternalListeners((ProcessingExecutionTask) task, ExecutionStatus.PENDING_FINALISATION.friendlyName(), 0, null);
                             }
@@ -247,7 +249,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                                 error = "n/a";
                                 code = -255;
                             }
-                            logger.warning(String.format("Task %s FAILED. Process output: %s", task.getId(), error));
+                            logger.warning(String.format("Task %s FAILED. Process output: %s", taskName, error));
                             if (task instanceof ProcessingExecutionTask) {
                                 notifyExternalListeners((ProcessingExecutionTask) task, ExecutionStatus.FAILED.friendlyName(), code, error);
                             }
@@ -255,7 +257,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                     }
                 } catch (DrmaaException | InternalException e) {
                     logger.severe(String.format("%s: Cannot get the status for the task %s [%s]",
-                                                e.getClass().getName(), task.getId(), e.getMessage()));
+                                                e.getClass().getName(), taskName, e.getMessage()));
                     markTaskFinished(task, ExecutionStatus.FAILED);
                 }
             }
@@ -291,8 +293,11 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
                     task.setExecutionNodeHostName((String) job.getAttribute(DrmaaJobExtensions.NODE_ATTRIBUTE));
                 }
             }
-            changeTaskStatus(task,
-                             session instanceof DefaultSession ? task instanceof ScriptTask ? ExecutionStatus.DONE : ExecutionStatus.RUNNING : ExecutionStatus.QUEUED_ACTIVE);
+            changeTaskStatus(task, session instanceof DefaultSession
+                                        ? task instanceof ScriptTask
+                                            ? ExecutionStatus.DONE
+                                            : ExecutionStatus.RUNNING
+                                        : ExecutionStatus.QUEUED_ACTIVE);
             notifyExternalListeners(task, null, -1, null);
         } catch (DrmaaException | InternalException e) {
             final String message = String.format("Error submitting task with id %s: %s", task.getId(), e.getMessage());
@@ -308,6 +313,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
         JobTemplate jt;
         try {
             logger.entering(getClass().getSimpleName(), "createJobTemplate(" + task.getId() + ")");
+            final String taskName = TaskUtilities.getTaskName(task);
             String[] pArgs = null;
             final ProcessingComponent component = task.getComponent();
             final Container container = containerProvider.get(component.getContainerId());
@@ -349,7 +355,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             if (node == null) {
                 throw new TryLaterException("Cannot obtain an available node [null]");
             } else {
-                logger.info("Task " + task.getId() + " will be submitted to host " + node.getId());
+                logger.info("Task " + taskName + " will be submitted to host " + node.getId());
             }
             setHost(jt, node.getId());
             task.setExecutionNodeHostName(node.getId());
@@ -530,7 +536,7 @@ public class DrmaaTaoExecutor extends Executor<ProcessingExecutionTask> {
             jt.setRemoteCommand(cmd);
             jt.setArgs(argsList);
             logger.finest(String.format("Task %s: %s%s %s",
-                    task.getId(),
+                    taskName,
                     unit != null ? String.join(" ", ContainerCmdBuilder.buildCommandLineArguments(unit)) + " " : "",
                     cmd,
                     String.join(" ", argsList)));
