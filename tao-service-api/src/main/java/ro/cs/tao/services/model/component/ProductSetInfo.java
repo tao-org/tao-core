@@ -19,7 +19,7 @@ public class ProductSetInfo {
     public ProductSetInfo() {
     }
 
-    public ProductSetInfo(DataSourceComponent component) {
+    public ProductSetInfo(DataSourceComponent component, String user) {
         this.id = component.getId();
         this.label = component.getLabel();
         this.description = component.getDescription();
@@ -29,7 +29,9 @@ public class ProductSetInfo {
         if (descriptor != null) {
             String location = descriptor.getDataDescriptor().getLocation();
             if (location != null) {
-                this.products.addAll(Arrays.stream(location.split(",")).collect(Collectors.toList()));
+                this.products.addAll(Arrays.stream(location.split(","))
+                                           .map(l -> l.indexOf(user) > 0 ? l.substring(l.indexOf(user) + user.length() + 1) : l)
+                                           .collect(Collectors.toList()));
             }
         }
     }
