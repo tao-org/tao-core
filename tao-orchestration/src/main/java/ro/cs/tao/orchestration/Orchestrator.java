@@ -50,6 +50,7 @@ import ro.cs.tao.quota.QuotaException;
 import ro.cs.tao.quota.UserQuotaManager;
 import ro.cs.tao.security.SessionContext;
 import ro.cs.tao.security.SystemPrincipal;
+import ro.cs.tao.security.UserPrincipal;
 import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.serialization.StringListAdapter;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
@@ -184,7 +185,17 @@ public class Orchestrator extends Notifiable {
             if (job == null) {
                 throw new ExecutionException("Another job is running or queued for user '" + user + "'. New job will be queued");
             } else {
-                this.executors.get(user).submit(() -> JobCommand.START.applyTo(job));
+                this.executors.get(user).submit(() -> {
+                    try {
+                        JobCommand.START.applyTo(job);
+                    } catch (ExecutionException e) {
+                        try {
+                            cancelJob(job);
+                        } catch (PersistenceException ex) {
+                            logger.severe(ex.getMessage());
+                        }
+                    }
+                });
             }
             return job;
         } catch (Exception e) {
@@ -208,7 +219,17 @@ public class Orchestrator extends Notifiable {
                 throw new ExecutionException("Another WPS job is running or queued for user '" + user + "'. New job will be queued");
             } else {
                 this.executors.putIfAbsent(context.getPrincipal().getName(), executorService);
-                executorService.submit(() -> JobCommand.START.applyTo(executionJob));
+                executorService.submit(() -> {
+                    try {
+                        JobCommand.START.applyTo(executionJob);
+                    } catch (ExecutionException e) {
+                        try {
+                            cancelJob(executionJob);
+                        } catch (PersistenceException ex) {
+                            logger.severe(ex.getMessage());
+                        }
+                    }
+                });
             }
             return executionJob;
         } catch (Exception e) {
@@ -262,7 +283,17 @@ public class Orchestrator extends Notifiable {
                 throw new ExecutionException(String.format("Non-existent workflow [%s]", workflowId));
             }
             final ExecutionJob job = new ScriptJobFactory().createJob(description, descriptor, inputs);
-            this.executors.get(context.getPrincipal().getName()).submit(() -> JobCommand.START.applyTo(job));
+            this.executors.get(context.getPrincipal().getName()).submit(() -> {
+                try {
+                    JobCommand.START.applyTo(job);
+                } catch (ExecutionException e) {
+                    try {
+                        cancelJob(job);
+                    } catch (PersistenceException ex) {
+                        logger.severe(ex.getMessage());
+                    }
+                }
+            });
             return job;
         } catch (PersistenceException e) {
             logger.severe(e.getMessage());
@@ -560,7 +591,7 @@ public class Orchestrator extends Notifiable {
                             final ExecutionJob nextJob = jobProvider.get(nextJobId);
                             executorService.submit(() -> JobCommand.START.applyTo(nextJob));
                         } else {
-                            shutDownExecutor(currentContext);
+                            shutDownExecutor(currentContext.getPrincipal().getName());
                         }
                         cleanupTransientComponents(job);
                     } else {
@@ -571,25 +602,7 @@ public class Orchestrator extends Notifiable {
                 final ExecutionJob job = task.getJob();
                 final ExecutionStatus jobStatus = job.getExecutionStatus();
                 if (jobStatus == ExecutionStatus.CANCELLED || jobStatus == ExecutionStatus.FAILED) {
-
-                    if (job.getEndTime() == null) {
-                        job.setEndTime(LocalDateTime.now());
-                    }
-                    WorkflowDescriptor workflow = workflowProvider.get(job.getWorkflowId());
-                    Duration time = null;
-                    if (job.getStartTime() != null && job.getEndTime() != null) {
-                        time = Duration.between(job.getStartTime(), job.getEndTime());
-                    }
-                    String msg = String.format("Job [%s] for workflow [%s]" +
-                                                       (jobStatus == ExecutionStatus.CANCELLED ?
-                                                               " cancelled after %ss" :
-                                                               " failed after %ss"),
-                                               job.getId(), workflow.getName(), time != null ? time.getSeconds() : "<unknown>");
-                    logger.warning(msg);
-                    jobProvider.update(job);
-                    Messaging.send(currentContext.getPrincipal(), Topic.EXECUTION.value(), this, msg);
-                    shutDownExecutor(currentContext);
-                    cleanupTransientComponents(job);
+                    cancelJob(job);
                 }
             }
         } catch (PersistenceException e) {
@@ -601,12 +614,45 @@ public class Orchestrator extends Notifiable {
             } catch (PersistenceException e1) {
                 logger.severe(String.format("Abnormal termination: %s", e1.getMessage()));
             }
-            shutDownExecutor(currentContext);
+            shutDownExecutor(currentContext.getPrincipal().getName());
         }
     }
 
-    private void shutDownExecutor(final SessionContext context) {
-        final String principalName = context.getPrincipal().getName();
+    private void cancelJob(ExecutionJob job) throws PersistenceException {
+        if (job.getExecutionStatus() != ExecutionStatus.CANCELLED) {
+            job.setExecutionStatus(ExecutionStatus.FAILED);
+        }
+
+        if (job.getEndTime() == null) {
+            job.setEndTime(LocalDateTime.now());
+        }
+        WorkflowDescriptor workflow = workflowProvider.get(job.getWorkflowId());
+        Duration time = null;
+        if (job.getStartTime() != null && job.getEndTime() != null) {
+            time = Duration.between(job.getStartTime(), job.getEndTime());
+        }
+        String msg = String.format("Job [%s] for workflow [%s]" +
+                                       (job.getExecutionStatus() == ExecutionStatus.CANCELLED ? " cancelled " : " failed ") +
+                                       "after %ss",
+                                   job.getId(), workflow.getName(), time != null ? time.getSeconds() : "<unknown>");
+        logger.warning(msg);
+        jobProvider.update(job);
+        job.getTasks().forEach(t -> {
+            if (t.getExecutionStatus() != ExecutionStatus.FAILED || t.getExecutionStatus() != ExecutionStatus.DONE) {
+                t.setExecutionStatus(ExecutionStatus.CANCELLED);
+                try {
+                    taskProvider.update(t);
+                } catch (PersistenceException e) {
+                    logger.warning(ro.cs.tao.utils.ExceptionUtils.getStackTrace(logger, e));
+                }
+            }
+        });
+        Messaging.send(new UserPrincipal(job.getUserName()), Topic.EXECUTION.value(), this, msg);
+        shutDownExecutor(job.getUserName());
+        cleanupTransientComponents(job);
+    }
+
+    private void shutDownExecutor(final String principalName) {
         if (!SystemPrincipal.instance().getName().equals(principalName)) {
             final List<Long> pendingJobIds = this.waitingJobs.get(principalName);
             if (pendingJobIds != null && pendingJobIds.size() > 0) {
@@ -617,7 +663,7 @@ public class Orchestrator extends Notifiable {
                 }
                 // update user processing quota
                 try {
-                    UserQuotaManager.getInstance().updateUserProcessingQuota(context.getPrincipal());
+                    UserQuotaManager.getInstance().updateUserProcessingQuota(new UserPrincipal(principalName));
                 } catch (QuotaException e) {
                     logger.severe(String.format("Error updating quota. Error message: %s", e.getMessage()));
                 }
@@ -702,7 +748,6 @@ public class Orchestrator extends Notifiable {
      */
     private void flowOutputs(ExecutionTask task, ExecutionTask nextTask) throws PersistenceException {
         final List<Variable> values = task.getOutputParameterValues();
-        final String taskName = TaskUtilities.getTaskName(task);
         if (task instanceof DataSourceExecutionTask) {
             final int cardinality;
             // A DataSourceExecutionTask outputs the list of results as a JSON-ified string array
@@ -716,7 +761,7 @@ public class Orchestrator extends Notifiable {
             }
             cardinality = valuesList.size();
             if (cardinality == 0) { // no point to continue since we have nothing to do
-                changeStatus(nextTask, ExecutionStatus.CANCELLED, String.format("Task %s produced no results", taskName));
+                changeStatus(nextTask, ExecutionStatus.CANCELLED, String.format("Task %s produced no results", TaskUtilities.getTaskName(task)));
             }
             for (int i = 0; i < cardinality; i++) {
                 String file = valuesList.get(i);
