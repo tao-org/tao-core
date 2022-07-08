@@ -229,7 +229,7 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
                         + " for " + ((DataSourceExecutionTask) task).getComponent().getSensorName()
                         + " changed to " + status.friendlyName();
             } else {
-                message = "Task " + task.getId() + " on node " + (StringUtils.isNotEmpty(task.getExecutionNodeHostName()) ? " on node " + task.getExecutionNodeHostName() : "")
+                message = "Task " + task.getId() + (StringUtils.isNotEmpty(task.getExecutionNodeHostName()) ? " on node " + task.getExecutionNodeHostName() : "")
                         + " changed to " + status.friendlyName();
             }
             Messaging.send(context.getPrincipal(), Topic.EXECUTION.value(), task.getId(), message, status.name());
