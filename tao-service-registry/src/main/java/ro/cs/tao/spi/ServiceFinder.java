@@ -149,10 +149,10 @@ public class ServiceFinder {
     }
 
     private void scanDirectory(Path directory, List<Module> modules) {
-        try {
-            //LOG.fine("Searching for SPIs " + servicesPath + " in " + directory);
-        	//TODO: Replace with the logger
-            Files.list(directory).forEach(entry -> {
+        //LOG.fine("Searching for SPIs " + servicesPath + " in " + directory);
+        //TODO: Replace with the logger
+        try(Stream<Path> stream = Files.list(directory)) {
+            stream.forEach(entry -> {
                 if (Files.isDirectory(entry)) {
                     parseServiceRegistry(entry.resolve(servicesPath), modules);
                 } else if (useZipFiles) {
@@ -164,7 +164,7 @@ public class ServiceFinder {
                             }
                         } catch (IOException e) {
                             //LOG.log(Level.SEVERE, "Failed to open file : " + entry, e);
-                        	//TODO: Replace with the logger
+                            //TODO: Replace with the logger
                         }
                     }
                 }

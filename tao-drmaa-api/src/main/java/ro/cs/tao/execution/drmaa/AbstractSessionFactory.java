@@ -143,14 +143,15 @@ public abstract class AbstractSessionFactory extends SessionFactory {
         try {
             setExecutablePermissions(destPath);
             if (Files.isDirectory(destPath)) {
-                Stream<Path> files = Files.list(destPath);
-                files.forEach(path -> {
-                    try {
-                        fixUpPermissions(path);
-                    } catch (IOException e) {
-                        logger.severe(String.format("Failed to fix permissions on '%s'", path));
-                    }
-                });
+                try (Stream<Path> files = Files.list(destPath)) {
+                    files.forEach(path -> {
+                        try {
+                            fixUpPermissions(path);
+                        } catch (IOException e) {
+                            logger.severe(String.format("Failed to fix permissions on '%s'", path));
+                        }
+                    });
+                }
             }
         } catch (IOException e) {
             logger.severe(String.format("Failed to fix permissions on '%s'", destPath));

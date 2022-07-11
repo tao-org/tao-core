@@ -15,6 +15,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Factory class for providing wrappers over file and process local or remote operations.
@@ -259,7 +260,9 @@ public class FileProcessFactory implements AutoCloseable {
 
         @Override
         public List<Path> list(Path folder) throws IOException {
-            return Files.list(folder).collect(Collectors.toList());
+            try (Stream<Path> stream = Files.list(folder)) {
+                return stream.collect(Collectors.toList());
+            }
         }
     }
     /**
