@@ -162,7 +162,8 @@ public class DefaultGroupTaskSelector implements TaskSelector<ExecutionGroup> {
             ExecutionTask t = this.taskByNodeProvider.apply(group.getId(), node.getId(), task.getInstanceId());
             if (t.getExecutionStatus() != ExecutionStatus.QUEUED_ACTIVE && t.getExecutionStatus() != ExecutionStatus.RUNNING) {
                 if (TaskUtilities.haveParentsCompleted(t)) {
-                    nextOnes.add(TaskUtilities.transferParentOutputs(t));
+                    //nextOnes.add(TaskUtilities.transferParentOutputs(t));
+                    nextOnes.add(t);
                 }
             }
         }
