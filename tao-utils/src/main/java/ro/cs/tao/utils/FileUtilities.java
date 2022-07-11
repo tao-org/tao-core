@@ -41,6 +41,7 @@ import java.util.function.Predicate;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -200,8 +201,8 @@ public class FileUtilities {
     }
 
     public static List<Path> listFiles(Path folder) {
-        try {
-            return Files.walk(folder, 1).collect(Collectors.toList());
+        try (Stream<Path> stream = Files.walk(folder, 1)) {
+            return stream.collect(Collectors.toList());
         } catch (IOException ex) {
             ex.printStackTrace();
             return new ArrayList<>();
@@ -210,23 +211,29 @@ public class FileUtilities {
 
     public static List<Path> listFiles(Path folder, String pattern) throws IOException {
         final Pattern p = Pattern.compile(pattern);
-        return Files.walk(folder, 1).filter(f -> p.matcher(f.getFileName().toString()).find()).collect(Collectors.toList());
+        try (Stream<Path> stream = Files.walk(folder, 1)) {
+            return stream.filter(f -> p.matcher(f.getFileName().toString()).find()).collect(Collectors.toList());
+        }
     }
 
     public static List<Path> listFiles(Path folder, String pattern, LocalDateTime before) throws IOException {
         final Instant instant = before.atZone(ZoneOffset.systemDefault()).toInstant();
         final Pattern p = Pattern.compile(pattern);
-        return Files.walk(folder, 1).filter(f -> {
-            try {
-                return p.matcher(f.getFileName().toString()).find() && Files.getLastModifiedTime(f).toInstant().isBefore(instant);
-            } catch (IOException inner) {
-                return false;
-            }
-        }).collect(Collectors.toList());
+        try (Stream<Path> stream = Files.walk(folder, 1)) {
+            return stream.filter(f -> {
+                try {
+                    return p.matcher(f.getFileName().toString()).find() && Files.getLastModifiedTime(f).toInstant().isBefore(instant);
+                } catch (IOException inner) {
+                    return false;
+                }
+            }).collect(Collectors.toList());
+        }
     }
 
     public static List<Path> listTree(Path folder) throws IOException {
-        return Files.walk(folder).collect(Collectors.toList());
+        try (Stream<Path> stream = Files.walk(folder)) {
+            return stream.collect(Collectors.toList());
+        }
     }
 
     public static List<Path> listFilesWithExtension(Path folder, String extension) {
@@ -661,10 +668,11 @@ public class FileUtilities {
     }
 
     public static long folderSize(Path folder) throws IOException {
-        return Files.walk(folder)
-                .filter(Files::isRegularFile)
-                .mapToLong(p -> p.toFile().length())
-                .sum();
+        try (Stream<Path> stream = Files.walk(folder)) {
+            return stream.filter(Files::isRegularFile)
+                         .mapToLong(p -> p.toFile().length())
+                         .sum();
+        }
     }
 
     public static void copyFile(URL sourceURL, Path destinationFile) throws IOException {
@@ -674,7 +682,7 @@ public class FileUtilities {
         try (InputStream inputStream = sourceURL.openStream()) {
             File dest = destinationFile.toFile();
             dest.getParentFile().mkdirs();
-            try (BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(dest))) {
+            try (BufferedOutputStream bos = new BufferedOutputStream(Files.newOutputStream(dest.toPath()))) {
                 byte[] buffer = new byte[4096];
                 int read;
                 while ((read = inputStream.read(buffer)) > 0) {
@@ -716,7 +724,9 @@ public class FileUtilities {
                         try (InputStream inputStream = zipFile.getInputStream(entry)) {
                             Files.createDirectories(keepFolderStructure ? filePath.getParent() : strippedFilePath.getParent());
                             try (BufferedOutputStream bos = new BufferedOutputStream(
-                                    new FileOutputStream(keepFolderStructure ? filePath.toFile() : strippedFilePath.toFile()))) {
+                                    Files.newOutputStream((keepFolderStructure
+                                                           ? filePath.toFile()
+                                                           : strippedFilePath.toFile()).toPath()))) {
                                 while ((read = inputStream.read(buffer)) > 0) {
                                     bos.write(buffer, 0, read);
                                 }
