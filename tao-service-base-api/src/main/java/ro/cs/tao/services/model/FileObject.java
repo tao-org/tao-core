@@ -16,6 +16,7 @@
 
 package ro.cs.tao.services.model;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -26,6 +27,7 @@ public class FileObject {
     private long size;
     private String productName;
     private String displayName;
+    private LocalDateTime lastModified;
     private Map<String, String> attributes;
 
     public FileObject() {
@@ -88,6 +90,14 @@ public class FileObject {
 
     public void setDisplayName(String displayName) {
         this.displayName = displayName;
+    }
+
+    public LocalDateTime getLastModified() {
+        return lastModified;
+    }
+
+    public void setLastModified(LocalDateTime lastModified) {
+        this.lastModified = lastModified;
     }
 
     public Map<String, String> getAttributes() { return attributes; }
