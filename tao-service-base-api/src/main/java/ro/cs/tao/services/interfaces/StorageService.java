@@ -154,6 +154,10 @@ public interface StorageService<T, U> extends TAOService {
 
     void streamToZip(String zipRoot, ZipOutputStream stream) throws IOException;
 
+    default String readAsText(U resource, int lines, int skipLines) throws IOException {
+        return null;
+    }
+
     default void setProgressListener(ProgressListener listener) { }
 
     default FileObject repositoryRootNode(Repository repository) {
