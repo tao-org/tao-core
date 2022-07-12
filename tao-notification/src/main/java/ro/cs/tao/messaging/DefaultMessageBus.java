@@ -120,6 +120,7 @@ public class DefaultMessageBus implements ro.cs.tao.messaging.EventBus<Event<Mes
         checkPatternConsumers(topic);
         Message message = event.getData();
         message.setTopic(topic);
+        message.setUser(principal.getName());
         this.messageBus.notify(topic, event);
         if (this.messagePersister != null && message.isPersistent()) {
             this.executorService.submit(() -> {

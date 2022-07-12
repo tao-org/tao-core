@@ -345,27 +345,30 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
     private void filterByOtherList(List<EOProduct> products, String otherProductsList) {
         final List<String> names = deserializeResults(otherProductsList);
         final List<EOProduct> otherProducts = productProvider.getProductsByNames(names.toArray(new String[0]));
-        final Set<LocalDate> otherDates = otherProducts.stream().map(p -> p.getAcquisitionDate().toLocalDate()).collect(Collectors.toSet());
-        products.removeIf(p -> !otherDates.contains(p.getAcquisitionDate().toLocalDate()));
-        // If multiple products on the same date, keep the "middle one"
-        final Map<LocalDate, List<EOProduct>> groupsByDate = new HashMap<>();
-        LocalDate date;
-        for (EOProduct product : products) {
-            date = product.getAcquisitionDate().toLocalDate();
-            List<EOProduct> list = groupsByDate.computeIfAbsent(date, k -> new ArrayList<>());
-            list.add(product);
-        }
-        for (Map.Entry<LocalDate, List<EOProduct>> entry : groupsByDate.entrySet()) {
-            List<EOProduct> list = entry.getValue();
-            final int size = list.size();
-            final int idx = size % 2 == 1 ? (size - 1 ) / 2 : size / 2 - 1;
-            for (int i = 0; i < size; i++) {
-                if (i != idx) {
-                    products.remove(list.get(i));
+        // If other list consists of non-products, do nothing
+        if (otherProducts != null && otherProducts.size() > 0) {
+            final Set<LocalDate> otherDates = otherProducts.stream().map(p -> p.getAcquisitionDate().toLocalDate()).collect(Collectors.toSet());
+            products.removeIf(p -> !otherDates.contains(p.getAcquisitionDate().toLocalDate()));
+            // If multiple products on the same date, keep the "middle one"
+            final Map<LocalDate, List<EOProduct>> groupsByDate = new HashMap<>();
+            LocalDate date;
+            for (EOProduct product : products) {
+                date = product.getAcquisitionDate().toLocalDate();
+                List<EOProduct> list = groupsByDate.computeIfAbsent(date, k -> new ArrayList<>());
+                list.add(product);
+            }
+            for (Map.Entry<LocalDate, List<EOProduct>> entry : groupsByDate.entrySet()) {
+                List<EOProduct> list = entry.getValue();
+                final int size = list.size();
+                final int idx = size % 2 == 1 ? (size - 1) / 2 : size / 2 - 1;
+                for (int i = 0; i < size; i++) {
+                    if (i != idx) {
+                        products.remove(list.get(i));
+                    }
                 }
             }
+            groupsByDate.clear();
         }
-        groupsByDate.clear();
     }
 
     @Override

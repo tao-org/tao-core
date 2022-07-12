@@ -35,6 +35,11 @@ public interface OutputDataHandler<T> {
     Class<T> isIntendedFor();
 
     /**
+     * Indicates if the subsequent handlers are allowed to be invoked.
+     */
+    default boolean allowNext() { return true; }
+
+    /**
      * Returns the priority of this handler among the handlers for the intended type.
      * The highest priority is zero.
      */
