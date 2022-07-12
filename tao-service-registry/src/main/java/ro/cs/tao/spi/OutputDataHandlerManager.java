@@ -87,6 +87,9 @@ public class OutputDataHandlerManager {
                 item = (T) handler.handle(item);
                 // reset any fileProcessFactory set
                 handler.setFileProcessFactory(null);
+                if (!handler.allowNext()) {
+                    break;
+                }
             }
         } else {
             logger.warning(String.format("No output handler defined for type %s", itemClass));
