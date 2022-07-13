@@ -86,7 +86,7 @@ public class OutputDataHandlerManager {
             for (OutputDataHandler handler : handlers) {
                 item = (T) handler.handle(item);
                 // reset any fileProcessFactory set
-                handler.setFileProcessFactory(null);
+                //handler.setFileProcessFactory(null);
                 if (!handler.allowNext()) {
                     break;
                 }

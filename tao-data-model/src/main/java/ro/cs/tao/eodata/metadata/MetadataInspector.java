@@ -16,14 +16,8 @@
 
 package ro.cs.tao.eodata.metadata;
 
-import org.geotools.geometry.jts.JTS;
-import org.geotools.referencing.CRS;
-import org.locationtech.jts.geom.Geometry;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.enums.*;
-import ro.cs.tao.serialization.GeometryAdapter;
 import ro.cs.tao.serialization.MediaType;
 import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.serialization.SerializerFactory;
@@ -168,7 +162,7 @@ public interface MetadataInspector {
             product.setFormatType(DataFormat.RASTER);
             product.setPixelType(this.pixelType);
             product.setCrs(this.crs);
-            try {
+            /*try {
                 if (crs != null && !"EPSG:4326".equalsIgnoreCase(crs)) {
                     GeometryAdapter geometryAdapter = new GeometryAdapter();
                     Geometry geometry = geometryAdapter.marshal(this.footprint);
@@ -186,9 +180,9 @@ public interface MetadataInspector {
                 } else {
                     product.setGeometry(this.wgs84footprint != null ? this.wgs84footprint : this.footprint);
                 }
-            } catch (Exception ex) {
+            } catch (Exception ex) {*/
                 product.setGeometry(this.wgs84footprint != null ? this.wgs84footprint : this.footprint);
-            }
+            //}
             product.setWidth(this.width);
             product.setHeight(this.height);
             product.setVisibility(Visibility.PUBLIC);
