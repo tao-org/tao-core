@@ -7,6 +7,9 @@ import ro.cs.tao.component.enums.ProcessingComponentVisibility;
 
 import java.util.List;
 
+/**
+ * Read-only bean for a ProcessingComponent entity
+ */
 public class ProcessingComponentInfo {
 
     private String id;

@@ -14,6 +14,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Factory class for getting instances of storage service implementation
+ *
+ * @author Cosmin Cara
+ */
 public class StorageServiceFactory {
     private static EOProductProvider productProvider;
     private static VectorDataProvider vectorDataProvider;
@@ -33,6 +38,14 @@ public class StorageServiceFactory {
         StorageServiceFactory.auxiliaryDataProvider = auxiliaryDataProvider;
     }
 
+    /**
+     * Gets an instance of the storage service associated with the given repository.
+     * If no such instance, it returns null.
+     * The returned instance is associated with the given repository instance and should not be used with other
+     * repository instance.
+     *
+     * @param workspace     The repository (workspace)
+     */
     public static final StorageService getInstance(Repository workspace) {
         StorageService service;
         if (!cachedServices.containsKey(workspace) || (service = cachedServices.get(workspace).get()) == null) {
@@ -59,6 +72,12 @@ public class StorageServiceFactory {
         }
         return service;
     }
+
+    /**
+     * Gets a storage service instance for the given protocol.
+     * If multiple storage services are defined for the same protocol, the first one is returned (no predictable order)
+     * @param protocol  The protocol
+     */
     public static final StorageService getInstance(String protocol) {
         final ServiceRegistry<StorageService> registry = ServiceRegistryManager.getInstance().getServiceRegistry(StorageService.class);
         final Set<StorageService> services = registry.getServices();

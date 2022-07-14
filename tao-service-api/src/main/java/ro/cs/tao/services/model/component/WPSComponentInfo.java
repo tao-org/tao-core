@@ -6,6 +6,9 @@ import ro.cs.tao.docker.Container;
 
 import java.util.List;
 
+/**
+ * Read-only bean for a WPSComponent entity
+ */
 public class WPSComponentInfo {
 
     private String id;

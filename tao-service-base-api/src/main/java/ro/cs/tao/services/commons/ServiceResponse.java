@@ -16,35 +16,68 @@
 
 package ro.cs.tao.services.commons;
 
+/**
+ * Structure for any controller response
+ * @param <T>   The type of the response data
+ */
 public class ServiceResponse<T> {
     private T data;
     private String message;
     private ResponseStatus status;
 
+    /**
+     * Constructs an empty response
+     */
     public ServiceResponse() {
 
     }
 
+    /**
+     * Constructs a success response with the given data
+     * @param data  The response data
+     */
     public ServiceResponse(T data) {
         this.data = data;
         this.status = ResponseStatus.SUCCEEDED;
     }
-
+    /**
+     * Constructs a response with the given data and the given status
+     * @param data      The response data
+     * @param status    The response status
+     */
     public ServiceResponse(T data, ResponseStatus status) {
         this(data, null, status);
     }
-
+    /**
+     * Constructs a response with the given text and status
+     * @param message  The response message
+     * @param status    The response status
+     */
     public ServiceResponse(String message, ResponseStatus status) {
         this(null, message, status);
     }
-
+    /**
+     * Constructs a response with the given data, text and status
+     * @param data      The response data
+     * @param message   The response message
+     * @param status    The response status
+     */
     public ServiceResponse(T data, String message, ResponseStatus status) {
         this.data = data;
         this.message = message;
         this.status = status;
     }
 
+    /**
+     * Returns the data (payload) of this response
+     */
     public T getData() { return data; }
+    /**
+     * Returns the message of this response
+     */
     public String getMessage() { return message; }
+    /**
+     * Returns the status of this response
+     */
     public ResponseStatus getStatus() { return status; }
 }

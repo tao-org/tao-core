@@ -16,6 +16,9 @@
 
 package ro.cs.tao.services.commons;
 
+/**
+ * Enumeration holding the possible statuses of a controller response
+ */
 public enum ResponseStatus {
     SUCCEEDED,
     FAILED

@@ -8,6 +8,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Read-only bean for a DataSourceComponent entity that encapsulates a product set
+ */
 public class ProductSetInfo {
 
     private String id;

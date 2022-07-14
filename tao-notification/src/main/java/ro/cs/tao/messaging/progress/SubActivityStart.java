@@ -5,6 +5,11 @@ import ro.cs.tao.messaging.Message;
 import java.beans.Transient;
 import java.util.Objects;
 
+/**
+ * Specialized message signaling the start of a nested (sub-) activity
+ *
+ * @author Cosmin Cara
+ */
 public class SubActivityStart extends Message {
     protected final String taskName;
     protected final String subTaskName;
