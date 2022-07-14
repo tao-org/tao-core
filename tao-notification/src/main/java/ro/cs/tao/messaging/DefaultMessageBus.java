@@ -39,6 +39,7 @@ import static reactor.bus.selector.Selectors.$;
  */
 public class DefaultMessageBus implements ro.cs.tao.messaging.EventBus<Event<Message>> {
     private static final int MAX_THREADS = 2;
+    private static final int CAPACITY = 1024;
 
     private final EventBus messageBus;
     private final Set<String> topics;
@@ -51,7 +52,7 @@ public class DefaultMessageBus implements ro.cs.tao.messaging.EventBus<Event<Mes
     public DefaultMessageBus() {
         Environment environment = Environment.initializeIfEmpty();
         this.messageBus = EventBus.create(environment,
-                                          Environment.newDispatcher(MAX_THREADS,
+                                          Environment.newDispatcher(CAPACITY,
                                                                     MAX_THREADS,
                                                                     DispatcherType.THREAD_POOL_EXECUTOR));
         this.topics = new HashSet<>();

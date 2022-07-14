@@ -132,6 +132,13 @@ public interface StorageService<T, U> extends TAOService {
      */
     List<FileObject> listFiles(String fromPath, Set<String> exclusions, String lastItem, int depth) throws IOException;
 
+    /**
+     * Lists the full tree of folders and files starting from the given path.
+     * This method should be used with caution for remote repositories, as the full traversal may take long time.
+     *
+     * @param fromPath      The path to look into
+     * @throws IOException if the content cannot be retrieved
+     */
     List<FileObject> listTree(String fromPath) throws IOException;
 
     /**
@@ -150,16 +157,49 @@ public interface StorageService<T, U> extends TAOService {
      */
     List<FileObject> getJobResults(long jobId) throws IOException;
 
+    /**
+     * Downloads the object from the given path.
+     * Some implementors may not return the binary content of the object, but an InputStream to the object.
+     *
+     * @param path  The path of the object to be retrieved.
+     *
+     * @throws IOException
+     */
     U download(String path) throws IOException;
 
+    /**
+     * Packs the children of an object into the given zip stream.
+     *
+     * @param zipRoot   The root of the subtree to be packed
+     * @param stream    The zip stream (created elsewhere)
+     *
+     * @throws IOException
+     */
     void streamToZip(String zipRoot, ZipOutputStream stream) throws IOException;
 
+    /**
+     * Reads a number of lines from the given resource.
+     *
+     * @param resource  The storage resource
+     * @param lines     The number of lines to be read
+     * @param skipLines The number of lines to be skipped before reading
+     *
+     * @throws IOException
+     */
     default String readAsText(U resource, int lines, int skipLines) throws IOException {
         return null;
     }
 
+    /**
+     * Sets a listener for progress reporting
+     */
     default void setProgressListener(ProgressListener listener) { }
 
+    /**
+     * Helper method for creating the (fake) root node of any storage tree.
+     *
+     * @param repository    The repository for which to create the fake root node
+     */
     default FileObject repositoryRootNode(Repository repository) {
         final FileObject object = new FileObject(repository.getUrlPrefix(), "/", true, 0, ROOT_TITLE);
         object.addAttribute(REMOTE_PATH_ATTRIBUTE, repository.root());
@@ -167,7 +207,7 @@ public interface StorageService<T, U> extends TAOService {
     }
 
     /**
-     * Returns a placeholder "file" to be used for S3-like storgaes when creating a "folder"
+     * Returns a placeholder "file" to be used for S3-like storages when creating a "folder"
      */
     default FileObject emptyFolderItem() {
         final FileObject object = new FileObject("", AVLFOLDER, false, 0, AVLFOLDER);

@@ -49,7 +49,13 @@ public class ProgressNotifier implements ProgressListener {
     public ProgressNotifier(Principal principal, Object source, Topic topic, Map<String, String> additionalInfo) {
         this.owner = source;
         this.topic = topic;
+        if (this.topic == null) {
+            throw new NullPointerException("topic");
+        }
         this.principal = principal;
+        if (this.principal == null) {
+            throw new NullPointerException("principal");
+        }
         this.additionalInfo = additionalInfo;
         this.subListener = new SubListener();
     }
@@ -133,6 +139,7 @@ public class ProgressNotifier implements ProgressListener {
         if (additionalInfo != null) {
             additionalInfo.forEach(message::addItem);
         }
+        message.setUser(this.principal.getName());
         Messaging.send(this.principal, this.topic.value(), message, false);
     }
 

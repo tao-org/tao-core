@@ -20,6 +20,11 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.TreeMap;
 
+/**
+ * Structure for holding information about a storage item.
+ *
+ * @author Cosmin Cara
+ */
 public class FileObject {
     private String protocol;
     private String relativePath;
@@ -53,15 +58,25 @@ public class FileObject {
         this.size = this.folder ? 0 : size;
         this.displayName = displayName;
     }
-
+    /**
+     * Returns the protocol (conventional prefix of the path) of this object
+     */
     public String getProtocol() {
         return protocol;
     }
-
+    /**
+     * Returns the path of this object, relative to the repository root
+     */
     public String getRelativePath() { return relativePath; }
 
+    /**
+     * Checks if this object represents a folder
+     */
     public boolean isFolder() { return folder; }
 
+    /**
+     * Returns the size of this object if the object is a file. For folders, the size is 0.
+     */
     public long getSize() { return size; }
 
     public void setProtocol(String protocol) {
@@ -80,10 +95,16 @@ public class FileObject {
         this.size = size;
     }
 
+    /**
+     * Returns the name of the product designated by this object (if any).
+     */
     public String getProductName() { return productName; }
 
     public void setProductName(String productName) { this.productName = productName; }
 
+    /**
+     * Returns the friendly name of the object to be displayed in the visual interface
+     */
     public String getDisplayName() {
         return displayName;
     }
@@ -92,6 +113,10 @@ public class FileObject {
         this.displayName = displayName;
     }
 
+    /**
+     * Returns the last modified timestamp of this object, as appearing in the storage.
+     * If the storage service doesn't support this, returns null.
+     */
     public LocalDateTime getLastModified() {
         return lastModified;
     }
@@ -100,6 +125,9 @@ public class FileObject {
         this.lastModified = lastModified;
     }
 
+    /**
+     * Returns additional attributes for this object (if any)
+     */
     public Map<String, String> getAttributes() { return attributes; }
 
     public void setAttributes(Map<String, String> attributes) { this.attributes = attributes; }

@@ -5,6 +5,11 @@ import ro.cs.tao.messaging.Message;
 import java.beans.Transient;
 import java.util.Objects;
 
+/**
+ * Specialized message signaling the beginning of an activity
+ *
+ * @author Cosmin Cara
+ */
 public class ActivityStart extends Message {
     protected String taskName;
 

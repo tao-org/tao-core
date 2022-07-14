@@ -7,6 +7,13 @@ import ro.cs.tao.workspaces.Repository;
 
 import java.io.InputStream;
 
+/**
+ * Base class for all storage service implementations.
+ * It defines method that are common to all implementorsa.
+ *
+ * @param <T>   The type of objects that can be used to upload items to this storage
+ * @param <U>   The type of objects that can be used to download items from this storage
+ */
 public abstract class BaseStorageService<T, U> implements StorageService<T, U> {
     protected ProgressListener progressListener;
     private Repository repository;

@@ -6,6 +6,11 @@ import java.beans.Transient;
 import java.util.Locale;
 import java.util.Objects;
 
+/**
+ * Specialized message signaling the progress change of an activity
+ *
+ * @author Cosmin Cara
+ */
 public class ActivityProgress extends Message {
     private final String taskName;
     private final double progress;

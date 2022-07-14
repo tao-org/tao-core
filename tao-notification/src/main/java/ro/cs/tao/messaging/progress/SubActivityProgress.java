@@ -6,6 +6,11 @@ import java.beans.Transient;
 import java.util.Locale;
 import java.util.Objects;
 
+/**
+ * Specialized message signaling the progress change of a nested (sub-) activity
+ *
+ * @author Cosmin Cara
+ */
 public class SubActivityProgress extends Message {
     protected final String taskName;
     protected final double taskProgress;

@@ -38,10 +38,18 @@ public abstract class Notifiable implements Consumer<Event<Message>> {
         onMessageReceived(payload);
     }
 
+    /**
+     * Subscribes this instance to one or more topics
+     * @param topics    The topic(s) to subscribe to
+     */
     protected void subscribe(String... topics) {
         Messaging.subscribe(this, topics);
     }
 
+    /**
+     * Handles the dispatch of a message to this instance
+     * @param message   The message
+     */
     protected abstract void onMessageReceived(Message message);
 
 }
