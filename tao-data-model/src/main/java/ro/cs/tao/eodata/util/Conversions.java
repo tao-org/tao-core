@@ -126,8 +126,8 @@ public class Conversions {
      * @param y     The y coordinate
      */
     public static double[] utmToDegrees(String crs, double x, double y) throws TransformException, FactoryException {
-        CoordinateReferenceSystem sourceCrs = CRS.decode(crs);
-        CoordinateReferenceSystem targetCrs = CRS.decode("EPSG:4326");
+        CoordinateReferenceSystem sourceCrs = CRS.decode(crs, true);
+        CoordinateReferenceSystem targetCrs = CRS.decode("EPSG:4326", true);
         MathTransform mathTransform = CRS.findMathTransform(sourceCrs, targetCrs, true);
         DirectPosition2D srcDirectPosition2D = new DirectPosition2D(sourceCrs, x, y);
         DirectPosition2D destDirectPosition2D = new DirectPosition2D();
