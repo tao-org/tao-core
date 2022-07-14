@@ -16,8 +16,14 @@
 
 package ro.cs.tao.eodata.metadata;
 
+import org.geotools.geometry.jts.JTS;
+import org.geotools.referencing.CRS;
+import org.locationtech.jts.geom.Geometry;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.referencing.operation.MathTransform;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.enums.*;
+import ro.cs.tao.serialization.GeometryAdapter;
 import ro.cs.tao.serialization.MediaType;
 import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.serialization.SerializerFactory;
@@ -162,12 +168,12 @@ public interface MetadataInspector {
             product.setFormatType(DataFormat.RASTER);
             product.setPixelType(this.pixelType);
             product.setCrs(this.crs);
-            /*try {
-                if (crs != null && !"EPSG:4326".equalsIgnoreCase(crs)) {
+            try {
+                if (this.wgs84footprint == null && crs != null && !"EPSG:4326".equalsIgnoreCase(crs)) {
                     GeometryAdapter geometryAdapter = new GeometryAdapter();
                     Geometry geometry = geometryAdapter.marshal(this.footprint);
-                    final CoordinateReferenceSystem sourceCrs = CRS.decode(crs);
-                    final CoordinateReferenceSystem targetCrs = CRS.decode("EPSG:4326");
+                    final CoordinateReferenceSystem sourceCrs = CRS.decode(crs, true);
+                    final CoordinateReferenceSystem targetCrs = CRS.decode("EPSG:4326", true);
                     MathTransform mathTransform;
                     try {
                         mathTransform = CRS.findMathTransform(sourceCrs, targetCrs);
@@ -180,9 +186,9 @@ public interface MetadataInspector {
                 } else {
                     product.setGeometry(this.wgs84footprint != null ? this.wgs84footprint : this.footprint);
                 }
-            } catch (Exception ex) {*/
+            } catch (Exception ex) {
                 product.setGeometry(this.wgs84footprint != null ? this.wgs84footprint : this.footprint);
-            //}
+            }
             product.setWidth(this.width);
             product.setHeight(this.height);
             product.setVisibility(Visibility.PUBLIC);
