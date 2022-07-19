@@ -40,8 +40,8 @@ public class Tuple<T,V> {
 
     @Override
     public String toString() {
-        return "[\""  + keyOne.toString() + "\"," +
-                (keyTwo != null ? "\"" + keyTwo.toString() + "\"" : "null") + "]";
+        return "[\""  + keyOne + "\"," +
+                (keyTwo != null ? "\"" + keyTwo + "\"" : "null") + "]";
     }
 
     @Override

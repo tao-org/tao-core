@@ -16,6 +16,7 @@
 
 package ro.cs.tao.orchestration;
 
+import ro.cs.tao.Tuple;
 import ro.cs.tao.component.*;
 import ro.cs.tao.component.enums.ProcessingComponentType;
 import ro.cs.tao.datasource.DataSourceComponent;
@@ -298,6 +299,7 @@ public class DefaultJobFactory {
                 task.setInputParameterValue(entry.getKey(), entry.getValue());
             }
         }
+        task.setCardinality(TaskUtilities.getTargetCardinality(component));
         return task;
     }
 
@@ -373,6 +375,7 @@ public class DefaultJobFactory {
             queryProvider.update(query);
         }
         task.setComponent(dsComponent);
+        task.setCardinality(TaskUtilities.getTargetCardinality(dsComponent));
         task.setInputParameterValue("query", query.toString());
         return task;
     }
@@ -441,6 +444,7 @@ public class DefaultJobFactory {
         localQuery.setUserId(job.getUserName());
         queryProvider.save(localQuery);
         task.setComponent(component);
+        task.setCardinality(TaskUtilities.getTargetCardinality(component));
         task.setInputParameterValue("local.query", localQuery.toString());
         task.setInputParameterValue("remote.query", query.toString());
         return task;
@@ -521,34 +525,90 @@ public class DefaultJobFactory {
         List<ExecutionTask> tasks = job.getTasks();
         //jobs.add(job);
         if (tasks != null) {
-            DataSourceExecutionTask dataTask = (DataSourceExecutionTask) tasks.stream().filter(t -> t instanceof DataSourceExecutionTask).findFirst().orElse(null);
-            if (dataTask != null) {
-                DataSourceComponent dataSourceComponent = dataTask.getComponent();
-                final String outPort = dataSourceComponent.getTargets().get(0).getName();
-                Variable values = dataTask.getOutputParameterValues()
-                                          .stream()
-                                          .filter(v -> v.getKey().equals(outPort))
-                                          .findFirst().orElse(null);
-                if (values != null) {
-                    List<String> list = deserializeResults(values.getValue());
-                    if (list != null && list.size() > 1) {
-                        for (int i = 1; i < list.size(); i++) {
+            //DataSourceExecutionTask dataTask = (DataSourceExecutionTask) tasks.stream().filter(t -> t instanceof DataSourceExecutionTask).findFirst().orElse(null);
+            final List<DataSourceExecutionTask> dataTasks = tasks.stream().filter(t -> t instanceof DataSourceExecutionTask)
+                                                           .map(t -> (DataSourceExecutionTask) t).collect(Collectors.toList());
+            if (dataTasks.size() == 2) {
+                DataSourceExecutionTask dataTask = dataTasks.stream().filter(TaskUtilities::isSynchronized).findFirst().orElse(null);
+                if (dataTask != null) {
+                    DataSourceExecutionTask primaryTask = dataTasks.stream().filter(d -> !d.getId().equals(dataTask.getId())).findFirst().get();
+                    List<Tuple<String, String>> tuples = TaskUtilities.coupleTaskOutputs(primaryTask, dataTask);
+                    if (tuples.size() > 1) {
+                        for (int i = 1; i < tuples.size(); i++) {
                             ExecutionJob clonedJob = cloneJob(job, i);
-                            ExecutionTask clonedDataTask = clonedJob.getTasks().stream().filter(t -> t instanceof DataSourceExecutionTask).findFirst().orElse(null);
-                            if (clonedDataTask == null) {
+                            final Map<String, List<String>> dependencies = clonedJob.getTaskDependencies();
+                            ExecutionTask clonedPrimaryDataTask = clonedJob.getTasks().stream()
+                                                                     .filter(t -> t instanceof DataSourceExecutionTask
+                                                                             && !dependencies.containsKey(String.valueOf(t.getId())))
+                                                                     .findFirst().orElse(null);
+                            if (clonedPrimaryDataTask == null) {
+                                throw new CloneNotSupportedException("DataSourceExecutionTask was not cloned");
+                            }
+                            ExecutionTask clonedSecondaryDataTask = clonedJob.getTasks().stream()
+                                                                       .filter(t -> t instanceof DataSourceExecutionTask
+                                                                               && dependencies.containsKey(String.valueOf(t.getId())))
+                                                                       .findFirst().orElse(null);
+
+                            if (clonedSecondaryDataTask == null) {
                                 throw new CloneNotSupportedException("DataSourceExecutionTask was not cloned");
                             }
                             // Reset the output values to prevent appending to any existing value
-                            clonedDataTask.setOutputParameterValues(null);
-                            clonedDataTask.setOutputParameterValue(outPort, list.get(i));
-                            clonedDataTask.setContext(dataTask.getContext());
-                            taskProvider.update(clonedDataTask);
+                            clonedPrimaryDataTask.setOutputParameterValues(null);
+                            clonedPrimaryDataTask.setOutputParameterValue(DataSourceComponent.RESULTS_PARAMETER, tuples.get(i).getKeyOne());
+                            clonedPrimaryDataTask.setContext(primaryTask.getContext());
+                            clonedPrimaryDataTask.setCardinality(1);
+                            taskProvider.update(clonedPrimaryDataTask);
+                            clonedSecondaryDataTask.setOutputParameterValues(null);
+                            clonedSecondaryDataTask.setOutputParameterValue(DataSourceComponent.RESULTS_PARAMETER, tuples.get(i).getKeyTwo());
+                            clonedSecondaryDataTask.setContext(dataTask.getContext());
+                            clonedSecondaryDataTask.setCardinality(1);
+                            taskProvider.update(clonedSecondaryDataTask);
+                            clonedJob = jobProvider.update(clonedJob);
                             jobs.add(clonedJob);
                         }
                         // Reset the output values to prevent appending to any existing value
+                        primaryTask.setOutputParameterValues(null);
+                        primaryTask.setOutputParameterValue(DataSourceComponent.RESULTS_PARAMETER, tuples.get(0).getKeyOne());
+                        primaryTask.setCardinality(1);
+                        taskProvider.update(primaryTask);
                         dataTask.setOutputParameterValues(null);
-                        dataTask.setOutputParameterValue(outPort, list.get(0));
+                        dataTask.setOutputParameterValue(DataSourceComponent.RESULTS_PARAMETER, tuples.get(0).getKeyTwo());
+                        dataTask.setCardinality(1);
                         taskProvider.update(dataTask);
+                        job = jobProvider.update(job);
+                    }
+                }
+            } else {
+                for (DataSourceExecutionTask dataTask : dataTasks) {
+                    DataSourceComponent dataSourceComponent = dataTask.getComponent();
+                    final String outPort = dataSourceComponent.getTargets().get(0).getName();
+                    Variable values = dataTask.getOutputParameterValues()
+                                              .stream()
+                                              .filter(v -> v.getKey().equals(outPort))
+                                              .findFirst().orElse(null);
+                    if (values != null) {
+                        List<String> list = deserializeResults(values.getValue());
+                        if (list != null && list.size() > 1) {
+                            for (int i = 1; i < list.size(); i++) {
+                                ExecutionJob clonedJob = cloneJob(job, i);
+                                ExecutionTask clonedDataTask = clonedJob.getTasks().stream().filter(t -> t instanceof DataSourceExecutionTask).findFirst().orElse(null);
+                                if (clonedDataTask == null) {
+                                    throw new CloneNotSupportedException("DataSourceExecutionTask was not cloned");
+                                }
+                                // Reset the output values to prevent appending to any existing value
+                                clonedDataTask.setOutputParameterValues(null);
+                                clonedDataTask.setOutputParameterValue(outPort, list.get(i));
+                                clonedDataTask.setContext(dataTask.getContext());
+                                taskProvider.update(clonedDataTask);
+                                clonedJob = jobProvider.update(clonedJob);
+                                jobs.add(clonedJob);
+                            }
+                            // Reset the output values to prevent appending to any existing value
+                            dataTask.setOutputParameterValues(null);
+                            dataTask.setOutputParameterValue(outPort, list.get(0));
+                            taskProvider.update(dataTask);
+                            job = jobProvider.update(job);
+                        }
                     }
                 }
             }

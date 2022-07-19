@@ -55,7 +55,7 @@ public class NamedThreadPoolExecutor extends ThreadPoolExecutor {
 
     public int getRunningTasks() { return this.runningTasks.get(); }
 
-    @Override
+    /*@Override
     protected void beforeExecute(Thread t, Runnable r) {
         logger.finest("Task entering execution (active tasks: " + this.runningTasks.getAndIncrement() + ")");
     }
@@ -63,7 +63,7 @@ public class NamedThreadPoolExecutor extends ThreadPoolExecutor {
     @Override
     protected void afterExecute(Runnable r, Throwable t) {
         logger.finest("One task ended (active tasks: " + this.runningTasks.decrementAndGet() + ")");
-    }
+    }*/
 
     String getPoolName() {  return this.poolName; }
 

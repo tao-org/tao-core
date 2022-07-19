@@ -812,6 +812,9 @@
             <basic name="log">
                 <column name="execution_log" nullable="true" column-definition="varchar NULL"/>
             </basic>
+            <basic name="cardinality">
+                <column name="cardinality" nullable="true" column-definition="integer NULL"/>
+            </basic>
 
             <many-to-one name="job" fetch="LAZY">
                 <join-column name="job_id" nullable="true"/>

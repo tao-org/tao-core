@@ -59,6 +59,7 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
     List<Variable> inputParameterValues = new ArrayList<>();
     List<Variable> outputParameterValues = new ArrayList<>();
     InternalStateHandler<?> stateHandler;
+    private Integer cardinality;
 
     public ExecutionTask() { }
 
@@ -221,6 +222,14 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
 
     public void setInstanceTargetOutput(String instanceTargetOutput) {
         this.instanceTargetOutput = instanceTargetOutput;
+    }
+
+    public Integer getCardinality() {
+        return cardinality;
+    }
+
+    public void setCardinality(Integer cardinality) {
+        this.cardinality = cardinality;
     }
 
     public abstract String buildExecutionCommand();

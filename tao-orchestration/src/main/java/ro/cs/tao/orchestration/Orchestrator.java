@@ -15,7 +15,6 @@
  */
 package ro.cs.tao.orchestration;
 
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.component.*;
 import ro.cs.tao.configuration.ConfigurationManager;
@@ -58,6 +57,7 @@ import ro.cs.tao.services.utils.WorkflowUtilities;
 import ro.cs.tao.spi.OutputDataHandlerManager;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.user.UserPreference;
+import ro.cs.tao.utils.ExceptionUtils;
 import ro.cs.tao.utils.TriFunction;
 import ro.cs.tao.workflow.ParameterValue;
 import ro.cs.tao.workflow.WorkflowDescriptor;
@@ -529,6 +529,32 @@ public class Orchestrator extends Notifiable {
                         }
                         if (manyParents) {
                             if (TaskUtilities.haveParentsCompleted(nextTask)) {
+                                final List<String> parentIds = task.getJob().getTaskDependencies().get(String.valueOf(nextTask.getId()));
+                                final List<ExecutionTask> parentTasks = parentIds.stream().map(i -> taskProvider.get(Long.parseLong(i))).collect(Collectors.toList());
+                                boolean allDS = true;
+                                int parentCardinality = 0;
+                                for (ExecutionTask pTask : parentTasks) {
+                                    allDS &= pTask instanceof DataSourceExecutionTask;
+                                    parentCardinality = Math.max(parentCardinality, TaskUtilities.getTargetCardinality(pTask));
+                                }
+                                final int expectedCardinality = TaskUtilities.getSourceCardinality(nextTask);
+                                if (allDS && parentCardinality > 1 && expectedCardinality == 1) {
+                                    // There are more than 1 parent data source tasks that returned a list of results,
+                                    // we need to split the job and
+                                    try {
+                                        List<ExecutionJob> jobs = this.jobFactory.splitJob(task.getJob());
+                                        logger.fine(String.format("Job %s will fork additional %d jobs", task.getJob().getName(), jobs.size()));
+                                        final String user = task.getContext().getPrincipal().getName();
+                                        final ExecutorService executorService = this.executors.get(user);
+                                        for (ExecutionJob job : jobs) {
+                                            if (canSubmitJob(user, job)) {
+                                                executorService.submit(() -> JobCommand.START.applyTo(job));
+                                            }
+                                        }
+                                    } catch (Exception e) {
+                                        logger.warning(ro.cs.tao.utils.ExceptionUtils.getStackTrace(logger, e));
+                                    }
+                                }
                                 TaskUtilities.transferParentOutputs(nextTask);
                                 nextTask.setContext(currentContext);
                                 if (!this.runningTasks.contains(nextTask.getId())) {
@@ -775,7 +801,9 @@ public class Orchestrator extends Notifiable {
                 valuesList.set(i, TaskUtilities.relativizePathForExecution(valuesList.get(i)));
 
             }
-            if (nextTask instanceof ExecutionGroup) {
+            if (nextTask instanceof DataSourceExecutionTask) {
+                // NOOP
+            } else if (nextTask instanceof ExecutionGroup) {
                 ExecutionGroup groupTask = (ExecutionGroup) nextTask;
                 groupTask.setStateHandler(new LoopStateHandler(new LoopState(cardinality, 1)));
                 // we need to keep this mapping because ExecutionTask.stateHandler is transient
@@ -1012,7 +1040,7 @@ public class Orchestrator extends Notifiable {
             try {
                 TaskCommand.STOP.applyTo(task);
             } catch (ExecutionException ex) {
-                logger.severe(ExceptionUtils.getStackTrace(ex));
+                logger.severe(ExceptionUtils.getStackTrace(logger, ex));
             }
         }
     }
@@ -1191,7 +1219,7 @@ public class Orchestrator extends Notifiable {
                 }
             }
         } catch (Exception e2) {
-            logger.severe(ExceptionUtils.getStackTrace(e2));
+            logger.severe(ExceptionUtils.getStackTrace(logger, e2));
             logger.severe("If this was caused by 'gdalinfo', please check that the Docker daemon is not blocked by a firewall");
         }
         return product;
