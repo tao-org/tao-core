@@ -72,6 +72,7 @@ CREATE TABLE execution.task
     used_HDD integer NULL,
     temp_target varchar(512) NULL,
     actual_target varchar(512) NULL,
+    cardinality integer NULL DEFAULT(1),
     -- special column used by JPA to distinguish which type of object is stored in one row (since this table holds 2 types of entities)
     discriminator integer NOT NULL
 );

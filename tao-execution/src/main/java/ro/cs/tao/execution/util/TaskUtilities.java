@@ -17,10 +17,13 @@
 package ro.cs.tao.execution.util;
 
 import org.springframework.stereotype.Component;
+import ro.cs.tao.Tuple;
 import ro.cs.tao.component.*;
+import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.datasource.persistence.DataSourceComponentProvider;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.docker.ExecutionConfiguration;
+import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.execution.persistence.ExecutionJobProvider;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
@@ -28,6 +31,7 @@ import ro.cs.tao.persistence.ContainerProvider;
 import ro.cs.tao.persistence.GroupComponentProvider;
 import ro.cs.tao.persistence.ProcessingComponentProvider;
 import ro.cs.tao.persistence.WorkflowNodeProvider;
+import ro.cs.tao.serialization.StringListAdapter;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.workflow.ParameterValue;
@@ -39,6 +43,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -155,8 +161,11 @@ public class TaskUtilities {
      * @param task      The task
      */
     public static int getTargetCardinality(ExecutionTask task) {
+        if (task.getCardinality() != null) {
+            return task.getCardinality();
+        }
         TaoComponent component = getComponentFor(task);
-        return getSourceCardinality(component);
+        return getTargetCardinality(component);
     }
 
     public static int getTargetCardinality(TaoComponent component) {
@@ -246,7 +255,7 @@ public class TaskUtilities {
      *
      * @param toTask    The current task.
      */
-    public static ExecutionTask transferParentOutputs(ExecutionTask toTask) {
+    public static void transferParentOutputs(ExecutionTask toTask) {
         if (toTask instanceof DataSourceExecutionTask) {
             throw new IllegalArgumentException("DataSourceExecutionTask cannot accept incoming links");
         }
@@ -279,7 +288,51 @@ public class TaskUtilities {
                 }
             }
         }
-        return toTask;
+    }
+
+    public static boolean isSynchronized(DataSourceExecutionTask task) {
+        final Set<ComponentLink> links = workflowNodeProvider.get(task.getWorkflowNodeId()).getIncomingLinks();
+        if (links == null || links.isEmpty()) {
+            return false;
+        }
+        final ComponentLink link = links.iterator().next();
+        final String portId = link.getOutput().getId();
+        return task.getComponent().getSources().stream().anyMatch(s -> s.getId().equals(portId));
+
+    }
+
+    public static List<Tuple<String, String>> coupleTaskOutputs(DataSourceExecutionTask primaryTask,
+                                                                DataSourceExecutionTask secondaryTask) {
+        final SourceDescriptor sdTwo = secondaryTask.getComponent().getSources().stream()
+                                              .filter(s -> DataSourceComponent.SYNC_PARAMETER.equals(s.getName()))
+                                              .findFirst().orElse(null);
+        if (sdTwo == null) {
+            throw new IllegalArgumentException("Data sources not synchronized");
+        }
+        final List<Variable> firstValues = primaryTask.getOutputParameterValues();
+        if (firstValues == null || firstValues.size() != 1) {
+            throw new ExecutionException("Primary data source didn't return any results");
+        }
+        final List<Variable> secondValues = secondaryTask.getOutputParameterValues();
+        if (secondValues == null || secondValues.size() != 1) {
+            throw new ExecutionException("Secondary data source didn't return any results");
+        }
+        final String firstStringList = firstValues.get(0).getValue();
+        final String secondStringList = secondValues.get(0).getValue();
+        final StringListAdapter adapter = new StringListAdapter();
+        final List<String> firstList = adapter.marshal(firstStringList);
+        final List<String> secondList = adapter.marshal(secondStringList);
+        final Pattern datePattern = Pattern.compile("([0-9]{4}[0-1][0-9][0-3][0-9])");
+        final List<Tuple<String, String>> results = new ArrayList<>();
+        for (String firstValue : firstList) {
+            final Matcher matcher = datePattern.matcher(firstValue);
+            if (matcher.find()) {
+                final String date = matcher.group(1);
+                final String secondValue = secondList.stream().filter(v -> v.contains(date)).findFirst().orElse(null);
+                results.add(new Tuple<>(firstValue, secondValue));
+            }
+        }
+        return results;
     }
 
     public static boolean isExternal(ExecutionTask task) {

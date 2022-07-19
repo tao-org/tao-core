@@ -56,6 +56,7 @@ import java.util.logging.Logger;
 public class DataSourceComponent extends TaoComponent {
     public static final String QUERY_PARAMETER = "query";
     public static final String SYNC_PARAMETER = "dateSync";
+    public static final String RESULTS_PARAMETER = "results";
 
     @XmlElement
     private String sensorName;
@@ -118,7 +119,7 @@ public class DataSourceComponent extends TaoComponent {
 
         TargetDescriptor targetDescriptor = new TargetDescriptor();
         targetDescriptor.setParentId(this.id);
-        targetDescriptor.setName("results");
+        targetDescriptor.setName(RESULTS_PARAMETER);
         DataDescriptor destData = new DataDescriptor();
         destData.setFormatType(DataFormat.RASTER);
         targetDescriptor.setDataDescriptor(destData);

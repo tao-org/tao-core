@@ -127,8 +127,8 @@ VALUES ('localhost', '', '', 'master', 'Master Node', 'master');
 INSERT INTO product.naming_rule (id, sensor, regex, description) VALUES
 (1, 'Sentinel2', '(S2[A-B])_(MSIL1C|MSIL2A)_(\d{8})T(\d{6})_(N\d{4})_R(\d{3})_T(\d{2}\w{3})_(\d{8}T\d{6})(?:.SAFE)?', 'Sentinel-2 L1C and L2A product naming'),
 (2, 'Sentinel1', '(S1[A-B])_(S[1-6]|IW|EW|WV)_(SLC|GRD|RAW|OCN)([FHM_])_([0-2])([AS])(SH|SV|DH|DV)_(\d{8})T(\d{6})_(\d{8})T(\d{6})_(\d{6})_([0-9A-F]{6})_([0-9A-F]{4})(?:.SAFE)?', 'Sentinel-1 L1 product naming'),
-(3, 'Landsat8', '(L\w\d{2})_(L[1-2]\w{2})_(\d{3})(\d{3})_(\d{8})_(\d{8})_(\d{2})_(\w{2})', 'Landsat-8 L1 product naming');
-(4, 'GeoTIFF', '([A-Za-z0-9_-]+)\.(tiff|tif|TIFF|TIF)', 'Generic GeoTIFF product')
+(3, 'Landsat8', '(L\w\d{2})_(L[1-2]\w{2})_(\d{3})(\d{3})_(\d{8})_(\d{8})_(\d{2})_(\w{2})', 'Landsat-8 L1 product naming'),
+(4, 'GeoTIFF', '([A-Za-z0-9_-]+)\.(tiff|tif|TIFF|TIF)', 'Generic GeoTIFF product');
 
 INSERT INTO product.naming_rule_token (naming_rule_id, token_name, matching_group_number, description) VALUES
 (1, 'MISSION', 1, 'Mission identifier'),
@@ -174,6 +174,6 @@ INSERT INTO product.naming_rule_token (naming_rule_id, token_name, matching_grou
 INSERT INTO workspace.repository_type (id, name, params) VALUES
 (1, 'Local repository', '{"root":true}'),
 (2, 'AWS S3 repository', '{"aws.region":true,"aws.access.key":false,"aws.secret.key":false,"aws.bucket":true}'),
-(3, 'OpenStack Swift S3 repository', '{"openstack.auth.url":true,"openstack.tenantId":true,"openstack.domain":true,"openstack.user":true,"openstack.password":true,"openstack.bucket":true}');
+(3, 'OpenStack Swift S3 repository', '{"openstack.auth.url":true,"openstack.tenantId":true,"openstack.domain":true,"openstack.user":true,"openstack.password":true,"openstack.bucket":true}'),
 (4, 'STAC repository', '{"stac.url":true, "page.size":false}'),
 (5, 'Network share repository', '{"smb.server":true,"smb.domain":false,"smb.share":true,"smb.user":false,"smb.password":false}');
