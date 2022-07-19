@@ -173,6 +173,7 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
 
     protected void changeTaskStatus(ExecutionTask task, ExecutionStatus status, boolean firstTime) {
         if (status != task.getExecutionStatus()) {
+            task.setLastUpdated(LocalDateTime.now());
             final String name = TaskUtilities.getTaskName(task);
             try {
                 if (!this.contextMap.containsKey(task.getId())) {
@@ -194,13 +195,13 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
                         case PENDING_FINALISATION:
                         case DONE:
                             task.setExecutionStatus(status);
-                            task.setLastUpdated(LocalDateTime.now());
                             notifyStatusListener(task);
                             decrement(userName, cpu, memory);
                             break;
                         case CANCELLED:
                         case SUSPENDED:
                         case FAILED:
+                            task.setEndTime(LocalDateTime.now());
                             notifyStatusListener(task, status);
                             decrement(userName, cpu, memory);
                             break;
