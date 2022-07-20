@@ -244,8 +244,7 @@ public class DefaultSession implements Session {
                                 args, false/*cmdsToRunAsSu.contains(jt.getRemoteCommand())*/, null) :
                         new ExecutionUnit(ExecutorType.SSH2, node.getId(), node.getUserName(), node.getUserPass(),
                                 //Crypto.decrypt(node.getUserPass(), node.getUserName()),
-                                args, false /*cmdsToRunAsSu.contains(jt.getRemoteCommand())*/, SSHMode.EXEC);
-            }
+                        		args, false /*cmdsToRunAsSu.contains(jt.getRemoteCommand())*/, SSHMode.EXEC, true, jt.getJobName() + "_" + System.nanoTime());            }
             if (memConstraint != null) {
                 unit.setMinMemory(memConstraint);
             }
