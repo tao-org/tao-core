@@ -41,8 +41,14 @@ public class ExecutionUnit {
     protected Long minDisk;
     protected ContainerUnit containerUnit;
     protected Map<String, Object> metadata;
+    protected final boolean asyncSSHExecution;
+    protected final String asyncSSHFileName;
 
     public ExecutionUnit(ExecutorType type, String host, String user, String password, List<String> arguments, boolean asSuperUser, SSHMode sshMode) {
+    	this(type, host, user, password, arguments, asSuperUser, sshMode, false, null);
+    }
+    
+    public ExecutionUnit(ExecutorType type, String host, String user, String password, List<String> arguments, boolean asSuperUser, SSHMode sshMode, boolean asyncSSHExecution, String asyncSSHFileName) {
         this.type = type;
         this.host = host;
         this.user = user;
@@ -50,6 +56,8 @@ public class ExecutionUnit {
         this.arguments = arguments;
         this.asSuperUser = asSuperUser;
         this.sshMode = sshMode;
+        this.asyncSSHExecution = asyncSSHExecution;
+        this.asyncSSHFileName = asyncSSHFileName;
     }
 
     public ExecutorType getType() { return type; }
@@ -166,4 +174,12 @@ public class ExecutionUnit {
         }
         return this.containerUnit;
     }
+
+	public boolean isAsyncSSHExecution() {
+		return asyncSSHExecution;
+	}
+
+	public String getAsyncSSHFileName() {
+		return asyncSSHFileName;
+	}
 }

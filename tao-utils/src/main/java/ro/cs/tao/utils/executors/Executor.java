@@ -120,7 +120,7 @@ public abstract class Executor<T> implements Runnable {
         }
         final Executor<?> executor;
         if (job.getType() != ExecutorType.SCRIPT) {
-            executor = create(job.getType(), job.getHost(), job.getArguments(), job.asSuperUser(), job.getSshMode());
+            executor = create(job.getType(), job.getHost(), job.getArguments(), job.asSuperUser(), job.getSshMode(), job.isAsyncSSHExecution(), job.getAsyncSSHFileName());
         } else{
             executor = new JsonExecutor(job);
         }
@@ -159,7 +159,9 @@ public abstract class Executor<T> implements Runnable {
                                    job.getArguments(),
                                    job.asSuperUser(),
                                    job.getSshMode(),
-                                   workingDirectory);
+                                   workingDirectory,
+                                   job.isAsyncSSHExecution(),
+                                   job.getAsyncSSHFileName());
         executor.setUser(job.getUser());
         executor.setPassword(job.getPassword());
         executor.setCertificate(job.getCertificate());
@@ -288,25 +290,29 @@ public abstract class Executor<T> implements Runnable {
     }
 
     public static Executor<?> create(ExecutorType type, String host, List<String> arguments) {
-        return create(type, host, arguments, false, SSHMode.EXEC, null);
+        return create(type, host, arguments, false, SSHMode.EXEC, null, false, null);
     }
 
     public static Executor<?> create(ExecutorType type, String host, List<String> arguments, boolean asSuperUser) {
-        return create(type, host, arguments, asSuperUser, SSHMode.EXEC, null);
+        return create(type, host, arguments, asSuperUser, SSHMode.EXEC, null, false, null);
     }
 
     public static Executor<?> create(ExecutorType type, String host, List<String> arguments, boolean asSuperUser, SSHMode mode) {
-        return create(type, host, arguments, asSuperUser, mode, null);
+        return create(type, host, arguments, asSuperUser, mode, null, false, null);
     }
 
-    public static Executor<?> create(ExecutorType type, String host, List<String> arguments, boolean asSuperUser, SSHMode mode, File workingDir) {
+    public static Executor<?> create(ExecutorType type, String host, List<String> arguments, boolean asSuperUser, SSHMode mode, boolean asyncSSHExecution, String asyncSSHFileName) {
+        return create(type, host, arguments, asSuperUser, mode, null, asyncSSHExecution, asyncSSHFileName);
+    }
+    
+    public static Executor<?> create(ExecutorType type, String host, List<String> arguments, boolean asSuperUser, SSHMode mode, File workingDir, boolean asyncSSHExecution, String asyncSSHFileName) {
         Executor<?> executor = null;
         switch (type) {
             case PROCESS:
                 executor = new ProcessExecutor(host, arguments, asSuperUser, workingDir);
                 break;
             case SSH2:
-                executor = new SSHExecutor(host, arguments, asSuperUser, mode);
+                executor = new SSHExecutor(host, arguments, asSuperUser, mode, asyncSSHExecution, asyncSSHFileName);
                 break;
             case MOCK:
                 executor = new MockExecutor(host, arguments, asSuperUser);
