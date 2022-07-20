@@ -237,18 +237,20 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                             }
                             break;
                         case Session.FAILED:
-                            // Just mark the task as finished with failed status
-                            markTaskFinished(task, ExecutionStatus.FAILED);
                             String error;
                             int code;
                             if (session instanceof DefaultSession) {
                                 final DefaultSession defaultSession = (DefaultSession) this.session;
-                                error = (defaultSession).getJobOutput(task.getResourceId());
-                                code = defaultSession.getJobExitCode(task.getResourceId());
+                                String resourceId = task.getResourceId();
+                                error = defaultSession.getJobOutput(resourceId);
+                                code = defaultSession.getJobExitCode(resourceId);
+                                defaultSession.cleanupJob(resourceId);
                             } else {
                                 error = "n/a";
                                 code = -255;
                             }
+                            task.setLog(error);
+                            markTaskFinished(task, ExecutionStatus.FAILED);
                             logger.warning(String.format("Task %s FAILED. Process output: %s", taskName, error));
                             if (task instanceof ProcessingExecutionTask) {
                                 notifyExternalListeners((ProcessingExecutionTask) task, ExecutionStatus.FAILED.friendlyName(), code, error);
@@ -484,7 +486,10 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                     if (task.getInstanceTemporaryOutput() != null) {
                         // replace the original command with /bin/bash since we're going to execute
                         // multiple commands inside docker run
-                        cmd = wrapShellInvocation(argsList, cmd, task.getInstanceTemporaryOutput(), task.getInstanceTargetOutput(), isLocal);
+                        cmd = wrapShellInvocation(argsList, cmd,
+                                                  task.getInstanceTemporaryOutput(),
+                                                  task.getInstanceTargetOutput(), isLocal,
+                                                  component.isOutputManaged());
                     }
                 } else {
                     cmd = "docker";
@@ -548,15 +553,24 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
     }
 
     private String wrapShellInvocation(final List<String> argsList, String initialCmd,
-                                       final String tempOutput, final String finalOutput, final boolean isLocal) {
+                                       final String tempOutput, final String finalOutput, final boolean isLocal,
+                                       final boolean isOutputManaged) {
+        final String tmpPath = isOutputManaged ? tempOutput : tempOutput.substring(0, tempOutput.lastIndexOf('/') + 1) + "*.*";
+        final String finalPath = isOutputManaged ? finalOutput : finalOutput.substring(0, finalOutput.lastIndexOf('/') + 1);
         argsList.add(0, initialCmd);
         argsList.add("&&");
         argsList.add("cp");
-        argsList.add(tempOutput);
-        argsList.add(finalOutput);
+        if (!isOutputManaged) {
+            argsList.add("-r");
+        }
+        argsList.add(tmpPath);
+        argsList.add(finalPath);
         argsList.add("&&");
         argsList.add("rm");
-        argsList.add(tempOutput);
+        if (!isOutputManaged) {
+            argsList.add("-r");
+        }
+        argsList.add(tmpPath);
         // all the existing args are merged into a single string as argument to -c
         final String quoteChar = isLocal
                 ? SystemUtils.IS_OS_WINDOWS

@@ -178,7 +178,8 @@ CREATE TABLE component.processing_component
 	created timestamp NULL DEFAULT now(),
     modified timestamp NULL,
 	active boolean NULL DEFAULT true,
-	transient boolean NULL DEFAULT false
+	transient boolean NULL DEFAULT false,
+	output_managed boolean NULL DEFAULT true
 );
 ALTER TABLE component.processing_component ADD CONSTRAINT PK_processing_component
 	PRIMARY KEY (id);
