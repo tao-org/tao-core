@@ -430,9 +430,9 @@ public class SSHExecutor extends Executor<Channel> {
                         if (this.outputConsumer != null && (this.password == null || !this.password.equals(line))) {
                             this.outputConsumer.consume(line);
                         }
-                        if (logMessages && !this.password.equals(line)) {
+                        /*if (logMessages && !this.password.equals(line)) {
                             this.logger.fine(line);
-                        }
+                        }*/
 
                         // try to extract the screen ID
                         final Matcher matcher = SCREEN_ID_PATTERN.matcher(line.trim());
