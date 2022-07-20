@@ -843,6 +843,8 @@ public class Orchestrator extends Notifiable {
                     }
                 }
                 final List<Variable> nextInputParameters = nextTask.getInputParameterValues();
+                final Set<String> outParams = nextTask.getOutputParameterValues().stream().map(Variable::getKey).collect(Collectors.toSet());
+                nextInputParameters.stream().filter(v -> !outParams.contains(v.getKey())).forEach(v -> resolveVariable(nextTask, v));
                 if (expectedCardinality != 0) {
                     if (cardinality < expectedCardinality) {
                         String message = String.format("Insufficient inputs for task %s [expected %s, received %s]",
@@ -851,7 +853,6 @@ public class Orchestrator extends Notifiable {
                         changeStatus(nextTask, ExecutionStatus.CANCELLED, message);
                     }
                     int idx = 0;
-                    final Set<String> outParams = nextTask.getOutputParameterValues().stream().map(Variable::getKey).collect(Collectors.toSet());
                     Variable overriddenOutParam = null;
                     final Map<String, String> connectedInputs = TaskUtilities.getConnectedInputs(task, nextTask);
                     for (Variable var : nextInputParameters) {
@@ -1120,6 +1121,39 @@ public class Orchestrator extends Notifiable {
                         nextTask.getInputParameterValues().removeIf(v -> v.getKey().equals(key));
                     } catch (ParseException ex) {
                         changeStatus(nextTask, ExecutionStatus.FAILED, ex.getMessage());
+                    }
+                }
+            }
+        }
+    }
+
+    private void resolveVariable(ExecutionTask nextTask, Variable variable) {
+        final String value = variable.getValue();
+        if (value != null && value.contains("${")) {
+            DataSourceExecutionTask originatingTask = findOriginatingTask(nextTask);
+            if (originatingTask != null) {
+                String sensor = originatingTask.getComponent().getSensorName().replace("-", "");
+                List<NamingRule> rules = namingRuleProvider.listBySensor(sensor);
+                if (rules.size() > 0) {
+                    NameExpressionParser parser = new NameExpressionParser(rules.get(0));
+                    final List<Variable> oValues = originatingTask.getOutputParameterValues();
+                    if (oValues != null && oValues.size() > 0) {
+                        final List<String> oValuesList;
+                        oValuesList = this.listAdapter.marshal(oValues.get(0).getValue());
+                        final int size = oValuesList.size();
+                        for (int i = 0; i < size; i++) {
+                            try {
+                                Path path = Paths.get(new URI(oValuesList.get(i)));
+                                oValuesList.set(i, path.getName(path.getNameCount() - 1).toString());
+                            } catch (URISyntaxException e) {
+                                logger.warning(e.getMessage());
+                            }
+                        }
+                        try {
+                            variable.setValue(parser.resolve(value, oValuesList.toArray(new String[0])));
+                        } catch (ParseException ex) {
+                            changeStatus(nextTask, ExecutionStatus.FAILED, ex.getMessage());
+                        }
                     }
                 }
             }
