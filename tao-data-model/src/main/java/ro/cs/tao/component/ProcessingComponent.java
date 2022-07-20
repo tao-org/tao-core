@@ -68,6 +68,7 @@ public class ProcessingComponent extends TaoComponent {
     private ProcessingComponentType componentType;
     private String owner;
     private boolean isTransient;
+    private Boolean outputManaged;
 
 
     public ProcessingComponent() {
@@ -296,6 +297,25 @@ public class ProcessingComponent extends TaoComponent {
      */
     public void setCategory(ComponentCategory category) {
         this.category = category;
+    }
+
+    /**
+     * Tests if the output of this component is managed by TAO.
+     * If <code>false</code>, the output is managed by this component.
+     */
+    public Boolean isOutputManaged() {
+        if (outputManaged == null) {
+            outputManaged = true;
+        }
+        return outputManaged;
+    }
+
+    /**
+     * Sets the output management. If <code>true</code> it will be managed by TAO.
+     * If <code>false</code> it will be managed by the component itself.
+     */
+    public void setOutputManaged(Boolean value) {
+        outputManaged = value;
     }
 
     /**

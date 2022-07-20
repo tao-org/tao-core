@@ -65,8 +65,10 @@ import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
 import ro.cs.tao.workflow.enums.TransitionBehavior;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.Principal;
@@ -81,6 +83,7 @@ import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  * The singleton orchestrator of task executions.
@@ -739,13 +742,13 @@ public class Orchestrator extends Notifiable {
                 /*pcTask.setOutputParameterValue(t.getName(),
                                                pcTask.getInstanceTemporaryOutput() != null && pcTask.getInstanceTemporaryOutput().equals(targetOutput) ?
                                                        pcTask.getInstanceTargetOuptut(null) : targetOutput);*/
-                final String instanceTargetOuptut = translateToMasterPath(pcTask.getInstanceTargetOutput());
+                final String instanceTargetOuptut = translateOutputToMasterPath(pcTask);
                 // if the output came from a remote note, we need to translate the node volumes to master volumes
-                if (targetOutput == null) {
+                if (targetOutput == null || instanceTargetOuptut == null) {
                     logger.severe(String.format("NULL TARGET [task %s, parameter %s]", pcTask.getId(), t.getName()));
-                } else if (!targetOutput.equals(instanceTargetOuptut)) {
+                }/* else if (!targetOutput.equals(instanceTargetOuptut)) {
                     logger.warning(String.format("Value %s different than expected [%s]", targetOutput, instanceTargetOuptut));
-                }
+                }*/
                 pcTask.setOutputParameterValue(t.getName(), instanceTargetOuptut);
                 logger.finest(String.format("Output [%s] of task [id=%d] was set to '%s'",
                                             t.getName(), pcTask.getId(), instanceTargetOuptut));
@@ -1268,11 +1271,35 @@ public class Orchestrator extends Notifiable {
         return canSubmitJob(user, executionJob) ? executionJob : null;
     }
 
-    private String translateToMasterPath(String path) {
+    private String translateOutputToMasterPath(ProcessingExecutionTask task) {
+        String path = task.getInstanceTargetOutput();
         final DockerVolumeMap workerVolumeMap = ExecutionConfiguration.getWorkerContainerVolumeMap();
-        return path.replace(workerVolumeMap.getContainerWorkspaceFolder(),
-                            //FileUtilities.asUnixPath(SystemVariable.ROOT.value(), false));
-                            SystemVariable.ROOT.value().replace("\\", "/"));
+        String outPath = path.replace(workerVolumeMap.getContainerWorkspaceFolder(),
+                                      SystemVariable.ROOT.value().replace("\\", "/"));
+        if (!task.getComponent().isOutputManaged()) {
+            DataFormat type = task.getComponent().getTargets().get(0).getDataDescriptor().getFormatType();
+            switch (type) {
+                case RASTER:
+                case VECTOR:
+                case FOLDER:
+                    Path taskFolder = Paths.get(outPath).getParent();
+                    try (Stream<Path> list = Files.list(taskFolder)) {
+                        Path producedPath = list.findFirst().orElse(null);
+                        if (producedPath != null) {
+                            outPath = outPath.substring(0, outPath.lastIndexOf('/') + 1) + producedPath.getFileName();
+                        } else {
+                            outPath = null;
+                        }
+                    } catch (IOException e) {
+                        logger.severe(ExceptionUtils.getStackTrace(logger, e));
+                    }
+                    break;
+                default:
+                    outPath = null;
+                    break;
+            }
+        }
+        return outPath;
     }
 
     private class MessageContext extends SessionContext {

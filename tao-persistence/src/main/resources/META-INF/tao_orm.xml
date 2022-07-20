@@ -425,6 +425,9 @@
             <basic name="isTransient">
                 <column name="transient" nullable="false" column-definition="varchar NULL DEFAULT false"/>
             </basic>
+            <basic name="outputManaged">
+                <column name="output_managed" nullable="true" column-definition="boolean NULL DEFAULT true"/>
+            </basic>
 
             <many-to-many name="parameterDescriptors" fetch="EAGER">
                 <join-table name="component.component_parameters">

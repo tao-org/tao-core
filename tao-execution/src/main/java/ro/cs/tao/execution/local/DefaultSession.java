@@ -181,6 +181,11 @@ public class DefaultSession implements Session {
         return consumer != null ? consumer.getOutput() : "n/a";
     }
 
+    public void cleanupJob(String jobId) {
+        this.jobOutputs.remove(jobId);
+        this.runningJobs.remove(jobId);
+    }
+
     @Override
     public String runJob(JobTemplate jt) throws DrmaaException {
         checkSession();
