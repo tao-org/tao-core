@@ -486,10 +486,9 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                     if (task.getInstanceTemporaryOutput() != null) {
                         // replace the original command with /bin/bash since we're going to execute
                         // multiple commands inside docker run
-                        cmd = wrapShellInvocation(argsList, cmd,
+                        cmd = wrapShellInvocation(component, argsList, cmd,
                                                   task.getInstanceTemporaryOutput(),
-                                                  task.getInstanceTargetOutput(), isLocal,
-                                                  component.isOutputManaged());
+                                                  task.getInstanceTargetOutput(), isLocal);
                     }
                 } else {
                     cmd = "docker";
@@ -552,22 +551,23 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         return jt;
     }
 
-    private String wrapShellInvocation(final List<String> argsList, String initialCmd,
-                                       final String tempOutput, final String finalOutput, final boolean isLocal,
-                                       final boolean isOutputManaged) {
+    private String wrapShellInvocation(ProcessingComponent component, final List<String> argsList, String initialCmd,
+                                       final String tempOutput, final String finalOutput, final boolean isLocal) {
+        final boolean isOutputManaged = component.isOutputManaged();
         final String tmpPath = isOutputManaged ? tempOutput : tempOutput.substring(0, tempOutput.lastIndexOf('/') + 1) + "*.*";
         final String finalPath = isOutputManaged ? finalOutput : finalOutput.substring(0, finalOutput.lastIndexOf('/') + 1);
+        final boolean recursiveCondition = !isOutputManaged || component.getTargets().stream().anyMatch(t -> DataFormat.FOLDER == t.getDataDescriptor().getFormatType());
         argsList.add(0, initialCmd);
         argsList.add("&&");
         argsList.add("cp");
-        if (!isOutputManaged) {
+        if (recursiveCondition) {
             argsList.add("-r");
         }
         argsList.add(tmpPath);
         argsList.add(finalPath);
         argsList.add("&&");
         argsList.add("rm");
-        if (!isOutputManaged) {
+        if (recursiveCondition) {
             argsList.add("-r");
         }
         argsList.add(tmpPath);

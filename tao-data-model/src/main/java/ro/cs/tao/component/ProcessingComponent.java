@@ -29,6 +29,7 @@ import ro.cs.tao.component.validation.ValidationException;
 import ro.cs.tao.docker.ExecutionConfiguration;
 import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.utils.FileUtilities;
+import ro.cs.tao.utils.StringUtilities;
 
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -437,10 +438,10 @@ public class ProcessingComponent extends TaoComponent {
         }
         for (ParameterDescriptor parameterDescriptor : this.parameters) {
             if (!clonedMap.containsKey(parameterDescriptor.getName())) {
-                if (!"null".equals(String.valueOf(parameterDescriptor.getDefaultValue()))) {
-                    clonedMap.put(parameterDescriptor.getName(), parameterDescriptor.getDefaultValue());
-                } else {
+                if (StringUtilities.isNullOrEmpty(parameterDescriptor.getDefaultValue())) {
                     removeEmptyParameter(parameterDescriptor);
+                } else {
+                    clonedMap.put(parameterDescriptor.getName(), parameterDescriptor.getDefaultValue());
                 }
             }
         }
@@ -594,6 +595,7 @@ public class ProcessingComponent extends TaoComponent {
                 this.template.setContents(templateContents.substring(0, beforeSeparator) + templateContents.substring(afterSeparator), false);
             } else {
                 beforeSeparator = templateContents.lastIndexOf('\n', idx);
+
                 afterSeparator = templateContents.indexOf('\n', idx);
                 this.template.setContents(templateContents.substring(0, beforeSeparator) + templateContents.substring(afterSeparator), false);
             }

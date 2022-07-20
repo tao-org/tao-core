@@ -22,7 +22,8 @@ public class NamingRuleManager extends EntityManager<NamingRule, Integer, Naming
 
     @Override
     public List<NamingRule> listBySensor(String sensor) {
-        return repository.findBySensor(sensor);
+        final String search = "n/a".equalsIgnoreCase(sensor) ? "Generic" : sensor;
+        return repository.findBySensor(search);
     }
 
     @Override
