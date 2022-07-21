@@ -25,6 +25,7 @@ public class ExecutionTaskSummary {
     private String componentName;
     private LocalDateTime taskStart;
     private LocalDateTime taskEnd;
+    private LocalDateTime lastUpdated;
     private String host;
     private ExecutionStatus taskStatus;
 
@@ -73,4 +74,11 @@ public class ExecutionTaskSummary {
         this.taskStatus = taskStatus;
     }
 
+    public LocalDateTime getLastUpdated() {
+        return lastUpdated;
+    }
+
+    public void setLastUpdated(LocalDateTime lastUpdated) {
+        this.lastUpdated = lastUpdated;
+    }
 }

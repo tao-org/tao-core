@@ -103,6 +103,8 @@ public interface OrchestratorService extends TAOService {
 
     List<ExecutionJobSummary> getCompletedJobs(String userName);
 
+    void clearJobHistory(String userName) throws PersistenceException;
+
     long startExternalWorkflow(String jsonGraph, String container, EndpointDescriptor callback) throws ExecutionException;
 
     long invokeWPS(String identifier, Map<String, Map<String, String>> inputs) throws ExecutionException;
