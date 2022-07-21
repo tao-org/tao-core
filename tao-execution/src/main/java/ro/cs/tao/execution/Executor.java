@@ -187,7 +187,6 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
                 final long memory = task.getUsedRAM();
                 if (firstTime) {
                     task.setExecutionStatus(status);
-                    task.setLastUpdated(LocalDateTime.now());
                     notifyStatusListener(task);
                     increment(userName, cpu, memory);
                 } else {
@@ -206,6 +205,9 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
                             decrement(userName, cpu, memory);
                             break;
                         case RUNNING:
+                            if (task.getStartTime() == null) {
+                                task.setStartTime(LocalDateTime.now());
+                            }
                             if (task.getExecutionStatus() != status) {
                                 notifyStatusListener(task, status);
                             }

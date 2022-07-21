@@ -47,6 +47,7 @@ import java.util.stream.Collectors;
  * @author Cosmin Cara
  */
 public class DefaultSession implements Session {
+    private static final String SSH_ASYNC_KEY = "tao.ssh.async";
     private final String localHost;
     private final String localIp;
     private NodeDescription[] nodes;
@@ -241,10 +242,12 @@ public class DefaultSession implements Session {
             } else {
                 unit = node == null || isLocalHost(node.getId()) ?
                         new ExecutionUnit(ExecutorType.PROCESS, this.localHost, null, null,
-                                args, false/*cmdsToRunAsSu.contains(jt.getRemoteCommand())*/, null) :
+                                          args, false/*cmdsToRunAsSu.contains(jt.getRemoteCommand())*/, null) :
                         new ExecutionUnit(ExecutorType.SSH2, node.getId(), node.getUserName(), node.getUserPass(),
-                                //Crypto.decrypt(node.getUserPass(), node.getUserName()),
-                        		args, false /*cmdsToRunAsSu.contains(jt.getRemoteCommand())*/, SSHMode.EXEC, true, jt.getJobName() + "_" + System.nanoTime());            }
+                                          //Crypto.decrypt(node.getUserPass(), node.getUserName()),
+                                          args, false /*cmdsToRunAsSu.contains(jt.getRemoteCommand())*/, SSHMode.EXEC,
+                                          ConfigurationManager.getInstance().getBooleanValue(SSH_ASYNC_KEY),
+                                          jt.getJobName() + "_" + System.nanoTime());            }
             if (memConstraint != null) {
                 unit.setMinMemory(memConstraint);
             }

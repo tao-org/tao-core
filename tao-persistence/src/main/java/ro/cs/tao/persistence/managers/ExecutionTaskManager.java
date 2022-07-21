@@ -97,7 +97,7 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
         return jdbcTemplate.query(con -> {
             PreparedStatement statement =
                     con.prepareStatement("SELECT t.id, w.name \"workflow\", CASE WHEN d.id IS NULL THEN CASE WHEN p.id IS NULL THEN 'group' ELSE p.id END ELSE d.id END \"componentName\", " +
-                                                 "t.start_time, t.end_time, t.execution_node_host_name, t.execution_status_id FROM execution.task t " +
+                                                 "t.start_time, t.end_time, t.execution_node_host_name, t.execution_status_id, t.last_updated FROM execution.task t " +
                                                  "INNER JOIN execution.job j ON j.id = t.job_id " +
                                                  "INNER JOIN workflow.graph w ON w.id = j.workflow_id " +
                                                  "LEFT OUTER JOIN component.data_source_component d ON d.id = t.component_id " +
@@ -120,6 +120,10 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
             }
             result.setHost(rs.getString(6));
             result.setTaskStatus(EnumUtils.getEnumConstantByValue(ExecutionStatus.class, rs.getInt(7)));
+            timestamp = rs.getTimestamp(8);
+            if (timestamp != null) {
+                result.setLastUpdated(timestamp.toLocalDateTime());
+            }
             return result;
         });
     }
