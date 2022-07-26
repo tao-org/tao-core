@@ -1,5 +1,6 @@
 package ro.cs.tao.datasource;
 
+import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.utils.executors.NamedThreadPoolExecutor;
 
@@ -16,6 +17,7 @@ import java.util.logging.Logger;
  * @author Cosmin Cara
  */
 public class DownloadManager {
+    private static final String SERIALIZE_DOWNLOADS_KEY = "serialize.downloads";
     private static final DownloadManager instance;
     private static final Logger logger;
     private final Map<String, NamedThreadPoolExecutor> downloadWorkers;
@@ -26,10 +28,16 @@ public class DownloadManager {
         logger = Logger.getLogger(DownloadManager.class.getName());
         String dsName;
         int maxTransfers;
+        final boolean serializeDownloads = ConfigurationManager.getInstance().getBooleanValue(SERIALIZE_DOWNLOADS_KEY);
         for (DataSource<?, ?> dataSource : DataSourceManager.getInstance().getRegisteredDataSources()) {
             dsName = dataSource.defaultId();
-            maxTransfers = dataSource.getMaximumAllowedTransfers();
-            instance.downloadWorkers.put(dsName, new NamedThreadPoolExecutor(dsName, maxTransfers));
+            if (serializeDownloads) {
+                maxTransfers = 1;
+                setConcurrentDownloads(dsName, maxTransfers);
+            } else {
+                maxTransfers = dataSource.getMaximumAllowedTransfers();
+                instance.downloadWorkers.put(dsName, new NamedThreadPoolExecutor(dsName, maxTransfers));
+            }
             logger.fine(String.format("Data source [%s] initialized with %d concurrent downloads", dsName, maxTransfers));
         }
     }
