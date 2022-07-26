@@ -54,7 +54,7 @@ public class ProcessExecutor extends Executor<Process> {
                 pb.directory(this.workingDirectory);
             }
             if (logMessages) {
-                this.logger.finest("[" + this.host + "] " + String.join(" ", pb.command()));
+                this.logger.fine("[" + this.host + "] " + String.join(" ", pb.command()));
             }
             //redirect the error of the tool to the standard output
             final Level parentLevel = this.logger.getParent().getLevel();
@@ -62,10 +62,11 @@ public class ProcessExecutor extends Executor<Process> {
                     arguments.stream().noneMatch(a -> a.equals("gdalinfo") || a.equals("build")
                             || a.equals("tag") || a.equals("push") || a.equals("images")) &&
                     (parentLevel == null || parentLevel.intValue() <= Level.FINE.intValue())) {
-                pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+                //pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+                pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
                 pb.redirectError(ProcessBuilder.Redirect.INHERIT);
             }
-            pb.redirectErrorStream(true);
+            //pb.redirectErrorStream(true);
             pb.environment().putAll(System.getenv());
             if (asSuperUser) {
                 insertSudoParams();

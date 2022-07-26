@@ -89,6 +89,12 @@ public interface OrchestratorService extends TAOService {
      * @throws ExecutionException   In case anything goes wrong or there was no job
      */
     void resumeJob(long jobId) throws ExecutionException;
+    /**
+     * Removes all pending jobs for a user.
+     * @param user  The user for which to remove the jobs
+     * @return      The number of purged jobs
+     */
+    int purgeJobs(String user) throws ExecutionException;
 
     /**
      * Returns (from the database) the list of tasks that are marked as being executed.

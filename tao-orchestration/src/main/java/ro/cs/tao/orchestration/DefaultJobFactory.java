@@ -31,6 +31,7 @@ import ro.cs.tao.execution.persistence.ExecutionJobProvider;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.execution.util.TaskUtilities;
 import ro.cs.tao.persistence.*;
+import ro.cs.tao.security.SessionContext;
 import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.serialization.StringListAdapter;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
@@ -83,7 +84,7 @@ public class DefaultJobFactory {
      * @param workflow The workflow
      * @param inputs   The (possibly overridden) input parameter values
      */
-    public ExecutionJob createJob(String jobName, WorkflowDescriptor workflow, Map<String, Map<String, String>> inputs)
+    public ExecutionJob createJob(SessionContext context, String jobName, WorkflowDescriptor workflow, Map<String, Map<String, String>> inputs)
             throws PersistenceException {
         ExecutionJob job = null;
         if (workflow != null && workflow.isActive()) {
@@ -116,6 +117,7 @@ public class DefaultJobFactory {
                     }
                     ExecutionTask task = createTask(job, workflow, node, taskInputs);
                     task.setLevel(node.getLevel());
+                    task.setContext(context);
                     if (task.getId() == null) {
                         taskProvider.save(task, job);
                     } else {
@@ -142,7 +144,7 @@ public class DefaultJobFactory {
         return job;
     }
 
-    public ExecutionJob createJob(String jobName, Map<String, Map<String, String>> inputs)
+    public ExecutionJob createJob(SessionContext context, String jobName, Map<String, Map<String, String>> inputs)
             throws PersistenceException {
         ExecutionJob job = new ExecutionJob();
         job.setName(jobName);
@@ -153,6 +155,7 @@ public class DefaultJobFactory {
         for (Map.Entry<String, Map<String, String>> entry : inputs.entrySet()) {
             ExecutionTask task = createWPSComponentExecutionTask(entry.getKey(), entry.getValue());
             task.setLevel(1);
+            task.setContext(context);
             if (task.getId() == null) {
                 taskProvider.save(task, job);
             } else {
@@ -580,11 +583,9 @@ public class DefaultJobFactory {
                 }
             } else {
                 for (DataSourceExecutionTask dataTask : dataTasks) {
-                    DataSourceComponent dataSourceComponent = dataTask.getComponent();
-                    final String outPort = dataSourceComponent.getTargets().get(0).getName();
                     Variable values = dataTask.getOutputParameterValues()
                                               .stream()
-                                              .filter(v -> v.getKey().equals(outPort))
+                                              .filter(v -> v.getKey().equals(DataSourceComponent.RESULTS_PARAMETER))
                                               .findFirst().orElse(null);
                     if (values != null) {
                         List<String> list = deserializeResults(values.getValue());
@@ -597,7 +598,8 @@ public class DefaultJobFactory {
                                 }
                                 // Reset the output values to prevent appending to any existing value
                                 clonedDataTask.setOutputParameterValues(null);
-                                clonedDataTask.setOutputParameterValue(outPort, list.get(i));
+                                clonedDataTask.setOutputParameterValue(DataSourceComponent.RESULTS_PARAMETER, list.get(i));
+                                clonedDataTask.setCardinality(1);
                                 clonedDataTask.setContext(dataTask.getContext());
                                 taskProvider.update(clonedDataTask);
                                 clonedJob = jobProvider.update(clonedJob);
@@ -605,7 +607,8 @@ public class DefaultJobFactory {
                             }
                             // Reset the output values to prevent appending to any existing value
                             dataTask.setOutputParameterValues(null);
-                            dataTask.setOutputParameterValue(outPort, list.get(0));
+                            dataTask.setOutputParameterValue(DataSourceComponent.RESULTS_PARAMETER, list.get(0));
+                            dataTask.setCardinality(1);
                             taskProvider.update(dataTask);
                             job = jobProvider.update(job);
                         }

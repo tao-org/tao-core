@@ -48,6 +48,7 @@ import ro.cs.tao.persistence.*;
 import ro.cs.tao.quota.QuotaException;
 import ro.cs.tao.quota.UserQuotaManager;
 import ro.cs.tao.security.SessionContext;
+import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.security.SystemPrincipal;
 import ro.cs.tao.security.UserPrincipal;
 import ro.cs.tao.serialization.SerializationException;
@@ -138,6 +139,7 @@ public class Orchestrator extends Notifiable {
         this.groupStateHandlers = new HashMap<>();
         this.queue = new LinkedBlockingDeque<>();
         this.executors = Collections.synchronizedMap(new HashMap<>());
+        this.executors.put(SystemPrincipal.instance().getName(), Executors.newFixedThreadPool(1));
         this.runningTasks = Collections.synchronizedSet(new HashSet<>());
         this.waitingJobs = Collections.synchronizedMap(new HashMap<>());
         this.listAdapter = new StringListAdapter();
@@ -285,7 +287,7 @@ public class Orchestrator extends Notifiable {
             if (descriptor == null) {
                 throw new ExecutionException(String.format("Non-existent workflow [%s]", workflowId));
             }
-            final ExecutionJob job = new ScriptJobFactory().createJob(description, descriptor, inputs);
+            final ExecutionJob job = new ScriptJobFactory().createJob(context, description, descriptor, inputs);
             this.executors.get(context.getPrincipal().getName()).submit(() -> {
                 try {
                     JobCommand.START.applyTo(job);
@@ -334,7 +336,7 @@ public class Orchestrator extends Notifiable {
                     optimized = descriptor;
                 }
             }
-            return this.jobFactory.createJob(description, optimized, inputs);
+            return this.jobFactory.createJob(context, description, optimized, inputs);
         } catch (QuotaException | PersistenceException e) {
             logger.severe(e.getMessage());
             throw new ExecutionException(e.getMessage());
@@ -350,7 +352,7 @@ public class Orchestrator extends Notifiable {
      */
     public ExecutionJob createJob(String wpsId, Map<String, Map<String, String>> inputs)  throws ExecutionException {
         try {
-            return this.jobFactory.createJob(wpsId, inputs);
+            return this.jobFactory.createJob(SessionStore.currentContext(), wpsId, inputs);
         } catch (PersistenceException e) {
             logger.severe(e.getMessage());
             throw new ExecutionException(e.getMessage());
@@ -390,11 +392,21 @@ public class Orchestrator extends Notifiable {
         JobCommand.RESUME.applyTo(job);
     }
 
+    public int purgeJobs(String user) {
+        final List<Long> jobIds = this.waitingJobs.remove(user);
+        if (jobIds != null) {
+            jobIds.forEach(this::stopJob);
+            return jobIds.size();
+        } else {
+            return 0;
+        }
+    }
+
     @Override
     protected void onMessageReceived(Message message) {
         logger.finest("Received message " + message);
         if (message instanceof StartupCompletedMessage) {
-            final List<ExecutionJob> jobs = prepareStalledJobs();
+            /*final List<ExecutionJob> jobs = prepareStalledJobs();
             if (jobs != null) {
                 for (ExecutionJob job : jobs) {
                     this.executors.put(job.getUserName(),
@@ -402,7 +414,7 @@ public class Orchestrator extends Notifiable {
                     logger.fine(String.format("Resuming job [id=%s]", job.getId()));
                     JobCommand.RESUME.applyTo(job);
                 }
-            }
+            }*/
         } else {
             try {
                 final SessionContext context = new MessageContext(message);
@@ -1283,7 +1295,7 @@ public class Orchestrator extends Notifiable {
             add(ExecutionStatus.RUNNING);
         }});
         final int limit = Integer.parseInt(ConfigurationManager.getInstance().getValue(USER_JOB_LIMIT_KEY, "1"));
-        if (runnableJobs != null && runnableJobs.size() > limit - 1) {
+        if (runnableJobs != null && (limit != 0 && runnableJobs.size() > limit - 1)) {
             if (!this.waitingJobs.containsKey(user)) {
                 this.waitingJobs.put(user, new ArrayList<>());
             }

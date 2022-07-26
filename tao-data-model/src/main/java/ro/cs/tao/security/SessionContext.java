@@ -24,7 +24,7 @@ import java.security.Principal;
 import java.util.List;
 
 /**
- * Holder class for the session of an user.
+ * Holder class for the session of a user.
  *
  * @author Cosmin Cara
  */

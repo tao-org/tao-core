@@ -141,6 +141,7 @@ public abstract class JobCommand {
         @Override
         protected Set<ExecutionStatus> getAllowedStates() {
             return new HashSet<ExecutionStatus>() {{
+                add(ExecutionStatus.UNDETERMINED);
                 add(ExecutionStatus.QUEUED_ACTIVE);
                 add(ExecutionStatus.RUNNING);
             }};
