@@ -151,7 +151,12 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
     @Override
     public int getMemoryForUser(String userName) {
         return repository.getMemoryForUser(userName);
-    }    
+    }
+
+    @Override
+    public int getRunningParents(long jobId, long taskId) {
+        return repository.getRunningParents(jobId, taskId);
+    }
 
     /**
      * Saves a task directly attached to an existent job

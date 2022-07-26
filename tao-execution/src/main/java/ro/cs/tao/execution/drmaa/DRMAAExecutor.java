@@ -217,6 +217,8 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                             // nothing to do
                             break;
                         case Session.RUNNING:
+                            task.setLastUpdated(LocalDateTime.now());
+                            taskProvider.update(task);
                             if (task.getExecutionStatus() != ExecutionStatus.RUNNING) {
                                 try {
                                     notifyStatusListener(task, ExecutionStatus.RUNNING);
@@ -257,7 +259,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                             }
                             break;
                     }
-                } catch (DrmaaException | InternalException e) {
+                } catch (Exception  e) {
                     logger.severe(String.format("%s: Cannot get the status for the task %s [%s]",
                                                 e.getClass().getName(), taskName, e.getMessage()));
                     markTaskFinished(task, ExecutionStatus.FAILED);
@@ -295,13 +297,14 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                     task.setExecutionNodeHostName((String) job.getAttribute(DrmaaJobExtensions.NODE_ATTRIBUTE));
                 }
             }
+            taskProvider.update(task);
             changeTaskStatus(task, session instanceof DefaultSession
                                         ? task instanceof ScriptTask
                                             ? ExecutionStatus.DONE
                                             : ExecutionStatus.RUNNING
                                         : ExecutionStatus.QUEUED_ACTIVE);
             notifyExternalListeners(task, null, -1, null);
-        } catch (DrmaaException | InternalException e) {
+        } catch (Exception e) {
             final String message = String.format("Error submitting task with id %s: %s", task.getId(), e.getMessage());
             logger.severe(message);
             changeTaskStatus(task, ExecutionStatus.FAILED);
@@ -459,6 +462,11 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                         add("--rm");
                         add("--volume-driver");
                         add("cifs");
+                        // -u $(id -u ${USER}):$(id -g ${USER})
+                        if (!masterHost.equals(node.getId())) {
+                            add("-u");
+                            add("$(id -u ${USER}):$(id -g ${USER})");
+                        }
                     }});
                     unit.setEnvironmentVariables(dbSources);
                     final DockerVolumeMap volumeMount;
@@ -505,6 +513,11 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                         add("--sig-proxy=true");// Proxy all received signals to the process
                         add("--volume-driver");
                         add("cifs");
+                        //-u $(id -u ${USER}):$(id -g ${USER})
+                        if (!masterHost.equals(node.getId())) {
+                            add("-u");
+                            add("$(id -u ${USER}):$(id -g ${USER})");
+                        }
                         add("-v");
                         add(volumeMap.getHostWorkspaceFolder() + ":" + volumeMap.getContainerWorkspaceFolder());
                         add("-v");

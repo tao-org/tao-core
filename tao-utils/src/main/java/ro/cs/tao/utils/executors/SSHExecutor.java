@@ -427,10 +427,10 @@ public class SSHExecutor extends Executor<Channel> {
             while (!isStopped() && !ended) {
                 while (!isStopped && (line = outReader.readLine()) != null) {
                     if (!"".equals(line.trim())) {
-                        if (this.outputConsumer != null && (this.password == null || !this.password.equals(line))) {
+                        /*if (this.outputConsumer != null && (this.password == null || !this.password.equals(line))) {
                             this.outputConsumer.consume(line);
                         }
-                        /*if (logMessages && !this.password.equals(line)) {
+                        if (logMessages && !this.password.equals(line)) {
                             this.logger.fine(line);
                         }*/
 
@@ -534,7 +534,7 @@ public class SSHExecutor extends Executor<Channel> {
     	
     	// If the async result was already obtained, return the value.
     	if (asyncResult != null) {
-    		return asyncResult.intValue();
+    		return asyncResult;
     	}
     	
         int result = Integer.MIN_VALUE;
@@ -556,7 +556,7 @@ public class SSHExecutor extends Executor<Channel> {
                         if (matcher.matches()) {
                         	// the line contains the result code
                         	result = Integer.parseInt(matcher.group(1));
-                        	asyncResult = new Integer(result);
+                        	asyncResult = result;
                         } else {
                         	// the line contains the output of the process
 	                        if (this.outputConsumer != null && (this.password == null || !this.password.equals(line))) {

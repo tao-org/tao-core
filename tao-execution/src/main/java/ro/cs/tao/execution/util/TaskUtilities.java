@@ -207,7 +207,7 @@ public class TaskUtilities {
      * @param task  The task whose parents are to be checked
      */
     public static boolean haveParentsCompleted(ExecutionTask task) {
-        boolean completed = false;
+        /*boolean completed = false;
         final ExecutionJob job = jobProvider.get(task.getJob().getId()); // make sure job tasks are in the latest state from DB
         final List<String> strPIds = job.getTaskDependencies().get(String.valueOf(task.getId()));
         if (strPIds != null) {
@@ -220,25 +220,11 @@ public class TaskUtilities {
             if (!completed) {
                 logger.fine(String.format("Not all the ancestors of the task %s have completed", task.getId()));
             }
-        }
-        /*final WorkflowNodeDescriptor node = workflowNodeProvider.get(task.getWorkflowNodeId());
-        final ExecutionJob job = job;
-        final Set<ComponentLink> links = node.getIncomingLinks();
-        if (links != null && links.size() > 0) {
-            for (ComponentLink link : links) {
-                ExecutionTask parentTask = taskProvider.getByJobAndNode(job.getId(), link.getSourceNodeId(), task.getInstanceId());
-                WorkflowNodeDescriptor parentNode = workflowNodeProvider.get(link.getSourceNodeId());
-                completed = (parentTask.getExecutionStatus() == ExecutionStatus.DONE &&
-                             parentTask.getOutputParameterValues() != null &&
-                             parentTask.getOutputParameterValues().stream().anyMatch(o -> o.getValue() != null)) ||
-                            (parentNode.getBehavior() == TransitionBehavior.FAIL_ON_ERROR &&
-                             parentTask.getExecutionStatus() == ExecutionStatus.FAILED);
-                if (!completed) {
-                    logger.fine(String.format("Task %s appears not to be completed", parentTask.getId()));
-                    break;
-                }
-            }
         }*/
+        boolean completed = taskProvider.getRunningParents(task.getJob().getId(), task.getId()) == 0;
+        if (!completed) {
+            logger.fine(String.format("Not all the ancestors of the task %s have completed", task.getId()));
+        }
         return completed;
     }
 

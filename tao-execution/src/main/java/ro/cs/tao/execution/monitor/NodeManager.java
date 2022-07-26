@@ -121,7 +121,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
      */
     public void setNodeLimit(int nodeLimit) { this.nodeLimit = nodeLimit; }
 
-    public boolean canCreateNewNodes() { return this.nodeLimit > 0; }
+    public boolean canCreateNewNodes() { return this.nodeLimit >= 0; }
 
     /**
      * Initializes this instance with the list of registered topology nodes.
@@ -299,7 +299,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     			logger.info(String.format("Error while computing the CPU and memory quota for the user %s. Error message: %s", principal.getName(), e.getMessage()));
             }
             if (availableNode == null) {
-                if (canCreateNewNodes() && this.nodes.size() < this.nodeLimit) {
+                if (canCreateNewNodes() && (this.nodeLimit == 0 || this.nodes.size() < this.nodeLimit)) {
                     try {
                         availableNode = createNodeIfMatchingFlavor(cpus, memory);
                     } catch (RuntimeException exception) {
