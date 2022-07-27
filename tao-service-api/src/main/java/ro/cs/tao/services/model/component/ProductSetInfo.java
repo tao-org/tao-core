@@ -16,6 +16,7 @@ public class ProductSetInfo {
     private String id;
     private String label;
     private String description;
+    private String user;
     private List<String> products;
     private List<String> tags;
 
@@ -26,6 +27,7 @@ public class ProductSetInfo {
         this.id = component.getId();
         this.label = component.getLabel();
         this.description = component.getDescription();
+        this.user = user;
         this.tags = component.getTags();
         final SourceDescriptor descriptor = component.getSources().stream().filter(s -> DataSourceComponent.QUERY_PARAMETER.equals(s.getName())).findFirst().orElse(null);
         this.products = new ArrayList<>();
@@ -49,6 +51,10 @@ public class ProductSetInfo {
 
     public String getDescription() {
         return description;
+    }
+
+    public String getUser() {
+        return user;
     }
 
     public List<String> getTags() { return tags; }
