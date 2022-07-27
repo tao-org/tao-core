@@ -52,12 +52,10 @@ import java.net.Inet4Address;
 import java.net.UnknownHostException;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -77,6 +75,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
     private final BlockingQueue<Tuple<JobTemplate, ProcessingExecutionTask>> queue;
     private final BlockingQueueWorker<Tuple<JobTemplate, ProcessingExecutionTask>> queueWorker;
     private final List<TaskListener> taskListeners;
+    private final Map<String, Tuple<NodeDescription, AtomicLong>> hostMemoryRequests;
 
     public static void setTaskProvider(ExecutionTaskProvider provider) { taskProvider = provider; }
 
@@ -97,6 +96,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         if (services != null) {
             this.taskListeners.addAll(services);
         }
+        this.hostMemoryRequests = Collections.synchronizedMap(new HashMap<>());
     }
 
     @Override
@@ -130,7 +130,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             changeTaskStatus(task, ExecutionStatus.QUEUED_ACTIVE, true);
             this.queue.put(new Tuple<>(jt, task));
             logger.finest(String.format("Task %s has been added to the wait queue", task.getId()));
-        } catch (InterruptedException | DrmaaException | IOException e) {
+        } catch (InterruptedException | DrmaaException | IOException | PersistenceException e) {
             logger.severe(String.format("Error submitting task with id %s: %s", task.getId(), e.getMessage()));
             throw new ExecutionException("Error executing DRMAA session operation", e);
         }
@@ -196,6 +196,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                         case Session.SYSTEM_SUSPENDED:
                         case Session.USER_SUSPENDED:
                         case Session.USER_SYSTEM_SUSPENDED:
+                            decrementMemory(task.getExecutionNodeHostName(), task.getUsedRAM());
                             try {
                                 notifyStatusListener(task, ExecutionStatus.SUSPENDED);
                             } catch (Exception e) {
@@ -229,6 +230,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                             }
                             break;
                         case Session.DONE:
+                            decrementMemory(task.getExecutionNodeHostName(), task.getUsedRAM());
                             // Just mark the task as finished with success status
                             if (task.getExecutionStatus() == ExecutionStatus.RUNNING) {
                                 // Only a running task can complete
@@ -241,6 +243,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                         case Session.FAILED:
                             String error;
                             int code;
+                            decrementMemory(task.getExecutionNodeHostName(), task.getUsedRAM());
                             if (session instanceof DefaultSession) {
                                 final DefaultSession defaultSession = (DefaultSession) this.session;
                                 String resourceId = task.getResourceId();
@@ -275,11 +278,29 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
 
     public String getDRMVersion() { return session != null ? session.getVersion().toString() : "n/a"; }
 
+    private void decrementMemory(String host, long amount) {
+        Tuple<NodeDescription, AtomicLong> tuple = this.hostMemoryRequests.get(host);
+        if (tuple != null) {
+            tuple.getKeyTwo().getAndAdd(-amount);
+        }
+    }
+
     private Void executeImpl(Tuple<JobTemplate, ProcessingExecutionTask> pair) {
         final JobTemplate jt = pair.getKeyOne();
         final ProcessingExecutionTask task = pair.getKeyTwo();
         logger.finest(String.format("Task %s has been dequeued for execution", task.getId()));
         try {
+            final Tuple<NodeDescription, AtomicLong> hostData = this.hostMemoryRequests.get(task.getExecutionNodeHostName());
+            if (hostData != null) {
+                int installed = hostData.getKeyOne().getFlavor().getMemory() * 1024;
+                long requested = hostData.getKeyTwo().get();
+                if (installed <= requested) {
+                    logger.warning(String.format("Host %s may not have enough available memory (installed: %d, requested: %d)",
+                                                 task.getExecutionNodeHostName(), installed, requested));
+                    //this.queue.put(pair);
+                    //return null;
+                }
+            }
             String id = session.runJob(jt);
             session.deleteJobTemplate(jt);
             if (id == null) {
@@ -313,7 +334,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         return null;
     }
 
-    private JobTemplate createJobTemplate(ProcessingExecutionTask task) throws DrmaaException, IOException {
+    private JobTemplate createJobTemplate(ProcessingExecutionTask task) throws DrmaaException, IOException, PersistenceException {
         // Get from the component the execution command
         JobTemplate jt;
         try {
@@ -342,7 +363,9 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                     template.setAttribute(DrmaaJobExtensions.TASK_OUTPUT, values.stream().map(Variable::getValue).collect(Collectors.toList()));
                 }
             }
-            final long memory = app != null ? app.getMemoryRequirements() : 0L;
+            final long memory = app != null
+                                ? app.getMemoryRequirements()
+                                : container.getApplications().stream().mapToLong(Application::getMemoryRequirements).min().orElse(0L);
             setMemoryConstraint(jt, memory);
             final String preferredHostName = task.getExecutionNodeHostName();
             final NodeData nodeData;
@@ -487,8 +510,9 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                         task.setUsedCPU(cpu);
                     }
                     if (mem > 0) {
-                        unit.addArgument("--memory", Math.min(8, mem) + "GB");
-                        task.setUsedRAM((int) mem);
+                        long arg = memory > 0 ? memory : Math.min(8, mem);
+                        unit.addArgument("--memory", arg + "GB");
+                        task.setUsedRAM((int) arg);
                     }
                     template.setAttribute(DrmaaJobExtensions.CONTAINER_ATTRIBUTE, unit);
                     if (task.getInstanceTemporaryOutput() != null) {
@@ -531,10 +555,11 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                             task.setUsedCPU(cpu);
                         }
                         if (mem > 0) {
+                            long arg = memory > 0 ? memory : Math.min(8, mem);
                             add("--memory");    // Enforce the memory limit to be used
                             // memory, if not 0, is expressed in MB
-                            add(mem + "MB");
-                            task.setUsedRAM((int) mem);
+                            add(arg + "MB");
+                            task.setUsedRAM((int) arg);
                         }
                     }};
                     String value = ExecutionConfiguration.getDockerRegistry();
@@ -552,6 +577,12 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             }
             jt.setRemoteCommand(cmd);
             jt.setArgs(argsList);
+            if (!this.hostMemoryRequests.containsKey(node.getId())) {
+                this.hostMemoryRequests.put(node.getId(), new Tuple<>(node, new AtomicLong(task.getUsedRAM())));
+            } else {
+                this.hostMemoryRequests.get(node.getId()).getKeyTwo().addAndGet(task.getUsedRAM());
+            }
+            taskProvider.update(task);
             logger.finest(String.format("Task %s: %s%s %s",
                     taskName,
                     unit != null ? String.join(" ", ContainerCmdBuilder.buildCommandLineArguments(unit)) + " " : "",
