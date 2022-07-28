@@ -16,13 +16,19 @@
 package ro.cs.tao.execution.model;
 
 import ro.cs.tao.component.*;
+import ro.cs.tao.component.converters.ConverterFactory;
+import ro.cs.tao.component.converters.ParameterConverter;
+import ro.cs.tao.component.enums.ParameterType;
 import ro.cs.tao.component.validation.ValidationException;
+import ro.cs.tao.datasource.converters.ConversionException;
+import ro.cs.tao.datasource.param.JavaType;
 import ro.cs.tao.docker.ExecutionConfiguration;
 import ro.cs.tao.security.SessionContext;
 import ro.cs.tao.utils.FileUtilities;
 
 import javax.xml.bind.annotation.XmlTransient;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -154,7 +160,25 @@ public class ProcessingExecutionTask extends ExecutionTask {
             for (Variable input : inputParameterValues) {
                 String value = input.getValue();
                 if (value.startsWith("[") && value.endsWith("]")) {
-                    value = value.substring(1, value.length() - 1).replace(",", " ");
+                    value = value.substring(1, value.length() - 1);
+                    ParameterDescriptor descriptor = this.component.getParameterDescriptors().stream()
+                                                                   .filter(d -> d.getName().equals(input.getKey()))
+                                                                   .findFirst().orElse(null);
+                    if (descriptor != null && (descriptor.getType() == ParameterType.ARRAY || descriptor.getDataType().isArray())) {
+                        final String[] values = value.split(",");
+                        final Object array = JavaType.createArray(JavaType.fromClass(descriptor.getDataType()), values.length);
+                        final Class<?> type = descriptor.getDataType().getComponentType();
+                        final ParameterConverter converter = ConverterFactory.getInstance().create(type);
+                        for (int i = 0; i < values.length; i++) {
+                            try {
+                                Array.set(array, i, converter.fromString(values[i]));
+                            } catch (ConversionException e) {
+                                throw new RuntimeException(e);
+                            }
+                        }
+                    } else {
+                        value = value.replace(",", " ");
+                    }
                 }
                 inputParams.put(input.getKey(), value);
             }

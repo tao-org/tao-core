@@ -393,7 +393,7 @@ public class ProcessingComponent extends TaoComponent {
                 this.parameters.stream().filter(p -> p instanceof TemplateParameterDescriptor)
                                .collect(Collectors.toMap(ParameterDescriptor::getName, p -> (TemplateParameterDescriptor) p));
         Map<String, ParameterDescriptor> arrayParameters =
-                this.parameters.stream().filter(p -> p.getType() == ParameterType.ARRAY)
+                this.parameters.stream().filter(p -> p.getType() == ParameterType.ARRAY || p.getDataType().isArray())
                                .collect(Collectors.toMap(ParameterDescriptor::getName, Function.identity()));
         if (parameterValues != null) {
             for (Map.Entry<String, Object> entry : parameterValues.entrySet()) {

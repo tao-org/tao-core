@@ -37,13 +37,20 @@ public class ConverterFactory {
     private ConverterFactory() {
         converters = new HashMap<>();
         converters.put(Boolean.class, BooleanConverter.class);
+        converters.put(boolean.class, BooleanConverter.class);
         converters.put(Byte.class, ByteConverter.class);
+        converters.put(byte.class, ByteConverter.class);
         converters.put(LocalDateTime.class, DateConverter.class);
         converters.put(Double.class, DoubleConverter.class);
+        converters.put(double.class, DoubleConverter.class);
         converters.put(Float.class, FloatConverter.class);
+        converters.put(float.class, FloatConverter.class);
         converters.put(Integer.class, IntegerConverter.class);
+        converters.put(int.class, IntegerConverter.class);
         converters.put(Long.class, LongConverter.class);
+        converters.put(long.class, LongConverter.class);
         converters.put(Short.class, ShortConverter.class);
+        converters.put(short.class, ShortConverter.class);
         converters.put(String.class, StringConverter.class);
     }
 
