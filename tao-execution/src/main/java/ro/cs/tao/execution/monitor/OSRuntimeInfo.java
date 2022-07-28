@@ -483,11 +483,6 @@ public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
                 if (executor.execute(false) == 0) {
                     List<String> messages = consumer.getMessages();
                     for (String message : messages) {
-                        /*if (message.startsWith("total")) {
-                            String[] values = message.replace("total", "").trim().split(" ");
-                            mem = Long.parseLong(values[0]) / MemoryUnit.MEGABYTE.value();
-                            break;
-                        }*/
                         if (message.startsWith("/dev/sd")) {
                             String[] values = message.replace(message.substring(0, message.indexOf(' ')), "").trim().split(" ");
                             mem += Long.parseLong(values[0]) / MemoryUnit.MEGABYTE.value();
@@ -513,11 +508,6 @@ public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
                 if (executor.execute(false) == 0) {
                     List<String> messages = consumer.getMessages();
                     for (String message : messages) {
-                        /*if (message.startsWith("total")) {
-                            String[] values = message.replace("total", "").trim().split(" ");
-                            mem = Long.parseLong(values[1]) / MemoryUnit.MEGABYTE.value();
-                            break;
-                        }*/
                         if (message.startsWith("/dev/sd")) {
                             String[] values = message.replace(message.substring(0, message.indexOf(' ')), "").trim().split(" ");
                             mem += Long.parseLong(values[1]) / MemoryUnit.MEGABYTE.value();

@@ -34,7 +34,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     private static final boolean isAvailable;
     private static final NodeManager instance;
     private static final int nodeCreationWaitTime;
-    private static final int pollInterval;
+    private static final long pollInterval;
     private static final NamedThreadPoolExecutor executor;
     private static final int DEFAULT_NODE_WAIT_TIME = 10000;
     private static final int DEFAULT_KEEP_ALIVE_SECONDS = 1800;

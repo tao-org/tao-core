@@ -207,20 +207,6 @@ public class TaskUtilities {
      * @param task  The task whose parents are to be checked
      */
     public static boolean haveParentsCompleted(ExecutionTask task) {
-        /*boolean completed = false;
-        final ExecutionJob job = jobProvider.get(task.getJob().getId()); // make sure job tasks are in the latest state from DB
-        final List<String> strPIds = job.getTaskDependencies().get(String.valueOf(task.getId()));
-        if (strPIds != null) {
-            Set<Long> ids = strPIds.stream().map(Long::parseLong).collect(Collectors.toSet());
-            completed = job.getTasks()
-                    .stream().filter(t -> ids.contains(t.getId()))
-                    .allMatch(t -> t.getExecutionStatus() == ExecutionStatus.DONE ||
-                                  (t.getExecutionStatus() == ExecutionStatus.FAILED &&
-                                   workflowNodeProvider.get(t.getWorkflowNodeId()).getBehavior() == TransitionBehavior.CONTINUE_ON_ERROR));
-            if (!completed) {
-                logger.fine(String.format("Not all the ancestors of the task %s have completed", task.getId()));
-            }
-        }*/
         boolean completed = taskProvider.getRunningParents(task.getJob().getId(), task.getId()) == 0;
         if (!completed) {
             logger.fine(String.format("Not all the ancestors of the task %s have completed", task.getId()));
@@ -308,7 +294,7 @@ public class TaskUtilities {
         final StringListAdapter adapter = new StringListAdapter();
         final List<String> firstList = adapter.marshal(firstStringList);
         final List<String> secondList = adapter.marshal(secondStringList);
-        final Pattern datePattern = Pattern.compile("([0-9]{4}[0-1][0-9][0-3][0-9])");
+        final Pattern datePattern = Pattern.compile("(\\d{4}[0-1]\\d[0-3]\\d)");
         final List<Tuple<String, String>> results = new ArrayList<>();
         for (String firstValue : firstList) {
             final Matcher matcher = datePattern.matcher(firstValue);

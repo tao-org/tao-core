@@ -100,8 +100,8 @@ public class ComponentLink {
             return false;
         }
         return this.sourceNodeId == other.sourceNodeId &&
-                (this.input.getId() != null && this.input.getId().equals(other.input.getId())) &&
-                (this.output.getId() != null && this.output.getId().equals(other.output.getId()));
+                this.input != null && this.input.getId() != null && this.input.getId().equals(other.input.getId()) &&
+                this.output.getId() != null && this.output.getId().equals(other.output.getId());
     }
 
     @Override

@@ -58,7 +58,7 @@ public class DefaultSession implements Session {
     private AtomicInteger nodeCounter;
     // TODO: This should be configurable - add it to tao.properties or in a specific file?
     private Set<String> cmdsToRunAsSu = new HashSet<String>() {{add("docker");}};
-    private Logger logger = Logger.getLogger(DefaultSession.class.getName());
+    private final Logger logger = Logger.getLogger(DefaultSession.class.getName());
     private boolean canHaveNodeList;
     //private final boolean isDevMode = ExecutionConfiguration.developmentModeEnabled();
 

@@ -68,9 +68,6 @@ public class ExecutionConfiguration {
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
-            /*map = map.entrySet().stream()
-                    .collect(Collectors.toMap(entry -> FileUtilities.asUnixPath(Paths.get(entry.getKey()), false),
-                            Map.Entry::getValue));*/
             workerVolumeMap = new DockerVolumeMap(map);
         }
         return workerVolumeMap;

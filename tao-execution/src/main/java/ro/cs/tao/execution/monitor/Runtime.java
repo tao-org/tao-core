@@ -24,7 +24,7 @@ import java.time.ZoneId;
  */
 public class Runtime {
 
-    private TimeUnit timeUnit;
+    private final TimeUnit timeUnit;
 
     private LocalDateTime startTime;
     private long upTime;

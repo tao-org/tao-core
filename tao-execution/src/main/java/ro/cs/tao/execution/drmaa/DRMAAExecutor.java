@@ -108,7 +108,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             masterHost = Inet4Address.getLocalHost().getHostName();
             this.queueWorker.start();
         } catch (UnknownHostException | DrmaaException e) {
-            isInitialized = false;
+            isInitialized.set(false);
             throw new ExecutionException("Error initiating DRMAA session", e);
         }
     }
@@ -179,7 +179,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
 
     @Override
     public void monitorExecutions() {
-        if(!isInitialized) {
+        if(!isInitialized.get()) {
             return;
         }
         final List<ExecutionTask> tasks = taskProvider.listExecuting();
@@ -209,6 +209,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                             } else {
                                 out = "n/a";
                             }
+                            task.setLog(out);
                             if (task instanceof ProcessingExecutionTask) {
                                 notifyExternalListeners((ProcessingExecutionTask) task, ExecutionStatus.SUSPENDED.friendlyName(), -1, out);
                             }
@@ -231,6 +232,9 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                             break;
                         case Session.DONE:
                             decrementMemory(task.getExecutionNodeHostName(), task.getUsedRAM());
+                            if (session instanceof DefaultSession) {
+                                task.setLog(((DefaultSession) this.session).getJobOutput(task.getResourceId()));
+                            }
                             // Just mark the task as finished with success status
                             if (task.getExecutionStatus() == ExecutionStatus.RUNNING) {
                                 // Only a running task can complete
@@ -297,8 +301,6 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                 if (installed <= requested) {
                     logger.warning(String.format("Host %s may not have enough available memory (installed: %d, requested: %d)",
                                                  task.getExecutionNodeHostName(), installed, requested));
-                    //this.queue.put(pair);
-                    //return null;
                 }
             }
             String id = session.runJob(jt);
