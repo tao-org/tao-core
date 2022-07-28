@@ -40,4 +40,8 @@ public interface MessageRepository extends PagingAndSortingRepository<Message, L
     @Modifying
     @Query(value = "UPDATE common.notification SET read = true WHERE id IN (:ids)", nativeQuery = true)
     void markAsRead(@Param("ids") List<Long> ids);
+
+    @Modifying
+    @Query(value = "DELETE FROM common.notification WHERE username = :user", nativeQuery = true)
+    void deleteAll(@Param("user") String userName);
 }

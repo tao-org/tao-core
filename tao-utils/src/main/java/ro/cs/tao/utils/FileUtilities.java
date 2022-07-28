@@ -32,6 +32,7 @@ import java.nio.channels.WritableByteChannel;
 import java.nio.file.FileSystem;
 import java.nio.file.*;
 import java.nio.file.attribute.*;
+import java.text.DecimalFormat;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -48,6 +49,8 @@ import java.util.zip.ZipFile;
 public class FileUtilities {
     private static final String[] WIN_TO_UNIX_TOKENS = new String[] {":", "\\"};
     private static final String[] WIN_TO_UNIX_REPLACEMENTS = new String[] {"", "/" };
+    private static final String[] UNITS = new String[] { "B", "KB", "MB", "GB", "TB" };
+    private static final DecimalFormat UNIT_FORMAT = new DecimalFormat("#,##0.#");
     private static final Logger logger = Logger.getLogger(FileUtilities.class.getName());
 
     public static String getExtension(Path path) {
@@ -669,10 +672,16 @@ public class FileUtilities {
 
     public static long folderSize(Path folder) throws IOException {
         try (Stream<Path> stream = Files.walk(folder)) {
-            return stream.filter(Files::isRegularFile)
+            return stream.filter(f -> Files.isRegularFile(f, LinkOption.NOFOLLOW_LINKS) && !Files.isSymbolicLink(f))
                          .mapToLong(p -> p.toFile().length())
                          .sum();
         }
+    }
+
+    public static String toReadableString(long value) {
+        final int unitIndex = (int) (Math.log10(value) / 3);
+        final double unitValue = 1 << (unitIndex * 10);
+        return UNIT_FORMAT.format(value / unitValue) + " " + UNITS[unitIndex];
     }
 
     public static void copyFile(URL sourceURL, Path destinationFile) throws IOException {

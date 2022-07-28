@@ -10,5 +10,6 @@ public interface MessageProvider extends EntityProvider<Message, Long> {
     List<Message> getUnreadMessages(String user);
     Message get(String userName, long timestamp);
     void acknowledge(List<Long> messageIds);
+    void clear(String user);
 
 }

@@ -57,6 +57,11 @@ public class NotificationManager extends EntityManager<Message, Long, MessageRep
     }
 
     @Override
+    public void clear(String user) {
+        repository.deleteAll(user);
+    }
+
+    @Override
     protected String identifier() { return "id"; }
 
     @Override
