@@ -275,7 +275,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
 
     @Override
     public void monitorExecutions() throws ExecutionException {
-        this.isInitialized = false;
+        this.isInitialized.set(false);
     }
 
     @Override

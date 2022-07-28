@@ -52,7 +52,7 @@ public class MapAdapter extends XmlAdapter<Map<String, String>, String> {
             idx = entry.indexOf(":");
             if (idx > 0) {
                 map.put(entry.substring(0, idx).replace("\"", ""),
-                        entry.substring(idx + 1, entry.length()).replace("\"", ""));
+                        entry.substring(idx + 1).replace("\"", ""));
             } else {
                 Logger.getLogger(MapAdapter.class.getName()).warning(String.format("Cannot map input: %s", v));
             }

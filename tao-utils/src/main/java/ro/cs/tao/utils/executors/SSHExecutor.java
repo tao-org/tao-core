@@ -476,7 +476,7 @@ public class SSHExecutor extends Executor<Channel> {
         // Check if the asynchronous session was started.
         if (this.asyncCallFinished == null) {
         	return true;
-        } else if (this.asyncCallFinished == true) {
+        } else if (this.asyncCallFinished) {
         	return false;
         }
         	

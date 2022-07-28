@@ -19,7 +19,7 @@ package ro.cs.tao.execution.monitor;
  * @author Cosmin Cara
  */
 public class Memory {
-    private MemoryUnit memoryUnit;
+    private final MemoryUnit memoryUnit;
 
     private long heapCommitted;
     private long heapInitial;

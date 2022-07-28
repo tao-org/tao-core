@@ -112,14 +112,4 @@ public class NodeDescription extends StringIdentifiable {
             this.tags.remove(tag);
         }
     }
-
-    @Override
-    public boolean equals(Object o) {
-        return super.equals(o);
-    }
-
-    @Override
-    public int hashCode() {
-        return super.hashCode();
-    }
 }

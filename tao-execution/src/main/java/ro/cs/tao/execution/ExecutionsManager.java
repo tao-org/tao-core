@@ -34,8 +34,8 @@ import java.util.Set;
  */
 public class ExecutionsManager {
 
-    private static ExecutionsManager instance = new ExecutionsManager();
-    private Set<Executor> services;
+    private static final ExecutionsManager instance = new ExecutionsManager();
+    private final Set<Executor> services;
     private ExecutionsManager() {
         ServiceRegistry<Executor> registry = ServiceRegistryManager.getInstance().getServiceRegistry(Executor.class);
         services = registry.getServices();

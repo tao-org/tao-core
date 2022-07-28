@@ -43,6 +43,7 @@ public abstract class TileExtent {
             byte[] buffer = new byte[tileCodeSize()];
             double x;
             try (DataInputStream dis = new DataInputStream(inputStream)) {
+                //noinspection InfiniteLoopStatement
                 while (true) {
                     dis.read(buffer, 0, buffer.length);
                     Polygon2D polygon2D = new Polygon2D();

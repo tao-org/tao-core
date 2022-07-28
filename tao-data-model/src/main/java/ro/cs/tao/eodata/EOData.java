@@ -124,7 +124,7 @@ public abstract class EOData extends StringIdentifiable implements Serializable 
         Attribute attribute = null;
         if (this.attributes != null) {
             for(Attribute attr : this.attributes) {
-                if(attr.getName().toLowerCase().equals(name.toLowerCase())) {
+                if(attr.getName().equalsIgnoreCase(name)) {
                     attribute = attr;
                     break;
                 }

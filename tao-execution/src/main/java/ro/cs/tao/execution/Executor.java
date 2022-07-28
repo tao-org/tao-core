@@ -33,6 +33,7 @@ import ro.cs.tao.security.SystemSessionContext;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 /**
@@ -44,8 +45,8 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
     private static final String TIMER_PERIOD = "5";
     /* Flag for trying to close the monitoring thread in an elegant manner */
     private static final Map<String, Tuple<Integer, Long>> resourcesUsage = new HashMap<>();
-    private static List<TaskStatusListener> statusListeners = new ArrayList<>();
-    protected Boolean isInitialized = false;
+    private static final List<TaskStatusListener> statusListeners = new ArrayList<>();
+    protected final AtomicBoolean isInitialized = new AtomicBoolean(false);
     protected final Logger logger = Logger.getLogger(getClass().getName());
     private final Timer executionsCheckTimer = new Timer("exec-monitor");
     private final Map<Long, SessionContext> contextMap = new HashMap<>();
@@ -89,10 +90,10 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
 
     public void initialize(int pollingInterval) throws ExecutionException {
         synchronized (isInitialized) {
-            if (isInitialized)
+            if (isInitialized.get())
                 return;
             // mark the executor as initialized
-            isInitialized = true;
+            isInitialized.set(true);
         }
         // once the session was created, start the timer
         executionsCheckTimer.schedule(new ExecutionsCheckTimer(this), 0, pollingInterval);
@@ -108,9 +109,9 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
     public void close() throws ExecutionException {
         // stop the monitoring thread
         synchronized (isInitialized) {
-            if (!isInitialized)
+            if (!isInitialized.get())
                 return;
-            isInitialized = false;
+            isInitialized.set(false);
         }
         executionsCheckTimer.cancel();
     }

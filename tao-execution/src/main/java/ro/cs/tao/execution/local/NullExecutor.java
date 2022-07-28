@@ -103,8 +103,8 @@ public class NullExecutor extends Executor {
                 tasks.stream()
                         .filter(t -> t.getExecutionStatus() == ExecutionStatus.QUEUED_ACTIVE)
                         .findFirst().ifPresent(task -> {
-                    changeTaskStatus(task, ExecutionStatus.RUNNING);
-                });
+                            changeTaskStatus(task, ExecutionStatus.RUNNING);
+                        });
                 List<Map.Entry<ExecutionTask, Integer>> toTerminate =
                         counters.entrySet().stream().filter(e -> e.getValue() == MAX).collect(Collectors.toList());
                 for (Map.Entry<ExecutionTask, Integer> entry : toTerminate) {
