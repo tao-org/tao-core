@@ -39,6 +39,8 @@ public interface MonitoringService<T> extends TAOService {
 
     List<T> acknowledgeNotification(List<T> notifications);
 
+    void deleteAll(String userName);
+
     Map<String, Boolean> getNodesOnlineStatus();
 
 }
