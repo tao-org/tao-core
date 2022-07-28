@@ -86,4 +86,38 @@ public enum JavaType implements TaoEnum<Class<?>> {
         }
         return STRING;
     }
+
+    public static Object createArray(JavaType type, int dimension) {
+        if (dimension <= 0) {
+            throw new IllegalArgumentException("[dimension]");
+        }
+        if (!type.description.endsWith("[]")) {
+            throw new IllegalArgumentException("[type] not an array type");
+        }
+        Object array = null;
+        switch (type) {
+            case BYTE_ARRAY:
+                array = new byte[dimension];
+                break;
+            case SHORT_ARRAY:
+                array = new short[dimension];
+                break;
+            case INT_ARRAY:
+                array = new int[dimension];
+                break;
+            case LONG_ARRAY:
+                array = new long[dimension];
+                break;
+            case FLOAT_ARRAY:
+                array = new float[dimension];
+                break;
+            case DOUBLE_ARRAY:
+                array = new double[dimension];
+                break;
+            case STRING_ARRAY:
+                array = new String[dimension];
+                break;
+        }
+        return array;
+    }
 }
