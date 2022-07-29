@@ -886,7 +886,7 @@ public class Orchestrator extends Notifiable {
                         for (Variable var : nextInputParameters) {
                             if (theOnlyValue.getKey().equals(connectedInputs.get(var.getKey()))) {
                                 for (String value : valuesList) {
-                                    nextTask.setInputParameterValue(var.getKey(), value);
+                                    nextTask.setInputParameterValue(var.getKey(), TaskUtilities.relativizePathForExecution(value));
                                 }
                                 break;
                             }
@@ -897,9 +897,12 @@ public class Orchestrator extends Notifiable {
         } else {
             Map<String, String> connectedInputs = TaskUtilities.getConnectedInputs(task, nextTask);
             final List<Variable> nextInputParameters = nextTask.getInputParameterValues();
+            // Connected inputs are target->source mappings. Since, at this point, targets should have been resolved
+            // to master paths, we need to "relativize" them for the next container execution
             for (Map.Entry<String, String> entry : connectedInputs.entrySet()) {
                 nextTask.setInputParameterValue(entry.getKey(),
-                                                values.stream().filter(v -> v.getKey().equals(entry.getValue())).findFirst().get().getValue());
+                                                TaskUtilities.relativizePathForExecution(values.stream().filter(v -> v.getKey().equals(entry.getValue()))
+                                                                                               .findFirst().get().getValue()));
             }
             final Set<String> outParams = nextTask.getOutputParameterValues().stream().map(Variable::getKey).collect(Collectors.toSet());
             Variable overriddenOutParam = null;
