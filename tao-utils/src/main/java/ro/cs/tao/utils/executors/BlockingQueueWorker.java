@@ -13,6 +13,7 @@ public class BlockingQueueWorker<E> extends Thread {
     private final Logger logger;
     private volatile boolean stopped;
     private volatile boolean paused;
+    private final Object monitor;
 
     public BlockingQueueWorker(BlockingQueue<E> monitoredQueue, Function<E, Void> runnable) {
         this(monitoredQueue, runnable, 1);
@@ -25,6 +26,7 @@ public class BlockingQueueWorker<E> extends Thread {
             this.executor = new NamedThreadPoolExecutor("queue-worker", parallelism);
         }
         this.stopped = false;
+        this.monitor = new Object();
         this.logger = Logger.getLogger(getClass().getName());
     }
 
@@ -41,6 +43,7 @@ public class BlockingQueueWorker<E> extends Thread {
     @Override
     public void interrupt() {
         this.stopped = true;
+        this.monitor.notifyAll();
         super.interrupt();
     }
 
@@ -48,35 +51,18 @@ public class BlockingQueueWorker<E> extends Thread {
     public void run() {
         while (!stopped) {
             try {
-                if (this.executor != null) {
-                    // The parallelism was initialized with >2 threads
-                    if (this.paused || this.executor.getRunningTasks() >= this.executor.getMaximumPoolSize()) {
-                        Thread.sleep(10000);
-                    } else {
-                        if (this.statePersister != null) {
-                            this.statePersister.accept(this.monitoredQueue);
-                        }
-                        E entry = this.monitoredQueue.take();
-                        logger.finest("Dequeued " + entry);
-                        this.executor.submit(() -> {
-                            try {
-                                this.work.apply(entry);
-                            } catch (Exception e) {
-                                logger.severe(e.getMessage());
-                            }
-                        });
+                if (this.paused || (this.executor != null && this.executor.getRunningTasks() >= this.executor.getMaximumPoolSize())) {
+                    //Thread.sleep(10000);
+                    synchronized (this.monitor) {
+                        this.monitor.wait(10000);
                     }
                 } else {
-                    // There should be no parallelism (this thread will handle the queue item)
-                    if (this.isPaused()) {
-                        Thread.sleep(10000);
-                    } else {
-                        // Persist the queue before processing the next item
-                        if (this.statePersister != null) {
-                            this.statePersister.accept(this.monitoredQueue);
-                        }
-                        E entry = this.monitoredQueue.take();
-                        logger.finest("Dequeued " + entry);
+                    if (this.statePersister != null) {
+                        this.statePersister.accept(this.monitoredQueue);
+                    }
+                    E entry = this.monitoredQueue.take();
+                    logger.finest("Dequeued " + entry);
+                    this.executor.submit(() -> {
                         try {
                             this.work.apply(entry);
                             // Item was handled, re-persist the state without it
@@ -86,7 +72,7 @@ public class BlockingQueueWorker<E> extends Thread {
                         } catch (Exception e) {
                             logger.severe(e.getMessage());
                         }
-                    }
+                    });
                 }
             } catch (InterruptedException e) {
                 logger.warning(e.getMessage());

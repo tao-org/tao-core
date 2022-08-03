@@ -44,22 +44,10 @@ public class DateUtils {
 
     public static DateTimeFormatter getFormatterAtUTC(String format) {
         return DateTimeFormatter.ofPattern(format).withZone(ZoneId.of("UTC"));
-        /*final DateTimeFormatterBuilder builder = new DateTimeFormatterBuilder()
-                .appendPattern("yyyy-MM-dd'T'HH:mm:ss").appendFraction(ChronoField.NANO_OF_SECOND, 0, 6, true);
-        if (format.endsWith("Z")) {
-            builder.appendLiteral("Z");
-        }
-        return builder.toFormatter().withZone(ZoneId.of("UTC"));*/
     }
 
     public static DateTimeFormatter getFormatterAtLocal(String format) {
         return DateTimeFormatter.ofPattern(format).withZone(ZoneId.systemDefault());
-        /*final DateTimeFormatterBuilder builder = new DateTimeFormatterBuilder()
-                .appendPattern("yyyy-MM-dd'T'HH:mm:ss").appendFraction(ChronoField.NANO_OF_SECOND, 0, 6, true);
-        if (format.endsWith("Z") || format.endsWith("Z'")) {
-            builder.appendLiteral("Z");
-        }
-        return builder.toFormatter().withZone(ZoneId.systemDefault());*/
     }
 
     public static DateTimeFormatter getResilientFormatterAtUTC() {

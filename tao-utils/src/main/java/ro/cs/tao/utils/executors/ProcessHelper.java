@@ -98,8 +98,8 @@ public final class ProcessHelper {
                 Win32Api.HANDLE h = new Win32Api.HANDLE();
                 h.setPointer(Pointer.createConstant(handle));
                 ntDll.NtSuspendProcess(h);
-            } catch (Throwable ignored) {
-                ignored.printStackTrace();
+            } catch (Throwable e) {
+                e.printStackTrace();
             }
         } else if (SystemUtils.IS_OS_LINUX) {
             try {

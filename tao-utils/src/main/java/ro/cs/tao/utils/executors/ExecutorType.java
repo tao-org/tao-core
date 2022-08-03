@@ -34,5 +34,5 @@ public enum ExecutorType {
     /**
      * Mock executor for tests
      */
-    MOCK;
+    MOCK
 }

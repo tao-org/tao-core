@@ -45,7 +45,7 @@ public class NativeLibraryUtils {
             }
         }
         if (propertyValue != null && !propertyValue.isEmpty()) {
-            propertyValue = builder.toString() + propertyValue;
+            propertyValue = builder + propertyValue;
         } else {
             propertyValue = builder.toString();
         }
@@ -78,25 +78,26 @@ public class NativeLibraryUtils {
         if (path.contains(".jar")) {
             int contentsSeparatorIndex = path.indexOf("!");
             String jarPath = path.substring(0, contentsSeparatorIndex);
-            JarFile jarFile = new JarFile(jarPath);
-            Enumeration<JarEntry> entries = jarFile.entries();
-            JarEntry jarEntry = null;
-            while (entries.hasMoreElements()) {
-                JarEntry currentEntry = entries.nextElement();
-                if (StringUtils.containsIgnoreCase(currentEntry.getName(), libraryName)) {
-                    jarEntry = currentEntry;
-                    break;
+            try (JarFile jarFile = new JarFile(jarPath)) {
+                Enumeration<JarEntry> entries = jarFile.entries();
+                JarEntry jarEntry = null;
+                while (entries.hasMoreElements()) {
+                    JarEntry currentEntry = entries.nextElement();
+                    if (StringUtils.containsIgnoreCase(currentEntry.getName(), libraryName)) {
+                        jarEntry = currentEntry;
+                        break;
+                    }
                 }
-            }
-            if (jarEntry == null) {
-                throw new IOException(String.format("Library %s could not be found in the jar file %s", libraryName, path));
-            }
-            try (InputStream in = jarFile.getInputStream(jarEntry)) {
-                Path tmpPath = Paths.get(System.getProperty("java.io.tmpdir"), "lib", getOSFamily(), mappedLibName);
-                try (OutputStream out = Files.newOutputStream(tmpPath)) {
-                    FileUtilities.copyStream(in, out);
+                if (jarEntry == null) {
+                    throw new IOException(String.format("Library %s could not be found in the jar file %s", libraryName, path));
                 }
-                path = tmpPath.toAbsolutePath().toString();
+                try (InputStream in = jarFile.getInputStream(jarEntry)) {
+                    Path tmpPath = Paths.get(System.getProperty("java.io.tmpdir"), "lib", getOSFamily(), mappedLibName);
+                    try (OutputStream out = Files.newOutputStream(tmpPath)) {
+                        FileUtilities.copyStream(in, out);
+                    }
+                    path = tmpPath.toAbsolutePath().toString();
+                }
             }
         } else {
             if (!Files.exists(Paths.get(path, mappedLibName))) {
