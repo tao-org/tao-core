@@ -324,38 +324,38 @@ public class NetUtils {
                 String[] tokens = domain.split("\\.");
                 domain = tokens[tokens.length - 2] + "." + tokens[tokens.length - 1];
             }
-            CloseableHttpClient httpClient;
-                httpClient = HttpClients.custom()
-                        .setDefaultCookieStore(new BasicCookieStore())
-                        .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
-                        .build();
-            HttpRequestBase requestBase;
-            switch (method) {
-                case GET:
-                    requestBase = new HttpGet(uri);
-                    break;
-                case POST:
-                    requestBase = new HttpPost(uri);
-                    if (json != null) {
-                        StringEntity requestEntity = new StringEntity(json, ContentType.APPLICATION_JSON);
-                        ((HttpPost) requestBase).setEntity(requestEntity);
-                    }
-                    break;
-                default:
-                    throw new IllegalArgumentException("Method not supported");
+            try (CloseableHttpClient httpClient = HttpClients.custom()
+                                                             .setDefaultCookieStore(new BasicCookieStore())
+                                                             .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
+                                                             .build()) {
+                HttpRequestBase requestBase;
+                switch (method) {
+                    case GET:
+                        requestBase = new HttpGet(uri);
+                        break;
+                    case POST:
+                        requestBase = new HttpPost(uri);
+                        if (json != null) {
+                            StringEntity requestEntity = new StringEntity(json, ContentType.APPLICATION_JSON);
+                            ((HttpPost) requestBase).setEntity(requestEntity);
+                        }
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Method not supported");
+                }
+                final RequestConfig.Builder requestBuilder = RequestConfig.custom()
+                                                                          .setConnectionRequestTimeout(timeout)
+                                                                          .setConnectTimeout(timeout)
+                                                                          .setSocketTimeout(timeout);
+                if (apacheHttpProxy != null) {
+                    requestBuilder.setProxy(apacheHttpProxy);
+                }
+                requestBase.setConfig(requestBuilder.build());
+                requestBase.setHeader(header, authToken);
+                Logger.getRootLogger().debug("Details: %s", requestBase.getConfig().toString());
+                response = httpClient.execute(requestBase);
+                Logger.getRootLogger().debug("HTTP %s %s returned %s", method.toString(), url, response.getStatusLine().getStatusCode());
             }
-            final RequestConfig.Builder requestBuilder = RequestConfig.custom()
-                    .setConnectionRequestTimeout(timeout)
-                    .setConnectTimeout(timeout)
-                    .setSocketTimeout(timeout);
-            if (apacheHttpProxy != null) {
-                requestBuilder.setProxy(apacheHttpProxy);
-            }
-            requestBase.setConfig(requestBuilder.build());
-            requestBase.setHeader(header, authToken);
-            Logger.getRootLogger().debug("Details: %s", requestBase.getConfig().toString());
-            response = httpClient.execute(requestBase);
-            Logger.getRootLogger().debug("HTTP %s %s returned %s", method.toString(), url, response.getStatusLine().getStatusCode());
         } catch (URISyntaxException | IOException e) {
             Logger.getRootLogger().debug("Could not create connection to %s : %s", url, e.getMessage());
             throw new IOException(e);
@@ -372,37 +372,37 @@ public class NetUtils {
                 String[] tokens = domain.split("\\.");
                 domain = tokens[tokens.length - 2] + "." + tokens[tokens.length - 1];
             }
-            CloseableHttpClient httpClient;
-            httpClient = HttpClients.custom()
-                    .setDefaultCookieStore(new BasicCookieStore())
-                    .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
-                    .build();
-            HttpRequestBase requestBase;
-            switch (method) {
-                case GET:
-                    requestBase = new HttpGet(uri);
-                    break;
-                case POST:
-                    requestBase = new HttpPost(uri);
-                    if (parameters != null) {
-                        ((HttpPost) requestBase).setEntity(new UrlEncodedFormEntity(parameters));
-                    }
-                    break;
-                default:
-                    throw new IllegalArgumentException("Method not supported");
+            try (CloseableHttpClient httpClient = HttpClients.custom()
+                                                             .setDefaultCookieStore(new BasicCookieStore())
+                                                             .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
+                                                             .build()) {
+                HttpRequestBase requestBase;
+                switch (method) {
+                    case GET:
+                        requestBase = new HttpGet(uri);
+                        break;
+                    case POST:
+                        requestBase = new HttpPost(uri);
+                        if (parameters != null) {
+                            ((HttpPost) requestBase).setEntity(new UrlEncodedFormEntity(parameters));
+                        }
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Method not supported");
+                }
+                final RequestConfig.Builder requestBuilder = RequestConfig.custom()
+                                                                          .setConnectionRequestTimeout(timeout)
+                                                                          .setConnectTimeout(timeout)
+                                                                          .setSocketTimeout(timeout);
+                if (apacheHttpProxy != null) {
+                    requestBuilder.setProxy(apacheHttpProxy);
+                }
+                requestBase.setConfig(requestBuilder.build());
+                requestBase.setHeader(header);
+                Logger.getRootLogger().debug("Details: %s", requestBase.getConfig().toString());
+                response = httpClient.execute(requestBase);
+                Logger.getRootLogger().debug("HTTP %s %s returned %s", method.toString(), url, response.getStatusLine().getStatusCode());
             }
-            final RequestConfig.Builder requestBuilder = RequestConfig.custom()
-                    .setConnectionRequestTimeout(timeout)
-                    .setConnectTimeout(timeout)
-                    .setSocketTimeout(timeout);
-            if (apacheHttpProxy != null) {
-                requestBuilder.setProxy(apacheHttpProxy);
-            }
-            requestBase.setConfig(requestBuilder.build());
-            requestBase.setHeader(header);
-            Logger.getRootLogger().debug("Details: %s", requestBase.getConfig().toString());
-            response = httpClient.execute(requestBase);
-            Logger.getRootLogger().debug("HTTP %s %s returned %s", method.toString(), url, response.getStatusLine().getStatusCode());
         } catch (URISyntaxException | IOException e) {
             Logger.getRootLogger().debug("Could not create connection to %s : %s", url, e.getMessage());
             throw new IOException(e);
@@ -414,41 +414,41 @@ public class NetUtils {
         CloseableHttpResponse response;
         try {
             URI uri = new URI(url);
-            CloseableHttpClient httpClient;
-            httpClient = HttpClients.custom()
-                    .setDefaultCookieStore(new BasicCookieStore())
-                    .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
-                    .build();
-            HttpRequestBase requestBase;
-            switch (method) {
-                case GET:
-                    requestBase = new HttpGet(uri);
-                    break;
-                case POST:
-                    requestBase = new HttpPost(uri);
-                    if (parameters != null) {
-                        ((HttpPost) requestBase).setEntity(new UrlEncodedFormEntity(parameters));
-                    }
-                    break;
-                default:
-                    throw new IllegalArgumentException("Method not supported");
-            }
-            final RequestConfig.Builder requestBuilder = RequestConfig.custom()
-                    .setConnectionRequestTimeout(timeout)
-                    .setConnectTimeout(timeout)
-                    .setSocketTimeout(timeout);
-            if (apacheHttpProxy != null) {
-                requestBuilder.setProxy(apacheHttpProxy);
-            }
-            requestBase.setConfig(requestBuilder.build());
-            if (headers != null) {
-                for (Header header : headers) {
-                    requestBase.setHeader(header);
+            try (CloseableHttpClient httpClient = HttpClients.custom()
+                                                             .setDefaultCookieStore(new BasicCookieStore())
+                                                             .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
+                                                             .build()) {
+                HttpRequestBase requestBase;
+                switch (method) {
+                    case GET:
+                        requestBase = new HttpGet(uri);
+                        break;
+                    case POST:
+                        requestBase = new HttpPost(uri);
+                        if (parameters != null) {
+                            ((HttpPost) requestBase).setEntity(new UrlEncodedFormEntity(parameters));
+                        }
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Method not supported");
                 }
+                final RequestConfig.Builder requestBuilder = RequestConfig.custom()
+                                                                          .setConnectionRequestTimeout(timeout)
+                                                                          .setConnectTimeout(timeout)
+                                                                          .setSocketTimeout(timeout);
+                if (apacheHttpProxy != null) {
+                    requestBuilder.setProxy(apacheHttpProxy);
+                }
+                requestBase.setConfig(requestBuilder.build());
+                if (headers != null) {
+                    for (Header header : headers) {
+                        requestBase.setHeader(header);
+                    }
+                }
+                Logger.getRootLogger().debug("Details: %s", requestBase.getConfig().toString());
+                response = httpClient.execute(requestBase);
+                Logger.getRootLogger().debug("HTTP %s %s returned %s", method.toString(), url, response.getStatusLine().getStatusCode());
             }
-            Logger.getRootLogger().debug("Details: %s", requestBase.getConfig().toString());
-            response = httpClient.execute(requestBase);
-            Logger.getRootLogger().debug("HTTP %s %s returned %s", method.toString(), url, response.getStatusLine().getStatusCode());
         } catch (URISyntaxException | IOException e) {
             Logger.getRootLogger().debug("Could not create connection to %s : %s", url, e.getMessage());
             throw new IOException(e);
@@ -590,7 +590,7 @@ public class NetUtils {
                     case 401:
                         throw new IOException("401: Unauthorized or the supplied credentials are invalid");
                     default:
-                        throw new IOException(String.valueOf(statusLine.getStatusCode()) + ": " + statusLine.getReasonPhrase());
+                        throw new IOException(statusLine.getStatusCode() + ": " + statusLine.getReasonPhrase());
                 }
             } else {
                 throw new IOException(String.format("Null response (maybe url %s is not reachable", url));

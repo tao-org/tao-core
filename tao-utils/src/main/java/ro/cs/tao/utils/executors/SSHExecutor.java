@@ -19,11 +19,15 @@ import com.jcraft.jsch.*;
 import ro.cs.tao.utils.ExceptionUtils;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 /**
  * Executor class based on JSch. It uses SSH2 for remote host connection and command invocation.
@@ -39,13 +43,13 @@ public class SSHExecutor extends Executor<Channel> {
     private Timer keepAliveTimer;
     
     /** Perform asynchronous execution. Default: false. */
-    private boolean asyncExecution;
+    private final boolean asyncExecution;
 
     /** Screen identifier for asynchronous execution. */
     private volatile String asyncScreenID;
     
     /** The name of the file where the output is saved in case of asynchronous execution. */
-    private String asyncFileName;
+    private final String asyncFileName;
 
     /** The result of the Asynchronous call. Null when the result was not obtained.*/
     private Integer asyncResult = null;
@@ -193,6 +197,8 @@ public class SSHExecutor extends Executor<Channel> {
             channel.connect(connectTimeoutMilliseconds);
             channel.disconnect();
             result = true;
+        } catch (Exception e) {
+            result = false;
         } finally {
             session.disconnect();
         }
@@ -787,12 +793,14 @@ public class SSHExecutor extends Executor<Channel> {
         String fileToTransfer = this.arguments.get(0);
         String workingDir = this.arguments.get(1);
         channelSftp.cd(workingDir);
-        if(new File(fileToTransfer).isDirectory()) {
+        Path file = Paths.get(fileToTransfer);
+        if(Files.isDirectory(file)) {
             recursiveFolderUpload(channelSftp, fileToTransfer, workingDir);
         } else {
-            File f = new File(fileToTransfer);
-            this.logger.fine("Uploading file " + f.getName());
-            channelSftp.put(new FileInputStream(f), f.getName(), ChannelSftp.OVERWRITE);
+            this.logger.fine("Uploading file " + file.getFileName());
+            try (InputStream stream = Files.newInputStream(file)) {
+                channelSftp.put(stream, file.getFileName().toString(), ChannelSftp.OVERWRITE);
+            }
         }
         channelSftp.disconnect();
         return channelSftp.getExitStatus();
@@ -807,52 +815,53 @@ public class SSHExecutor extends Executor<Channel> {
      * @throws SftpException
      * @throws FileNotFoundException
      */
-    private void recursiveFolderUpload(ChannelSftp channelSftp, String sourcePath, String destinationPath) throws SftpException, FileNotFoundException {
-
-        File sourceFile = new File(sourcePath);
-        if (sourceFile.isFile()) {
-
+    private void recursiveFolderUpload(ChannelSftp channelSftp, String sourcePath, String destinationPath) throws SftpException, IOException {
+        Path file = Paths.get(sourcePath);
+        String fileName = file.getFileName().toString();
+        if (Files.isRegularFile(file)) {
             // copy if it is a file
             channelSftp.cd(destinationPath);
-            if (!sourceFile.getName().startsWith("."))
-                this.logger.finest("Uploading file " + sourceFile);
-                channelSftp.put(new FileInputStream(sourceFile), sourceFile.getName(), ChannelSftp.OVERWRITE);
-
+            if (!file.getFileName().startsWith(".")) {
+                this.logger.finest("Uploading file " + file);
+            }
+            try (InputStream stream = Files.newInputStream(file)) {
+                channelSftp.put(stream, fileName, ChannelSftp.OVERWRITE);
+            }
         } else {
+            try (Stream<Path> files = Files.list(file)) {
+                if (files != null && !file.getFileName().startsWith(".")) {
+                    channelSftp.cd(destinationPath);
+                    SftpATTRS attrs = null;
 
-            //System.out.println("inside else " + sourceFile.getName());
-            File[] files = sourceFile.listFiles();
+                    // check if the directory is already existing
+                    try {
+                        attrs = channelSftp.stat(destinationPath + "/" + fileName);
+                    } catch (Exception e) {
+                        this.logger.fine(destinationPath + "/" + fileName + " not found");
+                    }
 
-            if (files != null && !sourceFile.getName().startsWith(".")) {
-
-                channelSftp.cd(destinationPath);
-                SftpATTRS attrs = null;
-
-                // check if the directory is already existing
-                try {
-                    attrs = channelSftp.stat(destinationPath + "/" + sourceFile.getName());
-                } catch (Exception e) {
-                    this.logger.fine(destinationPath + "/" + sourceFile.getName() + " not found");
-                }
-
-                // else create a directory
-                if (attrs != null) {
-                    this.logger.finest("Directory exists IsDir=" + attrs.isDir());
-                } else {
-                    this.logger.fine("Creating dir " + sourceFile.getName());
-                    channelSftp.mkdir(sourceFile.getName());
-                }
-
-                for (File f: files) {
-                    recursiveFolderUpload(channelSftp, f.getAbsolutePath(), destinationPath + "/" + sourceFile.getName());
+                    // else create a directory
+                    if (attrs != null) {
+                        this.logger.finest("Directory exists IsDir=" + attrs.isDir());
+                    } else {
+                        this.logger.fine("Creating dir " +fileName);
+                        channelSftp.mkdir(fileName);
+                    }
+                    files.forEach(f -> {
+                        try {
+                            recursiveFolderUpload(channelSftp, f.toAbsolutePath().toString(), destinationPath + "/" + fileName);
+                        } catch (SftpException | IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
                 }
             }
         }
     }
 
-    private class UserInfo implements com.jcraft.jsch.UserInfo {
+    private static class UserInfo implements com.jcraft.jsch.UserInfo {
 
-        private String pwd;
+        private final String pwd;
 
         UserInfo(String pass) {
             this.pwd = pass;

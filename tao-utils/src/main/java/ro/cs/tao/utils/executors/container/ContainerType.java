@@ -6,7 +6,7 @@ public enum ContainerType {
 
     private final String cmd;
 
-    private ContainerType(String value) {
+    ContainerType(String value) {
         this.cmd = value;
     }
 

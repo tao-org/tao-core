@@ -8,7 +8,7 @@ public class RejectedTaskHandler implements RejectedExecutionHandler {
     private final Logger logger;
 
     public RejectedTaskHandler() {
-        this.logger = Logger.getLogger(getClass().getName());;
+        this.logger = Logger.getLogger(getClass().getName());
     }
 
     @Override

@@ -35,7 +35,7 @@ public class Logger {
 
     private static final java.util.logging.Logger logger;
     private static String rootLogFile;
-    private static CustomLogger rootLogger = new CustomLogger() {
+    private static final CustomLogger rootLogger = new CustomLogger() {
         @Override
         public void debug(String message, Object... args) { fine(message, args); }
 
@@ -125,7 +125,7 @@ public class Logger {
 
     public static class ScopeLogger implements CustomLogger, AutoCloseable {
 
-        private Handler fileHandler;
+        private final Handler fileHandler;
 
         public ScopeLogger(String logFile) throws IOException {
             //fileHandler = registerHandler(logFile);

@@ -170,7 +170,7 @@ public class FileUtilities {
                 }
             }
         } catch (IOException ex) {
-            logger.warning(String.format("Cannot set permissions for %s", file.toString()));
+            logger.warning(String.format("Cannot set permissions for %s", file));
         }
         return file;
     }

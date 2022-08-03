@@ -18,7 +18,7 @@ package ro.cs.tao.utils;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
@@ -29,13 +29,13 @@ public class Crypto {
     private static SecretKeySpec createKey(String secret) {
         MessageDigest sha;
         try {
-            byte[] key = secret.getBytes("UTF-8");
+            byte[] key = secret.getBytes(StandardCharsets.UTF_8);
             sha = MessageDigest.getInstance("SHA-1");
             key = sha.digest(key);
             key = Arrays.copyOf(key, 16);
             return new SecretKeySpec(key, "AES");
         }
-        catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
+        catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
         return null;
@@ -47,7 +47,7 @@ public class Crypto {
                 SecretKeySpec key = createKey(secret);
                 Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
                 cipher.init(Cipher.ENCRYPT_MODE, key);
-                return Base64.getEncoder().encodeToString(cipher.doFinal(strToEncrypt.getBytes("UTF-8")));
+                return Base64.getEncoder().encodeToString(cipher.doFinal(strToEncrypt.getBytes(StandardCharsets.UTF_8)));
             } catch (Exception e) {
                 e.printStackTrace();
             }

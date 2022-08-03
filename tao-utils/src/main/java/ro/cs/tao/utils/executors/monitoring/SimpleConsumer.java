@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SimpleConsumer implements OutputConsumer {
-    private List<String> messages = new ArrayList<>();
+    private final List<String> messages = new ArrayList<>();
     @Override
     public void consume(String message) {
         messages.add(message.replace("\r", ""));

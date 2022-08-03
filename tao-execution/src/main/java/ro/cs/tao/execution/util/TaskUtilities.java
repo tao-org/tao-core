@@ -328,6 +328,10 @@ public class TaskUtilities {
     }
 
     public static String relativizePathForExecution(String path) {
+        if (path.startsWith(DOCKER_MOUNT_POINT)) {
+            // Path is already inside the docker container
+            return path;
+        }
         String result;
         try {
             Path p = FileUtilities.resolveSymLinks(Paths.get(URI.create(path)).toAbsolutePath());
