@@ -42,6 +42,7 @@ import ro.cs.tao.persistence.ContainerProvider;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.topology.NodeDescription;
+import ro.cs.tao.utils.StringUtilities;
 import ro.cs.tao.utils.executors.BlockingQueueWorker;
 import ro.cs.tao.utils.executors.container.ContainerCmdBuilder;
 import ro.cs.tao.utils.executors.container.ContainerType;
@@ -259,6 +260,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                                 code = -255;
                             }
                             task.setLog(error);
+                            taskProvider.update(task);
                             markTaskFinished(task, ExecutionStatus.FAILED);
                             logger.warning(String.format("Task %s FAILED. Process output: %s", taskName, error));
                             if (task instanceof ProcessingExecutionTask) {
@@ -501,9 +503,18 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                         volumeMount = ExecutionConfiguration.getWorkerContainerVolumeMap();
                     }
                     unit.addVolumeMapping(volumeMount.getHostWorkspaceFolder(), volumeMount.getContainerWorkspaceFolder());
-                    unit.addVolumeMapping(volumeMount.getHostConfigurationFolder(), volumeMount.getContainerConfigurationFolder());
-                    unit.addVolumeMapping(volumeMount.getHostTemporaryFolder(), volumeMount.getContainerTemporaryFolder());
-                    unit.addVolumeMapping(volumeMount.getHostEODataFolder(), volumeMount.getContainerEoDataFolder());
+                    String hostFolder = volumeMount.getHostConfigurationFolder();
+                    if (!StringUtilities.isNullOrEmpty(hostFolder)) {
+                        unit.addVolumeMapping(hostFolder, volumeMount.getContainerConfigurationFolder());
+                    }
+                    hostFolder = volumeMount.getHostTemporaryFolder();
+                    if (!StringUtilities.isNullOrEmpty(hostFolder)) {
+                        unit.addVolumeMapping(hostFolder, volumeMount.getContainerTemporaryFolder());
+                    }
+                    hostFolder = volumeMount.getHostEODataFolder();
+                    if (!StringUtilities.isNullOrEmpty(hostFolder)) {
+                        unit.addVolumeMapping(hostFolder, volumeMount.getContainerEoDataFolder());
+                    }
                     unit.setContainerName(container.getName());
                     unit.setContainerRegistry(ExecutionConfiguration.getDockerRegistry());
                     if (cpu > 0) {
@@ -512,8 +523,8 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                         task.setUsedCPU(cpu);
                     }
                     if (mem > 0) {
-                        long arg = memory > 0 ? memory : Math.min(8, mem);
-                        unit.addArgument("--memory", arg + "GB");
+                        long arg = memory > 0 ? memory : Math.min(8192, mem);
+                        unit.addArgument("--memory", arg + "MB");
                         task.setUsedRAM((int) arg);
                     }
                     template.setAttribute(DrmaaJobExtensions.CONTAINER_ATTRIBUTE, unit);
@@ -546,10 +557,14 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                         }
                         add("-v");
                         add(volumeMap.getHostWorkspaceFolder() + ":" + volumeMap.getContainerWorkspaceFolder());
-                        add("-v");
-                        add(volumeMap.getHostTemporaryFolder() + ":" + volumeMap.getContainerTemporaryFolder());
-                        add("-v");
-                        add(volumeMap.getHostConfigurationFolder() + ":" + volumeMap.getContainerConfigurationFolder());
+                        if (!StringUtilities.isNullOrEmpty(volumeMap.getHostTemporaryFolder())) {
+                            add("-v");
+                            add(volumeMap.getHostTemporaryFolder() + ":" + volumeMap.getContainerTemporaryFolder());
+                        }
+                        if (!StringUtilities.isNullOrEmpty(volumeMap.getHostConfigurationFolder())) {
+                            add("-v");
+                            add(volumeMap.getHostConfigurationFolder() + ":" + volumeMap.getContainerConfigurationFolder());
+                        }
                         if (cpu > 0) {
                             // Enforce the number of CPUs to be used
                             add("--cpus");
@@ -557,7 +572,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                             task.setUsedCPU(cpu);
                         }
                         if (mem > 0) {
-                            long arg = memory > 0 ? memory : Math.min(8, mem);
+                            long arg = memory > 0 ? memory : Math.min(8192, mem);
                             add("--memory");    // Enforce the memory limit to be used
                             // memory, if not 0, is expressed in MB
                             add(arg + "MB");
