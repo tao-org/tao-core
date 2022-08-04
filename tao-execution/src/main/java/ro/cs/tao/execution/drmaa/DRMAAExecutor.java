@@ -619,6 +619,11 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         final String finalPath = isOutputManaged ? finalOutput : finalOutput.substring(0, finalOutput.lastIndexOf('/') + 1);
         final boolean recursiveCondition = !isOutputManaged || component.getTargets().stream().anyMatch(t -> DataFormat.FOLDER == t.getDataDescriptor().getFormatType());
         argsList.add(0, initialCmd);
+        if (!isLocal && component.getTargets().stream().anyMatch(t -> t.getDataDescriptor().getFormatType() == DataFormat.FOLDER)) {
+            argsList.add(0, "mkdir");
+            argsList.add(1, tmpPath);
+            argsList.add(2, "&&");
+        }
         argsList.add("&&");
         argsList.add("cp");
         if (recursiveCondition) {

@@ -45,6 +45,7 @@ import ro.cs.tao.utils.StringUtilities;
 import ro.cs.tao.utils.executors.NamedThreadPoolExecutor;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
+import ro.cs.tao.workflow.enums.ComponentType;
 
 import java.net.InetAddress;
 import java.security.Principal;
@@ -198,19 +199,21 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                                     DataSorter<EOProduct> sorter = ProductSortingFactory.getSorter(sort[0]);
                                     products = sorter.sort(products, sort[1] == null || sort[1].equalsIgnoreCase("asc"));
                                 }
-                                String[] group = aggregator.getAssociator();
-                                if (group != null) {
-                                    Association<EOProduct> association;
-                                    if (group.length == 1) {
-                                        association = ProductAssociationFactory.getAssociation(group[0]);
-                                    } else {
-                                        if (group[1] == null) {
-                                            group[1] = "0";
+                                if (linkedNode.getComponentType() == ComponentType.DATASOURCE) {
+                                    String[] group = aggregator.getAssociator();
+                                    if (group != null) {
+                                        Association<EOProduct> association;
+                                        if (group.length == 1) {
+                                            association = ProductAssociationFactory.getAssociation(group[0]);
+                                        } else {
+                                            if (group[1] == null) {
+                                                group[1] = "0";
+                                            }
+                                            association = ProductAssociationFactory.getAssociation(group[0],
+                                                                                                   Integer.parseInt(group[1]));
                                         }
-                                        association = ProductAssociationFactory.getAssociation(group[0],
-                                                                                               Integer.parseInt(group[1]));
+                                        tuples = association.associate(products);
                                     }
-                                    tuples = association.associate(products);
                                 }
                             }
                         }
