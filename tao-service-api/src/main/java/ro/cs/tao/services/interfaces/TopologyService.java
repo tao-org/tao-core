@@ -31,4 +31,5 @@ public interface TopologyService extends CRUDService<NodeDescription, String> {
     List<NodeDescription> getNodes(boolean active);
     List<NodeDescription> getNodes(NodeFlavor nodeFlavor);
     List<NodeFlavor> getNodeFlavors();
+    boolean isExternalProviderAvailable();
 }
