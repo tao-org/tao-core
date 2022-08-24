@@ -36,12 +36,7 @@ public enum ParameterType implements TaoEnum<Integer> {
      * The parameter is a template parameter (describing the invocation of the component, for example)
      */
     @XmlEnumValue("2")
-    TEMPLATE(2, "Template"),
-    /**
-     * The parameter represents an array of simple values
-     */
-    @XmlEnumValue("3")
-    ARRAY(3, "Array");
+    TEMPLATE(2, "Template");
 
     private final int value;
     private final String description;

@@ -56,4 +56,12 @@ public class StringUtilities {
             return new String[] { json };
         }
     }
+
+    public static String padLeft(String value, int length, String padValue) {
+        return value.length() < length ? String.format("%" + length + "s", value).replace(" ", padValue) : value;
+    }
+
+    public static String padRight(String value, int length, String padValue) {
+        return value.length() < length ? String.format("%-" + length + "s", value).replace(" ", padValue) : value;
+    }
 }

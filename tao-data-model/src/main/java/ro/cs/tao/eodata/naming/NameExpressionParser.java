@@ -68,7 +68,6 @@ public class NameExpressionParser {
                                                        name, this.rule.getRegEx()));
             }
         }
-
-        return transformed;
+        return DateFunctions.resolve(transformed);
     }
 }

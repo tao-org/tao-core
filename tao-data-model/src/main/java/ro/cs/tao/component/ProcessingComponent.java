@@ -18,7 +18,10 @@ package ro.cs.tao.component;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
-import ro.cs.tao.component.enums.*;
+import ro.cs.tao.component.enums.ComponentCategory;
+import ro.cs.tao.component.enums.Condition;
+import ro.cs.tao.component.enums.ProcessingComponentType;
+import ro.cs.tao.component.enums.ProcessingComponentVisibility;
 import ro.cs.tao.component.template.BasicTemplate;
 import ro.cs.tao.component.template.Template;
 import ro.cs.tao.component.template.TemplateException;
@@ -393,7 +396,7 @@ public class ProcessingComponent extends TaoComponent {
                 this.parameters.stream().filter(p -> p instanceof TemplateParameterDescriptor)
                                .collect(Collectors.toMap(ParameterDescriptor::getName, p -> (TemplateParameterDescriptor) p));
         Map<String, ParameterDescriptor> arrayParameters =
-                this.parameters.stream().filter(p -> p.getType() == ParameterType.ARRAY || p.getDataType().isArray())
+                this.parameters.stream().filter(p -> p.getDataType().isArray())
                                .collect(Collectors.toMap(ParameterDescriptor::getName, Function.identity()));
         if (parameterValues != null) {
             for (Map.Entry<String, Object> entry : parameterValues.entrySet()) {

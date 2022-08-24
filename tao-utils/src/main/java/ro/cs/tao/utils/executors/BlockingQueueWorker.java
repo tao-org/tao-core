@@ -22,9 +22,7 @@ public class BlockingQueueWorker<E> extends Thread {
     public BlockingQueueWorker(BlockingQueue<E> monitoredQueue, Function<E, Void> runnable, int parallelism) {
         this.monitoredQueue = monitoredQueue;
         this.work = runnable;
-        if (parallelism > 1) {
-            this.executor = new NamedThreadPoolExecutor("queue-worker", parallelism);
-        }
+        this.executor = new NamedThreadPoolExecutor("queue-worker", parallelism > 0 ? parallelism : 1);
         this.stopped = false;
         this.monitor = new Object();
         this.logger = Logger.getLogger(getClass().getName());

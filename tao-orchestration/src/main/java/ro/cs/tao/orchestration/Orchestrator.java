@@ -1400,15 +1400,16 @@ public class Orchestrator extends Notifiable {
                 try {
                     AbstractMap.SimpleEntry<Message, SessionContext> entry = queue.take();
                     logger.finest("Dequeued message " + entry.getKey());
-                    final ExecutorService service = Orchestrator.this.executors.get(entry.getValue().getPrincipal().getName());
-                    if (service != null) {
-                        if (service.isShutdown() || service.isTerminated()) {
-                            logger.warning("Executor for " + entry.getKey() + " was shutdown. Further tasks cannot be processed");
-                        } else {
-                            service.submit(() -> processMessage(entry.getKey(), entry.getValue()));
-                        }
+                    String user = entry.getValue().getPrincipal().getName();
+                    ExecutorService service = Orchestrator.this.executors.get(user);
+                    if (service == null) {
+                        service = Executors.newFixedThreadPool(1);
+                        Orchestrator.this.executors.put(user, service);
+                    }
+                    if (service.isShutdown() || service.isTerminated()) {
+                        logger.warning("Executor for " + entry.getKey() + " was shutdown. Further tasks cannot be processed");
                     } else {
-                        logger.severe("Executor for " + entry.getKey() + " was already shut down");
+                        service.submit(() -> processMessage(entry.getKey(), entry.getValue()));
                     }
                 } catch (InterruptedException e) {
                     logger.severe(e.getMessage());
