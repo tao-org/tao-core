@@ -30,6 +30,8 @@ import ro.cs.tao.persistence.repository.ProcessingComponentRepository;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Component("processingComponentManager")
 public class ProcessingComponentManager extends TaoComponentManager<ProcessingComponent, ProcessingComponentRepository>
@@ -115,6 +117,25 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
                 }
             });
             map.clear();
+        }
+        return entity;
+    }
+
+    @Override
+    public ProcessingComponent update(ProcessingComponent entity) throws PersistenceException {
+        if (!checkEntity(entity, true)) {
+            throw new PersistenceException(String.format("Invalid parameters provided for updating entity of type %s!",
+                                                         entity.getClass().getSimpleName()));
+        }
+        repository.save(entity);
+        Map<ParameterDescriptor, ParameterExpansionRule> rules = entity.getParameterDescriptors().stream()
+                                                                       .filter(p -> p.getExpansionRule() != null)
+                                                                       .collect(Collectors.toMap(Function.identity(),
+                                                                                                 ParameterDescriptor::getExpansionRule));
+        for (Map.Entry<ParameterDescriptor, ParameterExpansionRule> entry : rules.entrySet()) {
+            ParameterExpansionRule rule = entry.getValue();
+            rule.setId(entry.getKey().getId());
+            expansionRuleRepository.save(rule);
         }
         return entity;
     }

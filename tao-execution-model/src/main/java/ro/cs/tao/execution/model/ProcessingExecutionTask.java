@@ -18,7 +18,6 @@ package ro.cs.tao.execution.model;
 import ro.cs.tao.component.*;
 import ro.cs.tao.component.converters.ConverterFactory;
 import ro.cs.tao.component.converters.ParameterConverter;
-import ro.cs.tao.component.enums.ParameterType;
 import ro.cs.tao.component.validation.ValidationException;
 import ro.cs.tao.datasource.converters.ConversionException;
 import ro.cs.tao.datasource.param.JavaType;
@@ -164,7 +163,7 @@ public class ProcessingExecutionTask extends ExecutionTask {
                     ParameterDescriptor descriptor = this.component.getParameterDescriptors().stream()
                                                                    .filter(d -> d.getName().equals(input.getKey()))
                                                                    .findFirst().orElse(null);
-                    if (descriptor != null && (descriptor.getType() == ParameterType.ARRAY || descriptor.getDataType().isArray())) {
+                    if (descriptor != null && (descriptor.getDataType().isArray())) {
                         final String[] values = value.split(",");
                         final Object array = JavaType.createArray(JavaType.fromClass(descriptor.getDataType()), values.length);
                         final Class<?> type = descriptor.getDataType().getComponentType();

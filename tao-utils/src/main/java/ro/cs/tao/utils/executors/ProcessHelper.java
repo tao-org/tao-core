@@ -39,7 +39,7 @@ public final class ProcessHelper {
     private static final String LINUX_RESUME = "kill -CONT %s";
 
     public static List<String> tokenizeCommands(String commandString) {
-        return tokenize(commandString, "'");
+        return tokenize(commandString, "'", (Object[]) null);
     }
 
     public static List<String> tokenizeCommands(String commandString, Object...args) {

@@ -48,7 +48,7 @@ INSERT INTO product.orbit_direction (direction) VALUES
 
 -- Parameter type
 INSERT INTO component.parameter_type (type) VALUES
-('RegularParameter'), ('TemplateParameter'), ('ArrayParameter');
+('RegularParameter'), ('TemplateParameter');
 
 -- Pixel types
 INSERT INTO product.pixel_type (type) VALUES

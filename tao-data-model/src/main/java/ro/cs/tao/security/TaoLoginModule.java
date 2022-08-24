@@ -56,7 +56,8 @@ public abstract class TaoLoginModule implements LoginModule {
 
     @Override
     public boolean login() throws LoginException {
-        if (!this.configuredAuthMode.equals(intendedFor())) {
+        final boolean localLogin = intendedFor() == AuthenticationMode.LOCAL;
+        if (!localLogin && !this.configuredAuthMode.equals(intendedFor())) {
             return false;
         }
         if (callbackHandler == null) {
@@ -93,7 +94,11 @@ public abstract class TaoLoginModule implements LoginModule {
             succeeded = false;
             username = null;
             password = null;
-            throw new FailedLoginException("Invalid login credentials.");
+            if (localLogin && this.configuredAuthMode != AuthenticationMode.LOCAL) {
+                return succeeded;
+            } else {
+                throw new FailedLoginException("Invalid login credentials.");
+            }
         }
     }
 

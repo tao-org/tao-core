@@ -43,13 +43,14 @@ public class TypeValidator extends Validator {
                                                             parameter.getName(),
                                                             dataType.getSimpleName()));
             }
-        } else if (parameter.getType() == ParameterType.ARRAY) {
-            final int len = Array.getLength(value);
-            for (int i = 0; i < len; i++) {
-                final Object elementValue = Array.get(value, i);
-                if (isNotAssignableFrom(dataType, elementValue)) {
-                    throw new ValidationException(String.format("Array element [%s] for [%s] must be of type %s",
-                                                                elementValue, parameter.getName(), dataType.getSimpleName()));
+            if (dataType.isArray()) {
+                final int len = Array.getLength(value);
+                for (int i = 0; i < len; i++) {
+                    final Object elementValue = Array.get(value, i);
+                    if (isNotAssignableFrom(dataType, elementValue)) {
+                        throw new ValidationException(String.format("Array element [%s] for [%s] must be of type %s",
+                                                                    elementValue, parameter.getName(), dataType.getSimpleName()));
+                    }
                 }
             }
         }
