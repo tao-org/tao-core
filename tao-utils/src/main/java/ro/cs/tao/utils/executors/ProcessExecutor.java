@@ -67,7 +67,7 @@ public class ProcessExecutor extends Executor<Process> {
                 pb.redirectError(ProcessBuilder.Redirect.INHERIT);
             }
             //pb.redirectErrorStream(true);
-            pb.environment().putAll(System.getenv());
+            pb.environment().putAll(getEnvironment() != null ? getEnvironment() : System.getenv());
             if (asSuperUser) {
                 insertSudoParams();
             }

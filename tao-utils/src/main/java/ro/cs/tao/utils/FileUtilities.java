@@ -21,6 +21,9 @@ import com.jcraft.jsch.SftpATTRS;
 import com.jcraft.jsch.SftpException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
+import ro.cs.tao.utils.executors.Executor;
+import ro.cs.tao.utils.executors.ExecutorType;
+import ro.cs.tao.utils.executors.OutputAccumulator;
 
 import java.io.*;
 import java.net.URI;
@@ -173,6 +176,27 @@ public class FileUtilities {
             logger.warning(String.format("Cannot set permissions for %s", file));
         }
         return file;
+    }
+
+    public static void takeOwnership(Path file) {
+        try {
+            final List<String> args = new ArrayList<String>() {{
+               add("chown");
+               if (Files.isDirectory(file)) {
+                   add("-R");
+               }
+               add(System.getProperty("user.name"));
+               add(file.toAbsolutePath().toString());
+            }};
+            final Executor<?> executor = Executor.create(ExecutorType.PROCESS, null, args, true);
+            final OutputAccumulator accumulator = new OutputAccumulator();
+            executor.setOutputConsumer(accumulator);
+            if (executor.execute(true) != 0) {
+                throw new Exception(accumulator.getOutput());
+            }
+        } catch (Exception e) {
+            logger.severe(e.getMessage());
+        }
     }
 
     public static List<Path> listFolders(Path root) throws IOException {

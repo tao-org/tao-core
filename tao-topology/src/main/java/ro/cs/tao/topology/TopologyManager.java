@@ -68,6 +68,7 @@ public class TopologyManager {
         createLocalShareLinuxTemplate = "if [ -e $(smbclient -N -g -L localhost | grep \"%1$s\") ]; then sed -i \"$ a[%1$s]\n\tpath = %2$s\n\tbrowsable = yes\n\twritable = yes\n\tguest ok = yes\" /etc/samba/smb.conf; fi;";
         sharedAccumulator = new OutputAccumulator();
         instance = new TopologyManager();
+        Executor.setEnvironment(ConfigurationManager.getInstance().getSystemEnvironment());
 
     }
 

@@ -42,6 +42,7 @@ import ro.cs.tao.persistence.ContainerProvider;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.topology.NodeDescription;
+import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.StringUtilities;
 import ro.cs.tao.utils.executors.BlockingQueueWorker;
 import ro.cs.tao.utils.executors.container.ContainerCmdBuilder;
@@ -243,6 +244,12 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                             }
                             if (task instanceof ProcessingExecutionTask) {
                                 notifyExternalListeners((ProcessingExecutionTask) task, ExecutionStatus.PENDING_FINALISATION.friendlyName(), 0, null);
+                            }
+                            if (masterHost.equals(task.getExecutionNodeHostName()) && !SystemUtils.IS_OS_WINDOWS) {
+                                String taskOutputLocation = task.getInstanceTargetOutput();
+                                if (taskOutputLocation != null) {
+                                    FileUtilities.takeOwnership(Paths.get(taskOutputLocation).getParent());
+                                }
                             }
                             break;
                         case Session.FAILED:
@@ -490,10 +497,10 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                         add("--volume-driver");
                         add("cifs");
                         // -u $(id -u ${USER}):$(id -g ${USER})
-                        if (!masterHost.equals(node.getId())) {
+                        /*if (!masterHost.equals(node.getId())) {
                             add("-u");
                             add("$(id -u ${USER}):$(id -g ${USER})");
-                        }
+                        }*/
                     }});
                     unit.setEnvironmentVariables(dbSources);
                     final DockerVolumeMap volumeMount;
@@ -551,10 +558,10 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                         add("--volume-driver");
                         add("cifs");
                         //-u $(id -u ${USER}):$(id -g ${USER})
-                        if (!masterHost.equals(node.getId())) {
+                        /*if (!masterHost.equals(node.getId())) {
                             add("-u");
                             add("$(id -u ${USER}):$(id -g ${USER})");
-                        }
+                        }*/
                         add("-v");
                         add(volumeMap.getHostWorkspaceFolder() + ":" + volumeMap.getContainerWorkspaceFolder());
                         if (!StringUtilities.isNullOrEmpty(volumeMap.getHostTemporaryFolder())) {

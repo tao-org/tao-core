@@ -23,6 +23,7 @@ import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 /**
  * Singleton than monitors registered topology nodes for resources availability.
@@ -269,30 +270,36 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
             	int availableCpu = userQuotaManager.getAvailableCpus(principal);
                 if ((availableCpu == -1 || availableCpu > 0) && userQuotaManager.checkUserProcessingMemory(principal, (int)memory)) {
                     requestedCPUs = (availableCpu == -1) ? cpus : Math.min(cpus, availableCpu);
-                    NodeRuntimeWrapper result = this.nodes.entrySet().stream()
-                            // First try to find a node different from the last one used
-                            .filter(e -> {
-                                final NodeRuntimeWrapper nrw = e.getValue();
-                                return !nrw.equals(lastUsedNode) && nrw.getRuntimeInfo().getAvailableMemory() >= memory;
-                            })
-                            .min(Comparator.comparingDouble(e -> {
-                                NodeDescription node = nodes.get(e.getKey()).getNode();
-                                RuntimeInfo runtimeInfo = e.getValue().getRuntimeInfo();
-                                return computeLoad(node, runtimeInfo.getCpuTotal(), runtimeInfo.getAvailableMemory());
-                            }))
-                            .map(Map.Entry::getValue).orElse(
-                                    this.nodes.entrySet().stream()
-                                            // And if not available, the first suitable one (may also be the last one used)
-                                            .filter(e -> e.getValue().getRuntimeInfo().getAvailableMemory() >= memory)
-                                            .min(Comparator.comparingDouble(e -> {
-                                                NodeDescription node = nodes.get(e.getKey()).getNode();
-                                                RuntimeInfo runtimeInfo = e.getValue().getRuntimeInfo();
-                                                return computeLoad(node, runtimeInfo.getCpuTotal(), runtimeInfo.getAvailableMemory());
-                                            }))
-                                            .map(Map.Entry::getValue).orElse(null));
+                    NodeRuntimeWrapper result = null;
+                    // First try to find a node different from the last one used
+                    List<Map.Entry<String, NodeRuntimeWrapper>> candidates = this.nodes.entrySet().stream()
+                                                                                    .filter(e -> {
+                                                                                        final NodeRuntimeWrapper nrw = e.getValue();
+                                                                                        return !nrw.equals(lastUsedNode) && nrw.getRuntimeInfo().getAvailableMemory() >= memory;
+                                                                                    }).collect(Collectors.toList());
+                    Map.Entry<String, NodeRuntimeWrapper> candidate = candidates.stream().min(Comparator.comparingDouble(e -> {
+                        NodeDescription node = nodes.get(e.getKey()).getNode();
+                        RuntimeInfo runtimeInfo = e.getValue().getRuntimeInfo();
+                        return computeLoad(node, runtimeInfo.getCpuTotal(), runtimeInfo.getAvailableMemory());
+                    })).orElse(null);
+                    if (candidate != null) {
+                        result = candidate.getValue();
+                    } else {
+                        // And if not available, the first suitable one (may also be the last one used)
+                        result = this.nodes.entrySet().stream()
+                                           // And if not available, the first suitable one (may also be the last one used)
+                                           .filter(e -> e.getValue().getRuntimeInfo().getAvailableMemory() >= memory)
+                                           .min(Comparator.comparingDouble(e -> {
+                                               NodeDescription node = nodes.get(e.getKey()).getNode();
+                                               RuntimeInfo runtimeInfo = e.getValue().getRuntimeInfo();
+                                               return computeLoad(node, runtimeInfo.getCpuTotal(), runtimeInfo.getAvailableMemory());
+                                           }))
+                                           .map(Map.Entry::getValue).orElse(null);
+                    }
                     if (result != null) {
                         availableNode = result.getNode();
                         lastUsedNode = result;
+                        result.getRuntimeInfo().setAvailableMemory(result.getRuntimeInfo().getAvailableMemory() - memory);
                     }
                 }
             } catch (QuotaException e) {

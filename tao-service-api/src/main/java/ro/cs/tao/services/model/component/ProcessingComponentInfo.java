@@ -24,6 +24,7 @@ public class ProcessingComponentInfo {
     private boolean active;
     private ProcessingComponentType componentType;
     private ComponentCategory category;
+    private boolean managedOutput;
     private List<String> tags;
 
     public ProcessingComponentInfo(ProcessingComponent component) {
@@ -43,6 +44,7 @@ public class ProcessingComponentInfo {
             this.category = ComponentCategory.MISC;
         }
         this.tags = component.getTags();
+        this.managedOutput = component.isOutputManaged();
     }
 
     public String getId() { return id; }
@@ -69,6 +71,14 @@ public class ProcessingComponentInfo {
 
     public ComponentCategory getCategory() {
         return category;
+    }
+
+    public boolean isManagedOutput() {
+        return managedOutput;
+    }
+
+    public void setManagedOutput(boolean managedOutput) {
+        this.managedOutput = managedOutput;
     }
 
     public List<String> getTags() { return tags; }

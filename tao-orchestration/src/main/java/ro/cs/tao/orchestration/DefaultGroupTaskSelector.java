@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * Default implementation for choosing the next task to be executed from a group of tasks.
@@ -60,7 +61,7 @@ public class DefaultGroupTaskSelector implements TaskSelector<ExecutionGroup> {
     }
 
     @Override
-    public DataSourceExecutionTask findDataSourceTask(ExecutionGroup job, ExecutionTask currentTask) {
+    public List<DataSourceExecutionTask> findDataSourceTasks(ExecutionGroup job, ExecutionTask currentTask) {
         WorkflowNodeDescriptor workflowNode = this.workflowProvider.apply(currentTask.getWorkflowNodeId());
         if (workflowNode == null) {
             logger.severe(String.format("No workflow node with id %s was found in the database",
@@ -68,11 +69,15 @@ public class DefaultGroupTaskSelector implements TaskSelector<ExecutionGroup> {
             return null;
         }
         WorkflowDescriptor workflow = workflowNode.getWorkflow();
-        List<WorkflowNodeDescriptor> ancestors = workflow.findAncestors(workflow.getOrderedNodes(), workflowNode);
+        /*List<WorkflowNodeDescriptor> ancestors = workflow.findAncestors(workflow.getOrderedNodes(), workflowNode);
         return job.getTasks().stream().filter(t -> t.getWorkflowNodeId().equals(ancestors.get(0).getId()) &&
                                                    t instanceof DataSourceExecutionTask)
                                       .map(t -> (DataSourceExecutionTask) t)
-                                      .findFirst().orElse(null);
+                                      .findFirst().orElse(null);*/
+        return job.getJob().orderedTasks().stream()
+                  .filter(t -> t instanceof DataSourceExecutionTask)
+                  .map(t -> (DataSourceExecutionTask) t)
+                  .collect(Collectors.toList());
     }
 
     @Override
