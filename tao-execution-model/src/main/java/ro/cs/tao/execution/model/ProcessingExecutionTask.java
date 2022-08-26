@@ -270,10 +270,11 @@ public class ProcessingExecutionTask extends ExecutionTask {
         }
         if (location != null) {
             Path path = Paths.get(location);
-            SessionContext context = getContext();
+            //SessionContext context = getContext();
+            String principalName = getJob().getUserName();
             if (!path.isAbsolute()) {
                 path = Paths.get(ExecutionConfiguration.getWorkerContainerVolumeMap().getContainerWorkspaceFolder())
-                        .resolve(context.getPrincipal().getName()).resolve(path); //context.getNetSpace().resolve(path);
+                        .resolve(principalName).resolve(path); //context.getNetSpace().resolve(path);
             }
             String fileName = path.getFileName().toString();
             String folderName = String.format(nameTemplate,
@@ -282,7 +283,7 @@ public class ProcessingExecutionTask extends ExecutionTask {
                                               this.internalState == null ? "" : this.internalState + "-",
                                               FileUtilities.getFilenameWithoutExtension(fileName));
             outPath = new String[] {
-                    FileUtilities.asUnixPath(context.getWorkspace().resolve(folderName), false),
+                    FileUtilities.asUnixPath(Paths.get(SystemVariable.ROOT.value()).resolve(principalName).resolve(folderName), false),
                     FileUtilities.asUnixPath(path.getParent().resolve(folderName), true)
             };
         }

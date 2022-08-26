@@ -18,13 +18,13 @@ package ro.cs.tao.orchestration;
 
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.utils.TriFunction;
-import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * Default implementation for choosing the next task to be executed from a job.
@@ -55,19 +55,23 @@ public class DefaultJobTaskSelector implements TaskSelector<ExecutionJob> {
     }
 
     @Override
-    public DataSourceExecutionTask findDataSourceTask(ExecutionJob job, ExecutionTask currentTask) {
+    public List<DataSourceExecutionTask> findDataSourceTasks(ExecutionJob job, ExecutionTask currentTask) {
         final WorkflowNodeDescriptor workflowNode = this.workflowProvider.apply(currentTask.getWorkflowNodeId());
         if (workflowNode == null) {
             logger.severe(String.format("No workflow node with id %s was found in the database",
                                         currentTask.getWorkflowNodeId()));
             return null;
         }
-        WorkflowDescriptor workflow = workflowNode.getWorkflow();
+        /*WorkflowDescriptor workflow = workflowNode.getWorkflow();
         final List<WorkflowNodeDescriptor> ancestors = workflow.findAncestors(workflow.getOrderedNodes(), workflowNode);
         return job.orderedTasks().stream().filter(t -> t.getWorkflowNodeId().equals(ancestors.get(0).getId()) &&
                                                        t instanceof DataSourceExecutionTask)
                                           .map(t -> (DataSourceExecutionTask) t)
-                                          .findFirst().orElse(null);
+                                          .findFirst().orElse(null);*/
+        return job.orderedTasks().stream()
+                  .filter(t -> t instanceof DataSourceExecutionTask)
+                  .map(t -> (DataSourceExecutionTask) t)
+                  .collect(Collectors.toList());
     }
 
     @Override

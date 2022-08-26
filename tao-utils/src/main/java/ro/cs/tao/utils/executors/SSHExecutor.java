@@ -143,7 +143,7 @@ public class SSHExecutor extends Executor<Channel> {
 
     private Session createSession() throws JSchException {
         Session session = openSession(3000);
-        this.logger.finest(String.format("Session %d opened", session.hashCode()));
+        //this.logger.finest(String.format("Session %d opened", session.hashCode()));
         return session;
     }
 
@@ -180,7 +180,7 @@ public class SSHExecutor extends Executor<Channel> {
             //resetChannel();
             if (session != null && !keepAlive) {
                 session.disconnect();
-                this.logger.finest(String.format("Session %d disconnected", session.hashCode()));
+                //this.logger.finest(String.format("Session %d disconnected", session.hashCode()));
             }
         }
         return ret;
@@ -341,13 +341,13 @@ public class SSHExecutor extends Executor<Channel> {
                 }
             });
             channel.connect();
-            this.logger.finest(String.format("Channel %d opened", channel.getId()));
+            //this.logger.finest(String.format("Channel %d opened", channel.getId()));
             return channel;
         } catch (Exception e) {
             stop(channel);
             if (session != null && !keepAlive) {
                 session.disconnect();
-                this.logger.finest(String.format("Session %d disconnected", session.hashCode()));
+                //this.logger.finest(String.format("Session %d disconnected", session.hashCode()));
             }
             throw new IOException(e);
         }
@@ -356,7 +356,7 @@ public class SSHExecutor extends Executor<Channel> {
     public void close() {
         if (singleSession != null) {
             singleSession.disconnect();
-            this.logger.finest(String.format("Session %d disconnected", singleSession.hashCode()));
+            //this.logger.finest(String.format("Session %d disconnected", singleSession.hashCode()));
             singleSession = null;
         }
     }
@@ -366,7 +366,7 @@ public class SSHExecutor extends Executor<Channel> {
             try {
                 //channel.sendSignal("2");
                 channel.disconnect();
-                this.logger.finest(String.format("Channel %d disconnected", channel.getId()));
+                //this.logger.finest(String.format("Channel %d disconnected", channel.getId()));
             } catch (Exception e) {
                 this.logger.warning(e.getMessage());
             }
@@ -461,7 +461,7 @@ public class SSHExecutor extends Executor<Channel> {
         } finally {
             if (!keepAlive) {
                 session.disconnect();
-                this.logger.finest(String.format("Session %d disconnected", session.hashCode()));
+                //this.logger.finest(String.format("Session %d disconnected", session.hashCode()));
             }
         }
 
@@ -485,7 +485,6 @@ public class SSHExecutor extends Executor<Channel> {
         } else if (this.asyncCallFinished) {
         	return false;
         }
-        	
         final Session session = getSession();
         ChannelExec channel = (ChannelExec) session.openChannel(SSHMode.EXEC.toString());
         try {
@@ -517,7 +516,8 @@ public class SSHExecutor extends Executor<Channel> {
         } finally {
             if (!keepAlive) {
                 session.disconnect();
-                this.logger.finest(String.format("Session %d disconnected", session.hashCode()));
+                logger.finest("Completed check for screen session " + this.asyncScreenID + " on host [" + this.host + "]");
+                //this.logger.finest(String.format("Session %d disconnected", session.hashCode()));
             }
         }
         

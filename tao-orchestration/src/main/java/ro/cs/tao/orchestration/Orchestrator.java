@@ -905,6 +905,7 @@ public class Orchestrator extends Notifiable {
                                                                                                .findFirst().get().getValue()));
             }
             final Set<String> outParams = nextTask.getOutputParameterValues().stream().map(Variable::getKey).collect(Collectors.toSet());
+            nextInputParameters.stream().filter(v -> !outParams.contains(v.getKey())).forEach(v -> resolveVariable(nextTask, v));
             Variable overriddenOutParam = null;
             for (Variable var : nextInputParameters) {
                 if (outParams.contains(var.getKey())) {
@@ -1100,53 +1101,20 @@ public class Orchestrator extends Notifiable {
         return this.jobTaskSelector.chooseNext(job, task);
     }
 
-    private DataSourceExecutionTask findOriginatingTask(ExecutionTask current) {
+    private List<DataSourceExecutionTask> findOriginatingTasks(ExecutionTask current) {
         ExecutionGroup groupTask = current.getGroupTask();
         if (groupTask != null) {
-            return this.groupTaskSelector.findDataSourceTask(groupTask, current);
+            return this.groupTaskSelector.findDataSourceTasks(groupTask, current);
         } else {
-            return this.jobTaskSelector.findDataSourceTask(current.getJob(), current);
+            return this.jobTaskSelector.findDataSourceTasks(current.getJob(), current);
         }
     }
 
     private void resolveTargetName(ExecutionTask nextTask, Variable overriddenOutParam) {
-        DataSourceExecutionTask originatingTask = findOriginatingTask(nextTask);
-        if (originatingTask != null) {
-            String targetOutput = overriddenOutParam.getValue();
-            String sensor = originatingTask.getComponent().getSensorName().replace("-", "");
-            List<NamingRule> rules = namingRuleProvider.listBySensor(sensor);
-            if (rules.size() > 0) {
-                NameExpressionParser parser = new NameExpressionParser(rules.get(0));
-                final List<Variable> oValues = originatingTask.getOutputParameterValues();
-                if (oValues != null && oValues.size() > 0) {
-                    final List<String> oValuesList;
-                    oValuesList = this.listAdapter.marshal(oValues.get(0).getValue());
-                    final int size = oValuesList.size();
-                    for (int i = 0; i < size; i++) {
-                        try {
-                            Path path = Paths.get(new URI(oValuesList.get(i)));
-                            oValuesList.set(i, path.getName(path.getNameCount() - 1).toString());
-                        } catch (URISyntaxException e) {
-                            logger.warning(e.getMessage());
-                        }
-                    }
-                    final String key = overriddenOutParam.getKey();
-                    try {
-                        nextTask.setOutputParameterValue(key, parser.resolve(targetOutput, oValuesList.toArray(new String[0])));
-                        nextTask.getInputParameterValues().removeIf(v -> v.getKey().equals(key));
-                    } catch (ParseException ex) {
-                        changeStatus(nextTask, ExecutionStatus.FAILED, ex.getMessage());
-                    }
-                }
-            }
-        }
-    }
-
-    private void resolveVariable(ExecutionTask nextTask, Variable variable) {
-        final String value = variable.getValue();
-        if (value != null && value.contains("${")) {
-            DataSourceExecutionTask originatingTask = findOriginatingTask(nextTask);
-            if (originatingTask != null) {
+        List<DataSourceExecutionTask> originatingTasks = findOriginatingTasks(nextTask);
+        if (originatingTasks != null && !originatingTasks.isEmpty()) {
+            for (DataSourceExecutionTask originatingTask : originatingTasks) {
+                String targetOutput = overriddenOutParam.getValue();
                 String sensor = originatingTask.getComponent().getSensorName().replace("-", "");
                 List<NamingRule> rules = namingRuleProvider.listBySensor(sensor);
                 if (rules.size() > 0) {
@@ -1164,10 +1132,47 @@ public class Orchestrator extends Notifiable {
                                 logger.warning(e.getMessage());
                             }
                         }
+                        final String key = overriddenOutParam.getKey();
                         try {
-                            variable.setValue(parser.resolve(value, oValuesList.toArray(new String[0])));
+                            nextTask.setOutputParameterValue(key, parser.resolve(targetOutput, oValuesList.toArray(new String[0])));
+                            nextTask.getInputParameterValues().removeIf(v -> v.getKey().equals(key));
                         } catch (ParseException ex) {
                             changeStatus(nextTask, ExecutionStatus.FAILED, ex.getMessage());
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void resolveVariable(ExecutionTask nextTask, Variable variable) {
+        final String value = variable.getValue();
+        if (value != null && value.contains("${")) {
+            List<DataSourceExecutionTask> originatingTasks = findOriginatingTasks(nextTask);
+            if (originatingTasks != null && !originatingTasks.isEmpty()) {
+                for (DataSourceExecutionTask originatingTask : originatingTasks) {
+                    String sensor = originatingTask.getComponent().getSensorName().replace("-", "");
+                    List<NamingRule> rules = namingRuleProvider.listBySensor(sensor);
+                    if (rules.size() > 0) {
+                        NameExpressionParser parser = new NameExpressionParser(rules.get(0));
+                        final List<Variable> oValues = originatingTask.getOutputParameterValues();
+                        if (oValues != null && oValues.size() > 0) {
+                            final List<String> oValuesList;
+                            oValuesList = this.listAdapter.marshal(oValues.get(0).getValue());
+                            final int size = oValuesList.size();
+                            for (int i = 0; i < size; i++) {
+                                try {
+                                    Path path = Paths.get(new URI(oValuesList.get(i)));
+                                    oValuesList.set(i, path.getName(path.getNameCount() - 1).toString());
+                                } catch (URISyntaxException e) {
+                                    logger.warning(e.getMessage());
+                                }
+                            }
+                            try {
+                                variable.setValue(parser.resolve(value, oValuesList.toArray(new String[0])));
+                            } catch (ParseException ex) {
+                                changeStatus(nextTask, ExecutionStatus.FAILED, ex.getMessage());
+                            }
                         }
                     }
                 }

@@ -33,6 +33,7 @@ import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.Executor;
 import ro.cs.tao.execution.model.DataSourceExecutionTask;
 import ro.cs.tao.execution.model.ExecutionStatus;
+import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.persistence.EOProductProvider;
 import ro.cs.tao.persistence.WorkflowProvider;
 import ro.cs.tao.quota.QuotaException;
@@ -68,6 +69,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
     private DataSourceComponent dataSourceComponent;
     private static EOProductProvider productProvider;
     private static WorkflowProvider workflowProvider;
+    private static ExecutionTaskProvider taskProvider;
     private static DataSourceConfigurationProvider configurationProvider;
 
     @Override
@@ -81,6 +83,8 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
 
     public static void setDataSourceConfigurationProvider(DataSourceConfigurationProvider provider) { configurationProvider = provider; }
 
+    public static void setTaskProvider(ExecutionTaskProvider provider) { taskProvider = provider; }
+
     public QueryExecutor() {
         super();
         if (productProvider == null) {
@@ -88,6 +92,9 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
         }
         if (workflowProvider == null) {
             throw new ExecutionException("A WorkflowProvider is required to use this executor");
+        }
+        if (taskProvider == null) {
+            throw new ExecutionException("An ExecutionTaskProvider is required to use this executor");
         }
     }
 
@@ -244,6 +251,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                     task.setOutputParameterValue(outPort,
                                                  jsonifyResults(Arrays.asList(strList.split(","))));
                     task.getComponent().setTargetCardinality(descriptor.getCardinality());
+
                 }
                 if (StringUtilities.isNullOrEmpty(strList)) {
                     throw new QueryException("Empty product set");
@@ -260,7 +268,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
     @Override
     public void stop(DataSourceExecutionTask task) throws ExecutionException {
         if (dataSourceComponent == null || !dataSourceComponent.equals(task.getComponent())) {
-            throw new ExecutionException("stop() called on different component");
+            logger.warning("stop() called on different component");
         }
         dataSourceComponent.cancel();
         markTaskFinished(task, ExecutionStatus.CANCELLED);

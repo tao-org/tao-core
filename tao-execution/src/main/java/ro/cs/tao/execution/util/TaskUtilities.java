@@ -328,7 +328,8 @@ public class TaskUtilities {
     }
 
     public static String relativizePathForExecution(String path) {
-        if (path.startsWith(DOCKER_MOUNT_POINT)) {
+        if (path.startsWith(DOCKER_MOUNT_POINT) &&
+                !path.startsWith(FileUtilities.asUnixPath(SystemVariable.ROOT.value(), true))) {
             // Path is already inside the docker container
             return path;
         }

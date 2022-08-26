@@ -42,6 +42,7 @@ public abstract class Executor<T> implements Runnable {
     private static final Logger staticLogger;
     private static final Map<String, AtomicLong> requestedMemory;
     private static final Map<Executor<?>, Long> memoryRequirements;
+    private static Map<String, String> environment;
 
     static {
         executorService = new NamedThreadPoolExecutor("process-exec", Runtime.getRuntime().availableProcessors());
@@ -134,7 +135,7 @@ public abstract class Executor<T> implements Runnable {
 
     /**
      * Submits for execution the given command and returns the executor object.
-     * The caller is responsible of waiting for the completion of the execution by waiting on
+     * The caller is responsible for waiting for the completion of the execution by waiting on
      * Executor.getWaitObject() latch.
      *
      * @param outputConsumer    The counsumer of the process output
@@ -433,6 +434,14 @@ public abstract class Executor<T> implements Runnable {
     }
 
     public void setOutputConsumer(OutputConsumer outputConsumer) { this.outputConsumer = outputConsumer; }
+
+    public static Map<String, String> getEnvironment() {
+        return environment;
+    }
+
+    public static void setEnvironment(Map<String, String> environment) {
+        Executor.environment = new HashMap<>(environment);
+    }
 
     public CountDownLatch getWaitObject() { return this.counter; }
 

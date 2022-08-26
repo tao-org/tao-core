@@ -64,4 +64,12 @@ public interface ConfigurationProvider {
      * Sets the location of the 'config' folder of the running instance
      */
     void setConfigurationFolder(Path folder);
+
+    default Map<String, String> getSystemEnvironment() {
+        return System.getenv();
+    }
+
+    default void setSystemEnvironment(Map<String, String> environment) {
+
+    }
 }
