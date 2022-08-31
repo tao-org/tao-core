@@ -16,7 +16,6 @@
 
 package ro.cs.tao.datasource.opensearch;
 
-import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.util.EntityUtils;
 import ro.cs.tao.datasource.ProductFetchStrategy;
 import ro.cs.tao.datasource.QueryException;
@@ -25,6 +24,7 @@ import ro.cs.tao.datasource.opensearch.model.OpenSearchEndpoint;
 import ro.cs.tao.datasource.opensearch.model.OpenSearchService;
 import ro.cs.tao.datasource.param.DataSourceParameter;
 import ro.cs.tao.datasource.param.ParameterProvider;
+import ro.cs.tao.utils.CloseableHttpResponse;
 import ro.cs.tao.utils.HttpMethod;
 import ro.cs.tao.utils.NetUtils;
 
