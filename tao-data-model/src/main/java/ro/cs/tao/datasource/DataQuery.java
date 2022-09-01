@@ -35,6 +35,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -397,64 +398,67 @@ public abstract class DataQuery extends StringIdentifiable {
                 // Check the supplied parameters for satisfying any defined dependency
                 final List<ParameterDependency> dependencies = dataSourceParameter.getDependencies();
                 if (dependencies != null) {
-                    for (ParameterDependency dependency : dependencies) {
-                        QueryParameter<?> refParam = actualParameters.get(dependency.getReferencedParameterId());
-                        QueryParameter<?> currentParam = actualParameters.get(entry.getKey());
-                        switch (dependency.getDependencyType()) {
-                            case EXCLUSIVE:
-                                if (refParam == null) {
-                                    errors.add(entry.getKey() + " cannot be set if " + dependency.getReferencedParameterId() + " is not set");
-                                }
-                                break;
-                            case FILTER:
-                                if (refParam != null) {
-                                    final String expectedValue = dependency.getExpectedValue();
-                                    String allowedValues = dependency.getAllowedValues();
-                                    final Set<String> aValues = allowedValues != null ? Arrays.stream(allowedValues.split(",")).collect(Collectors.toSet()) : new HashSet<>();
-                                    final Set<String> expValues = Arrays.stream(expectedValue.split(",")).collect(Collectors.toSet());
-                                    Condition condition = dependency.getCondition();
-                                    boolean hasError = false;
-                                    switch (condition) {
-                                        case EQ:
-                                            hasError = !expectedValue.equals(refParam.getValueAsString());
-                                            break;
-                                        case NEQ:
-                                            hasError = expectedValue.equals(refParam.getValueAsString());
-                                            break;
-                                        case IN:
-                                            hasError = !expValues.contains(refParam.getValueAsString());
-                                            break;
-                                        case NOTIN:
-                                            hasError = expValues.contains(refParam.getValueAsString());
-                                            break;
-                                        case GT:
-                                            hasError = compare(refParam.getType(), expectedValue, refParam.getValue()) <= 0;
-                                            break;
-                                        case GTE:
-                                            hasError = compare(refParam.getType(), expectedValue, refParam.getValue()) < 0;
-                                            break;
-                                        case LT:
-                                            hasError = compare(refParam.getType(), expectedValue, refParam.getValue()) >= 0;
-                                            break;
-                                        case LTE:
-                                            hasError = compare(refParam.getType(), expectedValue, refParam.getValue()) > 0;
-                                            break;
-                                    }
-                                    if (hasError) {
-                                        errors.add(String.format("%s cannot be set to %s if %s %s %s",
-                                                entry.getKey(), currentParam.getValueAsString(),
-                                                refParam.getName(), condition.friendlyName().toLowerCase(), refParam.getValue()));
-                                    }
-                                    if (!aValues.contains(currentParam.getValueAsString())) {
-                                        errors.add(String.format("Value %s of %s not allowed when %s %s %s",
-                                                currentParam.getValueAsString(), entry.getKey(),
-                                                refParam.getName(), condition.friendlyName().toLowerCase(), refParam.getValue()));
-                                    }
-                                }
-                            default:
-                                break;
-                        }
+                    Map<String, ParameterDependency> deps = dependencies.stream().collect(Collectors.toMap(ParameterDependency::getExpectedValue, Function.identity()));
+                    //for (ParameterDependency dependency : dependencies) {
+                    // All dependencies refer the same parameterId
+                    QueryParameter<?> refParam = actualParameters.get(dependencies.get(0).getReferencedParameterId());
+                    if (refParam == null) {
+                        errors.add(entry.getKey() + " cannot be set if " + dependencies.get(0).getReferencedParameterId() + " is not set");
+                        continue;
                     }
+                    ParameterDependency dependency = deps.get(refParam.getValueAsString());
+                    QueryParameter<?> currentParam = actualParameters.get(entry.getKey());
+                    switch (dependency.getDependencyType()) {
+                        case EXCLUSIVE:
+                            errors.add(entry.getKey() + " cannot be set if " + dependency.getReferencedParameterId() + " is not set");
+                            break;
+                        case FILTER:
+                            final String expectedValue = dependency.getExpectedValue();
+                            String allowedValues = dependency.getAllowedValues();
+                            final Set<String> aValues = allowedValues != null ? Arrays.stream(allowedValues.split(",")).collect(Collectors.toSet()) : new HashSet<>();
+                            final Set<String> expValues = Arrays.stream(expectedValue.split(",")).collect(Collectors.toSet());
+                            Condition condition = dependency.getCondition();
+                            boolean hasError = false;
+                            switch (condition) {
+                                case EQ:
+                                    hasError = !expectedValue.equals(refParam.getValueAsString());
+                                    break;
+                                case NEQ:
+                                    hasError = expectedValue.equals(refParam.getValueAsString());
+                                    break;
+                                case IN:
+                                    hasError = !expValues.contains(refParam.getValueAsString());
+                                    break;
+                                case NOTIN:
+                                    hasError = expValues.contains(refParam.getValueAsString());
+                                    break;
+                                case GT:
+                                    hasError = compare(refParam.getType(), expectedValue, refParam.getValue()) <= 0;
+                                    break;
+                                case GTE:
+                                    hasError = compare(refParam.getType(), expectedValue, refParam.getValue()) < 0;
+                                    break;
+                                case LT:
+                                    hasError = compare(refParam.getType(), expectedValue, refParam.getValue()) >= 0;
+                                    break;
+                                case LTE:
+                                    hasError = compare(refParam.getType(), expectedValue, refParam.getValue()) > 0;
+                                    break;
+                            }
+                            if (hasError) {
+                                errors.add(String.format("%s cannot be set to %s if %s %s %s",
+                                        entry.getKey(), currentParam.getValueAsString(),
+                                        refParam.getName(), condition.friendlyName().toLowerCase(), refParam.getValue()));
+                            }
+                            if (!aValues.contains(currentParam.getValueAsString())) {
+                                errors.add(String.format("Value %s of %s not allowed when %s %s %s",
+                                        currentParam.getValueAsString(), entry.getKey(),
+                                        refParam.getName(), condition.friendlyName().toLowerCase(), refParam.getValue()));
+                            }
+                        default:
+                            break;
+                    }
+                    //}
                 }
             }
         }
