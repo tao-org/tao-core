@@ -16,7 +16,7 @@
 
 package ro.cs.tao.serialization;
 
-import ro.cs.tao.Tuple;
+import ro.cs.tao.utils.Tuple;
 
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 import java.util.ArrayList;

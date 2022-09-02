@@ -16,7 +16,6 @@
 
 package ro.cs.tao.execution.local;
 
-import ro.cs.tao.Tuple;
 import ro.cs.tao.component.*;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.datasource.*;
@@ -43,6 +42,7 @@ import ro.cs.tao.serialization.StringListAdapter;
 import ro.cs.tao.spi.OutputDataHandlerManager;
 import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.StringUtilities;
+import ro.cs.tao.utils.Tuple;
 import ro.cs.tao.utils.executors.NamedThreadPoolExecutor;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
