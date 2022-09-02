@@ -54,7 +54,7 @@ public class Zipper {
         Files.deleteIfExists(zipFile);
         Files.createFile(zipFile);
         try (ZipOutputStream outputStream = new ZipOutputStream(Files.newOutputStream(zipFile))) {
-            try (Stream<Path> files = Files.walk(sourceFolder)) {
+            try (Stream<Path> files = Files.walk(sourceFolder, FileVisitOption.FOLLOW_LINKS)) {
                 Iterator<Path> pathIterator = files.iterator();
                 while (pathIterator.hasNext()) {
                     Path path = pathIterator.next();

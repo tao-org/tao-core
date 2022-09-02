@@ -151,7 +151,6 @@ public class Orchestrator extends Notifiable {
         this.groupComponentProvider = SpringContextBridge.services().getService(GroupComponentProvider.class);
         this.namingRuleProvider = SpringContextBridge.services().getService(NamingRuleProvider.class);
         this.userProvider = SpringContextBridge.services().getService(UserProvider.class);
-
         subscribe(Topic.EXECUTION.value(), Topic.SYSTEM.value());
     }
 

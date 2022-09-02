@@ -16,7 +16,6 @@
 package ro.cs.tao.execution;
 
 import org.apache.commons.lang3.StringUtils;
-import ro.cs.tao.Tuple;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.StringIdentifiable;
 import ro.cs.tao.component.TaoComponent;
@@ -30,6 +29,7 @@ import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.Topic;
 import ro.cs.tao.security.SessionContext;
 import ro.cs.tao.security.SystemSessionContext;
+import ro.cs.tao.utils.Tuple;
 
 import java.time.LocalDateTime;
 import java.util.*;

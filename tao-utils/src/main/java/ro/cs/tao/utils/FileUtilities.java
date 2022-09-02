@@ -185,7 +185,7 @@ public class FileUtilities {
                if (Files.isDirectory(file)) {
                    add("-R");
                }
-               add(System.getProperty("user.name"));
+               add(System.getProperty("user.name") + ":" + System.getProperty("user.name"));
                add(file.toAbsolutePath().toString());
             }};
             final Executor<?> executor = Executor.create(ExecutorType.PROCESS, null, args, true);
@@ -228,7 +228,7 @@ public class FileUtilities {
     }
 
     public static List<Path> listFiles(Path folder) {
-        try (Stream<Path> stream = Files.walk(folder, 1)) {
+        try (Stream<Path> stream = Files.walk(folder, 1, FileVisitOption.FOLLOW_LINKS)) {
             return stream.collect(Collectors.toList());
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -238,7 +238,7 @@ public class FileUtilities {
 
     public static List<Path> listFiles(Path folder, String pattern) throws IOException {
         final Pattern p = Pattern.compile(pattern);
-        try (Stream<Path> stream = Files.walk(folder, 1)) {
+        try (Stream<Path> stream = Files.walk(folder, 1, FileVisitOption.FOLLOW_LINKS)) {
             return stream.filter(f -> p.matcher(f.getFileName().toString()).find()).collect(Collectors.toList());
         }
     }
@@ -246,7 +246,7 @@ public class FileUtilities {
     public static List<Path> listFiles(Path folder, String pattern, LocalDateTime before) throws IOException {
         final Instant instant = before.atZone(ZoneOffset.systemDefault()).toInstant();
         final Pattern p = Pattern.compile(pattern);
-        try (Stream<Path> stream = Files.walk(folder, 1)) {
+        try (Stream<Path> stream = Files.walk(folder, 1, FileVisitOption.FOLLOW_LINKS)) {
             return stream.filter(f -> {
                 try {
                     return p.matcher(f.getFileName().toString()).find() && Files.getLastModifiedTime(f).toInstant().isBefore(instant);
@@ -258,7 +258,7 @@ public class FileUtilities {
     }
 
     public static List<Path> listTree(Path folder) throws IOException {
-        try (Stream<Path> stream = Files.walk(folder)) {
+        try (Stream<Path> stream = Files.walk(folder, FileVisitOption.FOLLOW_LINKS)) {
             return stream.collect(Collectors.toList());
         }
     }

@@ -16,7 +16,6 @@
 
 package ro.cs.tao.orchestration;
 
-import ro.cs.tao.Tuple;
 import ro.cs.tao.component.*;
 import ro.cs.tao.component.enums.ProcessingComponentType;
 import ro.cs.tao.datasource.DataSourceComponent;
@@ -35,6 +34,7 @@ import ro.cs.tao.security.SessionContext;
 import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.serialization.StringListAdapter;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
+import ro.cs.tao.utils.Tuple;
 import ro.cs.tao.workflow.ParameterValue;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;

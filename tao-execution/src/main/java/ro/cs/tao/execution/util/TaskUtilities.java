@@ -17,7 +17,6 @@
 package ro.cs.tao.execution.util;
 
 import org.springframework.stereotype.Component;
-import ro.cs.tao.Tuple;
 import ro.cs.tao.component.*;
 import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.datasource.persistence.DataSourceComponentProvider;
@@ -34,6 +33,7 @@ import ro.cs.tao.persistence.WorkflowNodeProvider;
 import ro.cs.tao.serialization.StringListAdapter;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.utils.FileUtilities;
+import ro.cs.tao.utils.Tuple;
 import ro.cs.tao.workflow.ParameterValue;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.enums.TransitionBehavior;
