@@ -493,6 +493,7 @@ public class Orchestrator extends Notifiable {
 
     private synchronized void processMessage(Message message, SessionContext currentContext) {
         ExecutionTask task = null;
+        String user = null;
         try {
             final String taskId = message.getItem(Message.SOURCE_KEY);
             final ExecutionStatus status = EnumUtils.getEnumConstantByName(ExecutionStatus.class,
@@ -508,6 +509,7 @@ public class Orchestrator extends Notifiable {
                 this.runningTasks.remove(task.getId());
                 logger.finest(String.format("Active or pending tasks: %d", this.runningTasks.size()));
             }
+            user = currentContext.getPrincipal().getName();
             if (completedOkStatuses.contains(status)) {
                 final WorkflowNodeDescriptor taskNode = workflowNodeProvider.get(task.getWorkflowNodeId());
                 // For DataSourceExecutionTask, it is the Query executor that sets the outputs.
@@ -558,7 +560,7 @@ public class Orchestrator extends Notifiable {
                                     try {
                                         List<ExecutionJob> jobs = this.jobFactory.splitJob(task.getJob());
                                         logger.fine(String.format("Job %s will fork additional %d jobs", task.getJob().getName(), jobs.size()));
-                                        final String user = task.getContext().getPrincipal().getName();
+                                        //final String user = task.getContext().getPrincipal().getName();
                                         final ExecutorService executorService = this.executors.get(user);
                                         for (ExecutionJob job : jobs) {
                                             if (canSubmitJob(user, job)) {
@@ -617,7 +619,6 @@ public class Orchestrator extends Notifiable {
                         logger.info(msg);
                         Messaging.send(currentContext.getPrincipal(), Topic.EXECUTION.value(), this, msg);
                         // If there are waiting jobs for this user, let's trigger the execution of the first one
-                        String user = currentContext.getPrincipal().getName();
                         List<Long> nextJobs;
                         if ((nextJobs = this.waitingJobs.get(user)) != null && nextJobs.size() > 0) {
                             Long nextJobId = nextJobs.remove(0);
@@ -631,7 +632,7 @@ public class Orchestrator extends Notifiable {
                             final ExecutionJob nextJob = jobProvider.get(nextJobId);
                             executorService.submit(() -> JobCommand.START.applyTo(nextJob));
                         } else {
-                            shutDownExecutor(currentContext.getPrincipal().getName());
+                            shutDownExecutor(user);
                         }
                         cleanupTransientComponents(job);
                     } else {
@@ -654,7 +655,7 @@ public class Orchestrator extends Notifiable {
             } catch (PersistenceException e1) {
                 logger.severe(String.format("Abnormal termination: %s", e1.getMessage()));
             }
-            shutDownExecutor(currentContext.getPrincipal().getName());
+            shutDownExecutor(user != null ? user : currentContext.getPrincipal().getName());
         }
     }
 
@@ -842,7 +843,8 @@ public class Orchestrator extends Notifiable {
                     try {
                         List<ExecutionJob> jobs = this.jobFactory.splitJob(task.getJob());
                         logger.fine(String.format("Job %s will fork additional %d jobs", task.getJob().getName(), jobs.size()));
-                        final String user = task.getContext().getPrincipal().getName();
+                        //final String user = task.getContext().getPrincipal().getName();
+                        final String user = task.getJob().getUserName();
                         final ExecutorService executorService = this.executors.get(user);
                         for (ExecutionJob job : jobs) {
                             if (canSubmitJob(user, job)) {

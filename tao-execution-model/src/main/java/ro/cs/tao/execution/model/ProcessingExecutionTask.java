@@ -224,8 +224,10 @@ public class ProcessingExecutionTask extends ExecutionTask {
                 SessionContext context = getContext();
                 if (!path.isAbsolute()) {
                     //path = context.getNetSpace().resolve(path);
+                    /*path = Paths.get(ExecutionConfiguration.getWorkerContainerVolumeMap().getContainerWorkspaceFolder())
+                                .resolve(context.getPrincipal().getName()).resolve(path);*/
                     path = Paths.get(ExecutionConfiguration.getWorkerContainerVolumeMap().getContainerWorkspaceFolder())
-                                .resolve(context.getPrincipal().getName()).resolve(path);
+                                .resolve(getJob().getUserName()).resolve(path);
                 }
                 final String fileName;
                 if (this.component.getTargets().stream().anyMatch(t -> t.getDataDescriptor().getLocation() != null &&
