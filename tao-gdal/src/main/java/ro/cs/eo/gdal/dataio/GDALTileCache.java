@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.stream.Stream;
 
 public final class GDALTileCache {
@@ -67,7 +66,7 @@ public final class GDALTileCache {
                 paths.filter(Files::isRegularFile).forEach(tilePath -> {
                     try {
                         final long fileSize = Files.size(tilePath);
-                        this.cachedTiles.putTileInCache(String.valueOf(tilePath), fileSize);
+                        this.cachedTiles.putTileInCache(tilePath, fileSize);
                     } catch (IOException e) {
                         System.err.println("Fail to load file from cache: " + tilePath);
                     }
@@ -82,11 +81,8 @@ public final class GDALTileCache {
         this.cacheDirPath = cacheDirPath;
     }
 
-    public void putTile(String tileFilePath, long tileSize) {
-        final Path tileFileToPutPath = Paths.get(tileFilePath);
-        if (Files.exists(tileFileToPutPath)) {
-            this.cachedTiles.putTileInCache(tileFilePath, tileSize);
-        }
+    public void putTile(Path tileFilePath, long tileSize) {
+        this.cachedTiles.putTileInCache(tileFilePath, tileSize);
     }
 
     public Path getTilePath(String imageFileName, int x, int y, byte z, int pixelMinScale, int pixelMaxScale){

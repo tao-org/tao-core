@@ -10,7 +10,9 @@ import ro.cs.tao.eodata.naming.NamingRule;
 import ro.cs.tao.persistence.NamingRuleProvider;
 import ro.cs.tao.persistence.repository.NamingRuleRepository;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Configuration
 @EnableTransactionManagement
@@ -18,11 +20,13 @@ import java.util.List;
 @Component("namingRuleManager")
 public class NamingRuleManager extends EntityManager<NamingRule, Integer, NamingRuleRepository>
                                 implements NamingRuleProvider {
-
+    private static final Set<String> wellKnownSensors = new HashSet<String>() {{
+        add("Sentinel1"); add("Sentinel2"); add("Landsat8"); add("GeoTIFF");
+    }};
 
     @Override
     public List<NamingRule> listBySensor(String sensor) {
-        final String search = "n/a".equalsIgnoreCase(sensor) ? "Generic" : sensor;
+        final String search = ("n/a".equalsIgnoreCase(sensor) || !wellKnownSensors.contains(sensor)) ? "Generic" : sensor;
         return repository.findBySensor(search);
     }
 
