@@ -187,6 +187,27 @@ public class Zipper {
                         }
                     }
                 }
+            } catch (IOException e) {
+                if (e.getMessage().equals("Input is not in the .gz format")) {
+                    try (TarArchiveInputStream tarStream = new TarArchiveInputStream(Files.newInputStream(source))) {
+                        TarArchiveEntry entry;
+                        while ((entry = tarStream.getNextTarEntry()) != null) {
+                            final Path currentPath = target.resolve(entry.getName());
+                            if (entry.isDirectory()) {
+                                Files.createDirectories(currentPath);
+                            } else {
+                                int count;
+                                final byte[] buffer = new byte[65536];
+                                Files.createDirectories(currentPath.getParent());
+                                try (OutputStream outputStream = Files.newOutputStream(currentPath)) {
+                                    while ((count = tarStream.read(buffer, 0, buffer.length)) != -1) {
+                                        outputStream.write(buffer, 0, count);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
             if (deleteAfterDecompress) {
                 Files.delete(source);
