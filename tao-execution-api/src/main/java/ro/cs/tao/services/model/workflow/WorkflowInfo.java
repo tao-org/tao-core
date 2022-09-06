@@ -20,6 +20,8 @@ import ro.cs.tao.eodata.enums.Visibility;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.enums.Status;
 
+import java.time.LocalDateTime;
+
 public class WorkflowInfo {
 
     protected Long id;
@@ -29,6 +31,7 @@ public class WorkflowInfo {
     protected final Status status;
     private final String path;
     private final boolean active;
+    private final LocalDateTime created;
 
     public WorkflowInfo(WorkflowDescriptor workflow) {
         this.id = workflow.getId();
@@ -38,6 +41,7 @@ public class WorkflowInfo {
         this.path = workflow.getPath();
         this.active = workflow.isActive();
         this.name = workflow.getName();
+        this.created = workflow.getCreated();
     }
 
     public Long getId() { return id; }
@@ -54,6 +58,8 @@ public class WorkflowInfo {
 
     public boolean isActive() { return active; }
 
+    public LocalDateTime getCreated() { return created; }
+
     public WorkflowDescriptor toWorkflowDescriptor() {
         final WorkflowDescriptor descriptor = new WorkflowDescriptor();
         descriptor.setId(this.id);
@@ -63,6 +69,7 @@ public class WorkflowInfo {
         descriptor.setPath(this.path);
         descriptor.setActive(this.active);
         descriptor.setName(this.name);
+        descriptor.setCreated(this.created);
         return descriptor;
     }
 }
