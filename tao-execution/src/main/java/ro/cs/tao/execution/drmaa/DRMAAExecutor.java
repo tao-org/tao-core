@@ -17,10 +17,7 @@ package ro.cs.tao.execution.drmaa;
 
 import org.apache.commons.lang3.SystemUtils;
 import org.ggf.drmaa.*;
-import ro.cs.tao.component.ProcessingComponent;
-import ro.cs.tao.component.SourceDescriptor;
-import ro.cs.tao.component.TargetDescriptor;
-import ro.cs.tao.component.Variable;
+import ro.cs.tao.component.*;
 import ro.cs.tao.component.enums.ProcessingComponentType;
 import ro.cs.tao.docker.Application;
 import ro.cs.tao.docker.Container;
@@ -680,8 +677,11 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                                        final String tempOutput, final String finalOutput, final boolean isLocal) {
         final boolean isOutputManaged = component.isOutputManaged();
         final String tmpPath = isOutputManaged ? tempOutput : tempOutput.substring(0, tempOutput.lastIndexOf('/') + 1) + "*.*";
-        final String finalPath = isOutputManaged ? finalOutput : finalOutput.substring(0, finalOutput.lastIndexOf('/') + 1);
-        final boolean recursiveCondition = !isOutputManaged || component.getTargets().stream().anyMatch(t -> DataFormat.FOLDER == t.getDataDescriptor().getFormatType());
+        //final String finalPath = isOutputManaged ? finalOutput : finalOutput.substring(0, finalOutput.lastIndexOf('/') + 1);
+        final String finalPath = finalOutput.substring(0, finalOutput.lastIndexOf('/') + 1);
+        final boolean isSnapDimap = component.getTargets().stream().anyMatch(t -> t.getDataDescriptor().getLocation().toLowerCase().endsWith(".dim")
+                                                                                || "beam-dimap".equalsIgnoreCase(t.getDataDescriptor().getFormatName()));
+        final boolean recursiveCondition = !isOutputManaged || isSnapDimap || component.getTargets().stream().anyMatch(t -> DataFormat.FOLDER == t.getDataDescriptor().getFormatType());
         argsList.add(0, initialCmd);
         if (!isLocal && component.getTargets().stream().anyMatch(t -> t.getDataDescriptor().getFormatType() == DataFormat.FOLDER)) {
             argsList.add(0, "mkdir");
@@ -693,14 +693,22 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         if (recursiveCondition) {
             argsList.add("-r");
         }
-        argsList.add(tmpPath);
+        if (isSnapDimap) {
+            argsList.add(tmpPath.replace(tmpPath.substring(tmpPath.lastIndexOf('.')), ".*"));
+        } else {
+            argsList.add(tmpPath);
+        }
         argsList.add(finalPath);
         argsList.add("&&");
         argsList.add("rm");
         if (recursiveCondition) {
             argsList.add("-r");
         }
-        argsList.add(tmpPath);
+        if (isSnapDimap) {
+            argsList.add(tmpPath.replace(tmpPath.substring(tmpPath.lastIndexOf('.')), ".*"));
+        } else {
+            argsList.add(tmpPath);
+        }
         // all the existing args are merged into a single string as argument to -c
         final String quoteChar = isLocal
                 ? SystemUtils.IS_OS_WINDOWS
@@ -760,8 +768,14 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         if (!source.startsWith("/")) {
             return source;
         }
-        final Path realPath = Paths.get(source).toRealPath();
         DockerVolumeMap masterVolumeMap = ExecutionConfiguration.getMasterContainerVolumeMap();
+        final Path realPath;
+        if (source.startsWith(masterVolumeMap.getHostWorkspaceFolder())) {
+            realPath = Paths.get(source).toRealPath();
+        } else {
+            realPath = Paths.get(source.replace(masterVolumeMap.getContainerWorkspaceFolder(),
+                                                SystemVariable.ROOT.value().replace("\\", "/"))).toRealPath();
+        }
         if (realPath.startsWith(masterVolumeMap.getHostEODataFolder())) {
             Path src = realPath;
             String lastName = null;
