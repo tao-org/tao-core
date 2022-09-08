@@ -184,4 +184,17 @@ public class Dataset {
         return GDALReflection.callGDALLibraryMethod(CLASS_NAME, "GetFileList", Vector.class, this.jniDatasetInstance, new Class[]{}, new Object[]{});
     }
 
+    /**
+     * Calls the JNI GDAL Dataset class GetSpatialRef() method
+     *
+     * @return the JNI GDAL Dataset class GetSpatialRef() method result
+     */
+    public SpatialReference getSpatialRef() {
+        Object jniSpatialReferenceInstance = GDALReflection.callGDALLibraryMethod(CLASS_NAME, "GetSpatialRef", Object.class, this.jniDatasetInstance, new Class[]{}, new Object[]{});
+        if (jniSpatialReferenceInstance != null) {
+            return new SpatialReference(jniSpatialReferenceInstance);
+        }
+        return null;
+    }
+
 }

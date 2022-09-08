@@ -222,7 +222,7 @@ public class Band {
      * @param ysize     the JNI GDAL Band class ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, ByteBuffer nioBuffer) method 'ysize' argument
      * @param bufxsize  the JNI GDAL Band class ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, ByteBuffer nioBuffer) method 'buf_xsize' argument
      * @param bufysize  the JNI GDAL Band class ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, ByteBuffer nioBuffer) method 'buf_ysize' argument
-     *                  @param buftype  the JNI GDAL Band class ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, ByteBuffer nioBuffer) method 'buf_type' argument
+     * @param buftype   the JNI GDAL Band class ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, ByteBuffer nioBuffer) method 'buf_type' argument
      * @param nioBuffer the JNI GDAL Band class ReadBlock_Direct(int nXBlockOff, int nYBlockOff, ByteBuffer nioBuffer) method 'nioBuffer' argument
      * @return the JNI GDAL Band class ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, ByteBuffer nioBuffer) method result
      */
@@ -303,5 +303,52 @@ public class Band {
      */
     public Integer writeRaster(int xoff, int yoff, int xsize, int ysize, int bufType, double[] array) {
         return GDALReflection.callGDALLibraryMethod(CLASS_NAME, "WriteRaster", Integer.class, this.jniBandInstance, new Class[]{int.class, int.class, int.class, int.class, int.class, double[].class}, new Object[]{xoff, yoff, xsize, ysize, bufType, array});
+    }
+
+    /**
+     * Calls the JNI GDAL Band class GetStatistics(boolean approxOk, boolean force, double[] min, double[] max, double[] mean, double[] stddev) method
+     *
+     * @param approxOk the JNI GDAL Band class GetStatistics(boolean approxOk, boolean force, double[] min, double[] max, double[] mean, double[] stddev) method 'approxOk' argument
+     * @param force    the JNI GDAL Band class GetStatistics(boolean approxOk, boolean force, double[] min, double[] max, double[] mean, double[] stddev) method 'force' argument
+     * @param min      the JNI GDAL Band class GetStatistics(boolean approxOk, boolean force, double[] min, double[] max, double[] mean, double[] stddev) method 'min' argument
+     * @param max      the JNI GDAL Band class GetStatistics(boolean approxOk, boolean force, double[] min, double[] max, double[] mean, double[] stddev) method 'max' argument
+     * @param mean     the JNI GDAL Band class GetStatistics(boolean approxOk, boolean force, double[] min, double[] max, double[] mean, double[] stddev) method 'mean' argument
+     * @param stddev   the JNI GDAL Band class GetStatistics(boolean approxOk, boolean force, double[] min, double[] max, double[] mean, double[] stddev) method 'stddev' argument
+     * @return the JNI GDAL Band class GetStatistics(boolean approxOk, boolean force, double[] min, double[] max, double[] mean, double[] stddev) method result
+     */
+    public Integer getStatistics(boolean approxOk, boolean force, double[] min, double[] max, double[] mean, double[] stddev) {
+        return GDALReflection.callGDALLibraryMethod(CLASS_NAME, "GetStatistics", Integer.class, this.jniBandInstance, new Class[]{boolean.class, boolean.class, double[].class, double[].class, double[].class, double[].class}, new Object[]{approxOk, force, min, max, mean, stddev});
+    }
+
+    /**
+     * Calls the JNI GDAL Band class GetHistogramGetHistogram(int[] buckets) method
+     *
+     * @param buckets the JNI GDAL Band class GetHistogramGetHistogram(int[] buckets)) method 'buckets' argument
+     * @return the JNI GDAL Band class GetHistogramGetHistogram(int[] buckets) method result
+     */
+    public Integer getHistogram(int[] buckets) {
+        return GDALReflection.callGDALLibraryMethod(CLASS_NAME, "GetHistogram", Integer.class, this.jniBandInstance, new Class[]{int[].class}, new Object[]{buckets});
+    }
+
+    /**
+     * Calls the JNI GDAL Band class GetDefaultRAT() method
+     *
+     * @return the JNI GDAL Band class GetDefaultRAT() method result
+     */
+    public RasterAttributeTable getDefaultRAT() {
+        Object jniRasterAttributeTableInstance = GDALReflection.callGDALLibraryMethod(CLASS_NAME, "GetDefaultRAT", Object.class, this.jniBandInstance, new Class[]{}, new Object[]{});
+        if (jniRasterAttributeTableInstance != null) {
+            return new RasterAttributeTable(jniRasterAttributeTableInstance);
+        }
+        return null;
+    }
+
+    /**
+     * Calls the JNI GDAL Band class Checksum() method
+     *
+     * @return the JNI GDAL Band class Checksum() method result
+     */
+    public Integer checksum() {
+        return GDALReflection.callGDALLibraryMethod(CLASS_NAME, "Checksum", Integer.class, this.jniBandInstance, new Class[]{}, new Object[]{});
     }
 }
