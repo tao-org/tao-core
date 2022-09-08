@@ -326,7 +326,7 @@ public class Orchestrator extends Notifiable {
             // check if the user's disk quota is not reached
             if (!checkProcessingQuota(principal)) {
                 // do not create any job
-                return null;
+                throw new ExecutionException("Quota exceeded for user " + principal.getName());
             }
             WorkflowDescriptor optimized = descriptor;
             if (optimize) {
