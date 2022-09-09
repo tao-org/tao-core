@@ -197,4 +197,22 @@ public class Dataset {
         return null;
     }
 
+    /**
+     * Calls the JNI GDAL Dataset class GetDescription() method
+     *
+     * @return the JNI GDAL Dataset class GetDescription() method result
+     */
+    public String getDescription() {
+        return GDALReflection.callGDALLibraryMethod(CLASS_NAME, "GetDescription", String.class, this.jniDatasetInstance, new Class[]{}, new Object[]{});
+    }
+
+    /**
+     * Calls the JNI GDAL Dataset class GetMetadataDomainList() method
+     *
+     * @return the JNI GDAL Dataset class GetMetadataDomainList() method result
+     */
+    public Vector getMetadataDomainList(){
+        return GDALReflection.callGDALLibraryMethod(CLASS_NAME, "GetMetadataDomainList", Vector.class, this.jniDatasetInstance, new Class[]{}, new Object[]{});
+    }
+
 }
