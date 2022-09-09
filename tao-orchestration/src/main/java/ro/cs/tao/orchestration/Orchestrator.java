@@ -543,6 +543,20 @@ public class Orchestrator extends Notifiable {
                                 nextTask.setInternalState(String.valueOf(((LoopState) handler.currentState()).getCurrent()));
                             }
                         }
+                        final List<Variable> nextInputParameters = nextTask.getInputParameterValues();
+                        final Set<String> outParams = nextTask.getOutputParameterValues().stream().map(Variable::getKey).collect(Collectors.toSet());
+                        nextInputParameters.stream().filter(v -> !outParams.contains(v.getKey())).forEach(v -> resolveVariable(nextTask, v));
+                        Variable overriddenOutParam = null;
+                        for (Variable var : nextInputParameters) {
+                            if (outParams.contains(var.getKey())) {
+                                overriddenOutParam = var;
+                                break;
+                            }
+                        }
+                        // If there is an overridden output parameter, it may be that we have a name expression
+                        if (overriddenOutParam != null) {
+                            resolveTargetName(nextTask, overriddenOutParam);
+                        }
                         if (manyParents) {
                             if (TaskUtilities.haveParentsCompleted(nextTask)) {
                                 final List<String> parentIds = task.getJob().getTaskDependencies().get(String.valueOf(nextTask.getId()));
@@ -866,20 +880,11 @@ public class Orchestrator extends Notifiable {
                         changeStatus(nextTask, ExecutionStatus.CANCELLED, message);
                     }
                     int idx = 0;
-                    Variable overriddenOutParam = null;
                     final Map<String, String> connectedInputs = TaskUtilities.getConnectedInputs(task, nextTask);
                     for (Variable var : nextInputParameters) {
-                        if (!outParams.contains(var.getKey())) {
-                            if (connectedInputs.containsKey(var.getKey())) {
-                                nextTask.setInputParameterValue(var.getKey(), valuesList.get(idx++));
-                            }
-                        } else {
-                            overriddenOutParam = var;
+                        if (connectedInputs.containsKey(var.getKey())) {
+                            nextTask.setInputParameterValue(var.getKey(), valuesList.get(idx++));
                         }
-                    }
-                    // If there is an overridden output parameter, it may be that we have a name expression
-                    if (overriddenOutParam != null) {
-                        resolveTargetName(nextTask, overriddenOutParam);
                     }
                 } else { // nextTask accepts a list
                     Map<String, String> connectedInputs = TaskUtilities.getConnectedInputs(task, nextTask);
@@ -907,17 +912,6 @@ public class Orchestrator extends Notifiable {
             }
             final Set<String> outParams = nextTask.getOutputParameterValues().stream().map(Variable::getKey).collect(Collectors.toSet());
             nextInputParameters.stream().filter(v -> !outParams.contains(v.getKey())).forEach(v -> resolveVariable(nextTask, v));
-            Variable overriddenOutParam = null;
-            for (Variable var : nextInputParameters) {
-                if (outParams.contains(var.getKey())) {
-                    overriddenOutParam = var;
-                    break;
-                }
-            }
-            // If there is an overridden output parameter, it may be that we have a name expression
-            if (overriddenOutParam != null) {
-                resolveTargetName(nextTask, overriddenOutParam);
-            }
         }
     }
 
