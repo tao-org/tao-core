@@ -204,6 +204,12 @@ public class FileProcessFactory implements AutoCloseable {
                 }
 
                 @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                    return excludedExtensions.contains(FileUtilities.getExtension(dir.toFile()))
+                                                       ? FileVisitResult.SKIP_SUBTREE : FileVisitResult.CONTINUE;
+                }
+
+                @Override
                 public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
                     // propagate the exception if not null
                     if (exc != null) {
@@ -215,7 +221,8 @@ public class FileProcessFactory implements AutoCloseable {
                         hasChildren = dirStream.iterator().hasNext();
                     }
                     if (!hasChildren) {
-                        cleanup(dir, excludedExtensions, patterns);
+                        Files.delete(dir);
+                        //cleanup(dir, excludedExtensions, patterns);
                     }
                     return FileVisitResult.CONTINUE;
                 }
