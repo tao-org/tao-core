@@ -576,6 +576,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                     if (!StringUtilities.isNullOrEmpty(hostFolder)) {
                         unit.addVolumeMapping(hostFolder, volumeMount.getContainerEoDataFolder());
                     }
+                    unit.addVolumeMapping(volumeMount.getHostConfigurationFolder(),"/home/.snap/:z");
                     unit.setContainerName(container.getName());
                     unit.setContainerRegistry(ExecutionConfiguration.getDockerRegistry());
                     if (cpu > 0) {
@@ -626,6 +627,8 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                             add("-v");
                             add(volumeMap.getHostConfigurationFolder() + ":" + volumeMap.getContainerConfigurationFolder());
                         }
+                        add("-v");
+                        add(volumeMap.getHostConfigurationFolder() + ":/home/.snap/:z");
                         if (cpu > 0) {
                             // Enforce the number of CPUs to be used
                             add("--cpus");
@@ -680,13 +683,19 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         //final String finalPath = isOutputManaged ? finalOutput : finalOutput.substring(0, finalOutput.lastIndexOf('/') + 1);
         final String finalPath = finalOutput.substring(0, finalOutput.lastIndexOf('/') + 1);
         final boolean isSnapDimap = component.getTargets().stream().anyMatch(t -> t.getDataDescriptor().getLocation().toLowerCase().endsWith(".dim")
-                                                                                || "beam-dimap".equalsIgnoreCase(t.getDataDescriptor().getFormatName()));
+                                                                                || "beam-dimap".equalsIgnoreCase(t.getDataDescriptor().getFormatName()))
+                                    && finalOutput.endsWith(".dim");
+        final boolean isSnap = initialCmd.equals("/opt/snap/bin/gpt");
         final boolean recursiveCondition = !isOutputManaged || isSnapDimap || component.getTargets().stream().anyMatch(t -> DataFormat.FOLDER == t.getDataDescriptor().getFormatType());
         argsList.add(0, initialCmd);
         if (!isLocal && component.getTargets().stream().anyMatch(t -> t.getDataDescriptor().getFormatType() == DataFormat.FOLDER)) {
             argsList.add(0, "mkdir");
             argsList.add(1, tmpPath);
             argsList.add(2, "&&");
+        }
+        if (isSnap && isOutputManaged && tempOutput.toLowerCase().endsWith(".tif")) {
+            argsList.add("-f");
+            argsList.add("GeoTIFF");
         }
         argsList.add("&&");
         argsList.add("cp");
