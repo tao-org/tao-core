@@ -74,6 +74,16 @@ public class SpatialReference {
         return GDALReflection.callGDALLibraryMethod(CLASS_NAME, "GetAuthorityCode", String.class, this.jniSpatialReferenceInstance, new Class[]{String.class}, new Object[]{target_key});
     }
 
+    /**
+     * Calls the JNI GDAL SpatialReference class GetAuthorityName(String target_key) method
+     *
+     * @param target_key the JNI GDAL SpatialReference class GetAuthorityName(String target_key) method 'target_key' argument
+     * @return the JNI GDAL SpatialReference class GetAuthorityName(String target_key) method result
+     */
+    public String getAuthorityName(String target_key){
+        return GDALReflection.callGDALLibraryMethod(CLASS_NAME, "GetAuthorityName", String.class, this.jniSpatialReferenceInstance, new Class[]{String.class}, new Object[]{target_key});
+    }
+
     public void setAxisMappingStrategy(int strategy) {
         GDALReflection.callGDALLibraryMethod(CLASS_NAME, "SetAxisMappingStrategy", Void.class, this.jniSpatialReferenceInstance, new Class[] { int.class }, new Object[] { strategy });
     }
