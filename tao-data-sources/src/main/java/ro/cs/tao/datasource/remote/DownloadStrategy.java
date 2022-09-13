@@ -17,7 +17,6 @@ package ro.cs.tao.datasource.remote;
 
 import org.apache.http.Header;
 import org.apache.http.auth.UsernamePasswordCredentials;
-import ro.cs.tao.ProgressListener;
 import ro.cs.tao.datasource.InterruptedException;
 import ro.cs.tao.datasource.*;
 import ro.cs.tao.eodata.EOProduct;
@@ -25,6 +24,7 @@ import ro.cs.tao.eodata.util.ProductHelper;
 import ro.cs.tao.utils.ExceptionUtils;
 import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.NetUtils;
+import ro.cs.tao.utils.executors.monitoring.ProgressListener;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;

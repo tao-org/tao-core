@@ -16,8 +16,8 @@
 package ro.cs.tao.datasource;
 
 import org.apache.http.auth.UsernamePasswordCredentials;
-import ro.cs.tao.ProgressListener;
 import ro.cs.tao.eodata.EOProduct;
+import ro.cs.tao.utils.executors.monitoring.ProgressListener;
 
 import java.io.IOException;
 import java.nio.file.Path;

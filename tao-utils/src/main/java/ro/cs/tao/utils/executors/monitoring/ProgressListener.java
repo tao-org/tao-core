@@ -16,7 +16,7 @@
  *  *
  *
  */
-package ro.cs.tao;
+package ro.cs.tao.utils.executors.monitoring;
 
 /**
  * Callback interface for progress reporting of a single execution task.

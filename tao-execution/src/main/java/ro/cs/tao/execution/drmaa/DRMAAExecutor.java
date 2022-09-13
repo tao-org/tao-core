@@ -19,6 +19,7 @@ import org.apache.commons.lang3.SystemUtils;
 import org.ggf.drmaa.*;
 import ro.cs.tao.component.*;
 import ro.cs.tao.component.enums.ProcessingComponentType;
+import ro.cs.tao.datasource.DataSourceTopic;
 import ro.cs.tao.docker.Application;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.docker.DockerVolumeMap;
@@ -34,6 +35,7 @@ import ro.cs.tao.execution.monitor.NodeManager;
 import ro.cs.tao.execution.monitor.NodeManager.NodeData;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.execution.util.TaskUtilities;
+import ro.cs.tao.messaging.ProgressNotifier;
 import ro.cs.tao.persistence.ContainerProvider;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.spi.ServiceRegistryManager;
@@ -353,7 +355,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                 for (Variable input : inputs) {
                     if (!outputs.contains(input.getKey())) {
                         String value = input.getValue();
-                        String newValue = copyLocally(value, task.getId());
+                        String newValue = copyLocally(value, task);
                         input.setValue(newValue);
                         if (!value.equals(newValue)) {
                             List args = jt.getArgs();
@@ -707,6 +709,11 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         } else {
             argsList.add(tmpPath);
         }
+        try {
+            Files.createDirectory(Paths.get(finalPath));
+        } catch (IOException e) {
+            logger.warning(e.getMessage());
+        }
         argsList.add(finalPath);
         argsList.add("&&");
         argsList.add("rm");
@@ -773,7 +780,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         return nodeData;
     }
 
-    private String copyLocally(String source, long taskId) throws IOException {
+    private String copyLocally(String source, ExecutionTask task) throws IOException {
         if (!source.startsWith("/")) {
             return source;
         }
@@ -796,12 +803,15 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             Path tmpPath = tmpFolder.resolve(src.getFileName());
             if (!Files.exists(tmpPath)) {
                 logger.fine(String.format("Copying %s to %s", src, tmpFolder));
-                FileUtilities.copy(src, tmpFolder);
+                //FileUtilities.copy(src, tmpFolder);
+                FileUtilities.copy(src, tmpFolder,
+                                   new ProgressNotifier(() -> task.getJob().getUserName(),
+                                                        task.getJob().getName(), DataSourceTopic.PRODUCT_PROGRESS));
             }
             if (!this.cachedInputs.containsKey(tmpPath)) {
                 this.cachedInputs.put(tmpPath, new HashSet<>());
             }
-            this.cachedInputs.get(tmpPath).add(taskId);
+            this.cachedInputs.get(tmpPath).add(task.getId());
             String out = lastName != null ? tmpPath.resolve(lastName).toString() : tmpPath.toString();
             return out.replace(masterVolumeMap.getHostTemporaryFolder(), masterVolumeMap.getContainerTemporaryFolder());
         } else {

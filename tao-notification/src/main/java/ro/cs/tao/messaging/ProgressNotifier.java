@@ -15,12 +15,11 @@
  */
 package ro.cs.tao.messaging;
 
-import ro.cs.tao.ProgressListener;
 import ro.cs.tao.messaging.progress.*;
 import ro.cs.tao.security.SessionStore;
+import ro.cs.tao.utils.executors.monitoring.ProgressListener;
 
 import java.security.Principal;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -87,11 +86,11 @@ public class ProgressNotifier implements ProgressListener {
 
     @Override
     public void notifyProgress(double progressValue) {
-        if (progressValue < taskCounter) {
+        /*if (progressValue < taskCounter) {
             throw new IllegalArgumentException(
                     String.format(Locale.US, "Progress taskCounter cannot go backwards [actual:%.2f%%, received:%.2f%%]",
                                   taskCounter, progressValue));
-        }
+        }*/
         taskCounter = progressValue;
         if (taskCounter < 1) {
             sendTransientMessage(new ActivityProgress(taskName, progressValue));
@@ -107,11 +106,11 @@ public class ProgressNotifier implements ProgressListener {
 
     @Override
     public void notifyProgress(String subTaskName, double subTaskProgress, double overallProgress) {
-        if (subTaskProgress < subTaskCounter) {
+        /*if (subTaskProgress < subTaskCounter) {
             throw new IllegalArgumentException(
                     String.format(Locale.US, "Progress counter cannot go backwards [actual:%.2f%%, received:%.2f%%]",
                                   subTaskCounter, subTaskProgress));
-        }
+        }*/
         subTaskCounter = subTaskProgress;
         taskCounter = overallProgress;
         if (subTaskCounter < 1) {

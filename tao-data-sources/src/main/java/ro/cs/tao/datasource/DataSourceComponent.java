@@ -16,7 +16,6 @@
 package ro.cs.tao.datasource;
 
 import org.apache.http.HttpStatus;
-import ro.cs.tao.ProgressListener;
 import ro.cs.tao.component.DataDescriptor;
 import ro.cs.tao.component.SourceDescriptor;
 import ro.cs.tao.component.TaoComponent;
@@ -33,6 +32,7 @@ import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.serialization.GenericAdapter;
 import ro.cs.tao.utils.Crypto;
 import ro.cs.tao.utils.ExceptionUtils;
+import ro.cs.tao.utils.executors.monitoring.ProgressListener;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;

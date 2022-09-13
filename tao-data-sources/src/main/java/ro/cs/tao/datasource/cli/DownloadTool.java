@@ -3,7 +3,6 @@ package ro.cs.tao.datasource.cli;
 import com.fasterxml.jackson.databind.ObjectReader;
 import org.apache.commons.cli.*;
 import org.locationtech.jts.geom.Geometry;
-import ro.cs.tao.ProgressListener;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.configuration.ConfigurationProvider;
 import ro.cs.tao.datasource.*;
@@ -17,6 +16,7 @@ import ro.cs.tao.serialization.GeometryAdapter;
 import ro.cs.tao.serialization.JsonMapper;
 import ro.cs.tao.utils.DateUtils;
 import ro.cs.tao.utils.NetUtils;
+import ro.cs.tao.utils.executors.monitoring.ProgressListener;
 
 import java.io.File;
 import java.io.IOException;
