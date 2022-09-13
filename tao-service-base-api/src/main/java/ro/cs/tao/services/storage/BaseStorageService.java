@@ -1,8 +1,8 @@
 package ro.cs.tao.services.storage;
 
 import ro.cs.tao.ListenableInputStream;
-import ro.cs.tao.ProgressListener;
 import ro.cs.tao.services.interfaces.StorageService;
+import ro.cs.tao.utils.executors.monitoring.ProgressListener;
 import ro.cs.tao.workspaces.Repository;
 
 import java.io.InputStream;

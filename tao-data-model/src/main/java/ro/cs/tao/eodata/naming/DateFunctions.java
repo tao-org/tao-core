@@ -11,8 +11,8 @@ public final class DateFunctions {
     private static final Pattern monthPattern = Pattern.compile("(MONTH\\(([0-9-]+)\\))");
     private static final Pattern dayPattern = Pattern.compile("(DAY\\(([0-9-]+)\\))");
     private static final Pattern hourPattern = Pattern.compile("(HOUR\\((\\d{2}):?(\\d{2}):?(\\d{2})\\))");
-    private static final Pattern minutePattern = Pattern.compile("MINUTE\\((\\d{2}):?(\\d{2}):?(\\d{2})\\))");
-    private static final Pattern secondPattern = Pattern.compile("SECOND\\((\\d{2}):?(\\d{2}):?(\\d{2})\\))");
+    private static final Pattern minutePattern = Pattern.compile("(MINUTE\\((\\d{2}):?(\\d{2}):?(\\d{2})\\))");
+    private static final Pattern secondPattern = Pattern.compile("(SECOND\\((\\d{2}):?(\\d{2}):?(\\d{2})\\))");
     public static final Function<String, String> YEAR = (str) -> str.substring(0, 4);
     public static final Function<String, String> MONTH = (str) -> {
         int idx = str.indexOf('-');

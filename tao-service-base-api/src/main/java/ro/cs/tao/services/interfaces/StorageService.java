@@ -16,11 +16,11 @@
 
 package ro.cs.tao.services.interfaces;
 
-import ro.cs.tao.ProgressListener;
 import ro.cs.tao.persistence.AuxiliaryDataProvider;
 import ro.cs.tao.persistence.EOProductProvider;
 import ro.cs.tao.persistence.VectorDataProvider;
 import ro.cs.tao.services.model.FileObject;
+import ro.cs.tao.utils.executors.monitoring.ProgressListener;
 import ro.cs.tao.workspaces.Repository;
 
 import java.io.IOException;

@@ -24,6 +24,8 @@ import org.apache.commons.lang3.SystemUtils;
 import ro.cs.tao.utils.executors.Executor;
 import ro.cs.tao.utils.executors.ExecutorType;
 import ro.cs.tao.utils.executors.OutputAccumulator;
+import ro.cs.tao.utils.executors.monitoring.ListenableInputStream;
+import ro.cs.tao.utils.executors.monitoring.ProgressListener;
 
 import java.io.*;
 import java.net.URI;
@@ -41,6 +43,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -447,6 +450,64 @@ public class FileUtilities {
             }
         }
         return copied.intValue();
+    }
+
+    public static int copy(Path source, Path destination, ProgressListener listener) throws IOException {
+        final AtomicInteger copied = new AtomicInteger(0);
+        try {
+            if (source != null && destination != null) {
+                listener.started(source.getFileName().toString());
+                if (Files.isRegularFile(source)) {
+                    copyFileWithProgress(source, destination, listener);
+                } else {
+                    Path targetFolder = destination.resolve(source.getFileName());
+                    Files.createDirectories(targetFolder);
+                    double total = folderSize(source);
+                    AtomicLong current = new AtomicLong(0);
+                    Files.walkFileTree(source, new SimpleFileVisitor<Path>() {
+                        @Override
+                        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                            Path target = targetFolder.resolve(source.relativize(dir));
+                            Files.createDirectories(target);
+                            return FileVisitResult.CONTINUE;
+                        }
+
+                        @Override
+                        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                            Path targetFile = targetFolder.resolve(source.relativize(file));
+                            Files.copy(file, targetFile);
+                            listener.notifyProgress((double) current.addAndGet(Files.size(file)) / total);
+                            copied.incrementAndGet();
+                            return FileVisitResult.CONTINUE;
+                        }
+
+                        @Override
+                        public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                            if (exc == null) {
+                                return FileVisitResult.CONTINUE;
+                            } else {
+                                throw exc;
+                            }
+                        }
+                    });
+                }
+            }
+            return copied.intValue();
+        } finally {
+            listener.ended();
+        }
+    }
+
+    private static void copyFileWithProgress(Path source, Path destination, ProgressListener listener) throws IOException {
+        Files.deleteIfExists(destination);
+        byte[] buffer = new byte[262144];
+        try (InputStream inStream = new ListenableInputStream(Files.newInputStream(source), listener);
+             OutputStream outStream = Files.newOutputStream(destination, StandardOpenOption.CREATE)) {
+            int bytesRead;
+            while ((bytesRead = inStream.read(buffer)) != -1) {
+                outStream.write(buffer, 0, bytesRead);
+            }
+        }
     }
 
     public static int upload(Path source, Path destination, ChannelSftp channel) throws IOException {

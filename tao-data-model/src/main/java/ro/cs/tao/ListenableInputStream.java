@@ -1,6 +1,7 @@
 package ro.cs.tao;
 
 import ro.cs.tao.configuration.ConfigurationManager;
+import ro.cs.tao.utils.executors.monitoring.ProgressListener;
 
 import java.io.IOException;
 import java.io.InputStream;
