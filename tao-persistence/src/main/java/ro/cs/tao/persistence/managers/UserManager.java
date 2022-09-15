@@ -29,6 +29,7 @@ import ro.cs.tao.persistence.repository.UserRepository;
 import ro.cs.tao.security.SystemPrincipal;
 import ro.cs.tao.user.*;
 import ro.cs.tao.utils.StringUtilities;
+import ro.cs.tao.workspaces.Repository;
 import ro.cs.tao.workspaces.RepositoryFactory;
 import ro.cs.tao.workspaces.RepositoryType;
 
@@ -545,9 +546,15 @@ public class UserManager extends EntityManager<User, Long, UserRepository> imple
 
     @Override
     public void createWorkspaces(String user) {
-        repositoryJPARepository.save(RepositoryFactory.createDefault(RepositoryType.LOCAL, user));
+        Repository repo = repositoryJPARepository.getByUserAndName(user, RepositoryType.LOCAL.name());
+        if (repo == null) {
+            repositoryJPARepository.save(RepositoryFactory.createDefault(RepositoryType.LOCAL, user));
+        }
         try {
-            repositoryJPARepository.save(RepositoryFactory.createDefault(RepositoryType.AWS, user));
+            repo = repositoryJPARepository.getByUserAndName(user, RepositoryType.AWS.name());
+            if (repo == null) {
+                repositoryJPARepository.save(RepositoryFactory.createDefault(RepositoryType.AWS, user));
+            }
         } catch (Exception e) {
             Logger.getLogger(UserManager.class.getName()).warning(e.getMessage());
         }
