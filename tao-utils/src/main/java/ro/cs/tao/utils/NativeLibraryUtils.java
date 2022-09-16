@@ -51,6 +51,7 @@ public class NativeLibraryUtils {
         }
         System.setProperty(ENV_LIB_PATH, propertyValue);
         try {
+            //TODO: ClassLoader in JVMs 9+ may not have the "initializePath" method
             java.lang.reflect.Method initializePathMethod = PrivilegedAccessor.getMethod(ClassLoader.class, "initializePath", new Class[]{String.class});
             initializePathMethod.setAccessible(true);
             String[] updatedUsrPaths = (String[]) initializePathMethod.invoke(null, ENV_LIB_PATH);
