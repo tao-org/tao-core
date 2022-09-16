@@ -11,5 +11,6 @@ public interface WorkflowNodeProvider extends EntityProvider<WorkflowNodeDescrip
     List<WorkflowNodeDescriptor> listByComponentId(long workflowId, String componentId);
     WorkflowNodeGroupDescriptor getGroupNode(long childNodeId);
     WorkflowNodeDescriptor save(WorkflowNodeDescriptor node, WorkflowDescriptor workflow) throws PersistenceException;
+    void updatePosition(Long id, float[] coordinates) throws PersistenceException;
 
 }
