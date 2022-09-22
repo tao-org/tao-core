@@ -97,7 +97,7 @@ public abstract class EntityManager<T extends Identifiable<K>, K, R extends Pagi
         return results;
     }
 
-    @Transactional
+    //@Transactional
     public T get(K id) {
         return id != null ? repository.findById(id).orElse(null) : null;
     }
