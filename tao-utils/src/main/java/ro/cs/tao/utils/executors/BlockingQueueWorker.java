@@ -19,10 +19,23 @@ public class BlockingQueueWorker<E> extends Thread {
         this(monitoredQueue, runnable, 1);
     }
 
+    public BlockingQueueWorker(BlockingQueue<E> monitoredQueue, Function<E, Void> runnable, String name) {
+        this(monitoredQueue, runnable, 1, name);
+    }
+
     public BlockingQueueWorker(BlockingQueue<E> monitoredQueue, Function<E, Void> runnable, int parallelism) {
         this.monitoredQueue = monitoredQueue;
         this.work = runnable;
         this.executor = new NamedThreadPoolExecutor("queue-worker", parallelism > 0 ? parallelism : 1);
+        this.stopped = false;
+        this.monitor = new Object();
+        this.logger = Logger.getLogger(getClass().getName());
+    }
+
+    public BlockingQueueWorker(BlockingQueue<E> monitoredQueue, Function<E, Void> runnable, int parallelism, String name) {
+        this.monitoredQueue = monitoredQueue;
+        this.work = runnable;
+        this.executor = new NamedThreadPoolExecutor(name, parallelism > 0 ? parallelism : 1);
         this.stopped = false;
         this.monitor = new Object();
         this.logger = Logger.getLogger(getClass().getName());
