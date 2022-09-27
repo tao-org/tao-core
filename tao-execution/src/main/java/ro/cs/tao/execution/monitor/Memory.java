@@ -15,6 +15,8 @@
  */
 package ro.cs.tao.execution.monitor;
 
+import ro.cs.tao.utils.executors.MemoryUnit;
+
 /**
  * @author Cosmin Cara
  */

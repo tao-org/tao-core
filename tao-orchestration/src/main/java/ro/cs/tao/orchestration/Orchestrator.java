@@ -830,9 +830,7 @@ public class Orchestrator extends Notifiable {
                 valuesList.set(i, TaskUtilities.relativizePathForExecution(valuesList.get(i)));
 
             }
-            if (nextTask instanceof DataSourceExecutionTask) {
-                // NOOP
-            } else if (nextTask instanceof ExecutionGroup) {
+            if (nextTask instanceof ExecutionGroup) {
                 ExecutionGroup groupTask = (ExecutionGroup) nextTask;
                 groupTask.setStateHandler(new LoopStateHandler(new LoopState(cardinality, 1)));
                 // we need to keep this mapping because ExecutionTask.stateHandler is transient
@@ -842,7 +840,7 @@ public class Orchestrator extends Notifiable {
                                                      theOnlyValue.getValue());
                 }
                 taskProvider.update(groupTask);
-            } else {
+            } else if (!(nextTask instanceof DataSourceExecutionTask)){
                 // if next to a DataSourceExecutionTask is a simple ExecutionTask, we feed it with as many
                 // values as sources
                 int expectedCardinality = TaskUtilities.getSourceCardinality(nextTask);
@@ -959,9 +957,10 @@ public class Orchestrator extends Notifiable {
     }
 
     private void notifyTaskGroup(ExecutionGroup groupTask, ExecutionTask task, String reason) {
-        ExecutionStatus previousStatus = groupTask.getExecutionStatus();
-        List<ExecutionTask> tasks = groupTask.getTasks();
-        ExecutionStatus taskStatus = task.getExecutionStatus();
+        final ExecutionStatus previousStatus = groupTask.getExecutionStatus();
+        final List<ExecutionTask> tasks = groupTask.getTasks();
+        final int taskCount = tasks.size();
+        final ExecutionStatus taskStatus = task.getExecutionStatus();
         try {
             switch (taskStatus) {
                 case QUEUED_ACTIVE:
@@ -974,10 +973,10 @@ public class Orchestrator extends Notifiable {
                 case SUSPENDED:
                 case CANCELLED:
                 case FAILED:
-                    int startIndex = IntStream.range(0, tasks.size())
+                    int startIndex = IntStream.range(0, taskCount)
                             .filter(i -> task.getId().equals(tasks.get(i).getId()))
                             .findFirst().orElse(0);
-                    bulkSetStatus(tasks.subList(startIndex, tasks.size()), taskStatus);
+                    bulkSetStatus(tasks.subList(startIndex, taskCount), taskStatus);
                     if (TransitionBehavior.FAIL_ON_ERROR == workflowNodeProvider.get(task.getWorkflowNodeId()).getBehavior()) {
                         groupTask.setExecutionStatus(taskStatus);
                     } else {

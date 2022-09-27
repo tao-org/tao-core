@@ -10,8 +10,6 @@ import java.util.stream.Stream;
 
 public final class GDALTileCache {
 
-    static final int MB = 1024 * 1024;
-
     private final GDALTileCacheMap cachedTiles;
 
     private final boolean cacheEnabled;

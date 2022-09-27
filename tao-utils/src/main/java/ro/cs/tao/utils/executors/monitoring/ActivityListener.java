@@ -3,6 +3,7 @@ package ro.cs.tao.utils.executors.monitoring;
 import org.apache.commons.lang3.StringUtils;
 import ro.cs.tao.utils.ExceptionUtils;
 import ro.cs.tao.utils.Triple;
+import ro.cs.tao.utils.executors.MemoryUnit;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -42,7 +43,7 @@ public class ActivityListener implements ProcessActivityListener {
                     return;
                 }
             }
-            this.logFile = new RollingFile(file, 1024 * 1024 * 16);
+            this.logFile = new RollingFile(file, MemoryUnit.MB.value() * 16);
             if (this.logFile.getBase() != null) {
                 logger.fine(String.format("Disk activity will be recorded in %s", this.logFile.getBase()));
             } else {

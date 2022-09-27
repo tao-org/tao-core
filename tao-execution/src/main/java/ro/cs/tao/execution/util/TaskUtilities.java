@@ -24,7 +24,6 @@ import ro.cs.tao.docker.Container;
 import ro.cs.tao.docker.ExecutionConfiguration;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.model.*;
-import ro.cs.tao.execution.persistence.ExecutionJobProvider;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.persistence.ContainerProvider;
 import ro.cs.tao.persistence.GroupComponentProvider;
@@ -59,7 +58,7 @@ public class TaskUtilities {
     private static final ProcessingComponentProvider processingComponentProvider;
     private static final DataSourceComponentProvider dataSourceComponentProvider;
     private static final GroupComponentProvider groupComponentProvider;
-    private static final ExecutionJobProvider jobProvider;
+    /*private static final ExecutionJobProvider jobProvider;*/
     private static final ExecutionTaskProvider taskProvider;
     private static final ContainerProvider containerProvider;
     private static final Logger logger = Logger.getLogger(TaskUtilities.class.getName());
@@ -72,7 +71,7 @@ public class TaskUtilities {
         DOCKER_EODATA_HOST_POINT = ExecutionConfiguration.getMasterContainerVolumeMap().getHostEODataFolder();
         DOCKER_EODATA_MOUNT_POINT = ExecutionConfiguration.getMasterContainerVolumeMap().getContainerEoDataFolder();
         workflowNodeProvider = SpringContextBridge.services().getService(WorkflowNodeProvider.class);
-        jobProvider = SpringContextBridge.services().getService(ExecutionJobProvider.class);
+        /*jobProvider = SpringContextBridge.services().getService(ExecutionJobProvider.class);*/
         taskProvider = SpringContextBridge.services().getService(ExecutionTaskProvider.class);
         processingComponentProvider = SpringContextBridge.services().getService(ProcessingComponentProvider.class);
         dataSourceComponentProvider = SpringContextBridge.services().getService(DataSourceComponentProvider.class);
@@ -80,6 +79,10 @@ public class TaskUtilities {
         containerProvider = SpringContextBridge.services().getService(ContainerProvider.class);
     }
 
+    /**
+     * Returns the workflow node whose instance is this execution task
+     * @param task  The task
+     */
     public static WorkflowNodeDescriptor getWorkflowNode(ExecutionTask task) {
         if (task == null || task.getWorkflowNodeId() == null) {
             return null;
@@ -87,11 +90,19 @@ public class TaskUtilities {
         return workflowNodeProvider.get(task.getWorkflowNodeId());
     }
 
+    /**
+     * Returns the container of the component wrapped by a workflow node
+     * @param node  The workflow node
+     */
     public static Container getComponentContainer(WorkflowNodeDescriptor node) {
         final ProcessingComponent component = processingComponentProvider.get(node.getComponentId());
         return containerProvider.get(component.getContainerId());
     }
 
+    /**
+     * Returns the defined transition behavior for the given task.
+     * @param task  The task
+     */
     public static TransitionBehavior getTransitionBehavior(ExecutionTask task) {
         WorkflowNodeDescriptor node = getWorkflowNode(task);
         return node != null ? node.getBehavior() : TransitionBehavior.FAIL_ON_ERROR;
@@ -120,14 +131,19 @@ public class TaskUtilities {
         return component;
     }
 
+    /**
+     * Returns a list with identifiers of parent tasks for a given task, or null if the task doesn't have any parents
+     * @param task  The task
+     */
     public static List<Long> getParentIds(ExecutionTask task) {
-        List<Long> ids = null;
+        /*List<Long> ids = null;
         final WorkflowNodeDescriptor node = getWorkflowNode(task);
         final Set<ComponentLink> links = node.getIncomingLinks();
         if (links != null) {
             ids = links.stream().map(l -> taskProvider.getByJobAndNode(task.getJob().getId(), l.getSourceNodeId(), task.getInstanceId()).getId()).distinct().collect(Collectors.toList());
-        }
-        return ids;
+        }*/
+        final List<String> ids = task.getJob().getTaskDependencies().get(String.valueOf(task.getId()));
+        return ids != null ? ids.stream().map(Long::parseLong).collect(Collectors.toList()) : null;
     }
 
     /**
@@ -138,7 +154,10 @@ public class TaskUtilities {
         TaoComponent component = getComponentFor(task);
         return getSourceCardinality(component);
     }
-
+    /**
+     * Returns the cardinality of inputs for a given component
+     * @param component      The component
+     */
     public static int getSourceCardinality(TaoComponent component) {
         int cardinality = -1;
         if (component != null) {
@@ -167,7 +186,10 @@ public class TaskUtilities {
         TaoComponent component = getComponentFor(task);
         return getTargetCardinality(component);
     }
-
+    /**
+     * Returns the cardinality of outputs for a given component
+     * @param component      The component
+     */
     public static int getTargetCardinality(TaoComponent component) {
         int cardinality = -1;
         if (component != null) {
@@ -262,6 +284,10 @@ public class TaskUtilities {
         }
     }
 
+    /**
+     * Checks if this data source task is sycnrhonized with another data source task
+     * @param task  The data source task that is inspected
+     */
     public static boolean isSynchronized(DataSourceExecutionTask task) {
         final Set<ComponentLink> links = workflowNodeProvider.get(task.getWorkflowNodeId()).getIncomingLinks();
         if (links == null || links.isEmpty()) {
@@ -273,6 +299,12 @@ public class TaskUtilities {
 
     }
 
+    /**
+     * Performs grouping of the outputs of the two data source tasks.
+     * Returns a list of pairs [first_task_output, corresponding_second_task_output]
+     * @param primaryTask       The primary data source task
+     * @param secondaryTask     The secondary data source task (which is synchronized on the primary one)
+     */
     public static List<Tuple<String, String>> coupleTaskOutputs(DataSourceExecutionTask primaryTask,
                                                                 DataSourceExecutionTask secondaryTask) {
         final SourceDescriptor sdTwo = secondaryTask.getComponent().getSources().stream()
@@ -307,6 +339,10 @@ public class TaskUtilities {
         return results;
     }
 
+    /**
+     * Checks if this task is an externally (i.e. not TAO-specific) executing task
+     * @param task  The task
+     */
     public static boolean isExternal(ExecutionTask task) {
         if (task instanceof ProcessingExecutionTask) {
             final List<ParameterValue> additionalInfo = workflowNodeProvider.get(task.getWorkflowNodeId()).getAdditionalInfo();
@@ -315,6 +351,11 @@ public class TaskUtilities {
         return false;
     }
 
+    /**
+     * Returns a friendly name of this task, in the format:
+     *      task_id (component_id, job job_id)
+     * @param task  The task
+     */
     public static String getTaskName(ExecutionTask task) {
         final String component;
         if (task instanceof DataSourceExecutionTask) {
@@ -327,6 +368,10 @@ public class TaskUtilities {
         return task.getId() + " (" + component + ", job " + task.getJob().getId() + ")";
     }
 
+    /**
+     * Computes a relative to a docker container path of the given path
+     * @param path  The path to be made relative
+     */
     public static String relativizePathForExecution(String path) {
         if (path.startsWith(DOCKER_MOUNT_POINT) &&
                 !path.startsWith(FileUtilities.asUnixPath(SystemVariable.ROOT.value(), true))) {

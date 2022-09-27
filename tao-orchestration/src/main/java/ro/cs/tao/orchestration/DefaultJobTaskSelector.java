@@ -17,8 +17,10 @@
 package ro.cs.tao.orchestration;
 
 import ro.cs.tao.execution.model.*;
+import ro.cs.tao.execution.util.TaskUtilities;
 import ro.cs.tao.utils.TriFunction;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
+import ro.cs.tao.workflow.enums.TransitionBehavior;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -118,7 +120,12 @@ public class DefaultJobTaskSelector implements TaskSelector<ExecutionJob> {
     }
 
     private List<ExecutionTask> getCandidatesForExecution(ExecutionJob job, ExecutionTask task) {
-        if (task == null || task.getExecutionStatus() != ExecutionStatus.DONE) {
+        if (task == null) {
+            return null;
+        }
+        final TransitionBehavior behavior = TaskUtilities.getTransitionBehavior(task);
+        if (ExecutionStatus.DONE != task.getExecutionStatus() &&
+                (behavior == null || behavior == TransitionBehavior.FAIL_ON_ERROR)) {
             return null;
         }
         final List<ExecutionTask> candidates = new ArrayList<>();

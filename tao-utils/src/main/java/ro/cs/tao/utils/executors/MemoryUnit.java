@@ -13,29 +13,27 @@
  * You should have received a copy of the GNU General Public License along
  * with this program; if not, see http://www.gnu.org/licenses/
  */
-package ro.cs.tao.execution.monitor;
-
-import java.util.Arrays;
+package ro.cs.tao.utils.executors;
 
 /**
  * @author Cosmin Cara
  */
 public enum MemoryUnit {
     BYTE(1),
-    KILOBYTE(1024),
-    MEGABYTE(1024*1024),
-    GIGABYTE(1024*1024*1024);
+    KB(BYTE.value * 1024),
+    MB(KB.value * 1024),
+    GB(MB.value * 1024),
+    TB(GB.value * 1024);
 
-    private final int value;
+    private final long value;
 
-    MemoryUnit(int value) { this.value = value; }
+    MemoryUnit(long value) { this.value = value; }
     @Override
     public String toString() { return String.valueOf(this.value); }
 
-    public int value() { return this.value; }
+    public Long value() { return this.value; }
 
-    public static String getEnumConstantNameByValue(final int value) {
-        return Arrays.stream(values()).filter(t -> String.valueOf(value).equals(t.toString())).findFirst().get().name();
+    public static MemoryUnit getEnumConstantByName(String name) {
+        return name != null ? MemoryUnit.valueOf(name.toUpperCase()) : null;
     }
-
 }
