@@ -44,6 +44,7 @@ import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.StringUtilities;
 import ro.cs.tao.utils.Tuple;
 import ro.cs.tao.utils.executors.BlockingQueueWorker;
+import ro.cs.tao.utils.executors.MemoryUnit;
 import ro.cs.tao.utils.executors.container.ContainerCmdBuilder;
 import ro.cs.tao.utils.executors.container.ContainerType;
 import ro.cs.tao.utils.executors.container.ContainerUnit;
@@ -338,7 +339,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         try {
             final Tuple<NodeDescription, AtomicLong> hostData = this.hostMemoryRequests.get(task.getExecutionNodeHostName());
             if (hostData != null) {
-                int installed = hostData.getKeyOne().getFlavor().getMemory() * 1024;
+                long installed = hostData.getKeyOne().getFlavor().getMemory() * MemoryUnit.KB.value();
                 long requested = hostData.getKeyTwo().get();
                 if (installed <= requested) {
                     logger.warning(String.format("Host %s may not have enough available memory (installed: %d, requested: %d)",

@@ -70,8 +70,8 @@ public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
         runtimeInfo.setAvailableMemory(getAvailableMemoryMB());
         runtimeInfo.setDiskTotal(getTotalDiskGB());
         runtimeInfo.setDiskUsed(getUsedDiskGB());
-        runtimeInfo.setDiskUnit(MemoryUnit.GIGABYTE);
-        runtimeInfo.setMemoryUnit(MemoryUnit.MEGABYTE);
+        runtimeInfo.setDiskUnit(MemoryUnit.GB);
+        runtimeInfo.setMemoryUnit(MemoryUnit.MB);
         return runtimeInfo;
     }
 
@@ -106,11 +106,11 @@ public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
                         if (message.startsWith("LoadPercentage")) {
                             runtimeInfo.setCpuTotal(Double.parseDouble(strings[1]));
                         } else if (message.startsWith("TotalVisibleMemorySize")) {
-                            runtimeInfo.setTotalMemory(Long.parseLong(strings[1]) / MemoryUnit.KILOBYTE.value());
-                            runtimeInfo.setMemoryUnit(MemoryUnit.MEGABYTE);
+                            runtimeInfo.setTotalMemory(Long.parseLong(strings[1]) / MemoryUnit.KB.value());
+                            runtimeInfo.setMemoryUnit(MemoryUnit.MB);
                         } else if (message.startsWith("FreePhysicalMemory")) {
                             // WMIC returns total memory in kilobytes
-                            runtimeInfo.setAvailableMemory(Long.parseLong(strings[1]) / MemoryUnit.KILOBYTE.value());
+                            runtimeInfo.setAvailableMemory(Long.parseLong(strings[1]) / MemoryUnit.KB.value());
                         } else if (message.startsWith("Size") && message.length() > 5) {
                             String strSize = strings[1];
                             if (strSize != null && !strSize.isEmpty()) {
@@ -124,10 +124,10 @@ public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
                         }
                     }
                     // WMIC returns total disk in bytes
-                    diskSize = diskSize / MemoryUnit.GIGABYTE.value();
+                    diskSize = diskSize / MemoryUnit.GB.value();
                     runtimeInfo.setDiskTotal(diskSize);
-                    runtimeInfo.setDiskUsed(diskSize - freeSpace / MemoryUnit.GIGABYTE.value());
-                    runtimeInfo.setDiskUnit(MemoryUnit.GIGABYTE);
+                    runtimeInfo.setDiskUsed(diskSize - freeSpace / MemoryUnit.GB.value());
+                    runtimeInfo.setDiskUnit(MemoryUnit.GB);
                 }
             } catch (Exception ex) {
                 logger.severe(ex.getMessage());
@@ -183,7 +183,7 @@ public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
                             if (strings.length == 1) {
                                 strings = new String[] { message, "0" };
                             }
-                            mem = Long.parseLong(strings[1]) / MemoryUnit.KILOBYTE.value();
+                            mem = Long.parseLong(strings[1]) / MemoryUnit.KB.value();
                             break;
                         }
                     }
@@ -213,7 +213,7 @@ public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
                                 strings = new String[] { message, "0" };
                             }
                             // WMIC returns total memory in kilobytes
-                            mem = Long.parseLong(strings[1]) / MemoryUnit.KILOBYTE.value();
+                            mem = Long.parseLong(strings[1]) / MemoryUnit.KB.value();
                             break;
                         }
                     }
@@ -245,7 +245,7 @@ public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
                         }
                     }
                     // WMIC returns total disk in bytes
-                    mem = mem / MemoryUnit.GIGABYTE.value();
+                    mem = mem / MemoryUnit.GB.value();
                 }
             } catch (Exception ex) {
                 logger.severe(ex.getMessage());
@@ -275,7 +275,7 @@ public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
                     }
                     long total = getTotalDiskGB();
                     // WMIC returns disk space in bytes
-                    mem = total - mem / MemoryUnit.GIGABYTE.value();
+                    mem = total - mem / MemoryUnit.GB.value();
                 }
             } catch (Exception ex) {
                 logger.severe(ex.getMessage());
@@ -334,16 +334,16 @@ public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
                             if (message.startsWith("MemTotal")) {
                                 message = message.replace("MemTotal:", "").trim();
                                 String value = message.substring(0, message.indexOf(" kB"));
-                                runtimeInfo.setTotalMemory(Long.parseLong(value) / MemoryUnit.KILOBYTE.value());
+                                runtimeInfo.setTotalMemory(Long.parseLong(value) / MemoryUnit.KB.value());
                             } else if (message.startsWith("MemAvailable")) {
                                 message = message.replace("MemAvailable:", "").trim();
                                 String value = message.substring(0, message.indexOf(" kB"));
-                                runtimeInfo.setAvailableMemory(Long.parseLong(value) / MemoryUnit.KILOBYTE.value());
+                                runtimeInfo.setAvailableMemory(Long.parseLong(value) / MemoryUnit.KB.value());
                                 //break;
                             } else if (message.startsWith("/dev/mapper/centos-home")) {
                                 List<String> values = Arrays.stream(message.replace(message.substring(0, message.indexOf(' ')), "").trim().split(" ")).filter(v -> !v.isEmpty()).collect(Collectors.toList());
-                                runtimeInfo.setDiskTotal(runtimeInfo.getDiskTotal() + Long.parseLong(values.get(0)) / MemoryUnit.MEGABYTE.value());
-                                runtimeInfo.setDiskUsed(runtimeInfo.getDiskUsed() + Long.parseLong(values.get(1)) / MemoryUnit.MEGABYTE.value());
+                                runtimeInfo.setDiskTotal(runtimeInfo.getDiskTotal() + Long.parseLong(values.get(0)) / MemoryUnit.MB.value());
+                                runtimeInfo.setDiskUsed(runtimeInfo.getDiskUsed() + Long.parseLong(values.get(1)) / MemoryUnit.MB.value());
                                 //break;
                             } else if (message.contains("load average")) {
                                 int idx = message.indexOf("load average");
@@ -355,21 +355,21 @@ public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
                                 if (message.startsWith("Buffers")) {
                                     message = message.replace("Buffers:", "").trim();
                                     String value = message.substring(0, message.indexOf(" kB"));
-                                    rex.setBuffers(Long.parseLong(value) / MemoryUnit.KILOBYTE.value());
+                                    rex.setBuffers(Long.parseLong(value) / MemoryUnit.KB.value());
                                 } else if (message.startsWith("Cached")) {
                                     message = message.replace("Cached:", "").trim();
                                     String value = message.substring(0, message.indexOf(" kB"));
-                                    rex.setCached(Long.parseLong(value) / MemoryUnit.KILOBYTE.value());
+                                    rex.setCached(Long.parseLong(value) / MemoryUnit.KB.value());
                                     //break;
                                 } else if (message.startsWith("SwapTotal")) {
                                     message = message.replace("SwapTotal:", "").trim();
                                     String value = message.substring(0, message.indexOf(" kB"));
-                                    rex.setSwapTotal(Long.parseLong(value) / MemoryUnit.KILOBYTE.value());
+                                    rex.setSwapTotal(Long.parseLong(value) / MemoryUnit.KB.value());
                                     //break;
                                 } else if (message.startsWith("SwapFree")) {
                                     message = message.replace("SwapFree:", "").trim();
                                     String value = message.substring(0, message.indexOf(" kB"));
-                                    rex.setSwapFree(Long.parseLong(value) / MemoryUnit.KILOBYTE.value());
+                                    rex.setSwapFree(Long.parseLong(value) / MemoryUnit.KB.value());
                                     //break;
                                 }
                             }
@@ -432,7 +432,7 @@ public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
                         if (message.startsWith("MemTotal")) {
                             message = message.replace("MemTotal:", "").trim();
                             String value = message.substring(0, message.indexOf(" kB"));
-                            mem = Long.parseLong(value) / MemoryUnit.KILOBYTE.value();
+                            mem = Long.parseLong(value) / MemoryUnit.KB.value();
                             break;
                         }
                     }
@@ -459,7 +459,7 @@ public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
                         if (message.startsWith("MemAvailable")) {
                             message = message.replace("MemAvailable:", "").trim();
                             String value = message.substring(0, message.indexOf(" kB"));
-                            mem = Long.parseLong(value) / MemoryUnit.KILOBYTE.value();
+                            mem = Long.parseLong(value) / MemoryUnit.KB.value();
                             break;
                         }
                     }
@@ -485,7 +485,7 @@ public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
                     for (String message : messages) {
                         if (message.startsWith("/dev/sd")) {
                             String[] values = message.replace(message.substring(0, message.indexOf(' ')), "").trim().split(" ");
-                            mem += Long.parseLong(values[0]) / MemoryUnit.MEGABYTE.value();
+                            mem += Long.parseLong(values[0]) / MemoryUnit.MB.value();
                         }
                     }
                 }
@@ -510,7 +510,7 @@ public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
                     for (String message : messages) {
                         if (message.startsWith("/dev/sd")) {
                             String[] values = message.replace(message.substring(0, message.indexOf(' ')), "").trim().split(" ");
-                            mem += Long.parseLong(values[1]) / MemoryUnit.MEGABYTE.value();
+                            mem += Long.parseLong(values[1]) / MemoryUnit.MB.value();
                         }
                     }
                 }

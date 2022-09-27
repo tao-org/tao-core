@@ -15,6 +15,7 @@ import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.topology.*;
 import ro.cs.tao.utils.ExceptionUtils;
 import ro.cs.tao.utils.async.Parallel;
+import ro.cs.tao.utils.executors.MemoryUnit;
 import ro.cs.tao.utils.executors.NamedThreadPoolExecutor;
 
 import java.security.Principal;
@@ -402,7 +403,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         try {
             final NodeFlavor flavor = node.getFlavor();
             double noCpus = flavor.getCpu();
-            double totalMem = flavor.getMemory() * MemoryUnit.MEGABYTE.value();
+            double totalMem = flavor.getMemory() * MemoryUnit.MB.value();
             result = (actualCPU / noCpus) * (1 - (availableMemory / totalMem));
         } finally {
             logger.finest(String.format("Processing pressure for %s: %f", node.getId(), result));

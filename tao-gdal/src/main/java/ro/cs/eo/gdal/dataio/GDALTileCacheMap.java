@@ -1,5 +1,7 @@
 package ro.cs.eo.gdal.dataio;
 
+import ro.cs.tao.utils.executors.MemoryUnit;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,7 +28,7 @@ final class GDALTileCacheMap extends LinkedHashMap<Path, Long> {
 
     @Override
     protected boolean removeEldestEntry(Map.Entry<Path, Long> eldest) {
-        final boolean removeEldestEntry = this.usedCacheSize.get() / GDALTileCache.MB >= this.cacheSize;
+        final boolean removeEldestEntry = this.usedCacheSize.get() / MemoryUnit.MB.value() >= this.cacheSize;
         if(removeEldestEntry){
             evictTileFromCache(eldest.getKey(), eldest.getValue());
         }
