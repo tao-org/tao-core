@@ -1,12 +1,12 @@
 package ro.cs.eo.gdal.dataio;
 
 import ro.cs.tao.component.SystemVariable;
+import ro.cs.tao.configuration.ConfigurationManager;
 
 import java.io.*;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -26,9 +26,9 @@ public enum GDALVersion {
     private static final String GDAL_NATIVE_LIBRARIES_SRC = "auxdata/gdal";
     private static final String GDAL_JNI_LIBRARY_FILE = "java/gdal.jar";
 
-    private static final String GDALINFIO_EXECUTABLE_NAME = "gdalinfo";
-    private static final String GDAL_INFO_CMD = GDALINFIO_EXECUTABLE_NAME + " --version";
-
+    //private static final String GDALINFIO_EXECUTABLE_NAME = "gdalinfo";
+    //private static final String GDAL_INFO_CMD = GDALINFIO_EXECUTABLE_NAME + " --version";
+    private static final String GDAL_AUXDATA_PATH_KEY = "gdal.auxdata.path";
     private static final String SNAP_PREFS_DIR="auxdata";
 
     private static final Logger logger = Logger.getLogger(GDALVersion.class.getName());
@@ -37,9 +37,9 @@ public enum GDALVersion {
     //private static final GDALVersion installedVersion = retrieveInstalledVersion();
 
     String id;
-    String name;
+    final String name;
     String location;
-    boolean jni;
+    final boolean jni;
     OSCategory osCategory;
 
     /**
@@ -236,9 +236,7 @@ public enum GDALVersion {
     public URL getZipFileURLFromSources() {
         String zipFileDirectoryFromSources = GDAL_NATIVE_LIBRARIES_SRC + "/" + getDirectory() + "/" + getZipName();
         try {
-            if (logger.isLoggable(Level.FINE)) {
-                logger.log(Level.FINE, "version zip archive URL from sources: '" + zipFileDirectoryFromSources + "'.");
-            }
+            logger.fine("version zip archive URL from sources: '" + zipFileDirectoryFromSources + "'.");
             return getClass().getClassLoader().getResource(zipFileDirectoryFromSources.replace(File.separator, "/"));
         } catch (Exception ignored) {
             return null;
@@ -251,8 +249,7 @@ public enum GDALVersion {
      * @return the ZIP archive root directory path for install this version
      */
     public Path getZipFilePath() {
-        Path zipFileDirectory = getNativeLibrariesRootFolderPath();
-        return zipFileDirectory.resolve(getDirName()).resolve(getZipName());
+        return getNativeLibrariesRootFolderPath().resolve(getDirName()).resolve(getZipName());
     }
 
     /**
@@ -287,7 +284,10 @@ public enum GDALVersion {
      * @return the root directory path for install this version
      */
     private static Path getAuxDataPath(){
-        return Paths.get(SystemVariable.ROOT.value()).getParent().resolve(SNAP_PREFS_DIR);
+        final String path = ConfigurationManager.getInstance().getValue(GDAL_AUXDATA_PATH_KEY);
+        return path != null
+               ? Paths.get(path).resolve(SNAP_PREFS_DIR)
+               : Paths.get(SystemVariable.ROOT.value()).getParent().resolve(SNAP_PREFS_DIR);
     }
 
     /**
@@ -296,8 +296,7 @@ public enum GDALVersion {
      * @return the root directory path for install this version
      */
     public Path getNativeLibrariesRootFolderPath() {
-        Path snapNativeLibrariesRootPath = getAuxDataPath();
-        return snapNativeLibrariesRootPath.resolve(GDAL_NATIVE_LIBRARIES_ROOT);
+        return getAuxDataPath().resolve(GDAL_NATIVE_LIBRARIES_ROOT);
     }
 
     /**
