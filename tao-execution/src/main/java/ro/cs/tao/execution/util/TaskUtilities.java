@@ -136,14 +136,13 @@ public class TaskUtilities {
      * @param task  The task
      */
     public static List<Long> getParentIds(ExecutionTask task) {
-        /*List<Long> ids = null;
+        List<Long> ids = null;
         final WorkflowNodeDescriptor node = getWorkflowNode(task);
         final Set<ComponentLink> links = node.getIncomingLinks();
         if (links != null) {
             ids = links.stream().map(l -> taskProvider.getByJobAndNode(task.getJob().getId(), l.getSourceNodeId(), task.getInstanceId()).getId()).distinct().collect(Collectors.toList());
-        }*/
-        final List<String> ids = task.getJob().getTaskDependencies().get(String.valueOf(task.getId()));
-        return ids != null ? ids.stream().map(Long::parseLong).collect(Collectors.toList()) : null;
+        }
+        return ids;
     }
 
     /**
