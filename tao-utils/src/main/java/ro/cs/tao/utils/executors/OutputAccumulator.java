@@ -27,7 +27,7 @@ public class OutputAccumulator implements OutputConsumer {
     @Override
     public void consume(String message) {
         synchronized (buffer) {
-            buffer.append(message);
+            buffer.append(message.replace('\n', ' '));
             if (delimitLines) {
                 buffer.append("\n");
             }
