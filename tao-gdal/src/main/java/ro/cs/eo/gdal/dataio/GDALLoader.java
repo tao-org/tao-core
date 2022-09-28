@@ -7,7 +7,6 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -54,7 +53,7 @@ public final class GDALLoader {
                 Path gdalDistributionBinFolderPath = Paths.get(this.gdalVersion.getLocation());
                 GDALInstallInfo.INSTANCE.setLocations(gdalDistributionBinFolderPath);
             } catch (Throwable ex) {
-                logger.log(Level.SEVERE, "Failed to initialize GDAL native drivers. GDAL readers and writers were disabled."+ex.getMessage());
+                logger.severe("Failed to initialize GDAL native drivers. GDAL readers and writers were disabled."+ex.getMessage());
                 if (this.gdalVersionLoader != null) {
                     try {
                         this.gdalVersionLoader.close();

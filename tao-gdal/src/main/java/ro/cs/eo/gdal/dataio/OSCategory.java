@@ -26,9 +26,9 @@ public enum OSCategory {
 
     private static final OSCategory osCategory = retrieveOSCategory();
 
-    private String operatingSystemName;
-    private String architecture;
-    private String findExecutableLocationCmd;
+    private final String operatingSystemName;
+    private final String architecture;
+    private final String findExecutableLocationCmd;
 
     /**
      * Creates new instance for this enum.
@@ -57,7 +57,7 @@ public enum OSCategory {
      *
      * @return the OS category for host OS
      */
-    private static OSCategory retrieveOSCategory() {
+    static OSCategory retrieveOSCategory() {
         OSCategory category;
         if (IS_OS_LINUX) {
             category = OSCategory.LINUX_64;

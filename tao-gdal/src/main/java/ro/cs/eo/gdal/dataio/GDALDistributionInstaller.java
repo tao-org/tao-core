@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.StringTokenizer;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -103,9 +102,7 @@ import java.util.logging.Logger;
     private static void processInstalledLinuxDistribution(Path gdalDistributionRootFolderPath) {
         Path libFolderPath = gdalDistributionRootFolderPath.resolve("lib");
 
-        if (logger.isLoggable(Level.FINE)) {
-            logger.log(Level.FINE, "Register native lib paths on Linux for folder '" + libFolderPath.toString() + "'.");
-        }
+        logger.fine("Register native lib paths on Linux for folder '" + libFolderPath.toString() + "'.");
         NativeLibraryUtils.registerNativePaths(libFolderPath.resolve("jni"));
 
         Path gdalDataFolderPath = gdalDistributionRootFolderPath.resolve("share/gdal");
@@ -142,9 +139,7 @@ import java.util.logging.Logger;
      * @throws IOException When IO error occurs
      */
     private static void processInstalledWindowsDistribution(Path gdalDistributionRootFolderPath) throws IOException {
-        if (logger.isLoggable(Level.FINE)) {
-            logger.log(Level.FINE, "Register native lib paths on Windows for folder '" + gdalDistributionRootFolderPath.toString() + "'.");
-        }
+        logger.fine("Register native lib paths on Windows for folder '" + gdalDistributionRootFolderPath.toString() + "'.");
         NativeLibraryUtils.registerNativePaths(gdalDistributionRootFolderPath);
 
         String pathEnvironment = EnvironmentVariables.getEnvironmentVariable("PATH");
