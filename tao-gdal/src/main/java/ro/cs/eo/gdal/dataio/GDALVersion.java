@@ -63,59 +63,7 @@ public enum GDALVersion {
      * @return the installed GDAL version when found or internal GDAL version otherwise
      */
     public static GDALVersion getGDALVersion() {
-        /*if (GDALLoaderConfig.getInstance().useInstalledGDALLibrary() && installedVersion != null) {
-            logger.log(Level.INFO, () -> "Installed GDAL " + installedVersion.getId() + " set to be used by SNAP.");
-            return installedVersion;
-        }
-        logger.log(Level.INFO, () -> "Internal GDAL " + internalVersion.getId() + " set to be used by SNAP.");*/
-        return internalVersion;
-    }
-
-    /**
-     * Gets installed GDAL version.
-     *
-     * @return the installed GDAL version or {@code null} if not found
-     */
-    /*public static GDALVersion getInstalledVersion() {
-        return installedVersion;
-    }*/
-
-    private static String fetchProcessOutput(Process process) throws IOException {
-        StringBuilder output = new StringBuilder();
-        Thread.yield(); // yield the control to other threads for ensure that the process has started
-        try (InputStream commandInputStream = process.getInputStream();
-             InputStreamReader inputStreamReader = new InputStreamReader(commandInputStream);
-             BufferedReader bufferedReader = new BufferedReader(inputStreamReader)
-        ) {
-            boolean done = false;
-            long startTime = System.currentTimeMillis();
-            long endTime;
-            int runningTime = 30;// allow only 30 seconds of running time for the process
-            long elapsedTime = 0;
-            while (!done && elapsedTime <= runningTime) {
-                Thread.yield(); // yield the control to other threads
-                while (bufferedReader.ready()) {
-                    String line = bufferedReader.readLine();
-                    if (line != null && !line.isEmpty()) {
-                        output.append(line).append("\n");
-                    } else {
-                        break;
-                    }
-                    done = true;
-                }
-                endTime = System.currentTimeMillis();
-                elapsedTime = (endTime - startTime) / 1000;
-            }
-            return output.toString();
-        }
-    }
-
-    /**
-     * Gets internal GDAL version.
-     *
-     * @return the internal GDAL version
-     */
-    public static GDALVersion getInternalVersion() {
+        logger.info("Internal GDAL " + internalVersion.getId() + " will be used by TAO.");
         return internalVersion;
     }
 
@@ -125,10 +73,9 @@ public enum GDALVersion {
      * @return the internal GDAL version
      */
     private static GDALVersion retrieveInternalVersion() {
-        GDALVersion gdalVersion = GDAL_340_FULL;
+        final GDALVersion gdalVersion = GDAL_340_FULL;
         gdalVersion.setOsCategory(OSCategory.getOSCategory());
-        Path internalPath = gdalVersion.getNativeLibrariesRootFolderPath().resolve(gdalVersion.getDirName());
-        gdalVersion.setLocation(internalPath.toString());
+        gdalVersion.setLocation(gdalVersion.getNativeLibrariesRootFolderPath().resolve(gdalVersion.getDirName()).toString());
         return gdalVersion;
     }
 
@@ -227,7 +174,7 @@ public enum GDALVersion {
      * @return the ZIP archive URL from SNAP distribution packages for this version
      */
     public URL getZipFileURLFromSources() {
-        String zipFileDirectoryFromSources = GDAL_NATIVE_LIBRARIES_SRC + "/" + getDirectory() + "/" + getZipName();
+        final String zipFileDirectoryFromSources = GDAL_NATIVE_LIBRARIES_SRC + "/" + getDirectory() + "/" + getZipName();
         try {
             logger.fine("version zip archive URL from sources: '" + zipFileDirectoryFromSources + "'.");
             return getClass().getClassLoader().getResource(zipFileDirectoryFromSources.replace(File.separator, "/"));
@@ -260,8 +207,7 @@ public enum GDALVersion {
      * @return the environment variables native library URL from SNAP distribution packages for this version
      */
     public URL getEnvironmentVariablesFilePathFromSources() {
-        String evFileNameFromSources = System.mapLibraryName(this.osCategory.getEnvironmentVariablesFileName());
-        String evFileDirectoryFromSources = GDAL_NATIVE_LIBRARIES_SRC + "/" + getDirectory() + "/" + evFileNameFromSources;
+        final String evFileDirectoryFromSources = GDAL_NATIVE_LIBRARIES_SRC + "/" + getDirectory() + "/" + System.mapLibraryName(this.osCategory.getEnvironmentVariablesFileName());
         try {
             return getClass().getClassLoader().getResource(evFileDirectoryFromSources.replace(File.separator, "/"));
         } catch (Exception ignored) {
@@ -289,9 +235,7 @@ public enum GDALVersion {
      * @return the environment variables native library root directory path for install this version
      */
     public Path getEnvironmentVariablesFilePath() {
-        Path zipFileDirectory = getNativeLibrariesRootFolderPath();
-        String evFileNameFromSources = System.mapLibraryName(this.osCategory.getEnvironmentVariablesFileName());
-        return zipFileDirectory.resolve(evFileNameFromSources);
+        return getNativeLibrariesRootFolderPath().resolve(System.mapLibraryName(this.osCategory.getEnvironmentVariablesFileName()));
     }
 
     /**

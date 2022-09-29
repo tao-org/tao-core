@@ -86,7 +86,7 @@ class GDALInstaller {
      */
     private static void setExecutablePermissions(Path executablePathName) {
         if (IS_OS_UNIX) {
-            Set<PosixFilePermission> permissions = new HashSet<>(Arrays.asList(
+            final Set<PosixFilePermission> permissions = new HashSet<>(Arrays.asList(
                     PosixFilePermission.OWNER_READ,
                     PosixFilePermission.OWNER_WRITE,
                     PosixFilePermission.OWNER_EXECUTE,
@@ -116,13 +116,13 @@ class GDALInstaller {
      * <0 when current module version lower than saved module version
      */
     private static int compareVersions(String currentModuleVersion, String savedModuleVersion) {
-        int[] moduleVersionFragments = parseVersion(currentModuleVersion);
-        int[] savedVersionFragments = parseVersion(savedModuleVersion);
+        final int[] moduleVersionFragments = parseVersion(currentModuleVersion);
+        final int[] savedVersionFragments = parseVersion(savedModuleVersion);
 
-        int max = Math.max(moduleVersionFragments.length, savedVersionFragments.length);
+        final int max = Math.max(moduleVersionFragments.length, savedVersionFragments.length);
         for (int i = 0; i < max; ++i) {
-            int d1 = (i < moduleVersionFragments.length) ? moduleVersionFragments[i] : 0;
-            int d2 = (i < savedVersionFragments.length) ? savedVersionFragments[i] : 0;
+            final int d1 = (i < moduleVersionFragments.length) ? moduleVersionFragments[i] : 0;
+            final int d2 = (i < savedVersionFragments.length) ? savedVersionFragments[i] : 0;
             if (d1 != d2) {
                 return d1 - d2;
             }
@@ -140,19 +140,19 @@ class GDALInstaller {
         if (version.toLowerCase().contentEquals("unknown")) {
             return new int[]{};
         }
-        StringTokenizer tok = new StringTokenizer(version, ".", true);
-        int len = tok.countTokens();
+        final StringTokenizer tok = new StringTokenizer(version, ".", true);
+        final int len = tok.countTokens();
         if (len % 2 == 0) {
             throw new NumberFormatException("Even number of pieces in a spec version: '" + version + "'");
         }
-        int[] digits = new int[len / 2 + 1];
+        final int[] digits = new int[len / 2 + 1];
         int index = 0;
         boolean expectingNumber = true;
         while (tok.hasMoreTokens()) {
-            String fragment = tok.nextToken().replaceAll("-SNAPSHOT", "");
+            final String fragment = tok.nextToken().replaceAll("-SNAPSHOT", "");
             if (expectingNumber) {
                 expectingNumber = false;
-                int piece = Integer.parseInt(fragment);
+                final int piece = Integer.parseInt(fragment);
                 if (piece < 0) {
                     throw new NumberFormatException("Spec version component '" + piece + "' is negative.");
                 }
@@ -202,12 +202,12 @@ class GDALInstaller {
      * @throws IOException When IO error occurs
      */
     private static void copyEnvironmentVariablesNativeLibrary(GDALVersion gdalVersion) throws IOException {
-        Path evFilePath = gdalVersion.getEnvironmentVariablesFilePath();
+        final Path evFilePath = gdalVersion.getEnvironmentVariablesFilePath();
         logger.fine("Copy the environment variables library file.");
 
-        URL libraryFileURLFromSources = gdalVersion.getEnvironmentVariablesFilePathFromSources();
+        final URL libraryFileURLFromSources = gdalVersion.getEnvironmentVariablesFilePathFromSources();
         if (libraryFileURLFromSources != null) {
-            logger.fine("The environment variables library file path on the local disk is '" + evFilePath.toString() + "' and the library file name from sources is '" + libraryFileURLFromSources.toString() + "'.");
+            logger.fine("The environment variables library file path on the local disk is '" + evFilePath + "' and the library file name from sources is '" + libraryFileURLFromSources + "'.");
 
             FileUtilities.copyFile(libraryFileURLFromSources, evFilePath);
         } else {
@@ -244,20 +244,20 @@ class GDALInstaller {
      */
     private static void copyDistributionArchiveAndInstall(Path gdalDistributionRootFolderPath, GDALVersion gdalVersion) throws IOException {
         if (!Files.exists(gdalDistributionRootFolderPath)) {
-            logger.fine("create the distribution root folder '" + gdalDistributionRootFolderPath.toString() + "'.");
+            logger.fine("create the distribution root folder '" + gdalDistributionRootFolderPath + "'.");
             Files.createDirectories(gdalDistributionRootFolderPath);
         }
-        logger.fine("The distribution root folder '" + gdalDistributionRootFolderPath.toString() + "' exists on the local disk.");
-        Path zipFilePath = gdalVersion.getZipFilePath();
+        logger.fine("The distribution root folder '" + gdalDistributionRootFolderPath + "' exists on the local disk.");
+        final Path zipFilePath = gdalVersion.getZipFilePath();
         try {
-            logger.fine("Copy the zip archive to folder '" + zipFilePath.toString() + "'.");
-            URL zipFileURLFromSources = gdalVersion.getZipFileURLFromSources();
+            logger.fine("Copy the zip archive to folder '" + zipFilePath + "'.");
+            final URL zipFileURLFromSources = gdalVersion.getZipFileURLFromSources();
             if (zipFileURLFromSources == null) {
                 throw new ExceptionInInitializerError("No GDAL distribution drivers provided for this OS.");
             }
             FileUtilities.copyFile(zipFileURLFromSources, zipFilePath);
 
-            logger.fine("Decompress the zip archive to folder '" + gdalDistributionRootFolderPath.toString() + "'.");
+            logger.fine("Decompress the zip archive to folder '" + gdalDistributionRootFolderPath + "'.");
             installDistribution(zipFilePath, gdalDistributionRootFolderPath);
         } finally {
             try {
@@ -276,22 +276,23 @@ class GDALInstaller {
     private String fetchCurrentModuleSpecificationVersion() {
         String version = "unknown";
         try {
-            Class<?> clazz = getClass();
-            String className = clazz.getSimpleName() + ".class";
-            String classPath = clazz.getResource(className).toString();
-            String manifestPath;
-            if (classPath.startsWith("jar")) {
-                manifestPath = classPath.substring(0, classPath.lastIndexOf('!') + 1) + "/META-INF/MANIFEST.MF";
-            } else {
-                // class not from jar archive
-                String relativePath = clazz.getName().replace('.', File.separatorChar) + ".class";
-                String classFolder = classPath.substring(0, classPath.length() - relativePath.length() - 1);
-                manifestPath = classFolder + "/META-INF/MANIFEST.MF";
-            }
-            Manifest manifest = new Manifest(new URL(manifestPath).openStream());
-            Attributes attributes = manifest.getMainAttributes();
-            if (attributes.getValue("Version") != null) {
-                version = attributes.getValue("Version");
+            final Class<?> clazz = getClass();
+            final URL classPathURL = clazz.getResource(clazz.getSimpleName() + ".class");
+            if (classPathURL != null) {
+                final String classPath = classPathURL.toString();
+                String manifestPath;
+                if (classPath.startsWith("jar")) {
+                    manifestPath = classPath.substring(0, classPath.lastIndexOf('!') + 1) + "/META-INF/MANIFEST.MF";
+                } else {
+                    // class not from jar archive
+                    final String relativePath = clazz.getName().replace('.', File.separatorChar) + ".class";
+                    final String classFolder = classPath.substring(0, classPath.length() - relativePath.length() - 1);
+                    manifestPath = classFolder + "/META-INF/MANIFEST.MF";
+                }
+                final Attributes attributes = new Manifest(new URL(manifestPath).openStream()).getMainAttributes();
+                if (attributes.getValue("Version") != null) {
+                    version = attributes.getValue("Version");
+                }
             }
         } catch (Exception ignored) {
             //ignored
@@ -303,23 +304,22 @@ class GDALInstaller {
      * Copies the GDAL distribution/JNI drivers files from distribution package to the target install directory.
      *
      * @param gdalVersion the GDAL version for which files will be installed
-     * @return the distribution install root directory
      * @throws IOException When IO error occurs
      */
-    final Path copyDistribution(GDALVersion gdalVersion) throws IOException {
+    final void copyDistribution(GDALVersion gdalVersion) throws IOException {
         logger.fine("Copy the GDAL distribution to folder '" + this.gdalNativeLibrariesFolderPath.toString() + "'.");
-        String moduleVersion = fetchCurrentModuleSpecificationVersion();
+        final String moduleVersion = fetchCurrentModuleSpecificationVersion();
 
         logger.fine("The module version is '" + moduleVersion + "'.");
         logger.fine("Check the GDAL distribution folder from the local disk.");
 
         boolean canCopyGDALDistribution = true;
 
-        Path gdalDistributionRootFolderPath = gdalVersion.getLocationPath();
+        final Path gdalDistributionRootFolderPath = gdalVersion.getLocationPath();
 
         if (Files.exists(this.gdalNativeLibrariesFolderPath)) {
             // the GDAL distribution folder already exists on the local disk
-            String savedVersion = fetchSavedModuleSpecificationVersion(this.gdalNativeLibrariesFolderPath);
+            final String savedVersion = fetchSavedModuleSpecificationVersion(this.gdalNativeLibrariesFolderPath);
             logger.fine("The saved GDAL distribution folder version is '" + savedVersion + "'.");
 
             boolean isDistributionRootFolderEmpty = true;
@@ -338,7 +338,7 @@ class GDALInstaller {
         }
 
         if (canCopyGDALDistribution) {
-            logger.fine("create the folder '" + this.gdalNativeLibrariesFolderPath.toString() + "' to copy the GDAL distribution.");
+            logger.fine("create the folder '" + this.gdalNativeLibrariesFolderPath + "' to copy the GDAL distribution.");
             Files.createDirectories(this.gdalNativeLibrariesFolderPath);
             copyEnvironmentVariablesNativeLibrary(gdalVersion);
             copyLoaderLibrary(gdalVersion);
@@ -346,8 +346,6 @@ class GDALInstaller {
             fixUpPermissions(this.gdalNativeLibrariesFolderPath);
             setSavedModuleSpecificationVersion(moduleVersion, this.gdalNativeLibrariesFolderPath);
         }
-
-        return gdalDistributionRootFolderPath;
     }
 
     private static boolean wasSymlink(org.apache.commons.compress.archivers.zip.ZipFile zipFile, ZipEntry zipEntry, Path zipPath) {
@@ -382,7 +380,7 @@ class GDALInstaller {
         }
         try (org.apache.commons.compress.archivers.zip.ZipFile zipFile = new org.apache.commons.compress.archivers.zip.ZipFile(sourceFile.toFile())) {
             ZipEntry entry;
-            Enumeration<? extends ZipEntry> entries = zipFile.getEntries();
+            final Enumeration<? extends ZipEntry> entries = zipFile.getEntries();
             final byte[] buffer = new byte[262144];
             while (entries.hasMoreElements()) {
                 entry = entries.nextElement();
@@ -407,5 +405,4 @@ class GDALInstaller {
             }
         }
     }
-
 }
