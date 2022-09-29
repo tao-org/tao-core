@@ -341,8 +341,9 @@ class GDALInstaller {
                 final Path zipEntryDir = zipEntryPath.getParent();
                 final Path zipEntryAbsolutePath = zipDir.resolve(zipEntryDir);
                 final String targetAbsolutePath = new File(zipEntryAbsolutePath.resolve(target).toString()).getCanonicalPath();
+                final String zipDirAbsolutePath = new File(zipDir.toString()).getCanonicalPath();
                 final Path linkPath = zipEntryAbsolutePath.resolve(zipEntryPath.getFileName());
-                if (targetAbsolutePath.startsWith(zipDir.toString())) {
+                if (targetAbsolutePath.startsWith(zipDirAbsolutePath)) {
                     Files.createSymbolicLink(linkPath, target);
                     return true;
                 }
