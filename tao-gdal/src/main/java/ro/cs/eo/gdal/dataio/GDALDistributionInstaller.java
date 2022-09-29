@@ -3,7 +3,6 @@ package ro.cs.eo.gdal.dataio;
 import org.apache.commons.lang3.SystemUtils;
 import org.esa.s2tbx.jni.EnvironmentVariables;
 import ro.cs.eo.gdal.dataio.drivers.OSR;
-import ro.cs.tao.utils.NativeLibraryUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,7 +17,7 @@ import java.util.logging.Logger;
  * @author Jean Coravu
  * @author Adrian Drăghici
  */
- class GDALDistributionInstaller {
+class GDALDistributionInstaller {
     private static final Logger logger = Logger.getLogger(GDALDistributionInstaller.class.getName());
 
     private GDALDistributionInstaller() {
@@ -42,8 +41,8 @@ import java.util.logging.Logger;
 
         logger.fine("Install the GDAL library from the distribution on " + osCategory.getOperatingSystemName() + ".");
 
-        GDALInstaller installer = new GDALInstaller();
-        Path gdalDistributionRootFolderPath = installer.copyDistribution(gdalNativeLibrariesRootFolderPath, gdalVersion);
+        final Path gdalDistributionRootFolderPath = new GDALInstaller().copyDistribution(gdalNativeLibrariesRootFolderPath, gdalVersion);
+        GDALLoader.loadEnvironmentVariablesNativeLibrary(gdalVersion);
 
         logger.fine("The GDAL library has been copied on the local disk.");
 
@@ -81,13 +80,11 @@ import java.util.logging.Logger;
 
         logger.fine("Install the GDAL JNI drivers from the distribution on " + osCategory.getOperatingSystemName() + ".");
 
-        GDALInstaller installer = new GDALInstaller();
-        Path gdalDistributionRootFolderPath = installer.copyDistribution(gdalNativeLibrariesRootFolderPath, gdalVersion);
+        Path gdalDistributionRootFolderPath = new GDALInstaller().copyDistribution(gdalNativeLibrariesRootFolderPath, gdalVersion);
 
         logger.fine("The GDAL JNI drivers has been copied on the local disk.");
         logger.fine("Process the GDAL JNI drivers on " + gdalVersion.getOsCategory().getOperatingSystemName() + ".");
         logger.fine("Register native lib paths on " + gdalVersion.getOsCategory().getOperatingSystemName() + " for folder '" + gdalDistributionRootFolderPath.toString() + "'.");
-        NativeLibraryUtils.registerNativePaths(gdalDistributionRootFolderPath);
         logger.fine("The GDAL library has been successfully installed.");
     }
 
@@ -102,11 +99,14 @@ import java.util.logging.Logger;
     private static void processInstalledLinuxDistribution(Path gdalDistributionRootFolderPath) {
         Path libFolderPath = gdalDistributionRootFolderPath.resolve("lib");
 
-        logger.fine("Register native lib paths on Linux for folder '" + libFolderPath.toString() + "'.");
-        NativeLibraryUtils.registerNativePaths(libFolderPath.resolve("jni"));
+        String pathEnvironment = EnvironmentVariables.getEnvironmentVariable("PATH");
+        final StringBuilder builder = new StringBuilder();
+        builder.append("PATH=").append(libFolderPath).append(File.pathSeparator).append(pathEnvironment);
+        logger.fine("Set the PATH environment variable on Linux with '" + builder + "'.");
+        EnvironmentVariables.setEnvironmentVariable(builder.toString());
 
         Path gdalDataFolderPath = gdalDistributionRootFolderPath.resolve("share/gdal");
-        final StringBuilder builder = new StringBuilder();
+        builder.setLength(0);
         builder.append("GDAL_DATA=").append(gdalDataFolderPath);
         logger.fine("Set the GDAL_DATA environment variable on Linux with '" + builder + "'.");
 
@@ -139,8 +139,6 @@ import java.util.logging.Logger;
      * @throws IOException When IO error occurs
      */
     private static void processInstalledWindowsDistribution(Path gdalDistributionRootFolderPath) throws IOException {
-        logger.fine("Register native lib paths on Windows for folder '" + gdalDistributionRootFolderPath.toString() + "'.");
-        NativeLibraryUtils.registerNativePaths(gdalDistributionRootFolderPath);
 
         String pathEnvironment = EnvironmentVariables.getEnvironmentVariable("PATH");
         final StringBuilder builder = new StringBuilder();
@@ -210,8 +208,8 @@ import java.util.logging.Logger;
     static void setupProj(GDALVersion gdalVersion){
         if (!gdalVersion.isJni()) {
             final Path projPath = SystemUtils.IS_OS_LINUX
-                                  ? gdalVersion.getZipFilePath().getParent().resolve("share").resolve("proj")
-                                  : gdalVersion.getZipFilePath().getParent().resolve("projlib");
+                    ? gdalVersion.getLocationPath().resolve("share").resolve("proj")
+                    : gdalVersion.getLocationPath().resolve("projlib");
             OSR.setPROJSearchPath(projPath.toString());
             logger.fine("GDAL projection folder set to " + projPath);
         }

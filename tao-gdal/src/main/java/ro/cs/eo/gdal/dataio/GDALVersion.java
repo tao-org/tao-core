@@ -1,5 +1,6 @@
 package ro.cs.eo.gdal.dataio;
 
+import org.apache.commons.lang.SystemUtils;
 import ro.cs.tao.component.SystemVariable;
 import ro.cs.tao.configuration.ConfigurationManager;
 
@@ -16,7 +17,7 @@ import java.util.logging.Logger;
  */
 public enum GDALVersion {
 
-    GDAL_340_FULL("3.4.0", "3-4-0", false);
+    GDAL_340_FULL("3.4.0", "3-4-0", new String[]{"gdalalljni"});
 
     private static final String VERSION_NAME = "{version}";
     private static final String JNI_NAME = "{jni}";
@@ -25,6 +26,7 @@ public enum GDALVersion {
     private static final String GDAL_NATIVE_LIBRARIES_ROOT = "gdal";
     private static final String GDAL_NATIVE_LIBRARIES_SRC = "auxdata/gdal";
     private static final String GDAL_JNI_LIBRARY_FILE = "java/gdal.jar";
+    private static final String GDAL_LOADER_LIBRARY_FILE = "NativeLibraryLoader.jar";
 
     //private static final String GDALINFIO_EXECUTABLE_NAME = "gdalinfo";
     //private static final String GDAL_INFO_CMD = GDALINFIO_EXECUTABLE_NAME + " --version";
@@ -36,23 +38,23 @@ public enum GDALVersion {
     private static final GDALVersion internalVersion = retrieveInternalVersion();
     //private static final GDALVersion installedVersion = retrieveInstalledVersion();
 
-    String id;
+    final String id;
     final String name;
     String location;
-    final boolean jni;
+    final String[] nativeLibraryNames;
     OSCategory osCategory;
 
     /**
      * Creates new instance for this enum.
      *
-     * @param id   the id of version
-     * @param name the name of version
-     * @param jni  the type of version: {@code true} if version is JNI driver
+     * @param id                 the id of version
+     * @param name               the name of version
+     * @param nativeLibraryNames the name(s) of native library file(s)
      */
-    GDALVersion(String id, String name, boolean jni) {
+    GDALVersion(String id, String name, String[] nativeLibraryNames) {
         this.id = id;
         this.name = name;
-        this.jni = jni;
+        this.nativeLibraryNames = nativeLibraryNames;
     }
 
     /**
@@ -140,20 +142,11 @@ public enum GDALVersion {
     }
 
     /**
-     * Sets the id for this version.
-     *
-     * @param id the new id
-     */
-    void setId(String id) {
-        this.id = id;
-    }
-
-    /**
      * Gets the location of this version.
      *
      * @return the location of this version
      */
-    public String getLocation() {
+    String getLocation() {
         return this.location;
     }
 
@@ -190,7 +183,7 @@ public enum GDALVersion {
      * @return {@code true} if this version is JNI driver
      */
     public boolean isJni() {
-        return this.jni;
+        return this.nativeLibraryNames == null;
     }
 
     /**
@@ -199,7 +192,7 @@ public enum GDALVersion {
      * @return the name of directory for this version
      */
     private String getDirName() {
-        if (this.jni) {
+        if (isJni()) {
             return DIR_NAME.replace(VERSION_NAME, this.name).replace(JNI_NAME, "-jni");
         } else {
             return DIR_NAME.replace(VERSION_NAME, this.name).replace(JNI_NAME, "");
@@ -212,7 +205,7 @@ public enum GDALVersion {
      * @return the name of ZIP archive for this version
      */
     private String getZipName() {
-        if (this.jni) {
+        if (isJni()) {
             return ZIP_NAME.replace(VERSION_NAME, this.name).replace(JNI_NAME, "-jni");
         } else {
             return ZIP_NAME.replace(VERSION_NAME, this.name).replace(JNI_NAME, "");
@@ -244,12 +237,21 @@ public enum GDALVersion {
     }
 
     /**
-     * Gets the ZIP archive root directory path for install this version.
+     * Gets the ZIP archive path for install this version.
      *
-     * @return the ZIP archive root directory path for install this version
+     * @return the ZIP archive path for install this version
      */
     public Path getZipFilePath() {
-        return getNativeLibrariesRootFolderPath().resolve(getDirName()).resolve(getZipName());
+        return getLocationPath().resolve(getZipName());
+    }
+
+    /**
+     * Gets the root directory path for install this version.
+     *
+     * @return the root directory path for install this version
+     */
+    public Path getLocationPath() {
+        return Paths.get(getLocation());
     }
 
     /**
@@ -262,6 +264,20 @@ public enum GDALVersion {
         String evFileDirectoryFromSources = GDAL_NATIVE_LIBRARIES_SRC + "/" + getDirectory() + "/" + evFileNameFromSources;
         try {
             return getClass().getClassLoader().getResource(evFileDirectoryFromSources.replace(File.separator, "/"));
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    /**
+     * Gets the loader library URL from SNAP distribution packages for this version.
+     *
+     * @return the loader library URL from SNAP distribution packages for this version
+     */
+    public URL getLoaderFilePathFromSources() {
+        final String loaderFileDirectoryFromSources = GDAL_NATIVE_LIBRARIES_SRC + "/" + GDAL_LOADER_LIBRARY_FILE;
+        try {
+            return getClass().getClassLoader().getResource(loaderFileDirectoryFromSources.replace(File.separator, "/"));
         } catch (Exception ignored) {
             return null;
         }
@@ -307,5 +323,30 @@ public enum GDALVersion {
     public Path getJNILibraryFilePath() {
         return getNativeLibrariesRootFolderPath().resolve(getDirName()).resolve(GDAL_JNI_LIBRARY_FILE);
     }
-}
 
+    /**
+     * Gets the GDAL native library files path for install this version.
+     *
+     * @return the GDAL native library files path for install this version
+     */
+    public Path[] getGDALNativeLibraryFilesPath() {
+        final Path[] gdalNativeLibaryFiles = new Path[this.nativeLibraryNames.length];
+        for (int i = 0; i < this.nativeLibraryNames.length; i++) {
+            gdalNativeLibaryFiles[i] = getLocationPath();
+            if (SystemUtils.IS_OS_LINUX) {
+                gdalNativeLibaryFiles[i] = gdalNativeLibaryFiles[i].resolve("lib").resolve("jni");
+            }
+            gdalNativeLibaryFiles[i] = gdalNativeLibaryFiles[i].resolve(System.mapLibraryName(this.nativeLibraryNames[i]));
+        }
+        return gdalNativeLibaryFiles;
+    }
+
+    /**
+     * Gets the path for Loader of this version.
+     *
+     * @return the path for Loader of this version
+     */
+    public Path getLoaderLibraryFilePath() {
+        return getNativeLibrariesRootFolderPath().resolve(GDAL_LOADER_LIBRARY_FILE);
+    }
+}
