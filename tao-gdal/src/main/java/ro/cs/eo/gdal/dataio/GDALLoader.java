@@ -3,10 +3,10 @@ package ro.cs.eo.gdal.dataio;
 import org.esa.lib.gdal.activator.GDALInstallInfo;
 import ro.cs.eo.gdal.dataio.drivers.GDAL;
 
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.logging.Logger;
 
 /**
@@ -18,12 +18,14 @@ import java.util.logging.Logger;
 public final class GDALLoader {
 
     private static final GDALLoader INSTANCE = new GDALLoader();
+
+    private static final String GDAL_NATIVE_LIBRARY_LOADER_CLASS_NAME = "ro.cs.eo.NativeLibraryLoader";
     private static final Logger logger = Logger.getLogger(GDALLoader.class.getName());
 
     private boolean gdalIsInitialized = false;
     private boolean gdalInitialisationExecuted = false;
     private GDALVersion gdalVersion;
-    private URLClassLoader gdalVersionLoader;
+    private GDALLoaderClassLoader gdalVersionLoader;
 
     private GDALLoader() {
 
@@ -46,12 +48,12 @@ public final class GDALLoader {
             try {
                 this.gdalVersion = GDALVersion.getGDALVersion();
                 GDALDistributionInstaller.setupDistribution(this.gdalVersion);
-                this.gdalVersionLoader = new URLClassLoader(new URL[]{this.gdalVersion.getJNILibraryFilePath().toUri().toURL()}, GDALLoader.class.getClassLoader());
+                this.gdalVersionLoader = new GDALLoaderClassLoader(new URL[]{this.gdalVersion.getJNILibraryFilePath().toUri().toURL(), this.gdalVersion.getLoaderLibraryFilePath().toUri().toURL()}, this.gdalVersion.getGDALNativeLibraryFilesPath());
+                loadGDALNativeLibrary();
                 this.gdalIsInitialized = true;
                 initDrivers();
                 GDALDistributionInstaller.setupProj(gdalVersion);
-                Path gdalDistributionBinFolderPath = Paths.get(this.gdalVersion.getLocation());
-                GDALInstallInfo.INSTANCE.setLocations(gdalDistributionBinFolderPath);
+                GDALInstallInfo.INSTANCE.setLocations(this.gdalVersion.getLocationPath());
             } catch (Throwable ex) {
                 logger.severe("Failed to initialize GDAL native drivers. GDAL readers and writers were disabled."+ex.getMessage());
                 if (this.gdalVersionLoader != null) {
@@ -75,6 +77,33 @@ public final class GDALLoader {
             throw new IllegalStateException("GDAL Loader not initialized.");
         }
         return this.gdalVersionLoader;
+    }
+
+    /**
+     * Loads the environment variables native library used for access OS environment variables.
+     *
+     * @param gdalVersion the GDAL version to which JNI environment variables native library be installed
+     */
+    static void loadEnvironmentVariablesNativeLibrary(GDALVersion gdalVersion) {
+        final Path evFilePath = gdalVersion.getEnvironmentVariablesFilePath();
+        logger.fine("Load the native library '" + evFilePath.getFileName() + "'.");
+        System.load(evFilePath.toAbsolutePath().toString());
+    }
+
+    /**
+     * Loads the GDAL native library used for access GDAL native methods.
+     *
+     */
+    void loadGDALNativeLibrary() {
+        try {
+            final Method loaderMethod = this.gdalVersionLoader.loadClass(GDAL_NATIVE_LIBRARY_LOADER_CLASS_NAME).getMethod("loadNativeLibrary", Path.class);
+            for (Path nativeLibraryFilePath : this.gdalVersion.getGDALNativeLibraryFilesPath()) {
+                loaderMethod.invoke(null, nativeLibraryFilePath);
+                Logger.getLogger(GDALLoader.class.getName()).fine("Load the GDAL native library '" + nativeLibraryFilePath.getFileName() + "'.");
+            }
+        } catch (Exception ex) {
+            throw new IllegalStateException(ex);
+        }
     }
 
     /**

@@ -19,7 +19,6 @@ package ro.cs.eo.gdal.dataio;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.utils.FileUtilities;
-import ro.cs.tao.utils.NativeLibraryUtils;
 import ro.cs.tao.utils.StringUtilities;
 
 import java.io.BufferedOutputStream;
@@ -184,17 +183,6 @@ class GDALInstaller {
     }
 
     /**
-     * Registers the environment variables native library used for access OS environment variables.
-     *
-     * @param gdalVersion the GDAL version to which JNI environment variables native library be installed
-     */
-    private static void registerEnvironmentVariablesNativeLibrary(GDALVersion gdalVersion) {
-        Path evFilePath = gdalVersion.getEnvironmentVariablesFilePath();
-        logger.fine("Register the native paths for folder '" + evFilePath.getParent() + "'.");
-        NativeLibraryUtils.registerNativePaths(evFilePath.getParent());
-    }
-
-    /**
      * Copies the environment variables native library used for access OS environment variables.
      *
      * @param gdalVersion the GDAL version to which JNI environment variables native library be installed
@@ -211,6 +199,26 @@ class GDALInstaller {
             FileUtilities.copyFile(libraryFileURLFromSources, evFilePath);
         } else {
             throw new IllegalStateException("Unable to get environment variables libraryFileURLFromSources");
+        }
+    }
+
+    /**
+     * Copies the loader library used for load GDAL native library.
+     *
+     * @param gdalVersion the GDAL version to which loader library be installed
+     * @throws IOException When IO error occurs
+     */
+    private static void copyLoaderLibrary(GDALVersion gdalVersion) throws IOException {
+        final Path loaderFilePath = gdalVersion.getLoaderLibraryFilePath();
+        logger.fine("Copy the loader library file.");
+
+        final URL libraryFileURLFromSources = gdalVersion.getLoaderFilePathFromSources();
+        if (libraryFileURLFromSources != null) {
+            logger.fine("The loader library file path on the local disk is '" + loaderFilePath + "' and the library file name from sources is '" + libraryFileURLFromSources + "'.");
+
+            FileUtilities.copyFile(libraryFileURLFromSources, loaderFilePath);
+        } else {
+            throw new IllegalStateException("Unable to get loader libraryFileURLFromSources");
         }
     }
 
@@ -295,8 +303,7 @@ class GDALInstaller {
 
         boolean canCopyGDALDistribution = true;
 
-        Path zipFilePath = gdalVersion.getZipFilePath();
-        Path gdalDistributionRootFolderPath = zipFilePath.getParent();
+        Path gdalDistributionRootFolderPath = gdalVersion.getLocationPath();
 
         if (Files.exists(gdalNativeLibrariesFolderPath)) {
             // the GDAL distribution folder already exists on the local disk
@@ -322,12 +329,12 @@ class GDALInstaller {
             logger.fine("create the folder '" + gdalNativeLibrariesFolderPath.toString() + "' to copy the GDAL distribution.");
             Files.createDirectories(gdalNativeLibrariesFolderPath);
             copyEnvironmentVariablesNativeLibrary(gdalVersion);
+            copyLoaderLibrary(gdalVersion);
             copyDistributionArchiveAndInstall(gdalDistributionRootFolderPath, gdalVersion);
             fixUpPermissions(gdalNativeLibrariesFolderPath);
             setSavedModuleSpecificationVersion(moduleVersion);
         }
 
-        registerEnvironmentVariablesNativeLibrary(gdalVersion);
         return gdalDistributionRootFolderPath;
     }
 
