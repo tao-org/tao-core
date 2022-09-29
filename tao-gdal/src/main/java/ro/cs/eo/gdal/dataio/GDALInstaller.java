@@ -17,7 +17,6 @@
 package ro.cs.eo.gdal.dataio;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.StringUtilities;
 
@@ -49,10 +48,13 @@ import static org.apache.commons.lang.SystemUtils.IS_OS_UNIX;
 class GDALInstaller {
 
     private static final String PREFERENCE_KEY = "gdal.installer";
+    private static final String CONFIG_FILE_NAME = "tao_gdal.properties";
     private static final Logger logger = Logger.getLogger(GDALInstaller.class.getName());
 
-    GDALInstaller() {
-        //nothing to initialize
+    private final Path gdalNativeLibrariesFolderPath;
+
+    GDALInstaller(Path gdalNativeLibrariesFolderPath) {
+        this.gdalNativeLibrariesFolderPath = gdalNativeLibrariesFolderPath;
     }
 
     /**
@@ -167,19 +169,30 @@ class GDALInstaller {
     }
 
     /**
-     * Fetches the saved module specification version from SNAP config.
+     * Fetches the saved module specification version from TAO GDAL config.
      *
      * @return the saved module specification version
      */
-    private static String fetchSavedModuleSpecificationVersion() {
-        return ConfigurationManager.getInstance().getValue(PREFERENCE_KEY, null);
+    private static String fetchSavedModuleSpecificationVersion(Path gdalNativeLibrariesFolderPath) {
+        try {
+            final Properties gdalConfig = new Properties();
+            gdalConfig.load(Files.newBufferedReader(gdalNativeLibrariesFolderPath.resolve(CONFIG_FILE_NAME)));
+            return gdalConfig.getProperty(PREFERENCE_KEY, null);
+        } catch (IOException ignored) {
+        }
+        return null;
     }
 
     /**
-     * Sets the saved module specification version to SNAP config.
+     * Sets the saved module specification version to TAO GDAL config.
      */
-    private static void setSavedModuleSpecificationVersion(String newModuleSpecificationVersion) {
-        ConfigurationManager.getInstance().setValue(PREFERENCE_KEY, newModuleSpecificationVersion);
+    private static void setSavedModuleSpecificationVersion(String newModuleSpecificationVersion, Path gdalNativeLibrariesFolderPath) {
+        try {
+            final Properties gdalConfig = new Properties();
+            gdalConfig.setProperty(PREFERENCE_KEY, newModuleSpecificationVersion);
+            gdalConfig.store(Files.newBufferedWriter(gdalNativeLibrariesFolderPath.resolve(CONFIG_FILE_NAME)), "");
+        } catch (IOException ignored) {
+        }
     }
 
     /**
@@ -289,13 +302,12 @@ class GDALInstaller {
     /**
      * Copies the GDAL distribution/JNI drivers files from distribution package to the target install directory.
      *
-     * @param gdalNativeLibrariesFolderPath the target install root directory
-     * @param gdalVersion                   the GDAL version for which files will be installed
+     * @param gdalVersion the GDAL version for which files will be installed
      * @return the distribution install root directory
      * @throws IOException When IO error occurs
      */
-    final Path copyDistribution(Path gdalNativeLibrariesFolderPath, GDALVersion gdalVersion) throws IOException {
-        logger.fine("Copy the GDAL distribution to folder '" + gdalNativeLibrariesFolderPath.toString() + "'.");
+    final Path copyDistribution(GDALVersion gdalVersion) throws IOException {
+        logger.fine("Copy the GDAL distribution to folder '" + this.gdalNativeLibrariesFolderPath.toString() + "'.");
         String moduleVersion = fetchCurrentModuleSpecificationVersion();
 
         logger.fine("The module version is '" + moduleVersion + "'.");
@@ -305,9 +317,9 @@ class GDALInstaller {
 
         Path gdalDistributionRootFolderPath = gdalVersion.getLocationPath();
 
-        if (Files.exists(gdalNativeLibrariesFolderPath)) {
+        if (Files.exists(this.gdalNativeLibrariesFolderPath)) {
             // the GDAL distribution folder already exists on the local disk
-            String savedVersion = fetchSavedModuleSpecificationVersion();
+            String savedVersion = fetchSavedModuleSpecificationVersion(this.gdalNativeLibrariesFolderPath);
             logger.fine("The saved GDAL distribution folder version is '" + savedVersion + "'.");
 
             boolean isDistributionRootFolderEmpty = true;
@@ -317,22 +329,22 @@ class GDALInstaller {
                 //nothing to do
             }
 
-            if (!StringUtilities.isNullOrEmpty(savedVersion) && compareVersions(savedVersion, moduleVersion) >= 0 && Files.exists(gdalDistributionRootFolderPath) && !isDistributionRootFolderEmpty && Files.exists(gdalVersion.getEnvironmentVariablesFilePath())) {
+            if (!StringUtilities.isNullOrEmpty(savedVersion) && compareVersions(savedVersion, moduleVersion) >= 0 && Files.exists(gdalDistributionRootFolderPath) && !isDistributionRootFolderEmpty && Files.exists(gdalVersion.getEnvironmentVariablesFilePath()) && Files.exists(gdalVersion.getLoaderLibraryFilePath())) {
                 canCopyGDALDistribution = false;
             } else {
                 // different module versions and delete the library saved on the local disk
-                FileUtilities.deleteTree(gdalNativeLibrariesFolderPath);
+                FileUtilities.deleteTree(this.gdalNativeLibrariesFolderPath);
             }
         }
 
         if (canCopyGDALDistribution) {
-            logger.fine("create the folder '" + gdalNativeLibrariesFolderPath.toString() + "' to copy the GDAL distribution.");
-            Files.createDirectories(gdalNativeLibrariesFolderPath);
+            logger.fine("create the folder '" + this.gdalNativeLibrariesFolderPath.toString() + "' to copy the GDAL distribution.");
+            Files.createDirectories(this.gdalNativeLibrariesFolderPath);
             copyEnvironmentVariablesNativeLibrary(gdalVersion);
             copyLoaderLibrary(gdalVersion);
             copyDistributionArchiveAndInstall(gdalDistributionRootFolderPath, gdalVersion);
-            fixUpPermissions(gdalNativeLibrariesFolderPath);
-            setSavedModuleSpecificationVersion(moduleVersion);
+            fixUpPermissions(this.gdalNativeLibrariesFolderPath);
+            setSavedModuleSpecificationVersion(moduleVersion, this.gdalNativeLibrariesFolderPath);
         }
 
         return gdalDistributionRootFolderPath;

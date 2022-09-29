@@ -41,7 +41,7 @@ class GDALDistributionInstaller {
 
         logger.fine("Install the GDAL library from the distribution on " + osCategory.getOperatingSystemName() + ".");
 
-        final Path gdalDistributionRootFolderPath = new GDALInstaller().copyDistribution(gdalNativeLibrariesRootFolderPath, gdalVersion);
+        final Path gdalDistributionRootFolderPath = new GDALInstaller(gdalNativeLibrariesRootFolderPath).copyDistribution(gdalVersion);
         GDALLoader.loadEnvironmentVariablesNativeLibrary(gdalVersion);
 
         logger.fine("The GDAL library has been copied on the local disk.");
@@ -80,7 +80,7 @@ class GDALDistributionInstaller {
 
         logger.fine("Install the GDAL JNI drivers from the distribution on " + osCategory.getOperatingSystemName() + ".");
 
-        Path gdalDistributionRootFolderPath = new GDALInstaller().copyDistribution(gdalNativeLibrariesRootFolderPath, gdalVersion);
+        Path gdalDistributionRootFolderPath = new GDALInstaller(gdalNativeLibrariesRootFolderPath).copyDistribution(gdalVersion);
 
         logger.fine("The GDAL JNI drivers has been copied on the local disk.");
         logger.fine("Process the GDAL JNI drivers on " + gdalVersion.getOsCategory().getOperatingSystemName() + ".");
