@@ -59,6 +59,7 @@ import ro.cs.tao.spi.OutputDataHandlerManager;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.user.UserPreference;
 import ro.cs.tao.utils.ExceptionUtils;
+import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.TriFunction;
 import ro.cs.tao.workflow.ParameterValue;
 import ro.cs.tao.workflow.WorkflowDescriptor;
@@ -765,16 +766,16 @@ public class Orchestrator extends Notifiable {
             }
             if (variable != null) {
                 String targetOutput = variable.getValue();
-                /*pcTask.setOutputParameterValue(t.getName(),
-                                               pcTask.getInstanceTemporaryOutput() != null && pcTask.getInstanceTemporaryOutput().equals(targetOutput) ?
-                                                       pcTask.getInstanceTargetOuptut(null) : targetOutput);*/
-                final String instanceTargetOuptut = translateOutputToMasterPath(pcTask);
                 // if the output came from a remote note, we need to translate the node volumes to master volumes
+                String instanceTargetOuptut = translateOutputToMasterPath(pcTask);
                 if (targetOutput == null || instanceTargetOuptut == null) {
                     logger.severe(String.format("NULL TARGET [task %s, parameter %s]", pcTask.getId(), t.getName()));
-                }/* else if (!targetOutput.equals(instanceTargetOuptut)) {
-                    logger.warning(String.format("Value %s different than expected [%s]", targetOutput, instanceTargetOuptut));
-                }*/
+                }
+                if (!pcTask.getComponent().isOutputManaged()) {
+                    // Since the component ignores what is given as target and creates its own output, we need to
+                    // get what was produced and map it to the target output
+                    instanceTargetOuptut = handleUnmanagedPath(instanceTargetOuptut);
+                }
                 pcTask.setOutputParameterValue(t.getName(), instanceTargetOuptut);
                 logger.finest(String.format("Output [%s] of task [id=%d] was set to '%s'",
                                             t.getName(), pcTask.getId(), instanceTargetOuptut));
@@ -794,6 +795,37 @@ public class Orchestrator extends Notifiable {
         }
         logger.fine(String.format("Status change for task %s [job %s]: %s",
                                   pcTask.getComponent().getId(), pcTask.getJob().getName(), ExecutionStatus.DONE.name()));
+    }
+
+    /**
+     * Maps the output of a task (as computed by the framework) to the actual output of the task.
+     * Since we don't know what a task produces, we try to map the largest known raster (if a file) or otherwise return
+     * what was the initial value.
+     * @param source    What is currently assigned as task output
+     */
+    private String handleUnmanagedPath(String source) {
+        final Path sourcePath = Paths.get(source);
+        String result;
+        if (Files.isRegularFile(sourcePath)) {
+            result = sourcePath.toString();
+        } else {
+            try(Stream<Path> stream = Files.list(sourcePath)) {
+                Path file = stream.filter(FileUtilities::isRaster)
+                             .max((o1, o2) -> {
+                                 try {
+                                     return Long.compare(Files.size(o2), Files.size(o1));
+                                 } catch (IOException e) {
+                                     logger.warning(ExceptionUtils.getStackTrace(logger, e));
+                                     return 0;
+                                 }
+                             }).orElse(null);
+                result = file != null ? file.toString() : source;
+            } catch (IOException e) {
+                logger.warning(ExceptionUtils.getStackTrace(logger, e));
+                result = source;
+            }
+        }
+        return result;
     }
 
     /**
@@ -822,7 +854,7 @@ public class Orchestrator extends Notifiable {
                 String file = valuesList.get(i);
                 ProductHelper helper = null;
                 try {
-                    helper = ProductHelper.getHelper(Paths.get(URI.create(file)).getFileName().toString());
+                    helper = ProductHelper.getHelper(FileUtilities.toPath(file).getFileName().toString());
                 } catch (Exception ignored) { }
                 if (helper != null) {
                     valuesList.set(i, valuesList.get(i) + (valuesList.get(i).endsWith("/") ? "" : "/") + helper.getMetadataFileName());

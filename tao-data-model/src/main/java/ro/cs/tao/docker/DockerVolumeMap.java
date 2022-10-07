@@ -9,6 +9,7 @@ public class DockerVolumeMap {
     private static final String DOCKER_TEMP_MOUNT_KEY = "temp.mount";
     private static final String DOCKER_CFG_MOUNT_KEY = "cfg.mount";
     private static final String DOCKER_EODATA_MOUNT_KEY = "eodata.mount";
+    private static final String DOCKER_ADDITIONAL_MOUNT_KEY = "additional.mount";
     private final String hostWorkspaceFolder;
     private final String containerWorkspaceFolder;
     private final String hostTemporaryFolder;
@@ -17,6 +18,8 @@ public class DockerVolumeMap {
     private final String containerConfigurationFolder;
     private String hostEoDataFolder;
     private String containerEoDataFolder;
+    private String hostAdditionalFolder;
+    private String containerAdditionalFolder;
 
     public DockerVolumeMap(Map<String, String> volumeMap) {
         String value = volumeMap.get(DOCKER_WORKSPACE_MOUNT_KEY);
@@ -26,6 +29,7 @@ public class DockerVolumeMap {
         String[] values = value.split(":");
         this.hostWorkspaceFolder = values[0];
         this.containerWorkspaceFolder = values[1];
+
         value = volumeMap.get(DOCKER_TEMP_MOUNT_KEY);
         if (StringUtils.isEmpty(value)) {
             throw new IllegalArgumentException("Temp volume map is missing!");
@@ -33,6 +37,7 @@ public class DockerVolumeMap {
         values = value.split(":");
         this.hostTemporaryFolder = values[0];
         this.containerTemporaryFolder = values[1];
+
         value = volumeMap.get(DOCKER_CFG_MOUNT_KEY);
         if (StringUtils.isEmpty(value)) {
             throw new IllegalArgumentException("Configuration volume map is missing!");
@@ -40,11 +45,19 @@ public class DockerVolumeMap {
         values = value.split(":");
         this.hostConfigurationFolder = values[0];
         this.containerConfigurationFolder = values[1];
+
         value = volumeMap.get(DOCKER_EODATA_MOUNT_KEY);
         if (StringUtils.isNotEmpty(value)) {
             values = value.split(":");
             this.hostEoDataFolder = values[0];
             this.containerEoDataFolder = values[1];
+        }
+
+        value = volumeMap.get(DOCKER_ADDITIONAL_MOUNT_KEY);
+        if (StringUtils.isNotEmpty(value)) {
+            values = value.split(":");
+            this.hostAdditionalFolder = values[0];
+            this.containerAdditionalFolder = values[1];
         }
     }
 
@@ -75,4 +88,8 @@ public class DockerVolumeMap {
     public String getHostEODataFolder() { return hostEoDataFolder; }
 
     public String getContainerEoDataFolder() { return containerEoDataFolder; }
+
+    public String getHostAdditionalFolder() { return hostAdditionalFolder; }
+
+    public String getContainerAdditionalFolder() { return containerAdditionalFolder; }
 }

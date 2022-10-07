@@ -1,6 +1,7 @@
 package ro.cs.tao.persistence.repository;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
@@ -62,5 +63,9 @@ public interface ExecutionTaskRepository extends PagingAndSortingRepository<Exec
             "and not (t.execution_status_id = 4 or (t.execution_status_id = 5 and exists(select id from workflow.graph_node where id = t.graph_node_id and behavior_id = 2)))",
             nativeQuery = true)
     int getRunningParents(@Param("jobId") long jobId, @Param("taskId") long taskId);
-    
+
+    @Modifying
+    @Query(value = "INSERT INTO execution.component_time (component_id, average_duration_seconds) VALUES (:id, :duration) " +
+            "ON CONFLICT (component_id) DO UPDATE SET average_duration_seconds = :update", nativeQuery = true)
+    void updateComponentTime(@Param("id") String id, @Param("duration") int duration);
 }

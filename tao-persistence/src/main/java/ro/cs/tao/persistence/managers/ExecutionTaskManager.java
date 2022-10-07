@@ -29,6 +29,7 @@ import ro.cs.tao.persistence.repository.ExecutionTaskRepository;
 import javax.sql.DataSource;
 import java.sql.PreparedStatement;
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -58,6 +59,10 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
                                 newStatus.value(), task.getResourceId(), task.getLastUpdated(), task.getId());
             logger.log(newStatus == ExecutionStatus.FAILED ? Level.SEVERE : newStatus == ExecutionStatus.CANCELLED ? Level.WARNING : Level.FINE,
                        String.format("Task %s status change [%s -> %s]. Reason: %s", task.getId(), oldStatus, newStatus, reason));
+            if (task instanceof ProcessingExecutionTask && newStatus == ExecutionStatus.DONE) {
+                updateComponentTime(((ProcessingExecutionTask) task).getComponent().getId(),
+                                    (int) Duration.between(task.getEndTime(), task.getStartTime()).getSeconds());
+            }
             task = get(task.getId());
             return task;
         } finally {
@@ -97,11 +102,16 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
         return jdbcTemplate.query(con -> {
             PreparedStatement statement =
                     con.prepareStatement("SELECT t.id, w.name \"workflow\", CASE WHEN d.id IS NULL THEN CASE WHEN p.id IS NULL THEN 'group' ELSE p.id END ELSE d.id END \"componentName\", " +
-                                                 "t.start_time, t.end_time, t.execution_node_host_name, t.execution_status_id, t.last_updated FROM execution.task t " +
+                                                 "t.start_time, t.end_time, t.execution_node_host_name, t.execution_status_id, t.last_updated, " +
+                                                 "CASE WHEN ct.average_duration_seconds IS NULL THEN -1 ELSE " +
+                                                 "DATE_PART('second', COALESCE(last_updated, start_time) - start_time) /  ct.average_duration_seconds * 100.0 END as progress " +
+                                                 "FROM execution.task t " +
                                                  "INNER JOIN execution.job j ON j.id = t.job_id " +
                                                  "INNER JOIN workflow.graph w ON w.id = j.workflow_id " +
                                                  "LEFT OUTER JOIN component.data_source_component d ON d.id = t.component_id " +
-                                                 "LEFT OUTER JOIN component.processing_component p ON p.id = t.component_id where job_id = ? " +
+                                                 "LEFT OUTER JOIN component.processing_component p ON p.id = t.component_id " +
+                                                 "LEFT OUTER JOIN execution.component_time ct ON t.component_id = ct.component_id " +
+                                                 "WHERE job_id = ? " +
                                                  "ORDER BY t.start_time, t.id");
             statement.setLong(1, jobId);
             return statement;
@@ -124,6 +134,13 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
             if (timestamp != null) {
                 result.setLastUpdated(timestamp.toLocalDateTime());
             }
+            double progress = rs.getDouble(9);
+            // If the progress comes > 100.0, it means the task takes longer than the current average,
+            // hence we set it to 99 not to overflow
+            if (Double.compare(progress, 100.0) == 1) {
+                progress = 99;
+            }
+            result.setPercentComplete(progress);
             return result;
         });
     }
@@ -156,6 +173,11 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
     @Override
     public int getRunningParents(long jobId, long taskId) {
         return repository.getRunningParents(jobId, taskId);
+    }
+
+    @Override
+    public void updateComponentTime(String id, int duration) {
+        repository.updateComponentTime(id, duration);
     }
 
     /**
@@ -191,7 +213,10 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
 
                 // save the new ExecutionTask entity
                 final ExecutionTask savedExecutionTask = repository.save(task);
-
+                if (task instanceof ProcessingExecutionTask && task.getExecutionStatus() == ExecutionStatus.DONE) {
+                    updateComponentTime(((ProcessingExecutionTask) task).getComponent().getId(),
+                                        (int) Duration.between(task.getEndTime(), task.getStartTime()).getSeconds());
+                }
                 // add the task to job tasks collection
                 List<ExecutionTask> jobTasks = job.orderedTasks();
                 if (jobTasks.stream().noneMatch(t -> t.getId().equals(task.getId()))) {
@@ -233,7 +258,10 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
 
                 // save the new ExecutionTask entity
                 final ExecutionTask savedExecutionTask = repository.save(task);
-
+                if (task instanceof ProcessingExecutionTask && task.getExecutionStatus() == ExecutionStatus.DONE) {
+                    updateComponentTime(((ProcessingExecutionTask) task).getComponent().getId(),
+                                        (int) Duration.between(task.getEndTime(), task.getStartTime()).getSeconds());
+                }
                 // add the task to job tasks collection
                 List<ExecutionTask> groupTasks = taskGroup.getTasks();
                 if (groupTasks == null) {

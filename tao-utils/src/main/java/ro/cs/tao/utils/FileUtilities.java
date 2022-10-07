@@ -56,7 +56,13 @@ public class FileUtilities {
     private static final String[] WIN_TO_UNIX_TOKENS = new String[] {":", "\\"};
     private static final String[] WIN_TO_UNIX_REPLACEMENTS = new String[] {"", "/" };
     private static final String[] UNITS = new String[] { "B", "KB", "MB", "GB", "TB" };
+    private static final Set<String> KNOWN_RASTER_EXTENSIONS = new HashSet<String>() {{
+       add(".tif"); add(".TIF"); add(".tiff"); add(".TIFF");
+       add(".nc"); add(".NC");
+       add(".hd5"); add(".HD5");
+    }};
     private static final DecimalFormat UNIT_FORMAT = new DecimalFormat("#,##0.#");
+    private static final Pattern URI_PATTERN = Pattern.compile("\\w+:\\/{2,3}[A-Za-z0-9._/]+");
     private static final Logger logger = Logger.getLogger(FileUtilities.class.getName());
 
     public static String getExtension(Path path) {
@@ -76,6 +82,11 @@ public class FileUtilities {
         return idx > 0 ? fileName.substring(idx) : null;
     }
 
+    public static boolean isRaster(Path file) {
+        final String strFile = file.toString();
+        return Files.isRegularFile(file) && KNOWN_RASTER_EXTENSIONS.stream().anyMatch(strFile::endsWith);
+    }
+
     public static String getFilenameWithoutExtension(Path path) {
         return path != null ? getFilenameWithoutExtension(path.toString()) : null;
     }
@@ -91,6 +102,18 @@ public class FileUtilities {
         String fileName = Paths.get(path).getFileName().toString();
         int idx = fileName.lastIndexOf('.');
         return idx > 0 ? fileName.substring(0, idx) : fileName;
+    }
+
+    public static boolean isURI(String path) {
+        return URI_PATTERN.matcher(path).find();
+    }
+
+    public static Path toPath(String path) {
+        if (isURI(path)) {
+            return Paths.get(URI.create(path));
+        } else {
+            return Paths.get(path);
+        }
     }
 
     public static Path unzip(Path zipFile) throws IOException {

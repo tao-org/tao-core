@@ -23,4 +23,5 @@ public interface ExecutionTaskProvider extends EntityProvider<ExecutionTask, Lon
     ExecutionTask saveWithSubTasks(ExecutionGroup taskGroup, ExecutionJob job) throws PersistenceException;
     int getCPUsForUser(String userName);
     int getMemoryForUser(String userName);
+    void updateComponentTime(String id, int duration);
 }

@@ -38,7 +38,6 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -431,7 +430,7 @@ public class ProcessingComponent extends TaoComponent {
                 } else {
                     try {
                         if (paramValue instanceof String) {
-                            clonedMap.put(paramName, Paths.get(URI.create((String) paramValue)).toString());
+                            clonedMap.put(paramName, FileUtilities.toPath((String) paramValue).toString());
                         }
                     } catch (Exception ex) {
                         clonedMap.put(paramName, paramValue);
