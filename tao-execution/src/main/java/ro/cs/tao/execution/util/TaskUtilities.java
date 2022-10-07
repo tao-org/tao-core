@@ -37,7 +37,6 @@ import ro.cs.tao.workflow.ParameterValue;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.enums.TransitionBehavior;
 
-import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -378,8 +377,9 @@ public class TaskUtilities {
             return path;
         }
         String result;
+        final String strPath = path.startsWith("[") ? path.substring(1, path.length() - 1) : path;
         try {
-            Path p = FileUtilities.resolveSymLinks(Paths.get(URI.create(path)).toAbsolutePath());
+            Path p = FileUtilities.resolveSymLinks(FileUtilities.toPath(strPath)).toAbsolutePath();
             if (DOCKER_EODATA_HOST_POINT != null && p.startsWith(DOCKER_EODATA_HOST_POINT)) {
                 Path root = Paths.get(DOCKER_EODATA_HOST_POINT);
                 final String unixPath = FileUtilities.asUnixPath(root.relativize(p), true);
@@ -390,22 +390,8 @@ public class TaskUtilities {
                 result = DOCKER_MOUNT_POINT + (unixPath.startsWith("/") ? unixPath.substring(1) : unixPath);
             }
         } catch (Exception e1) {
-            //e1.printStackTrace();
-            try {
-                Path p = FileUtilities.resolveSymLinks(Paths.get(path).toAbsolutePath());
-                if (DOCKER_EODATA_HOST_POINT != null && p.startsWith(DOCKER_EODATA_HOST_POINT)) {
-                    Path root = Paths.get(DOCKER_EODATA_HOST_POINT);
-                    final String unixPath = FileUtilities.asUnixPath(root.relativize(p), true);
-                    result = DOCKER_EODATA_MOUNT_POINT + "/" + (unixPath.startsWith("/") ? unixPath.substring(1) : unixPath);
-                } else {
-                    Path root = FileUtilities.resolveSymLinks(Paths.get(SystemVariable.ROOT.value()).toAbsolutePath());
-                    final String unixPath = FileUtilities.asUnixPath(root.relativize(p), true);
-                    result = DOCKER_MOUNT_POINT + (unixPath.startsWith("/") ? unixPath.substring(1) : unixPath);
-                }
-            } catch (Exception e2) {
-                e2.printStackTrace();
-                result = path;
-            }
+            e1.printStackTrace();
+            result = strPath;
         }
         return result;
     }

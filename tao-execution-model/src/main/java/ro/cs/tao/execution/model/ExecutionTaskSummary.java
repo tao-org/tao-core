@@ -26,6 +26,7 @@ public class ExecutionTaskSummary {
     private LocalDateTime taskStart;
     private LocalDateTime taskEnd;
     private LocalDateTime lastUpdated;
+    private double percentComplete;
     private String host;
     private ExecutionStatus taskStatus;
 
@@ -77,8 +78,15 @@ public class ExecutionTaskSummary {
     public LocalDateTime getLastUpdated() {
         return lastUpdated;
     }
-
     public void setLastUpdated(LocalDateTime lastUpdated) {
         this.lastUpdated = lastUpdated;
+    }
+
+    public double getPercentComplete() {
+        return percentComplete;
+    }
+
+    public void setPercentComplete(double percentComplete) {
+        this.percentComplete = percentComplete;
     }
 }

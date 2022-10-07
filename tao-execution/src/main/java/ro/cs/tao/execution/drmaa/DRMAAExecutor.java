@@ -353,10 +353,11 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             if (masterHost.equals(task.getExecutionNodeHostName()) && parentIds.stream().anyMatch(i -> map.get(Long.parseLong(i)))) {
                 List<Variable> inputs = task.getInputParameterValues();
                 Set<String> outputs = task.getOutputParameterValues().stream().map(Variable::getKey).collect(Collectors.toSet());
+                Set<String> inputSources = task.getComponent().getSources().stream().map(SourceDescriptor::getName).collect(Collectors.toSet());
                 for (Variable input : inputs) {
                     if (!outputs.contains(input.getKey())) {
                         String value = input.getValue();
-                        String newValue = copyLocally(value, task);
+                        String newValue = inputSources.contains(input.getKey()) ? copyLocally(value, task) : value;
                         input.setValue(newValue);
                         if (!value.equals(newValue)) {
                             List args = jt.getArgs();
@@ -579,7 +580,10 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                     if (!StringUtilities.isNullOrEmpty(hostFolder)) {
                         unit.addVolumeMapping(hostFolder, volumeMount.getContainerEoDataFolder());
                     }
-                    unit.addVolumeMapping(volumeMount.getHostConfigurationFolder(),"/home/.snap/:z");
+                    hostFolder = volumeMount.getHostAdditionalFolder();
+                    if (!StringUtilities.isNullOrEmpty(hostFolder)) {
+                        unit.addVolumeMapping(hostFolder, volumeMount.getContainerAdditionalFolder());
+                    }
                     unit.setContainerName(container.getName());
                     unit.setContainerRegistry(ExecutionConfiguration.getDockerRegistry());
                     if (cpu > 0) {
@@ -630,8 +634,10 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                             add("-v");
                             add(volumeMap.getHostConfigurationFolder() + ":" + volumeMap.getContainerConfigurationFolder());
                         }
-                        add("-v");
-                        add(volumeMap.getHostConfigurationFolder() + ":/home/.snap/:z");
+                        if (!StringUtilities.isNullOrEmpty(volumeMap.getHostAdditionalFolder())) {
+                            add("-v");
+                            add(volumeMap.getHostAdditionalFolder() + ":" + volumeMap.getContainerAdditionalFolder());
+                        }
                         if (cpu > 0) {
                             // Enforce the number of CPUs to be used
                             add("--cpus");
@@ -705,10 +711,16 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         if (recursiveCondition) {
             argsList.add("-r");
         }
-        if (isSnapDimap) {
-            argsList.add(tmpPath.replace(tmpPath.substring(tmpPath.lastIndexOf('.')), ".*"));
-        } else {
+        // If the output is managed by the component, copy all the folder contents
+        if (!isOutputManaged) {
             argsList.add(tmpPath);
+        } else {
+            // for SNAP BEAM-DIMAP, copy both the metadata and the data folder
+            if (isSnapDimap) {
+                argsList.add(tmpPath.replace(tmpPath.substring(tmpPath.lastIndexOf('.')), ".*"));
+            } else {
+                argsList.add(tmpPath);
+            }
         }
         try {
             Files.createDirectory(Paths.get(finalPath));
@@ -782,16 +794,17 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
     }
 
     private String copyLocally(String source, ExecutionTask task) throws IOException {
-        if (!source.startsWith("/")) {
-            return source;
+        final String strSource = source.replace("file://", "");
+        if (!strSource.startsWith("/")) {
+            return strSource;
         }
         DockerVolumeMap masterVolumeMap = ExecutionConfiguration.getMasterContainerVolumeMap();
         final Path realPath;
-        if (source.startsWith(masterVolumeMap.getHostWorkspaceFolder())) {
-            realPath = Paths.get(source).toRealPath();
+        if (strSource.startsWith(masterVolumeMap.getHostWorkspaceFolder())) {
+            realPath = Paths.get(strSource).toRealPath();
         } else {
-            realPath = Paths.get(source.replace(masterVolumeMap.getContainerWorkspaceFolder(),
-                                                SystemVariable.ROOT.value().replace("\\", "/"))).toRealPath();
+            realPath = Paths.get(strSource.replace(masterVolumeMap.getContainerWorkspaceFolder(),
+                                                   SystemVariable.ROOT.value().replace("\\", "/"))).toRealPath();
         }
         if (realPath.startsWith(masterVolumeMap.getHostEODataFolder())) {
             Path src = realPath;
@@ -816,7 +829,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             String out = lastName != null ? tmpPath.resolve(lastName).toString() : tmpPath.toString();
             return out.replace(masterVolumeMap.getHostTemporaryFolder(), masterVolumeMap.getContainerTemporaryFolder());
         } else {
-            return source;
+            return strSource;
         }
     }
 

@@ -173,3 +173,19 @@ DROP SEQUENCE IF EXISTS execution.user_data_source_connection_id_seq CASCADE;
 CREATE SEQUENCE execution.user_data_source_connection_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
 ALTER TABLE execution.user_data_source_connection ALTER COLUMN id SET DEFAULT nextval('execution.user_data_source_connection_id_seq');
 ALTER SEQUENCE execution.user_data_source_connection_id_seq OWNED BY execution.user_data_source_connection.id;
+
+-- Table: execution.component_time
+DROP TABLE IF EXISTS execution.component_time;
+CREATE TABLE execution.component_time
+(
+    component_id varchar(512) NOT NULL,
+    average_duration_seconds integer NOT NULL,
+    CONSTRAINT component_time_pkey PRIMARY KEY (component_id),
+    CONSTRAINT fk_component_time_processing_component FOREIGN KEY (component_id)
+        REFERENCES component.processing_component (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS fki_fk_component_time_processing_component
+    ON execution.component_time USING btree
+    (component_id COLLATE pg_catalog."default" ASC NULLS LAST);
