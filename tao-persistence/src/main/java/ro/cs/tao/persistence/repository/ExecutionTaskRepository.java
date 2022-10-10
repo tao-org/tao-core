@@ -66,6 +66,6 @@ public interface ExecutionTaskRepository extends PagingAndSortingRepository<Exec
 
     @Modifying
     @Query(value = "INSERT INTO execution.component_time (component_id, average_duration_seconds) VALUES (:id, :duration) " +
-            "ON CONFLICT (component_id) DO UPDATE SET average_duration_seconds = :update", nativeQuery = true)
+            "ON CONFLICT (component_id) DO UPDATE SET average_duration_seconds = (average_duration_seconds + :update) / 2", nativeQuery = true)
     void updateComponentTime(@Param("id") String id, @Param("duration") int duration);
 }

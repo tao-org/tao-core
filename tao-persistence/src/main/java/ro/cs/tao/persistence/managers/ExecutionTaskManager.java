@@ -104,7 +104,7 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
                     con.prepareStatement("SELECT t.id, w.name \"workflow\", CASE WHEN d.id IS NULL THEN CASE WHEN p.id IS NULL THEN 'group' ELSE p.id END ELSE d.id END \"componentName\", " +
                                                  "t.start_time, t.end_time, t.execution_node_host_name, t.execution_status_id, t.last_updated, " +
                                                  "CASE WHEN ct.average_duration_seconds IS NULL THEN -1 ELSE " +
-                                                 "DATE_PART('second', COALESCE(t.last_updated, t.start_time) - t.start_time) /  ct.average_duration_seconds * 100.0 END as progress " +
+                                                 "EXTRACT(EPOCH FROM (COALESCE(t.last_updated, t.start_time) - t.start_time)) /  ct.average_duration_seconds * 100.0 END as progress " +
                                                  "FROM execution.task t " +
                                                  "INNER JOIN execution.job j ON j.id = t.job_id " +
                                                  "INNER JOIN workflow.graph w ON w.id = j.workflow_id " +
