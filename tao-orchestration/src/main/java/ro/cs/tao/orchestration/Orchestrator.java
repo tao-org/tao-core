@@ -790,6 +790,8 @@ public class Orchestrator extends Notifiable {
         });
         pcTask.setExecutionStatus(ExecutionStatus.DONE);
         taskProvider.update(pcTask);
+        taskProvider.updateComponentTime(pcTask.getComponent().getId(),
+                                         (int) Duration.between(pcTask.getEndTime(), pcTask.getStartTime()).getSeconds());
         if (lastFromGroup) {
             taskProvider.update(groupTask);
         }

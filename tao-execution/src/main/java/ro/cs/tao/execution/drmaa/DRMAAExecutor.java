@@ -312,7 +312,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         }
     }
 
-    private void cleanupTmpFolder(ProcessingExecutionTask task) throws IOException {
+    private void cleanupTmpFolder(ProcessingExecutionTask task) {
         final Iterator<Map.Entry<Path, Set<Long>>> iterator = this.cachedInputs.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<Path, Set<Long>> entry = iterator.next();
@@ -321,10 +321,14 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                 referredByTasks.remove(task.getId());
                 if (referredByTasks.isEmpty()) {
                     Path path = entry.getKey();
-                    if (Files.isDirectory(path)) {
-                        FileUtilities.deleteTree(path);
-                    } else {
-                        Files.delete(path);
+                    try {
+                        if (Files.isDirectory(path)) {
+                            FileUtilities.deleteTree(path);
+                        } else {
+                            Files.delete(path);
+                        }
+                    } catch (IOException e) {
+                        logger.warning(e.getMessage());
                     }
                     iterator.remove();
                 }
