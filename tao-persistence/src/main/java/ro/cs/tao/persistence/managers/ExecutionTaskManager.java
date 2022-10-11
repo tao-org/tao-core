@@ -29,7 +29,6 @@ import ro.cs.tao.persistence.repository.ExecutionTaskRepository;
 import javax.sql.DataSource;
 import java.sql.PreparedStatement;
 import java.sql.Timestamp;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -59,10 +58,6 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
                                 newStatus.value(), task.getResourceId(), task.getLastUpdated(), task.getId());
             logger.log(newStatus == ExecutionStatus.FAILED ? Level.SEVERE : newStatus == ExecutionStatus.CANCELLED ? Level.WARNING : Level.FINE,
                        String.format("Task %s status change [%s -> %s]. Reason: %s", task.getId(), oldStatus, newStatus, reason));
-            if (task instanceof ProcessingExecutionTask && newStatus == ExecutionStatus.DONE) {
-                updateComponentTime(((ProcessingExecutionTask) task).getComponent().getId(),
-                                    (int) Duration.between(task.getEndTime(), task.getStartTime()).getSeconds());
-            }
             task = get(task.getId());
             return task;
         } finally {
@@ -177,7 +172,11 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
 
     @Override
     public void updateComponentTime(String id, int duration) {
-        repository.updateComponentTime(id, duration);
+        try {
+            repository.updateComponentTime(id, duration);
+        } catch (Throwable t) {
+            logger.severe(t.getMessage());
+        }
     }
 
     /**
@@ -213,10 +212,6 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
 
                 // save the new ExecutionTask entity
                 final ExecutionTask savedExecutionTask = repository.save(task);
-                if (task instanceof ProcessingExecutionTask && task.getExecutionStatus() == ExecutionStatus.DONE) {
-                    updateComponentTime(((ProcessingExecutionTask) task).getComponent().getId(),
-                                        (int) Duration.between(task.getEndTime(), task.getStartTime()).getSeconds());
-                }
                 // add the task to job tasks collection
                 List<ExecutionTask> jobTasks = job.orderedTasks();
                 if (jobTasks.stream().noneMatch(t -> t.getId().equals(task.getId()))) {
@@ -258,10 +253,6 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
 
                 // save the new ExecutionTask entity
                 final ExecutionTask savedExecutionTask = repository.save(task);
-                if (task instanceof ProcessingExecutionTask && task.getExecutionStatus() == ExecutionStatus.DONE) {
-                    updateComponentTime(((ProcessingExecutionTask) task).getComponent().getId(),
-                                        (int) Duration.between(task.getEndTime(), task.getStartTime()).getSeconds());
-                }
                 // add the task to job tasks collection
                 List<ExecutionTask> groupTasks = taskGroup.getTasks();
                 if (groupTasks == null) {

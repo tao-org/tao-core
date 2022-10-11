@@ -84,7 +84,8 @@ public class Zipper {
         try {
             Files.createDirectories(target);
             byte[] buffer = new byte[65536];
-            try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(source))) {
+            try (InputStream is = Files.newInputStream(source);
+                 ZipInputStream zis = new ZipInputStream(is)) {
                 ZipEntry entry = zis.getNextEntry();
                 while (entry != null) {
                     Path newFile = target.resolve(entry.getName());
@@ -92,12 +93,12 @@ public class Zipper {
                         Files.createDirectories(newFile);
                     } else {
                         Files.createDirectories(newFile.getParent());
-                        OutputStream outputStream = Files.newOutputStream(newFile);
-                        int read;
-                        while ((read = zis.read(buffer)) > 0) {
-                            outputStream.write(buffer, 0, read);
+                        try (OutputStream outputStream = Files.newOutputStream(newFile)) {
+                            int read;
+                            while ((read = zis.read(buffer)) > 0) {
+                                outputStream.write(buffer, 0, read);
+                            }
                         }
-                        outputStream.close();
                     }
                     entry = zis.getNextEntry();
                 }
@@ -170,7 +171,8 @@ public class Zipper {
         }
         try {
             Files.createDirectories(target);
-            try (TarArchiveInputStream tarStream = new TarArchiveInputStream(new GzipCompressorInputStream(Files.newInputStream(source)))) {
+            try (InputStream is = Files.newInputStream(source);
+                 TarArchiveInputStream tarStream = new TarArchiveInputStream(new GzipCompressorInputStream(is))) {
                 TarArchiveEntry entry;
                 while ((entry = tarStream.getNextTarEntry()) != null) {
                     final Path currentPath = target.resolve(entry.getName());
@@ -189,7 +191,8 @@ public class Zipper {
                 }
             } catch (IOException e) {
                 if (e.getMessage().equals("Input is not in the .gz format")) {
-                    try (TarArchiveInputStream tarStream = new TarArchiveInputStream(Files.newInputStream(source))) {
+                    try (InputStream is = Files.newInputStream(source);
+                         TarArchiveInputStream tarStream = new TarArchiveInputStream(is)) {
                         TarArchiveEntry entry;
                         while ((entry = tarStream.getNextTarEntry()) != null) {
                             final Path currentPath = target.resolve(entry.getName());

@@ -692,7 +692,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
     private String wrapShellInvocation(ProcessingComponent component, final List<String> argsList, String initialCmd,
                                        final String tempOutput, final String finalOutput, final boolean isLocal) {
         final boolean isOutputManaged = component.isOutputManaged();
-        final String tmpPath = isOutputManaged ? tempOutput : tempOutput.substring(0, tempOutput.lastIndexOf('/') + 1) + "*.*";
+        final String tmpPath = isOutputManaged ? tempOutput : tempOutput.substring(0, tempOutput.lastIndexOf('/') + 1) + ".";
         //final String finalPath = isOutputManaged ? finalOutput : finalOutput.substring(0, finalOutput.lastIndexOf('/') + 1);
         final String finalPath = finalOutput.substring(0, finalOutput.lastIndexOf('/') + 1);
         final boolean isSnapDimap = component.getTargets().stream().anyMatch(t -> t.getDataDescriptor().getLocation().toLowerCase().endsWith(".dim")
@@ -737,10 +737,14 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         if (recursiveCondition) {
             argsList.add("-r");
         }
-        if (isSnapDimap) {
-            argsList.add(tmpPath.replace(tmpPath.substring(tmpPath.lastIndexOf('.')), ".*"));
+        if (!isOutputManaged) {
+            argsList.add(tmpPath.substring(0, tmpPath.lastIndexOf('/')) + "/*");
         } else {
-            argsList.add(tmpPath);
+            if (isSnapDimap) {
+                argsList.add(tmpPath.replace(tmpPath.substring(tmpPath.lastIndexOf('.')), ".*"));
+            } else {
+                argsList.add(tmpPath);
+            }
         }
         // all the existing args are merged into a single string as argument to -c
         final String quoteChar = isLocal

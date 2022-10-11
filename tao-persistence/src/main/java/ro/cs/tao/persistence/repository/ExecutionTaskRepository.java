@@ -40,15 +40,19 @@ public interface ExecutionTaskRepository extends PagingAndSortingRepository<Exec
                                              @Param("instanceId") int instanceId);
 
     @Query(value = "SELECT * from execution.task where execution_status_id = 2", nativeQuery = true)
+    @Transactional(readOnly = true)
     List<ExecutionTask> getRunningTasks();
 
     @Query(value = "SELECT * FROM execution.task WHERE discriminator = 11 AND execution_status_id = 2 AND resource_id IS NOT NULL", nativeQuery = true)
+    @Transactional(readOnly = true)
     List<ExecutionTask> getExecutingTasks();
 
     @Query(value = "SELECT * FROM execution.task WHERE discriminator = 33 AND execution_status_id = 2 AND resource_id IS NOT NULL", nativeQuery = true)
+    @Transactional(readOnly = true)
     List<ExecutionTask> getRemoteExecutingTasks();
 
     @Query(value = "SELECT * FROM execution.task WHERE execution_status_id IN (1, 2) AND execution_node_host_name = :host", nativeQuery = true)
+    @Transactional(readOnly = true)
     List<ExecutionTask> getTasksByHost(@Param("host") String host);
 
     @Query(value = "SELECT COALESCE(SUM(t.used_cpu), 0) FROM execution.task as t JOIN execution.job AS j ON j.id = t.job_id WHERE t.execution_status_id IN (1, 2) AND j.username = :userName", nativeQuery = true)
@@ -66,6 +70,6 @@ public interface ExecutionTaskRepository extends PagingAndSortingRepository<Exec
 
     @Modifying
     @Query(value = "INSERT INTO execution.component_time (component_id, average_duration_seconds) VALUES (:id, :duration) " +
-            "ON CONFLICT (component_id) DO UPDATE SET average_duration_seconds = (average_duration_seconds + :update) / 2", nativeQuery = true)
+            "ON CONFLICT (component_id) DO UPDATE SET average_duration_seconds = (component_time.average_duration_seconds + :duration) / 2", nativeQuery = true)
     void updateComponentTime(@Param("id") String id, @Param("duration") int duration);
 }
