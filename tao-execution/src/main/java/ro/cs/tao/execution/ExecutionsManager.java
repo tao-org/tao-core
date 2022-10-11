@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.execution;
 
+import ro.cs.tao.execution.drmaa.DRMAAExecutor;
 import ro.cs.tao.execution.model.DataSourceExecutionTask;
 import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.execution.model.ProcessingExecutionTask;
@@ -67,6 +68,10 @@ public class ExecutionsManager {
     }
 
     public Set<Executor> getRegisteredExecutors() { return this.services; }
+
+    public String getJobOutput(long id) {
+        return DRMAAExecutor.getInstance().getJobOutput(String.valueOf(id));
+    }
 
     private Executor getExecutor(ExecutionTask task) {
         Optional<Executor> optional;

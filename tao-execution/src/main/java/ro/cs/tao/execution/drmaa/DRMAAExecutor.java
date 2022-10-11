@@ -75,6 +75,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
     private static String masterHost;
     private static ExecutionTaskProvider taskProvider;
     private static ContainerProvider containerProvider;
+    private static DRMAAExecutor instance;
     private Session session;
     private final BlockingQueue<Tuple<JobTemplate, ProcessingExecutionTask>> queue;
     private final BlockingQueueWorker<Tuple<JobTemplate, ProcessingExecutionTask>> queueWorker;
@@ -85,6 +86,8 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
     public static void setTaskProvider(ExecutionTaskProvider provider) { taskProvider = provider; }
 
     public static void setContainerProvider(ContainerProvider provider) { containerProvider = provider; }
+
+    public static DRMAAExecutor getInstance() { return instance; }
 
     public DRMAAExecutor() {
         super();
@@ -103,6 +106,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         }
         this.hostMemoryRequests = Collections.synchronizedMap(new HashMap<>());
         this.cachedInputs = Collections.synchronizedMap(new HashMap<>());
+        instance = this;
     }
 
     @Override
@@ -209,12 +213,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                                 logger.severe(String.format("Status update for task %s failed. Reason: %s",
                                                             taskName, e.getMessage()));
                             }
-                            String out;
-                            if (session instanceof DefaultSession) {
-                                out = ((DefaultSession) this.session).getJobOutput(task.getResourceId());
-                            } else {
-                                out = "n/a";
-                            }
+                            String out = getJobOutput(task.getResourceId());
                             task.setLog(out);
                             if (task instanceof ProcessingExecutionTask) {
                                 notifyExternalListeners((ProcessingExecutionTask) task, ExecutionStatus.SUSPENDED.friendlyName(), -1, out);
@@ -238,9 +237,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                             break;
                         case Session.DONE:
                             decrementMemory(task.getExecutionNodeHostName(), task.getUsedRAM());
-                            if (session instanceof DefaultSession) {
-                                task.setLog(((DefaultSession) this.session).getJobOutput(task.getResourceId()));
-                            }
+                            task.setLog(getJobOutput(task.getResourceId()));
                             // Just mark the task as finished with success status
                             if (task.getExecutionStatus() == ExecutionStatus.RUNNING) {
                                 // Only a running task can complete
@@ -304,6 +301,20 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
     public String getDRMName() { return session != null ? session.serviceName() : "n/a"; }
 
     public String getDRMVersion() { return session != null ? session.getVersion().toString() : "n/a"; }
+
+    public String getJobOutput(String jobId) {
+        String out;
+        if (session instanceof DefaultSession) {
+            try {
+                out = ((DefaultSession) this.session).getJobOutput(jobId);
+            } catch (DrmaaException e) {
+                out = e.getMessage();
+            }
+        } else {
+            out = "n/a";
+        }
+        return out;
+    }
 
     private void decrementMemory(String host, long amount) {
         Tuple<NodeDescription, AtomicLong> tuple = this.hostMemoryRequests.get(host);
