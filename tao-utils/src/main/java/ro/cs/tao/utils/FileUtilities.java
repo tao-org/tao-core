@@ -28,6 +28,7 @@ import ro.cs.tao.utils.executors.monitoring.ListenableInputStream;
 import ro.cs.tao.utils.executors.monitoring.ProgressListener;
 
 import java.io.*;
+import java.net.Inet4Address;
 import java.net.URI;
 import java.net.URL;
 import java.nio.ByteBuffer;
@@ -214,7 +215,9 @@ public class FileUtilities {
                add(System.getProperty("user.name") + ":" + System.getProperty("user.name"));
                add(file.toAbsolutePath().toString());
             }};
-            final Executor<?> executor = Executor.create(ExecutorType.PROCESS, null, args, true);
+            final Executor<?> executor = Executor.create(ExecutorType.PROCESS,
+                                                         Inet4Address.getLocalHost().getHostName(),
+                                                         args, true);
             final OutputAccumulator accumulator = new OutputAccumulator();
             executor.setOutputConsumer(accumulator);
             if (executor.execute(true) != 0) {

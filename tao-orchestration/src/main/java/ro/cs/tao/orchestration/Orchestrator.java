@@ -791,7 +791,7 @@ public class Orchestrator extends Notifiable {
         pcTask.setExecutionStatus(ExecutionStatus.DONE);
         taskProvider.update(pcTask);
         taskProvider.updateComponentTime(pcTask.getComponent().getId(),
-                                         (int) Duration.between(pcTask.getEndTime(), pcTask.getStartTime()).getSeconds());
+                                         (int) Duration.between(pcTask.getStartTime(), pcTask.getEndTime()).getSeconds());
         if (lastFromGroup) {
             taskProvider.update(groupTask);
         }
@@ -1141,6 +1141,8 @@ public class Orchestrator extends Notifiable {
     private void resolveTargetName(ExecutionTask nextTask, Variable overriddenOutParam) {
         List<DataSourceExecutionTask> originatingTasks = findOriginatingTasks(nextTask);
         if (originatingTasks != null && !originatingTasks.isEmpty()) {
+            boolean succeeded = false;
+            String error = "";
             for (DataSourceExecutionTask originatingTask : originatingTasks) {
                 String targetOutput = overriddenOutParam.getValue();
                 String sensor = originatingTask.getComponent().getSensorName().replace("-", "");
@@ -1164,11 +1166,15 @@ public class Orchestrator extends Notifiable {
                         try {
                             nextTask.setOutputParameterValue(key, parser.resolve(targetOutput, oValuesList.toArray(new String[0])));
                             nextTask.getInputParameterValues().removeIf(v -> v.getKey().equals(key));
+                            succeeded = true;
                         } catch (ParseException ex) {
-                            changeStatus(nextTask, ExecutionStatus.FAILED, ex.getMessage());
+                            error += ex.getMessage() + ";";
                         }
                     }
                 }
+            }
+            if (!succeeded) {
+                changeStatus(nextTask, ExecutionStatus.FAILED, error);
             }
         }
     }
@@ -1178,6 +1184,8 @@ public class Orchestrator extends Notifiable {
         if (value != null && value.contains("${")) {
             List<DataSourceExecutionTask> originatingTasks = findOriginatingTasks(nextTask);
             if (originatingTasks != null && !originatingTasks.isEmpty()) {
+                boolean succeeded = false;
+                String error = "";
                 for (DataSourceExecutionTask originatingTask : originatingTasks) {
                     String sensor = originatingTask.getComponent().getSensorName().replace("-", "");
                     List<NamingRule> rules = namingRuleProvider.listBySensor(sensor);
@@ -1198,11 +1206,15 @@ public class Orchestrator extends Notifiable {
                             }
                             try {
                                 variable.setValue(parser.resolve(value, oValuesList.toArray(new String[0])));
+                                succeeded = true;
                             } catch (ParseException ex) {
-                                changeStatus(nextTask, ExecutionStatus.FAILED, ex.getMessage());
+                                error += ex.getMessage() + ";";
                             }
                         }
                     }
+                }
+                if (!succeeded) {
+                    changeStatus(nextTask, ExecutionStatus.FAILED, error);
                 }
             }
         }
