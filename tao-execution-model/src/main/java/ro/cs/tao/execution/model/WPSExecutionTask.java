@@ -21,7 +21,7 @@ public class WPSExecutionTask extends ExecutionTask {
         boolean descriptorExists = false;
         List<ParameterDescriptor> descriptorList = this.component.getParameters();
         for (ParameterDescriptor descriptor : descriptorList) {
-            if (descriptor.getName().equals(parameterId)) {
+            if (descriptor.getId().equals(parameterId)) {
                 descriptorExists = true;
                 break;
             }

@@ -509,8 +509,20 @@ public class DefaultJobFactory {
             task.setExecutionNodeHostName(nodeAffinity);
         }
         if (inputs != null) {
+            final Map<String, String> extraParams = new HashMap<>();
+            final Iterator<Map.Entry<String, String>> iterator = inputs.entrySet().iterator();
+            while (iterator.hasNext()) {
+                Map.Entry<String, String> entry = iterator.next();
+                if (entry.getKey().startsWith("service~")) {
+                    extraParams.put(entry.getKey(), entry.getValue());
+                    iterator.remove();
+                }
+            }
             for (Map.Entry<String, String> entry : inputs.entrySet()) {
                 task.setInputParameterValue(entry.getKey(), entry.getValue());
+            }
+            for (Map.Entry<String, String> entry : extraParams.entrySet()) {
+                task.getInputParameterValues().add(new Variable(entry.getKey(), entry.getValue()));
             }
         }
         return task;
