@@ -687,10 +687,11 @@ public class Orchestrator extends Notifiable {
         if (job.getStartTime() != null && job.getEndTime() != null) {
             time = Duration.between(job.getStartTime(), job.getEndTime());
         }
-        String msg = String.format("Job [%s] for workflow [%s]" +
-                                       (job.getExecutionStatus() == ExecutionStatus.CANCELLED ? " cancelled " : " failed ") +
-                                       "after %ss",
-                                   job.getId(), workflow.getName(), time != null ? time.getSeconds() : "<unknown>");
+        String msg = String.format("Job [%s] for workflow [%s] %s after %ss",
+                                   job.getId(),
+                                   workflow != null ? workflow.getName() : "n/a",
+                                   (job.getExecutionStatus() == ExecutionStatus.CANCELLED ? " cancelled " : " failed "),
+                                   time != null ? time.getSeconds() : "<unknown>");
         logger.warning(msg);
         jobProvider.update(job);
         job.getTasks().forEach(t -> {
