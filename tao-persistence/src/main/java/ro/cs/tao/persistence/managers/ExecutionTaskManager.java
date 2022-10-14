@@ -102,7 +102,7 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
                                                  "EXTRACT(EPOCH FROM (COALESCE(t.last_updated, t.start_time) - t.start_time)) /  ct.average_duration_seconds * 100.0 END as progress " +
                                                  "FROM execution.task t " +
                                                  "INNER JOIN execution.job j ON j.id = t.job_id " +
-                                                 "INNER JOIN workflow.graph w ON w.id = j.workflow_id " +
+                                                 "LEFT OUTER JOIN workflow.graph w ON w.id = j.workflow_id " +
                                                  "LEFT OUTER JOIN component.data_source_component d ON d.id = t.component_id " +
                                                  "LEFT OUTER JOIN component.processing_component p ON p.id = t.component_id " +
                                                  "LEFT OUTER JOIN execution.component_time ct ON t.component_id = ct.component_id " +
