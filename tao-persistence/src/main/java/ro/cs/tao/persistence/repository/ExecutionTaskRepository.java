@@ -43,7 +43,7 @@ public interface ExecutionTaskRepository extends PagingAndSortingRepository<Exec
     @Transactional(readOnly = true)
     List<ExecutionTask> getRunningTasks();
 
-    @Query(value = "SELECT * FROM execution.task WHERE /*discriminator = 11 AND*/ execution_status_id = 2 AND resource_id IS NOT NULL", nativeQuery = true)
+    @Query(value = "SELECT * FROM execution.task WHERE discriminator = 11 AND execution_status_id = 2 AND resource_id IS NOT NULL", nativeQuery = true)
     @Transactional(readOnly = true)
     List<ExecutionTask> getExecutingTasks();
 
