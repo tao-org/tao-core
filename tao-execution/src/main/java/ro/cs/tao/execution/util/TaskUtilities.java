@@ -360,6 +360,8 @@ public class TaskUtilities {
             component = ((DataSourceExecutionTask) task).getComponent().getId();
         } else if (task instanceof ProcessingExecutionTask) {
             component = ((ProcessingExecutionTask) task).getComponent().getId();
+        } else if (task instanceof WPSExecutionTask) {
+            component = ((WPSExecutionTask) task).getComponent().getId();
         } else {
             component = "";
         }

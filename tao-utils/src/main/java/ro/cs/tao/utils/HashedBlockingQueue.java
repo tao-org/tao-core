@@ -9,6 +9,16 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+/**
+ * Specialization of a blocking queue that adds hashing to its elements, so that
+ * the check for existence of an element has O(1) complexity.
+ *
+ * @param <E>   The type of elements
+ * @param <I>   The type of index
+ *
+ * @author  Cosmin Cara
+ * @since   1.4
+ */
 public class HashedBlockingQueue<E, I> extends LinkedBlockingQueue<E> {
     private final Set<I> index;
     private final Function<E, I> indexFunction;
