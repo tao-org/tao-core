@@ -195,6 +195,7 @@ INSERT INTO workspace.repository_type (id, name, params) VALUES
 
 -- Repository templates
 INSERT INTO workspace.repository_template (name, description, url_prefix, repository_type_id, params) VALUES
+('CCI', 'CCI LandCover dataset', 'ftp', 6, '{"ftp.server":"geo10.elie.ucl.ac.be","ftp.user":"anonymous"}'),
 ('S2_L2A_COG', 'This dataset is the same as the Sentinel-2 dataset, except the JP2K files were converted into Cloud-Optimized GeoTIFFs (COGs).', 's3', '2', '{"aws.region":"us-west-2","aws.access.key":null,"aws.secret.key":null,"aws.bucket":"sentinel-cogs"}'),
 ('GeoMAD', 'GeoMAD is the Digital Earth Africa (DE Africa) surface reflectance geomedian and triple Median Absolute Deviation data service. It is a cloud-free composite of satellite data compiled over specific timeframes.', 's3', '2', '{"aws.region":"af-south-1","aws.access.key":null,"aws.secret.key":null,"aws.bucket":"deafrica-services/gm_s2_annual"}'),
 ('DE_Africa_S1', 'DE Africa provides Sentinel-1 backscatter as Radiometrically Terrain Corrected (RTC) gamma-0 (γ0) where variation due to changing observation geometries has been mitigated.', 's3', '2', '{"aws.region":"af-south-1","aws.access.key":null,"aws.secret.key":null,"aws.bucket":"deafrica-sentinel-1"}'),
