@@ -39,7 +39,21 @@ public enum RepositoryType implements TaoEnum<Integer> {
         put("smb.domain", false);
         put("smb.user", false);
         put("smb.password", false);
-    }}, false);
+    }}, false),
+    @XmlEnumValue("6")
+    FTP(6, "FTP repository", "ftp", "ftp.server", "ftp.user", "ftp.password",
+        new LinkedHashMap<String, Boolean>() {{
+            put("ftp.server", true);
+            put("ftp.user", false);
+            put("ftp.password", false);
+        }}, false),
+    @XmlEnumValue("7")
+    FTPS(7, "FTPS repository", "ftps", "ftps.server", "ftps.user", "ftps.password",
+        new LinkedHashMap<String, Boolean>() {{
+            put("ftps.server", true);
+            put("ftps.user", false);
+            put("ftps.password", false);
+        }}, false);
     private final int value;
     private final String description;
     private final String prefix;

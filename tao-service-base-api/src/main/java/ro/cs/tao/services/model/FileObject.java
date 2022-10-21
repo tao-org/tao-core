@@ -142,7 +142,14 @@ public class FileObject {
     @Override
     public String toString() {
         return "FileObject{" +
-                "relativePath='" + relativePath + '\'' +
+                "protocol='" + protocol + '\'' +
+                ", relativePath='" + relativePath + '\'' +
+                ", folder=" + folder +
+                ", size=" + size +
+                ", productName='" + productName + '\'' +
+                ", displayName='" + displayName + '\'' +
+                ", lastModified=" + lastModified +
+                ", attributes=" + attributes +
                 '}';
     }
 }
