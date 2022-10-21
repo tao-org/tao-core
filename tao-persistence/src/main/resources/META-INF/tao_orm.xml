@@ -1458,6 +1458,35 @@
         </attributes>
     </entity>
 
+    <entity class="ro.cs.tao.workspaces.RepositoryTemplate" access="PROPERTY">
+        <table name="workspace.repository_template"/>
+        <convert converter="ro.cs.tao.persistence.convert.MapConverter" attribute-name="parameters" />
+        <convert converter="ro.cs.tao.persistence.convert.RepositoryTypeConverter" attribute-name="type" />
+        <attributes>
+            <id name="id">
+                <column name="id" nullable="false" column-definition="varchar(40) DEFAULT uuid_generate_v4()"/>
+            </id>
+            <basic name="name">
+                <column name="name" nullable="false" column-definition="varchar(250) NOT NULL"/>
+            </basic>
+            <basic name="description">
+                <column name="description" nullable="false" column-definition="text NOT NULL"/>
+            </basic>
+            <basic name="urlPrefix">
+                <column name="url_prefix" nullable="false" column-definition="varchar(20) NOT NULL"/>
+            </basic>
+            <basic name="type">
+                <column name="repository_type_id" nullable="false" column-definition="int NOT NULL"/>
+            </basic>
+            <basic name="parameters">
+                <column name="params" nullable="true" column-definition="json"/>
+            </basic>
+            <basic name="created">
+                <column name="created" nullable="true" column-definition="timestamp DEFAULT now()"/>
+            </basic>
+        </attributes>
+    </entity>
+
     <entity class="ro.cs.tao.workspaces.Site" access="PROPERTY">
         <table name="workspace.site"/>
         <attributes>
