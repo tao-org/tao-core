@@ -76,4 +76,41 @@ public class RepositoryFactory {
         workspace.setSystem(true);
         return workspace;
     }
+
+    public static Repository createFromTemplate(RepositoryTemplate template, String user) {
+        final Repository workspace = template.toRepository();
+        workspace.setUserName(user);
+        final ConfigurationProvider cfgProvider = ConfigurationManager.getInstance();
+        RepositoryType type = workspace.getType();
+        switch (type) {
+            case LOCAL:
+                workspace.getParameters().replace(type.rootKey(),
+                                                  cfgProvider.getValue("workspace.location") + "/" + user);
+                break;
+            case AWS:
+            case SWIFT:
+                final HashMap<String, String> parameters = workspace.getParameters();
+                String value;
+                for (String key : parameters.keySet()) {
+                    if (type.rootKey().equals(key)) {
+                        value = cfgProvider.getValue(type.rootKey());
+                        if (value != null) {
+                            value += "/" + user;
+                        }
+                    } else {
+                        value = cfgProvider.getValue(key);
+                    }
+                    if (value == null) {
+                        throw new TopologyException("Values for default workspace of type" + type.name() + " not configured");
+                    }
+                    parameters.replace(key, value);
+                }
+                break;
+            default:
+                break;
+        }
+        workspace.setSystem(false);
+        workspace.setReadOnly(true);
+        return workspace;
+    }
 }

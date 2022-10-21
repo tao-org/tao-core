@@ -45,3 +45,24 @@ CREATE TABLE workspace.site
 );
 ALTER TABLE workspace.site ADD CONSTRAINT PK_site PRIMARY KEY (id);
 DROP SEQUENCE IF EXISTS workspace.site_id_seq CASCADE;
+
+-------------------------------------------------------------------------------
+-- table: workspace.repository_template
+DROP TABLE IF EXISTS workspace.repository_template;
+CREATE TABLE IF NOT EXISTS workspace.repository_template
+(
+    id character varying(40) COLLATE pg_catalog."default" NOT NULL DEFAULT uuid_generate_v4(),
+    name character varying(250) COLLATE pg_catalog."default" NOT NULL,
+    description text COLLATE pg_catalog."default" NOT NULL,
+    url_prefix character varying(20) COLLATE pg_catalog."default" NOT NULL,
+    repository_type_id integer NOT NULL,
+    params json,
+    created timestamp without time zone DEFAULT now(),
+    CONSTRAINT pk_repository_template PRIMARY KEY (id),
+    CONSTRAINT fk_repository_template_repository_type FOREIGN KEY (repository_type_id)
+        REFERENCES workspace.repository_type (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+);
+GRANT ALL ON TABLE workspace.repository_template TO postgres;
+GRANT ALL ON TABLE workspace.repository_template TO tao;
