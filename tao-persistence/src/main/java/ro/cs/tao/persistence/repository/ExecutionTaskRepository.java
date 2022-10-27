@@ -55,6 +55,9 @@ public interface ExecutionTaskRepository extends PagingAndSortingRepository<Exec
     @Transactional(readOnly = true)
     List<ExecutionTask> getTasksByHost(@Param("host") String host);
 
+    @Query(value = "SELECT t.* FROM execution.task t JOIN component.data_source_component c ON c.id = t.component_id WHERE t.job_id = :jobId", nativeQuery = true)
+    List<ExecutionTask> getDataSourceTasks(@Param("jobId") long jobId);
+
     @Query(value = "SELECT COALESCE(SUM(t.used_cpu), 0) FROM execution.task as t JOIN execution.job AS j ON j.id = t.job_id WHERE t.execution_status_id IN (1, 2) AND j.username = :userName", nativeQuery = true)
     int getCPUsForUser(@Param("userName") String userName);
 

@@ -119,9 +119,9 @@ public class DefaultJobFactory {
                     task.setLevel(node.getLevel());
                     task.setContext(context);
                     if (task.getId() == null) {
-                        taskProvider.save(task, job);
+                        task = taskProvider.save(task, job);
                     } else {
-                        taskProvider.update(task);
+                        task = taskProvider.update(task);
                     }
                     logger.finest(String.format("Created task %s.%s for node %s [id=%s, level %s]",
                                                 jobName, task.getId(), node.getName(), node.getId(), task.getLevel()));

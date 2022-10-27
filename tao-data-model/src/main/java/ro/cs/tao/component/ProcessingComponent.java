@@ -18,6 +18,7 @@ package ro.cs.tao.component;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
+import org.apache.commons.lang3.SystemUtils;
 import ro.cs.tao.component.enums.ComponentCategory;
 import ro.cs.tao.component.enums.Condition;
 import ro.cs.tao.component.enums.ProcessingComponentType;
@@ -429,8 +430,11 @@ public class ProcessingComponent extends TaoComponent {
                     }
                 } else {
                     try {
-                        if (paramValue instanceof String) {
-                            clonedMap.put(paramName, FileUtilities.toPath((String) paramValue).toString());
+                        if (paramValue instanceof String
+                                && (((String) paramValue).contains(SystemUtils.IS_OS_WINDOWS ? "\\" : "/"))) {
+                            clonedMap.put(paramName, FileUtilities.asUnixPath(FileUtilities.toPath((String) paramValue).toString(), true));
+                        } else {
+                            clonedMap.put(paramName, paramValue);
                         }
                     } catch (Exception ex) {
                         clonedMap.put(paramName, paramValue);

@@ -43,6 +43,10 @@ public class ProcessingExecutionTask extends ExecutionTask {
     // format is: jobId-taskId-[internalState-]fileName
     private static final String nameTemplate = "%s-%s-%s%s";
 
+    private static final Set<String> arrayChars = new HashSet<String>() {{
+        add("["); add("{"); add("]"); add("}");
+    }};
+
     private ProcessingComponent component;
 
     @XmlTransient
@@ -157,29 +161,35 @@ public class ProcessingExecutionTask extends ExecutionTask {
         Map<String, Object> inputParams = new HashMap<>();
         if (inputParameterValues != null) {
             for (Variable input : inputParameterValues) {
-                String value = input.getValue();
-                if (value.startsWith("[") && value.endsWith("]")) {
-                    value = value.substring(1, value.length() - 1);
-                    ParameterDescriptor descriptor = this.component.getParameterDescriptors().stream()
-                                                                   .filter(d -> d.getName().equals(input.getKey()))
-                                                                   .findFirst().orElse(null);
-                    if (descriptor != null && (descriptor.getDataType().isArray())) {
-                        final String[] values = value.split(",");
-                        final Object array = JavaType.createArray(JavaType.fromClass(descriptor.getDataType()), values.length);
-                        final Class<?> type = descriptor.getDataType().getComponentType();
-                        final ParameterConverter converter = ConverterFactory.getInstance().create(type);
-                        for (int i = 0; i < values.length; i++) {
-                            try {
-                                Array.set(array, i, converter.fromString(values[i]));
-                            } catch (ConversionException e) {
-                                throw new RuntimeException(e);
-                            }
-                        }
-                    } else {
-                        value = value.replace(",", " ");
+                String strValue = input.getValue();
+                final String key = input.getKey();
+                Object value = strValue;
+                ParameterDescriptor descriptor = this.component.getParameterDescriptors().stream()
+                                                               .filter(d -> d.getName().equals(key))
+                                                               .findFirst().orElse(null);
+                if (descriptor != null && (descriptor.getDataType().isArray())) {
+                    if (arrayChars.contains(strValue.substring(0, 1)) &&
+                        arrayChars.contains(strValue.substring(strValue.length() - 1))) {
+                        strValue = strValue.substring(1, strValue.length() - 1);
                     }
+                    final String[] values = strValue.split("[,;]");
+                    value = JavaType.createArray(JavaType.fromClass(descriptor.getDataType()), values.length);
+                    final Class<?> type = descriptor.getDataType().getComponentType();
+                    final ParameterConverter<?> converter = ConverterFactory.getInstance().create(type);
+                    for (int i = 0; i < values.length; i++) {
+                        try {
+                            Array.set(value, i, converter.fromString(values[i]));
+                        } catch (ConversionException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                    // it may be a source descriptor value, which is not marked as array
+                } else if (arrayChars.contains(strValue.substring(0, 1)) &&
+                           arrayChars.contains(strValue.substring(strValue.length() - 1))) {
+                    strValue = strValue.substring(1, strValue.length() - 1);
+                    value = strValue.replaceAll("[,;]", " ");
                 }
-                inputParams.put(input.getKey(), value);
+                inputParams.put(key, value);
             }
         }
         for (TargetDescriptor descriptor : this.component.getTargets()) {

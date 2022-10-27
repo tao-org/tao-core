@@ -1131,12 +1131,13 @@ public class Orchestrator extends Notifiable {
     }
 
     private List<DataSourceExecutionTask> findOriginatingTasks(ExecutionTask current) {
-        ExecutionGroup groupTask = current.getGroupTask();
+        /*ExecutionGroup groupTask = current.getGroupTask();
         if (groupTask != null) {
             return this.groupTaskSelector.findDataSourceTasks(groupTask, current);
         } else {
             return this.jobTaskSelector.findDataSourceTasks(current.getJob(), current);
-        }
+        }*/
+        return TaskUtilities.findDataSourceTasks(current.getJob());
     }
 
     private void resolveTargetName(ExecutionTask nextTask, Variable overriddenOutParam) {
