@@ -161,13 +161,13 @@ public class TaskUtilities {
         if (component != null) {
             List<SourceDescriptor> sources = component.getSources();
             if (sources != null && sources.size() > 0) {
-                if (sources.size() == 1) {
+                /*if (sources.size() == 1) {
                     cardinality = sources.get(0).getCardinality();
-                } else {
+                } else {*/
                     cardinality = sources.stream()
                             .max(Comparator.comparingInt(SourceDescriptor::getCardinality))
                             .get().getCardinality();
-                }
+                /*}*/
             }
         }
         return cardinality;
@@ -193,11 +193,11 @@ public class TaskUtilities {
         if (component != null) {
             List<TargetDescriptor> targets = component.getTargets();
             if (targets != null && targets.size() > 0) {
-                if (targets.size() == 1) {
+                /*if (targets.size() == 1) {
                     cardinality = targets.get(0).getCardinality();
-                } else {
+                } else {*/
                     cardinality = targets.stream().mapToInt(TargetDescriptor::getCardinality).sum();
-                }
+                /*}*/
             }
         }
         return cardinality;
@@ -235,6 +235,7 @@ public class TaskUtilities {
     }
 
     public static boolean haveAllTasksCompleted(ExecutionJob job) {
+        // TODO: replace with a count sql query
         final List<ExecutionTask> tasks = job.orderedTasks();
         return tasks != null &&
                 tasks.stream().allMatch(t -> t.getExecutionStatus() == ExecutionStatus.DONE ||
@@ -283,7 +284,7 @@ public class TaskUtilities {
     }
 
     /**
-     * Checks if this data source task is sycnrhonized with another data source task
+     * Checks if this data source task is synchronized with another data source task
      * @param task  The data source task that is inspected
      */
     public static boolean isSynchronized(DataSourceExecutionTask task) {
@@ -363,7 +364,7 @@ public class TaskUtilities {
         } else if (task instanceof WPSExecutionTask) {
             component = ((WPSExecutionTask) task).getComponent().getId();
         } else {
-            component = "";
+            component = "unknown component";
         }
         return task.getId() + " (" + component + ", job " + task.getJob().getId() + ")";
     }
@@ -382,19 +383,30 @@ public class TaskUtilities {
         final String strPath = path.startsWith("[") ? path.substring(1, path.length() - 1) : path;
         try {
             Path p = FileUtilities.resolveSymLinks(FileUtilities.toPath(strPath)).toAbsolutePath();
+            final Path root;
+            final String mountPoint;
             if (DOCKER_EODATA_HOST_POINT != null && p.startsWith(DOCKER_EODATA_HOST_POINT)) {
-                Path root = Paths.get(DOCKER_EODATA_HOST_POINT);
-                final String unixPath = FileUtilities.asUnixPath(root.relativize(p), true);
-                result = DOCKER_EODATA_MOUNT_POINT + "/" + (unixPath.startsWith("/") ? unixPath.substring(1) : unixPath);
+                root = Paths.get(DOCKER_EODATA_HOST_POINT);
+                mountPoint = DOCKER_EODATA_MOUNT_POINT;
             } else {
-                Path root = FileUtilities.resolveSymLinks(Paths.get(SystemVariable.ROOT.value()).toAbsolutePath());
-                final String unixPath = FileUtilities.asUnixPath(root.relativize(p), true);
-                result = DOCKER_MOUNT_POINT + (unixPath.startsWith("/") ? unixPath.substring(1) : unixPath);
+                root = FileUtilities.resolveSymLinks(Paths.get(SystemVariable.ROOT.value()).toAbsolutePath());
+                mountPoint = DOCKER_MOUNT_POINT;
             }
+            final String unixPath = FileUtilities.asUnixPath(root.relativize(p), true);
+            result = mountPoint + (unixPath.startsWith("/") ? unixPath.substring(1) : unixPath);
         } catch (Exception e1) {
             e1.printStackTrace();
             result = strPath;
         }
         return result;
+    }
+
+    /**
+     * Returns the DataSourceExecutionTasks of a job
+     * @param job   The job
+     */
+    public static List<DataSourceExecutionTask> findDataSourceTasks(ExecutionJob job) {
+        List<ExecutionTask> tasks = taskProvider.getDataSourceTasks(job.getId());
+        return tasks.stream().map(t -> (DataSourceExecutionTask) t).collect(Collectors.toList());
     }
 }

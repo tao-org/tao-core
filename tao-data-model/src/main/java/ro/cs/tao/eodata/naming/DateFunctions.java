@@ -55,15 +55,15 @@ public final class DateFunctions {
         }
         matcher = hourPattern.matcher(expression);
         if (matcher.find()) {
-            transformed = transformed.replace(matcher.group(1), DAY.apply(matcher.group(2)));
+            transformed = transformed.replace(matcher.group(1), HOUR.apply(matcher.group(2)));
         }
         matcher = minutePattern.matcher(expression);
         if (matcher.find()) {
-            transformed = transformed.replace(matcher.group(1), DAY.apply(matcher.group(2)));
+            transformed = transformed.replace(matcher.group(1), MINUTE.apply(matcher.group(3)));
         }
         matcher = secondPattern.matcher(expression);
         if (matcher.find()) {
-            transformed = transformed.replace(matcher.group(1), DAY.apply(matcher.group(2)));
+            transformed = transformed.replace(matcher.group(1), SECOND.apply(matcher.group(4)));
         }
         return transformed;
     }
