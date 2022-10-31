@@ -7,7 +7,7 @@
     <groupId>ro.cs.tao</groupId>
     <artifactId>tao-core</artifactId>
     <packaging>pom</packaging>
-    <version>1.4.0</version>
+    <version>1.4.1</version>
     <name>TAO Core</name>
 
     <modules>
@@ -37,6 +37,8 @@
     </modules>
 
     <properties>
+        <java.version>17</java.version>
+        <maven.compiler.release>11</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.deploy.root.path>file://W:/Dev/tao-github-publication</project.deploy.root.path>
         <geotools.version>26.1</geotools.version>
@@ -131,8 +133,7 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>${maven.compiler.plugin.version}</version>
                     <configuration>
-                        <source>1.8</source>
-                        <target>1.8</target>
+                        <release>11</release>
                     </configuration>
                 </plugin>
                 <plugin>
