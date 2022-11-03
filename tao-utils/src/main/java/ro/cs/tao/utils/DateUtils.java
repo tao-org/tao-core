@@ -68,8 +68,15 @@ public class DateUtils {
      */
     public static DateTimeFormatter getResilientFormatterAtUTC() {
         final DateTimeFormatterBuilder builder = new DateTimeFormatterBuilder()
-                .appendPattern("yyyy-").appendValue(ChronoField.MONTH_OF_YEAR, 1, 2, SignStyle.NOT_NEGATIVE)
-                .appendLiteral("-").appendValue(ChronoField.DAY_OF_MONTH, 1, 2, SignStyle.NOT_NEGATIVE)
+                .appendValue(ChronoField.YEAR, 2, 4, SignStyle.NOT_NEGATIVE)
+                .optionalStart()
+                    .appendLiteral("-")
+                .optionalEnd()
+                    .appendValue(ChronoField.MONTH_OF_YEAR, 1, 2, SignStyle.NOT_NEGATIVE)
+                .optionalStart()
+                    .appendLiteral("-")
+                .optionalEnd()
+                    .appendValue(ChronoField.DAY_OF_MONTH, 1, 2, SignStyle.NOT_NEGATIVE)
                 .optionalStart()
                     .appendLiteral("T")
                 .optionalEnd()
@@ -80,13 +87,16 @@ public class DateUtils {
                     .appendValue(ChronoField.HOUR_OF_DAY, 1, 2, SignStyle.NOT_NEGATIVE)
                     .appendLiteral(":").appendValue(ChronoField.MINUTE_OF_HOUR, 1, 2, SignStyle.NOT_NEGATIVE)
                     .appendLiteral(":").appendValue(ChronoField.SECOND_OF_MINUTE, 1, 2, SignStyle.NOT_NEGATIVE)
+                    .optionalStart()
+                        .appendLiteral(".")
+                    .optionalEnd()
                     .appendFraction(ChronoField.NANO_OF_SECOND, 0, 6, true)
                     .optionalStart()
-                        .appendZoneOrOffsetId()
+                     .appendZoneOrOffsetId()
                     .optionalEnd()
-                    .optionalStart()
-                        .appendLiteral("Z")
-                    .optionalEnd()
+                        .optionalStart()
+                            .appendLiteral("Z")
+                        .optionalEnd()
                 .optionalEnd();
         return builder.toFormatter().withZone(ZoneId.of("UTC"));
     }
