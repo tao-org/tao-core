@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import ro.cs.tao.datasource.CollectionDescription;
 import ro.cs.tao.datasource.param.DataSourceParameter;
+import ro.cs.tao.datasource.param.IndexedDataSourceParameter;
 
 import java.util.Map;
 
@@ -35,6 +36,7 @@ public class JsonMapper {
     private static final ObjectMapper instance;
     public static final TypeReference<Map<String, Map<String, DataSourceParameter>>> JSON_DATA_SOURCE_PARAMETERS_TYPE_REFERENCE;
     public static final TypeReference<Map<String, CollectionDescription>> JSON_SENSOR_TYPE_REFERENCE;
+    public static final TypeReference<Map<String, IndexedDataSourceParameter>> JSON_INDEXED_DATA_SOURCE_REFERENCE;
 
     static {
         instance = new ObjectMapper()
@@ -49,6 +51,7 @@ public class JsonMapper {
 
         JSON_DATA_SOURCE_PARAMETERS_TYPE_REFERENCE = new TypeReference<Map<String, Map<String, DataSourceParameter>>>() {};
         JSON_SENSOR_TYPE_REFERENCE = new TypeReference<Map<String, CollectionDescription>>() { };
+        JSON_INDEXED_DATA_SOURCE_REFERENCE = new TypeReference<Map<String, IndexedDataSourceParameter>>() { };
     }
 
     public static ObjectMapper instance() { return instance; }
