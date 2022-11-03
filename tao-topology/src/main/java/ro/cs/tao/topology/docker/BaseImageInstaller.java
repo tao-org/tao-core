@@ -18,15 +18,22 @@ package ro.cs.tao.topology.docker;
 
 import org.apache.commons.lang3.SystemUtils;
 import ro.cs.tao.Tag;
+import ro.cs.tao.component.ParameterDescriptor;
 import ro.cs.tao.component.ProcessingComponent;
+import ro.cs.tao.component.SourceDescriptor;
+import ro.cs.tao.component.TargetDescriptor;
+import ro.cs.tao.component.enums.ProcessingComponentType;
+import ro.cs.tao.component.enums.ProcessingComponentVisibility;
 import ro.cs.tao.component.enums.TagType;
 import ro.cs.tao.configuration.ConfigurationManager;
+import ro.cs.tao.docker.Application;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.docker.ContainerType;
 import ro.cs.tao.persistence.ContainerProvider;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.ProcessingComponentProvider;
 import ro.cs.tao.persistence.TagProvider;
+import ro.cs.tao.security.SystemPrincipal;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.utils.JacksonUtil;
 
@@ -34,10 +41,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -67,20 +71,6 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
             this.componentTags = new ArrayList<>();
         }
     }
-
-    /*public static Container readCommonContainerDescriptor() throws IOException {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(BaseImageInstaller.class.getResourceAsStream("common_container.json")))) {
-            final String str = reader.lines().collect(Collectors.joining(""));
-            return JacksonUtil.fromString(str, Container.class);
-        }
-    }
-
-    public static ProcessingComponent[] readCommonComponentsDescriptors() throws IOException {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(BaseImageInstaller.class.getResourceAsStream("common_applications.json")))) {
-            final String str = reader.lines().collect(Collectors.joining(""));
-            return JacksonUtil.OBJECT_MAPPER.readValue(str, ProcessingComponent[].class);
-        }
-    }*/
 
     @Override
     public Container installImage() {
@@ -253,6 +243,107 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
         return tag;
     }
 
+    protected Container initializeContainer(Container container, String path) {
+        Container readContainer;
+        try {
+            readContainer = readContainerDescriptor(getContainerDescriptorFileName());
+            readContainer.setId(container.getId());
+            readContainer.setName(container.getName());
+            readContainer.setTag(container.getTag());
+            readContainer.setApplicationPath(path);
+            readContainer.getApplications().forEach(this::configureApplication);
+            readContainer.setLogo(readContainerLogo(getLogoFileName()));
+            readContainer = this.containerProvider.save(readContainer);
+        } catch (Exception e) {
+            logger.severe(e.getMessage());
+            return null;
+        }
+        ProcessingComponent current = null;
+        try {
+            ProcessingComponent[] components = readComponentDescriptors(getComponentDescriptorFileName());
+            final List<Application> containerApplications = readContainer.getApplications();
+            for (ProcessingComponent component : components) {
+                try {
+                    current = component;
+                    component.setContainerId(readContainer.getId());
+                    component.setLabel(component.getId());
+                    component.setComponentType(ProcessingComponentType.EXECUTABLE);
+                    containerApplications.stream().filter(a -> a.getName().equals(component.getId())).findFirst()
+                                         .ifPresent(application -> component.setFileLocation(application.getPath()));
+                    List<ParameterDescriptor> parameterDescriptors = component.getParameterDescriptors();
+                    if (parameterDescriptors != null) {
+                        parameterDescriptors.forEach(p -> {
+                            if (p.getName() == null) {
+                                p.setName(p.getId());
+                                p.setId(UUID.randomUUID().toString());
+                            }
+                            String[] valueSet = p.getValueSet();
+                            if (valueSet != null && valueSet.length == 1 &&
+                                    ("null".equals(valueSet[0]) || valueSet[0].isEmpty())) {
+                                p.setValueSet(null);
+                            }
+                            if (valueSet != null && valueSet.length > 0 &&
+                                    ("null".equals(valueSet[0]) || valueSet[0].isEmpty())) {
+                                p.setDefaultValue(valueSet[0]);
+                            }
+                        });
+                    }
+                    final List<SourceDescriptor> sources = component.getSources();
+                    if (sources != null) {
+                        sources.forEach(s -> s.setId(UUID.randomUUID().toString()));
+                    }
+                    final List<TargetDescriptor> targets = component.getTargets();
+                    if (targets != null) {
+                        targets.forEach(t -> t.setId(UUID.randomUUID().toString()));
+                    }
+                    String template = component.getTemplateContents();
+                    final int length = template.length();
+                    int i = 0;
+                    while (i < length) {
+                        char ch = template.charAt(i);
+                        if (ch == '$' && template.charAt(i - 1) != '\n') {
+                            template = template.substring(0, i) + "\n" + template.substring(i);
+                        }
+                        i++;
+                    }
+                    final String[] tokens = template.split("\n");
+                    for (int j = 0; j < tokens.length - 1; j++) {
+                        final int idx = j;
+                        if ((targets != null && targets.stream().anyMatch(t -> t.getName().equals(tokens[idx].substring(1)))) ||
+                                (sources != null && sources.stream().anyMatch(s -> s.getName().equals(tokens[idx].substring(1))))) {
+                            tokens[j + 1] = tokens[j].replace('-', '$');
+                            j++;
+                        }
+                    }
+                    component.setTemplateContents(String.join("\n", tokens));
+                    component.setComponentType(ProcessingComponentType.EXECUTABLE);
+                    component.setVisibility(ProcessingComponentVisibility.SYSTEM);
+                    component.setOwner(SystemPrincipal.instance().getName());
+                    component.addTags(getOrCreateTag(container.getName()).getText());
+                    if (this.componentProvider.get(component.getId(), component.getContainerId()) == null) {
+                        this.componentProvider.save(component);
+                    } else {
+                        this.componentProvider.update(component);
+                    }
+                } catch (Exception inner) {
+                    logger.severe(String.format("Faulty component: %s. Error: %s",
+                                                current != null ? current.getId() : "n/a",
+                                                inner.getMessage()));
+                }
+            }
+        } catch (Exception outer) {
+            logger.severe(String.format("Error occured while registering container applications: %s",
+                                        outer.getMessage()));
+        }
+        return readContainer;
+    }
+
+    protected void configureApplication(Application app) {
+        String appPath = app.getPath();
+        app.setName(app.getName());
+        app.setPath(appPath);
+    }
+
     protected abstract String getContainerName();
 
     protected abstract String getDescription();
@@ -261,5 +352,9 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
 
     protected abstract String getPathInSystem();
 
-    protected abstract Container initializeContainer(Container container, String path);
+    protected abstract String getContainerDescriptorFileName();
+
+    protected abstract String getComponentDescriptorFileName();
+
+    protected abstract String getLogoFileName();
 }
