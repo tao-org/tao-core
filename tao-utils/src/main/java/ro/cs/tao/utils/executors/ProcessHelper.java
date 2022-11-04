@@ -64,30 +64,45 @@ public final class ProcessHelper {
         return tokens;
     }
 
+    /**
+     * Returns the PID of the given process
+     * @param process   The process
+     */
     public static int getPID(Process process) {
         int retVal = -1;
-        if (SystemUtils.IS_OS_WINDOWS) {
-            try {
-                Field field = process.getClass().getDeclaredField("handle");
-                field.setAccessible(true);
-                long handle = field.getLong(process);
-                Kernel32 kernel = Kernel32.INSTANCE;
-                Win32Api.HANDLE h = new Win32Api.HANDLE();
-                h.setPointer(Pointer.createConstant(handle));
-                retVal = kernel.GetProcessId(h);
-            } catch (Throwable ignored) { }
-        } else if (SystemUtils.IS_OS_LINUX) {
-            try {
-                Field field = process.getClass().getDeclaredField("pid");
-                field.setAccessible(true);
-                retVal = field.getInt(process);
-            } catch (Throwable ignored) { }
+        if (System.getProperty("java.version").startsWith("1.")) {
+            // For Java versions prior to 9, we need to rely on getting the pid the old way
+            if (SystemUtils.IS_OS_WINDOWS) {
+                try {
+                    Field field = process.getClass().getDeclaredField("handle");
+                    field.setAccessible(true);
+                    long handle = field.getLong(process);
+                    Kernel32 kernel = Kernel32.INSTANCE;
+                    Win32Api.HANDLE h = new Win32Api.HANDLE();
+                    h.setPointer(Pointer.createConstant(handle));
+                    retVal = kernel.GetProcessId(h);
+                } catch (Throwable ignored) {
+                }
+            } else if (SystemUtils.IS_OS_LINUX) {
+                try {
+                    Field field = process.getClass().getDeclaredField("pid");
+                    field.setAccessible(true);
+                    retVal = field.getInt(process);
+                } catch (Throwable ignored) {
+                }
+            } else {
+                throw new UnsupportedOperationException();
+            }
         } else {
-            throw new UnsupportedOperationException();
+            retVal = (int) process.pid();
         }
         return retVal;
     }
 
+    /**
+     * Suspends the execution of the given process.
+     * @param process   The process
+     */
     public static void suspend(Process process) {
         if (SystemUtils.IS_OS_WINDOWS) {
             try {
@@ -110,6 +125,10 @@ public final class ProcessHelper {
         }
     }
 
+    /**
+     * Resumes the execution of the given process
+     * @param process   The process
+     */
     public static void resume(Process process) {
         if (SystemUtils.IS_OS_WINDOWS) {
             try {
@@ -130,18 +149,31 @@ public final class ProcessHelper {
         }
     }
 
+    /**
+     * Forces the termination of the given process
+     * @param process   The process
+     */
     public static void terminate(Process process) {
-        int pid = getPID(process);
-        if (SystemUtils.IS_OS_WINDOWS) {
-            try {
-                Runtime.getRuntime().exec(String.format(WIN_KILL, pid));
-            } catch (IOException ignored) { }
-        } else if (SystemUtils.IS_OS_LINUX) {
-            try {
-                Runtime.getRuntime().exec(String.format(LINUX_KILL, pid));
-            } catch (IOException ignored) { }
+        if (System.getProperty("java.version").startsWith("1.")) {
+            // For Java versions prior to 9, we need to rely on getting the pid the old way
+            int pid = getPID(process);
+            if (pid > 0) {
+                if (SystemUtils.IS_OS_WINDOWS) {
+                    try {
+                        Runtime.getRuntime().exec(String.format(WIN_KILL, pid));
+                    } catch (IOException ignored) {
+                    }
+                } else if (SystemUtils.IS_OS_LINUX) {
+                    try {
+                        Runtime.getRuntime().exec(String.format(LINUX_KILL, pid));
+                    } catch (IOException ignored) {
+                    }
+                } else {
+                    throw new UnsupportedOperationException();
+                }
+            }
         } else {
-            throw new UnsupportedOperationException();
+            process.toHandle().destroyForcibly();
         }
     }
 
