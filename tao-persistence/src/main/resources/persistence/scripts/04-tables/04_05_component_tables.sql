@@ -210,7 +210,7 @@ CREATE TABLE component.processing_parameter
     type_id integer NOT NULL,
     label varchar(512) NOT NULL,
     data_type varchar(512) NOT NULL,
-    default_value varchar(250) NULL,
+    default_value text NULL,
     description text NULL,
     unit varchar(250) NULL,
     format varchar(250) NULL,
