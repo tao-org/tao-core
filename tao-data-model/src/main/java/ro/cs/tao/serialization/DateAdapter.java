@@ -20,21 +20,23 @@ import ro.cs.tao.utils.DateUtils;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.logging.Logger;
 
 /**
  * @author Cosmin Cara
  */
 public class DateAdapter extends XmlAdapter<String, LocalDateTime> {
+    protected Logger logger = Logger.getLogger(getClass().getName());
     private final DateTimeFormatter dateFormat = DateUtils.getFormatterAtUTC("yyyy-MM-dd'T'HH:mm:ss");
     private final DateTimeFormatter dateFormatZ = DateUtils.getFormatterAtUTC("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
     @Override
     public LocalDateTime unmarshal(String v) throws Exception {
-        LocalDateTime result;
+        LocalDateTime result = null;
         try {
-            result = LocalDateTime.parse(v, dateFormat);
+            result = DateUtils.parseDateTime(v);
         } catch (Exception e) {
-            result = LocalDateTime.parse(v, dateFormatZ);
+            logger.warning(e.getMessage());
         }
         return result;
     }
