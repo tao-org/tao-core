@@ -596,7 +596,7 @@
                 <column name="data_type" nullable="false" column-definition="varchar(512) NOT NULL"/>
             </basic>
             <basic name="defaultValue">
-                <column name="default_value" nullable="true" column-definition="varchar(250) NULL"/>
+                <column name="default_value" nullable="true" column-definition="text NULL"/>
             </basic>
             <basic name="description">
                 <column name="description" nullable="true" column-definition="text NULL"/>
