@@ -20,7 +20,7 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import ro.cs.tao.datasource.InterruptedException;
 import ro.cs.tao.datasource.*;
 import ro.cs.tao.eodata.EOProduct;
-import ro.cs.tao.eodata.util.ProductHelper;
+import ro.cs.tao.eodata.util.BaseProductHelper;
 import ro.cs.tao.utils.ExceptionUtils;
 import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.NetUtils;
@@ -448,7 +448,7 @@ public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
 
     private Path downloadFile(String remoteUrl, Path file, FetchMode mode, T authToken) throws IOException, InterruptedException {
         checkCancelled();
-        String subActivity = remoteUrl.substring(remoteUrl.lastIndexOf(ProductHelper.URL_SEPARATOR) + 1);
+        String subActivity = remoteUrl.substring(remoteUrl.lastIndexOf(BaseProductHelper.URL_SEPARATOR) + 1);
         if ("$value".equals(subActivity)) {
             subActivity = file.getFileName().toString();
         }
