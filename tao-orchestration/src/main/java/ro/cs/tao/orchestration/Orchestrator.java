@@ -18,6 +18,7 @@ package ro.cs.tao.orchestration;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.component.*;
 import ro.cs.tao.configuration.ConfigurationManager;
+import ro.cs.tao.datasource.ProductHelperFactory;
 import ro.cs.tao.docker.DockerVolumeMap;
 import ro.cs.tao.docker.ExecutionConfiguration;
 import ro.cs.tao.eodata.EOProduct;
@@ -857,7 +858,7 @@ public class Orchestrator extends Notifiable {
                 String file = valuesList.get(i);
                 ProductHelper helper = null;
                 try {
-                    helper = ProductHelper.getHelper(FileUtilities.toPath(file).getFileName().toString());
+                    helper = ProductHelperFactory.getHelper(FileUtilities.toPath(file).getFileName().toString());
                 } catch (Exception ignored) { }
                 if (helper != null) {
                     valuesList.set(i, valuesList.get(i) + (valuesList.get(i).endsWith("/") ? "" : "/") + helper.getMetadataFileName());
