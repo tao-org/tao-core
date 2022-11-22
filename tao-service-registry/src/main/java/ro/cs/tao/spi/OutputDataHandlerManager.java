@@ -82,12 +82,13 @@ public class OutputDataHandlerManager {
                                                .filter(e -> e.getKey().isAssignableFrom(itemClass))
                                                .map(Map.Entry::getValue).findFirst().orElse(null);
         }
+        T retItem = null;
         if (handlers != null) {
             for (OutputDataHandler handler : handlers) {
-                item = (T) handler.handle(item);
+                retItem = (T) handler.handle(item);
                 // reset any fileProcessFactory set
                 //handler.setFileProcessFactory(null);
-                if (item != null && !handler.allowNext()) {
+                if (retItem != null && !handler.allowNext()) {
                     break;
                 }
             }
@@ -95,7 +96,7 @@ public class OutputDataHandlerManager {
             logger.warning(String.format("No output handler defined for type %s", itemClass));
             return null;
         }
-        return item;
+        return retItem;
     }
 
     /**
