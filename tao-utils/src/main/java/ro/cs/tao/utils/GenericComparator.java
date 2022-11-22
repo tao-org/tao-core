@@ -99,10 +99,11 @@ public class GenericComparator implements Comparator<Object>  {
                         if (field == null) {
                             throw new NoSuchFieldException(fieldNames[index]);
                         }
-                        field.setAccessible(true);
-                        Object value1 = field.get(o1);
-                        Object value2 = field.get(o2);
-                        retValue = compare(value1, value2) * (ascendingOrder[index++] ? 1 : -1);
+                        if (field.canAccess(o1)) {
+                            Object value1 = field.get(o1);
+                            Object value2 = field.get(o2);
+                            retValue = compare(value1, value2) * (ascendingOrder[index++] ? 1 : -1);
+                        }
                     } catch (IllegalAccessException | NoSuchFieldException e) {
                         throw new RuntimeException(String.format("Class %s doesn't define field %s",
                                                                  this.objectClass.getSimpleName(), fieldNames[index - 1]));
