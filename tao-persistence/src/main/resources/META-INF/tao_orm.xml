@@ -1449,6 +1449,9 @@
             <basic name="system">
                 <column name="system" nullable="true" column-definition="boolean DEFAULT false"/>
             </basic>
+            <basic name="editable">
+                <column name="is_editable" nullable="false" column-definition="boolean NOT NULL"/>
+            </basic>
             <basic name="parameters">
                 <column name="params" nullable="true" column-definition="json"/>
             </basic>

@@ -19,6 +19,7 @@ public class Repository extends StringIdentifiable {
     private LinkedHashMap<String, String> parameters;
     private boolean readOnly;
     private boolean system;
+    private boolean editable;
     private LocalDateTime created;
 
     @XmlTransient
@@ -88,6 +89,14 @@ public class Repository extends StringIdentifiable {
 
     public void setSystem(boolean system) {
         this.system = system;
+    }
+
+    public boolean isEditable() {
+        return editable;
+    }
+
+    public void setEditable(boolean editable) {
+        this.editable = editable;
     }
 
     public LocalDateTime getCreated() {
