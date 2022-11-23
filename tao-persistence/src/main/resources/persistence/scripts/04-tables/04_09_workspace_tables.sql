@@ -22,6 +22,7 @@ CREATE TABLE workspace.repository
 	repository_type_id int NOT NULL,
 	read_only boolean NOT NULL,
 	system boolean DEFAULT false,
+	is_editable boolean NOT NULL,
 	params json NULL,
 	created timestamp DEFAULT now()
 );
