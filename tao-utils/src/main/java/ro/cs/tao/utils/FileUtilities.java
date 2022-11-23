@@ -117,6 +117,24 @@ public class FileUtilities {
         }
     }
 
+    public static String toUnixPath(String path) {
+        String transformed = path;
+        if (isURI(path)) {
+            transformed = path.substring(path.indexOf("://") + 3);
+            if (":".equals(transformed.substring(2, 3))) {
+                // Windows case
+                transformed = transformed.substring(transformed.indexOf(":") + 1);
+            }
+        } else {
+            transformed = transformed.replace("\\", "/");
+            int idx;
+            if ((idx = transformed.indexOf(":")) > 0) {
+                transformed = transformed.substring(idx + 1);
+            }
+        }
+        return transformed;
+    }
+
     public static Path unzip(Path zipFile) throws IOException {
         URI uri = URI.create("jar:file:" + zipFile.toUri().getPath());
         Map<String, String> env = new HashMap<>();
