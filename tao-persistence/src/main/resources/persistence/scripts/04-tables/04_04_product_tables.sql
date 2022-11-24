@@ -294,16 +294,12 @@ CREATE TABLE product.data_sources_index_props
 (
     data_source_id integer NOT NULL,
     footprint geometry(POLYGON, 4326) NULL,
-    acquisition_date timestamp NULL,
-    CONSTRAINT info unique (data_source_id, footprint, acquisition_date)
-)
-WITH (
-    OIDS = FALSE
-)
-TABLESPACE pg_default;
+    acquisition_date timestamp NULL
+);
 
-ALTER TABLE IF EXISTS public.data_sources_index_props
+ALTER TABLE IF EXISTS product.data_sources_index_props
     OWNER to tao;
+ALTER TABLE IF EXISTS product.data_sources_index_props ADD CONSTRAINT info UNIQUE (data_source_id, footprint, acquisition_date);
 -------------------------------------------------------------------------------
 -- Index: ix_data_source_geom
 DROP INDEX IF EXISTS public.ix_data_sources_geom;
