@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.services.interfaces;
 
+import ro.cs.tao.datasource.DataSourceCredentials;
 import ro.cs.tao.datasource.beans.Query;
 import ro.cs.tao.datasource.param.DataSourceParameter;
 import ro.cs.tao.datasource.remote.FetchMode;
@@ -72,4 +73,5 @@ public interface DataSourceService extends TAOService {
 
     List<EOProduct> fetch(Query queryObject, List<EOProduct> products, FetchMode mode, String localPath, String pathFormat);
 
+    DataSourceCredentials getDataSourceCredentials(String dataSource);
 }
