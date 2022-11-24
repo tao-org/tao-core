@@ -29,7 +29,7 @@ public class IndexedDataSourceParameter {
     }
 
     public Map<String, Object> getSensor(String name) {
-        return sensor.get(name);
+        return sensor != null ? sensor.get(name) : null;
     }
 
     public void setSensor(Map<String, Map<String, Object>> sensor) {
