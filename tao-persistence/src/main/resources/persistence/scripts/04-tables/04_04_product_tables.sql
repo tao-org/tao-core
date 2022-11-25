@@ -293,7 +293,7 @@ DROP TABLE IF EXISTS product.data_sources_index_props CASCADE;
 CREATE TABLE product.data_sources_index_props
 (
     data_source_id integer NOT NULL,
-    footprint geometry(POLYGON, 4326) NULL,
+    footprint  geometry(Geometry,4326) NULL,
     acquisition_date timestamp NULL
 );
 
