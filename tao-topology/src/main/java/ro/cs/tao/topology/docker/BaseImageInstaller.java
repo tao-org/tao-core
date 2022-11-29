@@ -112,7 +112,8 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
                         container = DockerManager.pullImage(properties.getProperty("docker.hub.name"));
                     } else {
                         dockerfilePath = dockerImagesPath.resolve(getContainerName()).resolve("Dockerfile");
-                        if (!Files.exists(dockerfilePath)) {
+                        if (!Files.exists(dockerfilePath) || Files.size(dockerfilePath) == 0) {
+                            Files.deleteIfExists(dockerfilePath);
                             logger.finest(String.format("Extracting Dockerfile for image %s", getContainerName()));
                             //Files.createDirectories(dockerfilePath.getParent());
                             try (BufferedInputStream is = new BufferedInputStream(getClass().getResourceAsStream("Dockerfile"));
