@@ -37,6 +37,7 @@ import ro.cs.tao.workflow.ParameterValue;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.enums.TransitionBehavior;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -382,7 +383,14 @@ public class TaskUtilities {
         String result;
         final String strPath = path.startsWith("[") ? path.substring(1, path.length() - 1) : path;
         try {
-            Path p = FileUtilities.resolveSymLinks(FileUtilities.toPath(strPath)).toAbsolutePath();
+            Path p = FileUtilities.toPath(strPath).toAbsolutePath();
+            Path absPath = FileUtilities.resolveSymLinks(FileUtilities.toPath(strPath)).toAbsolutePath();
+            if (Files.isSymbolicLink(p)) {
+                // If the path is a symlink to a /eodata product, maybe we want to leave it as-is
+                if (!absPath.startsWith(DOCKER_EODATA_HOST_POINT)) {
+                    p = absPath;
+                }
+            }
             final Path root;
             final String mountPoint;
             if (DOCKER_EODATA_HOST_POINT != null && p.startsWith(DOCKER_EODATA_HOST_POINT)) {
@@ -393,7 +401,7 @@ public class TaskUtilities {
                 mountPoint = DOCKER_MOUNT_POINT;
             }
             final String unixPath = FileUtilities.asUnixPath(root.relativize(p), true);
-            result = mountPoint + (unixPath.startsWith("/") ? unixPath.substring(1) : unixPath);
+            result = mountPoint + (mountPoint.endsWith("/") ? "" : "/") + (unixPath.startsWith("/") ? unixPath.substring(1) : unixPath);
         } catch (Exception e1) {
             e1.printStackTrace();
             result = strPath;
