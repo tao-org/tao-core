@@ -109,11 +109,11 @@ public abstract class Executor<T> implements Runnable {
     }
     /**
      * Creates an executor for the given command and returns the executor object.
-     * The caller is responsible of actually invoking the execution on the returned executor.
+     * The caller is responsible for actually invoking the execution on the returned executor.
      *
-     * @param outputConsumer    The counsumer of the process output
+     * @param outputConsumer    The consumer of the process output
      * @param job               The command (job) to be executed
-     * @return                  The Executor object that is responsible of execution
+     * @return                  The Executor object that is responsible for execution
      */
     public static Executor<?> prepare(OutputConsumer outputConsumer, ExecutionUnit job) {
         if (job == null) {
