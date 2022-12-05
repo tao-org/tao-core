@@ -24,10 +24,7 @@ import ro.cs.tao.datasource.persistence.DataSourceConfigurationProvider;
 import ro.cs.tao.eodata.EOData;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.enums.ProductStatus;
-import ro.cs.tao.eodata.sorting.Association;
-import ro.cs.tao.eodata.sorting.DataSorter;
-import ro.cs.tao.eodata.sorting.ProductAssociationFactory;
-import ro.cs.tao.eodata.sorting.ProductSortingFactory;
+import ro.cs.tao.eodata.sorting.*;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.Executor;
 import ro.cs.tao.execution.model.DataSourceExecutionTask;
@@ -40,6 +37,7 @@ import ro.cs.tao.quota.UserQuotaManager;
 import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.serialization.StringListAdapter;
 import ro.cs.tao.spi.OutputDataHandlerManager;
+import ro.cs.tao.utils.DateUtils;
 import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.StringUtilities;
 import ro.cs.tao.utils.Tuple;
@@ -147,12 +145,19 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                                                       task.getId(), rSize, rSize - results.size()));
                         }
                     }
+                    WorkflowDescriptor workflow = workflowProvider.get(task.getJob().getWorkflowId());
                     variable = values.stream().filter(v -> DataSourceComponent.SYNC_PARAMETER.equals(v.getKey()))
                                      .findFirst().orElse(null);
                     if (variable != null && variable.getValue() != null) {
                         // The current resultset must be synchronized with the one received in this parameter
                         // Synchronization means filtering by dates of the previous resultset
-                        filterByOtherList(results, variable.getValue());
+                        WorkflowNodeDescriptor node = workflow.getNodes().stream().filter(n -> n.getId().equals(task.getWorkflowNodeId())).findFirst().get();
+                        String[] filter = null;
+                        Set<ComponentLink> links = node.getIncomingLinks();
+                        if (links != null) {
+                            filter = links.iterator().next().getAggregator().getFilter();
+                        }
+                        filterByOtherList(results, variable.getValue(), filter);
                     }
                     final String sensorName = dataSourceComponent.getSensorName().toLowerCase().replace(" ", "-");
                     dataSourceComponent.setProductStatusListener(this);
@@ -191,7 +196,6 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                     Long workflowNodeId = task.getWorkflowNodeId();
                     List<Tuple<EOProduct, EOProduct>> tuples = null;
 
-                    WorkflowDescriptor workflow = workflowProvider.get(task.getJob().getWorkflowId());
                     List<WorkflowNodeDescriptor> linkedNodes =
                             workflow.getNodes().stream().filter(n -> n.getIncomingLinks() != null &&
                                             n.getIncomingLinks().stream().anyMatch(l -> l.getSourceNodeId() == workflowNodeId))
@@ -353,32 +357,42 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
         return json;
     }
 
-    private void filterByOtherList(List<EOProduct> products, String otherProductsList) {
+    private void filterByOtherList(List<EOProduct> products, String otherProductsList, String[] filters) {
         final List<String> names = deserializeResults(otherProductsList);
         final List<EOProduct> otherProducts = productProvider.getProductsByNames(names.toArray(new String[0]));
         // If other list consists of non-products, do nothing
         if (otherProducts != null && otherProducts.size() > 0) {
             final Set<LocalDate> otherDates = otherProducts.stream().map(p -> p.getAcquisitionDate().toLocalDate()).collect(Collectors.toSet());
             products.removeIf(p -> !otherDates.contains(p.getAcquisitionDate().toLocalDate()));
-            // If multiple products on the same date, keep the "middle one"
             final Map<LocalDate, List<EOProduct>> groupsByDate = new HashMap<>();
             LocalDate date;
+            // First, group by dates
             for (EOProduct product : products) {
                 date = product.getAcquisitionDate().toLocalDate();
                 List<EOProduct> list = groupsByDate.computeIfAbsent(date, k -> new ArrayList<>());
                 list.add(product);
             }
-            for (Map.Entry<LocalDate, List<EOProduct>> entry : groupsByDate.entrySet()) {
-                List<EOProduct> list = entry.getValue();
-                final int size = list.size();
-                final int idx = size % 2 == 1 ? (size - 1) / 2 : size / 2 - 1;
-                for (int i = 0; i < size; i++) {
-                    if (i != idx) {
-                        products.remove(list.get(i));
-                    }
+            // If multiple products on the same date, keep the one according to the defined filter or keep the "middle one"
+            DataFilter<EOProduct> filter = null;
+            if (filters != null) {
+                if (filters.length == 1) {
+                    filter = ProductFilterFactory.getFilter(filters[0]);
+                } else if (filters[1] != null) {
+                    filter = ProductFilterFactory.getFilter(filters[0],
+                                                            DateUtils.parseDateTime(filters[1]));
                 }
             }
+            if (filter == null) {
+                filter = new KeepMiddleProductFilter();
+            }
+            final Set<EOProduct> toKeep = new HashSet<>();
+            for (Map.Entry<LocalDate, List<EOProduct>> entry : groupsByDate.entrySet()) {
+                List<EOProduct> list = entry.getValue();
+                toKeep.add(filter.filter(list));
+            }
             groupsByDate.clear();
+            products.removeIf(p -> !toKeep.contains(p));
+            toKeep.clear();
         }
     }
 
