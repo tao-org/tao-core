@@ -4,41 +4,46 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import ro.cs.tao.TaoEnum;
 import ro.cs.tao.eodata.Polygon2D;
 import ro.cs.tao.serialization.JavaTypeDeserializer;
+import ro.cs.tao.utils.DateUtils;
 
 import javax.xml.bind.annotation.XmlEnum;
+import java.lang.reflect.Array;
 import java.time.LocalDateTime;
+import java.util.function.Function;
 
 @XmlEnum(Class.class)
 @JsonDeserialize(using = JavaTypeDeserializer.class)
 public enum JavaType implements TaoEnum<Class<?>> {
-    BYTE(byte.class, "byte", "urn:ogc:def:positiveInteger"),
-    BYTE_ARRAY(byte[].class, "byte[]", "urn:ogc:def:positiveIntegerList"),
-    SHORT(short.class, "short", "urn:ogc:def:integer"),
-    SHORT_ARRAY(short[].class, "short[]", "urn:ogc:def:integerList"),
-    INT(int.class, "int", "urn:ogc:def:integer"),
-    INT_ARRAY(int[].class, "int[]", "urn:ogc:def:integerList"),
-    LONG(long.class, "long", "urn:ogc:def:integer"),
-    LONG_ARRAY(long[].class, "long[]", "urn:ogc:def:integerList"),
-    FLOAT(float.class, "float", "urn:ogc:def:scale"),
-    FLOAT_ARRAY(float[].class, "float[]", "urn:ogc:def:scaleList"),
-    DOUBLE(double.class, "double", "urn:ogc:def:scale"),
-    DOUBLE_ARRAY(double[].class, "double[]", "urn:ogc:def:scaleList"),
-    STRING(String.class, "string", "urn:ogc:def:string"),
-    STRING_ARRAY(String[].class, "string[]", "urn:ogc:def:string"),
-    DATE(LocalDateTime.class, "date", "urn:ogc:def:time"),
-    DATE_ARRAY(LocalDateTime[].class, "date[]", "urn:ogc:def:timeList"),
-    BOOLEAN(boolean.class, "bool", "urn:ogc:def:boolean"),
-    BOOLEAN_ARRAY(boolean[].class, "bool[]", "\"urn:ogc:def:string"),
-    POLYGON(Polygon2D.class, "polygon", "urn:ogc:def:anyURI");
+    BYTE(byte.class, "byte", "urn:ogc:def:positiveInteger", Byte::parseByte),
+    BYTE_ARRAY(byte[].class, "byte[]", "urn:ogc:def:positiveIntegerList", Byte::parseByte),
+    SHORT(short.class, "short", "urn:ogc:def:integer", Short::parseShort),
+    SHORT_ARRAY(short[].class, "short[]", "urn:ogc:def:integerList", Short::parseShort),
+    INT(int.class, "int", "urn:ogc:def:integer", Integer::parseInt),
+    INT_ARRAY(int[].class, "int[]", "urn:ogc:def:integerList", Integer::parseInt),
+    LONG(long.class, "long", "urn:ogc:def:integer", Long::parseLong),
+    LONG_ARRAY(long[].class, "long[]", "urn:ogc:def:integerList", Long::parseLong),
+    FLOAT(float.class, "float", "urn:ogc:def:scale", Float::parseFloat),
+    FLOAT_ARRAY(float[].class, "float[]", "urn:ogc:def:scaleList", Float::parseFloat),
+    DOUBLE(double.class, "double", "urn:ogc:def:scale", Double::parseDouble),
+    DOUBLE_ARRAY(double[].class, "double[]", "urn:ogc:def:scaleList", Double::parseDouble),
+    STRING(String.class, "string", "urn:ogc:def:string", s -> s),
+    STRING_ARRAY(String[].class, "string[]", "urn:ogc:def:string", s -> s),
+    DATE(LocalDateTime.class, "date", "urn:ogc:def:time", DateUtils::parseDate),
+    DATE_ARRAY(LocalDateTime[].class, "date[]", "urn:ogc:def:timeList", DateUtils::parseDate),
+    BOOLEAN(boolean.class, "bool", "urn:ogc:def:boolean", Boolean::parseBoolean),
+    BOOLEAN_ARRAY(boolean[].class, "bool[]", "\"urn:ogc:def:string", Boolean::parseBoolean),
+    POLYGON(Polygon2D.class, "polygon", "urn:ogc:def:anyURI", Polygon2D::fromWKT);
 
     private final Class<?> clazz;
     private final String description;
     private final String ogcURN;
+    private final Function<String, Object> converter;
 
-    JavaType(Class<?> paramClass, String description, String ogcURN) {
+    JavaType(Class<?> paramClass, String description, String ogcURN, Function<String, Object> converter) {
         this.clazz = paramClass;
         this.description = description;
         this.ogcURN = ogcURN;
+        this.converter = converter;
     }
 
     @Override
@@ -52,6 +57,34 @@ public enum JavaType implements TaoEnum<Class<?>> {
     }
 
     public String ogcURN() { return this.ogcURN; }
+
+    public Object parse(String value) {
+        if (this.clazz.isArray()) {
+            throw new IllegalArgumentException("Method should not be called on an array type");
+        }
+        return value != null ? this.converter.apply(value) : this.clazz.cast(null);
+    }
+
+    public boolean isArrayType() { return this.clazz.isArray(); }
+
+    public Object parseArray(String value) {
+        if (!this.clazz.isArray()) {
+            throw new IllegalArgumentException("Method should be called on an array type");
+        }
+        if (value == null) {
+            return this.clazz.cast(null);
+        } else {
+            if (!value.startsWith("[") && !value.endsWith("]")) {
+                throw new IllegalArgumentException("Value does not represent an array");
+            }
+            String[] split = value.substring(1, value.length() - 1).split(",");
+            Object array = Array.newInstance(this.clazz, split.length);
+            for (int i = 0; i < split.length; i++) {
+                Array.set(array, i, this.converter.apply(split[i]));
+            }
+            return array;
+        }
+    }
 
     public static JavaType fromClass(Class<?> clazz) {
         for (JavaType type : JavaType.values()) {
