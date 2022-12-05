@@ -1,5 +1,6 @@
 package ro.cs.tao.eodata.sorting;
 
+import ro.cs.tao.datasource.param.JavaType;
 import ro.cs.tao.eodata.EOProduct;
 
 import java.time.Duration;
@@ -19,7 +20,7 @@ public class ClosestToDateFilter extends DataFilter<EOProduct> {
     }
 
     @Override
-    public String[] description() { return new String[] { friendlyName(), LocalDateTime.class.getName() }; }
+    public String[] description() { return new String[] {friendlyName(), JavaType.DATE.friendlyName()}; }
 
     public LocalDateTime getDateTime() {
         return dateTime;
@@ -52,7 +53,10 @@ public class ClosestToDateFilter extends DataFilter<EOProduct> {
     protected Function<EOProduct, Long> reducer() {
         return eoProduct -> {
             LocalDateTime acquisitionDate = eoProduct.getAcquisitionDate();
-            return acquisitionDate != null ? Math.abs(Duration.between(acquisitionDate, dateTime).getSeconds()) : Long.MAX_VALUE;
+            return acquisitionDate != null
+                   ? Math.abs(Duration.between(acquisitionDate.toLocalTime(),
+                                               dateTime.toLocalTime()).getSeconds())
+                   : Long.MAX_VALUE;
         };
     }
 

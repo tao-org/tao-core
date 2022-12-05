@@ -20,6 +20,7 @@ import ro.cs.tao.component.*;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.datasource.*;
 import ro.cs.tao.datasource.beans.Query;
+import ro.cs.tao.datasource.param.JavaType;
 import ro.cs.tao.datasource.persistence.DataSourceConfigurationProvider;
 import ro.cs.tao.eodata.EOData;
 import ro.cs.tao.eodata.EOProduct;
@@ -37,7 +38,6 @@ import ro.cs.tao.quota.UserQuotaManager;
 import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.serialization.StringListAdapter;
 import ro.cs.tao.spi.OutputDataHandlerManager;
-import ro.cs.tao.utils.DateUtils;
 import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.StringUtilities;
 import ro.cs.tao.utils.Tuple;
@@ -213,15 +213,13 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                                 if (linkedNode.getComponentType() == ComponentType.DATASOURCE) {
                                     String[] group = aggregator.getAssociator();
                                     if (group != null) {
-                                        Association<EOProduct> association;
-                                        if (group.length == 1) {
-                                            association = ProductAssociationFactory.getAssociation(group[0]);
-                                        } else {
-                                            if (group[1] == null) {
-                                                group[1] = "0";
-                                            }
+                                        Association<EOProduct> association = ProductAssociationFactory.getAssociation(group[0]);
+                                        if (group.length == 2) {
+                                            JavaType javaType = JavaType.fromFriendlyName(association.description()[1]);
                                             association = ProductAssociationFactory.getAssociation(group[0],
-                                                                                                   Integer.parseInt(group[1]));
+                                                                                                   javaType.isArrayType()
+                                                                                                        ? javaType.parseArray(group[1])
+                                                                                                        : javaType.parse(group[1]));
                                         }
                                         tuples = association.associate(products);
                                     }
@@ -375,11 +373,13 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
             // If multiple products on the same date, keep the one according to the defined filter or keep the "middle one"
             DataFilter<EOProduct> filter = null;
             if (filters != null) {
-                if (filters.length == 1) {
-                    filter = ProductFilterFactory.getFilter(filters[0]);
-                } else if (filters[1] != null) {
+                filter = ProductFilterFactory.getFilter(filters[0]);
+                if (filters.length == 2) {
+                    JavaType javaType = JavaType.fromFriendlyName(filter.description()[1]);
                     filter = ProductFilterFactory.getFilter(filters[0],
-                                                            DateUtils.parseDateTime(filters[1]));
+                                                            javaType.isArrayType()
+                                                                ? javaType.parseArray(filters[1])
+                                                                : javaType.parse(filters[1]));
                 }
             }
             if (filter == null) {

@@ -1,5 +1,6 @@
 package ro.cs.tao.eodata.sorting;
 
+import ro.cs.tao.datasource.param.JavaType;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.utils.Tuple;
 
@@ -28,7 +29,7 @@ public class ProductByDateOffsetAssociation extends Association<EOProduct> {
     }
 
     @Override
-    public String[] description() { return new String[] { friendlyName(), Integer.class.getName() }; }
+    public String[] description() { return new String[] {friendlyName(), JavaType.INT.friendlyName() }; }
 
     public int getOffsetDays() { return offsetDays; }
     public void setOffsetDays(int offsetDays) { this.offsetDays = offsetDays; }
