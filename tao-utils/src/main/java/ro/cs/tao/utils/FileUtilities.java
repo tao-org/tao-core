@@ -415,6 +415,26 @@ public class FileUtilities {
         return linkFile(sourcePath, target);
     }
 
+    public static Path replaceLink(Path link, ProgressListener progressListener) throws IOException {
+        if (!Files.exists(link)) {
+            throw new NoSuchFileException(link.toString());
+        }
+        Path resolved;
+        if (Files.isSymbolicLink(link)) {
+            resolved = Files.readSymbolicLink(link);
+            Path target = link.getParent();
+            Files.delete(link);
+            if (progressListener != null) {
+                copy(resolved, target, progressListener);
+            } else {
+                copy(resolved, target);
+            }
+        } else {
+            resolved = link;
+        }
+        return resolved;
+    }
+
     public static String asUnixPath(Path path, boolean insideDocker) {
         if (SystemUtils.IS_OS_UNIX) {
             return path.toString();

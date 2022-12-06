@@ -19,12 +19,17 @@ package ro.cs.tao.execution.util;
 import org.springframework.stereotype.Component;
 import ro.cs.tao.component.*;
 import ro.cs.tao.datasource.DataSourceComponent;
+import ro.cs.tao.datasource.DataSourceTopic;
 import ro.cs.tao.datasource.persistence.DataSourceComponentProvider;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.docker.ExecutionConfiguration;
 import ro.cs.tao.execution.ExecutionException;
+import ro.cs.tao.execution.ExecutionsManager;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
+import ro.cs.tao.messaging.Messaging;
+import ro.cs.tao.messaging.ProgressNotifier;
+import ro.cs.tao.messaging.Topic;
 import ro.cs.tao.persistence.ContainerProvider;
 import ro.cs.tao.persistence.GroupComponentProvider;
 import ro.cs.tao.persistence.ProcessingComponentProvider;
@@ -269,7 +274,7 @@ public class TaskUtilities {
                     final Variable inputVar = toTask.getInputParameterValues().stream().filter(p -> p.getKey().equals(toSourceName)).findFirst().get();
                     final boolean isExternal = isExternal(parentTask);
                     if (!isExternal || inputVar.getValue() == null) {
-                        toTask.setInputParameterValue(toSourceName, relativizePathForExecution(outValue));
+                        toTask.setInputParameterValue(toSourceName, relativizePathForExecution(outValue, toTask));
                         logger.finest(String.format("Transferred output [%s] of task %s to task %s",
                                                     toSourceName, parentTask.getId(), toTask.getId()));
                     } else {
@@ -374,7 +379,7 @@ public class TaskUtilities {
      * Computes a relative to a docker container path of the given path
      * @param path  The path to be made relative
      */
-    public static String relativizePathForExecution(String path) {
+    public static String relativizePathForExecution(String path, ExecutionTask task) {
         if (path.startsWith(DOCKER_MOUNT_POINT) &&
                 !path.startsWith(FileUtilities.asUnixPath(SystemVariable.ROOT.value(), true))) {
             // Path is already inside the docker container
@@ -386,9 +391,26 @@ public class TaskUtilities {
             Path p = FileUtilities.toPath(strPath).toAbsolutePath();
             Path absPath = FileUtilities.resolveSymLinks(FileUtilities.toPath(strPath)).toAbsolutePath();
             if (Files.isSymbolicLink(p)) {
-                // If the path is a symlink to a /eodata product, maybe we want to leave it as-is
+                // If the path is a symlink to a /eodata product, maybe we want to temporarily copy it locally
                 if (!absPath.startsWith(DOCKER_EODATA_HOST_POINT)) {
                     p = absPath;
+                } else {
+                    Messaging.send(task.getJob().getUserName(),
+                                   Topic.INFORMATION.getCategory(),
+                                   "Product " + p.getFileName() + " will be temporarily brought into workspace");
+                    final Path linkTarget = FileUtilities.replaceLink(p,
+                                                                      new ProgressNotifier(() -> task.getJob().getUserName(),
+                                                                                           task.getJob().getName(), DataSourceTopic.PRODUCT_PROGRESS));
+                    final Path link = p;
+                    ExecutionsManager.getInstance().registerPostExecuteAction(task, () -> {
+                        if (Files.isRegularFile(link)) {
+                            Files.delete(link);
+                        } else {
+                            FileUtilities.deleteTree(link);
+                        }
+                        FileUtilities.linkFile(linkTarget, link);
+                        return null;
+                    });
                 }
             }
             final Path root;

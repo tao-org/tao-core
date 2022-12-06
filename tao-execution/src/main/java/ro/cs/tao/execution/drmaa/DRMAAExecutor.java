@@ -362,7 +362,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                 }
             }
             // On master node, if the input of the task is on object storage, we need to copy it locally first
-            List<String> parentIds = task.getJob().getTaskDependencies().get(String.valueOf(task.getId()));
+            /*List<String> parentIds = task.getJob().getTaskDependencies().get(String.valueOf(task.getId()));
             Map<Long, Boolean> map = task.getJob().getTasks().stream().collect(Collectors.toMap(ExecutionTask::getId,
                                                                                                 t -> t instanceof DataSourceExecutionTask));
             if (masterHost.equals(task.getExecutionNodeHostName()) && parentIds.stream().anyMatch(i -> map.get(Long.parseLong(i)))) {
@@ -384,7 +384,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                         }
                     }
                 }
-            }
+            }*/
             String id = session.runJob(jt);
             session.deleteJobTemplate(jt);
             if (id == null) {
