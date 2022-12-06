@@ -316,11 +316,38 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         return out;
     }
 
+    private void incrementMemory(NodeDescription node, long amount) {
+        if (!this.hostMemoryRequests.containsKey(node.getId())) {
+            this.hostMemoryRequests.put(node.getId(), new Tuple<>(node, new AtomicLong(amount)));
+        } else {
+            this.hostMemoryRequests.get(node.getId()).getKeyTwo().addAndGet(amount);
+        }
+    }
+
     private void decrementMemory(String host, long amount) {
         Tuple<NodeDescription, AtomicLong> tuple = this.hostMemoryRequests.get(host);
         if (tuple != null) {
             tuple.getKeyTwo().getAndAdd(-amount);
         }
+    }
+
+    private boolean canSubmitTask(String host) {
+        final Tuple<NodeDescription, AtomicLong> hostData = this.hostMemoryRequests.get(host);
+        final boolean canSubmit;
+        if (hostData != null) {
+            long installed = hostData.getKeyOne().getFlavor().getMemory() * MemoryUnit.KB.value();
+            long requested = hostData.getKeyTwo().get();
+            if (installed <= requested) {
+                logger.warning(String.format("Host %s may not have enough available memory (installed: %d, requested: %d)",
+                                             host, installed, requested));
+                canSubmit = false;
+            } else {
+                canSubmit = true;
+            }
+        } else {
+            canSubmit = true;
+        }
+        return canSubmit;
     }
 
     private void cleanupTmpFolder(ProcessingExecutionTask task) {
@@ -352,39 +379,6 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         final ProcessingExecutionTask task = pair.getKeyTwo();
         logger.finest(String.format("Task %s has been dequeued for execution", task.getId()));
         try {
-            final Tuple<NodeDescription, AtomicLong> hostData = this.hostMemoryRequests.get(task.getExecutionNodeHostName());
-            if (hostData != null) {
-                long installed = hostData.getKeyOne().getFlavor().getMemory() * MemoryUnit.KB.value();
-                long requested = hostData.getKeyTwo().get();
-                if (installed <= requested) {
-                    logger.warning(String.format("Host %s may not have enough available memory (installed: %d, requested: %d)",
-                                                 task.getExecutionNodeHostName(), installed, requested));
-                }
-            }
-            // On master node, if the input of the task is on object storage, we need to copy it locally first
-            /*List<String> parentIds = task.getJob().getTaskDependencies().get(String.valueOf(task.getId()));
-            Map<Long, Boolean> map = task.getJob().getTasks().stream().collect(Collectors.toMap(ExecutionTask::getId,
-                                                                                                t -> t instanceof DataSourceExecutionTask));
-            if (masterHost.equals(task.getExecutionNodeHostName()) && parentIds.stream().anyMatch(i -> map.get(Long.parseLong(i)))) {
-                List<Variable> inputs = task.getInputParameterValues();
-                Set<String> outputs = task.getOutputParameterValues().stream().map(Variable::getKey).collect(Collectors.toSet());
-                Set<String> inputSources = task.getComponent().getSources().stream().map(SourceDescriptor::getName).collect(Collectors.toSet());
-                for (Variable input : inputs) {
-                    if (!outputs.contains(input.getKey())) {
-                        String value = input.getValue();
-                        String newValue = inputSources.contains(input.getKey()) ? copyLocally(value, task) : value;
-                        input.setValue(newValue);
-                        if (!value.equals(newValue)) {
-                            List args = jt.getArgs();
-                            List<String> newArgs = new ArrayList<>();
-                            for (Object arg : args) {
-                                newArgs.add(arg.toString().replace(value, newValue));
-                            }
-                            jt.setArgs(newArgs);
-                        }
-                    }
-                }
-            }*/
             String id = session.runJob(jt);
             session.deleteJobTemplate(jt);
             if (id == null) {
@@ -682,11 +676,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             }
             jt.setRemoteCommand(cmd);
             jt.setArgs(argsList);
-            if (!this.hostMemoryRequests.containsKey(node.getId())) {
-                this.hostMemoryRequests.put(node.getId(), new Tuple<>(node, new AtomicLong(task.getUsedRAM())));
-            } else {
-                this.hostMemoryRequests.get(node.getId()).getKeyTwo().addAndGet(task.getUsedRAM());
-            }
+            incrementMemory(node, task.getUsedRAM());
             taskProvider.update(task);
             logger.finest(String.format("Task %s: %s%s %s",
                     taskName,
@@ -722,6 +712,18 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             argsList.add("GeoTIFF");
         }
         argsList.add("&&");
+        if (isLocal) {
+            try {
+                Files.createDirectory(Paths.get(finalPath));
+            } catch (IOException e) {
+                logger.warning(e.getMessage());
+            }
+        } else {
+            argsList.add("mkdir");
+            argsList.add("-p");
+            argsList.add(finalPath);
+            argsList.add("&&");
+        }
         argsList.add("cp");
         if (recursiveCondition) {
             argsList.add("-r");
@@ -736,11 +738,6 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             } else {
                 argsList.add(tmpPath);
             }
-        }
-        try {
-            Files.createDirectory(Paths.get(finalPath));
-        } catch (IOException e) {
-            logger.warning(e.getMessage());
         }
         argsList.add(finalPath);
         argsList.add("&&");
@@ -793,6 +790,12 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
     	NodeData nodeData = null;
         if (NodeManager.isAvailable() && NodeManager.getInstance() != null) {
         	nodeData = NodeManager.getInstance().getAvailableNode(cpus, memory, 0);
+            while (!canSubmitTask(nodeData.getNode().getId())) {
+                try {
+                    Thread.sleep(10000);
+                } catch (InterruptedException ignored) { }
+                nodeData = NodeManager.getInstance().getAvailableNode(cpus, memory, 0);
+            }
             logger.finest(String.format("Node [%s] was chosen for next execution", nodeData.getNode().getId()));
         }
         if (nodeData == null) {
