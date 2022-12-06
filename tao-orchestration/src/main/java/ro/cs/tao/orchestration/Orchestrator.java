@@ -31,6 +31,7 @@ import ro.cs.tao.eodata.naming.NamingRule;
 import ro.cs.tao.eodata.naming.ParseException;
 import ro.cs.tao.eodata.util.ProductHelper;
 import ro.cs.tao.execution.ExecutionException;
+import ro.cs.tao.execution.ExecutionsManager;
 import ro.cs.tao.execution.callback.EndpointDescriptor;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.execution.persistence.ExecutionJobProvider;
@@ -794,6 +795,7 @@ public class Orchestrator extends Notifiable {
         taskProvider.update(pcTask);
         taskProvider.updateComponentTime(pcTask.getComponent().getId(),
                                          (int) Duration.between(pcTask.getStartTime(), pcTask.getEndTime()).getSeconds());
+        ExecutionsManager.getInstance().doPostExecuteAction(pcTask);
         if (lastFromGroup) {
             taskProvider.update(groupTask);
         }
@@ -863,7 +865,7 @@ public class Orchestrator extends Notifiable {
                 if (helper != null) {
                     valuesList.set(i, valuesList.get(i) + (valuesList.get(i).endsWith("/") ? "" : "/") + helper.getMetadataFileName());
                 }
-                valuesList.set(i, TaskUtilities.relativizePathForExecution(valuesList.get(i)));
+                valuesList.set(i, TaskUtilities.relativizePathForExecution(valuesList.get(i), nextTask));
 
             }
             if (nextTask instanceof ExecutionGroup) {
@@ -926,7 +928,7 @@ public class Orchestrator extends Notifiable {
                         for (Variable var : nextInputParameters) {
                             if (theOnlyValue.getKey().equals(connectedInputs.get(var.getKey()))) {
                                 for (String value : valuesList) {
-                                    nextTask.setInputParameterValue(var.getKey(), TaskUtilities.relativizePathForExecution(value));
+                                    nextTask.setInputParameterValue(var.getKey(), TaskUtilities.relativizePathForExecution(value, nextTask));
                                 }
                                 break;
                             }
@@ -942,7 +944,7 @@ public class Orchestrator extends Notifiable {
             for (Map.Entry<String, String> entry : connectedInputs.entrySet()) {
                 nextTask.setInputParameterValue(entry.getKey(),
                                                 TaskUtilities.relativizePathForExecution(values.stream().filter(v -> v.getKey().equals(entry.getValue()))
-                                                                                               .findFirst().get().getValue()));
+                                                                                               .findFirst().get().getValue(), nextTask));
             }
             final Set<String> outParams = nextTask.getOutputParameterValues().stream().map(Variable::getKey).collect(Collectors.toSet());
             nextInputParameters.stream().filter(v -> !outParams.contains(v.getKey())).forEach(v -> resolveVariable(nextTask, v));

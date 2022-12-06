@@ -23,8 +23,12 @@ import ro.cs.tao.execution.model.WPSExecutionTask;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.logging.Logger;
 
 /**
  * Manager class for executions. It is responsible with:
@@ -37,10 +41,12 @@ public class ExecutionsManager {
 
     private static final ExecutionsManager instance = new ExecutionsManager();
     private final Set<Executor> services;
+    private final Map<Long, Callable<Void>> postExecuteTaskActions;
     private ExecutionsManager() {
         ServiceRegistry<Executor> registry = ServiceRegistryManager.getInstance().getServiceRegistry(Executor.class);
         services = registry.getServices();
         services.forEach(Executor::initialize);
+        postExecuteTaskActions = new HashMap<>();
     }
 
     public static ExecutionsManager getInstance() {
@@ -71,6 +77,22 @@ public class ExecutionsManager {
 
     public String getJobOutput(long id) {
         return DRMAAExecutor.getInstance().getJobOutput(String.valueOf(id));
+    }
+
+    public void registerPostExecuteAction(ExecutionTask task, Callable<Void> action) {
+        postExecuteTaskActions.put(task.getId(), action);
+    }
+
+    public void doPostExecuteAction(ExecutionTask task) {
+        Callable<Void> action = postExecuteTaskActions.get(task.getId());
+        if (action != null) {
+            try {
+                action.call();
+                postExecuteTaskActions.remove(task.getId());
+            } catch (Throwable e) {
+                Logger.getLogger(ExecutionsManager.class.getName()).warning(e.getMessage());
+            }
+        }
     }
 
     private Executor getExecutor(ExecutionTask task) {

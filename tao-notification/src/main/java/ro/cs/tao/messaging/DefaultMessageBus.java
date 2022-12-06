@@ -22,7 +22,6 @@ import reactor.core.config.DispatcherType;
 import ro.cs.tao.persistence.MessageProvider;
 import ro.cs.tao.utils.executors.NamedThreadPoolExecutor;
 
-import java.security.Principal;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
@@ -117,17 +116,17 @@ public class DefaultMessageBus implements ro.cs.tao.messaging.EventBus<Event<Mes
     }
 
     @Override
-    public void send(Principal principal, String topic, Event<Message> event) {
+    public void send(String principal, String topic, Event<Message> event) {
         checkPatternConsumers(topic);
         Message message = event.getData();
         message.setTopic(topic);
-        message.setUser(principal.getName());
+        message.setUser(principal);
         this.messageBus.notify(topic, event);
         if (this.messagePersister != null && message.isPersistent()) {
             this.executorService.submit(() -> {
                 try {
                     //if (this.messagePersister != null && message.isPersistent()) {
-                        this.messagePersister.save(message);
+                    this.messagePersister.save(message);
                     //}
                 } catch (Exception e) {
                     this.logger.severe(e.getMessage());
@@ -137,8 +136,8 @@ public class DefaultMessageBus implements ro.cs.tao.messaging.EventBus<Event<Mes
     }
 
     @Override
-    public void send(Principal principal, String topic, Message message) {
-        message.setUser(principal.getName());
+    public void send(String principal, String topic, Message message) {
+        message.setUser(principal);
         send(principal, topic, Event.wrap(message));
     }
 

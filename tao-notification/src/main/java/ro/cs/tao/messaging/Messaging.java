@@ -99,12 +99,30 @@ public class Messaging {
         instance.send(principal, topic, Message.create(principal.getName(), null, message));
     }
     /**
+     * Sends a simple text message
+     * @param principal     The principal sending the message
+     * @param topic         The topic to send the message to
+     * @param message       The message
+     */
+    public static void send(String principal, String topic, String message) {
+        instance.send(principal, topic, Message.create(principal, null, message));
+    }
+    /**
      * Sends a structured message
      * @param principal     The principal sending the message
      * @param topic         The topic to send the message to
      * @param message       The structured message
      */
     public static void send(Principal principal, String topic, Message message) {
+        instance.send(principal, topic, message);
+    }
+    /**
+     * Sends a structured message
+     * @param principal     The principal sending the message
+     * @param topic         The topic to send the message to
+     * @param message       The structured message
+     */
+    public static void send(String principal, String topic, Message message) {
         instance.send(principal, topic, message);
     }
     /**
