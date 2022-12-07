@@ -751,6 +751,9 @@
             <basic name="localRepositoryPath">
                 <column name="local_repository_root" nullable="true" column-definition="varchar(255)"/>
             </basic>
+            <basic name="parameters">
+                <column name="parameters" nullable="true" column-definition="json"/>
+            </basic>
         </attributes>
     </entity>
 

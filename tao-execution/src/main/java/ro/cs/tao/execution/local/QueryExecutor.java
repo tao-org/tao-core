@@ -175,9 +175,16 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                     }
                     final DataSourceConfiguration dataSourceConfiguration = configurationProvider.get(dataSourceComponent.getId());
                     String localRepositoryRoot;
+                    Properties additionalProperties = null;
                     if (dataSourceConfiguration != null) {
                         dataSourceComponent.setFetchMode(dataSourceConfiguration.getFetchMode());
                         localRepositoryRoot = dataSourceConfiguration.getLocalRepositoryPath();
+                        Map<String, String> parameters = dataSourceConfiguration.getParameters();
+                        if (parameters != null) {
+                            additionalProperties = new Properties();
+                            additionalProperties.putAll(parameters);
+                        }
+
                     } else {
                         localRepositoryRoot = ConfigurationManager.getInstance().getValue(String.format("local.%s.path", sensorName));
                     }
@@ -185,7 +192,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                                                                                        null,
                                                                                        SystemVariable.USER_WORKSPACE.value(),
                                                                                        localRepositoryRoot,
-                                                                                       null);
+                                                                                       additionalProperties);
                     if (remoteProducts != null) {
                         if (!dataSourceComponent.getId().contains(LOCAL_DATABASE)) {
                             backgroundWorker.submit(() -> persistResults(remoteProducts));
