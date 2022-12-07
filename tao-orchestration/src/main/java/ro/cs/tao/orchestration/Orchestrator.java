@@ -197,7 +197,7 @@ public class Orchestrator extends Notifiable {
                         JobCommand.START.applyTo(job);
                     } catch (ExecutionException e) {
                         try {
-                            cancelJob(job);
+                            markJob(job, ExecutionStatus.FAILED);
                         } catch (PersistenceException ex) {
                             logger.severe(ex.getMessage());
                         }
@@ -231,7 +231,7 @@ public class Orchestrator extends Notifiable {
                         JobCommand.START.applyTo(executionJob);
                     } catch (ExecutionException e) {
                         try {
-                            cancelJob(executionJob);
+                            markJob(executionJob, ExecutionStatus.FAILED);
                         } catch (PersistenceException ex) {
                             logger.severe(ex.getMessage());
                         }
@@ -295,7 +295,7 @@ public class Orchestrator extends Notifiable {
                     JobCommand.START.applyTo(job);
                 } catch (ExecutionException e) {
                     try {
-                        cancelJob(job);
+                        markJob(job, ExecutionStatus.FAILED);
                     } catch (PersistenceException ex) {
                         logger.severe(ex.getMessage());
                     }
@@ -658,10 +658,10 @@ public class Orchestrator extends Notifiable {
                 }
             } else {
                 final ExecutionJob job = task.getJob();
-                final ExecutionStatus jobStatus = job.getExecutionStatus();
-                if (jobStatus == ExecutionStatus.CANCELLED || jobStatus == ExecutionStatus.FAILED) {
-                    cancelJob(job);
-                }
+                //final ExecutionStatus jobStatus = job.getExecutionStatus();
+                //if (jobStatus == ExecutionStatus.CANCELLED || jobStatus == ExecutionStatus.FAILED) {
+                    markJob(job, job.getExecutionStatus());
+                //}
             }
         } catch (PersistenceException e) {
             logger.severe(String.format("Abnormal termination: %s", e.getMessage()));
@@ -676,9 +676,9 @@ public class Orchestrator extends Notifiable {
         }
     }
 
-    private void cancelJob(ExecutionJob job) throws PersistenceException {
-        if (job.getExecutionStatus() != ExecutionStatus.CANCELLED) {
-            job.setExecutionStatus(ExecutionStatus.FAILED);
+    private void markJob(ExecutionJob job, ExecutionStatus status) throws PersistenceException {
+        if (job.getExecutionStatus() != status) {
+            job.setExecutionStatus(status);
         }
 
         if (job.getEndTime() == null) {

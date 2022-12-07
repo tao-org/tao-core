@@ -609,7 +609,8 @@ CREATE TABLE component.data_source_configuration
 (
 	id varchar(512) NOT NULL,
 	fetch_mode smallint NOT NULL,
-	local_repository_root varchar(255)
+	local_repository_root varchar(255),
+	parameters json
 );
 ALTER TABLE component.data_source_configuration ADD CONSTRAINT PK_data_source_configuration
 	PRIMARY KEY (id);
