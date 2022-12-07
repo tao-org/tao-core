@@ -246,11 +246,13 @@ public class SSHExecutor extends Executor<Channel> {
 
     @Override
     public void suspend() {
-        if (this.channel != null && !this.channel.isClosed() && this.channel.isConnected()) {
-            try {
-                this.channel.sendSignal("19");
-            } catch (Exception e) {
-                this.logger.warning(e.getMessage());
+        if (!this.asyncExecution) {
+            if (this.channel != null && !this.channel.isClosed() && this.channel.isConnected()) {
+                try {
+                    this.channel.sendSignal("19");
+                } catch (Exception e) {
+                    this.logger.warning(e.getMessage());
+                }
             }
         }
         super.suspend();
@@ -258,11 +260,13 @@ public class SSHExecutor extends Executor<Channel> {
 
     @Override
     public void resume() {
-        if (this.channel != null && !this.channel.isClosed() && this.channel.isConnected()) {
-            try {
-                this.channel.sendSignal("18");
-            } catch (Exception e) {
-                this.logger.warning(e.getMessage());
+        if (!this.asyncExecution) {
+            if (this.channel != null && !this.channel.isClosed() && this.channel.isConnected()) {
+                try {
+                    this.channel.sendSignal("18");
+                } catch (Exception e) {
+                    this.logger.warning(e.getMessage());
+                }
             }
         }
         super.resume();
@@ -270,11 +274,13 @@ public class SSHExecutor extends Executor<Channel> {
 
     @Override
     public void stop() {
-        if (this.channel != null && !this.channel.isClosed() && this.channel.isConnected()) {
-            try {
-                this.channel.sendSignal("2");
-            } catch (Exception e) {
-                this.logger.warning(e.getMessage());
+        if (!asyncExecution) {
+            if (this.channel != null && !this.channel.isClosed() && this.channel.isConnected()) {
+                try {
+                    this.channel.sendSignal("2");
+                } catch (Exception e) {
+                    this.logger.warning(e.getMessage());
+                }
             }
         }
         super.stop();
