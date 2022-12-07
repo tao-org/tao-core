@@ -596,7 +596,7 @@
                 <column name="data_type" nullable="false" column-definition="varchar(512) NOT NULL"/>
             </basic>
             <basic name="defaultValue">
-                <column name="default_value" nullable="true" column-definition="varchar(250) NULL"/>
+                <column name="default_value" nullable="true" column-definition="text NULL"/>
             </basic>
             <basic name="description">
                 <column name="description" nullable="true" column-definition="text NULL"/>
@@ -741,6 +741,7 @@
     <entity class="ro.cs.tao.datasource.DataSourceConfiguration" access="PROPERTY">
         <table name="component.data_source_configuration"/>
         <convert converter="ro.cs.tao.persistence.convert.FetchModeConverter" attribute-name="fetchMode" />
+        <convert converter="ro.cs.tao.persistence.convert.MapConverter" attribute-name="parameters" />
         <attributes>
             <id name="id">
                 <column name="id" nullable="false" column-definition="varchar(512) NOT NULL"/>
