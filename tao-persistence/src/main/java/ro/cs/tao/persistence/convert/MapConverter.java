@@ -27,11 +27,11 @@ public class MapConverter implements AttributeConverter<Map<String, String>, Str
 
     @Override
     public String convertToDatabaseColumn(Map<String, String> attribute) {
-        return JacksonUtil.toString(attribute);
+        return attribute == null ? null : JacksonUtil.toString(attribute);
     }
 
     @Override
     public Map<String, String> convertToEntityAttribute(String dbData) {
-        return JacksonUtil.fromString(dbData, Map.class);
+        return dbData == null ? null : JacksonUtil.fromString(dbData, Map.class);
     }
 }
