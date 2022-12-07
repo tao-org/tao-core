@@ -282,7 +282,9 @@ public class SSHExecutor extends Executor<Channel> {
                     this.logger.warning(e.getMessage());
                 }
             }
-        }
+        } else {
+    		stopAsync(asyncScreenID);
+    	}
         super.stop();
     }
 
@@ -597,7 +599,58 @@ public class SSHExecutor extends Executor<Channel> {
         return result;
     }
     
+    /**
+     * Stop the asynchronous process
+     * 
+     * @param screenID the id of the screen where the process is running
+     */
+    public void stopAsync(String screenID) {
+    	try {
+        	if (!checkSession()) {
+        		return;
+        	}
+        	
+            final Session session = getSession();
+            ChannelExec channel = (ChannelExec) session.openChannel(SSHMode.EXEC.toString());
+            try {
+            	String command = "screen -X -S \"" + screenID + "\" quit";
+            	final InputStream inputStream = configureAndConnectChannel(channel, command, false, true);
 
+                BufferedReader outReader = new BufferedReader(new InputStreamReader(inputStream));
+                String line;
+                boolean ended = false;
+                
+                while (!ended) {
+                    while ((line = outReader.readLine()) != null) {
+                        if (!"".equals(line.trim())) {
+                        	// the line contains the output of the process
+	                        if (this.outputConsumer != null && (this.password == null || !this.password.equals(line))) {
+	                            this.outputConsumer.consume(line);
+	                        }
+                        }
+                    }
+                    if (channel.isClosed()) {
+                        if (inputStream.available() > 0) {
+                            continue;
+                        }
+                        stop(channel);
+                        ended = true;
+                    } else {
+                        Thread.yield();
+                    }
+                }
+            } finally {
+                if (!keepAlive) {
+                    session.disconnect();
+                    this.logger.finest(String.format("Session %d disconnected", session.hashCode()));
+                }
+            }
+
+    	} catch(Exception e) {
+    		this.logger.warning(e.getMessage());
+    	}
+    }
+    
     /** Reconnect to an existing session and wait for it to end.
      * @param screenID The ID of the screen session
      * @param logMessages send messages to the log
