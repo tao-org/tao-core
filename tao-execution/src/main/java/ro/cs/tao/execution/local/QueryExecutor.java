@@ -279,7 +279,9 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
         if (dataSourceComponent == null || !dataSourceComponent.equals(task.getComponent())) {
             logger.warning("stop() called on different component");
         }
-        dataSourceComponent.cancel();
+        if (dataSourceComponent != null) {
+            dataSourceComponent.cancel();
+        }
         markTaskFinished(task, ExecutionStatus.CANCELLED);
     }
 
