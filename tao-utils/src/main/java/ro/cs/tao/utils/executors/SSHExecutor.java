@@ -613,8 +613,12 @@ public class SSHExecutor extends Executor<Channel> {
             final Session session = getSession();
             ChannelExec channel = (ChannelExec) session.openChannel(SSHMode.EXEC.toString());
             try {
-            	String command = "screen -X -S \"" + screenID + "\" quit";
+            	// stop all docker images
+            	String command = "docker ps --format={{.ID}} | xargs docker kill";
             	final InputStream inputStream = configureAndConnectChannel(channel, command, false, true);
+
+                // kill the screen session 
+                writeCommand(channel, ("screen -X -S \"" + screenID + "\" quit\n").getBytes());
 
                 BufferedReader outReader = new BufferedReader(new InputStreamReader(inputStream));
                 String line;
