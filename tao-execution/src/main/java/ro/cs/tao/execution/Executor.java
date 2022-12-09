@@ -164,15 +164,25 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
 
     protected void markTaskFinished(ExecutionTask task, ExecutionStatus status) {
         task.setEndTime(LocalDateTime.now());
-        changeTaskStatus(task, status);
+        changeTaskStatus(task, status, status.friendlyName());
+        this.contextMap.remove(task.getId());
+    }
+
+    protected void markTaskFinished(ExecutionTask task, ExecutionStatus status, String reason) {
+        task.setEndTime(LocalDateTime.now());
+        changeTaskStatus(task, status, reason);
         this.contextMap.remove(task.getId());
     }
 
     protected void changeTaskStatus(ExecutionTask task, ExecutionStatus status) {
-        changeTaskStatus(task, status, false);
+        changeTaskStatus(task, status, false, status.friendlyName());
     }
 
-    protected void changeTaskStatus(ExecutionTask task, ExecutionStatus status, boolean firstTime) {
+    protected void changeTaskStatus(ExecutionTask task, ExecutionStatus status, String reason) {
+        changeTaskStatus(task, status, false, reason);
+    }
+
+    protected void changeTaskStatus(ExecutionTask task, ExecutionStatus status, boolean firstTime, String reason) {
         if (status != task.getExecutionStatus()) {
             task.setLastUpdated(LocalDateTime.now());
             final String name = TaskUtilities.getTaskName(task);
@@ -202,7 +212,7 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
                         case SUSPENDED:
                         case FAILED:
                             task.setEndTime(LocalDateTime.now());
-                            notifyStatusListener(task, status);
+                            notifyStatusListener(task, status, reason);
                             decrement(userName, cpu, memory);
                             break;
                         case RUNNING:
@@ -210,7 +220,7 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
                                 task.setStartTime(LocalDateTime.now());
                             }
                             if (task.getExecutionStatus() != status) {
-                                notifyStatusListener(task, status);
+                                notifyStatusListener(task, status, null);
                             }
                             break;
                     }
@@ -240,9 +250,9 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
         }
     }
 
-    protected synchronized void notifyStatusListener(ExecutionTask task, ExecutionStatus status) {
+    protected synchronized void notifyStatusListener(ExecutionTask task, ExecutionStatus status, String reason) {
         for (TaskStatusListener listener : statusListeners) {
-            listener.taskStatusChanged(task, status);
+            listener.taskStatusChanged(task, status, reason);
         }
     }
 

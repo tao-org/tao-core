@@ -62,7 +62,7 @@ public class BlockingQueueWorker<E> extends Thread {
     public void run() {
         while (!stopped) {
             try {
-                if (this.paused || (this.executor != null && this.executor.getRunningTasks() >= this.executor.getMaximumPoolSize())) {
+                if (this.paused || (this.executor != null && this.executor.getActiveCount() >= this.executor.getMaximumPoolSize())) {
                     //Thread.sleep(10000);
                     synchronized (this.monitor) {
                         this.monitor.wait(10000);

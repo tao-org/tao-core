@@ -51,12 +51,13 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
     public ExecutionTask updateStatus(ExecutionTask task, ExecutionStatus newStatus, String reason) throws PersistenceException {
         lock.lock();
         try {
+            boolean failed = newStatus == ExecutionStatus.FAILED;
             task.setLastUpdated(LocalDateTime.now());
             final ExecutionStatus oldStatus = task.getExecutionStatus();
             JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-            jdbcTemplate.update("UPDATE execution.task SET execution_status_id = ?, resource_id = ?, last_updated = ? WHERE id = ?",
-                                newStatus.value(), task.getResourceId(), task.getLastUpdated(), task.getId());
-            logger.log(newStatus == ExecutionStatus.FAILED ? Level.SEVERE : newStatus == ExecutionStatus.CANCELLED ? Level.WARNING : Level.FINE,
+            jdbcTemplate.update("UPDATE execution.task SET execution_status_id = ?, resource_id = ?, execution_log = ?, last_updated = ? WHERE id = ?",
+                                newStatus.value(), task.getResourceId(), failed ? reason : null, task.getLastUpdated(), task.getId());
+            logger.log(failed ? Level.SEVERE : newStatus == ExecutionStatus.CANCELLED ? Level.WARNING : Level.FINE,
                        String.format("Task %s status change [%s -> %s]. Reason: %s", task.getId(), oldStatus, newStatus, reason));
             task = get(task.getId());
             return task;

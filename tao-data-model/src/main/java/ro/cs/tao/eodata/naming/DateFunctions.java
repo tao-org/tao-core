@@ -3,6 +3,7 @@ package ro.cs.tao.eodata.naming;
 import ro.cs.tao.utils.StringUtilities;
 
 import java.util.function.Function;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -10,9 +11,9 @@ public final class DateFunctions {
     private static final Pattern yearPattern = Pattern.compile("(YEAR\\(([0-9-]+)\\))");
     private static final Pattern monthPattern = Pattern.compile("(MONTH\\(([0-9-]+)\\))");
     private static final Pattern dayPattern = Pattern.compile("(DAY\\(([0-9-]+)\\))");
-    private static final Pattern hourPattern = Pattern.compile("(HOUR\\((\\d{2}):?(\\d{2}):?(\\d{2})\\))");
-    private static final Pattern minutePattern = Pattern.compile("(MINUTE\\((\\d{2}):?(\\d{2}):?(\\d{2})\\))");
-    private static final Pattern secondPattern = Pattern.compile("(SECOND\\((\\d{2}):?(\\d{2}):?(\\d{2})\\))");
+    private static final Pattern hourPattern = Pattern.compile("(HOUR\\(([0-9:]+)\\))");
+    private static final Pattern minutePattern = Pattern.compile("(MINUTE\\(([0-9:]+)\\))");
+    private static final Pattern secondPattern = Pattern.compile("(SECOND\\(([0-9:]+)\\))");
     public static final Function<String, String> YEAR = (str) -> str.substring(0, 4);
     public static final Function<String, String> MONTH = (str) -> {
         int idx = str.indexOf('-');
@@ -41,29 +42,33 @@ public final class DateFunctions {
             return expression;
         }
         String transformed = expression;
-        Matcher matcher = yearPattern.matcher(expression);
-        if (matcher.find()) {
-            transformed = transformed.replace(matcher.group(1), YEAR.apply(matcher.group(2)));
-        }
-        matcher = monthPattern.matcher(expression);
-        if (matcher.find()) {
-            transformed = transformed.replace(matcher.group(1), MONTH.apply(matcher.group(2)));
-        }
-        matcher = dayPattern.matcher(expression);
-        if (matcher.find()) {
-            transformed = transformed.replace(matcher.group(1), DAY.apply(matcher.group(2)));
-        }
-        matcher = hourPattern.matcher(expression);
-        if (matcher.find()) {
-            transformed = transformed.replace(matcher.group(1), HOUR.apply(matcher.group(2)));
-        }
-        matcher = minutePattern.matcher(expression);
-        if (matcher.find()) {
-            transformed = transformed.replace(matcher.group(1), MINUTE.apply(matcher.group(3)));
-        }
-        matcher = secondPattern.matcher(expression);
-        if (matcher.find()) {
-            transformed = transformed.replace(matcher.group(1), SECOND.apply(matcher.group(4)));
+        try {
+            Matcher matcher = yearPattern.matcher(expression);
+            if (matcher.find()) {
+                transformed = transformed.replace(matcher.group(1), YEAR.apply(matcher.group(2)));
+            }
+            matcher = monthPattern.matcher(expression);
+            if (matcher.find()) {
+                transformed = transformed.replace(matcher.group(1), MONTH.apply(matcher.group(2)));
+            }
+            matcher = dayPattern.matcher(expression);
+            if (matcher.find()) {
+                transformed = transformed.replace(matcher.group(1), DAY.apply(matcher.group(2)));
+            }
+            matcher = hourPattern.matcher(expression);
+            if (matcher.find()) {
+                transformed = transformed.replace(matcher.group(1), HOUR.apply(matcher.group(2)));
+            }
+            matcher = minutePattern.matcher(expression);
+            if (matcher.find()) {
+                transformed = transformed.replace(matcher.group(1), MINUTE.apply(matcher.group(2)));
+            }
+            matcher = secondPattern.matcher(expression);
+            if (matcher.find()) {
+                transformed = transformed.replace(matcher.group(1), SECOND.apply(matcher.group(2)));
+            }
+        } catch (Throwable t) {
+            Logger.getLogger(DateFunctions.class.getName()).warning(t.getMessage());
         }
         return transformed;
     }
