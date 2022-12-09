@@ -783,6 +783,24 @@ public class FileUtilities {
         }
     }
 
+    public static void deleteTreeUnix(Path root) throws IOException {
+        if (root != null && Files.isDirectory(root)) {
+            Executor<?> executor = Executor.create(ExecutorType.PROCESS,
+                                                   null,
+                                                   new ArrayList<>() {{ add("rm"); add("-rf"); add(root.toString()); }},
+                                                   true);
+            OutputAccumulator accumulator = new OutputAccumulator();
+            executor.setOutputConsumer(accumulator);
+            try {
+                if (executor.execute(false) != 0) {
+                    throw new IOException(accumulator.getOutput());
+                }
+            } catch (Exception e) {
+                throw new IOException(e);
+            }
+        }
+    }
+
     public static void remoteDeleteTree(Path root, ChannelSftp channel) throws IOException {
         if (root != null) {
             Files.walkFileTree(root, new SimpleFileVisitor<Path>() {

@@ -303,6 +303,7 @@ public class DefaultJobFactory {
             }
         }
         task.setCardinality(TaskUtilities.getTargetCardinality(component));
+        task.setUsedRAM(TaskUtilities.getComponentMemoryRequirements(component));
         return task;
     }
 
