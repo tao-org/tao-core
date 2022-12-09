@@ -21,6 +21,7 @@ import ro.cs.tao.component.*;
 import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.datasource.DataSourceTopic;
 import ro.cs.tao.datasource.persistence.DataSourceComponentProvider;
+import ro.cs.tao.docker.Application;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.docker.ExecutionConfiguration;
 import ro.cs.tao.execution.ExecutionException;
@@ -102,6 +103,12 @@ public class TaskUtilities {
     public static Container getComponentContainer(WorkflowNodeDescriptor node) {
         final ProcessingComponent component = processingComponentProvider.get(node.getComponentId());
         return containerProvider.get(component.getContainerId());
+    }
+
+    public static int getComponentMemoryRequirements(ProcessingComponent component) {
+        Container container = containerProvider.get(component.getContainerId());
+        Application app = container.getApplications().stream().filter(a -> a.getName().equals(component.getId())).findFirst().orElse(null);
+        return app != null ? app.getMemoryRequirements() : 0;
     }
 
     /**
@@ -403,10 +410,11 @@ public class TaskUtilities {
                                                                                            task.getJob().getName(), DataSourceTopic.PRODUCT_PROGRESS));
                     final Path link = p;
                     ExecutionsManager.getInstance().registerPostExecuteAction(task, () -> {
+                        logger.fine("Restoring symlink to " + link);
                         if (Files.isRegularFile(link)) {
                             Files.delete(link);
                         } else {
-                            FileUtilities.deleteTree(link);
+                            FileUtilities.deleteTreeUnix(link);
                         }
                         FileUtilities.linkFile(linkTarget, link);
                         return null;

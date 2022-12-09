@@ -38,7 +38,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     private static final int nodeCreationWaitTime;
     private static final long pollInterval;
     private static final NamedThreadPoolExecutor executor;
-    private static final int DEFAULT_NODE_WAIT_TIME = 10000;
+    private static final int DEFAULT_NODE_WAIT_TIME = 20000;
     private static final int DEFAULT_KEEP_ALIVE_SECONDS = 1800;
     private static final int POLLING_NODE_WITHOUT_TASKS_SECONDS = 20;
     private static final boolean isDevMode;
@@ -316,14 +316,17 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                         throw new IllegalStateException("Failed to create node.", exception);
                     }
                     if (availableNode == null) {
-                        logger.fine("No processing node matching the request was found. Will retry in 10 seconds.");
+                        logger.fine(String.format("No processing node matching the request was found. Will retry [%s]",
+                                                  this.nodes.values().stream()
+                                                            .map(n -> n.getNode().getId() + " cpu:" + n.getRuntimeInfo().getCpuTotal() + ",mem:" + n.getRuntimeInfo().getAvailableMemory())
+                                                          .collect(Collectors.joining("; "))));
                         waitBeforeNextRetry();
                     } else {
                         // new node has been created
                         addNewInstalledNode(availableNode);
                     }
                 } else {
-                    logger.fine("No processing node was found to be available. Will retry in 10 seconds.");
+                    logger.fine("No processing node was found to be available. Will retry.");
                     waitBeforeNextRetry();
                 }
             }
