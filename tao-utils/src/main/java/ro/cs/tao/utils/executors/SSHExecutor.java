@@ -57,11 +57,20 @@ public class SSHExecutor extends Executor<Channel> {
     /** The asynchronous call status. Null when the call was not yet initialized.  */
     private Boolean asyncCallFinished = null;
     
+    /** True if the asynchronous command received is a docker command. */
+    private boolean dockerAsyncCommand = false;
+    
+    /** The docker identifier if the docker command is executed asynchronously. */
+    private String dockerAsyncID;
+    
     /** Regex pattern to extract the screen ID after the screen session is disconnected. */
     private static final Pattern SCREEN_ID_PATTERN = Pattern.compile("^\\[.+\\s(\\d+\\.\\S+\\.\\S+)\\]$");
 
     /** Regex pattern to extract the execution result code after execution within a screen session. */
     private static final Pattern EXECUTION_RESULT_PATTERN = Pattern.compile("^\\*{3}\\={3}\\*{3}\\s*(\\-?[0-9]+)\\s*\\*{3}\\={3}\\*{3}$");
+
+    /** Regex pattern to extract the docker pattern. */
+    private static final Pattern DOCKER_ID = Pattern.compile("^([a-z0-9]+)\\:.*$");
     
     /** The format for the file generated during asynchronous call. */
     private static final String ASYNC_FILE_NAME_FORMAT = "~/%s.out";
@@ -219,6 +228,9 @@ public class SSHExecutor extends Executor<Channel> {
                 case EXEC:
                 	if(this.asyncExecution) {
                 		ret = executeAsyncSSH(logMessages);
+                		if (dockerAsyncCommand) {
+                			updateDockerId();
+                		}
                 	} else {
                         ret = executeSshCmd(logMessages);
                 	}
@@ -284,6 +296,13 @@ public class SSHExecutor extends Executor<Channel> {
             }
         } else {
     		stopAsync(asyncScreenID);
+        	try {
+        		// Update the asyncSSH result, for future calls
+    			getAsyncSSHResult();
+    		} catch (Exception e) {
+    			this.logger.warning(e.getMessage());
+    			this.asyncResult = Integer.MIN_VALUE;
+    		}
     	}
         super.stop();
     }
@@ -402,10 +421,16 @@ public class SSHExecutor extends Executor<Channel> {
         if (asSuperUser) {
             insertSudoParams();
         }
+        
+        // check if the command is a docker command
+        final String execCommand = String.join(" ", arguments);
+        if (execCommand.contains("docker ") && execCommand.contains(" run ")) {
+        	this.dockerAsyncCommand = true;
+        }
         // build the command line that will be executed within the screen session
         // the pattern of the line containing the return code has the format :
         // ***===***RESULT_CODE***===***
-        String cmdLine = "( " + String.join(" ", arguments) + "; echo '***===***'$?'***===***'; ) > " +this.asyncFileName+ " 2>&1\n";
+        String cmdLine = "( " + execCommand + "; echo '***===***'$?'***===***'; ) > " +this.asyncFileName+ " 2>&1\n";
         if (logMessages) {
             logger.fine("[" + host + "] " + cmdLine);
         }
@@ -449,7 +474,7 @@ public class SSHExecutor extends Executor<Channel> {
                         }*/
 
                         // try to extract the screen ID
-                        final Matcher matcher = SCREEN_ID_PATTERN.matcher(line.trim());
+                        Matcher matcher = SCREEN_ID_PATTERN.matcher(line.trim());
                         if (matcher.matches()) {
                             this.asyncScreenID = matcher.group(1);
                         }
@@ -497,7 +522,7 @@ public class SSHExecutor extends Executor<Channel> {
         ChannelExec channel = (ChannelExec) session.openChannel(SSHMode.EXEC.toString());
         try {
         	// Configure the channel
-        	final String command = "screen -ls";// + this.asyncScreenID;
+        	final String command = "screen -ls " + this.asyncScreenID;
         	final InputStream inputStream = configureAndConnectChannel(channel, command, false, true);
 
             BufferedReader outReader = new BufferedReader(new InputStreamReader(inputStream));
@@ -600,6 +625,51 @@ public class SSHExecutor extends Executor<Channel> {
     }
     
     /**
+     * Update the docker id field
+     * 
+     * @throws Exception if the operation failed
+     */
+    public void updateDockerId() throws Exception {
+        final Session session = getSession();
+        ChannelExec channel = (ChannelExec) session.openChannel(SSHMode.EXEC.toString());
+        try {
+        	// Configure the channel
+        	final String command = "docker ps --format=\"{{.ID}}:{{.Command}}\" --no-trunc | grep -G \\\".*" + this.arguments.get(this.arguments.size() - 1) + "\\\"";
+        	final InputStream inputStream = configureAndConnectChannel(channel, command, false, true);
+
+            BufferedReader outReader = new BufferedReader(new InputStreamReader(inputStream));
+            String line;
+            boolean ended = false;
+            
+            while (!ended) {
+                while ((line = outReader.readLine()) != null) {
+                    if (!"".equals(line.trim())) {
+                        final Matcher matcher = DOCKER_ID.matcher(line.trim());
+                        if (matcher.matches()) {
+                        	// the line contains the result code
+                        	this.dockerAsyncID = matcher.group(1);
+                        }
+                    }
+                }
+                if (channel.isClosed()) {
+                    if (inputStream.available() > 0) {
+                        continue;
+                    }
+                    stop(channel);
+                    ended = true;
+                } else {
+                    Thread.yield();
+                }
+            }
+        } finally {
+            if (!keepAlive) {
+                session.disconnect();
+                this.logger.finest(String.format("Session %d disconnected", session.hashCode()));
+            }
+        }
+    }
+    
+    /**
      * Stop the asynchronous process
      * 
      * @param screenID the id of the screen where the process is running
@@ -614,11 +684,17 @@ public class SSHExecutor extends Executor<Channel> {
             ChannelExec channel = (ChannelExec) session.openChannel(SSHMode.EXEC.toString());
             try {
             	// stop all docker images
-            	String command = "docker ps --format={{.ID}} | xargs docker kill";
+            	String command;
+            	if (dockerAsyncCommand) {
+            		command = "docker kill " + this.dockerAsyncID + " ; " + "screen -X -S \"" + screenID + "\" quit"; 
+            	} else {
+            		command = "screen -X -S \"" + screenID + "\" quit";
+            	}
+            	
             	final InputStream inputStream = configureAndConnectChannel(channel, command, false, true);
 
-                // kill the screen session 
-                writeCommand(channel, ("screen -X -S \"" + screenID + "\" quit\n").getBytes());
+                // kill the screen session and delete the temporary file that was created 
+                //writeCommand(channel, ("screen -X -S \"" + screenID + "\" quit && rm " + this.asyncFileName + "\n").getBytes());
 
                 BufferedReader outReader = new BufferedReader(new InputStreamReader(inputStream));
                 String line;
