@@ -109,6 +109,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
             // DSComponents having the id starting with 'product-set-' don't need to execute
             // a query. Instead, they should already contain a list of paths.
             ExecutionStatus status;
+            String message = null;
             if (!dataSourceComponent.getId().startsWith("product-set-")) {
                 List<Variable> values = task.getInputParameterValues();
                 if (values == null || values.size() == 0) {
@@ -134,9 +135,10 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                         variable = values.stream().filter(v -> "remote.query".equals(v.getKey()))
                                          .findFirst().orElse(null);
                         if (variable == null) {
-                            logger.warning(String.format("Task %s expected %s inputs, but received %s. Execution is cancelled",
-                                                         task.getId(), cardinality, results.size()));
-                            markTaskFinished(task, ExecutionStatus.CANCELLED);
+                            message = String.format("Task %s expected %s inputs, but received %s. Execution is cancelled",
+                                                           task.getId(), cardinality, results.size());
+                            logger.warning(message);
+                            markTaskFinished(task, ExecutionStatus.CANCELLED, message);
                             return;
                         } else {
                             results.removeIf(r -> r.getProductStatus() == ProductStatus.DOWNLOADING ||
@@ -243,7 +245,8 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                     }
                     status = ExecutionStatus.DONE;
                 } else {
-                    logger.info("Query returned no results");
+                    message = "Query returned no results";
+                    logger.warning(message);
                     status = ExecutionStatus.CANCELLED;
                 }
             } else {
@@ -267,10 +270,10 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                 }
                 status = ExecutionStatus.DONE;
             }
-            markTaskFinished(task, status);
+            markTaskFinished(task, status, message);
         } catch (Exception ex) {
             logger.severe(ex.getMessage());
-            markTaskFinished(task, ExecutionStatus.FAILED);
+            markTaskFinished(task, ExecutionStatus.FAILED, ex.getMessage());
         }
     }
 
@@ -282,7 +285,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
         if (dataSourceComponent != null) {
             dataSourceComponent.cancel();
         }
-        markTaskFinished(task, ExecutionStatus.CANCELLED);
+        markTaskFinished(task, ExecutionStatus.CANCELLED, ExecutionStatus.CANCELLED.friendlyName());
     }
 
     @Override

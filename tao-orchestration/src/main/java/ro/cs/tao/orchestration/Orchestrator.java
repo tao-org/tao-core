@@ -34,6 +34,7 @@ import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.ExecutionsManager;
 import ro.cs.tao.execution.callback.EndpointDescriptor;
 import ro.cs.tao.execution.model.*;
+import ro.cs.tao.execution.monitor.NodeManager;
 import ro.cs.tao.execution.persistence.ExecutionJobProvider;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.execution.util.TaskUtilities;
@@ -99,11 +100,14 @@ public class Orchestrator extends Notifiable {
     private static final String GROUP_TASK_SELECTOR_KEY = "group.task.selector";
     private static final String JOB_TASK_SELECTOR_KEY = "job.task.selector";
     private static final String USER_JOB_LIMIT_KEY = "tao.user.jobs.limit";
-    private static final Set<ExecutionStatus> notFurtherRunnableStatuses = new HashSet<ExecutionStatus>() {{
-       add(ExecutionStatus.DONE); add(ExecutionStatus.CANCELLED); add(ExecutionStatus.FAILED);
+    private static final Set<ExecutionStatus> notFurtherRunnableStatuses = new HashSet<>() {{
+        add(ExecutionStatus.DONE);
+        add(ExecutionStatus.CANCELLED);
+        add(ExecutionStatus.FAILED);
     }};
-    private static final Set<ExecutionStatus> completedOkStatuses = new HashSet<ExecutionStatus>() {{
-        add(ExecutionStatus.DONE); add(ExecutionStatus.PENDING_FINALISATION);
+    private static final Set<ExecutionStatus> completedOkStatuses = new HashSet<>() {{
+        add(ExecutionStatus.DONE);
+        add(ExecutionStatus.PENDING_FINALISATION);
     }};
 
     private static final Orchestrator instance;
@@ -197,7 +201,7 @@ public class Orchestrator extends Notifiable {
                         JobCommand.START.applyTo(job);
                     } catch (ExecutionException e) {
                         try {
-                            markJob(job, ExecutionStatus.FAILED);
+                            cancelJob(job);
                         } catch (PersistenceException ex) {
                             logger.severe(ex.getMessage());
                         }
@@ -225,13 +229,13 @@ public class Orchestrator extends Notifiable {
             if (executionJob == null) {
                 throw new ExecutionException("Another WPS job is running or queued for user '" + user + "'. New job will be queued");
             } else {
-                this.executors.putIfAbsent(context.getPrincipal().getName(), executorService);
+                this.executors.putIfAbsent(user, executorService);
                 executorService.submit(() -> {
                     try {
                         JobCommand.START.applyTo(executionJob);
                     } catch (ExecutionException e) {
                         try {
-                            markJob(executionJob, ExecutionStatus.FAILED);
+                            cancelJob(executionJob);
                         } catch (PersistenceException ex) {
                             logger.severe(ex.getMessage());
                         }
@@ -295,7 +299,7 @@ public class Orchestrator extends Notifiable {
                     JobCommand.START.applyTo(job);
                 } catch (ExecutionException e) {
                     try {
-                        markJob(job, ExecutionStatus.FAILED);
+                        cancelJob(job);
                     } catch (PersistenceException ex) {
                         logger.severe(ex.getMessage());
                     }
@@ -396,12 +400,22 @@ public class Orchestrator extends Notifiable {
 
     public int purgeJobs(String user) {
         final List<Long> jobIds = this.waitingJobs.remove(user);
+        int purged = 0;
         if (jobIds != null) {
             jobIds.forEach(this::stopJob);
-            return jobIds.size();
-        } else {
-            return 0;
+            purged = jobIds.size();
         }
+        List<ExecutionJob> jobs = jobProvider.list(user,
+                                                   new HashSet<>() {{
+                                                       add(ExecutionStatus.UNDETERMINED);
+                                                       add(ExecutionStatus.QUEUED_ACTIVE);
+                                                       add(ExecutionStatus.RUNNING);
+                                                   }});
+        if (jobs != null) {
+            jobs.forEach(j -> stopJob(j.getId()));
+            purged += jobs.size();
+        }
+        return purged;
     }
 
     @Override
@@ -510,9 +524,13 @@ public class Orchestrator extends Notifiable {
             }
             if (notFurtherRunnableStatuses.contains(status)) {
                 this.runningTasks.remove(task.getId());
+                if (task instanceof ProcessingExecutionTask) {
+                    ExecutionsManager.getInstance().doPostExecuteAction(task);
+                }
                 logger.finest(String.format("Active or pending tasks: %d", this.runningTasks.size()));
             }
-            user = currentContext.getPrincipal().getName();
+            user = task.getJob().getUserName();
+            //user = currentContext.getPrincipal().getName();
             if (completedOkStatuses.contains(status)) {
                 final WorkflowNodeDescriptor taskNode = workflowNodeProvider.get(task.getWorkflowNodeId());
                 // For DataSourceExecutionTask, it is the Query executor that sets the outputs.
@@ -658,10 +676,10 @@ public class Orchestrator extends Notifiable {
                 }
             } else {
                 final ExecutionJob job = task.getJob();
-                //final ExecutionStatus jobStatus = job.getExecutionStatus();
-                //if (jobStatus == ExecutionStatus.CANCELLED || jobStatus == ExecutionStatus.FAILED) {
-                    markJob(job, job.getExecutionStatus());
-                //}
+                final ExecutionStatus jobStatus = job.getExecutionStatus();
+                if (jobStatus == ExecutionStatus.CANCELLED || jobStatus == ExecutionStatus.FAILED) {
+                    cancelJob(job);
+                }
             }
         } catch (PersistenceException e) {
             logger.severe(String.format("Abnormal termination: %s", e.getMessage()));
@@ -676,9 +694,9 @@ public class Orchestrator extends Notifiable {
         }
     }
 
-    private void markJob(ExecutionJob job, ExecutionStatus status) throws PersistenceException {
-        if (job.getExecutionStatus() != status) {
-            job.setExecutionStatus(status);
+    private void cancelJob(ExecutionJob job) throws PersistenceException {
+        if (job.getExecutionStatus() != ExecutionStatus.CANCELLED) {
+            job.setExecutionStatus(ExecutionStatus.FAILED);
         }
 
         if (job.getEndTime() == null) {
@@ -1343,11 +1361,12 @@ public class Orchestrator extends Notifiable {
     }
 
     private boolean canSubmitJob(String user, ExecutionJob job) {
-        final List<ExecutionJob> runnableJobs = this.jobProvider.list(user, new HashSet<ExecutionStatus>() {{
+        final List<ExecutionJob> runnableJobs = this.jobProvider.list(user, new HashSet<>() {{
             add(ExecutionStatus.QUEUED_ACTIVE);
             add(ExecutionStatus.RUNNING);
         }});
-        final int limit = Integer.parseInt(ConfigurationManager.getInstance().getValue(USER_JOB_LIMIT_KEY, "1"));
+        final int limit = Math.min(Integer.parseInt(ConfigurationManager.getInstance().getValue(USER_JOB_LIMIT_KEY, "1")),
+                                   NodeManager.getInstance().getActiveNodes());
         if (runnableJobs != null && (limit != 0 && runnableJobs.size() > limit - 1)) {
             if (!this.waitingJobs.containsKey(user)) {
                 this.waitingJobs.put(user, new ArrayList<>());
