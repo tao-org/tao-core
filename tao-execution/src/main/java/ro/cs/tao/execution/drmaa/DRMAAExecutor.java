@@ -335,13 +335,13 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         }
     }
 
-    private boolean canSubmitTask(String host) {
+    private boolean canSubmitTask(String host, long newMemory) {
         final Tuple<NodeDescription, AtomicLong> hostData = this.hostMemoryRequests.get(host);
         final boolean canSubmit;
         if (hostData != null) {
             long installed = hostData.getKeyOne().getFlavor().getMemory() * MemoryUnit.KB.value();
             long requested = hostData.getKeyTwo().get();
-            if (installed <= requested) {
+            if (installed <= requested + newMemory) {
                 logger.finest(String.format("Host %s may not have enough available memory (installed: %d, requested: %d)",
                                              host, installed, requested));
                 canSubmit = false;
@@ -768,7 +768,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
     	NodeData nodeData = null;
         if (NodeManager.isAvailable() && NodeManager.getInstance() != null) {
         	nodeData = NodeManager.getInstance().getAvailableNode(cpus, memory, 0);
-            while (!canSubmitTask(nodeData.getNode().getId())) {
+            while (!canSubmitTask(nodeData.getNode().getId(), memory)) {
                 try {
                     Thread.sleep(20000);
                 } catch (InterruptedException ignored) { }
