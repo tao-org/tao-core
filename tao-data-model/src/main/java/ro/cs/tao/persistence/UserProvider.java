@@ -8,12 +8,14 @@ import ro.cs.tao.user.UserStatus;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public interface UserProvider extends EntityProvider<User, Long> {
 
     boolean login(String user, String password);
     List<User> list(UserStatus status);
     List<User> listAdministrators();
+    List<User> listUsers(Set<String> names);
     List<Group> listGroups();
     User getByName(String userName);
     List<UserPreference> listPreferences(String user);

@@ -178,6 +178,11 @@ public class UserManager extends EntityManager<User, Long, UserRepository> imple
     }
 
     @Override
+    public List<User> listUsers(Set<String> names) {
+        return repository.getUsers(names);
+    }
+
+    @Override
     public List<UserPreference> listPreferences(String userName) {
         final User user = repository.findByUsername(userName);
         return user != null ? user.getPreferences() : null;
