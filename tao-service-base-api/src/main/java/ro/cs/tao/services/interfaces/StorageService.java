@@ -20,6 +20,7 @@ import ro.cs.tao.persistence.AuxiliaryDataProvider;
 import ro.cs.tao.persistence.EOProductProvider;
 import ro.cs.tao.persistence.VectorDataProvider;
 import ro.cs.tao.services.model.FileObject;
+import ro.cs.tao.services.model.ItemAction;
 import ro.cs.tao.utils.executors.monitoring.ProgressListener;
 import ro.cs.tao.workspaces.Repository;
 
@@ -214,4 +215,23 @@ public interface StorageService<T, U> extends TAOService {
         object.addAttribute(CONTENTS_ATTRIBUTE, ".");
         return object;
     }
+
+    /**
+     * Registers an action that can be performed on a FileObject item
+     * @param action    The action to be registered
+     */
+    default void registerAction(ItemAction action) { }
+
+    /**
+     * Returns the list of the actions registered with this storage service. If no action is registered, the result
+     * should be <code>null</code>.
+     */
+    default List<ItemAction> getRegisteredActions() { return null; }
+
+    /**
+     * Executes the action with the given name on an item
+     * @param actionName    The action name
+     * @param item          The FileObject item onto which to execute the action
+     */
+    default void execute(String actionName, FileObject item) throws Exception { }
 }

@@ -4,15 +4,14 @@ import ro.cs.tao.persistence.AuxiliaryDataProvider;
 import ro.cs.tao.persistence.EOProductProvider;
 import ro.cs.tao.persistence.VectorDataProvider;
 import ro.cs.tao.services.interfaces.StorageService;
+import ro.cs.tao.services.model.ItemAction;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.workspaces.Repository;
+import ro.cs.tao.workspaces.RepositoryType;
 
 import java.lang.ref.WeakReference;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Factory class for getting instances of storage service implementation
@@ -25,6 +24,7 @@ public class StorageServiceFactory {
     private static AuxiliaryDataProvider auxiliaryDataProvider;
 
     private final static Map<Repository, WeakReference<StorageService>> cachedServices = Collections.synchronizedMap(new HashMap<>());
+    private final static Map<RepositoryType, List<ItemAction>> cachedActions = new HashMap<>();
 
     public static void setProductProvider(EOProductProvider productProvider) {
         StorageServiceFactory.productProvider = productProvider;
@@ -58,6 +58,21 @@ public class StorageServiceFactory {
             if (service == null) {
                 throw new IllegalArgumentException("No remote file repository for the given protocol is available");
             }
+            RepositoryType type = workspace.getType();
+            if (!cachedActions.containsKey(type)) {
+                final ServiceRegistry<ItemAction> actionRegistry = ServiceRegistryManager.getInstance().getServiceRegistry(ItemAction.class);
+                if (actionRegistry != null) {
+                    final Set<ItemAction> actions = actionRegistry.getServices();
+                    if (actions != null) {
+                        cachedActions.put(type, new ArrayList<>());
+                        for (ItemAction action : actions) {
+                            if (action.isIntendedFor(type)) {
+                                cachedActions.get(type).add(action);
+                            }
+                        }
+                    }
+                }
+            }
             // Don't forget that a SPI produces a single instance, and we don't want to re-use it
             try {
                 service = service.getClass().newInstance();
@@ -65,6 +80,12 @@ public class StorageServiceFactory {
                 service.setProductProvider(productProvider);
                 service.setVectorDataProvider(vectorDataProvider);
                 service.setAuxiliaryDataProvider(auxiliaryDataProvider);
+                final List<ItemAction> itemActions = cachedActions.get(type);
+                if (itemActions != null) {
+                    for (ItemAction action : itemActions) {
+                        service.registerAction(action);
+                    }
+                }
                 cachedServices.put(workspace, new WeakReference<>(service));
             } catch (InstantiationException | IllegalAccessException e) {
                 e.printStackTrace();
