@@ -26,5 +26,12 @@ public interface ItemAction {
      * @param item  The item onto which to execute the action
      * @throws Exception  If something goes wrong
      */
-    void doAction(final Path item) throws Exception;
+    default void doAction(final Path item) throws Exception { }
+    /**
+     * Execution of this action on the given item
+     * @param item  The item onto which to execute the action
+     * @param destination The destination of the action result
+     * @throws Exception  If something goes wrong
+     */
+    default void doAction(final Path item, final Path destination) throws Exception { }
 }

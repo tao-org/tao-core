@@ -640,7 +640,9 @@ public class FileUtilities {
                 Files.createDirectories(destination);
             }
             if (Files.isRegularFile(source)) {
-                Files.move(source, destination, StandardCopyOption.REPLACE_EXISTING);
+                Files.move(source,
+                           Files.isDirectory(destination) ? destination.resolve(source.getFileName()) : destination,
+                           StandardCopyOption.REPLACE_EXISTING);
             } else {
                 Path targetFolder = destination.resolve(source.getFileName());
                 Files.createDirectories(targetFolder);
