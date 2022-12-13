@@ -29,6 +29,7 @@ public class ExecutionTaskSummary {
     private double percentComplete;
     private String host;
     private ExecutionStatus taskStatus;
+    private String output;
 
     public long getTaskId() {
         return taskId;
@@ -85,8 +86,14 @@ public class ExecutionTaskSummary {
     public double getPercentComplete() {
         return percentComplete;
     }
-
     public void setPercentComplete(double percentComplete) {
         this.percentComplete = percentComplete;
+    }
+
+    public String getOutput() {
+        return output;
+    }
+    public void setOutput(String output) {
+        this.output = output;
     }
 }
