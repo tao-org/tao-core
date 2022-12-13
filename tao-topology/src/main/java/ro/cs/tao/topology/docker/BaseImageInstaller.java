@@ -302,12 +302,12 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
                     int i = 0;
                     while (i < length) {
                         char ch = template.charAt(i);
-                        if (ch == '$' && template.charAt(i - 1) != '\n') {
+                        if (ch == '$' && template.charAt(i - 1) != '\n' && template.charAt(i - 1) != '=') {
                             template = template.substring(0, i) + "\n" + template.substring(i);
                         }
                         i++;
                     }
-                    final String[] tokens = template.split("\n");
+                    /*final String[] tokens = template.split("\n");
                     for (int j = 0; j < tokens.length - 1; j++) {
                         final int idx = j;
                         if ((targets != null && targets.stream().anyMatch(t -> t.getName().equals(tokens[idx].substring(1)))) ||
@@ -316,7 +316,8 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
                             j++;
                         }
                     }
-                    component.setTemplateContents(String.join("\n", tokens));
+                    component.setTemplateContents(String.join("\n", tokens));*/
+                    component.setTemplateContents(template);
                     component.setComponentType(ProcessingComponentType.EXECUTABLE);
                     component.setVisibility(ProcessingComponentVisibility.SYSTEM);
                     component.setOwner(SystemPrincipal.instance().getName());
