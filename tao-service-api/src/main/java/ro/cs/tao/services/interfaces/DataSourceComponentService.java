@@ -68,6 +68,8 @@ public interface DataSourceComponentService extends CRUDService<DataSourceCompon
 
     void saveConfiguration(DataSourceConfiguration configuration) throws PersistenceException;
 
+    void updateConfiguration(DataSourceConfiguration configuration) throws PersistenceException;
+
     List<DataSourceComponent> getProductSets(String userName) throws PersistenceException;
 
     DataSourceComponent updateProductSet(ProductSetInfo productSet) throws PersistenceException;
