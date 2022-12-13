@@ -1,5 +1,6 @@
 package ro.cs.tao.services.model;
 
+import ro.cs.tao.persistence.EOProductProvider;
 import ro.cs.tao.workspaces.RepositoryType;
 
 import java.nio.file.Path;
@@ -26,12 +27,16 @@ public interface ItemAction {
      * @param item  The item onto which to execute the action
      * @throws Exception  If something goes wrong
      */
-    default void doAction(final Path item) throws Exception { }
+    default Path doAction(final Path item) throws Exception { return item; }
     /**
      * Execution of this action on the given item
      * @param item  The item onto which to execute the action
      * @param destination The destination of the action result
      * @throws Exception  If something goes wrong
      */
-    default void doAction(final Path item, final Path destination) throws Exception { }
+    default Path doAction(final Path item, final Path destination) throws Exception { return null; }
+
+    default void setProductProvider(EOProductProvider productProvider) { }
+
+    default void setActionUser(String user) { }
 }
