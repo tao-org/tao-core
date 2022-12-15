@@ -632,8 +632,6 @@ CREATE TABLE component.wps_authentication
 );
 ALTER TABLE component.wps_authentication ADD CONSTRAINT PK_wps_authentication
 	PRIMARY KEY (id);
-ALTER TABLE component.wps_authentication ADD CONSTRAINT FK_wps_authentication_container
-	FOREIGN KEY (id) REFERENCES component.container (id) ON DELETE No Action ON UPDATE No Action;
 
 -------------------------------------------------------------------------------
 -- table: component.wps_component

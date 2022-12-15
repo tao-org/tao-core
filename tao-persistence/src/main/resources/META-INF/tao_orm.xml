@@ -351,7 +351,7 @@
         </attributes>
     </entity>
 
-    <entity class="ro.cs.tao.component.WPSAuthentication" access="PROPERTY">
+    <entity class="ro.cs.tao.component.WebServiceAuthentication" access="PROPERTY">
         <table name="component.wps_authentication"/>
         <convert converter="ro.cs.tao.persistence.convert.AuthenticationTypeConverter" attribute-name="type" />
         <attributes>
