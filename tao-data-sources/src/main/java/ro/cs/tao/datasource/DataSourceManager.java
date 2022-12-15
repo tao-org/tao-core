@@ -131,7 +131,9 @@ public class DataSourceManager {
                 dataSource.setFilteredParameters(this.filteredParameters.get(dataSource.getId()));
             }
         }
-        return new HashSet<>(services);
+        Set<DataSource<?, ?>> sources = new HashSet<>(services);
+        sources.addAll(this.additionalDatasources.values());
+        return sources;
     }
 
     /**
