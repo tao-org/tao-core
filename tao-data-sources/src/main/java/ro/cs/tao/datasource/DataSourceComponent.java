@@ -32,6 +32,7 @@ import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.serialization.GenericAdapter;
 import ro.cs.tao.utils.Crypto;
 import ro.cs.tao.utils.ExceptionUtils;
+import ro.cs.tao.utils.StringUtilities;
 import ro.cs.tao.utils.executors.monitoring.ProgressListener;
 
 import javax.xml.bind.annotation.XmlElement;
@@ -552,7 +553,7 @@ public class DataSourceComponent extends TaoComponent {
                     dsManager.createInstance(this.sensorName, this.dataSourceName) :
                     dsManager.createInstance(this.sensorName);
         }
-        if (this.userName != null) {
+        if (!StringUtilities.isNullOrEmpty(this.userName)) {
             dataSource.setCredentials(this.userName, this.password);
         }
         return dataSource;
