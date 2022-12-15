@@ -20,7 +20,7 @@ INSERT INTO component.condition (id, description) VALUES
 
 -- Container type
 INSERT INTO component.container_type (id, description) VALUES
-(1, 'DOCKER'), (2, 'WPS');
+(1, 'DOCKER'), (2, 'WPS'), (3, 'UTILITY'), (4, 'STAC');
 
 -- Data formats
 INSERT INTO product.data_format (type) VALUES
