@@ -46,6 +46,7 @@ public abstract class DataSource<Q extends DataQuery, T> extends StringIdentifia
     protected Map<String, Map<String, Map<String, String>>> filteredParameters;
 
     public DataSource() {
+        super();
         this.properties = new Properties();
     }
 
