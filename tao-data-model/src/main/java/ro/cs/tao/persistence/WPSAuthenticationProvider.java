@@ -1,6 +1,6 @@
 package ro.cs.tao.persistence;
 
-import ro.cs.tao.component.WPSAuthentication;
+import ro.cs.tao.component.WebServiceAuthentication;
 
-public interface WPSAuthenticationProvider extends EntityProvider<WPSAuthentication, String> {
+public interface WPSAuthenticationProvider extends EntityProvider<WebServiceAuthentication, String> {
 }

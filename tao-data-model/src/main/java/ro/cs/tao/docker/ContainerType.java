@@ -12,7 +12,9 @@ public enum ContainerType implements TaoEnum<Integer> {
     @XmlEnumValue("2")
     WPS(2, "Web Processing Service"),
     @XmlEnumValue("3")
-    UTILITY(3, "Utility");
+    UTILITY(3, "Utility"),
+    @XmlEnumValue("4")
+    STAC(4, "STAC Service");
 
     private final int value;
     private final String description;

@@ -1,7 +1,7 @@
 package ro.cs.tao.persistence.managers;
 
 import org.springframework.stereotype.Component;
-import ro.cs.tao.component.WPSAuthentication;
+import ro.cs.tao.component.WebServiceAuthentication;
 import ro.cs.tao.component.enums.AuthenticationType;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.WPSAuthenticationProvider;
@@ -11,12 +11,12 @@ import ro.cs.tao.utils.StringUtilities;
 
 @Component("wpsAuthenticationManager")
 public class WPSAuthenticationManager
-        extends EntityManager<WPSAuthentication, String, WPSAuthenticationRepository>
+        extends EntityManager<WebServiceAuthentication, String, WPSAuthenticationRepository>
         implements WPSAuthenticationProvider {
 
     @Override
-    public WPSAuthentication get(String id) {
-        final WPSAuthentication authentication = super.get(id);
+    public WebServiceAuthentication get(String id) {
+        final WebServiceAuthentication authentication = super.get(id);
         if (authentication != null && authentication.getUser() != null) {
             authentication.setPassword(Crypto.decrypt(authentication.getPassword(), authentication.getUser()));
         }
@@ -24,7 +24,7 @@ public class WPSAuthenticationManager
     }
 
     @Override
-    public WPSAuthentication save(WPSAuthentication entity) throws PersistenceException {
+    public WebServiceAuthentication save(WebServiceAuthentication entity) throws PersistenceException {
         if (entity.getUser() != null) {
             entity.setPassword(Crypto.encrypt(entity.getPassword(), entity.getUser()));
         }
@@ -32,7 +32,7 @@ public class WPSAuthenticationManager
     }
 
     @Override
-    public WPSAuthentication update(WPSAuthentication entity) throws PersistenceException {
+    public WebServiceAuthentication update(WebServiceAuthentication entity) throws PersistenceException {
         if (entity.getUser() != null) {
             entity.setPassword(Crypto.encrypt(entity.getPassword(), entity.getUser()));
         }
@@ -45,7 +45,7 @@ public class WPSAuthenticationManager
     }
 
     @Override
-    protected boolean checkEntity(WPSAuthentication entity) {
+    protected boolean checkEntity(WebServiceAuthentication entity) {
         return !StringUtilities.isNullOrEmpty(entity.getId())
                 && entity.getType() != null
                 && (entity.getType() == AuthenticationType.NONE ||
