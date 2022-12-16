@@ -2,6 +2,11 @@ package ro.cs.tao.component;
 
 import ro.cs.tao.component.enums.AuthenticationType;
 
+/**
+ * Describes the authentication scheme of a web service.
+ *
+ * @author Cosmin Cara
+ */
 public class WebServiceAuthentication extends StringIdentifiable {
     private AuthenticationType type;
     private String user;
@@ -13,6 +18,10 @@ public class WebServiceAuthentication extends StringIdentifiable {
         super();
     }
 
+    /**
+     * The authentication type.
+     * Can be one of: NONE, BASIC, TOKEN
+     */
     public AuthenticationType getType() {
         return type;
     }
@@ -21,6 +30,9 @@ public class WebServiceAuthentication extends StringIdentifiable {
         this.type = type;
     }
 
+    /**
+     * The user name
+     */
     public String getUser() {
         return user;
     }
@@ -29,6 +41,9 @@ public class WebServiceAuthentication extends StringIdentifiable {
         this.user = user;
     }
 
+    /**
+     * The password
+     */
     public String getPassword() {
         return password;
     }
@@ -37,6 +52,9 @@ public class WebServiceAuthentication extends StringIdentifiable {
         this.password = password;
     }
 
+    /**
+     * The login URL, if the authentication type is TOKEN
+     */
     public String getLoginUrl() {
         return loginUrl;
     }
@@ -45,6 +63,9 @@ public class WebServiceAuthentication extends StringIdentifiable {
         this.loginUrl = loginUrl;
     }
 
+    /**
+     * The HTTP header name to be used in case of TOKEN authentication
+     */
     public String getAuthHeader() {
         return authHeader;
     }
