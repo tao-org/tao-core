@@ -730,6 +730,7 @@
             <transient name="password"/>
             <transient name="overriddenParameters"/>
             <transient name="currentProduct"/>
+            <transient name="principal"/>
         </attributes>
     </entity>
 
