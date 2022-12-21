@@ -84,7 +84,7 @@ public interface StorageService<T, U> extends TAOService {
      * Stores a file in the given folder, in the user workspace
      *
      * @param stream            The input stream of the file object
-     * @param length            The file length. If unknown, pass a value <= 0
+     * @param length            The file length. If unknown, pass a value less than 0
      * @param relativeFolder    The folder path, relative to the workspace of the calling user
      * @param description       A description for the file
      * @throws  Exception if the file cannot be stored

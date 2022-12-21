@@ -12,7 +12,6 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
  * the same cardinality.
  *
  * @author Cosmin Cara
- * @see SourceDescriptor,TargetDescriptor
  */
 @Constraint(name = "Same cardinality")
 @XmlJavaTypeAdapter(ConstraintAdapter.class)
