@@ -23,6 +23,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.List;
 
 /**
  * Utility class for encryption / decryption using AES
@@ -69,6 +70,22 @@ public class Crypto {
                 //e.printStackTrace();
                 return strToDecrypt;
             }
+        }
+        return null;
+    }
+
+    public static String hash(List<String> inputs) {
+        if (inputs != null && inputs.size() > 0) {
+            MessageDigest md5 = null;
+            try {
+                md5 = MessageDigest.getInstance("MD5");
+            } catch (NoSuchAlgorithmException e) {
+                throw new RuntimeException(e);
+            }
+            for (String input : inputs) {
+                md5.update(input.getBytes());
+            }
+            return Base64.getEncoder().encodeToString(md5.digest());
         }
         return null;
     }

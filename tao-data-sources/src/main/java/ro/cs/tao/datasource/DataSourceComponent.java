@@ -45,6 +45,7 @@ import java.net.URISyntaxException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.Principal;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -85,6 +86,8 @@ public class DataSourceComponent extends TaoComponent {
     private List<Parameter> overriddenParameters;
     @XmlTransient
     private ProgressListener progressListener;
+    @XmlTransient
+    private Principal principal;
 
     @XmlTransient
     private final Logger logger;
@@ -130,6 +133,14 @@ public class DataSourceComponent extends TaoComponent {
     }
 
     public DataSourceComponent() { this.logger = Logger.getLogger(DataSourceComponent.class.getName()); }
+
+    public Principal getPrincipal() {
+        return principal;
+    }
+
+    public void setPrincipal(Principal principal) {
+        this.principal = principal;
+    }
 
     /**
      * Returns the sensor name of this component
@@ -402,6 +413,7 @@ public class DataSourceComponent extends TaoComponent {
         newComponent.sensorName = this.sensorName;
         newComponent.dataSourceName = this.dataSourceName;
         newComponent.fetchMode = this.fetchMode;
+        newComponent.principal = this.principal;
         return newComponent;
     }
 
@@ -480,7 +492,8 @@ public class DataSourceComponent extends TaoComponent {
                                                      dataSourceName));
                     }
                     if (this.progressListener == null) {
-                        currentFetcher.setProgressListener(new ProgressNotifier(SessionStore.currentContext().getPrincipal(),
+                        Principal theOwner = this.principal == null ? SessionStore.currentContext().getPrincipal() : this.principal;
+                        currentFetcher.setProgressListener(new ProgressNotifier(theOwner,
                                                                                 this,
                                                                                 DataSourceTopic.PRODUCT_PROGRESS));
                     } else {
@@ -492,7 +505,7 @@ public class DataSourceComponent extends TaoComponent {
                     }
                     if (this.productStatusListener != null) {
                         // if the path is null, it means that either the product failed downloading or the
-                        // tiles filter did not passed
+                        // tiles filter were not passed
                         if (productPath != null) {
                             this.productStatusListener.downloadCompleted(product);
                         } else {

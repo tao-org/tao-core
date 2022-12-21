@@ -104,6 +104,22 @@ ALTER TABLE product.product_status ALTER COLUMN id SET DEFAULT nextval('product.
 ALTER SEQUENCE product.product_status_id_seq OWNED BY product.product_status.id;
 
 -------------------------------------------------------------------------------
+-- table: product.download_queue
+DROP TABLE IF EXISTS product.download_queue;
+CREATE TABLE product.download_queue
+(
+	id varchar(50) NOT NULL,
+	data_source varchar(255) NOT NULL,
+	products json NOT NULL,
+	destination varchar(512) NOT NULL,
+	local_root varchar(512),
+	tiles json,
+	properties json
+);
+ALTER TABLE product.download_queue ADD CONSTRAINT PK_download_queue
+	PRIMARY KEY (id);
+
+-------------------------------------------------------------------------------
 -- table: product.raster_data_product
 DROP TABLE IF EXISTS product.raster_data_product CASCADE;
 CREATE TABLE product.raster_data_product
