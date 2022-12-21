@@ -87,11 +87,12 @@ public class DataSourceManager {
     }
 
     public void registerDataSource(DataSource<?, ?> ds) {
+        unregisterDataSource(ds.getId());
         final String[] sensors = ds.getSupportedSensors();
         final String dsName = ds.getId();
         for (String sensor : sensors) {
             Map.Entry<String, String> key = new AbstractMap.SimpleEntry<>(sensor, dsName);
-            if (!this.registeredSources.containsKey(key)) {
+            //if (!this.registeredSources.containsKey(key)) {
                 if (this.filteredParameters != null && this.filteredParameters.containsKey(key.getValue())) {
                     ds.setFilteredParameters(this.filteredParameters.get(key.getValue()));
                 }
@@ -100,7 +101,7 @@ public class DataSourceManager {
                 if (this.registry.getService(dsName) == null) {
                     this.additionalDatasources.put(dsName, ds);
                 }
-            }
+            //}
         }
     }
 

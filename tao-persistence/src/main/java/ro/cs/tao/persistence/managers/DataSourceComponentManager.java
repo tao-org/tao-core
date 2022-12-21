@@ -55,6 +55,16 @@ public class DataSourceComponentManager extends TaoComponentManager<DataSourceCo
     }
 
     @Override
+    public List<DataSourceComponent> getBySourceAndSensor(String dataSourceName, String sensor) {
+        return this.repository.getBySourceAndSensor(dataSourceName, sensor);
+    }
+
+    @Override
+    public List<DataSourceComponent> getBySource(String dataSourceName) {
+        return this.repository.getBySource(dataSourceName);
+    }
+
+    @Override
     public DataSourceComponent getQueryDataSourceComponent(long queryId) {
         return this.repository.getQueryDataSourceComponent(queryId);
     }
