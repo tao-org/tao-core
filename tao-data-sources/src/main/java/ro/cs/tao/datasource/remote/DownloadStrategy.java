@@ -25,7 +25,7 @@ import ro.cs.tao.utils.ExceptionUtils;
 import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.NetUtils;
 import ro.cs.tao.utils.executors.MemoryUnit;
-import ro.cs.tao.utils.executors.monitoring.ProgressListener;
+import ro.cs.tao.utils.executors.monitoring.DownloadProgressListener;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -73,7 +73,7 @@ public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
     protected Logger logger = Logger.getLogger(getClass().getName());
     private String localArchiveRoot;
     private ProductPathBuilder pathBuilder;
-    private ProgressListener progressListener;
+    private DownloadProgressListener progressListener;
     private volatile boolean cancelled;
     private Timer timer;
     private long progressReportInterval;
@@ -195,7 +195,7 @@ public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
     }
 
     @Override
-    public void setProgressListener(ProgressListener progressListener) {
+    public void setProgressListener(DownloadProgressListener progressListener) {
         this.progressListener = progressListener;
     }
 
@@ -551,7 +551,9 @@ public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
         public void run() {
             if (progressListener != null && currentProductProgress != null) {
                 if (currentProductProgress.value() != lastValue) {
-                    progressListener.notifyProgress(currentProductProgress.value());
+                    double delta = currentProductProgress.value() - lastValue;
+                    progressListener.notifyProgress(currentProductProgress.value(),
+                                                    delta / currentProductProgress.factor() / DownloadStrategy.this.progressReportInterval * 1000 / MemoryUnit.MB.value());
                     lastValue = currentProductProgress.value();
                 }
             }
@@ -584,5 +586,9 @@ public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
         }
 
         public double value() { return this.adder.doubleValue(); }
+
+        public double factor() {
+            return this.factor;
+        }
     }
 }
