@@ -27,13 +27,13 @@ import ro.cs.tao.datasource.remote.FetchMode;
 import ro.cs.tao.datasource.util.Utilities;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.enums.DataFormat;
-import ro.cs.tao.messaging.ProgressNotifier;
+import ro.cs.tao.messaging.DownloadProgressNotifier;
 import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.serialization.GenericAdapter;
 import ro.cs.tao.utils.Crypto;
 import ro.cs.tao.utils.ExceptionUtils;
 import ro.cs.tao.utils.StringUtilities;
-import ro.cs.tao.utils.executors.monitoring.ProgressListener;
+import ro.cs.tao.utils.executors.monitoring.DownloadProgressListener;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
@@ -85,7 +85,7 @@ public class DataSourceComponent extends TaoComponent {
     @XmlTransient
     private List<Parameter> overriddenParameters;
     @XmlTransient
-    private ProgressListener progressListener;
+    private DownloadProgressListener progressListener;
     @XmlTransient
     private Principal principal;
 
@@ -325,7 +325,7 @@ public class DataSourceComponent extends TaoComponent {
      * Sets a progress listener that will receive progress notifications.
      * @param listener  The progress listener
      */
-    public void setProgressListener(ProgressListener listener) { this.progressListener = listener; }
+    public void setProgressListener(DownloadProgressListener listener) { this.progressListener = listener; }
 
     /**
      * Returns the product that this component currently is trying to fetch.
@@ -493,9 +493,9 @@ public class DataSourceComponent extends TaoComponent {
                     }
                     if (this.progressListener == null) {
                         Principal theOwner = this.principal == null ? SessionStore.currentContext().getPrincipal() : this.principal;
-                        currentFetcher.setProgressListener(new ProgressNotifier(theOwner,
-                                                                                this,
-                                                                                DataSourceTopic.PRODUCT_PROGRESS));
+                        currentFetcher.setProgressListener(new DownloadProgressNotifier(theOwner,
+                                                                                        this,
+                                                                                        DataSourceTopic.PRODUCT_PROGRESS));
                     } else {
                         currentFetcher.setProgressListener(this.progressListener);
                     }

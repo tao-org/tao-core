@@ -32,8 +32,8 @@ public class ProgressNotifier implements ProgressListener {
     private final Object owner;
     private final Principal principal;
     private final Map<String, String> additionalInfo;
-    private String taskName;
-    private double taskCounter;
+    protected String taskName;
+    protected double taskCounter;
     private double subTaskCounter;
     private ProgressListener subListener;
 
@@ -125,21 +125,22 @@ public class ProgressNotifier implements ProgressListener {
         return this.subListener;
     }
 
-    private void sendMessage(Message message) {
-        message.setTimestamp(System.currentTimeMillis());
-        if (additionalInfo != null) {
-            additionalInfo.forEach(message::addItem);
-        }
-        Messaging.send(this.principal, this.topic.value(), message, true);
-    }
-
-    private void sendTransientMessage(Message message) {
+    protected void sendTransientMessage(Message message) {
         message.setTimestamp(System.currentTimeMillis());
         if (additionalInfo != null) {
             additionalInfo.forEach(message::addItem);
         }
         message.setUser(this.principal.getName());
         Messaging.send(this.principal, this.topic.value(), message, false);
+    }
+
+
+    private void sendMessage(Message message) {
+        message.setTimestamp(System.currentTimeMillis());
+        if (additionalInfo != null) {
+            additionalInfo.forEach(message::addItem);
+        }
+        Messaging.send(this.principal, this.topic.value(), message, true);
     }
 
     private ActivityStart createStartMessage() {
