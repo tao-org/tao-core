@@ -35,14 +35,14 @@ public abstract class SessionContext {
     private final List<UserPreference> preferences;
 
     protected SessionContext() {
-        this.principal = setPrincipal();
+        this.principal = setPrincipal(null);
         this.workspaceRoot = Paths.get(SystemVariable.ROOT.value());
         final String value = SystemVariable.SHARE.value();
         this.netSpaceRoot = value != null ? Paths.get(value) : null;
         this.preferences = setPreferences();
     }
 
-    protected abstract Principal setPrincipal();
+    public abstract Principal setPrincipal(Principal principal);
     protected abstract List<UserPreference> setPreferences();
 
     /**

@@ -516,6 +516,8 @@ public class Orchestrator extends Notifiable {
             final ExecutionStatus status = EnumUtils.getEnumConstantByName(ExecutionStatus.class,
                                                                            message.getPayload());
             task = taskProvider.get(Long.parseLong(taskId));
+            user = task.getJob().getUserName();
+            currentContext.setPrincipal(new UserPrincipal(user));
             task.setContext(currentContext);
             if (!(status == ExecutionStatus.QUEUED_ACTIVE && task.getExecutionStatus() == ExecutionStatus.RUNNING)) {
                 // it may happen that the notification of Queue_Active to arrive after the task was actually put
@@ -681,7 +683,7 @@ public class Orchestrator extends Notifiable {
                     cancelJob(job);
                 }
             }
-        } catch (PersistenceException e) {
+        } catch (Throwable e) {
             logger.severe(String.format("Abnormal termination: %s", e.getMessage()));
             ExecutionJob job = task.getJob();
             job.setExecutionStatus(ExecutionStatus.FAILED);
@@ -715,7 +717,7 @@ public class Orchestrator extends Notifiable {
         logger.warning(msg);
         jobProvider.update(job);
         job.getTasks().forEach(t -> {
-            if (t.getExecutionStatus() != ExecutionStatus.FAILED || t.getExecutionStatus() != ExecutionStatus.DONE) {
+            if (t.getExecutionStatus() != ExecutionStatus.DONE && t.getExecutionStatus() != ExecutionStatus.FAILED) {
                 t.setExecutionStatus(ExecutionStatus.CANCELLED);
                 try {
                     taskProvider.update(t);
@@ -999,7 +1001,7 @@ public class Orchestrator extends Notifiable {
     private void changeStatus(ExecutionTask task, ExecutionStatus newStatus, String reason) {
         try {
             if (task.getExecutionStatus() != newStatus) {
-                taskProvider.updateStatus(task, newStatus, reason);
+                task = taskProvider.updateStatus(task, newStatus, reason);
             }
             ExecutionGroup groupTask = task.getGroupTask();
             if (groupTask != null) {
@@ -1179,7 +1181,9 @@ public class Orchestrator extends Notifiable {
                         final int size = oValuesList.size();
                         for (int i = 0; i < size; i++) {
                             try {
-                                Path path = Paths.get(new URI(oValuesList.get(i)));
+                                Path path = FileUtilities.isURI(oValuesList.get(i))
+                                            ? Paths.get(new URI(oValuesList.get(i)))
+                                            : Paths.get(oValuesList.get(i));
                                 oValuesList.set(i, path.getName(path.getNameCount() - 1).toString());
                             } catch (URISyntaxException e) {
                                 logger.warning(e.getMessage());
@@ -1380,7 +1384,8 @@ public class Orchestrator extends Notifiable {
 
     private ExecutionJob tryCreateJob(String user, SessionContext context, long workflowId, String description,
                                       Map<String, Map<String, String>> inputs) {
-        final ExecutionJob executionJob = createJob(context, workflowId, description, inputs, true);
+        final ExecutionJob executionJob = createJob(context, workflowId, description, inputs,
+                                                    ConfigurationManager.getInstance().getBooleanValue("optimize.workflows"));
         return canSubmitJob(user, executionJob) ? executionJob : null;
     }
 
@@ -1424,18 +1429,18 @@ public class Orchestrator extends Notifiable {
         private final Principal impersonatingUser;
 
         private MessageContext(Message message) {
-            this.impersonatingUser = message::getUser;
+            this.impersonatingUser = new UserPrincipal(message.getUser());
         }
 
         private MessageContext(String userName) {
-            this.impersonatingUser = () -> userName;
+            this.impersonatingUser = new UserPrincipal(userName);
         }
 
         @Override
         public Principal getPrincipal() { return this.impersonatingUser; }
 
         @Override
-        protected Principal setPrincipal() {
+        public Principal setPrincipal(Principal principal) {
             return this.impersonatingUser;
         }
 
