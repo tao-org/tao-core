@@ -677,8 +677,8 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         // Why "." at the end ???
         // final String tmpPath = isOutputManaged ? tempOutput : tempOutput.substring(0, tempOutput.lastIndexOf('/') + 1) + ".";
         final String tmpPath = isOutputManaged ? tempOutput : tempOutput.substring(0, tempOutput.lastIndexOf('/') + 1) + "*";
-        //final String finalPath = isOutputManaged ? finalOutput : finalOutput.substring(0, finalOutput.lastIndexOf('/') + 1);
-        final String finalPath = finalOutput.substring(0, finalOutput.lastIndexOf('/') + 1);
+        final String finalPath = isOutputManaged ? finalOutput : finalOutput.substring(0, finalOutput.lastIndexOf('/') + 1);
+//        final String finalPath = finalOutput.substring(0, finalOutput.lastIndexOf('/') + 1);
         final boolean isSnapDimap = component.getTargets().stream().anyMatch(t -> t.getDataDescriptor().getLocation().toLowerCase().endsWith(".dim")
                                                                                 || "beam-dimap".equalsIgnoreCase(t.getDataDescriptor().getFormatName()))
                                     && finalOutput.endsWith(".dim");
