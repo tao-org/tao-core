@@ -16,6 +16,7 @@
 
 package ro.cs.tao.execution.util;
 
+import org.apache.commons.lang3.SystemUtils;
 import org.springframework.stereotype.Component;
 import ro.cs.tao.component.*;
 import ro.cs.tao.datasource.DataSourceComponent;
@@ -427,7 +428,9 @@ public class TaskUtilities {
                 root = Paths.get(DOCKER_EODATA_HOST_POINT);
                 mountPoint = DOCKER_EODATA_MOUNT_POINT;
             } else {
-                root = FileUtilities.resolveSymLinks(Paths.get(SystemVariable.ROOT.value()).toAbsolutePath());
+                root = SystemUtils.IS_OS_WINDOWS
+                       ? FileUtilities.resolveSymLinks(Paths.get(SystemVariable.ROOT.value()).toAbsolutePath())
+                       : Paths.get(SystemVariable.ROOT.value()).toAbsolutePath();
                 mountPoint = DOCKER_MOUNT_POINT;
             }
             final String unixPath = FileUtilities.asUnixPath(root.relativize(p), true);

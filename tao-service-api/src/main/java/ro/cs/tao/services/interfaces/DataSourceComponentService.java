@@ -72,6 +72,10 @@ public interface DataSourceComponentService extends CRUDService<DataSourceCompon
 
     List<DataSourceComponent> getProductSets(String userName) throws PersistenceException;
 
+    List<DataSourceComponent> getBySource(String dataSourceName) throws PersistenceException;
+
+    List<DataSourceComponent> getBySourceAndSensor(String dataSourceName, String sensor) throws PersistenceException;
+
     DataSourceComponent updateProductSet(ProductSetInfo productSet) throws PersistenceException;
 
 }

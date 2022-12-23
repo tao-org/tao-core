@@ -27,12 +27,13 @@ import ro.cs.tao.datasource.remote.FetchMode;
 import ro.cs.tao.datasource.util.Utilities;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.enums.DataFormat;
-import ro.cs.tao.messaging.ProgressNotifier;
+import ro.cs.tao.messaging.DownloadProgressNotifier;
 import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.serialization.GenericAdapter;
 import ro.cs.tao.utils.Crypto;
 import ro.cs.tao.utils.ExceptionUtils;
-import ro.cs.tao.utils.executors.monitoring.ProgressListener;
+import ro.cs.tao.utils.StringUtilities;
+import ro.cs.tao.utils.executors.monitoring.DownloadProgressListener;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
@@ -44,6 +45,7 @@ import java.net.URISyntaxException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.Principal;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -83,7 +85,9 @@ public class DataSourceComponent extends TaoComponent {
     @XmlTransient
     private List<Parameter> overriddenParameters;
     @XmlTransient
-    private ProgressListener progressListener;
+    private DownloadProgressListener progressListener;
+    @XmlTransient
+    private Principal principal;
 
     @XmlTransient
     private final Logger logger;
@@ -129,6 +133,14 @@ public class DataSourceComponent extends TaoComponent {
     }
 
     public DataSourceComponent() { this.logger = Logger.getLogger(DataSourceComponent.class.getName()); }
+
+    public Principal getPrincipal() {
+        return principal;
+    }
+
+    public void setPrincipal(Principal principal) {
+        this.principal = principal;
+    }
 
     /**
      * Returns the sensor name of this component
@@ -313,7 +325,7 @@ public class DataSourceComponent extends TaoComponent {
      * Sets a progress listener that will receive progress notifications.
      * @param listener  The progress listener
      */
-    public void setProgressListener(ProgressListener listener) { this.progressListener = listener; }
+    public void setProgressListener(DownloadProgressListener listener) { this.progressListener = listener; }
 
     /**
      * Returns the product that this component currently is trying to fetch.
@@ -401,6 +413,7 @@ public class DataSourceComponent extends TaoComponent {
         newComponent.sensorName = this.sensorName;
         newComponent.dataSourceName = this.dataSourceName;
         newComponent.fetchMode = this.fetchMode;
+        newComponent.principal = this.principal;
         return newComponent;
     }
 
@@ -479,9 +492,10 @@ public class DataSourceComponent extends TaoComponent {
                                                      dataSourceName));
                     }
                     if (this.progressListener == null) {
-                        currentFetcher.setProgressListener(new ProgressNotifier(SessionStore.currentContext().getPrincipal(),
-                                                                                this,
-                                                                                DataSourceTopic.PRODUCT_PROGRESS));
+                        Principal theOwner = this.principal == null ? SessionStore.currentContext().getPrincipal() : this.principal;
+                        currentFetcher.setProgressListener(new DownloadProgressNotifier(theOwner,
+                                                                                        this,
+                                                                                        DataSourceTopic.PRODUCT_PROGRESS));
                     } else {
                         currentFetcher.setProgressListener(this.progressListener);
                     }
@@ -491,7 +505,7 @@ public class DataSourceComponent extends TaoComponent {
                     }
                     if (this.productStatusListener != null) {
                         // if the path is null, it means that either the product failed downloading or the
-                        // tiles filter did not passed
+                        // tiles filter were not passed
                         if (productPath != null) {
                             this.productStatusListener.downloadCompleted(product);
                         } else {
@@ -552,7 +566,7 @@ public class DataSourceComponent extends TaoComponent {
                     dsManager.createInstance(this.sensorName, this.dataSourceName) :
                     dsManager.createInstance(this.sensorName);
         }
-        if (this.userName != null) {
+        if (!StringUtilities.isNullOrEmpty(this.userName)) {
             dataSource.setCredentials(this.userName, this.password);
         }
         return dataSource;

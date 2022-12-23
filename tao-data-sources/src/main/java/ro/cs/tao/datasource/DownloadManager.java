@@ -2,11 +2,13 @@ package ro.cs.tao.datasource;
 
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.eodata.EOProduct;
+import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.utils.executors.NamedThreadPoolExecutor;
 
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.logging.Logger;
 
 /**
@@ -20,26 +22,21 @@ public class DownloadManager {
     private static final String SERIALIZE_DOWNLOADS_KEY = "serialize.downloads";
     private static final DownloadManager instance;
     private static final Logger logger;
+    private static final boolean serializeDownloads = ConfigurationManager.getInstance().getBooleanValue(SERIALIZE_DOWNLOADS_KEY);
     private final Map<String, NamedThreadPoolExecutor> downloadWorkers;
-    private final Map<Integer, Future<?>> queuedDownloads;
+    private final Map<String, Future<?>> queuedDownloads;
+    private DownloadQueuePersister persister;
 
     static {
         instance = new DownloadManager();
         logger = Logger.getLogger(DownloadManager.class.getName());
-        String dsName;
-        int maxTransfers;
-        final boolean serializeDownloads = ConfigurationManager.getInstance().getBooleanValue(SERIALIZE_DOWNLOADS_KEY);
         for (DataSource<?, ?> dataSource : DataSourceManager.getInstance().getRegisteredDataSources()) {
-            dsName = dataSource.defaultId();
-            if (serializeDownloads) {
-                maxTransfers = 1;
-                setConcurrentDownloads(dsName, maxTransfers);
-            } else {
-                maxTransfers = dataSource.getMaximumAllowedTransfers();
-                instance.downloadWorkers.put(dsName, new NamedThreadPoolExecutor(dsName, maxTransfers));
-            }
-            logger.fine(String.format("Data source [%s] initialized with %d concurrent downloads", dsName, maxTransfers));
+            initializeDatasource(dataSource);
         }
+    }
+
+    public static void setStatePersister(DownloadQueuePersister persister) {
+        instance.persister = persister;
     }
 
     /**
@@ -51,7 +48,7 @@ public class DownloadManager {
      */
     public static void setConcurrentDownloads(String dataSourceName, int value) {
         final NamedThreadPoolExecutor poolExecutor = instance.downloadWorkers.get(dataSourceName);
-        final DataSource<?, ?> dataSource = DataSourceManager.getInstance().getRegisteredDataSources().stream().filter(d -> d.defaultId().equals(dataSourceName)).findFirst().orElse(null);
+        final DataSource<?, ?> dataSource = DataSourceManager.getInstance().getRegisteredDataSources().stream().filter(d -> d.getId().equals(dataSourceName)).findFirst().orElse(null);
         if (dataSource == null) {
             throw new IllegalArgumentException(String.format("[%s] not registered", dataSourceName));
         }
@@ -86,22 +83,40 @@ public class DownloadManager {
     public static List<EOProduct> queueDownload(DataSourceComponent dsInstance,
                                                 FiveArgsFunction<List<EOProduct>, Set<String>, String, String, Properties, List<EOProduct>> delegate,
                                                 List<EOProduct> products, Set<String> tiles, String destinationPath, String localRootPath, Properties additionalProperties) {
+        final String dataSourceName = dsInstance.getDataSourceName();
+        DownloadQueueItem item = null;
+        if (instance.persister != null) {
+            item = new DownloadQueueItem();
+            item.setDataSourceName(dataSourceName);
+            item.setDestinationPath(destinationPath);
+            item.setLocalRootPath(localRootPath);
+            item.setProducts(products);
+            item.setTiles(tiles);
+            item.setId(DownloadQueueItem.computeId(item));
+            try {
+                instance.persister.save(item);
+            } catch (PersistenceException e) {
+                logger.warning(e.getMessage());
+            }
+        }
         try {
-            final NamedThreadPoolExecutor executor = instance.downloadWorkers.get(dsInstance.getDataSourceName());
+            final NamedThreadPoolExecutor executor = instance.downloadWorkers.get(dataSourceName);
             if (executor == null) {
-                throw new Exception(String.format("No download worker for source %s found", dsInstance.getDataSourceName()));
+                initializeDatasource(DataSourceManager.getInstance().getRegisteredDataSources()
+                                                      .stream().filter(d -> d.getId().equals(dataSourceName)).findFirst().get());
+                //throw new Exception(String.format("No download worker for source %s found", dsInstance.getDataSourceName()));
             }
             final Future<List<EOProduct>> task = executor.submit(() ->
                          delegate.apply(products, tiles, destinationPath, localRootPath, additionalProperties));
             try {
-                instance.queuedDownloads.put(dsInstance.hashCode(), task);
+                instance.queuedDownloads.put(dataSourceName, task);
                 logger.fine(String.format("Download queued for data source [%s-%s]. There are %d queued downloads for this source",
-                                          dsInstance.getDataSourceName(), dsInstance.getSensorName(), executor.getActiveCount()));
+                                          dataSourceName, dsInstance.getSensorName(), executor.getQueue().size()));
                 return task.get();
             } finally {
-                instance.queuedDownloads.remove(dsInstance.hashCode());
+                removeFromQueue(item, dataSourceName);
                 logger.fine(String.format("One download completed for data source [%s-%s]. There are %d queued downloads for this source",
-                        dsInstance.getDataSourceName(), dsInstance.getSensorName(), executor.getActiveCount()));
+                                          dataSourceName, dsInstance.getSensorName(), executor.getQueue().size()));
             }
         } catch (Exception e) {
             logger.severe(e.getMessage());
@@ -119,9 +134,9 @@ public class DownloadManager {
             delegate.call();
         } catch (Exception ignored) {
         }
-        final NamedThreadPoolExecutor executor = instance.downloadWorkers.get(dsInstance.defaultId());
+        final NamedThreadPoolExecutor executor = instance.downloadWorkers.get(dsInstance.getId());
         if (executor != null) {
-            final Future<?> task = instance.queuedDownloads.remove(dsInstance.hashCode());
+            final Future<?> task = instance.queuedDownloads.remove(dsInstance.getDataSourceName());
             if (task != null) {
                 task.cancel(true);
             } else {
@@ -143,6 +158,44 @@ public class DownloadManager {
                                      entry.getValue().getActiveCount(), entry.getValue().getQueue().size()));
         }
         return result;
+    }
+    /**
+     * Returns the global statistics of the manager (how many downloads are in progress, how many are queued).
+     *
+     */
+    public static Map<String, String> getOverallStatus() {
+        Map<String, String> result = new HashMap<>();
+        for (Map.Entry<String, NamedThreadPoolExecutor> entry : instance.downloadWorkers.entrySet()) {
+            result.put((Integer) instance.downloadWorkers.values().stream()
+                                                         .map(ThreadPoolExecutor::getActiveCount)
+                                                         .mapToInt(Integer::intValue).sum() + " active",
+                       (Integer) instance.downloadWorkers.values().stream()
+                                                         .map(v -> v.getQueue().size())
+                                                         .mapToInt(Integer::intValue).sum() + " queued");
+        }
+        return result;
+    }
+
+    private static void initializeDatasource(DataSource<?, ?> dataSource) {
+        String dsName = dataSource.getId();
+        int maxTransfers;
+        if (serializeDownloads) {
+            maxTransfers = 1;
+            setConcurrentDownloads(dsName, maxTransfers);
+        } else {
+            maxTransfers = dataSource.getMaximumAllowedTransfers();
+            instance.downloadWorkers.put(dsName, new NamedThreadPoolExecutor(dsName, maxTransfers));
+        }
+        logger.fine(String.format("Data source [%s] initialized with %d concurrent downloads", dsName, maxTransfers));
+    }
+
+    private static void removeFromQueue(DownloadQueueItem item, String name) {
+        if (item != null) {
+            if (instance.persister != null) {
+                instance.persister.remove(item.getId());
+            }
+            instance.queuedDownloads.remove(name);
+        }
     }
 
     private DownloadManager() {

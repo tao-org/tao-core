@@ -12,6 +12,8 @@ public interface DataSourceComponentProvider extends EntityProvider<DataSourceCo
     List<DataSourceComponent> getUserDataSourceComponents(String userName);
     List<DataSourceComponent> getSystemDataSourceComponents();
     List<DataSourceComponent> getProductSets(String userName);
+    List<DataSourceComponent> getBySourceAndSensor(String dataSourceName, String sensor);
+    List<DataSourceComponent> getBySource(String dataSourceName);
     DataSourceComponent getDataSourceComponentByLabel(String label);
     DataSourceComponent getQueryDataSourceComponent(long queryId);
 

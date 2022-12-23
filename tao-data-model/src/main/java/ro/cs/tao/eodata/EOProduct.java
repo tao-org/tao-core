@@ -106,7 +106,7 @@ public class EOProduct extends EOData implements Serializable {
     }
 
     public void setQuicklookLocation(String location) throws URISyntaxException {
-        if (location != null) {
+        if (location != null && !location.startsWith("s3")) {
             try {
                 this.quicklookLocation = new URL(location).toURI();
             } catch (MalformedURLException e) {
