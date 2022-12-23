@@ -224,6 +224,36 @@
         </attributes>
     </entity>
 
+    <entity class="ro.cs.tao.datasource.DownloadQueueItem" access="PROPERTY">
+        <table name="product.download_queue"/>
+        <convert converter="ro.cs.tao.persistence.convert.ProductListConverter" attribute-name="products" />
+        <convert converter="ro.cs.tao.persistence.convert.SetConverter" attribute-name="tiles" />
+        <convert converter="ro.cs.tao.persistence.convert.PropertiesConverter" attribute-name="properties" />
+        <attributes>
+            <id name="id">
+                <column name="id" nullable="false" column-definition="varchar(50) NOT NULL"/>
+            </id>
+            <basic name="products">
+                <column name="products" nullable="false" column-definition="json NOT NULL" />
+            </basic>
+            <basic name="dataSourceName">
+                <column name="data_source" nullable="false" column-definition="varchar(255) NOT NULL" />
+            </basic>
+            <basic name="destinationPath">
+                <column name="destination" nullable="false" column-definition="varchar(512) NOT NULL" />
+            </basic>
+            <basic name="localRootPath">
+                <column name="local_root" nullable="true" column-definition="varchar(512)" />
+            </basic>
+            <basic name="tiles">
+                <column name="tiles" nullable="true" column-definition="json" />
+            </basic>
+            <basic name="properties">
+                <column name="properties" nullable="true" column-definition="json" />
+            </basic>
+        </attributes>
+    </entity>
+
     <entity class="ro.cs.tao.topology.NodeFlavor" access="PROPERTY">
         <table name="topology.node_flavor"/>
         <attributes>
@@ -700,6 +730,7 @@
             <transient name="password"/>
             <transient name="overriddenParameters"/>
             <transient name="currentProduct"/>
+            <transient name="principal"/>
         </attributes>
     </entity>
 

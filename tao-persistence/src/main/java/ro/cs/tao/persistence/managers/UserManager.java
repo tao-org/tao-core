@@ -460,7 +460,7 @@ public class UserManager extends EntityManager<User, Long, UserRepository> imple
      * <li> the user's actual input quota
      * <li> the user's processing quota.
      * <li> the user's actual processing quota
-     * 
+     * </ol>
      * <p>
      * Users that have no quota limitation will have the value -1 in all of those fields.
      * 

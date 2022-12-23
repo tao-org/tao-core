@@ -16,7 +16,7 @@ import ro.cs.tao.serialization.GeometryAdapter;
 import ro.cs.tao.serialization.JsonMapper;
 import ro.cs.tao.utils.DateUtils;
 import ro.cs.tao.utils.NetUtils;
-import ro.cs.tao.utils.executors.monitoring.ProgressListener;
+import ro.cs.tao.utils.executors.monitoring.DownloadProgressListener;
 
 import java.io.File;
 import java.io.IOException;
@@ -254,7 +254,7 @@ public class DownloadTool {
                         }
                     }
                 } else {
-                    dsComponent.setProgressListener(new ProgressListener() {
+                    dsComponent.setProgressListener(new DownloadProgressListener() {
                         private String current;
                         @Override
                         public void started(String taskName) {
@@ -278,6 +278,13 @@ public class DownloadTool {
                         @Override
                         public void notifyProgress(double progressValue) {
                             System.out.print("\r" + current + ": " + String.format("%.2f%% ", progressValue * 100));
+                        }
+
+                        @Override
+                        public void notifyProgress(double progressValue, double transferSpeed) {
+                            System.out.print("\r" + current + ": " + String.format("%.2f%%, %.2fMB/s",
+                                                                                   progressValue * 100,
+                                                                                   transferSpeed));
                         }
 
                         @Override

@@ -25,18 +25,27 @@ public class WPSAuthenticationManager
 
     @Override
     public WebServiceAuthentication save(WebServiceAuthentication entity) throws PersistenceException {
-        if (entity.getUser() != null) {
-            entity.setPassword(Crypto.encrypt(entity.getPassword(), entity.getUser()));
+        if (entity.getType() != AuthenticationType.NONE) {
+            if (entity.getUser() != null) {
+                entity.setPassword(Crypto.encrypt(entity.getPassword(), entity.getUser()));
+            }
+            return super.save(entity);
+        } else {
+            // Don't persist the NONE authentication since it's irrelevant
+            return entity;
         }
-        return super.save(entity);
     }
 
     @Override
     public WebServiceAuthentication update(WebServiceAuthentication entity) throws PersistenceException {
-        if (entity.getUser() != null) {
-            entity.setPassword(Crypto.encrypt(entity.getPassword(), entity.getUser()));
+        if (entity.getType() != AuthenticationType.NONE) {
+            if (entity.getUser() != null) {
+                entity.setPassword(Crypto.encrypt(entity.getPassword(), entity.getUser()));
+            }
+            return super.update(entity);
+        } else {
+            return entity;
         }
-        return super.update(entity);
     }
 
     @Override

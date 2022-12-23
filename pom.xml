@@ -40,7 +40,7 @@
         <java.version>17</java.version>
         <maven.compiler.release>11</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.deploy.root.path>file://W:/Dev/tao-github-publication</project.deploy.root.path>
+        <project.deploy.root.path>file://C:/ssd/releases</project.deploy.root.path>
         <geotools.version>26.1</geotools.version>
         <spring.version>5.3.22</spring.version>
         <spring.data.version>2.7.2</spring.data.version>
@@ -166,6 +166,25 @@
                             </goals>
                         </execution>
                     </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>3.4.1</version>
+                    <executions>
+                        <execution>
+                            <id>javadoc</id>
+                            <goals>
+                                <goal>javadoc</goal>
+                            </goals>
+                            <configuration>
+                                <additionalparam>-Xdoclint:none</additionalparam>
+                            </configuration>
+                        </execution>
+                    </executions>
+                    <configuration>
+
+                    </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>

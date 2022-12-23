@@ -22,6 +22,7 @@ import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.utils.NetUtils;
 
+import java.lang.reflect.Constructor;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -36,6 +37,7 @@ public class DataSourceManager {
     private final ServiceRegistry<DataSource> registry;
     private final Map<Map.Entry<String, String>, Map<String, DataSourceParameter>> registeredSources;
     private Map<String, Map<String, Map<String, Map<String, String>>>> filteredParameters;
+    private final Map<String, DataSource<?, ?>> additionalDatasources;
 
     static {
         instance = new DataSourceManager();
@@ -61,6 +63,7 @@ public class DataSourceManager {
         }
         this.registeredSources = new HashMap<>();
         this.registry = ServiceRegistryManager.getInstance().getServiceRegistry(DataSource.class);
+        this.additionalDatasources = new HashMap<>();
         initializeSources();
     }
 
@@ -84,22 +87,27 @@ public class DataSourceManager {
     }
 
     public void registerDataSource(DataSource<?, ?> ds) {
+        unregisterDataSource(ds.getId());
         final String[] sensors = ds.getSupportedSensors();
         final String dsName = ds.getId();
         for (String sensor : sensors) {
             Map.Entry<String, String> key = new AbstractMap.SimpleEntry<>(sensor, dsName);
-            if (!this.registeredSources.containsKey(key)) {
+            //if (!this.registeredSources.containsKey(key)) {
                 if (this.filteredParameters != null && this.filteredParameters.containsKey(key.getValue())) {
                     ds.setFilteredParameters(this.filteredParameters.get(key.getValue()));
                 }
                 final Map<String, Map<String, DataSourceParameter>> parameters = ds.getSupportedParameters();
                 this.registeredSources.put(key, parameters.get(sensor));
-            }
+                if (this.registry.getService(dsName) == null) {
+                    this.additionalDatasources.put(dsName, ds);
+                }
+            //}
         }
     }
 
     public void unregisterDataSource(String dsName) {
         this.registeredSources.entrySet().removeIf(entry -> entry.getKey().getValue().equals(dsName));
+        this.additionalDatasources.remove(dsName);
     }
 
     public void setFilteredParameters(Map<Map.Entry<String, String>, Map<String, Map<String, String>>> filter) {
@@ -124,7 +132,9 @@ public class DataSourceManager {
                 dataSource.setFilteredParameters(this.filteredParameters.get(dataSource.getId()));
             }
         }
-        return new HashSet<>(services);
+        Set<DataSource<?, ?>> sources = new HashSet<>(services);
+        sources.addAll(this.additionalDatasources.values());
+        return sources;
     }
 
     /**
@@ -168,7 +178,7 @@ public class DataSourceManager {
         DataSource<?, ?> dataSource = null;
         String firstName = getFirst(sensorName);
         if (firstName != null) {
-            dataSource = this.registry.getService(firstName);
+            dataSource = getInternal(firstName);
             if (this.filteredParameters != null && this.filteredParameters.containsKey(firstName)) {
                 dataSource.setFilteredParameters(this.filteredParameters.get(firstName));
             }
@@ -186,7 +196,10 @@ public class DataSourceManager {
     public DataSource<?, ?> get(String sensorName, String dataSourceName) {
         DataSource<?, ?> dataSource = null;
         if (this.registeredSources.containsKey(new AbstractMap.SimpleEntry<>(sensorName, dataSourceName))) {
-            dataSource = this.registry.getService(dataSourceName);
+            dataSource = getInternal(dataSourceName);
+            if (dataSource == null) {
+                dataSource = this.additionalDatasources.get(dataSourceName);
+            }
             if (this.filteredParameters != null && this.filteredParameters.containsKey(dataSourceName)) {
                 dataSource.setFilteredParameters(this.filteredParameters.get(dataSourceName));
             }
@@ -205,7 +218,7 @@ public class DataSourceManager {
         String firstName = getFirst(sensorName);
         if (firstName != null) {
             try {
-                dataSource = this.registry.getService(firstName).getClass().newInstance();
+                dataSource = getInternal(firstName).getClass().newInstance();
                 if (this.filteredParameters != null && this.filteredParameters.containsKey(firstName)) {
                     dataSource.setFilteredParameters(this.filteredParameters.get(firstName));
                 }
@@ -227,7 +240,15 @@ public class DataSourceManager {
         DataSource<?, ?> dataSource = null;
         if (this.registeredSources.containsKey(new AbstractMap.SimpleEntry<>(sensorName, dataSourceName))) {
             try {
-                dataSource = this.registry.getService(dataSourceName).getClass().newInstance();
+                dataSource = getInternal(dataSourceName);
+                Constructor<? extends DataSource> constructor;
+                try {
+                    constructor = dataSource.getClass().getConstructor();
+                    dataSource = constructor.newInstance();
+                } catch (Exception e) {
+                    constructor = dataSource.getClass().getConstructor(String.class);
+                    dataSource = constructor.newInstance(dataSource.getId());
+                }
                 if (this.filteredParameters != null && this.filteredParameters.containsKey(dataSourceName)) {
                     dataSource.setFilteredParameters(this.filteredParameters.get(dataSourceName));
                 }
@@ -271,5 +292,13 @@ public class DataSourceManager {
             }
         }
         return match;
+    }
+
+    private DataSource<?, ?> getInternal(String name) {
+        DataSource dataSource = this.registry.getService(name);
+        if (dataSource == null) {
+            dataSource = this.additionalDatasources.get(name);
+        }
+        return dataSource;
     }
 }

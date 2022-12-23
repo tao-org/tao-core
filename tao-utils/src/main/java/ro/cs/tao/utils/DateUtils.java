@@ -64,7 +64,7 @@ public class DateUtils {
     /**
      * Returns a DateTimeFormatter that is permissive to optional format tokens.
      * The supported pattern is:
-     *      <@{@code yyyy-M{1,2}-D{1,2}(T| )(H{1,2}(:)m{1,2}(:)s{1,2}(.S{0,6}(+NN)(Z)}
+     *      <code>yyyy-M{1,2}-D{1,2}(T| )(H{1,2}(:)m{1,2}(:)s{1,2}(.S{0,6}(+NN)(Z)</code>
      */
     public static DateTimeFormatter getResilientFormatterAtUTC() {
         final DateTimeFormatterBuilder builder = new DateTimeFormatterBuilder()
