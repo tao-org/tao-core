@@ -62,6 +62,7 @@ import ro.cs.tao.spi.OutputDataHandlerManager;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.user.UserPreference;
 import ro.cs.tao.utils.ExceptionUtils;
+import ro.cs.tao.utils.FileMap;
 import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.TriFunction;
 import ro.cs.tao.workflow.ParameterValue;
@@ -148,7 +149,7 @@ public class Orchestrator extends Notifiable {
         this.executors = Collections.synchronizedMap(new HashMap<>());
         this.executors.put(SystemPrincipal.instance().getName(), Executors.newFixedThreadPool(1));
         this.runningTasks = Collections.synchronizedSet(new HashSet<>());
-        this.waitingJobs = Collections.synchronizedMap(new HashMap<>());
+        this.waitingJobs = Collections.synchronizedMap(new FileMap<>(Paths.get(SystemVariable.CACHE.value())));
         this.listAdapter = new StringListAdapter();
         this.jobProvider = SpringContextBridge.services().getService(ExecutionJobProvider.class);
         this.taskProvider = SpringContextBridge.services().getService(ExecutionTaskProvider.class);
@@ -534,12 +535,14 @@ public class Orchestrator extends Notifiable {
             user = task.getJob().getUserName();
             //user = currentContext.getPrincipal().getName();
             if (completedOkStatuses.contains(status)) {
+                // Current task has completed somehow
                 final WorkflowNodeDescriptor taskNode = workflowNodeProvider.get(task.getWorkflowNodeId());
                 // For DataSourceExecutionTask, it is the Query executor that sets the outputs.
                 // Hence, we need to "confirm" here the outputs of a processing task.
                 if (task instanceof ProcessingExecutionTask) {
                     handleProcessingTask((ProcessingExecutionTask) task, taskNode == null || taskNode.getPreserveOutput());
                 }
+                // Identify next tasks to be executed
                 final List<ExecutionTask> nextTasks = findNextTasks(task);
                 if (nextTasks != null && nextTasks.size() > 0) {
                     logger.finest(String.format("Has %s next tasks", nextTasks.size()));
