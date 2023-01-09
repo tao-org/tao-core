@@ -61,10 +61,7 @@ import ro.cs.tao.services.utils.WorkflowUtilities;
 import ro.cs.tao.spi.OutputDataHandlerManager;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.user.UserPreference;
-import ro.cs.tao.utils.ExceptionUtils;
-import ro.cs.tao.utils.FileMap;
-import ro.cs.tao.utils.FileUtilities;
-import ro.cs.tao.utils.TriFunction;
+import ro.cs.tao.utils.*;
 import ro.cs.tao.workflow.ParameterValue;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
@@ -514,8 +511,11 @@ public class Orchestrator extends Notifiable {
         String user = null;
         try {
             final String taskId = message.getItem(Message.SOURCE_KEY);
-            final ExecutionStatus status = EnumUtils.getEnumConstantByName(ExecutionStatus.class,
-                                                                           message.getPayload());
+            String payload = message.getPayload();
+            if (StringUtilities.isNullOrEmpty(payload)) {
+                return;
+            }
+            final ExecutionStatus status = EnumUtils.getEnumConstantByName(ExecutionStatus.class, payload);
             task = taskProvider.get(Long.parseLong(taskId));
             user = task.getJob().getUserName();
             currentContext.setPrincipal(new UserPrincipal(user));
