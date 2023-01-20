@@ -611,7 +611,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         runtimeInfo.setAvailableMemory(-1);
         runtimeInfo.setDiskTotal(diskTotal);
         runtimeInfo.setTotalMemory(totalMemory);
-        runtimeInfo.setCpuTotal(cpuTotal);
+        runtimeInfo.setCpuTotal(-1);
         runtimeInfo.setDiskUsed(-1);
         return runtimeInfo;
     }
