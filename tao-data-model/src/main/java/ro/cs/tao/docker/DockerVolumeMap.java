@@ -114,6 +114,8 @@ public class DockerVolumeMap {
                 if (!absPath.startsWith(getHostEODataFolder())) {
                     p = absPath;
                 }
+            } else {
+                p = FileUtilities.resolveSymLinks(p);
             }
             final Path root;
             final String mountPoint;
