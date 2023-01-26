@@ -135,6 +135,11 @@ public class FileUtilities {
         return transformed;
     }
 
+    /**
+     * Uncompresses a zip file as-is. This method uses internally the ZipFileSystem class.
+     * @param zipFile       The input zip file
+     * @return              The path to where the zip was extracted
+     */
     public static Path unzip(Path zipFile) throws IOException {
         URI uri = URI.create("jar:file:" + zipFile.toUri().getPath());
         Map<String, String> env = new HashMap<>();
@@ -152,7 +157,7 @@ public class FileUtilities {
         }
         try {
             final Path root = zipFileSystem.getPath("/");
-            Files.walkFileTree(root, new SimpleFileVisitor<Path>(){
+            Files.walkFileTree(root, new SimpleFileVisitor<>(){
                 @Override
                 public FileVisitResult visitFile(Path file,
                                                  BasicFileAttributes attrs) throws IOException {
@@ -181,6 +186,11 @@ public class FileUtilities {
         return destination;
     }
 
+    /**
+     * Makes sure the folders contained in the given path exist, with appropriate permissions.
+     * @param folder        The folder to make sure it exists
+     * @return              The same folder
+     */
     public static Path ensureExists(Path folder) throws IOException {
         if (folder != null && !Files.exists(folder)) {
             if (isPosixFileSystem()) {
@@ -199,7 +209,11 @@ public class FileUtilities {
         }
         return folder;
     }
-
+    /**
+     * Makes sure the given folder exists remotely.
+     * @param folder        The folder to make sure it exists
+     * @param clientChannel The SFTP channel
+     */
     public static void ensureExists(Path folder, ChannelSftp clientChannel) throws IOException {
         final int nameCount = folder.getNameCount();
         Path current = folder.getRoot().resolve(folder.getName(0));
@@ -209,6 +223,10 @@ public class FileUtilities {
         }
     }
 
+    /**
+     * Ensures that the given file has read/write permissions for the current user and read permissions for other users.
+     * @param file      The input file
+     */
     public static Path ensurePermissions(Path file) {
         try {
             if (file != null && Files.exists(file)) {
@@ -223,9 +241,13 @@ public class FileUtilities {
         return file;
     }
 
+    /**
+     * Takes ownership of the given file. The caller must have the rights to call 'chown'
+     * @param file  The input file
+     */
     public static void takeOwnership(Path file) {
         try {
-            final List<String> args = new ArrayList<String>() {{
+            final List<String> args = new ArrayList<>() {{
                add("chown");
                if (Files.isDirectory(file)) {
                    add("-R");
@@ -246,9 +268,14 @@ public class FileUtilities {
         }
     }
 
+    /**
+     * Lists all the sub-folders of the given path.
+     * @param root          The path to explore
+     * @return              A list of folders
+     */
     public static List<Path> listFolders(Path root) throws IOException {
         final List<Path> folders = new ArrayList<>();
-        Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
+        Files.walkFileTree(root, new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
                 if (root.compareTo(dir) != 0) {
@@ -259,7 +286,12 @@ public class FileUtilities {
         });
         return folders;
     }
-
+    /**
+     * Lists all the sub-folders of the given path, down to the given depth.
+     * @param root          The path to explore
+     * @param depth         The depth of the tree structure
+     * @return              A list of folders
+     */
     public static List<Path> listFolders(Path root, int depth) throws IOException {
         final List<Path> folders = new ArrayList<>();
         Files.walkFileTree(root, new HashSet<FileVisitOption>() {{ add(FileVisitOption.FOLLOW_LINKS); }}, depth, new SimpleFileVisitor<Path>() {
@@ -273,7 +305,11 @@ public class FileUtilities {
         });
         return folders;
     }
-
+    /**
+     * Lists all the files in the given path (first-level only)
+     * @param folder        The path to explore
+     * @return              A list of files
+     */
     public static List<Path> listFiles(Path folder) {
         try (Stream<Path> stream = Files.walk(folder, 1, FileVisitOption.FOLLOW_LINKS)) {
             return stream.collect(Collectors.toList());
@@ -282,14 +318,25 @@ public class FileUtilities {
             return new ArrayList<>();
         }
     }
-
+    /**
+     * Lists all the files in the given path (first-level only) that match a pattern.
+     * @param folder        The path to explore
+     * @param pattern       The regex pattern
+     * @return              A list of files
+     */
     public static List<Path> listFiles(Path folder, String pattern) throws IOException {
         final Pattern p = Pattern.compile(pattern);
         try (Stream<Path> stream = Files.walk(folder, 1, FileVisitOption.FOLLOW_LINKS)) {
             return stream.filter(f -> p.matcher(f.getFileName().toString()).find()).collect(Collectors.toList());
         }
     }
-
+    /**
+     * Lists all the files in the given path (first-level only) that match a pattern and are older than a date/time
+     * @param folder        The path to explore
+     * @param pattern       The regex pattern
+     * @param before        The date/time to compare with
+     * @return              A list of files
+     */
     public static List<Path> listFiles(Path folder, String pattern, LocalDateTime before) throws IOException {
         final Instant instant = before.atZone(ZoneOffset.systemDefault()).toInstant();
         final Pattern p = Pattern.compile(pattern);
@@ -303,13 +350,22 @@ public class FileUtilities {
             }).collect(Collectors.toList());
         }
     }
-
+    /**
+     * Lists all the files and folders in the given path.
+     * @param folder        The path to explore
+     * @return              A list of files and folders
+     */
     public static List<Path> listTree(Path folder) throws IOException {
         try (Stream<Path> stream = Files.walk(folder, FileVisitOption.FOLLOW_LINKS)) {
             return stream.collect(Collectors.toList());
         }
     }
-
+    /**
+     * Lists all the files in the given path (first-level only) that have a given extension.
+     * @param folder        The path to explore
+     * @param extension     The extension of the files
+     * @return              A list of files
+     */
     public static List<Path> listFilesWithExtension(Path folder, String extension) {
         final File[] files = folder.toFile().listFiles();
         return files != null ?
@@ -319,11 +375,25 @@ public class FileUtilities {
                         .collect(Collectors.toList()) :
                 new ArrayList<>();
     }
-
+    /**
+     * Creates symbolic links from an input path.
+     * If the input path is a folder, links will be created for all its files and sub-folders.
+     * @param sourcePath    The input path
+     * @param targetPath    The link location
+     * @return              The link location
+     */
     public static Path link(Path sourcePath, final Path targetPath) throws IOException {
         return link(sourcePath, targetPath, null, null);
     }
-
+    /**
+     * Creates symbolic links from an input path, optionally specifying filters for files and sub-folders.
+     * If the input path is a folder, links will be created for all its files and sub-folders.
+     * @param sourcePath    The input path
+     * @param targetPath    The link location
+     * @param fileFilter    The filter predicate for files
+     * @param folderFilter  The filter predicate for folders
+     * @return              The link location
+     */
     public static Path link(Path sourcePath, final Path targetPath,
                             Predicate<? super Path> folderFilter,
                             Predicate<? super Path> fileFilter) throws IOException {
@@ -357,6 +427,10 @@ public class FileUtilities {
         return targetPath;
     }
 
+    /**
+     * Checks if the given path is accessible (i.e., it exists and it is readable)
+     * @param path  The path to check
+     */
     public static boolean isPathAccessible(Path path) {
         boolean retVal;
         if (path != null) {
@@ -371,7 +445,10 @@ public class FileUtilities {
         }
         return retVal;
     }
-
+    /**
+     * Checks if the given path is writeable
+     * @param path  The path to check
+     */
     public static boolean isPathWriteable(Path path) {
         boolean retVal;
         if (path != null) {
@@ -387,6 +464,12 @@ public class FileUtilities {
         return retVal;
     }
 
+    /**
+     * Replaces symbolic links from a path with actual paths.
+     * A link may be also part of the path, not only the final part.
+     * @param path  The path to resolve.
+     * @return      The actual absolute path
+     */
     public static Path resolveSymLinks(Path path) throws IOException {
         Path realPath = path.getRoot();
         final int nameCount = path.getNameCount();
@@ -401,10 +484,21 @@ public class FileUtilities {
         return realPath;
     }
 
+    /**
+     * Creates a symbolic link of a path in a target path.
+     * @param sourcePath    The target of the symbolic link
+     * @param file          The path of the symlink to create (if it doesn't exist)
+     * @return              The symlink path
+     */
     public static Path linkFile(Path sourcePath, Path file) throws IOException {
         return Files.exists(file) ? file : Files.createSymbolicLink(file, sourcePath);
     }
-
+    /**
+     * Creates a symbolic link to a folder, making sure that the given path is a folder.
+     * @param sourcePath    The source folder
+     * @param target        The location of the symlink.
+     * @return              The path of the symlink
+     */
     public static Path linkFolder(Path sourcePath, Path target) throws IOException {
         if (!Files.isDirectory(sourcePath)) {
             throw new IOException(sourcePath + " is not a directory");
@@ -415,6 +509,12 @@ public class FileUtilities {
         return linkFile(sourcePath, target);
     }
 
+    /**
+     * Replaces a symbolic link with the actual file or folder (i.e., copying it instead of the link).
+     * @param link              The symbolic link path
+     * @param progressListener  A progress listener
+     * @return                  The resolved link path
+     */
     public static Path replaceLink(Path link, ProgressListener progressListener) throws IOException {
         if (!Files.exists(link)) {
             throw new NoSuchFileException(link.toString());
@@ -435,6 +535,11 @@ public class FileUtilities {
         return resolved;
     }
 
+    /**
+     * Returns the UNIX representation of a path.
+     * @param path          The path to convert
+     * @param insideDocker  If <code>false</code>, on Windows it strips the partition letter.
+     */
     public static String asUnixPath(Path path, boolean insideDocker) {
         if (SystemUtils.IS_OS_UNIX) {
             return path.toString();
@@ -455,7 +560,11 @@ public class FileUtilities {
             return strPath;
         }
     }
-
+    /**
+     * Returns the UNIX representation of a path as a string.
+     * @param path          The path to convert
+     * @param insideDocker  If <code>false</code>, on Windows it strips the partition letter.
+     */
     public static String asUnixPath(String path, boolean insideDocker) {
         if (SystemUtils.IS_OS_UNIX) {
             return path;
@@ -515,7 +624,13 @@ public class FileUtilities {
         }
         return copied.intValue();
     }
-
+    /**
+     * Copies the file or folder in the given destination with progress reporting.
+     * @param source        The source file or folder
+     * @param destination   The destination folder
+     * @param listener      The progress listener
+     * @return              The number of actual copied files.
+     */
     public static int copy(Path source, Path destination, ProgressListener listener) throws IOException {
         final AtomicInteger copied = new AtomicInteger(0);
         try {
@@ -853,6 +968,11 @@ public class FileUtilities {
         return UNIT_FORMAT.format(value / unitValue) + " " + UNITS[unitIndex];
     }
 
+    /**
+     * Copies the file from the given URL in the destination file
+     * @param sourceURL         The source URL
+     * @param destinationFile   The target file
+     */
     public static void copyFile(URL sourceURL, Path destinationFile) throws IOException {
         if (sourceURL == null || destinationFile == null) {
             throw new IllegalArgumentException("One of the arguments is null");
@@ -870,6 +990,12 @@ public class FileUtilities {
         }
     }
 
+    /**
+     * Uncompresses a zip file in a target folder, optionally keeping the folder structure from inside the zip file
+     * @param sourceFile            The source zip file
+     * @param destination           The destination folder
+     * @param keepFolderStructure   To keep or not to keep the folder structure from the archive
+     */
     public static void unzip(Path sourceFile, Path destination, boolean keepFolderStructure) throws IOException {
         if (sourceFile == null || destination == null) {
             throw new IllegalArgumentException("One of the arguments is null");
@@ -1109,6 +1235,12 @@ public class FileUtilities {
         return common != null ? String.join("/", common) : null;
     }
 
+    /**
+     * Appends a path fragment to a parent path.
+     * The child fragment must be relative.
+     * @param parent    The parent path
+     * @param child     The child path
+     */
     public static String resolve(String parent, String child) {
         if (StringUtilities.isNullOrEmpty(child)) {
             return parent;
