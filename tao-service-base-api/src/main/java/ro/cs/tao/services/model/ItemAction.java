@@ -23,6 +23,11 @@ public interface ItemAction {
     boolean isIntendedFor(RepositoryType repositoryType);
 
     /**
+     * Returns an array of filters of supported files (i.e., [".tif", ".nc"]).
+     * The default implementation returns <code>null</code>, which means all kind of files/folders
+     */
+    default String[] supportedFiles() { return null; }
+    /**
      * Execution of this action on the given item
      * @param item  The item onto which to execute the action
      * @throws Exception  If something goes wrong
