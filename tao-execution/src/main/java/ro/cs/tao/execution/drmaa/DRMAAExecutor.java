@@ -435,7 +435,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                     nodeData = NodeManager.getInstance().getMasterNode();
                 } else {
                     // the next call blocks until a node is available
-                    nodeData = getAvailableNode(component.getParallelism(), memory);
+                    nodeData = getAvailableNode(task.getJob().getUserName(), component.getParallelism(), memory);
                 }
             }
             final NodeDescription node = nodeData.getNode();
@@ -764,15 +764,15 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         }
     }
 
-    private NodeData getAvailableNode(int cpus, long memory) throws DrmaaException {
+    private NodeData getAvailableNode(String user, int cpus, long memory) throws DrmaaException {
     	NodeData nodeData = null;
         if (NodeManager.isAvailable() && NodeManager.getInstance() != null) {
-        	nodeData = NodeManager.getInstance().getAvailableNode(cpus, memory, 0);
+        	nodeData = NodeManager.getInstance().getAvailableNode(user, cpus, memory, 0);
             while (!canSubmitTask(nodeData.getNode().getId(), memory)) {
                 try {
                     Thread.sleep(20000);
                 } catch (InterruptedException ignored) { }
-                nodeData = NodeManager.getInstance().getAvailableNode(cpus, memory, 0);
+                nodeData = NodeManager.getInstance().getAvailableNode(user, cpus, memory, 0);
             }
             logger.finest(String.format("Node [%s] was chosen for next execution", nodeData.getNode().getId()));
         }

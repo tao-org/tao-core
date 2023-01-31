@@ -303,6 +303,9 @@
             <basic name="volatile">
                 <column name="volatile" nullable="true" column-definition="boolean NULL DEFAULT false"/>
             </basic>
+            <basic name="owner">
+                <column name="owner" nullable="true" column-definition="varchar(50)"/>
+            </basic>
             <basic name="tags">
                 <column name="tags" nullable="true" column-definition="text NULL"/>
                 <convert converter="ro.cs.tao.persistence.convert.StringListConverter"/>
