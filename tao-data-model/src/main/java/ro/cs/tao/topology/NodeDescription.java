@@ -39,6 +39,7 @@ public class NodeDescription extends StringIdentifiable {
     private Boolean isVolatile;
     private List<NodeServiceStatus> servicesStatus;
     private List<String> tags;
+    private String owner;
 
     public NodeDescription() { this.active = true;}
 
@@ -84,6 +85,10 @@ public class NodeDescription extends StringIdentifiable {
     @XmlElement(name = "volatile")
     public Boolean getVolatile() { return isVolatile; }
     public void setVolatile(Boolean value) { isVolatile = value; }
+
+    @XmlElement(name = "owner")
+    public String getOwner() { return owner; }
+    public void setOwner(String owner) { this.owner = owner; }
 
     @XmlElementWrapper(name = "services")
     public List<NodeServiceStatus> getServicesStatus() {
