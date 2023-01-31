@@ -30,6 +30,10 @@ public class ExecutionTaskSummary {
     private String host;
     private ExecutionStatus taskStatus;
     private String output;
+    private String command;
+    private String userName;
+    private Integer usedCPU;
+    private Integer usedRAM;
 
     public long getTaskId() {
         return taskId;
@@ -95,5 +99,37 @@ public class ExecutionTaskSummary {
     }
     public void setOutput(String output) {
         this.output = output;
+    }
+
+    public String getCommand() {
+        return command;
+    }
+
+    public void setCommand(String command) {
+        this.command = command;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public Integer getUsedCPU() {
+        return usedCPU;
+    }
+
+    public void setUsedCPU(Integer usedCPU) {
+        this.usedCPU = usedCPU;
+    }
+
+    public Integer getUsedRAM() {
+        return usedRAM;
+    }
+
+    public void setUsedRAM(Integer usedRAM) {
+        this.usedRAM = usedRAM;
     }
 }
