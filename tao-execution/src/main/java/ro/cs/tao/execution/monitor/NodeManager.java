@@ -11,7 +11,7 @@ import ro.cs.tao.messaging.Notifiable;
 import ro.cs.tao.quota.QuotaException;
 import ro.cs.tao.quota.QuotaManager;
 import ro.cs.tao.quota.UserQuotaManager;
-import ro.cs.tao.security.SessionStore;
+import ro.cs.tao.security.UserPrincipal;
 import ro.cs.tao.topology.*;
 import ro.cs.tao.utils.ExceptionUtils;
 import ro.cs.tao.utils.async.Parallel;
@@ -260,20 +260,29 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
      * @param memory    The memory threshold
      * @param disk      The disk threshold
      */
-    public NodeData getAvailableNode(int cpus, long memory, long disk) {
-        final Principal principal = SessionStore.currentContext().getPrincipal();
+    public NodeData getAvailableNode(String user, int cpus, long memory, long disk) {
+        //final Principal principal = SessionStore.currentContext().getPrincipal();
+        final Principal principal = new UserPrincipal(user);
         QuotaManager userQuotaManager = UserQuotaManager.getInstance();
         int requestedCPUs = cpus;
         NodeDescription availableNode = null;//getStartingAvailableNode();
+        // First check if there are nodes bound to this user
+        final List<Map.Entry<String, NodeRuntimeWrapper>> userNodes = this.nodes.entrySet().stream()
+                                                                                .filter(e -> user.equals(e.getValue().getNode().getUserName()))
+                                                                                .collect(Collectors.toList());
+        // If not, then use the pool of available nodes
+        if (userNodes.isEmpty()) {
+            userNodes.addAll(this.nodes.entrySet());
+        }
         do {
             try {
             	// check if the user has any CPU limitation
             	int availableCpu = userQuotaManager.getAvailableCpus(principal);
                 if ((availableCpu == -1 || availableCpu > 0) && userQuotaManager.checkUserProcessingMemory(principal, (int)memory)) {
                     requestedCPUs = (availableCpu == -1) ? cpus : Math.min(cpus, availableCpu);
-                    NodeRuntimeWrapper result = null;
+                    NodeRuntimeWrapper result;
                     // First try to find a node different from the last one used
-                    List<Map.Entry<String, NodeRuntimeWrapper>> candidates = this.nodes.entrySet().stream()
+                    List<Map.Entry<String, NodeRuntimeWrapper>> candidates = userNodes.stream()
                                                                                     .filter(e -> {
                                                                                         final NodeRuntimeWrapper nrw = e.getValue();
                                                                                         return !nrw.equals(lastUsedNode) && nrw.getRuntimeInfo().getAvailableMemory() >= memory;
@@ -287,15 +296,15 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                         result = candidate.getValue();
                     } else {
                         // And if not available, the first suitable one (may also be the last one used)
-                        result = this.nodes.entrySet().stream()
-                                           // And if not available, the first suitable one (may also be the last one used)
-                                           .filter(e -> e.getValue().getRuntimeInfo().getAvailableMemory() >= memory)
-                                           .min(Comparator.comparingDouble(e -> {
-                                               NodeDescription node = nodes.get(e.getKey()).getNode();
-                                               RuntimeInfo runtimeInfo = e.getValue().getRuntimeInfo();
-                                               return computeLoad(node, runtimeInfo.getCpuTotal(), runtimeInfo.getAvailableMemory());
-                                           }))
-                                           .map(Map.Entry::getValue).orElse(null);
+                        result = userNodes.stream()
+                                          // And if not available, the first suitable one (may also be the last one used)
+                                          .filter(e -> e.getValue().getRuntimeInfo().getAvailableMemory() >= memory)
+                                          .min(Comparator.comparingDouble(e -> {
+                                              NodeDescription node = nodes.get(e.getKey()).getNode();
+                                              RuntimeInfo runtimeInfo = e.getValue().getRuntimeInfo();
+                                              return computeLoad(node, runtimeInfo.getCpuTotal(), runtimeInfo.getAvailableMemory());
+                                          }))
+                                          .map(Map.Entry::getValue).orElse(null);
                     }
                     if (result != null) {
                         availableNode = result.getNode();
@@ -307,7 +316,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     			logger.info(String.format("Error while computing the CPU and memory quota for the user %s. Error message: %s", principal.getName(), e.getMessage()));
             }
             if (availableNode == null) {
-                if (canCreateNewNodes() && (this.nodeLimit == 0 || this.nodes.size() < this.nodeLimit)) {
+                if (canCreateNewNodes() && (this.nodeLimit == 0 || userNodes.size() < this.nodeLimit)) {
                     try {
                         availableNode = createNodeIfMatchingFlavor(cpus, memory);
                     } catch (RuntimeException exception) {
@@ -357,14 +366,15 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                             nodeInfo.getDescription(),
                             nodeInfo.getUser(),
                             nodeInfo.getPassword()));
+            NodeDescription node;
             try {
-                future.get(nodeCreationWaitTime, TimeUnit.SECONDS);
+                node = future.get(nodeCreationWaitTime, TimeUnit.SECONDS);
                 // The new node should be added into this.nodes in onCompleted() method
             } catch (Exception e) {
                 logger.severe(String.format("Node creation failed. Reason: %s", e.getMessage()));
+                throw e;
             }
-            //TODO Jean return the created node
-            return null;
+            return node;
         }
         return null;
     }
