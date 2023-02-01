@@ -140,7 +140,10 @@ public class Orchestrator extends Notifiable {
     private final Map<String, ExecutorService> executors;
     private final Set<Long> runningTasks;
 
+    private final String uuid;
+
     private Orchestrator() {
+        this.uuid = UUID.randomUUID().toString();
         this.groupStateHandlers = new HashMap<>();
         this.queue = new LinkedBlockingDeque<>();
         this.executors = Collections.synchronizedMap(new HashMap<>());
@@ -157,6 +160,10 @@ public class Orchestrator extends Notifiable {
         this.namingRuleProvider = SpringContextBridge.services().getService(NamingRuleProvider.class);
         this.userProvider = SpringContextBridge.services().getService(UserProvider.class);
         subscribe(Topic.EXECUTION.value(), Topic.SYSTEM.value());
+    }
+
+    public String getId() {
+        return uuid;
     }
 
     public void start() {
@@ -291,7 +298,7 @@ public class Orchestrator extends Notifiable {
             if (descriptor == null) {
                 throw new ExecutionException(String.format("Non-existent workflow [%s]", workflowId));
             }
-            final ExecutionJob job = new ScriptJobFactory().createJob(context, description, descriptor, inputs);
+            final ExecutionJob job = new ScriptJobFactory().createJob(context, this.uuid, description, descriptor, inputs);
             this.executors.get(context.getPrincipal().getName()).submit(() -> {
                 try {
                     JobCommand.START.applyTo(job);
@@ -340,7 +347,7 @@ public class Orchestrator extends Notifiable {
                     optimized = descriptor;
                 }
             }
-            return this.jobFactory.createJob(context, description, optimized, inputs);
+            return this.jobFactory.createJob(context, this.uuid, description, optimized, inputs);
         } catch (QuotaException | PersistenceException e) {
             logger.severe(e.getMessage());
             throw new ExecutionException(e.getMessage());
@@ -356,7 +363,7 @@ public class Orchestrator extends Notifiable {
      */
     public ExecutionJob createJob(String wpsId, Map<String, Map<String, String>> inputs)  throws ExecutionException {
         try {
-            return this.jobFactory.createJob(SessionStore.currentContext(), wpsId, inputs);
+            return this.jobFactory.createJob(SessionStore.currentContext(), this.uuid, wpsId, inputs);
         } catch (PersistenceException e) {
             logger.severe(e.getMessage());
             throw new ExecutionException(e.getMessage());

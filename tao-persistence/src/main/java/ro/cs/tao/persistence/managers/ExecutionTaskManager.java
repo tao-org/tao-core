@@ -77,10 +77,10 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
     }
 
     @Override
-    public List<ExecutionTask> listExecuting() {
+    public List<ExecutionTask> listExecuting(String applicationId) {
         lock.lock();
         try {
-            return repository.getExecutingTasks();
+            return repository.getExecutingTasks(applicationId);
         } finally {
             lock.unlock();
         }
