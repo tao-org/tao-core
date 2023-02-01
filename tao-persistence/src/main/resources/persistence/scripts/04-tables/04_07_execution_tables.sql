@@ -19,6 +19,7 @@ CREATE TABLE execution.job
 (
 	id bigint NOT NULL,
 	name text NOT NULL,
+	app_id varchar(50),
 	start_time timestamp without time zone NULL,
 	end_time timestamp without time zone NULL,
 	workflow_id bigint,

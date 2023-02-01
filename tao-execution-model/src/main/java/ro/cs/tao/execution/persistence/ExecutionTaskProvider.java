@@ -9,7 +9,7 @@ import java.util.List;
 public interface ExecutionTaskProvider extends EntityProvider<ExecutionTask, Long> {
 
     List<ExecutionTask> listRunning();
-    List<ExecutionTask> listExecuting();
+    List<ExecutionTask> listExecuting(String applicationId);
     List<ExecutionTask> listRemoteExecuting();
     List<ExecutionTask> listByHost(String hostName);
     List<ExecutionTask> getDataSourceTasks(long jobId);

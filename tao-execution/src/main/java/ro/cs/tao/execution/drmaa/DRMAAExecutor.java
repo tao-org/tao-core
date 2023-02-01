@@ -76,6 +76,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
     private static ExecutionTaskProvider taskProvider;
     private static ContainerProvider containerProvider;
     private static DRMAAExecutor instance;
+    private static String appId;
     private Session session;
     private final BlockingQueue<Tuple<JobTemplate, ProcessingExecutionTask>> queue;
     private final BlockingQueueWorker<Tuple<JobTemplate, ProcessingExecutionTask>> queueWorker;
@@ -85,6 +86,8 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
     public static void setTaskProvider(ExecutionTaskProvider provider) { taskProvider = provider; }
 
     public static void setContainerProvider(ContainerProvider provider) { containerProvider = provider; }
+
+    public static void setApplicationId(String id) { appId = id; }
 
     public static DRMAAExecutor getInstance() { return instance; }
 
@@ -190,7 +193,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         if(!isInitialized.get()) {
             return;
         }
-        final List<ExecutionTask> tasks = taskProvider.listExecuting();
+        final List<ExecutionTask> tasks = taskProvider.listExecuting(appId);
         if (tasks != null) {
             // For each job, get its status from DRMAA
             for (ExecutionTask task : tasks) {

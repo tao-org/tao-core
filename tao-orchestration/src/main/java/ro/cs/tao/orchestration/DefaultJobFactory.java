@@ -84,12 +84,13 @@ public class DefaultJobFactory {
      * @param workflow The workflow
      * @param inputs   The (possibly overridden) input parameter values
      */
-    public ExecutionJob createJob(SessionContext context, String jobName, WorkflowDescriptor workflow, Map<String, Map<String, String>> inputs)
+    public ExecutionJob createJob(SessionContext context, String appId, String jobName, WorkflowDescriptor workflow, Map<String, Map<String, String>> inputs)
             throws PersistenceException {
         ExecutionJob job = null;
         if (workflow != null && workflow.isActive()) {
             job = new ExecutionJob();
             job.setName(jobName);
+            job.setAppId(appId);
             job.setUserName(SessionStore.currentContext().getPrincipal().getName());
             job.setStartTime(LocalDateTime.now());
             job.setWorkflowId(workflow.getId());
@@ -144,10 +145,11 @@ public class DefaultJobFactory {
         return job;
     }
 
-    public ExecutionJob createJob(SessionContext context, String jobName, Map<String, Map<String, String>> inputs)
+    public ExecutionJob createJob(SessionContext context, String appId, String jobName, Map<String, Map<String, String>> inputs)
             throws PersistenceException {
         ExecutionJob job = new ExecutionJob();
         job.setName(jobName);
+        job.setAppId(appId);
         job.setUserName(SessionStore.currentContext().getPrincipal().getName());
         job.setStartTime(LocalDateTime.now());
         job.setExecutionStatus(ExecutionStatus.UNDETERMINED);
