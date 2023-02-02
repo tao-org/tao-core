@@ -41,7 +41,7 @@
         <maven.compiler.release>11</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.deploy.root.path>file://C:/ssd/releases</project.deploy.root.path>
-        <geotools.version>26.1</geotools.version>
+        <geotools.version>26.6</geotools.version>
         <spring.version>5.3.22</spring.version>
         <spring.data.version>2.7.2</spring.data.version>
         <jackson.version>2.13.3</jackson.version>
