@@ -34,6 +34,8 @@ public class ExecutionTaskSummary {
     private String userName;
     private Integer usedCPU;
     private Integer usedRAM;
+    private String jobName;
+    private String componentType;
 
     public long getTaskId() {
         return taskId;
@@ -131,5 +133,21 @@ public class ExecutionTaskSummary {
 
     public void setUsedRAM(Integer usedRAM) {
         this.usedRAM = usedRAM;
+    }
+
+    public String getJobName() {
+        return jobName;
+    }
+
+    public void setJobName(String jobName) {
+        this.jobName = jobName;
+    }
+
+    public String getComponentType() {
+        return componentType;
+    }
+
+    public void setComponentType(String componentType) {
+        this.componentType = componentType;
     }
 }
