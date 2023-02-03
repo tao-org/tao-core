@@ -16,9 +16,11 @@
 package ro.cs.tao.messaging;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * General topics handled by the registered event bus.
@@ -64,6 +66,10 @@ public class Topic {
             topicRegistry.put(category, new Topic(category, null));
         }
         return topicRegistry.get(category);
+    }
+
+    public static List<String> listTopics() {
+        return topicRegistry.values().stream().map(Topic::getCategory).collect(Collectors.toList());
     }
 
     public static Topic create(String category, String tag) {
