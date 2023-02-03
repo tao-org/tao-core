@@ -378,7 +378,11 @@ public class Orchestrator extends Notifiable {
      */
     public void stopJob(long jobId) throws ExecutionException {
         ExecutionJob job = checkJob(jobId);
-        JobCommand.STOP.applyTo(job);
+        try {
+            JobCommand.STOP.applyTo(job);
+        } catch (Exception e) {
+            logger.warning(e.getMessage());
+        }
     }
 
     /**
@@ -425,7 +429,6 @@ public class Orchestrator extends Notifiable {
 
     @Override
     protected void onMessageReceived(Message message) {
-        logger.finest("Received message " + message);
         if (message instanceof StartupCompletedMessage) {
             /*final List<ExecutionJob> jobs = prepareStalledJobs();
             if (jobs != null) {
@@ -514,17 +517,15 @@ public class Orchestrator extends Notifiable {
     }
 
     private synchronized void processMessage(Message message, SessionContext currentContext) {
-        ExecutionTask task = null;
-        String user = null;
+        final String taskId = message.getItem(Message.SOURCE_KEY);
+        String payload = message.getPayload();
+        if (StringUtilities.isNullOrEmpty(payload)) {
+            return;
+        }
+        final ExecutionStatus status = EnumUtils.getEnumConstantByName(ExecutionStatus.class, payload);
+        final ExecutionTask task = taskProvider.get(Long.parseLong(taskId));
+        final String user = task.getJob().getUserName();
         try {
-            final String taskId = message.getItem(Message.SOURCE_KEY);
-            String payload = message.getPayload();
-            if (StringUtilities.isNullOrEmpty(payload)) {
-                return;
-            }
-            final ExecutionStatus status = EnumUtils.getEnumConstantByName(ExecutionStatus.class, payload);
-            task = taskProvider.get(Long.parseLong(taskId));
-            user = task.getJob().getUserName();
             currentContext.setPrincipal(new UserPrincipal(user));
             task.setContext(currentContext);
             if (!(status == ExecutionStatus.QUEUED_ACTIVE && task.getExecutionStatus() == ExecutionStatus.RUNNING)) {
@@ -539,7 +540,6 @@ public class Orchestrator extends Notifiable {
                 }
                 logger.finest(String.format("Active or pending tasks: %d", this.runningTasks.size()));
             }
-            user = task.getJob().getUserName();
             //user = currentContext.getPrincipal().getName();
             if (completedOkStatuses.contains(status)) {
                 // Current task has completed somehow
@@ -666,19 +666,7 @@ public class Orchestrator extends Notifiable {
                         logger.info(msg);
                         Messaging.send(currentContext.getPrincipal(), Topic.EXECUTION.value(), this, msg);
                         // If there are waiting jobs for this user, let's trigger the execution of the first one
-                        List<Long> nextJobs;
-                        if ((nextJobs = this.waitingJobs.get(user)) != null && nextJobs.size() > 0) {
-                            Long nextJobId = nextJobs.remove(0);
-                            if (nextJobs.size() == 0) {
-                                this.waitingJobs.remove(user);
-                            }
-                            final ExecutorService executorService = this.executors.get(user);
-                            if (executorService == null) {
-                                throw new ExecutionException("Executor service for user " + user + " was reset");
-                            }
-                            final ExecutionJob nextJob = jobProvider.get(nextJobId);
-                            executorService.submit(() -> JobCommand.START.applyTo(nextJob));
-                        } else {
+                        if (!startNextWaitingJob(user)) {
                             shutDownExecutor(user);
                         }
                         cleanupTransientComponents(job);
@@ -692,6 +680,9 @@ public class Orchestrator extends Notifiable {
                 if (jobStatus == ExecutionStatus.CANCELLED || jobStatus == ExecutionStatus.FAILED) {
                     cancelJob(job);
                 }
+                if (!startNextWaitingJob(user)) {
+                    shutDownExecutor(user);
+                }
             }
         } catch (Throwable e) {
             logger.severe(String.format("Abnormal termination: %s", e.getMessage()));
@@ -704,6 +695,25 @@ public class Orchestrator extends Notifiable {
             }
             shutDownExecutor(user != null ? user : currentContext.getPrincipal().getName());
         }
+    }
+
+    private boolean startNextWaitingJob(String user) {
+        // If there are waiting jobs for this user, let's trigger the execution of the first one
+        List<Long> nextJobs;
+        if ((nextJobs = this.waitingJobs.get(user)) != null && nextJobs.size() > 0) {
+            Long nextJobId = nextJobs.remove(0);
+            if (nextJobs.size() == 0) {
+                this.waitingJobs.remove(user);
+            }
+            final ExecutorService executorService = this.executors.get(user);
+            if (executorService == null) {
+                throw new ExecutionException("Executor service for user " + user + " was reset");
+            }
+            final ExecutionJob nextJob = jobProvider.get(nextJobId);
+            executorService.submit(() -> JobCommand.START.applyTo(nextJob));
+            return true;
+        }
+        return false;
     }
 
     private void cancelJob(ExecutionJob job) throws PersistenceException {
