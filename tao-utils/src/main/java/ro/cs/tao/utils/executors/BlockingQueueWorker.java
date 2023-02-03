@@ -72,7 +72,6 @@ public class BlockingQueueWorker<E> extends Thread {
                         this.statePersister.accept(this.monitoredQueue);
                     }
                     E entry = this.monitoredQueue.take();
-                    logger.finest("Dequeued " + entry);
                     this.executor.submit(() -> {
                         try {
                             this.work.apply(entry);

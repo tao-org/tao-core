@@ -200,6 +200,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                 final String taskName = TaskUtilities.getTaskName(task);
                 try {
                     int jobStatus = session.getJobProgramStatus(task.getResourceId());
+                    logger.finest("DRMAA session returned " + jobStatus + " for task " + taskName);
                     switch (jobStatus) {
                         case Session.SYSTEM_ON_HOLD:
                         case Session.USER_ON_HOLD:
@@ -296,6 +297,8 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                     markTaskFinished(task, ExecutionStatus.FAILED, e.getMessage());
                 }
             }
+        } else {
+            logger.finest("No tasks are currently executing");
         }
     }
 
@@ -680,11 +683,11 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         // Why "." at the end ???
         // final String tmpPath = isOutputManaged ? tempOutput : tempOutput.substring(0, tempOutput.lastIndexOf('/') + 1) + ".";
         final String tmpPath = isOutputManaged ? tempOutput : tempOutput.substring(0, tempOutput.lastIndexOf('/') + 1) + "*";
-        final String finalPath = isOutputManaged ? finalOutput : finalOutput.substring(0, finalOutput.lastIndexOf('/') + 1);
-//        final String finalPath = finalOutput.substring(0, finalOutput.lastIndexOf('/') + 1);
+        //final String finalPath = isOutputManaged ? finalOutput : finalOutput.substring(0, finalOutput.lastIndexOf('/') + 1);
+        final String finalPath = finalOutput.substring(0, finalOutput.lastIndexOf('/') + 1);
         final boolean isSnapDimap = component.getTargets().stream().anyMatch(t -> t.getDataDescriptor().getLocation().toLowerCase().endsWith(".dim")
                                                                                 || "beam-dimap".equalsIgnoreCase(t.getDataDescriptor().getFormatName()))
-                                    && finalOutput.endsWith(".dim");
+                                    || finalOutput.endsWith(".dim");
         final boolean isSnap = initialCmd.equals("/opt/snap/bin/gpt");
         final boolean recursiveCondition = !isOutputManaged || isSnapDimap || component.getTargets().stream().anyMatch(t -> DataFormat.FOLDER == t.getDataDescriptor().getFormatType());
         argsList.add(0, initialCmd);
