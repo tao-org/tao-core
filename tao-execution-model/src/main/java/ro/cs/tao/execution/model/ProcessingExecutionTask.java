@@ -188,6 +188,10 @@ public class ProcessingExecutionTask extends ExecutionTask {
                            arrayChars.contains(strValue.substring(strValue.length() - 1))) {
                     strValue = strValue.substring(1, strValue.length() - 1);
                     value = strValue.replaceAll("[,;]", " ");
+                } else if (strValue.contains(" ") && strValue.charAt(0) != '\'' &&  strValue.charAt(0) != '\"') {
+                    // Parameter values containing spaces will break the command line invocation, hence
+                    // the value needs to be enclosed in quotes
+                    value = "'" + strValue + "'";
                 }
                 inputParams.put(key, value);
             }
