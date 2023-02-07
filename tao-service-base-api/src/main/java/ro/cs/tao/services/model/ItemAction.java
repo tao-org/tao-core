@@ -1,6 +1,7 @@
 package ro.cs.tao.services.model;
 
 import ro.cs.tao.persistence.EOProductProvider;
+import ro.cs.tao.utils.executors.monitoring.ProgressListener;
 import ro.cs.tao.workspaces.RepositoryType;
 
 import java.nio.file.Path;
@@ -44,4 +45,6 @@ public interface ItemAction {
     default void setProductProvider(EOProductProvider productProvider) { }
 
     default void setActionUser(String user) { }
+
+    default void setProgressListener(ProgressListener listener) { }
 }
