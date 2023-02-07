@@ -19,15 +19,18 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import ro.cs.tao.utils.ExceptionUtils;
+import ro.cs.tao.utils.executors.MemoryUnit;
+import ro.cs.tao.utils.executors.monitoring.ProgressListener;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -49,26 +52,51 @@ public class Zipper {
         decompressZip(source, target, false);
     }
 
-    public static void compress(Path sourceFolder, String archiveName, boolean deleteFolder) throws IOException {
+    public static void compress(Path sourceFolder, String archiveName, boolean deleteFolder, ProgressListener listener) throws IOException {
         Path zipFile = sourceFolder.getParent().resolve(archiveName + ".zip");
         Files.deleteIfExists(zipFile);
         Files.createFile(zipFile);
         try (ZipOutputStream outputStream = new ZipOutputStream(Files.newOutputStream(zipFile))) {
             try (Stream<Path> files = Files.walk(sourceFolder, FileVisitOption.FOLLOW_LINKS)) {
-                Iterator<Path> pathIterator = files.iterator();
-                while (pathIterator.hasNext()) {
-                    Path path = pathIterator.next();
+                final List<Path> paths = files.collect(Collectors.toList());
+                final long total = listener != null
+                        ? paths.stream().filter(Files::isRegularFile).mapToLong(value -> {
+                                try {
+                                    return Files.size(value);
+                                } catch (IOException e) {
+                                    return 0;
+                                }
+                            }).sum()
+                        : -1;
+                if (listener != null) {
+                    listener.started(archiveName);
+                }
+                long read = 0;
+                for (Path path : paths) {
                     String sp = sourceFolder.relativize(path).toString();
                     try {
                         ZipEntry entry = new ZipEntry(sp);
                         outputStream.putNextEntry(entry);
                         if (!Files.isDirectory(path)) {
-                            outputStream.write(Files.readAllBytes(path));
+                            byte[] buffer = new byte[MemoryUnit.MB.value().intValue()];
+                            try (InputStream stream = Files.newInputStream(path)) {
+                                int r;
+                                while ((r = stream.read(buffer)) != -1) {
+                                    outputStream.write(buffer, 0, r);
+                                    if (listener != null) {
+                                        read += r;
+                                        listener.notifyProgress((double) r / (double) total);
+                                    }
+                                }
+                            }
                         }
                         outputStream.closeEntry();
                     } catch (Exception e) {
                         logger.severe(e.getMessage());
                     }
+                }
+                if (listener != null) {
+                    listener.ended();
                 }
             }
         }
@@ -106,6 +134,46 @@ public class Zipper {
             }
             if (deleteAfterDecompress) {
                 Files.delete(source);
+            }
+        } catch (IOException e) {
+            logger.warning(ExceptionUtils.getStackTrace(logger, e));
+            throw e;
+        }
+        return target;
+    }
+
+    public static Path decompressZip(Path source, Path target, ProgressListener listener) throws IOException {
+        if (source == null || !source.toString().endsWith(".zip")) {
+            return null;
+        }
+        try {
+            Files.createDirectories(target);
+            byte[] buffer = new byte[65536];
+            double totalRead = 0;
+            long total = Files.size(source);
+            try (InputStream is = Files.newInputStream(source);
+                 ZipInputStream zis = new ZipInputStream(is)) {
+                ZipEntry entry = zis.getNextEntry();
+                while (entry != null) {
+                    Path newFile = target.resolve(entry.getName());
+                    if (entry.isDirectory()) {
+                        Files.createDirectories(newFile);
+                    } else {
+                        Files.createDirectories(newFile.getParent());
+                        try (OutputStream outputStream = Files.newOutputStream(newFile)) {
+                            int read;
+                            while ((read = zis.read(buffer)) > 0) {
+                                outputStream.write(buffer, 0, read);
+                                totalRead += (double) read * ((double) entry.getCompressedSize() / entry.getSize());
+                                if (listener != null) {
+                                    listener.notifyProgress(totalRead / total);
+                                }
+                            }
+                        }
+                    }
+                    entry = zis.getNextEntry();
+                }
+                zis.closeEntry();
             }
         } catch (IOException e) {
             logger.warning(ExceptionUtils.getStackTrace(logger, e));

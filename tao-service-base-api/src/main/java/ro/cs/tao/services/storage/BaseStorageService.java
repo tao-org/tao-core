@@ -53,11 +53,13 @@ public abstract class BaseStorageService<T, U> implements StorageService<T, U> {
 
     @Override
     public void execute(String actionName, FileObject item) throws Exception {
-        if (this.actions == null || !this.actions.containsKey(actionName)) {
+        final ItemAction action;
+        if (this.actions == null || (action = this.actions.get(actionName)) == null) {
             throw new IllegalArgumentException("No such action");
         }
         final String path = repository.resolve(item.getRelativePath());
-        this.actions.get(actionName).doAction(Paths.get(path));
+        action.setActionUser(repository.getUserName());
+        action.doAction(Paths.get(path));
     }
 
     protected InputStream wrapStream(InputStream inputStream) {
