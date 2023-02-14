@@ -22,6 +22,7 @@ import ro.cs.tao.utils.executors.monitoring.ActivityListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -43,6 +44,7 @@ public abstract class Executor<T> implements Runnable {
     private static final Map<String, AtomicLong> requestedMemory;
     private static final Map<Executor<?>, Long> memoryRequirements;
     private static Map<String, String> environment;
+    private static Set<ExecutionDescriptorConverter> converters;
 
     static {
         executorService = new NamedThreadPoolExecutor("process-exec", Runtime.getRuntime().availableProcessors());
@@ -73,6 +75,17 @@ public abstract class Executor<T> implements Runnable {
 
     private volatile int retCode = Integer.MAX_VALUE;
     private final CountDownLatch counter;
+
+    public static void setConverters(Set<ExecutionDescriptorConverter> converters) {
+        if (converters != null) {
+            Executor.converters = new HashSet<>();
+            for (ExecutionDescriptorConverter converter : converters) {
+                if (converter instanceof Executor) {
+                    Executor.converters.add(converter);
+                }
+            }
+        }
+    }
 
     /**
      * Returns the number of tasks currently executed by this executor
@@ -123,7 +136,16 @@ public abstract class Executor<T> implements Runnable {
         if (job.getType() != ExecutorType.SCRIPT) {
             executor = create(job.getType(), job.getHost(), job.getArguments(), job.asSuperUser(), job.getSshMode(), job.isAsyncSSHExecution(), job.getAsyncSSHFileName());
         } else{
-            executor = new JsonExecutor(job);
+            ExecutionDescriptorConverter converter = converters.stream().filter(c -> c.isIntendedFor(job.getUnitFormat())).findFirst().orElse(null);
+            if (converter != null) {
+                try {
+                    executor = (Executor<?>) converter.getClass().getConstructor(ExecutionUnit.class).newInstance(job);
+                } catch (InstantiationException | NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
+            } else {
+                throw new RuntimeException("Job is of type SCRIPT, but no converter has been found for the format " + job.getUnitFormat());
+            }
         }
         executor.setUser(job.getUser());
         executor.setPassword(job.getPassword());
@@ -366,6 +388,13 @@ public abstract class Executor<T> implements Runnable {
         return retVal;
     }
 
+    public Executor() {
+        this.counter = new CountDownLatch(1);
+        this.isStopped = false;
+        this.isSuspended = false;
+        logger = Logger.getLogger(Executor.class.getName());
+    }
+
     /**
      * Constructs an executor with given arguments and a shared latch counter.
      *
@@ -383,13 +412,10 @@ public abstract class Executor<T> implements Runnable {
      * @param args          The arguments
      */
     Executor(String host, List<String> args, boolean asSU, boolean ensureTokenizedArgs) {
-        this.isStopped = false;
-        this.isSuspended = false;
+        this();
         this.host = host;
         this.arguments = ensureTokenizedArgs ? ensureTokenized(args) : args;
-        this.counter = new CountDownLatch(1);
         this.asSuperUser = asSU;
-        logger = Logger.getLogger(Executor.class.getName());
     }
 
     public void setMonitor(ActivityListener monitor) { this.monitor = monitor; }

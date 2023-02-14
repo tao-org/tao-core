@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.utils.executors;
 
+import ro.cs.tao.utils.ExecutionUnitFormat;
 import ro.cs.tao.utils.executors.container.ContainerType;
 import ro.cs.tao.utils.executors.container.ContainerUnit;
 
@@ -29,12 +30,13 @@ import java.util.Map;
  */
 public class ExecutionUnit {
     protected final ExecutorType type;
+    protected ExecutionUnitFormat unitFormat;
     protected final String host;
     protected final String user;
     protected final String password;
     protected String certificate;
     protected final List<String> arguments;
-    protected String workdingDirectory;
+    protected String workingDirectory;
     protected final boolean asSuperUser;
     protected final SSHMode sshMode;
     protected Long minMemory;
@@ -58,9 +60,18 @@ public class ExecutionUnit {
         this.sshMode = sshMode;
         this.asyncSSHExecution = asyncSSHExecution;
         this.asyncSSHFileName = asyncSSHFileName;
+        this.unitFormat = ExecutionUnitFormat.TAO;
     }
 
     public ExecutorType getType() { return type; }
+
+    public ExecutionUnitFormat getUnitFormat() {
+        return unitFormat;
+    }
+
+    public void setUnitFormat(ExecutionUnitFormat unitFormat) {
+        this.unitFormat = unitFormat;
+    }
 
     public String getHost() { return host; }
 
@@ -102,12 +113,12 @@ public class ExecutionUnit {
         this.containerUnit = new ContainerUnit(type);
     }
 
-    public String getWorkdingDirectory() {
-        return workdingDirectory;
+    public String getWorkingDirectory() {
+        return workingDirectory;
     }
 
-    public void setWorkdingDirectory(String workdingDirectory) {
-        this.workdingDirectory = workdingDirectory;
+    public void setWorkingDirectory(String workdingDirectory) {
+        this.workingDirectory = workdingDirectory;
     }
 
     public boolean hasContainerArguments() {
