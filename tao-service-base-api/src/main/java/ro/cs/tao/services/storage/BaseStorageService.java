@@ -42,6 +42,7 @@ public abstract class BaseStorageService<T, U> implements StorageService<T, U> {
             this.actions = new LinkedHashMap<>();
         }
         if (!this.actions.containsKey(action.name())) {
+            action.associateWith(this);
             this.actions.put(action.name(), action);
         }
     }

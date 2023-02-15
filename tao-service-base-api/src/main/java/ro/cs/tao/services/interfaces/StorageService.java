@@ -115,6 +115,10 @@ public interface StorageService<T, U> extends TAOService {
      */
     void move(String source, String destination) throws IOException;
 
+    default void rename(String source, String target) throws IOException {
+
+    }
+
     /**
      * List the products and the uploaded files in a user workspace
      * @return The list uf user products and files
