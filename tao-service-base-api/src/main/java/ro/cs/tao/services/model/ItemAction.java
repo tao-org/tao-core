@@ -1,6 +1,7 @@
 package ro.cs.tao.services.model;
 
 import ro.cs.tao.persistence.EOProductProvider;
+import ro.cs.tao.services.interfaces.StorageService;
 import ro.cs.tao.utils.executors.monitoring.ProgressListener;
 import ro.cs.tao.workspaces.RepositoryType;
 
@@ -45,6 +46,8 @@ public interface ItemAction {
     default void setProductProvider(EOProductProvider productProvider) { }
 
     default void setActionUser(String user) { }
+
+    default void associateWith(StorageService storageService) { }
 
     default void setProgressListener(ProgressListener listener) { }
 }

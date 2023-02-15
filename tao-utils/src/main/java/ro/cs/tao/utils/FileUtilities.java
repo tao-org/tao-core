@@ -791,6 +791,48 @@ public class FileUtilities {
         }
     }
 
+    public static void rename(Path source, String newFileName) throws IOException {
+        if (source != null && !StringUtilities.isNullOrEmpty(newFileName)) {
+            final Path target = source.getParent().resolve(newFileName);
+            if (Files.exists(target)) {
+                throw new IOException("Target exists");
+            }
+            if (Files.isRegularFile(source)) {
+                Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
+            } else {
+                Files.createDirectory(target);
+                Files.walkFileTree(source, new SimpleFileVisitor<>() {
+                    @Override
+                    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                        if (!dir.equals(source)) {
+                            Path subFolder = target.resolve(source.relativize(dir));
+                            Files.createDirectories(subFolder);
+                        }
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                        Path targetFile = target.resolve(source.relativize(file));
+                        Files.move(file, targetFile, StandardCopyOption.REPLACE_EXISTING);
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                        if (exc == null) {
+                            Files.delete(dir);
+                            return FileVisitResult.CONTINUE;
+                        } else {
+                            throw exc;
+                        }
+                    }
+                });
+                Files.delete(source);
+            }
+        }
+    }
+
     public static void copyAndDelete(Path source, Path destination) throws IOException {
         if (source != null && destination != null) {
             if (!Files.exists(destination)) {
