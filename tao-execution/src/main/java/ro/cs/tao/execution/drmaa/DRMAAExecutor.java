@@ -423,6 +423,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                 template.setAttribute(DrmaaJobExtensions.TASK_ANCESTOR_ID, TaskUtilities.getParentIds(task));
                 template.setAttribute(DrmaaJobExtensions.TASK_NAME, TaskUtilities.getComponentFor(task).getLabel());
                 template.setAttribute(DrmaaJobExtensions.JOB_ID, task.getJob().getId());
+                template.setAttribute(DrmaaJobExtensions.USER, task.getJob().getUserName());
                 final List<Variable> values = task.getOutputParameterValues();
                 if (values != null) {
                     template.setAttribute(DrmaaJobExtensions.TASK_OUTPUT, values.stream().map(Variable::getValue).collect(Collectors.toList()));

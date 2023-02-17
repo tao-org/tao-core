@@ -60,7 +60,7 @@ public class ExecutionUnit {
         this.sshMode = sshMode;
         this.asyncSSHExecution = asyncSSHExecution;
         this.asyncSSHFileName = asyncSSHFileName;
-        this.unitFormat = ExecutionUnitFormat.TAO;
+        this.unitFormat = type == ExecutorType.SCRIPT ? ExecutionUnitFormat.JSON : ExecutionUnitFormat.TAO;
     }
 
     public ExecutorType getType() { return type; }

@@ -17,6 +17,7 @@ package ro.cs.tao.utils.executors;
 
 import com.jcraft.jsch.Channel;
 import org.apache.commons.lang3.SystemUtils;
+import ro.cs.tao.utils.ExecutionUnitFormat;
 import ro.cs.tao.utils.executors.monitoring.ActivityListener;
 
 import java.io.File;
@@ -365,6 +366,9 @@ public abstract class Executor<T> implements Runnable {
     }
 
     private static synchronized boolean canExecute(ExecutionUnit executionUnit) {
+        if (executionUnit.getUnitFormat() != ExecutionUnitFormat.TAO) {
+            return true;
+        }
         boolean retVal;
         final Long minMemory = executionUnit.getMinMemory();
         if (minMemory != null) {
