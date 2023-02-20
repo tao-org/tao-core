@@ -17,6 +17,7 @@
 package ro.cs.tao.execution.monitor;
 
 import org.apache.commons.lang3.SystemUtils;
+import ro.cs.tao.component.SystemVariable;
 import ro.cs.tao.utils.executors.*;
 
 import java.io.IOException;
@@ -329,6 +330,8 @@ public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
                 final int code = executor.execute(false);
                 if (code == 0) {
                     List<String> messages = consumer.getMessages();
+                    final String mountPointOne = SystemVariable.ROOT.value().substring(0, SystemVariable.ROOT.value().lastIndexOf("/"));
+                    final String mountPointTwo = mountPointOne.substring(0, mountPointOne.lastIndexOf("/"));
                     for (String message : messages) {
                         if (!message.isEmpty()) {
                             if (message.startsWith("MemTotal")) {
@@ -340,7 +343,8 @@ public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
                                 String value = message.substring(0, message.indexOf(" kB"));
                                 runtimeInfo.setAvailableMemory(Long.parseLong(value) / MemoryUnit.KB.value());
                                 //break;
-                            } else if (message.startsWith("/dev/mapper/centos-home")) {
+                            } else if (message.startsWith("/dev/mapper/centos-home") ||
+                                       message.contains(mountPointOne) || message.contains(mountPointTwo)) {
                                 List<String> values = Arrays.stream(message.replace(message.substring(0, message.indexOf(' ')), "").trim().split(" ")).filter(v -> !v.isEmpty()).collect(Collectors.toList());
                                 runtimeInfo.setDiskTotal(runtimeInfo.getDiskTotal() + Long.parseLong(values.get(0)) / MemoryUnit.MB.value());
                                 runtimeInfo.setDiskUsed(runtimeInfo.getDiskUsed() + Long.parseLong(values.get(1)) / MemoryUnit.MB.value());

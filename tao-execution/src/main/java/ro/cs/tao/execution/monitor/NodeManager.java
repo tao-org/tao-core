@@ -46,14 +46,13 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     private NodeProvider nodeProvider;
     private ExecutionTaskProvider taskProvider;
     private DefaultNodeInfo defaultNodeInfo;
-    private final Map<String, NodeRuntimeWrapper> nodes;
+    private final Map<String, NodeRuntime> nodes;
     private Timer nodeInspectTimer;
     private Timer nodeRefreshTimer;
-    private final Map<String, LocalDateTime> keepAliveMap;
     private NodeInspectTask nodeInspectTask;
     private NodeRefreshTask nodeRefreshTask;
     private volatile boolean refreshInProgress;
-    private NodeRuntimeWrapper lastUsedNode;
+    private NodeRuntime lastUsedNode;
 
     static {
         concurrentCalls = Math.max(2, java.lang.Runtime.getRuntime().availableProcessors() / 4);
@@ -82,7 +81,6 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         this.nodes = new HashMap<>();
         this.refreshInProgress = false;
         this.nodeLimit = 0;
-        this.keepAliveMap = Collections.synchronizedMap(new HashMap<>());
     }
 
     public DefaultNodeInfo getDefaultNodeInfo() {
@@ -97,14 +95,14 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     }
 
     /**
-     * Sets the node provider, which is responsible of retrieving the list of managed nodes.
+     * Sets the node provider, which is responsible for retrieving the list of managed nodes.
      *
      * @param nodeProvider  The node provider
      */
     public void setNodeProvider(NodeProvider nodeProvider) { this.nodeProvider = nodeProvider; }
 
     /**
-     * Sets the task provider, which is responsible of retrieving tasks executing on a node.
+     * Sets the task provider, which is responsible for retrieving tasks executing on a node.
      * @param taskProvider  The task provider
      */
     public void setTaskProvider(ExecutionTaskProvider taskProvider) { this.taskProvider = taskProvider; }
@@ -215,7 +213,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     public NodeDescription[] getCurrentNodes() {
         NodeDescription[] currentNodes = new NodeDescription[this.nodes.size()];
         int index = 0;
-        for (Map.Entry<String, NodeRuntimeWrapper> entry : this.nodes.entrySet()) {
+        for (Map.Entry<String, NodeRuntime> entry : this.nodes.entrySet()) {
             currentNodes[index++] = entry.getValue().getNode();
         }
         return currentNodes;
@@ -234,7 +232,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         //String nodeName = isDevMode ? TopologyManager.getInstance().getMasterNodeInfo().getId() : null;
         final String nodeName = TopologyManager.getInstance().getMasterNodeInfo().getId();
         if (isDevMode) {
-            NodeRuntimeWrapper value = this.nodes.get(nodeName);
+            NodeRuntime value = this.nodes.get(nodeName);
             if (value != null) {
                 return value.getNode();
             }
@@ -267,9 +265,9 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         int requestedCPUs = cpus;
         NodeDescription availableNode = null;//getStartingAvailableNode();
         // First check if there are nodes bound to this user
-        final List<Map.Entry<String, NodeRuntimeWrapper>> userNodes = this.nodes.entrySet().stream()
-                                                                                .filter(e -> user.equals(e.getValue().getNode().getUserName()))
-                                                                                .collect(Collectors.toList());
+        final List<Map.Entry<String, NodeRuntime>> userNodes = this.nodes.entrySet().stream()
+                                                                         .filter(e -> user.equals(e.getValue().getNode().getUserName()))
+                                                                         .collect(Collectors.toList());
         // If not, then use the pool of available nodes
         if (userNodes.isEmpty()) {
             userNodes.addAll(this.nodes.entrySet());
@@ -280,14 +278,14 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
             	int availableCpu = userQuotaManager.getAvailableCpus(principal);
                 if ((availableCpu == -1 || availableCpu > 0) && userQuotaManager.checkUserProcessingMemory(principal, (int)memory)) {
                     requestedCPUs = (availableCpu == -1) ? cpus : Math.min(cpus, availableCpu);
-                    NodeRuntimeWrapper result;
+                    NodeRuntime result;
                     // First try to find a node different from the last one used
-                    List<Map.Entry<String, NodeRuntimeWrapper>> candidates = userNodes.stream()
-                                                                                    .filter(e -> {
-                                                                                        final NodeRuntimeWrapper nrw = e.getValue();
+                    List<Map.Entry<String, NodeRuntime>> candidates = userNodes.stream()
+                                                                               .filter(e -> {
+                                                                                        final NodeRuntime nrw = e.getValue();
                                                                                         return !nrw.equals(lastUsedNode) && nrw.getRuntimeInfo().getAvailableMemory() >= memory;
                                                                                     }).collect(Collectors.toList());
-                    Map.Entry<String, NodeRuntimeWrapper> candidate = candidates.stream().min(Comparator.comparingDouble(e -> {
+                    Map.Entry<String, NodeRuntime> candidate = candidates.stream().min(Comparator.comparingDouble(e -> {
                         NodeDescription node = nodes.get(e.getKey()).getNode();
                         RuntimeInfo runtimeInfo = e.getValue().getRuntimeInfo();
                         return computeLoad(node, runtimeInfo.getCpuTotal(), runtimeInfo.getAvailableMemory());
@@ -380,11 +378,11 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     }
 
     public NodeData getNode(String nodeName) {
-        NodeRuntimeWrapper nodeRuntimeWrapper = this.nodes.get(nodeName);
-        if (nodeRuntimeWrapper == null) {
+        NodeRuntime nodeRuntime = this.nodes.get(nodeName);
+        if (nodeRuntime == null) {
             return null;
         }
-        NodeDescription node = nodeRuntimeWrapper.getNode();
+        NodeDescription node = nodeRuntime.getNode();
         return new NodeData(node, node.getFlavor().getCpu(), node.getFlavor().getMemory());
     }
 
@@ -394,13 +392,13 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
      * @param hostName  The node host name
      */
     public RuntimeInfo getNodeSnapshot(String hostName) {
-        NodeRuntimeWrapper nodeRuntimeWrapper = this.nodes.get(hostName);
-        return (nodeRuntimeWrapper == null) ? null : nodeRuntimeWrapper.getRuntimeInfo();
+        NodeRuntime nodeRuntime = this.nodes.get(hostName);
+        return (nodeRuntime == null) ? null : nodeRuntime.getRuntimeInfo();
     }
 
     public Map<String, RuntimeInfo> getNodesSnapshot() {
         Map<String, RuntimeInfo> runtimeInfoMap = new HashMap<>(this.nodes.size());
-        for (Map.Entry<String, NodeRuntimeWrapper> entry : this.nodes.entrySet()) {
+        for (Map.Entry<String, NodeRuntime> entry : this.nodes.entrySet()) {
             runtimeInfoMap.put(entry.getKey(), entry.getValue().getRuntimeInfo());
         }
         return runtimeInfoMap;
@@ -426,14 +424,12 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
 
     private void addNewInstalledNode(NodeDescription node) {
         addNode(node, new RuntimeInfo());
-        this.keepAliveMap.put(node.getId(), LocalDateTime.now().plusSeconds(DEFAULT_KEEP_ALIVE_SECONDS));
     }
 
     protected final void removeNode(String host) {
         synchronized (this.nodes) {
             this.nodes.remove(host);
         }
-        this.keepAliveMap.remove(host);
     }
 
     protected void uninstallNode(NodeDescription node) {
@@ -443,7 +439,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
 
     private void addNode(NodeDescription node, RuntimeInfo runtimeInfo) {
         synchronized (this.nodes) {
-            this.nodes.put(node.getId(), new NodeRuntimeWrapper(node, runtimeInfo));
+            this.nodes.put(node.getId(), new NodeRuntime(node, runtimeInfo));
         }
     }
 
@@ -515,32 +511,39 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                                     // ignore
                                 }
                             }
-                            NodeRuntimeWrapper nodeRuntimeWrapper;
+                            NodeRuntime nodeRuntime;
                             synchronized (nodes) {
-                                nodeRuntimeWrapper = nodes.get(h);
+                                nodeRuntime = nodes.get(h);
                             }
-                            if (nodeRuntimeWrapper != null) {
+                            if (nodeRuntime != null) {
+                                if (nodeRuntime.getFailedAttempts() == 3) {
+                                    NodeDescription node = nodeRuntime.getNode();
+                                    node.setActive(false);
+                                    nodeProvider.update(node);
+                                    nodes.remove(h);
+                                    return;
+                                }
                                 final List<ExecutionTask> tasks = taskProvider.listByHost(h);
                                 boolean isNodeWithoutTasks = (tasks == null || tasks.size() == 0);
-                                final LocalDateTime time = keepAliveMap.get(h);
-                                if (time != null && time.compareTo(LocalDateTime.now()) >= 0) {
-                                    Boolean isVolatile = nodeRuntimeWrapper.getNode().getVolatile();
+                                final LocalDateTime time = nodeRuntime.getNextKeepAlive();
+                                if (time != null && !time.isBefore(LocalDateTime.now())) {
+                                    Boolean isVolatile = nodeRuntime.getNode().getVolatile();
                                     if (isNodeWithoutTasks && (isVolatile != null && isVolatile)) {
-                                        uninstallNode(nodeRuntimeWrapper.getNode());
+                                        uninstallNode(nodeRuntime.getNode());
                                         return;
                                     } else {
-                                        keepAliveMap.replace(h, LocalDateTime.now().plusSeconds(DEFAULT_KEEP_ALIVE_SECONDS));
+                                        nodeRuntime.setNextKeepAlive(LocalDateTime.now().plusSeconds(DEFAULT_KEEP_ALIVE_SECONDS));
                                     }
                                 }
 
                                 boolean canReadNodeInfo = true;
                                 if (isNodeWithoutTasks) {
-                                    if (nodeRuntimeWrapper.getLastUpdatedTimeMilliseconds() > 0) {
+                                    if (nodeRuntime.getLastUpdatedTimeMilliseconds() > 0) {
                                         // the node has been updated at least one time
                                         ConfigurationProvider cfgManager = ConfigurationManager.getInstance();
                                         String value = cfgManager.getValue("topology.node.without.tasks.polling.interval");
                                         int pollingInterval = (value == null) ? POLLING_NODE_WITHOUT_TASKS_SECONDS : Integer.parseInt(value);
-                                        long elapsedTimeInSeconds = (System.currentTimeMillis() - nodeRuntimeWrapper.getLastUpdatedTimeMilliseconds()) / 1000;
+                                        long elapsedTimeInSeconds = (System.currentTimeMillis() - nodeRuntime.getLastUpdatedTimeMilliseconds()) / 1000;
                                         if (elapsedTimeInSeconds < pollingInterval) {
                                             canReadNodeInfo = false;
                                         }
@@ -549,16 +552,17 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                                 if (canReadNodeInfo) {
                                     RuntimeInfo runtimeInfo = null;
                                     try {
-                                        runtimeInfo = readNodeRuntimeInfo(nodeRuntimeWrapper.getNode());
+                                        runtimeInfo = readNodeRuntimeInfo(nodeRuntime.getNode());
                                     } catch (Exception exception) {
                                         logger.log(Level.SEVERE, "Cannot read node information '" + h + "': " + ExceptionUtils.getExceptionLoggingMessage(exception, 1));
+                                        nodeRuntime.incrementFailures();
                                     }
                                     if (runtimeInfo == null) {
-                                        NodeFlavor flavor = nodeRuntimeWrapper.getNode().getFlavor();
+                                        NodeFlavor flavor = nodeRuntime.getNode().getFlavor();
                                         runtimeInfo = buildDefaultRuntimeInfo(flavor.getDisk(), flavor.getMemory(), flavor.getCpu());
                                     }
-                                    nodeRuntimeWrapper.setRuntimeInfo(runtimeInfo);
-                                    nodeRuntimeWrapper.setLastUpdatedTimeMilliseconds(System.currentTimeMillis());
+                                    nodeRuntime.setRuntimeInfo(runtimeInfo);
+                                    nodeRuntime.setLastUpdatedTimeMilliseconds(System.currentTimeMillis());
                                 }
                             }
                         } catch (Exception exception) {
@@ -590,8 +594,8 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                     NodeFlavor flavor = node.getFlavor();
                     String host = node.getId();
                     synchronized (nodes) {
-                        NodeRuntimeWrapper nodeRuntimeWrapper = nodes.get(host);
-                        if (nodeRuntimeWrapper == null) {
+                        NodeRuntime nodeRuntime = nodes.get(host);
+                        if (nodeRuntime == null) {
                             // the node does not exist in the list
                             if (node.getActive()) {
                                 addNode(node, buildDefaultRuntimeInfo(flavor.getDisk(), flavor.getMemory(), cpuTotal));
@@ -599,7 +603,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                         } else {
                             // the node already exists in the list
                             if (!node.getActive()) {
-                                nodeRuntimeWrapper.setRuntimeInfo(buildDefaultRuntimeInfo(flavor.getDisk(), flavor.getMemory(), cpuTotal));
+                                nodeRuntime.setRuntimeInfo(buildDefaultRuntimeInfo(flavor.getDisk(), flavor.getMemory(), cpuTotal));
                             }
                         }
                     }
@@ -626,16 +630,18 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         return runtimeInfo;
     }
 
-    private static class NodeRuntimeWrapper {
-
+    private static class NodeRuntime {
         private RuntimeInfo runtimeInfo;
         private final NodeDescription node;
         private long lastUpdatedTimeMilliseconds;
+        private LocalDateTime nextKeepAlive;
+        private int failedAttempts;
 
-        public NodeRuntimeWrapper(NodeDescription node, RuntimeInfo runtimeInfo) {
+        public NodeRuntime(NodeDescription node, RuntimeInfo runtimeInfo) {
             this.node = node;
             this.runtimeInfo = runtimeInfo;
             this.lastUpdatedTimeMilliseconds = 0L;
+            this.nextKeepAlive = LocalDateTime.now().plusSeconds(DEFAULT_KEEP_ALIVE_SECONDS);
         }
 
         public long getLastUpdatedTimeMilliseconds() {
@@ -656,6 +662,22 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
 
         public NodeDescription getNode() {
             return node;
+        }
+
+        public LocalDateTime getNextKeepAlive() {
+            return nextKeepAlive;
+        }
+
+        public void setNextKeepAlive(LocalDateTime nextKeepAlive) {
+            this.nextKeepAlive = nextKeepAlive;
+        }
+
+        public int getFailedAttempts() {
+            return failedAttempts;
+        }
+
+        public void incrementFailures() {
+            this.failedAttempts++;
         }
     }
 }
