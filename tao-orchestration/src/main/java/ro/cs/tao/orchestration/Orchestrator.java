@@ -685,13 +685,13 @@ public class Orchestrator extends Notifiable {
                 }
             }
         } catch (Throwable e) {
-            logger.severe(String.format("Abnormal termination: %s", e.getMessage()));
+            logger.severe(String.format("Abnormal termination: %s", ExceptionUtils.getStackTrace(logger, e)));
             ExecutionJob job = task.getJob();
             job.setExecutionStatus(ExecutionStatus.FAILED);
             try {
                 jobProvider.update(job);
             } catch (PersistenceException e1) {
-                logger.severe(String.format("Abnormal termination: %s", e1.getMessage()));
+                logger.severe(String.format("Abnormal termination: %s", ExceptionUtils.getStackTrace(logger, e1)));
             }
             shutDownExecutor(user != null ? user : currentContext.getPrincipal().getName());
         }
@@ -1339,27 +1339,31 @@ public class Orchestrator extends Notifiable {
                     }
                 }
                 path = Paths.get(strPath).toAbsolutePath();
-                MetadataInspector metadataInspector = this.metadataServices.stream()
-                        .filter(s -> s.decodeQualification(path) == DecodeStatus.INTENDED)
-                        .findFirst().orElse(null);
-                if (metadataInspector == null) {
-                    metadataInspector = this.metadataServices.stream()
-                            .filter(s -> s.decodeQualification(path) == DecodeStatus.SUITABLE)
-                            .findFirst().orElse(null);
-                }
-                if (metadataInspector != null) {
-                    logger.fine("Creating metadata for " + path);
-                    MetadataInspector.Metadata metadata = metadataInspector.getMetadata(path);
-                    if (metadata != null) {
-                        product = metadata.toProductDescriptor(path);
-                        product.addReference(context.getPrincipal().getName());
-                        product.setVisibility(Visibility.PRIVATE);
-                        product.setAcquisitionDate(LocalDateTime.now());
+                if (Files.exists(path)) {
+                    MetadataInspector metadataInspector = this.metadataServices.stream()
+                                                                               .filter(s -> s.decodeQualification(path) == DecodeStatus.INTENDED)
+                                                                               .findFirst().orElse(null);
+                    if (metadataInspector == null) {
+                        metadataInspector = this.metadataServices.stream()
+                                                                 .filter(s -> s.decodeQualification(path) == DecodeStatus.SUITABLE)
+                                                                 .findFirst().orElse(null);
+                    }
+                    if (metadataInspector != null) {
+                        logger.fine("Creating metadata for " + path);
+                        MetadataInspector.Metadata metadata = metadataInspector.getMetadata(path);
+                        if (metadata != null) {
+                            product = metadata.toProductDescriptor(path);
+                            product.addReference(context.getPrincipal().getName());
+                            product.setVisibility(Visibility.PRIVATE);
+                            product.setAcquisitionDate(LocalDateTime.now());
+                        } else {
+                            throw new ExecutionException(String.format("Metadata for output %s could not be extracted", outValue));
+                        }
                     } else {
-                        throw new ExecutionException(String.format("Metadata for output %s could not be extracted", outValue));
+                        throw new ExecutionException(String.format("No suitable metadata inspector found for output %s", outValue));
                     }
                 } else {
-                    throw new ExecutionException(String.format("No suitable metadata inspector found for output %s", outValue));
+                    logger.warning("No such file: " + path);
                 }
             }
         } catch (Exception e2) {
