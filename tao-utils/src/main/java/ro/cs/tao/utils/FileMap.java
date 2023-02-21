@@ -11,10 +11,27 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * A map that is backed by a file.
+ * The map persists its state on any modification and can restore itself from a file.
+ * The keys and the values of the map are serialized as Json.
+ *
+ * @param <K>   The key type
+ * @param <V>   The value type
+ *
+ * @author Cosmin Cara
+ * @since  1.4.1
+ */
 public class FileMap<K, V> implements Map<K, V> {
     private final Path file;
     private final Map<K, V> map;
 
+    /**
+     * Constructs a new file-backed map.
+     * If the given file already contains map state, the map will be re-populated.
+     *
+     * @param file  The backing file
+     */
     public FileMap(Path file) {
         if (file == null) {
             throw new NullPointerException("file");
@@ -27,7 +44,7 @@ public class FileMap<K, V> implements Map<K, V> {
                 this.map.putAll(new ObjectMapper().reader().readValue(this.file.toFile()));
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 
