@@ -24,6 +24,7 @@ CREATE TABLE execution.job
 	end_time timestamp without time zone NULL,
 	workflow_id bigint,
 	username varchar(50) NOT NULL,
+	output_path varchar(512),
 	query_id bigint NULL,
 	execution_status_id integer NOT NULL,
 	is_external boolean NULL DEFAULT false,

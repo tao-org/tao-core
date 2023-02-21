@@ -149,7 +149,7 @@ public class Orchestrator extends Notifiable {
         this.executors = Collections.synchronizedMap(new HashMap<>());
         this.executors.put(SystemPrincipal.instance().getName(), Executors.newFixedThreadPool(1));
         this.runningTasks = Collections.synchronizedSet(new HashSet<>());
-        this.waitingJobs = Collections.synchronizedMap(new FileMap<>(Paths.get(SystemVariable.CACHE.value())));
+        this.waitingJobs = Collections.synchronizedMap(new FileMap<>(Paths.get(SystemVariable.CACHE.value()).resolve("wait_jobs.json")));
         this.listAdapter = new StringListAdapter();
         this.jobProvider = SpringContextBridge.services().getService(ExecutionJobProvider.class);
         this.taskProvider = SpringContextBridge.services().getService(ExecutionTaskProvider.class);
@@ -167,8 +167,6 @@ public class Orchestrator extends Notifiable {
     }
 
     public void start() {
-        //JobCommand.setPersistenceManager(persistenceManager);
-        //TaskUtilities.setPersistenceManager(persistenceManager);
         final Function<Long, WorkflowNodeDescriptor> workflowProvider = this.workflowNodeProvider::get;
         initializeJobSelector(workflowProvider, this.taskProvider::getByJobAndNode);
         initializeGroupSelector(workflowProvider, this.taskProvider::getByGroupAndNode);
@@ -188,16 +186,14 @@ public class Orchestrator extends Notifiable {
     /**
      * Creates a job from a workflow definition and starts its execution.
      *
-     * @param context 	 The session context 
-     * @param workflowId The workflow identifier
-     * @param inputs     The overridden parameter values for workflow nodes
+     * @param context 	The session context
+     * @param request   The workflow execution request
      * @throws ExecutionException In case anything goes wrong or a job for this workflow was already created
      */
-    public ExecutionJob startWorkflow(SessionContext context, long workflowId, String description,
-                              Map<String, Map<String, String>> inputs) throws ExecutionException {
+    public ExecutionJob startWorkflow(SessionContext context, ExecutionRequest request) throws ExecutionException {
         try {
             final String user = context.getPrincipal().getName();
-            final ExecutionJob job = tryCreateJob(user, context, workflowId, description, inputs);
+            final ExecutionJob job = tryCreateJob(user, context, request);
             if (job == null) {
                 throw new ExecutionException("Another job is running or queued for user '" + user + "'. New job will be queued");
             } else {
@@ -264,11 +260,15 @@ public class Orchestrator extends Notifiable {
      * @throws ExecutionException In case anything goes wrong or a job for this workflow was already created
      */
     public ExecutionJob startExternalWorkflow(SessionContext context, long workflowId, String description,
-                                              Map<String, Map<String, String>> inputs, ExecutorService executorService,
+                                              Map<String, Map<String, String>> inputs,
                                               EndpointDescriptor callback) throws ExecutionException {
         ExecutionJob executionJob;
         try {
-            executionJob = startWorkflow(context, workflowId, description, inputs);
+            final ExecutionRequest request = new ExecutionRequest();
+            request.setWorkflowId(workflowId);
+            request.setName(description);
+            request.setParameters(inputs);
+            executionJob = startWorkflow(context, request);
             if (executionJob != null) {
                 executionJob.setExternal(true);
                 executionJob.setCallbackDescriptor(callback);
@@ -321,18 +321,15 @@ public class Orchestrator extends Notifiable {
      * Creates a job from a workflow, intended for execution.
      *
      * @param context 	 The session context
-     * @param workflowId The workflow identifier
-     * @param description A description of the execution (workflow instance)
-     * @param inputs     The overridden parameter values for workflow nodes,
+     * @param request    The execution request
      * @param optimize  If <code>true</code>, the workflow will be optimized if possible
      * @throws ExecutionException In case anything goes wrong
      */
-    public ExecutionJob createJob(SessionContext context, long workflowId, String description,
-                                  Map<String, Map<String, String>> inputs, boolean optimize)  throws ExecutionException {
+    public ExecutionJob createJob(SessionContext context, ExecutionRequest request, boolean optimize)  throws ExecutionException {
         try {
-            final WorkflowDescriptor descriptor = workflowProvider.get(workflowId);
+            final WorkflowDescriptor descriptor = workflowProvider.get(request.getWorkflowId());
             if (descriptor == null) {
-                throw new ExecutionException(String.format("Non-existent workflow [%s]", workflowId));
+                throw new ExecutionException(String.format("Non-existent workflow [%s]", request.getWorkflowId()));
             }
             final Principal principal = context.getPrincipal();
             // check if the user's disk quota is not reached
@@ -347,7 +344,7 @@ public class Orchestrator extends Notifiable {
                     optimized = descriptor;
                 }
             }
-            return this.jobFactory.createJob(context, this.uuid, description, optimized, inputs);
+            return this.jobFactory.createJob(context, this.uuid, request.getName(), optimized, request.getParameters());
         } catch (QuotaException | PersistenceException e) {
             logger.severe(e.getMessage());
             throw new ExecutionException(e.getMessage());
@@ -1376,7 +1373,7 @@ public class Orchestrator extends Notifiable {
     /**
      * Check if the user still has disk processing quota available
      * 
-     * @param user the user for which the interogation is made
+     * @param user the user for which the interrogation is made
      * 
      * @return true if the user stil has disk processing quota available, false otherwise. 
      * @throws QuotaException if the operation fails. 
@@ -1406,9 +1403,8 @@ public class Orchestrator extends Notifiable {
         return true;
     }
 
-    private ExecutionJob tryCreateJob(String user, SessionContext context, long workflowId, String description,
-                                      Map<String, Map<String, String>> inputs) {
-        final ExecutionJob executionJob = createJob(context, workflowId, description, inputs,
+    private ExecutionJob tryCreateJob(String user, SessionContext context, ExecutionRequest request) {
+        final ExecutionJob executionJob = createJob(context, request,
                                                     ConfigurationManager.getInstance().getBooleanValue("optimize.workflows"));
         return canSubmitJob(user, executionJob) ? executionJob : null;
     }
@@ -1420,9 +1416,12 @@ public class Orchestrator extends Notifiable {
 
     private String translateOutputToMasterPath(ProcessingExecutionTask task) {
         String path = task.getInstanceTargetOutput();
+        final String masterRoot = SystemVariable.ROOT.value().replace("\\", "/");
+        if (path.startsWith(masterRoot)) {
+            return path;
+        }
         final DockerVolumeMap workerVolumeMap = ExecutionConfiguration.getWorkerContainerVolumeMap();
-        String outPath = path.replace(workerVolumeMap.getContainerWorkspaceFolder(),
-                                      SystemVariable.ROOT.value().replace("\\", "/"));
+        String outPath = path.replace(workerVolumeMap.getContainerWorkspaceFolder(), masterRoot);
         if (!task.getComponent().isOutputManaged()) {
             DataFormat type = task.getComponent().getTargets().get(0).getDataDescriptor().getFormatType();
             switch (type) {

@@ -685,7 +685,23 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         // final String tmpPath = isOutputManaged ? tempOutput : tempOutput.substring(0, tempOutput.lastIndexOf('/') + 1) + ".";
         final String tmpPath = isOutputManaged ? tempOutput : tempOutput.substring(0, tempOutput.lastIndexOf('/') + 1) + "*";
         //final String finalPath = isOutputManaged ? finalOutput : finalOutput.substring(0, finalOutput.lastIndexOf('/') + 1);
-        final String finalPath = finalOutput.substring(0, finalOutput.lastIndexOf('/') + 1);
+        String finalPath = finalOutput.substring(0, finalOutput.lastIndexOf('/') + 1);
+        final DockerVolumeMap volumeMap = isLocal ? ExecutionConfiguration.getMasterContainerVolumeMap() : ExecutionConfiguration.getWorkerContainerVolumeMap();
+        final String workspaceFolder = SystemUtils.IS_OS_WINDOWS
+                                       ? volumeMap.getHostWorkspaceFolder().substring(2)
+                                       : volumeMap.getHostWorkspaceFolder();
+        final String containerWorkspaceFolder = volumeMap.getContainerWorkspaceFolder();
+        if (finalPath.startsWith(workspaceFolder)) {
+            try {
+                Files.createDirectories(Paths.get(finalPath));
+            } catch (IOException e) {
+                logger.warning(e.getMessage());
+            }
+            final String replacement = containerWorkspaceFolder.endsWith("/")
+                                       ? containerWorkspaceFolder
+                                       : containerWorkspaceFolder + "/";
+            finalPath = finalPath.replace(workspaceFolder, replacement);
+        }
         final boolean isSnapDimap = component.getTargets().stream().anyMatch(t -> t.getDataDescriptor().getLocation().toLowerCase().endsWith(".dim")
                                                                                 || "beam-dimap".equalsIgnoreCase(t.getDataDescriptor().getFormatName()))
                                     || finalOutput.endsWith(".dim");
@@ -702,13 +718,6 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             argsList.add("GeoTIFF");
         }
         argsList.add("&&");
-        try {
-            DockerVolumeMap volumeMap = isLocal ? ExecutionConfiguration.getMasterContainerVolumeMap() : ExecutionConfiguration.getWorkerContainerVolumeMap();
-            Files.createDirectories(Paths.get(finalPath.replace(volumeMap.getContainerWorkspaceFolder(),
-                                                                ExecutionConfiguration.getMasterContainerVolumeMap().getHostWorkspaceFolder())));
-        } catch (IOException e) {
-            logger.warning(e.getMessage());
-        }
         argsList.add("cp");
         if (recursiveCondition) {
             argsList.add("-r");

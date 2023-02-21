@@ -40,6 +40,7 @@ import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
 
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.logging.Logger;
@@ -53,6 +54,7 @@ import java.util.stream.Collectors;
 public class DefaultJobFactory {
 
     protected static final int DEFAULT_INSTANCE = 1;
+    protected static final String invalidChars = "[\\~\\#\\%\\&\\*\\{\\}\\\\\\:\\<\\>\\?\\/\\+\\|, ]";
     protected final ExecutionJobProvider jobProvider;
     protected final ExecutionTaskProvider taskProvider;
     protected final QueryProvider queryProvider;
@@ -95,6 +97,10 @@ public class DefaultJobFactory {
             job.setStartTime(LocalDateTime.now());
             job.setWorkflowId(workflow.getId());
             job.setExecutionStatus(ExecutionStatus.UNDETERMINED);
+            job.setJobOutputPath(Paths.get(SystemVariable.ROOT.value())
+                                      .resolve(context.getPrincipal().getName())
+                                      .resolve(jobName.replaceAll(invalidChars, "_"))
+                                      .toString());
             job = jobProvider.save(job);
             List<WorkflowNodeDescriptor> nodes = workflow.getOrderedNodes();
             Set<WorkflowNodeGroupDescriptor> groups = nodes.stream()
@@ -643,6 +649,7 @@ public class DefaultJobFactory {
             clone.setQueryId(original.getQueryId());
             clone.setUserName(original.getUserName());
             clone.setExecutionStatus(ExecutionStatus.UNDETERMINED);
+            clone.setJobOutputPath(original.getJobOutputPath() + "_" + cloneNumber);
             clone = jobProvider.save(clone);
             final List<ExecutionTask> originalTasks = original.getTasks();
             final Map<String, String> cloneTaskMap = new HashMap<>();

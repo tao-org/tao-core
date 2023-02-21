@@ -987,6 +987,9 @@
             <basic name="userName">
                 <column name="username" nullable="false" column-definition="character varying(50) NOT NULL"/>
             </basic>
+            <basic name="jobOutputPath">
+                <column name="output_path" nullable="false" column-definition="character varying(512) NOT NULL"/>
+            </basic>
             <basic name="external">
                 <column name="is_external" nullable="true" column-definition="boolean NULL DEFAULT false"/>
             </basic>
