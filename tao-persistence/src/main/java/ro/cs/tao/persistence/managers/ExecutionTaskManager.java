@@ -57,8 +57,13 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
             JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
             jdbcTemplate.update("UPDATE execution.task SET execution_status_id = ?, resource_id = ?, execution_log = ?, last_updated = ? WHERE id = ?",
                                 newStatus.value(), task.getResourceId(), failed ? reason : null, task.getLastUpdated(), task.getId());
-            logger.log(failed ? Level.SEVERE : newStatus == ExecutionStatus.CANCELLED ? Level.WARNING : Level.FINE,
-                       String.format("Task %s status change [%s -> %s]. Reason: %s", task.getId(), oldStatus, newStatus, reason));
+            logger.log(failed
+                       ? Level.SEVERE
+                       : newStatus == ExecutionStatus.CANCELLED
+                         ? Level.WARNING
+                         : Level.FINE,
+                       String.format("Task %s status change [%s -> %s].", task.getId(), oldStatus, newStatus)
+                               + (reason != null ? " Reason: " + reason : ""));
             task = get(task.getId());
             return task;
         } finally {

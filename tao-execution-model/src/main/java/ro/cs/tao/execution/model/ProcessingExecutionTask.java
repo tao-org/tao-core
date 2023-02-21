@@ -43,7 +43,7 @@ public class ProcessingExecutionTask extends ExecutionTask {
     // format is: jobId-taskId-[internalState-]fileName
     private static final String nameTemplate = "%s-%s-%s%s";
 
-    private static final Set<String> arrayChars = new HashSet<String>() {{
+    private static final Set<String> arrayChars = new HashSet<>() {{
         add("["); add("{"); add("]"); add("}");
     }};
 
@@ -259,12 +259,15 @@ public class ProcessingExecutionTask extends ExecutionTask {
                                                         this.getId(),
                                                         this.internalState == null ? "" : this.internalState + "-",
                                                         this.component.getId());
+                final Path jobPath = Paths.get(getJob().getJobOutputPath());
                 try {
-                    FileUtilities.ensureExists(context.getWorkspace().resolve(folderName));
+                    //FileUtilities.ensureExists(context.getWorkspace().resolve(folderName));
+                    FileUtilities.ensureExists(jobPath.resolve(folderName));
                 } catch (IOException e) {
                     Logger.getLogger(ProcessingExecutionTask.class.getName()).severe(e.getMessage());
                 }
-                setInstanceTargetOutput(FileUtilities.asUnixPath(path.getParent().resolve(folderName).resolve(fileName), true));
+                //setInstanceTargetOutput(FileUtilities.asUnixPath(path.getParent().resolve(folderName).resolve(fileName), true));
+                setInstanceTargetOutput(FileUtilities.asUnixPath(jobPath.resolve(folderName).resolve(fileName), true));
                 setInstanceTemporaryOutput(ExecutionConfiguration.getWorkerContainerVolumeMap().getContainerTemporaryFolder() + "/" + fileName);
             }
         }
@@ -286,11 +289,11 @@ public class ProcessingExecutionTask extends ExecutionTask {
         }
         if (location != null) {
             Path path = Paths.get(location);
-            //SessionContext context = getContext();
-            String principalName = getJob().getUserName();
+            final Path jobPath = Paths.get(getJob().getJobOutputPath());
             if (!path.isAbsolute()) {
+                Path relPath = jobPath.getName(jobPath.getNameCount() - 2).resolve(jobPath.getFileName());
                 path = Paths.get(ExecutionConfiguration.getWorkerContainerVolumeMap().getContainerWorkspaceFolder())
-                        .resolve(principalName).resolve(path); //context.getNetSpace().resolve(path);
+                            .resolve(relPath).resolve(path); //context.getNetSpace().resolve(path);
             }
             String fileName = path.getFileName().toString();
             String folderName = String.format(nameTemplate,
@@ -298,9 +301,13 @@ public class ProcessingExecutionTask extends ExecutionTask {
                                               this.getId(),
                                               this.internalState == null ? "" : this.internalState + "-",
                                               FileUtilities.getFilenameWithoutExtension(fileName));
-            outPath = new String[] {
+            /*outPath = new String[] {
                     FileUtilities.asUnixPath(Paths.get(SystemVariable.ROOT.value()).resolve(principalName).resolve(folderName), false),
                     FileUtilities.asUnixPath(path.getParent().resolve(folderName), true)
+            };*/
+            outPath = new String[] {
+                    FileUtilities.asUnixPath(jobPath.resolve(folderName), false),
+                    FileUtilities.asUnixPath(path.getParent().resolve(jobPath.getFileName()).resolve(folderName), true)
             };
         }
         return outPath;

@@ -16,9 +16,13 @@ public class FileMap<K, V> implements Map<K, V> {
     private final Map<K, V> map;
 
     public FileMap(Path file) {
+        if (file == null) {
+            throw new NullPointerException("file");
+        }
         this.file = file;
         this.map = new LinkedHashMap<>();
         try {
+            Files.createDirectories(this.file.getParent());
             if (Files.exists(this.file) && Files.size(this.file) > 0) {
                 this.map.putAll(new ObjectMapper().reader().readValue(this.file.toFile()));
             }

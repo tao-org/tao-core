@@ -36,6 +36,7 @@ public class ExecutionJob extends LongIdentifiable implements StatusChangeListen
     private Long workflowId;
     private String queryId;
     private String userName;
+    private String jobOutputPath;
     private ExecutionStatus executionStatus;
     private boolean external;
     private EndpointDescriptor callbackDescriptor;
@@ -69,6 +70,14 @@ public class ExecutionJob extends LongIdentifiable implements StatusChangeListen
 
     public Long getWorkflowId() { return workflowId; }
     public void setWorkflowId(Long workflowId) { this.workflowId = workflowId; }
+
+    public String getJobOutputPath() {
+        return jobOutputPath;
+    }
+
+    public void setJobOutputPath(String jobOutputPath) {
+        this.jobOutputPath = jobOutputPath;
+    }
 
     public void setStartTime(LocalDateTime startTime) {
         this.startTime = startTime;

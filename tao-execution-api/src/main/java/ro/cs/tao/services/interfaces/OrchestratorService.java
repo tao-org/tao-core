@@ -22,6 +22,7 @@ import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.callback.EndpointDescriptor;
 import ro.cs.tao.execution.model.ExecutionJob;
 import ro.cs.tao.execution.model.ExecutionJobSummary;
+import ro.cs.tao.execution.model.ExecutionRequest;
 import ro.cs.tao.execution.model.ExecutionTaskSummary;
 import ro.cs.tao.persistence.PersistenceException;
 
@@ -50,13 +51,12 @@ public interface OrchestratorService extends TAOService {
     /**
      * Creates a job from a workflow definition and starts its execution.
      *
-     * @param workflowId    The workflow identifier
-     * @param jobName       A friendly name for this execution
-     * @param inputs        The overridden parameter values for components
+     * @param request   The execution request, containing the workflow identifier, input parameters and
+     *                  a name/label for the execution instance
      *
      * @throws ExecutionException   In case anything goes wrong or a job for this workflow was already created
      */
-    long startWorkflow(long workflowId, String jobName, Map<String, Map<String, String>> inputs) throws ExecutionException;
+    long startWorkflow(ExecutionRequest request) throws ExecutionException;
 
     /**
      * Creates a job for a workflow definition without starting its execution.
