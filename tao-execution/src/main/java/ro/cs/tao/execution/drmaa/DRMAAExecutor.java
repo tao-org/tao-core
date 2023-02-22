@@ -87,6 +87,12 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
 
     public static void setContainerProvider(ContainerProvider provider) { containerProvider = provider; }
 
+    /**
+     * Sets the orchestrator id.
+     * This allows multiple instances, from different machines, not to overlap on executing tasks.
+     *
+     * @param id    The orchestrator identifier
+     */
     public static void setApplicationId(String id) { appId = id; }
 
     public static DRMAAExecutor getInstance() { return instance; }
@@ -681,10 +687,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
     private String wrapShellInvocation(ProcessingComponent component, final List<String> argsList, String initialCmd,
                                        final String tempOutput, final String finalOutput, final boolean isLocal) {
         final boolean isOutputManaged = component.isOutputManaged();
-        // Why "." at the end ???
-        // final String tmpPath = isOutputManaged ? tempOutput : tempOutput.substring(0, tempOutput.lastIndexOf('/') + 1) + ".";
         final String tmpPath = isOutputManaged ? tempOutput : tempOutput.substring(0, tempOutput.lastIndexOf('/') + 1) + "*";
-        //final String finalPath = isOutputManaged ? finalOutput : finalOutput.substring(0, finalOutput.lastIndexOf('/') + 1);
         String finalPath = finalOutput.substring(0, finalOutput.lastIndexOf('/') + 1);
         final DockerVolumeMap volumeMap = isLocal ? ExecutionConfiguration.getMasterContainerVolumeMap() : ExecutionConfiguration.getWorkerContainerVolumeMap();
         final String workspaceFolder = SystemUtils.IS_OS_WINDOWS
