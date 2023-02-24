@@ -292,13 +292,13 @@ public class Orchestrator extends Notifiable {
      * @throws ExecutionException In case anything goes wrong
      */
     public ExecutionJob createJob(SessionContext context, long workflowId, String description,
-                                  Map<String, Map<String, String>> inputs)  throws ExecutionException {
+                                  Map<String, Map<String, String>> inputs, JobType jobType)  throws ExecutionException {
         try {
             final WorkflowDescriptor descriptor = workflowProvider.get(workflowId);
             if (descriptor == null) {
                 throw new ExecutionException(String.format("Non-existent workflow [%s]", workflowId));
             }
-            final ExecutionJob job = new ScriptJobFactory().createJob(context, this.uuid, description, descriptor, inputs);
+            final ExecutionJob job = new ScriptJobFactory().createJob(context, this.uuid, description, descriptor, inputs, jobType);
             this.executors.get(context.getPrincipal().getName()).submit(() -> {
                 try {
                     JobCommand.START.applyTo(job);
@@ -647,7 +647,8 @@ public class Orchestrator extends Notifiable {
                             job.setEndTime(LocalDateTime.now());
                         }
                         jobProvider.update(job);
-                        if (taskNode instanceof WorkflowNodeGroupDescriptor && taskNode.getPreserveOutput()) {
+                        if (JobType.EXECUTION.equals(job.getJobType()) &&
+                            taskNode instanceof WorkflowNodeGroupDescriptor && taskNode.getPreserveOutput()) {
                             persistOutputProducts(task);
                         }
                         WorkflowDescriptor workflow = workflowProvider.get(job.getWorkflowId());
@@ -819,8 +820,20 @@ public class Orchestrator extends Notifiable {
                 pcTask.setOutputParameterValue(t.getName(), instanceTargetOuptut);
                 logger.finest(String.format("Output [%s] of task [id=%d] was set to '%s'",
                                             t.getName(), pcTask.getId(), instanceTargetOuptut));
-                if (keepOutput) {
+                JobType jobType = pcTask.getJob().getJobType();
+                if (keepOutput && JobType.EXECUTION.equals(jobType)) {
                     persistOutputProducts(pcTask);
+                } else if (!JobType.EXECUTION.equals(jobType)){
+                    // cleanup empty folders created by simulated execution
+                    Path jobPath = Paths.get(pcTask.getJob().getJobOutputPath());
+                    try {
+                        List<Path> folders = FileUtilities.listFolders(jobPath);
+                        for (Path folder : folders) {
+                            FileUtilities.deleteTree(folder);
+                        }
+                    } catch (IOException e) {
+                        logger.warning(e.getMessage());
+                    }
                 }
                 if (lastFromGroup) {
                     //groupTask.setOutputParameterValue(t.getName(), targetOutput);

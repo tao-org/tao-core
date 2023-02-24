@@ -41,6 +41,7 @@ public class ExecutionJob extends LongIdentifiable implements StatusChangeListen
     private boolean external;
     private EndpointDescriptor callbackDescriptor;
     private Map<String, List<String>> taskDependencies;
+    private JobType jobType;
     @JsonManagedReference
     private List<ExecutionTask> tasks;
 
@@ -128,6 +129,15 @@ public class ExecutionJob extends LongIdentifiable implements StatusChangeListen
     public void setTasks(List<ExecutionTask> tasks) {
         this.tasks = tasks;
     }
+
+    public JobType getJobType() {
+        return jobType;
+    }
+
+    public void setJobType(JobType jobType) {
+        this.jobType = jobType;
+    }
+
     @JsonManagedReference
     public List<ExecutionTask> getTasks() {
         if (tasks == null) {

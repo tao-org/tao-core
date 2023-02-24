@@ -97,6 +97,7 @@ public class DefaultJobFactory {
             job.setStartTime(LocalDateTime.now());
             job.setWorkflowId(workflow.getId());
             job.setExecutionStatus(ExecutionStatus.UNDETERMINED);
+            job.setJobType(JobType.EXECUTION);
             job.setJobOutputPath(Paths.get(SystemVariable.ROOT.value())
                                       .resolve(context.getPrincipal().getName())
                                       .resolve(jobName.replaceAll(invalidChars, "_"))
@@ -159,6 +160,7 @@ public class DefaultJobFactory {
         job.setUserName(SessionStore.currentContext().getPrincipal().getName());
         job.setStartTime(LocalDateTime.now());
         job.setExecutionStatus(ExecutionStatus.UNDETERMINED);
+        job.setJobType(JobType.EXECUTION);
         job = jobProvider.save(job);
         for (Map.Entry<String, Map<String, String>> entry : inputs.entrySet()) {
             ExecutionTask task = createWPSComponentExecutionTask(entry.getKey(), entry.getValue());

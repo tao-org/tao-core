@@ -18,4 +18,6 @@ public class DrmaaJobExtensions {
     public static final String TASK_OUTPUT = "TaskOutput";
     public static final String JOB_ID = "JobId";
     public static final String USER = "User";
+    public static final String SCRIPT_FORMAT = "ScriptFormat";
+    public static final String SCRIPT_PATH = "ScriptPath";
 }

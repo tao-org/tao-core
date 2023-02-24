@@ -61,13 +61,16 @@ public interface OrchestratorService extends TAOService {
     /**
      * Creates a job for a workflow definition without starting its execution.
      *
-     * @param workflowId    The workflow identifier
-     * @param jobName       A friendly name for this execution
-     * @param inputs        The overridden parameter values for components
+     * @param request       The execution request, containing:
+     *  - The workflow identifier
+     *  - A friendly name for this execution
+     *  - The format in which the workflow will be exported
+     *  - The overridden parameter values for components
      *
      * @throws ExecutionException   In case anything goes wrong or a job for this workflow was already created
      */
-    ExecutionJob createJobExternal(long workflowId, String jobName, Map<String, Map<String, String>> inputs) throws ExecutionException;
+    //ExecutionJob createJobExternal(long workflowId, String jobName, Map<String, Map<String, String>> inputs) throws ExecutionException;
+    ExecutionJob createJobExternal(ExecutionRequest request) throws ExecutionException;
     /**
      * Stops the execution of the given job.
      *

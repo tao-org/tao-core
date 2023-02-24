@@ -16,7 +16,6 @@
 package ro.cs.tao.execution.local;
 
 import org.ggf.drmaa.*;
-import ro.cs.tao.component.SystemVariable;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.docker.ExecutionConfiguration;
 import ro.cs.tao.execution.DrmaaJobExtensions;
@@ -25,13 +24,13 @@ import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.topology.NodeFlavor;
+import ro.cs.tao.utils.ExecutionUnitFormat;
 import ro.cs.tao.utils.executors.*;
 import ro.cs.tao.utils.executors.container.ContainerCmdBuilder;
 import ro.cs.tao.utils.executors.container.ContainerUnit;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -158,6 +157,8 @@ public class DefaultSession implements Session {
                 set.add(DrmaaJobExtensions.TASK_OUTPUT);
                 set.add(DrmaaJobExtensions.JOB_ID);
                 set.add(DrmaaJobExtensions.USER);
+                set.add(DrmaaJobExtensions.SCRIPT_FORMAT);
+                set.add(DrmaaJobExtensions.SCRIPT_PATH);
                 return set;
             }
         };
@@ -200,6 +201,7 @@ public class DefaultSession implements Session {
             NodeDescription node = null;
             final List<String> args = new ArrayList<>();
             boolean simulate = false;
+            ExecutionUnitFormat format = ExecutionUnitFormat.TAO;
             if (jt instanceof JobTemplateExtension) {
                 JobTemplateExtension job = (JobTemplateExtension) jt;
                 if (job.hasAttribute(DrmaaJobExtensions.MEMORY_REQUIREMENTS_ATTRIBUTE)) {
@@ -218,6 +220,9 @@ public class DefaultSession implements Session {
                     ContainerUnit unit = (ContainerUnit) job.getAttribute(DrmaaJobExtensions.CONTAINER_ATTRIBUTE);
                     args.addAll(ContainerCmdBuilder.buildCommandLineArguments(unit));
                 }
+                if (job.hasAttribute(DrmaaJobExtensions.SCRIPT_FORMAT) && simulate) {
+                    format = ExecutionUnitFormat.valueOf((String) job.getAttribute(DrmaaJobExtensions.SCRIPT_FORMAT));
+                }
             }
             args.add(jt.getRemoteCommand());
             args.addAll(jt.getArgs());
@@ -226,15 +231,14 @@ public class DefaultSession implements Session {
                 unit = new ExecutionUnit(ExecutorType.SCRIPT, node != null ? node.getId() : this.localHost,
                                          node != null ? node.getUserName() : null,
                                          node != null ? node.getUserPass() : null,
-                                         args, false, SSHMode.EXEC);
+                                         args, false, SSHMode.EXEC, format);
                 final JobTemplateExtension template = (JobTemplateExtension) jt;
                 unit.setContainerUnit((ContainerUnit) template.getAttribute(DrmaaJobExtensions.CONTAINER_ATTRIBUTE));
                 unit.addMetadata("id", template.getAttribute(DrmaaJobExtensions.TASK_ID));
                 unit.addMetadata("name", template.getAttribute(DrmaaJobExtensions.TASK_NAME));
                 unit.addMetadata("dependsOn", template.getAttribute(DrmaaJobExtensions.TASK_ANCESTOR_ID));
                 unit.addMetadata("canDelete", template.getAttribute(DrmaaJobExtensions.TASK_OUTPUT));
-                final String basePath = SystemVariable.ROOT.value() + "/" + template.getAttribute(DrmaaJobExtensions.USER);
-                unit.addMetadata("jsonPath", Paths.get(basePath, template.getAttribute(DrmaaJobExtensions.JOB_ID).toString() + ".json").toString());
+                unit.addMetadata("scriptPath", template.getAttribute(DrmaaJobExtensions.SCRIPT_PATH));
             } else if (ExecutionConfiguration.developmentModeEnabled()) {
                 unit = new ExecutionUnit(ExecutorType.MOCK, node != null ? node.getId() : this.localHost,
                                          node != null ? node.getUserName() : null,
@@ -249,7 +253,7 @@ public class DefaultSession implements Session {
                                           //Crypto.decrypt(node.getUserPass(), node.getUserName()),
                                           args, false /*cmdsToRunAsSu.contains(jt.getRemoteCommand())*/, SSHMode.EXEC,
                                           ConfigurationManager.getInstance().getBooleanValue(SSH_ASYNC_KEY),
-                                          jt.getJobName() + "_" + System.nanoTime());            }
+                                          jt.getJobName() + "_" + System.nanoTime(), ExecutionUnitFormat.TAO);            }
             if (memConstraint != null) {
                 unit.setMinMemory(memConstraint);
             }

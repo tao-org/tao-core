@@ -6,6 +6,7 @@ public class ExecutionRequest {
     private long workflowId;
     private String name;
     private String label;
+    private String jobType;
     private Map<String, Map<String, String>> parameters;
 
     public long getWorkflowId() { return workflowId; }
@@ -16,6 +17,14 @@ public class ExecutionRequest {
 
     public String getLabel() { return label; }
     public void setLabel(String label) { this.label = label; }
+
+    public String getJobType() {
+        return jobType;
+    }
+
+    public void setJobType(String jobType) {
+        this.jobType = jobType;
+    }
 
     public Map<String, Map<String, String>> getParameters() { return parameters; }
     public void setParameters(Map<String, Map<String, String>> parameters) { this.parameters = parameters; }
