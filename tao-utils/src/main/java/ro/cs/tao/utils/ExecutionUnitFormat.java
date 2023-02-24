@@ -4,13 +4,27 @@ public enum ExecutionUnitFormat {
     /**
      * Execution unit should be executed by TAO
      */
-    TAO,
+    TAO(null),
     /**
      * Execution unit should be converted to JSON
      */
-    JSON,
+    JSON(".json"),
     /**
      * Execution unit should be converted to CWL
      */
-    CWL
+    CWL(".cwl"),
+    /**
+     * Execution unit should be converted to Bash shell script
+     */
+    BASH(".sh");
+
+    private final String extension;
+
+    ExecutionUnitFormat(String extension) {
+        this.extension = extension;
+    }
+
+    public String getExtension() {
+        return extension;
+    }
 }

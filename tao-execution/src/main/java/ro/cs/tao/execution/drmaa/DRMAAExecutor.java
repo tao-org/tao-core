@@ -41,6 +41,7 @@ import ro.cs.tao.persistence.ContainerProvider;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.topology.NodeDescription;
+import ro.cs.tao.utils.ExecutionUnitFormat;
 import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.StringUtilities;
 import ro.cs.tao.utils.Tuple;
@@ -54,6 +55,7 @@ import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -422,14 +424,34 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             if (jt == null) {
                 throw new ExecutionException("Error creating job template from the session!");
             }
+            ExecutionJob job = task.getJob();
             if (jt instanceof JobTemplateExtension && task instanceof ScriptTask) {
                 final JobTemplateExtension template = (JobTemplateExtension) jt;
                 template.setAttribute(DrmaaJobExtensions.SIMULATE_EXECUTION_ATTRIBUTE, Boolean.TRUE);
                 template.setAttribute(DrmaaJobExtensions.TASK_ID, task.getId());
                 template.setAttribute(DrmaaJobExtensions.TASK_ANCESTOR_ID, TaskUtilities.getParentIds(task));
                 template.setAttribute(DrmaaJobExtensions.TASK_NAME, TaskUtilities.getComponentFor(task).getLabel());
-                template.setAttribute(DrmaaJobExtensions.JOB_ID, task.getJob().getId());
-                template.setAttribute(DrmaaJobExtensions.USER, task.getJob().getUserName());
+                template.setAttribute(DrmaaJobExtensions.JOB_ID, job.getId());
+                template.setAttribute(DrmaaJobExtensions.USER, job.getUserName());
+                JobType jobType = job.getJobType();
+                final ExecutionUnitFormat value;
+                switch (jobType) {
+                    case JSON_EXPORT:
+                      value = ExecutionUnitFormat.JSON;
+                      break;
+                    case BASH_EXPORT:
+                        value = ExecutionUnitFormat.BASH;
+                        break;
+                    case CWL_EXPORT:
+                        value = ExecutionUnitFormat.CWL;
+                        break;
+                    default:
+                        value = ExecutionUnitFormat.TAO;
+                }
+                template.setAttribute(DrmaaJobExtensions.SCRIPT_FORMAT, value.name());
+                Path basePath = Paths.get(job.getJobOutputPath());
+                template.setAttribute(DrmaaJobExtensions.SCRIPT_PATH,
+                                      basePath.resolve(basePath.getFileName().toString() + value.getExtension()).toString());
                 final List<Variable> values = task.getOutputParameterValues();
                 if (values != null) {
                     template.setAttribute(DrmaaJobExtensions.TASK_OUTPUT, values.stream().map(Variable::getValue).collect(Collectors.toList()));
@@ -448,7 +470,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                     nodeData = NodeManager.getInstance().getMasterNode();
                 } else {
                     // the next call blocks until a node is available
-                    nodeData = getAvailableNode(task.getJob().getUserName(), component.getParallelism(), memory);
+                    nodeData = getAvailableNode(job.getUserName(), component.getParallelism(), memory);
                 }
             }
             final NodeDescription node = nodeData.getNode();

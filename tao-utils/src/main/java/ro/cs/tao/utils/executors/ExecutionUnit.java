@@ -47,10 +47,14 @@ public class ExecutionUnit {
     protected final String asyncSSHFileName;
 
     public ExecutionUnit(ExecutorType type, String host, String user, String password, List<String> arguments, boolean asSuperUser, SSHMode sshMode) {
-    	this(type, host, user, password, arguments, asSuperUser, sshMode, false, null);
+    	this(type, host, user, password, arguments, asSuperUser, sshMode, false, null, ExecutionUnitFormat.TAO);
+    }
+
+    public ExecutionUnit(ExecutorType type, String host, String user, String password, List<String> arguments, boolean asSuperUser, SSHMode sshMode, ExecutionUnitFormat format) {
+        this(type, host, user, password, arguments, asSuperUser, sshMode, false, null, format);
     }
     
-    public ExecutionUnit(ExecutorType type, String host, String user, String password, List<String> arguments, boolean asSuperUser, SSHMode sshMode, boolean asyncSSHExecution, String asyncSSHFileName) {
+    public ExecutionUnit(ExecutorType type, String host, String user, String password, List<String> arguments, boolean asSuperUser, SSHMode sshMode, boolean asyncSSHExecution, String asyncSSHFileName, ExecutionUnitFormat format) {
         this.type = type;
         this.host = host;
         this.user = user;
@@ -60,7 +64,7 @@ public class ExecutionUnit {
         this.sshMode = sshMode;
         this.asyncSSHExecution = asyncSSHExecution;
         this.asyncSSHFileName = asyncSSHFileName;
-        this.unitFormat = type == ExecutorType.SCRIPT ? ExecutionUnitFormat.JSON : ExecutionUnitFormat.TAO;
+        this.unitFormat = format;
     }
 
     public ExecutorType getType() { return type; }
@@ -168,8 +172,8 @@ public class ExecutionUnit {
         this.metadata.put(key, value);
     }
 
-    public String getJsonPath() {
-        return this.metadata != null && this.metadata.containsKey("jsonPath") ? (String) this.metadata.get("jsonPath") : null;
+    public String getScriptTargetPath() {
+        return this.metadata != null && this.metadata.containsKey("scriptPath") ? (String) this.metadata.get("scriptPath") : null;
     }
 
     @Override

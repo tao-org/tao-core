@@ -966,6 +966,9 @@
             <basic name="name">
                 <column name="name" nullable="false" column-definition="text not null"/>
             </basic>
+            <basic name="jobType">
+                <column name="job_type" nullable="false" column-definition="smallint not null default 0"/>
+            </basic>
             <basic name="appId">
                 <column name="app_id" nullable="true" column-definition="varchar(50) not null" />
             </basic>

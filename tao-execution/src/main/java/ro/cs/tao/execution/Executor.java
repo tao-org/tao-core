@@ -204,6 +204,7 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
                     switch (status) {
                         case PENDING_FINALISATION:
                         case DONE:
+                            task.setEndTime(LocalDateTime.now());
                             task.setExecutionStatus(status);
                             notifyStatusListener(task);
                             decrement(userName, cpu, memory);
