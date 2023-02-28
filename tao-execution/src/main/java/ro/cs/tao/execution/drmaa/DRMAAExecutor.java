@@ -429,7 +429,14 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                 final JobTemplateExtension template = (JobTemplateExtension) jt;
                 template.setAttribute(DrmaaJobExtensions.SIMULATE_EXECUTION_ATTRIBUTE, Boolean.TRUE);
                 template.setAttribute(DrmaaJobExtensions.TASK_ID, task.getId());
-                template.setAttribute(DrmaaJobExtensions.TASK_ANCESTOR_ID, TaskUtilities.getParentIds(task));
+                List<Long> parentIds = TaskUtilities.getParentIds(task);
+                template.setAttribute(DrmaaJobExtensions.TASK_ANCESTOR_ID, parentIds);
+                if (parentIds != null && parentIds.size() > 0) {
+                    template.setAttribute(DrmaaJobExtensions.TASK_ANCESTOR_OUTPUT,
+                                          taskProvider.list(parentIds).stream().map(ExecutionTask::getInstanceTargetOutput).collect(Collectors.joining(",")));
+                } else {
+                    template.setAttribute(DrmaaJobExtensions.TASK_ANCESTOR_OUTPUT, null);
+                }
                 template.setAttribute(DrmaaJobExtensions.TASK_NAME, TaskUtilities.getComponentFor(task).getLabel());
                 template.setAttribute(DrmaaJobExtensions.JOB_ID, job.getId());
                 template.setAttribute(DrmaaJobExtensions.USER, job.getUserName());
@@ -600,7 +607,8 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                     }
                     hostFolder = volumeMount.getHostTemporaryFolder();
                     if (!StringUtilities.isNullOrEmpty(hostFolder)) {
-                        unit.addVolumeMapping(hostFolder + "/" + task.getId(), volumeMount.getContainerTemporaryFolder());
+                        unit.addVolumeMapping(hostFolder + (hostFolder.endsWith("/") ? "" : "/") + task.getId(),
+                                              volumeMount.getContainerTemporaryFolder());
                     }
                     hostFolder = volumeMount.getHostEODataFolder();
                     if (!StringUtilities.isNullOrEmpty(hostFolder)) {
@@ -652,17 +660,20 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                         }*/
                         add("-v");
                         add(volumeMap.getHostWorkspaceFolder() + ":" + volumeMap.getContainerWorkspaceFolder());
-                        if (!StringUtilities.isNullOrEmpty(volumeMap.getHostTemporaryFolder())) {
+                        String folder = volumeMap.getHostTemporaryFolder();
+                        if (!StringUtilities.isNullOrEmpty(folder)) {
                             add("-v");
-                            add(volumeMap.getHostTemporaryFolder() + "/" + task.getId() + ":" + volumeMap.getContainerTemporaryFolder());
+                            add(folder + (folder.endsWith("/") ? "" : "/") + task.getId() + ":" + volumeMap.getContainerTemporaryFolder());
                         }
-                        if (!StringUtilities.isNullOrEmpty(volumeMap.getHostConfigurationFolder())) {
+                        folder = volumeMap.getHostConfigurationFolder();
+                        if (!StringUtilities.isNullOrEmpty(folder)) {
                             add("-v");
-                            add(volumeMap.getHostConfigurationFolder() + ":" + volumeMap.getContainerConfigurationFolder());
+                            add(folder + ":" + volumeMap.getContainerConfigurationFolder());
                         }
-                        if (!StringUtilities.isNullOrEmpty(volumeMap.getHostAdditionalFolder())) {
+                        folder = volumeMap.getHostAdditionalFolder();
+                        if (!StringUtilities.isNullOrEmpty(folder)) {
                             add("-v");
-                            add(volumeMap.getHostAdditionalFolder() + ":" + volumeMap.getContainerAdditionalFolder());
+                            add(folder + ":" + volumeMap.getContainerAdditionalFolder());
                         }
                         if (cpu > 0) {
                             // Enforce the number of CPUs to be used

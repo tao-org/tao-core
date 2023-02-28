@@ -154,6 +154,7 @@ public class DefaultSession implements Session {
                 set.add(DrmaaJobExtensions.TASK_NAME);
                 set.add(DrmaaJobExtensions.TASK_ID);
                 set.add(DrmaaJobExtensions.TASK_ANCESTOR_ID);
+                set.add(DrmaaJobExtensions.TASK_ANCESTOR_OUTPUT);
                 set.add(DrmaaJobExtensions.TASK_OUTPUT);
                 set.add(DrmaaJobExtensions.JOB_ID);
                 set.add(DrmaaJobExtensions.USER);
@@ -237,6 +238,7 @@ public class DefaultSession implements Session {
                 unit.addMetadata("id", template.getAttribute(DrmaaJobExtensions.TASK_ID));
                 unit.addMetadata("name", template.getAttribute(DrmaaJobExtensions.TASK_NAME));
                 unit.addMetadata("dependsOn", template.getAttribute(DrmaaJobExtensions.TASK_ANCESTOR_ID));
+                unit.addMetadata("inputs", template.getAttribute(DrmaaJobExtensions.TASK_ANCESTOR_OUTPUT));
                 unit.addMetadata("canDelete", template.getAttribute(DrmaaJobExtensions.TASK_OUTPUT));
                 unit.addMetadata("scriptPath", template.getAttribute(DrmaaJobExtensions.SCRIPT_PATH));
             } else if (ExecutionConfiguration.developmentModeEnabled()) {

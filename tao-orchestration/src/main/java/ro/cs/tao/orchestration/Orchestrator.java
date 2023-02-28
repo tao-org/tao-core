@@ -797,9 +797,10 @@ public class Orchestrator extends Notifiable {
         ExecutionGroup groupTask = pcTask.getGroupTask();
         boolean lastFromGroup = groupTask != null &&
                 groupTask.getOutputParameterValues().stream()
-                        .allMatch(o -> targets.stream().anyMatch(t -> t.getName().equals(o.getKey())));
+                         .allMatch(o -> targets.stream().anyMatch(t -> t.getName().equals(o.getKey())));
         final Map<String, Variable> parameterValues = pcTask.getInputParameterValues().stream()
-                                                          .collect(Collectors.toMap(Variable::getKey, Function.identity()));
+                                                            .collect(Collectors.toMap(Variable::getKey, Function.identity()));
+        final JobType jobType = pcTask.getJob().getJobType();
         targets.forEach(t -> {
             Variable variable = parameterValues.get(t.getName());
             if (variable == null) {
@@ -820,10 +821,9 @@ public class Orchestrator extends Notifiable {
                 pcTask.setOutputParameterValue(t.getName(), instanceTargetOuptut);
                 logger.finest(String.format("Output [%s] of task [id=%d] was set to '%s'",
                                             t.getName(), pcTask.getId(), instanceTargetOuptut));
-                JobType jobType = pcTask.getJob().getJobType();
                 if (keepOutput && JobType.EXECUTION.equals(jobType)) {
                     persistOutputProducts(pcTask);
-                } else if (!JobType.EXECUTION.equals(jobType)){
+                } else if (!JobType.EXECUTION.equals(jobType)) {
                     // cleanup empty folders created by simulated execution
                     Path jobPath = Paths.get(pcTask.getJob().getJobOutputPath());
                     try {
@@ -843,8 +843,10 @@ public class Orchestrator extends Notifiable {
         });
         pcTask.setExecutionStatus(ExecutionStatus.DONE);
         taskProvider.update(pcTask);
-        taskProvider.updateComponentTime(pcTask.getComponent().getId(),
-                                         (int) Duration.between(pcTask.getStartTime(), pcTask.getEndTime()).getSeconds());
+        if (JobType.EXECUTION.equals(jobType)) {
+            taskProvider.updateComponentTime(pcTask.getComponent().getId(),
+                                             (int) Duration.between(pcTask.getStartTime(), pcTask.getEndTime()).getSeconds());
+        }
         ExecutionsManager.getInstance().doPostExecuteAction(pcTask);
         if (lastFromGroup) {
             taskProvider.update(groupTask);
