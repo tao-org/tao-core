@@ -82,4 +82,8 @@ public class StringUtilities {
     public static String padRight(String value, int length, String padValue) {
         return value.length() < length ? String.format("%-" + length + "s", value).replace(" ", padValue) : value;
     }
+
+    public static String toFirstCaps(String value) {
+        return value.substring(0, 1).toUpperCase() + value.substring(1).toLowerCase();
+    }
 }
