@@ -399,6 +399,10 @@ public class NetUtils {
     }
 
     public static ro.cs.tao.utils.CloseableHttpResponse openConnection(HttpMethod method, String url, List<Header> headers, List<NameValuePair> parameters) throws IOException {
+        return openConnection(method, url, headers, parameters, timeout);
+    }
+
+    public static ro.cs.tao.utils.CloseableHttpResponse openConnection(HttpMethod method, String url, List<Header> headers, List<NameValuePair> parameters, int timeoutMillis) throws IOException {
         CloseableHttpResponse response;
         try {
             URI uri = new URI(url);
@@ -421,9 +425,9 @@ public class NetUtils {
                     throw new IllegalArgumentException("Method not supported");
             }
             final RequestConfig.Builder requestBuilder = RequestConfig.custom()
-                                                                      .setConnectionRequestTimeout(timeout)
-                                                                      .setConnectTimeout(timeout)
-                                                                      .setSocketTimeout(timeout);
+                                                                      .setConnectionRequestTimeout(timeoutMillis)
+                                                                      .setConnectTimeout(timeoutMillis)
+                                                                      .setSocketTimeout(timeoutMillis);
             if (apacheHttpProxy != null) {
                 requestBuilder.setProxy(apacheHttpProxy);
             }
