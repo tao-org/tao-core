@@ -1564,6 +1564,25 @@
         </attributes>
     </entity>
 
+    <entity class="ro.cs.tao.user.LogEvent" access="PROPERTY">
+        <table name="common.audit"/>
+        <attributes>
+            <id name="id">
+                <column name="id" nullable="false" column-definition="bigserial NOT NULL"/>
+                <generated-value strategy="SEQUENCE" />
+            </id>
+            <basic name="timestamp">
+                <column name="timestamp" nullable="true" column-definition="timestamp without time zone"/>
+            </basic>
+            <basic name="userName">
+                <column name="username" nullable="false" column-definition="character varying NOT NULL"/>
+            </basic>
+            <basic name="event">
+                <column name="event" nullable="true" column-definition="character varying NOT NULL"/>
+            </basic>
+        </attributes>
+    </entity>
+
     <embeddable class="ro.cs.tao.eodata.Attribute" access="PROPERTY">
         <attributes>
             <basic name="name">

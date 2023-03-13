@@ -16,7 +16,11 @@ public enum ExecutionUnitFormat {
     /**
      * Execution unit should be converted to Bash shell script
      */
-    BASH(".sh");
+    BASH(".sh"),
+    /**
+     * Execution unit should be converted to an Argo workflow
+     */
+    ARGO(".yaml");
 
     private final String extension;
 

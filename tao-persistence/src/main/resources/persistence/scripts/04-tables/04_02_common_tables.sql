@@ -62,3 +62,21 @@ DROP SEQUENCE IF EXISTS common.visibility_id_seq CASCADE;
 CREATE SEQUENCE common.visibility_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
 ALTER TABLE common.visibility ALTER COLUMN id SET DEFAULT nextval('common.visibility_id_seq');
 ALTER SEQUENCE common.visibility_id_seq OWNED BY common.visibility.id;
+
+-------------------------------------------------------------------------------
+-- table: audit
+DROP TABLE IF EXISTS common.audit CASCADE;
+CREATE TABLE common.audit
+(
+    id bigserial NOT NULL,
+    timestamp bigint NOT NULL,
+    username character varying NOT NULL,
+    event character varying NOT NULL
+);
+ALTER TABLE common.audit ADD CONSTRAINT PK_audit PRIMARY KEY (id);
+DROP SEQUENCE IF EXISTS common.audit_id_seq CASCADE;
+CREATE SEQUENCE common.audit_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE common.audit ALTER COLUMN id SET DEFAULT nextval('common.audit_id_seq');
+ALTER SEQUENCE common.audit_id_seq OWNED BY common.audit.id;
+CREATE INDEX IX_audit ON common.audit
+    USING btree (username COLLATE pg_catalog."default", timestamp);
