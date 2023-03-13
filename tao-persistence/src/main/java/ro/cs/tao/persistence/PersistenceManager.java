@@ -119,6 +119,9 @@ public class PersistenceManager {
     @Autowired
     private DownloadQueueManager downloadQueueManager;
 
+    @Autowired
+    private AuditManager auditManager;
+
     @PostConstruct
     public void initialize() {
         componentCache = SimpleCache.create(String.class, ProcessingComponent.class,
@@ -182,4 +185,6 @@ public class PersistenceManager {
     public WPSAuthenticationManager wpsAuthentication() { return wpsAuthenticationManager; }
 
     public DownloadQueueManager downloadQueue() { return downloadQueueManager; }
+
+    public AuditManager audit() { return auditManager; }
 }
