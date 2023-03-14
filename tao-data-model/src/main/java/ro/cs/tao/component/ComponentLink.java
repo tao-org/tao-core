@@ -43,15 +43,19 @@ public class ComponentLink {
      * @param input     The output of a component
      * @param output    The input of a component
      */
-    public static boolean canConnect(TargetDescriptor input, SourceDescriptor output) {
-        return input != null && output != null && output.isCompatibleWith(input);
+    public static void checkConnect(TargetDescriptor input, SourceDescriptor output) throws ConstraintException {
+        if (input == null) {
+            throw new ConstraintException("Link input is not defined");
+        }
+        if (output == null) {
+            throw new ConstraintException("Link output is not defined");
+        }
+        output.checkCompatible(input);
     }
 
     public ComponentLink(long sourceNodeId, TargetDescriptor input,
                          SourceDescriptor output) throws ConstraintException {
-        if (!canConnect(input, output)) {
-            throw new ConstraintException("Source and target are not compatible");
-        }
+        checkConnect(input, output);
         this.sourceNodeId = sourceNodeId;
         this.input = input;
         this.output = output;

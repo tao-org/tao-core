@@ -15,6 +15,8 @@
  */
 package ro.cs.tao.component;
 
+import ro.cs.tao.component.constraints.Constraint;
+import ro.cs.tao.component.constraints.ConstraintException;
 import ro.cs.tao.component.constraints.ConstraintFactory;
 import ro.cs.tao.component.constraints.IOConstraint;
 
@@ -115,6 +117,10 @@ public class SourceDescriptor extends StringIdentifiable {
         this.constraints = constraints;
     }
 
+    /**
+     * Returns the referenced source descriptor identifier.
+     * Returns a non-null value only when the current descriptor belongs to a group component.
+     */
     public String getReferencedSourceDescriptorId() {
         return referencedSourceDescriptorId;
     }
@@ -125,6 +131,7 @@ public class SourceDescriptor extends StringIdentifiable {
 
     /**
      * Verifies if all the constraints defined on this instance are satisfied by the target descriptor.
+     * This method only indicates the compatibility or not. For detailed messages use {@see checkCompatible}.
      *
      * @param other     The target descriptor
      */
@@ -135,6 +142,38 @@ public class SourceDescriptor extends StringIdentifiable {
                     IOConstraint constraint = ConstraintFactory.create(c);
                     return constraint == null || constraint.check(this.dataDescriptor, other.getDataDescriptor());
                 }));
+    }
+    /**
+     * Verifies if all the constraints defined on this instance are satisfied by the target descriptor.
+     * If inconsistencies or incompatibilities are found, exceptions are thrown.
+     *
+     * @param other     The target descriptor
+     */
+    public void checkCompatible(TargetDescriptor other) throws ConstraintException {
+        if (other == null) {
+            throw new ConstraintException("TargetDescriptor is not defined");
+        }
+        if (this.dataDescriptor == null) {
+            throw new ConstraintException("SourceDescriptor is empty");
+        }
+        if (other.getDataDescriptor() == null) {
+            throw new ConstraintException("TargetDescriptor is empty");
+        }
+        if (!this.dataDescriptor.getFormatType().equals(other.getDataDescriptor().getFormatType())) {
+            throw new ConstraintException(String.format("Incompatible formats (%s, %s)",
+                                                        this.dataDescriptor.getFormatType().friendlyName(),
+                                                        other.getDataDescriptor().getFormatType().friendlyName()));
+        }
+        if (this.constraints != null && this.constraints.size() > 0) {
+            for (String c : this.constraints) {
+                IOConstraint constraint = ConstraintFactory.create(c);
+                if (constraint != null && !constraint.check(this.dataDescriptor, other.getDataDescriptor())) {
+                    throw new ConstraintException(String.format("Constraint [%s] not satisfied",
+                                                                constraint.getClass().getAnnotation(Constraint.class).name()));
+                }
+            }
+
+        }
     }
 
     @Override
