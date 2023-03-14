@@ -427,15 +427,25 @@ public class Orchestrator extends Notifiable {
     @Override
     protected void onMessageReceived(Message message) {
         if (message instanceof StartupCompletedMessage) {
-            /*final List<ExecutionJob> jobs = prepareStalledJobs();
-            if (jobs != null) {
-                for (ExecutionJob job : jobs) {
-                    this.executors.put(job.getUserName(),
-                                       Executors.newFixedThreadPool(2));
-                    logger.fine(String.format("Resuming job [id=%s]", job.getId()));
-                    JobCommand.RESUME.applyTo(job);
+            final boolean resumeJobs = ConfigurationManager.getInstance().getBooleanValue("resume.jobs.at.startup");
+            if (resumeJobs) {
+                final List<ExecutionTask> tasks = prepareStalledTasks();
+                if (tasks != null) {
+                    for (ExecutionTask task : tasks) {
+                        String user = task.getJob().getUserName();
+                        if (!this.executors.containsKey(user)) {
+                            this.executors.put(user, Executors.newFixedThreadPool(1));
+                        }
+                        logger.fine(String.format("Resuming task [id=%s] from job [id=%d]",
+                                                  task.getId(), task.getJob().getId()));
+                        try {
+                            TaskCommand.START.applyTo(task);
+                        } catch (ExecutionException e) {
+                            logger.severe(e.getMessage());
+                        }
+                    }
                 }
-            }*/
+            }
         } else {
             try {
                 final SessionContext context = new MessageContext(message);
@@ -446,29 +456,25 @@ public class Orchestrator extends Notifiable {
         }
     }
 
-    private List<ExecutionJob> prepareStalledJobs() {
+    private List<ExecutionTask> prepareStalledTasks() {
+        List<ExecutionTask> runningTasks = null;
         List<ExecutionJob> jobs = jobProvider.list(ExecutionStatus.RUNNING);
         if (jobs != null) {
             for (ExecutionJob job : jobs) {
-                job.getTasks().stream()
-                              .filter(t -> t.getExecutionStatus() == ExecutionStatus.RUNNING)
-                              .forEach(t -> {
-                                  try {
-                                      t = taskProvider.updateStatus(t, ExecutionStatus.SUSPENDED, "Stalled job");
-                                  } catch (PersistenceException e) {
-                                      logger.severe(String.format("Cannot reset status for task %s [job %s]",
-                                                                  t.getId(), job.getId()));
-                                  }
-                              });
-                job.setExecutionStatus(ExecutionStatus.SUSPENDED);
-                try {
-                    jobProvider.update(job);
-                } catch (PersistenceException e) {
-                    logger.severe(String.format("Cannot reset status for job %s", job.getId()));
+                runningTasks = job.getTasks().stream()
+                                                      .filter(t -> t.getExecutionStatus() == ExecutionStatus.RUNNING)
+                                                      .collect(Collectors.toList());
+                for (ExecutionTask t : runningTasks) {
+                    try {
+                        t = taskProvider.updateStatus(t, ExecutionStatus.QUEUED_ACTIVE, "Stalled job");
+                    } catch (PersistenceException e) {
+                        logger.severe(String.format("Cannot reset status for task %s [job %s]",
+                                                    t.getId(), job.getId()));
+                    }
                 }
             }
         }
-        return jobs;
+        return runningTasks;
     }
 
     private void initializeGroupSelector(Function<Long, WorkflowNodeDescriptor> workflowProvider,
