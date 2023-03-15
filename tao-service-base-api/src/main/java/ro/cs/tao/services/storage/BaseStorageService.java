@@ -64,7 +64,9 @@ public abstract class BaseStorageService<T, U> implements StorageService<T, U> {
     }
 
     protected InputStream wrapStream(InputStream inputStream) {
-        return this.progressListener != null ? new ListenableInputStream(inputStream, this.progressListener) : inputStream;
+        return this.progressListener != null && !(inputStream instanceof ListenableInputStream)
+               ? new ListenableInputStream(inputStream, this.progressListener)
+               : inputStream;
     }
 
     protected Repository repository() {
