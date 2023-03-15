@@ -23,6 +23,7 @@ import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.utils.NetUtils;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -241,12 +242,18 @@ public class DataSourceManager {
         if (this.registeredSources.containsKey(new AbstractMap.SimpleEntry<>(sensorName, dataSourceName))) {
             try {
                 dataSource = getInternal(dataSourceName);
+                final Class<? extends DataSource> dataSourceClass = dataSource.getClass();
                 Constructor<? extends DataSource> constructor;
                 try {
-                    constructor = dataSource.getClass().getConstructor();
-                    dataSource = constructor.newInstance();
+                    try {
+                        final Method cloneMethod = dataSourceClass.getDeclaredMethod("clone");
+                        dataSource = dataSourceClass.cast(cloneMethod.invoke(dataSource));
+                    } catch (Exception e) {
+                        constructor = dataSourceClass.getConstructor();
+                        dataSource = constructor.newInstance();
+                    }
                 } catch (Exception e) {
-                    constructor = dataSource.getClass().getConstructor(String.class);
+                    constructor = dataSourceClass.getConstructor(String.class);
                     dataSource = constructor.newInstance(dataSource.getId());
                 }
                 if (this.filteredParameters != null && this.filteredParameters.containsKey(dataSourceName)) {
