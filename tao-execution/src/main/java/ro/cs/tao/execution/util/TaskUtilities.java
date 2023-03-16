@@ -32,15 +32,16 @@ import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.ProgressNotifier;
 import ro.cs.tao.messaging.Topic;
-import ro.cs.tao.persistence.*;
+import ro.cs.tao.persistence.ContainerProvider;
+import ro.cs.tao.persistence.GroupComponentProvider;
+import ro.cs.tao.persistence.ProcessingComponentProvider;
+import ro.cs.tao.persistence.WorkflowNodeProvider;
 import ro.cs.tao.serialization.StringListAdapter;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.Tuple;
 import ro.cs.tao.workflow.ParameterValue;
-import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
-import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
 import ro.cs.tao.workflow.enums.TransitionBehavior;
 
 import java.nio.file.Files;
@@ -61,7 +62,6 @@ import java.util.stream.Collectors;
 public class TaskUtilities {
 
     private static final WorkflowNodeProvider workflowNodeProvider;
-    private static final WorkflowProvider workflowProvider;
     private static final ProcessingComponentProvider processingComponentProvider;
     private static final DataSourceComponentProvider dataSourceComponentProvider;
     private static final GroupComponentProvider groupComponentProvider;
@@ -78,7 +78,6 @@ public class TaskUtilities {
         DOCKER_EODATA_HOST_POINT = ExecutionConfiguration.getMasterContainerVolumeMap().getHostEODataFolder();
         DOCKER_EODATA_MOUNT_POINT = ExecutionConfiguration.getMasterContainerVolumeMap().getContainerEoDataFolder();
         workflowNodeProvider = SpringContextBridge.services().getService(WorkflowNodeProvider.class);
-        workflowProvider = SpringContextBridge.services().getService(WorkflowProvider.class);
         /*jobProvider = SpringContextBridge.services().getService(ExecutionJobProvider.class);*/
         taskProvider = SpringContextBridge.services().getService(ExecutionTaskProvider.class);
         processingComponentProvider = SpringContextBridge.services().getService(ProcessingComponentProvider.class);
@@ -450,49 +449,5 @@ public class TaskUtilities {
     public static List<DataSourceExecutionTask> findDataSourceTasks(ExecutionJob job) {
         List<ExecutionTask> tasks = taskProvider.getDataSourceTasks(job.getId());
         return tasks.stream().map(t -> (DataSourceExecutionTask) t).collect(Collectors.toList());
-    }
-
-    /**
-     * Returns the component associated with an workflow node descriptor
-     * @param node  The workflow node descriptor
-     */
-    public static TaoComponent getComponentByNode(WorkflowNodeDescriptor node) {
-        TaoComponent component = null;
-        switch (node.getComponentType()) {
-            case PROCESSING:
-                component = processingComponentProvider.get(node.getComponentId());
-                break;
-            case DATASOURCE:
-                component = dataSourceComponentProvider.get(node.getComponentId());
-                break;
-            case GROUP:
-                component = groupComponentProvider.get(node.getComponentId());
-                break;
-        }
-        return component;
-    }
-
-    /**
-     * Returns the execution task of a task id
-     * @param taskId  The task id
-     */
-    public static ExecutionTask getTaskById(long taskId) {
-        return taskProvider.getTaskById(taskId);
-    }
-
-    /**
-     * Returns the workflow id associated with a task id
-     * @param taskId  The task id
-     */
-    public static long getWorkflowId (long taskId) {
-        return taskProvider.getWorkflowId(taskId);
-    }
-
-    /**
-     * Returns the workflow descriptoe of a workflow id
-     * @param workflowId  The workflow id
-     */
-    public static WorkflowDescriptor getWorkflowDescriptor(long workflowId) {
-        return workflowProvider.loadWorkflowDescriptor(workflowId);
     }
 }
