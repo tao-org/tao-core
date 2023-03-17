@@ -73,7 +73,7 @@ public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
     protected Logger logger = Logger.getLogger(getClass().getName());
     private String localArchiveRoot;
     private ProductPathBuilder pathBuilder;
-    private DownloadProgressListener progressListener;
+    protected DownloadProgressListener progressListener;
     private volatile boolean cancelled;
     private Timer timer;
     private long progressReportInterval;

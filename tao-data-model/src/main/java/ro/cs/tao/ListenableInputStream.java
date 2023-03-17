@@ -19,6 +19,10 @@ public class ListenableInputStream extends InputStream {
     private Timer timer;
 
     public ListenableInputStream(InputStream wrappedStream, ProgressListener listener) {
+        this(wrappedStream, 0, listener);
+    }
+
+    public ListenableInputStream(InputStream wrappedStream, long contentLength, ProgressListener listener) {
         if (wrappedStream == null || listener == null) {
             throw new IllegalArgumentException("Null argument");
         }
@@ -47,10 +51,14 @@ public class ListenableInputStream extends InputStream {
             };
         }
         this.timer.scheduleAtFixedRate(new TimedJob(computeProgress), 0, reportInterval);
-        try {
-            this.total = this.wrappedStream.available();
-        } catch (Throwable t) {
-            t.printStackTrace();
+        if (contentLength > 0) {
+            this.total = contentLength;
+        } else {
+            try {
+                this.total = this.wrappedStream.available();
+            } catch (Throwable t) {
+                t.printStackTrace();
+            }
         }
     }
 

@@ -7,6 +7,8 @@ import java.security.Principal;
 import java.util.Map;
 
 public class DownloadProgressNotifier extends ProgressNotifier implements DownloadProgressListener {
+    private long total;
+
     public DownloadProgressNotifier(Object source, Topic topic) {
         super(source, topic);
     }
@@ -17,6 +19,16 @@ public class DownloadProgressNotifier extends ProgressNotifier implements Downlo
 
     public DownloadProgressNotifier(Principal principal, Object source, Topic topic, Map<String, String> additionalInfo) {
         super(principal, source, topic, additionalInfo);
+    }
+
+    @Override
+    public void setLength(long value) {
+        this.total = value;
+    }
+
+    @Override
+    public long getLength() {
+        return this.total;
     }
 
     @Override

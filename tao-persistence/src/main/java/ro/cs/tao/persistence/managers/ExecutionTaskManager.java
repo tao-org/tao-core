@@ -103,16 +103,6 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
     }
 
     @Override
-    public ExecutionTask getTaskById(long taskId) {
-        return repository.getTaskById(taskId);
-    }
-
-    @Override
-    public long getWorkflowId(long taskId) {
-        return repository.getWorkflowId(taskId);
-    }
-
-    @Override
     public List<ExecutionTaskSummary> getTasksStatus(long jobId) {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         return jdbcTemplate.query(con -> {
