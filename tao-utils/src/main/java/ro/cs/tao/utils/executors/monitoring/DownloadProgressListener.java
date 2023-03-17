@@ -2,6 +2,12 @@ package ro.cs.tao.utils.executors.monitoring;
 
 public interface DownloadProgressListener extends ProgressListener {
 
+    default void setLength(long value) {
+
+    }
+
+    default long getLength() { return 0; }
+
     /**
      * Signals the current progress of the download, together with the detected download speed.
      * @param progressValue The progress value (between 0 and 1).
