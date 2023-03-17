@@ -7,7 +7,7 @@
     <groupId>ro.cs.tao</groupId>
     <artifactId>tao-core</artifactId>
     <packaging>pom</packaging>
-    <version>1.4.2</version>
+    <version>1.4.3</version>
     <name>TAO Core</name>
 
     <modules>
@@ -41,20 +41,22 @@
         <maven.compiler.release>11</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.deploy.root.path>file://C:/ssd/releases</project.deploy.root.path>
-        <geotools.version>26.6</geotools.version>
-        <spring.version>5.3.22</spring.version>
-        <spring.data.version>2.7.2</spring.data.version>
-        <jackson.version>2.13.3</jackson.version>
+        <geotools.version>27.2</geotools.version>
+        <spring.version>5.3.25</spring.version>
+        <spring.data.version>2.7.9</spring.data.version>
+        <jackson.version>2.14.2</jackson.version>
         <resteasy.version>5.0.1.Final</resteasy.version>
         <postgresql.version>42.3.1</postgresql.version>
-        <hibernate.version>5.6.2.Final</hibernate.version>
-        <jts.version>1.18.2</jts.version>
-        <maven.compiler.plugin.version>3.8.1</maven.compiler.plugin.version>
-        <maven.jar.plugin.version>3.2.0</maven.jar.plugin.version>
+        <hibernate.version>5.6.14.Final</hibernate.version>
+        <jts.version>1.19.0</jts.version>
+        <jna.version>5.13.0</jna.version>
+        <jsch.version>0.2.7</jsch.version>
+        <maven.compiler.plugin.version>3.11.0</maven.compiler.plugin.version>
+        <maven.jar.plugin.version>3.3.0</maven.jar.plugin.version>
         <maven.source.plugin.version>3.2.1</maven.source.plugin.version>
-        <maven.dependency.plugin.version>3.2.0</maven.dependency.plugin.version>
-        <maven.deploy.plugin.version>3.0.0-M1</maven.deploy.plugin.version>
-        <maven.install.plugin.version>3.0.0-M1</maven.install.plugin.version>
+        <maven.dependency.plugin.version>3.5.0</maven.dependency.plugin.version>
+        <maven.deploy.plugin.version>3.1.0</maven.deploy.plugin.version>
+        <maven.install.plugin.version>3.1.0</maven.install.plugin.version>
         <!-- maven -->
         <mavenPublicUrl>https://repo1.maven.org/maven2/</mavenPublicUrl>
         <taoReleasesUrl>${project.deploy.root.path}/tao-core</taoReleasesUrl>

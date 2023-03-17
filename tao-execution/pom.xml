@@ -5,7 +5,7 @@
     <parent>
         <artifactId>tao-core</artifactId>
         <groupId>ro.cs.tao</groupId>
-        <version>1.4.2</version>
+        <version>1.4.3</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -43,11 +43,6 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.jcraft</groupId>
-            <artifactId>jsch</artifactId>
-            <version>0.1.55</version>
-        </dependency>
-        <dependency>
             <groupId>ro.cs.tao</groupId>
             <artifactId>tao-drmaa-api</artifactId>
             <version>${project.version}</version>
@@ -58,9 +53,9 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.googlecode.json-simple</groupId>
-            <artifactId>json-simple</artifactId>
-            <version>1.1.1</version>
+            <groupId>com.github.mwiede</groupId>
+            <artifactId>jsch</artifactId>
+            <version>${jsch.version}</version>
         </dependency>
     </dependencies>
 
