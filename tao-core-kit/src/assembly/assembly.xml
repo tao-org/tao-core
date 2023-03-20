@@ -41,13 +41,13 @@
             </includes>
         </fileSet>
     </fileSets>
-    <files>
+    <!--<files>
         <file>
             <source>../../tao-services/tao-services-startup/src/main/resources/config/spring.properties</source>
             <outputDirectory>config</outputDirectory>
             <destName>application.properties</destName>
         </file>
-    </files>
+    </files>-->
     <dependencySets>
         <dependencySet>
             <outputDirectory>lib</outputDirectory>
@@ -79,7 +79,7 @@
                 <exclude>org.jboss.logging:jboss-logging:jar:3.4.1.Final</exclude>
                 <exclude>com.googlecode.json-simple:json-simple:jar:1.1</exclude>
                 <exclude>com.google.code.findbugs:jsr305:jar:2.0.0</exclude>
-                <exclude>org.locationtech.jts:jts-core:jar:1.18.2</exclude>
+                <!--<exclude>org.locationtech.jts:jts-core:jar:1.18.2</exclude>-->
                 <exclude>com.mchange:mchange-commons-java:jar:0.2.11</exclude>
                 <exclude>javax.servlet:servlet-api:jar:2.4</exclude>
                 <exclude>org.slf4j:slf4j-api:jar:1.7.7</exclude>
