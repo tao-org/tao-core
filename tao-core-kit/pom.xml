@@ -10,6 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>tao-core-kit</artifactId>
+    <packaging>pom</packaging>
 
     <name>TAO Core Kit Module</name>
 
@@ -143,7 +144,7 @@
                 <executions>
                     <execution>
                         <id>copy-libs</id>
-                        <phase>package</phase>
+                        <phase>deploy</phase>
                         <goals>
                             <goal>copy-dependencies</goal>
                         </goals>

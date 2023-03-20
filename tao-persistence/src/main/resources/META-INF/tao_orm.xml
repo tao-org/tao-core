@@ -288,9 +288,9 @@
             <basic name="userPass">
                 <column name="password" nullable="false" column-definition="text NOT NULL"/>
             </basic>
-            <basic name="nodeType">
+            <!--<basic name="nodeType">
                 <column name="type_id" nullable="false" column-definition="integer NOT NULL"/>
-            </basic>
+            </basic>-->
             <basic name="description">
                 <column name="description" nullable="true" column-definition="text null"/>
             </basic>
@@ -1738,7 +1738,7 @@
             <basic name="quantity">
                 <column name="machine_count" nullable="false" column-definition="smallint NOT NULL"/>
             </basic>
-            <many-to-one name="flavor" fetch="EAGER" target-entity="ro.cs.tao.topology.NodeFlavor">
+            <many-to-one name="machineType" fetch="EAGER" target-entity="ro.cs.tao.topology.NodeFlavor">
                 <join-column name="flavor_id" nullable="false"/>
             </many-to-one>
         </attributes>
