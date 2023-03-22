@@ -69,7 +69,7 @@ DROP TABLE IF EXISTS common.audit CASCADE;
 CREATE TABLE common.audit
 (
     id bigserial NOT NULL,
-    timestamp bigint NOT NULL,
+    "timestamp" timestamp without time zone NOT NULL,
     username character varying NOT NULL,
     event character varying NOT NULL
 );
