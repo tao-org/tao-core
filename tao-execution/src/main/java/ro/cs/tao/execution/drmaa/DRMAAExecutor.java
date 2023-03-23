@@ -108,7 +108,8 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             throw new ExecutionException("A ContainerProvider is required to use this executor");
         }
         this.queue = new LinkedBlockingDeque<>();
-        this.queueWorker = new BlockingQueueWorker<>(this.queue, this::executeImpl, NodeManager.getInstance().getActiveNodes());
+        this.queueWorker = new BlockingQueueWorker<>(this.queue, this::executeImpl,
+                                                     NodeManager.isAvailable() ? NodeManager.getInstance().getActiveNodes() : 1);
         final Set<TaskListener> services = ServiceRegistryManager.getInstance().getServiceRegistry(TaskListener.class).getServices();
         this.taskListeners = new ArrayList<>();
         if (services != null) {
@@ -818,7 +819,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
 
     private NodeData getAvailableNode(String user, int cpus, long memory) throws DrmaaException {
     	NodeData nodeData = null;
-        if (NodeManager.isAvailable() && NodeManager.getInstance() != null) {
+        if (NodeManager.isAvailable()) {
         	nodeData = NodeManager.getInstance().getAvailableNode(user, cpus, memory, 0);
             while (!canSubmitTask(nodeData.getNode().getId(), memory)) {
                 try {
@@ -827,6 +828,8 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                 nodeData = NodeManager.getInstance().getAvailableNode(user, cpus, memory, 0);
             }
             logger.finest(String.format("Node [%s] was chosen for next execution", nodeData.getNode().getId()));
+        } else {
+            nodeData = NodeManager.getInstance().getMasterNode();
         }
         if (nodeData == null) {
             throw new DeniedByDrmException("No node was found for execution");
