@@ -58,7 +58,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         concurrentCalls = Math.max(2, java.lang.Runtime.getRuntime().availableProcessors() / 4);
         final ConfigurationProvider configurationManager = ConfigurationManager.getInstance();
         isAvailable = DefaultSessionFactory.class.getName().equals(configurationManager.getValue("tao.drmaa.sessionfactory"));
-        instance = isAvailable ? new NodeManager() : null;
+        instance = new NodeManager();
         pollInterval = Integer.parseInt(configurationManager.getValue("topology.node.poll.interval", "15"));
         nodeCreationWaitTime = Integer.parseInt(configurationManager.getValue("topology.node.create.wait", "15"));
         executor = new NamedThreadPoolExecutor("node-manager", 1);

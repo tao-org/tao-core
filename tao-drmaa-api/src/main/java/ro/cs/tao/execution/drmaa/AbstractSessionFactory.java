@@ -43,8 +43,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.MissingResourceException;
@@ -85,29 +83,26 @@ public abstract class AbstractSessionFactory extends SessionFactory {
 
     protected abstract String getJniLibraryName();
 
-    private void initLibrary() {
+    protected void initLibrary() {
         String path = ConfigurationManager.getInstance().getValue("native.library.path");
         if (path == null) {
             throw new MissingResourceException("Native library path is not defined",
                                                getClass().getSimpleName(), "native.library.path");
         }
         final Path libraryPath = Paths.get(path, getJniLibraryName());
-        AccessController.doPrivileged((PrivilegedAction) () -> {
-            try {
-                if (!Files.exists(libraryPath)) {
-                    Files.createDirectories(libraryPath.getParent());
-                    logger.info(String.format("Copy library %s to %s",
-                                              libraryPath.getFileName(),
-                                              libraryPath.getParent()));
-                    copyLibrary(libraryPath.getParent(), libraryPath.getFileName().toString());
-                    fixUpPermissions(libraryPath);
-                }
-                System.load(libraryPath.toAbsolutePath().toString());
-            } catch (Exception e){
-                logger.severe(e.getMessage());
+        try {
+            if (!Files.exists(libraryPath)) {
+                Files.createDirectories(libraryPath.getParent());
+                logger.info(String.format("Copy library %s to %s",
+                                          libraryPath.getFileName(),
+                                          libraryPath.getParent()));
+                copyLibrary(libraryPath.getParent(), libraryPath.getFileName().toString());
+                fixUpPermissions(libraryPath);
             }
-            return null;
-        });
+            System.load(libraryPath.toAbsolutePath().toString());
+        } catch (Exception e){
+            logger.severe(e.getMessage());
+        }
     }
 
     private void copyLibrary(Path path, String libraryName) throws IOException {
