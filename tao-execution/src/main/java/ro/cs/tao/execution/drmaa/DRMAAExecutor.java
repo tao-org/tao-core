@@ -263,7 +263,8 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                                 if (taskOutputLocation != null) {
                                     DockerVolumeMap volumeMap = ExecutionConfiguration.getMasterContainerVolumeMap();
                                     String location = taskOutputLocation;
-                                    if (taskOutputLocation.startsWith(volumeMap.getContainerWorkspaceFolder())) {
+                                    if (!location.startsWith(volumeMap.getHostWorkspaceFolder()) &&
+                                        taskOutputLocation.startsWith(volumeMap.getContainerWorkspaceFolder())) {
                                         location = taskOutputLocation.replace(volumeMap.getContainerWorkspaceFolder(),
                                                                               volumeMap.getHostWorkspaceFolder());
                                     }

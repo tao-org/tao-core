@@ -264,7 +264,7 @@ public class FileUtilities {
                 throw new Exception(accumulator.getOutput());
             }
         } catch (Exception e) {
-            logger.severe(e.getMessage());
+            logger.severe(ExceptionUtils.getStackTrace(logger, e));
         }
     }
 
