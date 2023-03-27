@@ -60,7 +60,7 @@ public class ToolInstallersConfigParser {
 
     public static void main(String[] args) {
         System.out.println("Hello world!");
-        List<ToolInstallConfig> tmpResults = ToolInstallersConfigParser.parse("c:\\temp\\DefaultToolInstallConfig.xml",
+        List<ToolInstallConfig> tmpResults = ToolInstallersConfigParser.parse("c:\\temp\\CentOSInstallConfig.xml",
                 new ToolInstallersConfigHandler("tool_install_configurations"));
 
     }

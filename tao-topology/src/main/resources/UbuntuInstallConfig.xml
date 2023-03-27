@@ -1,0 +1,503 @@
+<?xml version='1.0' encoding='utf-8'?>
+<tool_install_configurations>
+    <!-- Possible tokens to be replaced in code:
+            #master_hostname#
+            #master_user#
+            #master_pass#
+            #master_share#
+            #node_hostname#
+            #node_user#
+            #node_pass#
+            #node_share#
+            #TODO: Add node memory for torque
+            #mem_size#
+            #procs_cnt#
+            #scripts_root_path#
+            #step_output#
+    -->
+    <!--<tool_install_config>
+        <name>Torque installer</name>
+        <description>Installs Torque on the executin nodes</description>
+        <version>1.0</version>
+        <priority>1</priority>
+        <install_steps>
+            &lt;!&ndash; ============ STEPS TO UPDATE THE MASTER NODE ================ &ndash;&gt;
+            <step>
+                <order_id>10</order_id>
+                <invocation_type>process</invocation_type>
+                <ignore_err>true</ignore_err>
+                <command>
+                    <![CDATA[
+                        chmod a+x #scripts_root_path#/torque/update_hosts_file.sh
+                    ]]>
+                </command>
+            </step>
+            <step>
+                <order_id>20</order_id>
+                <invocation_type>process</invocation_type>
+                <command>
+                    <![CDATA[
+                        #scripts_root_path#/torque/update_hosts_file.sh -s #node_hostname#
+                    ]]>
+                </command>
+            </step>
+
+            <step>
+                <order_id>30</order_id>
+                <invocation_type>process</invocation_type>
+                <ignore_err>true</ignore_err>
+                <command>
+                    <![CDATA[
+                        chmod a+x #scripts_root_path#/torque/torque_add_node.sh
+                    ]]>
+                </command>
+            </step>
+
+            <step>
+                <order_id>40</order_id>
+                <invocation_type>process</invocation_type>
+                &lt;!&ndash; echo #master_password# | sudo #scripts_root_path#/torque/torque_add_node.sh -s #node_hostname# -p #procs_cnt# &ndash;&gt;
+                <command>
+                    <![CDATA[
+                        #scripts_root_path#/torque/torque_add_node.sh -s #node_hostname# -n #procs_cnt# -u #master_user# -p #master_pass#
+                    ]]>
+                </command>
+            </step>
+            &lt;!&ndash; ============ END-OF STEPS TO UPDATE THE MASTER NODE &ndash;&gt;
+
+            &lt;!&ndash; ============ STEPS TO UPDATE THE EXECUTION NODE &ndash;&gt;
+            <step>
+                <order_id>50</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <command>
+                    <![CDATA[
+                        rm -fR /tmp/torque
+                    ]]>
+                </command>
+            </step>
+            <step>
+                <order_id>60</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <ssh_mode>sftp</ssh_mode>
+                <execution_mode>user</execution_mode>
+                <command>
+                    <![CDATA[
+                        #scripts_root_path#/torque /tmp/
+                    ]]>
+                </command>
+            </step>
+            <step>
+                <order_id>70</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <command>
+                    <![CDATA[
+                        chmod -R a+x /tmp/torque/ && /tmp/torque/install_torque_on_client.sh -d /tmp/torque/torque_package/ -s #master_hostname# -a #master_ip#
+                    ]]>
+                </command>
+            </step>
+            &lt;!&ndash; ============ END-OF STEPS TO UPDATE THE EXECUTION NODE &ndash;&gt;
+        </install_steps>
+
+        <uninstall_steps>
+            <step>
+                <order_id>10</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <command>
+                    <![CDATA[
+                        ps -ef
+                    ]]>
+                </command>
+            </step>
+        </uninstall_steps>
+
+    </tool_install_config>-->
+    <tool_install_config>
+        <name>Docker installer</name>
+        <description>Installs Docker on the execution nodes</description>
+        <version>1.0</version>
+        <priority>1</priority>
+        <install_steps>
+            <step>
+                <order_id>10</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <command>
+                    <![CDATA[
+                        docker -v || yum install docker -y
+                    ]]>
+                </command>
+            </step>
+            <step>
+                <order_id>20</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <ignore_err>true</ignore_err>
+                <command>
+                    <![CDATA[
+                        groupadd docker
+                    ]]>
+                </command>
+            </step>
+            <step>
+                <order_id>30</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <ignore_err>true</ignore_err>
+                <command>
+                    <![CDATA[
+                        usermod -aG docker #node_user#
+                    ]]>
+                </command>
+            </step>
+            <step>
+                <order_id>40</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <command>
+                    <![CDATA[
+                        systemctl enable docker
+                    ]]>
+                </command>
+            </step>
+            <step>
+                <order_id>50</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <command>
+                    <![CDATA[
+                        systemctl start docker
+                    ]]>
+                </command>
+            </step>
+        </install_steps>
+        <uninstall_steps>
+            <step>
+                <order_id>10</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <command>
+                    <![CDATA[
+                         docker -v && yum -y remove docker
+                    ]]>
+                </command>
+            </step>
+        </uninstall_steps>
+    </tool_install_config>
+    <tool_install_config>
+        <name>SMB installer</name>
+        <description>Installs SMB service on the execution nodes</description>
+        <version>1.0</version>
+        <priority>1</priority>
+        <install_steps>
+            <step>
+                <order_id>10</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <command>
+                    <![CDATA[
+                        yum install samba samba-client -y
+                    ]]>
+                </command>
+            </step>
+            <step>
+                <order_id>20</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <command>
+                    <![CDATA[
+                        systemctl enable smb.service
+                    ]]>
+                </command>
+            </step>
+            <step>
+                <order_id>30</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <command>
+                    <![CDATA[
+                        systemctl enable nmb.service
+                    ]]>
+                </command>
+            </step>
+            <step>
+                <order_id>40</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <command>
+                    <![CDATA[
+                        systemctl start smb.service
+                    ]]>
+                </command>
+            </step>
+            <step>
+                <order_id>50</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <command>
+                    <![CDATA[
+                        systemctl start nmb.service
+                    ]]>
+                </command>
+            </step>
+            <step>
+                <order_id>60</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <command>
+                    <![CDATA[
+                        firewall-cmd --permanent --zone=public --add-service=samba
+                    ]]>
+                </command>
+            </step>
+            <step>
+                <order_id>70</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <command>
+                    <![CDATA[
+                        firewall-cmd --zone=public --add-service=samba
+                    ]]>
+                </command>
+            </step>
+        </install_steps>
+        <uninstall_steps>
+            <step>
+                <order_id>10</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <command>
+                    <![CDATA[
+                         yum -y remove samba samba-client
+                    ]]>
+                </command>
+            </step>
+        </uninstall_steps>
+    </tool_install_config>
+    <tool_install_config>
+        <name>Network Share Mount</name>
+        <description>Mounts the master shared folder to on the execution nodes</description>
+        <version>1.0</version>
+        <priority>1</priority>
+        <install_steps>
+            <step>
+                <order_id>10</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <command>
+                    <![CDATA[
+                        mkdir -p #node_share#
+                    ]]>
+                </command>
+            </step>
+            <step>
+                <order_id>20</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <ignore_err>true</ignore_err>
+                <command>
+                    <![CDATA[
+                         chmod 777 #node_share#
+                    ]]>
+                </command>
+            </step>
+            <step>
+                <order_id>30</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <ignore_err>true</ignore_err>
+                <command>
+                    <![CDATA[
+                         sed -i "$ a//#master_hostname##master_share# #node_share# cifs user=#master_user#,password=#master_pass#,file_mode=0777,dir_mode=0777,noperm 0 0" /etc/fstab
+                    ]]>
+                </command>
+            </step>
+            <step>
+                <order_id>40</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <command>
+                    <![CDATA[
+                        mount -a
+                    ]]>
+                </command>
+            </step>
+        </install_steps>
+        <uninstall_steps>
+            <step>
+                <order_id>10</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <command>
+                    <![CDATA[
+                         docker -v && yum -y remove docker
+                    ]]>
+                </command>
+            </step>
+        </uninstall_steps>
+    </tool_install_config>
+    <tool_install_config>
+        <name>Screen installer</name>
+        <description>Installs screen on the execution nodes</description>
+        <version>1.0</version>
+        <priority>1</priority>
+        <install_steps>
+            <step>
+                <order_id>10</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <command>
+                    <![CDATA[
+                        yum install screen -y
+                    ]]>
+                </command>
+            </step>
+        </install_steps>
+        <uninstall_steps>
+            <step>
+                <order_id>10</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <command>
+                    <![CDATA[
+                         yum -y remove screen
+                    ]]>
+                </command>
+            </step>
+        </uninstall_steps>
+    </tool_install_config>
+    <!--<tool_install_config>
+        <name>Goofys installer</name>
+        <description>Installs Goofys for being able to mount Object Storage containers</description>
+        <version>1.0</version>
+        <priority>1</priority>
+        <install_steps>
+            <step>
+                <order_id>10</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <command>
+                    <![CDATA[
+                        rpm &#45;&#45;import https://mirror.go-repo.io/centos/RPM-GPG-KEY-GO-REPO
+                    ]]>
+                </command>
+            </step>
+            <step>
+                <order_id>20</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <ignore_err>true</ignore_err>
+                <command>
+                    <![CDATA[
+                         curl -s https://mirror.go-repo.io/centos/go-repo.repo | tee /etc/yum.repos.d/go-repo.repo
+                    ]]>
+                </command>
+            </step>
+            <step>
+                <order_id>30</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <ignore_err>true</ignore_err>
+                <command>
+                    <![CDATA[
+                         yum install golang
+                    ]]>
+                </command>
+            </step>
+            <step>
+                <order_id>40</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <command>
+                    <![CDATA[
+                        mount -a
+                    ]]>
+                </command>
+            </step>
+        </install_steps>
+        <uninstall_steps>
+            <step>
+                <order_id>10</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <command>
+                    <![CDATA[
+                         docker -v && yum -y remove docker
+                    ]]>
+                </command>
+            </step>
+        </uninstall_steps>
+    </tool_install_config>-->
+    <tool_install_config>
+        <name>SIAB installer</name>
+        <description>Installs Shell-in-a-Box container on the execution nodes</description>
+        <version>1.0</version>
+        <priority>1</priority>
+        <install_steps>
+            <step>
+                <order_id>10</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <command>
+                    <![CDATA[
+                        docker pull spali/shellinabox
+                    ]]>
+                </command>
+            </step>
+            <step>
+                <order_id>20</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <ignore_err>true</ignore_err>
+                <command>
+                    <![CDATA[
+                        firewall-cmd --zone=public --add-port 4200/tcp
+                    ]]>
+                </command>
+            </step>
+            <step>
+                <order_id>30</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <ignore_err>true</ignore_err>
+                <command>
+                    <![CDATA[
+                        firewall-cmd --reload
+                    ]]>
+                </command>
+            </step>
+            <step>
+                <order_id>40</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <command>
+                    <![CDATA[
+                        docker run -d --name shellinabox -p 4200:4200 -e SHELLINABOX_ALLOW_SUDO=1 -e SHELLINABOX_SERVICE_HOST=#node_hostname# -e SHELLINABOX_USER=#node_user# -e SHELLINABOX_DEFAULT=#node_hostname# -e SHELLINABOX_DISABLE_SSL=1 spali/shellinabox
+                    ]]>
+                </command>
+            </step>
+        </install_steps>
+        <uninstall_steps>
+            <step>
+                <order_id>10</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <command>
+                    <![CDATA[
+                         docker stop shellinabox
+                    ]]>
+                </command>
+            </step>
+            <step>
+                <order_id>20</order_id>
+                <invocation_type>ssh2</invocation_type>
+                <execution_mode>superuser</execution_mode>
+                <command>
+                    <![CDATA[
+                         docker rm shellinabox
+                    ]]>
+                </command>
+            </step>
+        </uninstall_steps>
+    </tool_install_config>
+</tool_install_configurations>
+
