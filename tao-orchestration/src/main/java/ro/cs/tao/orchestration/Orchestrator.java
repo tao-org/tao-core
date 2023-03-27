@@ -57,9 +57,11 @@ import ro.cs.tao.security.UserPrincipal;
 import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.serialization.StringListAdapter;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
+import ro.cs.tao.services.bridge.spring.SpringContextBridgedServices;
 import ro.cs.tao.services.utils.WorkflowUtilities;
 import ro.cs.tao.spi.OutputDataHandlerManager;
 import ro.cs.tao.spi.ServiceRegistryManager;
+import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.user.UserPreference;
 import ro.cs.tao.utils.*;
 import ro.cs.tao.workflow.ParameterValue;
@@ -69,6 +71,7 @@ import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
 import ro.cs.tao.workflow.enums.TransitionBehavior;
 
 import java.io.IOException;
+import java.net.Inet4Address;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -140,10 +143,9 @@ public class Orchestrator extends Notifiable {
     private final Map<String, ExecutorService> executors;
     private final Set<Long> runningTasks;
 
-    private final String uuid;
+    private String uuid;
 
     private Orchestrator() {
-        this.uuid = UUID.randomUUID().toString();
         this.groupStateHandlers = new HashMap<>();
         this.queue = new LinkedBlockingDeque<>();
         this.executors = Collections.synchronizedMap(new HashMap<>());
@@ -151,14 +153,22 @@ public class Orchestrator extends Notifiable {
         this.runningTasks = Collections.synchronizedSet(new HashSet<>());
         this.waitingJobs = Collections.synchronizedMap(new FileMap<>(Paths.get(SystemVariable.CACHE.value()).resolve("wait_jobs.json")));
         this.listAdapter = new StringListAdapter();
-        this.jobProvider = SpringContextBridge.services().getService(ExecutionJobProvider.class);
-        this.taskProvider = SpringContextBridge.services().getService(ExecutionTaskProvider.class);
-        this.workflowProvider = SpringContextBridge.services().getService(WorkflowProvider.class);
-        this.workflowNodeProvider = SpringContextBridge.services().getService(WorkflowNodeProvider.class);
-        this.processingComponentProvider = SpringContextBridge.services().getService(ProcessingComponentProvider.class);
-        this.groupComponentProvider = SpringContextBridge.services().getService(GroupComponentProvider.class);
-        this.namingRuleProvider = SpringContextBridge.services().getService(NamingRuleProvider.class);
-        this.userProvider = SpringContextBridge.services().getService(UserProvider.class);
+        final SpringContextBridgedServices bridgedServices = SpringContextBridge.services();
+        this.jobProvider = bridgedServices.getService(ExecutionJobProvider.class);
+        this.taskProvider = bridgedServices.getService(ExecutionTaskProvider.class);
+        this.workflowProvider = bridgedServices.getService(WorkflowProvider.class);
+        this.workflowNodeProvider = bridgedServices.getService(WorkflowNodeProvider.class);
+        this.processingComponentProvider = bridgedServices.getService(ProcessingComponentProvider.class);
+        this.groupComponentProvider = bridgedServices.getService(GroupComponentProvider.class);
+        this.namingRuleProvider = bridgedServices.getService(NamingRuleProvider.class);
+        this.userProvider = bridgedServices.getService(UserProvider.class);
+        try {
+            final NodeDescription masterNode = bridgedServices.getService(NodeProvider.class).get(Inet4Address.getLocalHost().getHostName());
+            this.uuid = masterNode.getAppId();
+        } catch (Exception e) {
+            logger.warning("The master node appId could not be found. A temporary appId will be created for the lifetime of this instance");
+            this.uuid = UUID.randomUUID().toString();
+        }
         subscribe(Topic.EXECUTION.value(), Topic.SYSTEM.value());
     }
 

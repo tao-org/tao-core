@@ -40,6 +40,7 @@ public class NodeDescription extends StringIdentifiable {
     private List<NodeServiceStatus> servicesStatus;
     private List<String> tags;
     private String owner;
+    private String appId;
 
     public NodeDescription() { this.active = true;}
 
@@ -89,6 +90,10 @@ public class NodeDescription extends StringIdentifiable {
     @XmlElement(name = "owner")
     public String getOwner() { return owner; }
     public void setOwner(String owner) { this.owner = owner; }
+
+    @XmlElement(name = "appId")
+    public String getAppId() { return appId; }
+    public void setAppId(String appId) { this.appId = appId; }
 
     @XmlElementWrapper(name = "services")
     public List<NodeServiceStatus> getServicesStatus() {
