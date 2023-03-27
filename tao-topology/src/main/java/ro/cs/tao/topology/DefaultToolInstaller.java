@@ -53,7 +53,9 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
         // extract the tools script dir to tao working dir
         extractResourceDir(taoWorkingDir, "tools_scripts");
 
-        final String toolInstallCfgFile = ConfigurationManager.getInstance().getValue("topology.tool_install_config");
+        //final String toolInstallCfgFile = ConfigurationManager.getInstance().getValue("topology.tool_install_config");
+        final String os = System.getProperty("os.name").toLowerCase();
+        final String toolInstallCfgFile = os.contains("ubuntu") ? "UbuntuInstallConfig.xml" : "CentOSInstallConfig.xml";
         InputStream is = this.getClass().getResourceAsStream(toolInstallCfgFile);
         this.toolInstallConfigs = ToolInstallersConfigParser.parse(is,
                 new ToolInstallersConfigHandler("tool_install_configurations"));
