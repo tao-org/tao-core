@@ -70,7 +70,7 @@ public interface OrchestratorService extends TAOService {
      * @throws ExecutionException   In case anything goes wrong or a job for this workflow was already created
      */
     //ExecutionJob createJobExternal(long workflowId, String jobName, Map<String, Map<String, String>> inputs) throws ExecutionException;
-    ExecutionJob createJobExternal(ExecutionRequest request) throws ExecutionException;
+    ExecutionJob scriptJob(ExecutionRequest request) throws ExecutionException;
     /**
      * Stops the execution of the given job.
      *
