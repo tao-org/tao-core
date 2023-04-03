@@ -61,6 +61,11 @@ public class WorkflowNodeDescriptorManager extends EntityManager<WorkflowNodeDes
     }
 
     @Override
+    public WorkflowNodeDescriptor findClonedNode(long workflowId, long originalNodeId) {
+        return repository.findClonedNode(workflowId, originalNodeId);
+    }
+
+    @Override
     public void updatePosition(Long id, float[] coordinates) throws PersistenceException {
         this.repository.updatePosition(id, coordinates[0], coordinates[1]);
     }

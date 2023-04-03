@@ -1154,6 +1154,9 @@
                 <column name="additional_info" nullable="true" column-definition="json NULL"/>
                 <convert converter="ro.cs.tao.persistence.convert.ParameterValueListConverter"/>
             </basic>
+            <basic name="createdFromNodeId">
+                <column name="created_from_node_id" nullable="true" column-definition="bigint"/>
+            </basic>
             <many-to-one name="workflow" fetch="LAZY">
                 <join-column name="workflow_id" referenced-column-name="id" nullable="false"/>
             </many-to-one>

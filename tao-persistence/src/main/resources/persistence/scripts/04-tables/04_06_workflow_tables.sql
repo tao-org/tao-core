@@ -82,6 +82,7 @@ CREATE TABLE workflow.graph_node
 	preserve_output boolean NULL DEFAULT true,
 	custom_values json NULL,
 	additional_info json NULL,
+	created_from_node_id bigint,
     -- special column used by JPA to distinguish which type of object is stored in one row (since this table holds 2 types of entities)
     discriminator integer NOT NULL
 );
