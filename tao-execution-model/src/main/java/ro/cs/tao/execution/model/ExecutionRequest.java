@@ -8,7 +8,7 @@ public class ExecutionRequest {
     private String name;
     private String label;
     private String jobType;
-    private Map<String, Long> inputs;
+    private Map<Long, String> inputs;
     private Map<String, Map<String, String>> parameters;
 
     public ExecutionRequest() {
@@ -44,11 +44,11 @@ public class ExecutionRequest {
         this.jobType = jobType;
     }
 
-    public Map<String, Long> getInputs() {
+    public Map<Long, String> getInputs() {
         return inputs;
     }
 
-    public void setInputs(Map<String, Long> inputs) {
+    public void setInputs(Map<Long, String> inputs) {
         this.inputs = inputs;
     }
 
