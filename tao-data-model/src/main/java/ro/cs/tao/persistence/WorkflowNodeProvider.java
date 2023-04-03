@@ -12,5 +12,6 @@ public interface WorkflowNodeProvider extends EntityProvider<WorkflowNodeDescrip
     WorkflowNodeGroupDescriptor getGroupNode(long childNodeId);
     WorkflowNodeDescriptor save(WorkflowNodeDescriptor node, WorkflowDescriptor workflow) throws PersistenceException;
     void updatePosition(Long id, float[] coordinates) throws PersistenceException;
+    WorkflowNodeDescriptor findClonedNode(long workflowId, long originalNodeId);
 
 }

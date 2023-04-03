@@ -47,6 +47,7 @@ public class WorkflowNodeDescriptor extends GraphObject {
     private boolean preserveOutput;
     private List<ParameterValue> additionalInfo;
     private TransitionBehavior behavior = TransitionBehavior.FAIL_ON_ERROR;
+    private Long createdFromNodeId;
 
     private WorkflowDescriptor workflow;
 
@@ -116,6 +117,14 @@ public class WorkflowNodeDescriptor extends GraphObject {
         } else {
             param.setParameterValue(value);
         }
+    }
+
+    public Long getCreatedFromNodeId() {
+        return createdFromNodeId;
+    }
+
+    public void setCreatedFromNodeId(Long createdFromNodeId) {
+        this.createdFromNodeId = createdFromNodeId;
     }
 
     @XmlTransient

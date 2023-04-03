@@ -111,6 +111,7 @@ public class OptimizedWorkflowBuilder extends WorkflowBuilderBase {
         WorkflowNodeDescriptor oldNode = node.getNodesDefinition().getWorkflowNode(node.getFirstNodeId());
 
         newNode.setWorkflow(workflow);
+        newNode.setCreatedFromNodeId(oldNode.getId());
         newNode.setName(oldNode.getName());
         newNode.setxCoord(oldNode.getxCoord());
         newNode.setyCoord(oldNode.getyCoord());
@@ -195,7 +196,7 @@ public class OptimizedWorkflowBuilder extends WorkflowBuilderBase {
 
         WorkflowNodeDescriptor newNode = new WorkflowNodeDescriptor();
         WorkflowNodeDescriptor oldNode = defined.getWorkflowNode(node.getFirstNodeId());
-
+        newNode.setCreatedFromNodeId(oldNode.getId());
         newNode.setName("Optimized component chain");
 
         newNode.setxCoord(oldNode.getxCoord());
