@@ -631,4 +631,6 @@ public interface Session {
     String getDrmaaImplementation();
 
     String serviceName();
+
+    default boolean isExecution() { return true; }
 }
