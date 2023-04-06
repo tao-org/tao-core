@@ -463,6 +463,8 @@ public class DataSourceComponent extends TaoComponent {
                         final String collection = product.getAttributeValue("collection");
                         if (collection != null) {
                             templateFetcher = dataSource.getProductFetchStrategy(collection);
+                        } else {
+                            templateFetcher = dataSource.getProductFetchStrategy(product.getSatelliteName().replace("-", ""));
                         }
                     }
                     if (templateFetcher == null) {
