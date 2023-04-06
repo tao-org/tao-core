@@ -395,9 +395,9 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             taskProvider.update(task);
             ExecutionStatus newStatus = task instanceof ScriptTask
                                         ? ExecutionStatus.DONE
-                                        : session.isExecution()
-                                          ? ExecutionStatus.RUNNING
-                                          : ExecutionStatus.QUEUED_ACTIVE;
+                                        : session.hasOwnQueue()
+                                          ? ExecutionStatus.QUEUED_ACTIVE
+                                          : ExecutionStatus.RUNNING;
             changeTaskStatus(task, newStatus, newStatus.friendlyName());
             notifyExternalListeners(task, null, -1, null);
         } catch (Exception e) {
