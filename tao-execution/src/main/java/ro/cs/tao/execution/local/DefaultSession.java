@@ -19,6 +19,7 @@ import org.ggf.drmaa.*;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.docker.ExecutionConfiguration;
 import ro.cs.tao.execution.DrmaaJobExtensions;
+import ro.cs.tao.execution.drmaa.JobExitHandler;
 import ro.cs.tao.execution.monitor.NodeManager;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
@@ -45,7 +46,7 @@ import java.util.stream.Collectors;
  *
  * @author Cosmin Cara
  */
-public class DefaultSession implements Session {
+public class DefaultSession implements Session, JobExitHandler {
     private static final String SSH_ASYNC_KEY = "tao.ssh.async";
     private final String localHost;
     private final String localIp;
@@ -175,16 +176,19 @@ public class DefaultSession implements Session {
         this.jobTemplates.remove(jt.getJobName());
     }
 
+    @Override
     public int getJobExitCode(String jobId) {
         final Executor<?> executor = this.runningJobs.get(jobId);
         return executor != null ? executor.getReturnCode() : Integer.MIN_VALUE;
     }
 
-    public String getJobOutput(String jobId) throws DrmaaException {
+    @Override
+    public String getJobOutput(String jobId) {
         OutputAccumulator consumer = this.jobOutputs.get(jobId);
         return consumer != null ? consumer.getOutput() : "n/a";
     }
 
+    @Override
     public void cleanupJob(String jobId) {
         this.jobOutputs.remove(jobId);
         this.runningJobs.remove(jobId);
