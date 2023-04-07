@@ -488,9 +488,11 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     protected class NodeInspectTask extends TimerTask {
 
         private boolean inProgress;
+        private final boolean shouldRetry;
 
         private NodeInspectTask() {
             this.inProgress = false;
+            this.shouldRetry = Integer.parseInt(ConfigurationManager.getInstance().getValue("topology.node.connection.retries", "-1")) >= 0;
         }
 
         @Override
@@ -516,7 +518,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                                 nodeRuntime = nodes.get(h);
                             }
                             if (nodeRuntime != null) {
-                                if (nodeRuntime.getFailedAttempts() == 3) {
+                                if (shouldRetry && nodeRuntime.getFailedAttempts() == 3) {
                                     NodeDescription node = nodeRuntime.getNode();
                                     node.setActive(false);
                                     nodeProvider.update(node);

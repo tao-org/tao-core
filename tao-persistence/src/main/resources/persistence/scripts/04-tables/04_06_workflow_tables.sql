@@ -50,6 +50,7 @@ CREATE TABLE workflow.graph
     zoom real NULL,
 	custom_values json NULL,
 	tags text NULL,
+	created_from_graph_id bigint,
 	active boolean NULL DEFAULT true
 );
 ALTER TABLE workflow.graph ADD CONSTRAINT PK_workflow PRIMARY KEY (id);

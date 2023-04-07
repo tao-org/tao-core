@@ -999,6 +999,9 @@
             <basic name="external">
                 <column name="is_external" nullable="true" column-definition="boolean NULL DEFAULT false"/>
             </basic>
+            <basic name="batchId">
+                <column name="batch_id" nullable="true" column-definition="varchar(50)"/>
+            </basic>
             <basic name="callbackDescriptor">
                 <column name="callback" nullable="true" column-definition="json NULL"/>
             </basic>
@@ -1085,6 +1088,9 @@
             </basic>
             <basic name="visibility">
                 <column name="visibility_id" nullable="false" column-definition="integer NOT NULL"/>
+            </basic>
+            <basic name="createdFromWorkflowId">
+                <column name="created_from_graph_id" nullable="true" column-definition="bigint" />
             </basic>
             <basic name="active">
                 <column name="active" nullable="true" column-definition="boolean NULL DEFAULT true"/>

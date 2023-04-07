@@ -106,6 +106,11 @@ public class WorkflowManager extends EntityManager<WorkflowDescriptor, Long, Wor
     }
 
     @Override
+    public WorkflowDescriptor getByNodeId(long workflowNodeId) {
+        return repository.getByNodeId(workflowNodeId);
+    }
+
+    @Override
     public List<WorkflowDescriptor> listUserWorkflowsByStatus(String user, int statusId) {
         return repository.getUserWorkflowsByStatus(user, statusId);
     }
@@ -150,7 +155,7 @@ public class WorkflowManager extends EntityManager<WorkflowDescriptor, Long, Wor
         }
         // retrieve WorkflowDescriptor after its identifier
         final Optional<WorkflowDescriptor> workflow = repository.findById(entity.getId());
-        if (!workflow.isPresent()) {
+        if (workflow.isEmpty()) {
             throw new PersistenceException("There is no workflow with the specified identifier: " + entity.getId());
         }
         repository.delete(entity);

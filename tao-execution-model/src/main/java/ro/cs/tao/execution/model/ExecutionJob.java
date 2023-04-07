@@ -42,6 +42,7 @@ public class ExecutionJob extends LongIdentifiable implements StatusChangeListen
     private EndpointDescriptor callbackDescriptor;
     private Map<String, List<String>> taskDependencies;
     private JobType jobType;
+    private String batchId;
     @JsonManagedReference
     private List<ExecutionTask> tasks;
 
@@ -55,6 +56,14 @@ public class ExecutionJob extends LongIdentifiable implements StatusChangeListen
     }
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getBatchId() {
+        return batchId;
+    }
+
+    public void setBatchId(String batchId) {
+        this.batchId = batchId;
     }
 
     public String getName() { return name; }
