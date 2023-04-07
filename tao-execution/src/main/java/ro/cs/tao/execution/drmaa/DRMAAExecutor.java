@@ -31,7 +31,6 @@ import ro.cs.tao.execution.DrmaaJobExtensions;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.Executor;
 import ro.cs.tao.execution.callback.EndpointDescriptor;
-import ro.cs.tao.execution.local.DefaultSession;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.execution.monitor.NodeManager;
 import ro.cs.tao.execution.monitor.NodeManager.NodeData;
@@ -271,22 +270,22 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                                     FileUtilities.takeOwnership(Paths.get(location).getParent());
                                 }
                             }
-                            if (session instanceof DefaultSession) {
-                                final DefaultSession defaultSession = (DefaultSession) this.session;
+                            if (session instanceof JobExitHandler) {
+                                final JobExitHandler handler = (JobExitHandler) this.session;
                                 String resourceId = task.getResourceId();
-                                defaultSession.cleanupJob(resourceId);
+                                handler.cleanupJob(resourceId);
                             }
                             break;
                         case Session.FAILED:
                             String error;
                             int code;
                             decrementMemory(task.getExecutionNodeHostName(), task.getUsedRAM());
-                            if (session instanceof DefaultSession) {
-                                final DefaultSession defaultSession = (DefaultSession) this.session;
+                            if (session instanceof JobExitHandler) {
+                                final JobExitHandler handler = (JobExitHandler) this.session;
                                 String resourceId = task.getResourceId();
-                                error = defaultSession.getJobOutput(resourceId);
-                                code = defaultSession.getJobExitCode(resourceId);
-                                defaultSession.cleanupJob(resourceId);
+                                error = handler.getJobOutput(resourceId);
+                                code = handler.getJobExitCode(resourceId);
+                                handler.cleanupJob(resourceId);
                             } else {
                                 error = "n/a";
                                 code = -255;
@@ -321,12 +320,8 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
 
     public String getJobOutput(String jobId) {
         String out;
-        if (session instanceof DefaultSession) {
-            try {
-                out = ((DefaultSession) this.session).getJobOutput(jobId);
-            } catch (DrmaaException e) {
-                out = e.getMessage();
-            }
+        if (session instanceof JobExitHandler) {
+            out = ((JobExitHandler) this.session).getJobOutput(jobId);
         } else {
             out = "n/a";
         }
