@@ -51,8 +51,8 @@ public interface DataSourceComponentService extends CRUDService<DataSourceCompon
      * @param label             The label of the custom data source component
      * @param principal         The principal to create the component for
      */
-    DataSourceComponent createForProductNames(List<String> productNames, String sensor, String dataSource, Long queryId,
-                                              String label, Principal principal) throws PersistenceException;
+    DataSourceComponent createForLocations(List<String> productNames, String sensor, String dataSource, Long queryId,
+                                           String label, Principal principal) throws PersistenceException;
 
     /**
      * Creates a user data source component that wraps the given list of products (a product set)
@@ -60,7 +60,7 @@ public interface DataSourceComponentService extends CRUDService<DataSourceCompon
      * @param label             The label of the custom data source component
      * @param principal         The principal to create the component for
      */
-    DataSourceComponent createForProductNames(List<String> productNames, String label, Principal principal) throws PersistenceException;
+    DataSourceComponent createForLocations(List<String> productNames, String label, Principal principal) throws PersistenceException;
 
     List<Tag> getDatasourceTags();
 

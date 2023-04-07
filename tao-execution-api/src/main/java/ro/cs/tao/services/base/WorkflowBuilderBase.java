@@ -83,7 +83,7 @@ public abstract class WorkflowBuilderBase implements WorkflowBuilder {
 
     protected DataSourceComponent newDataSourceComponent(String sensor, List<String> productNames, Principal principal) throws PersistenceException {
         // let's have a DataSourceComponent
-        return dataSourceComponentService.createForProductNames(productNames, sensor, "Local Database", null, "Test DSC", principal);
+        return dataSourceComponentService.createForLocations(productNames, sensor, "Local Database", null, "Test DSC", principal);
     }
 
     @Override
