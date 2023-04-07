@@ -1020,10 +1020,9 @@ public class FileUtilities {
             throw new IllegalArgumentException("One of the arguments is null");
         }
         try (InputStream inputStream = sourceURL.openStream()) {
-            File dest = destinationFile.toFile();
-            dest.getParentFile().mkdirs();
-            try (BufferedOutputStream bos = new BufferedOutputStream(Files.newOutputStream(dest.toPath()))) {
-                byte[] buffer = new byte[4096];
+            Files.createDirectories(destinationFile.getParent());
+            try (BufferedOutputStream bos = new BufferedOutputStream(Files.newOutputStream(destinationFile))) {
+                byte[] buffer = new byte[65536];
                 int read;
                 while ((read = inputStream.read(buffer)) > 0) {
                     bos.write(buffer, 0, read);
