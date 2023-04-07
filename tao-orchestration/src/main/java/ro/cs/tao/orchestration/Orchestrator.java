@@ -697,6 +697,7 @@ public class Orchestrator extends Notifiable {
                     cancelJob(job);
                 }
                 if (!startNextWaitingJob(user)) {
+                    tryRemoveTemporaryWorkflow(job);
                     shutDownExecutor(user);
                 }
             }
