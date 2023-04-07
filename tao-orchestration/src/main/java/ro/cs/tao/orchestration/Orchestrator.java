@@ -196,7 +196,7 @@ public class Orchestrator extends Notifiable {
     /**
      * Creates a job from a workflow definition and starts its execution.
      *
-     * @param context 	The session context
+     * @param context     The session context
      * @param request   The workflow execution request
      * @throws ExecutionException In case anything goes wrong or a job for this workflow was already created
      */
@@ -228,7 +228,7 @@ public class Orchestrator extends Notifiable {
     /**
      * Creates a job from a workflow definition and starts its execution.
      *
-     * @param context 	 The session context
+     * @param context      The session context
      * @param inputs     The overridden parameter values for workflow nodes
      * @throws ExecutionException In case anything goes wrong or a job for this workflow was already created
      */
@@ -264,7 +264,7 @@ public class Orchestrator extends Notifiable {
     /**
      * Creates a job from an externally-defined workflow and starts its execution.
      *
-     * @param context 	 The session context
+     * @param context      The session context
      * @param workflowId The workflow identifier
      * @param inputs     The overridden parameter values for workflow nodes
      * @throws ExecutionException In case anything goes wrong or a job for this workflow was already created
@@ -296,7 +296,7 @@ public class Orchestrator extends Notifiable {
      * The method is intended for operations that convert/export a TAO workflow
      * into another format (such as JSON, CWL)
      *
-     * @param context 	 The session context
+     * @param context      The session context
      * @param workflowId The workflow identifier
      * @param inputs     The overridden parameter values for workflow nodes
      * @throws ExecutionException In case anything goes wrong
@@ -330,7 +330,7 @@ public class Orchestrator extends Notifiable {
     /**
      * Creates a job from a workflow, intended for execution.
      *
-     * @param context 	 The session context
+     * @param context      The session context
      * @param request    The execution request
      * @param optimize  If <code>true</code>, the workflow will be optimized if possible
      * @throws ExecutionException In case anything goes wrong
@@ -352,6 +352,7 @@ public class Orchestrator extends Notifiable {
                 optimized = WorkflowOptimizer.getOptimizedWorkflow(descriptor);
                 if (optimized == null) {
                     optimized = descriptor;
+                    optimized.setActive(descriptor.isActive());
                 }
             }
             return this.jobFactory.createJob(context, this.uuid, request.getName(), optimized, request.getParameters());
@@ -681,6 +682,7 @@ public class Orchestrator extends Notifiable {
                         Messaging.send(currentContext.getPrincipal(), Topic.EXECUTION.value(), this, msg);
                         // If there are waiting jobs for this user, let's trigger the execution of the first one
                         if (!startNextWaitingJob(user)) {
+                            tryRemoveTemporaryWorkflow(job);
                             shutDownExecutor(user);
                         }
                         cleanupTransientComponents(job);
@@ -1410,7 +1412,7 @@ public class Orchestrator extends Notifiable {
      * @throws QuotaException if the operation fails. 
      */
     private boolean checkProcessingQuota(Principal user) throws QuotaException {
-    	// update the quota before checking
+        // update the quota before checking
         UserQuotaManager.getInstance().updateUserProcessingQuota(user);
         
         return UserQuotaManager.getInstance().checkUserProcessingQuota(user);
@@ -1477,6 +1479,40 @@ public class Orchestrator extends Notifiable {
             }
         }
         return outPath;
+    }
+
+    private void tryRemoveTemporaryWorkflow(ExecutionJob job) {
+        final WorkflowDescriptor workflow = workflowProvider.get(job.getWorkflowId());
+        if (workflow.getCreatedFromWorkflowId() != null) {
+            final List<ExecutionJob> jobs = jobProvider.listByWorkflow(workflow.getId());
+            if (jobs.stream().allMatch(j -> j.getExecutionStatus() == ExecutionStatus.FAILED ||
+                                            j.getExecutionStatus() == ExecutionStatus.DONE ||
+                                            j.getExecutionStatus() == ExecutionStatus.CANCELLED)) {
+                final List<WorkflowNodeDescriptor> nodes = workflow.getNodes();
+                final Map<Long, Long> idMap = new HashMap<>();
+                long originalWorkflowId = workflow.getCreatedFromWorkflowId();
+                for (WorkflowNodeDescriptor node : nodes) {
+                    idMap.put(node.getId(), node.getCreatedFromNodeId());
+                }
+                try {
+                    for (ExecutionJob jb : jobs) {
+                        final List<ExecutionTask> tasks = jb.getTasks();
+                        for (ExecutionTask task : tasks) {
+                            final Long originalId = idMap.get(task.getWorkflowNodeId());
+                            if (originalId != null) {
+                                task.setWorkflowNodeId(originalId);
+                                taskProvider.update(task);
+                            }
+                        }
+                        jb.setWorkflowId(originalWorkflowId);
+                        jobProvider.update(jb);
+                    }
+                    workflowProvider.delete(workflow);
+                } catch (PersistenceException ex) {
+                    logger.severe(ex.getMessage());
+                }
+            }
+        }
     }
 
     private class MessageContext extends SessionContext {

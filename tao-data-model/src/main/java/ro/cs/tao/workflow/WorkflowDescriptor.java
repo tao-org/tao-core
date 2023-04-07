@@ -43,6 +43,7 @@ public class WorkflowDescriptor
     private Visibility visibility;
     protected Status status;
     private String path;
+    private Long createdFromWorkflowId;
     private boolean active;
     private List<WorkflowNodeDescriptor> nodes = new ArrayList<>();
     private float xCoord;
@@ -69,6 +70,10 @@ public class WorkflowDescriptor
     @XmlElement(name = "active")
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
+
+    @XmlElement(name = "createdFromWorkflowId")
+    public Long getCreatedFromWorkflowId() { return createdFromWorkflowId; }
+    public void setCreatedFromWorkflowId(Long createdFromWorkflowId) { this.createdFromWorkflowId = createdFromWorkflowId; }
 
     @XmlTransient
     public float getxCoord() { return xCoord; }

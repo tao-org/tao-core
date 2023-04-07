@@ -195,6 +195,19 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
     WorkflowDescriptor clone(WorkflowDescriptor workflow) throws PersistenceException;
 
     /**
+     * Creates a duplicate of the given workflow and adds new input nodes corresponding to the ID map (links).
+     * The method should be invoked when executing the original workflow with new inputs.
+     * The intention is to delete the temporary workflow when the execution completes.
+     * @param fromWorkflowId    The original workflow identifier
+     * @param name              The name of the temporary workflow
+     * @param linksToAdd        The map of component IDs (pairs [Data source component id, Processing component id])
+     *                          for which to create nodes and links
+     * @return          The temporary workflow
+     */
+    WorkflowDescriptor createTemporaryWorkflow(long fromWorkflowId, String name, Map<Long, String> linksToAdd) throws PersistenceException;
+
+    void deleteTemporaryWorkflow(long workflowId) throws PersistenceException;
+    /**
      * Imports the nodes of a workflow into the given workflow
      * @param master        The workflow into which the nodes shall be imported
      * @param subWorkflow   The workflow whose nodes shall be imported

@@ -93,6 +93,7 @@ public class DefaultJobFactory {
             job = new ExecutionJob();
             job.setName(jobName);
             job.setAppId(appId);
+            job.setBatchId(UUID.randomUUID().toString());
             job.setUserName(SessionStore.currentContext().getPrincipal().getName());
             job.setStartTime(LocalDateTime.now());
             job.setWorkflowId(workflow.getId());
@@ -157,6 +158,7 @@ public class DefaultJobFactory {
         ExecutionJob job = new ExecutionJob();
         job.setName(jobName);
         job.setAppId(appId);
+        job.setBatchId(UUID.randomUUID().toString());
         job.setUserName(SessionStore.currentContext().getPrincipal().getName());
         job.setStartTime(LocalDateTime.now());
         job.setExecutionStatus(ExecutionStatus.UNDETERMINED);
@@ -647,6 +649,7 @@ public class DefaultJobFactory {
             ExecutionJob clone = new ExecutionJob();
             clone.setName(original.getName() + " (" + cloneNumber + ")");
             clone.setWorkflowId(original.getWorkflowId());
+            clone.setBatchId(original.getBatchId());
             clone.setExternal(original.isExternal());
             clone.setQueryId(original.getQueryId());
             clone.setUserName(original.getUserName());
