@@ -8,4 +8,9 @@ import ro.cs.tao.messaging.Message;
  * @author Cosmin Cara
  */
 public class StartupCompletedMessage extends Message {
+
+    public StartupCompletedMessage() {
+        super();
+        setMessage("System is ready");
+    }
 }
