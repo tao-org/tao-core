@@ -472,16 +472,19 @@ public class FileUtilities {
      */
     public static Path resolveSymLinks(Path path) throws IOException {
         Path realPath = path.getRoot();
-        final int nameCount = path.getNameCount();
-        for (int i = 0; i < nameCount; i++) {
-            realPath = realPath.resolve(path.getName(i));
-            if (Files.isSymbolicLink(realPath)) {
-                realPath = Files.readSymbolicLink(realPath);
-            } else {
-                realPath = realPath.toAbsolutePath();
+        // If the root is null, the path is relative
+        if (realPath != null) {
+            final int nameCount = path.getNameCount();
+            for (int i = 0; i < nameCount; i++) {
+                realPath = realPath.resolve(path.getName(i));
+                if (Files.isSymbolicLink(realPath)) {
+                    realPath = Files.readSymbolicLink(realPath);
+                } else {
+                    realPath = realPath.toAbsolutePath();
+                }
             }
         }
-        return realPath;
+        return realPath != null ? realPath : path;
     }
 
     /**
