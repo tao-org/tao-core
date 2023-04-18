@@ -1276,7 +1276,13 @@ public class Orchestrator extends Notifiable {
                             final int size = oValuesList.size();
                             for (int i = 0; i < size; i++) {
                                 try {
-                                    Path path = Paths.get(new URI(oValuesList.get(i)));
+                                    final String val = oValuesList.get(i);
+                                    Path path;
+                                    if (FileUtilities.isURI(val)) {
+                                        path = Paths.get(new URI(val));
+                                    } else {
+                                        path = Paths.get(val);
+                                    }
                                     oValuesList.set(i, path.getName(path.getNameCount() - 1).toString());
                                 } catch (URISyntaxException e) {
                                     logger.warning(e.getMessage());
@@ -1391,7 +1397,7 @@ public class Orchestrator extends Notifiable {
                             throw new ExecutionException(String.format("Metadata for output %s could not be extracted", outValue));
                         }
                     } else {
-                        throw new ExecutionException(String.format("No suitable metadata inspector found for output %s", outValue));
+                        logger.warning(String.format("No suitable metadata inspector found for output %s", outValue));
                     }
                 } else {
                     logger.warning("No such file: " + path);
