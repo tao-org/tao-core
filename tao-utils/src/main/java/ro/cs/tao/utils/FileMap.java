@@ -76,7 +76,9 @@ public class FileMap<K, V> implements Map<K, V> {
 
     @Override
     public V put(K key, V value) {
-        return this.map.put(key, value);
+        V retVal = this.map.put(key, value);
+        flush();
+        return retVal;
     }
 
     @Override
