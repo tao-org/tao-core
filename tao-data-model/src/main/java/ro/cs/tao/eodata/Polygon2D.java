@@ -214,7 +214,7 @@ public class Polygon2D {
      * Produces a WKT representation (clockwise) of this polygon with a given decimal precision
      */
     public String toWKT(int precision) {
-        StringBuilder format = new StringBuilder(".");
+        StringBuilder format = new StringBuilder("0.");
         int i = 0;
         while (i++ < precision) format.append("#");
         final DecimalFormat dfFormat = new DecimalFormat(format.toString(), DecimalFormatSymbols.getInstance(Locale.ENGLISH));
@@ -256,7 +256,7 @@ public class Polygon2D {
      * Produces a WKT representation (counter-clockwise) of this polygon with a given decimal precision
      */
     public String toWKTCounterClockwise(int precision) {
-        StringBuilder format = new StringBuilder(".");
+        StringBuilder format = new StringBuilder("0.");
         int i = 0;
         while (i++ < precision) format.append("#");
         final DecimalFormat dfFormat = new DecimalFormat(format.toString(), DecimalFormatSymbols.getInstance(Locale.ENGLISH));
@@ -306,7 +306,7 @@ public class Polygon2D {
     public String[] toWKTArray(int precision) {
         final String[] polygons = new String[this.polygons.length];
         final StringBuilder buffer = new StringBuilder();
-        final StringBuilder format = new StringBuilder(".");
+        final StringBuilder format = new StringBuilder("0.");
         int i = 0;
         while (i++ < precision) format.append("#");
         final DecimalFormat dfFormat = new DecimalFormat(format.toString(), DecimalFormatSymbols.getInstance(Locale.ENGLISH));
@@ -341,7 +341,7 @@ public class Polygon2D {
 
     public String toWKTBounds() {
         Rectangle2D bounds2D = getBounds2D();
-        DecimalFormat dfFormat = new DecimalFormat(".######", DecimalFormatSymbols.getInstance(Locale.ENGLISH));
+        DecimalFormat dfFormat = new DecimalFormat("0.######", DecimalFormatSymbols.getInstance(Locale.ENGLISH));
         return  "POLYGON((" +
                 dfFormat.format(bounds2D.getMinX()) + " " + dfFormat.format(bounds2D.getMinY()) + "," +
                 dfFormat.format(bounds2D.getMaxX()) + " " + dfFormat.format(bounds2D.getMinY()) + "," +
