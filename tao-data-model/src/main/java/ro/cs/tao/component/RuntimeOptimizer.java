@@ -16,6 +16,9 @@
 
 package ro.cs.tao.component;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * A runtime optimizer is a helper class that tries to combine several components belonging to the same toolbox
  * into a single execution chain, in order to avoid the intermediate I/O.
@@ -36,5 +39,5 @@ public interface RuntimeOptimizer {
      *
      * @param sources   The components to be aggregated
      */
-    ProcessingComponent aggregate(ProcessingComponent... sources) throws AggregationException;
+    ProcessingComponent aggregate(List<ProcessingComponent> sources, Map<String, Map<String, String>> values) throws AggregationException;
 }

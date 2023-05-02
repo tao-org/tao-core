@@ -655,6 +655,7 @@ public class DefaultJobFactory {
             clone.setUserName(original.getUserName());
             clone.setExecutionStatus(ExecutionStatus.UNDETERMINED);
             clone.setJobOutputPath(original.getJobOutputPath() + "_" + cloneNumber);
+            clone.setJobType(original.getJobType());
             clone = jobProvider.save(clone);
             final List<ExecutionTask> originalTasks = original.getTasks();
             final Map<String, String> cloneTaskMap = new HashMap<>();

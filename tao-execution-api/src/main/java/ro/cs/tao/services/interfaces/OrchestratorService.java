@@ -28,6 +28,7 @@ import ro.cs.tao.persistence.PersistenceException;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 
 /**
  * Interface for orchestration
@@ -111,6 +112,16 @@ public interface OrchestratorService extends TAOService {
     List<ExecutionJobSummary> getRunningJobs(String userName);
 
     List<ExecutionJobSummary> getCompletedJobs(String userName);
+
+    Map<String, Queue<ExecutionJobSummary>> getQueuedJobs();
+
+    Queue<ExecutionJobSummary> getQueuedJobs(String userName);
+
+    void moveJobUp(String userName, long jobId);
+
+    void moveJobDown(String userName, long jobId);
+
+    void deleteJobFromQueue(String userName, long jobId) throws PersistenceException;
 
     void clearJobHistory(String userName) throws PersistenceException;
 

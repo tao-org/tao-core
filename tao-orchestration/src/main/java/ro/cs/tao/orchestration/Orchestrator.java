@@ -63,7 +63,10 @@ import ro.cs.tao.spi.OutputDataHandlerManager;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.user.UserPreference;
-import ro.cs.tao.utils.*;
+import ro.cs.tao.utils.ExceptionUtils;
+import ro.cs.tao.utils.FileUtilities;
+import ro.cs.tao.utils.StringUtilities;
+import ro.cs.tao.utils.TriFunction;
 import ro.cs.tao.workflow.ParameterValue;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
@@ -349,7 +352,7 @@ public class Orchestrator extends Notifiable {
             }
             WorkflowDescriptor optimized = descriptor;
             if (optimize) {
-                optimized = WorkflowOptimizer.getOptimizedWorkflow(descriptor);
+                optimized = WorkflowOptimizer.getOptimizedWorkflow(descriptor, request.getParameters());
                 if (optimized == null) {
                     optimized = descriptor;
                     optimized.setActive(descriptor.isActive());
@@ -387,6 +390,7 @@ public class Orchestrator extends Notifiable {
     public void stopJob(long jobId) throws ExecutionException {
         ExecutionJob job = checkJob(jobId);
         try {
+            this.jobQueue.removeJob(job);
             JobCommand.STOP.applyTo(job);
         } catch (Exception e) {
             logger.warning(e.getMessage());
@@ -1515,9 +1519,24 @@ public class Orchestrator extends Notifiable {
         }
     }
 
-    private Void fetchNextJob(Tuple<String, Long> item) {
+    public void moveJobToHead(String user, long jobId) {
+        jobQueue.moveJobToHead(user, jobId);
+    }
 
-        return null;
+    public void moveJobToTail(String user, long jobId) {
+        jobQueue.moveJobToTail(user, jobId);
+    }
+
+    public List<Long> getUserQueuedJobs(String user) {
+        return jobQueue.getUserJobs(user);
+    }
+
+    public Map<String, Queue<Long>> getQueuedJobs() {
+        return jobQueue.getAll();
+    }
+
+    public void removeJob(String user, long jobId) {
+        jobQueue.removeJob(user, jobId);
     }
 
     private class MessageContext extends SessionContext {

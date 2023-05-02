@@ -1,6 +1,7 @@
 package ro.cs.tao.utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -40,8 +41,11 @@ public class FileMap<K, V> implements Map<K, V> {
         this.map = new LinkedHashMap<>();
         try {
             Files.createDirectories(this.file.getParent());
-            if (Files.exists(this.file) && Files.size(this.file) > 0) {
-                this.map.putAll(new ObjectMapper().reader().readValue(this.file.toFile()));
+            if (Files.exists(this.file) && Files.size(this.file) > 2) {
+                final ObjectReader reader = new ObjectMapper().readerFor(LinkedHashMap.class);
+                this.map.putAll(reader.readValue(this.file.toFile()));
+            } else if (Files.notExists(this.file)){
+                Files.createFile(this.file);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);

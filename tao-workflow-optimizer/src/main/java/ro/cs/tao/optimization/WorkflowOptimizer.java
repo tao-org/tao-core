@@ -145,7 +145,8 @@ public class WorkflowOptimizer {
      * @param workflowName original workflow's name
      * @return optimized workflow
      */
-    private static WorkflowDescriptor createWorkflow(OptimizationGraph graph, String workflowName) {
+    private static WorkflowDescriptor createWorkflow(OptimizationGraph graph, String workflowName,
+                                                     Map<String, Map<String, String>> values) {
         Logger logger = Logger.getLogger(WorkflowOptimizer.class.getName());
 
         OptimizedWorkflowBuilder builder = new OptimizedWorkflowBuilder(workflowName);
@@ -162,7 +163,7 @@ public class WorkflowOptimizer {
 
             /* for every optimization node make a workflow node */
             for (OptimizationNode node : graph.getNodes()) {
-                WorkflowNodeDescriptor wNode = builder.createOptimizedNode(node, workflow);
+                WorkflowNodeDescriptor wNode = builder.createOptimizedNode(node, workflow, values);
 
                 translation.put(node, wNode);
             }
@@ -203,7 +204,8 @@ public class WorkflowOptimizer {
      * @param workflow original workflow
      * @return optimized workflow
      */
-    public static WorkflowDescriptor getOptimizedWorkflow(WorkflowDescriptor workflow) {
+    public static WorkflowDescriptor getOptimizedWorkflow(WorkflowDescriptor workflow,
+                                                          Map<String, Map<String, String>> values) {
         Logger logger = Logger.getLogger(WorkflowOptimizer.class.getName());
 
         if (workflow == null) {
@@ -235,6 +237,6 @@ public class WorkflowOptimizer {
             return null;
         }
 
-        return createWorkflow(graph, workflow.getName());
+        return createWorkflow(graph, workflow.getName(), values);
     }
 }
