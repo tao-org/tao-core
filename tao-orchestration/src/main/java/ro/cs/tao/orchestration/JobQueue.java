@@ -55,13 +55,78 @@ public class JobQueue {
         return userQueue.size();
     }
 
+    public boolean removeJob(ExecutionJob job) {
+        final Queue<Long> userQueue = this.queue.get(job.getUserName());
+        if (userQueue != null) {
+            return userQueue.removeIf(i -> i.equals(job.getId()));
+        }
+        return false;
+    }
+
     /**
      * Removes all the queued jobs for a user
      * @param user  The name of the user
      */
     public List<Long> removeUserJobs(String user) {
         final Queue<Long> userQueue = this.queue.remove(user);
-        return new ArrayList<>(userQueue);
+        return userQueue != null ? new ArrayList<>(userQueue) : null;
+    }
+
+    public void moveJobToHead(String user, long jobId) {
+        final Queue<Long> userQueue = this.queue.get(user);
+        if (userQueue == null || userQueue.size() == 0) {
+            throw new IllegalArgumentException("User queue is empty");
+        }
+        if (!userQueue.peek().equals(jobId)) {
+            final ArrayDeque<Long> newQueue = new ArrayDeque<>(userQueue.size());
+            while (!userQueue.isEmpty()) {
+                final Long element = userQueue.poll();
+                if (element != jobId) {
+                    newQueue.offer(element);
+                } else {
+                    final Long previous = newQueue.removeLast();
+                    newQueue.offer(jobId);
+                    newQueue.offer(previous);
+                }
+            }
+            this.queue.put(user, newQueue);
+        }
+    }
+
+    public void moveJobToTail(String user, long jobId) {
+        final Queue<Long> userQueue = this.queue.get(user);
+        if (userQueue == null || userQueue.size() == 0) {
+            throw new IllegalArgumentException("User queue is empty");
+        }
+        if (!userQueue.peek().equals(jobId)) {
+            final ArrayDeque<Long> newQueue = new ArrayDeque<>(userQueue.size());
+            boolean found = false;
+            while (!userQueue.isEmpty()) {
+                final Long element = userQueue.poll();
+                if (element != jobId) {
+                    newQueue.offer(element);
+                    if (found) {
+                        newQueue.offer(jobId);
+                    }
+                } else {
+                    found = true;
+                }
+            }
+            this.queue.put(user, newQueue);
+        }
+    }
+
+    public void removeJob(String user, long jobId) {
+        final Queue<Long> userQueue = this.queue.get(user);
+        if (userQueue != null) {
+            final Iterator<Long> iterator = userQueue.iterator();
+            while (iterator.hasNext()) {
+                if (iterator.next().equals(jobId)) {
+                    iterator.remove();
+                    break;
+                }
+            }
+        }
     }
 
     /**
@@ -70,7 +135,7 @@ public class JobQueue {
      */
     public List<Long> getUserJobs(String user) {
         final Queue<Long> userQueue = this.queue.get(user);
-        return new ArrayList<>(userQueue);
+        return userQueue != null ? new ArrayList<>(userQueue) : null;
     }
 
     /**

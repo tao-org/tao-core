@@ -15,10 +15,7 @@ import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.enums.ComponentType;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
@@ -66,7 +63,8 @@ public class OptimizedWorkflowBuilder extends WorkflowBuilderBase {
      * @param workflow where to add the node
      * @return created node
      */
-    protected WorkflowNodeDescriptor createOptimizedNode(OptimizationNode node, WorkflowDescriptor workflow) throws PersistenceException {
+    protected WorkflowNodeDescriptor createOptimizedNode(OptimizationNode node, WorkflowDescriptor workflow,
+                                                         Map<String, Map<String, String>> values) throws PersistenceException {
         WorkflowNodeDescriptor optimizedNode;
 
         if (node.getNodeIds().size() == 0) {
@@ -81,13 +79,21 @@ public class OptimizedWorkflowBuilder extends WorkflowBuilderBase {
             List<ProcessingComponent> components = new ArrayList<>();
 
             logger.finer("Creating aggregated components from nodes: " + node.getNodeIds());
-
-            node.getNodeIds().forEach((id) ->
-                                 components.add(node.getNodesDefinition().getComponent(id)));
+            final Map<String, Map<String, String>> componentValues = new HashMap<>();
+            node.getNodeIds().forEach((id) -> {
+                final ProcessingComponent component = node.getNodesDefinition().getComponent(id);
+                components.add(component);
+                if (values != null) {
+                    final Map<String, String> map = values.get(node.getNodesDefinition().getWorkflowNode(id).getName());
+                    if (map != null) {
+                        componentValues.put(component.getId(), map);
+                    }
+                }
+            });
 
             RuntimeOptimizer optimizer = node.getNodesDefinition().getOptimizer(node.getFirstNodeId());
 
-            ProcessingComponent result = optimizer.aggregate(components.toArray(new ProcessingComponent[0]));
+            ProcessingComponent result = optimizer.aggregate(components, componentValues);
 
             result = persistenceManager.processingComponents().save(result);
 
