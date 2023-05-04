@@ -113,13 +113,15 @@ public interface OrchestratorService extends TAOService {
 
     List<ExecutionJobSummary> getCompletedJobs(String userName);
 
-    Map<String, Queue<ExecutionJobSummary>> getQueuedJobs();
+    Queue<ExecutionJobSummary> getQueuedJobs();
 
     Queue<ExecutionJobSummary> getQueuedJobs(String userName);
 
-    void moveJobUp(String userName, long jobId);
+    Map<String, Queue<ExecutionJobSummary>> getQueuedUserJobs();
 
-    void moveJobDown(String userName, long jobId);
+    void moveJobUp(long jobId, String userName);
+
+    void moveJobDown(long jobId, String userName);
 
     void deleteJobFromQueue(String userName, long jobId) throws PersistenceException;
 

@@ -34,7 +34,6 @@ import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.ExecutionsManager;
 import ro.cs.tao.execution.callback.EndpointDescriptor;
 import ro.cs.tao.execution.model.*;
-import ro.cs.tao.execution.monitor.NodeManager;
 import ro.cs.tao.execution.persistence.ExecutionJobProvider;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.execution.util.TaskUtilities;
@@ -52,7 +51,6 @@ import ro.cs.tao.quota.QuotaException;
 import ro.cs.tao.quota.UserQuotaManager;
 import ro.cs.tao.security.SessionContext;
 import ro.cs.tao.security.SessionStore;
-import ro.cs.tao.security.SystemPrincipal;
 import ro.cs.tao.security.UserPrincipal;
 import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.serialization.StringListAdapter;
@@ -63,10 +61,7 @@ import ro.cs.tao.spi.OutputDataHandlerManager;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.user.UserPreference;
-import ro.cs.tao.utils.ExceptionUtils;
-import ro.cs.tao.utils.FileUtilities;
-import ro.cs.tao.utils.StringUtilities;
-import ro.cs.tao.utils.TriFunction;
+import ro.cs.tao.utils.*;
 import ro.cs.tao.workflow.ParameterValue;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
@@ -88,6 +83,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -103,7 +99,6 @@ public class Orchestrator extends Notifiable {
 
     private static final String GROUP_TASK_SELECTOR_KEY = "group.task.selector";
     private static final String JOB_TASK_SELECTOR_KEY = "job.task.selector";
-    private static final String USER_JOB_LIMIT_KEY = "tao.user.jobs.limit";
     private static final Set<ExecutionStatus> notFurtherRunnableStatuses = new HashSet<>() {{
         add(ExecutionStatus.DONE);
         add(ExecutionStatus.CANCELLED);
@@ -129,6 +124,7 @@ public class Orchestrator extends Notifiable {
     private final StringListAdapter listAdapter;
     private final Logger logger = Logger.getLogger(Orchestrator.class.getName());
     private final JobQueue jobQueue;
+    private final JobQueueWorker jobQueueWorker;
     private final WorkflowProvider workflowProvider;
     private final WorkflowNodeProvider workflowNodeProvider;
     private final ExecutionJobProvider jobProvider;
@@ -137,21 +133,21 @@ public class Orchestrator extends Notifiable {
     private final GroupComponentProvider groupComponentProvider;
     private final NamingRuleProvider namingRuleProvider;
     private final UserProvider userProvider;
-
     private TaskSelector<ExecutionGroup> groupTaskSelector;
     private TaskSelector<ExecutionJob> jobTaskSelector;
     private DefaultJobFactory jobFactory;
     private Set<MetadataInspector> metadataServices;
-    private final Map<String, ExecutorService> executors;
+    private final ExecutorService messageWorker = Executors.newFixedThreadPool(1);
     private final Set<Long> runningTasks;
+    private final AtomicInteger activeJobs;
 
     private String uuid;
+    private final Object lock;
 
     private Orchestrator() {
+        this.lock = new Object();
         this.groupStateHandlers = new HashMap<>();
         this.messageQueue = new LinkedBlockingDeque<>();
-        this.executors = Collections.synchronizedMap(new HashMap<>());
-        this.executors.put(SystemPrincipal.instance().getName(), Executors.newFixedThreadPool(1));
         this.runningTasks = Collections.synchronizedSet(new HashSet<>());
         this.listAdapter = new StringListAdapter();
         final SpringContextBridgedServices bridgedServices = SpringContextBridge.services();
@@ -164,6 +160,8 @@ public class Orchestrator extends Notifiable {
         this.namingRuleProvider = bridgedServices.getService(NamingRuleProvider.class);
         this.userProvider = bridgedServices.getService(UserProvider.class);
         this.jobQueue = new JobQueue(this.jobProvider);
+        this.jobQueueWorker = new JobQueueWorker(this.jobQueue);
+        this.activeJobs = new AtomicInteger(0);
         try {
             final NodeDescription masterNode = bridgedServices.getService(NodeProvider.class).get(Inet4Address.getLocalHost().getHostName());
             this.uuid = masterNode.getAppId();
@@ -189,11 +187,8 @@ public class Orchestrator extends Notifiable {
         monitor.setName("orchestrator");
         monitor.start();
         this.jobQueue.initialize();
+        this.jobQueueWorker.start();
         logger.fine("Orchestration service initialized");
-    }
-
-    public Map<String, ExecutorService> getUserExecutors() {
-        return this.executors;
     }
 
     /**
@@ -210,17 +205,7 @@ public class Orchestrator extends Notifiable {
             if (job == null) {
                 throw new ExecutionException("Another job is running or queued for user '" + user + "'. New job will be queued");
             } else {
-                this.executors.get(user).submit(() -> {
-                    try {
-                        JobCommand.START.applyTo(job);
-                    } catch (ExecutionException e) {
-                        try {
-                            cancelJob(job);
-                        } catch (PersistenceException ex) {
-                            logger.severe(ex.getMessage());
-                        }
-                    }
-                });
+                this.jobQueue.put(job);
             }
             return job;
         } catch (Exception e) {
@@ -236,25 +221,14 @@ public class Orchestrator extends Notifiable {
      * @throws ExecutionException In case anything goes wrong or a job for this workflow was already created
      */
     public ExecutionJob startExecution(SessionContext context, String wpsId,
-                                       Map<String, Map<String, String>> inputs, ExecutorService executorService) throws ExecutionException {
+                                       Map<String, Map<String, String>> inputs) throws ExecutionException {
         try {
             final String user = context.getPrincipal().getName();
             final ExecutionJob executionJob = tryCreateJob(user, wpsId, inputs);
             if (executionJob == null) {
                 throw new ExecutionException("Another WPS job is running or queued for user '" + user + "'. New job will be queued");
             } else {
-                this.executors.putIfAbsent(user, executorService);
-                executorService.submit(() -> {
-                    try {
-                        JobCommand.START.applyTo(executionJob);
-                    } catch (ExecutionException e) {
-                        try {
-                            cancelJob(executionJob);
-                        } catch (PersistenceException ex) {
-                            logger.severe(ex.getMessage());
-                        }
-                    }
-                });
+                this.jobQueue.put(executionJob);
             }
             return executionJob;
         } catch (Exception e) {
@@ -312,17 +286,7 @@ public class Orchestrator extends Notifiable {
                 throw new ExecutionException(String.format("Non-existent workflow [%s]", workflowId));
             }
             final ExecutionJob job = new ScriptJobFactory().createJob(context, this.uuid, description, descriptor, inputs, jobType);
-            this.executors.get(context.getPrincipal().getName()).submit(() -> {
-                try {
-                    JobCommand.START.applyTo(job);
-                } catch (ExecutionException e) {
-                    try {
-                        cancelJob(job);
-                    } catch (PersistenceException ex) {
-                        logger.severe(ex.getMessage());
-                    }
-                }
-            });
+            this.jobQueue.put(job);
             return job;
         } catch (PersistenceException e) {
             logger.severe(e.getMessage());
@@ -389,11 +353,19 @@ public class Orchestrator extends Notifiable {
      */
     public void stopJob(long jobId) throws ExecutionException {
         ExecutionJob job = checkJob(jobId);
+        final ExecutionStatus status = job.getExecutionStatus();
         try {
             this.jobQueue.removeJob(job);
             JobCommand.STOP.applyTo(job);
         } catch (Exception e) {
             logger.warning(e.getMessage());
+        } finally {
+            if (status == ExecutionStatus.QUEUED_ACTIVE ||
+                status == ExecutionStatus.RUNNING ||
+                status == ExecutionStatus.PENDING_FINALISATION ||
+                status == ExecutionStatus.SUSPENDED) {
+                decrementActiveJobs();
+            }
         }
     }
 
@@ -417,6 +389,18 @@ public class Orchestrator extends Notifiable {
     public void resumeJob(long jobId) throws ExecutionException {
         ExecutionJob job = checkJob(jobId);
         JobCommand.RESUME.applyTo(job);
+    }
+
+    int getActiveJobsCount() {
+        return this.activeJobs.get();
+    }
+
+    void incrementActiveJobs() {
+        this.activeJobs.incrementAndGet();
+    }
+
+    void decrementActiveJobs() {
+        this.activeJobs.decrementAndGet();
     }
 
     public int purgeJobs(String user) {
@@ -447,10 +431,6 @@ public class Orchestrator extends Notifiable {
                 final List<ExecutionTask> tasks = prepareStalledTasks();
                 if (tasks != null) {
                     for (ExecutionTask task : tasks) {
-                        String user = task.getJob().getUserName();
-                        if (!this.executors.containsKey(user)) {
-                            this.executors.put(user, Executors.newFixedThreadPool(1));
-                        }
                         logger.fine(String.format("Resuming task [id=%s] from job [id=%d]",
                                                   task.getId(), task.getJob().getId()));
                         try {
@@ -625,12 +605,8 @@ public class Orchestrator extends Notifiable {
                                     try {
                                         List<ExecutionJob> jobs = this.jobFactory.splitJob(task.getJob());
                                         logger.fine(String.format("Job %s will fork additional %d jobs", task.getJob().getName(), jobs.size()));
-                                        //final String user = task.getContext().getPrincipal().getName();
-                                        final ExecutorService executorService = this.executors.get(user);
                                         for (ExecutionJob job : jobs) {
-                                            if (canSubmitJob(job)) {
-                                                executorService.submit(() -> JobCommand.START.applyTo(job));
-                                            }
+                                            this.jobQueue.put(job);
                                         }
                                     } catch (Exception e) {
                                         logger.warning(ro.cs.tao.utils.ExceptionUtils.getStackTrace(logger, e));
@@ -684,11 +660,7 @@ public class Orchestrator extends Notifiable {
                                                    job.getId(), workflow.getName(), time != null ? time.getSeconds() : "<unknown>");
                         logger.info(msg);
                         Messaging.send(currentContext.getPrincipal(), Topic.EXECUTION.value(), this, msg);
-                        // If there are waiting jobs for this user, let's trigger the execution of the first one
-                        if (!startNextWaitingJob(user)) {
-                            tryRemoveTemporaryWorkflow(job);
-                            shutDownExecutor(user);
-                        }
+                        tryRemoveTemporaryWorkflow(job);
                         cleanupTransientComponents(job);
                     } else {
                         logger.fine("Job has still tasks to complete");
@@ -700,89 +672,55 @@ public class Orchestrator extends Notifiable {
                 if (jobStatus == ExecutionStatus.CANCELLED || jobStatus == ExecutionStatus.FAILED) {
                     cancelJob(job);
                 }
-                if (!startNextWaitingJob(user)) {
-                    tryRemoveTemporaryWorkflow(job);
-                    shutDownExecutor(user);
-                }
+                tryRemoveTemporaryWorkflow(job);
             }
         } catch (Throwable e) {
             logger.severe(String.format("Abnormal termination: %s", ExceptionUtils.getStackTrace(logger, e)));
             ExecutionJob job = task.getJob();
             job.setExecutionStatus(ExecutionStatus.FAILED);
             try {
-                jobProvider.update(job);
+                cancelJob(job);
             } catch (PersistenceException e1) {
                 logger.severe(String.format("Abnormal termination: %s", ExceptionUtils.getStackTrace(logger, e1)));
             }
-            shutDownExecutor(user != null ? user : currentContext.getPrincipal().getName());
         }
     }
 
-    private boolean startNextWaitingJob(String user) {
-        // If there are waiting jobs for this user, let's trigger the execution of the first one
-        final ExecutionJob nextJob = this.jobQueue.take(user);
-        if (nextJob != null) {
-            final ExecutorService executorService = this.executors.get(user);
-            if (executorService == null) {
-                throw new ExecutionException("Executor service for user " + user + " was reset");
+    public void cancelJob(ExecutionJob job) throws PersistenceException {
+        try {
+            if (job.getExecutionStatus() != ExecutionStatus.CANCELLED) {
+                job.setExecutionStatus(ExecutionStatus.FAILED);
             }
-            executorService.submit(() -> JobCommand.START.applyTo(nextJob));
-            return true;
-        }
-        return false;
-    }
 
-    private void cancelJob(ExecutionJob job) throws PersistenceException {
-        if (job.getExecutionStatus() != ExecutionStatus.CANCELLED) {
-            job.setExecutionStatus(ExecutionStatus.FAILED);
-        }
-
-        if (job.getEndTime() == null) {
-            job.setEndTime(LocalDateTime.now());
-        }
-        WorkflowDescriptor workflow = workflowProvider.get(job.getWorkflowId());
-        Duration time = null;
-        if (job.getStartTime() != null && job.getEndTime() != null) {
-            time = Duration.between(job.getStartTime(), job.getEndTime());
-        }
-        String msg = String.format("Job [%s] for workflow [%s] %s after %ss",
-                                   job.getId(),
-                                   workflow != null ? workflow.getName() : "n/a",
-                                   (job.getExecutionStatus() == ExecutionStatus.CANCELLED ? " cancelled " : " failed "),
-                                   time != null ? time.getSeconds() : "<unknown>");
-        logger.warning(msg);
-        jobProvider.update(job);
-        job.getTasks().forEach(t -> {
-            if (t.getExecutionStatus() != ExecutionStatus.DONE && t.getExecutionStatus() != ExecutionStatus.FAILED) {
-                t.setExecutionStatus(ExecutionStatus.CANCELLED);
-                try {
-                    taskProvider.update(t);
-                } catch (PersistenceException e) {
-                    logger.warning(ro.cs.tao.utils.ExceptionUtils.getStackTrace(logger, e));
-                }
+            if (job.getEndTime() == null) {
+                job.setEndTime(LocalDateTime.now());
             }
-        });
-        Messaging.send(new UserPrincipal(job.getUserName()), Topic.EXECUTION.value(), this, msg);
-        shutDownExecutor(job.getUserName());
-        cleanupTransientComponents(job);
-    }
-
-    private void shutDownExecutor(final String principalName) {
-        if (!SystemPrincipal.instance().getName().equals(principalName)) {
-            final List<Long> pendingJobIds = this.jobQueue.getUserJobs(principalName);
-            if (pendingJobIds != null && pendingJobIds.size() > 0) {
-                final ExecutorService service = executors.get(principalName);
-                if (service != null) {
-                    service.shutdown();
-                    executors.remove(principalName);
-                }
-                // update user processing quota
-                try {
-                    UserQuotaManager.getInstance().updateUserProcessingQuota(new UserPrincipal(principalName));
-                } catch (QuotaException e) {
-                    logger.severe(String.format("Error updating quota. Error message: %s", e.getMessage()));
-                }
+            WorkflowDescriptor workflow = workflowProvider.get(job.getWorkflowId());
+            Duration time = null;
+            if (job.getStartTime() != null && job.getEndTime() != null) {
+                time = Duration.between(job.getStartTime(), job.getEndTime());
             }
+            String msg = String.format("Job [%s] for workflow [%s] %s after %ss",
+                                       job.getId(),
+                                       workflow != null ? workflow.getName() : "n/a",
+                                       (job.getExecutionStatus() == ExecutionStatus.CANCELLED ? " cancelled " : " failed "),
+                                       time != null ? time.getSeconds() : "<unknown>");
+            logger.warning(msg);
+            jobProvider.update(job);
+            job.getTasks().forEach(t -> {
+                if (t.getExecutionStatus() != ExecutionStatus.DONE && t.getExecutionStatus() != ExecutionStatus.FAILED) {
+                    t.setExecutionStatus(ExecutionStatus.CANCELLED);
+                    try {
+                        taskProvider.update(t);
+                    } catch (PersistenceException e) {
+                        logger.warning(ro.cs.tao.utils.ExceptionUtils.getStackTrace(logger, e));
+                    }
+                }
+            });
+            Messaging.send(new UserPrincipal(job.getUserName()), Topic.EXECUTION.value(), this, msg);
+            cleanupTransientComponents(job);
+        } finally {
+            decrementActiveJobs();
         }
     }
 
@@ -961,15 +899,10 @@ public class Orchestrator extends Notifiable {
                     // Since the next component can handle only 1 input, we split the current job in as
                     // many jobs as the number of inputs. The current job remains the same, with only 1st input
                     try {
-                        List<ExecutionJob> jobs = this.jobFactory.splitJob(task.getJob());
+                        final List<ExecutionJob> jobs = this.jobFactory.splitJob(task.getJob());
                         logger.fine(String.format("Job %s will fork additional %d jobs", task.getJob().getName(), jobs.size()));
-                        //final String user = task.getContext().getPrincipal().getName();
-                        final String user = task.getJob().getUserName();
-                        final ExecutorService executorService = this.executors.get(user);
                         for (ExecutionJob job : jobs) {
-                            if (canSubmitJob(job)) {
-                                executorService.submit(() -> JobCommand.START.applyTo(job));
-                            }
+                            this.jobQueue.put(job);
                         }
                     } catch (Exception e) {
                         logger.warning(ro.cs.tao.utils.ExceptionUtils.getStackTrace(logger, e));
@@ -1424,31 +1357,14 @@ public class Orchestrator extends Notifiable {
         return UserQuotaManager.getInstance().checkUserProcessingQuota(user);
     }
 
-    private boolean canSubmitJob(ExecutionJob job) {
-        final List<ExecutionJob> runnableJobs = this.jobProvider.list(job.getUserName(),
-                                                                      new HashSet<>() {{
-            add(ExecutionStatus.QUEUED_ACTIVE);
-            add(ExecutionStatus.RUNNING);
-        }});
-        final int limit = Math.min(Integer.parseInt(ConfigurationManager.getInstance().getValue(USER_JOB_LIMIT_KEY, "1")),
-                                   NodeManager.getInstance().getActiveNodes());
-        if (runnableJobs != null && (limit != 0 && runnableJobs.size() > limit - 1)) {
-            logger.warning(String.format("Job %d is #%d in the waiting list for user '%s'",
-                                         job.getId(), this.jobQueue.put(job), job.getUserName()));
-            return false;
-        }
-        return true;
-    }
-
     private ExecutionJob tryCreateJob(String user, SessionContext context, ExecutionRequest request) {
-        final ExecutionJob executionJob = createJob(context, request,
-                                                    ConfigurationManager.getInstance().getBooleanValue("optimize.workflows"));
-        return canSubmitJob(executionJob) ? executionJob : null;
+        return createJob(context, request, ConfigurationManager.getInstance().getBooleanValue("optimize.workflows"));
+        //return canSubmitJob(executionJob) ? executionJob : null;
     }
 
     private ExecutionJob tryCreateJob(String user, String wpsId, Map<String, Map<String, String>> inputs) {
-        final ExecutionJob executionJob = createJob(wpsId, inputs);
-        return canSubmitJob(executionJob) ? executionJob : null;
+        return createJob(wpsId, inputs);
+        //return canSubmitJob(executionJob) ? executionJob : null;
     }
 
     private String translateOutputToMasterPath(ProcessingExecutionTask task) {
@@ -1488,53 +1404,104 @@ public class Orchestrator extends Notifiable {
     private void tryRemoveTemporaryWorkflow(ExecutionJob job) {
         final WorkflowDescriptor workflow = workflowProvider.get(job.getWorkflowId());
         if (workflow.getCreatedFromWorkflowId() != null) {
-            final List<ExecutionJob> jobs = jobProvider.listByWorkflow(workflow.getId());
-            if (jobs.stream().allMatch(j -> j.getExecutionStatus() == ExecutionStatus.FAILED ||
-                                            j.getExecutionStatus() == ExecutionStatus.DONE ||
-                                            j.getExecutionStatus() == ExecutionStatus.CANCELLED)) {
-                final List<WorkflowNodeDescriptor> nodes = workflow.getNodes();
-                final Map<Long, Long> idMap = new HashMap<>();
-                long originalWorkflowId = workflow.getCreatedFromWorkflowId();
-                for (WorkflowNodeDescriptor node : nodes) {
-                    idMap.put(node.getId(), node.getCreatedFromNodeId());
-                }
-                try {
-                    for (ExecutionJob jb : jobs) {
-                        final List<ExecutionTask> tasks = jb.getTasks();
-                        for (ExecutionTask task : tasks) {
-                            final Long originalId = idMap.get(task.getWorkflowNodeId());
-                            if (originalId != null) {
-                                task.setWorkflowNodeId(originalId);
-                                taskProvider.update(task);
-                            }
-                        }
-                        jb.setWorkflowId(originalWorkflowId);
-                        jobProvider.update(jb);
+            synchronized (lock) {
+                final List<ExecutionJob> jobs = jobProvider.listByWorkflow(workflow.getId());
+                if (jobs.stream().allMatch(j -> j.getExecutionStatus() == ExecutionStatus.FAILED ||
+                        j.getExecutionStatus() == ExecutionStatus.DONE ||
+                        j.getExecutionStatus() == ExecutionStatus.CANCELLED)) {
+                    final List<WorkflowNodeDescriptor> nodes = workflow.getNodes();
+                    final Map<Long, Long> idMap = new HashMap<>();
+                    long originalWorkflowId = workflow.getCreatedFromWorkflowId();
+                    for (WorkflowNodeDescriptor node : nodes) {
+                        idMap.put(node.getId(), node.getCreatedFromNodeId());
                     }
-                    workflowProvider.delete(workflow);
-                } catch (PersistenceException ex) {
-                    logger.severe(ex.getMessage());
+                    try {
+                        for (ExecutionJob jb : jobs) {
+                            final List<ExecutionTask> tasks = jb.getTasks();
+                            for (ExecutionTask task : tasks) {
+                                final Long originalId = idMap.get(task.getWorkflowNodeId());
+                                if (originalId != null) {
+                                    task.setWorkflowNodeId(originalId);
+                                    taskProvider.update(task);
+                                }
+                            }
+                            jb.setWorkflowId(originalWorkflowId);
+                            jobProvider.update(jb);
+                        }
+                        workflowProvider.delete(workflow);
+                    } catch (PersistenceException ex) {
+                        logger.severe(ex.getMessage());
+                    }
                 }
             }
         }
     }
 
+    /**
+     * Moves a job one position closer to the head of the "user" queue (the job position in the queue is swapped with
+     * the one of the job of the same user that is closer to the head.
+     * If the job is already at the head of the queue, the method does nothing.
+     *
+     * @param user  The user
+     * @param jobId The job identifier
+     */
     public void moveJobToHead(String user, long jobId) {
         jobQueue.moveJobToHead(user, jobId);
     }
-
+    /**
+     * Moves a job one position closer to the head of the queue, regardless the user.
+     * If the job is already at the head of the queue, the method does nothing.
+     *
+     * @param jobId The job identifier
+     */
+    public void moveJobToHead(long jobId) {
+        jobQueue.moveJobToHead(jobId);
+    }
+    /**
+     * Moves a job one position closer to the tail of the queue, regardless the user.
+     * If the job is already at the tail of the queue, the method does nothing.
+     *
+     * @param jobId The job identifier
+     */
+    public void moveJobToTail(long jobId) {
+        jobQueue.moveJobToTail(jobId);
+    }
+    /**
+     * Moves a job one position closer to the tail of the "user" queue (the job position in the queue is swapped with
+     * the one of the job of the same user that is closer to the tail.
+     * If the job is already at the tail of the queue, the method does nothing.
+     *
+     * @param user  The user
+     * @param jobId The job identifier
+     */
     public void moveJobToTail(String user, long jobId) {
         jobQueue.moveJobToTail(user, jobId);
     }
-
+    /**
+     * Lists the contents of the job queue.
+     */
+    public Queue<Tuple<Long, String>> getAllJobs() {
+        return jobQueue.getAllJobs();
+    }
+    /**
+     * Lists all the queued jobs of a user
+     * @param user  The name of the user
+     */
     public List<Long> getUserQueuedJobs(String user) {
         return jobQueue.getUserJobs(user);
     }
-
-    public Map<String, Queue<Long>> getQueuedJobs() {
-        return jobQueue.getAll();
+    /**
+     * Lists all the jobs for all the users, grouped by user
+     */
+    public Map<String, List<Long>> getQueuedJobs() {
+        return jobQueue.getUserQueues();
     }
-
+    /**
+     * Removes a job from the queue, regardless its position in the queue.
+     *
+     * @param user  The user
+     * @param jobId The job identifier
+     */
     public void removeJob(String user, long jobId) {
         jobQueue.removeJob(user, jobId);
     }
@@ -1588,17 +1555,7 @@ public class Orchestrator extends Notifiable {
                 try {
                     AbstractMap.SimpleEntry<Message, SessionContext> entry = messageQueue.take();
                     logger.finest("Dequeued message " + entry.getKey());
-                    String user = entry.getValue().getPrincipal().getName();
-                    ExecutorService service = Orchestrator.this.executors.get(user);
-                    if (service == null) {
-                        service = Executors.newFixedThreadPool(1);
-                        Orchestrator.this.executors.put(user, service);
-                    }
-                    if (service.isShutdown() || service.isTerminated()) {
-                        logger.warning("Executor for " + entry.getKey() + " was shutdown. Further tasks cannot be processed");
-                    } else {
-                        service.submit(() -> processMessage(entry.getKey(), entry.getValue()));
-                    }
+                    Orchestrator.this.messageWorker.submit(() -> processMessage(entry.getKey(), entry.getValue()));
                 } catch (InterruptedException e) {
                     logger.severe(e.getMessage());
                 }

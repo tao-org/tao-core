@@ -23,7 +23,7 @@ import java.util.Set;
  * @author Cosmin Cara
  * @since  1.4.1
  */
-public class FileMap<K, V> implements Map<K, V> {
+public class FileBackedMap<K, V>  implements Map<K, V> {
     private final Path file;
     private final Map<K, V> map;
 
@@ -33,7 +33,7 @@ public class FileMap<K, V> implements Map<K, V> {
      *
      * @param file  The backing file
      */
-    public FileMap(Path file) {
+    public FileBackedMap(Path file) {
         if (file == null) {
             throw new NullPointerException("file");
         }
