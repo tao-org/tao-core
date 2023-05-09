@@ -5,6 +5,11 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Parser for naming rule expression that also allows the replacement of tokens with actual values.
+ *
+ * @author Cosmin Cara
+ */
 public class NameExpressionParser {
     private final NamingRule rule;
     private final Pattern rulePattern;
@@ -15,6 +20,10 @@ public class NameExpressionParser {
         this.rulePattern = Pattern.compile(this.rule.getRegEx());
     }
 
+    /**
+     * Parses (validates) the given naming rule expression.
+     * @param expression    The expression to be validated
+     */
     public void parse(String expression) {
         Matcher tokenMatcher = tokenPattern.matcher(expression);
         List<String> invalidTokens = new ArrayList<>();
@@ -34,6 +43,9 @@ public class NameExpressionParser {
         }
     }
 
+    /**
+     * Replaces the naming rule expression tokens with actual values.
+     */
     public String resolve(String expression, String[] names) throws ParseException {
         parse(expression);
         String transformed = expression;
@@ -56,15 +68,6 @@ public class NameExpressionParser {
                                                        name, this.rule.getRegEx()));
             }
         }
-
-        return transformed;
-    }
-
-    public class Token {
-        final String name;
-
-        public Token(String name) {
-            this.name = name;
-        }
+        return DateFunctions.resolve(transformed);
     }
 }

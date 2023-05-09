@@ -2,7 +2,7 @@ package ro.cs.tao.optimization;
 
 import ro.cs.tao.component.*;
 import ro.cs.tao.execution.Optimizers;
-import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.services.utils.WorkflowUtilities;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
@@ -10,6 +10,7 @@ import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 
 /**
@@ -80,19 +81,22 @@ public class WorkflowOptimizer {
             Long vId = wNode.getId();
             OptimizationNode v = references.get(vId);
 
-            for (ComponentLink link: wNode.getIncomingLinks()) {
-                Long uId = link.getSourceNodeId();
+            final Set<ComponentLink> links = wNode.getIncomingLinks();
+            if (links != null) {
+                for (ComponentLink link : links) {
+                    Long uId = link.getSourceNodeId();
 
-                OptimizationNode u = references.get(uId);
+                    OptimizationNode u = references.get(uId);
 
-                if (u == null) {
-                    /* no known optimization node has node with id uId */
-                    return null;
+                    if (u == null) {
+                        /* no known optimization node has node with id uId */
+                        return null;
+                    }
+
+                    /* add link between optimization nodes both ways */
+                    u.addChild(v);
+                    v.addParent(u);
                 }
-
-                /* add link between optimization nodes both ways */
-                u.addChild(v);
-                v.addParent(u);
             }
         }
 
@@ -141,7 +145,8 @@ public class WorkflowOptimizer {
      * @param workflowName original workflow's name
      * @return optimized workflow
      */
-    private static WorkflowDescriptor createWorkflow(OptimizationGraph graph, String workflowName) {
+    private static WorkflowDescriptor createWorkflow(OptimizationGraph graph, String workflowName,
+                                                     Map<String, Map<String, String>> values) {
         Logger logger = Logger.getLogger(WorkflowOptimizer.class.getName());
 
         OptimizedWorkflowBuilder builder = new OptimizedWorkflowBuilder(workflowName);
@@ -151,10 +156,14 @@ public class WorkflowOptimizer {
 
             /* make empty workflow */
             WorkflowDescriptor workflow = builder.createWorkflowDescriptor();
+            if (workflow.getNodes().size() > 0) {
+                // already done this
+                return workflow;
+            }
 
             /* for every optimization node make a workflow node */
             for (OptimizationNode node : graph.getNodes()) {
-                WorkflowNodeDescriptor wNode = builder.createOptimizedNode(node, workflow);
+                WorkflowNodeDescriptor wNode = builder.createOptimizedNode(node, workflow, values);
 
                 translation.put(node, wNode);
             }
@@ -195,7 +204,8 @@ public class WorkflowOptimizer {
      * @param workflow original workflow
      * @return optimized workflow
      */
-    public static WorkflowDescriptor getOptimizedWorkflow(WorkflowDescriptor workflow) {
+    public static WorkflowDescriptor getOptimizedWorkflow(WorkflowDescriptor workflow,
+                                                          Map<String, Map<String, String>> values) {
         Logger logger = Logger.getLogger(WorkflowOptimizer.class.getName());
 
         if (workflow == null) {
@@ -227,6 +237,6 @@ public class WorkflowOptimizer {
             return null;
         }
 
-        return createWorkflow(graph, workflow.getName());
+        return createWorkflow(graph, workflow.getName(), values);
     }
 }

@@ -41,6 +41,7 @@ public class TargetDescriptor extends StringIdentifiable {
     private DataDescriptor dataDescriptor;
     private List<String> constraints;
     private int cardinality = 1;
+    private String referencedTargetDescriptorId;
 
     public TargetDescriptor() { }
 
@@ -116,6 +117,14 @@ public class TargetDescriptor extends StringIdentifiable {
         this.constraints = constraints;
     }
 
+    public String getReferencedTargetDescriptorId() {
+        return referencedTargetDescriptorId;
+    }
+
+    public void setReferencedTargetDescriptorId(String referencedTargetDescriptorId) {
+        this.referencedTargetDescriptorId = referencedTargetDescriptorId;
+    }
+
     /**
      * Verifies if all the constraints defined on this instance are satisfied by the source descriptor.
      *
@@ -161,6 +170,7 @@ public class TargetDescriptor extends StringIdentifiable {
             clone.constraints = new ArrayList<>(this.constraints);
         }
         clone.cardinality = this.cardinality;
+        clone.referencedTargetDescriptorId = this.referencedTargetDescriptorId;
         return clone;
     }
 

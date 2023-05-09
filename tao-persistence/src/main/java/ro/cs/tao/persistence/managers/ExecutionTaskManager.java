@@ -22,49 +22,102 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.execution.model.*;
-import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
+import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.repository.ExecutionTaskRepository;
 
 import javax.sql.DataSource;
 import java.sql.PreparedStatement;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @Component("executionManager")
-public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, ExecutionTaskRepository> {
+public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, ExecutionTaskRepository>
+                                  implements ExecutionTaskProvider {
 
     @Autowired
     private ExecutionJobManager executionJobManager;
-
     @Autowired
     private DataSource dataSource;
+    private final Logger logger = Logger.getLogger(ExecutionTaskManager.class.getName());
 
-    public ExecutionTask updateStatus(ExecutionTask task, ExecutionStatus newStatus) throws PersistenceException {
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        jdbcTemplate.update("UPDATE execution.task SET execution_status_id = ?, resource_id = ?, start_time = ? WHERE id = ?",
-                            newStatus.value(), task.getResourceId(), task.getLastUpdated(), task.getId());
-        return get(task.getId());
+    private final ReentrantLock lock = new ReentrantLock();
+
+    public ExecutionTask updateStatus(ExecutionTask task, ExecutionStatus newStatus, String reason) throws PersistenceException {
+        lock.lock();
+        try {
+            boolean failed = newStatus == ExecutionStatus.FAILED;
+            task.setLastUpdated(LocalDateTime.now());
+            final ExecutionStatus oldStatus = task.getExecutionStatus();
+            JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+            jdbcTemplate.update("UPDATE execution.task SET execution_status_id = ?, resource_id = ?, execution_log = ?, last_updated = ? WHERE id = ?",
+                                newStatus.value(), task.getResourceId(), failed ? reason : null, task.getLastUpdated(), task.getId());
+            logger.log(failed
+                       ? Level.SEVERE
+                       : newStatus == ExecutionStatus.CANCELLED
+                         ? Level.WARNING
+                         : Level.FINE,
+                       String.format("Task %s status change [%s -> %s].", task.getId(), oldStatus, newStatus)
+                               + (reason != null ? " Reason: " + reason : ""));
+            task = get(task.getId());
+            return task;
+        } finally {
+            lock.unlock();
+        }
     }
 
-    @Transactional
-    public List<ExecutionTask> getRunningTasks() { return repository.getRunningTasks(); }
+    @Override
+    public List<ExecutionTask> listRunning() {
+        lock.lock();
+        try {
+            return repository.getRunningTasks();
+        } finally {
+            lock.unlock();
+        }
+    }
 
-    public List<ExecutionTask> getExecutingTasks() { return repository.getExecutingTasks(); }
+    @Override
+    public List<ExecutionTask> listExecuting(String applicationId) {
+        lock.lock();
+        try {
+            return repository.getExecutingTasks(applicationId);
+        } finally {
+            lock.unlock();
+        }
+    }
 
-    public List<ExecutionTask> getRemoteExecutingTasks() { return repository.getRemoteExecutingTasks(); }
+    @Override
+    public List<ExecutionTask> listRemoteExecuting() { return repository.getRemoteExecutingTasks(); }
 
-    @Transactional
-    public List<ExecutionTaskSummary> getStatus(long jobId) {
+    @Override
+    public List<ExecutionTask> listByHost(String hostName) { return repository.getTasksByHost(hostName); }
+
+    @Override
+    public List<ExecutionTask> getDataSourceTasks(long jobId) {
+        return repository.getDataSourceTasks(jobId);
+    }
+
+    @Override
+    public List<ExecutionTaskSummary> getTasksStatus(long jobId) {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         return jdbcTemplate.query(con -> {
             PreparedStatement statement =
                     con.prepareStatement("SELECT t.id, w.name \"workflow\", CASE WHEN d.id IS NULL THEN CASE WHEN p.id IS NULL THEN 'group' ELSE p.id END ELSE d.id END \"componentName\", " +
-                                                 "t.start_time, t.end_time, t.execution_node_host_name, t.execution_status_id FROM execution.task t " +
+                                                 "t.start_time, t.end_time, t.execution_node_host_name, t.execution_status_id, t.last_updated, " +
+                                                 "CASE WHEN ct.average_duration_seconds IS NULL THEN -1 ELSE " +
+                                                 "EXTRACT(EPOCH FROM (COALESCE(t.last_updated, t.start_time) - t.start_time)) /  ct.average_duration_seconds * 100.0 END as progress, t.execution_log " +
+                                                 "FROM execution.task t " +
                                                  "INNER JOIN execution.job j ON j.id = t.job_id " +
-                                                 "INNER JOIN workflow.graph w ON w.id = j.workflow_id " +
+                                                 "LEFT OUTER JOIN workflow.graph w ON w.id = j.workflow_id " +
                                                  "LEFT OUTER JOIN component.data_source_component d ON d.id = t.component_id " +
-                                                 "LEFT OUTER JOIN component.processing_component p ON p.id = t.component_id where job_id = ? " +
+                                                 "LEFT OUTER JOIN component.processing_component p ON p.id = t.component_id " +
+                                                 "LEFT OUTER JOIN execution.component_time ct ON t.component_id = ct.component_id " +
+                                                 "WHERE job_id = ? " +
                                                  "ORDER BY t.start_time, t.id");
             statement.setLong(1, jobId);
             return statement;
@@ -83,38 +136,63 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
             }
             result.setHost(rs.getString(6));
             result.setTaskStatus(EnumUtils.getEnumConstantByValue(ExecutionStatus.class, rs.getInt(7)));
+            timestamp = rs.getTimestamp(8);
+            if (timestamp != null) {
+                result.setLastUpdated(timestamp.toLocalDateTime());
+            }
+            double progress = rs.getDouble(9);
+            // If the progress comes > 100.0, it means the task takes longer than the current average,
+            // hence we set it to 99 not to overflow
+            if (Double.compare(progress, 100.0) == 1) {
+                progress = 99;
+            }
+            result.setPercentComplete(progress);
+            result.setOutput(rs.getString(10));
+            if (result.getOutput() == null) {
+                result.setOutput("");
+            }
             return result;
         });
     }
 
-    @Transactional
-    public ExecutionTask getTaskByJobAndNode(long jobId, long nodeId, int instanceId) {
+    @Override
+    public ExecutionTask getByJobAndNode(long jobId, long nodeId, int instanceId) {
         return repository.findByJobAndWorkflowNode(jobId, nodeId, instanceId);
     }
 
-    @Transactional
-    public ExecutionTask getTaskByGroupAndNode(long groupId, long nodeId, int instanceId) {
+    @Override
+    public ExecutionTask getByGroupAndNode(long groupId, long nodeId, int instanceId) {
         return repository.findByGroupAndWorkflowNode(groupId, nodeId, instanceId);
     }
 
-    @Transactional
-    public ExecutionTask getTaskByResourceId(String id) throws PersistenceException {
-        final ExecutionTask existingTask = repository.findByResourceId(id);
-        if (existingTask == null) {
-            throw new PersistenceException("There is no execution task with the given resource identifier: " + id);
-        }
-        return existingTask;
+    @Override
+    public ExecutionTask getByResourceId(String id) {
+        return repository.findByResourceId(id);
     }
 
-    @Transactional
+    @Override
     public int getCPUsForUser(String userName) {
         return repository.getCPUsForUser(userName);
     }    
 
-    @Transactional
+    @Override
     public int getMemoryForUser(String userName) {
         return repository.getMemoryForUser(userName);
-    }    
+    }
+
+    @Override
+    public int getRunningParents(long jobId, long taskId) {
+        return repository.getRunningParents(jobId, taskId);
+    }
+
+    @Override
+    public void updateComponentTime(String id, int duration) {
+        try {
+            repository.updateComponentTime(id, duration);
+        } catch (Throwable t) {
+            logger.severe(t.getMessage());
+        }
+    }
 
     /**
      * Saves a task directly attached to an existent job
@@ -126,85 +204,92 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
      */
     @Transactional
     public ExecutionTask save(ExecutionTask task, ExecutionJob job) throws PersistenceException {
-        // check method parameters
-        if (!checkExecutionTask(task, job, task.getId() != null)) {
-            throw new PersistenceException("Invalid parameters were provided for adding new execution task !");
-        }
-
-        // check if there is already task with the same resource identifier
-        if (task.getResourceId() != null) {
-            final ExecutionTask taskWithSameResourceId = repository.findByResourceId(task.getResourceId());
-            if (taskWithSameResourceId != null) {
-                throw new PersistenceException("There is already another task with the resource identifier: " + task.getResourceId());
-            }
-        }
-
-        if (task instanceof ProcessingExecutionTask || task instanceof DataSourceExecutionTask ||
-                task instanceof ExecutionGroup) {
-
-            // set the task parent job
-            task.setJob(job);
-
-            // save the new ExecutionTask entity
-            final ExecutionTask savedExecutionTask =  repository.save(task);
-
-            // add the task to job tasks collection
-            List<ExecutionTask> jobTasks = job.orderedTasks();
-            if (jobTasks.stream().noneMatch(t -> t.getId().equals(task.getId()))) {
-                jobTasks.add(task);
-                job.setTasks(jobTasks);
-                executionJobManager.update(job);
+        lock.lock();
+        try {
+            // check method parameters
+            if (!checkExecutionTask(task, job, task.getId() != null)) {
+                throw new PersistenceException("Invalid parameters were provided for adding new execution task !");
             }
 
-            return savedExecutionTask;
-        }
+            // check if there is already task with the same resource identifier
+            if (task.getResourceId() != null) {
+                final ExecutionTask taskWithSameResourceId = repository.findByResourceId(task.getResourceId());
+                if (taskWithSameResourceId != null) {
+                    throw new PersistenceException("There is already another task with the resource identifier: " + task.getResourceId());
+                }
+            }
 
-        return null;
+            if (task instanceof ProcessingExecutionTask || task instanceof DataSourceExecutionTask ||
+                    task instanceof ExecutionGroup || task instanceof WPSExecutionTask) {
+
+                // set the task parent job
+                task.setJob(job);
+
+                // save the new ExecutionTask entity
+                final ExecutionTask savedExecutionTask = repository.save(task);
+                // add the task to job tasks collection
+                List<ExecutionTask> jobTasks = job.orderedTasks();
+                if (jobTasks.stream().noneMatch(t -> t.getId().equals(task.getId()))) {
+                    jobTasks.add(task);
+                    job.setTasks(jobTasks);
+                    executionJobManager.update(job);
+                }
+
+                return savedExecutionTask;
+            }
+
+            return null;
+        } finally {
+            lock.unlock();
+        }
     }
 
-    @Transactional
-    public ExecutionTask saveExecutionGroupSubTask(ExecutionTask task, ExecutionGroup taskGroup) throws PersistenceException {
-
-        // check method parameters
-        if (!checkExecutionGroupTask(task, taskGroup, false)) {
-            throw new PersistenceException("Invalid parameters were provided for adding new execution task within task group " + taskGroup.getId() + "!");
-        }
-
-        // check if there is already task with the same resource identifier
-        if (task.getResourceId() != null) {
-            final ExecutionTask taskWithSameResourceId = repository.findByResourceId(task.getResourceId());
-            if (taskWithSameResourceId != null) {
-                throw new PersistenceException("There is already another task with the resource identifier: " + task.getResourceId());
-            }
-        }
-
-        if (task instanceof ProcessingExecutionTask || task instanceof DataSourceExecutionTask) {
-
-            // set the task parent group
-            task.setGroupTask(taskGroup);
-
-            // save the new ExecutionTask entity
-            final ExecutionTask savedExecutionTask =  repository.save(task);
-
-            // add the task to job tasks collection
-            List<ExecutionTask> groupTasks = taskGroup.getTasks();
-            if (groupTasks == null){
-                groupTasks = new ArrayList<>();
-            }
-            if (groupTasks.stream().noneMatch(t -> t.getId().equals(task.getId()))) {
-                groupTasks.add(task);
-                taskGroup.setTasks(groupTasks);
-                repository.save(taskGroup);
+    @Override
+    public ExecutionTask save(ExecutionTask task, ExecutionGroup taskGroup) throws PersistenceException {
+        lock.lock();
+        try {
+            // check method parameters
+            if (!checkExecutionGroupTask(task, taskGroup, false)) {
+                throw new PersistenceException("Invalid parameters were provided for adding new execution task within task group " + taskGroup.getId() + "!");
             }
 
-            return savedExecutionTask;
-        }
+            // check if there is already task with the same resource identifier
+            if (task.getResourceId() != null) {
+                final ExecutionTask taskWithSameResourceId = repository.findByResourceId(task.getResourceId());
+                if (taskWithSameResourceId != null) {
+                    throw new PersistenceException("There is already another task with the resource identifier: " + task.getResourceId());
+                }
+            }
 
-        return null;
+            if (task instanceof ProcessingExecutionTask || task instanceof DataSourceExecutionTask) {
+
+                // set the task parent group
+                task.setGroupTask(taskGroup);
+
+                // save the new ExecutionTask entity
+                final ExecutionTask savedExecutionTask = repository.save(task);
+                // add the task to job tasks collection
+                List<ExecutionTask> groupTasks = taskGroup.getTasks();
+                if (groupTasks == null) {
+                    groupTasks = new ArrayList<>();
+                }
+                if (groupTasks.stream().noneMatch(t -> t.getId().equals(task.getId()))) {
+                    groupTasks.add(task);
+                    taskGroup.setTasks(groupTasks);
+                    repository.save(taskGroup);
+                }
+
+                return savedExecutionTask;
+            }
+
+            return null;
+        } finally {
+            lock.unlock();
+        }
     }
 
-    @Transactional
-    public ExecutionTask saveExecutionGroupWithSubTasks(ExecutionGroup taskGroup, ExecutionJob job) throws PersistenceException {
+    @Override
+    public ExecutionTask saveWithSubTasks(ExecutionGroup taskGroup, ExecutionJob job) throws PersistenceException {
 
         // check method parameters
         if (!checkExecutionTask(taskGroup, job, false)) {
@@ -217,7 +302,7 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
         taskGroup = (ExecutionGroup) save(taskGroup, job);
 
         for (ExecutionTask subTask : subTasks){
-            saveExecutionGroupSubTask(subTask, taskGroup);
+            save(subTask, taskGroup);
         }
 
         return taskGroup;
@@ -236,7 +321,7 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
 
     @Override
     protected boolean checkEntity(ExecutionTask entity) {
-        return entity.getExecutionStatus() != null && entity.getWorkflowNodeId() != null;
+        return entity.getExecutionStatus() != null;// && entity.getWorkflowNodeId() != null;
     }
 
     private boolean checkExecutionJob(ExecutionJob job, boolean existingEntity) {

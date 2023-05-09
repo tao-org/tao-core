@@ -17,6 +17,7 @@
 package ro.cs.tao.component;
 
 import ro.cs.tao.configuration.ConfigurationManager;
+import ro.cs.tao.docker.ExecutionConfiguration;
 import ro.cs.tao.security.SessionStore;
 
 import java.nio.file.Paths;
@@ -163,7 +164,7 @@ public abstract class SystemVariable {
 
         @Override
         public String value() {
-            return Paths.get(ConfigurationManager.getInstance().getValue("node.mount.folder")).toString();
+            return ExecutionConfiguration.getWorkerContainerVolumeMap().getHostWorkspaceFolder();
         }
     }
 }

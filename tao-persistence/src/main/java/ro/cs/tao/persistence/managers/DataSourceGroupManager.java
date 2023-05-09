@@ -7,7 +7,8 @@ import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.datasource.DataSourceComponentGroup;
 import ro.cs.tao.datasource.beans.Query;
-import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.datasource.persistence.DataSourceComponentGroupProvider;
+import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.repository.DataSourceGroupRepository;
 import ro.cs.tao.persistence.repository.SourceDescriptorRepository;
 import ro.cs.tao.persistence.repository.TargetDescriptorRepository;
@@ -17,7 +18,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component("dataSourceGroupManager")
-public class DataSourceGroupManager extends TaoComponentManager<DataSourceComponentGroup, DataSourceGroupRepository> {
+public class DataSourceGroupManager extends TaoComponentManager<DataSourceComponentGroup, DataSourceGroupRepository>
+                                    implements DataSourceComponentGroupProvider {
 
     @Autowired
     private SourceDescriptorRepository sourceDescriptorRepository;
@@ -25,19 +27,21 @@ public class DataSourceGroupManager extends TaoComponentManager<DataSourceCompon
     @Autowired
     private TargetDescriptorRepository targetDescriptorRepository;
 
-    public List<DataSourceComponentGroup> getUserDataSourceComponents(String userName) {
+    @Override
+    public List<DataSourceComponentGroup> listByUser(String userName) {
         return userName != null ? this.repository.getUserDataSourceComponentGroups(userName) :
                 this.repository.getDataSourceComponentGroups();
     }
 
-    public DataSourceComponentGroup getDataSourceComponentByLabel(String label) {
+    @Override
+    public DataSourceComponentGroup getDataSourceComponentGroupByLabel(String label) {
         List<DataSourceComponentGroup> components = this.repository.getDataSourceComponentGroupByLabel(label);
         return (components == null || components.size() == 0) ? null : components.get(0);
     }
 
     @Override
     public DataSourceComponentGroup get(String id) {
-        DataSourceComponentGroup group = this.repository.getById(id);
+        DataSourceComponentGroup group = super.get(id);
         if (group != null) {
             // workaround for two eager collections
             Set<Query> queries = group.getDataSourceQueries();
@@ -48,7 +52,6 @@ public class DataSourceGroupManager extends TaoComponentManager<DataSourceCompon
             }
         }
         return group;
-        //return super.get(id);
     }
 
     @Override
@@ -83,11 +86,6 @@ public class DataSourceGroupManager extends TaoComponentManager<DataSourceCompon
             }
         }
         return super.update(entity);
-    }
-
-    @Override
-    public DataSourceComponentGroup delete(String id) throws PersistenceException {
-        return super.delete(id);
     }
 
     @Override

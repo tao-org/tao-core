@@ -32,6 +32,7 @@ public class Container extends StringIdentifiable {
 
     private String name;
     private String description;
+    private ContainerType type;
     private String tag;
     private String applicationPath;
     private String logo;
@@ -54,6 +55,10 @@ public class Container extends StringIdentifiable {
     @XmlElement(name = "description")
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+
+    @XmlElement(name = "type")
+    public ContainerType getType() { return type; }
+    public void setType(ContainerType type) { this.type = type; }
 
     @XmlElement(name = "tag")
     public String getTag() { return tag; }

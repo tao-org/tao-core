@@ -15,6 +15,8 @@
  */
 package ro.cs.tao.messaging;
 
+import ro.cs.tao.persistence.MessageProvider;
+
 import java.io.Serializable;
 import java.security.Principal;
 import java.util.function.Consumer;
@@ -50,27 +52,47 @@ public interface EventBus<T extends Serializable> {
      * Assigns a persister to this event bus such that any message will be stored.
      * @param persister The message persister.
      */
-    void setPersister(MessagePersister persister);
+    void setPersister(MessageProvider persister);
 
     /**
      * Sends an event on a topic.
-     * @param principal The user under which identity the event is send.
+     * @param principal The user under which identity the event is sent.
      * @param topic The topic
      * @param event The event
      */
-    void send(Principal principal, String topic, T event);
+    default void send(Principal principal, String topic, T event) {
+        send(principal.getName(), topic, event);
+    }
+
+    /**
+     * Sends an event on a topic.
+     * @param principal The user under which identity the event is sent.
+     * @param topic The topic
+     * @param event The event
+     */
+    void send(String principal, String topic, T event);
 
     /**
      * Sends a message on a topic
-     * @param principal The user under which identity the event is send.
+     * @param principal The user under which identity the event is sent.
      * @param topic The topic
      * @param message   The message
      */
-    void send(Principal principal, String topic, Message message);
+    default void send(Principal principal, String topic, Message message) {
+        send(principal.getName(), topic, message);
+    }
+
+    /**
+     * Sends a message on a topic
+     * @param principal The user under which identity the event is sent.
+     * @param topic The topic
+     * @param message   The message
+     */
+    void send(String principal, String topic, Message message);
 
     /**
      * Sends a message on a topic indicating also the source of the message.
-     * @param principal The user under which identity the event is send.
+     * @param principal The user under which identity the event is sent.
      * @param topic The topic
      * @param source    The source of the message
      * @param message   The message
@@ -81,7 +103,19 @@ public interface EventBus<T extends Serializable> {
 
     /**
      * Sends a message on a topic indicating also the source of the message.
-     * @param principal The user under which identity the event is send.
+     * @param principal The user under which identity the event is sent.
+     * @param topic The topic
+     * @param source    The source of the message
+     * @param message   The message
+     * @param data      Additional data
+     */
+    default void send(Principal principal, String topic, Object source, String message, String data) {
+        send(principal, topic, Message.create(principal.getName(), source, message, data, true));
+    }
+
+    /**
+     * Sends a message on a topic indicating also the source of the message.
+     * @param principal The user under which identity the event is sent.
      * @param topic The topic
      * @param source    The source of the message
      * @param message   The message

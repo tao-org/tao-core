@@ -19,9 +19,9 @@ import reactor.Environment;
 import reactor.bus.Event;
 import reactor.bus.EventBus;
 import reactor.core.config.DispatcherType;
+import ro.cs.tao.persistence.MessageProvider;
 import ro.cs.tao.utils.executors.NamedThreadPoolExecutor;
 
-import java.security.Principal;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
@@ -38,19 +38,20 @@ import static reactor.bus.selector.Selectors.$;
  */
 public class DefaultMessageBus implements ro.cs.tao.messaging.EventBus<Event<Message>> {
     private static final int MAX_THREADS = 2;
+    private static final int CAPACITY = 1024;
 
     private final EventBus messageBus;
     private final Set<String> topics;
     private final Map<Pattern, Set<reactor.fn.Consumer<Event<Message>>>> patternSubscribers;
     private final Set<String> matchedTopics;
-    private MessagePersister messagePersister;
+    private MessageProvider messagePersister;
     private final ExecutorService executorService;
     private final Logger logger;
 
     public DefaultMessageBus() {
         Environment environment = Environment.initializeIfEmpty();
         this.messageBus = EventBus.create(environment,
-                                          Environment.newDispatcher(MAX_THREADS,
+                                          Environment.newDispatcher(CAPACITY,
                                                                     MAX_THREADS,
                                                                     DispatcherType.THREAD_POOL_EXECUTOR));
         this.topics = new HashSet<>();
@@ -66,7 +67,7 @@ public class DefaultMessageBus implements ro.cs.tao.messaging.EventBus<Event<Mes
     }
 
     @Override
-    public void setPersister(MessagePersister messagePersister) {
+    public void setPersister(MessageProvider messagePersister) {
         this.messagePersister = messagePersister;
     }
 
@@ -115,17 +116,18 @@ public class DefaultMessageBus implements ro.cs.tao.messaging.EventBus<Event<Mes
     }
 
     @Override
-    public void send(Principal principal, String topic, Event<Message> event) {
+    public void send(String principal, String topic, Event<Message> event) {
         checkPatternConsumers(topic);
         Message message = event.getData();
         message.setTopic(topic);
+        message.setUser(principal);
         this.messageBus.notify(topic, event);
-        if (this.messagePersister != null) {
+        if (this.messagePersister != null && message.isPersistent()) {
             this.executorService.submit(() -> {
                 try {
-                    if (this.messagePersister != null && message.isPersistent()) {
-                        this.messagePersister.saveMessage(message);
-                    }
+                    //if (this.messagePersister != null && message.isPersistent()) {
+                    this.messagePersister.save(message);
+                    //}
                 } catch (Exception e) {
                     this.logger.severe(e.getMessage());
                 }
@@ -134,8 +136,8 @@ public class DefaultMessageBus implements ro.cs.tao.messaging.EventBus<Event<Mes
     }
 
     @Override
-    public void send(Principal principal, String topic, Message message) {
-        message.setUser(principal.getName());
+    public void send(String principal, String topic, Message message) {
+        message.setUser(principal);
         send(principal, topic, Event.wrap(message));
     }
 

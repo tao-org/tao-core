@@ -18,39 +18,68 @@ package ro.cs.tao.persistence.managers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.component.ParameterDescriptor;
 import ro.cs.tao.component.ParameterExpansionRule;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.enums.ProcessingComponentType;
-import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.persistence.PersistenceException;
+import ro.cs.tao.persistence.ProcessingComponentProvider;
 import ro.cs.tao.persistence.repository.ParameterExpansionRuleRepository;
 import ro.cs.tao.persistence.repository.ProcessingComponentRepository;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Component("processingComponentManager")
-public class ProcessingComponentManager extends TaoComponentManager<ProcessingComponent, ProcessingComponentRepository> {
+public class ProcessingComponentManager extends TaoComponentManager<ProcessingComponent, ProcessingComponentRepository>
+                                        implements ProcessingComponentProvider {
 
     @Autowired
     private ParameterExpansionRuleRepository expansionRuleRepository;
 
+    @Override
+    public ProcessingComponent get(String id, String containerId) {
+        return repository.getByIdAndContainer(id, containerId);
+    }
+
+    @Override
+    public ProcessingComponent getByLabel(String label, String containerId) {
+        return repository.getByLabelAndContainer(label, containerId);
+    }
+
     /**
      * Retrieve active processing components with SYSTEM and CONTRIBUTOR visibility
      */
-    @Transactional
-    public List<ProcessingComponent> getUserProcessingComponents(String userName) {
+    @Override
+    public List<ProcessingComponent> listUserProcessingComponents(String userName) {
         return repository.getUserComponentsByType(userName, ProcessingComponentType.EXECUTABLE.value());
     }
 
-    @Transactional
-    public List<ProcessingComponent> getUserScriptComponents(String userName) {
+    @Override
+    public List<ProcessingComponent> listUserScriptComponents(String userName) {
         return repository.getUserComponentsByType(userName, ProcessingComponentType.SCRIPT.value());
     }
 
-    public List<ProcessingComponent> getProcessingComponentsByLabel(String label) {
+    @Override
+    public boolean hasCopyComponent(String containerId) {
+        return getByLabel("Copy", containerId) != null;
+    }
+
+    @Override
+    public boolean hasMoveComponent(String containerId) {
+        return getByLabel("Move", containerId) != null;
+    }
+
+    @Override
+    public boolean hasDeleteComponent(String containerId) {
+        return getByLabel("Delete", containerId) != null;
+    }
+
+    @Override
+    public List<ProcessingComponent> listByLabel(String label) {
         return repository.getByLabel(label);
     }
 
@@ -68,7 +97,18 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
                 }
             });
         }
-        super.save(entity);
+        //super.save(entity);
+        if (!checkEntity(entity, false)) {
+            throw new PersistenceException(String.format("Invalid parameters provided for adding new entity of type %s!",
+                                                         entity.getClass().getSimpleName()));
+        }
+        if (entity.getId() != null && entity.getContainerId() != null) {
+            final ProcessingComponent existing = repository.getByIdAndContainer(entity.getId(), entity.getContainerId());
+            if (existing != null) {
+                throw new PersistenceException("There is already another entity with the identifier: " + entity.getId());
+            }
+        }
+        repository.save(entity);
         if (map.size() > 0) {
             expansionRuleRepository.saveAll(map.values());
             descriptors.forEach(d -> {
@@ -83,7 +123,21 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
 
     @Override
     public ProcessingComponent update(ProcessingComponent entity) throws PersistenceException {
-        return super.update(entity);
+        if (!checkEntity(entity, true)) {
+            throw new PersistenceException(String.format("Invalid parameters provided for updating entity of type %s!",
+                                                         entity.getClass().getSimpleName()));
+        }
+        repository.save(entity);
+        Map<ParameterDescriptor, ParameterExpansionRule> rules = entity.getParameterDescriptors().stream()
+                                                                       .filter(p -> p.getExpansionRule() != null)
+                                                                       .collect(Collectors.toMap(Function.identity(),
+                                                                                                 ParameterDescriptor::getExpansionRule));
+        for (Map.Entry<ParameterDescriptor, ParameterExpansionRule> entry : rules.entrySet()) {
+            ParameterExpansionRule rule = entry.getValue();
+            rule.setId(entry.getKey().getId());
+            expansionRuleRepository.save(rule);
+        }
+        return entity;
     }
 
     @Override

@@ -40,12 +40,13 @@ public abstract class DataSource<Q extends DataQuery, T> extends StringIdentifia
      * filteredParameters is an optional map that allows to:
      * 1) reduce the number of valueSet entries of a parameter
      * 2) map the entries of a valueSet to more friendly display values
-     * The structure of the map is: Map<Sensor, Map<ParameterName, Map<ValueSetEntry, ValueSetFriendlyValue>>>
+     * The structure of the map is: <code>Map&lt;Sensor, Map&lt;ParameterName, Map&lt;ValueSetEntry, ValueSetFriendlyValue&gt;&gt;&gt;</code>
      * If the member is not set, no filtering will be done.
      */
     protected Map<String, Map<String, Map<String, String>>> filteredParameters;
 
     public DataSource() {
+        super();
         this.properties = new Properties();
     }
 
@@ -145,6 +146,12 @@ public abstract class DataSource<Q extends DataQuery, T> extends StringIdentifia
      * Returns the sensors (product types) supported by this data source
      */
     public abstract String[] getSupportedSensors();
+
+    /**
+     * Returns the supported sensor types of this data source
+     */
+    public abstract Map<String, CollectionDescription> getSensorTypes();
+
     /**
      * Returns a the query parameters for each sensor supported by this data source
      */

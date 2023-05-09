@@ -100,7 +100,7 @@ public abstract class RuntimeInfo {
                     List<String> messages = consumer.getMessages();
                     for (String message : messages) {
                         if (message.startsWith("TotalVisibleMemorySize")) {
-                            mem = Long.parseLong(message.split("=")[1]) / ByteUnit.KILOBYTE.value();
+                            mem = Long.parseLong(message.split("=")[1]) / MemoryUnit.KB.value();
                             break;
                         }
                     }
@@ -126,7 +126,7 @@ public abstract class RuntimeInfo {
                     for (String message : messages) {
                         if (message.startsWith("FreePhysicalMemory")) {
                             // WMIC returns total memory in kilobytes
-                            mem = Long.parseLong(message.split("=")[1]) / ByteUnit.KILOBYTE.value();
+                            mem = Long.parseLong(message.split("=")[1]) / MemoryUnit.KB.value();
                             break;
                         }
                     }
@@ -157,7 +157,7 @@ public abstract class RuntimeInfo {
                         }
                     }
                     // WMIC returns total disk in bytes
-                    mem = mem / ByteUnit.GIGABYTE.value();
+                    mem = mem / MemoryUnit.GB.value();
                 }
             } catch (Exception ex) {
                 Logger.getLogger(RuntimeInfo.class.getName()).severe(ex.getMessage());
@@ -186,7 +186,7 @@ public abstract class RuntimeInfo {
                     }
                     long total = getTotalDiskGB();
                     // WMIC returns disk space in bytes
-                    mem = total - mem / ByteUnit.GIGABYTE.value();
+                    mem = total - mem / MemoryUnit.GB.value();
                 }
             } catch (Exception ex) {
                 Logger.getLogger(RuntimeInfo.class.getName()).severe(ex.getMessage());
@@ -262,7 +262,7 @@ public abstract class RuntimeInfo {
                         if (message.startsWith("MemTotal")) {
                             message = message.replace("MemTotal:", "").trim();
                             String value = message.substring(0, message.indexOf(" kB"));
-                            mem = Long.parseLong(value) / ByteUnit.KILOBYTE.value();
+                            mem = Long.parseLong(value) / MemoryUnit.KB.value();
                             break;
                         }
                     }
@@ -301,7 +301,7 @@ public abstract class RuntimeInfo {
                         if (message.startsWith("MemAvailable")) {
                             message = message.replace("MemAvailable:", "").trim();
                             String value = message.substring(0, message.indexOf(" kB"));
-                            mem = Long.parseLong(value) / ByteUnit.KILOBYTE.value();
+                            mem = Long.parseLong(value) / MemoryUnit.KB.value();
                             break;
                         }
                     }
@@ -336,7 +336,7 @@ public abstract class RuntimeInfo {
                     for (String message : messages) {
                         if (message.startsWith("total")) {
                             String[] values = message.replace("total", "").trim().split(" ");
-                            mem = Long.parseLong(values[0]) / ByteUnit.MEGABYTE.value();
+                            mem = Long.parseLong(values[0]) / MemoryUnit.MB.value();
                             break;
                         }
                     }
@@ -371,7 +371,7 @@ public abstract class RuntimeInfo {
                     for (String message : messages) {
                         if (message.startsWith("total")) {
                             String[] values = message.replace("total", "").trim().split(" ");
-                            mem = Long.parseLong(values[1]) / ByteUnit.MEGABYTE.value();
+                            mem = Long.parseLong(values[1]) / MemoryUnit.MB.value();
                             break;
                         }
                     }

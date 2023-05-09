@@ -1,5 +1,9 @@
 package ro.cs.tao.datasource.param;
 
+/**
+ * String constants holder for commonly used data source parameter names.
+ *
+ */
 public class CommonParameterNames {
     public static final String PLATFORM = "platformName";
     public static final String START_DATE = "startDate";

@@ -20,7 +20,7 @@ import ro.cs.tao.eodata.Polygon2D;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,7 +37,7 @@ public class ConverterFactory {
 
     public ConverterFactory() {
         converters = new HashMap<>();
-        converters.put(Date.class, DateParameterConverter.class);
+        converters.put(LocalDateTime.class, DateParameterConverter.class);
         converters.put(Polygon2D.class, PolygonParameterConverter.class);
     }
 
@@ -62,6 +62,26 @@ public class ConverterFactory {
             instance = ctor.newInstance(parameter);
         } catch (NoSuchMethodException | IllegalAccessException |
                  InstantiationException | InvocationTargetException e) {
+            e.printStackTrace();
+        }
+        return instance;
+    }
+
+    public <T> QueryParameterConverter simple(QueryParameter<T[]> parameter) {
+        Class<T> parameterType = (Class<T>) parameter.getType().getComponentType();
+        Class<? extends QueryParameterConverter> converterClass = converters.get(parameterType);
+        if (converterClass == null) {
+            converterClass = DefaultParameterConverter.class;
+        }
+        Constructor<? extends QueryParameterConverter> ctor;
+        QueryParameterConverter instance = null;
+        try {
+            QueryParameter<T> sParameter = new QueryParameter(parameterType, parameter.getName(),
+                                                                parameter.getMinValue(), parameter.getMaxValue());
+            ctor = converterClass.getConstructor(QueryParameter.class);
+            instance = ctor.newInstance(sParameter);
+        } catch (NoSuchMethodException | IllegalAccessException |
+                InstantiationException | InvocationTargetException e) {
             e.printStackTrace();
         }
         return instance;

@@ -40,6 +40,6 @@ public class CRSAdapter extends XmlAdapter<CoordinateReferenceSystem, String> {
 
 
     public CoordinateReferenceSystem marshal(String v) throws Exception {
-        return v != null ? CRS.decode(v) : null;
+        return v != null ? CRS.decode(v, true) : null;
     }
 }

@@ -19,6 +19,7 @@ package ro.cs.tao.persistence.managers;
 import org.springframework.stereotype.Component;
 import ro.cs.tao.execution.model.ExecutionJob;
 import ro.cs.tao.execution.model.ExecutionStatus;
+import ro.cs.tao.execution.persistence.ExecutionJobProvider;
 import ro.cs.tao.persistence.repository.ExecutionJobRepository;
 
 import java.util.Arrays;
@@ -27,24 +28,35 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component("executionJobManager")
-public class ExecutionJobManager extends EntityManager<ExecutionJob, Long, ExecutionJobRepository> {
+public class ExecutionJobManager extends EntityManager<ExecutionJob, Long, ExecutionJobRepository>
+                                 implements ExecutionJobProvider {
 
-    public List<ExecutionJob> list(long workflowId) {
+    @Override
+    public List<ExecutionJob> listByWorkflow(long workflowId) {
         return repository.findByWorkflowId(workflowId);
     }
 
-    public List<String> listWorkflowJobsOutputKeys(long workflowId) {
+    @Override
+    public List<String> getWorkflowOutputKeys(long workflowId) {
         return repository.getWorkflowJobsOutputs(workflowId);
     }
 
-    public List<String> listJobOutputKeys(long jobId) {
+    @Override
+    public List<String> getOutputKeys(long jobId) {
         return repository.getJobOutputs(jobId);
     }
 
+    @Override
     public List<ExecutionJob> list(ExecutionStatus status) {
         return repository.findByExecutionStatus(status);
     }
 
+    @Override
+    public List<ExecutionJob> list(Set<ExecutionStatus> statuses) {
+        return repository.findByExecutionStatuses(statuses.stream().map(ExecutionStatus::value).collect(Collectors.toSet()));
+    }
+
+    @Override
     public List<ExecutionJob> list(String userName, Set<ExecutionStatus> statuses) {
         Set<Integer> statusIds;
         if (statuses == null) {

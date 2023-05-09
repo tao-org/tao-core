@@ -10,6 +10,7 @@ import ro.cs.tao.user.User;
 import ro.cs.tao.user.UserStatus;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * CRUD repository for User entities
@@ -53,6 +54,9 @@ public interface UserRepository extends PagingAndSortingRepository<User, Long> {
     @Query(value = "SELECT u.* FROM usr.user u JOIN usr.user_group ug ON ug.user_id = u.id " +
             "WHERE ug.group_id = 1 AND u.status_id = 2", nativeQuery = true)
     List<User> getAdministrators();
+
+    @Query(value = "SELECT * FROM usr.user WHERE username in (:names) ORDER BY username", nativeQuery = true)
+    List<User> getUsers(@Param("names")Set<String> names);
 
     @Query(value = "SELECT id FROM usr.user WHERE username = :usr and password = :pwd", nativeQuery = true)
     Integer login(@Param("usr") String user, @Param("pwd") String password);

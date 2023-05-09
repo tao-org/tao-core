@@ -17,56 +17,51 @@
 package ro.cs.tao.persistence.managers;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.SortDirection;
-import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.persistence.NodeProvider;
+import ro.cs.tao.persistence.PersistenceException;
+import ro.cs.tao.persistence.repository.NodeFlavorRepository;
 import ro.cs.tao.persistence.repository.NodeRepository;
 import ro.cs.tao.persistence.repository.ServiceRepository;
-import ro.cs.tao.topology.NodeDescription;
-import ro.cs.tao.topology.NodeServiceStatus;
-import ro.cs.tao.topology.NodeType;
-import ro.cs.tao.topology.ServiceDescription;
+import ro.cs.tao.topology.*;
 import ro.cs.tao.utils.Crypto;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Configuration
+@EnableTransactionManagement
+@EnableJpaRepositories(basePackages = { "ro.cs.tao.persistence.repository" })
 @Component("nodeManager")
-public class NodeManager extends EntityManager<NodeDescription, String, NodeRepository> {
+public class NodeManager extends EntityManager<NodeDescription, String, NodeRepository> implements NodeProvider {
 
     /** CRUD Repository for ServiceDescription entities */
     @Autowired
     private ServiceRepository serviceRepository;
+    @Autowired
+    private NodeFlavorRepository nodeFlavorRepository;
 
-    @Transactional
-    public List<NodeDescription> listActive() {
+    @Override
+    public List<NodeDescription> list(boolean active) {
         return list(ro.cs.tao.Sort.by(identifier(), SortDirection.ASC))
                 .stream()
-                .filter(NodeDescription::getActive)
+                .filter(n -> n.getActive() != null && n.getActive() == active)
                 .collect(Collectors.toList());
     }
 
-    @Transactional
-    public NodeDescription getNodeByHostName(final String hostName) throws PersistenceException {
-        // check method parameters
-        if (hostName == null || hostName.isEmpty()) {
-            throw new PersistenceException("Invalid parameters were provided for searching execution node by host name ("+ String.valueOf(hostName) +") !");
-        }
-        return repository.findById(hostName).orElse(null);
+    @Override
+    public List<NodeDescription> getByFlavor(NodeFlavor flavor) {
+        return repository.findByFlavor(flavor);
     }
 
-    public List<NodeDescription> findByActive(boolean active) {
-        return repository.findByActive(active);
-    }
-
-    public List<NodeDescription> getNodesByType(NodeType type) {
-        return repository.findByNodeType(type);
-    }
-
-    @Transactional
-    public NodeDescription saveExecutionNode(NodeDescription node) throws PersistenceException {
+    @Override
+    public NodeDescription save(NodeDescription node) throws PersistenceException {
         // check method parameters
         if(!checkEntity(node)) {
             throw new PersistenceException("Invalid parameters were provided for adding new execution node!");
@@ -91,30 +86,16 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
                 serviceStatus.setServiceDescription(existingService);
             }
         }
-        if (node.getNodeType() == null) {
-            int processors = node.getProcessorCount();
-            NodeType nodeType;
-            if (processors <= 4) {
-                nodeType = NodeType.S;
-            } else if (processors <= 8) {
-                nodeType = NodeType.M;
-            } else if (processors <= 16) {
-                nodeType = NodeType.L;
-            } else {
-                nodeType = NodeType.XL;
-            }
-            node.setNodeType(nodeType);
-        }
         // save the new NodeDescription entity and return it
         return repository.save(node);
     }
 
     @Override
-    public NodeDescription update(NodeDescription entity) throws PersistenceException {
+    public NodeDescription update(NodeDescription entity) throws TopologyException {
         // check if there is already another node with the same host name
         final Optional<NodeDescription> nodeWithSameHostName = repository.findById(entity.getId());
         if (!nodeWithSameHostName.isPresent()) {
-            throw new PersistenceException(String.format("Entity %s does not exist. use 'saveExecutionode' instead.",
+            throw new TopologyException(String.format("Entity %s does not exist. use 'saveExecutionode' instead.",
                                                          entity.getId()));
         }
         // save the services first
@@ -130,26 +111,15 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
                 serviceStatus.setServiceDescription(existingService);
             }
         }
-        if (entity.getNodeType() == null) {
-            int processors = entity.getProcessorCount();
-            NodeType nodeType;
-            if (processors <= 4) {
-                nodeType = NodeType.S;
-            } else if (processors <= 8) {
-                nodeType = NodeType.M;
-            } else if (processors <= 16) {
-                nodeType = NodeType.L;
-            } else {
-                nodeType = NodeType.XL;
-            }
-            entity.setNodeType(nodeType);
+        if (entity.getFlavor() == null) {
+            throw new TopologyException(String.format("Node flavor not defined for node '%s'", entity.getId()));
         }
         // save the new NodeDescription entity and return it
         return repository.save(entity);
     }
 
-    @Transactional
-    public NodeDescription deleteExecutionNode(final String hostName) throws PersistenceException {
+    @Override
+    public void delete(final String hostName) throws PersistenceException {
         // check method parameters
         if (hostName == null || hostName.isEmpty()) {
             throw new PersistenceException("Invalid parameters were provided for deleting execution node (host name \""+ String.valueOf(hostName) +"\") !");
@@ -160,16 +130,20 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
         if (nodeEnt == null) {
             throw new PersistenceException("There is no execution node with the specified host name: " + hostName);
         }
-        nodeEnt.setActive(false);
-        // save it
-        return repository.save(nodeEnt);
+        if (nodeEnt.getVolatile()) {
+            repository.delete(nodeEnt);
+        } else {
+            nodeEnt.setActive(false);
+            repository.save(nodeEnt);
+        }
     }
 
+    @Override
     public ServiceDescription getServiceDescription(String name, String version) {
         return serviceRepository.findByNameAndVersion(name, version);
     }
 
-    @Transactional
+    @Override
     public ServiceDescription saveServiceDescription(ServiceDescription service) throws PersistenceException {
         // check method parameters
         if(!checkServiceDescription(service)) {
@@ -196,8 +170,7 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
 
     @Override
     protected boolean checkEntity(NodeDescription entity) {
-        return entity.getUserName() != null && entity.getUserPass() != null &&
-               entity.getProcessorCount() > 0 && entity.getDiskSpaceSizeGB() > 0 && entity.getMemorySizeGB() > 0;
+        return entity.getUserName() != null && entity.getUserPass() != null && entity.getFlavor() != null;
     }
 
     private boolean checkServiceDescription(ServiceDescription service) {

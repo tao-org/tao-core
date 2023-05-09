@@ -16,17 +16,14 @@
 
 package ro.cs.tao.persistence.managers;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.messaging.Message;
-import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.persistence.MessageProvider;
 import ro.cs.tao.persistence.repository.MessageRepository;
 
 import java.util.List;
@@ -35,36 +32,51 @@ import java.util.List;
 @EnableTransactionManagement
 @EnableJpaRepositories(basePackages = { "ro.cs.tao.persistence.repository" })
 @Component("notificationManager")
-public class NotificationManager {
+public class NotificationManager extends EntityManager<Message, Long, MessageRepository> implements MessageProvider {
 
-    /** CRUD Repository for Mesaage entities */
-    @Autowired
-    private MessageRepository messageRepository;
-
-    @Transactional
-    public Message saveMessage(Message message) throws PersistenceException {
-        // check method parameters
-        if(!checkMessage(message)) {
-            throw new PersistenceException("Invalid parameters were provided for adding new message !");
-        }
-
-        // save the new Message entity and return it
-        return messageRepository.save(message);
-    }
-
-    @Transactional
-    public Page<Message> getUserMessages(String user, Integer pageNumber)
-    {
+    @Override
+    public List<Message> getUserMessages(String user, Integer pageNumber) {
         PageRequest pageRequest = PageRequest.of(pageNumber - 1, Constants.MESSAGES_PAGE_SIZE,
                                                   Sort.Direction.DESC, Constants.MESSAGE_TIMESTAMP_PROPERTY_NAME);
-        return messageRepository.findByUser(user, pageRequest);
+        return repository.findByUser(user, pageRequest).getContent();
     }
 
+    @Override
     public List<Message> getUnreadMessages(String user) {
-        return messageRepository.getUnreadMessages(user);
+        return repository.getUnreadMessages(user);
     }
 
-    private boolean checkMessage(Message message) {
-        return message != null && message.getTimestamp() != 0 && message.getData() != null;
+    @Override
+    public Message get(String userName, long timestamp) {
+        return repository.get(userName, timestamp);
     }
+
+    @Override
+    public void acknowledge(List<Long> messageIds) {
+        repository.markAsRead(messageIds);
+    }
+
+    @Override
+    public void clear(String user) {
+        repository.deleteAll(user);
+    }
+
+    @Override
+    protected String identifier() { return "id"; }
+
+    @Override
+    protected boolean checkEntity(Message entity) {
+        return entity != null && entity.getTimestamp() != 0 && entity.getData() != null;
+    }
+
+    @Override
+    protected boolean checkEntity(Message entity, boolean existingEntity) {
+        return checkEntity(entity);
+    }
+
+    @Override
+    protected boolean checkId(Long entityId, boolean existingEntity) {
+        return (!existingEntity && (entityId == null || entityId.equals(0L))) || (existingEntity && get(entityId) != null);
+    }
+
 }

@@ -16,8 +16,14 @@
 
 package ro.cs.tao.eodata.metadata;
 
+import org.geotools.geometry.jts.JTS;
+import org.geotools.referencing.CRS;
+import org.locationtech.jts.geom.Geometry;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.referencing.operation.MathTransform;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.enums.*;
+import ro.cs.tao.serialization.GeometryAdapter;
 import ro.cs.tao.serialization.MediaType;
 import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.serialization.SerializerFactory;
@@ -30,8 +36,10 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Interface to be implemented by all simple metadata inspectors.
@@ -152,28 +160,46 @@ public interface MetadataInspector {
         public EOProduct toProductDescriptor(Path productPath) throws URISyntaxException, IOException {
             EOProduct product = new EOProduct();
             String name = FileUtilities.getFilenameWithoutExtension(productPath.toFile());
-            if (this.aquisitionDate != null) {
-                product.setAcquisitionDate(Date.from(this.aquisitionDate.atZone(ZoneId.systemDefault()).toInstant()));
-            }
+            product.setAcquisitionDate(this.aquisitionDate);
             product.setId(name);
             product.setName(name);
             product.setProductType(this.productType);
             product.setSensorType(this.sensorType != null ? this.sensorType : SensorType.UNKNOWN);
             product.setFormatType(DataFormat.RASTER);
             product.setPixelType(this.pixelType);
-            product.setGeometry(this.footprint);
             product.setCrs(this.crs);
+            try {
+                if (this.wgs84footprint == null && crs != null && !"EPSG:4326".equalsIgnoreCase(crs)) {
+                    GeometryAdapter geometryAdapter = new GeometryAdapter();
+                    Geometry geometry = geometryAdapter.marshal(this.footprint);
+                    final CoordinateReferenceSystem sourceCrs = CRS.decode(crs, true);
+                    final CoordinateReferenceSystem targetCrs = CRS.decode("EPSG:4326", true);
+                    MathTransform mathTransform;
+                    try {
+                        mathTransform = CRS.findMathTransform(sourceCrs, targetCrs);
+                    } catch (Exception ex) {
+                        // fall back to lenient transform if Bursa Wolf parameters are not provided
+                        mathTransform = CRS.findMathTransform(sourceCrs, targetCrs, true);
+                    }
+                    geometry = JTS.transform(geometry, mathTransform);
+                    product.setGeometry(geometryAdapter.unmarshal(geometry));
+                } else {
+                    product.setGeometry(this.wgs84footprint != null ? this.wgs84footprint : this.footprint);
+                }
+            } catch (Exception ex) {
+                product.setGeometry(this.wgs84footprint != null ? this.wgs84footprint : this.footprint);
+            }
             product.setWidth(this.width);
             product.setHeight(this.height);
             product.setVisibility(Visibility.PUBLIC);
             if (this.orbitDirection != null) {
                 product.addAttribute("orbitdirection", this.orbitDirection.name());
             }
-            URI productUri = productPath.toUri();
+            URI productUri = productPath.toAbsolutePath().toUri();
             if (Files.isDirectory(productPath)) {
                 product.setLocation(productUri.toString());
             } else {
-                product.setLocation(productPath.getParent().toUri().toString());
+                product.setLocation(productPath.getParent().toAbsolutePath().toUri().toString());
             }
             //product.setLocation(productUri.toString());
             product.setApproximateSize(Files.size(productPath));

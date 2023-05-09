@@ -16,119 +16,102 @@
 
 package ro.cs.tao.persistence.managers;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.datasource.beans.Query;
-import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.datasource.persistence.QueryProvider;
+import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.repository.QueryRepository;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Optional;
-import java.util.logging.Logger;
 
 @Configuration
 @EnableTransactionManagement
 @EnableJpaRepositories(basePackages = { "ro.cs.tao.persistence.repository" })
 @Component("queryManager")
-public class QueryManager {
+public class QueryManager extends EntityManager<Query, Long, QueryRepository> implements QueryProvider {
 
-    private Logger logger = Logger.getLogger(QueryManager.class.getName());
-
-    /** CRUD Repository for Query entities */
-    @Autowired
-    private QueryRepository queryRepository;
-
-    public Query findById(long id) {
-        final Optional<Query> query = queryRepository.findById(id);
-        return query.orElse(null);
+    @Override
+    public Query get(String userId, String label) {
+        return repository.findByUserIdAndLabel(userId, label);
     }
 
-    public List<Query> findAllById(Iterable<Long> ids) {
-        return (List<Query>) queryRepository.findAllById(ids);
+    @Override
+    public List<Query> list(String userId) { return repository.getUserQueries(userId); }
+
+    @Override
+    public Query get(String userId, String sensor, String dataSource, long nodeId) {
+        return repository.getQuery(userId, sensor, dataSource, nodeId);
     }
 
-    public Query findByUserIdAndSensorAndDataSourceAndWorkflowNodeId(String userId, String sensor, String dataSource, long nodeId) {
-        return queryRepository.findByUserIdAndSensorAndDataSourceAndWorkflowNodeId(userId, sensor, dataSource, nodeId);
+    @Override
+    public List<Query> list(String userId, long nodeId) {
+        return repository.getUserQueries(userId, nodeId);
     }
 
-    public List<Query> findByUserIdAndWorkflowNodeId(String userId, long nodeId) {
-        return queryRepository.findByUserIdAndWorkflowNodeId(userId, nodeId);
+    @Override
+    public List<Query> listBySensor(String userId, String sensor) {
+        return repository.getQueriesByUserAndSensor(userId, sensor);
     }
 
-    public List<Query> findByUserIdAndSensorAndDataSource(String userId, String sensor, String dataSource) {
-        return queryRepository.findByUserIdAndSensorAndDataSource(userId, sensor, dataSource);
+    @Override
+    public List<Query> listByDataSource(String userId, String dataSource) {
+        return repository.getQueriesByUserAndDataSource(userId, dataSource);
     }
 
-    public Query findByUserIdAndLabel(String userId, String label) {
-        return queryRepository.findByUserIdAndLabel(userId, label);
+    @Override
+    public List<Query> list(String userId, String sensor, String dataSource) {
+        return repository.getUserQueries(userId, sensor, dataSource);
     }
 
-    public List<Query> findByUserId(String userId) {
-        return queryRepository.findByUserId(userId);
-    }
-
-    public List<Query> getUserQueries(String userId) { return queryRepository.getUserQueries(userId); }
-
-    public Query getQuery(long queryId) { return queryRepository.getQuery(queryId); }
-
-    public Query getQuery(String userId, String sensor, String dataSource, long nodeId) {
-        return queryRepository.getQuery(userId, sensor, dataSource, nodeId);
-    }
-
-    public List<Query> getUserQueries(String userId, long nodeId) {
-        return queryRepository.getUserQueries(userId, nodeId);
-    }
-
-    public List<Query> findByUserIdAndSensor(String userId, String sensor) {
-        return queryRepository.findByUserIdAndSensor(userId, sensor);
-    }
-
-    public List<Query> findByUserIdAndDataSource(String userId, String dataSource) {
-        return queryRepository.findByUserIdAndDataSource(userId, dataSource);
-    }
-
-    public List<Query> getUserQueries(String userId, String sensor, String dataSource) {
-        return queryRepository.getUserQueries(userId, sensor, dataSource);
-    }
-
-    public List<Query> getQueriesByUserAndSensor(String userId, String sensor) {
-        return queryRepository.getQueriesByUserAndSensor(userId, sensor);
-    }
-
-    public List<Query> getQueriesByUserAndDataSource(String userId, String dataSource) {
-        return queryRepository.getQueriesByUserAndDataSource(userId, dataSource);
-    }
-
-    public Page<Query> findAll(Pageable pageable) {
-        return queryRepository.findAll(pageable);
-    }
-
-    @Transactional
-    public Query saveQuery(Query query) throws PersistenceException {
-        // check method parameters
-        if(!checkQuery(query)) {
-            throw new PersistenceException("Invalid parameters were provided for adding new query !");
+    @Override
+    public Query save(Query query) throws PersistenceException {
+        LocalDateTime timestamp = LocalDateTime.now();
+        final Query existingQuery;
+        if (query.getLabel() == null) {
+            query.setLabel(String.format("Query for %s on %s - %s",
+                                         query.getSensor(), query.getDataSource(),
+                                         timestamp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
+            existingQuery = get(query.getUserId(), query.getSensor(), query.getDataSource(), query.getWorkflowNodeId());
+        } else {
+            existingQuery = get(query.getUserId(), query.getLabel());
         }
-
-        // save the new Query entity and return it
-        return queryRepository.save(query);
+        try {
+            if (existingQuery != null && query.getId() != null && !existingQuery.getId().equals(query.getId())) {
+                throw new PersistenceException(String.format("There is already a query with the same label for the user %s",
+                                                             query.getUserId()));
+            }
+        } catch (Exception e) {
+            throw new PersistenceException(e);
+        }
+        if (query.getCreated() == null) {
+            query.setCreated(timestamp);
+        }
+        if (query.getWorkflowNodeId() != null && query.getWorkflowNodeId() == 0) {
+            query.setWorkflowNodeId(null);
+        }
+        query.setModified(timestamp);
+        if (query.getId() == null) {
+            if (existingQuery != null) {
+                query.setId(existingQuery.getId());
+                return super.update(query);
+            } else {
+                return super.save(query);
+            }
+        } else {
+            return super.update(query);
+        }
     }
 
-    public void removeQuery(long id) {
-        queryRepository.deleteById(id);
-    }
+    @Override
+    protected String identifier() {return "id"; }
 
-    public void removeQuery(Query query) {
-        queryRepository.delete(query);
-    }
-
-    private boolean checkQuery(Query query) {
+    @Override
+    protected boolean checkEntity(Query query) {
         return query != null && query.getUserId() != null &&
                 query.getSensor() != null && query.getDataSource() != null;
     }

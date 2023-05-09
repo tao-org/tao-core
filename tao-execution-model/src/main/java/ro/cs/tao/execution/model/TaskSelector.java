@@ -51,9 +51,9 @@ public interface TaskSelector<T> {
     List<ExecutionTask> chooseNext(T job, ExecutionTask currentTask);
 
     /**
-     * Given a task, it returns the Data Source Task that initiated the current execution branch.
+     * Given a task, it returns the Data Source tasks that initiated the current execution branch.
      * @param job           The parent job
      * @param currentTask   The task that is about to be executed
      */
-    DataSourceExecutionTask findDataSourceTask(T job, ExecutionTask currentTask);
+    List<DataSourceExecutionTask> findDataSourceTasks(T job, ExecutionTask currentTask);
 }

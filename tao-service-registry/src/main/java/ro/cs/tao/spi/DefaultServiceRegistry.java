@@ -16,6 +16,7 @@
 package ro.cs.tao.spi;
 
 import ro.cs.tao.component.Identifiable;
+import ro.cs.tao.utils.Assert;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -32,10 +33,7 @@ public class DefaultServiceRegistry<T> implements ServiceRegistry<T> {
     private final ArrayList<ServiceRegistryListener<T>> listeners;
 
     public DefaultServiceRegistry(Class<T> serviceType) {
-        //Assert.notNull(serviceType, "serviceType");
-        if (serviceType == null) {
-            throw new NullPointerException("serviceType");
-        }
+        Assert.notNull(serviceType, "serviceType");
         this.serviceType = serviceType;
         this.services = new HashMap<>(10);
         this.serviceIds = new HashMap<>(10);
@@ -92,10 +90,7 @@ public class DefaultServiceRegistry<T> implements ServiceRegistry<T> {
      */
     @Override
     public boolean addService(T service) {
-        //Assert.notNull(service, "service");
-        if (service == null) {
-            throw new NullPointerException("service");
-        }
+        Assert.notNull(service, "service");
         final T existingService = services.put(service.getClass().getName(), service);
         if (existingService != null && existingService.getClass().equals(service.getClass())) {
             return false;
@@ -115,10 +110,7 @@ public class DefaultServiceRegistry<T> implements ServiceRegistry<T> {
      */
     @Override
     public boolean removeService(T service) {
-        //Assert.notNull(service, "service");
-        if (service == null) {
-            throw new NullPointerException("service");
-        }
+        Assert.notNull(service, "service");
         final T existingService = services.remove(service.getClass().getName());
         if (existingService != service) {
             return false;
@@ -146,10 +138,7 @@ public class DefaultServiceRegistry<T> implements ServiceRegistry<T> {
      */
     @Override
     public void addListener(ServiceRegistryListener<T> listener) {
-        //Assert.notNull(listener, "listener");
-        if (listener == null) {
-            throw new NullPointerException("listener");
-        }
+        Assert.notNull(listener, "listener");
         listeners.add(listener);
     }
 
@@ -158,10 +147,7 @@ public class DefaultServiceRegistry<T> implements ServiceRegistry<T> {
      */
     @Override
     public void removeListener(ServiceRegistryListener<T> listener) {
-        //Assert.notNull(listener, "listener");
-        if (listener == null) {
-            throw new NullPointerException("listener");
-        }
+        Assert.notNull(listener, "listener");
         listeners.remove(listener);
     }
     

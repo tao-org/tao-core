@@ -40,7 +40,7 @@ public class CRSConstraint extends IOConstraint {
                         .allMatch(a -> {
                             CoordinateReferenceSystem first = null;
                             try {
-                                first = CRS.decode(args[0].getCrs());
+                                first = CRS.decode(args[0].getCrs(), true);
                             } catch (FactoryException ignored) { }
                             return (first != null && CRS.equalsIgnoreMetadata(first, a.getCrs())) ||
                                     (first == null && a.getCrs() == null);

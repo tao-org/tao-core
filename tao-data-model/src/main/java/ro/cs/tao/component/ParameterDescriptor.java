@@ -15,16 +15,19 @@
  */
 package ro.cs.tao.component;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import ro.cs.tao.EnumUtils;
 import ro.cs.tao.component.enums.Condition;
+import ro.cs.tao.component.enums.DependencyType;
 import ro.cs.tao.component.enums.ParameterType;
 import ro.cs.tao.component.validation.*;
+import ro.cs.tao.datasource.param.JavaType;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Complete descriptor of a component parameter.
@@ -32,10 +35,11 @@ import java.util.UUID;
  * @author Cosmin Cara
  */
 @XmlRootElement(name = "parameter")
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class ParameterDescriptor extends StringIdentifiable {
     private String name;
     private ParameterType type;
-    private Class<?> dataType;
+    JavaType dataType;
     private String defaultValue;
     private String description;
     private String label;
@@ -50,13 +54,39 @@ public class ParameterDescriptor extends StringIdentifiable {
 
     public ParameterDescriptor() { super(); }
 
+    @JsonCreator
+    public ParameterDescriptor(@JsonProperty("id") String id,
+                               @JsonProperty("name") String name,
+                               @JsonProperty("type") ParameterType type,
+                               @JsonProperty("dataType") JavaType dataType,
+                               @JsonProperty("defaultValue") String defaultValue,
+                               @JsonProperty("description") String description,
+                               @JsonProperty("label") String label,
+                               @JsonProperty("unit") String unit,
+                               @JsonProperty("valueSet") String[] valueSet,
+                               @JsonProperty("format") String format,
+                               @JsonProperty("expansionRule") ParameterExpansionRule rule,
+                               @JsonProperty("notNull") boolean notNull) {
+        super(id);
+        this.name = name;
+        this.type = type;
+        this.dataType = dataType;
+        this.defaultValue = defaultValue;
+        this.description = description;
+        this.label = label;
+        this.valueSet = valueSet;
+        this.format = format;
+        this.expansionRule = rule;
+        this.notNull = notNull;
+    }
+
     public ParameterDescriptor(String id, String name, ParameterType type, Class<?> dataType, String defaultValue,
                                String description, String label, String unit, String[] valueSet, String format,
                                boolean notNull, ParameterExpansionRule expansionRule) {
         super(id);
         this.name = name;
         this.type = type;
-        this.dataType = dataType;
+        this.dataType = EnumUtils.getEnumConstantByValue(JavaType.class, dataType);
         this.defaultValue = defaultValue;
         this.description = description;
         this.label = label;
@@ -83,11 +113,18 @@ public class ParameterDescriptor extends StringIdentifiable {
     }
 
     public Class<?> getDataType() {
-        return dataType;
+        return dataType != null ? dataType.value() : null;
     }
 
     public void setDataType(Class<?> dataType) {
-        this.dataType = dataType;
+        if (dataType != null) {
+            // first try to match by simple types
+            this.dataType = EnumUtils.getEnumConstantByValue(JavaType.class, dataType);
+            if (this.dataType == null) {
+                // next try with a java class name
+                this.dataType = EnumUtils.getEnumConstantByFriendlyName(JavaType.class, dataType.getName());
+            }
+        }
     }
 
     public String getDefaultValue() {
@@ -147,6 +184,8 @@ public class ParameterDescriptor extends StringIdentifiable {
         this.notNull = notNull;
     }
 
+    public String typeFriendlyName() { return type != null ? type.friendlyName() : null; }
+
     public Validator getValidator() { return customValidator; }
 
     public void setValidator(Validator customValidator) { this.customValidator = customValidator; }
@@ -159,11 +198,11 @@ public class ParameterDescriptor extends StringIdentifiable {
 
     public void setDependencies(List<ParameterDependency> dependencies) { this.dependencies = dependencies; }
 
-    public void addDependency(String parameterId, Condition condition, String... values) {
+    public void addDependency(DependencyType type, String parameterId, Condition condition, String... values) {
         if (this.dependencies == null) {
             this.dependencies = new ArrayList<>();
         }
-        ParameterDependency dependency = new ParameterDependency(parameterId, condition, values);
+        ParameterDependency dependency = new ParameterDependency(type, parameterId, condition, values);
         if (!this.dependencies.contains(dependency)) {
             this.dependencies.add(dependency);
         }
@@ -215,6 +254,20 @@ public class ParameterDescriptor extends StringIdentifiable {
         }
         builder.setLength(builder.length() - 1);
         return builder.toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ParameterDescriptor)) return false;
+        if (!super.equals(o)) return false;
+        ParameterDescriptor that = (ParameterDescriptor) o;
+        return name.equals(that.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), name);
     }
 
     protected Validator createValidator() {

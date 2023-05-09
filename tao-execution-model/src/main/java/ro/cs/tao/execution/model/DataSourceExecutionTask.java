@@ -54,7 +54,8 @@ public class DataSourceExecutionTask extends ExecutionTask {
                 break;
             }
         }*/
-        if (!"query".equals(parameterId)) {
+        if (!DataSourceComponent.QUERY_PARAMETER.equals(parameterId) &&
+            !DataSourceComponent.SYNC_PARAMETER.equals(parameterId)) {
             throw new ValidationException(String.format("The parameter ID [%s] does not exists in the component '%s'",
                     parameterId, component.getLabel()));
         }
@@ -69,7 +70,13 @@ public class DataSourceExecutionTask extends ExecutionTask {
         if (this.outputParameterValues == null) {
             this.outputParameterValues = new ArrayList<>();
         }
-        this.outputParameterValues.add(new Variable(parameterId, value));
+        Variable variable = this.outputParameterValues.stream().filter(v -> v.getKey().equals(parameterId)).findFirst().orElse(null);
+        if (variable == null) {
+            variable = new Variable(parameterId, value);
+            this.outputParameterValues.add(variable);
+        } else {
+            variable.setValue(value);
+        }
     }
 
     @Override

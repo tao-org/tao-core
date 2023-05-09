@@ -39,7 +39,7 @@ import java.util.*;
  * This class represents a remote job and its attributes.  It is used to
  * set up the environment for a job to be submitted.
  *
- * <h3>DRMMA Attributes</h3>
+ * <h2>DRMMA Attributes</h2>
  *
  * <p>DRMAA job template attributes can be set from six different sources.  In
  * order of precedence, from lowest to highest, there are: options
@@ -88,12 +88,13 @@ import java.util.*;
  * variable, SGE_DRMAA_ALLOW_CWD.  However, the &quot;-cwd&quot; option is not
  * thread safe and should not be used in a multi-threaded context.</p>
  *
- * <h3>Attribute Correlations</h3>
+ * <h2>Attribute Correlations</h2>
  *
  * <p>The following DRMAA attributes correspond to the following qsub
  * options:</p>
  *
  * <table>
+ *  <caption>DRMAA attributes corresponding to qsub options</caption>
  *  <tr><th>DRMAA Attribute</th><th>qsub Option</th></tr>
  *  <tr><td>remoteCommand</td><td>script file</td></tr>
  *  <tr><td>args</td><td>script file arguments</td></tr>

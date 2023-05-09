@@ -16,12 +16,21 @@
 
 package ro.cs.tao.utils;
 
+/**
+ * String utility class
+ *
+ * @author  Cosmin Cara
+ * @since   1.0
+ */
 public class StringUtilities {
 
+    /**
+     * Convenience method to check if a string is null or empty
+     * @param value     The string to check
+     */
     public static boolean isNullOrEmpty(String value) {
         return value == null || value.isEmpty();
     }
-
     /**
      * Converts a string array to a json representation
      * @param array The array to be converted
@@ -40,7 +49,6 @@ public class StringUtilities {
         buffer.append("]");
         return buffer.toString();
     }
-
     /**
      * Converts a json array to a string array
      * @param json  The json to be converted
@@ -55,5 +63,27 @@ public class StringUtilities {
         } else {
             return new String[] { json };
         }
+    }
+    /**
+     * Pads a string to the left with the given number of pad values
+     * @param value     The string to be padded
+     * @param length    The length of padding
+     * @param padValue  The value to pad with
+     */
+    public static String padLeft(String value, int length, String padValue) {
+        return value.length() < length ? String.format("%" + length + "s", value).replace(" ", padValue) : value;
+    }
+    /**
+     * Pads a string to the right with the given number of pad values
+     * @param value     The string to be padded
+     * @param length    The length of padding
+     * @param padValue  The value to pad with
+     */
+    public static String padRight(String value, int length, String padValue) {
+        return value.length() < length ? String.format("%-" + length + "s", value).replace(" ", padValue) : value;
+    }
+
+    public static String toFirstCaps(String value) {
+        return value.substring(0, 1).toUpperCase() + value.substring(1).toLowerCase();
     }
 }

@@ -125,6 +125,9 @@ public abstract class TaoComponent extends StringIdentifiable {
      */
     @XmlElementWrapper(name = "inputs")
     public List<SourceDescriptor> getSources() {
+        if (sources == null) {
+            sources = new ArrayList<>();
+        }
         return sources;
     }
     /**
@@ -171,6 +174,9 @@ public abstract class TaoComponent extends StringIdentifiable {
      */
     @XmlElementWrapper(name = "outputs")
     public List<TargetDescriptor> getTargets() {
+        if (targets == null) {
+            targets = new ArrayList<>();
+        }
         return targets;
     }
     /**

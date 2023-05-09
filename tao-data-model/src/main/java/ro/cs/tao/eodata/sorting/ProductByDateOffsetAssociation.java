@@ -1,14 +1,19 @@
 package ro.cs.tao.eodata.sorting;
 
-import ro.cs.tao.Tuple;
+import ro.cs.tao.datasource.param.JavaType;
 import ro.cs.tao.eodata.EOProduct;
+import ro.cs.tao.utils.Tuple;
 
 import java.time.LocalDate;
 import java.time.Period;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Groups EOProduct entities in pairs of two, based on the difference (in days) of their acquisition dates.
+ *
+ * @author Cosmin Cara
+ */
 public class ProductByDateOffsetAssociation extends Association<EOProduct> {
 
     private int offsetDays;
@@ -24,7 +29,7 @@ public class ProductByDateOffsetAssociation extends Association<EOProduct> {
     }
 
     @Override
-    public String[] description() { return new String[] { friendlyName(), Integer.class.getName() }; }
+    public String[] description() { return new String[] {friendlyName(), JavaType.INT.friendlyName() }; }
 
     public int getOffsetDays() { return offsetDays; }
     public void setOffsetDays(int offsetDays) { this.offsetDays = offsetDays; }
@@ -39,8 +44,8 @@ public class ProductByDateOffsetAssociation extends Association<EOProduct> {
             first = source.get(i);
             for (int j = i + 1; j < sourceSize; j++) {
                 second = source.get(j);
-                LocalDate date1 = first.getAcquisitionDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                LocalDate date2 = second.getAcquisitionDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                LocalDate date1 = first.getAcquisitionDate().toLocalDate();
+                LocalDate date2 = second.getAcquisitionDate().toLocalDate();
                 int offset;
                 if (date1.compareTo(date2) >= 0) {
                     offset = Period.between(date2, date1).getDays() + 1;

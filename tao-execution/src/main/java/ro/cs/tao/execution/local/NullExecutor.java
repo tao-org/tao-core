@@ -21,6 +21,8 @@ import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.Executor;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
+import ro.cs.tao.persistence.ProcessingComponentProvider;
+import ro.cs.tao.persistence.WorkflowNodeProvider;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 
 import java.time.LocalDateTime;
@@ -34,8 +36,24 @@ import java.util.stream.Collectors;
  */
 public class NullExecutor extends Executor {
     private static final int MAX = 3;
+    private static WorkflowNodeProvider workflowNodeProvider;
+    private static ProcessingComponentProvider componentProvider;
     private final Map<ExecutionTask, Integer> counters = new HashMap<>();
     private final List<ExecutionTask> tasks = new ArrayList<>();
+
+    public static void setWorkflowNodeProvider(WorkflowNodeProvider provider) { workflowNodeProvider = provider; }
+
+    public static void setComponentProvider(ProcessingComponentProvider provider) { componentProvider = provider; }
+
+    public NullExecutor() {
+        super();
+        if (workflowNodeProvider == null) {
+            throw new ExecutionException("A WorkflowNodeProvider is required to use this executor");
+        }
+        if (componentProvider == null) {
+            throw new ExecutionException("A ComponentProvider is required to use this executor");
+        }
+    }
 
     @Override
     public void execute(ExecutionTask task) throws ExecutionException {
@@ -85,8 +103,8 @@ public class NullExecutor extends Executor {
                 tasks.stream()
                         .filter(t -> t.getExecutionStatus() == ExecutionStatus.QUEUED_ACTIVE)
                         .findFirst().ifPresent(task -> {
-                    changeTaskStatus(task, ExecutionStatus.RUNNING);
-                });
+                            changeTaskStatus(task, ExecutionStatus.RUNNING);
+                        });
                 List<Map.Entry<ExecutionTask, Integer>> toTerminate =
                         counters.entrySet().stream().filter(e -> e.getValue() == MAX).collect(Collectors.toList());
                 for (Map.Entry<ExecutionTask, Integer> entry : toTerminate) {
@@ -94,8 +112,8 @@ public class NullExecutor extends Executor {
                     counters.remove(task);
                     tasks.remove(task);
                     try {
-                        WorkflowNodeDescriptor node = persistenceManager.getWorkflowNodeById(task.getWorkflowNodeId());
-                        ProcessingComponent component = persistenceManager.getProcessingComponentById(node.getComponentId());
+                        WorkflowNodeDescriptor node = workflowNodeProvider.get(task.getWorkflowNodeId());
+                        ProcessingComponent component = componentProvider.get(node.getComponentId());
                         component.getTargets().forEach(t -> task.setOutputParameterValue(t.getName(), t.getDataDescriptor().getLocation()));
                     } catch (Exception ex) {
                         logger.severe(ex.getMessage());

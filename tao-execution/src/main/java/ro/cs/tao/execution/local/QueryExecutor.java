@@ -16,41 +16,41 @@
 
 package ro.cs.tao.execution.local;
 
-import ro.cs.tao.Tuple;
 import ro.cs.tao.component.*;
 import ro.cs.tao.configuration.ConfigurationManager;
-import ro.cs.tao.datasource.DataQuery;
-import ro.cs.tao.datasource.DataSourceComponent;
-import ro.cs.tao.datasource.ProductStatusListener;
+import ro.cs.tao.datasource.*;
 import ro.cs.tao.datasource.beans.Query;
+import ro.cs.tao.datasource.param.JavaType;
+import ro.cs.tao.datasource.persistence.DataSourceConfigurationProvider;
 import ro.cs.tao.eodata.EOData;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.enums.ProductStatus;
-import ro.cs.tao.eodata.sorting.Association;
-import ro.cs.tao.eodata.sorting.DataSorter;
-import ro.cs.tao.eodata.sorting.ProductAssociationFactory;
-import ro.cs.tao.eodata.sorting.ProductSortingFactory;
+import ro.cs.tao.eodata.sorting.*;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.Executor;
 import ro.cs.tao.execution.model.DataSourceExecutionTask;
 import ro.cs.tao.execution.model.ExecutionStatus;
-import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
+import ro.cs.tao.persistence.EOProductProvider;
+import ro.cs.tao.persistence.WorkflowProvider;
 import ro.cs.tao.quota.QuotaException;
 import ro.cs.tao.quota.UserQuotaManager;
 import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.serialization.StringListAdapter;
 import ro.cs.tao.spi.OutputDataHandlerManager;
+import ro.cs.tao.utils.FileUtilities;
+import ro.cs.tao.utils.StringUtilities;
+import ro.cs.tao.utils.Tuple;
 import ro.cs.tao.utils.executors.NamedThreadPoolExecutor;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
+import ro.cs.tao.workflow.enums.ComponentType;
 
 import java.net.InetAddress;
 import java.security.Principal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
@@ -63,91 +63,153 @@ import java.util.stream.Collectors;
 public class QueryExecutor extends Executor<DataSourceExecutionTask> implements ProductStatusListener {
 
     private static final String LOCAL_DATABASE = "Local Database";
-    private ExecutorService backgroundWorker = new NamedThreadPoolExecutor("query-thread", 1);//Executors.newSingleThreadExecutor();
+    private final ExecutorService backgroundWorker = new NamedThreadPoolExecutor("query-thread", 1);//Executors.newSingleThreadExecutor();
     private DataSourceComponent dataSourceComponent;
+    private static EOProductProvider productProvider;
+    private static WorkflowProvider workflowProvider;
+    private static ExecutionTaskProvider taskProvider;
+    private static DataSourceConfigurationProvider configurationProvider;
+
     @Override
     public boolean supports(TaoComponent component) { return component instanceof DataSourceComponent; }
+
+    public static void setProductProvider(EOProductProvider provider) {
+        productProvider = provider;
+    }
+
+    public static void setWorkflowProvider(WorkflowProvider provider) { workflowProvider = provider; }
+
+    public static void setDataSourceConfigurationProvider(DataSourceConfigurationProvider provider) { configurationProvider = provider; }
+
+    public static void setTaskProvider(ExecutionTaskProvider provider) { taskProvider = provider; }
+
+    public QueryExecutor() {
+        super();
+        if (productProvider == null) {
+            throw new ExecutionException("A ProductProvider is required to use this executor");
+        }
+        if (workflowProvider == null) {
+            throw new ExecutionException("A WorkflowProvider is required to use this executor");
+        }
+        if (taskProvider == null) {
+            throw new ExecutionException("An ExecutionTaskProvider is required to use this executor");
+        }
+    }
 
     @Override
     public void execute(DataSourceExecutionTask task) throws ExecutionException {
         try {
             task.setResourceId(UUID.randomUUID().toString());
-            logger.fine(String.format("Successfully submitted task with id %s", task.getId()));
+            logger.fine(String.format("Received task %s", task.getComponent().getId()));
             task.setExecutionNodeHostName(InetAddress.getLocalHost().getHostName());
             task.setStartTime(LocalDateTime.now());
-            changeTaskStatus(task, ExecutionStatus.RUNNING);
+            //changeTaskStatus(task, ExecutionStatus.RUNNING);
+            task.setExecutionStatus(ExecutionStatus.RUNNING);
             dataSourceComponent = task.getComponent();
-            List<Variable> values = task.getInputParameterValues();
-            if (values == null || values.size() == 0) {
-                throw new ExecutionException(String.format("No input data for the task %s", task.getId()));
-            }
-            Variable variable  = values.stream().filter(v -> "query".equals(v.getKey()) ||
-                                                             "local.query".equals(v.getKey()))
-                                                .findFirst().orElse(null);
-            if (variable == null) {
-                throw new ExecutionException("Expected parameter [query] not found");
-            }
-            Query primaryQuery = Query.fromString(variable.getValue());
-            if (primaryQuery == null) {
-                throw new ExecutionException(String.format("Invalid input data for the task %s", task.getId()));
-            }
-            DataQuery dataQuery = Query.toDataQuery(primaryQuery);
-            Future<List<EOProduct>> future = backgroundWorker.submit(dataQuery::execute);
-            List<EOProduct> results = future.get();
+            // DSComponents having the id starting with 'product-set-' don't need to execute
+            // a query. Instead, they should already contain a list of paths.
             ExecutionStatus status;
-            if (results != null && results.size() > 0) {
-                int cardinality = dataSourceComponent.getSources().get(0).getCardinality();
-                int rSize = results.size();
-                if (cardinality > 0 && cardinality != rSize) {
-                    variable = values.stream().filter(v -> "remote.query".equals(v.getKey()))
-                                               .findFirst().orElse(null);
-                    if (variable == null) {
-                        logger.warning(String.format("Task %s expected %s inputs, but received %s. Execution is cancelled",
-                                                     task.getId(), cardinality, results.size()));
-                        markTaskFinished(task, ExecutionStatus.CANCELLED);
-                        return;
-                    } else {
-                        results.removeIf(r -> r.getProductStatus() == ProductStatus.DOWNLOADING ||
-                                              r.getProductStatus() == ProductStatus.DOWNLOADED);
-                        logger.info(String.format("Task %s expects %d inputs, but only %d are locally available. Download for the missing will start",
-                                                  task.getId(), rSize, rSize - results.size()));
-                    }
+            String message = null;
+            if (!dataSourceComponent.getId().startsWith("product-set-")) {
+                List<Variable> values = task.getInputParameterValues();
+                if (values == null || values.size() == 0) {
+                    throw new ExecutionException(String.format("No input data for the task %s", task.getId()));
                 }
-                String sensorName = dataSourceComponent.getSensorName().toLowerCase().replace(" ", "-");
-                dataSourceComponent.setProductStatusListener(this);
-                List<EOProduct> products = new ArrayList<>();
-                if (!dataSourceComponent.getId().contains(LOCAL_DATABASE)) {
-                    // first try to retrieve the products that have already been downloaded locally
-                    List<EOProduct> localProducts = persistenceManager.getEOProducts(results.stream().map(EOData::getId).collect(Collectors.joining()));
-                    if (localProducts != null) {
-                        localProducts.removeIf(p -> p.getProductStatus() != ProductStatus.DOWNLOADED);
-                        localProducts.forEach(this::downloadCompleted);
-                        products.addAll(localProducts);
-                        Set<String> ids = localProducts.stream().map(EOData::getId).collect(Collectors.toSet());
-                        results.removeIf(p -> ids.contains(p.getId()));
-                    }
+                Variable variable = values.stream().filter(v -> DataSourceComponent.QUERY_PARAMETER.equals(v.getKey()) ||
+                                                  "local.query".equals(v.getKey()))
+                                          .findFirst().orElse(null);
+                if (variable == null) {
+                    throw new ExecutionException("Expected parameter [query] not found");
                 }
-                final List<EOProduct> remoteProducts = dataSourceComponent.doFetch(results,
-                        null,
-                        SystemVariable.SHARED_WORKSPACE.value(),
-                        ConfigurationManager.getInstance().getValue(String.format("local.%s.path", sensorName)),
-                                                                             null);
-                if (remoteProducts != null) {
+                Query primaryQuery = Query.fromString(variable.getValue());
+                if (primaryQuery == null) {
+                    throw new ExecutionException(String.format("Invalid input data for the task %s", task.getId()));
+                }
+                final DataQuery dataQuery = Query.toDataQuery(primaryQuery);
+                final Future<List<EOProduct>> future = backgroundWorker.submit(dataQuery::execute);
+                final List<EOProduct> results = future.get();
+                if (results != null && results.size() > 0) {
+                    int cardinality = dataSourceComponent.getSources().get(0).getCardinality();
+                    int rSize = results.size();
+                    if (cardinality > 0 && cardinality != rSize) {
+                        variable = values.stream().filter(v -> "remote.query".equals(v.getKey()))
+                                         .findFirst().orElse(null);
+                        if (variable == null) {
+                            message = String.format("Task %s expected %s inputs, but received %s. Execution is cancelled",
+                                                           task.getId(), cardinality, results.size());
+                            logger.warning(message);
+                            markTaskFinished(task, ExecutionStatus.CANCELLED, message);
+                            return;
+                        } else {
+                            results.removeIf(r -> r.getProductStatus() == ProductStatus.DOWNLOADING ||
+                                    r.getProductStatus() == ProductStatus.DOWNLOADED);
+                            logger.info(String.format("Task %s expects %d inputs, but only %d are locally available. Download for the missing will start",
+                                                      task.getId(), rSize, rSize - results.size()));
+                        }
+                    }
+                    WorkflowDescriptor workflow = workflowProvider.get(task.getJob().getWorkflowId());
+                    variable = values.stream().filter(v -> DataSourceComponent.SYNC_PARAMETER.equals(v.getKey()))
+                                     .findFirst().orElse(null);
+                    if (variable != null && variable.getValue() != null) {
+                        // The current resultset must be synchronized with the one received in this parameter
+                        // Synchronization means filtering by dates of the previous resultset
+                        WorkflowNodeDescriptor node = workflow.getNodes().stream().filter(n -> n.getId().equals(task.getWorkflowNodeId())).findFirst().get();
+                        String[] filter = null;
+                        Set<ComponentLink> links = node.getIncomingLinks();
+                        if (links != null) {
+                            filter = links.iterator().next().getAggregator().getFilter();
+                        }
+                        filterByOtherList(results, variable.getValue(), filter);
+                    }
+                    final String sensorName = dataSourceComponent.getSensorName().toLowerCase().replace(" ", "-");
+                    dataSourceComponent.setProductStatusListener(this);
+                    List<EOProduct> products = new ArrayList<>();
                     if (!dataSourceComponent.getId().contains(LOCAL_DATABASE)) {
-                        backgroundWorker.submit(() -> persistResults(remoteProducts));
+                        // first try to retrieve the products that have already been downloaded locally
+                        List<EOProduct> localProducts = productProvider.list(results.stream().map(EOData::getId).collect(Collectors.toList()));
+                        if (localProducts != null) {
+                            localProducts.removeIf(p -> p.getProductStatus() != ProductStatus.DOWNLOADED);
+                            localProducts.forEach(this::downloadCompleted);
+                            products.addAll(localProducts);
+                            Set<String> ids = localProducts.stream().map(EOData::getId).collect(Collectors.toSet());
+                            results.removeIf(p -> ids.contains(p.getId()));
+                        }
                     }
-                    products.addAll(remoteProducts);
-                }
-                //if (results.size() > 0) {
+                    final DataSourceConfiguration dataSourceConfiguration = configurationProvider.get(dataSourceComponent.getId());
+                    String localRepositoryRoot;
+                    Properties additionalProperties = null;
+                    if (dataSourceConfiguration != null) {
+                        dataSourceComponent.setFetchMode(dataSourceConfiguration.getFetchMode());
+                        localRepositoryRoot = dataSourceConfiguration.getLocalRepositoryPath();
+                        Map<String, String> parameters = dataSourceConfiguration.getParameters();
+                        if (parameters != null) {
+                            additionalProperties = new Properties();
+                            additionalProperties.putAll(parameters);
+                        }
+
+                    } else {
+                        localRepositoryRoot = ConfigurationManager.getInstance().getValue(String.format("local.%s.path", sensorName));
+                    }
+                    final List<EOProduct> remoteProducts = dataSourceComponent.doFetch(results,
+                                                                                       null,
+                                                                                       SystemVariable.USER_WORKSPACE.value(),
+                                                                                       localRepositoryRoot,
+                                                                                       additionalProperties);
+                    if (remoteProducts != null) {
+                        if (!dataSourceComponent.getId().contains(LOCAL_DATABASE)) {
+                            backgroundWorker.submit(() -> persistResults(remoteProducts));
+                        }
+                        products.addAll(remoteProducts);
+                    }
                     task.getComponent().setTargetCardinality(products.size());
                     Long workflowNodeId = task.getWorkflowNodeId();
-                    WorkflowDescriptor workflow = persistenceManager.getFullWorkflowDescriptor(task.getJob().getWorkflowId());
+                    List<Tuple<EOProduct, EOProduct>> tuples = null;
+
                     List<WorkflowNodeDescriptor> linkedNodes =
                             workflow.getNodes().stream().filter(n -> n.getIncomingLinks() != null &&
-                                                                     n.getIncomingLinks().stream().anyMatch(l -> l.getSourceNodeId() == workflowNodeId))
-                                                        .collect(Collectors.toList());
+                                            n.getIncomingLinks().stream().anyMatch(l -> l.getSourceNodeId() == workflowNodeId))
+                                    .collect(Collectors.toList());
                     Aggregator aggregator;
-                    List<Tuple<EOProduct, EOProduct>> tuples = null;
                     for (WorkflowNodeDescriptor linkedNode : linkedNodes) {
                         Set<ComponentLink> links = linkedNode.getIncomingLinks();
                         for (ComponentLink link : links) {
@@ -157,19 +219,19 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                                     DataSorter<EOProduct> sorter = ProductSortingFactory.getSorter(sort[0]);
                                     products = sorter.sort(products, sort[1] == null || sort[1].equalsIgnoreCase("asc"));
                                 }
-                                String[] group = aggregator.getAssociator();
-                                if (group != null) {
-                                    Association<EOProduct> association;
-                                    if (group.length == 1) {
-                                        association = ProductAssociationFactory.getAssociation(group[0]);
-                                    } else {
-                                        if (group[1] == null) {
-                                            group[1] = "0";
+                                if (linkedNode.getComponentType() == ComponentType.DATASOURCE) {
+                                    String[] group = aggregator.getAssociator();
+                                    if (group != null) {
+                                        Association<EOProduct> association = ProductAssociationFactory.getAssociation(group[0]);
+                                        if (group.length == 2) {
+                                            JavaType javaType = JavaType.fromFriendlyName(association.description()[1]);
+                                            association = ProductAssociationFactory.getAssociation(group[0],
+                                                                                                   javaType.isArrayType()
+                                                                                                        ? javaType.parseArray(group[1])
+                                                                                                        : javaType.parse(group[1]));
                                         }
-                                        association = ProductAssociationFactory.getAssociation(group[0],
-                                                                                               Integer.parseInt(group[1]));
+                                        tuples = association.associate(products);
                                     }
-                                    tuples = association.associate(products);
                                 }
                             }
                         }
@@ -181,26 +243,50 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                         task.setOutputParameterValue(dataSourceComponent.getTargets().get(0).getName(),
                                                      serializeResults(products));
                     }
-                //}
-                status = ExecutionStatus.DONE;
+                    status = ExecutionStatus.DONE;
+                } else {
+                    message = "Query returned no results";
+                    logger.warning(message);
+                    status = ExecutionStatus.CANCELLED;
+                }
             } else {
-                logger.info("Query returned no results");
-                status = ExecutionStatus.CANCELLED;
+                final String outPort = dataSourceComponent.getTargets().get(0).getName();
+                List<Variable> values = task.getOutputParameterValues();
+                final String strList;
+                if (values != null && values.size() > 0 && values.stream().anyMatch(v -> outPort.equals(v.getKey()))) {
+                    strList = values.stream().filter(v -> outPort.equals(v.getKey())).findFirst().get().getValue();
+                } else {
+                    final SourceDescriptor descriptor = dataSourceComponent.getSources().stream()
+                                                                           .filter(s -> s.getName().equals(DataSourceComponent.QUERY_PARAMETER))
+                                                                           .findFirst().get();
+                    strList = descriptor.getDataDescriptor().getLocation();
+                    task.setOutputParameterValue(outPort,
+                                                 jsonifyResults(Arrays.asList(strList.split(","))));
+                    task.getComponent().setTargetCardinality(descriptor.getCardinality());
+
+                }
+                if (StringUtilities.isNullOrEmpty(strList)) {
+                    throw new QueryException("Empty product set");
+                }
+                task.setInstanceTargetOutput(strList);
+                status = ExecutionStatus.DONE;
             }
-            markTaskFinished(task, status);
+            markTaskFinished(task, status, message);
         } catch (Exception ex) {
             logger.severe(ex.getMessage());
-            markTaskFinished(task, ExecutionStatus.FAILED);
+            markTaskFinished(task, ExecutionStatus.FAILED, ex.getMessage());
         }
     }
 
     @Override
     public void stop(DataSourceExecutionTask task) throws ExecutionException {
         if (dataSourceComponent == null || !dataSourceComponent.equals(task.getComponent())) {
-            throw new ExecutionException("stop() called on different component");
+            logger.warning("stop() called on different component");
         }
-        dataSourceComponent.cancel();
-        markTaskFinished(task, ExecutionStatus.CANCELLED);
+        if (dataSourceComponent != null) {
+            dataSourceComponent.cancel();
+        }
+        markTaskFinished(task, ExecutionStatus.CANCELLED, ExecutionStatus.CANCELLED.friendlyName());
     }
 
     @Override
@@ -215,7 +301,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
 
     @Override
     public void monitorExecutions() throws ExecutionException {
-        this.isInitialized = false;
+        this.isInitialized.set(false);
     }
 
     @Override
@@ -229,16 +315,41 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
         OutputDataHandlerManager.getInstance().applyHandlers(results);
     }
 
+    /**
+     * Transforms a list of products in a string containing a list of product names
+     * @param results   The list of products
+     */
     private String serializeResults(List<EOProduct> results) {
         String json = null;
         try {
             StringListAdapter adapter = new StringListAdapter();
-            json = adapter.unmarshal(results.stream().map(EOProduct::getLocation)
-                            .collect(Collectors.toList()));
+            json = adapter.unmarshal(results.stream().map(p -> FileUtilities.resolve(p.getLocation(), p.getEntryPoint())).collect(Collectors.toList()));
         } catch (Exception e) {
             logger.severe("Serialization of results failed: " + e.getMessage());
         }
         return json;
+    }
+
+    private String jsonifyResults(List<String> results) {
+        String json = null;
+        try {
+            StringListAdapter adapter = new StringListAdapter();
+            json = adapter.unmarshal(results);
+        } catch (Exception e) {
+            logger.severe("Serialization of results failed: " + e.getMessage());
+        }
+        return json;
+    }
+
+    private List<String> deserializeResults(String list) {
+        List<String> names = null;
+        try {
+            StringListAdapter adapter = new StringListAdapter();
+            names = adapter.marshal(list);
+        } catch (Exception e) {
+            logger.severe("Deserialization of list failed: " + e.getMessage());
+        }
+        return names;
     }
 
     private String serializeGroups(List<Tuple<EOProduct, EOProduct>> results) {
@@ -257,6 +368,47 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
         return json;
     }
 
+    private void filterByOtherList(List<EOProduct> products, String otherProductsList, String[] filters) {
+        final List<String> names = deserializeResults(otherProductsList);
+        final List<EOProduct> otherProducts = productProvider.getProductsByNames(names.toArray(new String[0]));
+        // If other list consists of non-products, do nothing
+        if (otherProducts != null && otherProducts.size() > 0) {
+            final Set<LocalDate> otherDates = otherProducts.stream().map(p -> p.getAcquisitionDate().toLocalDate()).collect(Collectors.toSet());
+            products.removeIf(p -> !otherDates.contains(p.getAcquisitionDate().toLocalDate()));
+            final Map<LocalDate, List<EOProduct>> groupsByDate = new HashMap<>();
+            LocalDate date;
+            // First, group by dates
+            for (EOProduct product : products) {
+                date = product.getAcquisitionDate().toLocalDate();
+                List<EOProduct> list = groupsByDate.computeIfAbsent(date, k -> new ArrayList<>());
+                list.add(product);
+            }
+            // If multiple products on the same date, keep the one according to the defined filter or keep the "middle one"
+            DataFilter<EOProduct> filter = null;
+            if (filters != null) {
+                filter = ProductFilterFactory.getFilter(filters[0]);
+                if (filters.length == 2) {
+                    JavaType javaType = JavaType.fromFriendlyName(filter.description()[1]);
+                    filter = ProductFilterFactory.getFilter(filters[0],
+                                                            javaType.isArrayType()
+                                                                ? javaType.parseArray(filters[1])
+                                                                : javaType.parse(filters[1]));
+                }
+            }
+            if (filter == null) {
+                filter = new KeepMiddleProductFilter();
+            }
+            final Set<EOProduct> toKeep = new HashSet<>();
+            for (Map.Entry<LocalDate, List<EOProduct>> entry : groupsByDate.entrySet()) {
+                List<EOProduct> list = entry.getValue();
+                toKeep.add(filter.filter(list));
+            }
+            groupsByDate.clear();
+            products.removeIf(p -> !toKeep.contains(p));
+            toKeep.clear();
+        }
+    }
+
     @Override
     public boolean downloadStarted(EOProduct product) {
     	final Principal principal = SessionStore.currentContext().getPrincipal();
@@ -269,7 +421,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
         	}
         	
         	// check if the product already exists
-        	final EOProduct oldProd = persistenceManager.getEOProduct(product.getId());
+        	final EOProduct oldProd = productProvider.get(product.getId());
         	if (oldProd != null) {
         		// if the product is failed or downloading, copy its references but continue with the download
         		if (oldProd.getProductStatus() == ProductStatus.FAILED || oldProd.getProductStatus() == ProductStatus.DOWNLOADING) {
@@ -291,17 +443,17 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
             product.setProductStatus(ProductStatus.DOWNLOADING);
             // attach the current user 
             product.addReference(principal.getName());
-            persistenceManager.saveEOProduct(product);
-            
+            productProvider.save(product);
+
             // update the user's input quota
             UserQuotaManager.getInstance().updateUserInputQuota(principal);
             return true;
-        } catch (PersistenceException e) {
-            logger.severe(String.format("Updating product %s failed. Reason: %s", product.getName(), e.getMessage()));
-            return false;
         } catch (QuotaException  e) {
         	logger.severe(String.format("Cannot update the input quota for user %s. Reason: %s", principal.getName(), e.getMessage()));
         	return false;
+        } catch (Exception e) {
+            logger.severe(String.format("Updating product %s failed. Reason: %s", product.getName(), e.getMessage()));
+            return false;
         }
     }
 
@@ -311,7 +463,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
         try {
         	// re-update the references, in case some other user tried to download this product after 
         	// the current user started
-        	final EOProduct oldProd = persistenceManager.getEOProduct(product.getId());
+        	final EOProduct oldProd = productProvider.get(product.getId());
         	if (oldProd != null) {
         		product.setRefs(oldProd.getRefs());
         	}
@@ -319,14 +471,14 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
             product.setProductStatus(ProductStatus.DOWNLOADED);
             // update the product's reference
             product.addReference(principal.getName());
-            persistenceManager.saveEOProduct(product);
-            
+            productProvider.save(product);
+
             // update the user's input quota
             UserQuotaManager.getInstance().updateUserInputQuota(principal);
-        } catch (PersistenceException e) {
-            logger.severe(String.format("Updating product %s failed. Reason: %s", product.getName(), e.getMessage()));
         } catch (QuotaException  e) {
         	logger.severe(String.format("Cannot update the input quota for user %s. Reason: %s", principal.getName(), e.getMessage()));
+        } catch (Exception e) {
+            logger.severe(String.format("Updating product %s failed. Reason: %s", product.getName(), e.getMessage()));
         }
     }
 
@@ -337,14 +489,14 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
         try {
             product.setProductStatus(ProductStatus.FAILED);
             product.removeReference(principal.getName());
-            persistenceManager.saveEOProduct(product);
+            productProvider.save(product);
             // roll back the user's quota
             UserQuotaManager.getInstance().updateUserInputQuota(principal);
             logger.warning(String.format("Product %s not downloaded. Reason: %s", product.getName(), reason));
-        } catch (PersistenceException e) {
-            logger.severe(String.format("Updating product %s failed. Reason: %s", product.getName(), e.getMessage()));
         } catch (QuotaException  e) {
         	logger.severe(String.format("Cannot update the input quota for user %s. Reason: %s", principal.getName(), e.getMessage()));
+        } catch (Exception e) {
+            logger.severe(String.format("Updating product %s failed. Reason: %s", product.getName(), e.getMessage()));
         }
     }
 
@@ -356,5 +508,11 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
     @Override
     public void downloadIgnored(EOProduct product, String reason) {
         //No-op
+    }
+
+    @Override
+    public void downloadQueued(EOProduct product, String reason) {
+        product.setProductStatus(ProductStatus.QUEUED);
+        logger.warning(String.format("Product %s not downloaded. Reason: %s", product.getName(), reason));
     }
 }

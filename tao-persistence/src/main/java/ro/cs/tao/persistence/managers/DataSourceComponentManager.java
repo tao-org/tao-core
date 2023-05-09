@@ -18,27 +18,53 @@ package ro.cs.tao.persistence.managers;
 
 import org.springframework.stereotype.Component;
 import ro.cs.tao.datasource.DataSourceComponent;
+import ro.cs.tao.datasource.persistence.DataSourceComponentProvider;
 import ro.cs.tao.persistence.repository.DataSourceComponentRepository;
+import ro.cs.tao.utils.StringUtilities;
 
 import java.util.List;
 
 @Component("dataSourceComponentManager")
-public class DataSourceComponentManager extends TaoComponentManager<DataSourceComponent, DataSourceComponentRepository> {
+public class DataSourceComponentManager extends TaoComponentManager<DataSourceComponent, DataSourceComponentRepository>
+                                        implements DataSourceComponentProvider {
 
+    @Override
     public List<DataSourceComponent> getUserDataSourceComponents(String userName) {
         return userName != null ? this.repository.getUserDataSourceComponents(userName) :
                 this.repository.getUserDataSourceComponents();
     }
 
+    @Override
     public List<DataSourceComponent> getSystemDataSourceComponents() {
         return this.repository.getSystemDataSourceComponents();
     }
 
+    @Override
     public DataSourceComponent getDataSourceComponentByLabel(String label) {
         List<DataSourceComponent> components = this.repository.getDataSourceComponentByLabel(label);
         return (components == null || components.size() == 0) ? null : components.get(0);
     }
 
+    @Override
+    public List<DataSourceComponent> getProductSets(String userName) {
+        List<DataSourceComponent> components = this.repository.getUserDataSourceComponents(userName);
+        if (components != null) {
+            components.removeIf(c -> StringUtilities.isNullOrEmpty(c.getSources().stream().filter(s -> DataSourceComponent.QUERY_PARAMETER.equals(s.getName())).findFirst().get().getDataDescriptor().getLocation()));
+        }
+        return components;
+    }
+
+    @Override
+    public List<DataSourceComponent> getBySourceAndSensor(String dataSourceName, String sensor) {
+        return this.repository.getBySourceAndSensor(dataSourceName, sensor);
+    }
+
+    @Override
+    public List<DataSourceComponent> getBySource(String dataSourceName) {
+        return this.repository.getBySource(dataSourceName);
+    }
+
+    @Override
     public DataSourceComponent getQueryDataSourceComponent(long queryId) {
         return this.repository.getQueryDataSourceComponent(queryId);
     }

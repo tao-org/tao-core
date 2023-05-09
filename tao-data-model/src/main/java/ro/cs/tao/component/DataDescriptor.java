@@ -140,10 +140,11 @@ public class DataDescriptor {
 
     /**
      * Sets the location of the product described by the component port.
-     * @param value The location, either as an URL or as a relative file system path. Absolute paths are not supported.
+     * @param value The location, either as a URL or as a relative file system path. Absolute paths are not supported.
      */
     public void setLocation(String value) {
-        if (value != null) {
+        if (value != null &&
+            (DataFormat.RASTER.equals(this.formatType) || DataFormat.VECTOR.equals(this.formatType) || DataFormat.FOLDER.equals(this.formatType))) {
             try {
                 // if the value is a URL
                 URI.create(value);

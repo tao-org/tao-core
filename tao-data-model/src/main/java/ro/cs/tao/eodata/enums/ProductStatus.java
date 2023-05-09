@@ -31,7 +31,12 @@ public enum ProductStatus implements TaoEnum<Integer> {
      * The product is an output of an execution task.
      */
     @XmlEnumValue("5")
-    PRODUCED(5, "Produced");
+    PRODUCED(5, "Produced"),
+    /**
+     * The product was queried for download.
+     */
+    @XmlEnumValue("6")
+    QUEUED(5, "Queued");
 
     private final int value;
     private final String description;

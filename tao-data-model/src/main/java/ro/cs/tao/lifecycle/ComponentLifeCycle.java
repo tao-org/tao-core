@@ -16,9 +16,24 @@
 package ro.cs.tao.lifecycle;
 
 /**
+ * An interface (activator) that defines actions to be taken by a module at different system execution points.
+ *
  * @author Cosmin Cara
  */
 public interface ComponentLifeCycle {
+    /**
+     * The priority of this module (the lower the higher).
+     * The priority dictates the order in which the modules will be treated.
+     */
+    int priority();
+
+    /**
+     * Life cycle method called when the system starts up.
+     */
     void onStartUp();
+
+    /**
+     * Life cycle method called when the system is about to be shut down.
+     */
     void onShutdown();
 }

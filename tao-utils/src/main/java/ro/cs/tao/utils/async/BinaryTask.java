@@ -3,7 +3,13 @@ package ro.cs.tao.utils.async;
 import java.util.function.BiConsumer;
 
 /**
- * @author Cosmin Cara
+ * Wrapper for a runnable that would eventually invoke a callback method accepting two arguments.
+ *
+ * @param <T>   The type of the runnable input and of the first argument of the callback method
+ * @param <V>   The type of the second argument of the callback method
+ *
+ * @author  Cosmin Cara
+ * @since   1.0
  */
 public abstract class BinaryTask<T, V> implements Runnable {
     private final T reference;

@@ -41,13 +41,13 @@
             </includes>
         </fileSet>
     </fileSets>
-    <files>
+    <!--<files>
         <file>
             <source>../../tao-services/tao-services-startup/src/main/resources/config/spring.properties</source>
             <outputDirectory>config</outputDirectory>
             <destName>application.properties</destName>
         </file>
-    </files>
+    </files>-->
     <dependencySets>
         <dependencySet>
             <outputDirectory>lib</outputDirectory>
@@ -55,6 +55,38 @@
             </outputFileNameMapping>
             <excludes>
                 <exclude>ro.cs.tao:tao-*</exclude>
+                <!-- Unwanted dependencies -->
+                <exclude>commons-lang:commons-lang:jar:2.4</exclude>
+                <exclude>org.apache.httpcomponents:httpclient:jar:4.5.13</exclude>
+                <exclude>org.apache.httpcomponents:httpcore:jar:4.4.13</exclude>
+                <exclude>com.fasterxml.jackson.core:jackson-core:jar:2.13.2</exclude>
+                <exclude>com.fasterxml.jackson.core:jackson-databind:jar:2.14.1</exclude>
+                <exclude>com.fasterxml.jackson.core:jackson-databind:jar:2.14.1</exclude>
+                <exclude>com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:jar:2.14.0</exclude>
+                <exclude>com.fasterxml.jackson.jaxrs:jackson-jaxrs-base:jar:2.12.3</exclude>
+                <exclude>com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:jar:2.12.3</exclude>
+                <exclude>com.fasterxml.jackson.jaxrs:jackson-jaxrs-base:jar:2.12.3</exclude>
+                <exclude>com.fasterxml.jackson.module:jackson-module-jaxb-annotations:jar:2.12.3</exclude>
+                <exclude>jakarta.activation:jakarta.activation-api:jar:1.2.1</exclude>
+                <exclude>jakarta.annotation:jakarta.annotation-api:jar:1.3.4</exclude>
+                <exclude>jakarta.xml.bind:jakarta.xml.bind-api:jar:2.3.2</exclude>
+                <exclude>javax.activation:javax.activation-api:jar:1.2.0</exclude>
+                <exclude>com.vividsolutions:jts-core:jar:1.14.0</exclude>
+                <exclude>com.sun.istack:istack-commons-runtime:jar:3.0.7</exclude>
+                <exclude>org.glassfish.jaxb:jaxb-runtime:jar:2.3.1</exclude>
+                <exclude>org.reactivestreams:reactive-streams:jar:1.0.0</exclude>
+                <exclude>org.glassfish.jaxb:txw2:jar:2.3.1</exclude>
+                <exclude>org.jboss.logging:jboss-logging:jar:3.4.1.Final</exclude>
+                <exclude>com.googlecode.json-simple:json-simple:jar:1.1</exclude>
+                <exclude>com.google.code.findbugs:jsr305:jar:2.0.0</exclude>
+                <!--<exclude>org.locationtech.jts:jts-core:jar:1.18.2</exclude>-->
+                <exclude>com.mchange:mchange-commons-java:jar:0.2.11</exclude>
+                <exclude>javax.servlet:servlet-api:jar:2.4</exclude>
+                <exclude>org.slf4j:slf4j-api:jar:1.7.7</exclude>
+                <exclude>org.slf4j:slf4j-api:jar:1.7.2*</exclude>
+                <exclude>org.slf4j:slf4j-api:jar:1.7.32</exclude>
+                <exclude>org.slf4j:slf4j-api:jar:1.7.33</exclude>
+                <exclude>org.yaml:snakeyaml:jar:1.30</exclude>
             </excludes>
         </dependencySet>
         <dependencySet>

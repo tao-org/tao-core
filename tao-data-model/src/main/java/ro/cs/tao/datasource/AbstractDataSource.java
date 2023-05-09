@@ -80,6 +80,13 @@ public abstract class AbstractDataSource<Q extends DataQuery, T> extends DataSou
         ProductFetchStrategy productFetchStrategy = null;
         if (this.parameterProvider != null) {
             productFetchStrategy = this.parameterProvider.getRegisteredProductFetchStrategies().get(sensorName);
+            if(productFetchStrategy == null){
+                for(String expectedSensorName:this.parameterProvider.getRegisteredProductFetchStrategies().keySet()){
+                    if(sensorName.toLowerCase().startsWith(expectedSensorName.toLowerCase()) || expectedSensorName.toLowerCase().startsWith(sensorName.toLowerCase())){
+                        productFetchStrategy = this.parameterProvider.getRegisteredProductFetchStrategies().get(expectedSensorName);
+                    }
+                }
+            }
             if (productFetchStrategy != null) {
                 productFetchStrategy.setCredentials(this.credentials);
             }
@@ -121,6 +128,15 @@ public abstract class AbstractDataSource<Q extends DataQuery, T> extends DataSou
     }
 
     @Override
+    public Map<String, CollectionDescription> getSensorTypes() {
+        Map<String, CollectionDescription> types = null;
+        if (this.parameterProvider != null) {
+            types = this.parameterProvider.getSensorTypes();
+        }
+        return types;
+    }
+
+    @Override
     public long getTimeout() { return this.timeout; }
 
     @Override
@@ -129,7 +145,7 @@ public abstract class AbstractDataSource<Q extends DataQuery, T> extends DataSou
     @Override
     public void setCredentials(String username, String password) {
         if (username == null || username.isEmpty()) {
-            throw new IllegalArgumentException(String.format("Datasource %s requires an account", defaultId()));
+            throw new IllegalArgumentException(String.format("Datasource %s requires an account", this.id));
         }
         this.credentials = new UsernamePasswordCredentials(username, password);
     }

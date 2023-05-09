@@ -43,5 +43,8 @@ public interface ProductStatusListener {
      * Signals that the download of a product was ignored, and the reason why
      */
     void downloadIgnored(EOProduct product, String reason);
-
+    /**
+     * Signals that the download of a product was queued, and the reason why
+     */
+    void downloadQueued(EOProduct product, String reason);
 }

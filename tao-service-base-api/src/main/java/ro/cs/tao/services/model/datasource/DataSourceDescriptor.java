@@ -24,17 +24,33 @@ import java.util.Map;
  * @author Cosmin Cara
  */
 public class DataSourceDescriptor {
+    private String mission;
     private String sensor;
     private String dataSourceName;
+    private String category;
+    private String description;
+	private String temporalCoverage;
+	private String spatialCoverage;
+    private String user;
+    private String pwd;
     private Map<String, DataSourceParameter> parameters;
+    private boolean requiresAuthentication;
 
     public DataSourceDescriptor() {
     }
 
-    public DataSourceDescriptor(String sensor, String dataSourceName, Map<String, DataSourceParameter> parameters) {
+    public DataSourceDescriptor(String mission, String sensor, String dataSourceName, String category, String description,
+								String temporalCoverage, String spatialCoverage,
+								Map<String, DataSourceParameter> parameters, boolean requiresAuthentication) {
+        this.mission = mission;
         this.sensor = sensor;
         this.dataSourceName = dataSourceName;
         this.parameters = parameters;
+		this.category = category;
+		this.description = description;
+		this.temporalCoverage = temporalCoverage;
+		this.spatialCoverage = spatialCoverage;
+        this.requiresAuthentication = requiresAuthentication;
         if (this.parameters != null) {
             Iterator<String> iterator = parameters.keySet().iterator();
             int order = 1;
@@ -42,6 +58,14 @@ public class DataSourceDescriptor {
                 parameters.get(iterator.next()).setOrder(order++);
             }
         }
+    }
+
+    public String getMission() {
+        return mission;
+    }
+
+    public void setMission(String mission) {
+        this.mission = mission;
     }
 
     public String getSensor() {
@@ -56,6 +80,54 @@ public class DataSourceDescriptor {
     }
     public void setDataSourceName(String dataSourceName) {
         this.dataSourceName = dataSourceName;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getTemporalCoverage() { return temporalCoverage; }
+
+    public void setTemporalCoverage(String temporalCoverage) { this.temporalCoverage = temporalCoverage; }
+
+    public String getSpatialCoverage() { return spatialCoverage; }
+
+    public void setSpatialCoverage(String spatialCoverage) { this.spatialCoverage = spatialCoverage; }
+
+    public String getUser() {
+        return user;
+    }
+
+    public void setUser(String user) {
+        this.user = user;
+    }
+
+    public String getPwd() {
+        return pwd;
+    }
+
+    public void setPwd(String pwd) {
+        this.pwd = pwd;
+    }
+
+    public boolean isRequiresAuthentication() {
+        return requiresAuthentication;
+    }
+
+    public void setRequiresAuthentication(boolean requiresAuthentication) {
+        this.requiresAuthentication = requiresAuthentication;
     }
 
     public Map<String, DataSourceParameter> getParameters() {

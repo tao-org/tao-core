@@ -16,6 +16,8 @@
 
 package ro.cs.tao.eodata;
 
+import ro.cs.tao.utils.executors.FileProcessFactory;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,6 +33,11 @@ public interface OutputDataHandler<T> {
      * Returns the type for which this handler is intended for.
      */
     Class<T> isIntendedFor();
+
+    /**
+     * Indicates if the subsequent handlers are allowed to be invoked.
+     */
+    default boolean allowNext() { return true; }
 
     /**
      * Returns the priority of this handler among the handlers for the intended type.
@@ -58,4 +65,10 @@ public interface OutputDataHandler<T> {
         List<T> list = handle(new ArrayList<T>() {{ add(item); }});
         return list != null && list.size() == 1 ? list.get(0) : null;
     }
+
+    /**
+     * Sets the
+     * @param factory
+     */
+    default void setFileProcessFactory(FileProcessFactory factory) { }
 }

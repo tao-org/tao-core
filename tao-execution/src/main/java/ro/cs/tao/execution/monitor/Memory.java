@@ -15,11 +15,13 @@
  */
 package ro.cs.tao.execution.monitor;
 
+import ro.cs.tao.utils.executors.MemoryUnit;
+
 /**
  * @author Cosmin Cara
  */
 public class Memory {
-    private MemoryUnit memoryUnit;
+    private final MemoryUnit memoryUnit;
 
     private long heapCommitted;
     private long heapInitial;

@@ -16,54 +16,46 @@
 package ro.cs.tao.datasource.converters;
 
 import ro.cs.tao.datasource.param.QueryParameter;
+import ro.cs.tao.utils.DateUtils;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
 
 /**
  * Default query parameter converter for Date values.
  *
  * @author Cosmin Cara
  */
-public class DateParameterConverter extends DefaultParameterConverter {
+public class DateParameterConverter extends DefaultParameterConverter<LocalDateTime> {
     private static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
     protected DateTimeFormatter dateFormat;
-    public DateParameterConverter(QueryParameter parameter) {
+    public DateParameterConverter(QueryParameter<LocalDateTime> parameter) {
         super(parameter);
-        if (!Date.class.equals(parameter.getType())) {
+        if (!LocalDateTime.class.equals(parameter.getType())) {
             throw new IllegalArgumentException("Invalid parameter type");
         }
-        dateFormat = DateTimeFormatter.ofPattern(DATE_FORMAT);
+        dateFormat = DateUtils.getFormatterAtUTC(DATE_FORMAT);
     }
 
     @Override
     public String stringValue() throws ConversionException {
         StringBuilder builder = new StringBuilder();
-        Object minValue = null, maxValue = null;
+        LocalDateTime minValue, maxValue;
         if (parameter.isInterval()) {
             minValue = parameter.getMinValue();
             maxValue = parameter.getMaxValue();
         } else {
             minValue = parameter.getValue();
-            maxValue = Date.from(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant());
-            /*LocalDateTime date = ((Date) parameter.getValue()).toInstant()
-                    .atZone(ZoneId.systemDefault()).toLocalDateTime();
-            builder.append(date.format(dateFormat));*/
+            maxValue = LocalDateTime.now();
         }
         if (minValue != null) {
-            LocalDateTime minDate = ((Date) minValue).toInstant()
-                    .atZone(ZoneId.systemDefault()).toLocalDateTime();
-            builder.append(minDate.format(dateFormat));
+            builder.append(minValue.format(dateFormat));
         } else {
             throw new ConversionException("Parameter represents an interval, but the minimum value is absent");
         }
         builder.append(" TO ");
         if (maxValue != null) {
-            LocalDateTime maxDate = ((Date) maxValue).toInstant()
-                    .atZone((ZoneId.systemDefault())).toLocalDateTime();
-            builder.append(maxDate.format(dateFormat));
+            builder.append(maxValue.format(dateFormat));
         } else {
             throw new ConversionException("Parameter represents an interval, but the maximum value is absent");
         }

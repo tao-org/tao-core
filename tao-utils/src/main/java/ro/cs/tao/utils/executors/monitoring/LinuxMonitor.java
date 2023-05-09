@@ -22,10 +22,10 @@ class LinuxMonitor extends ProcessActivityMonitor {
     int readDiskStats() {
         int retVal = -1;
         try {
-            List<String> args = new ArrayList<>();
+            final List<String> args = new ArrayList<>();
             Collections.addAll(args, String.format("pidstat -d -p %d", processId).split(" "));
-            Executor executor = Executor.create(ExecutorType.PROCESS, this.hostName, args);
-            SimpleConsumer consumer = new SimpleConsumer();
+            final Executor<?> executor = Executor.create(ExecutorType.PROCESS, this.hostName, args);
+            final SimpleConsumer consumer = new SimpleConsumer();
             executor.setOutputConsumer(consumer);
             if ((retVal = executor.execute(false)) == 0) {
                 List<String> messages = consumer.getMessages();
@@ -34,8 +34,8 @@ class LinuxMonitor extends ProcessActivityMonitor {
                     if (!message.contains("PID")) {
                         String[] tokens = Arrays.stream(message.split(" ")).filter(t -> !t.isEmpty()).toArray(String[]::new);
                         if (tokens.length > 5) {
-                            Double read = Double.parseDouble(tokens[4]);
-                            Double write = Double.parseDouble(tokens[5]);
+                            final Double read = Double.parseDouble(tokens[4]);
+                            final Double write = Double.parseDouble(tokens[5]);
                             // values are already in kilobytes/second
                             record = new Triple<>(LocalDateTime.now(), read.longValue(), write.longValue());
                         }

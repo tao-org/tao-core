@@ -23,7 +23,7 @@ import ro.cs.tao.eodata.Polygon2D;
 import ro.cs.tao.eodata.enums.ProductStatus;
 import ro.cs.tao.eodata.enums.Visibility;
 import ro.cs.tao.eodata.util.Conversions;
-import ro.cs.tao.persistence.PersistenceManager;
+import ro.cs.tao.persistence.EOProductProvider;
 import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 
@@ -37,7 +37,7 @@ import java.util.logging.Logger;
  * @author Cosmin Cara
  */
 public class ProductPersister implements OutputDataHandler<EOProduct> {
-    private final PersistenceManager persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
+    //private final PersistenceManager persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
     private final Logger logger = Logger.getLogger(getClass().getName());
 
     @Override
@@ -48,26 +48,24 @@ public class ProductPersister implements OutputDataHandler<EOProduct> {
 
     @Override
     public List<EOProduct> handle(List<EOProduct> list) throws DataHandlingException {
-        String utmCode = null;
+        String utmCode;
         for (EOProduct product : list) {
             try {
                 utmCode = product.getAttributeValue("utmCode");
                 if (utmCode != null) {
                     Polygon2D footprint = Polygon2D.fromWKT(product.getGeometry());
-                    if (footprint != null) {
-                        Polygon2D footprintUTM = new Polygon2D();
-                        List<Point2D> points = footprint.getPoints();
-                        for (Point2D point : points) {
-                            double[] values = Conversions.utmToDegrees(product.getCrs(), point.getX(), point.getY());
-                            footprintUTM.append(values[0], values[1]);
-                        }
-                        product.setGeometry(footprintUTM.toWKT());
+                    Polygon2D footprintUTM = new Polygon2D();
+                    List<Point2D> points = footprint.getPoints();
+                    for (Point2D point : points) {
+                        double[] values = Conversions.utmToDegrees(product.getCrs(), point.getX(), point.getY());
+                        footprintUTM.append(values[0], values[1]);
                     }
+                    product.setGeometry(footprintUTM.toWKT());
                 }
                 product.setVisibility(Visibility.PRIVATE);
                 product.setProductStatus(ProductStatus.PRODUCED);
                 product.addReference(SessionStore.currentContext().getPrincipal().getName());
-                product = persistenceManager.saveEOProduct(product);
+                product = SpringContextBridge.services().getService(EOProductProvider.class).save(product);
             } catch (Exception e) {
                 logger.severe(String.format("Product %s could not be written to database: %s",
                                             product.getName(), e.getMessage()));

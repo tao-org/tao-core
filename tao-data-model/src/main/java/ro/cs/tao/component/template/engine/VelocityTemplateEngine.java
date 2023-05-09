@@ -30,6 +30,7 @@ import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Apache Velocity template engine.
@@ -88,6 +89,21 @@ public class VelocityTemplateEngine extends TemplateEngine {
             VelocityEngine veloEngine = new VelocityEngine();
             VelocityContext veloContext = new VelocityContext();
             veloEngine.init();
+            // Velocity can handle only one parameter per line
+            // If the template contains concatenation of parameters, we need to replace them with actual values
+            String contents = template.getContents();
+            String[] lines = contents.split("\n");
+            for (int i = 0; i < lines.length; i++) {
+                int idx = lines[i].indexOf('$');
+                idx = lines[i].indexOf('$', idx + 1);
+                if (idx > 0) {
+                    Set<String> keys = parameters.keySet();
+                    for (String key : keys) {
+                        lines[i] = lines[i].replace("$" + key, String.valueOf(parameters.get(key)));
+                    }
+                }
+            }
+            template.setContents(String.join("\n", lines), false);
             org.apache.velocity.Template veloTemplate = createTemplate(veloEngine, template);
             for (String key : parameters.keySet()) {
                 veloContext.put(key, parameters.get(key));

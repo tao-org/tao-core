@@ -23,7 +23,7 @@ import java.util.Set;
 @Transactional
 public interface EOProductRepository extends PagingAndSortingRepository<EOProduct, String> {
 
-    @Query(value = "SELECT * FROM product.raster_data_product WHERE location IN (:locations)",
+    @Query(value = "SELECT * FROM product.raster_data_product WHERE location IN (:locations) OR location || CASE WHEN RIGHT(location, 1) = '/' THEN '' ELSE '/' END || entry_point IN (:locations)",
             nativeQuery = true)
     List<EOProduct> getProductsByLocation(@Param("locations") Set<String> locations);
 
@@ -37,7 +37,7 @@ public interface EOProductRepository extends PagingAndSortingRepository<EOProduc
             "WHERE p.visibility_id = 1 AND p.status_id = 5 AND r.refs != :user", nativeQuery = true)
     List<EOProduct> getOtherPublishedProducts(@Param("user") String user);
 
-    @Query(value = "SELECT name FROM product.raster_data_product WHERE name IN (:names) AND status_id = 3", nativeQuery = true)
+    @Query(value = "SELECT name FROM product.raster_data_product WHERE name IN (:names) AND status_id IN (2, 3)", nativeQuery = true)
     List<String> getExistingProductNames(@Param("names") Set<String> names);
 
     @Query(value = "SELECT * FROM product.raster_data_product WHERE name IN (:names)", nativeQuery = true)

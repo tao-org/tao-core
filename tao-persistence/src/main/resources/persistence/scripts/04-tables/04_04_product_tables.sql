@@ -104,6 +104,22 @@ ALTER TABLE product.product_status ALTER COLUMN id SET DEFAULT nextval('product.
 ALTER SEQUENCE product.product_status_id_seq OWNED BY product.product_status.id;
 
 -------------------------------------------------------------------------------
+-- table: product.download_queue
+DROP TABLE IF EXISTS product.download_queue;
+CREATE TABLE product.download_queue
+(
+	id varchar(50) NOT NULL,
+	data_source varchar(255) NOT NULL,
+	products json NOT NULL,
+	destination varchar(512) NOT NULL,
+	local_root varchar(512),
+	tiles json,
+	properties json
+);
+ALTER TABLE product.download_queue ADD CONSTRAINT PK_download_queue
+	PRIMARY KEY (id);
+
+-------------------------------------------------------------------------------
 -- table: product.raster_data_product
 DROP TABLE IF EXISTS product.raster_data_product CASCADE;
 CREATE TABLE product.raster_data_product
@@ -267,3 +283,42 @@ ALTER TABLE product.naming_rule_token ADD CONSTRAINT PK_naming_rule_token
     PRIMARY KEY (naming_rule_id, token_name);
 ALTER TABLE product.naming_rule_token ADD CONSTRAINT FK_naming_rule_token_naming_rule
 	FOREIGN KEY (naming_rule_id) REFERENCES product.naming_rule (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: product.data_sources_index
+DROP TABLE IF EXISTS product.data_sources_index CASCADE;
+CREATE TABLE product.data_sources_index
+(
+	id integer NOT NULL,
+    data_source_name varchar(50) NOT NULL,
+    sensor_name varchar(50) NOT NULL,
+    from_year integer NOT NULL,
+   	to_year integer NULL,
+   	last_run timestamp NULL,
+   	params json NULL
+);
+ALTER TABLE product.data_sources_index ADD CONSTRAINT PK_query
+	PRIMARY KEY (data_source_name,sensor_name);
+DROP SEQUENCE IF EXISTS product.data_sources_index_id_seq CASCADE;
+CREATE SEQUENCE product.data_sources_index_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE product.data_sources_index ALTER COLUMN id SET DEFAULT nextval('product.data_sources_index_id_seq');
+ALTER SEQUENCE product.data_sources_index_id_seq OWNED BY product.data_sources_index.id;
+-------------------------------------------------------------------------------
+-- table: product.data_sources_index_props
+DROP TABLE IF EXISTS product.data_sources_index_props CASCADE;
+CREATE TABLE product.data_sources_index_props
+(
+    data_source_id integer NOT NULL,
+    footprint  geometry(Geometry,4326) NULL,
+    acquisition_date timestamp NULL
+);
+
+ALTER TABLE IF EXISTS product.data_sources_index_props
+    OWNER to tao;
+ALTER TABLE IF EXISTS product.data_sources_index_props ADD CONSTRAINT info UNIQUE (data_source_id, footprint, acquisition_date);
+-------------------------------------------------------------------------------
+-- Index: ix_data_source_geom
+DROP INDEX IF EXISTS public.ix_data_sources_geom;
+CREATE INDEX IF NOT EXISTS ix_data_sources_geom
+    ON product.data_sources_index_props USING gist (footprint)
+TABLESPACE pg_default;

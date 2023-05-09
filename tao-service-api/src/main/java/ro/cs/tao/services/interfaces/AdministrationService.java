@@ -15,7 +15,7 @@
  */
 package ro.cs.tao.services.interfaces;
 
-import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.services.model.user.DisableUserInfo;
 import ro.cs.tao.services.model.user.UserUnicityInfo;
 import ro.cs.tao.user.Group;
@@ -23,6 +23,7 @@ import ro.cs.tao.user.User;
 import ro.cs.tao.user.UserStatus;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Service for managing administration tasks.
@@ -40,6 +41,8 @@ public interface AdministrationService extends TAOService {
     List<Group> getGroups();
 
     List<User> getAdministrators();
+
+    List<User> getUsers(Set<String> userNames);
 
     User getUserInfo(String username);
 

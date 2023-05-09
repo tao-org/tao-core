@@ -18,6 +18,12 @@ package ro.cs.tao.utils;
 
 import java.util.Objects;
 
+/**
+ * Structure for holding 3-tuples
+ * @param <T>   The first type
+ * @param <U>   The second type
+ * @param <V>   The third type
+ */
 public class Triple<T,U,V> {
     private final T keyOne;
     private final U keyTwo;

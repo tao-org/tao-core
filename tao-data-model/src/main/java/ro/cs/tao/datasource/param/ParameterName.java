@@ -2,11 +2,21 @@ package ro.cs.tao.datasource.param;
 
 import java.util.Objects;
 
+/**
+ * Descriptor for a parameter name properties.
+ * A parameter has:
+ * - a remote name (how it is defined at the remote data source)
+ * - a local name (how it is used in TAO)
+ * - a label (useful for visualisation renderings)
+ * - a description (useful for visualisation renderings)
+ *
+ * @author Cosmin Cara
+ */
 public class ParameterName {
-    private String systemName;
-    private String label;
-    private String description;
-    private String remoteName;
+    private final String systemName;
+    private final String label;
+    private final String description;
+    private final String remoteName;
 
     public static ParameterName create(String systemName, String remoteName) {
         return new ParameterName(systemName, remoteName);

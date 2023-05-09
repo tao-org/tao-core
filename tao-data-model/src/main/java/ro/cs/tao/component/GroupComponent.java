@@ -53,6 +53,7 @@ public class GroupComponent extends TaoComponent {
             for (SourceDescriptor source : sources) {
                 SourceDescriptor sourceDescriptor = source.clone();
                 sourceDescriptor.setId(UUID.randomUUID().toString());
+                sourceDescriptor.setReferencedSourceDescriptorId(source.getId());
                 component.addSource(sourceDescriptor, source.getId());
             }
         }
@@ -60,11 +61,21 @@ public class GroupComponent extends TaoComponent {
             for (TargetDescriptor target: targets) {
                 TargetDescriptor targetDescriptor = target.clone();
                 targetDescriptor.setId(UUID.randomUUID().toString());
+                targetDescriptor.setReferencedTargetDescriptorId(target.getId());
                 component.addTarget(targetDescriptor, target.getId());
             }
         }
         component.setActive(true);
         return component;
+    }
+
+    public static void cloneIndex(GroupComponent source, GroupComponent target) {
+        if (source.descriptorIndex != null) {
+            if (target.descriptorIndex == null) {
+                target.descriptorIndex = new HashMap<>();
+            }
+            target.descriptorIndex.putAll(source.descriptorIndex);
+        }
     }
 
     public GroupComponent() {

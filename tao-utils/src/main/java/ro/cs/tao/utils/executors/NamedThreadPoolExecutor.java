@@ -18,12 +18,15 @@ package ro.cs.tao.utils.executors;
 
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Logger;
 
 public class NamedThreadPoolExecutor extends ThreadPoolExecutor {
     private static final String THREAD_NAME = "%s-%d";
     private String poolName;
     private long timeout = -1;
     private TimeUnit timeUnit = TimeUnit.SECONDS;
+    private final AtomicInteger runningTasks = new AtomicInteger(0);
+    private final Logger logger = Logger.getLogger(NamedThreadPoolExecutor.class.getName());
 
     public NamedThreadPoolExecutor(String poolName, int maxThreads) {
         this(maxThreads, maxThreads, 1L, TimeUnit.SECONDS, poolName);
@@ -50,6 +53,18 @@ public class NamedThreadPoolExecutor extends ThreadPoolExecutor {
         return new TimeoutFuture<>(super.submit(task), this.timeout, this.timeUnit);
     }
 
+    public int getRunningTasks() { return this.runningTasks.get(); }
+
+    /*@Override
+    protected void beforeExecute(Thread t, Runnable r) {
+        logger.finest("Task entering execution (active tasks: " + this.runningTasks.getAndIncrement() + ")");
+    }
+
+    @Override
+    protected void afterExecute(Runnable r, Throwable t) {
+        logger.finest("One task ended (active tasks: " + this.runningTasks.decrementAndGet() + ")");
+    }*/
+
     String getPoolName() {  return this.poolName; }
 
     private NamedThreadPoolExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime, final TimeUnit unit,
@@ -70,7 +85,7 @@ public class NamedThreadPoolExecutor extends ThreadPoolExecutor {
     /**
      * Credits to Igor Kromin
      */
-    public class TimeoutFuture<T> implements Future<T> {
+    public static class TimeoutFuture<T> implements Future<T> {
         private final Future<T> delegate;
         private final long timeout;
         private final TimeUnit timeUnit;

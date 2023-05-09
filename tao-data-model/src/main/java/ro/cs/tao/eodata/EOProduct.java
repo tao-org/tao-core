@@ -22,9 +22,16 @@ import ro.cs.tao.eodata.enums.Visibility;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.net.URL;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * @author Cosmin Cara
@@ -32,13 +39,13 @@ import java.util.*;
 @XmlRootElement(name = "eoData")
 public class EOProduct extends EOData implements Serializable {
     private SensorType sensorType;
-    private Date acquisitionDate;
+    private LocalDateTime acquisitionDate;
     private PixelType pixelType;
     private String productType;
     private int width;
     private int height;
     private long approximateSize;
-    private Date processingDate;
+    private LocalDateTime processingDate;
     private URI quicklookLocation;
     private Set<String> refs;
     private String satelliteName;
@@ -52,15 +59,15 @@ public class EOProduct extends EOData implements Serializable {
         this.sensorType = sensorType;
     }
 
-    public Date getAcquisitionDate() { return acquisitionDate; }
+    public LocalDateTime getAcquisitionDate() { return acquisitionDate; }
 
-    public void setAcquisitionDate(Date acquisitionDate) {
+    public void setAcquisitionDate(LocalDateTime acquisitionDate) {
         this.acquisitionDate = acquisitionDate;
     }
 
-    public Date getProcessingDate() { return processingDate; }
+    public LocalDateTime getProcessingDate() { return processingDate; }
 
-    public void setProcessingDate(Date processingDate) { this.processingDate = processingDate; }
+    public void setProcessingDate(LocalDateTime processingDate) { this.processingDate = processingDate; }
 
     public PixelType getPixelType() {
         return pixelType;
@@ -99,8 +106,12 @@ public class EOProduct extends EOData implements Serializable {
     }
 
     public void setQuicklookLocation(String location) throws URISyntaxException {
-        if (location != null) {
-            this.quicklookLocation = new URI(location);
+        if (location != null && !location.startsWith("s3")) {
+            try {
+                this.quicklookLocation = new URL(location).toURI();
+            } catch (MalformedURLException e) {
+                this.quicklookLocation = Paths.get(location).toUri();
+            }
         }
     }
 
@@ -150,7 +161,7 @@ public class EOProduct extends EOData implements Serializable {
     //endregion
     @Override
     public Map<String, String> toAttributeMap() {
-        Map<String, String> attributes = super.toAttributeMap();
+        final Map<String, String> attributes = super.toAttributeMap();
         attributes.put("name", getName());
         attributes.put("sensorType", sensorType != null ? sensorType.name() : "n/a");
         attributes.put("pixelType", pixelType != null ? pixelType.name() : "n/a");
@@ -159,6 +170,7 @@ public class EOProduct extends EOData implements Serializable {
         attributes.put("width", safeValue(width));
         attributes.put("height", safeValue(height));
         attributes.put("visibility", (getVisibility() != null ? getVisibility() : Visibility.PRIVATE).name());
+        attributes.put("size", safeValue(getApproximateSize()));
         return attributes;
     }
 }

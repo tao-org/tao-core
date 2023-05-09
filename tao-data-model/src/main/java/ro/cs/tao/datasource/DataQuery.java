@@ -15,23 +15,27 @@
  */
 package ro.cs.tao.datasource;
 
+import org.locationtech.jts.geom.Geometry;
+import ro.cs.tao.component.ParameterDependency;
 import ro.cs.tao.component.StringIdentifiable;
+import ro.cs.tao.component.enums.Condition;
 import ro.cs.tao.datasource.converters.ConversionException;
 import ro.cs.tao.datasource.converters.ConverterFactory;
+import ro.cs.tao.datasource.param.CommonParameterNames;
 import ro.cs.tao.datasource.param.DataSourceParameter;
 import ro.cs.tao.datasource.param.QueryParameter;
 import ro.cs.tao.eodata.EOProduct;
+import ro.cs.tao.eodata.Polygon2D;
 import ro.cs.tao.eodata.enums.Visibility;
-import ro.cs.tao.serialization.BaseSerializer;
-import ro.cs.tao.serialization.MediaType;
-import ro.cs.tao.serialization.SerializationException;
-import ro.cs.tao.serialization.SerializerFactory;
+import ro.cs.tao.serialization.*;
 import ro.cs.tao.utils.StringUtilities;
 
 import javax.xml.bind.annotation.XmlTransient;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -56,6 +60,7 @@ public abstract class DataQuery extends StringIdentifiable {
     protected int pageSize;
     protected int pageNumber;
     protected int limit;
+    protected double coverage;
     protected long timeout;
     /* Introduces a delay between consecutive queries, expressed in seconds */
     protected int queryDelay;
@@ -141,23 +146,58 @@ public abstract class DataQuery extends StringIdentifiable {
 
     public void setMaxResults(int value) { this.limit = value; }
 
+    public void setCoverage(double coverage) {
+        this.coverage = coverage;
+    }
+
     public boolean supportsPaging() { return true; }
 
     public List<EOProduct> execute() {
         final Set<String> mandatoryParams = getMandatoryParams();
         final Map<String, QueryParameter<?>> actualParameters = getParameters();
-        List<String> missing = mandatoryParams.stream()
-                .filter(p -> !actualParameters.containsKey(p)).collect(Collectors.toList());
-        if (missing.size() > 0) {
+        final List<String> errors = mandatoryParams.stream()
+                                                   .filter(p -> !actualParameters.containsKey(p)).collect(Collectors.toList());
+        if (errors.size() > 0) {
             QueryException ex = new QueryException("Mandatory parameter(s) not supplied");
-            ex.addAdditionalInfo("Missing", String.join(",", missing));
+            ex.addAdditionalInfo("Missing", String.join(",", errors));
             throw ex;
         }
-        this.dataSourceParameters.entrySet().stream()
-                .filter(entry -> entry.getValue().getDefaultValue() != null && !actualParameters.containsKey(entry.getKey()))
-                .forEach(e -> addParameter(e.getKey(), e.getValue().getType(), e.getValue().getDefaultValue()));
+        errors.addAll(checkDependencies(actualParameters));
+        if (errors.size() > 0) {
+            QueryException ex = new QueryException("Some parameter(s) dependencies are not satisfied");
+            ex.addAdditionalInfo("Dependencies", String.join(",", errors));
+            throw ex;
+        }
         Instant start = Instant.now();
         List<EOProduct> retList = executeImpl();
+        final QueryParameter<?> footprintParam = actualParameters.get(CommonParameterNames.FOOTPRINT);
+        if (this.coverage > 0.0 && footprintParam != null) {
+            // If coverage parameter is set, then keep only those products
+            // that intersect at least <coverage>% (of the given footprint) the area of interest
+            final Polygon2D polygon2D = (Polygon2D) footprintParam.getValue();
+            try {
+                final Geometry footprint = new GeometryAdapter().marshal(polygon2D.toWKT());
+                final double footprintArea = footprint.getArea();
+                retList.removeIf(p -> {
+                    Geometry product = p.geometryObject();
+                    final Geometry intersection = footprint.intersection(product);
+                    if (intersection.isEmpty()) {
+                        return true;
+                    }
+                    final double productArea = product.getArea();
+                    final double areaPercentage = productArea > footprintArea
+                                                  ? intersection.getArea() / footprintArea
+                                                  : intersection.getArea() / productArea;
+                    final boolean toRemove = areaPercentage < this.coverage;
+                    if (toRemove) {
+                        logger.finest(String.format("Product %s removed due to coverage (%.2f%%)", p.getName(), areaPercentage));
+                    }
+                    return toRemove;
+                });
+            } catch (Exception e) {
+                logger.warning(e.getMessage());
+            }
+        }
         logger.finest(String.format("Data query completed in %d ms.", Duration.between(start, Instant.now()).toMillis()));
 
         boolean canSortAcqDate = true;
@@ -198,9 +238,6 @@ public abstract class DataQuery extends StringIdentifiable {
                 }
             }
         }
-        /*this.dataSourceParameters.entrySet().stream()
-                .filter(entry -> entry.getValue().getDefaultValue() != null && !parameters.containsKey(entry.getKey()))
-                .forEach(e -> addParameter(e.getKey(), e.getValue().getType(), e.getValue().getDefaultValue()));*/
         Instant start = Instant.now();
         final long count = getCountImpl();
         logger.finest(String.format("Count query completed in %d ms.", Duration.between(start, Instant.now()).toMillis()));
@@ -244,7 +281,7 @@ public abstract class DataQuery extends StringIdentifiable {
     public DataQuery clone() throws CloneNotSupportedException {
         DataQuery newQuery = (DataQuery) super.clone();
         newQuery.initialize(this.source, this.sensorName);
-        this.parameters.forEach((key, value) -> newQuery.parameters.put(key, value));
+        newQuery.parameters.putAll(this.parameters);
         return newQuery;
     }
 
@@ -309,7 +346,10 @@ public abstract class DataQuery extends StringIdentifiable {
     }
 
     protected String getParameterValue(QueryParameter<?> parameter) throws ConversionException {
-        return getRemoteMappedValue(parameter.getName(), converterFactory.get(getClass()).create(parameter).stringValue());
+        return getRemoteMappedValue(parameter.getName(),
+                                    parameter.getType().isArray() && LocalDateTime.class.equals(parameter.getType().getComponentType()) ?
+                                            converterFactory.get(getClass()).simple((QueryParameter<LocalDateTime[]>) parameter).stringValue() :
+                                            converterFactory.get(getClass()).create(parameter).stringValue());
     }
 
     protected String getRemoteMappedValue(String parameterName, String mappedValue) {
@@ -339,10 +379,90 @@ public abstract class DataQuery extends StringIdentifiable {
     protected void sleep() {
         if (this.queryDelay > 0) {
             try {
-                Thread.sleep(this.queryDelay * 1000);
+                Thread.sleep(this.queryDelay * 1000L);
             } catch (java.lang.InterruptedException ignored) {
             }
         }
+    }
+
+    protected List<String> checkDependencies(Map<String, QueryParameter<?>> actualParameters) {
+        final List<String> errors = new ArrayList<>();
+        for (Map.Entry<String, DataSourceParameter> entry : this.dataSourceParameters.entrySet()) {
+            final DataSourceParameter dataSourceParameter = entry.getValue();
+            if (!actualParameters.containsKey(entry.getKey())) {
+                // Parameters not supplied that have defined a default value will be added with the default value
+                if (dataSourceParameter.getDefaultValue() != null) {
+                    addParameter(entry.getKey(), dataSourceParameter.getType(), dataSourceParameter.getDefaultValue());
+                }
+            } else {
+                // Check the supplied parameters for satisfying any defined dependency
+                final List<ParameterDependency> dependencies = dataSourceParameter.getDependencies();
+                if (dependencies != null) {
+                    Map<String, ParameterDependency> deps = dependencies.stream().collect(Collectors.toMap(ParameterDependency::getExpectedValue, Function.identity()));
+                    //for (ParameterDependency dependency : dependencies) {
+                    // All dependencies refer the same parameterId
+                    QueryParameter<?> refParam = actualParameters.get(dependencies.get(0).getReferencedParameterId());
+                    if (refParam == null) {
+                        errors.add(entry.getKey() + " cannot be set if " + dependencies.get(0).getReferencedParameterId() + " is not set");
+                        continue;
+                    }
+                    ParameterDependency dependency = deps.get(refParam.getValueAsString());
+                    QueryParameter<?> currentParam = actualParameters.get(entry.getKey());
+                    switch (dependency.getDependencyType()) {
+                        case EXCLUSIVE:
+                            errors.add(entry.getKey() + " cannot be set if " + dependency.getReferencedParameterId() + " is not set");
+                            break;
+                        case FILTER:
+                            final String expectedValue = dependency.getExpectedValue();
+                            String allowedValues = dependency.getAllowedValues();
+                            final Set<String> aValues = allowedValues != null ? Arrays.stream(allowedValues.split(",")).collect(Collectors.toSet()) : new HashSet<>();
+                            final Set<String> expValues = Arrays.stream(expectedValue.split(",")).collect(Collectors.toSet());
+                            Condition condition = dependency.getCondition();
+                            boolean hasError = false;
+                            switch (condition) {
+                                case EQ:
+                                    hasError = !expectedValue.equals(refParam.getValueAsString());
+                                    break;
+                                case NEQ:
+                                    hasError = expectedValue.equals(refParam.getValueAsString());
+                                    break;
+                                case IN:
+                                    hasError = !expValues.contains(refParam.getValueAsString());
+                                    break;
+                                case NOTIN:
+                                    hasError = expValues.contains(refParam.getValueAsString());
+                                    break;
+                                case GT:
+                                    hasError = compare(refParam.getType(), expectedValue, refParam.getValue()) <= 0;
+                                    break;
+                                case GTE:
+                                    hasError = compare(refParam.getType(), expectedValue, refParam.getValue()) < 0;
+                                    break;
+                                case LT:
+                                    hasError = compare(refParam.getType(), expectedValue, refParam.getValue()) >= 0;
+                                    break;
+                                case LTE:
+                                    hasError = compare(refParam.getType(), expectedValue, refParam.getValue()) > 0;
+                                    break;
+                            }
+                            if (hasError) {
+                                errors.add(String.format("%s cannot be set to %s if %s %s %s",
+                                        entry.getKey(), currentParam.getValueAsString(),
+                                        refParam.getName(), condition.friendlyName().toLowerCase(), refParam.getValue()));
+                            }
+                            if (!aValues.contains(currentParam.getValueAsString())) {
+                                errors.add(String.format("Value %s of %s not allowed when %s %s %s",
+                                        currentParam.getValueAsString(), entry.getKey(),
+                                        refParam.getName(), condition.friendlyName().toLowerCase(), refParam.getValue()));
+                            }
+                        default:
+                            break;
+                    }
+                    //}
+                }
+            }
+        }
+        return errors;
     }
 
     private void initialize(DataSource<?, ?> source, String sensorName) {
@@ -362,5 +482,23 @@ public abstract class DataQuery extends StringIdentifiable {
                 .filter(e -> e.getValue().isRequired() && e.getValue().getDefaultValue() == null)
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toSet());
+    }
+
+    private int compare(Class<?> type, String val1, Object val2) {
+        if (type.equals(byte.class) || type.equals(Byte.class)) {
+            return Byte.compare(Byte.parseByte(val1), (byte) val2);
+        } else if (type.equals(short.class) || type.equals(Short.class)) {
+            return Short.compare(Short.parseShort(val1), (short) val2);
+        } else if (type.equals(int.class) || type.equals(Integer.class)) {
+            return Integer.compare(Integer.parseInt(val1), (int) val2);
+        } else if (type.equals(long.class) || type.equals(Long.class)) {
+            return Long.compare(Long.parseLong(val1), (long) val2);
+        } else if (type.equals(float.class) || type.equals(Float.class)) {
+            return Float.compare(Float.parseFloat(val1), (float) val2);
+        } else if (type.equals(double.class) || type.equals(Double.class)) {
+            return Double.compare(Double.parseDouble(val1), (double) val2);
+        } else {
+            return val1.compareTo(val2.toString());
+        }
     }
 }

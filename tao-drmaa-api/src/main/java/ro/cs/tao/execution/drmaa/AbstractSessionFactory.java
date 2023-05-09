@@ -31,6 +31,7 @@
 /*___INFO__MARK_END__*/
 package ro.cs.tao.execution.drmaa;
 
+import org.apache.commons.lang3.SystemUtils;
 import org.ggf.drmaa.Session;
 import org.ggf.drmaa.SessionFactory;
 import ro.cs.tao.configuration.ConfigurationManager;
@@ -43,8 +44,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.MissingResourceException;
@@ -66,7 +65,7 @@ import java.util.stream.Stream;
 public abstract class AbstractSessionFactory extends SessionFactory {
 
     protected Session thisSession;
-    private Logger logger = Logger.getLogger(getClass().getName());
+    private final Logger logger = Logger.getLogger(getClass().getName());
 
     protected AbstractSessionFactory() {
         initLibrary();
@@ -85,17 +84,18 @@ public abstract class AbstractSessionFactory extends SessionFactory {
 
     protected abstract String getJniLibraryName();
 
-    private void initLibrary() {
-        String path = ConfigurationManager.getInstance().getValue("native.library.path");
-        if (path == null) {
-            throw new MissingResourceException("Native library path is not defined",
-                                               getClass().getSimpleName(), "native.library.path");
-        }
-        final Path libraryPath = Paths.get(path, getJniLibraryName());
-        AccessController.doPrivileged((PrivilegedAction) () -> {
+    protected void initLibrary() {
+        if (SystemUtils.IS_OS_LINUX) {
+            String path = ConfigurationManager.getInstance().getValue("native.library.path");
+            if (path == null) {
+                throw new MissingResourceException("Native library path is not defined",
+                                                   getClass().getSimpleName(), "native.library.path");
+            }
+            final Path libraryPath = Paths.get(path, getJniLibraryName()).toAbsolutePath();
             try {
-                if (!Files.exists(libraryPath)) {
+                if (!Files.exists(libraryPath) || Files.size(libraryPath) == 0) {
                     Files.createDirectories(libraryPath.getParent());
+                    Files.deleteIfExists(libraryPath);
                     logger.info(String.format("Copy library %s to %s",
                                               libraryPath.getFileName(),
                                               libraryPath.getParent()));
@@ -103,24 +103,21 @@ public abstract class AbstractSessionFactory extends SessionFactory {
                     fixUpPermissions(libraryPath);
                 }
                 System.load(libraryPath.toAbsolutePath().toString());
-            } catch (Exception e){
+            } catch (Exception e) {
                 logger.severe(e.getMessage());
             }
-            return null;
-        });
+        }
     }
 
     private void copyLibrary(Path path, String libraryName) throws IOException {
-        ClassLoader loader = Thread.currentThread().getContextClassLoader();
-        byte[] buffer = new byte[1024];
-        try (BufferedInputStream is = new BufferedInputStream(loader.getResourceAsStream("/auxdata/" + libraryName))) {
-            int read;
-            try (OutputStream os = new BufferedOutputStream(Files.newOutputStream(path.resolve(libraryName)))) {
-                while ((read = is.read(buffer)) != -1) {
-                    os.write(buffer, 0, read);
-                }
-                os.flush();
+        byte[] buffer = new byte[65536];
+        int read;
+        try (BufferedInputStream is = new BufferedInputStream(getClass().getResourceAsStream("/auxdata/" + libraryName));
+             OutputStream os = new BufferedOutputStream(Files.newOutputStream(path.resolve(libraryName)))) {
+            while ((read = is.read(buffer)) != -1) {
+                os.write(buffer, 0, read);
             }
+            os.flush();
         }
     }
 
@@ -143,14 +140,15 @@ public abstract class AbstractSessionFactory extends SessionFactory {
         try {
             setExecutablePermissions(destPath);
             if (Files.isDirectory(destPath)) {
-                Stream<Path> files = Files.list(destPath);
-                files.forEach(path -> {
-                    try {
-                        fixUpPermissions(path);
-                    } catch (IOException e) {
-                        logger.severe(String.format("Failed to fix permissions on '%s'", path));
-                    }
-                });
+                try (Stream<Path> files = Files.list(destPath)) {
+                    files.forEach(path -> {
+                        try {
+                            fixUpPermissions(path);
+                        } catch (IOException e) {
+                            logger.severe(String.format("Failed to fix permissions on '%s'", path));
+                        }
+                    });
+                }
             }
         } catch (IOException e) {
             logger.severe(String.format("Failed to fix permissions on '%s'", destPath));

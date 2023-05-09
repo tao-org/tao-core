@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
-import ro.cs.tao.execution.model.DataSourceConnection;
+import ro.cs.tao.datasource.DataSourceCredentials;
 
 import java.util.List;
 
@@ -17,9 +17,9 @@ import java.util.List;
 @Repository
 @Qualifier(value = "dataSourceConnectionRepository")
 @Transactional
-public interface DataSourceConnectionRepository extends PagingAndSortingRepository<DataSourceConnection, Long> {
+public interface DataSourceConnectionRepository extends PagingAndSortingRepository<DataSourceCredentials, Long> {
 
-    List<DataSourceConnection> findByUserId(int userId);
+    List<DataSourceCredentials> findByUserId(String userId);
 
-    DataSourceConnection findByUserIdAndDataSource(int userId, String dataSource);
+    DataSourceCredentials findByUserIdAndDataSource(String userId, String dataSource);
 }

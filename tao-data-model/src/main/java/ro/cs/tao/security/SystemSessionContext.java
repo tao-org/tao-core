@@ -33,7 +33,7 @@ public class SystemSessionContext extends SessionContext {
     private SystemSessionContext() { super(); }
 
     @Override
-    protected Principal setPrincipal() { return SystemPrincipal.instance(); }
+    public Principal setPrincipal(Principal principal) { return SystemPrincipal.instance(); }
 
     @Override
     protected List<UserPreference> setPreferences() { return null; }

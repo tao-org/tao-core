@@ -1,9 +1,16 @@
 package ro.cs.tao.configuration;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.ServiceLoader;
 
+/**
+ * Singleton that handles the configuration provider registration.
+ * If no such provider is registered, an in-memory provider (i.e. that is not backed by a file) will be used.
+ *
+ * @author Cosmin Cara
+ */
 public class ConfigurationManager {
     private static ConfigurationProvider configurationProvider;
 
@@ -19,9 +26,11 @@ public class ConfigurationManager {
         if (configurationProvider == null) {
             configurationProvider = new EmptyConfigurationProvider();
             final String userHome = System.getProperty("user.home");
+            configurationProvider.setValue(ConfigurationProvider.APP_HOME, userHome);
             configurationProvider.setValue("products.location", userHome);
-            configurationProvider.setScriptsFolder(Paths.get(userHome));
-            configurationProvider.setConfigurationFolder(Paths.get(userHome));
+            Path path = Paths.get(userHome);
+            configurationProvider.setScriptsFolder(path);
+            configurationProvider.setConfigurationFolder(path);
         }
     }
 

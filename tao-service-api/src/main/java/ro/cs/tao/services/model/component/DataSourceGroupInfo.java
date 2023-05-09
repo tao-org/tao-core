@@ -6,6 +6,9 @@ import ro.cs.tao.datasource.DataSourceComponentGroup;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Read-only bean for a DataSourceComponentGroup entity
+ */
 public class DataSourceGroupInfo {
 
     private String id;

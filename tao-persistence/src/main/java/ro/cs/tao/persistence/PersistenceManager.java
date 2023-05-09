@@ -18,46 +18,12 @@ package ro.cs.tao.persistence;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.transaction.annotation.Transactional;
-import ro.cs.tao.Sort;
-import ro.cs.tao.Tag;
-import ro.cs.tao.component.GroupComponent;
 import ro.cs.tao.component.ProcessingComponent;
-import ro.cs.tao.component.enums.TagType;
-import ro.cs.tao.datasource.DataSourceComponent;
-import ro.cs.tao.datasource.DataSourceComponentGroup;
-import ro.cs.tao.datasource.beans.Query;
-import ro.cs.tao.docker.Container;
-import ro.cs.tao.eodata.AuxiliaryData;
-import ro.cs.tao.eodata.EOProduct;
-import ro.cs.tao.eodata.VectorData;
-import ro.cs.tao.eodata.naming.NamingRule;
-import ro.cs.tao.execution.model.*;
-import ro.cs.tao.messaging.Message;
-import ro.cs.tao.messaging.MessagePersister;
-import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.datasource.persistence.DataSourceConfigurationProvider;
 import ro.cs.tao.persistence.managers.*;
-import ro.cs.tao.persistence.repository.QueryViewRepository;
-import ro.cs.tao.persistence.repository.TagRepository;
-import ro.cs.tao.topology.NodeDescription;
-import ro.cs.tao.topology.NodeType;
-import ro.cs.tao.topology.ServiceDescription;
-import ro.cs.tao.user.Group;
-import ro.cs.tao.user.User;
-import ro.cs.tao.user.UserPreference;
-import ro.cs.tao.user.UserStatus;
-import ro.cs.tao.utils.Crypto;
-import ro.cs.tao.workflow.WorkflowDescriptor;
-import ro.cs.tao.workflow.WorkflowNodeDescriptor;
-import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
 
 import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
 
 /**
  * DAO
@@ -68,10 +34,19 @@ import java.util.*;
 //@EnableTransactionManagement
 //@EnableJpaRepositories(basePackages = { "ro.cs.tao.persistence.repository" })
 @Scope("singleton")
-public class PersistenceManager implements MessagePersister {
+public class PersistenceManager {
 
     @Autowired
-    private ProductManager productManager;
+    private EOProductManager eoProductManager;
+
+    @Autowired
+    private VectorDataManager vectorDataManager;
+
+    @Autowired
+    private AuxiliaryDataManager auxiliaryDataManager;
+
+    @Autowired
+    private NodeFlavorManager nodeFlavorManager;
 
     @Autowired
     private NodeManager nodeManager;
@@ -83,6 +58,9 @@ public class PersistenceManager implements MessagePersister {
     private ProcessingComponentManager processingComponentManager;
 
     @Autowired
+    private WPSComponentManager wpsComponentManager;
+
+    @Autowired
     private GroupComponentManager groupComponentManager;
 
     @Autowired
@@ -90,6 +68,12 @@ public class PersistenceManager implements MessagePersister {
 
     @Autowired
     private DataSourceGroupManager dataSourceGroupManager;
+
+    @Autowired
+    private DataSourceConnectionManager dataSourceConnectionManager;
+
+    @Autowired
+    private DataSourceConfigurationManager dataSourceConfigurationManager;
 
     private SimpleCache.Cache<String, ProcessingComponent> componentCache;
 
@@ -118,829 +102,89 @@ public class PersistenceManager implements MessagePersister {
     private DataSource dataSource;
 
     @Autowired
-    private TagRepository tagRepository;
+    private TagManager tagManager;
 
     @Autowired
     private NamingRuleManager namingRuleManager;
+
+    @Autowired
+    private RepositoryManager repositoryManager;
+
+    @Autowired
+    private SiteManager siteManager;
+
+    @Autowired
+    private WPSAuthenticationManager wpsAuthenticationManager;
+
+    @Autowired
+    private DownloadQueueManager downloadQueueManager;
+
+    @Autowired
+    private AuditManager auditManager;
 
     @PostConstruct
     public void initialize() {
         componentCache = SimpleCache.create(String.class, ProcessingComponent.class,
                                             id -> processingComponentManager.get(id));
-        /*workflowNodeCache = SimpleCache.create(Long.class, WorkflowNodeDescriptor.class,
-                                               id -> workflowNodeDescriptorManager.get(id));*/
     }
 
     public DataSource getDataSource() { return dataSource; }
 
-    //region Tags
+    public EOProductManager rasterData() { return eoProductManager; }
 
-    public List<Tag> getComponentTags() {
-        return tagRepository.getTags(TagType.COMPONENT.value());
-    }
-
-    public List<Tag> getNodeTags(){
-        return tagRepository.getTags(TagType.TOPOLOGY_NODE.value());
-    }
-
-    public List<Tag> getDatasourceTags() {
-        return tagRepository.getTags(TagType.DATASOURCE.value());
-    }
-
-    public List<Tag> getWorkflowTags() {
-        return tagRepository.getTags(TagType.WORKFLOW.value());
-    }
-
-    public Tag saveTag(Tag tag) {
-        return tagRepository.save(tag);
-    }
-
-    //endregion
-    //region EOProduct and VectorData
-
-    public EOProduct getEOProduct(String id) {
-        return productManager.getEOProduct(id);
-    }
-
-    public List<EOProduct> getEOProducts() {
-        return productManager.getEOProducts();
-    }
-
-    public List<EOProduct> getEOProducts(Iterable<String> ids) {
-        return productManager.getEOProducts(ids);
-    }
-
-    public List<EOProduct> getEOProducts(String...locations) {
-        if (locations == null || locations.length == 0) {
-            return getEOProducts();
-        } else if (locations.length == 1) {
-            return productManager.getEOProducts(locations[0]);
-        } else {
-            Set<String> set = new HashSet<>();
-            Collections.addAll(set, locations);
-            return productManager.getEOProducts(set);
-        }
-    }
-
-    public List<EOProduct> getPublicProducts() { return productManager.getPublicEOProducts(); }
-
-    public List<EOProduct> getOtherPublishedProducts(String currentUser) { return productManager.getOtherPublishedProducts(currentUser); }
-
-    public List<String> getExistingProductNames(String... names) {
-        return productManager.getExistingProductNames(names);
-    }
-
-    public List<EOProduct> getProductsByNames(String... names) {
-        return productManager.getProductsByName(names);
-    }
-
-    public int getOtherProductReferences(String componentId, String name) {
-        return productManager.getOtherProductReferences(componentId, name);
-    }
-
-    public void deleteIfNotReferenced(String refererComponentId, String productName) {
-        productManager.deleteIfNotReferenced(refererComponentId, productName);
-    }
-
-    public List<EOProduct> getWorkflowOutputs(long workflowId) {
-        return productManager.getWorkflowOutputs(workflowId);
-    }
-
-    public long getUserProductsSize(String user) {
-        return productManager.getUserEOProductsSize(user);
-    }
-
-    public long getUserInputProductsSize(String user, String location) {
-        return productManager.getUserInputEOProductsSize(user, location);
-    }
-
-    public Date getNewestProductDateForUser(String user, String footprint) {
-    	return productManager.getNewestProductDateForUser(user, footprint);
-    }
-    
-    public List<EOProduct> getJobOutputs(long jobId) {
-        return productManager.getJobOutputs(jobId);
-    }
-
-    public List<VectorData> getVectorDataProducts() {
-        return productManager.getVectorDataProducts();
-    }
-
-    public List<VectorData> getVectorDataProducts(String...locations) {
-        if (locations == null || locations.length == 0) {
-            return getVectorDataProducts();
-        } else {
-            Set<String> set = new HashSet<>();
-            Collections.addAll(set, locations);
-            return productManager.getVectorDataProducts(set);
-        }
-    }
-
-    public List<AuxiliaryData> getAuxiliaryData(String userName) {
-        return productManager.getAuxiliaryData(userName);
-    }
-
-    public List<AuxiliaryData> getAuxiliaryData(String userName, String...locations) {
-        if (locations == null || locations.length == 0) {
-            return getAuxiliaryData(userName);
-        } else {
-            Set<String> set = new HashSet<>();
-            Collections.addAll(set, locations);
-            return productManager.getAuxiliaryData(userName, set);
-        }
-    }
-
-    public EOProduct saveEOProduct(EOProduct eoProduct) throws PersistenceException {
-        return productManager.saveEOProduct(eoProduct);
-    }
-
-    public void remove(EOProduct product) {
-        productManager.removeProduct(product);
-    }
-
-    public void removeProduct(String name) {
-        productManager.removeProduct(name);
-    }
-
-    public VectorData saveVectorDataProduct(VectorData vectorDataProduct) throws PersistenceException {
-        return productManager.saveVectorDataProduct(vectorDataProduct);
-    }
-
-    public void remove(VectorData product) {
-        productManager.removeProduct(product);
-    }
-
-    public AuxiliaryData saveAuxiliaryData(AuxiliaryData auxiliaryData) throws PersistenceException {
-        return productManager.saveAuxiliaryData(auxiliaryData);
-    }
-
-    public void removeAuxiliaryData(String location) {
-        productManager.removeAuxiliaryData(location);
-    }
-
-    public void removeAuxiliaryData(AuxiliaryData auxiliaryData) {
-        productManager.removeAuxiliaryData(auxiliaryData);
-    }
-    //endregion
-
-    //region NodeDescription and ServiceDescription
-    public List<NodeDescription> getNodes() {
-        return nodeManager.list();
-    }
-
-    public NodeDescription getNodeByHostName(String hostName) throws PersistenceException {
-        return nodeManager.getNodeByHostName(hostName);
-    }
-
-    public List<NodeDescription> getNodesByType(NodeType type) {
-        return nodeManager.getNodesByType(type);
-    }
-
-    public List<NodeDescription> getNodes(boolean active) {
-        return nodeManager.findByActive(active);
-    }
-
-    public NodeDescription saveExecutionNode(NodeDescription node) throws PersistenceException {
-        return nodeManager.saveExecutionNode(node);
-    }
-
-    public NodeDescription updateExecutionNode(NodeDescription node) throws PersistenceException {
-        return nodeManager.update(node);
-    }
-
-    public NodeDescription deleteExecutionNode(String hostName) throws PersistenceException {
-        return nodeManager.delete(hostName);
-    }
-
-    public void removeExecutionNode(String hostName) throws PersistenceException {
-        nodeManager.deleteExecutionNode(hostName);
-    }
-
-    public ServiceDescription getServiceDescription(String name, String version) {
-        return nodeManager.getServiceDescription(name, version);
-    }
-
-    public ServiceDescription saveServiceDescription(ServiceDescription service) throws PersistenceException {
-        return nodeManager.saveServiceDescription(service);
-    }
-
-    public boolean checkIfExistsNodeByHostName(String hostName) {
-        return nodeManager.exists(hostName);
-    }
-    //endregion
-
-    //region Container
-    public List<Container> getContainers() {
-        return containerManager.list();
-    }
-
-    public List<Container> getContainers(Iterable<String> ids) {
-        return containerManager.list(ids);
-    }
-
-    public Container getContainerById(String id) {
-        return containerManager.get(id);
-    }
-
-    public Container getContainerByName(String name) {
-        return containerManager.getByName(name);
-    }
-
-    public Container saveContainer(Container container) throws PersistenceException {
-        return containerManager.save(container);
-    }
-
-    public Container updateContainer(Container container) throws PersistenceException {
-        return containerManager.update(container);
-    }
-
-    public boolean existsContainer(String id) {
-        return containerManager.exists(id);
-    }
-
-    public void deleteContainer(String id) throws PersistenceException {
-        containerManager.delete(id);
-    }
-    //endregion
-
-    //region ProcessingComponent
-    public List<ProcessingComponent> getProcessingComponents() {
-        return processingComponentManager.list();
-    }
-
-    public List<ProcessingComponent> list(int pageNumber, int pageSize, Sort sort) {
-        return processingComponentManager.list(pageNumber, pageSize, sort);
-    }
-
-    public List<ProcessingComponent> getProcessingComponents(int pageNumber, int pageSize, Sort sort) {
-        return processingComponentManager.list(pageNumber, pageSize, sort);
-    }
-
-    public List<ProcessingComponent> getProcessingComponents(Iterable<String> ids) {
-        return processingComponentManager.list(ids);
-    }
-
-    public List<ProcessingComponent> getUserProcessingComponents(String userName) {
-        return processingComponentManager.getUserProcessingComponents(userName);
-    }
-
-    public List<ProcessingComponent> getUserScriptComponents(String userName) {
-        return processingComponentManager.getUserScriptComponents(userName);
-    }
-
-    public ProcessingComponent getProcessingComponentById(String id) {
-        return componentCache.get(id); //componentManager.getProcessingComponentById(id);
-    }
-
-    public List<ProcessingComponent> getProcessingComponentByLabel(String label) {
-        return processingComponentManager.getProcessingComponentsByLabel(label);
-    }
-
-    public ProcessingComponent saveProcessingComponent(ProcessingComponent component) throws PersistenceException {
-        ProcessingComponent c = processingComponentManager.save(component);
-        componentCache.put(c.getId(), c);
-        return c;
-    }
-
-
-    public ProcessingComponent updateProcessingComponent(ProcessingComponent component) throws PersistenceException {
-        ProcessingComponent c = processingComponentManager.update(component);
-        componentCache.put(c.getId(), c);
-        return c;
-    }
-
-    public boolean existsProcessingComponent(String id) {
-        return processingComponentManager.exists(id);
-    }
-
-    public ProcessingComponent deleteProcessingComponent(String id) throws PersistenceException {
-        componentCache.remove(id);
-        ProcessingComponent component = processingComponentManager.get(id);
-        component.setActive(false);
-        return processingComponentManager.update(component);
-    }
-    //endregion
-
-    //region GroupComponent
-    public List<GroupComponent> getGroupComponents() {
-        return groupComponentManager.list();
-    }
-
-    public List<GroupComponent> getGroupComponents(Iterable<String> ids) {
-        return groupComponentManager.list(ids);
-    }
-
-    public GroupComponent getGroupComponentById(String id) {
-        return groupComponentManager.get(id);
-    }
-
-    public void deleteGroupComponent(String id) throws PersistenceException {
-        groupComponentManager.delete(id);
-    }
-
-    public GroupComponent saveGroupComponent(GroupComponent component) throws PersistenceException {
-        return groupComponentManager.save(component);
-    }
-
-    public GroupComponent updateGroupComponent(GroupComponent component) throws PersistenceException {
-        return groupComponentManager.update(component);
-    }
-    //endregion
-
-    //region DataSourceComponent
-    public List<DataSourceComponent> getDataSourceComponents() {
-        return dataSourceComponentManager.list();
-    }
-
-    public List<DataSourceComponent> getDataSourceComponents(Iterable<String> ids) {
-        return dataSourceComponentManager.list(ids);
-    }
-
-    public List<DataSourceComponent> getDataSourceComponents(int pageNumber, int pageSize, Sort sort) {
-        return dataSourceComponentManager.list(pageNumber, pageSize, sort);
-    }
-
-    public List<DataSourceComponent> getUserDataSourceComponents(String userName) {
-        return dataSourceComponentManager.getUserDataSourceComponents(userName);
-    }
-
-    public List<DataSourceComponent> getSystemDataSourceComponents() {
-        return dataSourceComponentManager.getSystemDataSourceComponents();
-    }
-
-    public DataSourceComponent getDataSourceComponentByLabel(String label) {
-        return dataSourceComponentManager.getDataSourceComponentByLabel(label);
-    }
-
-    public DataSourceComponent getQueryDataSourceComponent(long queryId) {
-        return dataSourceComponentManager.getQueryDataSourceComponent(queryId);
-    }
-
-    public DataSourceComponent getDataSourceInstance(String id) {
-        return dataSourceComponentManager.get(id);
-    }
-
-    public DataSourceComponent saveDataSourceComponent(DataSourceComponent component) throws PersistenceException {
-        return dataSourceComponentManager.save(component);
-    }
-
-    public DataSourceComponent updateDataSourceComponent(DataSourceComponent component) throws PersistenceException {
-        return dataSourceComponentManager.update(component);
-    }
-
-    public void deleteDataSourceComponent(String id) throws PersistenceException {
-        dataSourceComponentManager.delete(id);
-    }
-    //endregion
-
-    //region DataSourceComponentGroup
-
-    public DataSourceComponentGroup getDataSourceComponentGroup(String id) {
-        return dataSourceGroupManager.get(id);
-    }
-
-    public List<DataSourceComponentGroup> getDataSourceComponentGroups() {
-        return dataSourceGroupManager.list();
-    }
-
-    public List<DataSourceComponentGroup> getDataSourceComponentGroups(Iterable<String> ids) {
-        return dataSourceGroupManager.list(ids);
-    }
-
-    public List<DataSourceComponentGroup> getDataSourceComponentGroups(int pageNumber, int pageSize, Sort sort) {
-        return dataSourceGroupManager.list(pageNumber, pageSize, sort);
-    }
-
-    public List<DataSourceComponentGroup> getUserDataSourceComponentGroup(String userName) {
-        return dataSourceGroupManager.getUserDataSourceComponents(userName);
-    }
-
-    public DataSourceComponentGroup getDataSourceComponentGroupByLabel(String label) {
-        return dataSourceGroupManager.getDataSourceComponentByLabel(label);
-    }
-
-    public DataSourceComponentGroup saveDataSourceComponentGroup(DataSourceComponentGroup component) throws PersistenceException {
-        return dataSourceGroupManager.save(component);
-    }
-
-    public DataSourceComponentGroup updateDataSourceComponentGroup(DataSourceComponentGroup component) throws PersistenceException {
-        return dataSourceGroupManager.update(component);
-    }
-
-    public void deleteDataSourceComponentGroup(String id) throws PersistenceException {
-        dataSourceGroupManager.delete(id);
-    }
-    //endregion
-
-    //region WorkflowDescriptor
-    public List<WorkflowDescriptor> getAllWorkflows() {
-        return workflowManager.getAllWorkflows();
-    }
-
-    public List<WorkflowDescriptor> getWorkflows(Iterable<Long> ids) {
-        return workflowManager.getWorkflows(ids);
-    }
-
-    public WorkflowDescriptor getWorkflowDescriptor(long identifier) {
-        return workflowManager.getWorkflowDescriptor(identifier);
-    }
-
-    public WorkflowDescriptor getWorkflowDescriptor(String name) {
-        return workflowManager.getWorkflowByName(name);
-    }
-
-    public WorkflowDescriptor getFullWorkflowDescriptor(long identifier) {
-        return workflowManager.getFullWorkflow(identifier);
-    }
-
-    public List<WorkflowDescriptor> getUserWorkflowsByStatus(String user, int statusId) {
-        return workflowManager.getUserWorkflowsByStatus(user, statusId);
-    }
-
-    public List<WorkflowDescriptor> getUserPublishedWorkflowsByVisibility(String user, int visibilityId) {
-        return workflowManager.getUserPublishedWorkflowsByVisibility(user, visibilityId);
-    }
-
-    public List<WorkflowDescriptor> getOtherPublicWorkflows(String user) {
-        return workflowManager.getOtherPublicWorkflows(user);
-    }
-
-    public List<WorkflowDescriptor> getPublicWorkflows() {
-        return workflowManager.getPublicWorkflows();
-    }
-
-    public WorkflowDescriptor saveWorkflowDescriptor(WorkflowDescriptor workflow) throws PersistenceException {
-        return workflowManager.saveWorkflowDescriptor(workflow);
-    }
-
-    public WorkflowDescriptor updateWorkflowDescriptor(WorkflowDescriptor workflow) throws PersistenceException {
-        return workflowManager.updateWorkflowDescriptor(workflow);
-    }
-
-    public WorkflowDescriptor deleteWorkflowDescriptor(Long workflowId) throws PersistenceException {
-        return workflowManager.deleteWorkflowDescriptor(workflowId);
-    }
-    //endregion
-
-    //region WorkflowNodeDescriptor
-    public WorkflowNodeDescriptor getWorkflowNodeById(Long id) {
-        return workflowNodeDescriptorManager.get(id);
-    }
-
-    @Transactional
-    public List<WorkflowNodeDescriptor> getWorkflowNodesById(Long... ids) {
-        return workflowNodeDescriptorManager.list(Arrays.asList(ids));
-    }
-
-    public List<WorkflowNodeDescriptor> getWorkflowNodesByComponentId(long workflowId, String componentId) {
-        return workflowNodeDescriptorManager.getWorkflowNodesByComponentId(workflowId, componentId);
-    }
-
-    public WorkflowNodeGroupDescriptor getGroupNode(long childNodeId) {
-        return workflowNodeDescriptorManager.getGroupNode(childNodeId);
-    }
-
-    public WorkflowNodeDescriptor saveWorkflowNodeDescriptor(WorkflowNodeDescriptor node, WorkflowDescriptor workflow) throws PersistenceException {
-        node.setWorkflow(workflow);
-        node = workflowNodeDescriptorManager.save(node);
-        workflow.addNode(node);
-        workflowManager.updateWorkflowDescriptor(workflow);
-        return node;
-    }
-
-    public WorkflowNodeDescriptor updateWorkflowNodeDescriptor(WorkflowNodeDescriptor node) throws PersistenceException {
-        return workflowNodeDescriptorManager.update(node);
-    }
-
-    public void delete(WorkflowNodeDescriptor nodeDescriptor) throws PersistenceException {
-        workflowNodeDescriptorManager.delete(nodeDescriptor);
-    }
-
-//endregion
-
-    //region ExecutionJob, ExecutionTask and ExecutionGroup
-    public List<ExecutionJob> getAllJobs() {
-        return executionJobManager.list();
-    }
-
-    public List<ExecutionJob> getJobs(long workflowId) {
-        return executionJobManager.list(workflowId);
-    }
-
-    public List<String> getJobsOutputKeys(long workflowId) {
-        return executionJobManager.listWorkflowJobsOutputKeys(workflowId);
-    }
-
-    public List<String> getJobOutputKeys(long jobId) {
-        return executionJobManager.listJobOutputKeys(jobId);
-    }
-
-    public ExecutionJob getJobById(long jobId) {
-        return executionJobManager.get(jobId);
-    }
-
-    public List<ExecutionJob> getJobs(ExecutionStatus status) {
-        return executionJobManager.list(status);
-    }
-
-    public List<ExecutionJob> getJobs(String userName, Set<ExecutionStatus> statuses) {
-        return executionJobManager.list(userName, statuses);
-    }
-
-    public ExecutionJob saveExecutionJob(ExecutionJob job) throws PersistenceException {
-        return executionJobManager.save(job);
-    }
-
-    public ExecutionJob updateExecutionJob(ExecutionJob job) throws PersistenceException {
-        return executionJobManager.update(job);
-    }
-
-    public List<ExecutionTask> getRunningTasks() {
-        return executionTaskManager.getRunningTasks();
-    }
-
-    public List<ExecutionTask> getExecutingTasks() {
-        return executionTaskManager.getExecutingTasks();
-    }
-
-    public List<ExecutionTask> getRemoteExecutingTasks() {
-        return executionTaskManager.getRemoteExecutingTasks();
-    }
-
-    public List<ExecutionTaskSummary> getTasksStatus(long jobId) {
-        return executionTaskManager.getStatus(jobId);
-    }
-
-    public ExecutionTask getTaskById(Long id) throws PersistenceException {
-        return executionTaskManager.get(id);
-    }
-
-    public ExecutionTask getTaskByJobAndNode(long jobId, long nodeId, int instanceId) {
-        return executionTaskManager.getTaskByJobAndNode(jobId, nodeId, instanceId);
-    }
+    public VectorDataManager vectorData() { return vectorDataManager; }
 
-    public ExecutionTask getTaskByGroupAndNode(long groupId, long nodeId, int instanceId) {
-        return executionTaskManager.getTaskByGroupAndNode(groupId, nodeId, instanceId);
-    }
-
-    public ExecutionTask getTaskByResourceId(String id) throws PersistenceException {
-        return executionTaskManager.getTaskByResourceId(id);
-    }
-
-    public ExecutionTask saveExecutionTask(ExecutionTask task, ExecutionJob job) throws PersistenceException {
-        return executionTaskManager.save(task, job);
-    }
-
-    public ExecutionTask updateExecutionTask(ExecutionTask task) throws PersistenceException {
-        return executionTaskManager.update(task);
-    }
-
-    public ExecutionTask updateTaskStatus(ExecutionTask task, ExecutionStatus newStatus) throws PersistenceException {
-        task.setLastUpdated(LocalDateTime.now());
-        return executionTaskManager.updateStatus(task, newStatus);
-    }
-
-    public ExecutionTask saveExecutionGroupSubTask(ExecutionTask task, ExecutionGroup taskGroup) throws PersistenceException {
-        return executionTaskManager.saveExecutionGroupSubTask(task, taskGroup);
-    }
-
-    public ExecutionTask saveExecutionGroupWithSubTasks(ExecutionGroup taskGroup, ExecutionJob job) throws PersistenceException {
-        return executionTaskManager.saveExecutionGroupWithSubTasks(taskGroup, job);
-    }
-    
-    public int getCPUsForUser(String userName) {
-        return executionTaskManager.getCPUsForUser(userName);
-    }    
-
-    public int getMemoryForUser(String userName) {
-        return executionTaskManager.getMemoryForUser(userName);
-    }   
-    //endregion
-
-    //region Query
-    public Query findQueryById(long id) {
-        return queryManager.findById(id);
-    }
-
-    public List<Query> getQueries(Iterable<Long> ids) {
-        return queryManager.findAllById(ids);
-    }
-
-    public Query getQuery(String userId, String sensor, String dataSource, long workflowNodeId) {
-        return queryManager.findByUserIdAndSensorAndDataSourceAndWorkflowNodeId(userId, sensor, dataSource, workflowNodeId);
-    }
-
-    public List<Query> getUserQueries(String userId, long nodeId) {
-        return queryManager.getUserQueries(userId, nodeId);
-    }
-
-    public List<Query> getUserQueries(String userId, String sensor, String dataSource) {
-        return queryManager.getUserQueries(userId, sensor, dataSource);
-    }
-
-    public List<Query> getQueriesByUserAndSensor(String userId, String sensor) {
-        return queryManager.getQueriesByUserAndSensor(userId, sensor);
-    }
-
-    public List<Query> getQueriesByUserAndDataSource(String userId, String dataSource) {
-        return queryManager.getQueriesByUserAndDataSource(userId, dataSource);
-    }
-
-    public List<Query> getQueries(String userId, long nodeId) {
-        return queryManager.findByUserIdAndWorkflowNodeId(userId, nodeId);
-    }
-
-    public List<Query> getQueries(String userId, String sensor, String dataSource) {
-        return queryManager.findByUserIdAndSensorAndDataSource(userId, sensor, dataSource);
-    }
-
-    public List<Query> getQueries(String userId) {
-        return queryManager.findByUserId(userId);
-    }
-
-    public List<Query> getUserQueries(String userId) throws PersistenceException {
-        //return queryManager.getUserQueries(userId);
-        return new QueryViewRepository(this).getUserQueries(userId);
-    }
-
-    public Query getQuery(long queryId) throws PersistenceException {
-        //return queryManager.getQuery(queryId);
-        return new QueryViewRepository(this).getQuery(queryId);
-    }
-
-    public List<Query> getQueriesBySensor(String userId, String sensor) {
-        return queryManager.findByUserIdAndSensor(userId, sensor);
-    }
-
-    public List<Query> getQueriesByDataSource(String userId, String dataSource) {
-        return queryManager.findByUserIdAndDataSource(userId, dataSource);
-    }
-
-    public Page<Query> getAllQueries (Pageable pageable) {
-        return queryManager.findAll(pageable);
-    }
-
-    public Query saveQuery(Query query) throws PersistenceException {
-        LocalDateTime timestamp = LocalDateTime.now();
-        if (query.getLabel() == null) {
-            query.setLabel(String.format("Query for %s on %s - %s",
-                                         query.getSensor(), query.getDataSource(),
-                                         timestamp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
-        }
-        try {
-            Query existingQuery = queryManager.findByUserIdAndLabel(query.getUserId(), query.getLabel());
-            if (existingQuery != null && !existingQuery.getId().equals(query.getId())) {
-                throw new PersistenceException(String.format("There is already a query with the same label for the user %s",
-                                                             query.getUserId()));
-            }
-        } catch (Exception e) {
-            throw new PersistenceException(e);
-        }
-        if (query.getCreated() == null) {
-            query.setCreated(timestamp);
-        }
-        if (query.getWorkflowNodeId() != null && query.getWorkflowNodeId() == 0) {
-            query.setWorkflowNodeId(null);
-        }
-        query.setModified(timestamp);
-        return queryManager.saveQuery(query);
-    }
-
-    public void removeQuery(long id) {
-        queryManager.removeQuery(id);
-    }
-
-    public void removeQuery(Query query) {
-        queryManager.removeQuery(query);
-    }
-
-    //endregion
+    public AuxiliaryDataManager auxiliaryData() { return auxiliaryDataManager; }
 
-    //region Message
-    public Page<Message> getUserMessages(String user, Integer pageNumber) {
-        return notificationManager.getUserMessages(user, pageNumber);
-    }
-
-    public List<Message> getUnreadMessages(String user) {
-        return notificationManager.getUnreadMessages(user);
-    }
-
-    @Override
-    public Message saveMessage(Message message) throws PersistenceException {
-        return notificationManager.saveMessage(message);
-    }
-    //endregion
+    public NodeFlavorManager nodeFlavors() { return nodeFlavorManager; }
 
-    // region User
-    public User addNewUser(final User newUserInfo) throws PersistenceException {
-        return userManager.addNewUser(newUserInfo);
-    }
-
-    public List<User> findUsersByStatus(UserStatus userStatus) {
-        return userManager.findUsersByStatus(userStatus);
-    }
-
-    public Map<String, String[]> getAllUsersUnicityInfo() {
-        return userManager.getAllUsersUnicityInfo();
-    }
+    public NodeManager nodes() { return nodeManager; }
 
-    public User findUserByUsername(final String username) {
-        return userManager.findUserByUsername(username);
-    }
+    public ContainerManager containers() { return containerManager; }
 
-    public List<UserPreference> getUserPreferences(String userName) throws PersistenceException {
-        return userManager.getUserPreferences(userName);
-    }
+    public ProcessingComponentManager processingComponents() { return processingComponentManager; }
 
-    public String getUserOrganization(String userName) throws PersistenceException {
-        return userManager.getUserOrganization(userName);
-    }
+    public GroupComponentManager groupComponents() { return groupComponentManager; }
 
-    public List<User> getAdministrators() { return userManager.getAdministrators(); }
+    public DataSourceComponentManager dataSourceComponents() { return dataSourceComponentManager; }
 
-    public List<Group> getUserGroups(String userName) {
-        return userManager.getUserGroups(userName);
-    }
+    public DataSourceGroupManager dataSourceGroups() { return dataSourceGroupManager; }
 
-    public boolean checkLoginCredentials(String userName, String password) {
-        //return userManager.checkLoginCredentials(userName, password);
-        return userManager.login(userName, Crypto.encrypt(password, userName));
-    }
+    public DataSourceConnectionManager dataSourceConnectionManager() { return dataSourceConnectionManager; }
 
-    public User updateUser(User updatedInfo, boolean fromAdmin) throws PersistenceException {
-        return userManager.updateUser(updatedInfo, fromAdmin);
-    }
+    public DataSourceConfigurationProvider dataSourceConfigurationProvider() { return dataSourceConfigurationManager; }
 
-    public void updateUserLastLoginDate(Long userId, LocalDateTime lastLoginDate) {
-        userManager.updateUserLastLoginDate(userId, lastLoginDate);
+    public SimpleCache.Cache<String, ProcessingComponent> getComponentCache() {
+        return componentCache;
     }
 
-    public void activateUser(String userName) throws PersistenceException {
-        userManager.activateUser(userName);
-    }
+    public WorkflowNodeDescriptorManager workflowNodes() { return workflowNodeDescriptorManager; }
 
-    public void resetUserPassword(String userName, String resetKey, String newPassword) throws PersistenceException {
-        userManager.resetUserPassword(userName, resetKey, newPassword);
-    }
+    public WorkflowManager workflows() { return workflowManager; }
 
-    public void disableUser(String userName) throws PersistenceException {
-        userManager.disableUser(userName);
-    }
+    public ExecutionJobManager jobs() { return executionJobManager; }
 
-    public void deleteUser(String userName) throws PersistenceException {
-        userManager.deleteUser(userName);
-    }
+    public ExecutionTaskManager tasks() { return executionTaskManager; }
 
-    public List<UserPreference> saveOrUpdateUserPreferences(String username, List<UserPreference> newUserPreferences) throws PersistenceException {
-        return userManager.saveOrUpdateUserPreferences(username, newUserPreferences);
-    }
+    public QueryManager queries() { return queryManager; }
 
-    public List<UserPreference> removeUserPreferences(String username, List<String> userPrefsKeysToDelete) throws PersistenceException {
-        return userManager.removeUserPreferences(username, userPrefsKeysToDelete);
-    }
+    public NotificationManager notifications() { return notificationManager; }
 
-    public List<Group> getGroups() {
-        return userManager.getGroups();
-    }
-    
-    public long[] getUserDiskQuotas(String username) throws PersistenceException {
-        return userManager.getUserDiskQuotas(username);
-    }
-    
-    public int updateUserInputQuota(String username, int actualInputQuota) throws PersistenceException {
-    	return userManager.updateUserInputQuota(username, actualInputQuota);
-    }
-    
-    public int updateUserProcessingQuota(String username, int actualProcessingQuota) throws PersistenceException {
-    	return userManager.updateUserProcessingQuota(username, actualProcessingQuota);
-    }    
-    // endregion
+    public UserManager users() { return userManager; }
 
-    //region NamingRule
+    public NamingRuleManager namingRules() { return namingRuleManager; }
 
-    public NamingRule getRuleById(int id) {
-        return namingRuleManager.findById(id);
-    }
+    public TagManager tags() { return tagManager; }
 
-    public List<NamingRule> getRules(String sensor) {
-        return namingRuleManager.findBySensor(sensor);
-    }
+    public WPSComponentManager wpsComponents() { return wpsComponentManager; }
 
-    public List<NamingRule> getAllRules() {
-        return namingRuleManager.list();
-    }
+    public RepositoryManager repositories() { return repositoryManager; }
 
-    public NamingRule saveRule(NamingRule rule) throws PersistenceException {
-        return namingRuleManager.save(rule);
-    }
+    public SiteManager sites() { return siteManager; }
 
-    public void deleteRule(int ruleId) {
-        namingRuleManager.delete(ruleId);
-    }
+    public WPSAuthenticationManager wpsAuthentication() { return wpsAuthenticationManager; }
 
-    public void deleteRule(NamingRule rule) {
-        namingRuleManager.delete(rule);
-    }
+    public DownloadQueueManager downloadQueue() { return downloadQueueManager; }
 
-    //endregion
+    public AuditManager audit() { return auditManager; }
 }

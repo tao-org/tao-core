@@ -28,7 +28,7 @@ import java.util.Map;
  */
 public class DefaultJobInfo implements JobInfo {
     private final Executor runner;
-    private String jobId;
+    private final String jobId;
 
     public DefaultJobInfo(String jobId, Executor runner) {
         this.jobId = jobId;

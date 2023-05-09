@@ -28,10 +28,7 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -214,10 +211,10 @@ public class Polygon2D {
         return toWKT(4);
     }
     /**
-     * Produces a WKT representation of this polygon with a given decimal precision
+     * Produces a WKT representation (clockwise) of this polygon with a given decimal precision
      */
     public String toWKT(int precision) {
-        StringBuilder format = new StringBuilder(".");
+        StringBuilder format = new StringBuilder("0.");
         int i = 0;
         while (i++ < precision) format.append("#");
         final DecimalFormat dfFormat = new DecimalFormat(format.toString(), DecimalFormatSymbols.getInstance(Locale.ENGLISH));
@@ -249,6 +246,54 @@ public class Polygon2D {
         return buffer.toString();
     }
     /**
+     * Produces a WKT representation (counter-clockwise) of this polygon.
+     * Default decimal precision is 4.
+     */
+    public String toWKTCounterClockwise() {
+        return toWKTCounterClockwise(4);
+    }
+    /**
+     * Produces a WKT representation (counter-clockwise) of this polygon with a given decimal precision
+     */
+    public String toWKTCounterClockwise(int precision) {
+        StringBuilder format = new StringBuilder("0.");
+        int i = 0;
+        while (i++ < precision) format.append("#");
+        final DecimalFormat dfFormat = new DecimalFormat(format.toString(), DecimalFormatSymbols.getInstance(Locale.ENGLISH));
+        final StringBuilder buffer = new StringBuilder();
+        final boolean isMulti = this.polygons.length > 1;
+        final boolean isPoint = this.polygons.length == 1 && this.numPoints == 1;
+        buffer.append(isPoint ? "POINT(" : isMulti ? "MULTIPOLYGON(((" : "POLYGON((");
+
+        final Stack<double[]> stack = new Stack<>();
+        for (int j = 0; j < this.polygons.length; j++) {
+            if (j > 0) {
+                buffer.append("((");
+            }
+            final PathIterator pathIterator = polygons[j].getPathIterator(null);
+            while (!pathIterator.isDone()) {
+                final double[] segment = new double[6];
+                pathIterator.currentSegment(segment);
+                stack.push(segment);
+                pathIterator.next();
+            }
+            while (!stack.empty()) {
+                double[] segment = stack.pop();
+                buffer.append(dfFormat.format(segment[0])).append(" ").append(dfFormat.format(segment[1])).append(",");
+            }
+            buffer.setLength(buffer.length() - 1);
+            buffer.append(isPoint ? ")" : "))");
+            if (isMulti) {
+                buffer.append(",");
+            }
+        }
+        if (isMulti) {
+            buffer.setLength(buffer.length() - 1);
+            buffer.append(")");
+        }
+        return buffer.toString();
+    }
+    /**
      * Produces an array of WKT representations of this polygon.
      * Default decimal precision is 4.
      */
@@ -261,7 +306,7 @@ public class Polygon2D {
     public String[] toWKTArray(int precision) {
         final String[] polygons = new String[this.polygons.length];
         final StringBuilder buffer = new StringBuilder();
-        final StringBuilder format = new StringBuilder(".");
+        final StringBuilder format = new StringBuilder("0.");
         int i = 0;
         while (i++ < precision) format.append("#");
         final DecimalFormat dfFormat = new DecimalFormat(format.toString(), DecimalFormatSymbols.getInstance(Locale.ENGLISH));
@@ -296,7 +341,7 @@ public class Polygon2D {
 
     public String toWKTBounds() {
         Rectangle2D bounds2D = getBounds2D();
-        DecimalFormat dfFormat = new DecimalFormat(".######", DecimalFormatSymbols.getInstance(Locale.ENGLISH));
+        DecimalFormat dfFormat = new DecimalFormat("0.######", DecimalFormatSymbols.getInstance(Locale.ENGLISH));
         return  "POLYGON((" +
                 dfFormat.format(bounds2D.getMinX()) + " " + dfFormat.format(bounds2D.getMinY()) + "," +
                 dfFormat.format(bounds2D.getMaxX()) + " " + dfFormat.format(bounds2D.getMinY()) + "," +

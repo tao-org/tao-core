@@ -16,7 +16,6 @@
 
 package ro.cs.tao.datasource.opensearch;
 
-import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.util.EntityUtils;
 import ro.cs.tao.datasource.ProductFetchStrategy;
 import ro.cs.tao.datasource.QueryException;
@@ -25,6 +24,7 @@ import ro.cs.tao.datasource.opensearch.model.OpenSearchEndpoint;
 import ro.cs.tao.datasource.opensearch.model.OpenSearchService;
 import ro.cs.tao.datasource.param.DataSourceParameter;
 import ro.cs.tao.datasource.param.ParameterProvider;
+import ro.cs.tao.utils.CloseableHttpResponse;
 import ro.cs.tao.utils.HttpMethod;
 import ro.cs.tao.utils.NetUtils;
 
@@ -83,14 +83,15 @@ public abstract class OpenSearchParameterProvider implements ParameterProvider {
                 String sensorParamName = parameter != null ? parameter.getName() : null;
                 DataSourceParameter sensorParam = parameters.get(sensorParamName);
                 this.parameters = new HashMap<>();
+                Map<String, DataSourceParameter> params = new LinkedHashMap<>(parameters);
                 if (sensorParamName != null) {
                     Object[] values = sensorParam.getValueSet();
-                    parameters.remove(sensorParamName);
+                    params.remove(sensorParamName);
                     if (values != null) {
                         this.sensors = new String[values.length];
                         for (int i = 0; i < this.sensors.length; i++) {
                             this.sensors[i] = String.valueOf(values[i]);
-                            this.parameters.put(this.sensors[i], new LinkedHashMap<>(parameters));
+                            this.parameters.put(this.sensors[i], params);
                         }
                     }
                     break;

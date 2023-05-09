@@ -24,7 +24,7 @@ import java.util.Arrays;
  * @author Cosmin Cara
  */
 public class CompositeKey {
-    private Object[] composites;
+    private final Object[] composites;
 
     public CompositeKey(Object...composites) {
         this.composites = composites;

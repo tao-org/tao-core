@@ -24,11 +24,13 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
- * Descriptor of an workflow node.
+ * Descriptor of a workflow node.
  *
  * @author Cosmin Cara
  */
@@ -43,7 +45,9 @@ public class WorkflowNodeDescriptor extends GraphObject {
     private int level;
     private Set<ComponentLink> incomingLinks;
     private boolean preserveOutput;
+    private List<ParameterValue> additionalInfo;
     private TransitionBehavior behavior = TransitionBehavior.FAIL_ON_ERROR;
+    private Long createdFromNodeId;
 
     private WorkflowDescriptor workflow;
 
@@ -95,6 +99,32 @@ public class WorkflowNodeDescriptor extends GraphObject {
         if (this.incomingLinks != null && link != null) {
             this.incomingLinks.removeIf(l -> l.equals(link));
         }
+    }
+
+    @XmlElementWrapper(name = "additionalInfo")
+    public List<ParameterValue> getAdditionalInfo() { return additionalInfo; }
+    public void setAdditionalInfo(List<ParameterValue> values) { this.additionalInfo = values; }
+    public void addInfo(String key, String value) {
+        ParameterValue parameterValue = new ParameterValue();
+        parameterValue.setParameterName(key);
+        parameterValue.setParameterValue(value);
+        if (this.additionalInfo == null) {
+            this.additionalInfo = new ArrayList<>();
+        }
+        final ParameterValue param = this.additionalInfo.stream().filter(p -> p.getParameterName().equals(key)).findFirst().orElse(null);
+        if (param == null) {
+            this.additionalInfo.add(parameterValue);
+        } else {
+            param.setParameterValue(value);
+        }
+    }
+
+    public Long getCreatedFromNodeId() {
+        return createdFromNodeId;
+    }
+
+    public void setCreatedFromNodeId(Long createdFromNodeId) {
+        this.createdFromNodeId = createdFromNodeId;
     }
 
     @XmlTransient

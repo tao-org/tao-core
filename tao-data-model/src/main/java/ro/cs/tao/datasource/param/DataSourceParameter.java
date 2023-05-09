@@ -17,7 +17,13 @@ package ro.cs.tao.datasource.param;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import ro.cs.tao.EnumUtils;
+import ro.cs.tao.component.ParameterDependency;
+import ro.cs.tao.component.enums.Condition;
+import ro.cs.tao.component.enums.DependencyType;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -29,11 +35,12 @@ public class DataSourceParameter {
     private final String name;
     private final String remoteName;
     private final String label;
-    private final Class type;
-    private final Object defaultValue;
+    final JavaType type;
+    private Object defaultValue;
     private final boolean required;
     private Object[] valueSet;
     private int order;
+    private List<ParameterDependency> dependencies;
 
     public DataSourceParameter(String name, String remoteName, Class type, String label) {
         this(name, remoteName, type, null, false);
@@ -51,7 +58,7 @@ public class DataSourceParameter {
         this.name = name;
         this.remoteName = remoteName;
         this.label = label;
-        this.type = type;
+        this.type = EnumUtils.getEnumConstantByValue(JavaType.class, type);
         this.defaultValue = defaultValue;
         this.required = required;
     }
@@ -60,7 +67,7 @@ public class DataSourceParameter {
         this.name = name;
         this.remoteName = remoteName;
         this.label = label;
-        this.type = type;
+        this.type = EnumUtils.getEnumConstantByValue(JavaType.class, type);
         this.defaultValue = defaultValue;
         this.required = required;
         this.valueSet = valueSet;
@@ -70,7 +77,7 @@ public class DataSourceParameter {
     public DataSourceParameter(@JsonProperty("name") String name,
                                @JsonProperty("remoteName") String remoteName,
                                @JsonProperty("label") String label,
-                               @JsonProperty("type") Class type,
+                               @JsonProperty("type") JavaType type,
                                @JsonProperty("defaultValue") Object defaultValue,
                                @JsonProperty("required") boolean required,
                                @JsonProperty("valueSet") Object[] valueSet,
@@ -91,11 +98,15 @@ public class DataSourceParameter {
 
     public String getLabel() { return label; }
 
-    public Class getType() { return type; }
+    public Class getType() { return type != null ? type.value() : null; }
 
     public boolean isRequired() { return required; }
 
     public Object getDefaultValue() { return defaultValue; }
+
+    public void setDefaultValue(Object defaultValue) {
+        this.defaultValue = defaultValue;
+    }
 
     public Object[] getValueSet() { return valueSet; }
 
@@ -104,6 +115,22 @@ public class DataSourceParameter {
     public int getOrder() { return order; }
 
     public void setOrder(int order) { this.order = order; }
+
+    public List<ParameterDependency> getDependencies() { return dependencies; }
+
+    public void setDependencies(List<ParameterDependency> dependencies) { this.dependencies = dependencies; }
+
+    public void addDependency(DependencyType type, String parameterId, Condition condition, String... values) {
+        if (this.dependencies == null) {
+            this.dependencies = new ArrayList<>();
+        }
+        ParameterDependency dependency = new ParameterDependency(type, parameterId, condition, values);
+        if (!this.dependencies.contains(dependency)) {
+            this.dependencies.add(dependency);
+        }
+    }
+
+    public String typeFriendlyName() { return type != null ? type.friendlyName() : null; }
 
     @Override
     public boolean equals(Object o) {

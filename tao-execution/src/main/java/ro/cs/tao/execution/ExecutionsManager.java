@@ -15,14 +15,20 @@
  */
 package ro.cs.tao.execution;
 
+import ro.cs.tao.execution.drmaa.DRMAAExecutor;
 import ro.cs.tao.execution.model.DataSourceExecutionTask;
 import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.execution.model.ProcessingExecutionTask;
+import ro.cs.tao.execution.model.WPSExecutionTask;
 import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.logging.Logger;
 
 /**
  * Manager class for executions. It is responsible with:
@@ -33,12 +39,14 @@ import java.util.Set;
  */
 public class ExecutionsManager {
 
-    private static ExecutionsManager instance = new ExecutionsManager();
-    private Set<Executor> services;
+    private static final ExecutionsManager instance = new ExecutionsManager();
+    private final Set<Executor> services;
+    private final Map<Long, Callable<Void>> postExecuteTaskActions;
     private ExecutionsManager() {
         ServiceRegistry<Executor> registry = ServiceRegistryManager.getInstance().getServiceRegistry(Executor.class);
         services = registry.getServices();
         services.forEach(Executor::initialize);
+        postExecuteTaskActions = new HashMap<>();
     }
 
     public static ExecutionsManager getInstance() {
@@ -67,11 +75,35 @@ public class ExecutionsManager {
 
     public Set<Executor> getRegisteredExecutors() { return this.services; }
 
+    public String getJobOutput(long id) {
+        return DRMAAExecutor.getInstance().getJobOutput(String.valueOf(id));
+    }
+
+    public void registerPostExecuteAction(ExecutionTask task, Callable<Void> action) {
+        postExecuteTaskActions.put(task.getId(), action);
+    }
+
+    public void doPostExecuteAction(ExecutionTask task) {
+        Callable<Void> action = postExecuteTaskActions.get(task.getId());
+        if (action != null) {
+            try {
+                action.call();
+                postExecuteTaskActions.remove(task.getId());
+            } catch (Throwable e) {
+                Logger.getLogger(ExecutionsManager.class.getName()).warning(e.getMessage());
+            }
+        }
+    }
+
     private Executor getExecutor(ExecutionTask task) {
         Optional<Executor> optional;
         if (task instanceof ProcessingExecutionTask) {
             optional = services.stream()
                     .filter(x -> x.supports(((ProcessingExecutionTask) task).getComponent()))
+                    .findFirst();
+        } else if (task instanceof WPSExecutionTask) {
+            optional = services.stream()
+                    .filter(x -> x.supports(((WPSExecutionTask) task).getComponent()))
                     .findFirst();
         } else {
             optional = services.stream()

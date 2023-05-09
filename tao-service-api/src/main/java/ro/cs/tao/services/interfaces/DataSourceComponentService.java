@@ -18,8 +18,10 @@ package ro.cs.tao.services.interfaces;
 
 import ro.cs.tao.Tag;
 import ro.cs.tao.datasource.DataSourceComponent;
+import ro.cs.tao.datasource.DataSourceConfiguration;
 import ro.cs.tao.eodata.EOProduct;
-import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.persistence.PersistenceException;
+import ro.cs.tao.services.model.component.ProductSetInfo;
 
 import java.security.Principal;
 import java.util.List;
@@ -49,8 +51,31 @@ public interface DataSourceComponentService extends CRUDService<DataSourceCompon
      * @param label             The label of the custom data source component
      * @param principal         The principal to create the component for
      */
-    DataSourceComponent createForProductNames(List<String> productNames, String sensor, String dataSource, Long queryId,
-                                              String label, Principal principal) throws PersistenceException;
+    DataSourceComponent createForLocations(List<String> productNames, String sensor, String dataSource, Long queryId,
+                                           String label, Principal principal) throws PersistenceException;
+
+    /**
+     * Creates a user data source component that wraps the given list of products (a product set)
+     * @param productNames      The list of names of products
+     * @param label             The label of the custom data source component
+     * @param principal         The principal to create the component for
+     */
+    DataSourceComponent createForLocations(List<String> productNames, String label, Principal principal) throws PersistenceException;
 
     List<Tag> getDatasourceTags();
+
+    DataSourceConfiguration getConfiguration(String dataSourceId) throws PersistenceException;
+
+    void saveConfiguration(DataSourceConfiguration configuration) throws PersistenceException;
+
+    void updateConfiguration(DataSourceConfiguration configuration) throws PersistenceException;
+
+    List<DataSourceComponent> getProductSets(String userName) throws PersistenceException;
+
+    List<DataSourceComponent> getBySource(String dataSourceName) throws PersistenceException;
+
+    List<DataSourceComponent> getBySourceAndSensor(String dataSourceName, String sensor) throws PersistenceException;
+
+    DataSourceComponent updateProductSet(ProductSetInfo productSet) throws PersistenceException;
+
 }

@@ -26,5 +26,13 @@ public enum ExecutorType {
     /**
      * SSH2 executor.
      */
-    SSH2
+    SSH2,
+    /**
+     * Script executor for producing instances of execution graphs
+     */
+    SCRIPT,
+    /**
+     * Mock executor for tests
+     */
+    MOCK
 }

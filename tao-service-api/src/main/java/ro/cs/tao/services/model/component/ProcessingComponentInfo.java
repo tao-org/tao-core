@@ -1,11 +1,15 @@
 package ro.cs.tao.services.model.component;
 
 import ro.cs.tao.component.ProcessingComponent;
+import ro.cs.tao.component.enums.ComponentCategory;
 import ro.cs.tao.component.enums.ProcessingComponentType;
 import ro.cs.tao.component.enums.ProcessingComponentVisibility;
 
 import java.util.List;
 
+/**
+ * Read-only bean for a ProcessingComponent entity
+ */
 public class ProcessingComponentInfo {
 
     private String id;
@@ -19,6 +23,8 @@ public class ProcessingComponentInfo {
     private ProcessingComponentVisibility visibility;
     private boolean active;
     private ProcessingComponentType componentType;
+    private ComponentCategory category;
+    private boolean managedOutput;
     private List<String> tags;
 
     public ProcessingComponentInfo(ProcessingComponent component) {
@@ -33,7 +39,12 @@ public class ProcessingComponentInfo {
         this.visibility = component.getVisibility();
         this.active = component.getActive();
         this.componentType = component.getComponentType();
+        this.category = component.getCategory();
+        if (this.category == null) {
+            this.category = ComponentCategory.MISC;
+        }
         this.tags = component.getTags();
+        this.managedOutput = component.isOutputManaged();
     }
 
     public String getId() { return id; }
@@ -57,6 +68,18 @@ public class ProcessingComponentInfo {
     public boolean isActive() { return active; }
 
     public ProcessingComponentType getComponentType() { return componentType; }
+
+    public ComponentCategory getCategory() {
+        return category;
+    }
+
+    public boolean isManagedOutput() {
+        return managedOutput;
+    }
+
+    public void setManagedOutput(boolean managedOutput) {
+        this.managedOutput = managedOutput;
+    }
 
     public List<String> getTags() { return tags; }
 }

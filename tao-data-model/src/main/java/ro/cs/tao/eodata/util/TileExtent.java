@@ -43,6 +43,7 @@ public abstract class TileExtent {
             byte[] buffer = new byte[tileCodeSize()];
             double x;
             try (DataInputStream dis = new DataInputStream(inputStream)) {
+                //noinspection InfiniteLoopStatement
                 while (true) {
                     dis.read(buffer, 0, buffer.length);
                     Polygon2D polygon2D = new Polygon2D();
@@ -149,7 +150,7 @@ public abstract class TileExtent {
         synchronized (tiles) {
             tileCodes = tiles.entrySet().stream()
                     .filter(entry -> entry.getValue().intersects(aoi))
-                    .map(Map.Entry::getKey).distinct().collect(Collectors.toSet());
+                    .map(Map.Entry::getKey).collect(Collectors.toSet());
         }
         return tileCodes;
     }
@@ -159,7 +160,7 @@ public abstract class TileExtent {
      * @param aoi   The area of interest polygon
      */
     public Set<String> intersectingTiles(Polygon2D aoi) {
-        Set<String> tileCodes = new HashSet<>();
+        Set<String> tileCodes = new TreeSet<>();
         if (aoi != null && aoi.getNumPoints() > 0) {
             synchronized (tiles) {
                 List<Point2D> points = aoi.getPoints();

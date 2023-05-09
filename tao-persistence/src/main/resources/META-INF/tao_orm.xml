@@ -45,6 +45,7 @@
                 </collection-table>
             </element-collection>
 
+            <transient name="files"/>
         </attributes>
     </mapped-superclass>
 
@@ -56,6 +57,19 @@
                 but the mapping to a column name can be only done once (here!),
                 all correspondant columns must have the same name (and definition) defined here  -->
                 <column name="id" nullable="false" column-definition="varchar(512) NOT NULL" unique="true"/>
+            </id>
+        </attributes>
+    </mapped-superclass>
+
+    <mapped-superclass class="ro.cs.tao.component.IntIdentifiable" access="PROPERTY">
+        <attributes>
+            <id name="id">
+                <!-- ! IMPORTANT NOTICE:
+                Because Identifiable class is extended by several other classes,
+                but the mapping to a column name can be only done once (here!),
+                all correspondant columns must have the same name (and definition) defined here  -->
+                <column name="id" nullable="false" column-definition="int NOT NULL"/>
+                <generated-value strategy="IDENTITY" generator="dsc_identifier"/>
             </id>
         </attributes>
     </mapped-superclass>
@@ -210,12 +224,63 @@
         </attributes>
     </entity>
 
+    <entity class="ro.cs.tao.datasource.DownloadQueueItem" access="PROPERTY">
+        <table name="product.download_queue"/>
+        <convert converter="ro.cs.tao.persistence.convert.ProductListConverter" attribute-name="products" />
+        <convert converter="ro.cs.tao.persistence.convert.SetConverter" attribute-name="tiles" />
+        <convert converter="ro.cs.tao.persistence.convert.PropertiesConverter" attribute-name="properties" />
+        <attributes>
+            <id name="id">
+                <column name="id" nullable="false" column-definition="varchar(50) NOT NULL"/>
+            </id>
+            <basic name="products">
+                <column name="products" nullable="false" column-definition="json NOT NULL" />
+            </basic>
+            <basic name="dataSourceName">
+                <column name="data_source" nullable="false" column-definition="varchar(255) NOT NULL" />
+            </basic>
+            <basic name="destinationPath">
+                <column name="destination" nullable="false" column-definition="varchar(512) NOT NULL" />
+            </basic>
+            <basic name="localRootPath">
+                <column name="local_root" nullable="true" column-definition="varchar(512)" />
+            </basic>
+            <basic name="tiles">
+                <column name="tiles" nullable="true" column-definition="json" />
+            </basic>
+            <basic name="properties">
+                <column name="properties" nullable="true" column-definition="json" />
+            </basic>
+        </attributes>
+    </entity>
+
+    <entity class="ro.cs.tao.topology.NodeFlavor" access="PROPERTY">
+        <table name="topology.node_flavor"/>
+        <attributes>
+            <basic name="cpu">
+                <column name="cpu" nullable="false" column-definition="integer NOT NULL"/>
+            </basic>
+            <basic name="memory">
+                <column name="memory" nullable="false" column-definition="integer NOT NULL"/>
+            </basic>
+            <basic name="disk">
+                <column name="disk" nullable="false" column-definition="integer NOT NULL"/>
+            </basic>
+            <basic name="swap">
+                <column name="swap" nullable="false" column-definition="integer NOT NULL"/>
+            </basic>
+            <basic name="rxtxFactor">
+                <column name="rxtx" nullable="false" column-definition="real NOT NULL"/>
+            </basic>
+        </attributes>
+    </entity>
+
     <entity class="ro.cs.tao.topology.NodeDescription" access="PROPERTY">
         <table name="topology.node"/>
         <entity-listeners>
             <entity-listener class="ro.cs.tao.persistence.audit.NodeDescriptionListener"/>
         </entity-listeners>
-        <convert converter="ro.cs.tao.persistence.convert.NodeTypeConverter" attribute-name="nodeType" />
+        <convert converter="ro.cs.tao.persistence.convert.NodeRoleConverter" attribute-name="role"/>
         <attributes>
             <basic name="userName">
                 <column name="username" nullable="false" column-definition="character varying(50) NOT NULL"/>
@@ -223,30 +288,35 @@
             <basic name="userPass">
                 <column name="password" nullable="false" column-definition="text NOT NULL"/>
             </basic>
-            <basic name="nodeType">
+            <!--<basic name="nodeType">
                 <column name="type_id" nullable="false" column-definition="integer NOT NULL"/>
-            </basic>
-            <basic name="processorCount">
-                <column name="total_cpu" nullable="false" column-definition="integer not null"/>
-            </basic>
-            <basic name="memorySizeGB">
-                <column name="total_ram" nullable="false" column-definition="integer not null"/>
-            </basic>
-            <basic name="diskSpaceSizeGB">
-                <column name="total_hdd" nullable="false" column-definition="integer not null"/>
-            </basic>
+            </basic>-->
             <basic name="description">
                 <column name="description" nullable="true" column-definition="text null"/>
             </basic>
+            <basic name="role">
+                <column name="role" nullable="true" column-definition="varchar(6) null DEFAULT 'worker'"/>
+            </basic>
             <basic name="active">
                 <column name="active" nullable="true" column-definition="boolean NULL DEFAULT true"/>
+            </basic>
+            <basic name="volatile">
+                <column name="volatile" nullable="true" column-definition="boolean NULL DEFAULT false"/>
+            </basic>
+            <basic name="owner">
+                <column name="owner" nullable="true" column-definition="varchar(50)"/>
+            </basic>
+            <basic name="appId">
+                <column name="app_id" nullable="true" column-definition="varchar(50)"/>
             </basic>
             <basic name="tags">
                 <column name="tags" nullable="true" column-definition="text NULL"/>
                 <convert converter="ro.cs.tao.persistence.convert.StringListConverter"/>
             </basic>
-
-            <element-collection name="servicesStatus" target-class="ro.cs.tao.topology.NodeServiceStatus" access="PROPERTY" fetch="EAGER">
+            <many-to-one name="flavor" fetch="EAGER" target-entity="ro.cs.tao.topology.NodeFlavor">
+                <join-column name="flavor_id" nullable="false"/>
+            </many-to-one>
+            <element-collection name="servicesStatus" target-class="ro.cs.tao.topology.NodeServiceStatus" access="PROPERTY" fetch="LAZY">
                 <collection-table name="topology.node_service" >
                     <join-column name="host_name" referenced-column-name="id" />
                 </collection-table>
@@ -276,12 +346,16 @@
 
     <entity class="ro.cs.tao.docker.Container" access="PROPERTY">
         <table name="component.container"/>
+        <convert converter="ro.cs.tao.persistence.convert.ContainerTypeConverter" attribute-name="type" />
         <attributes>
             <basic name="name">
                 <column name="name" nullable="false" column-definition="character varying(1024) NOT NULL"/>
             </basic>
             <basic name="description">
                 <column name="description" nullable="false" column-definition="character varying(1024) NOT NULL"/>
+            </basic>
+            <basic name="type">
+                <column name="type_id" nullable="false" column-definition="integer NOT NULL"/>
             </basic>
             <basic name="tag">
                 <column name="tag" nullable="false" column-definition="character varying(1024) NOT NULL"/>
@@ -313,6 +387,28 @@
         </attributes>
     </entity>
 
+    <entity class="ro.cs.tao.component.WebServiceAuthentication" access="PROPERTY">
+        <table name="component.wps_authentication"/>
+        <convert converter="ro.cs.tao.persistence.convert.AuthenticationTypeConverter" attribute-name="type" />
+        <attributes>
+            <basic name="type">
+                <column name="auth_type" nullable="false" column-definition="varchar(20) NOT NULL"/>
+            </basic>
+            <basic name="user">
+                <column name="username" nullable="true" column-definition="varchar(50)"/>
+            </basic>
+            <basic name="password">
+                <column name="password" nullable="true" column-definition="text"/>
+            </basic>
+            <basic name="loginUrl">
+                <column name="login_url" nullable="true" column-definition="varchar(1024)"/>
+            </basic>
+            <basic name="authHeader">
+                <column name="header_name" nullable="true" column-definition="varchar(20)"/>
+            </basic>
+        </attributes>
+    </entity>
+
     <entity class="ro.cs.tao.component.ProcessingComponent" access="PROPERTY">
         <table name="component.processing_component"/>
 
@@ -323,6 +419,7 @@
         <convert converter="ro.cs.tao.persistence.convert.TemplateTypeConverter" attribute-name="templateType" />
         <convert converter="ro.cs.tao.persistence.convert.ProcessingComponentVisibilityConverter" attribute-name="visibility" />
         <convert converter="ro.cs.tao.persistence.convert.ProcessingComponentTypeConverter" attribute-name="componentType" />
+        <convert converter="ro.cs.tao.persistence.convert.ComponentCategoryConverter" attribute-name="category" />
 
         <attributes>
             <basic name="fileLocation">
@@ -346,21 +443,26 @@
             <basic name="active">
                 <column name="active" nullable="true" column-definition="boolean NULL DEFAULT true"/>
             </basic>
-
             <basic name="componentType">
                 <column name="component_type_id" nullable="true" column-definition="integer NULL DEFAULT 1"/>
             </basic>
-
+            <basic name="category">
+                <column name="category_id" nullable="true" column-definition="integer NULL DEFAULT 5"/>
+            </basic>
             <basic name="containerId">
                 <column name="container_id" nullable="false" column-definition="varchar(1024) NOT NULL"/>
             </basic>
-
             <basic name="templateContents">
                 <column name="template_contents" nullable="true" column-definition="text NULL"/>
             </basic>
-            
             <basic name="owner">
                 <column name="owner_user" nullable="true" column-definition="varchar NULL"/>
+            </basic>
+            <basic name="isTransient">
+                <column name="transient" nullable="false" column-definition="varchar NULL DEFAULT false"/>
+            </basic>
+            <basic name="outputManaged">
+                <column name="output_managed" nullable="true" column-definition="boolean NULL DEFAULT true"/>
             </basic>
 
             <many-to-many name="parameterDescriptors" fetch="EAGER">
@@ -382,6 +484,50 @@
             <transient name="template" />
             <transient name="templateEngine" />
             <transient name="expandedFileLocation" />
+        </attributes>
+    </entity>
+
+    <entity class="ro.cs.tao.component.WPSComponent" access="PROPERTY">
+        <table name="component.wps_component"/>
+
+        <association-override name="sources">
+            <join-table name="component.wps_component_sources">
+                <join-column name="wps_component_id" referenced-column-name="id"/>
+                <inverse-join-column name="source_descriptor_id" referenced-column-name="id"/>
+            </join-table>
+        </association-override>
+
+        <association-override name="targets">
+            <join-table name="component.wps_component_targets">
+                <join-column name="wps_component_id" referenced-column-name="id"/>
+                <inverse-join-column name="target_descriptor_id" referenced-column-name="id"/>
+            </join-table>
+        </association-override>
+
+        <convert converter="ro.cs.tao.persistence.convert.ProcessingComponentVisibilityConverter" attribute-name="visibility" />
+        <convert converter="ro.cs.tao.persistence.convert.WPSParameterDescriptorListConverter" attribute-name="parameters" />
+        <attributes>
+            <basic name="remoteAddress">
+                <column name="remote_address" nullable="false" column-definition="character varying(1024) NOT NULL"/>
+            </basic>
+            <basic name="capabilityName">
+                <column name="capability" nullable="false" column-definition="character varying(512) NOT NULL"/>
+            </basic>
+            <basic name="visibility">
+                <column name="visibility_id" nullable="false" column-definition="integer not null"/>
+            </basic>
+            <basic name="active">
+                <column name="active" nullable="true" column-definition="boolean NULL DEFAULT true"/>
+            </basic>
+            <basic name="owner">
+                <column name="owner_user" nullable="true" column-definition="varchar NULL"/>
+            </basic>
+            <basic name="parameters">
+                <column name="parameters" nullable="true" column-definition="json NULL" />
+            </basic>
+            <many-to-one name="service" fetch="EAGER" target-entity="ro.cs.tao.docker.Container">
+                <join-column name="container_id" nullable="true"/>
+            </many-to-one>
         </attributes>
     </entity>
 
@@ -486,7 +632,7 @@
                 <column name="data_type" nullable="false" column-definition="varchar(512) NOT NULL"/>
             </basic>
             <basic name="defaultValue">
-                <column name="default_value" nullable="true" column-definition="varchar(250) NULL"/>
+                <column name="default_value" nullable="true" column-definition="text NULL"/>
             </basic>
             <basic name="description">
                 <column name="description" nullable="true" column-definition="text NULL"/>
@@ -590,12 +736,21 @@
             <transient name="password"/>
             <transient name="overriddenParameters"/>
             <transient name="currentProduct"/>
+            <transient name="principal"/>
         </attributes>
     </entity>
 
-    <entity class="ro.cs.tao.execution.model.DataSourceConnection" access="PROPERTY">
+    <entity class="ro.cs.tao.datasource.DataSourceCredentials" access="PROPERTY">
         <table name="execution.user_data_source_connection"/>
+        <entity-listeners>
+            <entity-listener class="ro.cs.tao.persistence.audit.DataSourceCredentialsListener"/>
+        </entity-listeners>
+        <convert converter="ro.cs.tao.persistence.convert.MapConverter" attribute-name="params" />
         <attributes>
+            <id name="id">
+                <column name="id" nullable="false" column-definition="bigint NOT NULL"/>
+                <generated-value strategy="IDENTITY" generator="credentials_identifier"/>
+            </id>
             <basic name="userId">
                 <column name="user_id" nullable="false" column-definition="varchar(50) NOT NULL"/>
             </basic>
@@ -608,11 +763,34 @@
             <basic name="password">
                 <column name="password" nullable="true" column-definition="text NOT NULL"/>
             </basic>
+            <basic name="params">
+                <column name="params" nullable="true" column-definition="varchar(512) NOT NULL"/>
+            </basic>
             <basic name="created">
                 <column name="created" nullable="true" column-definition="timestamp without time zone DEFAULT now()"/>
             </basic>
             <basic name="modified">
                 <column name="modified" nullable="true" column-definition="timestamp without time zone DEFAULT now()"/>
+            </basic>
+        </attributes>
+    </entity>
+
+    <entity class="ro.cs.tao.datasource.DataSourceConfiguration" access="PROPERTY">
+        <table name="component.data_source_configuration"/>
+        <convert converter="ro.cs.tao.persistence.convert.FetchModeConverter" attribute-name="fetchMode" />
+        <convert converter="ro.cs.tao.persistence.convert.MapConverter" attribute-name="parameters" />
+        <attributes>
+            <id name="id">
+                <column name="id" nullable="false" column-definition="varchar(512) NOT NULL"/>
+            </id>
+            <basic name="fetchMode">
+                <column name="fetch_mode" nullable="false" column-definition="smallint NOT NULL"/>
+            </basic>
+            <basic name="localRepositoryPath">
+                <column name="local_repository_root" nullable="true" column-definition="varchar(255)"/>
+            </basic>
+            <basic name="parameters">
+                <column name="parameters" nullable="true" column-definition="json"/>
             </basic>
         </attributes>
     </entity>
@@ -642,6 +820,9 @@
             <basic name="executionNodeHostName">
                 <column name="execution_node_host_name" nullable="true" column-definition="character varying(250) NULL"/>
             </basic>
+            <basic name="command">
+                <column name="command" nullable="true" column-definition="varchar NULL"/>
+            </basic>
             <basic name="startTime">
                 <column name="start_time" nullable="true" column-definition="timestamp without time zone NULL"/>
             </basic>
@@ -663,11 +844,20 @@
             <basic name="usedRAM">
                 <column name="used_ram" nullable="true" column-definition="integer NULL"/>
             </basic>
+            <basic name="instanceTemporaryOutput">
+                <column name="temp_target" nullable="true" column-definition="text NULL"/>
+            </basic>
+            <basic name="instanceTargetOutput">
+                <column name="actual_target" nullable="true" column-definition="text NULL"/>
+            </basic>
             <basic name="level">
                 <column name="execution_level" nullable="false" column-definition="integer NOT NULL"/>
             </basic>
             <basic name="log">
                 <column name="execution_log" nullable="true" column-definition="varchar NULL"/>
+            </basic>
+            <basic name="cardinality">
+                <column name="cardinality" nullable="true" column-definition="integer NULL"/>
             </basic>
 
             <many-to-one name="job" fetch="LAZY">
@@ -713,6 +903,19 @@
                 <join-column name="component_id" nullable="false"/>
             </many-to-one>
             <!--<transient name="instanceTargetOutput"/>-->
+            <transient name="externalCommonParameters"/>
+        </attributes>
+    </entity>
+
+    <entity class="ro.cs.tao.execution.model.ScriptTask" access="PROPERTY">
+
+        <discriminator-value>12</discriminator-value>
+
+        <attributes>
+            <many-to-one name="component" fetch="LAZY" target-entity="ro.cs.tao.component.ProcessingComponent">
+                <join-column name="component_id" nullable="false"/>
+            </many-to-one>
+            <transient name="externalCommonParameters"/>
         </attributes>
     </entity>
 
@@ -753,16 +956,24 @@
             <many-to-one name="component" fetch="LAZY" target-entity="ro.cs.tao.component.WPSComponent">
                 <join-column name="component_id" nullable="false"/>
             </many-to-one>
-            <!--<transient name="instanceTargetOutput"/>-->
+            <transient name="externalCommonParameters"/>
         </attributes>
     </entity>
 
     <entity class="ro.cs.tao.execution.model.ExecutionJob" access="PROPERTY">
         <table name="execution.job"/>
         <convert converter="ro.cs.tao.persistence.convert.ExecutionStatusConverter" attribute-name="executionStatus" />
+        <convert converter="ro.cs.tao.persistence.convert.JsonCallbackConverter" attribute-name="callbackDescriptor"/>
+        <convert converter="ro.cs.tao.persistence.convert.JsonTaskDependenciesConverter" attribute-name="taskDependencies"/>
         <attributes>
             <basic name="name">
                 <column name="name" nullable="false" column-definition="text not null"/>
+            </basic>
+            <basic name="jobType">
+                <column name="job_type" nullable="false" column-definition="smallint not null default 0"/>
+            </basic>
+            <basic name="appId">
+                <column name="app_id" nullable="true" column-definition="varchar(50) not null" />
             </basic>
             <basic name="executionStatus">
                 <column name="execution_status_id" nullable="false" column-definition="integer not null"/>
@@ -782,7 +993,21 @@
             <basic name="userName">
                 <column name="username" nullable="false" column-definition="character varying(50) NOT NULL"/>
             </basic>
-
+            <basic name="jobOutputPath">
+                <column name="output_path" nullable="false" column-definition="character varying(512) NOT NULL"/>
+            </basic>
+            <basic name="external">
+                <column name="is_external" nullable="true" column-definition="boolean NULL DEFAULT false"/>
+            </basic>
+            <basic name="batchId">
+                <column name="batch_id" nullable="true" column-definition="varchar(50)"/>
+            </basic>
+            <basic name="callbackDescriptor">
+                <column name="callback" nullable="true" column-definition="json NULL"/>
+            </basic>
+            <basic name="taskDependencies">
+                <column name="task_dependencies" nullable="true" column-definition="json NULL"/>
+            </basic>
             <one-to-many name="tasks" fetch="EAGER" mapped-by="job" />
         </attributes>
     </entity>
@@ -792,9 +1017,13 @@
         <inheritance strategy="SINGLE_TABLE"/>
         <discriminator-column name="discriminator" column-definition="integer NOT NULL" discriminator-type="INTEGER"/>
         <attributes>
-            <id name="timestamp">
-                <column name="timestamp" nullable="false" column-definition="bigint NOT NULL"/>
+            <id name="id">
+                <column name="id" nullable="false" column-definition="bigserial NOT NULL"/>
+                <generated-value strategy="IDENTITY" />
             </id>
+            <basic name="timestamp">
+                <column name="timestamp" nullable="false" column-definition="bigint NOT NULL"/>
+            </basic>
             <basic name="topic">
                 <column name="topic" nullable="false" column-definition="character varying NOT NULL"/>
             </basic>
@@ -814,15 +1043,29 @@
         </attributes>
     </entity>
 
-    <entity class="ro.cs.tao.messaging.progress.ActivityStartMessage" access="PROPERTY">
+    <entity class="ro.cs.tao.messaging.progress.ActivityStart" access="PROPERTY">
         <discriminator-value>2</discriminator-value>
         <attributes>
             <transient name="taskName"/>
         </attributes>
     </entity>
 
-    <entity class="ro.cs.tao.messaging.progress.ActivityEndMessage" access="PROPERTY">
+    <entity class="ro.cs.tao.messaging.progress.ActivityEnd" access="PROPERTY">
         <discriminator-value>3</discriminator-value>
+        <attributes>
+            <transient name="taskName"/>
+        </attributes>
+    </entity>
+
+    <entity class="ro.cs.tao.messaging.progress.TransferStart" access="PROPERTY">
+        <discriminator-value>4</discriminator-value>
+        <attributes>
+            <transient name="taskName"/>
+        </attributes>
+    </entity>
+
+    <entity class="ro.cs.tao.messaging.progress.TransferEnd" access="PROPERTY">
+        <discriminator-value>5</discriminator-value>
         <attributes>
             <transient name="taskName"/>
         </attributes>
@@ -845,6 +1088,9 @@
             </basic>
             <basic name="visibility">
                 <column name="visibility_id" nullable="false" column-definition="integer NOT NULL"/>
+            </basic>
+            <basic name="createdFromWorkflowId">
+                <column name="created_from_graph_id" nullable="true" column-definition="bigint" />
             </basic>
             <basic name="active">
                 <column name="active" nullable="true" column-definition="boolean NULL DEFAULT true"/>
@@ -910,6 +1156,13 @@
             <basic name="preserveOutput">
                 <column name="preserve_output" nullable="true" column-definition="boolean NULL DEFAULT true"/>
             </basic>
+            <basic name="additionalInfo">
+                <column name="additional_info" nullable="true" column-definition="json NULL"/>
+                <convert converter="ro.cs.tao.persistence.convert.ParameterValueListConverter"/>
+            </basic>
+            <basic name="createdFromNodeId">
+                <column name="created_from_node_id" nullable="true" column-definition="bigint"/>
+            </basic>
             <many-to-one name="workflow" fetch="LAZY">
                 <join-column name="workflow_id" referenced-column-name="id" nullable="false"/>
             </many-to-one>
@@ -963,6 +1216,9 @@
             <basic name="constraints">
                 <column name="constraints" nullable="true" column-definition="text NULL"/>
             </basic>
+            <basic name="referencedSourceDescriptorId">
+                <column name="ref_source_descriptor_id" nullable="true" column-definition="varchar"/>
+            </basic>
 
             <embedded name="dataDescriptor" />
 
@@ -985,6 +1241,9 @@
             <basic name="constraints">
                 <column name="constraints" nullable="true" column-definition="text NULL"/>
             </basic>
+            <basic name="referencedTargetDescriptorId">
+                <column name="ref_target_descriptor_id" nullable="true" column-definition="varchar"/>
+            </basic>
 
             <embedded name="dataDescriptor" />
 
@@ -996,7 +1255,7 @@
         <entity-listeners>
             <entity-listener class="ro.cs.tao.persistence.audit.QueryListener"/>
         </entity-listeners>
-        <convert converter="ro.cs.tao.persistence.convert.QueryValuesMapConverter" attribute-name="values"/>
+        <convert converter="ro.cs.tao.persistence.convert.MapConverter" attribute-name="values"/>
         <attributes>
             <id name="id">
                 <column name="id" nullable="false" column-definition="bigserial NOT NULL"/>
@@ -1035,6 +1294,9 @@
             <basic name="limit">
                 <column name="_limit" nullable="true" column-definition="integer NULL"/>
             </basic>
+            <basic name="coverage">
+                <column name="coverage" nullable="true" column-definition="real NULL"/>
+            </basic>
             <basic name="values">
                 <column name="values" nullable="true" column-definition="json NULL"/>
             </basic>
@@ -1051,7 +1313,11 @@
 
     <entity class="ro.cs.tao.user.User" access="PROPERTY">
         <table name="usr.user"/>
+        <entity-listeners>
+            <entity-listener class="ro.cs.tao.persistence.audit.UserListener"/>
+        </entity-listeners>
         <convert converter="ro.cs.tao.persistence.convert.UserStatusConverter" attribute-name="status" />
+        <convert converter="ro.cs.tao.persistence.convert.UserTypeConverter" attribute-name="userType" />
         <attributes>
             <id name="id">
                 <column name="id" nullable="false" column-definition="serial NOT NULL"/>
@@ -1105,8 +1371,11 @@
             <basic name="status">
                 <column name="status_id" nullable="false" column-definition="integer NOT NULL"/>
             </basic>
-            <basic name="external">
+            <!--<basic name="external">
                 <column name="external" nullable="true" column-definition="boolean NULL DEFAULT false"/>
+            </basic>-->
+            <basic name="userType">
+                <column name="user_type_id" nullable="false" column-definition="integer NOT NULL"/>
             </basic>
             <basic name="passwordResetKey">
                 <column name="password_reset_key" nullable="true" column-definition="character varying(255) NULL"/>
@@ -1175,7 +1444,7 @@
         <table name="product.naming_rule"/>
         <attributes>
             <id name="id">
-                <column name="id" nullable="false" column-definition="integr NOT NULL"/>
+                <column name="id" nullable="false" column-definition="integer NOT NULL"/>
                 <generated-value strategy="IDENTITY" generator="rule_identifier"/>
             </id>
             <basic name="sensor">
@@ -1210,6 +1479,122 @@
         </attributes>
     </entity>
 
+    <entity class="ro.cs.tao.workspaces.Repository" access="PROPERTY">
+        <table name="workspace.repository"/>
+        <convert converter="ro.cs.tao.persistence.convert.MapConverter" attribute-name="parameters" />
+        <convert converter="ro.cs.tao.persistence.convert.RepositoryTypeConverter" attribute-name="type" />
+        <attributes>
+            <id name="id">
+                <column name="id" nullable="false" column-definition="varchar(40) DEFAULT uuid_generate_v4()"/>
+            </id>
+            <basic name="name">
+                <column name="name" nullable="false" column-definition="varchar(250) NOT NULL"/>
+            </basic>
+            <basic name="description">
+                <column name="description" nullable="false" column-definition="text NOT NULL"/>
+            </basic>
+            <basic name="urlPrefix">
+                <column name="url_prefix" nullable="false" column-definition="varchar(20) NOT NULL"/>
+            </basic>
+            <basic name="userName">
+                <column name="username" nullable="false" column-definition="varchar(50)"/>
+            </basic>
+            <basic name="type">
+                <column name="repository_type_id" nullable="false" column-definition="int NOT NULL"/>
+            </basic>
+            <basic name="readOnly">
+                <column name="read_only" nullable="false" column-definition="boolean NOT NULL"/>
+            </basic>
+            <basic name="system">
+                <column name="system" nullable="true" column-definition="boolean DEFAULT false"/>
+            </basic>
+            <basic name="editable">
+                <column name="is_editable" nullable="false" column-definition="boolean NOT NULL"/>
+            </basic>
+            <basic name="parameters">
+                <column name="params" nullable="true" column-definition="json"/>
+            </basic>
+            <basic name="created">
+                <column name="created" nullable="true" column-definition="timestamp DEFAULT now()"/>
+            </basic>
+        </attributes>
+    </entity>
+
+    <entity class="ro.cs.tao.workspaces.RepositoryTemplate" access="PROPERTY">
+        <table name="workspace.repository_template"/>
+        <convert converter="ro.cs.tao.persistence.convert.MapConverter" attribute-name="parameters" />
+        <convert converter="ro.cs.tao.persistence.convert.RepositoryTypeConverter" attribute-name="type" />
+        <attributes>
+            <id name="id">
+                <column name="id" nullable="false" column-definition="varchar(40) DEFAULT uuid_generate_v4()"/>
+            </id>
+            <basic name="name">
+                <column name="name" nullable="false" column-definition="varchar(250) NOT NULL"/>
+            </basic>
+            <basic name="description">
+                <column name="description" nullable="false" column-definition="text NOT NULL"/>
+            </basic>
+            <basic name="urlPrefix">
+                <column name="url_prefix" nullable="false" column-definition="varchar(20) NOT NULL"/>
+            </basic>
+            <basic name="type">
+                <column name="repository_type_id" nullable="false" column-definition="int NOT NULL"/>
+            </basic>
+            <basic name="parameters">
+                <column name="params" nullable="true" column-definition="json"/>
+            </basic>
+            <basic name="created">
+                <column name="created" nullable="true" column-definition="timestamp DEFAULT now()"/>
+            </basic>
+        </attributes>
+    </entity>
+
+    <entity class="ro.cs.tao.workspaces.Site" access="PROPERTY">
+        <table name="workspace.site"/>
+        <attributes>
+            <id name="id">
+                <column name="id" nullable="false" column-definition="varchar(40) DEFAULT uuid_generate_v4()"/>
+            </id>
+            <basic name="name">
+                <column name="name" nullable="false" column-definition="varchar(250) NOT NULL"/>
+            </basic>
+            <basic name="description">
+                <column name="description" nullable="false" column-definition="text NOT NULL"/>
+            </basic>
+            <basic name="footprint">
+                <column name="footprint" nullable="false" column-definition="geography(Polygon,4326) not null"/>
+            </basic>
+            <basic name="startDate">
+                <column name="start_date" nullable="false" column-definition="timestamp NOT NULL"/>
+            </basic>
+            <basic name="endDate">
+                <column name="end_date" nullable="false" column-definition="timestamp NOT NULL"/>
+            </basic>
+            <basic name="user">
+                <column name="username" nullable="false" column-definition="varchar(50)"/>
+            </basic>
+        </attributes>
+    </entity>
+
+    <entity class="ro.cs.tao.user.LogEvent" access="PROPERTY">
+        <table name="common.audit"/>
+        <attributes>
+            <id name="id">
+                <column name="id" nullable="false" column-definition="bigserial NOT NULL"/>
+                <generated-value strategy="SEQUENCE" />
+            </id>
+            <basic name="timestamp">
+                <column name="timestamp" nullable="true" column-definition="timestamp without time zone"/>
+            </basic>
+            <basic name="userName">
+                <column name="username" nullable="false" column-definition="character varying NOT NULL"/>
+            </basic>
+            <basic name="event">
+                <column name="event" nullable="true" column-definition="character varying NOT NULL"/>
+            </basic>
+        </attributes>
+    </entity>
+
     <embeddable class="ro.cs.tao.eodata.Attribute" access="PROPERTY">
         <attributes>
             <basic name="name">
@@ -1227,7 +1612,7 @@
                 <column name="key" nullable="false" column-definition="varchar(512) NOT NULL"/>
             </basic>
             <basic name="value">
-                <column name="value" nullable="false" column-definition="varchar(512) NOT NULL"/>
+                <column name="value" nullable="true" column-definition="varchar(512)"/>
             </basic>
         </attributes>
     </embeddable>
@@ -1329,6 +1714,10 @@
 
     <embeddable class="ro.cs.tao.component.ParameterDependency" access="PROPERTY">
         <attributes>
+            <basic name="dependencyType">
+                <column name="dependency_type_id" nullable="false" column-definition="integer NOT NULL"/>
+                <convert converter="ro.cs.tao.persistence.convert.ParameterTypeConverter"/>
+            </basic>
             <basic name="expectedValue">
                 <column name="dependant_parameter_value" nullable="true" column-definition="varchar(250) NULL"/>
             </basic>
@@ -1338,6 +1727,9 @@
             </basic>
             <basic name="referencedParameterId">
                 <column name="dependant_parameter_id" nullable="false" column-definition="varchar(512) NOT NULL" />
+            </basic>
+            <basic name="allowedValues">
+                <column name="allowed_values" nullable="true" column-definition="varchar NULL"/>
             </basic>
         </attributes>
     </embeddable>
@@ -1355,12 +1747,12 @@
 
     <embeddable class="ro.cs.tao.user.UserMachine" access="PROPERTY">
         <attributes>
-            <basic name="machineType">
-                <column name="machine_type_id" nullable="false" column-definition="smallint NOT NULL"/>
-            </basic>
             <basic name="quantity">
                 <column name="machine_count" nullable="false" column-definition="smallint NOT NULL"/>
             </basic>
+            <many-to-one name="machineType" fetch="EAGER" target-entity="ro.cs.tao.topology.NodeFlavor">
+                <join-column name="flavor_id" nullable="false"/>
+            </many-to-one>
         </attributes>
     </embeddable>
 
@@ -1394,13 +1786,20 @@
     <converter class="ro.cs.tao.persistence.convert.ConstraintsConverter" />
     <converter class="ro.cs.tao.persistence.convert.DimensionConverter" />
     <converter class="ro.cs.tao.persistence.convert.ParameterValueListConverter"/>
-    <converter class="ro.cs.tao.persistence.convert.QueryValuesMapConverter"/>
+    <converter class="ro.cs.tao.persistence.convert.MapConverter"/>
+    <converter class="ro.cs.tao.persistence.convert.SetConverter"/>
     <converter class="ro.cs.tao.persistence.convert.UserStatusConverter"/>
     <converter class="ro.cs.tao.persistence.convert.ConditionConverter" />
     <converter class="ro.cs.tao.persistence.convert.StringListConverter" />
     <converter class="ro.cs.tao.persistence.convert.TagTypeConverter" />
     <converter class="ro.cs.tao.persistence.convert.ProductStatusConverter" />
     <converter class="ro.cs.tao.persistence.convert.AggregatorConverter" />
-    <converter class="ro.cs.tao.persistence.convert.NodeTypeConverter" />
-
+    <converter class="ro.cs.tao.persistence.convert.NodeRoleConverter" />
+    <converter class="ro.cs.tao.persistence.convert.JsonCallbackConverter" />
+    <converter class="ro.cs.tao.persistence.convert.RepositoryTypeConverter"/>
+    <converter class="ro.cs.tao.persistence.convert.ContainerTypeConverter"/>
+    <converter class="ro.cs.tao.persistence.convert.WPSParameterDescriptorListConverter"/>
+    <converter class="ro.cs.tao.persistence.convert.DependencyTypeConverter"/>
+    <converter class="ro.cs.tao.persistence.convert.ComponentCategoryConverter"/>
+    <converter class="ro.cs.tao.persistence.convert.UserTypeConverter"/>
 </entity-mappings>

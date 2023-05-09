@@ -23,33 +23,14 @@ import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.execution.model.ProcessingExecutionTask;
 
-import java.lang.reflect.Field;
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Light wrapper over ExecutionTask entity for services operations purpose
  * @author Oana H.
  */
 public class ExecutionTaskInfo {
-
-    private static final Map<Class<? extends ExecutionTask>, Field> componentField;
-
-    static {
-        componentField = new HashMap<>();
-        try {
-            Field field = ProcessingExecutionTask.class.getDeclaredField("component");
-            field.setAccessible(true);
-            componentField.put(ProcessingExecutionTask.class, field);
-            field = DataSourceExecutionTask.class.getDeclaredField("component");
-            field.setAccessible(true);
-            componentField.put(DataSourceExecutionTask.class, field);
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
-        }
-    }
 
     private Long id;
 
@@ -77,7 +58,12 @@ public class ExecutionTaskInfo {
         this.workflowNodeId = executionTask.getWorkflowNodeId();
         this.level = executionTask.getLevel();
         try {
-            TaoComponent component = (TaoComponent) componentField.get(executionTask.getClass()).get(executionTask);
+            TaoComponent component = null;
+            if (executionTask instanceof DataSourceExecutionTask) {
+                component = ((DataSourceExecutionTask) executionTask).getComponent();
+            } else if (executionTask instanceof ProcessingExecutionTask) {
+                component = ((ProcessingExecutionTask) executionTask).getComponent();
+            }
             this.componentId = component != null ? component.getId() : "n/a";
         } catch (Exception e) {
             this.componentId = "n/a";

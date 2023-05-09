@@ -32,13 +32,16 @@ public class ProductAssociationFactory {
         }
     }
 
-    public static Association<EOProduct> getAssociation(String name, int arg) {
+    public static Association<EOProduct> getAssociation(String name, Object arg) {
+        if (arg == null) {
+            throw new IllegalArgumentException(String.format("Cannot create association %s with NULL argument", name));
+        }
         Class<? extends Association<EOProduct>> association = associationMap.get(name);
         if (association == null) {
             throw new IllegalArgumentException("No such Association<EOProduct>: " + name);
         }
         try {
-            Constructor<? extends Association<EOProduct>> constructor = association.getDeclaredConstructor(Integer.class);
+            Constructor<? extends Association<EOProduct>> constructor = association.getDeclaredConstructor(arg.getClass());
             return constructor.newInstance(arg);
         } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             throw new IllegalArgumentException(String.format("Cannot create association %s. Check the second argument",

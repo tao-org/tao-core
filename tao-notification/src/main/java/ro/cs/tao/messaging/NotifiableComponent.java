@@ -34,10 +34,7 @@ public abstract class NotifiableComponent extends Notifiable {
      * Default constructor.
      */
     public NotifiableComponent() {
-        super();
-        this.queueSize = DEFAULT_QUEUE_SIZE;
-        this.messageQueue = new LinkedList<>();
-        subscribe(topics());
+        this(DEFAULT_QUEUE_SIZE);
     }
 
     /**
@@ -45,6 +42,7 @@ public abstract class NotifiableComponent extends Notifiable {
      * @param queueSize The size of the internal queue
      */
     public NotifiableComponent(int queueSize) {
+        super();
         this.queueSize = queueSize;
         this.messageQueue = new LinkedList<>();
         subscribe(topics());

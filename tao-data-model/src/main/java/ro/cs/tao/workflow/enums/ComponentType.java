@@ -42,7 +42,12 @@ public enum ComponentType implements TaoEnum<Integer> {
      * Designates a data source group component
      */
     @XmlEnumValue("4")
-    DATASOURCE_GROUP(4, "Data Source Group");
+    DATASOURCE_GROUP(4, "Data Source Group"),
+    /**
+     * Designates a WPS component
+     */
+    @XmlEnumValue("5")
+    WPS_COMPONENT(5, "WPS Component");
 
     private final int value;
     private final String description;

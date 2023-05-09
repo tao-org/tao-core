@@ -22,6 +22,7 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
@@ -31,7 +32,6 @@ import java.util.stream.Collectors;
  * @author Cosmin Cara
  */
 public class TaoConfigurationProvider implements ConfigurationProvider {
-    public static final String APP_HOME = "app.home";
     private static TaoConfigurationProvider instance;
     private static final String CONFIG_FILE_NAME = "tao.properties";
     // this field may be set by the launcher of the services
@@ -39,6 +39,7 @@ public class TaoConfigurationProvider implements ConfigurationProvider {
     // this field may be set by the launcher of the services
     private Path scriptsFolder;
     private Properties settings;
+    private Map<String, String> environment;
 
     public static TaoConfigurationProvider getInstance() {
         if (instance == null) {
@@ -113,7 +114,7 @@ public class TaoConfigurationProvider implements ConfigurationProvider {
                         Collectors.toMap(
                                 e -> (String) e.getKey(),
                                 e -> (String) e.getValue()
-                        ));
+                                        ));
     }
 
     @Override
@@ -122,11 +123,21 @@ public class TaoConfigurationProvider implements ConfigurationProvider {
                 Collectors.toMap(
                         e -> (String) e.getKey(),
                         e -> (String) e.getValue()
-                ));
+                                ));
     }
 
     @Override
     public void setValue(String name, String value) { this.settings.setProperty(name, value); }
+
+    @Override
+    public Map<String, String> getSystemEnvironment() {
+        return this.environment != null ? this.environment : System.getenv();
+    }
+
+    @Override
+    public void setSystemEnvironment(Map<String, String> environment) {
+        this.environment = new HashMap<>(environment);
+    }
 
     private void externalizeProperties(Path target) throws IOException {
         byte[] buffer = new byte[1024];

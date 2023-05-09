@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.messaging;
 
+import ro.cs.tao.component.LongIdentifiable;
 import ro.cs.tao.serialization.*;
 
 import javax.xml.bind.annotation.XmlElement;
@@ -29,7 +30,7 @@ import java.util.Map;
  * @author Cosmin Cara
  */
 @XmlRootElement(name = "message")
-public class Message {
+public class Message extends LongIdentifiable {
     public static final String PRINCIPAL_KEY = "Principal";
     public static final String PAYLOAD_KEY = "Payload";
     public static final String SOURCE_KEY = "Source";
@@ -58,19 +59,31 @@ public class Message {
     public static Message create(String user, Object source, String message, boolean persistent) {
         HashMap<String, String> data = new HashMap<>();
         data.put(PRINCIPAL_KEY, user);
-        data.put(PAYLOAD_KEY, message);
+        data.put(MESSAGE_KEY, message);
         if (source != null) {
             data.put(SOURCE_KEY, source.toString());
         }
         return new Message(System.currentTimeMillis(), data, persistent);
     }
 
-    public Message() { }
+    public static Message create(String user, Object source, String message, String additional, boolean persistent) {
+        HashMap<String, String> data = new HashMap<>();
+        data.put(PRINCIPAL_KEY, user);
+        data.put(MESSAGE_KEY, message);
+        data.put(PAYLOAD_KEY, additional);
+        if (source != null) {
+            data.put(SOURCE_KEY, source.toString());
+        }
+        return new Message(System.currentTimeMillis(), data, persistent);
+    }
+
+    public Message() { super(); }
 
     private Message(long timestamp, HashMap<String, String> data) {
         this(timestamp, data, true);
     }
     private Message(long timestamp, HashMap<String, String> data, boolean persistent) {
+        this.id = 0L;
         this.timestamp = timestamp;
         this.data = data;
         this.read = false;

@@ -20,8 +20,11 @@
         <class>ro.cs.tao.component.ParameterDependency</class>
         <class>ro.cs.tao.component.TemplateParameterDescriptor</class>
         <class>ro.cs.tao.component.ProcessingComponent</class>
+        <class>ro.cs.tao.component.GroupComponent</class>
+        <class>ro.cs.tao.component.WPSComponent</class>
 
         <class>ro.cs.tao.datasource.DataSourceComponent</class>
+        <class>ro.cs.tao.datasource.DataSourceComponentGroup</class>
 
         <class>ro.cs.tao.execution.model.ExecutionJob</class>
         <class>ro.cs.tao.execution.model.ExecutionTask</class>
@@ -31,11 +34,14 @@
         <class>ro.cs.tao.component.TargetDescriptor</class>
 
         <class>ro.cs.tao.messaging.Message</class>
+        <class>ro.cs.tao.Tag</class>
 
         <class>ro.cs.tao.workflow.WorkflowDescriptor</class>
         <class>ro.cs.tao.workflow.WorkflowNodeDescriptor</class>
+        <class>ro.cs.tao.workflow.WorkflowNodeGroupDescriptor</class>
 
         <class>ro.cs.tao.datasource.beans.Query</class>
+        <class>ro.cs.tao.workspaces.Repository</class>
 
         <exclude-unlisted-classes>false</exclude-unlisted-classes>
 

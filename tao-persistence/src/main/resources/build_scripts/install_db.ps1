@@ -2,13 +2,13 @@ param (
     [string]$port = "5432",
     [string]$password
 )
- 
+
 $PSScriptRoot = Split-Path $MyInvocation.MyCommand.Path -Parent
 cd $PSScriptRoot
- 
+
 . .\common_functions.ps1
 
-$PostgresInstallBinPath = Get-Psql-Access 
+$PostgresInstallBinPath = Get-Psql-Access
 Ensure-psql-access $port $password
 
 $sqlScriptsList = Get-Scripts-To-Execute "install_db_sql_files.txt"

@@ -4,6 +4,9 @@ import ro.cs.tao.datasource.DataSourceComponent;
 
 import java.util.List;
 
+/**
+ * Read-only bean for a DataSourceComponent entity
+ */
 public class DataSourceInfo {
 
     private String id;

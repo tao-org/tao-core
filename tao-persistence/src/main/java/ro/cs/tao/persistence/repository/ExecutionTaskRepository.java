@@ -1,6 +1,7 @@
 package ro.cs.tao.persistence.repository;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
@@ -39,18 +40,40 @@ public interface ExecutionTaskRepository extends PagingAndSortingRepository<Exec
                                              @Param("instanceId") int instanceId);
 
     @Query(value = "SELECT * from execution.task where execution_status_id = 2", nativeQuery = true)
+    @Transactional(readOnly = true)
     List<ExecutionTask> getRunningTasks();
 
-    @Query(value = "SELECT * FROM execution.task WHERE discriminator = 11 AND execution_status_id = 2 AND resource_id IS NOT NULL", nativeQuery = true)
-    List<ExecutionTask> getExecutingTasks();
+    @Query(value = "SELECT t.* FROM execution.task t JOIN execution.job j ON j.id = t.job_id " +
+            "WHERE j.app_id = :appId AND t.discriminator = 11 AND t.execution_status_id = 2 AND t.resource_id IS NOT NULL", nativeQuery = true)
+    @Transactional(readOnly = true)
+    List<ExecutionTask> getExecutingTasks(@Param("appId") String appId);
 
     @Query(value = "SELECT * FROM execution.task WHERE discriminator = 33 AND execution_status_id = 2 AND resource_id IS NOT NULL", nativeQuery = true)
+    @Transactional(readOnly = true)
     List<ExecutionTask> getRemoteExecutingTasks();
+
+    @Query(value = "SELECT * FROM execution.task WHERE execution_status_id IN (1, 2) AND execution_node_host_name = :host", nativeQuery = true)
+    @Transactional(readOnly = true)
+    List<ExecutionTask> getTasksByHost(@Param("host") String host);
+
+    @Query(value = "SELECT t.* FROM execution.task t JOIN component.data_source_component c ON c.id = t.component_id WHERE t.job_id = :jobId", nativeQuery = true)
+    List<ExecutionTask> getDataSourceTasks(@Param("jobId") long jobId);
 
     @Query(value = "SELECT COALESCE(SUM(t.used_cpu), 0) FROM execution.task as t JOIN execution.job AS j ON j.id = t.job_id WHERE t.execution_status_id IN (1, 2) AND j.username = :userName", nativeQuery = true)
     int getCPUsForUser(@Param("userName") String userName);
 
     @Query(value = "SELECT COALESCE(SUM(t.used_ram), 0) FROM execution.task as t JOIN execution.job AS j ON j.id = t.job_id WHERE t.execution_status_id IN (1, 2) AND j.username = :userName", nativeQuery = true)
     int getMemoryForUser(@Param("userName") String userName);
-    
+
+    @Query(value = "with deps as (select id as jid, json_object_keys(task_dependencies) as parentId from execution.job where id = :jobId) " +
+            "select count(t.id) from execution.task t where cast(t.id as text) in (" +
+            "select json_array_elements_text(json_extract_path(j.task_dependencies, cast(d.parentId as text))) from execution.job j join deps d on j.id = d.jid where cast(d.parentId as integer) = :taskId) " +
+            "and not (t.execution_status_id = 4 or (t.execution_status_id = 5 and exists(select id from workflow.graph_node where id = t.graph_node_id and behavior_id = 2)))",
+            nativeQuery = true)
+    int getRunningParents(@Param("jobId") long jobId, @Param("taskId") long taskId);
+
+    @Modifying
+    @Query(value = "INSERT INTO execution.component_time (component_id, average_duration_seconds) VALUES (:id, :duration) " +
+            "ON CONFLICT (component_id) DO UPDATE SET average_duration_seconds = (component_time.average_duration_seconds + :duration) / 2", nativeQuery = true)
+    void updateComponentTime(@Param("id") String id, @Param("duration") int duration);
 }

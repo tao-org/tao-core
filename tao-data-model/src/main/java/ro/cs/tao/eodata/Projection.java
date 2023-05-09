@@ -4,7 +4,7 @@ import org.apache.commons.collections.bidimap.TreeBidiMap;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.ReferencingFactoryFinder;
 import org.geotools.referencing.factory.FallbackAuthorityFactory;
-import org.geotools.factory.Hints;
+import org.geotools.util.factory.Hints;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CRSAuthorityFactory;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;

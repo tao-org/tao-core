@@ -149,22 +149,22 @@ public class ServiceFinder {
     }
 
     private void scanDirectory(Path directory, List<Module> modules) {
-        try {
-            //LOG.fine("Searching for SPIs " + servicesPath + " in " + directory);
-        	//TODO: Replace with the logger
-            Files.list(directory).forEach(entry -> {
+        //LOG.fine("Searching for SPIs " + servicesPath + " in " + directory);
+        //TODO: Replace with the logger
+        try(Stream<Path> stream = Files.list(directory)) {
+            stream.forEach(entry -> {
                 if (Files.isDirectory(entry)) {
                     parseServiceRegistry(entry.resolve(servicesPath), modules);
                 } else if (useZipFiles) {
                     String extension = FileUtilities.getExtension(entry.toString());
                     if (".jar".compareToIgnoreCase(extension) == 0 || ".zip".compareToIgnoreCase(extension) == 0) {
                         try {
-                            try (FileSystem fs = FileSystems.newFileSystem(entry, null)) {
+                            try (FileSystem fs = FileSystems.newFileSystem(entry, (ClassLoader) null)) {
                                 parseServiceRegistry(fs.getPath(servicesPath), modules);
                             }
                         } catch (IOException e) {
                             //LOG.log(Level.SEVERE, "Failed to open file : " + entry, e);
-                        	//TODO: Replace with the logger
+                            //TODO: Replace with the logger
                         }
                     }
                 }

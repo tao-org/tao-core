@@ -16,8 +16,8 @@
 package ro.cs.tao.datasource;
 
 import org.apache.http.auth.UsernamePasswordCredentials;
-import ro.cs.tao.ProgressListener;
 import ro.cs.tao.eodata.EOProduct;
+import ro.cs.tao.utils.executors.monitoring.DownloadProgressListener;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -75,10 +75,10 @@ public interface ProductFetchStrategy {
     default void cancel() { }
 
     /**
-     * Sets the progress listener to this strategy
+     * Sets the download progress listener to this strategy
      * @param progressListener  The listener
      */
-    default void setProgressListener(ProgressListener progressListener) { }
+    default void setProgressListener(DownloadProgressListener progressListener) { }
 
     /**
      * Produces a deep copy of this strategy.

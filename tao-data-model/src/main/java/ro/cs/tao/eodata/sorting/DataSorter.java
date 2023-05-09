@@ -4,6 +4,12 @@ import ro.cs.tao.eodata.EOData;
 
 import java.util.List;
 
+/**
+ * Base class for sorter implementations.
+ * A sorter orders a list of inputs based on its internal implementation.
+ *
+ * @param <T>   The type of the inputs (derivatives of EOData)
+ */
 public abstract class DataSorter<T extends EOData> {
 
     private final String friendlyName;

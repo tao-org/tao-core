@@ -3,6 +3,7 @@ package ro.cs.tao.persistence.repository;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
@@ -21,7 +22,7 @@ import java.util.List;
 @Repository
 @Qualifier(value = "messageRepository")
 @Transactional
-public interface MessageRepository extends PagingAndSortingRepository<Message, String> {
+public interface MessageRepository extends PagingAndSortingRepository<Message, Long> {
 
     /**
      * Find Message entity by user identifier
@@ -32,4 +33,15 @@ public interface MessageRepository extends PagingAndSortingRepository<Message, S
 
     @Query(value = "SELECT * FROM common.notification WHERE username = :user AND read = false", nativeQuery = true)
     List<Message> getUnreadMessages(@Param("user") String userName);
+
+    @Query(value = "SELECT * FROM common.notification WHERE username = :user AND timestamp = :timestamp", nativeQuery = true)
+    Message get(@Param("user") String userName, @Param("timestamp") long timestamp);
+
+    @Modifying
+    @Query(value = "UPDATE common.notification SET read = true WHERE id IN (:ids)", nativeQuery = true)
+    void markAsRead(@Param("ids") List<Long> ids);
+
+    @Modifying
+    @Query(value = "DELETE FROM common.notification WHERE username = :user", nativeQuery = true)
+    void deleteAll(@Param("user") String userName);
 }

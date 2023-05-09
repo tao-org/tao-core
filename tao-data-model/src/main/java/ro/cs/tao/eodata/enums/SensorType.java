@@ -15,7 +15,9 @@
  */
 package ro.cs.tao.eodata.enums;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import ro.cs.tao.TaoEnum;
+import ro.cs.tao.serialization.SensorTypeDeserializer;
 
 import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlEnumValue;
@@ -24,6 +26,7 @@ import javax.xml.bind.annotation.XmlEnumValue;
  * @author Cosmin Cara
  */
 @XmlEnum(Integer.class)
+@JsonDeserialize(using = SensorTypeDeserializer.class)
 public enum SensorType implements TaoEnum<Integer> {
     @XmlEnumValue("1")
     OPTICAL(1, "Optical"),
@@ -34,7 +37,9 @@ public enum SensorType implements TaoEnum<Integer> {
     @XmlEnumValue("4")
     ATMOSPHERIC(4, "Atmospheric"),
     @XmlEnumValue("5")
-    UNKNOWN(5, "Unknown");
+    UNKNOWN(5, "Unknown"),
+    @XmlEnumValue("6")
+    PASSIVE_MICROWAVE(6, "Passive Microwave");
 
     private final int value;
     private final String description;

@@ -15,33 +15,34 @@
  */
 package ro.cs.tao.datasource.beans;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import ro.cs.tao.component.LongIdentifiable;
 import ro.cs.tao.datasource.DataQuery;
 import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.datasource.DataSourceManager;
 import ro.cs.tao.datasource.param.DataSourceParameter;
 import ro.cs.tao.eodata.Polygon2D;
 import ro.cs.tao.serialization.GenericAdapter;
+import ro.cs.tao.serialization.JsonMapper;
 import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.utils.CompositeKey;
 import ro.cs.tao.utils.DateUtils;
 
 import java.lang.reflect.Array;
-import java.text.DateFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.logging.Logger;
 
 /**
  * @author Cosmin Cara
  */
-public class Query {
-    private static final DateFormat SIMPLE_DATE_FORMAT = DateUtils.getFormatterAtUTC("yyyy-MM-dd");
+public class Query extends LongIdentifiable {
+    private static final DateTimeFormatter dateFormat = DateUtils.getResilientFormatterAtUTC();//DateUtils.getFormatterAtUTC("yyyy-MM-dd");
     private static final Map<CompositeKey, DataSourceComponent> componentPool = Collections.synchronizedMap(new HashMap<>());
-    private Long id;
     private String label;
     private String userId;
+    private String siteId;
     private Long workflowNodeId;
     private String sensor;
     private String dataSource;
@@ -50,6 +51,7 @@ public class Query {
     private int pageSize;
     private int pageNumber;
     private int limit;
+    private Double coverage;
     private Map<String, String> values;
     private LocalDateTime created;
     private LocalDateTime modified;
@@ -57,16 +59,16 @@ public class Query {
     private String groupId;
     private String groupLabel;
 
-    public Query() { }
-
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Query() { super(); }
 
     public String getLabel() { return label; }
     public void setLabel(String label) { this.label = label; }
 
     public String getUserId() { return userId; }
     public void setUserId(String userId) { this.userId = userId; }
+
+    public String getSiteId() { return siteId; }
+    public void setSiteId(String siteId) { this.siteId = siteId; }
 
     public Long getWorkflowNodeId() { return workflowNodeId; }
     public void setWorkflowNodeId(Long workflowNodeId) { this.workflowNodeId = workflowNodeId; }
@@ -122,13 +124,16 @@ public class Query {
     public String getGroupLabel() { return groupLabel; }
     public void setGroupLabel(String groupLabel) { this.groupLabel = groupLabel; }
 
+    public double getCoverage() { return coverage != null ? coverage : 0.0; }
+    public void setCoverage(Double coverage) { this.coverage = coverage; }
+
     public static DataQuery toDataQuery(Query webQuery) throws SerializationException {
         DataQuery query = null;
         if (webQuery != null) {
             try {
-                CompositeKey key = new CompositeKey(webQuery.getSensor(),
-                                                    webQuery.getDataSource(),
-                                                    webQuery.getUser());
+                final CompositeKey key = new CompositeKey(webQuery.getSensor(),
+                                                          webQuery.getDataSource(),
+                                                          webQuery.getUser());
                 if (!componentPool.containsKey(key)) {
                     componentPool.put(key, new DataSourceComponent(webQuery.getSensor(), webQuery.getDataSource()));
                 }
@@ -142,6 +147,7 @@ public class Query {
                 query.setMaxResults(webQuery.getLimit() > 0 ? webQuery.getLimit() : 10);
                 query.setPageNumber(webQuery.getPageNumber() > 0 ? webQuery.getPageNumber() : 1);
                 query.setPageSize(webQuery.getPageSize() > 0 ? webQuery.getPageSize() : 10);
+                query.setCoverage(webQuery.getCoverage());
                 Map<String, String> paramValues = webQuery.getValues();
                 for (Map.Entry<String, String> entry : paramValues.entrySet()) {
                     String paramName = entry.getKey();
@@ -156,25 +162,36 @@ public class Query {
                         value = null;
                     }
                     if (value != null && value.startsWith("[") & value.endsWith("]")) {
+                        if (!type.isArray()) {
+                            throw new IllegalArgumentException(String.format("[%s] parameter type is not an array", paramName));
+                        }
                         String[] elements = value.substring(1, value.length() - 1).split(",");
-                        if (Date.class.isAssignableFrom(type)) {
+                        final Class arrayType = type.isArray() ? type.getComponentType() : type;
+                        if (LocalDateTime.class.isAssignableFrom(arrayType)) {
+                            // date[] values are not an actual array, but represent [min,max] pairs
                             query.addParameter(query.createParameter(paramName,
                                                                      type,
-                                                                     SIMPLE_DATE_FORMAT.parse(elements[0]),
-                                                                     SIMPLE_DATE_FORMAT.parse(elements[1])));
+                                                                     elements[0].length() > 10 ?
+                                                                        LocalDateTime.parse(elements[0], dateFormat) :
+                                                                        LocalDate.parse(elements[0], dateFormat).atStartOfDay(),
+                                                                     elements[1].length() > 10 ?
+                                                                        LocalDateTime.parse(elements[1], dateFormat) :
+                                                                        LocalDate.parse(elements[1], dateFormat).plusDays(1).atStartOfDay().minusSeconds(1)));
                         } else {
-                            final Class arrayType = type.isArray() ? type.getComponentType() : type;
-                            Object array = Array.newInstance(arrayType, elements.length);
-                            GenericAdapter adapter = new GenericAdapter(arrayType.getName());
+                            final Object array = Array.newInstance(arrayType, elements.length);
+                            final GenericAdapter adapter = new GenericAdapter(arrayType.getName());
                             for (int i = 0; i < elements.length; i++) {
                                 Array.set(array, i, adapter.marshal(elements[i]));
                             }
                             query.addParameter(query.createParameter(paramName, type, array));
                         }
                     } else {
-                        if (Date.class.isAssignableFrom(type)) {
+                        if (LocalDateTime.class.isAssignableFrom(type)) {
+                            final String stringValue = String.valueOf(value);
                             query.addParameter(paramName, type,
-                                               SIMPLE_DATE_FORMAT.parse(String.valueOf(value)));
+                                               stringValue.length() > 10 ?
+                                                       LocalDateTime.parse(stringValue, dateFormat) :
+                                                       LocalDate.parse(stringValue, dateFormat).atStartOfDay());
                         } else if (Polygon2D.class.isAssignableFrom(type)) {
                             query.addParameter(paramName, type, Polygon2D.fromWKT(String.valueOf(value)));
                         } else {
@@ -198,6 +215,7 @@ public class Query {
                 for (String val : vals) {
                     Query subQuery = new Query();
                     subQuery.userId = this.userId;
+                    subQuery.siteId = this.siteId;
                     subQuery.dataSource = this.dataSource;
                     subQuery.sensor = this.sensor;
                     subQuery.user = this.user;
@@ -241,9 +259,7 @@ public class Query {
     @Override
     public String toString() {
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.registerModule(new JavaTimeModule());
-            return mapper.writeValueAsString(this);
+            return JsonMapper.instance().writeValueAsString(this);
         } catch (Exception ex) {
             Logger.getLogger(Query.class.getName()).severe(ex.getMessage());
             return super.toString();
@@ -252,9 +268,7 @@ public class Query {
 
     public static Query fromString(String jsonValue) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.registerModule(new JavaTimeModule());
-            return mapper.readValue(jsonValue, Query.class);
+            return JsonMapper.instance().readValue(jsonValue, Query.class);
         } catch (Exception ex) {
             Logger.getLogger(Query.class.getName()).severe(ex.getMessage());
             return null;

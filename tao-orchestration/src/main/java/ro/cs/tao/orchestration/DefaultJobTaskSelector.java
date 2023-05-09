@@ -17,15 +17,16 @@
 package ro.cs.tao.orchestration;
 
 import ro.cs.tao.execution.model.*;
-import ro.cs.tao.orchestration.util.TaskUtilities;
+import ro.cs.tao.execution.util.TaskUtilities;
 import ro.cs.tao.utils.TriFunction;
-import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
+import ro.cs.tao.workflow.enums.TransitionBehavior;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * Default implementation for choosing the next task to be executed from a job.
@@ -56,19 +57,23 @@ public class DefaultJobTaskSelector implements TaskSelector<ExecutionJob> {
     }
 
     @Override
-    public DataSourceExecutionTask findDataSourceTask(ExecutionJob job, ExecutionTask currentTask) {
+    public List<DataSourceExecutionTask> findDataSourceTasks(ExecutionJob job, ExecutionTask currentTask) {
         final WorkflowNodeDescriptor workflowNode = this.workflowProvider.apply(currentTask.getWorkflowNodeId());
         if (workflowNode == null) {
             logger.severe(String.format("No workflow node with id %s was found in the database",
                                         currentTask.getWorkflowNodeId()));
             return null;
         }
-        WorkflowDescriptor workflow = workflowNode.getWorkflow();
+        /*WorkflowDescriptor workflow = workflowNode.getWorkflow();
         final List<WorkflowNodeDescriptor> ancestors = workflow.findAncestors(workflow.getOrderedNodes(), workflowNode);
         return job.orderedTasks().stream().filter(t -> t.getWorkflowNodeId().equals(ancestors.get(0).getId()) &&
                                                        t instanceof DataSourceExecutionTask)
                                           .map(t -> (DataSourceExecutionTask) t)
-                                          .findFirst().orElse(null);
+                                          .findFirst().orElse(null);*/
+        return job.orderedTasks().stream()
+                  .filter(t -> t instanceof DataSourceExecutionTask)
+                  .map(t -> (DataSourceExecutionTask) t)
+                  .collect(Collectors.toList());
     }
 
     @Override
@@ -115,29 +120,25 @@ public class DefaultJobTaskSelector implements TaskSelector<ExecutionJob> {
     }
 
     private List<ExecutionTask> getCandidatesForExecution(ExecutionJob job, ExecutionTask task) {
-        if (task == null || task.getExecutionStatus() != ExecutionStatus.DONE) {
+        if (task == null) {
             return null;
         }
-        WorkflowNodeDescriptor workflowNode = this.workflowProvider.apply(task.getWorkflowNodeId());
-        if (workflowNode == null) {
-            logger.severe(String.format("No workflow node with id %s was found in the database", task.getWorkflowNodeId()));
+        final TransitionBehavior behavior = TaskUtilities.getTransitionBehavior(task);
+        if (ExecutionStatus.DONE != task.getExecutionStatus() &&
+                (behavior == null || behavior == TransitionBehavior.FAIL_ON_ERROR)) {
             return null;
         }
-        WorkflowDescriptor workflow = workflowNode.getWorkflow();
-        List<WorkflowNodeDescriptor> childNodes = workflow.findChildren(workflow.getNodes(), workflowNode);
-        if (childNodes == null || childNodes.size() == 0) {
-            System.out.println("No children for current node " + workflowNode.getComponentId());
-            return null;
-        }
-        List<ExecutionTask> nextOnes = new ArrayList<>();
-        for (WorkflowNodeDescriptor node : childNodes) {
-            ExecutionTask t = this.taskByNodeProvider.apply(job.getId(), node.getId(), task.getInstanceId());
-            if (t.getExecutionStatus() != ExecutionStatus.QUEUED_ACTIVE && t.getExecutionStatus() != ExecutionStatus.RUNNING) {
-                if (TaskUtilities.haveParentsCompleted(t)) {
-                    nextOnes.add(TaskUtilities.transferParentOutputs(t));
+        final List<ExecutionTask> candidates = new ArrayList<>();
+        job.getTaskDependencies().forEach((key, value) -> {
+            if (value.contains(String.valueOf(task.getId()))) {
+                if (value.stream()
+                         .map(v -> job.getTasks().stream().filter(t -> t.getId().equals(Long.parseLong(v))).findFirst().get())
+                         .allMatch(t -> t.getExecutionStatus() == ExecutionStatus.DONE &&
+                                        t.getOutputParameterValues() != null)) {
+                    candidates.add(job.getTasks().stream().filter(t -> t.getId().equals(Long.parseLong(key))).findFirst().get());
                 }
             }
-        }
-        return nextOnes;
+        });
+        return candidates;
     }
 }

@@ -16,32 +16,75 @@
 
 package ro.cs.tao.services.interfaces;
 
-import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.datasource.beans.Parameter;
 import ro.cs.tao.execution.model.ExecutionJob;
 import ro.cs.tao.services.model.FileObject;
-import ro.cs.tao.services.model.workflow.WorkflowInfo;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-public interface WebProcessingService extends TAOService {
+/**
+ * Generic interface for a WPS web service.
+ * @param <W>   The capability type
+ * @param <T>   The output type descriptor
+ */
+public interface WebProcessingService<W, T> extends TAOService {
 
-    List<WorkflowInfo> getCapabilities();
+    /**
+     * Returns a list of capabilities (operations) supported by this service
+     */
+    List<W> getCapabilities();
 
-    ProcessInfo describeProcess(long workflowId);
+    /**
+     * Describes a supported operation
+     * @param identifier    The operation identifier
+     */
+    ProcessInfo<W, T> describeProcess(long identifier);
 
-    long execute(long workflowId, Map<String, Map<String, String>> parameters);
+    /**
+     * Executes the operation identified by <code>identifier</code> using the given parameter values
+     * @param identifier    The operation identifier
+     * @param parameters    The parameter [name,value] pairs
+     * @return              The execution job identifier
+     */
+    long execute(long identifier, Map<String, Map<String, String>> parameters);
 
-    ExecutionJob getStatus(long jobId);
+    default long execute(String user, long identifier, Map<String, Map<String, String>> parameters) {
+        return execute(identifier, parameters);
+    }
 
-    List<FileObject> getJobResult(long jobId) throws IOException;
+    /**
+     * Returns information about the execution job having the given identifier
+     * @param executionJobId    The execution job identifier
+     */
+    ExecutionJob getStatus(long executionJobId);
 
-    interface ProcessInfo {
+    /**
+     * Returns the list of results of the given execution job
+     * @param executionJobId    The execution job identifier
+     */
+    List<FileObject> getJobResult(long executionJobId) throws IOException;
 
-        WorkflowInfo getWorkflowInfo();
+    /**
+     * Interface describing an operation
+     * @param <W>   The operation descriptor type
+     * @param <T>   The output descriptor type
+     */
+    interface ProcessInfo<W, T> {
+        /**
+         * The operation (workflow) description
+         */
+        W getCapabilityInfo();
+
+        /**
+         * The supported parameters (grouped by workflow node)
+         */
         Map<String, List<Parameter>> getParameters();
-        List<TargetDescriptor> getOutputs();
+
+        /**
+         * The description of the outputs
+         */
+        List<T> getOutputs();
     }
 }
