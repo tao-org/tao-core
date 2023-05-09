@@ -3,12 +3,13 @@ package ro.cs.tao.orchestration.status;
 import ro.cs.tao.execution.model.ExecutionJob;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
-import ro.cs.tao.persistence.PersistenceManager;
-import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.execution.persistence.ExecutionJobProvider;
+import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
+import ro.cs.tao.persistence.PersistenceException;
 
 public class RunningStatusHandler extends TaskStatusHandler {
-    protected RunningStatusHandler(PersistenceManager persistenceManager) {
-        super(persistenceManager);
+    protected RunningStatusHandler(ExecutionJobProvider jobProvider, ExecutionTaskProvider taskProvider) {
+        super(jobProvider, taskProvider);
     }
 
     @Override
@@ -17,7 +18,7 @@ public class RunningStatusHandler extends TaskStatusHandler {
         ExecutionStatus jobStatus = job.getExecutionStatus();
         if (jobStatus == ExecutionStatus.QUEUED_ACTIVE || jobStatus == ExecutionStatus.UNDETERMINED) {
             job.setExecutionStatus(ExecutionStatus.RUNNING);
-            persistenceManager.updateExecutionJob(job);
+            jobProvider.update(job);
         }
     }
 }

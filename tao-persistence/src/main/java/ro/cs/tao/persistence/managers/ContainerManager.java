@@ -19,13 +19,23 @@ package ro.cs.tao.persistence.managers;
 import org.springframework.stereotype.Component;
 import ro.cs.tao.docker.Application;
 import ro.cs.tao.docker.Container;
+import ro.cs.tao.docker.ContainerType;
+import ro.cs.tao.persistence.ContainerProvider;
 import ro.cs.tao.persistence.repository.ContainerRepository;
 
-@Component("containerManager")
-public class ContainerManager extends EntityManager<Container, String, ContainerRepository> {
+import java.util.List;
 
+@Component("containerManager")
+public class ContainerManager extends EntityManager<Container, String, ContainerRepository> implements ContainerProvider {
+
+    @Override
     public Container getByName(String name) {
         return repository.findByName(name);
+    }
+
+    @Override
+    public List<Container> getByType(ContainerType type) {
+        return repository.findByTypeId(type.value());
     }
 
     @Override

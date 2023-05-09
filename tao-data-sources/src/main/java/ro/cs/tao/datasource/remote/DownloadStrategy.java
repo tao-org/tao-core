@@ -17,14 +17,15 @@ package ro.cs.tao.datasource.remote;
 
 import org.apache.http.Header;
 import org.apache.http.auth.UsernamePasswordCredentials;
-import ro.cs.tao.ProgressListener;
 import ro.cs.tao.datasource.InterruptedException;
 import ro.cs.tao.datasource.*;
 import ro.cs.tao.eodata.EOProduct;
-import ro.cs.tao.eodata.util.ProductHelper;
+import ro.cs.tao.eodata.util.BaseProductHelper;
 import ro.cs.tao.utils.ExceptionUtils;
 import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.NetUtils;
+import ro.cs.tao.utils.executors.MemoryUnit;
+import ro.cs.tao.utils.executors.monitoring.DownloadProgressListener;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -51,7 +52,7 @@ import java.util.regex.Pattern;
  */
 public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
     protected static final String NAME_SEPARATOR = "_";
-    protected static final int BUFFER_SIZE = 1024 * 1024;
+    protected static final int BUFFER_SIZE = MemoryUnit.MB.value().intValue();
     private static final String startMessage = "(%s,%s) %s [size: %skB]";
     private static final String completeMessage = "(%s,%s) %s [elapsed: %ss]";
     private static final String errorMessage ="Cannot download %s: %s";
@@ -72,7 +73,7 @@ public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
     protected Logger logger = Logger.getLogger(getClass().getName());
     private String localArchiveRoot;
     private ProductPathBuilder pathBuilder;
-    private ProgressListener progressListener;
+    protected DownloadProgressListener progressListener;
     private volatile boolean cancelled;
     private Timer timer;
     private long progressReportInterval;
@@ -83,7 +84,7 @@ public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
         this.destination = targetFolder;
         this.props = properties;
         this.progressEnabled = Boolean.parseBoolean(this.props.getProperty(PROGRESS_KEY, "true"));
-        this.progressReportInterval = Long.parseLong(this.props.getProperty(PROGRESS_INTERVAL, "2000"));
+        this.progressReportInterval = Long.parseLong(this.props.getProperty(PROGRESS_INTERVAL, "5000"));
         this.downloadIfNotFound = "download".equalsIgnoreCase(this.props.getProperty(MISSING_ACTION, "none"));
     }
 
@@ -194,7 +195,7 @@ public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
     }
 
     @Override
-    public void setProgressListener(ProgressListener progressListener) {
+    public void setProgressListener(DownloadProgressListener progressListener) {
         this.progressListener = progressListener;
     }
 
@@ -208,7 +209,7 @@ public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
         }
         activityStart(product.getName());
         Path file;
-        this.progressReportInterval = Long.parseLong(this.props.getProperty(PROGRESS_INTERVAL, "2000"));
+        this.progressReportInterval = Long.parseLong(this.props.getProperty(PROGRESS_INTERVAL, "5000"));
         try {
             currentProduct = product;
             currentProductProgress = new ProductProgress(currentProduct.getApproximateSize(), adjustProductLength());
@@ -447,7 +448,7 @@ public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
 
     private Path downloadFile(String remoteUrl, Path file, FetchMode mode, T authToken) throws IOException, InterruptedException {
         checkCancelled();
-        String subActivity = remoteUrl.substring(remoteUrl.lastIndexOf(ProductHelper.URL_SEPARATOR) + 1);
+        String subActivity = remoteUrl.substring(remoteUrl.lastIndexOf(BaseProductHelper.URL_SEPARATOR) + 1);
         if ("$value".equals(subActivity)) {
             subActivity = file.getFileName().toString();
         }
@@ -550,7 +551,9 @@ public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
         public void run() {
             if (progressListener != null && currentProductProgress != null) {
                 if (currentProductProgress.value() != lastValue) {
-                    progressListener.notifyProgress(currentProductProgress.value());
+                    double delta = currentProductProgress.value() - lastValue;
+                    progressListener.notifyProgress(currentProductProgress.value(),
+                                                    delta / currentProductProgress.factor() / DownloadStrategy.this.progressReportInterval * 1000 / MemoryUnit.MB.value());
                     lastValue = currentProductProgress.value();
                 }
             }
@@ -583,5 +586,9 @@ public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
         }
 
         public double value() { return this.adder.doubleValue(); }
+
+        public double factor() {
+            return this.factor;
+        }
     }
 }

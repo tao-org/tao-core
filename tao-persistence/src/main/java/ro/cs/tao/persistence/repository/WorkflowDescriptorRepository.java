@@ -29,6 +29,10 @@ public interface WorkflowDescriptorRepository extends PagingAndSortingRepository
 
     Optional<WorkflowDescriptor> findByName(String name);
 
+    @Query(value = "SELECT * from workflow.graph g JOIN workflow.graph_node n ON n.workflow_id = g.id WHERE n.id = :nodeId",
+            nativeQuery = true)
+    WorkflowDescriptor getByNodeId(@Param("nodeId") long nodeId);
+
     @Query(value = "SELECT * from workflow.graph WHERE username = :user AND status_id = :statusId " +
             "ORDER BY created DESC", nativeQuery = true)
     List<WorkflowDescriptor> getUserWorkflowsByStatus(@Param("user") String user, @Param("statusId") int statusId);
@@ -45,4 +49,8 @@ public interface WorkflowDescriptorRepository extends PagingAndSortingRepository
     @Query(value = "SELECT * from workflow.graph WHERE visibility_id = 1 AND status_id = 3 " +
             "ORDER BY created DESC", nativeQuery = true)
     List<WorkflowDescriptor> getPublicWorkflows();
+
+    @Query(value = "SELECT * from workflow.graph WHERE username = :user OR (username != :user AND visibility_id = 1 AND status_id = 3) " +
+            "ORDER BY created DESC", nativeQuery = true)
+    List<WorkflowDescriptor> getUserVisibleWorkflows(@Param("user") String user);
 }

@@ -3,9 +3,10 @@
  */
 package ro.cs.tao.quota;
 
-import java.util.logging.Logger;
-
 import ro.cs.tao.configuration.ConfigurationManager;
+
+import java.lang.reflect.InvocationTargetException;
+import java.util.logging.Logger;
 
 /**
  * Singleton class used to manage the user's quota values.
@@ -23,7 +24,7 @@ public class UserQuotaManager {
 		// create the manager instance
         String quotaVerifierClass = ConfigurationManager.getInstance().getValue("tao.quota.manager", NullQuotaManager.class.getName());
         try {
-        	_manager = (QuotaManager) Class.forName(quotaVerifierClass).newInstance();
+        	_manager = (QuotaManager) Class.forName(quotaVerifierClass).getConstructor().newInstance();
         } catch (ClassNotFoundException e) {
             Logger.getLogger(UserQuotaManager.class.getName()).severe(String.format("QuotaManager class [%s] could not be instantiated. Reason: Class %s not found!",
                                                                                quotaVerifierClass, e.getMessage()));
@@ -32,7 +33,9 @@ public class UserQuotaManager {
             Logger.getLogger(UserQuotaManager.class.getName()).severe(String.format("QuotaManager class [%s] could not be instantiated. Reason: %s",
                                                                                quotaVerifierClass, e.getMessage()));
             _manager = new NullQuotaManager();
-        }
+        } catch (InvocationTargetException | NoSuchMethodException e) {
+			throw new RuntimeException(e);
+		}
 	}
 	
 	/**

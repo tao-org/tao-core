@@ -15,13 +15,19 @@
  */
 package ro.cs.tao.messaging;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * General topics handled by the registered event bus.
  * @author Cosmin Cara
  */
 public class Topic {
+    private static final Map<String, Topic> topicRegistry = new HashMap<>();
     /**
      * Topic for system messages / events.
      */
@@ -50,9 +56,20 @@ public class Topic {
      * Special topic for signaling that a topology node was added or removed.
      */
     public static final Topic TOPOLOGY = Topic.create("topology");
+    /**
+     * Topic for signaling the progress of a transfer of files between workspaces
+     */
+    public static final Topic TRANSFER_PROGRESS = Topic.create("transfer");
 
     public static Topic create(String category) {
-        return new Topic(category, null);
+        if (!topicRegistry.containsKey(category)) {
+            topicRegistry.put(category, new Topic(category, null));
+        }
+        return topicRegistry.get(category);
+    }
+
+    public static List<String> listTopics() {
+        return topicRegistry.values().stream().map(Topic::getCategory).collect(Collectors.toList());
     }
 
     public static Topic create(String category, String tag) {
@@ -64,7 +81,7 @@ public class Topic {
     }
 
     public static Pattern getCategoryPattern(Topic topic) {
-        return Pattern.compile(topic.getTag() == null ? "(.+)" + topic.getCategory() : topic.value());
+        return Pattern.compile(topic.getTag() == null ? "(.*)" + topic.getCategory() : topic.value());
     }
 
     private final String category;
@@ -100,4 +117,17 @@ public class Topic {
 
     @Override
     public String toString() { return value(); }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Topic topic = (Topic) o;
+        return category.equals(topic.category) && Objects.equals(tag, topic.tag);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(category, tag);
+    }
 }

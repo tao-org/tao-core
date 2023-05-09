@@ -26,6 +26,8 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.BasicCookieStore;
@@ -39,6 +41,8 @@ import ro.cs.tao.utils.logger.Logger;
 import javax.net.ssl.*;
 import java.io.IOException;
 import java.net.*;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Base64;
 import java.util.HashMap;
@@ -207,11 +211,37 @@ public class NetUtils {
         return connection;
     }
 
-    public static CloseableHttpResponse openConnection(HttpMethod method, String url, Credentials credentials) throws IOException {
+    private static SSLConnectionSocketFactory sslConnectionSocketFactory() {
+        SSLConnectionSocketFactory sslsf = null;
+        try {
+            // This is to accept self-signed certificates
+            SSLContext ctx = SSLContext.getInstance("TLS");
+            ctx.init(new KeyManager[0], new TrustManager[] {
+                    new X509TrustManager() {
+                        @Override
+                        public void checkClientTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {}
+
+                        @Override
+                        public void checkServerTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {}
+
+                        @Override
+                        public X509Certificate[] getAcceptedIssuers() {
+                            return null;
+                        }
+                    } },
+                    new SecureRandom());
+            sslsf = new SSLConnectionSocketFactory(ctx, NoopHostnameVerifier.INSTANCE);
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
+        return sslsf;
+    }
+
+    public static ro.cs.tao.utils.CloseableHttpResponse openConnection(HttpMethod method, String url, Credentials credentials) throws IOException {
         return openConnection(method, url, credentials, (List<NameValuePair>) null);
     }
 
-    public static CloseableHttpResponse openConnection(HttpMethod method, String url, Credentials credentials, String json) throws IOException {
+    public static ro.cs.tao.utils.CloseableHttpResponse openConnection(HttpMethod method, String url, Credentials credentials, String json) throws IOException {
         CloseableHttpResponse response;
         try {
             URI uri = new URI(url);
@@ -239,11 +269,13 @@ public class NetUtils {
                         httpClient = HttpClients.custom().setDefaultCookieStore(new BasicCookieStore())
                                 .setDefaultCredentialsProvider(credentialsProvider)
                                 .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
+                                .setSSLSocketFactory(sslConnectionSocketFactory())
                                 .build();
                     } else {
                         httpClient = HttpClients.custom()
                                 .setDefaultCookieStore(new BasicCookieStore())
                                 .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
+                                .setSSLSocketFactory(sslConnectionSocketFactory())
                                 .build();
                     }
                     httpClients.put(key, httpClient);
@@ -276,75 +308,63 @@ public class NetUtils {
             Logger.getRootLogger().debug("Details: %s", requestBase.getConfig().toString());
             response = httpClient.execute(requestBase);
             Logger.getRootLogger().debug("HTTP %s %s returned %s", method.toString(), url, response.getStatusLine().getStatusCode());
+            return new ro.cs.tao.utils.CloseableHttpResponse(httpClient, response, false);
         } catch (URISyntaxException | IOException e) {
             Logger.getRootLogger().debug("Could not create connection to %s : %s", url, e.getMessage());
             throw new IOException(e);
         }
-        return response;
     }
 
-    public static CloseableHttpResponse openConnection(HttpMethod method, String url, String header, String authToken, String json) throws IOException {
+    public static ro.cs.tao.utils.CloseableHttpResponse openConnection(HttpMethod method, String url, String header, String authToken, String json) throws IOException {
         CloseableHttpResponse response;
         try {
             URI uri = new URI(url);
-            String domain = uri.getHost();
-            if (domain.indexOf(".") > 0) {
-                String[] tokens = domain.split("\\.");
-                domain = tokens[tokens.length - 2] + "." + tokens[tokens.length - 1];
-            }
-            CloseableHttpClient httpClient;
-                httpClient = HttpClients.custom()
-                        .setDefaultCookieStore(new BasicCookieStore())
-                        .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
-                        .build();
-            HttpRequestBase requestBase;
-            switch (method) {
-                case GET:
-                    requestBase = new HttpGet(uri);
-                    break;
-                case POST:
-                    requestBase = new HttpPost(uri);
-                    if (json != null) {
-                        StringEntity requestEntity = new StringEntity(json, ContentType.APPLICATION_JSON);
-                        ((HttpPost) requestBase).setEntity(requestEntity);
-                    }
-                    break;
-                default:
-                    throw new IllegalArgumentException("Method not supported");
-            }
-            final RequestConfig.Builder requestBuilder = RequestConfig.custom()
-                    .setConnectionRequestTimeout(timeout)
-                    .setConnectTimeout(timeout)
-                    .setSocketTimeout(timeout);
-            if (apacheHttpProxy != null) {
-                requestBuilder.setProxy(apacheHttpProxy);
-            }
-            requestBase.setConfig(requestBuilder.build());
-            requestBase.setHeader(header, authToken);
-            Logger.getRootLogger().debug("Details: %s", requestBase.getConfig().toString());
-            response = httpClient.execute(requestBase);
-            Logger.getRootLogger().debug("HTTP %s %s returned %s", method.toString(), url, response.getStatusLine().getStatusCode());
+            CloseableHttpClient httpClient = HttpClients.custom()
+                                                             .setDefaultCookieStore(new BasicCookieStore())
+                                                             .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
+                                                             .build();
+                HttpRequestBase requestBase;
+                switch (method) {
+                    case GET:
+                        requestBase = new HttpGet(uri);
+                        break;
+                    case POST:
+                        requestBase = new HttpPost(uri);
+                        if (json != null) {
+                            StringEntity requestEntity = new StringEntity(json, ContentType.APPLICATION_JSON);
+                            ((HttpPost) requestBase).setEntity(requestEntity);
+                        }
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Method not supported");
+                }
+                final RequestConfig.Builder requestBuilder = RequestConfig.custom()
+                                                                          .setConnectionRequestTimeout(timeout)
+                                                                          .setConnectTimeout(timeout)
+                                                                          .setSocketTimeout(timeout);
+                if (apacheHttpProxy != null) {
+                    requestBuilder.setProxy(apacheHttpProxy);
+                }
+                requestBase.setConfig(requestBuilder.build());
+                requestBase.setHeader(header, authToken);
+                Logger.getRootLogger().debug("Details: %s", requestBase.getConfig().toString());
+                response = httpClient.execute(requestBase);
+                Logger.getRootLogger().debug("HTTP %s %s returned %s", method.toString(), url, response.getStatusLine().getStatusCode());
+                return new ro.cs.tao.utils.CloseableHttpResponse(httpClient, response, false);
         } catch (URISyntaxException | IOException e) {
             Logger.getRootLogger().debug("Could not create connection to %s : %s", url, e.getMessage());
             throw new IOException(e);
         }
-        return response;
     }
 
-    public static CloseableHttpResponse openConnection(HttpMethod method, String url, Header header, List<NameValuePair> parameters) throws IOException {
+    public static ro.cs.tao.utils.CloseableHttpResponse openConnection(HttpMethod method, String url, Header header, List<NameValuePair> parameters) throws IOException {
         CloseableHttpResponse response;
         try {
             URI uri = new URI(url);
-            String domain = uri.getHost();
-            if (domain.indexOf(".") > 0) {
-                String[] tokens = domain.split("\\.");
-                domain = tokens[tokens.length - 2] + "." + tokens[tokens.length - 1];
-            }
-            CloseableHttpClient httpClient;
-            httpClient = HttpClients.custom()
-                    .setDefaultCookieStore(new BasicCookieStore())
-                    .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
-                    .build();
+            CloseableHttpClient httpClient = HttpClients.custom()
+                                                             .setDefaultCookieStore(new BasicCookieStore())
+                                                             .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
+                                                             .build();
             HttpRequestBase requestBase;
             switch (method) {
                 case GET:
@@ -360,9 +380,9 @@ public class NetUtils {
                     throw new IllegalArgumentException("Method not supported");
             }
             final RequestConfig.Builder requestBuilder = RequestConfig.custom()
-                    .setConnectionRequestTimeout(timeout)
-                    .setConnectTimeout(timeout)
-                    .setSocketTimeout(timeout);
+                                                                      .setConnectionRequestTimeout(timeout)
+                                                                      .setConnectTimeout(timeout)
+                                                                      .setSocketTimeout(timeout);
             if (apacheHttpProxy != null) {
                 requestBuilder.setProxy(apacheHttpProxy);
             }
@@ -371,22 +391,25 @@ public class NetUtils {
             Logger.getRootLogger().debug("Details: %s", requestBase.getConfig().toString());
             response = httpClient.execute(requestBase);
             Logger.getRootLogger().debug("HTTP %s %s returned %s", method.toString(), url, response.getStatusLine().getStatusCode());
+            return new ro.cs.tao.utils.CloseableHttpResponse(httpClient, response, true);
         } catch (URISyntaxException | IOException e) {
             Logger.getRootLogger().debug("Could not create connection to %s : %s", url, e.getMessage());
             throw new IOException(e);
         }
-        return response;
     }
 
-    public static CloseableHttpResponse openConnection(HttpMethod method, String url, List<Header> headers, List<NameValuePair> parameters) throws IOException {
+    public static ro.cs.tao.utils.CloseableHttpResponse openConnection(HttpMethod method, String url, List<Header> headers, List<NameValuePair> parameters) throws IOException {
+        return openConnection(method, url, headers, parameters, timeout);
+    }
+
+    public static ro.cs.tao.utils.CloseableHttpResponse openConnection(HttpMethod method, String url, List<Header> headers, List<NameValuePair> parameters, int timeoutMillis) throws IOException {
         CloseableHttpResponse response;
         try {
             URI uri = new URI(url);
-            CloseableHttpClient httpClient;
-            httpClient = HttpClients.custom()
-                    .setDefaultCookieStore(new BasicCookieStore())
-                    .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
-                    .build();
+            CloseableHttpClient httpClient = HttpClients.custom()
+                                                             .setDefaultCookieStore(new BasicCookieStore())
+                                                             .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
+                                                             .build();
             HttpRequestBase requestBase;
             switch (method) {
                 case GET:
@@ -402,9 +425,9 @@ public class NetUtils {
                     throw new IllegalArgumentException("Method not supported");
             }
             final RequestConfig.Builder requestBuilder = RequestConfig.custom()
-                    .setConnectionRequestTimeout(timeout)
-                    .setConnectTimeout(timeout)
-                    .setSocketTimeout(timeout);
+                                                                      .setConnectionRequestTimeout(timeoutMillis)
+                                                                      .setConnectTimeout(timeoutMillis)
+                                                                      .setSocketTimeout(timeoutMillis);
             if (apacheHttpProxy != null) {
                 requestBuilder.setProxy(apacheHttpProxy);
             }
@@ -417,18 +440,18 @@ public class NetUtils {
             Logger.getRootLogger().debug("Details: %s", requestBase.getConfig().toString());
             response = httpClient.execute(requestBase);
             Logger.getRootLogger().debug("HTTP %s %s returned %s", method.toString(), url, response.getStatusLine().getStatusCode());
+            return new ro.cs.tao.utils.CloseableHttpResponse(httpClient, response, true);
         } catch (URISyntaxException | IOException e) {
             Logger.getRootLogger().debug("Could not create connection to %s : %s", url, e.getMessage());
             throw new IOException(e);
         }
-        return response;
     }
 
-    public static CloseableHttpResponse openConnection(HttpMethod method, String url, Credentials credentials, List<NameValuePair> parameters) throws IOException {
+    public static ro.cs.tao.utils.CloseableHttpResponse openConnection(HttpMethod method, String url, Credentials credentials, List<NameValuePair> parameters) throws IOException {
         return openConnection(method, url, credentials, parameters, timeout);
     }
 
-    public static CloseableHttpResponse openConnection(HttpMethod method, String url, Credentials credentials, List<NameValuePair> parameters, int timeoutMillis) throws IOException {
+    public static ro.cs.tao.utils.CloseableHttpResponse openConnection(HttpMethod method, String url, Credentials credentials, List<NameValuePair> parameters, int timeoutMillis) throws IOException {
         CloseableHttpResponse response;
         try {
             URI uri = new URI(url);
@@ -456,11 +479,13 @@ public class NetUtils {
                         httpClient = HttpClients.custom().setDefaultCookieStore(new BasicCookieStore())
                                 .setDefaultCredentialsProvider(credentialsProvider)
                                 .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
+                                .setSSLSocketFactory(sslConnectionSocketFactory())
                                 .build();
                     } else {
                         httpClient = HttpClients.custom()
                                 .setDefaultCookieStore(new BasicCookieStore())
                                 .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
+                                .setSSLSocketFactory(sslConnectionSocketFactory())
                                 .build();
                     }
                     httpClients.put(key, httpClient);
@@ -492,11 +517,11 @@ public class NetUtils {
             Logger.getRootLogger().debug("Details: %s", requestBase.getConfig().toString());
             response = httpClient.execute(requestBase);
             Logger.getRootLogger().debug("HTTP %s %s returned %s", method.toString(), url, response.getStatusLine().getStatusCode());
+            return new ro.cs.tao.utils.CloseableHttpResponse(httpClient, response, false);
         } catch (URISyntaxException | IOException e) {
             Logger.getRootLogger().debug("Could not create connection to %s : %s", url, e.getMessage());
             throw new IOException(e);
         }
-        return response;
     }
 
     public static String getResponseAsString(String url) throws IOException {
@@ -505,21 +530,17 @@ public class NetUtils {
 
     public static String getResponseAsString(String url, Credentials credentials) throws IOException {
         String result = null;
-        try (CloseableHttpResponse response = NetUtils.openConnection(HttpMethod.GET, url, credentials)) {
-            if (response != null) {
-                switch (response.getStatusLine().getStatusCode()) {
-                    case 200:
-                        result = EntityUtils.toString(response.getEntity());
-                        break;
-                    case 401:
-                        Logger.getRootLogger().warn("The supplied credentials are invalid!");
-                        break;
-                    default:
-                        Logger.getRootLogger().warn("The request was not successful. Reason: %s", response.getStatusLine().getReasonPhrase());
-                        break;
-                }
-            } else {
-                Logger.getRootLogger().warn(String.format("The url %s was not reachable", url));
+        try (ro.cs.tao.utils.CloseableHttpResponse response = NetUtils.openConnection(HttpMethod.GET, url, credentials)) {
+            switch (response.getStatusLine().getStatusCode()) {
+                case 200:
+                    result = EntityUtils.toString(response.getEntity());
+                    break;
+                case 401:
+                    Logger.getRootLogger().warn("The supplied credentials are invalid!");
+                    break;
+                default:
+                    Logger.getRootLogger().warn("The request was not successful. Reason: %s", response.getStatusLine().getReasonPhrase());
+                    break;
             }
         }
         return result;
@@ -530,33 +551,32 @@ public class NetUtils {
     }
 
     public static NetStreamResponse getResponseAsStream(String url, Credentials credentials) throws IOException {
-        NetStreamResponse result = null;
-        try (CloseableHttpResponse response = NetUtils.openConnection(HttpMethod.GET, url, credentials)) {
-            if (response != null) {
-                StatusLine statusLine = response.getStatusLine();
-                switch (statusLine.getStatusCode()) {
-                    case 200:
-                        HttpEntity entity = response.getEntity();
-                        Header contentType = entity.getContentType();
-                        Header[] headers = response.getHeaders("Content-Disposition");
-                        String name = null;
-                        if (headers.length > 0) {
-                            name = headers[0].getValue();
-                            if (name.toLowerCase().contains("filename")) {
-                                name = name.toLowerCase().substring(name.lastIndexOf("=") + 1).replace("\"", "");
-                            }
+        NetStreamResponse result;
+        try (ro.cs.tao.utils.CloseableHttpResponse response = NetUtils.openConnection(HttpMethod.GET, url, credentials)) {
+            StatusLine statusLine = response.getStatusLine();
+            switch (statusLine.getStatusCode()) {
+                case 200:
+                    HttpEntity entity = response.getEntity();
+                    Header contentType = entity.getContentType();
+                    Header[] headers = response.getHeaders("Content-Disposition");
+                    String name;
+                    if (headers.length > 0) {
+                        name = headers[0].getValue();
+                        if (name.toLowerCase().contains("filename")) {
+                            name = name.toLowerCase().substring(name.lastIndexOf("=") + 1).replace("\"", "");
                         }
-                        result = new NetStreamResponse(name, entity.getContentLength(), contentType.getValue(),
-                                                       EntityUtils.toByteArray(entity));
+                    } else {
+                        name = url.substring(url.lastIndexOf("/") + 1);
+                    }
+                    result = new NetStreamResponse(name, entity.getContentLength(),
+                                                   contentType != null ? contentType.getValue() : "applicaiton/otctet-stream",
+                                                   EntityUtils.toByteArray(entity));
 
-                        break;
-                    case 401:
-                        throw new IOException("401: Unauthorized or the supplied credentials are invalid");
-                    default:
-                        throw new IOException(String.valueOf(statusLine.getStatusCode()) + ": " + statusLine.getReasonPhrase());
-                }
-            } else {
-                throw new IOException(String.format("Null response (maybe url %s is not reachable", url));
+                    break;
+                case 401:
+                    throw new IOException("401: Unauthorized or the supplied credentials are invalid");
+                default:
+                    throw new IOException(statusLine.getStatusCode() + ": " + statusLine.getReasonPhrase());
             }
         }
         return result;

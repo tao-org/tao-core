@@ -15,8 +15,9 @@
  */
 package ro.cs.tao.datasource.param;
 
-import ro.cs.tao.Tuple;
+import ro.cs.tao.datasource.CollectionDescription;
 import ro.cs.tao.datasource.ProductFetchStrategy;
+import ro.cs.tao.utils.Tuple;
 
 import java.util.Map;
 
@@ -36,6 +37,11 @@ public interface ParameterProvider {
      * Returns the sensors supported by this data source
      */
     String[] getSupportedSensors();
+
+    /**
+     * Returns the type of supported sensors
+     */
+    Map<String, CollectionDescription> getSensorTypes();
 
     /**
      * Returns the fetchers associated with the supported sensors.

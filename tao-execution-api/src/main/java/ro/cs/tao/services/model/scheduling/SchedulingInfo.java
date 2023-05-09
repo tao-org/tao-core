@@ -3,9 +3,7 @@
  */
 package ro.cs.tao.services.model.scheduling;
 
-import ro.cs.tao.utils.DateUtils;
-
-import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
@@ -16,7 +14,7 @@ import java.util.*;
  *
  */
 public class SchedulingInfo {
-	private static final DateFormat df = DateUtils.getFormatterAtLocal("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+	private static final SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 	
 	private String id;
 	private String friendlyName;

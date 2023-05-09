@@ -27,8 +27,8 @@ import ro.cs.tao.datasource.remote.result.ParseException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.StringReader;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 public class DescriptionParser {
@@ -91,7 +91,7 @@ public class DescriptionParser {
                                     attributes.getValue("value") != null &&
                                             (attributes.getValue("value").startsWith("{time:") ||
                                                     attributes.getValue("value").startsWith("{date:")) ?
-                                            Date.class : String.class;
+                                            LocalDateTime.class : String.class;
                     break;
                 case "Option":
                     if (this.currentOptions == null) {

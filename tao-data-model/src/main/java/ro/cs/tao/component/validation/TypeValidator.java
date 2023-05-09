@@ -38,37 +38,38 @@ public class TypeValidator extends Validator {
         }
         final Class<?> dataType = parameter.getDataType();
         if (parameter.getType() == ParameterType.REGULAR) {
-            if (!isAssignableFrom(dataType, value)) {
+            if (isNotAssignableFrom(dataType, value)) {
                 throw new ValidationException(String.format("Value for [%s] must be of type %s",
                                                             parameter.getName(),
                                                             dataType.getSimpleName()));
             }
-        } else if (parameter.getType() == ParameterType.ARRAY) {
-            final int len = Array.getLength(value);
-            for (int i = 0; i < len; i++) {
-                final Object elementValue = Array.get(value, i);
-                if (!isAssignableFrom(dataType, elementValue)) {
-                    throw new ValidationException(String.format("Array element [%s] for [%s] must be of type %s",
-                                                                elementValue, parameter.getName(), dataType.getSimpleName()));
+            if (dataType.isArray()) {
+                final int len = Array.getLength(value);
+                for (int i = 0; i < len; i++) {
+                    final Object elementValue = Array.get(value, i);
+                    if (isNotAssignableFrom(dataType, elementValue)) {
+                        throw new ValidationException(String.format("Array element [%s] for [%s] must be of type %s",
+                                                                    elementValue, parameter.getName(), dataType.getSimpleName()));
+                    }
                 }
             }
         }
     }
 
-    private boolean isAssignableFrom(Class<?> type, Object value) {
+    private boolean isNotAssignableFrom(Class<?> type, Object value) {
         if (value == null) {
-            return !type.isPrimitive();
+            return type.isPrimitive();
         }
         final Class<?> valueType = value.getClass();
-        return type.isAssignableFrom(valueType)
-                || type.isPrimitive()
-                && (type.equals(Boolean.TYPE) && valueType.equals(Boolean.class)
-                || type.equals(Character.TYPE) && valueType.equals(Character.class)
-                || type.equals(Byte.TYPE) && valueType.equals(Byte.class)
-                || type.equals(Short.TYPE) && valueType.equals(Short.class)
-                || type.equals(Integer.TYPE) && valueType.equals(Integer.class)
-                || type.equals(Long.TYPE) && valueType.equals(Long.class)
-                || type.equals(Float.TYPE) && valueType.equals(Float.class)
-                || type.equals(Double.TYPE) && valueType.equals(Double.class));
+        return !type.isAssignableFrom(valueType)
+                && (!type.isPrimitive()
+                || ((!type.equals(Boolean.TYPE) || !valueType.equals(Boolean.class))
+                && (!type.equals(Character.TYPE) || !valueType.equals(Character.class))
+                && (!type.equals(Byte.TYPE) || !valueType.equals(Byte.class))
+                && (!type.equals(Short.TYPE) || !valueType.equals(Short.class))
+                && (!type.equals(Integer.TYPE) || !valueType.equals(Integer.class))
+                && (!type.equals(Long.TYPE) || !valueType.equals(Long.class))
+                && (!type.equals(Float.TYPE) || !valueType.equals(Float.class))
+                && (!type.equals(Double.TYPE) || !valueType.equals(Double.class))));
     }
 }

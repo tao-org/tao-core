@@ -15,6 +15,7 @@
  */
 package ro.cs.tao.execution.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import ro.cs.tao.component.LongIdentifiable;
 import ro.cs.tao.component.Variable;
 import ro.cs.tao.security.SessionContext;
@@ -39,10 +40,12 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
     private int level;
     private String resourceId;
     private String executionNodeHostName;
+    private String command;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private LocalDateTime lastUpdated;
     private String log;
+    @JsonBackReference
     private ExecutionJob job;
     private ExecutionStatus executionStatus = ExecutionStatus.UNDETERMINED;
     private SessionContext context;
@@ -50,10 +53,13 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
     private int instanceId;
     private Integer usedCPU;
     private Integer usedRAM;
+    protected String instanceTemporaryOutput;
+    protected String instanceTargetOutput;
     protected String internalState;
     List<Variable> inputParameterValues = new ArrayList<>();
     List<Variable> outputParameterValues = new ArrayList<>();
     InternalStateHandler<?> stateHandler;
+    private Integer cardinality;
 
     public ExecutionTask() { }
 
@@ -75,6 +81,9 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
 
     public int getLevel() { return level; }
     public void setLevel(int level) { this.level = level; }
+
+    public String getCommand() { return command; }
+    public void setCommand(String command) { this.command = command; }
 
     /**
      * Sets the status of this task.
@@ -171,6 +180,7 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
     public LocalDateTime getLastUpdated() { return lastUpdated; }
     public void setLastUpdated(LocalDateTime lastUpdated) { this.lastUpdated = lastUpdated; }
 
+    @JsonBackReference
     public ExecutionJob getJob() { return job; }
     public void setJob(ExecutionJob job) {
         this.job = job;
@@ -198,6 +208,30 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
     }
     public void setUsedRAM(Integer usedRAM) { this.usedRAM = usedRAM; }
 
+    public String getInstanceTemporaryOutput() {
+        return instanceTemporaryOutput;
+    }
+
+    public void setInstanceTemporaryOutput(String instanceTemporaryOutput) {
+        this.instanceTemporaryOutput = instanceTemporaryOutput;
+    }
+
+    public String getInstanceTargetOutput() {
+        return instanceTargetOutput;
+    }
+
+    public void setInstanceTargetOutput(String instanceTargetOutput) {
+        this.instanceTargetOutput = instanceTargetOutput;
+    }
+
+    public Integer getCardinality() {
+        return cardinality;
+    }
+
+    public void setCardinality(Integer cardinality) {
+        this.cardinality = cardinality;
+    }
+
     public abstract String buildExecutionCommand();
 
     @Transient
@@ -220,8 +254,8 @@ public abstract class ExecutionTask extends LongIdentifiable implements StatusCh
         List<String> values = (valuesAsString == null || valuesAsString.isEmpty()) ?
                 new ArrayList<>() :
                 getListParameterValues(valuesAsString);
-        values.removeIf("null"::equals);
-        if (!values.contains(newValue)) {
+        values.removeIf(v -> v.endsWith("null") || v.contains("[null]"));
+        if (!values.contains(newValue) && newValue != null && !newValue.contains("[null]")) {
             values.add(newValue);
         }
         return convertListToSingleValue(values);

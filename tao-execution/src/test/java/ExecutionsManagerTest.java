@@ -13,8 +13,11 @@ import ro.cs.tao.execution.model.ExecutionJob;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.execution.model.ProcessingExecutionTask;
-import ro.cs.tao.persistence.PersistenceManager;
-import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.execution.persistence.ExecutionJobProvider;
+import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
+import ro.cs.tao.persistence.NodeProvider;
+import ro.cs.tao.persistence.PersistenceException;
+import ro.cs.tao.persistence.ProcessingComponentProvider;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.topology.NodeDescription;
 
@@ -39,7 +42,8 @@ public class ExecutionsManagerTest {
 
     static void testExecuteTask() throws PersistenceException {
 
-        PersistenceManager persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
+        ExecutionTaskProvider taskProvider = SpringContextBridge.services().getService(ExecutionTaskProvider.class);
+        ExecutionJobProvider jobProvider = SpringContextBridge.services().getService(ExecutionJobProvider.class);
 
         // Add an execution node if it does not exist
         createNode("test_hostname");
@@ -51,41 +55,43 @@ public class ExecutionsManagerTest {
 
         ExecutionJob job = new ExecutionJob();
         job.setExecutionStatus(ExecutionStatus.RUNNING);
-        job.setWorkflowId(1);
+        job.setWorkflowId(1L);
         job.setUserName("admin");
 
         ExecutionTask task = creatTask(processingComponent, "test_hostname",
             Collections.unmodifiableMap(Stream.of(
                     new AbstractMap.SimpleEntry<>("id", "1")).
-                    collect(Collectors.toMap((e) -> e.getKey(), (e) -> e.getValue()))));
+                    collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue))));
         job.addTask(task);
 
-        persistenceManager.saveExecutionJob(job);
+        jobProvider.save(job);
         for (int i = 0; i < 10; i++) {
-            persistenceManager.saveExecutionTask(task, job);
+            taskProvider.save(task, job);
             ExecutionsManager.getInstance().execute(task);
             // reset the parameters of the task object in order to be used again
             task = creatTask(processingComponent, "test_hostname",
                     Collections.unmodifiableMap(Stream.of(
                             new AbstractMap.SimpleEntry<>("id", "1")).
-                            collect(Collectors.toMap((e) -> e.getKey(), (e) -> e.getValue()))));
+                            collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue))));
             job.addTask(task);
-            persistenceManager.updateExecutionJob(job);
+            jobProvider.update(job);
         }
-        int curRunningTasks = persistenceManager.getRunningTasks().size();
+        int curRunningTasks = taskProvider.listRunning().size();
         while(curRunningTasks > 0) {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            List<ExecutionTask> runningTasks = persistenceManager.getRunningTasks();
+            List<ExecutionTask> runningTasks = taskProvider.listRunning();
             curRunningTasks = runningTasks.size();
         }
     }
 
     static void testSuspendResumeStopTask() throws PersistenceException {
-        PersistenceManager persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
+
+        ExecutionTaskProvider taskProvider = SpringContextBridge.services().getService(ExecutionTaskProvider.class);
+        ExecutionJobProvider jobProvider = SpringContextBridge.services().getService(ExecutionJobProvider.class);
 
         // Add an execution node if it does not exist
         createNode("test_hostname");
@@ -98,14 +104,14 @@ public class ExecutionsManagerTest {
 
         ExecutionJob job = new ExecutionJob();
         job.setExecutionStatus(ExecutionStatus.RUNNING);
-        job.setWorkflowId(1);
+        job.setWorkflowId(1L);
         job.setUserName("admin");
 
         ExecutionTask task = creatTask(processingComponent, "test_hostname", new HashMap<>());
         job.addTask(task);
-        persistenceManager.saveExecutionJob(job);
+        jobProvider.save(job);
 
-        persistenceManager.saveExecutionTask(task, job);
+        taskProvider.save(task, job);
         ExecutionsManager.getInstance().execute(task);
         try {
             Thread.sleep(1000);
@@ -114,7 +120,7 @@ public class ExecutionsManagerTest {
         }
         ExecutionsManager.getInstance().suspend(task);
         // Get from the database the task
-        task = persistenceManager.getTaskById(task.getId());
+        task = taskProvider.get(task.getId());
         if(task.getExecutionStatus() != ExecutionStatus.SUSPENDED) {
             logger.info("Suspend failed!");
         } else {
@@ -144,7 +150,7 @@ public class ExecutionsManagerTest {
                 e.printStackTrace();
             }
             // Get from the database the task
-            task = persistenceManager.getTaskById(task.getId());
+            task = taskProvider.get(task.getId());
             ExecutionStatus status = task.getExecutionStatus();
             if(status == ExecutionStatus.FAILED) {
                 logger.info("Stop succeeded!");
@@ -159,7 +165,7 @@ public class ExecutionsManagerTest {
     }
 
     private static NodeDescription createNode(String nodeName) throws PersistenceException {
-        PersistenceManager persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
+        NodeProvider nodeProvider = SpringContextBridge.services().getService(NodeProvider.class);
 
         NodeDescription node = new NodeDescription();
         node.setActive(Boolean.TRUE);
@@ -169,9 +175,9 @@ public class ExecutionsManagerTest {
         node.setUserPass("test");
 
         try {
-            persistenceManager.updateExecutionNode(node);
-        } catch (PersistenceException e) {
-            persistenceManager.saveExecutionNode(node);
+            nodeProvider.update(node);
+        } catch (Exception e) {
+            nodeProvider.save(node);
         }
         return node;
     }
@@ -220,11 +226,11 @@ public class ExecutionsManagerTest {
     }
 
     private static void saveProcessingComponent(ProcessingComponent component) throws PersistenceException {
-        PersistenceManager persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
+        ProcessingComponentProvider componentProvider = SpringContextBridge.services().getService(ProcessingComponentProvider.class);
         try {
-            persistenceManager.updateProcessingComponent(component);
+            componentProvider.update(component);
         } catch (PersistenceException e) {
-            persistenceManager.saveProcessingComponent(component);
+            componentProvider.save(component);
         }
     }
 
@@ -233,7 +239,7 @@ public class ExecutionsManagerTest {
         task.setComponent(processingComponent);
         task.setExecutionNodeHostName(hostName);
         task.setWorkflowNodeId(1L);
-        values.forEach((k,v)-> task.setInputParameterValue(k, v));
+        values.forEach(task::setInputParameterValue);
 
         return task;
     }

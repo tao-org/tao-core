@@ -28,7 +28,8 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.SortDirection;
 import ro.cs.tao.component.Identifiable;
-import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.persistence.EntityProvider;
+import ro.cs.tao.persistence.PersistenceException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +39,8 @@ import java.util.Optional;
 @Configuration
 @EnableTransactionManagement
 @EnableJpaRepositories(basePackages = { "ro.cs.tao.persistence.repository" })
-public abstract class EntityManager<T extends Identifiable<K>, K, R extends PagingAndSortingRepository<T, K>> {
+public abstract class EntityManager<T extends Identifiable<K>, K, R extends PagingAndSortingRepository<T, K>>
+    implements EntityProvider<T, K> {
 
     @Autowired
     protected R repository;
@@ -95,9 +97,9 @@ public abstract class EntityManager<T extends Identifiable<K>, K, R extends Pagi
         return results;
     }
 
-    @Transactional
+    //@Transactional
     public T get(K id) {
-        return repository.findById(id).orElse(null);
+        return id != null ? repository.findById(id).orElse(null) : null;
     }
 
     @Transactional
@@ -108,14 +110,15 @@ public abstract class EntityManager<T extends Identifiable<K>, K, R extends Pagi
     @Transactional
     public T save(T entity) throws PersistenceException {
         if (!checkEntity(entity, false)) {
-            throw new PersistenceException("Invalid parameters provided for adding new entity!");
+            throw new PersistenceException(String.format("Invalid parameters provided for adding new entity of type %s!",
+                                                         entity != null ? entity.getClass().getSimpleName() : "[null]"));
         }
-        if (entity.getId() != null) {
+        /*if (entity.getId() != null) {
             final Optional<T> existing = repository.findById(entity.getId());
             if (existing.isPresent()) {
                 throw new PersistenceException("There is already another entity with the identifier: " + entity.getId());
             }
-        }
+        }*/
         return repository.save(entity);
     }
 
@@ -135,7 +138,7 @@ public abstract class EntityManager<T extends Identifiable<K>, K, R extends Pagi
     }
 
     @Transactional
-    public T delete(K id) throws PersistenceException {
+    public void delete(K id) throws PersistenceException {
         if (id == null || (id instanceof String && StringUtils.isEmpty(id.toString()))) {
             throw new PersistenceException("Invalid parameter provided for deleting the entity (empty identifier)");
         }
@@ -146,23 +149,23 @@ public abstract class EntityManager<T extends Identifiable<K>, K, R extends Pagi
         }
         T entity = existing.get();
         repository.delete(entity);
-        return entity;
     }
 
     @Transactional
-    public T delete(T entity) throws PersistenceException {
+    public void delete(T entity) throws PersistenceException {
         if (entity == null || (entity.getId() instanceof String && StringUtils.isEmpty(entity.getId().toString()))) {
             throw new PersistenceException("Invalid parameter provided for deleting the entity (empty identifier)");
         }
         delete(entity.getId());
-        return entity;
     }
 
     protected abstract String identifier();
 
     protected abstract boolean checkEntity(T entity);
 
-    protected abstract boolean checkId(K entityId, boolean existingEntity);
+    protected boolean checkId(K entityId, boolean existingEntity) {
+        return (existingEntity == (get(entityId) != null));
+    }
 
     protected boolean checkEntity(T entity, boolean existingEntity) {
         return entity != null && checkId(entity.getId(), existingEntity) && checkEntity(entity);

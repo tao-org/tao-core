@@ -16,6 +16,8 @@
 package ro.cs.tao.serialization;
 
 import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.PrecisionModel;
 import org.locationtech.jts.io.WKBReader;
 import org.locationtech.jts.io.WKTReader;
 
@@ -41,6 +43,21 @@ public class GeometryAdapter extends XmlAdapter<Geometry, String> {
                 result = reader.read(WKBReader.hexToBytes(v));
             } catch (NumberFormatException nfe) {
                 WKTReader reader = new WKTReader();
+                result = reader.read(v);
+            }
+        }
+        return result;
+    }
+
+    public Geometry marshal(String v, int SRID) throws Exception {
+        Geometry result = null;
+        if (v != null && !v.isEmpty()) {
+            try {
+                Integer.parseInt(v.substring(0, 1));
+                WKBReader reader = new WKBReader(new GeometryFactory(new PrecisionModel(), SRID));
+                result = reader.read(WKBReader.hexToBytes(v));
+            } catch (NumberFormatException nfe) {
+                WKTReader reader = new WKTReader(new GeometryFactory(new PrecisionModel(), SRID));
                 result = reader.read(v);
             }
         }

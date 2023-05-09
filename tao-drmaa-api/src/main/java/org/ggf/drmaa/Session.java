@@ -631,4 +631,11 @@ public interface Session {
     String getDrmaaImplementation();
 
     String serviceName();
+
+    /**
+     * This is not part of the DRMAA specification.
+     * It is a convenience method to distinguish between DRMs managing their own queues or
+     * custom DRM implementations that can immediately execute tasks.
+     */
+    default boolean hasOwnQueue() { return false; }
 }

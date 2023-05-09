@@ -1,0 +1,24 @@
+{
+  "id": null,
+  "name": "common-apps",
+  "description": "Common Linux utilities",
+  "tag": "latest",
+  "applicationPath": null,
+  "applications": [
+    {
+      "path": "cp",
+      "name": "Copy",
+      "memoryRequirements": 0
+    },
+    {
+      "path": "mv",
+      "name": "Move",
+      "memoryRequirements": 0
+    },
+    {
+      "path": "rm",
+      "name": "Delete",
+      "memoryRequirements": 0
+    }
+  ]
+}

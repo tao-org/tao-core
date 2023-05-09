@@ -18,36 +18,34 @@ package ro.cs.tao.utils;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.List;
 
+/**
+ * Utility class for encryption / decryption using AES
+ *
+ * @author  Cosmin Cara
+ * @since   1.0
+ */
 public class Crypto {
 
-    private static SecretKeySpec createKey(String secret) {
-        MessageDigest sha;
-        try {
-            byte[] key = secret.getBytes("UTF-8");
-            sha = MessageDigest.getInstance("SHA-1");
-            key = sha.digest(key);
-            key = Arrays.copyOf(key, 16);
-            return new SecretKeySpec(key, "AES");
-        }
-        catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
+    /**
+     * Encrypts a string using a secret
+     * @param strToEncrypt  The string to be encrypted
+     * @param secret        The secret
+     * @return      A Base64 representation of the encrypted string
+     */
     public static String encrypt(String strToEncrypt, String secret) {
         if (strToEncrypt != null && secret != null) {
             try {
                 SecretKeySpec key = createKey(secret);
                 Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
                 cipher.init(Cipher.ENCRYPT_MODE, key);
-                return Base64.getEncoder().encodeToString(cipher.doFinal(strToEncrypt.getBytes("UTF-8")));
+                return Base64.getEncoder().encodeToString(cipher.doFinal(strToEncrypt.getBytes(StandardCharsets.UTF_8)));
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -55,6 +53,12 @@ public class Crypto {
         return null;
     }
 
+    /**
+     * Decrypts an encrypted string given its secret
+     * @param strToDecrypt  The Base64 representation of the encrypted string
+     * @param secret        The secret used for encryption
+     * @return      The decrypted string.
+     */
     public static String decrypt(String strToDecrypt, String secret) {
         if (strToDecrypt != null && secret != null) {
             try {
@@ -66,6 +70,37 @@ public class Crypto {
                 //e.printStackTrace();
                 return strToDecrypt;
             }
+        }
+        return null;
+    }
+
+    public static String hash(List<String> inputs) {
+        if (inputs != null && inputs.size() > 0) {
+            MessageDigest md5 = null;
+            try {
+                md5 = MessageDigest.getInstance("MD5");
+            } catch (NoSuchAlgorithmException e) {
+                throw new RuntimeException(e);
+            }
+            for (String input : inputs) {
+                md5.update(input.getBytes());
+            }
+            return Base64.getEncoder().encodeToString(md5.digest());
+        }
+        return null;
+    }
+
+    private static SecretKeySpec createKey(String secret) {
+        MessageDigest sha;
+        try {
+            byte[] key = secret.getBytes(StandardCharsets.UTF_8);
+            sha = MessageDigest.getInstance("SHA-1");
+            key = sha.digest(key);
+            key = Arrays.copyOf(key, 16);
+            return new SecretKeySpec(key, "AES");
+        }
+        catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
         }
         return null;
     }

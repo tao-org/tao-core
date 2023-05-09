@@ -1,8 +1,8 @@
 package ro.cs.tao.services.utils;
 
 import ro.cs.tao.component.*;
+import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.PersistenceManager;
-import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.workflow.GraphObject;
 import ro.cs.tao.workflow.WorkflowDescriptor;
@@ -12,7 +12,6 @@ import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
 import java.awt.geom.Rectangle2D;
 import java.util.*;
 import java.util.function.Function;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
@@ -23,7 +22,6 @@ import java.util.stream.Collectors;
 //@Component
 public class WorkflowUtilities {
     private static final PersistenceManager persistenceManager;
-    private static final Logger logger = Logger.getLogger(WorkflowUtilities.class.getName());
 
     static {
         persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
@@ -131,7 +129,8 @@ public class WorkflowUtilities {
      */
     public static TargetDescriptor findTarget(String id, WorkflowNodeDescriptor nodeDescriptor) throws PersistenceException {
         final TaoComponent component = findComponent(nodeDescriptor);
-        return component != null ? component.findDescriptor(id) : null;
+        //return component != null ? component.findDescriptor(id) : null;
+        return component != null ? component.getTargets().stream().filter(t -> t.getId().equals(id)).findFirst().orElse(null) : null;
     }
     /**
      * Returns the SourceDescriptor entity of a workflow node by its id.
@@ -140,17 +139,18 @@ public class WorkflowUtilities {
      */
     public static SourceDescriptor findSource(String id, WorkflowNodeDescriptor nodeDescriptor) throws PersistenceException {
         TaoComponent component = findComponent(nodeDescriptor);
-        return component != null ? component.findDescriptor(id) : null;
+        //return component != null ? component.findDescriptor(id) : null;
+        return component != null ? component.getSources().stream().filter(s -> s.getId().equals(id)).findFirst().orElse(null) : null;
     }
 
-    public static WorkflowNodeDescriptor findGroupSourceOwner(String groupSourceId, WorkflowNodeGroupDescriptor groupNode) throws PersistenceException {
+    public static WorkflowNodeDescriptor findGroupSourceOwner(SourceDescriptor groupSource, WorkflowNodeGroupDescriptor groupNode) throws PersistenceException {
         WorkflowNodeDescriptor owner = null;
         final List<WorkflowNodeDescriptor> nodes = groupNode.getNodes();
         final GroupComponent groupComponent = (GroupComponent) findComponent(groupNode);
-        final SourceDescriptor groupDescriptor = groupComponent.findDescriptor(groupSourceId);
+        //final SourceDescriptor groupDescriptor = groupComponent.findDescriptor(groupSourceId);
         for (WorkflowNodeDescriptor node : nodes) {
             final TaoComponent component = findComponent(node);
-            if (component.getSources().stream().anyMatch(t -> t.getName().equals(groupDescriptor.getName()))) {
+            if (component.getSources().stream().anyMatch(s -> s.getId().equals(groupSource.getReferencedSourceDescriptorId()))) {
                 owner = node;
                 break;
             }
@@ -158,14 +158,14 @@ public class WorkflowUtilities {
         return owner;
     }
 
-    public static WorkflowNodeDescriptor findGroupTargetOwner(String groupTargetId, WorkflowNodeGroupDescriptor groupNode) throws PersistenceException {
+    public static WorkflowNodeDescriptor findGroupTargetOwner(TargetDescriptor groupTarget, WorkflowNodeGroupDescriptor groupNode) throws PersistenceException {
         WorkflowNodeDescriptor owner = null;
         final List<WorkflowNodeDescriptor> nodes = groupNode.getNodes();
         final GroupComponent groupComponent = (GroupComponent) findComponent(groupNode);
-        final SourceDescriptor groupDescriptor = groupComponent.findDescriptor(groupTargetId);
+        //final SourceDescriptor groupDescriptor = groupComponent.findDescriptor(groupTargetId);
         for (WorkflowNodeDescriptor node : nodes) {
             final TaoComponent component = findComponent(node);
-            if (component.getTargets().stream().anyMatch(t -> t.getName().equals(groupDescriptor.getName()))) {
+            if (component.getTargets().stream().anyMatch(t -> t.getId().equals(groupTarget.getReferencedTargetDescriptorId()))) {
                 owner = node;
                 break;
             }
@@ -173,14 +173,96 @@ public class WorkflowUtilities {
         return owner;
     }
 
-    public static SourceDescriptor findSourceByName(String name, WorkflowNodeDescriptor node) throws PersistenceException {
-        TaoComponent component = findComponent(node);
-        return component != null ? component.getSources().stream().filter(s -> s.getName().equals(name)).findFirst().orElse(null) : null;
+    public static List<WorkflowNodeDescriptor> findAncestors(WorkflowNodeDescriptor node) {
+        if (node == null) {
+            return null;
+        }
+        final WorkflowDescriptor workflow = node.getWorkflow();
+        if (workflow == null) {
+            return null;
+        }
+        final List<WorkflowNodeDescriptor> nodes = workflow.getNodes();;
+        final Set<ComponentLink> links = node.getIncomingLinks();
+        if (links == null || links.isEmpty()) {
+            return null;
+        } else {
+            final Set<Long> parents = links.stream().map(ComponentLink::getSourceNodeId).collect(Collectors.toSet());
+            return nodes.stream().filter(n -> parents.contains(n.getId())).collect(Collectors.toList());
+        }
     }
 
-    public static TargetDescriptor findTargetByName(String name, WorkflowNodeDescriptor node) throws PersistenceException {
+    public static List<WorkflowNodeDescriptor> findDescendants(WorkflowNodeDescriptor node) {
+        if (node == null) {
+            return null;
+        }
+        final WorkflowDescriptor workflow = node.getWorkflow();
+        if (workflow == null) {
+            return null;
+        }
+        final List<WorkflowNodeDescriptor> nodes = workflow.getNodes();;
+        return nodes.stream().filter(n -> n.getIncomingLinks() != null &&
+                                          n.getIncomingLinks().stream().anyMatch(l -> node.getId() == l.getSourceNodeId()))
+                    .collect(Collectors.toList());
+    }
+
+    public static List<WorkflowNodeDescriptor> findSiblings(WorkflowNodeDescriptor node) {
+        if (node == null) {
+            return null;
+        }
+        final WorkflowDescriptor workflow = node.getWorkflow();
+        if (workflow == null) {
+            return null;
+        }
+        final List<WorkflowNodeDescriptor> nodes = workflow.getNodes();
+        final List<WorkflowNodeDescriptor> siblings = new ArrayList<>();
+        final Set<ComponentLink> links = node.getIncomingLinks();
+        if (links == null || links.isEmpty()) {
+            siblings.addAll(nodes.stream().filter(n -> {
+                final Set<ComponentLink> linkSet = n.getIncomingLinks();
+                return linkSet == null || linkSet.isEmpty();
+            }).collect(Collectors.toList()));
+        } else {
+            final Set<Long> parents = links.stream().map(ComponentLink::getSourceNodeId).collect(Collectors.toSet());
+            siblings.addAll(nodes.stream().filter(n -> {
+                if (n.getId().equals(node.getId())) {
+                    return false;
+                }
+                final Set<ComponentLink> linkSet = n.getIncomingLinks();
+                return linkSet != null && linkSet.stream().anyMatch(l -> parents.contains(l.getSourceNodeId()));
+            }).collect(Collectors.toList()));
+        }
+        return siblings;
+    }
+
+    public static void deleteWorkflowNodes(long workflowId) throws PersistenceException {
+        WorkflowDescriptor workflow = persistenceManager.workflows().get(workflowId);
+        if (workflow == null) {
+            throw new PersistenceException("Non-existent workflow with id=%d", workflowId);
+        }
+        final List<WorkflowNodeDescriptor> nodes = workflow.getOrderedNodes();
+        if (nodes != null) {
+            for (WorkflowNodeDescriptor node : nodes) {
+                final Set<ComponentLink> links = node.getIncomingLinks();
+                if (links != null) {
+                    links.clear();
+                    persistenceManager.workflowNodes().update(node);
+                }
+            }
+            for (WorkflowNodeDescriptor node : nodes) {
+                persistenceManager.workflowNodes().delete(node);
+            }
+        }
+        persistenceManager.workflows().delete(workflowId);
+    }
+
+    public static SourceDescriptor findSourceById(String id, WorkflowNodeDescriptor node) throws PersistenceException {
         TaoComponent component = findComponent(node);
-        return component != null ? component.getTargets().stream().filter(s -> s.getName().equals(name)).findFirst().orElse(null) : null;
+        return component != null ? component.getSources().stream().filter(s -> s.getId().equals(id)).findFirst().orElse(null) : null;
+    }
+
+    public static TargetDescriptor findTargetById(String id, WorkflowNodeDescriptor node) throws PersistenceException {
+        TaoComponent component = findComponent(node);
+        return component != null ? component.getTargets().stream().filter(t -> t.getId().equals(id)).findFirst().orElse(null) : null;
     }
 
     public static TaoComponent findComponent(WorkflowNodeDescriptor nodeDescriptor) throws PersistenceException{
@@ -191,16 +273,16 @@ public class WorkflowUtilities {
         TaoComponent component = null;
         switch (nodeDescriptor.getComponentType()) {
             case DATASOURCE:
-                component = persistenceManager.getDataSourceInstance(id);
+                component = persistenceManager.dataSourceComponents().get(id);
                 break;
             case PROCESSING:
-                component = persistenceManager.getProcessingComponentById(id);
+                component = persistenceManager.processingComponents().get(id);
                 break;
             case GROUP:
-                component = persistenceManager.getGroupComponentById(id);
+                component = persistenceManager.groupComponents().get(id);
                 break;
             case DATASOURCE_GROUP:
-                component = persistenceManager.getDataSourceComponentGroup(id);
+                component = persistenceManager.dataSourceGroups().get(id);
                 break;
         }
         if (component == null) {

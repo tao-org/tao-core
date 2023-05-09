@@ -18,6 +18,7 @@ package ro.cs.tao.spi;
 
 import ro.cs.tao.eodata.DataHandlingException;
 import ro.cs.tao.eodata.OutputDataHandler;
+import ro.cs.tao.utils.executors.FileProcessFactory;
 
 import java.util.*;
 import java.util.logging.Logger;
@@ -64,6 +65,12 @@ public class OutputDataHandlerManager {
 
     }
 
+    public void setFileProcessFactory(FileProcessFactory factory) {
+        for (List<OutputDataHandler> handlerList : this.handlers.values()) {
+            handlerList.forEach(h -> h.setFileProcessFactory(factory));
+        }
+    }
+
     public <T> T applyHandlers(T item) throws DataHandlingException {
         if (item == null) {
             throw new DataHandlingException("Unhandled null value");
@@ -75,15 +82,21 @@ public class OutputDataHandlerManager {
                                                .filter(e -> e.getKey().isAssignableFrom(itemClass))
                                                .map(Map.Entry::getValue).findFirst().orElse(null);
         }
+        T retItem = null;
         if (handlers != null) {
             for (OutputDataHandler handler : handlers) {
-                item = (T) handler.handle(item);
+                retItem = (T) handler.handle(item);
+                // reset any fileProcessFactory set
+                //handler.setFileProcessFactory(null);
+                if (retItem != null && !handler.allowNext()) {
+                    break;
+                }
             }
         } else {
             logger.warning(String.format("No output handler defined for type %s", itemClass));
             return null;
         }
-        return item;
+        return retItem;
     }
 
     /**

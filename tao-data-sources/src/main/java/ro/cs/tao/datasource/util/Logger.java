@@ -15,6 +15,8 @@
  */
 package ro.cs.tao.datasource.util;
 
+import ro.cs.tao.utils.logger.LogFormatter;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.logging.*;

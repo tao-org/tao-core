@@ -7,7 +7,7 @@ import ro.cs.tao.utils.DateUtils;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.Properties;
 import java.util.Scanner;
 import java.util.logging.Logger;
@@ -46,7 +46,7 @@ public class DefaultProductPathBuilder implements ProductPathBuilder {
     @Override
     public Path getProductPath(Path repositoryPath, EOProduct product) {
         // Products are assumed to be organized according to the pattern defined in tao.properties
-        Date date = product.getAcquisitionDate();
+        LocalDateTime date = product.getAcquisitionDate();
         String productName = getProductName(product);
         Path productFolderPath = dateToPath(this.repositoryPath, date, this.localPathFormat);
         Path fullProductPath = productFolderPath.resolve(productName);
@@ -85,7 +85,7 @@ public class DefaultProductPathBuilder implements ProductPathBuilder {
         return name;
     }
 
-    protected Path dateToPath(Path root, Date date, String formatOnDisk) {
+    protected Path dateToPath(Path root, LocalDateTime date, String formatOnDisk) {
         final DateFormatTokenizer tokenizer = new DateFormatTokenizer(formatOnDisk);
         return root.resolve(tokenizer.getYearPart(date))
                 .resolve(tokenizer.getMonthPart(date))
@@ -110,27 +110,27 @@ public class DefaultProductPathBuilder implements ProductPathBuilder {
             parse(format);
         }
 
-        String getYearPart(Date date) {
+        String getYearPart(LocalDateTime date) {
             return DateUtils.getFormatterAtUTC(yearPart).format(date);
         }
 
-        String getMonthPart(Date date) {
+        String getMonthPart(LocalDateTime date) {
             return DateUtils.getFormatterAtUTC(monthPart).format(date);
         }
 
-        String getDayPart(Date date) {
+        String getDayPart(LocalDateTime date) {
             return DateUtils.getFormatterAtUTC(dayPart).format(date);
         }
 
-        public String getHourPart(Date date) {
+        public String getHourPart(LocalDateTime date) {
             return DateUtils.getFormatterAtUTC(hourPart).format(date);
         }
 
-        public String getMinutePart(Date date) {
+        public String getMinutePart(LocalDateTime date) {
             return DateUtils.getFormatterAtUTC(minutePart).format(date);
         }
 
-        public String getSecondPart(Date date) {
+        public String getSecondPart(LocalDateTime date) {
             return DateUtils.getFormatterAtUTC(secondPart).format(date);
         }
 

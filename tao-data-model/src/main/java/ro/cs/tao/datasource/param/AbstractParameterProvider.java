@@ -16,7 +16,9 @@
 package ro.cs.tao.datasource.param;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import ro.cs.tao.datasource.CollectionDescription;
 import ro.cs.tao.datasource.ProductFetchStrategy;
+import ro.cs.tao.serialization.JsonMapper;
 
 import java.io.IOException;
 import java.net.URI;
@@ -26,31 +28,46 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.logging.Logger;
 
-import static ro.cs.tao.serialization.ObjectMapperProvider.JSON_DATA_SOURCE_PARAMETERS_TYPE_REFERENCE;
-import static ro.cs.tao.serialization.ObjectMapperProvider.JSON_OBJECT_MAPPER;
+import static ro.cs.tao.serialization.JsonMapper.JSON_DATA_SOURCE_PARAMETERS_TYPE_REFERENCE;
+import static ro.cs.tao.serialization.JsonMapper.JSON_SENSOR_TYPE_REFERENCE;
 
 /**
+ * Base class for data source parameter providers.
+ *
  * @author Valentin Netoiu on 10/17/2019.
  */
 public abstract class AbstractParameterProvider implements ParameterProvider {
 
     private static final String PARAMETER_DESCRIPTOR_RESOURCE = "ro/cs/tao/datasource/parameters/parameters.json";
-    private static final List<String> parameterResources;
-    private static final Map<Class<?>, Map<String, Map<String, DataSourceParameter>>> readDescriptors;
+    private static final String SENSOR_TYPE_RESOURCE = "ro/cs/tao/datasource/parameters/sensors.json";
+    private static final List<String> resources;
+    private static final Map<Class<?>, Map<String, Map<String, DataSourceParameter>>> readParamDescriptors;
+    private static final Map<Class<?>, Map<String, CollectionDescription>> readTypeDescriptors;
 
     protected final String[] supportedSensors;
     protected final Map<String, Map<String, DataSourceParameter>> supportedParameters;
+    protected final Map<String, CollectionDescription> sensorTypes;
     protected Map<String, ProductFetchStrategy> productFetchers;
     protected Logger logger = Logger.getLogger(getClass().getName());
 
     static {
-        parameterResources = new ArrayList<>();
-        readDescriptors = Collections.synchronizedMap(new HashMap<>());
+        resources = new ArrayList<>();
+        readParamDescriptors = Collections.synchronizedMap(new HashMap<>());
+        readTypeDescriptors = Collections.synchronizedMap(new HashMap<>());
         try {
-            Enumeration<URL> resources = AbstractParameterProvider.class.getClassLoader().getResources(PARAMETER_DESCRIPTOR_RESOURCE);
-            while (resources.hasMoreElements()) {
-                String resourcePath = resources.nextElement().toURI().toString().replace("jar:", "");
-                parameterResources.add(resourcePath);
+            Enumeration<URL> iterator = AbstractParameterProvider.class.getClassLoader().getResources(PARAMETER_DESCRIPTOR_RESOURCE);
+            while (iterator.hasMoreElements()) {
+                String resourcePath = iterator.nextElement().toURI().toString().replace("jar:", "");
+                resources.add(resourcePath);
+            }
+        } catch (Exception e) {
+            System.err.println(ExceptionUtils.getStackTrace(e));
+        }
+        try {
+            Enumeration<URL> iterator = AbstractParameterProvider.class.getClassLoader().getResources(SENSOR_TYPE_RESOURCE);
+            while (iterator.hasMoreElements()) {
+                String resourcePath = iterator.nextElement().toURI().toString().replace("jar:", "");
+                resources.add(resourcePath);
             }
         } catch (Exception e) {
             System.err.println(ExceptionUtils.getStackTrace(e));
@@ -59,22 +76,37 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
 
     protected AbstractParameterProvider() {
         Map<String, Map<String, DataSourceParameter>> readParameters = null;
+        Map<String, CollectionDescription> readSensorTypes = null;
         try {
             final Class<? extends AbstractParameterProvider> clazz = getClass();
-            if (!readDescriptors.containsKey(clazz)) {
-                readDescriptors.put(clazz, JSON_OBJECT_MAPPER.readValue(readDescriptor(), JSON_DATA_SOURCE_PARAMETERS_TYPE_REFERENCE));
+            if (!readParamDescriptors.containsKey(clazz)) {
+                readParamDescriptors.put(clazz,
+                                         JsonMapper.instance().readValue(readDescriptor(PARAMETER_DESCRIPTOR_RESOURCE),
+                                                               JSON_DATA_SOURCE_PARAMETERS_TYPE_REFERENCE));
+                final String sensorDescriptor = readDescriptor(SENSOR_TYPE_RESOURCE);
+                if (sensorDescriptor != null) {
+                    readTypeDescriptors.put(clazz,
+                                            JsonMapper.instance().readValue(sensorDescriptor, JSON_SENSOR_TYPE_REFERENCE));
+                }
             }
-            readParameters = readDescriptors.get(clazz);
+            readParameters = readParamDescriptors.get(clazz);
+            readSensorTypes = readTypeDescriptors.get(clazz);
+
         } catch (Exception e) {
             logger.severe(String.format("Cannot load data source supported parameters. Cause: %s", e.getMessage()));
         }
 
-        if(readParameters != null){
+        if (readParameters != null){
             supportedParameters = readParameters;
             supportedSensors = readParameters.keySet().toArray(new String[0]);
         } else {
             supportedParameters = new HashMap<>();
             supportedSensors = new String[0];
+        }
+        if (readSensorTypes != null) {
+            sensorTypes = readSensorTypes;
+        } else {
+            sensorTypes = new HashMap<>();
         }
     }
 
@@ -95,19 +127,28 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
     }
 
     @Override
+    public Map<String, CollectionDescription> getSensorTypes() {
+        return sensorTypes;
+    }
+
+    @Override
     public Map<String, ProductFetchStrategy> getRegisteredProductFetchStrategies() { return productFetchers; }
 
-    private String readDescriptor() throws IOException, URISyntaxException {
+    private String readDescriptor(String fileName) throws IOException, URISyntaxException {
         final String classLocation = getClass().getProtectionDomain().getCodeSource().getLocation().toURI().toString().replace("jar:", "");
         String currentResource = null;
-        for (String current : parameterResources) {
-            if (current.startsWith(classLocation)) {
+        for (String current : resources) {
+            if (current.startsWith(classLocation) && current.endsWith(fileName)) {
                 currentResource = current;
                 break;
             }
         }
         if (currentResource == null) {
-            throw new IOException("No parameter descriptor found");
+            if (fileName.endsWith("parameters.json")) {
+                throw new IOException("No parameter descriptor found");
+            } else {
+                return null;
+            }
         }
         Path rPath;
         FileSystem fileSystem = null;
@@ -122,7 +163,7 @@ public abstract class AbstractParameterProvider implements ParameterProvider {
                 } catch (FileSystemNotFoundException ignored) {
                     fileSystem = FileSystems.newFileSystem(uri, env);
                 }
-                rPath = fileSystem.getPath("/" + PARAMETER_DESCRIPTOR_RESOURCE);
+                rPath = fileSystem.getPath("/" + fileName);
             } else {
                 rPath = Paths.get(URI.create(currentResource));
             }

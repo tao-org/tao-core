@@ -3,7 +3,12 @@ package ro.cs.tao.utils.async;
 import java.util.function.Consumer;
 
 /**
- * @author Cosmin Cara
+ * Wrapper for a runnable that would eventually invoke a callback method accepting one argument.
+ *
+ * @param <T>   The type of the runnable input and of the argument of the callback method
+ *
+ * @author  Cosmin Cara
+ * @since   1.0
  */
 public abstract class UnaryTask<T> implements Runnable {
     private final Consumer<T> callback;

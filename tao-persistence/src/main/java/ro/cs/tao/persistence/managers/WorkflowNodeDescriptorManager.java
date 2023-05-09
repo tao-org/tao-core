@@ -16,24 +16,58 @@
 
 package ro.cs.tao.persistence.managers;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
+import ro.cs.tao.persistence.PersistenceException;
+import ro.cs.tao.persistence.WorkflowNodeProvider;
+import ro.cs.tao.persistence.repository.WorkflowDescriptorRepository;
 import ro.cs.tao.persistence.repository.WorkflowNodeDescriptorRepository;
+import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeGroupDescriptor;
 
 import java.util.List;
 
 @Component("workflowNodeDescriptorManager")
-public class WorkflowNodeDescriptorManager extends EntityManager<WorkflowNodeDescriptor, Long, WorkflowNodeDescriptorRepository> {
+public class WorkflowNodeDescriptorManager extends EntityManager<WorkflowNodeDescriptor, Long, WorkflowNodeDescriptorRepository>
+                                            implements WorkflowNodeProvider {
 
-    @Transactional
-    public List<WorkflowNodeDescriptor> getWorkflowNodesByComponentId(long workflowId, String componentId) {
+    @Autowired
+    private WorkflowDescriptorRepository workflowDescriptorRepository;
+
+    @Override
+    public List<WorkflowNodeDescriptor> listByComponentId(long workflowId, String componentId) {
         return repository.findByComponentId(workflowId, componentId);
     }
 
+    @Override
     public WorkflowNodeGroupDescriptor getGroupNode(long nodeId) {
         return repository.getGroupNode(nodeId);
+    }
+
+    @Override
+    public WorkflowNodeDescriptor save(WorkflowNodeDescriptor node, WorkflowDescriptor workflow) throws PersistenceException {
+        if (workflow == null) {
+            throw new PersistenceException("[workflow] null");
+        }
+        if (node == null) {
+            throw new PersistenceException("[node] null");
+        }
+        node.setWorkflow(workflow);
+        node = repository.save(node);
+        workflow.addNode(node);
+        workflowDescriptorRepository.save(workflow);
+        return node;
+    }
+
+    @Override
+    public WorkflowNodeDescriptor findClonedNode(long workflowId, long originalNodeId) {
+        return repository.findClonedNode(workflowId, originalNodeId);
+    }
+
+    @Override
+    public void updatePosition(Long id, float[] coordinates) throws PersistenceException {
+        this.repository.updatePosition(id, coordinates[0], coordinates[1]);
     }
 
     @Override

@@ -5,11 +5,12 @@
     <parent>
         <artifactId>tao-core</artifactId>
         <groupId>ro.cs.tao</groupId>
-        <version>1.0.4.0</version>
+        <version>1.4.3</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>tao-core-kit</artifactId>
+    <packaging>pom</packaging>
 
     <name>TAO Core Kit Module</name>
 
@@ -104,6 +105,16 @@
             <artifactId>tao-quota</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>ro.cs.tao</groupId>
+            <artifactId>tao-mail</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ro.cs.tao</groupId>
+            <artifactId>tao-gdal</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -123,9 +134,9 @@
         <plugins>
             <plugin>
                 <artifactId>maven-jar-plugin</artifactId>
-                <configuration>
+                <!--<configuration>
                     <useDefaultManifestFile>true</useDefaultManifestFile>
-                </configuration>
+                </configuration>-->
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -133,7 +144,7 @@
                 <executions>
                     <execution>
                         <id>copy-libs</id>
-                        <phase>package</phase>
+                        <phase>deploy</phase>
                         <goals>
                             <goal>copy-dependencies</goal>
                         </goals>
@@ -151,7 +162,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.1.0</version>
+                <version>3.2.0</version>
                 <configuration>
                     <descriptors>
                         <descriptor>src/assembly/assembly.xml</descriptor>
@@ -160,7 +171,7 @@
                 <executions>
                     <execution>
                         <id>directory-bundle</id>
-                        <phase>package</phase>
+                        <phase>install</phase>
                         <goals>
                             <goal>single</goal>
                         </goals>

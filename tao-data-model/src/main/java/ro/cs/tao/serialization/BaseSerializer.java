@@ -15,12 +15,12 @@
  */
 package ro.cs.tao.serialization;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -57,20 +57,26 @@ public abstract class BaseSerializer<T> implements Serializer<T, String> {
         }
         try {
             ObjectMapper mapper = createMapper();
-            TypeReference<List<T>> typeRef = new TypeReference<List<T>>() { };
             final JsonNode jsonNode = mapper.readTree(source);
             final List<T> results = new ArrayList<>();
-            jsonNode.fields().forEachRemaining(entry -> {
-                final JsonNode node = entry.getValue();
-                if (node.isArray()) {
-                    final int size = node.size();
-                    for (int i = 0; i < size; i++) {
-                        results.add(mapper.convertValue(node.get(i), clazz));
-                    }
-                }/* else {
+            if (!jsonNode.isArray()) {
+                jsonNode.fields().forEachRemaining(entry -> {
+                    final JsonNode node = entry.getValue();
+                    if (node.isArray()) {
+                        final int size = node.size();
+                        for (int i = 0; i < size; i++) {
+                            results.add(mapper.convertValue(node.get(i), clazz));
+                        }
+                    }/* else {
                     results.add(mapper.convertValue(node, clazz));
                 }*/
-            });
+                });
+            } else {
+                final Iterator<JsonNode> elements = jsonNode.elements();
+                elements.forEachRemaining(entry -> {
+                    results.add(mapper.convertValue(entry, clazz));
+                });
+            }
             return results;
         } catch (Exception e) {
             throw new SerializationException(e);

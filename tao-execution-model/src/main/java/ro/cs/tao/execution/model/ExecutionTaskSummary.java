@@ -25,8 +25,17 @@ public class ExecutionTaskSummary {
     private String componentName;
     private LocalDateTime taskStart;
     private LocalDateTime taskEnd;
+    private LocalDateTime lastUpdated;
+    private double percentComplete;
     private String host;
     private ExecutionStatus taskStatus;
+    private String output;
+    private String command;
+    private String userName;
+    private Integer usedCPU;
+    private Integer usedRAM;
+    private String jobName;
+    private String componentType;
 
     public long getTaskId() {
         return taskId;
@@ -73,4 +82,72 @@ public class ExecutionTaskSummary {
         this.taskStatus = taskStatus;
     }
 
+    public LocalDateTime getLastUpdated() {
+        return lastUpdated;
+    }
+    public void setLastUpdated(LocalDateTime lastUpdated) {
+        this.lastUpdated = lastUpdated;
+    }
+
+    public double getPercentComplete() {
+        return percentComplete;
+    }
+    public void setPercentComplete(double percentComplete) {
+        this.percentComplete = percentComplete;
+    }
+
+    public String getOutput() {
+        return output;
+    }
+    public void setOutput(String output) {
+        this.output = output;
+    }
+
+    public String getCommand() {
+        return command;
+    }
+
+    public void setCommand(String command) {
+        this.command = command;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public Integer getUsedCPU() {
+        return usedCPU;
+    }
+
+    public void setUsedCPU(Integer usedCPU) {
+        this.usedCPU = usedCPU;
+    }
+
+    public Integer getUsedRAM() {
+        return usedRAM;
+    }
+
+    public void setUsedRAM(Integer usedRAM) {
+        this.usedRAM = usedRAM;
+    }
+
+    public String getJobName() {
+        return jobName;
+    }
+
+    public void setJobName(String jobName) {
+        this.jobName = jobName;
+    }
+
+    public String getComponentType() {
+        return componentType;
+    }
+
+    public void setComponentType(String componentType) {
+        this.componentType = componentType;
+    }
 }

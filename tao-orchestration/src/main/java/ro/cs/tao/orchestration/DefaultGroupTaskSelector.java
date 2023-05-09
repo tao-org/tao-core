@@ -20,7 +20,7 @@ import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.component.Variable;
 import ro.cs.tao.execution.model.*;
-import ro.cs.tao.orchestration.util.TaskUtilities;
+import ro.cs.tao.execution.util.TaskUtilities;
 import ro.cs.tao.utils.TriFunction;
 import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * Default implementation for choosing the next task to be executed from a group of tasks.
@@ -60,7 +61,7 @@ public class DefaultGroupTaskSelector implements TaskSelector<ExecutionGroup> {
     }
 
     @Override
-    public DataSourceExecutionTask findDataSourceTask(ExecutionGroup job, ExecutionTask currentTask) {
+    public List<DataSourceExecutionTask> findDataSourceTasks(ExecutionGroup job, ExecutionTask currentTask) {
         WorkflowNodeDescriptor workflowNode = this.workflowProvider.apply(currentTask.getWorkflowNodeId());
         if (workflowNode == null) {
             logger.severe(String.format("No workflow node with id %s was found in the database",
@@ -68,11 +69,15 @@ public class DefaultGroupTaskSelector implements TaskSelector<ExecutionGroup> {
             return null;
         }
         WorkflowDescriptor workflow = workflowNode.getWorkflow();
-        List<WorkflowNodeDescriptor> ancestors = workflow.findAncestors(workflow.getOrderedNodes(), workflowNode);
+        /*List<WorkflowNodeDescriptor> ancestors = workflow.findAncestors(workflow.getOrderedNodes(), workflowNode);
         return job.getTasks().stream().filter(t -> t.getWorkflowNodeId().equals(ancestors.get(0).getId()) &&
                                                    t instanceof DataSourceExecutionTask)
                                       .map(t -> (DataSourceExecutionTask) t)
-                                      .findFirst().orElse(null);
+                                      .findFirst().orElse(null);*/
+        return job.getJob().orderedTasks().stream()
+                  .filter(t -> t instanceof DataSourceExecutionTask)
+                  .map(t -> (DataSourceExecutionTask) t)
+                  .collect(Collectors.toList());
     }
 
     @Override
@@ -162,7 +167,8 @@ public class DefaultGroupTaskSelector implements TaskSelector<ExecutionGroup> {
             ExecutionTask t = this.taskByNodeProvider.apply(group.getId(), node.getId(), task.getInstanceId());
             if (t.getExecutionStatus() != ExecutionStatus.QUEUED_ACTIVE && t.getExecutionStatus() != ExecutionStatus.RUNNING) {
                 if (TaskUtilities.haveParentsCompleted(t)) {
-                    nextOnes.add(TaskUtilities.transferParentOutputs(t));
+                    //nextOnes.add(TaskUtilities.transferParentOutputs(t));
+                    nextOnes.add(t);
                 }
             }
         }

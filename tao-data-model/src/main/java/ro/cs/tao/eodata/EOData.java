@@ -18,6 +18,7 @@ package ro.cs.tao.eodata;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import ro.cs.tao.component.StringIdentifiable;
 import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.eodata.enums.ProductStatus;
 import ro.cs.tao.eodata.enums.Visibility;
@@ -25,20 +26,17 @@ import ro.cs.tao.serialization.CRSAdapter;
 import ro.cs.tao.serialization.GeometryAdapter;
 
 import javax.xml.bind.annotation.XmlElementWrapper;
+import javax.xml.bind.annotation.XmlTransient;
 import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Cosmin Cara
  */
-public abstract class EOData implements Serializable {
+public abstract class EOData extends StringIdentifiable implements Serializable {
 
-    private String id;
     private String name;
     private DataFormat formatType;
     private Geometry geometry;
@@ -48,15 +46,12 @@ public abstract class EOData implements Serializable {
     private String entryPoint;
     private Visibility visibility;
     private ProductStatus productStatus;
+    @XmlTransient
+    private Set<String> files;
+
+    public EOData() { super(); }
 
     //region Getters and Setters
-    public String getId() {
-        return id;
-    }
-    public void setId(String id) {
-        this.id = id;
-    }
-
     public String getName() {
         return name;
     }
@@ -77,6 +72,9 @@ public abstract class EOData implements Serializable {
             return null;
         }
     }
+
+    public Geometry geometryObject() { return this.geometry; }
+
     public void setGeometry(String geometryAsText) {
         try {
             this.geometry = new GeometryAdapter().marshal(geometryAsText);
@@ -126,7 +124,7 @@ public abstract class EOData implements Serializable {
         Attribute attribute = null;
         if (this.attributes != null) {
             for(Attribute attr : this.attributes) {
-                if(attr.getName().toLowerCase().equals(name.toLowerCase())) {
+                if(attr.getName().equalsIgnoreCase(name)) {
                     attribute = attr;
                     break;
                 }
@@ -168,7 +166,7 @@ public abstract class EOData implements Serializable {
 
     //endregion
     public Map<String, String> toAttributeMap() {
-        Map<String, String> attributes = new HashMap<>();
+        final Map<String, String> attributes = new HashMap<>();
         attributes.put("id", safeValue(id));
         attributes.put("formatType", formatType != null ? formatType.name() : "n/a");
         attributes.put("geometry", safeValue(geometry));
@@ -179,6 +177,18 @@ public abstract class EOData implements Serializable {
             }
         }
         return attributes;
+    }
+
+    @XmlTransient
+    public Set<String> getFiles() {
+        return files;
+    }
+
+    public void addFile(String file)  throws URISyntaxException {
+        if (this.files == null) {
+            this.files = new LinkedHashSet<>();
+        }
+        this.files.add(file);
     }
 
     String safeValue(Object value) {

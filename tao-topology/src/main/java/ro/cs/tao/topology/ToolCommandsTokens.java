@@ -15,7 +15,6 @@
  */
 package ro.cs.tao.topology;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,38 +25,24 @@ public class ToolCommandsTokens {
     static final String MASTER_HOSTNAME = "#master_hostname#";
     static final String MASTER_USER = "#master_user#";
     static final String MASTER_PASS = "#master_pass#";
+    static final String MASTER_SHARE = "#master_share#";
     static final String NODE_HOSTNAME = "#node_hostname#";
     static final String NODE_USER = "#node_user#";
     static final String NODE_PASSWORD = "#node_pass#";
+    static final String NODE_SHARE = "#node_share#";
     static final String NODE_PROCESSORS_CNT = "#procs_cnt#";
     static final String INSTALL_SCRIPTS_ROOT_PATH = "#scripts_root_path#";
     static final String STEP_OUTPUT = "#step_output#";
 
-    private static List<String> tokensList = new ArrayList<>();
+    private static final List<String> tokensList;
 
     static {
-        initAllTokensList();
+         tokensList = new ArrayList<String>() {{
+             add(MASTER_HOSTNAME); add(MASTER_USER); add(MASTER_PASS); add(MASTER_SHARE);
+             add(NODE_HOSTNAME); add(NODE_USER); add(NODE_PASSWORD); add(NODE_SHARE); add(NODE_PROCESSORS_CNT);
+             add(INSTALL_SCRIPTS_ROOT_PATH); add(STEP_OUTPUT);
+         }};
     }
 
-    public static List<String> getDefinedTokensList() {
-        return tokensList;
-    }
-
-    /**
-     * Creates a list with all token values from the variables defined with static final in this class
-     */
-    private static void initAllTokensList() {
-        Field[] declaredFields = ToolCommandsTokens.class.getDeclaredFields();
-        List<Field> staticFields = new ArrayList<>();
-        for (Field field : declaredFields) {
-            if (java.lang.reflect.Modifier.isStatic(field.getModifiers()) && java.lang.reflect.Modifier.isFinal(field.getModifiers()) &&
-                    java.lang.reflect.Modifier.isPublic(field.getModifiers()) && field.getType().isAssignableFrom(String.class)) {
-                try {
-                    tokensList.add((String)field.get(null));
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
+    public static List<String> getDefinedTokensList() { return tokensList; }
 }

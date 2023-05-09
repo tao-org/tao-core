@@ -16,6 +16,7 @@
 
 package ro.cs.tao.services.base;
 
+import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.SourceDescriptor;
 import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.component.TargetDescriptor;
@@ -23,8 +24,9 @@ import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.datasource.DataSourceComponentGroup;
 import ro.cs.tao.datasource.remote.FetchMode;
 import ro.cs.tao.eodata.enums.Visibility;
+import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.PersistenceManager;
-import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.persistence.ProcessingComponentProvider;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.services.interfaces.ComponentService;
 import ro.cs.tao.services.interfaces.DataSourceComponentService;
@@ -42,7 +44,6 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
 public abstract class WorkflowBuilderBase implements WorkflowBuilder {
     protected static final PersistenceManager persistenceManager;
@@ -65,7 +66,7 @@ public abstract class WorkflowBuilderBase implements WorkflowBuilder {
         // let's have a DataSourceComponent
         String componentId = sensor + "-" + dataSource;
         DataSourceComponent dataSourceComponent;
-        dataSourceComponent = persistenceManager.getDataSourceInstance(componentId);
+        dataSourceComponent = persistenceManager.dataSourceComponents().get(componentId);
         if (dataSourceComponent == null) {
             dataSourceComponent = new DataSourceComponent(sensor, dataSource);
             dataSourceComponent.setFetchMode(FetchMode.OVERWRITE);
@@ -75,20 +76,20 @@ public abstract class WorkflowBuilderBase implements WorkflowBuilder {
             dataSourceComponent.setAuthors("TAO Team");
             dataSourceComponent.setCopyright("(C) TAO Team");
             dataSourceComponent.setNodeAffinity("Any");
-            persistenceManager.saveDataSourceComponent(dataSourceComponent);
+            persistenceManager.dataSourceComponents().save(dataSourceComponent);
         }
         return dataSourceComponent;
     }
 
     protected DataSourceComponent newDataSourceComponent(String sensor, List<String> productNames, Principal principal) throws PersistenceException {
         // let's have a DataSourceComponent
-        return dataSourceComponentService.createForProductNames(productNames, sensor, "Local Database", null, "Test DSC", principal);
+        return dataSourceComponentService.createForLocations(productNames, sensor, "Local Database", null, "Test DSC", principal);
     }
 
     @Override
     public WorkflowDescriptor createWorkflowDescriptor() throws PersistenceException {
         WorkflowDescriptor descriptor;
-        descriptor = persistenceManager.getWorkflowDescriptor(getName());
+        descriptor = persistenceManager.workflows().getByName(getName());
         if (descriptor == null) {
             descriptor = new WorkflowDescriptor();
             descriptor.setName(getName());
@@ -97,11 +98,11 @@ public abstract class WorkflowBuilderBase implements WorkflowBuilder {
             descriptor.setActive(true);
             descriptor.setUserName("admin");
             descriptor.setVisibility(Visibility.PRIVATE);
-            descriptor = persistenceManager.saveWorkflowDescriptor(descriptor);
+            descriptor = persistenceManager.workflows().save(descriptor);
             addNodes(descriptor);
-        } else {
+        }/* else {
             Logger.getLogger(getClass().getName()).warning(String.format("Workflow '%s' already exists", getName()));
-        }
+        }*/
         return descriptor;
     }
 
@@ -133,6 +134,44 @@ public abstract class WorkflowBuilderBase implements WorkflowBuilder {
             TaoComponent component2 = WorkflowUtilities.findComponent(node);
             workflowService.addLink(parentNode.getId(), component1.getTargets().get(0).getId(),
                                     node.getId(), component2.getSources().get(0).getId());
+        }
+        return node;
+    }
+
+    protected WorkflowNodeDescriptor addUtilityNode(WorkflowDescriptor parent,
+                                                    String nodeType,
+                                                    String containerId,
+                                                    Map<String, String> customValues,
+                                                    WorkflowNodeDescriptor parentNode,
+                                                    Direction... relativeDirection) throws PersistenceException {
+        final UtilityNode type = UtilityNode.valueOf(nodeType);
+        final ProcessingComponentProvider componentProvider = persistenceManager.processingComponents();
+        final ProcessingComponent component = componentProvider.getByLabel(type.name(), containerId);
+        if (component == null) {
+            throw new PersistenceException("Cannot add utility node '%s' because the container '%s' doesn't define it",
+                                           nodeType, containerId);
+        }
+        WorkflowNodeDescriptor node = new WorkflowNodeDescriptor();
+        node.setWorkflow(parent);
+        node.setName(nodeType);
+        final float[] coords = placeNode(parentNode, relativeDirection);
+        node.setxCoord(coords[0]);
+        node.setyCoord(coords[1]);
+        node.setComponentId(component.getId());
+        node.setComponentType(ComponentType.PROCESSING);
+        if (customValues != null) {
+            for (Map.Entry<String, String> entry : customValues.entrySet()) {
+                node.addCustomValue(entry.getKey(), entry.getValue());
+            }
+        }
+        node.setPreserveOutput(true);
+        node.setCreated(LocalDateTime.now());
+        node.setLevel(parentNode != null ? parentNode.getLevel() + 1 : 0);
+        node = workflowService.addNode(parent.getId(), node);
+        if (parentNode != null) {
+            TaoComponent component1 = WorkflowUtilities.findComponent(parentNode);
+            workflowService.addLink(parentNode.getId(), component1.getTargets().get(0).getId(),
+                    node.getId(), component.getSources().get(0).getId());
         }
         return node;
     }
@@ -209,7 +248,8 @@ public abstract class WorkflowBuilderBase implements WorkflowBuilder {
             if (fromParentPort == null) {
                 linkSource = component1.getTargets().get(0);
             } else {
-                linkSource = component1.findDescriptor(fromParentPort);
+                linkSource = component1.getTargets().stream().filter(t -> t.getName().equals(fromParentPort))
+                                       .findFirst().orElse(component1.findDescriptor(fromParentPort));
                 if (linkSource == null) {
                     throw new PersistenceException(String.format("No such target descriptor [%s] for component [%s]",
                                                                  fromParentPort, parent.getId()));
@@ -218,7 +258,8 @@ public abstract class WorkflowBuilderBase implements WorkflowBuilder {
             if (toChildPort == null) {
                 linkTarget = component2.getSources().get(0);
             } else {
-                linkTarget = component2.findDescriptor(toChildPort);
+                linkTarget = component2.getSources().stream().filter(s -> s.getName().equals(toChildPort))
+                                       .findFirst().orElse(component2.findDescriptor(toChildPort));
                 if (linkTarget == null) {
                     throw new PersistenceException(String.format("No such source descriptor [%s] for component [%s]",
                                                                  toChildPort, parent.getId()));
@@ -229,7 +270,7 @@ public abstract class WorkflowBuilderBase implements WorkflowBuilder {
         }
     }
 
-    private float[] placeNode(WorkflowNodeDescriptor relativeTo, Direction... directions) {
+    protected float[] placeNode(WorkflowNodeDescriptor relativeTo, Direction... directions) {
         float x,y;
         if (relativeTo == null) {
             x = xOrigin;
@@ -286,5 +327,11 @@ public abstract class WorkflowBuilderBase implements WorkflowBuilder {
         TOP_RIGHT,
         BOTTOM_LEFT,
         BOTTOM_RIGHT
+    }
+
+    private enum UtilityNode {
+        Copy,
+        Move,
+        Delete
     }
 }

@@ -4,8 +4,10 @@ import org.junit.Test;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.enums.DataFormat;
 import ro.cs.tao.eodata.enums.PixelType;
+import ro.cs.tao.eodata.enums.ProductStatus;
 import ro.cs.tao.eodata.enums.SensorType;
-import ro.cs.tao.utils.DateUtils;
+
+import java.time.LocalDateTime;
 
 /**
  * @author Cosmin Cara
@@ -13,40 +15,12 @@ import ro.cs.tao.utils.DateUtils;
 public class EOProductTest extends BaseSerializationTest<EOProduct> {
     @Override
     protected String referenceJSON() {
-        return "{\n" +
-                "      \"crs\" : \"EPSG:4326\",\n" +
-                "      \"geometry\" : \"POLYGON ((0 0, 1 1, 2 2, 3 3, 0 0))\",\n" +
-                "      \"id\" : \"1234567890\",\n" +
-                "      \"formatType\" : \"1\",\n" +
-                "      \"acquisitionDate\" : \"2017-09-01T18:33:47+03:00\",\n" +
-                "      \"height\" : 1024,\n" +
-                "      \"pixelType\" : \"2\",\n" +
-                "      \"productType\" : \"Satellite-5\",\n" +
-                "      \"sensorType\" : \"0\",\n" +
-                "      \"width\" : 1024\n" +
-                "}";
+        return "{\"id\":\"1234567890\",\"name\":\"Product\",\"formatType\":0,\"geometry\":\"POLYGON ((0 0, 1 1, 2 2, 3 3, 0 0))\",\"attributes\":[{\"name\":\"attribute1\",\"value\":\"value1\"},{\"name\":\"attribute2\",\"value\":\"value2\"}],\"crs\":\"EPSG:4326\",\"location\":\"http://some.url.com/some_location/product.zip\",\"entryPoint\":null,\"visibility\":null,\"productStatus\":2,\"sensorType\":\"OPTICAL\",\"acquisitionDate\":\"2017-09-01T18:33:47\",\"pixelType\":2,\"productType\":\"Satellite5\",\"width\":1024,\"height\":1024,\"approximateSize\":1234,\"processingDate\":null,\"quicklookLocation\":null,\"refs\":null,\"satelliteName\":\"Satellite-5\"}";
     }
 
     @Override
     protected String referenceXML() {
-        return "<eoData>\n" +
-                "    <crs>EPSG:4326</crs>\n" +
-                "    <geometry>POLYGON ((0 0, 1 1, 2 2, 3 3, 0 0))</geometry>\n" +
-                "    <id>1234567890</id>\n" +
-                "    <formatType>1</formatType>\n" +
-                "    <acquisitionDate>2017-09-01T18:33:47+03:00</acquisitionDate>\n" +
-                "    <height>1024</height>\n" +
-                "    <pixelType>2</pixelType>\n" +
-                "    <productType>Satellite-5</productType>\n" +
-                "    <sensorType>0</sensorType>\n" +
-                "    <width>1024</width>\n" +
-                "    <attributes>\n" +
-                "        <attribute>\n" +
-                "            <name>attributeX</name>\n" +
-                "            <value>valueX</value>\n" +
-                "        </attribute>\n" +
-                "    </attributes>\n" +
-                "</eoData>";
+        return "<eoData><id>1234567890</id><name>Product</name><formatType>0</formatType><geometry>POLYGON ((0 0, 1 1, 2 2, 3 3, 0 0))</geometry><attributes><attributes><name>attribute1</name><value>value1</value></attributes><attributes><name>attribute2</name><value>value2</value></attributes></attributes><crs>EPSG:4326</crs><location>http://some.url.com/some_location/product.zip</location><entryPoint/><visibility/><productStatus>2</productStatus><sensorType>OPTICAL</sensorType><acquisitionDate>2017-09-01T18:33:47</acquisitionDate><pixelType>2</pixelType><productType>Satellite5</productType><width>1024</width><height>1024</height><approximateSize>1234</approximateSize><processingDate/><quicklookLocation/><satelliteName>Satellite-5</satelliteName></eoData>";
     }
 
     @Override
@@ -55,7 +29,7 @@ public class EOProductTest extends BaseSerializationTest<EOProduct> {
         super.setUp();
         entity = new EOProduct() {{
             setName("Product");
-            setAcquisitionDate(DateUtils.getFormatterAtUTC("yyyyMMdd'T'hh:mm:ss").parse("20170901T18:33:47"));
+            setAcquisitionDate(LocalDateTime.of(2017,9,1,18,33,47));
             setLocation("http://some.url.com/some_location/product.zip");
             setFormatType(DataFormat.RASTER);
             setProductType("Satellite-5");
@@ -66,6 +40,9 @@ public class EOProductTest extends BaseSerializationTest<EOProduct> {
             setWidth(1024);
             setId("1234567890");
             setSensorType(SensorType.OPTICAL);
+            setApproximateSize(1234);
+            setSatelliteName("Satellite-5");
+            setProductStatus(ProductStatus.DOWNLOADED);
             addAttribute("attribute1", "value1");
             addAttribute("attribute2", "value2");
         }};

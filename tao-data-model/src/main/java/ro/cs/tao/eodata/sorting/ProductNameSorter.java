@@ -5,6 +5,11 @@ import ro.cs.tao.eodata.EOProduct;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Sorts a list of EOProduct entities by their name.
+ *
+ * @author Cosmin Cara
+ */
 public class ProductNameSorter extends DataSorter<EOProduct> {
 
     @Override

@@ -1,11 +1,16 @@
 package ro.cs.tao.eodata.sorting;
 
-import ro.cs.tao.Tuple;
 import ro.cs.tao.eodata.EOProduct;
+import ro.cs.tao.utils.Tuple;
 
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Groups EOProduct entities in pairs of two, based on the same acquisition dates.
+ *
+ * @author Cosmin Cara
+ */
 public class ProductBySameDateAssociation extends Association<EOProduct> {
 
     @Override

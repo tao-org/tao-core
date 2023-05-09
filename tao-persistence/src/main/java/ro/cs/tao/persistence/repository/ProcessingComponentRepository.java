@@ -28,4 +28,10 @@ public interface ProcessingComponentRepository extends PagingAndSortingRepositor
 
     @Query(value = "SELECT * FROM component.processing_component WHERE label = :label", nativeQuery = true)
     List<ProcessingComponent> getByLabel(@Param("label") String label);
+
+    @Query(value = "SELECT * FROM component.processing_component WHERE id = :id AND container_id = :containerId", nativeQuery = true)
+    ProcessingComponent getByIdAndContainer(@Param("id") String id, @Param("containerId") String containerId);
+
+    @Query(value = "SELECT * FROM component.processing_component WHERE label = :label AND container_id = :containerId", nativeQuery = true)
+    ProcessingComponent getByLabelAndContainer(@Param("label") String label, @Param("containerId") String containerId);
 }

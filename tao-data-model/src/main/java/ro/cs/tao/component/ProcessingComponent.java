@@ -18,8 +18,9 @@ package ro.cs.tao.component;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
+import org.apache.commons.lang3.SystemUtils;
+import ro.cs.tao.component.enums.ComponentCategory;
 import ro.cs.tao.component.enums.Condition;
-import ro.cs.tao.component.enums.ParameterType;
 import ro.cs.tao.component.enums.ProcessingComponentType;
 import ro.cs.tao.component.enums.ProcessingComponentVisibility;
 import ro.cs.tao.component.template.BasicTemplate;
@@ -29,13 +30,15 @@ import ro.cs.tao.component.template.TemplateType;
 import ro.cs.tao.component.template.engine.EngineFactory;
 import ro.cs.tao.component.template.engine.TemplateEngine;
 import ro.cs.tao.component.validation.ValidationException;
+import ro.cs.tao.docker.ExecutionConfiguration;
 import ro.cs.tao.security.SessionStore;
+import ro.cs.tao.utils.FileUtilities;
+import ro.cs.tao.utils.StringUtilities;
 
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -53,6 +56,7 @@ import java.util.stream.Collectors;
 public class ProcessingComponent extends TaoComponent {
 
     private String containerId;
+    private ComponentCategory category;
     private String fileLocation;
     private String expandedFileLocation;
     private String workingDirectory;
@@ -67,6 +71,8 @@ public class ProcessingComponent extends TaoComponent {
     private boolean active;
     private ProcessingComponentType componentType;
     private String owner;
+    private boolean isTransient;
+    private Boolean outputManaged;
 
 
     public ProcessingComponent() {
@@ -76,7 +82,7 @@ public class ProcessingComponent extends TaoComponent {
      * Returns the binary/executable of the tool
      */
     public String getFileLocation() {
-        return fileLocation;
+        return this.fileLocation;
     }
     /**
      * Sets the binary/executable of the tool
@@ -91,7 +97,7 @@ public class ProcessingComponent extends TaoComponent {
      */
     @JsonIgnore
     public String getExpandedFileLocation() {
-        return expandedFileLocation;
+        return this.expandedFileLocation;
     }
     /**
      * Sets the full path (inside the container) of the tool binary/executable.
@@ -105,7 +111,7 @@ public class ProcessingComponent extends TaoComponent {
      * Returns the working directory for the tool.
      */
     public String getWorkingDirectory() {
-        return workingDirectory;
+        return this.workingDirectory;
     }
 
     /**
@@ -120,7 +126,7 @@ public class ProcessingComponent extends TaoComponent {
      */
     @JsonIgnore
     public Template getTemplate() {
-        return template;
+        return this.template;
     }
 
     /**
@@ -143,7 +149,7 @@ public class ProcessingComponent extends TaoComponent {
      */
     @XmlElementWrapper(name = "variables")
     public Set<Variable> getVariables() {
-        return variables;
+        return this.variables;
     }
 
     /**
@@ -171,11 +177,18 @@ public class ProcessingComponent extends TaoComponent {
         this.parameters = parameters;
     }
 
+    public void addParameter(ParameterDescriptor parameterDescriptor) {
+        final List<ParameterDescriptor> descriptors = getParameterDescriptors();
+        if (!descriptors.contains(parameterDescriptor)) {
+            descriptors.add(parameterDescriptor);
+        }
+    }
+
     /**
      * Check if the current component can run on multiple threads.
      */
     public boolean getMultiThread() {
-        return multiThread;
+        return this.multiThread;
     }
     /**
      * Instructs the current component to run on multiple threads.
@@ -188,7 +201,7 @@ public class ProcessingComponent extends TaoComponent {
      * Returns the visibility of the component.
      */
     public ProcessingComponentVisibility getVisibility() {
-        return visibility;
+        return this.visibility;
     }
 
     /**
@@ -202,7 +215,7 @@ public class ProcessingComponent extends TaoComponent {
      * Checks if the component is active (i.e. not deleted).
      */
     public boolean getActive() {
-        return active;
+        return this.active;
     }
 
     /**
@@ -217,7 +230,7 @@ public class ProcessingComponent extends TaoComponent {
      */
     @XmlTransient
     public TemplateType getTemplateType() {
-        return templateType != null ? templateType : TemplateType.VELOCITY;
+        return this.templateType != null ? this.templateType : TemplateType.VELOCITY;
     }
 
     /**
@@ -236,7 +249,7 @@ public class ProcessingComponent extends TaoComponent {
      */
     @JsonGetter(value = "templatecontents")
     public String getTemplateContents(){
-        return template != null ? template.getContents() : null;
+        return this.template != null ? this.template.getContents() : null;
     }
     /**
      * Sets the template contents of the component.
@@ -244,9 +257,9 @@ public class ProcessingComponent extends TaoComponent {
     @JsonSetter(value = "templatecontents")
     public void setTemplateContents(String contents) {
         this.template = new BasicTemplate();
-        template.setTemplateType(getTemplateType());
-        template.setContents(contents, false);
-        template.associateWith(getTemplateEngine());
+        this.template.setTemplateType(getTemplateType());
+        this.template.setContents(contents, false);
+        this.template.associateWith(getTemplateEngine());
     }
 
     /**
@@ -264,16 +277,49 @@ public class ProcessingComponent extends TaoComponent {
      * Returns the recommended degree of parallelism for this component.
      */
     public Integer getParallelism() {
-        if (parallelism == null) {
-            parallelism = 1;
+        if (this.parallelism == null) {
+            this.parallelism = 1;
         }
-        return parallelism;
+        return this.parallelism;
     }
     /**
      * Sets the recommended degree of parallelsim for this component
      */
     public void setParallelism(int parallelism) {
         this.parallelism = parallelism;
+    }
+
+    /**
+     * Returns the component category
+     */
+    public ComponentCategory getCategory() {
+        return category;
+    }
+
+    /**
+     * Sets the component category
+     */
+    public void setCategory(ComponentCategory category) {
+        this.category = category;
+    }
+
+    /**
+     * Tests if the output of this component is managed by TAO.
+     * If <code>false</code>, the output is managed by this component.
+     */
+    public Boolean isOutputManaged() {
+        if (outputManaged == null) {
+            outputManaged = true;
+        }
+        return outputManaged;
+    }
+
+    /**
+     * Sets the output management. If <code>true</code> it will be managed by TAO.
+     * If <code>false</code> it will be managed by the component itself.
+     */
+    public void setOutputManaged(Boolean value) {
+        outputManaged = value;
     }
 
     /**
@@ -302,14 +348,18 @@ public class ProcessingComponent extends TaoComponent {
         }
     }
 
-    public String getContainerId() { return containerId; }
+    public String getContainerId() { return this.containerId; }
     public void setContainerId(String containerId) { this.containerId = containerId; }
 
     public ProcessingComponentType getComponentType() { return componentType; }
     public void setComponentType(ProcessingComponentType componentType) { this.componentType = componentType; }
 
-    public String getOwner() { return owner; }
+    public String getOwner() { return this.owner; }
     public void setOwner(String owner) { this.owner = owner; }
+
+    public boolean isTransient() { return this.isTransient; }
+
+    public void setTransient(boolean value) { this.isTransient = value; }
 
     @Override
     public ProcessingComponent clone() throws CloneNotSupportedException {
@@ -346,60 +396,63 @@ public class ProcessingComponent extends TaoComponent {
                 this.parameters.stream().filter(p -> p instanceof TemplateParameterDescriptor)
                                .collect(Collectors.toMap(ParameterDescriptor::getName, p -> (TemplateParameterDescriptor) p));
         Map<String, ParameterDescriptor> arrayParameters =
-                this.parameters.stream().filter(p -> p.getType() == ParameterType.ARRAY)
+                this.parameters.stream().filter(p -> p.getDataType().isArray())
                                .collect(Collectors.toMap(ParameterDescriptor::getName, Function.identity()));
-        for (Map.Entry<String, Object> entry : parameterValues.entrySet()) {
-            String paramName = entry.getKey();
-            Object paramValue = entry.getValue();
-            if (templateParameters.containsKey(paramName)) {
-                Map<String, Object> values = (Map<String, Object>) parameterValues.get(paramName);
-                TemplateParameterDescriptor descriptor = templateParameters.get(paramName);
-                TemplateEngine paramEngine = descriptor.getTemplateEngine();
-                String transformed = paramEngine.transform(descriptor.getTemplate(), values);
-                String outputPath = variables.get("$TEMPLATE_REAL_PATH");
-                String templateCmdPath = variables.get("$TEMPLATE_CMD_PATH");
-                if (outputPath != null && templateCmdPath != null) {
-                    String file = outputPath + "/" + descriptor.getDefaultValue();
-                    try {
-                        Files.write(Paths.get(file), transformed.getBytes());
-                        clonedMap.put(paramName, templateCmdPath + "/" + descriptor.getDefaultValue());
-                    } catch (IOException e) {
-                        Logger.getLogger(getClass().getName()).severe(String.format("Cannot write transformed template '%s'. Reason: %s",
-                                                                                    file, e.getMessage()));
+        if (parameterValues != null) {
+            for (Map.Entry<String, Object> entry : parameterValues.entrySet()) {
+                String paramName = entry.getKey();
+                Object paramValue = entry.getValue();
+                if (templateParameters.containsKey(paramName)) {
+                    Map<String, Object> values = (Map<String, Object>) parameterValues.get(paramName);
+                    TemplateParameterDescriptor descriptor = templateParameters.get(paramName);
+                    TemplateEngine paramEngine = descriptor.getTemplateEngine();
+                    String transformed = paramEngine.transform(descriptor.getTemplate(), values);
+                    String outputPath = variables.get("$TEMPLATE_REAL_PATH");
+                    String templateCmdPath = variables.get("$TEMPLATE_CMD_PATH");
+                    if (outputPath != null && templateCmdPath != null) {
+                        String file = outputPath + "/" + descriptor.getDefaultValue();
+                        try {
+                            Files.write(Paths.get(file), transformed.getBytes());
+                            clonedMap.put(paramName, templateCmdPath + "/" + descriptor.getDefaultValue());
+                        } catch (IOException e) {
+                            Logger.getLogger(getClass().getName()).severe(String.format("Cannot write transformed template '%s'. Reason: %s",
+                                                                                        file, e.getMessage()));
+                        }
+                    } else {
+                        Logger.getLogger(getClass().getName()).warning(String.format("Parameter '%s' is a template parameter, but the output path cannot be determined",
+                                                                                     paramName));
+                    }
+                } else if (arrayParameters.containsKey(paramName)) {
+                    Object values = parameterValues.get(paramName);
+                    if (values != null) {
+                        ParameterDescriptor descriptor = arrayParameters.get(paramName);
+                        clonedMap.put(paramName, descriptor.expandValues(values));
                     }
                 } else {
-                    Logger.getLogger(getClass().getName()).warning(String.format("Parameter '%s' is a template parameter, but the output path cannot be determined",
-                                                                                 paramName));
-                }
-            } else if (arrayParameters.containsKey(paramName)) {
-                Object values = parameterValues.get(paramName);
-                if (values != null) {
-                    ParameterDescriptor descriptor = arrayParameters.get(paramName);
-                    clonedMap.put(paramName, descriptor.expandValues(values));
-                }
-            } else {
-                try {
-                    if (paramValue instanceof String) {
-                        clonedMap.put(paramName, Paths.get(URI.create((String) paramValue)).toString());
+                    try {
+                        if (paramValue instanceof String
+                                && (((String) paramValue).contains(SystemUtils.IS_OS_WINDOWS ? "\\" : "/"))) {
+                            clonedMap.put(paramName, FileUtilities.asUnixPath(FileUtilities.toPath((String) paramValue).toString(), true));
+                        } else {
+                            clonedMap.put(paramName, paramValue);
+                        }
+                    } catch (Exception ex) {
+                        clonedMap.put(paramName, paramValue);
                     }
-                } catch(Exception ex){
-                    clonedMap.put(paramName, paramValue);
                 }
             }
         }
         for (ParameterDescriptor parameterDescriptor : this.parameters) {
             if (!clonedMap.containsKey(parameterDescriptor.getName())) {
-                if (parameterDescriptor.getDefaultValue() != null) {
-                    clonedMap.put(parameterDescriptor.getName(), parameterDescriptor.getDefaultValue());
-                } else {
+                if (StringUtilities.isNullOrEmpty(parameterDescriptor.getDefaultValue())) {
                     removeEmptyParameter(parameterDescriptor);
+                } else {
+                    clonedMap.put(parameterDescriptor.getName(), parameterDescriptor.getDefaultValue());
                 }
             }
         }
         if (variables != null) {
-            for (Map.Entry<String, String> variable : variables.entrySet()) {
-                clonedMap.put(variable.getKey(), variable.getValue());
-            }
+            clonedMap.putAll(variables);
         }
         StringBuilder cmdBuilder = new StringBuilder();
         if (this.expandedFileLocation != null) {
@@ -435,16 +488,42 @@ public class ProcessingComponent extends TaoComponent {
                 break;
             case AGGREGATE:
                 try {
-                    Path scriptPath = SessionStore.currentContext().getWorkspace().resolve("scripts");
+                    final Path scriptPath = SessionStore.currentContext().getWorkspace().resolve("scripts");
                     Files.createDirectories(scriptPath);
-                    Path scriptFile = scriptPath.resolve(System.currentTimeMillis() + "-" + this.template.getName());
+                    String scriptFileName = this.template.getName().replace(" ", "_") + "-" + System.currentTimeMillis();
+                    final boolean velocityTemplate = this.templateType == TemplateType.VELOCITY;
+                    if (velocityTemplate) {
+                        // OTB aggregation
+                        scriptFileName += ".py";
+                    } else {
+                        // SNAP aggregation
+                        scriptFileName += ".xml";
+                        transformedTemplate = transformedTemplate.replace("[", "{").replace("]", "}");
+                    }
+                    final Path scriptFile = scriptPath.resolve(scriptFileName);
                     Files.write(scriptFile, transformedTemplate.getBytes());
-                    cmdBuilder.append(scriptFile.toString()).append("\n");
+                    String relScriptFile = ExecutionConfiguration.getWorkerContainerVolumeMap().getContainerWorkspaceFolder() +
+                            "/" + FileUtilities.asUnixPath(scriptFile, true)
+                                               .replace(FileUtilities.asUnixPath(Paths.get(SystemVariable.ROOT.value()), true), "");
+                    cmdBuilder.append(relScriptFile).append("\n");
+                    for (SourceDescriptor sourceDescriptor : this.sources) {
+                        if (parameterValues != null && parameterValues.containsKey(sourceDescriptor.getName())) {
+                            cmdBuilder.append("-").append(sourceDescriptor.getName()).append(velocityTemplate ? "\n" : "=");
+                            cmdBuilder.append(parameterValues.get(sourceDescriptor.getName())).append("\n");
+                        }
+                    }
+                    for (TargetDescriptor targetDescriptor : this.targets) {
+                        if (parameterValues != null && parameterValues.containsKey(targetDescriptor.getName())) {
+                            cmdBuilder.append("-").append(targetDescriptor.getName()).append("\n");
+                            cmdBuilder.append(parameterValues.get(targetDescriptor.getName())).append("\n");
+                        }
+                    }
                 } catch (IOException e) {
                     Logger.getLogger(ProcessingComponent.class.getName()).severe("Cannot persist aggregated template file");
                     throw new TemplateException(e);
                 }
                 break;
+            case EXTERNAL:
             case EXECUTABLE:
             default:
                 cmdBuilder.append(transformedTemplate).append("\n");
@@ -509,9 +588,23 @@ public class ProcessingComponent extends TaoComponent {
         if (this.template != null) {
             String templateContents = this.template.getContents();
             int idx = templateContents.indexOf(descriptor.getLabel());
-            int beforeSeparator = templateContents.lastIndexOf('\n', idx);
-            int afterSeparator = templateContents.indexOf('\n', idx);
-            this.template.setContents(templateContents.substring(0, beforeSeparator) + templateContents.substring(afterSeparator), false);
+            int beforeSeparator, afterSeparator;
+            // idx should not be -1 for Velocity templates, but it may be for XSLT ones
+            if (idx == -1) {
+                idx = templateContents.indexOf(descriptor.getName());
+                beforeSeparator = templateContents.lastIndexOf('\n', idx);
+                afterSeparator = templateContents.indexOf('\n', idx);
+                this.template.setContents(templateContents.substring(0, beforeSeparator) + templateContents.substring(afterSeparator), false);
+                idx = templateContents.indexOf(descriptor.getName(), idx + 1);
+                beforeSeparator = templateContents.lastIndexOf('\n', idx);
+                afterSeparator = templateContents.indexOf('\n', idx);
+                this.template.setContents(templateContents.substring(0, beforeSeparator) + templateContents.substring(afterSeparator), false);
+            } else {
+                beforeSeparator = templateContents.lastIndexOf('\n', idx);
+
+                afterSeparator = templateContents.indexOf('\n', idx);
+                this.template.setContents(templateContents.substring(0, beforeSeparator) + templateContents.substring(afterSeparator), false);
+            }
         }
     }
 }

@@ -32,19 +32,20 @@ import java.util.List;
 public class NodeDescription extends StringIdentifiable {
     private String userName;
     private String userPass;
-    private NodeType nodeType;
-    private int processorCount;
-    private int memorySizeGB;
-    private int diskSpaceSizeGB;
+    private NodeFlavor flavor;
     private String description;
+    private NodeRole role;
     private Boolean active;
+    private Boolean isVolatile;
     private List<NodeServiceStatus> servicesStatus;
     private List<String> tags;
+    private String owner;
+    private String appId;
 
     public NodeDescription() { this.active = true;}
 
     @Override
-    public String defaultId() { return null; }
+    public String defaultId() { return "NewNode"; }
 
     @XmlElement(name = "userName")
     public String getUserName() { return userName; }
@@ -58,26 +59,11 @@ public class NodeDescription extends StringIdentifiable {
         this.userPass = userPass;
     }
 
-    @XmlElement(name = "nodeType")
-    public NodeType getNodeType() { return nodeType; }
-    public void setNodeType(NodeType nodeType) { this.nodeType = nodeType; }
+    @XmlElement(name = "flavor")
+    public NodeFlavor getFlavor() { return flavor; }
+    public void setFlavor(NodeFlavor flavor) { this.flavor = flavor; }
 
-    @XmlElement(name = "processors")
-    public int getProcessorCount() {
-        return processorCount;
-    }
-    public void setProcessorCount(int processorCount) {
-        this.processorCount = processorCount;
-    }
-
-    @XmlElement(name = "memory")
-    public int getMemorySizeGB() { return memorySizeGB; }
-    public void setMemorySizeGB(int memorySizeGB) { this.memorySizeGB = memorySizeGB; }
-
-    @XmlElement(name = "diskSpace")
-    public int getDiskSpaceSizeGB() { return diskSpaceSizeGB; }
-    public void setDiskSpaceSizeGB(int diskSpaceSizeGB) { this.diskSpaceSizeGB = diskSpaceSizeGB; }
-
+    @XmlElement(name = "description")
     public String getDescription() {
         return description;
     }
@@ -85,12 +71,29 @@ public class NodeDescription extends StringIdentifiable {
         this.description = description;
     }
 
+    @XmlElement(name = "role")
+    public NodeRole getRole() { return role; }
+    public void setRole(NodeRole role) { this.role = role; }
+
+    @XmlElement(name = "active")
     public Boolean getActive() {
         return active;
     }
     public void setActive(Boolean active) {
         this.active = active;
     }
+
+    @XmlElement(name = "volatile")
+    public Boolean getVolatile() { return isVolatile; }
+    public void setVolatile(Boolean value) { isVolatile = value; }
+
+    @XmlElement(name = "owner")
+    public String getOwner() { return owner; }
+    public void setOwner(String owner) { this.owner = owner; }
+
+    @XmlElement(name = "appId")
+    public String getAppId() { return appId; }
+    public void setAppId(String appId) { this.appId = appId; }
 
     @XmlElementWrapper(name = "services")
     public List<NodeServiceStatus> getServicesStatus() {

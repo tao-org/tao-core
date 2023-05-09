@@ -15,12 +15,11 @@
  */
 package ro.cs.tao.messaging;
 
-import ro.cs.tao.ProgressListener;
 import ro.cs.tao.messaging.progress.*;
 import ro.cs.tao.security.SessionStore;
+import ro.cs.tao.utils.executors.monitoring.ProgressListener;
 
 import java.security.Principal;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -33,9 +32,10 @@ public class ProgressNotifier implements ProgressListener {
     private final Object owner;
     private final Principal principal;
     private final Map<String, String> additionalInfo;
-    private String taskName;
-    private double taskCounter;
+    protected String taskName;
+    protected double taskCounter;
     private double subTaskCounter;
+    private ProgressListener subListener;
 
     public ProgressNotifier(Object source, Topic topic) {
         this(SessionStore.currentContext().getPrincipal(), source, topic);
@@ -48,45 +48,52 @@ public class ProgressNotifier implements ProgressListener {
     public ProgressNotifier(Principal principal, Object source, Topic topic, Map<String, String> additionalInfo) {
         this.owner = source;
         this.topic = topic;
+        if (this.topic == null) {
+            throw new NullPointerException("topic");
+        }
         this.principal = principal;
+        if (this.principal == null) {
+            throw new NullPointerException("principal");
+        }
         this.additionalInfo = additionalInfo;
+        this.subListener = new SubListener();
     }
 
     @Override
     public void started(String taskName) {
         this.taskCounter = 0;
         this.taskName = taskName;
-        sendMessage(new ActivityStartMessage(taskName));
+        sendMessage(createStartMessage());
     }
 
     @Override
     public void subActivityStarted(String subTaskName) {
         this.subTaskCounter = 0;
-        sendTransientMessage(new SubActivityStartMessage(taskName, subTaskName));
+        sendTransientMessage(createSubStartMessage(subTaskName));
     }
 
     @Override
     public void subActivityEnded(String subTaskName) {
         this.subTaskCounter = 1;
-        sendTransientMessage(new SubActivityEndMessage(taskName, subTaskName));
+        sendTransientMessage(createSubEndMessage(subTaskName));
     }
 
     @Override
     public void ended() {
         this.taskCounter = 1;
-        sendMessage(new ActivityEndMessage(taskName));
+        sendMessage(createEndMessage());
     }
 
     @Override
     public void notifyProgress(double progressValue) {
-        if (progressValue < taskCounter) {
+        /*if (progressValue < taskCounter) {
             throw new IllegalArgumentException(
                     String.format(Locale.US, "Progress taskCounter cannot go backwards [actual:%.2f%%, received:%.2f%%]",
                                   taskCounter, progressValue));
-        }
+        }*/
         taskCounter = progressValue;
         if (taskCounter < 1) {
-            sendTransientMessage(new ActivityProgressMessage(taskName, progressValue));
+            sendTransientMessage(new ActivityProgress(taskName, progressValue));
         } else {
             ended();
         }
@@ -99,19 +106,34 @@ public class ProgressNotifier implements ProgressListener {
 
     @Override
     public void notifyProgress(String subTaskName, double subTaskProgress, double overallProgress) {
-        if (subTaskProgress < subTaskCounter) {
+        /*if (subTaskProgress < subTaskCounter) {
             throw new IllegalArgumentException(
                     String.format(Locale.US, "Progress counter cannot go backwards [actual:%.2f%%, received:%.2f%%]",
                                   subTaskCounter, subTaskProgress));
-        }
+        }*/
         subTaskCounter = subTaskProgress;
         taskCounter = overallProgress;
         if (subTaskCounter < 1) {
-            sendTransientMessage(new SubActivityProgressMessage(taskName, subTaskName, taskCounter, subTaskCounter));
+            sendTransientMessage(new SubActivityProgress(taskName, subTaskName, taskCounter, subTaskCounter));
         } else {
             subActivityEnded(subTaskName);
         }
     }
+
+    @Override
+    public ProgressListener subProgressListener() {
+        return this.subListener;
+    }
+
+    protected void sendTransientMessage(Message message) {
+        message.setTimestamp(System.currentTimeMillis());
+        if (additionalInfo != null) {
+            additionalInfo.forEach(message::addItem);
+        }
+        message.setUser(this.principal.getName());
+        Messaging.send(this.principal, this.topic.value(), message, false);
+    }
+
 
     private void sendMessage(Message message) {
         message.setTimestamp(System.currentTimeMillis());
@@ -121,11 +143,86 @@ public class ProgressNotifier implements ProgressListener {
         Messaging.send(this.principal, this.topic.value(), message, true);
     }
 
-    private void sendTransientMessage(Message message) {
-        message.setTimestamp(System.currentTimeMillis());
-        if (additionalInfo != null) {
-            additionalInfo.forEach(message::addItem);
+    private ActivityStart createStartMessage() {
+        ActivityStart message;
+        if (this.topic.equals(Topic.TRANSFER_PROGRESS)) {
+            message = new TransferStart(this.taskName);
+        } else {
+            message = new ActivityStart(this.taskName);
         }
-        Messaging.send(this.principal, this.topic.value(), message, false);
+        message.setUser(this.principal.getName());
+        message.setTopic(this.topic.value());
+        return message;
+    }
+
+    private ActivityEnd createEndMessage() {
+        ActivityEnd message;
+        if (this.topic.equals(Topic.TRANSFER_PROGRESS)) {
+            message = new TransferEnd(this.taskName);
+        } else {
+            message = new ActivityEnd(this.taskName);
+        }
+        message.setUser(this.principal.getName());
+        message.setTopic(this.topic.value());
+        return message;
+    }
+
+    private SubActivityStart createSubStartMessage(String subTask) {
+        SubActivityStart message;
+        if (this.topic.equals(Topic.TRANSFER_PROGRESS)) {
+            message = new SubTransferStart(this.taskName, subTask);
+        } else {
+            message = new SubActivityStart(this.taskName, subTask);
+        }
+        message.setUser(this.principal.getName());
+        message.setTopic(this.topic.value());
+        return message;
+    }
+
+    private SubActivityEnd createSubEndMessage(String subTask) {
+        SubActivityEnd message;
+        if (this.topic.equals(Topic.TRANSFER_PROGRESS)) {
+            message = new SubTransferEnd(this.taskName, subTask);
+        } else {
+            message = new SubActivityEnd(this.taskName, subTask);
+        }
+        message.setUser(this.principal.getName());
+        message.setTopic(this.topic.value());
+        return message;
+    }
+
+    private class SubListener implements ProgressListener {
+        private String subTask;
+        @Override
+        public void started(String taskName) {
+            this.subTask = taskName;
+            ProgressNotifier.this.subActivityStarted(taskName);
+        }
+
+        @Override
+        public void ended() {
+            ProgressNotifier.this.subActivityEnded(subTask);
+        }
+
+        @Override
+        public void notifyProgress(double progressValue) {
+            ProgressNotifier.this.notifyProgress(subTask, progressValue);
+        }
+
+        @Override
+        public void subActivityStarted(String subTaskName) {
+        }
+
+        @Override
+        public void subActivityEnded(String subTaskName) {
+        }
+
+        @Override
+        public void notifyProgress(String subTaskName, double subTaskProgress) {
+        }
+
+        @Override
+        public void notifyProgress(String subTaskName, double subTaskProgress, double overallProgress) {
+        }
     }
 }

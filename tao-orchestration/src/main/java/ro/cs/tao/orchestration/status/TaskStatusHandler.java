@@ -3,10 +3,10 @@ package ro.cs.tao.orchestration.status;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
+import ro.cs.tao.execution.persistence.ExecutionJobProvider;
+import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.orchestration.commands.TaskCommand;
-import ro.cs.tao.persistence.PersistenceManager;
-import ro.cs.tao.persistence.exception.PersistenceException;
-import ro.cs.tao.utils.ExceptionUtils;
+import ro.cs.tao.persistence.PersistenceException;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -18,23 +18,26 @@ public abstract class TaskStatusHandler {
 
     private static Map<ExecutionStatus, TaskStatusHandler> handlers;
     protected final Logger logger;
-    protected final PersistenceManager persistenceManager;
+    protected final ExecutionJobProvider jobProvider;
+    protected final ExecutionTaskProvider taskProvider;
 
-    public static void registerHandlers(PersistenceManager persistenceManager) {
+    public static void registerHandlers(ExecutionJobProvider jobProvider, ExecutionTaskProvider taskProvider) {
         if (handlers == null) {
             handlers = new HashMap<>();
         }
-        handlers.put(ExecutionStatus.UNDETERMINED, new IgnoredStatusHandler(persistenceManager));
-        handlers.put(ExecutionStatus.QUEUED_ACTIVE, new IgnoredStatusHandler(persistenceManager));
-        handlers.put(ExecutionStatus.RUNNING, new RunningStatusHandler(persistenceManager));
-        handlers.put(ExecutionStatus.DONE, new DoneStatusHandler(persistenceManager));
-        handlers.put(ExecutionStatus.FAILED, new FailedStatusHandler(persistenceManager));
-        handlers.put(ExecutionStatus.SUSPENDED, new SuspendedStatusHandler(persistenceManager));
-        handlers.put(ExecutionStatus.CANCELLED, new CancelledStatusHandler(persistenceManager));
+        handlers.put(ExecutionStatus.UNDETERMINED, new IgnoredStatusHandler(jobProvider, taskProvider));
+        handlers.put(ExecutionStatus.QUEUED_ACTIVE, new IgnoredStatusHandler(jobProvider, taskProvider));
+        handlers.put(ExecutionStatus.RUNNING, new RunningStatusHandler(jobProvider, taskProvider));
+        handlers.put(ExecutionStatus.PENDING_FINALISATION, new PendingFinalisationStatusHandler(jobProvider, taskProvider));
+        handlers.put(ExecutionStatus.DONE, new DoneStatusHandler(jobProvider, taskProvider));
+        handlers.put(ExecutionStatus.FAILED, new FailedStatusHandler(jobProvider, taskProvider));
+        handlers.put(ExecutionStatus.SUSPENDED, new SuspendedStatusHandler(jobProvider, taskProvider));
+        handlers.put(ExecutionStatus.CANCELLED, new CancelledStatusHandler(jobProvider, taskProvider));
     }
 
-    protected TaskStatusHandler(PersistenceManager persistenceManager) {
-        this.persistenceManager = persistenceManager;
+    protected TaskStatusHandler(ExecutionJobProvider jobProvider, ExecutionTaskProvider taskProvider) {
+        this.jobProvider = jobProvider;
+        this.taskProvider = taskProvider;
         this.logger = Logger.getLogger(getClass().getName());
     }
 
@@ -60,8 +63,7 @@ public abstract class TaskStatusHandler {
         tasks.forEach(t -> {
             t.setExecutionStatus(status);
             try {
-                persistenceManager.updateTaskStatus(t, status);
-                logger.fine(String.format("Task %s was put into status %s", t.getId(), status));
+                taskProvider.updateStatus(t, status, "Bulk set");
             } catch (PersistenceException e) {
                 logger.severe(e.getMessage());
             }
@@ -73,7 +75,7 @@ public abstract class TaskStatusHandler {
             try {
                 TaskCommand.STOP.applyTo(task);
             } catch (ExecutionException ex) {
-                logger.severe(ExceptionUtils.getStackTrace(logger, ex));
+                logger.severe(ex.getMessage());
             }
         }
     }

@@ -15,7 +15,7 @@
  */
 package ro.cs.tao.security;
 
-import ro.cs.tao.configuration.ConfigurationManager;
+import ro.cs.tao.component.SystemVariable;
 import ro.cs.tao.user.UserPreference;
 
 import java.nio.file.Path;
@@ -24,7 +24,7 @@ import java.security.Principal;
 import java.util.List;
 
 /**
- * Holder class for the session of an user.
+ * Holder class for the session of a user.
  *
  * @author Cosmin Cara
  */
@@ -35,13 +35,14 @@ public abstract class SessionContext {
     private final List<UserPreference> preferences;
 
     protected SessionContext() {
-        this.principal = setPrincipal();
-        this.workspaceRoot = Paths.get(ConfigurationManager.getInstance().getValue("workspace.location"));
-        this.netSpaceRoot = Paths.get(ConfigurationManager.getInstance().getValue("node.mount.folder"));
+        this.principal = setPrincipal(null);
+        this.workspaceRoot = Paths.get(SystemVariable.ROOT.value());
+        final String value = SystemVariable.SHARE.value();
+        this.netSpaceRoot = value != null ? Paths.get(value) : null;
         this.preferences = setPreferences();
     }
 
-    protected abstract Principal setPrincipal();
+    public abstract Principal setPrincipal(Principal principal);
     protected abstract List<UserPreference> setPreferences();
 
     /**
@@ -52,9 +53,9 @@ public abstract class SessionContext {
     /**
      * Returns the root path in the shared file system for the current principal
      */
-    public Path getWorkspace() { return workspaceRoot.resolve(principal.getName()); }
+    public Path getWorkspace() { return workspaceRoot.resolve(getPrincipal().getName()); }
 
-    public Path getNetSpace() { return netSpaceRoot.getParent().resolve(principal.getName()); }
+    public Path getNetSpace() { return netSpaceRoot != null ? netSpaceRoot.resolve(getPrincipal().getName()) : null; }
 
     /**
      * Returns the location where the current principal can upload files

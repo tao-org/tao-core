@@ -16,29 +16,60 @@
 
 package ro.cs.tao.services.interfaces;
 
+import ro.cs.tao.persistence.AuxiliaryDataProvider;
+import ro.cs.tao.persistence.EOProductProvider;
+import ro.cs.tao.persistence.VectorDataProvider;
 import ro.cs.tao.services.model.FileObject;
+import ro.cs.tao.services.model.ItemAction;
+import ro.cs.tao.utils.executors.monitoring.ProgressListener;
+import ro.cs.tao.workspaces.Repository;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Service interface for manipulation of files and folders (server-side).
  *
  * @author Cosmin Cara
  */
-public interface StorageService<T> extends TAOService {
+public interface StorageService<T, U> extends TAOService {
+
+    String AVLFOLDER = ".avlfolder";
+    String CONTENTS_ATTRIBUTE = "contents";
+    String REMOTE_PATH_ATTRIBUTE = "remotePath";
+    String ROOT_TITLE = "__root";
+
+    /**
+     * Indicates if this storage service implementation is intended for the given protocol
+     * @param protocol  The protocol
+     */
+    boolean isIntendedFor(String protocol);
+
+    /**
+     * Associates a repository configuration to this service instance
+     * @param repository    The repository
+     */
+    default void associate(Repository repository) { }
+
+    default void setProductProvider(EOProductProvider productProvider) { }
+
+    default void setVectorDataProvider(VectorDataProvider vectorDataProvider) { }
+
+    default void setAuxiliaryDataProvider(AuxiliaryDataProvider auxiliaryDataProvider) { }
     /**
      * Creates a folder.
      *
-     * @param folderRelativePath    The folder path, relative to the current workspace
+     * @param relativePath    The folder path, relative to the current workspace
      * @param userOnly              If <code>true</code>, the folder is created in the workspace of the calling user.
      *                              Otherwise, it is created in the shared workspace.
      * @return  The path in the user workspace
      * @throws  IOException if the path cannot be created
      */
-    Path createFolder(String folderRelativePath, boolean userOnly) throws IOException;
+    Path createFolder(String relativePath, boolean userOnly) throws IOException;
 
     /**
      * Stores a file in the given folder, in the user workspace
@@ -50,58 +81,70 @@ public interface StorageService<T> extends TAOService {
      */
     void storeUserFile(T object, String relativeFolder, String description) throws Exception;
     /**
-     * Stores a file in the given folder, in the shared workspace
+     * Stores a file in the given folder, in the user workspace
      *
-     * @param object            The file object
-     * @param relativeFolder    The folder path, relative to the shared workspace
+     * @param stream            The input stream of the file object
+     * @param length            The file length. If unknown, pass a value less than 0
+     * @param relativeFolder    The folder path, relative to the workspace of the calling user
      * @param description       A description for the file
      * @throws  Exception if the file cannot be stored
      */
-    void storePublicFile(T object, String relativeFolder, String description) throws Exception;
+    void storeFile(InputStream stream, long length, String relativeFolder, String description) throws Exception;
+
+    /**
+     * Checks if the given relative path exists in the workspace
+     *
+     * @param path          The path to check in the workspace
+     */
+    boolean exists(String path) throws Exception;
 
     /**
      * Removes the file or folder with the given name.
      *
-     * @param name          The name of the file or folder
+     * @param path          The relative path of the file or folder
      * @throws IOException if the file or folder cannot be removed
      */
-    void remove(String name) throws IOException;
+    void remove(String path) throws IOException;
 
     /**
-     * List the files uploaded in the shared workspace
-     * @return  The list of shared uploaded files
-     * @throws IOException if the content cannot be retrieved
+     * Moves a file from a source directory to a destination in the same workspace
+     *
+     * @param source          The original relative path of the file
+     * @param destination     The new relative destination of the file
+     * @throws IOException if the file or folder cannot be moved
      */
-    List<FileObject> listUploaded() throws IOException;
-    /**
-     * List the products and uploaded files in the shared workspace
-     * @return  The list of shared products and files
-     * @throws IOException if the content cannot be retrieved
-     */
-    List<FileObject> listPublicWorkspace() throws IOException;
+    void move(String source, String destination) throws IOException;
 
-    /**
-     * List the files uploaded in a user workspace
-     * @return  The list of user uploaded files
-     * @throws IOException if the content cannot be retrieved
-     */
-    List<FileObject> listUploaded(String userName) throws IOException;
+    default void rename(String source, String target) throws IOException {
+
+    }
+
     /**
      * List the products and the uploaded files in a user workspace
-     * @param userName The user name
      * @return The list uf user products and files
      * @throws IOException if the content cannot be retrieved
      */
-    List<FileObject> listUserWorkspace(String userName) throws IOException;
+    default List<FileObject> listUserWorkspace() throws IOException {
+        return listFiles("/", null, null, 1);
+    }
 
     /**
      * List the children files starting from the given path.
      *
-     * @param fromPath  The path to look into.
-     * @return The subtree of the given path
+     * @param fromPath       The path to look into.
+     * @return               The subtree of the given path
      * @throws IOException if the content cannot be retrieved
      */
-    List<FileObject> listFiles(Path fromPath, Set<Path> exclusions) throws IOException;
+    List<FileObject> listFiles(String fromPath, Set<String> exclusions, String lastItem, int depth) throws IOException;
+
+    /**
+     * Lists the full tree of folders and files starting from the given path.
+     * This method should be used with caution for remote repositories, as the full traversal may take long time.
+     *
+     * @param fromPath      The path to look into
+     * @throws IOException if the content cannot be retrieved
+     */
+    List<FileObject> listTree(String fromPath) throws IOException;
 
     /**
      * Lists the results of the given workflow, regardless of the execution job.
@@ -118,4 +161,81 @@ public interface StorageService<T> extends TAOService {
      * @param jobId         The job identifier.
      */
     List<FileObject> getJobResults(long jobId) throws IOException;
+
+    /**
+     * Downloads the object from the given path.
+     * Some implementors may not return the binary content of the object, but an InputStream to the object.
+     *
+     * @param path  The path of the object to be retrieved.
+     *
+     * @throws IOException
+     */
+    U download(String path) throws IOException;
+
+    /**
+     * Packs the children of an object into the given zip stream.
+     *
+     * @param zipRoot   The root of the subtree to be packed
+     * @param stream    The zip stream (created elsewhere)
+     *
+     * @throws IOException
+     */
+    void streamToZip(String zipRoot, ZipOutputStream stream) throws IOException;
+
+    /**
+     * Reads a number of lines from the given resource.
+     *
+     * @param resource  The storage resource
+     * @param lines     The number of lines to be read
+     * @param skipLines The number of lines to be skipped before reading
+     *
+     * @throws IOException
+     */
+    default String readAsText(U resource, int lines, int skipLines) throws IOException {
+        return null;
+    }
+
+    /**
+     * Sets a listener for progress reporting
+     */
+    default void setProgressListener(ProgressListener listener) { }
+
+    /**
+     * Helper method for creating the (fake) root node of any storage tree.
+     *
+     * @param repository    The repository for which to create the fake root node
+     */
+    default FileObject repositoryRootNode(Repository repository) {
+        final FileObject object = new FileObject(repository.getUrlPrefix(), "/", true, 0, ROOT_TITLE);
+        object.addAttribute(REMOTE_PATH_ATTRIBUTE, repository.root());
+        return object;
+    }
+
+    /**
+     * Returns a placeholder "file" to be used for S3-like storages when creating a "folder"
+     */
+    default FileObject emptyFolderItem() {
+        final FileObject object = new FileObject("", AVLFOLDER, false, 0, AVLFOLDER);
+        object.addAttribute(CONTENTS_ATTRIBUTE, ".");
+        return object;
+    }
+
+    /**
+     * Registers an action that can be performed on a FileObject item
+     * @param action    The action to be registered
+     */
+    default void registerAction(ItemAction action) { }
+
+    /**
+     * Returns the list of the actions registered with this storage service. If no action is registered, the result
+     * should be <code>null</code>.
+     */
+    default List<ItemAction> getRegisteredActions() { return null; }
+
+    /**
+     * Executes the action with the given name on an item
+     * @param actionName    The action name
+     * @param item          The FileObject item onto which to execute the action
+     */
+    default void execute(String actionName, FileObject item) throws Exception { }
 }

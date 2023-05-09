@@ -15,26 +15,25 @@
  */
 package ro.cs.tao.execution;
 
-import ro.cs.tao.Tuple;
+import org.apache.commons.lang3.StringUtils;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.StringIdentifiable;
 import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.configuration.ConfigurationManager;
+import ro.cs.tao.execution.model.DataSourceExecutionTask;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
+import ro.cs.tao.execution.model.ProcessingExecutionTask;
+import ro.cs.tao.execution.util.TaskUtilities;
 import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.Topic;
-import ro.cs.tao.persistence.PersistenceManager;
-import ro.cs.tao.persistence.exception.PersistenceException;
 import ro.cs.tao.security.SessionContext;
 import ro.cs.tao.security.SystemSessionContext;
-import ro.cs.tao.services.bridge.spring.SpringContextBridge;
+import ro.cs.tao.utils.Tuple;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 /**
@@ -46,8 +45,8 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
     private static final String TIMER_PERIOD = "5";
     /* Flag for trying to close the monitoring thread in an elegant manner */
     private static final Map<String, Tuple<Integer, Long>> resourcesUsage = new HashMap<>();
-    protected Boolean isInitialized = false;
-    protected final PersistenceManager persistenceManager = SpringContextBridge.services().getService(PersistenceManager.class);
+    private static final List<TaskStatusListener> statusListeners = new ArrayList<>();
+    protected final AtomicBoolean isInitialized = new AtomicBoolean(false);
     protected final Logger logger = Logger.getLogger(getClass().getName());
     private final Timer executionsCheckTimer = new Timer("exec-monitor");
     private final Map<Long, SessionContext> contextMap = new HashMap<>();
@@ -58,6 +57,14 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
             tuple = new Tuple<>(0, 0L);
         }
         return tuple;
+    }
+
+    public static void addStatusListener(TaskStatusListener statusListener) {
+        Executor.statusListeners.add(statusListener);
+    }
+
+    public static void removeStatusListener(TaskStatusListener listener) {
+        Executor.statusListeners.remove(listener);
     }
 
     public Executor() {
@@ -83,10 +90,10 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
 
     public void initialize(int pollingInterval) throws ExecutionException {
         synchronized (isInitialized) {
-            if (isInitialized)
+            if (isInitialized.get())
                 return;
             // mark the executor as initialized
-            isInitialized = true;
+            isInitialized.set(true);
         }
         // once the session was created, start the timer
         executionsCheckTimer.schedule(new ExecutionsCheckTimer(this), 0, pollingInterval);
@@ -102,9 +109,9 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
     public void close() throws ExecutionException {
         // stop the monitoring thread
         synchronized (isInitialized) {
-            if (!isInitialized)
+            if (!isInitialized.get())
                 return;
-            isInitialized = false;
+            isInitialized.set(false);
         }
         executionsCheckTimer.cancel();
     }
@@ -157,20 +164,32 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
 
     protected void markTaskFinished(ExecutionTask task, ExecutionStatus status) {
         task.setEndTime(LocalDateTime.now());
-        changeTaskStatus(task, status);
+        changeTaskStatus(task, status, status.friendlyName());
+        this.contextMap.remove(task.getId());
+    }
+
+    protected void markTaskFinished(ExecutionTask task, ExecutionStatus status, String reason) {
+        task.setEndTime(LocalDateTime.now());
+        changeTaskStatus(task, status, reason);
         this.contextMap.remove(task.getId());
     }
 
     protected void changeTaskStatus(ExecutionTask task, ExecutionStatus status) {
-        changeTaskStatus(task, status, false);
+        changeTaskStatus(task, status, false, status.friendlyName());
     }
 
-    protected void changeTaskStatus(ExecutionTask task, ExecutionStatus status, boolean firstTime) {
-        if(status != task.getExecutionStatus()) {
+    protected void changeTaskStatus(ExecutionTask task, ExecutionStatus status, String reason) {
+        changeTaskStatus(task, status, false, reason);
+    }
+
+    protected void changeTaskStatus(ExecutionTask task, ExecutionStatus status, boolean firstTime, String reason) {
+        if (status != task.getExecutionStatus()) {
+            task.setLastUpdated(LocalDateTime.now());
+            final String name = TaskUtilities.getTaskName(task);
             try {
                 if (!this.contextMap.containsKey(task.getId())) {
                     if (task.getContext() == null) {
-                        logger.warning(String.format("Context for task %s is null!", task.getId()));
+                        logger.warning(String.format("Context for task %s is null!", name));
                     }
                     this.contextMap.put(task.getId(), task.getContext());
                 }
@@ -179,36 +198,68 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
                 final long memory = task.getUsedRAM();
                 if (firstTime) {
                     task.setExecutionStatus(status);
-                    task.setLastUpdated(LocalDateTime.now());
-                    persistenceManager.updateExecutionTask(task);
+                    notifyStatusListener(task);
                     increment(userName, cpu, memory);
                 } else {
                     switch (status) {
+                        case PENDING_FINALISATION:
                         case DONE:
+                            task.setEndTime(LocalDateTime.now());
                             task.setExecutionStatus(status);
-                            task.setLastUpdated(LocalDateTime.now());
-                            persistenceManager.updateExecutionTask(task);
+                            notifyStatusListener(task);
                             decrement(userName, cpu, memory);
                             break;
                         case CANCELLED:
                         case SUSPENDED:
                         case FAILED:
-                            persistenceManager.updateTaskStatus(task, status);
+                            task.setEndTime(LocalDateTime.now());
+                            notifyStatusListener(task, status, reason);
                             decrement(userName, cpu, memory);
                             break;
                         case RUNNING:
-                            persistenceManager.updateTaskStatus(task, status);
+                            if (task.getStartTime() == null) {
+                                task.setStartTime(LocalDateTime.now());
+                            }
+                            if (task.getExecutionStatus() != status) {
+                                notifyStatusListener(task, status, null);
+                            }
                             break;
                     }
                 }
-            } catch (PersistenceException e) {
+            } catch (Exception e) {
                 logger.severe(e.getMessage());
             }
             SessionContext context = this.contextMap.get(task.getId());
             if (context == null) {
                 context = SystemSessionContext.instance();
             }
-            Messaging.send(context.getPrincipal(), Topic.EXECUTION.value(), task.getId(), status.name());
+            //Messaging.send(context.getPrincipal(), Topic.EXECUTION.value(), task.getId(), status.name());
+            final String message;
+            if (task instanceof ProcessingExecutionTask) {
+                message = "Task " + name
+                        + (StringUtils.isNotEmpty(task.getExecutionNodeHostName()) ? " on node " + task.getExecutionNodeHostName() : "")
+                        + " changed to " + status.friendlyName();
+            } else if (task instanceof DataSourceExecutionTask) {
+                message = "Query on " + ((DataSourceExecutionTask) task).getComponent().getDataSourceName()
+                        + " for " + ((DataSourceExecutionTask) task).getComponent().getSensorName()
+                        + " changed to " + status.friendlyName();
+            } else {
+                message = "Task " + task.getId() + (StringUtils.isNotEmpty(task.getExecutionNodeHostName()) ? " on node " + task.getExecutionNodeHostName() : "")
+                        + " changed to " + status.friendlyName();
+            }
+            Messaging.send(context.getPrincipal(), Topic.EXECUTION.value(), task.getId(), message, status.name());
+        }
+    }
+
+    protected synchronized void notifyStatusListener(ExecutionTask task, ExecutionStatus status, String reason) {
+        for (TaskStatusListener listener : statusListeners) {
+            listener.taskStatusChanged(task, status, reason);
+        }
+    }
+
+    protected synchronized void notifyStatusListener(ExecutionTask task) {
+        for (TaskStatusListener listener : statusListeners) {
+            listener.taskChanged(task);
         }
     }
 

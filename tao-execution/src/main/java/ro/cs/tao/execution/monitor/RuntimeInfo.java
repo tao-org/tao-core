@@ -16,6 +16,8 @@
 
 package ro.cs.tao.execution.monitor;
 
+import ro.cs.tao.utils.executors.MemoryUnit;
+
 import java.time.LocalDateTime;
 
 public class RuntimeInfo {
@@ -60,7 +62,7 @@ public class RuntimeInfo {
     }
 
     public MemoryUnit getMemoryUnit() {
-        return memoryUnit != null ? memoryUnit : MemoryUnit.MEGABYTE;
+        return memoryUnit != null ? memoryUnit : MemoryUnit.MB;
     }
 
     public void setMemoryUnit(MemoryUnit memoryUnit) {
@@ -84,7 +86,7 @@ public class RuntimeInfo {
     }
 
     public MemoryUnit getDiskUnit() {
-        return this.diskUnit != null ? this.diskUnit : MemoryUnit.GIGABYTE;
+        return this.diskUnit != null ? this.diskUnit : MemoryUnit.GB;
     }
 
     public void setDiskUnit(MemoryUnit diskUnit) { this.diskUnit = diskUnit; }

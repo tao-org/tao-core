@@ -15,8 +15,9 @@
  */
 package ro.cs.tao.services.interfaces;
 
-import ro.cs.tao.persistence.exception.PersistenceException;
+import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.services.model.user.ResetPasswordInfo;
+import ro.cs.tao.user.Group;
 import ro.cs.tao.user.User;
 import ro.cs.tao.user.UserPreference;
 
@@ -28,6 +29,8 @@ import java.util.List;
  * @author Oana H.
  */
 public interface UserService extends TAOService {
+
+    List<Group> getGroups();
 
     void activateUser(String username) throws PersistenceException;
 

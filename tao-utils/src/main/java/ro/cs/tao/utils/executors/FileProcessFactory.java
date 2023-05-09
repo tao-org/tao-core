@@ -1,8 +1,10 @@
 package ro.cs.tao.utils.executors;
 
+import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.SftpATTRS;
 import com.jcraft.jsch.SftpException;
+import org.apache.commons.lang3.StringUtils;
 import ro.cs.tao.utils.FileUtilities;
 
 import java.io.*;
@@ -11,6 +13,9 @@ import java.net.UnknownHostException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Factory class for providing wrappers over file and process local or remote operations.
@@ -115,10 +120,12 @@ public class FileProcessFactory implements AutoCloseable {
         void cleanup(Path folder, Set<String> excludedExtensions, String... patterns) throws IOException;
         long size(Path path) throws IOException;
         long folderSize(Path folder) throws IOException;
+        long availableBytes(Path folder) throws IOException;
         List<String> readAllLines(Path file) throws IOException;
         void write(Path file, byte[] bytes) throws IOException;
         void ensurePermissions(Path path) throws IOException;
         void close();
+        List<Path> list(Path folder) throws IOException;
     }
 
     /**
@@ -189,11 +196,22 @@ public class FileProcessFactory implements AutoCloseable {
             Files.walkFileTree(folder, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    if ((patterns != null && Arrays.stream(patterns).anyMatch(p -> file.getFileName().toString().endsWith(p)))
+                    if ((patterns != null && Arrays.stream(patterns).anyMatch(p -> file.getFileName().toString().contains(p)))
                             || !excludedExtensions.contains(FileUtilities.getExtension(file.toFile()))) {
                         Files.delete(file);
                     }
                     return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                    if (patterns != null && Arrays.stream(patterns).anyMatch(p -> dir.getFileName().toString().contains(p))) {
+                        FileUtilities.deleteTree(dir);
+                        return FileVisitResult.SKIP_SUBTREE;
+                    } else {
+                        return excludedExtensions.contains(FileUtilities.getExtension(dir.toFile()))
+                               ? FileVisitResult.SKIP_SUBTREE : FileVisitResult.CONTINUE;
+                    }
                 }
 
                 @Override
@@ -208,7 +226,8 @@ public class FileProcessFactory implements AutoCloseable {
                         hasChildren = dirStream.iterator().hasNext();
                     }
                     if (!hasChildren) {
-                        cleanup(dir, excludedExtensions, patterns);
+                        Files.delete(dir);
+                        //cleanup(dir, excludedExtensions, patterns);
                     }
                     return FileVisitResult.CONTINUE;
                 }
@@ -223,6 +242,11 @@ public class FileProcessFactory implements AutoCloseable {
         @Override
         public long folderSize(Path folder) throws IOException {
             return FileUtilities.folderSize(folder);
+        }
+
+        @Override
+        public long availableBytes(Path folder) throws IOException {
+            return folder.toFile().getUsableSpace();
         }
 
         @Override
@@ -244,6 +268,13 @@ public class FileProcessFactory implements AutoCloseable {
         @Override
         public void close() {
             //NOOP
+        }
+
+        @Override
+        public List<Path> list(Path folder) throws IOException {
+            try (Stream<Path> stream = Files.list(folder)) {
+                return stream.collect(Collectors.toList());
+            }
         }
     }
     /**
@@ -271,47 +302,29 @@ public class FileProcessFactory implements AutoCloseable {
 
         public void deleteFile(Path file) throws IOException {
             //execute("/bin/bash", "-c", "\"rm -f " + file.toString() + "\"");
-            ChannelSftp channel = null;
-            try {
-                channel = (ChannelSftp) this.executor.open(SSHMode.SFTP);
-                channel.cd(file.getParent().toString());
-                channel.rm(file.getFileName().toString());
+            try (ChannelWrapper<ChannelSftp> channel = new ChannelWrapper<>(this.executor.open(SSHMode.SFTP))) {
+                channel.getChannel().cd(file.getParent().toString());
+                channel.getChannel().rm(file.getFileName().toString());
             } catch (Exception e) {
                 throw new IOException(e);
-            } finally {
-                if (channel != null) {
-                    channel.disconnect();
-                }
             }
         }
 
         public void deleteFolder(Path folder) throws IOException {
             //execute("/bin/bash", "-c", "\"rm -rf " + folder.toString() + "\"");
-            ChannelSftp channel = null;
-            try {
-                channel = (ChannelSftp) this.executor.open(SSHMode.SFTP);
-                deleteFolderInner(folder.toString(), channel);
+            try (ChannelWrapper<ChannelSftp> channel = new ChannelWrapper<>(this.executor.open(SSHMode.SFTP))) {
+                deleteFolderInner(folder.toString(), channel.getChannel());
             } catch (Exception e) {
                 throw new IOException(e);
-            } finally {
-                if (channel != null) {
-                    channel.disconnect();
-                }
             }
         }
 
         @Override
         public void cleanup(Path folder, Set<String> excludedExtensions, String... patterns) throws IOException {
-            ChannelSftp channel = null;
-            try {
-                channel = (ChannelSftp) this.executor.open(SSHMode.SFTP);
-                cleanup(folder.toString(), excludedExtensions, channel, patterns);
+            try (ChannelWrapper<ChannelSftp> channel = new ChannelWrapper<>(this.executor.open(SSHMode.SFTP))) {
+                cleanup(folder.toString(), excludedExtensions, channel.getChannel(), patterns);
             } catch (Exception e) {
                 throw new IOException(e);
-            } finally {
-                if (channel != null) {
-                    channel.disconnect();
-                }
             }
         }
 
@@ -339,7 +352,7 @@ public class FileProcessFactory implements AutoCloseable {
                 if (!item.getAttrs().isDir()) {
                     if (patterns == null && excludedExtensions == null) {
                         channel.rm(path + "/" + item.getFilename());
-                    } else if ((patterns != null && Arrays.stream(patterns).anyMatch(p -> item.getFilename().endsWith(p)))
+                    } else if ((patterns != null && Arrays.stream(patterns).anyMatch(p -> item.getFilename().contains(p)))
                             || !excludedExtensions.contains(item.getFilename().substring(item.getFilename().lastIndexOf('.')))) {
                         channel.rm(path + "/" + item.getFilename());
                     }
@@ -354,22 +367,16 @@ public class FileProcessFactory implements AutoCloseable {
         }
 
         public void move(Path source, Path destination) throws IOException {
-            ChannelSftp channel = null;
-            try {
-                channel = (ChannelSftp) this.executor.open(SSHMode.SFTP);
-                channel.rename(source.toString(), destination.toString());
+            try (ChannelWrapper<ChannelSftp> channel = new ChannelWrapper<>(this.executor.open(SSHMode.SFTP))) {
+                channel.getChannel().rename(source.toString(), destination.toString());
             } catch (Exception e) {
                 throw new IOException(e);
-            } finally {
-                if (channel != null) {
-                    channel.disconnect();
-                }
             }
         }
 
         public boolean exists(Path path) {
-            try {
-                execute("ls", path.toString());
+            try (ChannelWrapper<ChannelSftp> channel = new ChannelWrapper<>(this.executor.open(SSHMode.SFTP))) {
+                channel.getChannel().ls(path.toString());
                 return true;
             } catch (Exception e) {
                 return false;
@@ -378,53 +385,35 @@ public class FileProcessFactory implements AutoCloseable {
 
         @Override
         public boolean isDirectory(Path path) {
-            ChannelSftp channel = null;
-            try {
-                channel = (ChannelSftp) this.executor.open(SSHMode.SFTP);
-                channel.cd(path.getParent().toString());
+            try (ChannelWrapper<ChannelSftp> channel = new ChannelWrapper<>(this.executor.open(SSHMode.SFTP))) {
+                channel.getChannel().cd(path.getParent().toString());
                 final String fileName = path.getFileName().toString();
-                final SftpATTRS attrs = channel.lstat(fileName);
+                final SftpATTRS attrs = channel.getChannel().lstat(fileName);
                 return attrs.isDir();
             } catch (Exception e) {
                 return false;
-            }finally {
-                if (channel != null) {
-                    try {
-                        channel.disconnect();
-                    } catch (Exception ignored) {
-                    }
-                }
             }
         }
 
         public void ensureExists(Path path) throws IOException {
-            ChannelSftp channel = null;
-            try {
-                channel = (ChannelSftp) this.executor.open(SSHMode.SFTP);
+            try (ChannelWrapper<ChannelSftp> channel = new ChannelWrapper<>(this.executor.open(SSHMode.SFTP))) {
                 Path current = path.getRoot().resolve(path.getName(0));
-                channel.cd(current.toString());
+                channel.getChannel().cd(current.toString());
                 for (int i = 1; i < path.getNameCount(); i++) {
                     current = current.resolve(path.getName(i));
                     try {
-                        channel.ls(current.toString());
+                        channel.getChannel().ls(current.toString());
                     } catch (SftpException e) {
                         if (e.id == ChannelSftp.SSH_FX_NO_SUCH_FILE) {
-                            channel.mkdir(current.getFileName().toString());
+                            channel.getChannel().mkdir(current.getFileName().toString());
                         } else {
                             throw e;
                         }
                     }
-                    channel.cd(current.toString());
+                    channel.getChannel().cd(current.toString());
                 }
-            } catch (SftpException e) {
+            } catch (Exception e) {
                 throw new IOException(e);
-            } finally {
-                if (channel != null) {
-                    try {
-                        channel.disconnect();
-                    } catch (Exception ignored) {
-                    }
-                }
             }
         }
 
@@ -442,17 +431,8 @@ public class FileProcessFactory implements AutoCloseable {
         }
 
         private void copyFile(Path source, Path destination, ChannelSftp uploadChannel) throws Exception {
-            ChannelSftp downloadChannel = null;
-            try {
-                downloadChannel = (ChannelSftp) this.executor.open(SSHMode.SFTP);
-                downloadChannel.put(uploadChannel.get(source.toString()), destination.toString());
-            } finally {
-                if (downloadChannel != null) {
-                    try {
-                        downloadChannel.disconnect();
-                    } catch (Exception ignored) {
-                    }
-                }
+            try (ChannelWrapper<ChannelSftp> channel = new ChannelWrapper<>(this.executor.open(SSHMode.SFTP))) {
+                channel.getChannel().put(uploadChannel.get(source.toString()), destination.toString());
             }
         }
 
@@ -468,43 +448,50 @@ public class FileProcessFactory implements AutoCloseable {
 
         @Override
         public long size(Path path) throws IOException {
-            ChannelSftp channel = null;
-            try {
-                channel = (ChannelSftp) this.executor.open(SSHMode.SFTP);
-                return FileUtilities.size(path, channel);
-            } finally {
-                if (channel != null) {
-                    try {
-                        channel.disconnect();
-                    } catch (Exception ignored) {
-                    }
-                }
+            try (ChannelWrapper<ChannelSftp> channel = new ChannelWrapper<>(this.executor.open(SSHMode.SFTP))) {
+                return FileUtilities.size(path, channel.getChannel());
+            } catch (Exception e) {
+                throw new IOException(e);
             }
         }
 
         @Override
         public long folderSize(Path folder) throws IOException {
-            ChannelSftp channel = null;
-            try {
-                channel = (ChannelSftp) this.executor.open(SSHMode.SFTP);
-                return FileUtilities.size(folder, channel);
-            } finally {
-                if (channel != null) {
-                    try {
-                        channel.disconnect();
-                    } catch (Exception ignored) {
+            try (ChannelWrapper<ChannelSftp> channel = new ChannelWrapper<>(this.executor.open(SSHMode.SFTP))) {
+                return FileUtilities.size(folder, channel.getChannel());
+            } catch (Exception e) {
+                throw new IOException(e);
+            }
+        }
+
+        @Override
+        public long availableBytes(Path folder) throws IOException {
+            final String out = execute("df", "-h", folder.toString());
+            if (StringUtils.isNotEmpty(out)) {
+                final List<String> lines = Arrays.stream(out.split(" ")).filter(e -> e.length() > 0).collect(Collectors.toList());
+                int shift = 30;
+                int idx = lines.get(9).indexOf('G');
+                if (idx < 0) {
+                    idx = lines.get(9).indexOf('T');
+                    if (idx < 0) {
+                        idx = lines.get(9).indexOf('P');
+                        shift += 20;
+                    } else {
+                        shift += 10;
                     }
                 }
+                final String value = lines.get(9).substring(0, idx).trim();
+                return (value.contains(".") ? (long) Double.parseDouble(value) : Long.parseLong(value)) << shift;
+            } else {
+                return 0;
             }
         }
 
         @Override
         public List<String> readAllLines(Path file) throws IOException {
-            ChannelSftp channel = null;
-            try {
-                channel = (ChannelSftp) this.executor.open(SSHMode.SFTP);
-                channel.cd(file.getParent().toString());
-                try (InputStream stream = channel.get(file.getFileName().toString());
+            try (ChannelWrapper<ChannelSftp> channel = new ChannelWrapper<>(this.executor.open(SSHMode.SFTP))) {
+                channel.getChannel().cd(file.getParent().toString());
+                try (InputStream stream = channel.getChannel().get(file.getFileName().toString());
                      BufferedReader reader = new BufferedReader(new InputStreamReader(stream))) {
                     final List<String> result = new ArrayList<>();
                     for (; ; ) {
@@ -515,45 +502,28 @@ public class FileProcessFactory implements AutoCloseable {
                     }
                     return result;
                 }
-            } catch (SftpException e) {
+            } catch (Exception e) {
                 throw new IOException(e);
-            } finally {
-                if (channel != null) {
-                    try {
-                        channel.disconnect();
-                    } catch (Exception ignored) {
-                    }
-                }
             }
         }
 
         @Override
         public void write(Path file, byte[] bytes) throws IOException {
-            ChannelSftp channel = null;
-            try (InputStream stm = new ByteArrayInputStream(bytes)){
-                ensureExists(file.getParent());
-                channel = (ChannelSftp) this.executor.open(SSHMode.SFTP);
-                channel.cd(file.getParent().toString());
-                channel.put(stm, file.getFileName().toString());
-                channel.chmod(Integer.parseInt("777", 8), file.getFileName().toString());
-            } catch (SftpException e) {
+            try (InputStream stm = new ByteArrayInputStream(bytes);
+                 ChannelWrapper<ChannelSftp> channel = new ChannelWrapper<>(this.executor.open(SSHMode.SFTP))){
+                //ensureExists(file.getParent());
+                channel.getChannel().cd(file.getParent().toString());
+                channel.getChannel().put(stm, file.getFileName().toString());
+                channel.getChannel().chmod(Integer.parseInt("777", 8), file.getFileName().toString());
+            } catch (Exception e) {
                 throw new IOException(e);
-            } finally {
-                if (channel != null) {
-                    try {
-                        channel.disconnect();
-                    } catch (Exception ignored) {
-                    }
-                }
             }
         }
 
         @Override
         public void ensurePermissions(Path path) throws IOException {
-            ChannelSftp channel = null;
-            try {
-                channel = (ChannelSftp) this.executor.open(SSHMode.SFTP);
-                channel.cd(path.getParent().toString());
+            try (ChannelWrapper<ChannelSftp> channel = new ChannelWrapper<>(this.executor.open(SSHMode.SFTP))) {
+                channel.getChannel().cd(path.getParent().toString());
                 final String filePart = path.getFileName().toString();
                 /*if (uid != null) {
                     this.channel.chown(uid, filePart);
@@ -561,17 +531,9 @@ public class FileProcessFactory implements AutoCloseable {
                 if (gid != null) {
                     this.channel.chgrp(gid, filePart);
                 }*/
-                channel.chmod(Integer.parseInt("777", 8), filePart);
-            } catch (SftpException e) {
+                channel.getChannel().chmod(Integer.parseInt("777", 8), filePart);
+            } catch (Exception e) {
                 throw new IOException(e);
-            } finally {
-                if (channel != null) {
-                    try {
-                        channel.disconnect();
-                        //channel.getSession().disconnect();
-                    } catch (Exception ignored) {
-                    }
-                }
             }
         }
 
@@ -581,7 +543,26 @@ public class FileProcessFactory implements AutoCloseable {
             this.executor.close();
         }
 
-        private void execute(String...commands) throws IOException {
+        @Override
+        public List<Path> list(Path folder) throws IOException {
+            try (ChannelWrapper<ChannelSftp> sftpChannel = new ChannelWrapper<>(this.executor.open(SSHMode.SFTP))) {
+                final List<Path> files = new ArrayList<>();
+                ChannelSftp channel = sftpChannel.getChannel();
+                final String path = folder.toString();
+                channel.cd(path);
+                Vector<ChannelSftp.LsEntry> fileAndFolderList = channel.ls(path);
+                for (ChannelSftp.LsEntry item : fileAndFolderList) {
+                    if (!(".".equals(item.getFilename()) || "..".equals(item.getFilename()))) {
+                        files.add(folder.resolve(item.getFilename()));
+                    }
+                }
+                return files;
+            } catch (Exception e) {
+                throw new IOException(e);
+            }
+        }
+
+        private String execute(String...commands) throws IOException {
             this.executor.arguments.clear();
             this.accumulator.reset();
             this.executor.isStopped = false;
@@ -591,6 +572,7 @@ public class FileProcessFactory implements AutoCloseable {
                 if (retCode != 0) {
                     throw new IOException("[code " + retCode + "] " + this.accumulator.getOutput());
                 }
+                return this.accumulator.getOutput();
             } catch (Exception e) {
                 throw new IOException(e);
             }
@@ -634,6 +616,29 @@ public class FileProcessFactory implements AutoCloseable {
                 executor.setCertificate(token);
             }
             return executor;
+        }
+    }
+
+    private static class ChannelWrapper<T extends Channel> implements AutoCloseable {
+        private final T channel;
+
+        public ChannelWrapper(Channel channel) {
+            this.channel = (T) channel;
+        }
+
+        public T getChannel() {
+            return channel;
+        }
+
+        @Override
+        public void close() throws Exception {
+            if (channel != null) {
+                try {
+                    channel.disconnect();
+                    Logger.getLogger(FileProcessFactory.class.getName()).finest(String.format("Channel %d disconnected", channel.getId()));
+                } catch (Exception ignored) {
+                }
+            }
         }
     }
 }

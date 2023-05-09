@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class DockerHelper {
 
@@ -37,6 +38,7 @@ public class DockerHelper {
             }
         }
         isDockerFound = canUseDocker;
+        Logger.getLogger(DockerHelper.class.getName()).fine("Docker was " + (!isDockerFound ? "not " : "") + "found on system path");
     }
     public static boolean isDockerFound() { return isDockerFound; }
 
@@ -47,9 +49,9 @@ public class DockerHelper {
             arguments.add("docker");
             arguments.add("version");
             try {
-                Executor executor = ProcessExecutor.create(ExecutorType.PROCESS,
-                                                           InetAddress.getLocalHost().getHostName(),
-                                                           arguments);
+                Executor<?> executor = ProcessExecutor.create(ExecutorType.PROCESS,
+                                                              InetAddress.getLocalHost().getHostName(),
+                                                              arguments);
                 OutputAccumulator accumulator = new OutputAccumulator();
                 executor.setOutputConsumer(accumulator);
                 if (executor.execute(true) == 0) {

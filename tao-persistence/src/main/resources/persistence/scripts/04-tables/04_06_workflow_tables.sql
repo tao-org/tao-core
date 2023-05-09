@@ -50,6 +50,7 @@ CREATE TABLE workflow.graph
     zoom real NULL,
 	custom_values json NULL,
 	tags text NULL,
+	created_from_graph_id bigint,
 	active boolean NULL DEFAULT true
 );
 ALTER TABLE workflow.graph ADD CONSTRAINT PK_workflow PRIMARY KEY (id);
@@ -81,12 +82,14 @@ CREATE TABLE workflow.graph_node
 	behavior_id smallint NULL DEFAULT 1,
 	preserve_output boolean NULL DEFAULT true,
 	custom_values json NULL,
+	additional_info json NULL,
+	created_from_node_id bigint,
     -- special column used by JPA to distinguish which type of object is stored in one row (since this table holds 2 types of entities)
     discriminator integer NOT NULL
 );
 ALTER TABLE workflow.graph_node ADD CONSTRAINT PK_graph_node PRIMARY KEY (id);
 ALTER TABLE workflow.graph_node ADD CONSTRAINT FK_graph_node_workflow_graph
-	FOREIGN KEY (workflow_id) REFERENCES workflow.graph (id) ON DELETE No Action ON UPDATE No Action;
+	FOREIGN KEY (workflow_id) REFERENCES workflow.graph (id) ON DELETE CASCADE ON UPDATE No Action;
 ALTER TABLE workflow.graph_node ADD CONSTRAINT FK_graph_node_component_type
 	FOREIGN KEY (component_type_id) REFERENCES workflow.component_type (id) ON DELETE No Action ON UPDATE No Action;
 ALTER TABLE workflow.graph_node ADD CONSTRAINT FK_graph_node_node_behavior
@@ -107,9 +110,9 @@ CREATE TABLE workflow.graph_node_group_nodes
 ALTER TABLE workflow.graph_node_group_nodes ADD CONSTRAINT PK_graph_node_group_nodes
 	PRIMARY KEY (graph_node_group_id, graph_node_id);
 ALTER TABLE workflow.graph_node_group_nodes ADD CONSTRAINT FK_graph_node_group_nodes_graph_node_01
-	FOREIGN KEY (graph_node_group_id) REFERENCES workflow.graph_node (id) ON DELETE No Action ON UPDATE No Action;
+	FOREIGN KEY (graph_node_group_id) REFERENCES workflow.graph_node (id) ON DELETE CASCADE ON UPDATE No Action;
 ALTER TABLE workflow.graph_node_group_nodes ADD CONSTRAINT FK_graph_node_group_nodes_graph_node_02
-	FOREIGN KEY (graph_node_id) REFERENCES workflow.graph_node (id) ON DELETE No Action ON UPDATE No Action;
+	FOREIGN KEY (graph_node_id) REFERENCES workflow.graph_node (id) ON DELETE CASCADE ON UPDATE No Action;
 
 -------------------------------------------------------------------------------
 -- table: workflow.component_link
@@ -124,13 +127,13 @@ CREATE TABLE workflow.component_link
 );
 ALTER TABLE workflow.component_link ADD CONSTRAINT PK_component_link PRIMARY KEY (source_graph_node_id, target_graph_node_id, source_descriptor_id, target_descriptor_id);
 ALTER TABLE workflow.component_link ADD CONSTRAINT FK_component_link_graph_node_1
-	FOREIGN KEY (source_graph_node_id) REFERENCES workflow.graph_node (id) ON DELETE No Action ON UPDATE No Action;
+	FOREIGN KEY (source_graph_node_id) REFERENCES workflow.graph_node (id) ON DELETE CASCADE ON UPDATE No Action;
 ALTER TABLE workflow.component_link ADD CONSTRAINT FK_component_link_graph_node_2
-	FOREIGN KEY (target_graph_node_id) REFERENCES workflow.graph_node (id) ON DELETE No Action ON UPDATE No Action;
+	FOREIGN KEY (target_graph_node_id) REFERENCES workflow.graph_node (id) ON DELETE CASCADE ON UPDATE No Action;
 ALTER TABLE workflow.component_link ADD CONSTRAINT FK_component_link_source_descriptor
-	FOREIGN KEY (source_descriptor_id) REFERENCES component.source_descriptor (id) ON DELETE No Action ON UPDATE No Action;
+	FOREIGN KEY (source_descriptor_id) REFERENCES component.source_descriptor (id) ON DELETE CASCADE ON UPDATE No Action;
 ALTER TABLE workflow.component_link ADD CONSTRAINT FK_component_link_target_descriptor
-	FOREIGN KEY (target_descriptor_id) REFERENCES component.target_descriptor (id) ON DELETE No Action ON UPDATE No Action;
+	FOREIGN KEY (target_descriptor_id) REFERENCES component.target_descriptor (id) ON DELETE CASCADE ON UPDATE No Action;
 
 -------------------------------------------------------------------------------
 -- table: query
@@ -140,6 +143,7 @@ CREATE TABLE workflow.query
     id bigserial NOT NULL,
     label text,
 	user_id varchar(50) NOT NULL,
+	siteid varchar,
 	graph_node_id bigint,
 	component_id varchar(512),
 	sensor_name varchar(512) NOT NULL,
@@ -149,6 +153,7 @@ CREATE TABLE workflow.query
 	page_size integer NULL,
 	page_number integer NULL,
 	_limit integer NULL,  -- reserved word
+	coverage real NULL,
 	"values" json NULL,    -- reserved word
 	created timestamp NULL DEFAULT now(),
     modified timestamp NULL
@@ -160,9 +165,9 @@ ALTER TABLE workflow.query ADD CONSTRAINT U_query_label UNIQUE(label, user_id);
 ALTER TABLE workflow.query ADD CONSTRAINT FK_query_user
 	FOREIGN KEY (user_id) REFERENCES usr."user"(username) ON DELETE No Action ON UPDATE No Action;
 ALTER TABLE workflow.query ADD CONSTRAINT FK_query_graph_node
-	FOREIGN KEY (graph_node_id) REFERENCES workflow.graph_node(id) ON DELETE No Action ON UPDATE No Action;
+	FOREIGN KEY (graph_node_id) REFERENCES workflow.graph_node(id) ON DELETE CASCADE ON UPDATE No Action;
 ALTER TABLE workflow.query ADD CONSTRAINT FK_query_data_source_component
-    FOREIGN KEY (component_id) REFERENCES component.data_source_component (id) ON DELETE No Action ON UPDATE No Action;
+    FOREIGN KEY (component_id) REFERENCES component.data_source_component (id) ON DELETE CASCADE ON UPDATE No Action;
 DROP SEQUENCE IF EXISTS workflow.query_id_seq CASCADE;
 CREATE SEQUENCE workflow.query_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
 ALTER TABLE workflow.query ALTER COLUMN id SET DEFAULT nextval('workflow.query_id_seq');
@@ -186,4 +191,4 @@ CREATE SEQUENCE workflow.query_parameter_id_seq INCREMENT BY 1 MINVALUE 1 NO MAX
 ALTER TABLE workflow.query_parameter ALTER COLUMN id SET DEFAULT nextval('workflow.query_parameter_id_seq');
 ALTER SEQUENCE workflow.query_parameter_id_seq OWNED BY workflow.query_parameter.id;
 ALTER TABLE component.data_source_component_group_queries ADD CONSTRAINT FK_data_source_component_group_queries_2
-	FOREIGN KEY (query_id) REFERENCES workflow.query (id) ON DELETE No Action ON UPDATE No Action;
+	FOREIGN KEY (query_id) REFERENCES workflow.query (id) ON DELETE CASCADE ON UPDATE No Action;

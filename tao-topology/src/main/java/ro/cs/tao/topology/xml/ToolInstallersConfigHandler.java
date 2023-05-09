@@ -228,10 +228,10 @@ public class ToolInstallersConfigHandler extends DefaultHandler {
                 currentStep.setInvocationCommand(elementValue);
                 break;
             case "ignore_err":
-                currentStep.setIgnoreErr(Boolean.valueOf(elementValue));
+                currentStep.setIgnoreErr(Boolean.parseBoolean(elementValue));
                 break;
             case "execution_timeout":
-                currentStep.setExecutionTimeout(Integer.valueOf(elementValue));
+                currentStep.setExecutionTimeout(Integer.parseInt(elementValue));
                 break;
         }
     }

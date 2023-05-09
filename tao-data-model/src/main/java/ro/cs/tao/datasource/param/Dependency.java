@@ -18,6 +18,9 @@ package ro.cs.tao.datasource.param;
 import java.util.Map;
 
 /**
+ * A dependency introduces a relation between two query parameters, based on one's value and condition
+ * (for example: if parameter1 has value1 then parameter2 should have value2)
+ *
  * @author Cosmin Cara
  */
 public class Dependency<T extends Comparable, V extends Comparable> {

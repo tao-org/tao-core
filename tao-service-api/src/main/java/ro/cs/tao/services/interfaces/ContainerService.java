@@ -18,6 +18,7 @@ package ro.cs.tao.services.interfaces;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.docker.Application;
 import ro.cs.tao.docker.Container;
+import ro.cs.tao.docker.ContainerType;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -28,6 +29,12 @@ import java.util.List;
  * @author Cosmin Cara
  */
 public interface ContainerService extends CRUDService<Container, String> {
+
+    /**
+     * Returns a list of containers of the respective type
+     * @param type  The type of containers
+     */
+    List<Container> listByType(ContainerType type);
 
     /**
      * Updates database container information and its list of applications

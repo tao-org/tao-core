@@ -18,6 +18,7 @@ package ro.cs.tao.topology;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.SystemUtils;
 import ro.cs.tao.configuration.ConfigurationManager;
+import ro.cs.tao.docker.ExecutionConfiguration;
 import ro.cs.tao.topology.xml.ToolInstallersConfigHandler;
 import ro.cs.tao.topology.xml.ToolInstallersConfigParser;
 import ro.cs.tao.utils.executors.*;
@@ -42,8 +43,8 @@ import java.util.regex.Pattern;
  * @author Cosmin Udroiu
  */
 public class DefaultToolInstaller extends TopologyToolInstaller {
-    private List<ToolInstallConfig> toolInstallConfigs;
-    private String installToolsRootPath;
+    private final List<ToolInstallConfig> toolInstallConfigs;
+    private final String installToolsRootPath;
     private NodeDescription masterNodeInfo;
     protected static Logger logger = Logger.getLogger(DefaultToolInstaller.class.getName());
 
@@ -52,7 +53,9 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
         // extract the tools script dir to tao working dir
         extractResourceDir(taoWorkingDir, "tools_scripts");
 
-        final String toolInstallCfgFile = ConfigurationManager.getInstance().getValue("topology.tool_install_config");
+        //final String toolInstallCfgFile = ConfigurationManager.getInstance().getValue("topology.tool_install_config");
+        final String os = System.getProperty("os.name").toLowerCase();
+        final String toolInstallCfgFile = os.contains("ubuntu") ? "UbuntuInstallConfig.xml" : "CentOSInstallConfig.xml";
         InputStream is = this.getClass().getResourceAsStream(toolInstallCfgFile);
         this.toolInstallConfigs = ToolInstallersConfigParser.parse(is,
                 new ToolInstallersConfigHandler("tool_install_configurations"));
@@ -68,18 +71,18 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
     }
 
     @Override
-    public ToolInstallStatus installNewNode(NodeDescription info) throws TopologyException {
-        ToolInstallStatus installStatus = new ToolInstallStatus();
+    public ServiceInstallStatus installNewNode(NodeDescription info) throws TopologyException {
+        ServiceInstallStatus installStatus = ServiceInstallStatus.NODE_ADDED;
         for (ToolInstallConfig toolCfg : toolInstallConfigs) {
             try {
-                installStatus.setToolName(toolCfg.getName());
+                installStatus.setServiceName(toolCfg.getName());
                 invokeSteps(info, toolCfg, false);
                 installStatus.setStatus(ServiceStatus.INSTALLED);
             } catch (TopologyException tex) {
                 installStatus.setStatus(ServiceStatus.ERROR);
                 installStatus.setReason(tex.getMessage());
             }
-            info.addServiceStatus(new NodeServiceStatus(new ServiceDescription(installStatus.getToolName(),
+            info.addServiceStatus(new NodeServiceStatus(new ServiceDescription(installStatus.getServiceName(),
                 toolCfg.getVersion(),
                 toolCfg.getDescription()),
               installStatus.getStatus()));
@@ -88,11 +91,11 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
     }
 
     @Override
-    public ToolInstallStatus uninstallNode(NodeDescription info) throws TopologyException {
-        ToolInstallStatus installStatus = new ToolInstallStatus();
+    public ServiceInstallStatus uninstallNode(NodeDescription info) throws TopologyException {
+        ServiceInstallStatus installStatus = ServiceInstallStatus.NODE_REMOVED;
         for (ToolInstallConfig toolCfg : toolInstallConfigs) {
             try {
-                installStatus.setToolName(toolCfg.getName());
+                installStatus.setServiceName(toolCfg.getName());
                 invokeSteps(info, toolCfg, true);
                 installStatus.setStatus(ServiceStatus.UNINSTALLED);
             } catch (TopologyException tex) {
@@ -114,7 +117,7 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
             int retCode = doStepInvocation(info, steps, step);
             if (retCode != ToolInvocationCodes.OK) {
                 if (step.getIgnoreErr()) {
-                    logger.warning("Step [[" + step.getName() + "]] was not successful but the failure is ignored as configured!");
+                    logger.warning("Step [" + (step.getName() != null ? step.getName() : step.getInvocationCommand()) + "] was not successful but the failure is ignored as configured!");
                 } else {
                     throw new TopologyException(String.format("Tool %s installation failed with code %d",
                                                               toolCfg.getName(), retCode)) {{
@@ -180,12 +183,9 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
             default:
                 break;
         }
-        if (job != null) {
-            OutputConsumer consumer = new StepExecutionOutputConsumer(curStep);
-            // wait for execution timeout
-            return Executor.execute(consumer, curStep.getExecutionTimeout(), job);
-        }
-        return ToolInvocationCodes.INVALID_INVOCATION_TYPE;
+        OutputConsumer consumer = new StepExecutionOutputConsumer(curStep);
+        // wait for execution timeout
+        return Executor.execute(consumer, curStep.getExecutionTimeout(), job);
     }
 
     /**
@@ -208,6 +208,9 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
                     case ToolCommandsTokens.MASTER_PASS:
                         replacementStr = masterNodeInfo.getUserPass();
                         break;
+                    case ToolCommandsTokens.MASTER_SHARE:
+                        replacementStr = ConfigurationManager.getInstance().getValue("master.share.name", "/tao");
+                        break;
                     case ToolCommandsTokens.NODE_HOSTNAME:
                         replacementStr = info.getId();
                         break;
@@ -217,8 +220,11 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
                     case ToolCommandsTokens.NODE_PASSWORD:
                         replacementStr = info.getUserPass();
                         break;
+                    case ToolCommandsTokens.NODE_SHARE:
+                        replacementStr = ExecutionConfiguration.getWorkerContainerVolumeMap().getHostWorkspaceFolder();
+                        break;
                     case ToolCommandsTokens.NODE_PROCESSORS_CNT:
-                        replacementStr = String.valueOf(info.getProcessorCount());
+                        replacementStr = String.valueOf(info.getFlavor().getCpu());
                         break;
                     case ToolCommandsTokens.INSTALL_SCRIPTS_ROOT_PATH:
                         replacementStr = installToolsRootPath;
@@ -276,6 +282,7 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
         } else {
             try {
                 workingDirectory = Files.createTempDirectory("TAO").toString();
+                //workingDirectory = workingDirectory + "/TAO_" + new SimpleDateFormat("yyyyMMdd_HHmmss.SSS").format(new Date(System.currentTimeMillis()));
             } catch (IOException e) {
                 throw new TopologyException("Cannot create TAO temporary directory for Topology scripts");
             }

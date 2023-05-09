@@ -30,6 +30,16 @@ ALTER TABLE usr.user_status ALTER COLUMN id SET DEFAULT nextval('usr.user_status
 ALTER SEQUENCE usr.user_status_id_seq OWNED BY usr.user_status.id;
 
 -------------------------------------------------------------------------------
+-- table: usr.user_status
+DROP TABLE IF EXISTS usr.user_type CASCADE;
+CREATE TABLE usr.user_type
+(
+	id integer NOT NULL,
+	type varchar(250) NOT NULL
+);
+ALTER TABLE usr.user_type ADD CONSTRAINT PK_user_type PRIMARY KEY (id);
+
+-------------------------------------------------------------------------------
 -- table: usr.user
 DROP TABLE IF EXISTS usr."user" CASCADE;
 CREATE TABLE usr."user"
@@ -52,7 +62,8 @@ CREATE TABLE usr."user"
     memory_quota int NOT NULL DEFAULT 8192,
 	organization varchar(255) NOT NULL,
 	status_id integer NOT NULL,
-	external boolean NULL DEFAULT false,
+	-- external boolean NULL DEFAULT false,
+	user_type_id integer NOT NULL,
 	password_reset_key varchar(255) NULL,
 	created timestamp NULL DEFAULT now(),
 	expiration_date timestamp NULL,
@@ -62,6 +73,8 @@ ALTER TABLE usr."user" ADD CONSTRAINT PK_user PRIMARY KEY (id);
 ALTER TABLE usr."user" ADD CONSTRAINT UQ_user UNIQUE (username);
 ALTER TABLE usr."user" ADD CONSTRAINT FK_user_status
 	FOREIGN KEY (status_id) REFERENCES usr.user_status (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE usr."user" ADD CONSTRAINT FK_user_type
+    	FOREIGN KEY (user_type_id) REFERENCES usr.user_type (id) ON DELETE No Action ON UPDATE No Action;
 DROP SEQUENCE IF EXISTS usr.user_id_seq CASCADE;
 CREATE SEQUENCE usr.user_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
 ALTER TABLE usr."user" ALTER COLUMN id SET DEFAULT nextval('usr.user_id_seq');

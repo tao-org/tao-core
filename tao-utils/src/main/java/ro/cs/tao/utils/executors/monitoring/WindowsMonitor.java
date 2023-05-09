@@ -3,6 +3,7 @@ package ro.cs.tao.utils.executors.monitoring;
 import ro.cs.tao.utils.Triple;
 import ro.cs.tao.utils.executors.Executor;
 import ro.cs.tao.utils.executors.ExecutorType;
+import ro.cs.tao.utils.executors.MemoryUnit;
 import ro.cs.tao.utils.executors.RuntimeInfo;
 
 import java.time.Duration;
@@ -37,8 +38,8 @@ class WindowsMonitor extends ProcessActivityMonitor {
                         String[] tokens = Arrays.stream(message.split(" ")).filter(t -> !t.isEmpty()).toArray(String[]::new);
                         // values in kilobytes / second
                         Triple<LocalDateTime, Long, Long> newRecord = new Triple<>(LocalDateTime.now(),
-                                                                                   Long.parseLong(tokens[0]) / 1024,
-                                                                                   Long.parseLong(tokens[1]) / 1024);
+                                                                                   Long.parseLong(tokens[0]) / MemoryUnit.KB.value(),
+                                                                                   Long.parseLong(tokens[1]) / MemoryUnit.KB.value());
                         if (lastRecord != null) {
                             long seconds = Duration.between(lastRecord.getKeyOne(), newRecord.getKeyOne()).getSeconds();
                             if (seconds > 0) {

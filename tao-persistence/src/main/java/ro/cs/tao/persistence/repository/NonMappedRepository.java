@@ -7,10 +7,9 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import ro.cs.tao.Sort;
 import ro.cs.tao.SortDirection;
+import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.PersistenceManager;
-import ro.cs.tao.persistence.exception.PersistenceException;
 
-import javax.sql.DataSource;
 import java.sql.PreparedStatement;
 import java.util.List;
 import java.util.Map;
@@ -19,11 +18,13 @@ import java.util.function.Supplier;
 import java.util.logging.Logger;
 
 public abstract class NonMappedRepository<T, K> {
-    protected PersistenceManager persistenceManager;
+    protected final PersistenceManager persistenceManager;
+    protected final JdbcTemplate jdbcTemplate;
     protected final Logger logger = Logger.getLogger(getClass().getName());
 
     NonMappedRepository(PersistenceManager persistenceManager) {
         this.persistenceManager = persistenceManager;
+        this.jdbcTemplate = new JdbcTemplate(persistenceManager.getDataSource());
     }
 
     protected abstract RowMapper<T> rowMapper();
@@ -36,8 +37,6 @@ public abstract class NonMappedRepository<T, K> {
         if (whereStatement == null || key == null) {
             throw new PersistenceException("Argument cannot be null");
         }
-        DataSource dataSource = persistenceManager.getDataSource();
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         final String sql = selectSQL() + " WHERE " + whereStatement.get();
         try {
             return jdbcTemplate.queryForObject(sql, rowMapper(), key);
@@ -77,8 +76,6 @@ public abstract class NonMappedRepository<T, K> {
     public List<T> list(Supplier<String> whereStatement,
                         Function<PreparedStatement, PreparedStatement> parameterMapper,
                         Sort sort) throws PersistenceException {
-        DataSource dataSource = persistenceManager.getDataSource();
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         try {
             return jdbcTemplate.query(
                     connection -> {
@@ -105,8 +102,6 @@ public abstract class NonMappedRepository<T, K> {
         if (parameterMapper == null) {
             throw new PersistenceException("Argument cannot be null");
         }
-        DataSource dataSource = persistenceManager.getDataSource();
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         KeyHolder keyHolder = new GeneratedKeyHolder();
         try {
             jdbcTemplate.update(connection -> parameterMapper.apply(connection.prepareStatement(insertSQL())), keyHolder);
@@ -124,8 +119,6 @@ public abstract class NonMappedRepository<T, K> {
         if (whereStatement == null || key == null || parameterMapper == null) {
             throw new PersistenceException("Argument cannot be null");
         }
-        DataSource dataSource = persistenceManager.getDataSource();
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         try {
         return jdbcTemplate.update(
                 connection -> {
@@ -142,8 +135,6 @@ public abstract class NonMappedRepository<T, K> {
         if (whereStatement == null || key == null || parameterMapper == null) {
             throw new PersistenceException("Argument cannot be null");
         }
-        DataSource dataSource = persistenceManager.getDataSource();
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         try {
             return jdbcTemplate.update(
                     connection -> {

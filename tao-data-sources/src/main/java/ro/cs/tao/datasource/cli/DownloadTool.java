@@ -1,28 +1,28 @@
 package ro.cs.tao.datasource.cli;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import org.apache.commons.cli.*;
-import ro.cs.tao.ProgressListener;
+import org.locationtech.jts.geom.Geometry;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.configuration.ConfigurationProvider;
 import ro.cs.tao.datasource.*;
+import ro.cs.tao.datasource.param.CommonParameterNames;
 import ro.cs.tao.datasource.param.DataSourceParameter;
+import ro.cs.tao.datasource.param.QueryParameter;
 import ro.cs.tao.datasource.remote.FetchMode;
 import ro.cs.tao.eodata.EOProduct;
 import ro.cs.tao.eodata.Polygon2D;
-import ro.cs.tao.messaging.Message;
-import ro.cs.tao.messaging.Notifiable;
-import ro.cs.tao.messaging.TaskProgress;
-import ro.cs.tao.messaging.progress.*;
+import ro.cs.tao.serialization.GeometryAdapter;
+import ro.cs.tao.serialization.JsonMapper;
 import ro.cs.tao.utils.DateUtils;
 import ro.cs.tao.utils.NetUtils;
+import ro.cs.tao.utils.executors.monitoring.DownloadProgressListener;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.text.DateFormat;
 import java.time.LocalDate;
-import java.time.ZoneId;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -30,12 +30,11 @@ import java.util.stream.Collectors;
 public class DownloadTool {
     private static final Options options;
     private static final Set<String> specificArgs;
-    private static Notifiable progressMonitor;
+    //private static Notifiable progressMonitor;
 
     static {
         options = new Options();
-        ObjectMapper objectMapper = new ObjectMapper();
-        final ObjectReader jsonReader = objectMapper.readerFor(CliDescriptor.class);
+        final ObjectReader jsonReader = JsonMapper.instance().readerFor(CliDescriptor.class);
         try (InputStream inputStream = DownloadTool.class.getResourceAsStream("arguments.json")) {
             CliDescriptor descriptor = jsonReader.readValue(inputStream);
             final List<CliOptionGroup> groups = descriptor.getGroups();
@@ -53,7 +52,7 @@ public class DownloadTool {
             for (CliOption option : optionList) {
                 options.addOption(buildOption(option));
             }
-            progressMonitor = new ProgressMonitor();
+            //progressMonitor = new ProgressMonitor();
         } catch (IOException ex) {
             ex.printStackTrace();
             System.exit(-1);
@@ -64,7 +63,8 @@ public class DownloadTool {
     public static void main(String[] args) {
         if (args.length == 0) {
             HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp("download-tool", options);
+            formatter.setWidth(180);
+            formatter.printHelp("eo-search", options);
             System.exit(0);
         }
         CommandLineParser parser = new DefaultParser();
@@ -91,6 +91,9 @@ public class DownloadTool {
             case 1:
                 optionBuilder.hasArg(true);
                 break;
+            case 2:
+                //optionBuilder.hasArgs().numberOfArgs(option.getCardinality()).valueSeparator(option.getValueSeparator().charAt(0));
+                break;
             default:
                 optionBuilder.hasArgs().numberOfArgs(Option.UNLIMITED_VALUES).valueSeparator(option.getValueSeparator().charAt(0));
                 break;
@@ -102,9 +105,8 @@ public class DownloadTool {
         int retCode = ReturnCode.OK;
         try {
             if (commandLine.hasOption(Constants.HELP)) {
-                processHelp(commandLine.getOptionValues(Constants.HELP));
+                processHelp(commandLine.getArgs());
             } else {
-
                 specificArgs.addAll(Arrays.stream(commandLine.getOptions()).map(Option::getOpt).collect(Collectors.toSet()));
                 final ConfigurationProvider cfgManager = ConfigurationManager.getInstance();
                 final String targetFolder = getArgValue(commandLine, Constants.FOLDER, String.class,
@@ -169,16 +171,15 @@ public class DownloadTool {
                     tokens = parameter.split("=");
                     currentParameter = supportedParameters.get(tokens[0]);
                     if (currentParameter == null) {
-                        System.err.println(String.format("Parameter [%s] is not supported by the data source [%s - %s] and was ignored.",
-                                                         tokens[0], dataSourceName, satellite));
+                        System.err.printf("Parameter [%s] is not supported by the data source [%s - %s] and was ignored.%n",
+                                                         tokens[0], dataSourceName, satellite);
                         continue;
                     }
                     final Class<?> type = currentParameter.getType();
-                    if (Date.class.isAssignableFrom(type)) {
-                        query.addParameter(tokens[0], Date.from(LocalDate.parse(tokens[1],
-                                                                                DateTimeFormatter.ofPattern("yyyy-MM-dd"))
-                                                                        .atStartOfDay().atZone(ZoneId.systemDefault())
-                                                                        .toInstant()));
+                    if (LocalDate.class.isAssignableFrom(type)) {
+                        query.addParameter(tokens[0], LocalDate.parse(tokens[1], DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+                    } else if (LocalDateTime.class.isAssignableFrom(type)) {
+                        query.addParameter(tokens[0], LocalDateTime.parse(tokens[1], DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
                     } else if (Polygon2D.class.isAssignableFrom(type)) {
                         query.addParameter(tokens[0], Polygon2D.fromWKT(tokens[1]));
                     } else if (Integer.class.isAssignableFrom(type)) {
@@ -189,32 +190,76 @@ public class DownloadTool {
                         query.addParameter(tokens[0], tokens[1]);
                     }
                 }
-                final String format = getArgValue(commandLine, Constants.FORMAT, String.class, "text");
+                final String format = getArgValue(commandLine, Constants.FORMAT, String.class, "TEXT");
                 if (!("json".equalsIgnoreCase(format) || "text".equalsIgnoreCase(format))) {
                     System.err.println("Invalid value for parameter [format]");
                     System.exit(1);
                 }
                 final List<EOProduct> results = query.execute();
+                // If flagged, keep only products that cover the most of the AOI
+                if (getArgValue(commandLine, Constants.FULL_COVERAGE, Boolean.class, false)) {
+                    final QueryParameter<Polygon2D> footprintParam = (QueryParameter<Polygon2D>) query.getParameters().get(CommonParameterNames.FOOTPRINT);
+                    if (footprintParam != null) {
+                        final GeometryAdapter geometryAdapter = new GeometryAdapter();
+                        final Geometry footprint = geometryAdapter.marshal(footprintParam.getValue().toWKT());
+                        if (results != null && results.size() > 0) {
+                            int maxIntersection = results.stream().mapToInt(p -> {
+                                try {
+                                    final String geometry = p.getGeometry();
+                                    if (geometry != null) {
+                                        Geometry productGeometry = geometryAdapter.marshal(geometry);
+                                        return (int) (productGeometry.intersection(footprint).getArea() / productGeometry.getArea() * 100);
+                                    }
+                                    return 0;
+                                } catch (Exception e) {
+                                    System.err.printf("Geometry error for product %s: %s%n", p.getName(), e.getMessage());
+                                    return 0;
+                                }
+                            }).max().getAsInt();
+                            results.removeIf(p -> {
+                                try {
+                                    final String geometry = p.getGeometry();
+                                    if (geometry != null) {
+                                        Geometry productGeometry = geometryAdapter.marshal(geometry);
+                                        return (int) (productGeometry.intersection(footprint).getArea() / productGeometry.getArea() * 100) < maxIntersection;
+                                    }
+                                    return true;
+                                } catch (Exception e) {
+                                    System.err.printf("Geometry error for product %s: %s%n", p.getName(), e.getMessage());
+                                    return true;
+                                }
+                            });
+                        }
+                    }
+                }
+                // If flagged, keep only the latest product from the results
+                if (getArgValue(commandLine, Constants.LATEST, Boolean.class, false)) {
+                    if (results != null && results.size() > 0) {
+                        EOProduct last = results.get(results.size() - 1);
+                        results.clear();
+                        results.add(last);
+                    }
+                }
                 if (queryOnly) {
                     if (results == null || results.size() == 0) {
                         System.out.println("No results");
                     } else {
-                        final DateFormat dateFormat = DateUtils.getFormatterAtUTC("yyyy-MM-dd");
+                        final DateTimeFormatter dateFormat = DateUtils.getFormatterAtUTC("yyyy-MM-dd");
                         if ("text".equalsIgnoreCase(format)) {
                             for (EOProduct result : results) {
                                 System.out.println("name=" + result.getName() + "; date=" + dateFormat.format(result.getAcquisitionDate()) + "; url=" + result.getLocation());
                             }
                         } else if ("json".equalsIgnoreCase(format)) {
-                            System.out.println(new ObjectMapper().writer().writeValueAsString(results));
+                            System.out.println(JsonMapper.instance().writer().writeValueAsString(results));
                         }
                     }
                 } else {
-                    dsComponent.setProgressListener(new ProgressListener() {
+                    dsComponent.setProgressListener(new DownloadProgressListener() {
                         private String current;
                         @Override
                         public void started(String taskName) {
                             current = taskName;
-                            System.out.print("Started " + current);
+                            System.out.print("\r" + current + ": 0.00%");
                         }
 
                         @Override
@@ -227,12 +272,19 @@ public class DownloadTool {
 
                         @Override
                         public void ended() {
-                            System.out.print("\rCompleted " + current);
+                            System.out.print("\rCompleted " + targetFolder + File.separator +  current + "\r\n");
                         }
 
                         @Override
                         public void notifyProgress(double progressValue) {
                             System.out.print("\r" + current + ": " + String.format("%.2f%% ", progressValue * 100));
+                        }
+
+                        @Override
+                        public void notifyProgress(double progressValue, double transferSpeed) {
+                            System.out.print("\r" + current + ": " + String.format("%.2f%%, %.2fMB/s",
+                                                                                   progressValue * 100,
+                                                                                   transferSpeed));
                         }
 
                         @Override
@@ -243,10 +295,10 @@ public class DownloadTool {
                         public void notifyProgress(String subTaskName, double subTaskProgress, double overallProgress) {
                         }
                     });
-                    System.out.printf("Found %d products%n", results.size());
+                    System.out.printf("Retained %d products%n", results.size());
                     final Properties properties = new Properties();
                     properties.put("auto.uncompress", "false");
-                    properties.put("progress.interval", "10000");
+                    properties.put("progress.interval", "3000");
                     dataSource.getProductFetchStrategy(satellite).addProperties(properties);
                     dsComponent.doFetch(results, null, targetFolder, null, properties);
                 }
@@ -273,17 +325,29 @@ public class DownloadTool {
             if (!cmd.hasOption(argName)) {
                 return null;
             } else {
-                final String value = String.join(" ", cmd.getOptionValues(argName));
+                final String value = String.join(" ", cmd.getOptionValues(argName)).trim();
                 final List<String> optionValues = new ArrayList<>();
                 final List<Integer> indices = new ArrayList<>();
-                int currentIdx = value.indexOf('=');
+                /*int currentIdx = value.indexOf('=');
                 while (currentIdx > 0) {
                     indices.add(Math.max(value.lastIndexOf(' ', currentIdx), 0));
                     currentIdx = value.indexOf('=', currentIdx + 1);
+                }*/
+                int currentIdx = value.lastIndexOf('=');
+                indices.add(value.length());
+                while (currentIdx > 0) {
+                    if (value.lastIndexOf(' ', currentIdx) > 0) {
+                        indices.add(value.lastIndexOf(' ', currentIdx));
+                    }
+                    currentIdx = value.lastIndexOf('=', currentIdx - 1);
                 }
+                indices.add(0);
                 for (int i = 1; i < indices.size(); i++) {
-                    optionValues.add(value.substring(indices.get(i -1), indices.get(i)).trim());
+                    optionValues.add(value.substring(indices.get(i), indices.get(i - 1)).trim());
                 }
+                /*for (int i = 0; i < tokens.length; i++) {
+                    optionValues
+                }*/
                 //optionValues.add(value.substring(indices.size() - 1).trim());
                 if (Boolean.class.isAssignableFrom(elementClass)) {
                     return optionValues.stream().map(v -> elementClass.cast(Boolean.parseBoolean(v))).collect(Collectors.toList());
@@ -341,11 +405,11 @@ public class DownloadTool {
                     for (String sensor : supportedSensors) {
                         System.out.println(sensor);
                     }
-                } else{
-                    final List<String> names = dataSourceManager.getNames(values[0]);
-                    System.out.println("Repositories for " + values[0]);
-                    for (String name : names) {
-                        System.out.println(name + " @ " + dataSourceManager.get(values[0], name).getConnectionString(values[0]));
+                } else if (Constants.REPOSITORY.equals(values[0])) {
+                    final Set<DataSource<?, ?>> dataSources = dataSourceManager.getRegisteredDataSources();
+                    System.out.println("Supported repositories:");
+                    for (DataSource<?, ?> ds : dataSources) {
+                        System.out.println(ds.getId() + " @ " + ds.getConnectionString());
                     }
                 }
                 break;
@@ -371,7 +435,7 @@ public class DownloadTool {
                     }
                     lineBuilder.append(" ");
                     line = "--" + parameter.getName() + " <" + parameter.getType().getSimpleName().toLowerCase() + ">";
-                    line = String.format("%1$-30s", line);
+                    line = String.format("%1$-60s", line);
                     descBuilder.append(line).append(parameter.getLabel()).append(".");
                     final Object[] valueSet = parameter.getValueSet();
                     if (valueSet != null) {
@@ -386,14 +450,14 @@ public class DownloadTool {
                     }
                     descBuilder.append("\n");
                 }
-                System.out.println(lineBuilder.toString());
-                System.out.println(descBuilder.toString());
+                System.out.println(lineBuilder);
+                System.out.println(descBuilder);
                 lineBuilder.setLength(0);
                 descBuilder.setLength(0);
         }
     }
 
-    private static class ProgressMonitor extends Notifiable {
+    /*private static class ProgressMonitor extends Notifiable {
         private final static String SIMPLE_MESSAGE = "%s: %.2f%%\r";
         private final static String MEDIUM_MESSAGE = "%s[%s]: %.2f%%\r";
         private final static String DETAIL_MESSAGE = "%s[%s]: %.2f%%[%.2f%%]\r";
@@ -413,7 +477,7 @@ public class DownloadTool {
                 ActivityStartMessage casted = (ActivityStartMessage) message;
                 taskName = ((ActivityStartMessage) message).getTaskName();
                 current = new TaskProgress(taskName, category, 0.0);
-                System.out.print(String.format(SIMPLE_MESSAGE, taskName, current.getProgress()));
+                System.out.printf(SIMPLE_MESSAGE, taskName, current.getProgress());
             } else if (message instanceof SubActivityStartMessage) {
                 SubActivityStartMessage casted = (SubActivityStartMessage) message;
                 taskName = casted.getTaskName();
@@ -423,38 +487,38 @@ public class DownloadTool {
                     current = new TaskProgress(taskName, category, current.getProgress(), casted.getSubTaskName(), 0.0);
                 }
                 if (Double.compare(current.getProgress(), 0.0) != 0) {
-                    System.out.print(String.format(DETAIL_MESSAGE, taskName, casted.getSubTaskName(), current.getProgress() * 100, 0.0));
+                    System.out.printf(DETAIL_MESSAGE, taskName, casted.getSubTaskName(), current.getProgress() * 100, 0.0);
                 } else {
-                    System.out.print(String.format(MEDIUM_MESSAGE, taskName, casted.getSubTaskName(), current.getProgress() * 100));
+                    System.out.printf(MEDIUM_MESSAGE, taskName, casted.getSubTaskName(), current.getProgress() * 100);
                 }
             } else if (message instanceof SubActivityEndMessage) {
                 SubActivityEndMessage casted = (SubActivityEndMessage) message;
                 taskName = casted.getTaskName();
                 current = new TaskProgress(taskName, category, current.getProgress(), casted.getSubTaskName(), 100.0);
                 if (Double.compare(current.getProgress(), 0.0) != 0) {
-                    System.out.print(String.format(DETAIL_MESSAGE, taskName, casted.getSubTaskName(), current.getProgress() * 100, 100.0));
+                    System.out.printf(DETAIL_MESSAGE, taskName, casted.getSubTaskName(), current.getProgress() * 100, 100.0);
                 } else {
-                    System.out.print(String.format(MEDIUM_MESSAGE, taskName, casted.getSubTaskName(), 100.0));
+                    System.out.printf(MEDIUM_MESSAGE, taskName, casted.getSubTaskName(), 100.0);
                 }
             } else if (message instanceof SubActivityProgressMessage) {
                 SubActivityProgressMessage casted = (SubActivityProgressMessage) message;
                 taskName = casted.getTaskName();
                 this.current = new TaskProgress(taskName, category, casted.getTaskProgress(), casted.getSubTaskName(), casted.getSubTaskProgress());
                 if (Double.compare(current.getProgress(), 0.0) != 0) {
-                    System.out.print(String.format(DETAIL_MESSAGE, taskName, casted.getSubTaskName(), current.getProgress() * 100, current.getSubTaskProgress().getValue() * 100));
+                    System.out.printf(DETAIL_MESSAGE, taskName, casted.getSubTaskName(), current.getProgress() * 100, current.getSubTaskProgress().getValue() * 100);
                 } else {
-                    System.out.print(String.format(MEDIUM_MESSAGE, taskName, casted.getSubTaskName(), current.getSubTaskProgress().getValue() * 100));
+                    System.out.printf(MEDIUM_MESSAGE, taskName, casted.getSubTaskName(), current.getSubTaskProgress().getValue() * 100);
                 }
             } else if (message instanceof ActivityProgressMessage) {
                 ActivityProgressMessage casted = (ActivityProgressMessage) message;
                 taskName = casted.getTaskName();
                 this.current = new TaskProgress(taskName, category, casted.getProgress());
-                System.out.print(String.format(SIMPLE_MESSAGE, taskName, current.getProgress() * 100));
+                System.out.printf(SIMPLE_MESSAGE, taskName, current.getProgress() * 100);
             } else if (message instanceof ActivityEndMessage) {
                 ActivityEndMessage casted = (ActivityEndMessage) message;
                 taskName = casted.getTaskName();
-                System.out.println(String.format(END_MESSAGE, taskName, 100.0));
+                System.out.printf((END_MESSAGE) + "%n", taskName, 100.0);
             }
         }
-    }
+    }*/
 }
