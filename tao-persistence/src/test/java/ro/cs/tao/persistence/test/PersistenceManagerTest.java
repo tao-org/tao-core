@@ -104,7 +104,7 @@ public class PersistenceManagerTest {
                 handler.setLevel(Level.INFO);
             }
             AbstractDataSource<SciHubDataQuery> dataSource = new SciHubDataSource();
-            dataSource.setCredentials("kraftek", "cei7pitici.");
+            dataSource.setCredentials("", "");
 
             List<DataSourceType> savedDataSourceTypes = persistenceManager.getDataSourceTypes();
 
@@ -141,7 +141,7 @@ public class PersistenceManagerTest {
                 handler.setLevel(Level.INFO);
             }
             DataSource dataSource = getDatasourceRegistry().getService(SciHubDataSource.class.getName());
-            dataSource.setCredentials("kraftek", "cei7pitici.");
+            dataSource.setCredentials("", "");
             String[] sensors = dataSource.getSupportedSensors();
 
             DataQuery query = dataSource.createQuery(sensors[1]);

@@ -1,3 +1,4 @@
+/*
 package ro.cs.tao.services.model.datasource;
 
 public class ParameterDescriptor {
@@ -75,3 +76,4 @@ public class ParameterDescriptor {
         this.valueSet = valueSet;
     }
 }
+*/
