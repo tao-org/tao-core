@@ -13,7 +13,7 @@ public class JobQueueWorker extends Thread {
     private final Logger logger;
     private final int maxJobs;
     private final Object monitor;
-    private final Orchestrator orchestrator;
+    private Orchestrator orchestrator;
     private volatile boolean paused;
     private volatile boolean stopped;
 
@@ -23,7 +23,10 @@ public class JobQueueWorker extends Thread {
         this.logger = Logger.getLogger(JobQueueWorker.class.getName());
         this.maxJobs = NodeManager.getInstance().getActiveNodes() * 2;
         this.monitor = new Object();
-        this.orchestrator = Orchestrator.getInstance();
+    }
+
+    public void setOrchestrator(Orchestrator instance) {
+        this.orchestrator = instance;
     }
 
     @Override

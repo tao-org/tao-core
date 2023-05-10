@@ -161,6 +161,7 @@ public class Orchestrator extends Notifiable {
         this.userProvider = bridgedServices.getService(UserProvider.class);
         this.jobQueue = new JobQueue(this.jobProvider);
         this.jobQueueWorker = new JobQueueWorker(this.jobQueue);
+        this.jobQueueWorker.setOrchestrator(this);
         this.activeJobs = new AtomicInteger(0);
         try {
             final NodeDescription masterNode = bridgedServices.getService(NodeProvider.class).get(Inet4Address.getLocalHost().getHostName());
