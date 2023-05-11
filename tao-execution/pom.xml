@@ -4,51 +4,52 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>tao-core</artifactId>
-        <groupId>ro.cs.tao</groupId>
+        <groupId>ro.c-s.tao</groupId>
         <version>1.4.3</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>tao-execution</artifactId>
     <name>TAO Execution Base</name>
+    <description>Module handling the execution of local and remote processes</description>
     <dependencies>
         <dependency>
-            <groupId>ro.cs.tao</groupId>
+            <groupId>ro.c-s.tao</groupId>
             <artifactId>tao-data-model</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>ro.cs.tao</groupId>
+            <groupId>ro.c-s.tao</groupId>
             <artifactId>tao-data-sources</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>ro.cs.tao</groupId>
+            <groupId>ro.c-s.tao</groupId>
             <artifactId>tao-execution-model</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>ro.cs.tao</groupId>
+            <groupId>ro.c-s.tao</groupId>
             <artifactId>tao-service-registry</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>ro.cs.tao</groupId>
+            <groupId>ro.c-s.tao</groupId>
             <artifactId>tao-topology</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>ro.cs.tao</groupId>
+            <groupId>ro.c-s.tao</groupId>
             <artifactId>tao-spring-bridge</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>ro.cs.tao</groupId>
+            <groupId>ro.c-s.tao</groupId>
             <artifactId>tao-drmaa-api</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>ro.cs.tao</groupId>
+            <groupId>ro.c-s.tao</groupId>
             <artifactId>tao-quota</artifactId>
             <version>${project.version}</version>
         </dependency>

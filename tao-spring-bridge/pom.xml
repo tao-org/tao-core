@@ -4,13 +4,14 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>tao-core</artifactId>
-        <groupId>ro.cs.tao</groupId>
+        <groupId>ro.c-s.tao</groupId>
         <version>1.4.3</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>tao-spring-bridge</artifactId>
     <name>TAO Spring Bridge</name>
+    <description>Bridge between the TAO core (Spring-agnostic) and Spring framework</description>
     <packaging>jar</packaging>
 
     <dependencies>
@@ -25,7 +26,7 @@
             <version>${spring.version}</version>
         </dependency>
         <dependency>
-            <groupId>ro.cs.tao</groupId>
+            <groupId>ro.c-s.tao</groupId>
             <artifactId>tao-data-model</artifactId>
             <version>${project.version}</version>
         </dependency>
