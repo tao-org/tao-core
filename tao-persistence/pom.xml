@@ -3,13 +3,14 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<parent>
 		<artifactId>tao-core</artifactId>
-		<groupId>ro.cs.tao</groupId>
+		<groupId>ro.c-s.tao</groupId>
 		<version>1.4.3</version>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 
 	<artifactId>tao-persistence</artifactId>
 	<name>TAO Database Persistence</name>
+	<description>Database access module</description>
 	<packaging>jar</packaging>
 
 	<properties>
@@ -21,12 +22,12 @@
 
 		<!-- TAO modules -->
 		<dependency>
-			<groupId>ro.cs.tao</groupId>
+			<groupId>ro.c-s.tao</groupId>
 			<artifactId>tao-data-model</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>ro.cs.tao</groupId>
+			<groupId>ro.c-s.tao</groupId>
 			<artifactId>tao-execution-model</artifactId>
 			<version>${project.version}</version>
 		</dependency>
@@ -90,7 +91,7 @@
 		<dependency>
 			<groupId>org.hibernate.validator</groupId>
 			<artifactId>hibernate-validator</artifactId>
-			<version>6.1.0.Final</version>
+			<version>6.1.3.Final</version>
 		</dependency>
 
 		<dependency>

@@ -5,18 +5,19 @@
 
     <parent>
         <artifactId>tao-core</artifactId>
-        <groupId>ro.cs.tao</groupId>
+        <groupId>ro.c-s.tao</groupId>
         <version>1.4.3</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>tao-drmaa-api</artifactId>
     <name>TAO DRMAA API</name>
+    <description>Core module for DRMAA API implementation</description>
     <packaging>jar</packaging>
 
     <dependencies>
         <dependency>
-            <groupId>ro.cs.tao</groupId>
+            <groupId>ro.c-s.tao</groupId>
             <artifactId>tao-service-registry</artifactId>
             <version>${project.version}</version>
         </dependency>
