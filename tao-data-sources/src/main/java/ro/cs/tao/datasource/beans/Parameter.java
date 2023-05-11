@@ -37,6 +37,7 @@ public class Parameter {
     private String type;
     private String value;
     private String[] valueSet;
+    private boolean required;
 
     public Parameter() { }
 
@@ -45,12 +46,26 @@ public class Parameter {
         this.type = type;
         this.value = value;
     }
+    public Parameter(String name, String type, String value, boolean required) {
+        this.name = name;
+        this.type = type;
+        this.value = value;
+        this.required = required;
+    }
 
     public Parameter(String name, String type, String value, String[] valueSet) {
         this.name = name;
         this.type = type;
         this.value = value;
         this.valueSet = valueSet;
+    }
+
+    public Parameter(String name, String type, String value, String[] valueSet, boolean required) {
+        this.name = name;
+        this.type = type;
+        this.value = value;
+        this.valueSet = valueSet;
+        this.required = required;
     }
 
     @XmlElement(name = "name")
@@ -64,6 +79,10 @@ public class Parameter {
     @XmlElement(name = "value")
     public String getValue() { return value; }
     public void setValue(String value) { this.value = value; }
+
+    @XmlElement(name = "required")
+    public boolean getRequired() { return required; }
+    public void setRequired(boolean required) { this.required = required; }
 
     @XmlElement(name = "valueSet")
     public String[] getValueSet() { return valueSet; }

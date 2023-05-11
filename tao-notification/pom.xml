@@ -4,17 +4,18 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>tao-core</artifactId>
-        <groupId>ro.cs.tao</groupId>
+        <groupId>ro.c-s.tao</groupId>
         <version>1.4.3</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>tao-notification</artifactId>
     <name>TAO Notifications</name>
+    <description>Module handling the asynchronous messaging between framework components and services</description>
 
     <dependencies>
         <dependency>
-            <groupId>ro.cs.tao</groupId>
+            <groupId>ro.c-s.tao</groupId>
             <artifactId>tao-service-registry</artifactId>
             <version>${project.version}</version>
         </dependency>
