@@ -58,6 +58,8 @@ public enum JavaType implements TaoEnum<Class<?>> {
 
     public String ogcURN() { return this.ogcURN; }
 
+    public Function<String, Object> getConverter() { return this.converter; }
+
     public Object parse(String value) {
         if (this.clazz.isArray()) {
             throw new IllegalArgumentException("Method should not be called on an array type");
