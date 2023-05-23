@@ -171,7 +171,7 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
     @Resource
     private Environment environment;
 
-    private List<ComboPooledDataSource> createdBeans = new ArrayList<>();
+    private final List<ComboPooledDataSource> createdBeans = new ArrayList<>();
 
     /**
      * Empty constructor
@@ -214,8 +214,8 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
                 logger.log(Level.SEVERE, "Database connection cannot be established!");
             } else {
                 String[] jdbcUrlTokens = dataSource.getJdbcUrl().split(":");
-                logger.fine(String.format("Using %s as database driver to connect to '%s'",
-                                          dataSource.getDriverClass(), jdbcUrlTokens[2]));
+                logger.fine(String.format("Using %s as database driver to connect to '%s:%s'",
+                                          dataSource.getDriverClass(), jdbcUrlTokens[2], jdbcUrlTokens[3]));
                 connection.close();
             }
         } catch (SQLException | IllegalStateException | PropertyVetoException e) {
@@ -253,8 +253,9 @@ public class DatabaseConfiguration implements ApplicationListener<ContextClosedE
           .setPackagesToScan(environment.getRequiredProperty(PROPERTY_NAME_ENTITYMANAGER_PACKAGES_TO_SCAN));
         entityManagerFactoryBean.setPersistenceProviderClass(HibernatePersistenceProvider.class);
         entityManagerFactoryBean.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
-        entityManagerFactoryBean.setPersistenceXmlLocation("classpath:META-INF/persistence.xml");
+        //entityManagerFactoryBean.setPersistenceXmlLocation("classpath:META-INF/persistence.xml");
         entityManagerFactoryBean.setPersistenceUnitName("tao");
+        entityManagerFactoryBean.setMappingResources("META-INF/common_orm.xml", "META-INF/eo_orm.xml");
 
         final Properties jpaProperties = new Properties();
         jpaProperties.put(PROPERTY_NAME_HIBERNATE_DIALECT,
