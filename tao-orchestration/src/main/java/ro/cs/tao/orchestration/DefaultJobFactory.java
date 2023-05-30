@@ -685,7 +685,7 @@ public class DefaultJobFactory {
         if (values != null) {
             values.forEach(v -> params.put(v.getKey(), v.getValue()));
         }
-        if (original instanceof ProcessingExecutionTask) {
+        if (original instanceof ProcessingExecutionTask && !(original instanceof ScriptTask)) {
             clone = createProcessingExecutionTask(node, node.getIncomingLinks(), params);
         } else if (original instanceof WPSExecutionTask) {
             clone = createWPSComponentExecutionTask(node, node.getIncomingLinks(), params);
