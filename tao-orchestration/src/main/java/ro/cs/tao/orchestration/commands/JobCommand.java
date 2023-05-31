@@ -27,6 +27,7 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Class encapsulating the desired status of an execution job and the action to get there.
@@ -75,7 +76,9 @@ public abstract class JobCommand {
         if (job != null) {
             ExecutionStatus currentStatus = job.getExecutionStatus();
             if (!this.allowedStates.contains(currentStatus)) {
-                throw new ExecutionException("Invalid job state");
+                throw new ExecutionException(String.format("Invalid job state. Expected %s, found %s",
+                                                           this.allowedStates.stream().map(Enum::name).collect(Collectors.joining(",")),
+                                                           currentStatus.name()));
             }
             try {
                 job.setExecutionStatus(this.requestedStatus);
@@ -103,7 +106,7 @@ public abstract class JobCommand {
         }
         @Override
         protected Set<ExecutionStatus> getAllowedStates() {
-            return new HashSet<ExecutionStatus>() {{
+            return new HashSet<>() {{
                 add(ExecutionStatus.UNDETERMINED);
             }};
         }
@@ -140,7 +143,7 @@ public abstract class JobCommand {
         }
         @Override
         protected Set<ExecutionStatus> getAllowedStates() {
-            return new HashSet<ExecutionStatus>() {{
+            return new HashSet<>() {{
                 add(ExecutionStatus.UNDETERMINED);
                 add(ExecutionStatus.QUEUED_ACTIVE);
                 add(ExecutionStatus.RUNNING);
@@ -170,7 +173,7 @@ public abstract class JobCommand {
         }
         @Override
         protected Set<ExecutionStatus> getAllowedStates() {
-            return new HashSet<ExecutionStatus>() {{
+            return new HashSet<>() {{
                 add(ExecutionStatus.RUNNING);
             }};
         }
@@ -195,7 +198,7 @@ public abstract class JobCommand {
         }
         @Override
         protected Set<ExecutionStatus> getAllowedStates() {
-            return new HashSet<ExecutionStatus>() {{
+            return new HashSet<>() {{
                 add(ExecutionStatus.SUSPENDED);
             }};
         }

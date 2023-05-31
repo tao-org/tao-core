@@ -6,8 +6,8 @@ import java.util.Queue;
 
 public class FileQueue<E> extends FileBackedCollection<E, Queue<E>> implements Queue<E> {
 
-    public FileQueue(Path file) {
-        super(file);
+    public FileQueue(Path file, Class<E> elementClass) {
+        super(file, elementClass);
     }
 
     @Override

@@ -24,8 +24,12 @@ import java.util.Objects;
  * @author Cosmin Cara
  */
 public class Tuple<T,V> {
-    private final T keyOne;
-    private final V keyTwo;
+    private T keyOne;
+    private V keyTwo;
+
+    public Tuple() {
+
+    }
 
     public Tuple(T keyOne, V keyTwo) {
         if (keyOne == null) {
@@ -37,6 +41,14 @@ public class Tuple<T,V> {
 
     public T getKeyOne() { return keyOne; }
     public V getKeyTwo() { return keyTwo; }
+
+    public void setKeyOne(T keyOne) {
+        this.keyOne = keyOne;
+    }
+
+    public void setKeyTwo(V keyTwo) {
+        this.keyTwo = keyTwo;
+    }
 
     @Override
     public String toString() {

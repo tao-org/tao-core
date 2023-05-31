@@ -38,6 +38,7 @@ public class JobQueueWorker extends Thread {
     @Override
     public void interrupt() {
         this.stopped = true;
+        logger.warning("Job queue worker stopped");
         super.interrupt();
     }
 
@@ -64,20 +65,26 @@ public class JobQueueWorker extends Thread {
                 } else {
                     if (this.orchestrator.getActiveJobsCount() >= this.maxJobs) {
                         synchronized (this.monitor) {
+                            logger.finest(String.format("Job queue has still %d active jobs (max. limit is %d)",
+                                                        this.orchestrator.getActiveJobsCount(), this.maxJobs));
                             this.monitor.wait(10000);
                         }
                     } else {
                         final ExecutionJob job = this.queue.take();
-                        this.orchestrator.incrementActiveJobs();
-                        try {
-                            JobCommand.START.applyTo(job);
-                        } catch (ExecutionException e) {
+                        if (job != null) {
                             try {
-                                this.orchestrator.cancelJob(job);
-                            } catch (PersistenceException ex) {
-                                logger.severe(ex.getMessage());
-                            } finally {
-                                this.orchestrator.decrementActiveJobs();
+                                logger.finest(String.format("Job [%s] for user '%s' was dequeued",
+                                                            job.getName(), job.getUserName()));
+                                JobCommand.START.applyTo(job);
+                                this.orchestrator.incrementActiveJobs();
+                            } catch (ExecutionException e) {
+                                try {
+                                    logger.warning(String.format("Job [%s] for user '%s' could not be started. Reason: %s",
+                                                                 job.getName(), job.getUserName(), e.getMessage()));
+                                    this.orchestrator.cancelJob(job);
+                                } catch (PersistenceException ex) {
+                                    logger.severe(ex.getMessage());
+                                }
                             }
                         }
                     }

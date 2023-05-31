@@ -1,17 +1,22 @@
 package ro.cs.tao.orchestration;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.CollectionType;
 import ro.cs.tao.component.SystemVariable;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.execution.model.ExecutionJob;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.JobSelector;
 import ro.cs.tao.execution.persistence.ExecutionJobProvider;
+import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.utils.FileQueue;
 import ro.cs.tao.utils.StringUtilities;
 import ro.cs.tao.utils.Tuple;
 
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
@@ -25,9 +30,24 @@ public class JobQueue {
     private final ExecutionJobProvider jobProvider;
     private JobSelector<Tuple<Long, String>> jobSelector;
     private final Object lock;
+    private final Logger logger = Logger.getLogger(JobQueue.class.getName());
 
     public JobQueue(ExecutionJobProvider jobProvider) {
-        this.queue = new FileQueue<>(Paths.get(SystemVariable.CACHE.value()).resolve("wait_jobs.json"));
+        Tuple<Long, String> dummy = new Tuple<>(0L, "");
+        this.queue = new FileQueue<>(Paths.get(SystemVariable.CACHE.value()).resolve("wait_jobs.json"),
+                                     (Class<Tuple<Long, String>>) dummy.getClass()) {
+            @Override
+            protected List<Tuple<Long, String>> readItems() throws IOException {
+                final ObjectMapper mapper = new ObjectMapper();
+                final CollectionType type = mapper.getTypeFactory().constructCollectionType(ArrayList.class, Tuple.class);
+                final List<Tuple<? extends Number, String>> list = mapper.readValue(this.file.toFile(), type);
+                final List<Tuple<Long, String>> casted = new ArrayList<>();
+                for (Tuple<? extends Number, String> tuple : list) {
+                    casted.add(new Tuple<>(tuple.getKeyOne().longValue(), tuple.getKeyTwo()));
+                }
+                return casted;
+            }
+        };
         this.jobProvider = jobProvider;
         this.lock = new Object();
         String jobSelectorClass = ConfigurationManager.getInstance().getValue("job.selector");
@@ -35,7 +55,7 @@ public class JobQueue {
             if (!StringUtilities.isNullOrEmpty(jobSelectorClass)) {
                 final Class<?> clazz = Class.forName(jobSelectorClass);
                 if (JobSelector.class.isAssignableFrom(clazz)) {
-                    this.jobSelector = (JobSelector<Tuple<Long, String>>) clazz.getConstructor(queue.getClass()).newInstance(this.queue);
+                    this.jobSelector = (JobSelector<Tuple<Long, String>>) clazz.getConstructor(Queue.class).newInstance(this.queue);
                 }
             }
             if (this.jobSelector == null) {
@@ -57,6 +77,15 @@ public class JobQueue {
         final List<ExecutionJob> runnableJobs = this.jobProvider.list(statuses);
         if (runnableJobs != null) {
             for (ExecutionJob job : runnableJobs) {
+                job.setExecutionStatus(ExecutionStatus.UNDETERMINED);
+                job.setStartTime(null);
+                job.setEndTime(null);
+                try {
+                    this.jobProvider.update(job);
+                    logger.fine(String.format("Job [%s] was reset to UNDETERMINED", job.getName()));
+                } catch (PersistenceException e) {
+                    logger.warning(String.format("Error resetting job [%s]. Reason: %s", job.getName(), e.getMessage()));
+                }
                 put(job);
             }
         }
@@ -69,6 +98,8 @@ public class JobQueue {
     public int put(ExecutionJob job) {
         synchronized (lock) {
             this.queue.offer(new Tuple<>(job.getId(), job.getUserName()));
+            logger.finest(String.format("Job [%s] for user '%s' was added to the queue with status %s",
+                                        job.getName(), job.getUserName(), job.getExecutionStatus().name()));
             return this.queue.size();
         }
     }
