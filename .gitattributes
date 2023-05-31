@@ -5,4 +5,5 @@
 /tao-topology/src/main/resources/tools_scripts/torque/torque_package/* text eol=lf
 /tao-topology/src/main/resources/tools_scripts/torque/torque_package/contrib/init.d/* text eol=lf
 /tao-topology/src/main/resources/tools_scripts/torque/torque_package/contrib/systemd/* text eol=lf
-
+E:/github/tao-core/ro/c-s/tao/tao-gdal/1.4.3/tao-gdal-1.4.3.jar filter=lfs diff=lfs merge=lfs -text
+E:/github/tao-core/ro/c-s/tao/tao-gdal/1.4.3/tao-gdal-1.4.3-sources.jar filter=lfs diff=lfs merge=lfs -text
