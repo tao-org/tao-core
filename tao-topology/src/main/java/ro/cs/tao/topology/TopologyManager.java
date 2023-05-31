@@ -48,6 +48,7 @@ import java.util.stream.Collectors;
 public class TopologyManager {
 
     //private static final String createMountTemplate;
+    private static final String checkLocalShareWindowsTemplate;
     private static final String createLocalShareWindowsTemplate;
     private static final String createLocalShareLinuxTemplate;
     private static final OutputAccumulator sharedAccumulator;
@@ -64,6 +65,7 @@ public class TopologyManager {
     static {
         //if [ ! -e /mnt/tao ]; then sed -i '$a//#MASTERHOST##SHARE# /mnt/tao cifs user=tao,password=tao123,file_mode=0777,dir_mode=0777,noperm 0 0' /etc/fstab; fi
         //createMountTemplate = "if [ ! -e %1$s ]; then mkdir %1$s; chmod 777 %1$s; sed -i \"$ a//%2$s%3$s %1$s cifs user=%4$s,password=%5$s,file_mode=0777,dir_mode=0777,noperm 0 0\" /etc/fstab; mount -a; fi;";
+        checkLocalShareWindowsTemplate = "net share %s";
         createLocalShareWindowsTemplate = "net share %s=%s /GRANT:Everyone,FULL";
         createLocalShareLinuxTemplate = "if [ -e $(smbclient -N -g -L localhost | grep \"%1$s\") ]; then sed -i \"$ a[%1$s]\n\tpath = %2$s\n\tbrowsable = yes\n\twritable = yes\n\tguest ok = yes\" /etc/samba/smb.conf; fi;";
         sharedAccumulator = new OutputAccumulator();
@@ -309,10 +311,11 @@ public class TopologyManager {
             Executor<?> executor = Executor.execute(sharedAccumulator, job);
             logger.fine("Executing " + String.join(" ", commands));
             waitFor(executor, 5, TimeUnit.SECONDS);
-            if (executor.getReturnCode() != 0) {
+            int retCode;
+            if ((retCode = executor.getReturnCode()) != 0) {
                 status.setStatus(ServiceStatus.ERROR);
                 status.setReason(sharedAccumulator.getOutput());
-                logger.warning("Command failed: " + status.getReason());
+                logger.warning(String.format("Command %s failed with code %d", String.join(" ", commands), retCode));
             }
             sharedAccumulator.reset();
         }

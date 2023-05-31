@@ -660,7 +660,8 @@ public class Orchestrator extends Notifiable {
                                                                    " failed after %ss"),
                                                    job.getId(), workflow.getName(), time != null ? time.getSeconds() : "<unknown>");
                         logger.info(msg);
-                        Messaging.send(currentContext.getPrincipal(), Topic.EXECUTION.value(), this, msg);
+                        decrementActiveJobs();
+                        Messaging.send(new UserPrincipal(job.getUserName()), Topic.EXECUTION.value(), this, msg);
                         tryRemoveTemporaryWorkflow(job);
                         cleanupTransientComponents(job);
                     } else {

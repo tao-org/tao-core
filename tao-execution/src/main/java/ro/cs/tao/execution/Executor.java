@@ -29,6 +29,7 @@ import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.Topic;
 import ro.cs.tao.security.SessionContext;
 import ro.cs.tao.security.SystemSessionContext;
+import ro.cs.tao.security.UserPrincipal;
 import ro.cs.tao.utils.Tuple;
 
 import java.time.LocalDateTime;
@@ -247,7 +248,7 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
                 message = "Task " + task.getId() + (StringUtils.isNotEmpty(task.getExecutionNodeHostName()) ? " on node " + task.getExecutionNodeHostName() : "")
                         + " changed to " + status.friendlyName();
             }
-            Messaging.send(context.getPrincipal(), Topic.EXECUTION.value(), task.getId(), message, status.name());
+            Messaging.send(new UserPrincipal(task.getJob().getUserName()), Topic.EXECUTION.value(), task.getId(), message, status.name());
         }
     }
 

@@ -1,5 +1,6 @@
 package ro.cs.tao.utils;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 
@@ -9,6 +10,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Spliterator;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
@@ -24,20 +26,24 @@ import java.util.stream.Stream;
  * @since   1.4.3
  */
 public abstract class FileBackedCollection<E, V extends Collection<E>> implements Collection<E> {
-    private final Path file;
+    protected final Path file;
     protected final V collection;
+    protected final Class<E> elementClass;
 
-    public FileBackedCollection(Path file) {
+    public FileBackedCollection(Path file, Class<E> elementClass) {
         if (file == null) {
             throw new NullPointerException("file");
         }
         this.file = file;
+        this.elementClass = elementClass;
         this.collection = newCollection();
         try {
             Files.createDirectories(this.file.getParent());
             if (Files.exists(this.file) && Files.size(this.file) > 2) {
-                final ObjectReader reader = new ObjectMapper().readerFor(this.collection.getClass());
-                this.collection.addAll(reader.readValue(this.file.toFile()));
+                final List<E> items = readItems();
+                if (items != null) {
+                    this.collection.addAll(items);
+                }
             } else if (Files.notExists(this.file)){
                 Files.createFile(this.file);
             }
@@ -152,6 +158,11 @@ public abstract class FileBackedCollection<E, V extends Collection<E>> implement
      */
     protected abstract V newCollection();
 
+    protected List<E> readItems() throws IOException {
+        final ObjectReader reader = new ObjectMapper().readerFor(new TypeReference<List<E>>() {});
+        return reader.readValue(this.file.toFile());
+    }
+
     /**
      * Helper method to wrap actual collection methods and flush the collection to disk
      * only if the collection operation was successful.
@@ -180,7 +191,8 @@ public abstract class FileBackedCollection<E, V extends Collection<E>> implement
 
     protected void flush() {
         try {
-            Files.write(this.file, new ObjectMapper().writer().writeValueAsBytes(this.collection), StandardOpenOption.TRUNCATE_EXISTING);
+            Files.write(this.file, new ObjectMapper().writerFor(collection.getClass())
+                                                     .writeValueAsBytes(this.collection), StandardOpenOption.TRUNCATE_EXISTING);
         } catch (IOException e) {
             e.printStackTrace();
         }

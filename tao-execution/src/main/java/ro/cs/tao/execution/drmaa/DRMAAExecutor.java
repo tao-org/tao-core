@@ -474,7 +474,8 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                     nodeData = NodeManager.getInstance().getMasterNode();
                 } else {
                     // the next call blocks until a node is available
-                    nodeData = getAvailableNode(job.getUserName(), component.getParallelism(), memory);
+                    nodeData = getAvailableNode(job.getUserName(), component.getParallelism(),
+                                                ExecutionConfiguration.forceMemoryConstraint() ? memory : 0);
                 }
             }
             final NodeDescription node = nodeData.getNode();

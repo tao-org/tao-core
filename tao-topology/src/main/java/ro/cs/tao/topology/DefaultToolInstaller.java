@@ -55,7 +55,7 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
 
         //final String toolInstallCfgFile = ConfigurationManager.getInstance().getValue("topology.tool_install_config");
         final String os = System.getProperty("os.name").toLowerCase();
-        final String toolInstallCfgFile = os.contains("ubuntu") ? "UbuntuInstallConfig.xml" : "CentOSInstallConfig.xml";
+        final String toolInstallCfgFile = os.contains("ubuntu") ? "/UbuntuInstallConfig.xml" : "/CentOSInstallConfig.xml";
         InputStream is = this.getClass().getResourceAsStream(toolInstallCfgFile);
         this.toolInstallConfigs = ToolInstallersConfigParser.parse(is,
                 new ToolInstallersConfigHandler("tool_install_configurations"));
