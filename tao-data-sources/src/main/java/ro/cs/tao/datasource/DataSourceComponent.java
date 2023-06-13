@@ -560,7 +560,7 @@ public class DataSourceComponent extends TaoComponent {
         DataSourceManager dsManager = DataSourceManager.getInstance();
         DataSource<?, ?> dataSource = null;
         if (product != null) {
-            final String productLocationUrlDomain = Utilities.getDomainURL(product.getLocation());
+            final String productLocationUrlDomain = Utilities.getHostURL(product.getLocation());
             dataSource = dsManager.getMatchingDataSource(productLocationUrlDomain);
         }
         if (dataSource == null) {
