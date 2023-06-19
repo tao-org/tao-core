@@ -54,7 +54,7 @@
             <outputFileNameMapping>${artifact.artifactId}-${artifact.version}.${artifact.extension}
             </outputFileNameMapping>
             <excludes>
-                <exclude>ro.cs.tao:tao-*</exclude>
+                <exclude>ro.c-s.tao:tao-*</exclude>
                 <!-- Unwanted dependencies -->
                 <exclude>commons-lang:commons-lang:jar:2.4</exclude>
                 <exclude>org.apache.httpcomponents:httpclient:jar:4.5.13</exclude>
@@ -93,7 +93,7 @@
             <outputDirectory>modules</outputDirectory>
             <outputFileNameMapping>${artifact.artifactId}-${artifact.version}.${artifact.extension}</outputFileNameMapping>
             <includes>
-                <include>ro.cs.tao:*</include>
+                <include>ro.c-s.tao:*</include>
             </includes>
         </dependencySet>
     </dependencySets>
