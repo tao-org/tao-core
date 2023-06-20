@@ -26,7 +26,7 @@ import ro.cs.tao.spi.ServiceRegistry;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.topology.docker.DockerImageInstaller;
 import ro.cs.tao.topology.docker.DockerManager;
-import ro.cs.tao.topology.docker.StandaloneContainer;
+import ro.cs.tao.topology.docker.SingletonContainer;
 import ro.cs.tao.topology.provider.DefaultNodeOperationListener;
 import ro.cs.tao.utils.async.BinaryTask;
 import ro.cs.tao.utils.executors.*;
@@ -249,9 +249,9 @@ public class TopologyManager {
         return new ArrayList<>(serviceRegistry.getServices());
     }
 
-    public List<StandaloneContainer> getStandaloneContainers() {
-        ServiceRegistry<StandaloneContainer> serviceRegistry =
-                ServiceRegistryManager.getInstance().getServiceRegistry(StandaloneContainer.class);
+    public List<SingletonContainer> getStandaloneContainers() {
+        ServiceRegistry<SingletonContainer> serviceRegistry =
+                ServiceRegistryManager.getInstance().getServiceRegistry(SingletonContainer.class);
         return new ArrayList<>(serviceRegistry.getServices());
     }
 

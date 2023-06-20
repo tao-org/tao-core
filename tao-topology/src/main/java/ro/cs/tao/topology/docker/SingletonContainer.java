@@ -9,7 +9,9 @@ import java.io.IOException;
  *
  * @author Cosmin Cara
  */
-public interface StandaloneContainer {
+public interface SingletonContainer {
+
+    default boolean isPerUser() { return false; }
 
     /**
      * Returns the name of the container

@@ -39,6 +39,7 @@ public class DockerManager {
     private static final String dockerListCmdTemplate;
     private static final String dockerListAllCmd;
     private static final String dockerPullCmd;
+    private static final String dockerCheckRunningCmd;
     //private static final OutputAccumulator sharedAccumulator;
     private static final DockerManager instance;
 
@@ -54,6 +55,7 @@ public class DockerManager {
         dockerListAllCmd = "docker images --format {{.ID}}\\t{{.Tag}}\\t{{.Repository}}";
         dockerListCmdTemplate = "docker images %s --format {{.ID}}\\t{{.Tag}}\\t{{.Repository}}";
         dockerPullCmd = "docker pull %s";
+        dockerCheckRunningCmd = "docker ps --filter\"name=%s\"";
         //sharedAccumulator = new OutputAccumulator();
         instance = new DockerManager();
     }
@@ -80,6 +82,10 @@ public class DockerManager {
 
     public static String runWait(String containerName, List<String> arguments, long timeoutMinutes)  throws IOException {
         return instance.run(containerName, arguments, timeoutMinutes);
+    }
+
+    public static boolean isRunning(String containerName) {
+        return instance.checkRunning(containerName);
     }
 
     public static String registerImage(Path imagePath, String shortName, String description) throws TopologyException {
@@ -145,6 +151,23 @@ public class DockerManager {
         }
 
         return container;
+    }
+
+    private boolean checkRunning(String name) {
+        final List<String> commands = ProcessHelper.tokenizeCommands(dockerPullCmd, name);
+        ExecutionUnit job = new ExecutionUnit(ExecutorType.PROCESS,
+                                              masterNode.getId(),
+                                              masterNode.getUserName(),
+                                              masterNode.getUserPass(),
+                                              commands, false, SSHMode.EXEC);
+        final OutputAccumulator accumulator = new OutputAccumulator();
+        accumulator.preserveLineSeparator(true);
+        final Executor<?> executor = Executor.execute(accumulator, job);
+        if (executor.getReturnCode() == 0) {
+            String[] lines = accumulator.getOutput().split("\n");
+            return lines.length == 2;
+        }
+        return false;
     }
 
     private Container pull(String name) {
