@@ -7,10 +7,10 @@ import ro.cs.tao.utils.DockerHelper;
 import java.io.IOException;
 import java.util.List;
 
-public abstract class BaseStandaloneInstaller extends BaseUtilityInstaller
-        implements StandaloneContainer{
+public abstract class BaseSingletonInstaller extends BaseUtilityInstaller
+        implements SingletonContainer {
 
-    public BaseStandaloneInstaller() {
+    public BaseSingletonInstaller() {
         super();
     }
 
