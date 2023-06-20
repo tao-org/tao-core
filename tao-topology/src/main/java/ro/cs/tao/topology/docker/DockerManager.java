@@ -293,6 +293,8 @@ public class DockerManager {
             List<String> args = new ArrayList<String>() {{
                 add("docker");
                 add("stop");
+                add("-t");
+                add("10");
                 add(containerName);
             }};
             ExecutionUnit job = new ExecutionUnit(ExecutorType.PROCESS,
