@@ -36,6 +36,7 @@ import ro.cs.tao.persistence.TagProvider;
 import ro.cs.tao.security.SystemPrincipal;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.utils.JacksonUtil;
+import ro.cs.tao.utils.StringUtilities;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -185,17 +186,20 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
     }
 
     protected String readContainerLogo(String fileName) throws IOException {
-        try (InputStream in = getClass().getResourceAsStream(fileName)) {
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            if (in == null) return null;
-            int read;
-            byte[] buffer = new byte[1024];
-            while ((read = in.read(buffer)) != -1) {
-                out.write(buffer, 0, read);
+        if (!StringUtilities.isNullOrEmpty(fileName)) {
+            try (InputStream in = getClass().getResourceAsStream(fileName)) {
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                if (in == null) return null;
+                int read;
+                byte[] buffer = new byte[1024];
+                while ((read = in.read(buffer)) != -1) {
+                    out.write(buffer, 0, read);
+                }
+                out.flush();
+                return Base64.getEncoder().encodeToString(out.toByteArray());
             }
-            out.flush();
-            return Base64.getEncoder().encodeToString(out.toByteArray());
         }
+        return null;
     }
 
     protected byte[] readResource(String name) throws IOException {
