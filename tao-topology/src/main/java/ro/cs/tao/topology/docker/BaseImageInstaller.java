@@ -273,7 +273,8 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
                     component.setContainerId(readContainer.getId());
                     component.setLabel(component.getId());
                     component.setComponentType(ProcessingComponentType.EXECUTABLE);
-                    containerApplications.stream().filter(a -> a.getName().equals(component.getId())).findFirst()
+                    containerApplications.stream().filter(a -> a.getName().equals(component.getId()) ||
+                                                               a.getName().equals(component.getLabel())).findFirst()
                                          .ifPresent(application -> component.setFileLocation(application.getPath()));
                     List<ParameterDescriptor> parameterDescriptors = component.getParameterDescriptors();
                     if (parameterDescriptors != null) {
@@ -295,11 +296,17 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
                     }
                     final List<SourceDescriptor> sources = component.getSources();
                     if (sources != null) {
-                        sources.forEach(s -> s.setId(UUID.randomUUID().toString()));
+                        sources.forEach(s -> {
+                            s.setId(UUID.randomUUID().toString());
+                            s.setParentId(component.getId());
+                        });
                     }
                     final List<TargetDescriptor> targets = component.getTargets();
                     if (targets != null) {
-                        targets.forEach(t -> t.setId(UUID.randomUUID().toString()));
+                        targets.forEach(t -> {
+                            t.setId(UUID.randomUUID().toString());
+                            t.setParentId(component.getId());
+                        });
                     }
                     String template = component.getTemplateContents();
                     final int length = template.length();
@@ -311,16 +318,6 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
                         }
                         i++;
                     }
-                    /*final String[] tokens = template.split("\n");
-                    for (int j = 0; j < tokens.length - 1; j++) {
-                        final int idx = j;
-                        if ((targets != null && targets.stream().anyMatch(t -> t.getName().equals(tokens[idx].substring(1)))) ||
-                                (sources != null && sources.stream().anyMatch(s -> s.getName().equals(tokens[idx].substring(1))))) {
-                            tokens[j + 1] = tokens[j].replace('-', '$');
-                            j++;
-                        }
-                    }
-                    component.setTemplateContents(String.join("\n", tokens));*/
                     component.setTemplateContents(template);
                     component.setComponentType(ProcessingComponentType.EXECUTABLE);
                     component.setVisibility(ProcessingComponentVisibility.SYSTEM);
