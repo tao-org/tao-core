@@ -476,7 +476,7 @@ public class ProcessingComponent extends TaoComponent {
                     Files.createDirectories(scriptPath);
                     Path scriptFile = scriptPath.resolve(this.id + "-script");
                     Files.write(scriptFile, transformedTemplate.getBytes());
-                    cmdBuilder.append(scriptFile.toString()).append("\n");
+                    cmdBuilder.append(scriptFile).append("\n");
                     clonedMap.keySet().retainAll(this.parameters.stream().map(ParameterDescriptor::getName).collect(Collectors.toSet()));
                     for (Map.Entry<String, Object> entry : clonedMap.entrySet()) {
                         cmdBuilder.append("--").append(entry.getKey()).append("=").append(entry.getValue()).append("\n");
