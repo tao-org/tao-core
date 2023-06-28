@@ -14,15 +14,11 @@ public class ExecutionConfiguration {
     private static Boolean forceMemoryRequirements;
     private static String dockerRegistry;
     private static Boolean useDocker;
-    private static Boolean devMode;
     private static DockerVolumeMap masterVolumeMap;
     private static DockerVolumeMap workerVolumeMap;
 
     public static boolean developmentModeEnabled() {
-        if (devMode == null) {
-            devMode = Boolean.parseBoolean(ConfigurationManager.getInstance().getValue("tao.dev.mode", "false"));
-        }
-        return devMode;
+        return Boolean.parseBoolean(ConfigurationManager.getInstance().getValue("tao.dev.mode", "false"));
     }
 
     public static boolean forceMemoryConstraint() {
