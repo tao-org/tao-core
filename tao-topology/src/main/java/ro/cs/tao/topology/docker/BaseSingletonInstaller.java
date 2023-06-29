@@ -2,6 +2,7 @@ package ro.cs.tao.topology.docker;
 
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.docker.ContainerType;
+import ro.cs.tao.security.SystemPrincipal;
 import ro.cs.tao.utils.DockerHelper;
 
 import java.io.IOException;
@@ -15,11 +16,12 @@ public abstract class BaseSingletonInstaller extends BaseUtilityInstaller
     }
 
     @Override
-    public void start() throws IOException {
+    public String start() throws IOException {
         if (!DockerHelper.isDockerFound()) {
             throw new IOException("This plugin requires Docker to be installed");
         }
-        DockerManager.runDaemon(getContainerName(), startupArguments());
+        final String name = SystemPrincipal.instance().getName();
+        return DockerManager.runDaemon(getContainerName(), name, null, name, startupArguments());
     }
 
     @Override
@@ -34,7 +36,7 @@ public abstract class BaseSingletonInstaller extends BaseUtilityInstaller
         if (!DockerHelper.isDockerFound()) {
             throw new IOException("This plugin requires Docker to be installed");
         }
-        DockerManager.stopContainer(getContainerName());
+        DockerManager.stopInstances(getContainerName());
     }
 
     protected abstract List<String> startupArguments();
