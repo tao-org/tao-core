@@ -381,16 +381,17 @@ public class DockerManager {
         if (StringUtilities.isNullOrEmpty(imageName) || arguments == null) {
             return null;
         }
-        arguments.add("docker");
-        arguments.add("run");
-        arguments.add("-d");
+        int idx = 0;
+        arguments.add(idx++, "docker");
+        arguments.add(idx++, "run");
+        arguments.add(idx++, "-d");
         if (!StringUtilities.isNullOrEmpty(name)) {
-            arguments.add("--name");
-            arguments.add(name);
+            arguments.add(idx++, "--name");
+            arguments.add(idx++, name);
         }
         if (portMap != null) {
-            arguments.add("-p");
-            arguments.add(portMap.getKeyOne() + ":" + portMap.getKeyTwo());
+            arguments.add(idx++, "-p");
+            arguments.add(idx, portMap.getKeyOne() + ":" + portMap.getKeyTwo());
         }
         arguments.add(imageName);
         ExecutionUnit job = new ExecutionUnit(ExecutorType.PROCESS,
