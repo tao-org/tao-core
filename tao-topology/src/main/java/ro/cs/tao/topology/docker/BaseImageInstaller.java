@@ -49,16 +49,31 @@ import java.util.stream.Collectors;
 public abstract class BaseImageInstaller implements DockerImageInstaller {
     //protected static final Set<String> winExtensions = new HashSet<String>() {{ add(".bat"); add(".exe"); }};
     private static final Path dockerPath;
+    private static final Path dockerImagesPath;
     protected final Logger logger;
     protected final TagProvider tagProvider;
     protected final ContainerProvider containerProvider;
     protected final ProcessingComponentProvider componentProvider;
+    protected final Properties additionalProperties;
     private List<Tag> componentTags;
 
     static {
+        final Logger log = Logger.getLogger(BaseImageInstaller.class.getName());
         dockerPath = findInPath("docker" + (SystemUtils.IS_OS_WINDOWS ? ".exe" : ""));
         if (dockerPath == null) {
-            Logger.getLogger(BaseImageInstaller.class.getName()).warning("[docker] was not found in system path");
+            log.warning("[docker] was not found in system path");
+        }
+        final String cfgValue = ConfigurationManager.getInstance().getValue("tao.docker.images");
+        if (cfgValue == null) {
+            log.warning("Invalid path for docker images");
+            throw new RuntimeException("Invalid path for docker images");
+        } else {
+            dockerImagesPath = Paths.get(cfgValue);
+            try {
+                Files.createDirectories(dockerImagesPath);
+            } catch (IOException e) {
+                log.severe(e.getMessage());
+            }
         }
     }
 
@@ -68,6 +83,7 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
         this.componentProvider = SpringContextBridge.services().getService(ProcessingComponentProvider.class);
         this.logger = Logger.getLogger(getClass().getName());
         this.componentTags = this.tagProvider.list();
+        this.additionalProperties = new Properties();
         if (this.componentTags == null) {
             this.componentTags = new ArrayList<>();
         }
@@ -81,13 +97,6 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
                 final String localRegistry = ConfigurationManager.getInstance().getValue("tao.docker.registry");
                 if ((container = DockerManager.getDockerImage(getContainerName())) == null &&
                     (container = DockerManager.getDockerImage(localRegistry + "/" + getContainerName())) == null) {
-                    final String cfgValue = ConfigurationManager.getInstance().getValue("tao.docker.images");
-                    if (cfgValue == null) {
-                        logger.warning("Invalid path for docker images");
-                        return null;
-                    }
-                    final Path dockerImagesPath = Paths.get(cfgValue);
-                    Files.createDirectories(dockerImagesPath);
                     // first try the container.properties file, maybe it is a container from Docker Hub
                     Path dockerfilePath = dockerImagesPath.resolve(getContainerName()).resolve("container.properties");
                     Files.createDirectories(dockerImagesPath.resolve(getContainerName()));
@@ -105,12 +114,11 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
                     } catch (Exception notFound) {
                         logger.fine(String.format("Container %s doesn't have container.properties", getContainerName()));
                     }
-                    Properties properties = new Properties();
                     if (Files.exists(dockerfilePath)) {
-                        properties.load(Files.newBufferedReader(dockerfilePath));
+                        additionalProperties.load(Files.newBufferedReader(dockerfilePath));
                     }
-                    if (properties.size() > 0) {
-                        container = DockerManager.pullImage(properties.getProperty("docker.hub.name"));
+                    if (additionalProperties.size() > 0) {
+                        container = DockerManager.pullImage(additionalProperties.getProperty("docker.hub.name"));
                     } else {
                         dockerfilePath = dockerImagesPath.resolve(getContainerName()).resolve("Dockerfile");
                         if (!Files.exists(dockerfilePath) || Files.size(dockerfilePath) == 0) {
@@ -164,6 +172,18 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
             }
         }
         return dbContainer;
+    }
+
+    protected Properties getAdditionalProperties() {
+        Path dockerfilePath = dockerImagesPath.resolve(getContainerName()).resolve("container.properties");
+        if (Files.exists(dockerfilePath)) {
+            try (InputStream stream = Files.newInputStream(dockerfilePath)) {
+                additionalProperties.load(stream);
+            } catch (IOException e) {
+                logger.warning("Cannot read file " + dockerfilePath);
+            }
+        }
+        return additionalProperties;
     }
 
     protected Container readContainerDescriptor(String fileName) throws IOException {

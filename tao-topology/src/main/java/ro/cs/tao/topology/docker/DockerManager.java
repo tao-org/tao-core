@@ -4,10 +4,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.docker.Container;
+import ro.cs.tao.docker.ContainerInstance;
 import ro.cs.tao.docker.ContainerType;
 import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.Topic;
+import ro.cs.tao.persistence.ContainerInstanceProvider;
 import ro.cs.tao.persistence.ContainerProvider;
+import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.security.SystemPrincipal;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
@@ -15,6 +18,7 @@ import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.topology.TopologyException;
 import ro.cs.tao.topology.TopologyManager;
 import ro.cs.tao.utils.StringUtilities;
+import ro.cs.tao.utils.Tuple;
 import ro.cs.tao.utils.executors.*;
 
 import java.io.IOException;
@@ -39,13 +43,16 @@ public class DockerManager {
     private static final String dockerListCmdTemplate;
     private static final String dockerListAllCmd;
     private static final String dockerPullCmd;
-    private static final String dockerCheckRunningCmd;
-    //private static final OutputAccumulator sharedAccumulator;
+    private static final String dockerRunningInstanceByPortCmd;
+    private static final String dockerRunningInstanceCmd;
+    private static final String dockerRunningInstanceByIdCmd;
+    private static final String dockerRunningInstancesCmd;
     private static final DockerManager instance;
 
     private final ContainerProvider containerProvider;
-    private final Map<String, Executor<?>> daemonContainerExecutors;
+    private final ContainerInstanceProvider containerInstanceProvider;
     private final Logger logger;
+    private final int basePort;
     private NodeDescription masterNode;
 
     static {
@@ -55,8 +62,10 @@ public class DockerManager {
         dockerListAllCmd = "docker images --format {{.ID}}\\t{{.Tag}}\\t{{.Repository}}";
         dockerListCmdTemplate = "docker images %s --format {{.ID}}\\t{{.Tag}}\\t{{.Repository}}";
         dockerPullCmd = "docker pull %s";
-        dockerCheckRunningCmd = "docker ps --filter\"name=%s\"";
-        //sharedAccumulator = new OutputAccumulator();
+        dockerRunningInstanceByPortCmd = "docker ps --filter \"expose=%s\"";
+        dockerRunningInstanceCmd = "docker ps --filter \"ancestor=%s\" --filter \"name=%s\" --filter \"status=running\"";
+        dockerRunningInstanceByIdCmd = "docker ps --filter \"id=%s\" --filter \"status=running\"";
+        dockerRunningInstancesCmd = "docker ps --filter \"ancestor=%s\" --filter \"status=running\"";
         instance = new DockerManager();
     }
 
@@ -76,30 +85,47 @@ public class DockerManager {
         return instance.pull(name);
     }
 
-    public static void runDaemon(String containerName, List<String> arguments) throws IOException {
-        instance.runAsDaemon(containerName, arguments);
+    public static String runDaemon(String imageName, String name, Tuple<Integer, Integer> portMap, String user, List<String> arguments) throws IOException {
+        return instance.runAsDaemon(imageName, name, portMap, user, arguments);
     }
 
     public static String runWait(String containerName, List<String> arguments, long timeoutMinutes)  throws IOException {
         return instance.run(containerName, arguments, timeoutMinutes);
     }
 
-    public static boolean isRunning(String containerName) {
-        return instance.checkRunning(containerName);
+    public static String[] getInstances(String imageName) {
+        return instance.getRunningInstances(imageName);
+    }
+
+    public static String getInstance(String imageName, String containerName) {
+        return instance.getRunningInstance(imageName, containerName);
+    }
+
+    public static String getInstance(String containerId) {
+        return instance.getRunningInstance(containerId);
     }
 
     public static String registerImage(Path imagePath, String shortName, String description) throws TopologyException {
         return instance.register(imagePath, shortName, description);
     }
 
-    public static void stopContainer(String containerName) throws IOException {
-        instance.stop(containerName);
+    public static void stopInstance(String containerId, String user) throws IOException {
+        instance.stop(containerId, user);
+    }
+
+    public static void stopInstances(String containerName) throws IOException {
+        instance.stopAll(containerName);
+    }
+
+    public static int getNextFreePort() {
+        return instance.getAvailablePort();
     }
 
     private DockerManager() {
         this.logger = Logger.getLogger(TopologyManager.class.getName());
-        this.daemonContainerExecutors = Collections.synchronizedMap(new HashMap<>());
         this.containerProvider = SpringContextBridge.services().getService(ContainerProvider.class);
+        this.containerInstanceProvider = SpringContextBridge.services().getService(ContainerInstanceProvider.class);
+        this.basePort = Integer.parseInt(ConfigurationManager.getInstance().getValue("tao.docker.base.port", "8888"));
     }
 
     private List<Container> listAvailableDockerImages() {
@@ -153,8 +179,8 @@ public class DockerManager {
         return container;
     }
 
-    private boolean checkRunning(String name) {
-        final List<String> commands = ProcessHelper.tokenizeCommands(dockerPullCmd, name);
+    private String[] getRunningInstances(String imageName) {
+        final List<String> commands = ProcessHelper.tokenizeCommands(dockerRunningInstancesCmd, imageName);
         ExecutionUnit job = new ExecutionUnit(ExecutorType.PROCESS,
                                               masterNode.getId(),
                                               masterNode.getUserName(),
@@ -163,11 +189,57 @@ public class DockerManager {
         final OutputAccumulator accumulator = new OutputAccumulator();
         accumulator.preserveLineSeparator(true);
         final Executor<?> executor = Executor.execute(accumulator, job);
+        String[] ids = null;
         if (executor.getReturnCode() == 0) {
             String[] lines = accumulator.getOutput().split("\n");
-            return lines.length == 2;
+            if (lines.length >= 2) {
+                ids = new String[lines.length - 1];
+                for (int i = 0; i < ids.length; i++) {
+                    ids[i] = lines[i + 1].substring(0, 12);
+                }
+            }
         }
-        return false;
+        return ids;
+    }
+
+    private String getRunningInstance(String containerId) {
+        final List<String> commands = ProcessHelper.tokenizeCommands(dockerRunningInstanceByIdCmd, containerId);
+        ExecutionUnit job = new ExecutionUnit(ExecutorType.PROCESS,
+                                              masterNode.getId(),
+                                              masterNode.getUserName(),
+                                              masterNode.getUserPass(),
+                                              commands, false, SSHMode.EXEC);
+        final OutputAccumulator accumulator = new OutputAccumulator();
+        accumulator.preserveLineSeparator(true);
+        final Executor<?> executor = Executor.execute(accumulator, job);
+        String id = null;
+        if (executor.getReturnCode() == 0) {
+            String[] lines = accumulator.getOutput().split("\n");
+            if (lines.length == 2) {
+                id = lines[1].substring(0, 12);
+            }
+        }
+        return id;
+    }
+
+    private String getRunningInstance(String imageName, String containerName) {
+        final List<String> commands = ProcessHelper.tokenizeCommands(dockerRunningInstanceCmd, imageName, containerName);
+        ExecutionUnit job = new ExecutionUnit(ExecutorType.PROCESS,
+                                              masterNode.getId(),
+                                              masterNode.getUserName(),
+                                              masterNode.getUserPass(),
+                                              commands, false, SSHMode.EXEC);
+        final OutputAccumulator accumulator = new OutputAccumulator();
+        accumulator.preserveLineSeparator(true);
+        final Executor<?> executor = Executor.execute(accumulator, job);
+        String id = null;
+        if (executor.getReturnCode() == 0) {
+            String[] lines = accumulator.getOutput().split("\n");
+            if (lines.length == 2) {
+                id = lines[1].substring(0, 12);
+            }
+        }
+        return id;
     }
 
     private Container pull(String name) {
@@ -266,6 +338,19 @@ public class DockerManager {
         return containerId;
     }
 
+    private int getAvailablePort() {
+        final List<Integer> ports = containerInstanceProvider.getAllocatedPorts();
+        if (ports == null || ports.isEmpty()) {
+            return basePort;
+        }
+        final Set<Integer> distinctPorts = new HashSet<>(ports);
+        int currentPort = basePort;
+        while (distinctPorts.contains(currentPort)) {
+            currentPort++;
+        }
+        return currentPort;
+    }
+
     private String run(String containerName, List<String> arguments, long timeoutMinutes)  throws IOException {
         if (StringUtilities.isNullOrEmpty(containerName) || arguments == null) {
             return null;
@@ -292,14 +377,22 @@ public class DockerManager {
         }
     }
 
-    private void runAsDaemon(String containerName, List<String> arguments) throws IOException {
-        if (StringUtilities.isNullOrEmpty(containerName) || arguments == null) {
-            return;
+    private String runAsDaemon(String imageName, String name, Tuple<Integer, Integer> portMap, String user, List<String> arguments) throws IOException {
+        if (StringUtilities.isNullOrEmpty(imageName) || arguments == null) {
+            return null;
         }
-        arguments.add(0, "docker");
-        arguments.add(1, "run");
-        arguments.add(2, "-d");
-        arguments.add(containerName);
+        arguments.add("docker");
+        arguments.add("run");
+        arguments.add("-d");
+        if (!StringUtilities.isNullOrEmpty(name)) {
+            arguments.add("--name");
+            arguments.add(name);
+        }
+        if (portMap != null) {
+            arguments.add("-p");
+            arguments.add(portMap.getKeyOne() + ":" + portMap.getKeyTwo());
+        }
+        arguments.add(imageName);
         ExecutionUnit job = new ExecutionUnit(ExecutorType.PROCESS,
                                               masterNode.getId(),
                                               masterNode.getUserName(),
@@ -307,51 +400,131 @@ public class DockerManager {
                                               arguments, false, SSHMode.EXEC);
         final OutputAccumulator accumulator = new OutputAccumulator();
         accumulator.preserveLineSeparator(true);
-        this.daemonContainerExecutors.put(containerName,
-                                          Executor.execute(accumulator, job));
+        final Executor<?> executor = Executor.execute(accumulator, job);
+        String id = null;
+        if (executor.getReturnCode() == 0) {
+            String[] lines = accumulator.getOutput().split("\n");
+            if (lines.length == 1) {
+                id = lines[0].substring(0, 12);
+                final ContainerInstance entity = new ContainerInstance();
+                entity.setId(id);
+                entity.setContainerId(containerProvider.getByName(imageName).getId());
+                entity.setName(name);
+                if (portMap != null) {
+                    entity.setHostPort(portMap.getKeyOne());
+                }
+                entity.setUserName(user);
+                try {
+                    containerInstanceProvider.save(entity);
+                } catch (PersistenceException e) {
+                    logger.severe(e.getMessage());
+                }
+            }
+        }
+        return id;
     }
 
-    private void stop(String containerName) throws IOException {
-        if (this.daemonContainerExecutors.containsKey(containerName)) {
-            List<String> args = new ArrayList<String>() {{
-                add("docker");
-                add("stop");
-                add("-t");
-                add("10");
-                add(containerName);
-            }};
-            ExecutionUnit job = new ExecutionUnit(ExecutorType.PROCESS,
-                                                  masterNode.getId(),
-                                                  masterNode.getUserName(),
-                                                  masterNode.getUserPass(),
-                                                  args, false, SSHMode.EXEC);
-            this.daemonContainerExecutors.get(containerName).stop();
-            final OutputAccumulator accumulator = new OutputAccumulator();
-            accumulator.preserveLineSeparator(true);
-            int retCode;
-            Executor<?> executor = Executor.execute(accumulator, job);
+    private void stop(String containerId, String user) throws IOException {
+        final ContainerInstance instance = containerInstanceProvider.getByContainerIdAndUserName(containerId, user);
+        if (instance == null) {
+            return; // no instance
+        }
+        List<String> args = new ArrayList<>() {{
+            add("docker");
+            add("stop");
+            add("-t");
+            add("10");
+            add(instance.getId());
+        }};
+        ExecutionUnit job = new ExecutionUnit(ExecutorType.PROCESS,
+                                              masterNode.getId(),
+                                              masterNode.getUserName(),
+                                              masterNode.getUserPass(),
+                                              args, false, SSHMode.EXEC);
+        final OutputAccumulator accumulator = new OutputAccumulator();
+        accumulator.preserveLineSeparator(true);
+        int retCode;
+        Executor<?> executor = Executor.execute(accumulator, job);
+        waitFor(executor, 15, TimeUnit.SECONDS);
+        if ((retCode = executor.getReturnCode()) != 0) {
+            String message = String.format("Docker command failed wit code %s. Details: '%s'",
+                                           retCode, accumulator.getOutput());
+            throw new IOException(message);
+        } else {
+            accumulator.reset();
+            args.clear();
+            args.add("docker");
+            args.add("rm");
+            args.add(instance.getId());
+            job = new ExecutionUnit(ExecutorType.PROCESS,
+                                    masterNode.getId(),
+                                    masterNode.getUserName(),
+                                    masterNode.getUserPass(),
+                                    args, false, SSHMode.EXEC);
+            executor = Executor.execute(accumulator, job);
             waitFor(executor, 15, TimeUnit.SECONDS);
             if ((retCode = executor.getReturnCode()) != 0) {
                 String message = String.format("Docker command failed wit code %s. Details: '%s'",
                                                retCode, accumulator.getOutput());
                 throw new IOException(message);
-            } else {
-                accumulator.reset();
-                args.clear();
-                args.add("docker");
-                args.add("rm");
-                args.add(containerName);
-                job = new ExecutionUnit(ExecutorType.PROCESS,
-                                        masterNode.getId(),
-                                        masterNode.getUserName(),
-                                        masterNode.getUserPass(),
-                                        args, false, SSHMode.EXEC);
-                executor = Executor.execute(accumulator, job);
+            }
+        }
+        try {
+            containerInstanceProvider.delete(instance.getId());
+        } catch (PersistenceException e) {
+            logger.severe(e.getMessage());
+        }
+    }
+
+    private void stopAll(String containerName) throws IOException {
+        final String[] ids = getInstances(containerName);
+        if (ids != null) {
+            for (String id : ids) {
+                List<String> args = new ArrayList<>() {{
+                    add("docker");
+                    add("stop");
+                    add("-t");
+                    add("10");
+                    add(id);
+                }};
+                ExecutionUnit job = new ExecutionUnit(ExecutorType.PROCESS,
+                                                      masterNode.getId(),
+                                                      masterNode.getUserName(),
+                                                      masterNode.getUserPass(),
+                                                      args, false, SSHMode.EXEC);
+                final OutputAccumulator accumulator = new OutputAccumulator();
+                accumulator.preserveLineSeparator(true);
+                int retCode;
+                Executor<?> executor = Executor.execute(accumulator, job);
                 waitFor(executor, 15, TimeUnit.SECONDS);
                 if ((retCode = executor.getReturnCode()) != 0) {
                     String message = String.format("Docker command failed wit code %s. Details: '%s'",
                                                    retCode, accumulator.getOutput());
                     throw new IOException(message);
+                } else {
+                    accumulator.reset();
+                    args.clear();
+                    args.add("docker");
+                    args.add("rm");
+                    args.add(id);
+                    job = new ExecutionUnit(ExecutorType.PROCESS,
+                                            masterNode.getId(),
+                                            masterNode.getUserName(),
+                                            masterNode.getUserPass(),
+                                            args, false, SSHMode.EXEC);
+                    executor = Executor.execute(accumulator, job);
+                    waitFor(executor, 15, TimeUnit.SECONDS);
+                    if ((retCode = executor.getReturnCode()) != 0) {
+                        String message = String.format("Docker command failed wit code %s. Details: '%s'",
+                                                       retCode, accumulator.getOutput());
+                        throw new IOException(message);
+                    } else {
+                        try {
+                            containerInstanceProvider.delete(id);
+                        } catch (PersistenceException e) {
+                            logger.severe(e.getMessage());
+                        }
+                    }
                 }
             }
         }

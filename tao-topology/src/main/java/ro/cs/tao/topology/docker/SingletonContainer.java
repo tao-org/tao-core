@@ -31,7 +31,13 @@ public interface SingletonContainer {
     /**
      * Starts the Docker container
      */
-    void start() throws IOException;
+    default String start() throws IOException {
+        return null;
+    }
+
+    default String start(String user, String token) throws IOException {
+        return null;
+    }
 
     /**
      * Shuts down the Docker container
