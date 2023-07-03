@@ -176,6 +176,11 @@ public class DownloadManager {
         return result;
     }
 
+    public static int getQueuedDownloads(String dataSourceName) {
+        final NamedThreadPoolExecutor executor = instance.downloadWorkers.get(dataSourceName);
+        return executor != null ? executor.getQueue().size() : 0;
+    }
+
     private static void initializeDatasource(DataSource<?, ?> dataSource) {
         String dsName = dataSource.getId();
         int maxTransfers;
