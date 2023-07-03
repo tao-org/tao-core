@@ -283,10 +283,12 @@ public class DataSourceManager {
         while (continueMatching) {
             final String urlToMatch = url;
             Stream<DataSource> matches = this.registry.getServices().stream().filter(d -> {
-                if (Utilities.getHostURL(d.getConnectionString()).endsWith(urlToMatch)) {
+                String hostURL = Utilities.getHostURL(d.getConnectionString());
+                if (hostURL != null && hostURL.endsWith(urlToMatch)) {
                     return true;
                 } else {
-                    return Utilities.getHostURL(d.getAlternateConnectionString()).endsWith(urlToMatch);
+                    hostURL = Utilities.getHostURL(d.getAlternateConnectionString());
+                    return hostURL != null && hostURL.endsWith(urlToMatch);
                 }
             });
             url = url.substring(url.indexOf('.') + 1);

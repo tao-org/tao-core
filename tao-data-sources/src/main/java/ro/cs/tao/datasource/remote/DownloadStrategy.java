@@ -397,7 +397,7 @@ public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
         }
         if (this.progressEnabled) {
             this.timer = new Timer("Progress reporter", true);
-            this.timer.scheduleAtFixedRate(new TimedJob(), 0, this.progressReportInterval);
+            this.timer.scheduleAtFixedRate(new TimedJob(this.dataSource.getId()), 0, this.progressReportInterval);
         }
     }
 
@@ -408,7 +408,7 @@ public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
         if (this.progressEnabled) {
             if (this.timer == null) {
                 this.timer = new Timer("Progress reporter", true);
-                this.timer.scheduleAtFixedRate(new TimedJob(), 0, this.progressReportInterval);
+                this.timer.scheduleAtFixedRate(new TimedJob(this.dataSource.getId()), 0, this.progressReportInterval);
             }
         }
     }
@@ -546,14 +546,21 @@ public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
     }
 
     private class TimedJob extends TimerTask {
+        private final String dsName;
         private double lastValue;
+
+        TimedJob(String dataSourceName) {
+            this.dsName = dataSourceName;
+        }
+
         @Override
         public void run() {
             if (progressListener != null && currentProductProgress != null) {
                 if (currentProductProgress.value() != lastValue) {
                     double delta = currentProductProgress.value() - lastValue;
                     progressListener.notifyProgress(currentProductProgress.value(),
-                                                    delta / currentProductProgress.factor() / DownloadStrategy.this.progressReportInterval * 1000 / MemoryUnit.MB.value());
+                                                    delta / currentProductProgress.factor() / DownloadStrategy.this.progressReportInterval * 1000 / MemoryUnit.MB.value(),
+                                                    DownloadManager.getQueuedDownloads(this.dsName));
                     lastValue = currentProductProgress.value();
                 }
             }
