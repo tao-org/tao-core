@@ -569,8 +569,9 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                                     }
                                     nodeRuntime.setRuntimeInfo(runtimeInfo);
                                     nodeRuntime.setLastUpdatedTimeMilliseconds(System.currentTimeMillis());
-                                    Messaging.send(SystemPrincipal.instance().getName(),
-                                                   Topic.SYSTEM.getCategory(),
+                                    Messaging.send(SystemPrincipal.instance(),
+                                                   Topic.RESOURCES.getCategory(),
+                                                   nodeRuntime.node.getId(),
                                                    JsonMapper.instance().writeValueAsString(runtimeInfo));
                                 }
                             }
