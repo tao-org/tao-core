@@ -164,6 +164,7 @@ CREATE TABLE execution.user_data_source_connection
     data_source_id varchar(512) NOT NULL,
 	username varchar(50) NULL,
 	password text NULL,
+	tfa_secret text NULL,
 	params varchar(512) NULL,
 	created timestamp NULL DEFAULT now(),
 	modified timestamp NULL

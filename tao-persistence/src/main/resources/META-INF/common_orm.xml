@@ -583,13 +583,16 @@
                 <column name="data_source_id" nullable="false" column-definition="varchar(512) NOT NULL"/>
             </basic>
             <basic name="userName">
-                <column name="username" nullable="true" column-definition="varchar(50) NOT NULL"/>
+                <column name="username" nullable="true" column-definition="varchar(50)"/>
             </basic>
             <basic name="password">
-                <column name="password" nullable="true" column-definition="text NOT NULL"/>
+                <column name="password" nullable="true" column-definition="text"/>
+            </basic>
+            <basic name="secret">
+                <column name="tfa_secret" nullable="true" column-definition="text"/>
             </basic>
             <basic name="params">
-                <column name="params" nullable="true" column-definition="varchar(512) NOT NULL"/>
+                <column name="params" nullable="true" column-definition="varchar(512)"/>
             </basic>
             <basic name="created">
                 <column name="created" nullable="true" column-definition="timestamp without time zone DEFAULT now()"/>
