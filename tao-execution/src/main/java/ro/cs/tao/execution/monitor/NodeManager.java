@@ -7,11 +7,15 @@ import ro.cs.tao.execution.local.DefaultSessionFactory;
 import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.messaging.Message;
+import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.Notifiable;
+import ro.cs.tao.messaging.Topic;
 import ro.cs.tao.quota.QuotaException;
 import ro.cs.tao.quota.QuotaManager;
 import ro.cs.tao.quota.UserQuotaManager;
+import ro.cs.tao.security.SystemPrincipal;
 import ro.cs.tao.security.UserPrincipal;
+import ro.cs.tao.serialization.JsonMapper;
 import ro.cs.tao.topology.*;
 import ro.cs.tao.utils.ExceptionUtils;
 import ro.cs.tao.utils.async.Parallel;
@@ -565,6 +569,9 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                                     }
                                     nodeRuntime.setRuntimeInfo(runtimeInfo);
                                     nodeRuntime.setLastUpdatedTimeMilliseconds(System.currentTimeMillis());
+                                    Messaging.send(SystemPrincipal.instance().getName(),
+                                                   Topic.SYSTEM.getCategory(),
+                                                   JsonMapper.instance().writeValueAsString(runtimeInfo));
                                 }
                             }
                         } catch (Exception exception) {
