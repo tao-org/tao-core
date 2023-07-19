@@ -449,7 +449,12 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
 
     protected RuntimeInfo readNodeRuntimeInfo(NodeDescription node) throws Exception {
         OSRuntimeInfo<RuntimeInfo> osRuntimeInfo = OSRuntimeInfo.createInspector(node.getId(), node.getUserName(), node.getUserPass(), RuntimeInfo.class);
-        return osRuntimeInfo.getInfo();
+        final RuntimeInfo info = osRuntimeInfo.getInfo();
+        if (osRuntimeInfo instanceof OSRuntimeInfo.Linux) {
+            // Linux reports CPU as the sum of the cores load, hence it may be > 100%
+            info.setCpuTotal(info.getCpuTotal() / (double) node.getFlavor().getCpu());
+        }
+        return info;
     }
 
     /**
