@@ -125,6 +125,9 @@ public class PersistenceManager {
     @Autowired
     private ContainerInstanceManager containerInstanceManager;
 
+    @Autowired
+    private ConfigurationManager configurationManager;
+
     @PostConstruct
     public void initialize() {
         componentCache = SimpleCache.create(String.class, ProcessingComponent.class,
@@ -192,4 +195,6 @@ public class PersistenceManager {
     public AuditManager audit() { return auditManager; }
 
     public ContainerInstanceManager containerInstance() { return containerInstanceManager; }
+
+    public ConfigurationManager configuration() { return configurationManager; }
 }

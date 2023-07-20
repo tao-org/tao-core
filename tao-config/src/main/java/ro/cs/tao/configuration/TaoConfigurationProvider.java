@@ -23,6 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
@@ -40,6 +41,7 @@ public class TaoConfigurationProvider implements ConfigurationProvider {
     private Path scriptsFolder;
     private Properties settings;
     private Map<String, String> environment;
+    private PersistentConfigurationProvider dbConfigProvider;
 
     public static TaoConfigurationProvider getInstance() {
         if (instance == null) {
@@ -57,6 +59,11 @@ public class TaoConfigurationProvider implements ConfigurationProvider {
         if (instance == null) {
             instance = this;
         }
+    }
+
+    @Override
+    public void setPersistentConfigurationProvider(PersistentConfigurationProvider provider) {
+        this.dbConfigProvider = provider;
     }
 
     @Override
@@ -88,46 +95,65 @@ public class TaoConfigurationProvider implements ConfigurationProvider {
 
     @Override
     public String getValue(String name) {
-        return this.settings.getProperty(name, null);
+        return getValue(name, null);
     }
 
     @Override
     public String getValue(String name, String defaultValue) {
-        return this.settings.getProperty(name, defaultValue);
+        final String value = getDbValue(name);
+        return value != null ? value : this.settings.getProperty(name, defaultValue);
     }
 
     @Override
     public boolean getBooleanValue(String name) {
-        String strValue = this.settings.getProperty(name);
-        boolean returnValue = false;
-        if ("1".equalsIgnoreCase(strValue) || "yes".equalsIgnoreCase(strValue) ||
-                "true".equalsIgnoreCase(strValue) || "on".equalsIgnoreCase(strValue)) {
-            returnValue = true;
+        String strValue = getDbValue(name);
+        if (strValue == null) {
+            strValue = this.settings.getProperty(name);
         }
-        return returnValue;
+        return "1".equalsIgnoreCase(strValue) || "yes".equalsIgnoreCase(strValue) ||
+                "true".equalsIgnoreCase(strValue) || "on".equalsIgnoreCase(strValue);
     }
 
     @Override
     public Map<String, String> getValues(String filter) {
-        return this.settings.entrySet().stream()
-                .filter(e -> ((String) e.getKey()).contains(filter)).collect(
-                        Collectors.toMap(
-                                e -> (String) e.getKey(),
-                                e -> (String) e.getValue()
-                                        ));
+        final Map<String, String> results = new HashMap<>();
+        if (this.dbConfigProvider != null) {
+            final List<ConfigurationItem> items = this.dbConfigProvider.getItems(filter);
+            if (items != null) {
+                for (ConfigurationItem item : items) {
+                    results.put(item.getId(), item.getValue());
+                }
+            }
+        }
+        results.putAll(this.settings.entrySet().stream()
+                                    .filter(e -> ((String) e.getKey()).contains(filter)).collect(
+                                            Collectors.toMap(
+                                                    e -> (String) e.getKey(),
+                                                    e -> (String) e.getValue())));
+        return results;
     }
 
     @Override
     public Map<String, String> getAll() {
-        return this.settings.entrySet().stream().collect(
-                Collectors.toMap(
-                        e -> (String) e.getKey(),
-                        e -> (String) e.getValue()
-                                ));
+        final Map<String, String> results = new HashMap<>();
+        if (this.dbConfigProvider != null) {
+            results.putAll(this.dbConfigProvider.getItems().stream().collect(Collectors.toMap(ConfigurationItem::getId, ConfigurationItem::getValue)));
+        }
+        results.putAll(this.settings.entrySet().stream().collect(Collectors.toMap(e -> (String) e.getKey(),
+                                                                                  e -> (String) e.getValue())));
+        return results;
     }
 
     @Override
-    public void setValue(String name, String value) { this.settings.setProperty(name, value); }
+    public void setValue(String name, String value) {
+        this.settings.setProperty(name, value);
+        if (this.dbConfigProvider != null) {
+            ConfigurationItem item = this.dbConfigProvider.getItem(name);
+            if (item != null) {
+                this.dbConfigProvider.saveItem(item);
+            }
+        }
+    }
 
     @Override
     public Map<String, String> getSystemEnvironment() {
@@ -137,6 +163,17 @@ public class TaoConfigurationProvider implements ConfigurationProvider {
     @Override
     public void setSystemEnvironment(Map<String, String> environment) {
         this.environment = new HashMap<>(environment);
+    }
+
+    private String getDbValue(String name) {
+        String value = null;
+        if (this.dbConfigProvider != null) {
+            final ConfigurationItem item = this.dbConfigProvider.getItem(name);
+            if (item != null) {
+                value = item.getValue();
+            }
+        }
+        return value;
     }
 
     private void externalizeProperties(Path target) throws IOException {
