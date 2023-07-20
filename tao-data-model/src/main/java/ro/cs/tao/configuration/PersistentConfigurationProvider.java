@@ -1,0 +1,15 @@
+package ro.cs.tao.configuration;
+
+import java.util.List;
+import java.util.Map;
+
+public interface PersistentConfigurationProvider {
+
+    List<ConfigurationCategory> getCategories();
+    List<ConfigurationItem> getItems();
+    List<ConfigurationItem> getItems(String filter);
+    Map<ConfigurationCategory, ConfigurationItem> getGroupedItems();
+    List<ConfigurationItem> getCategoryItems(ConfigurationCategory category);
+    ConfigurationItem getItem(String key);
+    ConfigurationItem saveItem(ConfigurationItem item);
+}

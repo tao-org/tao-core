@@ -105,6 +105,53 @@
         </attributes>
     </mapped-superclass>
 
+    <entity class="ro.cs.tao.configuration.ConfigurationCategory" access="PROPERTY">
+        <table name="config.category"/>
+        <attributes>
+            <id name="id">
+                <column name="id" nullable="false" column-definition="smallint NOT NULL"/>
+            </id>
+            <basic name="name">
+                <column name="name" nullable="false" column-definition="varchar NOT NULL"/>
+            </basic>
+            <basic name="order">
+                <column name="display_order" nullable="false" column-definition="integer NOT NULL"/>
+            </basic>
+        </attributes>
+    </entity>
+
+    <entity class="ro.cs.tao.configuration.ConfigurationItem" access="PROPERTY">
+        <table name="config.config"/>
+        <attributes>
+            <id name="id">
+                <column name="key" nullable="false" column-definition="varchar(250) NOT NULL"/>
+            </id>
+            <basic name="value">
+                <column name="value" nullable="true" column-definition="varchar"/>
+            </basic>
+            <basic name="friendlyName">
+                <column name="friendly_name" nullable="false" column-definition="varchar NOT NULL"/>
+            </basic>
+            <basic name="type">
+                <column name="type" nullable="false" column-definition="varchar(10) NOT NULL"/>
+            </basic>
+            <basic name="label">
+                <column name="label" nullable="true" column-definition="varchar NOT NULL"/>
+            </basic>
+            <basic name="values">
+                <column name="values" nullable="true" column-definition="json"/>
+                <convert converter="ro.cs.tao.persistence.convert.ValuesConverter"/>
+            </basic>
+            <basic name="lastUpdated">
+                <column name="last_updated" nullable="false" column-definition="timestamp with time zone NOT NULL DEFAULT now()"/>
+            </basic>
+            <many-to-one name="category" fetch="EAGER" target-entity="ro.cs.tao.configuration.ConfigurationCategory">
+                <join-column name="category_id" />
+            </many-to-one>
+            <transient name="typedValue"/>
+        </attributes>
+    </entity>
+
     <entity class="ro.cs.tao.topology.NodeFlavor" access="PROPERTY">
         <table name="topology.node_flavor"/>
         <attributes>
