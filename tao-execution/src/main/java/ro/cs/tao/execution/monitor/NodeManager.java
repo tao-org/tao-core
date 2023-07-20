@@ -166,14 +166,9 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         stop();
         this.nodeInspectTask = new NodeInspectTask();
         this.nodeRefreshTask = new NodeRefreshTask();
-        if (this.nodeInspectTimer == null) {
-            this.nodeInspectTimer = new Timer("node-monitor");
-        }
-        if (this.nodeRefreshTimer == null) {
-            this.nodeRefreshTimer = new Timer("node-refresh");
-        }
-        this.nodeRefreshTimer.schedule(this.nodeRefreshTask, 0, pollInterval * 1000);
-        this.nodeInspectTimer.schedule(this.nodeInspectTask, pollInterval * 1000, pollInterval * 1000);
+        final long interval = pollInterval * 1000;
+        scheduleRefresh(0, interval);
+        scheduleInspection(interval, interval);
     }
 
     /**
@@ -457,6 +452,22 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         return info;
     }
 
+    protected void scheduleInspection(long delay, long interval) {
+        if (this.nodeInspectTimer != null) {
+            this.nodeInspectTimer.cancel();
+        }
+        this.nodeInspectTimer = new Timer("node-monitor");
+        this.nodeInspectTimer.scheduleAtFixedRate(this.nodeInspectTask, delay, interval);
+    }
+
+    protected void scheduleRefresh(long delay, long interval) {
+        if (this.nodeInspectTimer != null) {
+            this.nodeInspectTimer.cancel();
+        }
+        this.nodeInspectTimer = new Timer("node-refresh");
+        this.nodeInspectTimer.scheduleAtFixedRate(this.nodeInspectTask, interval, interval);
+    }
+
     /**
      * This class contains the node on which a task can be executed together with the number of
      * CPU's and the memory that should be used.
@@ -565,7 +576,9 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                                     try {
                                         runtimeInfo = readNodeRuntimeInfo(nodeRuntime.getNode());
                                     } catch (Exception exception) {
-                                        logger.log(Level.SEVERE, "Cannot read node information '" + h + "': " + ExceptionUtils.getExceptionLoggingMessage(exception, 1));
+                                        logger.severe(() -> String.format("Cannot read node information '%s': %s",
+                                                                          h,
+                                                                          ExceptionUtils.getExceptionLoggingMessage(exception, 1)));
                                         nodeRuntime.incrementFailures();
                                     }
                                     if (runtimeInfo == null) {
