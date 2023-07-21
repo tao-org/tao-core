@@ -6,6 +6,7 @@ import java.util.Map;
 public interface PersistentConfigurationProvider {
 
     List<ConfigurationCategory> getCategories();
+    ConfigurationCategory getCategory(int categoryId);
     List<ConfigurationItem> getItems();
     List<ConfigurationItem> getItems(String filter);
     Map<ConfigurationCategory, ConfigurationItem> getGroupedItems();

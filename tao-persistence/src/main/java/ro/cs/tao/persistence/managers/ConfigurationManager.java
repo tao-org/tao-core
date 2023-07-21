@@ -34,6 +34,11 @@ public class ConfigurationManager
     }
 
     @Override
+    public ConfigurationCategory getCategory(int categoryId) {
+        return configurationCategoryRepository.findById(categoryId).orElse(null);
+    }
+
+    @Override
     public List<ConfigurationItem> getItems() {
         final List<ConfigurationItem> results = new ArrayList<>();
         repository.findAll().forEach(results::add);
