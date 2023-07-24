@@ -30,10 +30,7 @@ import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.BasicCookieStore;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.client.*;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 import ro.cs.tao.utils.logger.Logger;
@@ -270,12 +267,14 @@ public class NetUtils {
                                 .setDefaultCredentialsProvider(credentialsProvider)
                                 .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
                                 .setSSLSocketFactory(sslConnectionSocketFactory())
+                                .setRedirectStrategy(new LaxRedirectStrategy())
                                 .build();
                     } else {
                         httpClient = HttpClients.custom()
                                 .setDefaultCookieStore(new BasicCookieStore())
                                 .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
                                 .setSSLSocketFactory(sslConnectionSocketFactory())
+                                .setRedirectStrategy(new LaxRedirectStrategy())
                                 .build();
                     }
                     httpClients.put(key, httpClient);
@@ -322,6 +321,7 @@ public class NetUtils {
             CloseableHttpClient httpClient = HttpClients.custom()
                                                              .setDefaultCookieStore(new BasicCookieStore())
                                                              .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
+                                                             .setRedirectStrategy(new LaxRedirectStrategy())
                                                              .build();
                 HttpRequestBase requestBase;
                 switch (method) {
@@ -364,6 +364,7 @@ public class NetUtils {
             CloseableHttpClient httpClient = HttpClients.custom()
                                                              .setDefaultCookieStore(new BasicCookieStore())
                                                              .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
+                                                             .setRedirectStrategy(new LaxRedirectStrategy())
                                                              .build();
             HttpRequestBase requestBase;
             switch (method) {
@@ -409,6 +410,7 @@ public class NetUtils {
             CloseableHttpClient httpClient = HttpClients.custom()
                                                              .setDefaultCookieStore(new BasicCookieStore())
                                                              .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
+                                                             .setRedirectStrategy(new LaxRedirectStrategy())
                                                              .build();
             HttpRequestBase requestBase;
             switch (method) {
@@ -480,12 +482,14 @@ public class NetUtils {
                                 .setDefaultCredentialsProvider(credentialsProvider)
                                 .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
                                 .setSSLSocketFactory(sslConnectionSocketFactory())
+                                .setRedirectStrategy(new LaxRedirectStrategy())
                                 .build();
                     } else {
                         httpClient = HttpClients.custom()
                                 .setDefaultCookieStore(new BasicCookieStore())
                                 .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
                                 .setSSLSocketFactory(sslConnectionSocketFactory())
+                                .setRedirectStrategy(new LaxRedirectStrategy())
                                 .build();
                     }
                     httpClients.put(key, httpClient);
