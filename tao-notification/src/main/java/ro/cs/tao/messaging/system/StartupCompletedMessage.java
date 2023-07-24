@@ -11,6 +11,7 @@ public class StartupCompletedMessage extends Message {
 
     public StartupCompletedMessage() {
         super();
+        setTimestamp(System.currentTimeMillis());
         setMessage("System is ready");
     }
 }

@@ -95,8 +95,8 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
         if (dockerPath != null) {
             try {
                 final String localRegistry = ConfigurationManager.getInstance().getValue("tao.docker.registry");
-                if ((container = DockerManager.getDockerImage(getContainerName())) == null &&
-                    (container = DockerManager.getDockerImage(localRegistry + "/" + getContainerName())) == null) {
+                if ((container = DockerManager.getDockerImage(localRegistry + "/" + getContainerName())) == null &&
+                    (container = DockerManager.getDockerImage(getContainerName())) == null) {
                     // first try the container.properties file, maybe it is a container from Docker Hub
                     Path dockerfilePath = dockerImagesPath.resolve(getContainerName()).resolve("container.properties");
                     Files.createDirectories(dockerImagesPath.resolve(getContainerName()));
@@ -366,8 +366,6 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
         app.setName(app.getName());
         app.setPath(appPath);
     }
-
-    protected abstract String getContainerName();
 
     protected abstract String getDescription();
 

@@ -7,11 +7,15 @@ import ro.cs.tao.execution.local.DefaultSessionFactory;
 import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.messaging.Message;
+import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.Notifiable;
+import ro.cs.tao.messaging.Topic;
 import ro.cs.tao.quota.QuotaException;
 import ro.cs.tao.quota.QuotaManager;
 import ro.cs.tao.quota.UserQuotaManager;
+import ro.cs.tao.security.SystemPrincipal;
 import ro.cs.tao.security.UserPrincipal;
+import ro.cs.tao.serialization.JsonMapper;
 import ro.cs.tao.topology.*;
 import ro.cs.tao.utils.ExceptionUtils;
 import ro.cs.tao.utils.async.Parallel;
@@ -162,14 +166,9 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         stop();
         this.nodeInspectTask = new NodeInspectTask();
         this.nodeRefreshTask = new NodeRefreshTask();
-        if (this.nodeInspectTimer == null) {
-            this.nodeInspectTimer = new Timer("node-monitor");
-        }
-        if (this.nodeRefreshTimer == null) {
-            this.nodeRefreshTimer = new Timer("node-refresh");
-        }
-        this.nodeRefreshTimer.schedule(this.nodeRefreshTask, 0, pollInterval * 1000);
-        this.nodeInspectTimer.schedule(this.nodeInspectTask, pollInterval * 1000, pollInterval * 1000);
+        final long interval = pollInterval * 1000;
+        scheduleRefresh(0, interval);
+        scheduleInspection(interval, interval);
     }
 
     /**
@@ -445,7 +444,28 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
 
     protected RuntimeInfo readNodeRuntimeInfo(NodeDescription node) throws Exception {
         OSRuntimeInfo<RuntimeInfo> osRuntimeInfo = OSRuntimeInfo.createInspector(node.getId(), node.getUserName(), node.getUserPass(), RuntimeInfo.class);
-        return osRuntimeInfo.getInfo();
+        final RuntimeInfo info = osRuntimeInfo.getInfo();
+        if (osRuntimeInfo instanceof OSRuntimeInfo.Linux) {
+            // Linux reports CPU as the sum of the cores load, hence it may be > 100%
+            info.setCpuTotal(info.getCpuTotal() / (double) node.getFlavor().getCpu());
+        }
+        return info;
+    }
+
+    protected void scheduleInspection(long delay, long interval) {
+        if (this.nodeInspectTimer != null) {
+            this.nodeInspectTimer.cancel();
+        }
+        this.nodeInspectTimer = new Timer("node-monitor");
+        this.nodeInspectTimer.scheduleAtFixedRate(this.nodeInspectTask, delay, interval);
+    }
+
+    protected void scheduleRefresh(long delay, long interval) {
+        if (this.nodeRefreshTimer != null) {
+            this.nodeRefreshTimer.cancel();
+        }
+        this.nodeRefreshTimer = new Timer("node-refresh");
+        this.nodeRefreshTimer.scheduleAtFixedRate(this.nodeRefreshTask, interval, interval);
     }
 
     /**
@@ -556,7 +576,9 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                                     try {
                                         runtimeInfo = readNodeRuntimeInfo(nodeRuntime.getNode());
                                     } catch (Exception exception) {
-                                        logger.log(Level.SEVERE, "Cannot read node information '" + h + "': " + ExceptionUtils.getExceptionLoggingMessage(exception, 1));
+                                        logger.severe(() -> String.format("Cannot read node information '%s': %s",
+                                                                          h,
+                                                                          ExceptionUtils.getExceptionLoggingMessage(exception, 1)));
                                         nodeRuntime.incrementFailures();
                                     }
                                     if (runtimeInfo == null) {
@@ -565,6 +587,10 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                                     }
                                     nodeRuntime.setRuntimeInfo(runtimeInfo);
                                     nodeRuntime.setLastUpdatedTimeMilliseconds(System.currentTimeMillis());
+                                    Messaging.send(SystemPrincipal.instance(),
+                                                   Topic.RESOURCES.getCategory(),
+                                                   nodeRuntime.node.getId(),
+                                                   JsonMapper.instance().writeValueAsString(runtimeInfo));
                                 }
                             }
                         } catch (Exception exception) {

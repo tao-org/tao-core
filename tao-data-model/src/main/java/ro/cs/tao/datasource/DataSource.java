@@ -50,9 +50,6 @@ public abstract class DataSource<Q extends DataQuery, T> extends StringIdentifia
         this.properties = new Properties();
     }
 
-    @Override
-    public String defaultId() { return null; }
-
     /**
      * Returns the given property value.
      * @param name  The property name
@@ -120,6 +117,7 @@ public abstract class DataSource<Q extends DataQuery, T> extends StringIdentifia
      */
     public abstract void useAlternateConnectionString(boolean value);
     public boolean requiresAuthentication() { return false; }
+    public boolean is2FAEnabled() { return false; }
     /**
      * Sets the credentials needed to connect to this data source
      * @param username  The user id
@@ -130,6 +128,10 @@ public abstract class DataSource<Q extends DataQuery, T> extends StringIdentifia
      * Gets the credentials set for this data source.
      */
     public abstract UsernamePasswordCredentials getCredentials();
+
+    public T authenticate(String oneTimePassword) throws IOException {
+        return authenticate();
+    }
 
     public abstract T authenticate() throws IOException;
 
