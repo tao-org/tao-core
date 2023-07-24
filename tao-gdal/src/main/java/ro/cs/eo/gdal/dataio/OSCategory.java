@@ -1,6 +1,6 @@
 package ro.cs.eo.gdal.dataio;
 
-import static org.apache.commons.lang.SystemUtils.*;
+import static org.apache.commons.lang3.SystemUtils.*;
 
 /**
  * GDAL OS category enum for defining GDAL compatible operating systems types with SNAP.

@@ -30,8 +30,8 @@ public class AutoEvictableCache<T, U> {
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                long current = System.currentTimeMillis();
-                AutoEvictableCache.this.cache.entrySet().removeIf(e -> e.getValue().getKeyTwo() - current >= retention);
+                final long current = System.currentTimeMillis();
+                AutoEvictableCache.this.cache.entrySet().removeIf(e -> current - e.getValue().getKeyTwo() >= retention);
             }
         }, retention, retention);
     }
