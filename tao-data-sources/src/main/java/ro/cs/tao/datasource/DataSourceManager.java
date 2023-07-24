@@ -293,8 +293,8 @@ public class DataSourceManager {
             });
             url = url.substring(url.indexOf('.') + 1);
             final List<DataSource> matchedDataSources = matches.collect(Collectors.toList());
-            continueMatching = matchedDataSources.size() != 1;
-            if (!continueMatching) {
+            continueMatching = matchedDataSources.size() != 1 && url.contains(".");
+            if (!continueMatching && !matchedDataSources.isEmpty()) {
                 match = matchedDataSources.get(0);
             }
         }
