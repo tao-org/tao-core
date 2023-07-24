@@ -9,6 +9,7 @@ import ro.cs.tao.utils.DateUtils;
 import javax.xml.bind.annotation.XmlEnum;
 import java.lang.reflect.Array;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.function.Function;
 
 @XmlEnum(Class.class)
@@ -120,6 +121,10 @@ public enum JavaType implements TaoEnum<Class<?>> {
             }
         }
         return STRING;
+    }
+
+    public static boolean isValid(String name) {
+        return Arrays.stream(JavaType.values()).anyMatch(t -> t.description.equals(name));
     }
 
     public static Object createArray(JavaType type, int dimension) {

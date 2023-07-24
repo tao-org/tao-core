@@ -37,11 +37,11 @@ public interface ItemAction {
     default Path doAction(final Path item) throws Exception { return item; }
     /**
      * Execution of this action on the given item
-     * @param item  The item onto which to execute the action
+     * @param items  The items onto which to execute the action
      * @param destination The destination of the action result
      * @throws Exception  If something goes wrong
      */
-    default Path doAction(final Path item, final Path destination) throws Exception { return null; }
+    default Path doAction(final Path[] items, final Path destination) throws Exception { return null; }
 
     default void setProductProvider(EOProductProvider productProvider) { }
 

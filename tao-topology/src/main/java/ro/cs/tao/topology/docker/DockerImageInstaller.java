@@ -21,5 +21,6 @@ import ro.cs.tao.docker.Container;
 import java.io.IOException;
 
 public interface DockerImageInstaller {
+    String getContainerName();
     Container installImage() throws IOException;
 }

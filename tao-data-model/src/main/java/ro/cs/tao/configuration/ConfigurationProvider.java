@@ -72,4 +72,8 @@ public interface ConfigurationProvider {
     default void setSystemEnvironment(Map<String, String> environment) {
 
     }
+
+    default void setPersistentConfigurationProvider(PersistentConfigurationProvider provider) {
+
+    }
 }
