@@ -28,6 +28,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.cookie.Cookie;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.*;
@@ -45,6 +46,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
@@ -586,5 +588,15 @@ public class NetUtils {
             }
         }
         return result;
+    }
+
+    public static List<Cookie> getCookies(String url) throws IOException {
+        try {
+            final String domain = new URI(url).getHost();
+            return cookieStore.getCookies().stream().filter(c -> c.getDomain().equals(domain)).collect(Collectors.toList());
+        } catch (URISyntaxException e) {
+            Logger.getRootLogger().debug("Could not get cookies for %s : %s", url, e.getMessage());
+            throw new IOException(e);
+        }
     }
 }
