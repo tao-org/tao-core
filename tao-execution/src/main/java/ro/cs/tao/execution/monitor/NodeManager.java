@@ -461,11 +461,11 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     }
 
     protected void scheduleRefresh(long delay, long interval) {
-        if (this.nodeInspectTimer != null) {
-            this.nodeInspectTimer.cancel();
+        if (this.nodeRefreshTimer != null) {
+            this.nodeRefreshTimer.cancel();
         }
-        this.nodeInspectTimer = new Timer("node-refresh");
-        this.nodeInspectTimer.scheduleAtFixedRate(this.nodeInspectTask, interval, interval);
+        this.nodeRefreshTimer = new Timer("node-refresh");
+        this.nodeRefreshTimer.scheduleAtFixedRate(this.nodeRefreshTask, interval, interval);
     }
 
     /**
