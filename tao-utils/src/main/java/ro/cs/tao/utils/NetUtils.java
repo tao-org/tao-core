@@ -61,6 +61,8 @@ public class NetUtils {
     private static CredentialsProvider proxyCredentials;
     private static int timeout = 30000;
 
+    private static final BasicCookieStore cookieStore = new BasicCookieStore();
+
     static {
         allowSelfSignedCertificates();
     }
@@ -263,7 +265,7 @@ public class NetUtils {
                     }
                     CloseableHttpClient httpClient;
                     if (credentialsProvider != null) {
-                        httpClient = HttpClients.custom().setDefaultCookieStore(new BasicCookieStore())
+                        httpClient = HttpClients.custom().setDefaultCookieStore(cookieStore)
                                 .setDefaultCredentialsProvider(credentialsProvider)
                                 .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
                                 .setSSLSocketFactory(sslConnectionSocketFactory())
@@ -271,7 +273,7 @@ public class NetUtils {
                                 .build();
                     } else {
                         httpClient = HttpClients.custom()
-                                .setDefaultCookieStore(new BasicCookieStore())
+                                .setDefaultCookieStore(cookieStore)
                                 .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
                                 .setSSLSocketFactory(sslConnectionSocketFactory())
                                 .setRedirectStrategy(new LaxRedirectStrategy())
@@ -319,7 +321,7 @@ public class NetUtils {
         try {
             URI uri = new URI(url);
             CloseableHttpClient httpClient = HttpClients.custom()
-                                                             .setDefaultCookieStore(new BasicCookieStore())
+                                                             .setDefaultCookieStore(cookieStore)
                                                              .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
                                                              .setRedirectStrategy(new LaxRedirectStrategy())
                                                              .build();
@@ -362,7 +364,7 @@ public class NetUtils {
         try {
             URI uri = new URI(url);
             CloseableHttpClient httpClient = HttpClients.custom()
-                                                             .setDefaultCookieStore(new BasicCookieStore())
+                                                             .setDefaultCookieStore(cookieStore)
                                                              .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
                                                              .setRedirectStrategy(new LaxRedirectStrategy())
                                                              .build();
@@ -408,7 +410,7 @@ public class NetUtils {
         try {
             URI uri = new URI(url);
             CloseableHttpClient httpClient = HttpClients.custom()
-                                                             .setDefaultCookieStore(new BasicCookieStore())
+                                                             .setDefaultCookieStore(cookieStore)
                                                              .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
                                                              .setRedirectStrategy(new LaxRedirectStrategy())
                                                              .build();
@@ -478,7 +480,7 @@ public class NetUtils {
                     }
                     CloseableHttpClient httpClient;
                     if (credentialsProvider != null) {
-                        httpClient = HttpClients.custom().setDefaultCookieStore(new BasicCookieStore())
+                        httpClient = HttpClients.custom().setDefaultCookieStore(cookieStore)
                                 .setDefaultCredentialsProvider(credentialsProvider)
                                 .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
                                 .setSSLSocketFactory(sslConnectionSocketFactory())
@@ -486,7 +488,7 @@ public class NetUtils {
                                 .build();
                     } else {
                         httpClient = HttpClients.custom()
-                                .setDefaultCookieStore(new BasicCookieStore())
+                                .setDefaultCookieStore(cookieStore)
                                 .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
                                 .setSSLSocketFactory(sslConnectionSocketFactory())
                                 .setRedirectStrategy(new LaxRedirectStrategy())
