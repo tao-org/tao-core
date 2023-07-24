@@ -225,7 +225,7 @@ INSERT INTO config.category (id, name, display_order) VALUES
 (4, 'Execution', 4),
 (5, 'Email', 5),
 (6, 'OpenStack', 6),
-(7, 'Workspaces', 7)
+(7, 'Workspaces', 7);
 
 -- Configuration items
 INSERT INTO config.config (category_id, key, value, friendly_name, type, label, "values", last_updated) VALUES
@@ -274,4 +274,4 @@ INSERT INTO config.config (category_id, key, value, friendly_name, type, label, 
 (7, 'aws.region', 'eu-central-1', 'AWS region', 'string', 'AWS region', null, now()),
 (7, 'aws.access.key', null, 'AWS access key', 'string', 'Access key', null, now()),
 (7, 'aws.secret.key', null, 'AWS secret key', 'string', 'Secret key', null, now()),
-(7, 'aws.bucket', null, 'AWS S3 bucket', 'string', 'S3 bucket', null, now())
+(7, 'aws.bucket', null, 'AWS S3 bucket', 'string', 'S3 bucket', null, now());
