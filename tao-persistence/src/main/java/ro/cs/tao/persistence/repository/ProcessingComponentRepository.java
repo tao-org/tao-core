@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.component.ProcessingComponent;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * CRUD repository for ProcessingComponent entities
@@ -28,6 +29,9 @@ public interface ProcessingComponentRepository extends PagingAndSortingRepositor
 
     @Query(value = "SELECT * FROM component.processing_component WHERE label = :label", nativeQuery = true)
     List<ProcessingComponent> getByLabel(@Param("label") String label);
+
+    @Query(value = "SELECT * FROM component.processing_component WHERE id NOT IN (?1)", nativeQuery = true)
+    List<ProcessingComponent> getOtherComponents(Set<String> ids);
 
     @Query(value = "SELECT * FROM component.processing_component WHERE id = :id AND container_id = :containerId", nativeQuery = true)
     ProcessingComponent getByIdAndContainer(@Param("id") String id, @Param("containerId") String containerId);

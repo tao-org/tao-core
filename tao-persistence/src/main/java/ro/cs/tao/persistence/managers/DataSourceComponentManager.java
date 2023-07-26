@@ -23,6 +23,7 @@ import ro.cs.tao.persistence.repository.DataSourceComponentRepository;
 import ro.cs.tao.utils.StringUtilities;
 
 import java.util.List;
+import java.util.Set;
 
 @Component("dataSourceComponentManager")
 public class DataSourceComponentManager extends TaoComponentManager<DataSourceComponent, DataSourceComponentRepository>
@@ -37,6 +38,11 @@ public class DataSourceComponentManager extends TaoComponentManager<DataSourceCo
     @Override
     public List<DataSourceComponent> getSystemDataSourceComponents() {
         return this.repository.getSystemDataSourceComponents();
+    }
+
+    @Override
+    public List<DataSourceComponent> getOtherDataSourceComponents(Set<String> ids) {
+        return this.repository.getOtherDataSourceComponents(ids);
     }
 
     @Override
