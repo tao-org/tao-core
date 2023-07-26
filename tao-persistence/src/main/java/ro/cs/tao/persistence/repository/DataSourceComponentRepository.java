@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.datasource.DataSourceComponent;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * CRUD repository for DataSourceComponent entities
@@ -32,6 +33,9 @@ public interface DataSourceComponentRepository extends PagingAndSortingRepositor
 
     @Query(value = "SELECT dsc FROM DataSourceComponent dsc WHERE dsc.system = false ORDER BY dsc.id")
     List<DataSourceComponent> getUserDataSourceComponents();
+
+    @Query(value = "SELECT dsc FROM DataSourceComponent dsc WHERE dsc.id NOT IN (?1) ORDER BY dsc.id")
+    List<DataSourceComponent> getOtherDataSourceComponents(Set<String> ids);
 
     @Query(value = "SELECT dsc FROM DataSourceComponent dsc WHERE dsc.system = true ORDER BY dsc.id")
     List<DataSourceComponent> getSystemDataSourceComponents();
