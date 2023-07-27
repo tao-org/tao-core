@@ -36,4 +36,9 @@ public class UserPrincipal implements Principal, Serializable {
 
     @Override
     public boolean implies(Subject subject) { return true; }
+
+    @Override
+    public String toString() {
+        return id;
+    }
 }
