@@ -554,15 +554,16 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
     // End Quota related methods
 
     @Override
-    public void createWorkspaces(String user) {
-        Repository repo = repositoryJPARepository.getByUserAndName(user, RepositoryType.LOCAL.name());
+    public void createWorkspaces(String userName) {
+        final String id = getId(userName);
+        Repository repo = repositoryJPARepository.getByUserAndName(id, RepositoryType.LOCAL.name());
         if (repo == null) {
-            repositoryJPARepository.save(RepositoryFactory.createDefault(RepositoryType.LOCAL, user));
+            repositoryJPARepository.save(RepositoryFactory.createDefault(RepositoryType.LOCAL, userName));
         }
         try {
-            repo = repositoryJPARepository.getByUserAndName(user, RepositoryType.AWS.name());
+            repo = repositoryJPARepository.getByUserAndName(id, RepositoryType.AWS.name());
             if (repo == null) {
-                repositoryJPARepository.save(RepositoryFactory.createDefault(RepositoryType.AWS, user));
+                repositoryJPARepository.save(RepositoryFactory.createDefault(RepositoryType.AWS, userName));
             }
         } catch (Exception e) {
             Logger.getLogger(UserManager.class.getName()).warning(e.getMessage());
