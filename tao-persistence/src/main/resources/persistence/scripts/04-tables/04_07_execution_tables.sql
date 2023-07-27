@@ -24,7 +24,7 @@ CREATE TABLE execution.job
 	start_time timestamp without time zone NULL,
 	end_time timestamp without time zone NULL,
 	workflow_id bigint,
-	username varchar(50) NOT NULL,
+	user_id varchar(50) NOT NULL,
 	output_path varchar(512),
 	query_id bigint NULL,
 	execution_status_id integer NOT NULL,
@@ -37,7 +37,7 @@ ALTER TABLE execution.job ADD CONSTRAINT PK_job PRIMARY KEY (id);
 ALTER TABLE execution.job ADD CONSTRAINT FK_job_workflow
 	FOREIGN KEY (workflow_id) REFERENCES workflow.graph (id) ON DELETE No Action ON UPDATE No Action;
 ALTER TABLE execution.job ADD CONSTRAINT FK_job_user
-	FOREIGN KEY (username) REFERENCES usr."user" (username) ON DELETE No Action ON UPDATE No Action;
+	FOREIGN KEY (user_id) REFERENCES usr."user" (id) ON DELETE No Action ON UPDATE No Action;
 ALTER TABLE execution.job ADD CONSTRAINT FK_job_query
 	FOREIGN KEY (query_id) REFERENCES workflow.query (id) ON DELETE No Action ON UPDATE No Action;
 ALTER TABLE execution.job ADD CONSTRAINT FK_job_execution_status

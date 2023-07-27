@@ -184,7 +184,7 @@ CREATE TABLE component.processing_component
 	main_tool_file_location varchar(512) NOT NULL,
 	working_directory varchar(512) NULL,
 	template_type_id integer NOT NULL,
-	owner_user varchar NULL,
+	owner_user_id varchar NULL,
 	visibility_id integer NOT NULL,
 	multi_thread boolean NULL DEFAULT false,
 	parallelism integer NULL DEFAULT 1,
@@ -202,7 +202,7 @@ ALTER TABLE component.processing_component ADD CONSTRAINT PK_processing_componen
 ALTER TABLE component.processing_component ADD CONSTRAINT FK_processing_component_template_type
 	FOREIGN KEY (template_type_id) REFERENCES component.template_type (id) ON DELETE No Action ON UPDATE No Action;
 ALTER TABLE component.processing_component ADD CONSTRAINT FK_processing_component_user
-	FOREIGN KEY (owner_user) REFERENCES usr.user (username) ON DELETE No Action ON UPDATE No Action;
+	FOREIGN KEY (owner_user_id) REFERENCES usr.user (id) ON DELETE No Action ON UPDATE No Action;
 ALTER TABLE component.processing_component ADD CONSTRAINT FK_processing_component_component_visibility
 	FOREIGN KEY (visibility_id) REFERENCES component.component_visibility (id) ON DELETE No Action ON UPDATE No Action;
 ALTER TABLE component.processing_component ADD CONSTRAINT FK_processing_component_processing_component_type
@@ -358,7 +358,7 @@ CREATE TABLE component.group_component
 	authors varchar(1024) NOT NULL,
 	copyright text NOT NULL,
 	node_affinity varchar(250) NULL,
-	owner_user_id integer NULL,
+	owner_user_id varchar NULL,
 	visibility_id integer NOT NULL,
 	parallelism integer NULL DEFAULT 1,
 	tags text NULL,
@@ -552,14 +552,14 @@ CREATE TABLE component.data_source_component_group
 	copyright text NOT NULL,
 	node_affinity varchar(250) NULL,
 	tags text NULL,
-	username text NOT NULL,
+	user_id text NOT NULL,
 	created timestamp NULL DEFAULT now(),
     modified timestamp NULL DEFAULT now()
 );
 ALTER TABLE component.data_source_component_group ADD CONSTRAINT PK_data_source_component_group
 	PRIMARY KEY (id);
 ALTER TABLE component.data_source_component_group ADD CONSTRAINT FK_data_source_component_group_user
-	FOREIGN KEY (username) REFERENCES usr.user (username) ON DELETE No Action ON UPDATE No Action;
+	FOREIGN KEY (user_id) REFERENCES usr.user (id) ON DELETE No Action ON UPDATE No Action;
 
 -------------------------------------------------------------------------------
 -- table: component.data_source_component_group_sources
@@ -664,7 +664,7 @@ CREATE TABLE component.wps_component
     remote_address varchar(1024) NOT NULL,
 	capability  varchar(512) NOT NULL,
 	visibility_id integer NOT NULL,
-	owner_user varchar NULL,
+	owner_user_id varchar NULL,
 	container_id varchar(1024) NOT NULL,
 	parameters json NULL,
     active boolean NULL DEFAULT true,

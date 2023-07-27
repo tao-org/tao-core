@@ -120,7 +120,7 @@ public class DefaultMessageBus implements ro.cs.tao.messaging.EventBus<Event<Mes
         checkPatternConsumers(topic);
         Message message = event.getData();
         message.setTopic(topic);
-        message.setUser(principal);
+        message.setUserId(principal);
         try {
             if (message.isPersistent()) {
                 message = this.messagePersister.save(message);
@@ -133,7 +133,7 @@ public class DefaultMessageBus implements ro.cs.tao.messaging.EventBus<Event<Mes
 
     @Override
     public void send(String principal, String topic, Message message) {
-        message.setUser(principal);
+        message.setUserId(principal);
         send(principal, topic, Event.wrap(message));
     }
 

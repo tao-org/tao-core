@@ -59,7 +59,7 @@ public abstract class BaseStorageService<T, U> implements StorageService<T, U> {
             throw new IllegalArgumentException("No such action");
         }
         final String path = repository.resolve(item.getRelativePath());
-        action.setActionUser(repository.getUserName());
+        action.setActionUser(repository.getUserId());
         action.doAction(Paths.get(path));
     }
 

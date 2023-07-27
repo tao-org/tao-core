@@ -33,24 +33,24 @@ public interface WorkflowDescriptorRepository extends PagingAndSortingRepository
             nativeQuery = true)
     WorkflowDescriptor getByNodeId(@Param("nodeId") long nodeId);
 
-    @Query(value = "SELECT * from workflow.graph WHERE username = :user AND status_id = :statusId " +
+    @Query(value = "SELECT * from workflow.graph WHERE user_id = :userId AND status_id = :statusId " +
             "ORDER BY created DESC", nativeQuery = true)
-    List<WorkflowDescriptor> getUserWorkflowsByStatus(@Param("user") String user, @Param("statusId") int statusId);
+    List<WorkflowDescriptor> getUserWorkflowsByStatus(@Param("userId") String userId, @Param("statusId") int statusId);
 
-    @Query(value = "SELECT * from workflow.graph WHERE username = :user AND visibility_id = :visibilityId " +
+    @Query(value = "SELECT * from workflow.graph WHERE user_id = :userId AND visibility_id = :visibilityId " +
             "ORDER BY created DESC", nativeQuery = true)
-    List<WorkflowDescriptor> getUserPublishedWorkflowsByVisibility(@Param("user") String user,
+    List<WorkflowDescriptor> getUserPublishedWorkflowsByVisibility(@Param("userId") String userId,
                                                                    @Param("visibilityId") int visibilityId);
 
-    @Query(value = "SELECT * from workflow.graph WHERE username != :user AND visibility_id = 1 " +
+    @Query(value = "SELECT * from workflow.graph WHERE user_id != :userId AND visibility_id = 1 " +
             "AND status_id = 3 ORDER BY created DESC", nativeQuery = true)
-    List<WorkflowDescriptor> getOtherPublicWorkflows(@Param("user") String user);
+    List<WorkflowDescriptor> getOtherPublicWorkflows(@Param("userId") String userId);
 
     @Query(value = "SELECT * from workflow.graph WHERE visibility_id = 1 AND status_id = 3 " +
             "ORDER BY created DESC", nativeQuery = true)
     List<WorkflowDescriptor> getPublicWorkflows();
 
-    @Query(value = "SELECT * from workflow.graph WHERE username = :user OR (username != :user AND visibility_id = 1 AND status_id = 3) " +
+    @Query(value = "SELECT * from workflow.graph WHERE user_id = :userId OR (user_id != :userId AND visibility_id = 1 AND status_id = 3) " +
             "ORDER BY created DESC", nativeQuery = true)
-    List<WorkflowDescriptor> getUserVisibleWorkflows(@Param("user") String user);
+    List<WorkflowDescriptor> getUserVisibleWorkflows(@Param("userId") String userId);
 }

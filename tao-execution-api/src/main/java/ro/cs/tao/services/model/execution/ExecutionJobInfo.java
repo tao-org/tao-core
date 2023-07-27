@@ -43,7 +43,7 @@ public class ExecutionJobInfo {
         this.endTime = executionJob.getEndTime();
         this.workflowId = executionJob.getWorkflowId();
         this.queryId = executionJob.getQueryId();
-        this.userName = executionJob.getUserName();
+        this.userName = executionJob.getUserId();
         this.executionStatus = executionJob.getExecutionStatus();
         this.name = executionJob.getName();
     }

@@ -106,14 +106,13 @@ INSERT INTO usr.user_type (id, type) VALUES
 
 -- Users
 INSERT INTO usr."user" (username, password, email, alternative_email, last_name, first_name, input_quota, actual_input_quota, processing_quota, actual_processing_quota, cpu_quota, memory_quota, organization, status_id, user_type_id, created)
-VALUES ('admin', 'QxdxrJkXAQMN5nT9+dBWLg==', 'admin@tao.org', null, 'Administrator', 'Account', -1, -1, -1, -1, -1, -1, 'TAO', 2, 1, CURRENT_TIMESTAMP);
-
-INSERT INTO usr."user" (username, password, email, alternative_email, last_name, first_name, input_quota, actual_input_quota, processing_quota, actual_processing_quota, cpu_quota, memory_quota, organization, status_id, user_type_id, created)
-VALUES ('SystemAccount', 'TSEBHrrH9Uo+O69A5nzq9A==', 'admin@tao.org', null, 'System', 'Account', -1, -1, -1, -1, -1, -1, 'TAO', 2, 1, CURRENT_TIMESTAMP);
+VALUES
+('admin', 'QxdxrJkXAQMN5nT9+dBWLg==', 'admin@tao.org', null, 'Administrator', 'Account', -1, -1, -1, -1, -1, -1, 'TAO', 2, 1, CURRENT_TIMESTAMP),
+('SystemAccount', 'TSEBHrrH9Uo+O69A5nzq9A==', 'system@tao.org', null, 'System', 'Account', -1, -1, -1, -1, -1, -1, 'TAO', 2, 1, CURRENT_TIMESTAMP);
 
 -- User groups
-INSERT INTO usr.user_group (user_id, group_id) VALUES (1, 1);
-INSERT INTO usr.user_group (user_id, group_id) VALUES (2, 1);
+INSERT INTO usr.user_group (user_id, group_id) VALUES ((SELECT id FROM usr."user" WHERE username='admin'), 1);
+INSERT INTO usr.user_group (user_id, group_id) VALUES ((SELECT id FROM usr."user" WHERE username='SystemAccount'), 1);
 
 -- Node flavor
 INSERT INTO topology.node_flavor (id, cpu, memory, disk, swap, rxtx)

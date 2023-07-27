@@ -436,7 +436,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                 }
                 template.setAttribute(DrmaaJobExtensions.TASK_NAME, TaskUtilities.getComponentFor(task).getLabel());
                 template.setAttribute(DrmaaJobExtensions.JOB_ID, job.getId());
-                template.setAttribute(DrmaaJobExtensions.USER, job.getUserName());
+                template.setAttribute(DrmaaJobExtensions.USER, job.getUserId());
                 JobType jobType = job.getJobType();
                 final ExecutionUnitFormat value;
                 switch (jobType) {
@@ -474,7 +474,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                     nodeData = NodeManager.getInstance().getMasterNode();
                 } else {
                     // the next call blocks until a node is available
-                    nodeData = getAvailableNode(job.getUserName(), component.getParallelism(),
+                    nodeData = getAvailableNode(job.getUserId(), component.getParallelism(),
                                                 ExecutionConfiguration.forceMemoryConstraint() ? memory : 0);
                 }
             }
