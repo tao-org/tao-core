@@ -22,9 +22,9 @@ import java.util.Set;
 @Transactional
 public interface ProcessingComponentRepository extends PagingAndSortingRepository<ProcessingComponent, String> {
 
-    @Query(value = "SELECT * FROM component.processing_component WHERE owner_user = :userName AND component_type_id = :typeId",
+    @Query(value = "SELECT * FROM component.processing_component WHERE owner_user_id = :userId AND component_type_id = :typeId",
             nativeQuery = true)
-    List<ProcessingComponent> getUserComponentsByType(@Param("userName") String userName,
+    List<ProcessingComponent> getUserComponentsByType(@Param("userId") String userId,
                                                       @Param("typeId") int typeId);
 
     @Query(value = "SELECT * FROM component.processing_component WHERE label = :label", nativeQuery = true)

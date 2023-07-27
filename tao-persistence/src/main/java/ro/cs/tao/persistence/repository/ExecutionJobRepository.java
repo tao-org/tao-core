@@ -35,9 +35,9 @@ public interface ExecutionJobRepository extends PagingAndSortingRepository<Execu
             "ORDER BY start_time ASC", nativeQuery = true)
     List<ExecutionJob> findByExecutionStatuses(@Param("statuses") Set<Integer> statuses);
 
-    @Query(value = "SELECT * FROM execution.job WHERE username = :userName AND execution_status_id in (:statuses) " +
+    @Query(value = "SELECT * FROM execution.job WHERE user_id = :userId AND execution_status_id in (:statuses) " +
             "ORDER BY end_time DESC, start_time DESC", nativeQuery = true)
-    List<ExecutionJob> findByStatusAndUser(@Param("statuses") Set<Integer> statuses, @Param("userName") String userName);
+    List<ExecutionJob> findByStatusAndUser(@Param("statuses") Set<Integer> statuses, @Param("userId") String userId);
 
     @Query(value = "SELECT * FROM execution.job WHERE execution_status_id in (:statuses) " +
             "ORDER BY end_time DESC, start_time DESC", nativeQuery = true)
