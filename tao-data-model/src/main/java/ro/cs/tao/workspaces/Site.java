@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 public class Site extends StringIdentifiable {
     private String name;
     private String description;
-    private String user;
+    private String userId;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
     private Geometry footprint;
@@ -31,12 +31,12 @@ public class Site extends StringIdentifiable {
         this.description = description;
     }
 
-    public String getUser() {
-        return user;
+    public String getUserId() {
+        return userId;
     }
 
-    public void setUser(String user) {
-        this.user = user;
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 
     public LocalDateTime getStartDate() {
