@@ -114,8 +114,8 @@
             <basic name="description">
                 <column name="description" nullable="false" column-definition="character varying NOT NULL"/>
             </basic>
-            <basic name="userName">
-                <column name="username" nullable="false" column-definition="character varying NOT NULL"/>
+            <basic name="userId">
+                <column name="user_id" nullable="false" column-definition="character varying NOT NULL"/>
             </basic>
             <basic name="created">
                 <column name="created" nullable="true" column-definition="timestamp without time zone"/>
@@ -189,7 +189,7 @@
                 <column name="active" nullable="true" column-definition="boolean NULL DEFAULT true"/>
             </basic>
             <basic name="owner">
-                <column name="owner_user" nullable="true" column-definition="varchar NULL"/>
+                <column name="owner_user_id" nullable="true" column-definition="varchar NULL"/>
             </basic>
             <basic name="parameters">
                 <column name="parameters" nullable="true" column-definition="json NULL" />
@@ -257,8 +257,8 @@
             <basic name="endDate">
                 <column name="end_date" nullable="false" column-definition="timestamp NOT NULL"/>
             </basic>
-            <basic name="user">
-                <column name="username" nullable="false" column-definition="varchar(50)"/>
+            <basic name="userId">
+                <column name="user_id" nullable="false" column-definition="varchar(50)"/>
             </basic>
         </attributes>
     </entity>

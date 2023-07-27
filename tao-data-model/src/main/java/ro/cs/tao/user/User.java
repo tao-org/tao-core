@@ -16,13 +16,13 @@
 package ro.cs.tao.user;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import ro.cs.tao.component.LongIdentifiable;
+import ro.cs.tao.component.StringIdentifiable;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @JsonIgnoreProperties( { "password", "created", "modified" })
-public class User extends LongIdentifiable {
+public class User extends StringIdentifiable {
 
     private String username;
     private String password;

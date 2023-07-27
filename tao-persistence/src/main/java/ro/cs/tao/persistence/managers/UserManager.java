@@ -42,7 +42,7 @@ import java.util.logging.Logger;
 @EnableTransactionManagement
 @EnableJpaRepositories(basePackages = { "ro.cs.tao.persistence.repository" })
 @Component("userManager")
-public class UserManager extends EntityManager<User, Long, UserRepository> implements UserProvider {
+public class UserManager extends EntityManager<User, String, UserRepository> implements UserProvider {
 
     /** CRUD Repository for Group entities */
     @Autowired
@@ -140,7 +140,11 @@ public class UserManager extends EntityManager<User, Long, UserRepository> imple
     @Override
     public List<User> list(UserStatus userStatus) {
         final List<User> users = repository.findByStatus(userStatus);
-        users.removeIf(u -> SystemPrincipal.instance().getName().equals(u.getUsername()));
+        if (SystemPrincipal.instance().getName() == null) {
+            SystemPrincipal.refresh(this);
+        }
+        final String userId = SystemPrincipal.instance().getName();
+        users.removeIf(u -> userId.equals(u.getId()));
         return users;
     }
 
@@ -302,7 +306,7 @@ public class UserManager extends EntityManager<User, Long, UserRepository> imple
     }
 
     @Override
-    public void updateLastLoginDate(Long userId, LocalDateTime lastLoginDate) {
+    public void updateLastLoginDate(String userId, LocalDateTime lastLoginDate) {
         final Optional<User> user = repository.findById(userId);
         if (user.isPresent()) {
             final User userEnt = user.get();
@@ -413,7 +417,7 @@ public class UserManager extends EntityManager<User, Long, UserRepository> imple
     }
 
     @Override
-    protected boolean checkId(Long entityId, boolean existingEntity) {
+    protected boolean checkId(String entityId, boolean existingEntity) {
         return entityId != null && (existingEntity == (get(entityId) != null));
     }
 
@@ -564,5 +568,11 @@ public class UserManager extends EntityManager<User, Long, UserRepository> imple
             Logger.getLogger(UserManager.class.getName()).warning(e.getMessage());
         }
     }
+
+    @Override
+    public String getId(String userName) {
+        return repository.getId(userName);
+    }
+
     //endregion
 }

@@ -18,7 +18,7 @@ CREATE TABLE workspace.repository
 	name varchar(250) NOT NULL,
 	description text NOT NULL,
 	url_prefix varchar(20) NOT NULL,
-	username varchar(50),
+	user_id varchar(50),
 	repository_type_id int NOT NULL,
 	read_only boolean NOT NULL,
 	system boolean DEFAULT false,
@@ -42,7 +42,7 @@ CREATE TABLE workspace.site
 	footprint geography(POLYGON, 4326) NOT NULL,
 	start_date timestamp NOT NULL,
 	end_date timestamp NOT NULL,
-	username varchar(50)
+	user_id varchar(50)
 );
 ALTER TABLE workspace.site ADD CONSTRAINT PK_site PRIMARY KEY (id);
 DROP SEQUENCE IF EXISTS workspace.site_id_seq CASCADE;

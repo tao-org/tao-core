@@ -248,7 +248,7 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
                 message = "Task " + task.getId() + (StringUtils.isNotEmpty(task.getExecutionNodeHostName()) ? " on node " + task.getExecutionNodeHostName() : "")
                         + " changed to " + status.friendlyName();
             }
-            Messaging.send(new UserPrincipal(task.getJob().getUserName()), Topic.EXECUTION.value(), task.getId(), message, status.name());
+            Messaging.send(new UserPrincipal(task.getJob().getUserId()), Topic.EXECUTION.value(), task.getId(), message, status.name());
         }
     }
 

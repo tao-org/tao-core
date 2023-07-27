@@ -94,7 +94,7 @@ public class DefaultJobFactory {
             job.setName(jobName);
             job.setAppId(appId);
             job.setBatchId(UUID.randomUUID().toString());
-            job.setUserName(SessionStore.currentContext().getPrincipal().getName());
+            job.setUserId(SessionStore.currentContext().getPrincipal().getName());
             job.setStartTime(LocalDateTime.now());
             job.setWorkflowId(workflow.getId());
             job.setExecutionStatus(ExecutionStatus.UNDETERMINED);
@@ -159,7 +159,7 @@ public class DefaultJobFactory {
         job.setName(jobName);
         job.setAppId(appId);
         job.setBatchId(UUID.randomUUID().toString());
-        job.setUserName(SessionStore.currentContext().getPrincipal().getName());
+        job.setUserId(SessionStore.currentContext().getPrincipal().getName());
         job.setStartTime(LocalDateTime.now());
         job.setExecutionStatus(ExecutionStatus.UNDETERMINED);
         job.setJobType(JobType.EXECUTION);
@@ -384,7 +384,7 @@ public class DefaultJobFactory {
         }
         query.setLimit(val);
         query.setValues(taskInputs);
-        query.setUserId(job.getUserName());
+        query.setUserId(job.getUserId());
         if (query.getId() == null || query.getId() == 0) {
             queryProvider.save(query);
         } else {
@@ -457,7 +457,7 @@ public class DefaultJobFactory {
         }
         localQuery.setLimit(val);
         localQuery.setValues(taskInputs);
-        localQuery.setUserId(job.getUserName());
+        localQuery.setUserId(job.getUserId());
         queryProvider.save(localQuery);
         task.setComponent(component);
         task.setCardinality(TaskUtilities.getTargetCardinality(component));
@@ -652,7 +652,7 @@ public class DefaultJobFactory {
             clone.setBatchId(original.getBatchId());
             clone.setExternal(original.isExternal());
             clone.setQueryId(original.getQueryId());
-            clone.setUserName(original.getUserName());
+            clone.setUserId(original.getUserId());
             clone.setExecutionStatus(ExecutionStatus.UNDETERMINED);
             clone.setJobOutputPath(original.getJobOutputPath() + "_" + cloneNumber);
             clone.setJobType(original.getJobType());

@@ -74,13 +74,13 @@ public class JobQueueWorker extends Thread {
                         if (job != null) {
                             try {
                                 logger.finest(String.format("Job [%s] for user '%s' was dequeued",
-                                                            job.getName(), job.getUserName()));
+                                                            job.getName(), job.getUserId()));
                                 JobCommand.START.applyTo(job);
                                 this.orchestrator.incrementActiveJobs();
                             } catch (ExecutionException e) {
                                 try {
                                     logger.warning(String.format("Job [%s] for user '%s' could not be started. Reason: %s",
-                                                                 job.getName(), job.getUserName(), e.getMessage()));
+                                                                 job.getName(), job.getUserId(), e.getMessage()));
                                     this.orchestrator.cancelJob(job);
                                 } catch (PersistenceException ex) {
                                     logger.severe(ex.getMessage());

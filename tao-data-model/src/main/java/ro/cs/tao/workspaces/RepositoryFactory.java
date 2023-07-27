@@ -44,7 +44,7 @@ public class RepositoryFactory {
             throw new IllegalArgumentException("Workspace type " + type.name() + " is disabled");
         }
         workspace.setId(UUID.randomUUID().toString());
-        workspace.setUserName(user);
+        workspace.setUserId(user);
         final ConfigurationProvider cfgProvider = ConfigurationManager.getInstance();
         switch (type) {
             case LOCAL:
@@ -79,7 +79,7 @@ public class RepositoryFactory {
 
     public static Repository createFromTemplate(RepositoryTemplate template, String user) {
         final Repository workspace = template.toRepository();
-        workspace.setUserName(user);
+        workspace.setUserId(user);
         final ConfigurationProvider cfgProvider = ConfigurationManager.getInstance();
         RepositoryType type = workspace.getType();
         switch (type) {

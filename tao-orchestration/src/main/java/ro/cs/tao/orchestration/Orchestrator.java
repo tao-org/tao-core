@@ -523,7 +523,7 @@ public class Orchestrator extends Notifiable {
         }
         final ExecutionStatus status = EnumUtils.getEnumConstantByName(ExecutionStatus.class, payload);
         final ExecutionTask task = taskProvider.get(Long.parseLong(taskId));
-        final String user = task.getJob().getUserName();
+        final String user = task.getJob().getUserId();
         try {
             currentContext.setPrincipal(new UserPrincipal(user));
             task.setContext(currentContext);
@@ -661,7 +661,7 @@ public class Orchestrator extends Notifiable {
                                                    job.getId(), workflow.getName(), time != null ? time.getSeconds() : "<unknown>");
                         logger.info(msg);
                         decrementActiveJobs();
-                        Messaging.send(new UserPrincipal(job.getUserName()), Topic.EXECUTION.value(), this, msg);
+                        Messaging.send(new UserPrincipal(job.getUserId()), Topic.EXECUTION.value(), this, msg);
                         tryRemoveTemporaryWorkflow(job);
                         cleanupTransientComponents(job);
                     } else {
@@ -719,7 +719,7 @@ public class Orchestrator extends Notifiable {
                     }
                 }
             });
-            Messaging.send(new UserPrincipal(job.getUserName()), Topic.EXECUTION.value(), this, msg);
+            Messaging.send(new UserPrincipal(job.getUserId()), Topic.EXECUTION.value(), this, msg);
             cleanupTransientComponents(job);
         } finally {
             decrementActiveJobs();
@@ -1512,7 +1512,7 @@ public class Orchestrator extends Notifiable {
         private final Principal impersonatingUser;
 
         private MessageContext(Message message) {
-            this.impersonatingUser = new UserPrincipal(message.getUser());
+            this.impersonatingUser = new UserPrincipal(message.getUserId());
         }
 
         private MessageContext(String userName) {

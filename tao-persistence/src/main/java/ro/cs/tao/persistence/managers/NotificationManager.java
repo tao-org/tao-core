@@ -35,20 +35,20 @@ import java.util.List;
 public class NotificationManager extends EntityManager<Message, Long, MessageRepository> implements MessageProvider {
 
     @Override
-    public List<Message> getUserMessages(String user, Integer pageNumber) {
+    public List<Message> getUserMessages(String userId, Integer pageNumber) {
         PageRequest pageRequest = PageRequest.of(pageNumber - 1, Constants.MESSAGES_PAGE_SIZE,
                                                   Sort.Direction.DESC, Constants.MESSAGE_TIMESTAMP_PROPERTY_NAME);
-        return repository.findByUser(user, pageRequest).getContent();
+        return repository.findByUserId(userId, pageRequest).getContent();
     }
 
     @Override
-    public List<Message> getUnreadMessages(String user) {
-        return repository.getUnreadMessages(user);
+    public List<Message> getUnreadMessages(String userId) {
+        return repository.getUnreadMessages(userId);
     }
 
     @Override
-    public Message get(String userName, long timestamp) {
-        return repository.get(userName, timestamp);
+    public Message get(String userId, long timestamp) {
+        return repository.get(userId, timestamp);
     }
 
     @Override
@@ -57,8 +57,8 @@ public class NotificationManager extends EntityManager<Message, Long, MessageRep
     }
 
     @Override
-    public void clear(String user) {
-        repository.deleteAll(user);
+    public void clear(String userId) {
+        repository.deleteAll(userId);
     }
 
     @Override
