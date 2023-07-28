@@ -34,7 +34,8 @@ import java.util.Map;
 @JsonSubTypes({
         @JsonSubTypes.Type(value = JavascriptTemplateEngine.class),
         @JsonSubTypes.Type(value = VelocityTemplateEngine.class),
-        @JsonSubTypes.Type(value = XsltTemplateEngine.class)
+        @JsonSubTypes.Type(value = XsltTemplateEngine.class),
+        @JsonSubTypes.Type(value = JsonEngine.class)
 })
 public abstract class TemplateEngine {
 

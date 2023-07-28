@@ -34,6 +34,8 @@ public class EngineFactory {
                 return new JavascriptTemplateEngine();
             case XSLT:
                 return new XsltTemplateEngine();
+            case JSON:
+                return new JsonEngine();
             case VELOCITY:
             default:
                 return new VelocityTemplateEngine();
