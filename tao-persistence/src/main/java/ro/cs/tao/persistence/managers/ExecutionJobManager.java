@@ -80,6 +80,6 @@ public class ExecutionJobManager extends EntityManager<ExecutionJob, Long, Execu
 
     @Override
     protected boolean checkEntity(ExecutionJob entity) {
-        return entity.getUserName() != null && entity.getExecutionStatus() != null;
+        return entity.getUserId() != null && entity.getExecutionStatus() != null;
     }
 }

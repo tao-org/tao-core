@@ -58,15 +58,15 @@ import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 public class NetUtils {
 
     private static final Map<CompositeKey, CloseableHttpClient> httpClients = new HashMap<>();
+    private static final AutoEvictableCache<CompositeKey, BasicCookieStore> cookieStores;
     private static Proxy javaNetProxy;
     private static HttpHost apacheHttpProxy;
     private static CredentialsProvider proxyCredentials;
     private static int timeout = 30000;
 
-    private static final BasicCookieStore cookieStore = new BasicCookieStore();
-
     static {
         allowSelfSignedCertificates();
+        cookieStores = new AutoEvictableCache<>(compositeKey -> new BasicCookieStore(), 3600);
     }
 
     public static String getAuthToken(final String username, final String password) {
@@ -267,19 +267,9 @@ public class NetUtils {
                     }
                     CloseableHttpClient httpClient;
                     if (credentialsProvider != null) {
-                        httpClient = HttpClients.custom().setDefaultCookieStore(cookieStore)
-                                .setDefaultCredentialsProvider(credentialsProvider)
-                                .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
-                                .setSSLSocketFactory(sslConnectionSocketFactory())
-                                .setRedirectStrategy(new LaxRedirectStrategy())
-                                .build();
+                        httpClient = defaultClientBuilder(key).setDefaultCredentialsProvider(credentialsProvider).build();
                     } else {
-                        httpClient = HttpClients.custom()
-                                .setDefaultCookieStore(cookieStore)
-                                .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
-                                .setSSLSocketFactory(sslConnectionSocketFactory())
-                                .setRedirectStrategy(new LaxRedirectStrategy())
-                                .build();
+                        httpClient = defaultClientBuilder(key).build();
                     }
                     httpClients.put(key, httpClient);
                 }
@@ -322,11 +312,7 @@ public class NetUtils {
         CloseableHttpResponse response;
         try {
             URI uri = new URI(url);
-            CloseableHttpClient httpClient = HttpClients.custom()
-                                                             .setDefaultCookieStore(cookieStore)
-                                                             .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
-                                                             .setRedirectStrategy(new LaxRedirectStrategy())
-                                                             .build();
+            CloseableHttpClient httpClient = defaultClientBuilder(new CompositeKey(url, authToken)).build();
                 HttpRequestBase requestBase;
                 switch (method) {
                     case GET:
@@ -365,11 +351,7 @@ public class NetUtils {
         CloseableHttpResponse response;
         try {
             URI uri = new URI(url);
-            CloseableHttpClient httpClient = HttpClients.custom()
-                                                             .setDefaultCookieStore(cookieStore)
-                                                             .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
-                                                             .setRedirectStrategy(new LaxRedirectStrategy())
-                                                             .build();
+            CloseableHttpClient httpClient = defaultClientBuilder(new CompositeKey(url)).build();
             HttpRequestBase requestBase;
             switch (method) {
                 case GET:
@@ -411,11 +393,7 @@ public class NetUtils {
         CloseableHttpResponse response;
         try {
             URI uri = new URI(url);
-            CloseableHttpClient httpClient = HttpClients.custom()
-                                                             .setDefaultCookieStore(cookieStore)
-                                                             .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
-                                                             .setRedirectStrategy(new LaxRedirectStrategy())
-                                                             .build();
+            CloseableHttpClient httpClient = defaultClientBuilder(new CompositeKey(url)).build();
             HttpRequestBase requestBase;
             switch (method) {
                 case GET:
@@ -482,19 +460,9 @@ public class NetUtils {
                     }
                     CloseableHttpClient httpClient;
                     if (credentialsProvider != null) {
-                        httpClient = HttpClients.custom().setDefaultCookieStore(cookieStore)
-                                .setDefaultCredentialsProvider(credentialsProvider)
-                                .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
-                                .setSSLSocketFactory(sslConnectionSocketFactory())
-                                .setRedirectStrategy(new LaxRedirectStrategy())
-                                .build();
+                        httpClient = defaultClientBuilder(key).setDefaultCredentialsProvider(credentialsProvider).build();
                     } else {
-                        httpClient = HttpClients.custom()
-                                .setDefaultCookieStore(cookieStore)
-                                .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
-                                .setSSLSocketFactory(sslConnectionSocketFactory())
-                                .setRedirectStrategy(new LaxRedirectStrategy())
-                                .build();
+                        httpClient = defaultClientBuilder(key).build();
                     }
                     httpClients.put(key, httpClient);
                 }
@@ -593,10 +561,18 @@ public class NetUtils {
     public static List<Cookie> getCookies(String url) throws IOException {
         try {
             final String domain = new URI(url).getHost();
-            return cookieStore.getCookies().stream().filter(c -> c.getDomain().equals(domain)).collect(Collectors.toList());
+            return cookieStores.get(new CompositeKey(url)).getCookies().stream().filter(c -> c.getDomain().equals(domain)).collect(Collectors.toList());
         } catch (URISyntaxException e) {
             Logger.getRootLogger().debug("Could not get cookies for %s : %s", url, e.getMessage());
             throw new IOException(e);
         }
+    }
+
+    private static HttpClientBuilder defaultClientBuilder(CompositeKey key) {
+        return HttpClients.custom()
+                          .setDefaultCookieStore(cookieStores.get(key))
+                          .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
+                          .setSSLSocketFactory(sslConnectionSocketFactory())
+                          .setRedirectStrategy(new LaxRedirectStrategy());
     }
 }

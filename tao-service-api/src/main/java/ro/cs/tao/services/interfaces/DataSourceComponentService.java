@@ -25,12 +25,15 @@ import ro.cs.tao.services.model.component.ProductSetInfo;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.Set;
 
 public interface DataSourceComponentService extends CRUDService<DataSourceComponent, String> {
 
     List<DataSourceComponent> getUserDataSourceComponents(String userName);
 
     List<DataSourceComponent> getSystemDataSourceComponents();
+
+    List<DataSourceComponent> getOhterDataSourceComponents(Set<String> ids);
 
     /**
      * Creates a user data source component that wraps the given list of products.

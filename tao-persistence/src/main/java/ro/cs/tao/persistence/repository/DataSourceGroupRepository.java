@@ -20,8 +20,8 @@ public interface DataSourceGroupRepository extends PagingAndSortingRepository<Da
             "WHERE d.id = :id")
     DataSourceComponentGroup getById(@Param("id") String id);
 
-    @Query(value = "SELECT g FROM DataSourceComponentGroup g WHERE g.userName = ?1 ORDER BY g.label")
-    List<DataSourceComponentGroup> getUserDataSourceComponentGroups(String userName);
+    @Query(value = "SELECT g FROM DataSourceComponentGroup g WHERE g.userId = ?1 ORDER BY g.label")
+    List<DataSourceComponentGroup> getUserDataSourceComponentGroups(String userId);
 
     @Query(value = "SELECT g FROM DataSourceComponentGroup g ORDER BY g.label")
     List<DataSourceComponentGroup> getDataSourceComponentGroups();

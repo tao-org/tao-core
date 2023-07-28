@@ -77,7 +77,7 @@ public class WorkflowManager extends EntityManager<WorkflowDescriptor, Long, Wor
                             List<ParameterValue> customValues = n.getCustomValues();
                             if (customValues == null || customValues.isEmpty()) {
                                 DataSourceComponent component = dataSourceComponentManager.get(n.getComponentId());
-                                Query query = queryManager.get(finalWorkflow.getUserName(),
+                                Query query = queryManager.get(finalWorkflow.getUserId(),
                                                                component.getSensorName(),
                                                                component.getDataSourceName(),
                                                                n.getId());
@@ -111,18 +111,18 @@ public class WorkflowManager extends EntityManager<WorkflowDescriptor, Long, Wor
     }
 
     @Override
-    public List<WorkflowDescriptor> listUserWorkflowsByStatus(String user, int statusId) {
-        return repository.getUserWorkflowsByStatus(user, statusId);
+    public List<WorkflowDescriptor> listUserWorkflowsByStatus(String userId, int statusId) {
+        return repository.getUserWorkflowsByStatus(userId, statusId);
     }
 
     @Override
-    public List<WorkflowDescriptor> listUserPublishedWorkflowsByVisibility(String user, int visibilityId) {
-        return repository.getUserPublishedWorkflowsByVisibility(user, visibilityId);
+    public List<WorkflowDescriptor> listUserPublishedWorkflowsByVisibility(String userId, int visibilityId) {
+        return repository.getUserPublishedWorkflowsByVisibility(userId, visibilityId);
     }
 
     @Override
-    public List<WorkflowDescriptor> listOtherPublicWorkflows(String user) {
-        return repository.getOtherPublicWorkflows(user);
+    public List<WorkflowDescriptor> listOtherPublicWorkflows(String userId) {
+        return repository.getOtherPublicWorkflows(userId);
     }
 
     @Override
@@ -131,8 +131,8 @@ public class WorkflowManager extends EntityManager<WorkflowDescriptor, Long, Wor
     }
 
     @Override
-    public List<WorkflowDescriptor> listUserVisible(String user) {
-        return repository.getUserVisibleWorkflows(user);
+    public List<WorkflowDescriptor> listUserVisible(String userId) {
+        return repository.getUserVisibleWorkflows(userId);
     }
 
     @Override
@@ -160,7 +160,7 @@ public class WorkflowManager extends EntityManager<WorkflowDescriptor, Long, Wor
         }
         final List<WorkflowNodeDescriptor> nodes = workflow.get().getOrderedNodes();
         for (WorkflowNodeDescriptor node : nodes) {
-            final List<Query> list = queryManager.list(entity.getUserName(), node.getId());
+            final List<Query> list = queryManager.list(entity.getUserId(), node.getId());
             if (list != null) {
                 for (Query query : list) {
                     queryManager.delete(query);
@@ -196,7 +196,7 @@ public class WorkflowManager extends EntityManager<WorkflowDescriptor, Long, Wor
     @Override
     protected boolean checkEntity(WorkflowDescriptor entity) {
         return entity != null && !StringUtilities.isNullOrEmpty(entity.getName()) &&
-                !StringUtilities.isNullOrEmpty(entity.getUserName()) &&
+                !StringUtilities.isNullOrEmpty(entity.getUserId()) &&
                 entity.getVisibility() != null && entity.getStatus() != null;
     }
 

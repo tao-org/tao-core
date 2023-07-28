@@ -35,7 +35,7 @@ public class WorkflowInfo {
 
     public WorkflowInfo(WorkflowDescriptor workflow) {
         this.id = workflow.getId();
-        this.userName = workflow.getUserName();
+        this.userName = workflow.getUserId();
         this.visibility = workflow.getVisibility();
         this.status = workflow.getStatus();
         this.path = workflow.getPath();
@@ -63,7 +63,7 @@ public class WorkflowInfo {
     public WorkflowDescriptor toWorkflowDescriptor() {
         final WorkflowDescriptor descriptor = new WorkflowDescriptor();
         descriptor.setId(this.id);
-        descriptor.setUserName(this.userName);
+        descriptor.setUserId(this.userName);
         descriptor.setVisibility(this.visibility);
         descriptor.setStatus(this.status);
         descriptor.setPath(this.path);

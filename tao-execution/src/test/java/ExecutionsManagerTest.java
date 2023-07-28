@@ -56,7 +56,7 @@ public class ExecutionsManagerTest {
         ExecutionJob job = new ExecutionJob();
         job.setExecutionStatus(ExecutionStatus.RUNNING);
         job.setWorkflowId(1L);
-        job.setUserName("admin");
+        job.setUserId("admin");
 
         ExecutionTask task = creatTask(processingComponent, "test_hostname",
             Collections.unmodifiableMap(Stream.of(
@@ -105,7 +105,7 @@ public class ExecutionsManagerTest {
         ExecutionJob job = new ExecutionJob();
         job.setExecutionStatus(ExecutionStatus.RUNNING);
         job.setWorkflowId(1L);
-        job.setUserName("admin");
+        job.setUserId("admin");
 
         ExecutionTask task = creatTask(processingComponent, "test_hostname", new HashMap<>());
         job.addTask(task);

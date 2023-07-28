@@ -185,7 +185,7 @@ public class TopologyManager {
         }
         Message message = new Message();
         message.setTopic(Topic.TOPOLOGY.value());
-        message.setUser(SystemPrincipal.instance().getName());
+        message.setUserId(SystemPrincipal.instance().getName());
         message.setPersistent(false);
         message.addItem("node", info.getId());
         message.addItem("operation", "added");
@@ -214,7 +214,7 @@ public class TopologyManager {
         notifyListeners(node, ServiceInstallStatus.NODE_REMOVED);
         Message message = new Message();
         message.setTopic(Topic.TOPOLOGY.value());
-        message.setUser(SystemPrincipal.instance().getName());
+        message.setUserId(SystemPrincipal.instance().getName());
         message.setPersistent(false);
         message.addItem("node", hostName);
         message.addItem("operation", "removed");

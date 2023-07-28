@@ -19,13 +19,13 @@ public class RepositoryManager extends EntityManager<Repository, String, Reposit
                                 implements RepositoryProvider {
 
     @Override
-    public List<Repository> getByUser(String userName) {
-        return this.repository.getByUser(userName);
+    public List<Repository> getByUser(String userId) {
+        return this.repository.getByUser(userId);
     }
 
     @Override
-    public Repository getByUserAndName(String userName, String repoName) {
-        return this.repository.getByUserAndName(userName, repoName);
+    public Repository getByUserAndName(String userId, String repoName) {
+        return this.repository.getByUserAndName(userId, repoName);
     }
 
     @Override

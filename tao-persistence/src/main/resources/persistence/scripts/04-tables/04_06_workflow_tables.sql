@@ -41,7 +41,7 @@ CREATE TABLE workflow.graph
 	id bigint NOT NULL,
 	name varchar(250) NOT NULL,
 	created timestamp NULL DEFAULT now(),
-	username varchar(50) NOT NULL,
+	user_id varchar(50) NOT NULL,
 	definition_path varchar(512) NULL,
 	status_id integer NOT NULL,
 	visibility_id integer NOT NULL,
@@ -59,7 +59,7 @@ ALTER TABLE workflow.graph ADD CONSTRAINT FK_workflow_graph_status
 ALTER TABLE workflow.graph ADD CONSTRAINT FK_workflow_graph_visibility
 	FOREIGN KEY (visibility_id) REFERENCES common.visibility (id) ON DELETE No Action ON UPDATE No Action;
 ALTER TABLE workflow.graph ADD CONSTRAINT FK_workflow_user
-	FOREIGN KEY (username) REFERENCES usr."user" (username) ON DELETE No Action ON UPDATE No Action;
+	FOREIGN KEY (user_id) REFERENCES usr."user" (id) ON DELETE No Action ON UPDATE No Action;
 DROP SEQUENCE IF EXISTS workflow.workflow_graph_id_seq CASCADE;
 CREATE SEQUENCE workflow.workflow_graph_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
 ALTER TABLE workflow.graph ALTER COLUMN id SET DEFAULT nextval('workflow.workflow_graph_id_seq');

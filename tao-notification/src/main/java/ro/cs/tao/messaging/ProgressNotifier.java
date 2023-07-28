@@ -130,7 +130,7 @@ public class ProgressNotifier implements ProgressListener {
         if (additionalInfo != null) {
             additionalInfo.forEach(message::addItem);
         }
-        message.setUser(this.principal.getName());
+        message.setUserId(this.principal.getName());
         Messaging.send(this.principal, this.topic.value(), message, false);
     }
 
@@ -150,7 +150,7 @@ public class ProgressNotifier implements ProgressListener {
         } else {
             message = new ActivityStart(this.taskName);
         }
-        message.setUser(this.principal.getName());
+        message.setUserId(this.principal.getName());
         message.setTopic(this.topic.value());
         return message;
     }
@@ -162,7 +162,7 @@ public class ProgressNotifier implements ProgressListener {
         } else {
             message = new ActivityEnd(this.taskName);
         }
-        message.setUser(this.principal.getName());
+        message.setUserId(this.principal.getName());
         message.setTopic(this.topic.value());
         return message;
     }
@@ -174,7 +174,7 @@ public class ProgressNotifier implements ProgressListener {
         } else {
             message = new SubActivityStart(this.taskName, subTask);
         }
-        message.setUser(this.principal.getName());
+        message.setUserId(this.principal.getName());
         message.setTopic(this.topic.value());
         return message;
     }
@@ -186,7 +186,7 @@ public class ProgressNotifier implements ProgressListener {
         } else {
             message = new SubActivityEnd(this.taskName, subTask);
         }
-        message.setUser(this.principal.getName());
+        message.setUserId(this.principal.getName());
         message.setTopic(this.topic.value());
         return message;
     }

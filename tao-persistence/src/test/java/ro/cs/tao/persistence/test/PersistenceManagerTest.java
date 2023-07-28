@@ -1041,7 +1041,7 @@ public class PersistenceManagerTest {
             workflow.setName("test_workflow_2");
             workflow.setStatus(Status.DRAFT);
             workflow.setVisibility(Visibility.PRIVATE);
-            workflow.setUserName("admin");
+            workflow.setUserId("admin");
             //workflow.setCreated(LocalDateTime.now());
 
             // add nodes within this workflow
@@ -1095,7 +1095,7 @@ public class PersistenceManagerTest {
             workflow.setName("test_workflow_3");
             workflow.setStatus(Status.DRAFT);
             workflow.setVisibility(Visibility.PRIVATE);
-            workflow.setUserName("admin");
+            workflow.setUserId("admin");
             //workflow.setCreated(LocalDateTime.now());
 
             // add nodes within this workflow
@@ -1141,7 +1141,7 @@ public class PersistenceManagerTest {
             workflow.setName("test_workflow_4");
             workflow.setStatus(Status.DRAFT);
             workflow.setVisibility(Visibility.PRIVATE);
-            workflow.setUserName("admin");
+            workflow.setUserId("admin");
             //workflow.setCreated(LocalDateTime.now());
 
             // add nodes within this workflow
@@ -1203,7 +1203,7 @@ public class PersistenceManagerTest {
             workflow.setName("test_workflow_5");
             workflow.setStatus(Status.DRAFT);
             workflow.setVisibility(Visibility.PRIVATE);
-            workflow.setUserName("admin");
+            workflow.setUserId("admin");
             //workflow.setCreated(LocalDateTime.now());
 
             // add nodes within this workflow
@@ -1270,7 +1270,7 @@ public class PersistenceManagerTest {
             workflow.setName("test_workflow_6");
             workflow.setStatus(Status.DRAFT);
             workflow.setVisibility(Visibility.PRIVATE);
-            workflow.setUserName("admin");
+            workflow.setUserId("admin");
             //workflow.setCreated(LocalDateTime.now());
 
             // add nodes within this workflow
@@ -1356,7 +1356,7 @@ public class PersistenceManagerTest {
             workflow.setName("test_workflow_7");
             workflow.setStatus(Status.DRAFT);
             workflow.setVisibility(Visibility.PRIVATE);
-            workflow.setUserName("admin");
+            workflow.setUserId("admin");
             //workflow.setCreated(LocalDateTime.now());
 
             // add nodes within this workflow
@@ -1475,7 +1475,7 @@ public class PersistenceManagerTest {
             ExecutionJob job = new ExecutionJob();
             job.setExecutionStatus(ExecutionStatus.UNDETERMINED);
             job.setWorkflowId(1L);
-            job.setUserName("admin");
+            job.setUserId("admin");
 
             job = persistenceManager.jobs().save(job);
             // check persisted job

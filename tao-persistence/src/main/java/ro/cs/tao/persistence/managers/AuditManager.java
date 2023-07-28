@@ -38,7 +38,7 @@ public class AuditManager extends EntityManager<LogEvent, Long, AuditRepository>
 
     @Override
     protected boolean checkEntity(LogEvent data) {
-        return data != null && !StringUtilities.isNullOrEmpty(data.getUserName())
+        return data != null && !StringUtilities.isNullOrEmpty(data.getUserId())
                 && !StringUtilities.isNullOrEmpty(data.getEvent());
     }
 }

@@ -23,6 +23,7 @@ import ro.cs.tao.serialization.SerializationException;
 import ro.cs.tao.services.model.component.ProcessingComponentInfo;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Service for managing ProcessingComponent entities.
@@ -45,6 +46,8 @@ public interface ComponentService extends CRUDService<ProcessingComponent, Strin
      * @param userName  The user name
      */
     List<ProcessingComponentInfo> getUserProcessingComponents(String userName);
+
+    List<ProcessingComponentInfo> getOtherComponents(Set<String> ids);
 
     /**
      * Retrieves the list of script components belonging to a user.

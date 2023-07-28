@@ -4,12 +4,15 @@ import ro.cs.eo.gdal.dataio.GDALLoader;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * GDAL Reflection class which uses Java reflection API to invoke methods from JNI GDAL
  */
 class GDALReflection {
-
+    private static final Map<String, Integer> cachedConstants = Collections.synchronizedMap(new HashMap<>());
     /**
      * Creates new instance for this class
      */

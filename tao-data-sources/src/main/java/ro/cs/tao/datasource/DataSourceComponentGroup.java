@@ -18,13 +18,13 @@ import java.util.stream.Collectors;
  * @author Cosmin Cara
  */
 public class DataSourceComponentGroup extends TaoComponent {
-    private String userName;
+    private String userId;
     private List<DataSourceComponent> dataSourceComponents;
     private Set<Query> dataSourceQueries;
 
-    public String getUserName() { return userName; }
+    public String getUserId() { return userId; }
 
-    public void setUserName(String userName) { this.userName = userName; }
+    public void setUserId(String userId) { this.userId = userId; }
 
     public List<DataSourceComponent> getDataSourceComponents() {
         return dataSourceComponents;

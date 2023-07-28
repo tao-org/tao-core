@@ -27,6 +27,7 @@ import ro.cs.tao.eodata.enums.Visibility;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.PersistenceManager;
 import ro.cs.tao.persistence.ProcessingComponentProvider;
+import ro.cs.tao.security.SystemPrincipal;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.services.interfaces.ComponentService;
 import ro.cs.tao.services.interfaces.DataSourceComponentService;
@@ -96,7 +97,7 @@ public abstract class WorkflowBuilderBase implements WorkflowBuilder {
             descriptor.setStatus(Status.DRAFT);
             descriptor.setCreated(LocalDateTime.now());
             descriptor.setActive(true);
-            descriptor.setUserName("admin");
+            descriptor.setUserId(SystemPrincipal.instance().getName());
             descriptor.setVisibility(Visibility.PRIVATE);
             descriptor = persistenceManager.workflows().save(descriptor);
             addNodes(descriptor);

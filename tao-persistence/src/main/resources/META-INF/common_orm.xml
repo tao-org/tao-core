@@ -202,7 +202,7 @@
                 <column name="volatile" nullable="true" column-definition="boolean NULL DEFAULT false"/>
             </basic>
             <basic name="owner">
-                <column name="owner" nullable="true" column-definition="varchar(50)"/>
+                <column name="owner_id" nullable="true" column-definition="varchar(50)"/>
             </basic>
             <basic name="appId">
                 <column name="app_id" nullable="true" column-definition="varchar(50)"/>
@@ -372,7 +372,7 @@
                 <column name="template_contents" nullable="true" column-definition="text NULL"/>
             </basic>
             <basic name="owner">
-                <column name="owner_user" nullable="true" column-definition="varchar NULL"/>
+                <column name="owner_user_id" nullable="true" column-definition="varchar NULL"/>
             </basic>
             <basic name="isTransient">
                 <column name="transient" nullable="false" column-definition="varchar NULL DEFAULT false"/>
@@ -457,8 +457,8 @@
         <convert converter="ro.cs.tao.persistence.convert.ProcessingComponentVisibilityConverter" attribute-name="visibility" />
 
         <attributes>
-            <basic name="userName">
-                <column name="username" nullable="false" column-definition="character varying not null"/>
+            <basic name="userId">
+                <column name="user_id" nullable="false" column-definition="character varying not null"/>
             </basic>
             <many-to-many name="dataSourceComponents" fetch="EAGER">
                 <join-table name="component.data_source_component_group_components">
@@ -853,8 +853,8 @@
             <basic name="queryId">
                 <column name="query_id" nullable="true" column-definition="varchar(512) NULL"/>
             </basic>
-            <basic name="userName">
-                <column name="username" nullable="false" column-definition="character varying(50) NOT NULL"/>
+            <basic name="userId">
+                <column name="user_id" nullable="false" column-definition="character varying(50) NOT NULL"/>
             </basic>
             <basic name="jobOutputPath">
                 <column name="output_path" nullable="false" column-definition="character varying(512) NOT NULL"/>
@@ -890,8 +890,8 @@
             <basic name="topic">
                 <column name="topic" nullable="false" column-definition="character varying NOT NULL"/>
             </basic>
-            <basic name="user">
-                <column name="username" nullable="false" column-definition="character varying NOT NULL"/>
+            <basic name="userId">
+                <column name="user_id" nullable="false" column-definition="character varying NOT NULL"/>
             </basic>
             <basic name="read">
                 <column name="read" nullable="true" column-definition="boolean NULL"/>
@@ -940,8 +940,8 @@
         <convert converter="ro.cs.tao.persistence.convert.VisibilityConverter" attribute-name="visibility" />
         <convert converter="ro.cs.tao.persistence.convert.StringListConverter" attribute-name="tags"/>
         <attributes>
-            <basic name="userName">
-                <column name="username" nullable="false" column-definition="character varying(50) NOT NULL"/>
+            <basic name="userId">
+                <column name="user_id" nullable="false" column-definition="character varying(50) NOT NULL"/>
             </basic>
             <basic name="path">
                 <column name="definition_path" nullable="true" column-definition="character varying(512) NULL"/>
@@ -1141,8 +1141,8 @@
             <basic name="dataSource">
                 <column name="data_source" nullable="false" column-definition="varchar(512) NOT NULL"/>
             </basic>
-            <basic name="user">
-                <column name="username" nullable="true" column-definition="character varying(512) NULL"/>
+            <basic name="userId">
+                <column name="user_id" nullable="true" column-definition="character varying(512) NULL"/>
             </basic>
             <basic name="password">
                 <column name="password" nullable="true" column-definition="varchar NULL"/>
@@ -1182,8 +1182,7 @@
         <convert converter="ro.cs.tao.persistence.convert.UserTypeConverter" attribute-name="userType" />
         <attributes>
             <id name="id">
-                <column name="id" nullable="false" column-definition="serial NOT NULL"/>
-                <generated-value strategy="IDENTITY" generator="user_identifier"/>
+                <column name="id" nullable="false" column-definition="varchar NOT NULL DEFAULT(generate_uuid_v4())"/>
             </id>
             <basic name="username">
                 <column name="username" nullable="false" column-definition="character varying(50) NOT NULL"/>
@@ -1334,8 +1333,8 @@
             <basic name="urlPrefix">
                 <column name="url_prefix" nullable="false" column-definition="varchar(20) NOT NULL"/>
             </basic>
-            <basic name="userName">
-                <column name="username" nullable="false" column-definition="varchar(50)"/>
+            <basic name="userId">
+                <column name="user_id" nullable="false" column-definition="varchar(50)"/>
             </basic>
             <basic name="type">
                 <column name="repository_type_id" nullable="false" column-definition="int NOT NULL"/>
@@ -1397,8 +1396,8 @@
             <basic name="timestamp">
                 <column name="timestamp" nullable="true" column-definition="timestamp without time zone"/>
             </basic>
-            <basic name="userName">
-                <column name="username" nullable="false" column-definition="character varying NOT NULL"/>
+            <basic name="userId">
+                <column name="user_id" nullable="false" column-definition="character varying NOT NULL"/>
             </basic>
             <basic name="event">
                 <column name="event" nullable="true" column-definition="character varying NOT NULL"/>
