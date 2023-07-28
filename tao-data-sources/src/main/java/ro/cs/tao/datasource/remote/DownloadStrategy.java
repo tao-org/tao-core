@@ -584,7 +584,9 @@ public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
             double oldFactor = this.factor;
             this.factor = newSize > 0 ? (double) 1 / (double) newSize : 0.0;
             double oldValue = this.adder.sumThenReset();
-            this.adder.add(oldValue / oldFactor * this.factor);
+            if (oldFactor > 0) {
+                this.adder.add(oldValue / oldFactor * this.factor);
+            }
             this.needsAdjustment = false;
         }
 
