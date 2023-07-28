@@ -59,7 +59,7 @@ public abstract class EntityManager<T extends Identifiable<K>, K, R extends Pagi
     @Transactional
     public List<T> list(ro.cs.tao.Sort sort) {
         Sort jpaSort;
-        if (sort != null && sort.getFieldsForSort() != null && sort.getFieldsForSort().size() > 0) {
+        if (sort != null && sort.getFieldsForSort() != null && !sort.getFieldsForSort().isEmpty()) {
             List<Sort.Order> orders = new ArrayList<>();
             for (Map.Entry<String, SortDirection> entry : sort.getFieldsForSort().entrySet()) {
                 orders.add(new Sort.Order(SortDirection.ASC.equals(entry.getValue()) ? Sort.Direction.ASC : Sort.Direction.DESC,
@@ -77,7 +77,7 @@ public abstract class EntityManager<T extends Identifiable<K>, K, R extends Pagi
         List<T> results = null;
         if (pageNumber > 0 && pageSize > 0) {
             Sort jpaSort;
-            if (sort != null && sort.getFieldsForSort() != null && sort.getFieldsForSort().size() > 0) {
+            if (sort != null && sort.getFieldsForSort() != null && !sort.getFieldsForSort().isEmpty()) {
                 List<Sort.Order> orders = new ArrayList<>();
                 for (Map.Entry<String, SortDirection> entry : sort.getFieldsForSort().entrySet()) {
                     orders.add(new Sort.Order(SortDirection.ASC.equals(entry.getValue()) ? Sort.Direction.ASC : Sort.Direction.DESC,
@@ -130,7 +130,7 @@ public abstract class EntityManager<T extends Identifiable<K>, K, R extends Pagi
         }
 
         final Optional<T> existing = repository.findById(entity.getId());
-        if (!existing.isPresent()) {
+        if (existing.isEmpty()) {
             throw new PersistenceException(String.format("There is no entity with the given identifier %s",
                                                          entity.getId()));
         }
@@ -144,7 +144,7 @@ public abstract class EntityManager<T extends Identifiable<K>, K, R extends Pagi
         }
 
         final Optional<T> existing = repository.findById(id);
-        if (!existing.isPresent()) {
+        if (existing.isEmpty()) {
             throw new PersistenceException(String.format("There is no entity with the given identifier %s", id));
         }
         T entity = existing.get();
@@ -157,6 +157,13 @@ public abstract class EntityManager<T extends Identifiable<K>, K, R extends Pagi
             throw new PersistenceException("Invalid parameter provided for deleting the entity (empty identifier)");
         }
         delete(entity.getId());
+    }
+
+    @Transactional
+    public void delete(Iterable<K> ids) throws PersistenceException {
+        if (ids != null) {
+            repository.deleteAllById(ids);
+        }
     }
 
     protected abstract String identifier();
