@@ -425,11 +425,11 @@ public class TaskUtilities {
                 if (!absPath.startsWith(DOCKER_EODATA_HOST_POINT)) {
                     p = absPath;
                 } else {
-                    Messaging.send(task.getJob().getUserName(),
+                    Messaging.send(task.getJob().getUserId(),
                                    Topic.INFORMATION.getCategory(),
                                    "Product " + p.getFileName() + " will be temporarily brought into workspace");
                     final Path linkTarget = FileUtilities.replaceLink(p,
-                                                                      new ProgressNotifier(() -> task.getJob().getUserName(),
+                                                                      new ProgressNotifier(() -> task.getJob().getUserId(),
                                                                                            task.getJob().getName(), DataSourceTopic.PRODUCT_PROGRESS));
                     final Path link = p;
                     ExecutionsManager.getInstance().registerPostExecuteAction(task, () -> {

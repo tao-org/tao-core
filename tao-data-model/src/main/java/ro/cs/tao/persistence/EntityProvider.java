@@ -20,4 +20,5 @@ public interface EntityProvider<E extends Identifiable<K>, K> {
             delete(entity.getId());
         }
     }
+    void delete(Iterable<K> ids) throws PersistenceException;
 }

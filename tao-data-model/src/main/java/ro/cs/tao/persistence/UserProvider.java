@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public interface UserProvider extends EntityProvider<User, Long> {
+public interface UserProvider extends EntityProvider<User, String> {
 
     boolean login(String user, String password);
     List<User> list(UserStatus status);
@@ -20,7 +20,8 @@ public interface UserProvider extends EntityProvider<User, Long> {
     User getByName(String userName);
     List<UserPreference> listPreferences(String user);
     User update(User user, boolean asAdmin) throws PersistenceException;
-    void updateLastLoginDate(Long userId, LocalDateTime lastLoginDate) throws PersistenceException;
+    String getId(String userName);
+    void updateLastLoginDate(String userId, LocalDateTime lastLoginDate) throws PersistenceException;
     void activate(String userName) throws PersistenceException;
     void resetPassword(String userName, String resetKey, String newPassword) throws PersistenceException;
     void disable(String userName) throws PersistenceException;

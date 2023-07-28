@@ -87,6 +87,7 @@
                 <exclude>org.slf4j:slf4j-api:jar:1.7.32</exclude>
                 <exclude>org.slf4j:slf4j-api:jar:1.7.33</exclude>
                 <exclude>org.yaml:snakeyaml:jar:1.30</exclude>
+                <exclude>com.zaxxer:HikariCP-java6:jar:2.3.13</exclude>
             </excludes>
         </dependencySet>
         <dependencySet>

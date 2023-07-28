@@ -39,7 +39,7 @@ import java.util.List;
 public class WorkflowDescriptor
         extends GraphObject implements NodeListOrderer {
 
-    private String userName;
+    private String userId;
     private Visibility visibility;
     protected Status status;
     private String path;
@@ -52,8 +52,8 @@ public class WorkflowDescriptor
     private List<String> tags;
 
     @XmlElement(name = "userName")
-    public String getUserName() { return userName; }
-    public void setUserName(String userName) { this.userName = userName; }
+    public String getUserId() { return userId; }
+    public void setUserId(String userId) { this.userId = userId; }
 
     @XmlElement(name = "visibility")
     public Visibility getVisibility() { return visibility; }

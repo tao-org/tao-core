@@ -44,10 +44,10 @@ class GDALDistributionInstaller {
 
         logger.fine("The GDAL library has been copied on the local disk.");
 
-        if (org.apache.commons.lang.SystemUtils.IS_OS_WINDOWS) {
+        if (org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS) {
             logger.fine("Process the GDAL library on Windows.");
             processInstalledWindowsDistribution(gdalDistributionRootFolderPath);
-        } else if (org.apache.commons.lang.SystemUtils.IS_OS_LINUX || org.apache.commons.lang.SystemUtils.IS_OS_MAC_OSX) {
+        } else if (org.apache.commons.lang3.SystemUtils.IS_OS_LINUX || org.apache.commons.lang3.SystemUtils.IS_OS_MAC_OSX) {
             final String currentFolderPath = EnvironmentVariables.getCurrentDirectory();
             GDALInstaller.fixUpPermissions(gdalDistributionRootFolderPath);
             try {

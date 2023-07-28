@@ -97,9 +97,9 @@ public class JobQueue {
      */
     public int put(ExecutionJob job) {
         synchronized (lock) {
-            this.queue.offer(new Tuple<>(job.getId(), job.getUserName()));
+            this.queue.offer(new Tuple<>(job.getId(), job.getUserId()));
             logger.finest(String.format("Job [%s] for user '%s' was added to the queue with status %s",
-                                        job.getName(), job.getUserName(), job.getExecutionStatus().name()));
+                                        job.getName(), job.getUserId(), job.getExecutionStatus().name()));
             return this.queue.size();
         }
     }
@@ -112,7 +112,7 @@ public class JobQueue {
     public boolean removeJob(ExecutionJob job) {
         synchronized (lock) {
             return this.queue.removeIf(p -> p.getKeyOne().equals(job.getId()) &&
-                                            p.getKeyTwo().equals(job.getUserName()));
+                                            p.getKeyTwo().equals(job.getUserId()));
         }
     }
 

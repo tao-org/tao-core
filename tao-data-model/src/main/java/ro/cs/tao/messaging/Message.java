@@ -108,12 +108,12 @@ public class Message extends LongIdentifiable {
     }
 
     @XmlElement(name = "user")
-    public String getUser() { return this.data != null ? this.data.get(PRINCIPAL_KEY) : null; }
-    public void setUser(String name) {
+    public String getUserId() { return this.data != null ? this.data.get(PRINCIPAL_KEY) : null; }
+    public void setUserId(String userId) {
         if (this.data == null) {
             this.data = new HashMap<>();
         }
-        this.data.put(PRINCIPAL_KEY, name);
+        this.data.put(PRINCIPAL_KEY, userId);
     }
 
     @XmlElement(name = "isRead")

@@ -241,7 +241,7 @@ public class ProcessingExecutionTask extends ExecutionTask {
                     /*path = Paths.get(ExecutionConfiguration.getWorkerContainerVolumeMap().getContainerWorkspaceFolder())
                                 .resolve(context.getPrincipal().getName()).resolve(path);*/
                     path = Paths.get(ExecutionConfiguration.getWorkerContainerVolumeMap().getContainerWorkspaceFolder())
-                                .resolve(getJob().getUserName()).resolve(path);
+                                .resolve(getJob().getUserId()).resolve(path);
                 }
                 final String fileName;
                 if (this.component.getTargets().stream().anyMatch(t -> t.getDataDescriptor().getLocation() != null &&

@@ -30,6 +30,7 @@ import ro.cs.tao.persistence.repository.ProcessingComponentRepository;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -61,6 +62,11 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
     @Override
     public List<ProcessingComponent> listUserScriptComponents(String userName) {
         return repository.getUserComponentsByType(userName, ProcessingComponentType.SCRIPT.value());
+    }
+
+    @Override
+    public List<ProcessingComponent> listOtherComponents(Set<String> ids) {
+        return repository.getOtherComponents(ids);
     }
 
     @Override
