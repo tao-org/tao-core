@@ -57,15 +57,15 @@ public class ExecutionJobManager extends EntityManager<ExecutionJob, Long, Execu
     }
 
     @Override
-    public List<ExecutionJob> list(String userName, Set<ExecutionStatus> statuses) {
+    public List<ExecutionJob> list(String userId, Set<ExecutionStatus> statuses) {
         Set<Integer> statusIds;
         if (statuses == null) {
             statusIds = Arrays.stream(ExecutionStatus.values()).map(ExecutionStatus::value).collect(Collectors.toSet());
         } else {
             statusIds = statuses.stream().map(ExecutionStatus::value).collect(Collectors.toSet());
         }
-        return userName != null ?
-                repository.findByStatusAndUser(statusIds, userName) :
+        return userId != null ?
+                repository.findByStatusAndUser(statusIds, userId) :
                 repository.findByStatus(statusIds);
     }
 
