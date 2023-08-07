@@ -52,8 +52,8 @@ public class NotificationManager extends EntityManager<Message, Long, MessageRep
     }
 
     @Override
-    public void acknowledge(List<Long> messageIds) {
-        repository.markAsRead(messageIds);
+    public void acknowledge(List<Long> messageIds, String userId) {
+        repository.markAsRead(messageIds, userId);
     }
 
     @Override
