@@ -246,11 +246,7 @@ public class NetUtils {
         CloseableHttpResponse response;
         try {
             URI uri = new URI(url);
-            String domain = uri.getHost();
-            if (domain.indexOf(".") > 0) {
-                String[] tokens = domain.split("\\.");
-                domain = tokens[tokens.length - 2] + "." + tokens[tokens.length - 1];
-            }
+            final String domain = extractDomainFromURL(url);
             final CompositeKey key;
             if (credentials != null) {
                 key = new CompositeKey(domain, credentials.getUserPrincipal(), credentials.getPassword());
@@ -439,11 +435,7 @@ public class NetUtils {
         CloseableHttpResponse response;
         try {
             URI uri = new URI(url);
-            String domain = uri.getHost();
-            if (domain.indexOf(".") > 0) {
-                String[] tokens = domain.split("\\.");
-                domain = tokens[tokens.length - 2] + "." + tokens[tokens.length - 1];
-            }
+            final String domain = extractDomainFromURL(url);
             final CompositeKey key;
             if (credentials != null) {
                 key = new CompositeKey(domain, credentials.getUserPrincipal(), credentials.getPassword());
@@ -558,14 +550,29 @@ public class NetUtils {
         return result;
     }
 
-    public static List<Cookie> getCookies(String url) throws IOException {
+    public static List<Cookie> getCookies(String url, Credentials credentials) throws IOException {
         try {
-            final String domain = new URI(url).getHost();
-            return cookieStores.get(new CompositeKey(url)).getCookies().stream().filter(c -> c.getDomain().equals(domain)).collect(Collectors.toList());
+            final String domain = extractDomainFromURL(url);
+            final CompositeKey key;
+            if (credentials != null) {
+                key = new CompositeKey(domain, credentials.getUserPrincipal(), credentials.getPassword());
+            } else {
+                key = new CompositeKey(domain, null);
+            }
+            return cookieStores.get(key).getCookies().stream().filter(c -> c.getValue() != null && !c.getValue().isEmpty()).collect(Collectors.toList());
         } catch (URISyntaxException e) {
             Logger.getRootLogger().debug("Could not get cookies for %s : %s", url, e.getMessage());
             throw new IOException(e);
         }
+    }
+
+    private static String extractDomainFromURL(String url) throws URISyntaxException {
+        String domain = new URI(url).getHost();
+        if (domain.indexOf(".") > 0) {
+            String[] tokens = domain.split("\\.");
+            domain = tokens[tokens.length - 2] + "." + tokens[tokens.length - 1];
+        }
+        return domain;
     }
 
     private static HttpClientBuilder defaultClientBuilder(CompositeKey key) {
