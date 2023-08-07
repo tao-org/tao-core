@@ -590,7 +590,8 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                                     Messaging.send(SystemPrincipal.instance(),
                                                    Topic.RESOURCES.getCategory(),
                                                    nodeRuntime.node.getId(),
-                                                   JsonMapper.instance().writeValueAsString(runtimeInfo));
+                                                   JsonMapper.instance().writeValueAsString(runtimeInfo),
+                                                   false);
                                 }
                             }
                         } catch (Exception exception) {
