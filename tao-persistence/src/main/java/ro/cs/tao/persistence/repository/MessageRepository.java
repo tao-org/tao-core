@@ -38,8 +38,8 @@ public interface MessageRepository extends PagingAndSortingRepository<Message, L
     Message get(@Param("userId") String userId, @Param("timestamp") long timestamp);
 
     @Modifying
-    @Query(value = "UPDATE common.notification SET read = true WHERE id IN (:ids)", nativeQuery = true)
-    void markAsRead(@Param("ids") List<Long> ids);
+    @Query(value = "UPDATE common.notification SET read = true WHERE id IN (:ids) AND user_id = :userId", nativeQuery = true)
+    void markAsRead(@Param("ids") List<Long> ids, @Param("userId") String userId);
 
     @Modifying
     @Query(value = "DELETE FROM common.notification WHERE user_id = :userId", nativeQuery = true)
