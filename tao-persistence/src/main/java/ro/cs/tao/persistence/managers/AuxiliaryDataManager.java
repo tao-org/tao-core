@@ -23,8 +23,8 @@ public class AuxiliaryDataManager extends EntityManager<AuxiliaryData, String, A
     }
 
     @Override
-    public List<AuxiliaryData> list(String userName, String... locations) {
-        return repository.getAuxiliaryDataByLocation(userName, new HashSet<>(Arrays.asList(locations)));
+    public List<AuxiliaryData> list(String userId, String... locations) {
+        return repository.getAuxiliaryDataByLocation(userId, new HashSet<>(Arrays.asList(locations)));
     }
 
     @Override

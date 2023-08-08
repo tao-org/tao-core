@@ -35,7 +35,7 @@ public interface MonitoringService<T> extends TAOService {
 
     Map<String, List<T>> getUnreadNotifications(String userId);
 
-    List<T> getNotifications(String user, int page);
+    List<T> getNotifications(String userId, int page);
 
     List<Long> acknowledgeNotification(List<Long> notifications, String userId);
 

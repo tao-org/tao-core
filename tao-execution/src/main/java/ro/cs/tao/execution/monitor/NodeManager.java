@@ -257,15 +257,15 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
      * @param memory    The memory threshold
      * @param disk      The disk threshold
      */
-    public NodeData getAvailableNode(String user, int cpus, long memory, long disk) {
+    public NodeData getAvailableNode(String userId, int cpus, long memory, long disk) {
         //final Principal principal = SessionStore.currentContext().getPrincipal();
-        final Principal principal = new UserPrincipal(user);
+        final Principal principal = new UserPrincipal(userId);
         QuotaManager userQuotaManager = UserQuotaManager.getInstance();
         int requestedCPUs = cpus;
         NodeDescription availableNode = null;//getStartingAvailableNode();
         // First check if there are nodes bound to this user
         final List<Map.Entry<String, NodeRuntime>> userNodes = this.nodes.entrySet().stream()
-                                                                         .filter(e -> user.equals(e.getValue().getNode().getUserName()))
+                                                                         .filter(e -> userId.equals(e.getValue().getNode().getOwner()))
                                                                          .collect(Collectors.toList());
         // If not, then use the pool of available nodes
         if (userNodes.isEmpty()) {

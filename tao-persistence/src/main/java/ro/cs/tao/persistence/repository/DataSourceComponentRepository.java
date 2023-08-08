@@ -29,7 +29,7 @@ public interface DataSourceComponentRepository extends PagingAndSortingRepositor
     DataSourceComponent findByLabel(String label);
 
     @Query(value = "SELECT dsc FROM DataSourceComponent dsc WHERE dsc.system = false AND dsc.id like %?1% ORDER BY dsc.id")
-    List<DataSourceComponent> getUserDataSourceComponents(String userName);
+    List<DataSourceComponent> getUserDataSourceComponents(String userId);
 
     @Query(value = "SELECT dsc FROM DataSourceComponent dsc WHERE dsc.system = false ORDER BY dsc.id")
     List<DataSourceComponent> getUserDataSourceComponents();

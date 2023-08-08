@@ -160,12 +160,14 @@ CREATE TABLE IF NOT EXISTS component.container_instance
     container_id varchar(1024) NOT NULL,
     name varchar(50),
     host_port integer,
-    username character varying(50) NOT NULL
+    user_id character varying(50) NOT NULL
 );
 ALTER TABLE component.container_instance ADD CONSTRAINT PK_container_instance
     PRIMARY KEY (id);
-ALTER TABLE component.container_instance ADD CONSTRAINT fk_container_instance_container
+ALTER TABLE component.container_instance ADD CONSTRAINT FK_container_instance_container
     FOREIGN KEY (container_id) REFERENCES component.container (id) ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE component.container_instance ADD CONSTRAINT FK_container_instance_user
+    FOREIGN KEY (user_id) REFERENCES usr.user (id) ON UPDATE NO ACTION ON DELETE NO ACTION;
 
 -------------------------------------------------------------------------------
 -- table: processing_component

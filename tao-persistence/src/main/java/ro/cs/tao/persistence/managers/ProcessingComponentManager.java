@@ -55,13 +55,13 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
      * Retrieve active processing components with SYSTEM and CONTRIBUTOR visibility
      */
     @Override
-    public List<ProcessingComponent> listUserProcessingComponents(String userName) {
-        return repository.getUserComponentsByType(userName, ProcessingComponentType.EXECUTABLE.value());
+    public List<ProcessingComponent> listUserProcessingComponents(String userId) {
+        return repository.getUserComponentsByType(userId, ProcessingComponentType.EXECUTABLE.value());
     }
 
     @Override
-    public List<ProcessingComponent> listUserScriptComponents(String userName) {
-        return repository.getUserComponentsByType(userName, ProcessingComponentType.SCRIPT.value());
+    public List<ProcessingComponent> listUserScriptComponents(String userId) {
+        return repository.getUserComponentsByType(userId, ProcessingComponentType.SCRIPT.value());
     }
 
     @Override
