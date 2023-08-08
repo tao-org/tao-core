@@ -32,8 +32,8 @@ public class EOProductManager extends EntityManager<EOProduct, String, EOProduct
     }
 
     @Override
-    public List<EOProduct> getOtherPublishedProducts(String currentUser) {
-        return repository.getOtherPublishedProducts(currentUser);
+    public List<EOProduct> getOtherPublishedProducts(String userId) {
+        return repository.getOtherPublishedProducts(userId);
     }
 
     @Override
@@ -68,18 +68,18 @@ public class EOProductManager extends EntityManager<EOProduct, String, EOProduct
     }
 
     @Override
-    public long getUserProductsSize(String user) {
-        return repository.getUserRasterProductsSize(user);
+    public long getUserProductsSize(String userId) {
+        return repository.getUserRasterProductsSize(userId);
     }
 
     @Override
-    public long getUserInputProductsSize(String user, String location) {
-        return repository.getUserInputRasterProductsSize(user, location);
+    public long getUserInputProductsSize(String userId, String location) {
+        return repository.getUserInputRasterProductsSize(userId, location);
     }
 
     @Override
-    public LocalDateTime getNewestProductDateForUser(String user, String footprint) {
-        final EOProduct prod = repository.getNewestProductForUser(user, footprint);
+    public LocalDateTime getNewestProductDateForUser(String userId, String footprint) {
+        final EOProduct prod = repository.getNewestProductForUser(userId, footprint);
         if (prod == null) {
             return null;
         }

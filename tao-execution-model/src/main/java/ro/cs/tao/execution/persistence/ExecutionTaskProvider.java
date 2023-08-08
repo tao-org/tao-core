@@ -22,7 +22,7 @@ public interface ExecutionTaskProvider extends EntityProvider<ExecutionTask, Lon
     ExecutionTask updateStatus(ExecutionTask task, ExecutionStatus newStatus, String reason) throws PersistenceException;
     ExecutionTask save(ExecutionTask task, ExecutionGroup taskGroup) throws PersistenceException;
     ExecutionTask saveWithSubTasks(ExecutionGroup taskGroup, ExecutionJob job) throws PersistenceException;
-    int getCPUsForUser(String userName);
-    int getMemoryForUser(String userName);
+    int getCPUsForUser(String userId);
+    int getMemoryForUser(String userId);
     void updateComponentTime(String id, int duration);
 }

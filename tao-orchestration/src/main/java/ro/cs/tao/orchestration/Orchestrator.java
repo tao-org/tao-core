@@ -1444,11 +1444,11 @@ public class Orchestrator extends Notifiable {
      * the one of the job of the same user that is closer to the head.
      * If the job is already at the head of the queue, the method does nothing.
      *
-     * @param user  The user
+     * @param userId  The user
      * @param jobId The job identifier
      */
-    public void moveJobToHead(String user, long jobId) {
-        jobQueue.moveJobToHead(user, jobId);
+    public void moveJobToHead(String userId, long jobId) {
+        jobQueue.moveJobToHead(userId, jobId);
     }
     /**
      * Moves a job one position closer to the head of the queue, regardless the user.
@@ -1515,8 +1515,8 @@ public class Orchestrator extends Notifiable {
             this.impersonatingUser = new UserPrincipal(message.getUserId());
         }
 
-        private MessageContext(String userName) {
-            this.impersonatingUser = new UserPrincipal(userName);
+        private MessageContext(String userId) {
+            this.impersonatingUser = new UserPrincipal(userId);
         }
 
         @Override

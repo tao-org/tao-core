@@ -109,8 +109,8 @@ public class DockerManager {
         return instance.register(imagePath, shortName, description);
     }
 
-    public static void stopInstance(String containerId, String user) throws IOException {
-        instance.stop(containerId, user);
+    public static void stopInstance(String containerId, String userId) throws IOException {
+        instance.stop(containerId, userId);
     }
 
     public static void stopInstances(String containerName) throws IOException {
@@ -414,7 +414,7 @@ public class DockerManager {
                 if (portMap != null) {
                     entity.setHostPort(portMap.getKeyOne());
                 }
-                entity.setUserName(user);
+                entity.setUserId(user);
                 try {
                     containerInstanceProvider.save(entity);
                 } catch (PersistenceException e) {
@@ -425,8 +425,8 @@ public class DockerManager {
         return id;
     }
 
-    private void stop(String containerId, String user) throws IOException {
-        final ContainerInstance instance = containerInstanceProvider.getByContainerIdAndUserName(containerId, user);
+    private void stop(String containerId, String userId) throws IOException {
+        final ContainerInstance instance = containerInstanceProvider.getByContainerIdAndUserId(containerId, userId);
         if (instance == null) {
             return; // no instance
         }

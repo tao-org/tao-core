@@ -30,9 +30,9 @@ public class DataSourceComponentManager extends TaoComponentManager<DataSourceCo
                                         implements DataSourceComponentProvider {
 
     @Override
-    public List<DataSourceComponent> getUserDataSourceComponents(String userName) {
-        return userName != null ? this.repository.getUserDataSourceComponents(userName) :
-                this.repository.getUserDataSourceComponents();
+    public List<DataSourceComponent> getUserDataSourceComponents(String userId) {
+        return userId != null ? this.repository.getUserDataSourceComponents(userId) :
+               this.repository.getUserDataSourceComponents();
     }
 
     @Override
@@ -52,8 +52,8 @@ public class DataSourceComponentManager extends TaoComponentManager<DataSourceCo
     }
 
     @Override
-    public List<DataSourceComponent> getProductSets(String userName) {
-        List<DataSourceComponent> components = this.repository.getUserDataSourceComponents(userName);
+    public List<DataSourceComponent> getProductSets(String userId) {
+        List<DataSourceComponent> components = this.repository.getUserDataSourceComponents(userId);
         if (components != null) {
             components.removeIf(c -> StringUtilities.isNullOrEmpty(c.getSources().stream().filter(s -> DataSourceComponent.QUERY_PARAMETER.equals(s.getName())).findFirst().get().getDataDescriptor().getLocation()));
         }

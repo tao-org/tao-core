@@ -22,9 +22,9 @@ public interface ContainerInstanceRepository extends PagingAndSortingRepository<
 
     List<ContainerInstance> findByContainerId(String containerId);
 
-    List<ContainerInstance> findByUserName(String userName);
+    List<ContainerInstance> findByUserId(String userId);
 
-    ContainerInstance findByContainerIdAndUserName(String containerId, String userName);
+    ContainerInstance findByContainerIdAndUserId(String containerId, String userId);
 
     @Query(value = "SELECT host_port FROM component.container_instance", nativeQuery = true)
     List<Integer> getAllocatedPorts();

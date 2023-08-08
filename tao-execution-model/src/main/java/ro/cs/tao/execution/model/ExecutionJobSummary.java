@@ -30,7 +30,7 @@ public class ExecutionJobSummary {
     private String jobName;
     private LocalDateTime jobStart;
     private LocalDateTime jobEnd;
-    private String user;
+    private String userId;
     private ExecutionStatus jobStatus;
     private List<ExecutionTaskSummary> taskSummaries;
 
@@ -66,12 +66,12 @@ public class ExecutionJobSummary {
         this.jobEnd = jobEnd;
     }
 
-    public String getUser() {
-        return user;
+    public String getUserId() {
+        return userId;
     }
 
-    public void setUser(String user) {
-        this.user = user;
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 
     public ExecutionStatus getJobStatus() {

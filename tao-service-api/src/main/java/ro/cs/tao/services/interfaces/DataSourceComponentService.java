@@ -29,7 +29,7 @@ import java.util.Set;
 
 public interface DataSourceComponentService extends CRUDService<DataSourceComponent, String> {
 
-    List<DataSourceComponent> getUserDataSourceComponents(String userName);
+    List<DataSourceComponent> getUserDataSourceComponents(String userId);
 
     List<DataSourceComponent> getSystemDataSourceComponents();
 
@@ -73,7 +73,7 @@ public interface DataSourceComponentService extends CRUDService<DataSourceCompon
 
     void updateConfiguration(DataSourceConfiguration configuration) throws PersistenceException;
 
-    List<DataSourceComponent> getProductSets(String userName) throws PersistenceException;
+    List<DataSourceComponent> getProductSets(String userId) throws PersistenceException;
 
     List<DataSourceComponent> getBySource(String dataSourceName) throws PersistenceException;
 

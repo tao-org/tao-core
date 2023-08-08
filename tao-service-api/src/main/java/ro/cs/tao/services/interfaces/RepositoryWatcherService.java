@@ -9,7 +9,7 @@ public interface RepositoryWatcherService extends TAOService {
 
     void stopWatching();
 
-    void registerUser(String userName);
+    void registerUser(String userId);
 
-    void unregisterUser(String userName);
+    void unregisterUser(String userId);
 }
