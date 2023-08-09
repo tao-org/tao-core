@@ -546,7 +546,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                                     return;
                                 }
                                 final List<ExecutionTask> tasks = taskProvider.listByHost(h);
-                                boolean isNodeWithoutTasks = (tasks == null || tasks.size() == 0);
+                                boolean isNodeWithoutTasks = (tasks == null || tasks.isEmpty());
                                 final LocalDateTime time = nodeRuntime.getNextKeepAlive();
                                 if (time != null && !time.isBefore(LocalDateTime.now())) {
                                     Boolean isVolatile = nodeRuntime.getNode().getVolatile();
