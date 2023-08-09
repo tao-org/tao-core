@@ -137,6 +137,10 @@ public interface StorageService<T, U> extends TAOService {
      */
     List<FileObject> listFiles(String fromPath, Set<String> exclusions, String lastItem, int depth) throws IOException;
 
+    default List<FileObject> listFiles(String fromPath, Set<String> exclusions, String lastItem, int depth, Set<Path> excludedPaths) throws IOException {
+        return listFiles(fromPath, exclusions, lastItem, depth);
+    }
+
     /**
      * Lists the full tree of folders and files starting from the given path.
      * This method should be used with caution for remote repositories, as the full traversal may take long time.
