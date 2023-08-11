@@ -318,8 +318,8 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
             throw new PersistenceException("Cannot handle password for external user: " + userId);
         }
 
-        // check if reset key matches
-        if (!user.getPasswordResetKey().equalsIgnoreCase(resetKey)) {
+        // check if reset key matches either the previously set reset key or the old password
+        if (!user.getPasswordResetKey().equalsIgnoreCase(resetKey) || !user.getPassword().equals(resetKey)) {
             throw new PersistenceException("Unauthorized password reset for user: " + userId);
         }
 
