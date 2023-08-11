@@ -200,7 +200,7 @@ public class DefaultJobFactory {
             }
         }
         List<ExecutionTask> tasks = group.getTasks();
-        if (tasks != null && tasks.size() > 0) {
+        if (tasks != null && !tasks.isEmpty()) {
             Set<ComponentLink> links = groupNode.getIncomingLinks();
             links.forEach(link -> {
                 String name = link.getOutput().getName();

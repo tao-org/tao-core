@@ -202,7 +202,7 @@ public class DownloadTool {
                     if (footprintParam != null) {
                         final GeometryAdapter geometryAdapter = new GeometryAdapter();
                         final Geometry footprint = geometryAdapter.marshal(footprintParam.getValue().toWKT());
-                        if (results != null && results.size() > 0) {
+                        if (results != null && !results.isEmpty()) {
                             int maxIntersection = results.stream().mapToInt(p -> {
                                 try {
                                     final String geometry = p.getGeometry();
@@ -234,14 +234,14 @@ public class DownloadTool {
                 }
                 // If flagged, keep only the latest product from the results
                 if (getArgValue(commandLine, Constants.LATEST, Boolean.class, false)) {
-                    if (results != null && results.size() > 0) {
+                    if (results != null && !results.isEmpty()) {
                         EOProduct last = results.get(results.size() - 1);
                         results.clear();
                         results.add(last);
                     }
                 }
                 if (queryOnly) {
-                    if (results == null || results.size() == 0) {
+                    if (results == null || results.isEmpty()) {
                         System.out.println("No results");
                     } else {
                         final DateTimeFormatter dateFormat = DateUtils.getFormatterAtUTC("yyyy-MM-dd");
@@ -295,7 +295,7 @@ public class DownloadTool {
                         public void notifyProgress(String subTaskName, double subTaskProgress, double overallProgress) {
                         }
                     });
-                    System.out.printf("Retained %d products%n", results.size());
+                    System.out.printf("Retained %d products%n", results != null ? results.size() : 0);
                     final Properties properties = new Properties();
                     properties.put("auto.uncompress", "false");
                     properties.put("progress.interval", "3000");

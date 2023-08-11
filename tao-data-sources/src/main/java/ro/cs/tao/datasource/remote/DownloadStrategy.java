@@ -114,7 +114,7 @@ public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
      */
     public void setFilteredTiles(Set<String> tiles) {
         this.filteredTiles = tiles;
-        if (tiles != null && tiles.size() > 0) {
+        if (tiles != null && !tiles.isEmpty()) {
             StringBuilder text = new StringBuilder();
             text.append("(?:.+)(");
             int idx = 1, n = tiles.size();

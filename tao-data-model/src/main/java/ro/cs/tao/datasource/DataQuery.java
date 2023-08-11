@@ -157,13 +157,13 @@ public abstract class DataQuery extends StringIdentifiable {
         final Map<String, QueryParameter<?>> actualParameters = getParameters();
         final List<String> errors = mandatoryParams.stream()
                                                    .filter(p -> !actualParameters.containsKey(p)).collect(Collectors.toList());
-        if (errors.size() > 0) {
+        if (!errors.isEmpty()) {
             QueryException ex = new QueryException("Mandatory parameter(s) not supplied");
             ex.addAdditionalInfo("Missing", String.join(",", errors));
             throw ex;
         }
         errors.addAll(checkDependencies(actualParameters));
-        if (errors.size() > 0) {
+        if (!errors.isEmpty()) {
             QueryException ex = new QueryException("Some parameter(s) dependencies are not satisfied");
             ex.addAdditionalInfo("Dependencies", String.join(",", errors));
             throw ex;
@@ -218,7 +218,7 @@ public abstract class DataQuery extends StringIdentifiable {
         final Map<String, QueryParameter<?>> parameters = getParameters();
         List<String> missing = mandatoryParams.stream()
                 .filter(p -> !parameters.containsKey(p)).collect(Collectors.toList());
-        if (missing.size() > 0) {
+        if (!missing.isEmpty()) {
             final String list = String.join(",", missing);
             QueryException ex = new QueryException("Mandatory parameters not supplied: " + list);
             ex.addAdditionalInfo("Missing", list);
