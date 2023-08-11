@@ -26,7 +26,7 @@ public class WorkflowInfo {
 
     protected Long id;
     private final String name;
-    private final String userName;
+    private final String userId;
     private final Visibility visibility;
     protected final Status status;
     private final String path;
@@ -35,7 +35,7 @@ public class WorkflowInfo {
 
     public WorkflowInfo(WorkflowDescriptor workflow) {
         this.id = workflow.getId();
-        this.userName = workflow.getUserId();
+        this.userId = workflow.getUserId();
         this.visibility = workflow.getVisibility();
         this.status = workflow.getStatus();
         this.path = workflow.getPath();
@@ -48,7 +48,7 @@ public class WorkflowInfo {
 
     public String getName() { return name; }
 
-    public String getUserName() { return userName; }
+    public String getUserId() { return userId; }
 
     public Visibility getVisibility() { return visibility; }
 
@@ -63,7 +63,7 @@ public class WorkflowInfo {
     public WorkflowDescriptor toWorkflowDescriptor() {
         final WorkflowDescriptor descriptor = new WorkflowDescriptor();
         descriptor.setId(this.id);
-        descriptor.setUserId(this.userName);
+        descriptor.setUserId(this.userId);
         descriptor.setVisibility(this.visibility);
         descriptor.setStatus(this.status);
         descriptor.setPath(this.path);

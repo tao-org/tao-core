@@ -297,8 +297,8 @@
             <basic name="port">
                 <column name="host_port" nullable="true" column-definition="integer"/>
             </basic>
-            <basic name="userName">
-                <column name="username" nullable="false" column-definition="varchar(50) NOT NULL"/>
+            <basic name="userId">
+                <column name="user_id" nullable="false" column-definition="varchar(50) NOT NULL"/>
             </basic>
         </attributes>
     </entity>

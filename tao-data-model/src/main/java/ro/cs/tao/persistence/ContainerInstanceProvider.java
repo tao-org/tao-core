@@ -7,7 +7,7 @@ import java.util.List;
 public interface ContainerInstanceProvider extends EntityProvider<ContainerInstance, String> {
 
     List<ContainerInstance> getByContainerId(String containerId);
-    List<ContainerInstance> getByUserName(String userName);
-    ContainerInstance getByContainerIdAndUserName(String containerId, String userName);
+    List<ContainerInstance> getByUserId(String userId);
+    ContainerInstance getByContainerIdAndUserId(String containerId, String userId);
     List<Integer> getAllocatedPorts();
 }

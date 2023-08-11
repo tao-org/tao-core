@@ -16,7 +16,7 @@ public interface DataSourceGroupService extends CRUDService<DataSourceComponentG
                                                  List<Tuple<Query, List<EOProduct>>> groupQueries,
                                                  Principal user) throws PersistenceException;
 
-    List<DataSourceComponentGroup> getUserDataSourceComponentGroups(String userName);
+    List<DataSourceComponentGroup> getUserDataSourceComponentGroups(String userId);
 
     List<Tag> getDatasourceGroupTags();
 }

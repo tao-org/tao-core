@@ -20,13 +20,13 @@ public class ContainerInstanceManager
     }
 
     @Override
-    public List<ContainerInstance> getByUserName(String userName) {
-        return repository.findByUserName(userName);
+    public List<ContainerInstance> getByUserId(String userId) {
+        return repository.findByUserId(userId);
     }
 
     @Override
-    public ContainerInstance getByContainerIdAndUserName(String containerId, String userName) {
-        return repository.findByContainerIdAndUserName(containerId, userName);
+    public ContainerInstance getByContainerIdAndUserId(String containerId, String userId) {
+        return repository.findByContainerIdAndUserId(containerId, userId);
     }
 
     @Override
@@ -44,6 +44,6 @@ public class ContainerInstanceManager
         return entity != null
                 && !StringUtilities.isNullOrEmpty(entity.getId())
                 && !StringUtilities.isNullOrEmpty(entity.getContainerId())
-                && !StringUtilities.isNullOrEmpty(entity.getUserName());
+                && !StringUtilities.isNullOrEmpty(entity.getUserId());
     }
 }

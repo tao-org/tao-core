@@ -43,17 +43,17 @@ public interface ComponentService extends CRUDService<ProcessingComponent, Strin
 
     /**
      * Retrieves the list of processing components belonging to a user.
-     * @param userName  The user name
+     * @param userId  The user identifier
      */
-    List<ProcessingComponentInfo> getUserProcessingComponents(String userName);
+    List<ProcessingComponentInfo> getUserProcessingComponents(String userId);
 
     List<ProcessingComponentInfo> getOtherComponents(Set<String> ids);
 
     /**
      * Retrieves the list of script components belonging to a user.
-     * @param userName  The user name
+     * @param userId  The user identifier
      */
-    List<ProcessingComponentInfo> getUserScriptComponents(String userName);
+    List<ProcessingComponentInfo> getUserScriptComponents(String userId);
 
     List<Tag> getComponentTags();
 

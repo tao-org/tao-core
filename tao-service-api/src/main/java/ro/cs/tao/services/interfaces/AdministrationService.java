@@ -42,13 +42,13 @@ public interface AdministrationService extends TAOService {
 
     List<User> getAdministrators();
 
-    List<User> getUsers(Set<String> userNames);
+    List<User> getUsers(Set<String> userIds);
 
-    User getUserInfo(String username);
+    User getUserInfo(String userId);
 
     User updateUserInfo(User updatedInfo) throws PersistenceException;
 
-    void disableUser(String username, DisableUserInfo additionalDisableActions) throws PersistenceException;
+    void disableUser(String userId, DisableUserInfo additionalDisableActions) throws PersistenceException;
 
-    void deleteUser(String username) throws PersistenceException;
+    void deleteUser(String userId) throws PersistenceException;
 }

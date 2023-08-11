@@ -171,13 +171,13 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
     }
 
     @Override
-    public int getCPUsForUser(String userName) {
-        return repository.getCPUsForUser(userName);
+    public int getCPUsForUser(String userId) {
+        return repository.getCPUsForUser(userId);
     }    
 
     @Override
-    public int getMemoryForUser(String userName) {
-        return repository.getMemoryForUser(userName);
+    public int getMemoryForUser(String userId) {
+        return repository.getMemoryForUser(userId);
     }
 
     @Override

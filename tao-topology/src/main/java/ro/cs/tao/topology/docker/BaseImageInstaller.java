@@ -48,8 +48,8 @@ import java.util.stream.Collectors;
 
 public abstract class BaseImageInstaller implements DockerImageInstaller {
     //protected static final Set<String> winExtensions = new HashSet<String>() {{ add(".bat"); add(".exe"); }};
-    private static final Path dockerPath;
-    private static final Path dockerImagesPath;
+    protected static final Path dockerPath;
+    protected static final Path dockerImagesPath;
     protected final Logger logger;
     protected final TagProvider tagProvider;
     protected final ContainerProvider containerProvider;
@@ -117,22 +117,17 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
                     if (Files.exists(dockerfilePath)) {
                         additionalProperties.load(Files.newBufferedReader(dockerfilePath));
                     }
-                    if (additionalProperties.size() > 0) {
-                        container = DockerManager.pullImage(additionalProperties.getProperty("docker.hub.name"));
+                    if (!additionalProperties.isEmpty()) {
+                        final String dockerHubName = additionalProperties.getProperty("docker.hub.name");
+                        if (!StringUtilities.isNullOrEmpty(dockerHubName)) {
+                            container = DockerManager.pullImage(dockerHubName);
+                        }
                     } else {
                         dockerfilePath = dockerImagesPath.resolve(getContainerName()).resolve("Dockerfile");
                         if (!Files.exists(dockerfilePath) || Files.size(dockerfilePath) == 0) {
                             Files.deleteIfExists(dockerfilePath);
                             logger.finest(String.format("Extracting Dockerfile for image %s", getContainerName()));
-                            //Files.createDirectories(dockerfilePath.getParent());
-                            try (BufferedInputStream is = new BufferedInputStream(getClass().getResourceAsStream("Dockerfile"));
-                                 OutputStream os = new BufferedOutputStream(Files.newOutputStream(dockerfilePath))) {
-                                int read;
-                                while ((read = is.read(buffer)) != -1) {
-                                    os.write(buffer, 0, read);
-                                }
-                                os.flush();
-                            }
+                            Files.write(dockerfilePath, readResource("Dockerfile"));
                         }
                         container = DockerManager.getDockerImage(getContainerName());
                     }

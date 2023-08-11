@@ -160,20 +160,6 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
         return repository.findByUsername(username);
     }
 
-    /*public Map<String, String> getUserPreferences(String userName) {
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        return new HashMap<>(jdbcTemplate.query(con -> {
-            PreparedStatement statement =
-                    con.prepareStatement("SELECT up.pref_key, up.pref_value FROM tao.user_prefs up " +
-                                                 "JOIN tao.user u ON up.user_id = u.id " +
-                                                 "WHERE u.username = ?");
-            statement.setString(1, userName);
-            return statement;
-        }, (rs, rowNum) -> {
-            return new UserPreference(rs.getString(1), rs.getString(2));
-        }).stream().collect(Collectors.toMap(UserPreference::getKey, UserPreference::getValue)));
-    }*/
-
     @Override
     public List<User> listAdministrators() {
         final List<User> administrators = repository.getAdministrators();
@@ -187,21 +173,10 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
     }
 
     @Override
-    public List<UserPreference> listPreferences(String userName) {
-        final User user = repository.findByUsername(userName);
+    public List<UserPreference> listPreferences(String userId) {
+        final User user = repository.findById(userId).orElse(null);
         return user != null ? user.getPreferences() : null;
     }
-
-    /*@Transactional
-    public boolean checkLoginCredentials(String userName, String password) {
-        final User user = userRepository.findByUsername(userName);
-        if (user == null)
-        {
-            // no such user exists
-            return false;
-        }
-        return user.getPassword().equals(password);
-    }*/
 
     @Override
     public User update(User updatedInfo, boolean fromAdmin) throws PersistenceException {
@@ -316,15 +291,15 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
     }
 
     @Override
-    public void activate(String userName) throws PersistenceException {
-        final User user = repository.findByUsername(userName);
+    public void activate(String userId) throws PersistenceException {
+        final User user = repository.findById(userId).orElse(null);
         if (user == null)
         {
-            throw new PersistenceException("There is no user with the given username: " + String.valueOf(userName));
+            throw new PersistenceException("There is no user with the given id: " + userId);
         }
         // only a pending activation user can be activated
         if (!Objects.equals(user.getStatus().value(), UserStatus.PENDING.value())) {
-            throw new PersistenceException("Cannot activate user: " + String.valueOf(userName));
+            throw new PersistenceException("Cannot activate user: " + userId);
         }
         // activate user
         user.setStatus(UserStatus.ACTIVE);
@@ -332,25 +307,25 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
     }
 
     @Override
-    public void resetPassword(String userName, String resetKey, String newPassword) throws PersistenceException {
-        final User user = repository.findByUsername(userName);
+    public void resetPassword(String userId, String resetKey, String newPassword) throws PersistenceException {
+        final User user = repository.findById(userId).orElse(null);
         if (user == null)
         {
-            throw new PersistenceException("There is no user with the given username: " + String.valueOf(userName));
+            throw new PersistenceException("There is no user with the given id: " + userId);
         }
         // only for an internal user the password can be reset
         if (user.getUserType() != UserType.INTERNAL) {
-            throw new PersistenceException("Cannot handle password for external user: " + String.valueOf(userName));
+            throw new PersistenceException("Cannot handle password for external user: " + userId);
         }
 
         // check if reset key matches
         if (!user.getPasswordResetKey().equalsIgnoreCase(resetKey)) {
-            throw new PersistenceException("Unauthorized password reset for user: " + String.valueOf(userName));
+            throw new PersistenceException("Unauthorized password reset for user: " + userId);
         }
 
         // check if new password different
         if (!StringUtilities.isNullOrEmpty(user.getPassword()) && user.getPassword().equalsIgnoreCase(newPassword)) {
-            throw new PersistenceException("Unauthorized password reset for user: " + String.valueOf(userName));
+            throw new PersistenceException("Unauthorized password reset for user: " + userId);
         }
 
         // set the new password
@@ -362,16 +337,16 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
     }
 
     @Override
-    public void disable(String userName) throws PersistenceException {
-        final User user = repository.findByUsername(userName);
+    public void disable(String userId) throws PersistenceException {
+        final User user = repository.findById(userId).orElse(null);
         if (user == null)
         {
-            throw new PersistenceException("There is no user with the given username: " + String.valueOf(userName));
+            throw new PersistenceException("There is no user with the given username: " + userId);
         }
         // only a pending activation or an active user can be disabled
         if (!Objects.equals(user.getStatus().value(), UserStatus.PENDING.value()) &&
                 !Objects.equals(user.getStatus().value(), UserStatus.ACTIVE.value())) {
-            throw new PersistenceException("Cannot disable user: " + String.valueOf(userName));
+            throw new PersistenceException("Cannot disable user: " + userId);
         }
         // activate user
         user.setStatus(UserStatus.DISABLED);
@@ -379,20 +354,20 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
     }
 
     @Override
-    public void delete(String userName) throws PersistenceException {
-        final User user = repository.findByUsername(userName);
+    public void delete(String userId) throws PersistenceException {
+        final User user = repository.findById(userId).orElse(null);
         if (user == null) {
-            throw new PersistenceException("There is no user with the given username: " + String.valueOf(userName));
+            throw new PersistenceException("There is no user with the given id: " + userId);
         }
         // check if cascade delete or not (?)
         repository.delete(user);
     }
 
     @Override
-    public List<UserPreference> save(String username, List<UserPreference> newUserPreferences) throws PersistenceException {
-        User user = repository.findByUsername(username);
+    public List<UserPreference> save(String userId, List<UserPreference> newUserPreferences) throws PersistenceException {
+        User user = repository.findById(userId).orElse(null);
         if (user == null) {
-            throw new PersistenceException("There is no user with the given username: " + String.valueOf(username));
+            throw new PersistenceException("There is no user with the given id: " + userId);
         }
 
         for (UserPreference newUserPref : newUserPreferences) {
@@ -413,7 +388,7 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
 
     @Override
     protected boolean checkEntity(User entity) {
-        return entity != null && entity.getUsername() != null && entity.getGroups() != null && entity.getGroups().size() > 0;
+        return entity != null && entity.getUsername() != null && entity.getGroups() != null && !entity.getGroups().isEmpty();
     }
 
     @Override
@@ -430,10 +405,10 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
     }
 
     @Override
-    public List<UserPreference> remove(String username, List<String> userPrefsKeysToDelete) throws PersistenceException {
-        User user = repository.findByUsername(username);
+    public List<UserPreference> remove(String userId, List<String> userPrefsKeysToDelete) throws PersistenceException {
+        User user = repository.findById(userId).orElse(null);
         if (user == null) {
-            throw new PersistenceException("There is no user with the given username: " + String.valueOf(username));
+            throw new PersistenceException("There is no user with the given id: " + userId);
         }
         if (userPrefsKeysToDelete == null || userPrefsKeysToDelete.isEmpty()) {
             user.setPreferences(null);
@@ -468,14 +443,14 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
      * <p>
      * Users that have no quota limitation will have the value -1 in all of those fields.
      * 
-     * @param username the identifier of the user's whose quota must be obtained
+     * @param userId the identifier of the user's whose quota must be obtained
      * @return an array with the four quota values.
      */
     @Override
-    public long[] listDiskQuotas(String username) {
+    public long[] listDiskQuotas(String userId) {
         long[] result = null;
         // get the user
-    	final User user = repository.findByUsername(username);
+    	final User user = repository.findById(userId).orElse(null);
         if (user != null) {
             result = new long[4];
             // fill the result with data
@@ -493,17 +468,17 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
      * <p>
      *   If the current value for the actual input quota is -1, no update is performed.
      * 
-     * @param userName the identifier of the user's whose quota must be updated
+     * @param userId the identifier of the user's whose quota must be updated
      * @param actualInputQuota the new value for the actual input quota
      * @return the new value of the actual input quota for the user
      * @throws PersistenceException if the user is not defined in the database
      */
     @Override
-    public int updateInputQuota(String userName, int actualInputQuota) throws PersistenceException {
+    public int updateInputQuota(String userId, int actualInputQuota) throws PersistenceException {
     	// get the user
-    	final User user = repository.findByUsername(userName);
+    	final User user = repository.findById(userId).orElse(null);
         if (user == null) {
-            throw new PersistenceException("There is no user with the given username: " + String.valueOf(userName));
+            throw new PersistenceException("There is no user with the given username: " + userId);
         }
         // check if the field should be updated to the new value or not
         if (user.getActualInputQuota() == -1) {
@@ -525,17 +500,17 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
      * <p>
      *   If the current value for the actual processing quota is -1, no update is performed.
      * 
-     * @param userName the identifier of the user's whose quota must be updated
+     * @param userId the identifier of the user's whose quota must be updated
      * @param actualProcessingQuota the new value for the actual processing quota
      * @return the new value of the actual processing quota for the user
      * @throws PersistenceException if the user is not defined in the database
      */
     @Override
-    public int updateProcessingQuota(String userName, int actualProcessingQuota) throws PersistenceException {
+    public int updateProcessingQuota(String userId, int actualProcessingQuota) throws PersistenceException {
     	// get the user
-    	final User user = repository.findByUsername(userName);
+    	final User user = repository.findById(userId).orElse(null);
         if (user == null) {
-            throw new PersistenceException("There is no user with the given username: " + String.valueOf(userName));
+            throw new PersistenceException("There is no user with the given id: " + userId);
         }
         
         // check if the field should be updated to the new value or not
@@ -554,16 +529,16 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
     // End Quota related methods
 
     @Override
-    public void createWorkspaces(String userName) {
-        final String id = getId(userName);
-        Repository repo = repositoryJPARepository.getByUserAndName(id, RepositoryType.LOCAL.name());
+    public void createWorkspaces(String userId) {
+        //final String id = getId(userId);
+        Repository repo = repositoryJPARepository.getByUserAndName(userId, RepositoryType.LOCAL.name());
         if (repo == null) {
-            repositoryJPARepository.save(RepositoryFactory.createDefault(RepositoryType.LOCAL, userName));
+            repositoryJPARepository.save(RepositoryFactory.createDefault(RepositoryType.LOCAL, userId));
         }
         try {
-            repo = repositoryJPARepository.getByUserAndName(id, RepositoryType.AWS.name());
+            repo = repositoryJPARepository.getByUserAndName(userId, RepositoryType.AWS.name());
             if (repo == null) {
-                repositoryJPARepository.save(RepositoryFactory.createDefault(RepositoryType.AWS, userName));
+                repositoryJPARepository.save(RepositoryFactory.createDefault(RepositoryType.AWS, userId));
             }
         } catch (Exception e) {
             Logger.getLogger(UserManager.class.getName()).warning(e.getMessage());

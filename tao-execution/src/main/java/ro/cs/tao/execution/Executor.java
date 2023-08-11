@@ -52,8 +52,8 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
     private final Timer executionsCheckTimer = new Timer("exec-monitor");
     private final Map<Long, SessionContext> contextMap = new HashMap<>();
 
-    public static Tuple<Integer, Long> getResourcesInUse(String userName) {
-        Tuple<Integer, Long> tuple = resourcesUsage.get(userName);
+    public static Tuple<Integer, Long> getResourcesInUse(String userId) {
+        Tuple<Integer, Long> tuple = resourcesUsage.get(userId);
         if (tuple == null) {
             tuple = new Tuple<>(0, 0L);
         }
@@ -194,13 +194,13 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
                     }
                     this.contextMap.put(task.getId(), task.getContext());
                 }
-                final String userName = task.getContext().getPrincipal().getName();
+                final String userId = task.getContext().getPrincipal().getName();
                 final int cpu = task.getUsedCPU();
                 final long memory = task.getUsedRAM();
                 if (firstTime) {
                     task.setExecutionStatus(status);
                     notifyStatusListener(task);
-                    increment(userName, cpu, memory);
+                    increment(userId, cpu, memory);
                 } else {
                     switch (status) {
                         case PENDING_FINALISATION:
@@ -208,14 +208,14 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
                             task.setEndTime(LocalDateTime.now());
                             task.setExecutionStatus(status);
                             notifyStatusListener(task);
-                            decrement(userName, cpu, memory);
+                            decrement(userId, cpu, memory);
                             break;
                         case CANCELLED:
                         case SUSPENDED:
                         case FAILED:
                             task.setEndTime(LocalDateTime.now());
                             notifyStatusListener(task, status, reason);
-                            decrement(userName, cpu, memory);
+                            decrement(userId, cpu, memory);
                             break;
                         case RUNNING:
                             if (task.getStartTime() == null) {
@@ -264,24 +264,24 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
         }
     }
 
-    private void decrement(String userName, int cpu, long memory) {
+    private void decrement(String userId, int cpu, long memory) {
         synchronized (resourcesUsage) {
-            final Tuple<Integer, Long> tuple = resourcesUsage.get(userName);
+            final Tuple<Integer, Long> tuple = resourcesUsage.get(userId);
             if (tuple != null) {
-                resourcesUsage.put(userName,
+                resourcesUsage.put(userId,
                                    new Tuple<>(Math.max(0, tuple.getKeyOne() - cpu),
                                                Math.max(0, tuple.getKeyTwo() - memory)));
             }
         }
     }
 
-    private void increment(String userName, int cpu, long memory) {
+    private void increment(String userId, int cpu, long memory) {
         synchronized (resourcesUsage) {
-            final Tuple<Integer, Long> tuple = resourcesUsage.get(userName);
+            final Tuple<Integer, Long> tuple = resourcesUsage.get(userId);
             if (tuple == null) {
-                resourcesUsage.put(userName, new Tuple<>(cpu, memory));
+                resourcesUsage.put(userId, new Tuple<>(cpu, memory));
             } else {
-                resourcesUsage.put(userName,
+                resourcesUsage.put(userId,
                                    new Tuple<>(Math.max(0, tuple.getKeyOne() + cpu),
                                                Math.max(0, tuple.getKeyTwo() + memory)));
             }
