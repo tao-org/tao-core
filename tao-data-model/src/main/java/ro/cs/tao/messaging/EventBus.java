@@ -131,7 +131,7 @@ public interface EventBus<T extends Serializable> {
     }
 
     /**
-     * Instructs the event bus to shutdown.
+     * Instructs the event bus to shut down.
      */
     void shutdown();
 }

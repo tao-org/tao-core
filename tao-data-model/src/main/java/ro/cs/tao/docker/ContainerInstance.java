@@ -13,7 +13,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class ContainerInstance extends StringIdentifiable {
     private String containerId;
     private String name;
-    private String userName;
+    private String userId;
     private Integer hostPort;
 
     public String getContainerId() {
@@ -32,12 +32,12 @@ public class ContainerInstance extends StringIdentifiable {
         this.name = name;
     }
 
-    public String getUserName() {
-        return userName;
+    public String getUserId() {
+        return userId;
     }
 
-    public void setUserName(String userName) {
-        this.userName = userName;
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 
     public Integer getHostPort() {

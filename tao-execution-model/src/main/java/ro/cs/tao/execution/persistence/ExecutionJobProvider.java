@@ -14,6 +14,6 @@ public interface ExecutionJobProvider extends EntityProvider<ExecutionJob, Long>
     List<String> getOutputKeys(long jobId);
     List<ExecutionJob> list(ExecutionStatus status);
     List<ExecutionJob> list(Set<ExecutionStatus> statuses);
-    List<ExecutionJob> list(String userName, Set<ExecutionStatus> statuses);
+    List<ExecutionJob> list(String userId, Set<ExecutionStatus> statuses);
 
 }

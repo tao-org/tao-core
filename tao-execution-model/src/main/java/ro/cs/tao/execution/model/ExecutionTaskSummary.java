@@ -31,7 +31,7 @@ public class ExecutionTaskSummary {
     private ExecutionStatus taskStatus;
     private String output;
     private String command;
-    private String userName;
+    private String userId;
     private Integer usedCPU;
     private Integer usedRAM;
     private String jobName;
@@ -111,12 +111,12 @@ public class ExecutionTaskSummary {
         this.command = command;
     }
 
-    public String getUserName() {
-        return userName;
+    public String getUserId() {
+        return userId;
     }
 
-    public void setUserName(String userName) {
-        this.userName = userName;
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 
     public Integer getUsedCPU() {

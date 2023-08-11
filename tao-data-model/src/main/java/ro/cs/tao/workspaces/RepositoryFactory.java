@@ -38,18 +38,18 @@ public class RepositoryFactory {
         }
     }
 
-    public static Repository createDefault(RepositoryType type, String user) {
+    public static Repository createDefault(RepositoryType type, String userId) {
         final Repository workspace = instance.templates.get(type);
         if (workspace == null) {
             throw new IllegalArgumentException("Workspace type " + type.name() + " is disabled");
         }
         workspace.setId(UUID.randomUUID().toString());
-        workspace.setUserId(user);
+        workspace.setUserId(userId);
         final ConfigurationProvider cfgProvider = ConfigurationManager.getInstance();
         switch (type) {
             case LOCAL:
                 workspace.getParameters().replace(type.rootKey(),
-                                                  cfgProvider.getValue("workspace.location") + "/" + user);
+                                                  cfgProvider.getValue("workspace.location") + "/" + userId);
                 break;
             case AWS:
             case SWIFT:
@@ -59,7 +59,7 @@ public class RepositoryFactory {
                     if (type.rootKey().equals(key)) {
                         value = cfgProvider.getValue(type.rootKey());
                         if (value != null) {
-                            value += "/" + user;
+                            value += "/" + userId;
                         }
                     } else {
                         value = cfgProvider.getValue(key);
@@ -77,15 +77,15 @@ public class RepositoryFactory {
         return workspace;
     }
 
-    public static Repository createFromTemplate(RepositoryTemplate template, String user) {
+    public static Repository createFromTemplate(RepositoryTemplate template, String userId) {
         final Repository workspace = template.toRepository();
-        workspace.setUserId(user);
+        workspace.setUserId(userId);
         final ConfigurationProvider cfgProvider = ConfigurationManager.getInstance();
         RepositoryType type = workspace.getType();
         switch (type) {
             case LOCAL:
                 workspace.getParameters().replace(type.rootKey(),
-                                                  cfgProvider.getValue("workspace.location") + "/" + user);
+                                                  cfgProvider.getValue("workspace.location") + "/" + userId);
                 break;
             case AWS:
             case SWIFT:
@@ -95,7 +95,7 @@ public class RepositoryFactory {
                     if (type.rootKey().equals(key)) {
                         value = cfgProvider.getValue(type.rootKey());
                         if (value != null) {
-                            value += "/" + user;
+                            value += "/" + userId;
                         }
                     } else {
                         value = cfgProvider.getValue(key);

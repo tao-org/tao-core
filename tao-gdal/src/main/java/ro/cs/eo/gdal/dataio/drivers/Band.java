@@ -1,5 +1,8 @@
 package ro.cs.eo.gdal.dataio.drivers;
 
+import java.io.Closeable;
+import java.io.IOException;
+import java.lang.invoke.MethodHandle;
 import java.nio.ByteBuffer;
 
 /**
@@ -7,14 +10,43 @@ import java.nio.ByteBuffer;
  *
  * @author Adrian Drăghici
  */
-public class Band {
+public class Band extends GDALBase implements Closeable {
 
     /**
      * The name of JNI GDAL Band class
      */
-    private static final String CLASS_NAME = "org.gdal.gdal.Band";
+    static final String CLASS_NAME = "org.gdal.gdal.Band";
+    private static final Class<?> bandClass;
 
-    private Object jniBandInstance;
+    static {
+        bandClass = GDALReflection.fetchGDALLibraryClass(CLASS_NAME);
+    }
+
+    private final Object jniBandInstance;
+    private final MethodHandle deleteHandle;
+    private final MethodHandle getDataTypeHandle;
+    private final MethodHandle getBlockXSizeHandle;
+    private final MethodHandle getBlockYSizeHandle;
+    private final MethodHandle getXSizeHandle;
+    private final MethodHandle getYSizeHandle;
+    private final MethodHandle getOverviewCountHandle;
+    private final MethodHandle getRasterColorInterpretationHandle;
+    private final MethodHandle getRasterColorTableHandle;
+    private final MethodHandle getDescriptionHandle;
+    private final MethodHandle getOverviewHandle;
+    private final MethodHandle getOffsetHandle;
+    private final MethodHandle getScaleHandle;
+    private final MethodHandle getUnitTypeHandle;
+    private final MethodHandle getNoDataValueHandle;
+    private final MethodHandle getMaskBandHandle;
+    private final MethodHandle getMaskFlagsHandle;
+    private final MethodHandle readBlockDirectHandle;
+    private final MethodHandle readRasterDirectHandle;
+    private final MethodHandle writeRasterByteHandle;
+    private final MethodHandle writeRasterShortHandle;
+    private final MethodHandle writeRasterIntHandle;
+    private final MethodHandle writeRasterFloatHandle;
+    private final MethodHandle writeRasterDoubleHandle;
 
     /**
      * Creates new instance for this driver
@@ -23,13 +55,47 @@ public class Band {
      */
     public Band(Object jniBandInstance) {
         this.jniBandInstance = jniBandInstance;
+        try {
+            deleteHandle = createHandle(bandClass, "delete", void.class);
+            getDataTypeHandle = createHandle(bandClass, "getDataType", int.class);
+            getBlockXSizeHandle = createHandle(bandClass, "GetBlockXSize", int.class);
+            getBlockYSizeHandle = createHandle(bandClass, "GetBlockYSize", int.class);
+            getXSizeHandle = createHandle(bandClass, "GetXSize", int.class);
+            getYSizeHandle = createHandle(bandClass, "GetYSize", int.class);
+            getOverviewCountHandle = createHandle(bandClass, "GetOverviewCount", int.class);
+            getRasterColorInterpretationHandle = createHandle(bandClass, "GetRasterColorInterpretation", int.class);
+            getRasterColorTableHandle = createHandle(bandClass, "GetRasterColorTable", GDALReflection.fetchGDALLibraryClass("org.gdal.gdal.ColorTable"));
+            getDescriptionHandle = createHandle(bandClass, "GetDescription", String.class);
+            getOverviewHandle = createHandle(bandClass, "GetOverview", GDALReflection.fetchGDALLibraryClass("org.gdal.gdal.Band"), int.class);
+            getOffsetHandle = createHandle(bandClass, "GetOffset", void.class, Double[].class);
+            getScaleHandle = createHandle(bandClass, "GetScale", void.class, Double[].class);
+            getUnitTypeHandle = createHandle(bandClass, "GetUnitType", String.class);
+            getNoDataValueHandle = createHandle(bandClass, "GetNoDataValue", void.class, Double[].class);
+            getMaskBandHandle = createHandle(bandClass, "GetMaskBand", GDALReflection.fetchGDALLibraryClass("org.gdal.gdal.Band"));
+            getMaskFlagsHandle = createHandle(bandClass, "GetMaskFlags", int.class);
+            readBlockDirectHandle = createHandle(bandClass, "ReadBlock_Direct", int.class, int.class, int.class, ByteBuffer.class);
+            readRasterDirectHandle = createHandle(bandClass, "ReadRaster_Direct", int.class,
+                                                  int.class, int.class, int.class, int.class, int.class, int.class, int.class, ByteBuffer.class);
+            writeRasterByteHandle = createHandle(bandClass, "WriteRaster", int.class,
+                                                 int.class, int.class, int.class, int.class, byte[].class);
+            writeRasterShortHandle = createHandle(bandClass, "WriteRaster", int.class,
+                                                  int.class, int.class, int.class, int.class, short[].class);
+            writeRasterIntHandle = createHandle(bandClass, "WriteRaster", int.class,
+                                                int.class, int.class, int.class, int.class, int[].class);
+            writeRasterFloatHandle = createHandle(bandClass, "WriteRaster", int.class,
+                                                  int.class, int.class, int.class, int.class, float[].class);
+            writeRasterDoubleHandle = createHandle(bandClass, "WriteRaster", int.class,
+                                                   int.class, int.class, int.class, int.class, double[].class);
+        } catch (NoSuchMethodException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
      * Calls the JNI GDAL Band class delete() method
      */
     public void delete() {
-        GDALReflection.callGDALLibraryMethod(CLASS_NAME, "delete", null, this.jniBandInstance, new Class[]{}, new Object[]{});
+        invoke(deleteHandle, this.jniBandInstance);
     }
 
     /**
@@ -38,7 +104,7 @@ public class Band {
      * @return the JNI GDAL Band class getDataType() method result
      */
     public Integer getDataType() {
-        return GDALReflection.callGDALLibraryMethod(CLASS_NAME, "getDataType", Integer.class, this.jniBandInstance, new Class[]{}, new Object[]{});
+        return (Integer) invoke(getDataTypeHandle, this.jniBandInstance);
     }
 
     /**
@@ -47,7 +113,7 @@ public class Band {
      * @return the JNI GDAL Band class GetBlockXSize() method result
      */
     public Integer getBlockXSize() {
-        return GDALReflection.callGDALLibraryMethod(CLASS_NAME, "GetBlockXSize", Integer.class, this.jniBandInstance, new Class[]{}, new Object[]{});
+        return (Integer) invoke(getBlockXSizeHandle, this.jniBandInstance);
     }
 
     /**
@@ -56,7 +122,7 @@ public class Band {
      * @return the JNI GDAL Band class GetBlockYSize() method result
      */
     public Integer getBlockYSize() {
-        return GDALReflection.callGDALLibraryMethod(CLASS_NAME, "GetBlockYSize", Integer.class, this.jniBandInstance, new Class[]{}, new Object[]{});
+        return (Integer) invoke(getBlockYSizeHandle, this.jniBandInstance);
     }
 
     /**
@@ -65,7 +131,7 @@ public class Band {
      * @return the JNI GDAL Band class GetXSize() method result
      */
     public Integer getXSize() {
-        return GDALReflection.callGDALLibraryMethod(CLASS_NAME, "GetXSize", Integer.class, this.jniBandInstance, new Class[]{}, new Object[]{});
+        return (Integer) invoke(getXSizeHandle, this.jniBandInstance);
     }
 
     /**
@@ -74,7 +140,7 @@ public class Band {
      * @return the JNI GDAL Band class GetYSize() method result
      */
     public Integer getYSize() {
-        return GDALReflection.callGDALLibraryMethod(CLASS_NAME, "GetYSize", Integer.class, this.jniBandInstance, new Class[]{}, new Object[]{});
+        return (Integer) invoke(getYSizeHandle, this.jniBandInstance);
     }
 
     /**
@@ -83,7 +149,7 @@ public class Band {
      * @return the JNI GDAL Band class GetOverviewCount() method result
      */
     public Integer getOverviewCount() {
-        return GDALReflection.callGDALLibraryMethod(CLASS_NAME, "GetOverviewCount", Integer.class, this.jniBandInstance, new Class[]{}, new Object[]{});
+        return (Integer) invoke(getOverviewCountHandle, this.jniBandInstance);
     }
 
     /**
@@ -92,7 +158,7 @@ public class Band {
      * @return the JNI GDAL Band class GetRasterColorInterpretation() method result
      */
     public Integer getRasterColorInterpretation() {
-        return GDALReflection.callGDALLibraryMethod(CLASS_NAME, "GetRasterColorInterpretation", Integer.class, this.jniBandInstance, new Class[]{}, new Object[]{});
+        return (Integer) invoke(getRasterColorInterpretationHandle, this.jniBandInstance);
     }
 
     /**
@@ -101,11 +167,8 @@ public class Band {
      * @return the JNI GDAL Band class GetRasterColorTable() method result
      */
     public ColorTable getRasterColorTable() {
-        Object jniColorTable = GDALReflection.callGDALLibraryMethod(CLASS_NAME, "GetRasterColorTable", Object.class, this.jniBandInstance, new Class[]{}, new Object[]{});
-        if (jniColorTable != null) {
-            return new ColorTable(jniColorTable);
-        }
-        return null;
+        Object jniColorTable = invoke(getRasterColorTableHandle, this.jniBandInstance);
+        return jniColorTable != null ? new ColorTable(jniColorTable) : null;
     }
 
     /**
@@ -114,7 +177,7 @@ public class Band {
      * @return the JNI GDAL Band class GetDescription() method result
      */
     public String getDescription() {
-        return GDALReflection.callGDALLibraryMethod(CLASS_NAME, "GetDescription", String.class, this.jniBandInstance, new Class[]{}, new Object[]{});
+        return (String) invoke(getDescriptionHandle, this.jniBandInstance);
     }
 
     /**
@@ -124,11 +187,8 @@ public class Band {
      * @return the JNI GDAL Band class GetOverview(int i) method result
      */
     public Band getOverview(int i) {
-        Object newJNIBandInstance = GDALReflection.callGDALLibraryMethod(CLASS_NAME, "GetOverview", Object.class, this.jniBandInstance, new Class[]{int.class}, new Object[]{i});
-        if (newJNIBandInstance != null) {
-            return new Band(newJNIBandInstance);
-        }
-        return null;
+        Object newJNIBandInstance = invoke(getOverviewHandle, this.jniBandInstance, i);
+        return newJNIBandInstance != null ? new Band(newJNIBandInstance) : null;
     }
 
     /**
@@ -137,7 +197,7 @@ public class Band {
      * @param val the JNI GDAL Band class GetOffset(Double[] val) method 'val' argument
      */
     public void getOffset(Double[] val) {
-        GDALReflection.callGDALLibraryMethod(CLASS_NAME, "GetOffset", null, this.jniBandInstance, new Class[]{Double[].class}, new Object[]{val});
+        invoke(getOffsetHandle, this.jniBandInstance, (Object) val);
     }
 
     /**
@@ -146,7 +206,7 @@ public class Band {
      * @param val the JNI GDAL Band class GetScale(Double[] val) method 'val' argument
      */
     public void getScale(Double[] val) {
-        GDALReflection.callGDALLibraryMethod(CLASS_NAME, "GetScale", null, this.jniBandInstance, new Class[]{Double[].class}, new Object[]{val});
+        invoke(getScaleHandle, this.jniBandInstance, (Object) val);
     }
 
     public void getMinimum(Double[] val) {
@@ -167,7 +227,7 @@ public class Band {
      * @return the JNI GDAL Band class GetUnitType() method result
      */
     public String getUnitType() {
-        return GDALReflection.callGDALLibraryMethod(CLASS_NAME, "GetUnitType", String.class, this.jniBandInstance, new Class[]{}, new Object[]{});
+        return (String) invoke(getUnitTypeHandle, this.jniBandInstance);
     }
 
     /**
@@ -176,7 +236,7 @@ public class Band {
      * @param val the JNI GDAL Band class GetNoDataValue(Double[] val) method 'val' argument
      */
     public void getNoDataValue(Double[] val) {
-        GDALReflection.callGDALLibraryMethod(CLASS_NAME, "GetNoDataValue", null, this.jniBandInstance, new Class[]{Double[].class}, new Object[]{val});
+        invoke(getNoDataValueHandle, this.jniBandInstance, (Object) val);
     }
 
     /**
@@ -185,11 +245,8 @@ public class Band {
      * @return the JNI GDAL Band class GetMaskBand() method result
      */
     public Band getMaskBand() {
-        Object newJNIBandInstance = GDALReflection.callGDALLibraryMethod(CLASS_NAME, "GetMaskBand", Object.class, this.jniBandInstance, new Class[]{}, new Object[]{});
-        if (newJNIBandInstance != null) {
-            return new Band(newJNIBandInstance);
-        }
-        return null;
+        Object newJNIBandInstance = invoke(getMaskBandHandle, this.jniBandInstance);
+        return newJNIBandInstance != null ? new Band(newJNIBandInstance) : null;
     }
 
     /**
@@ -198,7 +255,7 @@ public class Band {
      * @return the JNI GDAL Band class GetMaskFlags() method result
      */
     public Integer getMaskFlags() {
-        return GDALReflection.callGDALLibraryMethod(CLASS_NAME, "GetMaskFlags", Integer.class, this.jniBandInstance, new Class[]{}, new Object[]{});
+        return (Integer) invoke(getMaskFlagsHandle, this.jniBandInstance);
     }
 
     /**
@@ -210,7 +267,7 @@ public class Band {
      * @return the JNI GDAL Band class ReadBlock_Direct(int nXBlockOff, int nYBlockOff, ByteBuffer nioBuffer) method result
      */
     public Integer readBlockDirect(int nXBlockOff, int nYBlockOff, ByteBuffer nioBuffer) {
-        return GDALReflection.callGDALLibraryMethod(CLASS_NAME, "ReadBlock_Direct", Integer.class, this.jniBandInstance, new Class[]{int.class, int.class, ByteBuffer.class}, new Object[]{nXBlockOff, nYBlockOff, nioBuffer});
+        return (Integer) invoke(readBlockDirectHandle, this.jniBandInstance, nXBlockOff, nYBlockOff, nioBuffer);
     }
 
     /**
@@ -227,7 +284,7 @@ public class Band {
      * @return the JNI GDAL Band class ReadRaster_Direct(int xoff, int yoff, int xsize, int ysize, int buf_xsize, int buf_ysize, int buf_type, ByteBuffer nioBuffer) method result
      */
     public Integer readRasterDirect(int xoff, int yoff, int xsize, int ysize, int bufxsize, int bufysize, int buftype, ByteBuffer nioBuffer) {
-        return GDALReflection.callGDALLibraryMethod(CLASS_NAME, "ReadRaster_Direct", Integer.class, this.jniBandInstance, new Class[]{int.class, int.class, int.class, int.class, int.class, int.class, int.class, ByteBuffer.class}, new Object[]{xoff, yoff, xsize, ysize, bufxsize, bufysize, buftype, nioBuffer});
+        return (Integer) invoke(readRasterDirectHandle, this.jniBandInstance, xoff, yoff, xsize, ysize, bufxsize, bufysize, buftype, nioBuffer);
     }
 
     /**
@@ -242,7 +299,7 @@ public class Band {
      * @return the JNI GDAL Band class WriteRaster(int xoff, int yoff, int xsize, int ysize, int bufType, byte[] array) method result
      */
     public Integer writeRaster(int xoff, int yoff, int xsize, int ysize, int bufType, byte[] array) {
-        return GDALReflection.callGDALLibraryMethod(CLASS_NAME, "WriteRaster", Integer.class, this.jniBandInstance, new Class[]{int.class, int.class, int.class, int.class, int.class, byte[].class}, new Object[]{xoff, yoff, xsize, ysize, bufType, array});
+        return (Integer) invoke(writeRasterByteHandle, this.jniBandInstance, xoff, yoff, xsize, ysize, bufType, array);
     }
 
     /**
@@ -257,7 +314,7 @@ public class Band {
      * @return the JNI GDAL Band class WriteRaster(int xoff, int yoff, int xsize, int ysize, int bufType, short[] array) method result
      */
     public Integer writeRaster(int xoff, int yoff, int xsize, int ysize, int bufType, short[] array) {
-        return GDALReflection.callGDALLibraryMethod(CLASS_NAME, "WriteRaster", Integer.class, this.jniBandInstance, new Class[]{int.class, int.class, int.class, int.class, int.class, short[].class}, new Object[]{xoff, yoff, xsize, ysize, bufType, array});
+        return (Integer) invoke(writeRasterShortHandle, this.jniBandInstance, xoff, yoff, xsize, ysize, bufType, array);
     }
 
     /**
@@ -272,7 +329,7 @@ public class Band {
      * @return the JNI GDAL Band class WriteRaster(int xoff, int yoff, int xsize, int ysize, int bufType, int[] array) method result
      */
     public Integer writeRaster(int xoff, int yoff, int xsize, int ysize, int bufType, int[] array) {
-        return GDALReflection.callGDALLibraryMethod(CLASS_NAME, "WriteRaster", Integer.class, this.jniBandInstance, new Class[]{int.class, int.class, int.class, int.class, int.class, int[].class}, new Object[]{xoff, yoff, xsize, ysize, bufType, array});
+        return (Integer) invoke(writeRasterIntHandle, this.jniBandInstance, xoff, yoff, xsize, ysize, bufType, array);
     }
 
     /**
@@ -287,7 +344,7 @@ public class Band {
      * @return the JNI GDAL Band class WriteRaster(int xoff, int yoff, int xsize, int ysize, int bufType, float[] array) method result
      */
     public Integer writeRaster(int xoff, int yoff, int xsize, int ysize, int bufType, float[] array) {
-        return GDALReflection.callGDALLibraryMethod(CLASS_NAME, "WriteRaster", Integer.class, this.jniBandInstance, new Class[]{int.class, int.class, int.class, int.class, int.class, float[].class}, new Object[]{xoff, yoff, xsize, ysize, bufType, array});
+        return (Integer) invoke(writeRasterFloatHandle, this.jniBandInstance, xoff, yoff, xsize, ysize, bufType, array);
     }
 
     /**
@@ -302,7 +359,7 @@ public class Band {
      * @return the JNI GDAL Band class WriteRaster(int xoff, int yoff, int xsize, int ysize, int bufType, double[] array) method result
      */
     public Integer writeRaster(int xoff, int yoff, int xsize, int ysize, int bufType, double[] array) {
-        return GDALReflection.callGDALLibraryMethod(CLASS_NAME, "WriteRaster", Integer.class, this.jniBandInstance, new Class[]{int.class, int.class, int.class, int.class, int.class, double[].class}, new Object[]{xoff, yoff, xsize, ysize, bufType, array});
+        return (Integer) invoke(writeRasterDoubleHandle, this.jniBandInstance, xoff, yoff, xsize, ysize, bufType, array);
     }
 
     /**
@@ -350,5 +407,10 @@ public class Band {
      */
     public Integer checksum() {
         return GDALReflection.callGDALLibraryMethod(CLASS_NAME, "Checksum", Integer.class, this.jniBandInstance, new Class[]{}, new Object[]{});
+    }
+
+    @Override
+    public void close() throws IOException {
+        delete();
     }
 }

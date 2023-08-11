@@ -163,7 +163,7 @@ ALTER TABLE workflow.query ADD CONSTRAINT PK_query
 ALTER TABLE workflow.query ADD CONSTRAINT U_query UNIQUE (user_id, graph_node_id, sensor_name, data_source);
 ALTER TABLE workflow.query ADD CONSTRAINT U_query_label UNIQUE(label, user_id);
 ALTER TABLE workflow.query ADD CONSTRAINT FK_query_user
-	FOREIGN KEY (user_id) REFERENCES usr."user"(username) ON DELETE No Action ON UPDATE No Action;
+	FOREIGN KEY (user_id) REFERENCES usr."user"(id) ON DELETE No Action ON UPDATE No Action;
 ALTER TABLE workflow.query ADD CONSTRAINT FK_query_graph_node
 	FOREIGN KEY (graph_node_id) REFERENCES workflow.graph_node(id) ON DELETE CASCADE ON UPDATE No Action;
 ALTER TABLE workflow.query ADD CONSTRAINT FK_query_data_source_component

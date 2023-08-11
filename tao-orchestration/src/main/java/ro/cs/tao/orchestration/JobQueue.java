@@ -179,10 +179,10 @@ public class JobQueue {
      * the one of the job of the same user that is closer to the head.
      * If the job is already at the head of the queue, the method does nothing.
      *
-     * @param user  The user
+     * @param userId  The user
      * @param jobId The job identifier
      */
-    public void moveJobToHead(String user, long jobId) {
+    public void moveJobToHead(String userId, long jobId) {
         synchronized (lock) {
             if (!this.queue.isEmpty() && !this.queue.peek().getKeyOne().equals(jobId)) {
                 final Stack<Tuple<Long, String>> stack = new Stack<>();
@@ -190,7 +190,7 @@ public class JobQueue {
                 final Iterator<Tuple<Long, String>> iterator = ((ArrayDeque<Tuple<Long, String>>) this.queue).descendingIterator();
                 while (iterator.hasNext()) {
                     final Tuple<Long, String> pair = iterator.next();
-                    if (!pair.getKeyTwo().equals(user)) {
+                    if (!pair.getKeyTwo().equals(userId)) {
                         stack.push(pair);
                     } else {
                         if (pair.getKeyOne() != jobId) {

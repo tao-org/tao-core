@@ -29,13 +29,13 @@ public class DataSourceConnectionManager
         implements DataSourceCredentialsProvider {
 
     @Override
-    public List<DataSourceCredentials> getByUser(String user) {
-        return repository.findByUserId(user);
+    public List<DataSourceCredentials> getByUser(String userId) {
+        return repository.findByUserId(userId);
     }
 
     @Override
-    public DataSourceCredentials get(String user, String dataSource) {
-        return repository.findByUserIdAndDataSource(user, dataSource);
+    public DataSourceCredentials get(String userId, String dataSource) {
+        return repository.findByUserIdAndDataSource(userId, dataSource);
     }
 
     @Override

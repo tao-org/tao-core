@@ -12,7 +12,7 @@ public class CoordinateTransformation {
      */
     private static final String CLASS_NAME = "org.gdal.osr.CoordinateTransformation";
 
-    private Object jniCoordinateTransformationInstance;
+    private final Object jniCoordinateTransformationInstance;
 
     /**
      * Creates new instance for this driver

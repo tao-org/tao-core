@@ -12,9 +12,9 @@ public class BuildVRTOptions {
     /**
      * The name of JNI GDAL BuildVRTOptions class
      */
-    private static final String CLASS_NAME = "org.gdal.gdal.BuildVRTOptions";
+    static final String CLASS_NAME = "org.gdal.gdal.BuildVRTOptions";
 
-    private Object jniBuildVRTOptionsInstance;
+    private final Object jniBuildVRTOptionsInstance;
 
     /**
      * Creates new instance for this driver
