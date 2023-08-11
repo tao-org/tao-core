@@ -256,7 +256,7 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
                 String stepName = cmd.substring(idx+ToolCommandsTokens.STEP_OUTPUT.length(), stepLastDiezIdx);
                 ToolInstallStep sourceStep = getStepByName(stepName, allSteps);
                 List<String> msgs = sourceStep.getExecutionMessages();
-                if(msgs.size() > 0) {
+                if(!msgs.isEmpty()) {
                     cmd = cmd.substring(0, idx) + msgs.get(0).trim() + cmd.substring(stepLastDiezIdx+1);
                 }
             } else {

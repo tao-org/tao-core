@@ -550,7 +550,7 @@ public class Orchestrator extends Notifiable {
                 }
                 // Identify next tasks to be executed
                 final List<ExecutionTask> nextTasks = findNextTasks(task);
-                if (nextTasks != null && nextTasks.size() > 0) {
+                if (nextTasks != null && !nextTasks.isEmpty()) {
                     logger.finest(String.format("Has %s next tasks", nextTasks.size()));
                     for (ExecutionTask nextTask : nextTasks) {
                         final WorkflowNodeDescriptor nextNode = workflowNodeProvider.get(nextTask.getWorkflowNodeId());
@@ -856,7 +856,7 @@ public class Orchestrator extends Notifiable {
             // A DataSourceExecutionTask outputs the list of results as a JSON-ified string array
             Variable theOnlyValue = null;
             final List<String> valuesList;
-            if (values != null && values.size() > 0) {
+            if (values != null && !values.isEmpty()) {
                 theOnlyValue = values.get(0);
                 valuesList = this.listAdapter.marshal(theOnlyValue.getValue());
             } else {
@@ -971,7 +971,7 @@ public class Orchestrator extends Notifiable {
             case QUEUED_ACTIVE:
             case RUNNING:
                 List<ExecutionTask> tasks = job.orderedTasks();
-                if (tasks != null && tasks.size() > 0) {
+                if (tasks != null && !tasks.isEmpty()) {
                     ExecutionTask first = tasks.get(0);
                     existing = first.getInputParameterValues().stream()
                             .allMatch(i -> inputs.containsKey(i.getKey()) && inputs.get(i.getKey()).equals(i.getValue()));
@@ -1157,10 +1157,10 @@ public class Orchestrator extends Notifiable {
                 String targetOutput = overriddenOutParam.getValue();
                 String sensor = originatingTask.getComponent().getSensorName().replace("-", "");
                 List<NamingRule> rules = namingRuleProvider.listBySensor(sensor);
-                if (rules.size() > 0) {
+                if (!rules.isEmpty()) {
                     NameExpressionParser parser = new NameExpressionParser(rules.get(0));
                     final List<Variable> oValues = originatingTask.getOutputParameterValues();
-                    if (oValues != null && oValues.size() > 0) {
+                    if (oValues != null && !oValues.isEmpty()) {
                         final List<String> oValuesList;
                         oValuesList = this.listAdapter.marshal(oValues.get(0).getValue());
                         final int size = oValuesList.size();
@@ -1201,10 +1201,10 @@ public class Orchestrator extends Notifiable {
                 for (DataSourceExecutionTask originatingTask : originatingTasks) {
                     String sensor = originatingTask.getComponent().getSensorName().replace("-", "");
                     List<NamingRule> rules = namingRuleProvider.listBySensor(sensor);
-                    if (rules.size() > 0) {
+                    if (!rules.isEmpty()) {
                         NameExpressionParser parser = new NameExpressionParser(rules.get(0));
                         final List<Variable> oValues = originatingTask.getOutputParameterValues();
-                        if (oValues != null && oValues.size() > 0) {
+                        if (oValues != null && !oValues.isEmpty()) {
                             final List<String> oValuesList;
                             oValuesList = this.listAdapter.marshal(oValues.get(0).getValue());
                             final int size = oValuesList.size();

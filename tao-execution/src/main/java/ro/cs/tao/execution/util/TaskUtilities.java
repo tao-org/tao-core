@@ -196,7 +196,7 @@ public class TaskUtilities {
         int cardinality = -1;
         if (component != null) {
             List<SourceDescriptor> sources = component.getSources();
-            if (sources != null && sources.size() > 0) {
+            if (sources != null && !sources.isEmpty()) {
                 /*if (sources.size() == 1) {
                     cardinality = sources.get(0).getCardinality();
                 } else {*/
@@ -228,7 +228,7 @@ public class TaskUtilities {
         int cardinality = -1;
         if (component != null) {
             List<TargetDescriptor> targets = component.getTargets();
-            if (targets != null && targets.size() > 0) {
+            if (targets != null && !targets.isEmpty()) {
                 /*if (targets.size() == 1) {
                     cardinality = targets.get(0).getCardinality();
                 } else {*/
@@ -245,7 +245,7 @@ public class TaskUtilities {
     public static Map<String, String> getConnectedInputs(ExecutionTask sourceTask, ExecutionTask targetTask) {
         final WorkflowNodeDescriptor targetNode = workflowNodeProvider.get(targetTask.getWorkflowNodeId());
         final Set<ComponentLink> links = targetNode.getIncomingLinks();
-        if (links != null && links.size() > 0) {
+        if (links != null && !links.isEmpty()) {
             final Map<String, String> connections = new LinkedHashMap<>();
             final WorkflowNodeDescriptor sourceNode = workflowNodeProvider.get(sourceTask.getWorkflowNodeId());
             links.stream()
@@ -291,7 +291,7 @@ public class TaskUtilities {
         final WorkflowNodeDescriptor node = workflowNodeProvider.get(toTask.getWorkflowNodeId());
         //final ExecutionJob job = toTask.getJob();
         final Set<ComponentLink> links = node.getIncomingLinks();
-        if (links != null && links.size() > 0) {
+        if (links != null && !links.isEmpty()) {
             for (ComponentLink link : links) {
                 final ExecutionTask parentTask = taskProvider.getByJobAndNode(toTask.getJob().getId(),
                                                                               link.getSourceNodeId(), toTask.getInstanceId());

@@ -38,8 +38,6 @@ import ro.cs.tao.spi.ServiceRegistryManager;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -101,10 +99,11 @@ public abstract class SessionFactory {
     public static SessionFactory getFactory() {
         synchronized (SessionFactory.class) {
             if (thisFactory == null) {
-                NewFactoryAction action = new NewFactoryAction();
+                /*NewFactoryAction action = new NewFactoryAction();
                 
                 thisFactory =
-                        (SessionFactory)AccessController.doPrivileged(action);
+                        (SessionFactory)AccessController.doPrivileged(action);*/
+                thisFactory = newFactory();
             }
         }
         
@@ -170,15 +169,15 @@ public abstract class SessionFactory {
         String className = ConfigurationManager.getInstance().getValue("tao.drmaa.sessionfactory");
         // try to find services in properties or CLASSPATH
         try {
-            if (className != null && ! className.equals("")) {
-                factory = (SessionFactory)Class.forName(className).newInstance();
+            if (className != null && !className.isEmpty()) {
+                factory = (SessionFactory)Class.forName(className).getConstructor().newInstance();
                 Logger.getLogger(SessionFactory.class.getName()).info("Class " + className + " is loaded");
             } else {
                 final ServiceRegistry<SessionFactory> registry =
                         ServiceRegistryManager.getInstance().getServiceRegistry(SessionFactory.class);
                 if (registry != null) {
                     final Set<SessionFactory> services = registry.getServices();
-                    if (services != null && services.size() > 0) {
+                    if (services != null && !services.isEmpty()) {
                         factory = services.iterator().next();
                     }
                 }
@@ -238,7 +237,7 @@ public abstract class SessionFactory {
                 spiClass = classLoader.loadClass(className);
             }
             
-            return spiClass.newInstance();
+            return spiClass.getConstructor().newInstance();
         } catch (ClassNotFoundException ex) {
             throw new ConfigurationError("Provider " + className +
                     " not found", ex);
@@ -258,7 +257,7 @@ public abstract class SessionFactory {
         /**
          * The Exception which caused this Exception
          */
-        private Exception exception;
+        private final Exception exception;
         
         /**
          * Construct a new instance with the specified detail string and
@@ -285,13 +284,13 @@ public abstract class SessionFactory {
      * allows the DRMAA library to be granted the required security permissions
      * without having to grant those permission to the user's application.
      */
-    private static class NewFactoryAction implements PrivilegedAction {
-        /**
+    /*private static class NewFactoryAction implements PrivilegedAction {
+        *//**
          * Create a new factory.
          * @return a new factory
-         */
+         *//*
         public Object run() {
             return newFactory();
         }
-    }
+    }*/
 }
