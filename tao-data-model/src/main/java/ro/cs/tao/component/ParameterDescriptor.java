@@ -159,7 +159,6 @@ public class ParameterDescriptor extends StringIdentifiable {
         this.unit = unit;
     }
 
-    //@XmlJavaTypeAdapter(StringArrayAdapter.class)
     public String[] getValueSet() {
         return valueSet;
     }
@@ -168,6 +167,11 @@ public class ParameterDescriptor extends StringIdentifiable {
         this.valueSet = valueSet;
     }
 
+    /**
+     * For a regular parameter, the format represents the string representation of the parameter (e.g. the date format).
+     * For a template parameter, the format represents the type of the template of the parameter.
+     *
+     */
     public String getFormat() {
         return format;
     }
