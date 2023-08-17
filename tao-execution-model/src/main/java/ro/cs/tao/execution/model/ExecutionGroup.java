@@ -51,7 +51,7 @@ public class ExecutionGroup extends ExecutionTask {
         } else {
             this.inputParameterValues.add(new Variable(parameterId, value));
         }
-        if (this.tasks != null && this.tasks.size() > 0) {
+        if (this.tasks != null && !this.tasks.isEmpty()) {
             // We may have a parallelism > 1, case in which there should be more than one initial task in the group
             List<ExecutionTask> firstTasks = this.tasks.stream().filter(t -> t.getLevel() == this.getLevel() + 1).collect(Collectors.toList());
             for (ExecutionTask task : firstTasks) {

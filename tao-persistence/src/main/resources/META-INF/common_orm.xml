@@ -563,6 +563,7 @@
 
             <transient name="template"/>
             <transient name="templateEngine"/>
+            <transient name="templateType"/>
         </attributes>
 
     </entity>

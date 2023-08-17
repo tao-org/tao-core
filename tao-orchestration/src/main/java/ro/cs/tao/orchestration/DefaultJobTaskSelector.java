@@ -80,7 +80,7 @@ public class DefaultJobTaskSelector implements TaskSelector<ExecutionJob> {
     public List<ExecutionTask> chooseNext(ExecutionJob job, ExecutionTask currentTask) {
         List<ExecutionTask> next = null;
         List<ExecutionTask> tasks = job.orderedTasks();
-        if (tasks != null && tasks.size() > 0) {
+        if (tasks != null && !tasks.isEmpty()) {
             next = new ArrayList<>();
             ExecutionStatus status = job.getExecutionStatus();
             switch (status) {

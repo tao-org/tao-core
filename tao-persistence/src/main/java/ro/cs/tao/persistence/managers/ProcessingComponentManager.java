@@ -115,7 +115,7 @@ public class ProcessingComponentManager extends TaoComponentManager<ProcessingCo
             }
         }
         repository.save(entity);
-        if (map.size() > 0) {
+        if (!map.isEmpty()) {
             expansionRuleRepository.saveAll(map.values());
             descriptors.forEach(d -> {
                 if (map.containsKey(d)) {

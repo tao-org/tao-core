@@ -51,7 +51,7 @@ public class DataSourceManager {
 
     private DataSourceManager() {
         Map<String, String> proxySettings = ConfigurationManager.getInstance().getValues("proxy");
-        if (proxySettings != null && proxySettings.size() > 0) {
+        if (proxySettings != null && !proxySettings.isEmpty()) {
             String port = proxySettings.get("proxy.port");
             String host = proxySettings.get("proxy.host");
             if (host != null && !host.isEmpty()) {

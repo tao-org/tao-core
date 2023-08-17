@@ -210,7 +210,7 @@ public interface MetadataInspector {
                     product.setEntryPoint(this.entryPoint);
                 }
             }
-            if (this.controlSums != null && this.controlSums.size() > 0) {
+            if (this.controlSums != null && !this.controlSums.isEmpty()) {
                 product.addAttribute("controlSum", String.join(",", this.controlSums));
             }
             return product;

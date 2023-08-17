@@ -51,7 +51,7 @@ public class WPSParameterDescriptorListConverter implements AttributeConverter<L
     @Override
     public String convertToDatabaseColumn(List<ParameterDescriptor> parameters) {
         try {
-            return parameters != null && parameters.size() > 0
+            return parameters != null && !parameters.isEmpty()
                     ? objectMapper().writerFor(parameters.getClass()).writeValueAsString(parameters)
                     : null;
         } catch (JsonProcessingException e) {
