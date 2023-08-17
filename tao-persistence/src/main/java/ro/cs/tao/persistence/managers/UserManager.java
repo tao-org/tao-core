@@ -21,6 +21,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.UserProvider;
 import ro.cs.tao.persistence.repository.GroupRepository;
@@ -37,6 +38,7 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @Configuration
 @EnableTransactionManagement
@@ -133,7 +135,7 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
 
         // save the new user and return it
         user = repository.save(user);
-        createWorkspaces(user.getUsername());
+        createWorkspaces(user);
         return user;
     }
 
@@ -529,19 +531,30 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
     // End Quota related methods
 
     @Override
-    public void createWorkspaces(String userId) {
-        //final String id = getId(userId);
-        Repository repo = repositoryJPARepository.getByUserAndName(userId, RepositoryType.LOCAL.name());
-        if (repo == null) {
-            repositoryJPARepository.save(RepositoryFactory.createDefault(RepositoryType.LOCAL, userId));
-        }
-        try {
-            repo = repositoryJPARepository.getByUserAndName(userId, RepositoryType.AWS.name());
-            if (repo == null) {
-                repositoryJPARepository.save(RepositoryFactory.createDefault(RepositoryType.AWS, userId));
+    public void createWorkspaces(User user) {
+        List<RepositoryType> repoTypes =  Arrays.stream(ConfigurationManager.getInstance()
+                                                              .getValue("workspaces.default", "local")
+                                                              .toUpperCase()
+                                                              .split(","))
+                                                .map(RepositoryType::valueOf).collect(Collectors.toList());
+        Repository repo;
+        final List<UserPreference> preferences = user.getPreferences();
+        Map<String, String> dbParams = null;
+        for (RepositoryType type : repoTypes) {
+            try {
+                repo = repositoryJPARepository.getByUserAndName(user.getId(), type.name());
+                if (repo == null) {
+                    if (preferences != null) {
+                        dbParams = preferences.stream()
+                                              .filter(p -> p.getKey().startsWith("workspace." + type.name().toLowerCase()))
+                                              .collect(Collectors.toMap(p -> p.getKey().replace("workspace.", ""),
+                                                                        UserPreference::getValue));
+                    }
+                    repositoryJPARepository.save(RepositoryFactory.createDefault(type, user.getId(), dbParams));
+                }
+            } catch (Exception e) {
+                Logger.getLogger(UserManager.class.getName()).warning(e.getMessage());
             }
-        } catch (Exception e) {
-            Logger.getLogger(UserManager.class.getName()).warning(e.getMessage());
         }
     }
 
