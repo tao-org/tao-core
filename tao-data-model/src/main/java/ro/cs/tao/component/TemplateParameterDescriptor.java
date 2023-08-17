@@ -18,6 +18,8 @@ package ro.cs.tao.component;
 import ro.cs.tao.component.template.BasicTemplate;
 import ro.cs.tao.component.template.Template;
 import ro.cs.tao.component.template.TemplateException;
+import ro.cs.tao.component.template.TemplateType;
+import ro.cs.tao.component.template.engine.EngineFactory;
 import ro.cs.tao.component.template.engine.TemplateEngine;
 
 import javax.xml.bind.annotation.XmlElementWrapper;
@@ -72,28 +74,40 @@ public class TemplateParameterDescriptor extends ParameterDescriptor {
         this.parameters.add(parameter);
     }
 
+    public TemplateType getTemplateType() {
+        final String format = getFormat();
+        return format != null ? TemplateType.valueOf(format) : TemplateType.JSON;
+    }
+
+    public void setTemplateType(TemplateType type) {
+        setFormat(type.name());
+        this.templateEngine = EngineFactory.createInstance(type);
+    }
+
     public Template getTemplate() {
         if (this.template == null) {
             this.template = new BasicTemplate();
-            if (this.templateEngine != null) {
-                try {
-                    this.template.associateWith(this.templateEngine);
-                } catch (TemplateException e) {
-                    e.printStackTrace();
-                }
-            }
+            this.template.associateWith(getTemplateEngine());
         }
         return this.template;
     }
 
     public void setTemplate(Template template) throws TemplateException {
-        this.template = template;
-        this.template.associateWith(this.templateEngine);
+        if (template != null) {
+            if (!getTemplateType().equals(template.getTemplateType())) {
+                throw new TemplateException("Incompatible template type");
+            }
+            this.template = template;
+            this.template.associateWith(getTemplateEngine());
+        }
     }
 
     @XmlTransient
     public TemplateEngine getTemplateEngine() {
-        return templateEngine;
+        if (this.templateEngine == null) {
+            this.templateEngine = EngineFactory.createInstance(getTemplateType());
+        }
+        return this.templateEngine;
     }
 
     @XmlTransient
