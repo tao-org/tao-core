@@ -1,5 +1,7 @@
 package ro.cs.tao.utils;
 
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.Credentials;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
@@ -14,6 +16,7 @@ import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import java.net.URI;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 
@@ -21,10 +24,12 @@ public final class WrappedCloseableHttpClient {
 
     private final CloseableHttpClient closeableHttpClient;
     private final CookieStore cookieStore;
+    private final CredentialsProvider credentialsProvider;
 
-    private WrappedCloseableHttpClient(CloseableHttpClient closeableHttpClient, CookieStore cookieStore) {
+    private WrappedCloseableHttpClient(CloseableHttpClient closeableHttpClient, CookieStore cookieStore, CredentialsProvider credentialsProvider) {
         this.closeableHttpClient = closeableHttpClient;
         this.cookieStore = cookieStore;
+        this.credentialsProvider = credentialsProvider;
     }
 
     public CloseableHttpClient getCloseableHttpClient() {
@@ -35,13 +40,20 @@ public final class WrappedCloseableHttpClient {
         return cookieStore;
     }
 
+    public void setCredentials(URI uri, Credentials credentials) {
+        final AuthScope authScope = new AuthScope(uri.getHost(), uri.getPort());
+        if (this.credentialsProvider != null && this.credentialsProvider.getCredentials(authScope) == null) {
+            this.credentialsProvider.setCredentials(authScope, credentials);
+        }
+    }
+
     public static WrappedCloseableHttpClient create(){
         return create(null);
     }
 
     public static WrappedCloseableHttpClient create(CredentialsProvider credentialsProvider) {
         final CookieStore cookieStore = new BasicCookieStore();
-        return new WrappedCloseableHttpClient(createHttpClient(cookieStore, credentialsProvider), cookieStore);
+        return new WrappedCloseableHttpClient(createHttpClient(cookieStore, credentialsProvider), cookieStore, credentialsProvider);
     }
 
     private static CloseableHttpClient createHttpClient(CookieStore cookieStore, CredentialsProvider credentialsProvider) {
