@@ -131,7 +131,7 @@ public class DockerManager {
     private List<Container> listAvailableDockerImages() {
         List<Container> containers = getDockerImages();
         List<Container> dbContainers = containerProvider.getByType(ContainerType.DOCKER);
-        if (containers.size() == 0) {
+        if (containers.isEmpty()) {
             logger.warning("Docker execution failed. Check that Docker is installed and the sudo credentials are valid");
         } else {
             dbContainers.retainAll(containers);
@@ -533,9 +533,11 @@ public class DockerManager {
 
     private void waitFor(Executor<?> executor, long amount, TimeUnit unit) {
         try {
-            executor.getWaitObject().await(amount, unit);
+            if (!executor.getWaitObject().await(amount, unit)) {
+                logger.warning("Process timed out");
+            }
         } catch (InterruptedException e) {
-            logger.warning("Process timed out: " + e.getMessage());
+            logger.warning("Process was interrupted: " + e.getMessage());
         }
     }
 

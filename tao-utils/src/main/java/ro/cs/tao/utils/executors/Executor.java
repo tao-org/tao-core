@@ -75,7 +75,7 @@ public abstract class Executor<T> implements Runnable {
     ActivityListener monitor;
 
     private volatile int retCode = Integer.MAX_VALUE;
-    private final CountDownLatch counter;
+    private CountDownLatch counter;
 
     public static void setConverters(Set<ExecutionDescriptorConverter> converters) {
         if (converters != null) {
@@ -288,10 +288,12 @@ public abstract class Executor<T> implements Runnable {
                     }
                     executorService.submit(executors[finalI]);
                     printQueue();
-                    executors[finalI].getWaitObject().await(timeout, TimeUnit.SECONDS);
+                    if (!executors[finalI].getWaitObject().await(timeout, TimeUnit.SECONDS)) {
+                        staticLogger.warning(String.format("The job %s failed to complete within the allocated time [%s s] and is being terminated",
+                                                           jobs[finalI], timeout));
+                    }
                 } catch (InterruptedException iex) {
-                    staticLogger.severe(String.format("The job %s failed to complete within the allocated time [%s s] and is being terminated",
-                                                      jobs[finalI], timeout));
+                    staticLogger.severe(String.format("The job %s was interrupted", jobs[finalI]));
                 } finally {
                     executors[finalI].stop();
                     printQueue();
@@ -481,13 +483,17 @@ public abstract class Executor<T> implements Runnable {
             isStopped = isSuspended = false;
             requestedMemory.computeIfAbsent(this.host, h -> new AtomicLong(0L))
                            .getAndAdd(memoryRequirements.computeIfAbsent(this, k -> 0L));
+            if (this.counter != null && this.counter.getCount() == 0) {
+                // This can happen if the same instance is reused
+                this.counter = new CountDownLatch(1);
+            }
             retCode = execute(true);
         } catch (Exception e) {
             retCode = -255;
             logger.severe(e.getMessage());
         } finally {
             if (this.counter != null) {
-                counter.countDown();
+                this.counter.countDown();
             }
             requestedMemory.get(this.host).getAndAdd(-memoryRequirements.remove(this));
             isStopped = true;
