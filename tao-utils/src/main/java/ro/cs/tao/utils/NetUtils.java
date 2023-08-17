@@ -507,9 +507,7 @@ public class NetUtils {
 
     private static CloseableHttpClient getOrCreateHttpClient(URI uri, Credentials credentials) throws URISyntaxException {
         if (credentials != null) {
-            final CredentialsProvider credentialsProvider = proxyCredentials != null ? proxyCredentials : new BasicCredentialsProvider();
-            credentialsProvider.setCredentials(new AuthScope(uri.getHost(), uri.getPort()), credentials);
-            return getOrCreateHttpClient(uri, credentials.getUserPrincipal().getName() + ":" + credentials.getPassword(), credentialsProvider);
+            return getOrCreateHttpClient(uri, credentials.getUserPrincipal().getName() + ":" + credentials.getPassword(), credentials);
         }
         return getOrCreateHttpClient(uri, "");
     }
@@ -525,14 +523,20 @@ public class NetUtils {
         return getOrCreateHttpClient(uri, authToken, null);
     }
 
-    private static CloseableHttpClient getOrCreateHttpClient(URI uri, String authToken, CredentialsProvider credentialsProvider) throws URISyntaxException {
+    private static CloseableHttpClient getOrCreateHttpClient(URI uri, String authToken, Credentials credentials) throws URISyntaxException {
         final String domain = extractDomainFromURL(uri);
         final CompositeKey key = new CompositeKey(domain, authToken);
         synchronized (httpClients) {
             if (!httpClients.keySet().contains(key)) {
+                final CredentialsProvider credentialsProvider = proxyCredentials != null ? proxyCredentials : new BasicCredentialsProvider();
                 httpClients.put(key, WrappedCloseableHttpClient.create(credentialsProvider));
             }
         }
-        return httpClients.get(key).getCloseableHttpClient();
+        final WrappedCloseableHttpClient wrappedCloseableHttpClient = httpClients.get(key);
+        if (credentials != null) {
+            wrappedCloseableHttpClient.setCredentials(uri, credentials);
+        }
+        return wrappedCloseableHttpClient.getCloseableHttpClient();
+
     }
 }
