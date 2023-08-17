@@ -93,7 +93,7 @@ public interface NodeListOrderer {
                 queue.add(root);
                 while (!queue.isEmpty()) {
                     final List<WorkflowNodeDescriptor> children = findChildren(nodes, queue.remove());
-                    if (children != null && children.size() > 0) {
+                    if (children != null && !children.isEmpty()) {
                         children.forEach(n -> {
                             if (!newList.contains(n)) {
                                 newList.add(n);
@@ -118,7 +118,7 @@ public interface NodeListOrderer {
      */
     default List<WorkflowNodeDescriptor> findChildren(final List<WorkflowNodeDescriptor> masterList,
                                                       final WorkflowNodeDescriptor node) {
-        if (masterList == null || masterList.size() == 0 || node == null) {
+        if (masterList == null || masterList.isEmpty() || node == null) {
             return null;
         }
         final List<WorkflowNodeDescriptor> children = node instanceof WorkflowNodeGroupDescriptor ?
@@ -139,18 +139,18 @@ public interface NodeListOrderer {
      */
     default List<WorkflowNodeDescriptor> findAncestors(final List<WorkflowNodeDescriptor> masterList,
                                                        final WorkflowNodeDescriptor node) {
-        if (masterList == null || masterList.size() == 0 || node == null) {
+        if (masterList == null || masterList.isEmpty() || node == null) {
             return null;
         }
         final List<WorkflowNodeDescriptor> ancestors = new ArrayList<>();
         final Queue<WorkflowNodeDescriptor> queue = new ArrayDeque<>();
         final Set<ComponentLink> componentLinks = node.getIncomingLinks();
-        if (componentLinks != null && componentLinks.size() > 0) {
+        if (componentLinks != null && !componentLinks.isEmpty()) {
             for (ComponentLink link : componentLinks) {
                 final WorkflowNodeDescriptor previous = masterList.stream().filter(n -> n.getId().equals(link.getSourceNodeId())).findFirst().orElse(null);
                 if (previous != null) {
                     queue.add(previous);
-                    if (previous.getIncomingLinks() == null || previous.getIncomingLinks().size() == 0) {
+                    if (previous.getIncomingLinks() == null || previous.getIncomingLinks().isEmpty()) {
                         ancestors.add(previous);
                     }
                     while (!queue.isEmpty()) {

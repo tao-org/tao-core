@@ -128,7 +128,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                 final DataQuery dataQuery = Query.toDataQuery(primaryQuery);
                 final Future<List<EOProduct>> future = backgroundWorker.submit(dataQuery::execute);
                 final List<EOProduct> results = future.get();
-                if (results != null && results.size() > 0) {
+                if (results != null && !results.isEmpty()) {
                     int cardinality = dataSourceComponent.getSources().get(0).getCardinality();
                     int rSize = results.size();
                     if (cardinality > 0 && cardinality != rSize) {
@@ -253,7 +253,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                 final String outPort = dataSourceComponent.getTargets().get(0).getName();
                 List<Variable> values = task.getOutputParameterValues();
                 final String strList;
-                if (values != null && values.size() > 0 && values.stream().anyMatch(v -> outPort.equals(v.getKey()))) {
+                if (values != null && !values.isEmpty() && values.stream().anyMatch(v -> outPort.equals(v.getKey()))) {
                     strList = values.stream().filter(v -> outPort.equals(v.getKey())).findFirst().get().getValue();
                 } else {
                     final SourceDescriptor descriptor = dataSourceComponent.getSources().stream()
@@ -372,7 +372,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
         final List<String> names = deserializeResults(otherProductsList);
         final List<EOProduct> otherProducts = productProvider.getProductsByNames(names.toArray(new String[0]));
         // If other list consists of non-products, do nothing
-        if (otherProducts != null && otherProducts.size() > 0) {
+        if (otherProducts != null && !otherProducts.isEmpty()) {
             final Set<LocalDate> otherDates = otherProducts.stream().map(p -> p.getAcquisitionDate().toLocalDate()).collect(Collectors.toSet());
             products.removeIf(p -> !otherDates.contains(p.getAcquisitionDate().toLocalDate()));
             final Map<LocalDate, List<EOProduct>> groupsByDate = new HashMap<>();

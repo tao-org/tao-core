@@ -428,7 +428,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                 template.setAttribute(DrmaaJobExtensions.TASK_ID, task.getId());
                 List<Long> parentIds = TaskUtilities.getParentIds(task);
                 template.setAttribute(DrmaaJobExtensions.TASK_ANCESTOR_ID, parentIds);
-                if (parentIds != null && parentIds.size() > 0) {
+                if (parentIds != null && !parentIds.isEmpty()) {
                     template.setAttribute(DrmaaJobExtensions.TASK_ANCESTOR_OUTPUT,
                                           taskProvider.list(parentIds).stream().map(ExecutionTask::getInstanceTargetOutput).collect(Collectors.joining(",")));
                 } else {

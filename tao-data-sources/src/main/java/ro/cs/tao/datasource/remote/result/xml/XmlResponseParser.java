@@ -72,7 +72,7 @@ public class XmlResponseParser<T> implements ResponseParser<T> {
             SAXParser parser = factory.newSAXParser();
             parser.parse(inputSource, this.handler);
             List<T> results = this.handler.getResults();
-            result = results.size() > 0 ? results.get(0) : null;
+            result = !results.isEmpty() ? results.get(0) : null;
         } catch (ParserConfigurationException | IOException | SAXException e) {
             throw new ParseException(e.getMessage());
         }

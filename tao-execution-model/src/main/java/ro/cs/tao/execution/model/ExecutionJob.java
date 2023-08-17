@@ -177,7 +177,7 @@ public class ExecutionJob extends LongIdentifiable implements StatusChangeListen
 
     public List<ExecutionTask> find(ExecutionStatus status) {
         List<ExecutionTask> running = null;
-        if (this.tasks != null && this.tasks.size() > 0) {
+        if (this.tasks != null && !this.tasks.isEmpty()) {
             running = this.tasks.stream()
                                 .filter(t -> t.getExecutionStatus() == status)
                                 .collect(Collectors.toList());

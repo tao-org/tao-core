@@ -19,7 +19,7 @@ public class RepositoryFactory {
 
     private RepositoryFactory() {
         this.templates = new HashMap<>();
-        final String values = ConfigurationManager.getInstance().getValue("workspace.enabled");
+        final String values = ConfigurationManager.getInstance().getValue("workspaces.enabled");
         if (values != null) {
             final String[] workspaces = values.toUpperCase().split(",");
             for (String w : workspaces) {
@@ -38,7 +38,7 @@ public class RepositoryFactory {
         }
     }
 
-    public static Repository createDefault(RepositoryType type, String userId) {
+    public static Repository createDefault(RepositoryType type, String userId, Map<String, String> dbParams) {
         final Repository workspace = instance.templates.get(type);
         if (workspace == null) {
             throw new IllegalArgumentException("Workspace type " + type.name() + " is disabled");
@@ -46,6 +46,9 @@ public class RepositoryFactory {
         workspace.setId(UUID.randomUUID().toString());
         workspace.setUserId(userId);
         final ConfigurationProvider cfgProvider = ConfigurationManager.getInstance();
+        if (dbParams == null) {
+            dbParams = new HashMap<>();
+        }
         switch (type) {
             case LOCAL:
                 workspace.getParameters().replace(type.rootKey(),
@@ -57,12 +60,12 @@ public class RepositoryFactory {
                 String value;
                 for (String key : parameters.keySet()) {
                     if (type.rootKey().equals(key)) {
-                        value = cfgProvider.getValue(type.rootKey());
+                        value = dbParams.containsKey(key) ? dbParams.get(key) : cfgProvider.getValue(type.rootKey());
                         if (value != null) {
                             value += "/" + userId;
                         }
                     } else {
-                        value = cfgProvider.getValue(key);
+                        value = dbParams.containsKey(key) ? dbParams.get(key) : cfgProvider.getValue(key);
                     }
                     if (value == null) {
                         throw new TopologyException("Values for default workspace of type" + type.name() + " not configured");

@@ -138,7 +138,7 @@ public class SourceDescriptor extends StringIdentifiable {
     public boolean isCompatibleWith(TargetDescriptor other) {
         return other != null && this.dataDescriptor != null && other.getDataDescriptor() != null &&
                 this.dataDescriptor.getFormatType().equals(other.getDataDescriptor().getFormatType()) &&
-                (this.constraints == null || this.constraints.size() == 0 || this.constraints.stream().allMatch(c -> {
+                (this.constraints == null || this.constraints.isEmpty() || this.constraints.stream().allMatch(c -> {
                     IOConstraint constraint = ConstraintFactory.create(c);
                     return constraint == null || constraint.check(this.dataDescriptor, other.getDataDescriptor());
                 }));
@@ -164,7 +164,7 @@ public class SourceDescriptor extends StringIdentifiable {
                                                         this.dataDescriptor.getFormatType().friendlyName(),
                                                         other.getDataDescriptor().getFormatType().friendlyName()));
         }
-        if (this.constraints != null && this.constraints.size() > 0) {
+        if (this.constraints != null && !this.constraints.isEmpty()) {
             for (String c : this.constraints) {
                 IOConstraint constraint = ConstraintFactory.create(c);
                 if (constraint != null && !constraint.check(this.dataDescriptor, other.getDataDescriptor())) {

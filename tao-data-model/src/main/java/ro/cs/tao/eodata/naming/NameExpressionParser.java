@@ -38,7 +38,7 @@ public class NameExpressionParser {
                 }
             }
         }
-        if (invalidTokens.size() > 0) {
+        if (!invalidTokens.isEmpty()) {
             throw new ParseException(String.format("Invalid tokens: %s", String.join(",", invalidTokens)));
         }
     }
