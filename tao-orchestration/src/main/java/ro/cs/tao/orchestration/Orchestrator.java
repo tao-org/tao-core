@@ -892,7 +892,7 @@ public class Orchestrator extends Notifiable {
                 // if next to a DataSourceExecutionTask is a simple ExecutionTask, we feed it with as many
                 // values as sources
                 int expectedCardinality = TaskUtilities.getSourceCardinality(nextTask);
-                if (expectedCardinality == -1) {
+                if (expectedCardinality < -1) { // allow also -1, it represents no input required for the task
                     String message = String.format("Cannot determine input cardinality for task %s",
                                                    TaskUtilities.getTaskName(nextTask));
                     changeStatus(nextTask, ExecutionStatus.CANCELLED, message);
