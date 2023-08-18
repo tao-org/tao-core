@@ -56,7 +56,6 @@ public class JsonEngine extends TemplateEngine {
                 final String key = entry.getKey();
                 if (value != null) {
                     JavaType type = JavaType.fromClass(value.getClass());
-                    StringBuilder builder;
                     switch (type) {
                         case BOOLEAN:
                         case BYTE:

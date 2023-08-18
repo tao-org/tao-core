@@ -88,6 +88,7 @@ public class TemplateParameterDescriptor extends ParameterDescriptor {
         if (this.template == null) {
             this.template = new BasicTemplate();
             this.template.associateWith(getTemplateEngine());
+            this.template.setContents(getDefaultValue(), false);
         }
         return this.template;
     }
@@ -99,6 +100,7 @@ public class TemplateParameterDescriptor extends ParameterDescriptor {
             }
             this.template = template;
             this.template.associateWith(getTemplateEngine());
+            setDefaultValue(this.template.getContents());
         }
     }
 
@@ -132,7 +134,7 @@ public class TemplateParameterDescriptor extends ParameterDescriptor {
                 removeEmptyParameter(parameter);
             }
         }
-        return this.templateEngine.transform(this.template, params);
+        return this.templateEngine.transform(getTemplate(), params);
     }
 
     @Override
