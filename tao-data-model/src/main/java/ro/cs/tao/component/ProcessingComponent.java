@@ -406,6 +406,8 @@ public class ProcessingComponent extends TaoComponent {
                     Map<String, Object> values = (Map<String, Object>) parameterValues.get(paramName);
                     TemplateParameterDescriptor descriptor = templateParameters.get(paramName);
                     TemplateEngine paramEngine = descriptor.getTemplateEngine();
+                    // A template parameter can also use values from the parent's regular parameters
+                    values.putAll(parameterValues);
                     String transformed = paramEngine.transform(descriptor.getTemplate(), values);
                     if ("file".equalsIgnoreCase(descriptor.getFormat())) {
                         String outputPath = variables.get("$TEMPLATE_REAL_PATH");
