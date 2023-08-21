@@ -9,6 +9,7 @@ public class DownloadProgress extends ActivityProgress {
 
     public DownloadProgress(String taskName, double progress, double transferSpeed, int remaining) {
         super(taskName, progress);
+        this.id = System.currentTimeMillis();
         this.transferSpeedMB = transferSpeed;
         this.remaining = remaining;
     }

@@ -6,11 +6,7 @@ import org.apache.http.client.CookieStore;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.impl.client.BasicCookieStore;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.client.LaxRedirectStrategy;
+import org.apache.http.impl.client.*;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
@@ -66,6 +62,7 @@ public final class WrappedCloseableHttpClient {
 
     private static HttpClientBuilder defaultClientBuilder(CookieStore cookieStore) {
         return HttpClients.custom()
+                .setConnectionManagerShared(true)
                 .setDefaultCookieStore(cookieStore)
                 .setUserAgent("Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/57.0")
                 .setSSLSocketFactory(sslConnectionSocketFactory())
