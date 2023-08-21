@@ -29,7 +29,8 @@ import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.*;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 import ro.cs.tao.utils.logger.Logger;
@@ -73,7 +74,7 @@ public class NetUtils {
     }
 
     public static void setProxy(String type, final String host, final int port, final String user, final String pwd) {
-        if (type != null && host != null && !"".equals(type) && !"".equals(host)) {
+        if (type != null && host != null && !type.isEmpty() && !host.isEmpty()) {
             Proxy.Type proxyType = Enum.valueOf(Proxy.Type.class, type.toUpperCase());
             javaNetProxy = new Proxy(proxyType, new InetSocketAddress(host, port));
             Authenticator.setDefault(new Authenticator() {

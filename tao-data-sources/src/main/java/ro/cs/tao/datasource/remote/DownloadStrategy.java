@@ -560,7 +560,7 @@ public abstract class DownloadStrategy<T> implements ProductFetchStrategy {
                     double delta = currentProductProgress.value() - lastValue;
                     progressListener.notifyProgress(currentProductProgress.value(),
                                                     delta / currentProductProgress.factor() / DownloadStrategy.this.progressReportInterval * 1000 / MemoryUnit.MB.value(),
-                                                    Math.max(DownloadManager.getQueuedDownloads(this.dsName), 1));
+                                                    DownloadManager.getQueuedDownloads(this.dsName));
                     lastValue = currentProductProgress.value();
                 }
             }
