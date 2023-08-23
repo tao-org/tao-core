@@ -124,7 +124,7 @@
         <table name="config.config"/>
         <attributes>
             <id name="id">
-                <column name="key" nullable="false" column-definition="varchar(250) NOT NULL"/>
+                <column name="id" nullable="false" column-definition="varchar(250) NOT NULL"/>
             </id>
             <basic name="value">
                 <column name="value" nullable="true" column-definition="varchar"/>
@@ -146,7 +146,7 @@
                 <column name="last_updated" nullable="false" column-definition="timestamp with time zone NOT NULL DEFAULT now()"/>
             </basic>
             <many-to-one name="category" fetch="EAGER" target-entity="ro.cs.tao.configuration.ConfigurationCategory">
-                <join-column name="category_id" />
+                <join-column name="category_id" referenced-column-name="id"/>
             </many-to-one>
             <transient name="typedValue"/>
         </attributes>

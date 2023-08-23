@@ -14,7 +14,7 @@ ALTER TABLE config.category ADD CONSTRAINT PK_config_category PRIMARY KEY (id);
 DROP TABLE IF EXISTS config.config;
 CREATE TABLE IF NOT EXISTS config.config
 (
-    key varchar(250) NOT NULL,
+    id varchar(512) NOT NULL,
     value varchar,
     friendly_name varchar NOT NULL,
     type varchar(10) NOT NULL,
@@ -23,6 +23,6 @@ CREATE TABLE IF NOT EXISTS config.config
     "values" json,
     last_updated timestamp with time zone NOT NULL DEFAULT now()
 );
-ALTER TABLE config.config ADD CONSTRAINT PK_config PRIMARY KEY (key);
+ALTER TABLE config.config ADD CONSTRAINT PK_config PRIMARY KEY (id);
 ALTER TABLE config.config ADD CONSTRAINT FK_config_category
     FOREIGN KEY (category_id) REFERENCES config.category (id) ON DELETE No Action ON UPDATE No Action;
