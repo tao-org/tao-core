@@ -130,4 +130,6 @@ public interface OrchestratorService extends TAOService {
     long startExternalWorkflow(String jsonGraph, String container, EndpointDescriptor callback) throws ExecutionException;
 
     long invokeWPS(String identifier, Map<String, Map<String, String>> inputs) throws ExecutionException;
+
+    long invokeWMS(String identifier, Map<String, String> inputs) throws ExecutionException;
 }
