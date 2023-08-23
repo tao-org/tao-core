@@ -399,6 +399,8 @@ public class TaskUtilities {
             component = ((ProcessingExecutionTask) task).getComponent().getId();
         } else if (task instanceof WPSExecutionTask) {
             component = ((WPSExecutionTask) task).getComponent().getId();
+        } else if (task instanceof WMSExecutionTask) {
+            component = ((WMSExecutionTask) task).getComponent().getId();
         } else {
             component = "unknown component";
         }

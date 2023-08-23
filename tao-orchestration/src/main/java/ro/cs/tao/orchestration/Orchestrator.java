@@ -215,17 +215,18 @@ public class Orchestrator extends Notifiable {
         }
     }
     /**
-     * Creates a job from a workflow definition and starts its execution.
+     * Creates a job for a WPS service invocation.
      *
-     * @param context      The session context
-     * @param inputs     The overridden parameter values for workflow nodes
+     * @param context   The session context
+     * @param wpsId     The WPS identifier
+     * @param inputs    The overridden parameter values for workflow nodes
      * @throws ExecutionException In case anything goes wrong or a job for this workflow was already created
      */
-    public ExecutionJob startExecution(SessionContext context, String wpsId,
-                                       Map<String, Map<String, String>> inputs) throws ExecutionException {
+    public ExecutionJob invokeWPS(SessionContext context, String wpsId,
+                                  Map<String, Map<String, String>> inputs) throws ExecutionException {
         try {
             final String user = context.getPrincipal().getName();
-            final ExecutionJob executionJob = tryCreateJob(user, wpsId, inputs);
+            final ExecutionJob executionJob = tryCreateWPSJob(user, wpsId, inputs);
             if (executionJob == null) {
                 throw new ExecutionException("Another WPS job is running or queued for user '" + user + "'. New job will be queued");
             } else {
@@ -238,6 +239,30 @@ public class Orchestrator extends Notifiable {
         }
     }
 
+    /**
+     * Creates a job for a WPS service invocation.
+     *
+     * @param context   The session context
+     * @param wmsId     The WMS identifier
+     * @param inputs    The overridden parameter values for workflow nodes
+     * @throws ExecutionException In case anything goes wrong or a job for this workflow was already created
+     */
+    public ExecutionJob invokeWMS(SessionContext context, String wmsId,
+                                  Map<String, String> inputs) throws ExecutionException {
+        try {
+            final String user = context.getPrincipal().getName();
+            final ExecutionJob executionJob = tryCreateWMSJob(user, wmsId, inputs);
+            if (executionJob == null) {
+                throw new ExecutionException("Another WMS job is running or queued for user '" + user + "'. New job will be queued");
+            } else {
+                this.jobQueue.put(executionJob);
+            }
+            return executionJob;
+        } catch (Exception e) {
+            logger.severe(e.getMessage());
+            throw e instanceof ExecutionException ? (ExecutionException) e : new ExecutionException(e.getMessage());
+        }
+    }
 
     /**
      * Creates a job from an externally-defined workflow and starts its execution.
@@ -337,9 +362,25 @@ public class Orchestrator extends Notifiable {
      * @param inputs     The overridden parameter values,
      * @throws ExecutionException In case anything goes wrong
      */
-    public ExecutionJob createJob(String wpsId, Map<String, Map<String, String>> inputs)  throws ExecutionException {
+    public ExecutionJob createWPSJob(String wpsId, Map<String, Map<String, String>> inputs)  throws ExecutionException {
         try {
-            return this.jobFactory.createJob(SessionStore.currentContext(), this.uuid, wpsId, inputs);
+            return this.jobFactory.createWPSJob(SessionStore.currentContext(), this.uuid, wpsId, inputs);
+        } catch (PersistenceException e) {
+            logger.severe(e.getMessage());
+            throw new ExecutionException(e.getMessage());
+        }
+    }
+
+    /**
+     * Creates a job for a WMS, intended for execution.
+     *
+     * @param wmsId     The WMS identifier
+     * @param inputs     The overridden parameter values,
+     * @throws ExecutionException In case anything goes wrong
+     */
+    public ExecutionJob createWMSJob(String wmsId, Map<String, String> inputs)  throws ExecutionException {
+        try {
+            return this.jobFactory.createWMSJob(SessionStore.currentContext(), this.uuid, wmsId, inputs);
         } catch (PersistenceException e) {
             logger.severe(e.getMessage());
             throw new ExecutionException(e.getMessage());
@@ -1361,12 +1402,14 @@ public class Orchestrator extends Notifiable {
 
     private ExecutionJob tryCreateJob(String user, SessionContext context, ExecutionRequest request) {
         return createJob(context, request, ConfigurationManager.getInstance().getBooleanValue("optimize.workflows"));
-        //return canSubmitJob(executionJob) ? executionJob : null;
     }
 
-    private ExecutionJob tryCreateJob(String user, String wpsId, Map<String, Map<String, String>> inputs) {
-        return createJob(wpsId, inputs);
-        //return canSubmitJob(executionJob) ? executionJob : null;
+    private ExecutionJob tryCreateWPSJob(String user, String wpsId, Map<String, Map<String, String>> inputs) {
+        return createWPSJob(wpsId, inputs);
+    }
+
+    private ExecutionJob tryCreateWMSJob(String user, String wmsId, Map<String, String> inputs) {
+        return createWMSJob(wmsId, inputs);
     }
 
     private String translateOutputToMasterPath(ProcessingExecutionTask task) {

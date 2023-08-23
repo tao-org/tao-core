@@ -684,13 +684,13 @@ ALTER TABLE component.wps_component ADD CONSTRAINT FK_wps_component_container
 DROP TABLE IF EXISTS component.wps_component_sources CASCADE;
 CREATE TABLE component.wps_component_sources
 (
-	wps_component_id varchar(512) NOT NULL,
+	component_id varchar(512) NOT NULL,
 	source_descriptor_id varchar(512) NOT NULL
 );
 ALTER TABLE component.wps_component_sources ADD CONSTRAINT PK_wps_component_sources
-	PRIMARY KEY (wps_component_id, source_descriptor_id);
+	PRIMARY KEY (component_id, source_descriptor_id);
 ALTER TABLE component.wps_component_sources ADD CONSTRAINT FK_wps_component_sources_wps_component
-	FOREIGN KEY (wps_component_id) REFERENCES component.wps_component (id) ON DELETE CASCADE ON UPDATE No Action;
+	FOREIGN KEY (component_id) REFERENCES component.wps_component (id) ON DELETE CASCADE ON UPDATE No Action;
 ALTER TABLE component.wps_component_sources ADD CONSTRAINT FK_wps_component_source_descriptor
 	FOREIGN KEY (source_descriptor_id) REFERENCES component.source_descriptor (id) ON DELETE CASCADE ON UPDATE No Action;
 
@@ -699,13 +699,13 @@ ALTER TABLE component.wps_component_sources ADD CONSTRAINT FK_wps_component_sour
 DROP TABLE IF EXISTS component.wps_component_targets CASCADE;
 CREATE TABLE component.wps_component_targets
 (
-	wps_component_id varchar(512) NOT NULL,
+	component_id varchar(512) NOT NULL,
 	target_descriptor_id varchar(512) NOT NULL
 );
 ALTER TABLE component.wps_component_targets ADD CONSTRAINT PK_wps_component_targets
-	PRIMARY KEY (wps_component_id, target_descriptor_id);
+	PRIMARY KEY (component_id, target_descriptor_id);
 ALTER TABLE component.wps_component_targets ADD CONSTRAINT FK_wps_component_targets_wps_component
-	FOREIGN KEY (wps_component_id) REFERENCES component.wps_component (id) ON DELETE CASCADE ON UPDATE No Action;
+	FOREIGN KEY (component_id) REFERENCES component.wps_component (id) ON DELETE CASCADE ON UPDATE No Action;
 ALTER TABLE component.wps_component_targets ADD CONSTRAINT FK_wps_component_targets_target_descriptor
 	FOREIGN KEY (target_descriptor_id) REFERENCES component.target_descriptor (id) ON DELETE CASCADE ON UPDATE No Action;
 
@@ -714,12 +714,57 @@ ALTER TABLE component.wps_component_targets ADD CONSTRAINT FK_wps_component_targ
 DROP TABLE IF EXISTS component.wps_component_parameters CASCADE;
 CREATE TABLE component.wps_component_parameters
 (
-    wps_component_id varchar(512) NOT NULL,
-    wps_processing_parameter_id varchar(512) NOT NULL
+    component_id varchar(512) NOT NULL,
+    processing_parameter_id varchar(512) NOT NULL
 );
 ALTER TABLE component.wps_component_parameters ADD CONSTRAINT PK_wps_component_parameters
-    PRIMARY KEY (wps_component_id, wps_processing_parameter_id);
+    PRIMARY KEY (component_id, processing_parameter_id);
 ALTER TABLE component.wps_component_parameters ADD CONSTRAINT FK_wps_component_parameters_processing_component
-    FOREIGN KEY (wps_component_id) REFERENCES component.wps_component (id) ON DELETE No Action ON UPDATE No Action;
+    FOREIGN KEY (component_id) REFERENCES component.wps_component (id) ON DELETE No Action ON UPDATE No Action;
 ALTER TABLE component.wps_component_parameters ADD CONSTRAINT FK_wps_component_parameters_processing_parameter
-    FOREIGN KEY (wps_processing_parameter_id) REFERENCES component.processing_parameter (id) ON DELETE No Action ON UPDATE No Action;
+    FOREIGN KEY (processing_parameter_id) REFERENCES component.processing_parameter (id) ON DELETE No Action ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: component.wms_component
+DROP TABLE IF EXISTS component.wms_component CASCADE;
+CREATE TABLE component.wms_component ( )
+    INHERITS (component.wps_component);
+ALTER TABLE component.wms_component ADD CONSTRAINT PK_wms_component
+	PRIMARY KEY (id);
+ALTER TABLE component.wms_component ADD CONSTRAINT FK_wms_component_container
+	FOREIGN KEY (container_id) REFERENCES component.container (id) ON DELETE No Action ON UPDATE No Action;
+-------------------------------------------------------------------------------
+-- table: component.wms_component_sources
+DROP TABLE IF EXISTS component.wms_component_sources CASCADE;
+CREATE TABLE component.wms_component_sources( )
+    INHERITS (component.wps_component_sources);
+ALTER TABLE component.wms_component_sources ADD CONSTRAINT PK_wms_component_sources
+	PRIMARY KEY (component_id, source_descriptor_id);
+ALTER TABLE component.wms_component_sources ADD CONSTRAINT FK_wms_component_sources_wms_component
+	FOREIGN KEY (component_id) REFERENCES component.wms_component (id) ON DELETE CASCADE ON UPDATE No Action;
+ALTER TABLE component.wms_component_sources ADD CONSTRAINT FK_wms_component_source_descriptor
+	FOREIGN KEY (source_descriptor_id) REFERENCES component.source_descriptor (id) ON DELETE CASCADE ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: component.wms_component_targets
+DROP TABLE IF EXISTS component.wms_component_targets CASCADE;
+CREATE TABLE component.wms_component_targets ( )
+    INHERITS (component.wps_component_targets);
+ALTER TABLE component.wms_component_targets ADD CONSTRAINT PK_wms_component_targets
+	PRIMARY KEY (component_id, target_descriptor_id);
+ALTER TABLE component.wms_component_targets ADD CONSTRAINT FK_wms_component_targets_wms_component
+	FOREIGN KEY (component_id) REFERENCES component.wms_component (id) ON DELETE CASCADE ON UPDATE No Action;
+ALTER TABLE component.wms_component_targets ADD CONSTRAINT FK_wms_component_targets_target_descriptor
+	FOREIGN KEY (target_descriptor_id) REFERENCES component.target_descriptor (id) ON DELETE CASCADE ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: wms_component_parameters
+DROP TABLE IF EXISTS component.wms_component_parameters CASCADE;
+CREATE TABLE component.wms_component_parameters ( )
+    INHERITS (component.wps_component_parameters);
+ALTER TABLE component.wms_component_parameters ADD CONSTRAINT PK_wms_component_parameters
+    PRIMARY KEY (component_id, processing_parameter_id);
+ALTER TABLE component.wms_component_parameters ADD CONSTRAINT FK_wms_component_parameters_processing_component
+    FOREIGN KEY (component_id) REFERENCES component.wms_component (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE component.wms_component_parameters ADD CONSTRAINT FK_wms_component_parameters_processing_parameter
+    FOREIGN KEY (processing_parameter_id) REFERENCES component.processing_parameter (id) ON DELETE No Action ON UPDATE No Action;

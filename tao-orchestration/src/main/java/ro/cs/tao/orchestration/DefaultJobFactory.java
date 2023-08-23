@@ -60,6 +60,7 @@ public class DefaultJobFactory {
     protected final QueryProvider queryProvider;
     protected final ProcessingComponentProvider processingComponentProvider;
     protected final WPSComponentProvider wpsComponentProvider;
+    protected final WMSComponentProvider wmsComponentProvider;
     protected final DataSourceComponentProvider dataSourceComponentProvider;
     protected final DataSourceComponentGroupProvider dataSourceComponentGroupProvider;
     protected final GroupComponentProvider groupComponentProvider;
@@ -72,6 +73,7 @@ public class DefaultJobFactory {
         this.queryProvider = SpringContextBridge.services().getService(QueryProvider.class);
         this.processingComponentProvider = SpringContextBridge.services().getService(ProcessingComponentProvider.class);
         this.wpsComponentProvider = SpringContextBridge.services().getService(WPSComponentProvider.class);
+        this.wmsComponentProvider = SpringContextBridge.services().getService(WMSComponentProvider.class);
         this.dataSourceComponentProvider = SpringContextBridge.services().getService(DataSourceComponentProvider.class);
         this.dataSourceComponentGroupProvider = SpringContextBridge.services().getService(DataSourceComponentGroupProvider.class);
         this.groupComponentProvider = SpringContextBridge.services().getService(GroupComponentProvider.class);
@@ -153,7 +155,7 @@ public class DefaultJobFactory {
         return job;
     }
 
-    public ExecutionJob createJob(SessionContext context, String appId, String jobName, Map<String, Map<String, String>> inputs)
+    public ExecutionJob createWPSJob(SessionContext context, String appId, String jobName, Map<String, Map<String, String>> inputs)
             throws PersistenceException {
         ExecutionJob job = new ExecutionJob();
         job.setName(jobName);
@@ -175,6 +177,29 @@ public class DefaultJobFactory {
             }
             logger.finest(String.format("Created WPS task %s.%s", jobName, task.getId()));
         }
+        return job;
+    }
+
+    public ExecutionJob createWMSJob(SessionContext context, String appId, String jobName, Map<String, String> inputs)
+            throws PersistenceException {
+        ExecutionJob job = new ExecutionJob();
+        job.setName(jobName);
+        job.setAppId(appId);
+        job.setBatchId(UUID.randomUUID().toString());
+        job.setUserId(SessionStore.currentContext().getPrincipal().getName());
+        job.setStartTime(LocalDateTime.now());
+        job.setExecutionStatus(ExecutionStatus.UNDETERMINED);
+        job.setJobType(JobType.EXECUTION);
+        job = jobProvider.save(job);
+        ExecutionTask task = createWMSComponentExecutionTask(jobName, inputs);
+        task.setLevel(1);
+        task.setContext(context);
+        if (task.getId() == null) {
+            taskProvider.save(task, job);
+        } else {
+            taskProvider.update(task);
+        }
+        logger.finest(String.format("Created WMS task %s.%s", jobName, task.getId()));
         return job;
     }
 
@@ -536,6 +561,27 @@ public class DefaultJobFactory {
             }
             for (Map.Entry<String, String> entry : extraParams.entrySet()) {
                 task.getInputParameterValues().add(new Variable(entry.getKey(), entry.getValue()));
+            }
+        }
+        return task;
+    }
+
+    protected WMSExecutionTask createWMSComponentExecutionTask(String wmsComponentId, Map<String, String> inputs) {
+        final WMSComponent component = wmsComponentProvider.get(wmsComponentId);
+        final WMSExecutionTask task = new WMSExecutionTask();
+        task.setComponent(component);
+        // Placeholders for outputs of this task
+        final List<TargetDescriptor> targets = component.getTargets();
+        if (targets != null) {
+            targets.forEach(t -> task.setOutputParameterValue(t.getName(), null));
+        }
+        final String nodeAffinity = component.getNodeAffinity();
+        if (nodeAffinity != null && !"Any".equals(nodeAffinity)) {
+            task.setExecutionNodeHostName(nodeAffinity);
+        }
+        if (inputs != null) {
+            for (Map.Entry<String, String> entry : inputs.entrySet()) {
+                task.setInputParameterValue(entry.getKey(), entry.getValue());
             }
         }
         return task;

@@ -61,6 +61,9 @@ public class PersistenceManager {
     private WPSComponentManager wpsComponentManager;
 
     @Autowired
+    private WMSComponentManager wmsComponentManager;
+
+    @Autowired
     private GroupComponentManager groupComponentManager;
 
     @Autowired
@@ -183,6 +186,8 @@ public class PersistenceManager {
     public TagManager tags() { return tagManager; }
 
     public WPSComponentManager wpsComponents() { return wpsComponentManager; }
+
+    public WMSComponentManager wmsComponents() { return wmsComponentManager; }
 
     public RepositoryManager repositories() { return repositoryManager; }
 
