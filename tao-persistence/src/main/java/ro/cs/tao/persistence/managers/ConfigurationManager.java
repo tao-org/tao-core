@@ -10,10 +10,7 @@ import ro.cs.tao.persistence.repository.ConfigurationCategoryRepository;
 import ro.cs.tao.persistence.repository.ConfigurationRepository;
 import ro.cs.tao.utils.StringUtilities;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -47,8 +44,8 @@ public class ConfigurationManager
     }
 
     @Override
-    public Map<ConfigurationCategory, ConfigurationItem> getGroupedItems() {
-        return getItems().stream().collect(Collectors.toMap(ConfigurationItem::getCategory, Function.identity()));
+    public Map<String, List<ConfigurationItem>> getGroupedItems() {
+       return getItems().stream().collect(Collectors.groupingBy(item -> item.getCategory().getName(), Collectors.collectingAndThen(Collectors.toList(), Collections::<ConfigurationItem> unmodifiableList)));
     }
 
     @Override

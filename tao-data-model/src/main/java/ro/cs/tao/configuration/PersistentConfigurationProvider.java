@@ -9,7 +9,7 @@ public interface PersistentConfigurationProvider {
     ConfigurationCategory getCategory(int categoryId);
     List<ConfigurationItem> getItems();
     List<ConfigurationItem> getItems(String filter);
-    Map<ConfigurationCategory, ConfigurationItem> getGroupedItems();
+    Map<String, List<ConfigurationItem>> getGroupedItems();
     List<ConfigurationItem> getCategoryItems(ConfigurationCategory category);
     ConfigurationItem getItem(String key);
     ConfigurationItem saveItem(ConfigurationItem item);
