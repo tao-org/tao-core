@@ -22,6 +22,7 @@ public class SubActivityProgress extends Message {
         this.taskProgress = taskProgress;
         this.subTaskName = subTaskName;
         this.subTaskProgress = subTaskProgress;
+        this.id = System.currentTimeMillis();
         setPayload(String.format("[%s: %s] - %s: %s",
                                  taskName, String.format(Locale.US, "%.4f", taskProgress),
                                  subTaskName, String.format(Locale.US, "%.4f", subTaskProgress)));

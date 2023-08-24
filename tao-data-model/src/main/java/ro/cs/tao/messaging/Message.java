@@ -23,6 +23,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import java.beans.Transient;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Container for messages that circulate via the available {@link EventBus}.
@@ -169,6 +170,20 @@ public class Message extends LongIdentifiable {
 
     @Transient
     public Map<String, String> getItems() { return data; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        Message message = (Message) o;
+        return timestamp == message.timestamp && read == message.read && persistent == message.persistent && Objects.equals(data, message.data);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), timestamp, read, persistent, data);
+    }
 
     @Override
     public String toString() {
