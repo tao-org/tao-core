@@ -69,13 +69,13 @@ public class ProgressNotifier implements ProgressListener {
     @Override
     public void subActivityStarted(String subTaskName) {
         this.subTaskCounter = 0;
-        sendTransientMessage(createSubStartMessage(subTaskName));
+        this.subListener.started(subTaskName);
     }
 
     @Override
     public void subActivityEnded(String subTaskName) {
         this.subTaskCounter = 1;
-        sendTransientMessage(createSubEndMessage(subTaskName));
+        this.subListener.ended();
     }
 
     @Override
@@ -126,6 +126,7 @@ public class ProgressNotifier implements ProgressListener {
     }
 
     protected void sendTransientMessage(Message message) {
+        message.setId(System.currentTimeMillis());
         message.setTimestamp(System.currentTimeMillis());
         if (additionalInfo != null) {
             additionalInfo.forEach(message::addItem);
@@ -193,20 +194,31 @@ public class ProgressNotifier implements ProgressListener {
 
     private class SubListener implements ProgressListener {
         private String subTask;
+        private boolean theOnlyItem;
         @Override
         public void started(String taskName) {
             this.subTask = taskName;
-            ProgressNotifier.this.subActivityStarted(taskName);
+            theOnlyItem = taskName.substring(taskName.lastIndexOf('/'))
+                                  .equals(ProgressNotifier.this.taskName.substring(ProgressNotifier.this.taskName.lastIndexOf('/')));
+            //if (!theOnlyItem) {
+                sendTransientMessage(createSubStartMessage(this.subTask));
+            //}
         }
 
         @Override
         public void ended() {
-            ProgressNotifier.this.subActivityEnded(subTask);
+            //if (!theOnlyItem) {
+                sendTransientMessage(createSubEndMessage(this.subTask));
+            //}
         }
 
         @Override
         public void notifyProgress(double progressValue) {
-            ProgressNotifier.this.notifyProgress(subTask, progressValue);
+            if (theOnlyItem) {
+                ProgressNotifier.this.notifyProgress(progressValue);
+            } else {
+                ProgressNotifier.this.notifyProgress(subTask, progressValue);
+            }
         }
 
         @Override
