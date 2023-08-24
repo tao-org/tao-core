@@ -11,4 +11,5 @@ public interface ContainerProvider extends EntityProvider<Container, String> {
 
     List<Container> getByType(ContainerType type);
 
+    List<Container> listContainersVisibleToUser(String userId);
 }

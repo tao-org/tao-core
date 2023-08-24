@@ -273,6 +273,7 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
             readContainer.setApplicationPath(path);
             readContainer.getApplications().forEach(this::configureApplication);
             readContainer.setLogo(readContainerLogo(getLogoFileName()));
+            readContainer.setOwnerId(SystemPrincipal.instance().getName());
             readContainer = this.containerProvider.save(readContainer);
         } catch (Exception e) {
             logger.severe(e.getMessage());

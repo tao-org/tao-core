@@ -270,6 +270,9 @@
             <basic name="formatNameParameter">
                 <column name="format_name_parameter" nullable="true" column-definition="varchar(20) NULL"/>
             </basic>
+            <basic name="ownerId">
+                <column name="owner_id" nullable="true" column-definition="varchar NULL"/>
+            </basic>
 
             <element-collection name="applications" target-class="ro.cs.tao.docker.Application" access="PROPERTY" fetch="EAGER">
                 <collection-table name="component.container_applications" >
