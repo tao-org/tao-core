@@ -36,6 +36,8 @@ public interface ContainerService extends CRUDService<Container, String> {
      */
     List<Container> listByType(ContainerType type);
 
+    List<Container> listContainersVisibleToUser(String userId);
+
     /**
      * Updates database container information and its list of applications
      * @param id            The Docker container id (as returned by Docker)

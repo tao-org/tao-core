@@ -227,7 +227,7 @@ INSERT INTO config.category (id, name, display_order) VALUES
 (7, 'Workspaces', 7);
 
 -- Configuration items
-INSERT INTO config.config (category_id, key, value, friendly_name, type, label, "values", last_updated) VALUES
+INSERT INTO config.config (category_id, id, value, friendly_name, type, label, "values", last_updated) VALUES
 (1, 'allow.resumable.transfers', 'true', 'Enables persistence of transfer state', 'bool', 'Transfers can be resumed ?', null, now()),
 (1, 'quicklook.extension', '.png', 'Extension for product quicklooks', 'string', 'Quicklook extension', null, now()),
 (1, 'extract.statistics', 'true', 'Include raster statistics in produced metadata', 'bool', 'Extract statistics', null, now()),
@@ -256,7 +256,7 @@ INSERT INTO config.config (category_id, key, value, friendly_name, type, label, 
 (5, 'mail.smtp.username', 'sen2agri.system@gmail.com', 'SMTP user', 'string', 'SMTP user', null, now()),
 (5, 'mail.smtp.password', 'esa-sen2agri2019', 'SMTP password', 'string', 'SMTP password', null, now()),
 (5, 'mail.from', 'sen2agri.system@gmail.com', 'Sender', 'string', 'Sender', null, now()),
-(5, 'mail.to', 'kraftek@c-s.ro', 'Additional email receiving emails', 'bool', 'Additional receiving email', null, now()),
+(5, 'mail.to', 'kraftek@c-s.ro', 'Additional email receiving emails', 'string', 'Additional receiving email', null, now()),
 (6, 'openstack.auth.url', 'https://cf2.cloudferro.com:5000/v3', 'OpenStack authentication endpoint', 'string', 'Authentication endpoint', null, now()),
 (6, 'openstack.tenantId', 'e31d0ad8bb8b45968ac5d0167b0b32a7', 'OpenStack tenant (or project) ID', 'string', 'Project ID', null, now()),
 (6, 'openstack.domain', 'cloud_01569', 'OpenStack domain', 'string', 'Domain', null, now()),

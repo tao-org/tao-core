@@ -115,7 +115,8 @@ CREATE TABLE component.container
 	common_parameters varchar(128) NULL,
 	format_name_parameter varchar(20) NULL,
 	created timestamp NULL DEFAULT now(),
-    modified timestamp NULL
+    modified timestamp NULL,
+    owner_id varchar NULL
 );
 ALTER TABLE component.container ADD CONSTRAINT PK_container
 	PRIMARY KEY (id);

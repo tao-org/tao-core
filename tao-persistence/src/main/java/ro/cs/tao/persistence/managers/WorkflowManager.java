@@ -33,6 +33,7 @@ import ro.cs.tao.workflow.enums.ComponentType;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 @Configuration
@@ -77,14 +78,19 @@ public class WorkflowManager extends EntityManager<WorkflowDescriptor, Long, Wor
                             List<ParameterValue> customValues = n.getCustomValues();
                             if (customValues == null || customValues.isEmpty()) {
                                 DataSourceComponent component = dataSourceComponentManager.get(n.getComponentId());
-                                Query query = queryManager.get(finalWorkflow.getUserId(),
-                                                               component.getSensorName(),
-                                                               component.getDataSourceName(),
-                                                               n.getId());
-                                if (query != null) {
-                                    n.setCustomValues(query.getValues().entrySet().stream()
-                                                           .map(e -> new ParameterValue(e.getKey(), e.getValue()))
-                                                           .collect(Collectors.toList()));
+                                if (component != null) {
+                                    Query query = queryManager.get(finalWorkflow.getUserId(),
+                                                                   component.getSensorName(),
+                                                                   component.getDataSourceName(),
+                                                                   n.getId());
+                                    if (query != null) {
+                                        n.setCustomValues(query.getValues().entrySet().stream()
+                                                               .map(e -> new ParameterValue(e.getKey(), e.getValue()))
+                                                               .collect(Collectors.toList()));
+                                    }
+                                } else {
+                                    Logger.getLogger(WorkflowManager.class.getName()).warning(String.format("Component [%s] referred by node [%s] does not exist",
+                                                                                                            n.getComponentId(), n.getName()));
                                 }
                             }
                         });
