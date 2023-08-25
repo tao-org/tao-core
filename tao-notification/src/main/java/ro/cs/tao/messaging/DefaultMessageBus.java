@@ -40,7 +40,7 @@ public class DefaultMessageBus implements ro.cs.tao.messaging.EventBus<Event<Mes
 
     private final EventBus messageBus;
     private final Set<String> topics;
-    private final Map<Pattern, Set<reactor.fn.Consumer<Event<Message>>>> patternSubscribers;
+    private final Map<String, Set<reactor.fn.Consumer<Event<Message>>>> patternSubscribers;
     private final Set<String> matchedTopics;
     private MessageProvider messagePersister;
     private final Logger logger;
@@ -94,10 +94,10 @@ public class DefaultMessageBus implements ro.cs.tao.messaging.EventBus<Event<Mes
         for (String topic : matched) {
             this.messageBus.on($(topic), eventConsumer);
         }
-        if (!this.patternSubscribers.containsKey(topicPattern)) {
-            this.patternSubscribers.put(topicPattern, new HashSet<>());
+        if (!this.patternSubscribers.containsKey(topicPattern.pattern())) {
+            this.patternSubscribers.put(topicPattern.pattern(), new HashSet<>());
         }
-        this.patternSubscribers.get(topicPattern).add(eventConsumer);
+        this.patternSubscribers.get(topicPattern.pattern()).add(eventConsumer);
     }
 
     @Override
@@ -136,7 +136,7 @@ public class DefaultMessageBus implements ro.cs.tao.messaging.EventBus<Event<Mes
     private void checkPatternConsumers(String topic) {
         if (!this.matchedTopics.contains(topic)) {
             Set<Set<reactor.fn.Consumer<Event<Message>>>> set = this.patternSubscribers.entrySet().stream()
-                    .filter(e -> e.getKey().matcher(topic).matches())
+                    .filter(e -> Pattern.compile(e.getKey()).matcher(topic).matches())
                     .map(Map.Entry::getValue)
                     .collect(Collectors.toSet());
             if (!set.isEmpty()) {
