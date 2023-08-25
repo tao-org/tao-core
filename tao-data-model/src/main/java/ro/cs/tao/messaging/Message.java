@@ -143,6 +143,11 @@ public class Message extends LongIdentifiable {
     }
 
     @Transient
+    public Map<String, String> getRawData() {
+        return this.data != null ? new HashMap<>(this.data) : new HashMap<>();
+    }
+
+    @Transient
     public String getPayload() {
         return this.data != null ? this.data.get(PAYLOAD_KEY) : null;
     }
