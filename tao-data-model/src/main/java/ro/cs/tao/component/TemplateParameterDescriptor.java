@@ -15,12 +15,16 @@
  */
 package ro.cs.tao.component;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import ro.cs.tao.component.enums.ParameterType;
 import ro.cs.tao.component.template.BasicTemplate;
 import ro.cs.tao.component.template.Template;
 import ro.cs.tao.component.template.TemplateException;
 import ro.cs.tao.component.template.TemplateType;
 import ro.cs.tao.component.template.engine.EngineFactory;
 import ro.cs.tao.component.template.engine.TemplateEngine;
+import ro.cs.tao.datasource.param.JavaType;
 
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -43,6 +47,34 @@ public class TemplateParameterDescriptor extends ParameterDescriptor {
     private List<ParameterDescriptor> parameters;
     private Template template;
     private TemplateEngine templateEngine;
+
+    @JsonCreator
+    public TemplateParameterDescriptor(@JsonProperty("id") String id,
+                               @JsonProperty("name") String name,
+                               @JsonProperty("type") ParameterType type,
+                               @JsonProperty("dataType") JavaType dataType,
+                               @JsonProperty("defaultValue") String defaultValue,
+                               @JsonProperty("description") String description,
+                               @JsonProperty("label") String label,
+                               @JsonProperty("unit") String unit,
+                               @JsonProperty("valueSet") String[] valueSet,
+                               @JsonProperty("format") String format,
+                               @JsonProperty("expansionRule") ParameterExpansionRule rule,
+                               @JsonProperty("notNull") boolean notNull,
+                               @JsonProperty("parameters") List<ParameterDescriptor> parameters) {
+        super(id);
+        setName(name);
+        setType(type);
+        setDataType(dataType.value());
+        setDefaultValue(defaultValue);
+        setDescription(description);
+        setLabel(label);
+        setValueSet(valueSet);
+        setFormat(format);
+        setExpansionRule(rule);
+        setNotNull(notNull);
+        setParameters(parameters);
+    }
 
     public TemplateParameterDescriptor() {
         super();

@@ -16,12 +16,18 @@
 
 package ro.cs.tao.topology.docker;
 
+import com.fasterxml.jackson.core.JacksonException;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.ObjectCodec;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.apache.commons.lang3.SystemUtils;
 import ro.cs.tao.Tag;
-import ro.cs.tao.component.ParameterDescriptor;
-import ro.cs.tao.component.ProcessingComponent;
-import ro.cs.tao.component.SourceDescriptor;
-import ro.cs.tao.component.TargetDescriptor;
+import ro.cs.tao.component.*;
+import ro.cs.tao.component.enums.ParameterType;
 import ro.cs.tao.component.enums.ProcessingComponentType;
 import ro.cs.tao.component.enums.ProcessingComponentVisibility;
 import ro.cs.tao.component.enums.TagType;
@@ -195,7 +201,26 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
         ProcessingComponent[] components;
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(fileName)))) {
             final String str = reader.lines().collect(Collectors.joining(""));
-            components = JacksonUtil.OBJECT_MAPPER.readValue(str, ProcessingComponent[].class);
+            final ObjectMapper mapper = new ObjectMapper();
+            final ObjectMapper innerMapper = new ObjectMapper();
+            SimpleModule module = new SimpleModule();
+            module.addDeserializer(ParameterDescriptor.class, new JsonDeserializer<>() {
+                @Override
+                public ParameterDescriptor deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
+                    JsonNode node = p.readValueAsTree();
+                    try (JsonParser parser = innerMapper.createParser(node.toString())) {
+                        final ObjectCodec codec = parser.getCodec();
+                        JsonNode innerNode = parser.readValueAsTree();
+                        if (ParameterType.TEMPLATE.name().equals(innerNode.get("type").textValue())) {
+                            return codec.treeToValue(innerNode, TemplateParameterDescriptor.class);
+                        } else {
+                            return codec.treeToValue(innerNode, ParameterDescriptor.class);
+                        }
+                    }
+                }
+            });
+            mapper.registerModule(module);
+            components = mapper.readValue(str, ProcessingComponent[].class);
         }
         return components;
     }
