@@ -907,6 +907,7 @@
             <transient name="payload"/>
             <transient name="persistent"/>
             <transient name="items"/>
+            <transient name="rawData"/>
         </attributes>
     </entity>
 
