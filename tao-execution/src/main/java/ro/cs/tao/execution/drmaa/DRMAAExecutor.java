@@ -38,6 +38,8 @@ import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.execution.util.TaskUtilities;
 import ro.cs.tao.persistence.ContainerProvider;
 import ro.cs.tao.persistence.PersistenceException;
+import ro.cs.tao.quota.UserQuotaManager;
+import ro.cs.tao.security.UserPrincipal;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.utils.ExecutionUnitFormat;
@@ -244,6 +246,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                                                                 taskName, e.getMessage()));
                                 }
                             }
+                            UserQuotaManager.getInstance().updateUserCPU(new UserPrincipal(task.getJob().getUserId()));
                             break;
                         case Session.DONE:
                             decrementMemory(task.getExecutionNodeHostName(), task.getUsedRAM());
@@ -275,6 +278,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                                 String resourceId = task.getResourceId();
                                 handler.cleanupJob(resourceId);
                             }
+                            UserQuotaManager.getInstance().updateUserCPU(new UserPrincipal(task.getJob().getUserId()));
                             break;
                         case Session.FAILED:
                             String error;
@@ -298,6 +302,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                                 ProcessingExecutionTask executionTask = (ProcessingExecutionTask) task;
                                 notifyExternalListeners(executionTask, ExecutionStatus.FAILED.friendlyName(), code, error);
                             }
+                            UserQuotaManager.getInstance().updateUserCPU(new UserPrincipal(task.getJob().getUserId()));
                             break;
                     }
                 } catch (Exception  e) {
@@ -467,6 +472,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             setMemoryConstraint(jt, memory);
             final String preferredHostName = task.getExecutionNodeHostName();
             final NodeData nodeData;
+            final Integer parallelism = component.getParallelism();
             if (preferredHostName != null) {
                 nodeData = getNode(preferredHostName);
             } else {
@@ -474,7 +480,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                     nodeData = NodeManager.getInstance().getMasterNode();
                 } else {
                     // the next call blocks until a node is available
-                    nodeData = getAvailableNode(job.getUserId(), component.getParallelism(),
+                    nodeData = getAvailableNode(job.getUserId(), parallelism,
                                                 ExecutionConfiguration.forceMemoryConstraint() ? memory : 0);
                 }
             }
@@ -487,7 +493,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             }
             setHost(jt, node.getId());
             task.setExecutionNodeHostName(node.getId());
-            final int cpu = nodeData.getCpu();
+            int cpu = Math.min(nodeData.getCpu(), parallelism != null ? parallelism : 4);
             final long mem = nodeData.getMemory();
             String location = task.getComponent().getFileLocation();
             if ((SystemUtils.IS_OS_WINDOWS && !location.startsWith("/") && !Paths.get(location).isAbsolute()) ||
