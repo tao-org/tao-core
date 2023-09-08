@@ -77,11 +77,15 @@ public class Topic {
     }
 
     public static Topic create(String category, String tag) {
-        return new Topic(category, tag);
+        final Topic topic = new Topic(category, tag);
+        topicRegistry.put(topic.value(), topic);
+        return topic;
     }
 
     public static Topic create(Topic parent, String tag) {
-        return new Topic(parent.value(), tag);
+        final Topic topic = new Topic(parent.value(), tag);
+        topicRegistry.put(topic.value(), topic);
+        return topic;
     }
 
     public static Pattern getCategoryPattern(Topic topic) {
