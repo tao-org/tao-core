@@ -93,6 +93,7 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
 
         // create new User entity
         User user = new User();
+        user.setId(newUserInfo.getId() != null ? newUserInfo.getId() : UUID.randomUUID().toString());
         user.setUsername(newUserInfo.getUsername());
         user.setEmail(newUserInfo.getEmail());
         if (!StringUtilities.isNullOrEmpty(newUserInfo.getAlternativeEmail())) {
