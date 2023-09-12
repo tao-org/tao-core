@@ -1,5 +1,7 @@
 package ro.cs.tao.utils.executors.container;
 
+import ro.cs.tao.utils.StringUtilities;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +37,7 @@ public class ContainerCmdBuilder {
                     }
                 }
                 final String registry = unit.getContainerRegistry();
-                if (registry != null) {
+                if (!StringUtilities.isNullOrEmpty(registry)) {
                     args.add(registry + "/" + unit.getContainerName());
                 } else {
                     args.add(unit.getContainerName());

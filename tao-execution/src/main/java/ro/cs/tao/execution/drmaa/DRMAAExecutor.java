@@ -694,7 +694,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                         }
                     }};
                     String value = ExecutionConfiguration.getDockerRegistry();
-                    if (value != null) {
+                    if (!StringUtilities.isNullOrEmpty(value)) {
                         dockerArgsList.add(value + "/" + container.getName());
                     } else {
                         dockerArgsList.add(container.getId());
