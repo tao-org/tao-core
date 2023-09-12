@@ -86,8 +86,8 @@ public class TopologyManager {
         final Set<NodeProvider> nodeProviders = nodeProviderRegistry.getServices();
         final String configuredProvider = ConfigurationManager.getInstance().getValue("topology.provider");
         logger.info(String.format("External node providers available: %s",
-                                  nodeProviders.size() == 0 ? "none" :
-                                          nodeProviders.stream().map(p -> p.getClass().getName()).collect(Collectors.joining(","))));
+                                  nodeProviders.isEmpty() ? "none" :
+                                  nodeProviders.stream().map(p -> p.getClass().getName()).collect(Collectors.joining(","))));
         for (NodeProvider provider : nodeProviders) {
             if (provider.getClass().getName().equals(configuredProvider)) {
                 this.externalNodeProvider = provider;

@@ -14,7 +14,7 @@ public class ContainerInstance extends StringIdentifiable {
     private String containerId;
     private String name;
     private String userId;
-    private Integer hostPort;
+    private Integer port;
 
     public String getContainerId() {
         return containerId;
@@ -40,11 +40,11 @@ public class ContainerInstance extends StringIdentifiable {
         this.userId = userId;
     }
 
-    public Integer getHostPort() {
-        return hostPort;
+    public Integer getPort() {
+        return port;
     }
 
-    public void setHostPort(Integer hostPort) {
-        this.hostPort = hostPort;
+    public void setPort(Integer port) {
+        this.port = port;
     }
 }

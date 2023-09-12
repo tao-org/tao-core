@@ -403,6 +403,11 @@ public class DockerManager {
         accumulator.preserveLineSeparator(true);
         final Executor<?> executor = Executor.execute(accumulator, job);
         String id = null;
+        try {
+            executor.getWaitObject().await(30, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            logger.warning(e.getMessage());
+        }
         if (executor.getReturnCode() == 0) {
             String[] lines = accumulator.getOutput().split("\n");
             if (lines.length == 1) {
@@ -412,7 +417,7 @@ public class DockerManager {
                 entity.setContainerId(containerProvider.getByName(imageName).getId());
                 entity.setName(name);
                 if (portMap != null) {
-                    entity.setHostPort(portMap.getKeyOne());
+                    entity.setPort(portMap.getKeyOne());
                 }
                 entity.setUserId(user);
                 try {
