@@ -60,6 +60,15 @@ public interface StorageService<T, U> extends TAOService {
     default void setVectorDataProvider(VectorDataProvider vectorDataProvider) { }
 
     default void setAuxiliaryDataProvider(AuxiliaryDataProvider auxiliaryDataProvider) { }
+
+    /**
+     * Creates the root of the repository. Since not all storages support this, the default implementation
+     * does nothing. It is up to the specializations to override this method with the proper behavior.
+     *
+     * @param root    The root of the repository
+     * @throws  IOException if the root cannot be created
+     */
+    default void createRoot(String root) throws IOException { }
     /**
      * Creates a folder.
      *
