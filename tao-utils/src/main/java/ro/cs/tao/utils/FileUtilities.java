@@ -539,6 +539,26 @@ public class FileUtilities {
     }
 
     /**
+     * Replaces a file or folder with a symbolic link.
+     * @param path  The file or folder to be replaced
+     * @param linkTarget    The target of the symbolic link
+     */
+    public static void replaceWithLink(Path path, Path linkTarget) throws IOException {
+        if (!Files.exists(path)) {
+            throw new NoSuchFileException(path.toString());
+        }
+        if (!Files.exists(linkTarget)) {
+            throw new NoSuchFileException(linkTarget.toString());
+        }
+        if (Files.isDirectory(path)) {
+            deleteTree(path);
+        } else {
+            Files.delete(path);
+        }
+        Files.createLink(path, linkTarget);
+    }
+
+    /**
      * Returns the UNIX representation of a path.
      * @param path          The path to convert
      * @param insideDocker  If <code>false</code>, on Windows it strips the partition letter.

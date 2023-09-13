@@ -18,6 +18,7 @@ package ro.cs.tao.orchestration;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.component.*;
 import ro.cs.tao.configuration.ConfigurationManager;
+import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.datasource.ProductHelperFactory;
 import ro.cs.tao.docker.DockerVolumeMap;
 import ro.cs.tao.docker.ExecutionConfiguration;
@@ -703,6 +704,7 @@ public class Orchestrator extends Notifiable {
                         logger.info(msg);
                         decrementActiveJobs();
                         Messaging.send(new UserPrincipal(job.getUserId()), Topic.EXECUTION.value(), this, msg);
+                        tryRestoreSymlinks(job);
                         tryRemoveTemporaryWorkflow(job);
                         cleanupTransientComponents(job);
                     } else {
@@ -760,6 +762,7 @@ public class Orchestrator extends Notifiable {
                     }
                 }
             });
+            tryRestoreSymlinks(job);
             Messaging.send(new UserPrincipal(job.getUserId()), Topic.EXECUTION.value(), this, msg);
             cleanupTransientComponents(job);
         } finally {
@@ -1476,6 +1479,45 @@ public class Orchestrator extends Notifiable {
                         workflowProvider.delete(workflow);
                     } catch (PersistenceException ex) {
                         logger.severe(ex.getMessage());
+                    }
+                }
+            }
+        }
+    }
+
+    private void tryRestoreSymlinks(ExecutionJob job) {
+        final WorkflowDescriptor workflow = workflowProvider.get(job.getWorkflowId());
+        final List<WorkflowNodeDescriptor> firstLevel = WorkflowUtilities.findFirstLevel(workflow.getOrderedNodes());
+        final List<DataSourceComponent> components = new ArrayList<>();
+        for (WorkflowNodeDescriptor node : firstLevel) {
+            final TaoComponent c = TaskUtilities.getComponentFor(node);
+            if (c instanceof DataSourceComponent) {
+                components.add((DataSourceComponent) c);
+            }
+        }
+        for (DataSourceComponent component : components) {
+            synchronized (lock) {
+                final SourceDescriptor srcDescriptor = component.getSources().stream()
+                                                             .filter(t -> t.getName().equals(DataSourceComponent.QUERY_PARAMETER))
+                                                             .findFirst().get();
+                final TargetDescriptor trgDescriptor = component.getTargets().stream()
+                                                                   .filter(t -> t.getName().equals(DataSourceComponent.RESULTS_PARAMETER))
+                                                                   .findFirst().get();
+                final String initialList = srcDescriptor.getDataDescriptor().getLocation();
+                final String modifiedList = trgDescriptor.getDataDescriptor().getLocation();
+                if (!StringUtilities.isNullOrEmpty(modifiedList)) {
+                    final String[] initial = initialList.split(",");
+                    final String[] modified = modifiedList.split(",");
+                    if (initial.length == modified.length) {
+                        for (int i = 0; i < initial.length; i++) {
+                            try {
+                                FileUtilities.replaceWithLink(Paths.get(initial[i]),
+                                                              Paths.get(modified[i]));
+                                logger.finest("Restored symlink " + initial[i]);
+                            } catch (IOException e) {
+                                logger.warning(e.getMessage());
+                            }
+                        }
                     }
                 }
             }

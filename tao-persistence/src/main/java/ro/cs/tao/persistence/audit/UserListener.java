@@ -23,7 +23,7 @@ public class UserListener {
     public void onBeforeSave(User user) {
         if (user != null) {
             final LocalDateTime now = LocalDateTime.now();
-            final boolean isDecrypted = Crypto.decrypt(user.getPassword(), user.getUsername()).equals(user.getPassword());
+            final boolean isDecrypted = user.getPassword() != null && Crypto.decrypt(user.getPassword(), user.getUsername()).equals(user.getPassword());
             String encryptedPassword = Crypto.encrypt(user.getPassword(), user.getUsername());
             if (user.getModified() == null || Duration.between(user.getModified(), now).getSeconds() > 3 || isDecrypted) {
                 user.setPassword(encryptedPassword);

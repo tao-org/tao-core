@@ -21,6 +21,7 @@ import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.datasource.*;
 import ro.cs.tao.datasource.beans.Query;
 import ro.cs.tao.datasource.param.JavaType;
+import ro.cs.tao.datasource.persistence.DataSourceComponentProvider;
 import ro.cs.tao.datasource.persistence.DataSourceConfigurationProvider;
 import ro.cs.tao.eodata.EOData;
 import ro.cs.tao.eodata.EOProduct;
@@ -46,7 +47,11 @@ import ro.cs.tao.workflow.WorkflowDescriptor;
 import ro.cs.tao.workflow.WorkflowNodeDescriptor;
 import ro.cs.tao.workflow.enums.ComponentType;
 
+import java.io.IOException;
 import java.net.InetAddress;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.Principal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -69,6 +74,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
     private static WorkflowProvider workflowProvider;
     private static ExecutionTaskProvider taskProvider;
     private static DataSourceConfigurationProvider configurationProvider;
+    private static DataSourceComponentProvider componentProvider;
 
     @Override
     public boolean supports(TaoComponent component) { return component instanceof DataSourceComponent; }
@@ -83,6 +89,8 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
 
     public static void setTaskProvider(ExecutionTaskProvider provider) { taskProvider = provider; }
 
+    public static void setComponentProvider(DataSourceComponentProvider provider) { componentProvider = provider; }
+
     public QueryExecutor() {
         super();
         if (productProvider == null) {
@@ -93,6 +101,9 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
         }
         if (taskProvider == null) {
             throw new ExecutionException("An ExecutionTaskProvider is required to use this executor");
+        }
+        if (componentProvider == null) {
+            throw new ExecutionException("An DataSourceComponentProvider is required to use this executor");
         }
     }
 
@@ -112,7 +123,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
             String message = null;
             if (!dataSourceComponent.getId().startsWith("product-set-")) {
                 List<Variable> values = task.getInputParameterValues();
-                if (values == null || values.size() == 0) {
+                if (values == null || values.isEmpty()) {
                     throw new ExecutionException(String.format("No input data for the task %s", task.getId()));
                 }
                 Variable variable = values.stream().filter(v -> DataSourceComponent.QUERY_PARAMETER.equals(v.getKey()) ||
@@ -260,10 +271,32 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                                                                            .filter(s -> s.getName().equals(DataSourceComponent.QUERY_PARAMETER))
                                                                            .findFirst().get();
                     strList = descriptor.getDataDescriptor().getLocation();
-                    task.setOutputParameterValue(outPort,
-                                                 jsonifyResults(Arrays.asList(strList.split(","))));
+                    final String[] list = strList.split(",");
+                    // First try to replace any symlinks with actual data to avoid S3 read issues
+                    final StringBuilder builder = new StringBuilder();
+                    for (String item : list) {
+                        try {
+                            final Path path = Paths.get(item);
+                            if (Files.isSymbolicLink(path)) {
+                                builder.append(FileUtilities.replaceLink(path, null));
+                            } else {
+                                builder.append(path);
+                            }
+                            builder.append(",");
+                        } catch (IOException e) {
+                            logger.warning(e.getMessage());
+                        }
+                    }
+                    builder.setLength(builder.length() - 1);
+                    // Persist any targets of the symlinks, together with the symlink path.
+                    // They will be restored at the end of the job.
+                    final TargetDescriptor targetDescriptor = dataSourceComponent.getTargets().stream()
+                                                                                 .filter(t -> t.getName().equals(DataSourceComponent.RESULTS_PARAMETER))
+                                                                                 .findFirst().get();
+                    targetDescriptor.getDataDescriptor().setLocation(builder.toString());
+                    componentProvider.save(dataSourceComponent);
+                    task.setOutputParameterValue(outPort, jsonifyResults(Arrays.asList(list)));
                     task.getComponent().setTargetCardinality(descriptor.getCardinality());
-
                 }
                 if (StringUtilities.isNullOrEmpty(strList)) {
                     throw new QueryException("Empty product set");
