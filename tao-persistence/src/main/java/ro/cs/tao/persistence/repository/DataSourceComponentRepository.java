@@ -50,7 +50,7 @@ public interface DataSourceComponentRepository extends PagingAndSortingRepositor
     List<DataSourceComponent> getBySourceAndSensor(String dataSourceName, String sensor);
 
     @Query(value = "SELECT dsc.* FROM component.source_descriptor sd JOIN component.data_source_component dsc ON dsc.id = sd.parent_id " +
-            "WHERE dsc.id LIKE '%?1%' AND sd.name = 'query' AND sd.location IS NOT NULL ORDER BY dsc.created", nativeQuery = true)
+            "WHERE dsc.id LIKE '%' || ?1 || '%' AND sd.name = 'query' AND sd.location IS NOT NULL ORDER BY dsc.created", nativeQuery = true)
     List<DataSourceComponent> getProductSets(String userName);
 
     @Query(value = "SELECT dsc.* FROM component.data_source_component dsc " +

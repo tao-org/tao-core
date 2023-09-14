@@ -116,6 +116,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
             task.setStartTime(LocalDateTime.now());
             //changeTaskStatus(task, ExecutionStatus.RUNNING);
             task.setExecutionStatus(ExecutionStatus.RUNNING);
+            taskProvider.update(task);
             dataSourceComponent = task.getComponent();
             // DSComponents having the id starting with 'product-set-' don't need to execute
             // a query. Instead, they should already contain a list of paths.
