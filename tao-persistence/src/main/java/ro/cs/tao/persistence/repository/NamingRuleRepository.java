@@ -1,6 +1,7 @@
 package ro.cs.tao.persistence.repository;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,6 +14,7 @@ import java.util.List;
 @Transactional
 public interface NamingRuleRepository extends PagingAndSortingRepository<NamingRule, Integer> {
 
-    List<NamingRule> findBySensor(String sensor);
+    @Query(value = "SELECT * FROM product.naming_rule WHERE sensor = :sensor OR COALESCE(synonyms,'') LIKE '%:sensor%'", nativeQuery = true)
+    List<NamingRule> getBySensor(String sensor);
 
 }

@@ -284,6 +284,9 @@
             <basic name="description">
                 <column name="description" nullable="false" column-definition="varchar(100) NOT NULL"/>
             </basic>
+            <basic name="synonyms">
+                <column name="synonyms" nullable="true" column-definition="varchar"/>
+            </basic>
             <element-collection name="tokens" target-class="ro.cs.tao.eodata.naming.NameToken" access="PROPERTY" fetch="EAGER">
                 <collection-table name="product.naming_rule_token">
                     <join-column name="naming_rule_id" referenced-column-name="id"/>

@@ -555,7 +555,7 @@ public class FileUtilities {
         } else {
             Files.delete(path);
         }
-        Files.createLink(path, linkTarget);
+        linkFile(linkTarget, path);
     }
 
     /**
