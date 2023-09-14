@@ -18,6 +18,7 @@ package ro.cs.tao.utils.executors;
 import org.apache.commons.lang3.SystemUtils;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -73,9 +74,9 @@ public class ProcessExecutor extends Executor<Process> {
             }
             //start the process
             this.channel = pb.start();
-            if (asSuperUser) {
+            /*if (asSuperUser) {
                 writeSudoPassword();
-            }
+            }*/
             if (this.monitor != null) {
                 this.monitor.attachTo(this.channel);
             }
@@ -150,9 +151,23 @@ public class ProcessExecutor extends Executor<Process> {
 
     @Override
     protected void insertSudoParams() {
-        if (!SystemUtils.IS_OS_WINDOWS) {
-            super.insertSudoParams();
+        int idx = 0;
+        String curArg;
+        List<String> sudoArgs = new ArrayList<String>() {{
+            add("sudo");
+            add("-S");
+            add("--user=" + user);
+            add("--prompt=" + password);
+        }};
+        while (idx < arguments.size()) {
+            curArg = arguments.get(idx);
+            if (SHELL_COMMAND_SEPARATOR.equals(curArg) || SHELL_COMMAND_SEPARATOR_AMP.equals(curArg) ||
+                    SHELL_COMMAND_SEPARATOR_BAR.equals(curArg)) {
+                arguments.addAll(idx + 1, sudoArgs);
+            }
+            idx++;
         }
+        arguments.addAll(0, sudoArgs);
     }
 
     @Override

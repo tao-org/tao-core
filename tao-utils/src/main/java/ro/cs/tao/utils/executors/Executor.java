@@ -38,14 +38,17 @@ import java.util.logging.Logger;
  */
 public abstract class Executor<T> implements Runnable {
     public static final String SHELL_COMMAND_SEPARATOR = ";";
-    private static final String SHELL_COMMAND_SEPARATOR_AMP = "&&";
-    private static final String SHELL_COMMAND_SEPARATOR_BAR = "||";
+    protected static final String SHELL_COMMAND_SEPARATOR_AMP = "&&";
+    protected static final String SHELL_COMMAND_SEPARATOR_BAR = "||";
     private static final NamedThreadPoolExecutor executorService;
     private static final Logger staticLogger;
     private static final Map<String, AtomicLong> requestedMemory;
     private static final Map<Executor<?>, Long> memoryRequirements;
     private static Map<String, String> environment;
     private static Set<ExecutionDescriptorConverter> converters;
+    private static String localSudoUser;
+    private static String localSudoPwd;
+
 
     static {
         executorService = new NamedThreadPoolExecutor("process-exec", Runtime.getRuntime().availableProcessors());
@@ -62,9 +65,9 @@ public abstract class Executor<T> implements Runnable {
 
     T channel;
     String host;
-    String user;
-    String password;
-    String certificate;
+    protected String user;
+    protected String password;
+    protected String certificate;
     volatile boolean isStopped;
     private volatile boolean isSuspended;
     List<String> arguments;
@@ -76,6 +79,14 @@ public abstract class Executor<T> implements Runnable {
 
     private volatile int retCode = Integer.MAX_VALUE;
     private CountDownLatch counter;
+
+    public static void setLocalSudoUser(String localSudoUser) {
+        Executor.localSudoUser = localSudoUser;
+    }
+
+    public static void setLocalSudoPwd(String localSudoPwd) {
+        Executor.localSudoPwd = localSudoPwd;
+    }
 
     public static void setConverters(Set<ExecutionDescriptorConverter> converters) {
         if (converters != null) {
@@ -336,6 +347,10 @@ public abstract class Executor<T> implements Runnable {
         switch (type) {
             case PROCESS:
                 executor = new ProcessExecutor(host, arguments, asSuperUser, workingDir);
+                if (asSuperUser) {
+                    executor.setUser(Executor.localSudoUser);
+                    executor.setPassword(Executor.localSudoPwd);
+                }
                 break;
             case SSH2:
                 executor = new SSHExecutor(host, arguments, asSuperUser, mode, asyncSSHExecution, asyncSSHFileName);

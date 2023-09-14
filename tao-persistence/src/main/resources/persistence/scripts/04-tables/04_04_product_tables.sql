@@ -260,7 +260,8 @@ CREATE TABLE product.naming_rule
     id integer NOT NULL,
     sensor varchar(50) NOT NULL,
     regex varchar(512) NOT NULL,
-    description varchar(100) NOT NULL
+    description varchar(100) NOT NULL,
+    synonyms varchar
 );
 ALTER TABLE product.naming_rule ADD CONSTRAINT PK_naming_rule
     PRIMARY KEY (id);
