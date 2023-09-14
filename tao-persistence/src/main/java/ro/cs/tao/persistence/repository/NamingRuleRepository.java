@@ -15,7 +15,7 @@ import java.util.List;
 @Transactional
 public interface NamingRuleRepository extends PagingAndSortingRepository<NamingRule, Integer> {
 
-    @Query(value = "SELECT * FROM product.naming_rule WHERE sensor = :sensor OR COALESCE(synonyms,'') LIKE '%:sensor%'", nativeQuery = true)
+    @Query(value = "SELECT * FROM product.naming_rule WHERE sensor = ?1 OR COALESCE(synonyms,'') LIKE '%' || ?1 || '%'", nativeQuery = true)
     List<NamingRule> getBySensor(@Param("sensor") String sensor);
 
 }

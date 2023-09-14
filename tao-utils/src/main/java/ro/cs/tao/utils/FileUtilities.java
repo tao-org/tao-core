@@ -630,6 +630,7 @@ public class FileUtilities {
                     public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                         Path targetFile = targetFolder.resolve(source.relativize(file));
                         Files.copy(file, targetFile, StandardCopyOption.REPLACE_EXISTING);
+                        ensurePermissions(targetFile);
                         copied.incrementAndGet();
                         return FileVisitResult.CONTINUE;
                     }

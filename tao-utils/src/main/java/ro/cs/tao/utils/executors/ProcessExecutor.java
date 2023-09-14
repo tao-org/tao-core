@@ -66,8 +66,9 @@ public class ProcessExecutor extends Executor<Process> {
                 //pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
                 pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
                 pb.redirectError(ProcessBuilder.Redirect.INHERIT);
+            } else {
+                pb.redirectErrorStream(true);
             }
-            //pb.redirectErrorStream(true);
             pb.environment().putAll(getEnvironment() != null ? getEnvironment() : System.getenv());
             if (asSuperUser) {
                 insertSudoParams();
@@ -87,7 +88,7 @@ public class ProcessExecutor extends Executor<Process> {
                 String line;
                 while (!this.isStopped && (line = outReader.readLine()) != null) {
                     //consume the line if possible
-                    if (!"".equals(line.trim())) {
+                    if (!line.trim().isEmpty()) {
                         if (this.outputConsumer != null) {
                             this.outputConsumer.consume(line);
                         }
@@ -157,7 +158,7 @@ public class ProcessExecutor extends Executor<Process> {
             add("sudo");
             add("-S");
             add("--user=" + user);
-            add("--prompt=" + password);
+            //add("--prompt=" + password);
         }};
         while (idx < arguments.size()) {
             curArg = arguments.get(idx);
