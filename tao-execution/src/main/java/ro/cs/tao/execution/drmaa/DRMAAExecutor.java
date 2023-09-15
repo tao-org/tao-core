@@ -36,10 +36,14 @@ import ro.cs.tao.execution.monitor.NodeManager;
 import ro.cs.tao.execution.monitor.NodeManager.NodeData;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.execution.util.TaskUtilities;
+import ro.cs.tao.messaging.Message;
+import ro.cs.tao.messaging.Messaging;
+import ro.cs.tao.messaging.Topic;
 import ro.cs.tao.persistence.ContainerProvider;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.quota.UserQuotaManager;
 import ro.cs.tao.security.UserPrincipal;
+import ro.cs.tao.serialization.JsonMapper;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.topology.NodeDescription;
 import ro.cs.tao.utils.ExecutionUnitFormat;
@@ -211,6 +215,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                 try {
                     int jobStatus = session.getJobProgramStatus(task.getResourceId());
                     logger.finest("DRMAA session returned " + jobStatus + " for task " + taskName);
+                    final String userId = task.getJob().getUserId();
                     switch (jobStatus) {
                         case Session.SYSTEM_ON_HOLD:
                         case Session.USER_ON_HOLD:
@@ -246,7 +251,15 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                                                                 taskName, e.getMessage()));
                                 }
                             }
-                            UserQuotaManager.getInstance().updateUserCPU(new UserPrincipal(task.getJob().getUserId()));
+                            try {
+                                final Message message = Message.create(userId,
+                                                                       String.valueOf(task.getId()),
+                                                                       ExecutionStatus.RUNNING.name(),
+                                                                       false);
+                                message.setData(JsonMapper.instance().writeValueAsString(taskProvider.getTaskStatus(task.getId())));
+                                Messaging.send(new UserPrincipal(userId), Topic.EXECUTION.value(), message, false);
+                            } catch (Exception ignored) { }
+                            UserQuotaManager.getInstance().updateUserCPU(new UserPrincipal(userId));
                             break;
                         case Session.DONE:
                             decrementMemory(task.getExecutionNodeHostName(), task.getUsedRAM());
@@ -278,7 +291,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                                 String resourceId = task.getResourceId();
                                 handler.cleanupJob(resourceId);
                             }
-                            UserQuotaManager.getInstance().updateUserCPU(new UserPrincipal(task.getJob().getUserId()));
+                            UserQuotaManager.getInstance().updateUserCPU(new UserPrincipal(userId));
                             break;
                         case Session.FAILED:
                             String error;
@@ -302,7 +315,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                                 ProcessingExecutionTask executionTask = (ProcessingExecutionTask) task;
                                 notifyExternalListeners(executionTask, ExecutionStatus.FAILED.friendlyName(), code, error);
                             }
-                            UserQuotaManager.getInstance().updateUserCPU(new UserPrincipal(task.getJob().getUserId()));
+                            UserQuotaManager.getInstance().updateUserCPU(new UserPrincipal(userId));
                             break;
                     }
                 } catch (Exception  e) {

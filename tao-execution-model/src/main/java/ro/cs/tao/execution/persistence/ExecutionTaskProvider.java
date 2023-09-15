@@ -14,6 +14,7 @@ public interface ExecutionTaskProvider extends EntityProvider<ExecutionTask, Lon
     List<ExecutionTask> listByHost(String hostName);
     List<ExecutionTask> getDataSourceTasks(long jobId);
     List<ExecutionTaskSummary> getTasksStatus(long jobId);
+    ExecutionTaskSummary getTaskStatus(long taskId);
     ExecutionTask getByJobAndNode(long jobId, long nodeId, int instanceId);
     ExecutionTask getByGroupAndNode(long groupId, long nodeId, int instanceId);
     ExecutionTask getByResourceId(String id);

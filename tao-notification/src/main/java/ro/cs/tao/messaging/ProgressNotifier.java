@@ -35,7 +35,7 @@ public class ProgressNotifier implements ProgressListener {
     protected String taskName;
     protected double taskCounter;
     private double subTaskCounter;
-    private ProgressListener subListener;
+    private final ProgressListener subListener;
 
     public ProgressNotifier(Object source, Topic topic) {
         this(SessionStore.currentContext().getPrincipal(), source, topic);

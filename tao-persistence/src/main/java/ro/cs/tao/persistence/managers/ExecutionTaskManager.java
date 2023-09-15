@@ -156,6 +156,58 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
     }
 
     @Override
+    public ExecutionTaskSummary getTaskStatus(long taskId) {
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+        return jdbcTemplate.query(con -> {
+            PreparedStatement statement =
+                    con.prepareStatement("SELECT t.id, w.name \"workflow\", CASE WHEN d.id IS NULL THEN CASE WHEN p.id IS NULL THEN 'group' ELSE p.id END ELSE d.id END \"componentName\", " +
+                                                 "t.start_time, t.end_time, t.execution_node_host_name, t.execution_status_id, t.last_updated, " +
+                                                 "CASE WHEN ct.average_duration_seconds IS NULL OR ct.average_duration_seconds = 0 THEN -1 ELSE " +
+                                                 "EXTRACT(EPOCH FROM (COALESCE(t.last_updated, t.start_time) - t.start_time)) /  ct.average_duration_seconds * 100.0 END as progress, t.execution_log " +
+                                                 "FROM execution.task t " +
+                                                 "INNER JOIN execution.job j ON j.id = t.job_id " +
+                                                 "LEFT OUTER JOIN workflow.graph w ON w.id = j.workflow_id " +
+                                                 "LEFT OUTER JOIN component.data_source_component d ON d.id = t.component_id " +
+                                                 "LEFT OUTER JOIN component.processing_component p ON p.id = t.component_id " +
+                                                 "LEFT OUTER JOIN execution.component_time ct ON t.component_id = ct.component_id " +
+                                                 "WHERE t.id = ?");
+            statement.setLong(1, taskId);
+            return statement;
+        }, (rs) -> {
+            ExecutionTaskSummary result = new ExecutionTaskSummary();
+            result.setTaskId(rs.getLong(1));
+            result.setWorkflowName(rs.getString(2));
+            result.setComponentName(rs.getString(3));
+            Timestamp timestamp = rs.getTimestamp(4);
+            if (timestamp != null) {
+                result.setTaskStart(timestamp.toLocalDateTime());
+            }
+            timestamp = rs.getTimestamp(5);
+            if (timestamp != null) {
+                result.setTaskEnd(timestamp.toLocalDateTime());
+            }
+            result.setHost(rs.getString(6));
+            result.setTaskStatus(EnumUtils.getEnumConstantByValue(ExecutionStatus.class, rs.getInt(7)));
+            timestamp = rs.getTimestamp(8);
+            if (timestamp != null) {
+                result.setLastUpdated(timestamp.toLocalDateTime());
+            }
+            double progress = rs.getDouble(9);
+            // If the progress comes > 100.0, it means the task takes longer than the current average,
+            // hence we set it to 99 not to overflow
+            if (Double.compare(progress, 100.0) == 1) {
+                progress = 99;
+            }
+            result.setPercentComplete(progress);
+            result.setOutput(rs.getString(10));
+            if (result.getOutput() == null) {
+                result.setOutput("");
+            }
+            return result;
+        });
+    }
+
+    @Override
     public ExecutionTask getByJobAndNode(long jobId, long nodeId, int instanceId) {
         return repository.findByJobAndWorkflowNode(jobId, nodeId, instanceId);
     }
