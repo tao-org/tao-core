@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
  * @since 1.4.3
  */
 public class JobQueue {
-    private final Queue<Tuple<Long, String>> queue;
+    private final FileQueue<Tuple<Long, String>> queue;
     private final ExecutionJobProvider jobProvider;
     private JobSelector<Tuple<Long, String>> jobSelector;
     private final Object lock;
@@ -129,7 +129,9 @@ public class JobQueue {
     }
 
     /**
-     * Removes all the queued jobs for a user
+     * Removes all the queued jobs for a user.
+     * If no user is specified, all the queued jobs are removed.
+     *
      * @param user  The name of the user
      */
     public List<Long> removeUserJobs(String user) {
@@ -138,7 +140,7 @@ public class JobQueue {
             final Iterator<Tuple<Long, String>> iterator = this.queue.iterator();
             while (iterator.hasNext()) {
                 final Tuple<Long, String> next = iterator.next();
-                if (next.getKeyTwo().equals(user)) {
+                if (user == null || next.getKeyTwo().equals(user)) {
                     iterator.remove();
                     if (removedJobs == null) {
                         removedJobs = new ArrayList<>();
@@ -187,7 +189,7 @@ public class JobQueue {
             if (!this.queue.isEmpty() && !this.queue.peek().getKeyOne().equals(jobId)) {
                 final Stack<Tuple<Long, String>> stack = new Stack<>();
                 Tuple<Long, String> swapped = null;
-                final Iterator<Tuple<Long, String>> iterator = ((ArrayDeque<Tuple<Long, String>>) this.queue).descendingIterator();
+                final Iterator<Tuple<Long, String>> iterator = this.queue.descendingIterator();
                 while (iterator.hasNext()) {
                     final Tuple<Long, String> pair = iterator.next();
                     if (!pair.getKeyTwo().equals(userId)) {
@@ -221,8 +223,7 @@ public class JobQueue {
      */
     public void moveJobToTail(long jobId) {
         synchronized (lock) {
-            final ArrayDeque<Tuple<Long, String>> deque = (ArrayDeque<Tuple<Long, String>>) this.queue;
-            if (!deque.getLast().getKeyOne().equals(jobId)) {
+            if (!this.queue.getLast().getKeyOne().equals(jobId)) {
                 final Iterator<Tuple<Long, String>> iterator = this.queue.iterator();
                 final Queue<Tuple<Long, String>> newQueue = new ArrayDeque<>();
                 Tuple<Long, String> swapped = null;
@@ -253,9 +254,8 @@ public class JobQueue {
      */
     public void moveJobToTail(String user, long jobId) {
         synchronized (lock) {
-            final ArrayDeque<Tuple<Long, String>> deque = (ArrayDeque<Tuple<Long, String>>) this.queue;
-            if (!deque.getLast().getKeyOne().equals(jobId)) {
-                final Iterator<Tuple<Long, String>> iterator = deque.descendingIterator();
+            if (!this.queue.getLast().getKeyOne().equals(jobId)) {
+                final Iterator<Tuple<Long, String>> iterator = this.queue.descendingIterator();
                 final Stack<Tuple<Long, String>> stack = new Stack<>();
                 Tuple<Long, String> swapped = null;
                 while (iterator.hasNext()) {
