@@ -453,12 +453,9 @@ public class Orchestrator extends Notifiable {
             jobIds.forEach(this::stopJob);
             purged = jobIds.size();
         }
-        List<ExecutionJob> jobs = jobProvider.list(user,
-                                                   new HashSet<>() {{
-                                                       add(ExecutionStatus.UNDETERMINED);
-                                                       add(ExecutionStatus.QUEUED_ACTIVE);
-                                                       add(ExecutionStatus.RUNNING);
-                                                   }});
+        List<ExecutionJob> jobs = jobProvider.list(user,EnumSet.of(ExecutionStatus.UNDETERMINED,
+                                                                   ExecutionStatus.QUEUED_ACTIVE,
+                                                                   ExecutionStatus.RUNNING));
         if (jobs != null) {
             jobs.forEach(j -> stopJob(j.getId()));
             purged += jobs.size();
