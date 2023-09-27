@@ -36,24 +36,28 @@ public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
     final String password;
     final boolean isRemote;
     final Class<R> runtimeClass;
+    final AuthenticationType authenticationType;
     final Logger logger;
 
-    OSRuntimeInfo(String host, String user, String password, boolean remote, Class<R> clazz) {
+    OSRuntimeInfo(String host, AuthenticationType authenticationType, String user, String password, boolean remote, Class<R> clazz) {
         this.node = host;
         this.user = user;
+        this.authenticationType = authenticationType;
         this.password = password;
         this.isRemote = remote;
         this.runtimeClass = clazz;
         this.logger = Logger.getLogger(getClass().getName());
     }
 
-    public static <R extends RuntimeInfo> OSRuntimeInfo<R> createInspector(String host, String user, String password, Class<R> clazz) throws Exception {
+    public static <R extends RuntimeInfo> OSRuntimeInfo<R> createInspector(String host, String user, String password,
+                                                                           AuthenticationType authType, Class<R> clazz) throws Exception {
         String localhost = InetAddress.getLocalHost().getHostName();
         if (localhost.equals(host)) {
-            return SystemUtils.IS_OS_WINDOWS ?
-                    new Windows<>(host, user, password, false, clazz) : new Linux<>(host, user, password, false, clazz);
+            return SystemUtils.IS_OS_WINDOWS
+                   ? new Windows<>(host, user, password, false, authType, clazz)
+                   : new Linux<>(host, authType, user, password, false, clazz);
         } else {
-            return new Linux<>(host, user, password, true, clazz);
+            return new Linux<>(host, authType, user, password, true, clazz);
         }
     }
 
@@ -65,7 +69,7 @@ public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
     public abstract R getInfo() throws Exception;
 
     public R getSnapshot() throws Exception {
-        R runtimeInfo = this.runtimeClass.newInstance();
+        R runtimeInfo = this.runtimeClass.getConstructor().newInstance();
         runtimeInfo.setCpuTotal(getProcessorUsage());
         runtimeInfo.setTotalMemory(getTotalMemoryMB());
         runtimeInfo.setAvailableMemory(getAvailableMemoryMB());
@@ -78,13 +82,13 @@ public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
 
     private static class Windows<R extends RuntimeInfo> extends OSRuntimeInfo<R> {
 
-        Windows(String host, String user, String password, boolean remote, Class<R> clazz) {
-            super(host, user, password, remote, clazz);
+        Windows(String host, String user, String password, boolean remote, AuthenticationType authType, Class<R> clazz) {
+            super(host, authType, user, password, remote, clazz);
         }
 
         @Override
         public R getInfo() throws Exception {
-            R runtimeInfo = this.runtimeClass.newInstance();
+            R runtimeInfo = this.runtimeClass.getConstructor().newInstance();
             List<String> args = new ArrayList<>();
             Collections.addAll(args, "cmd", "/c");
             args.add("wmic cpu get loadpercentage /value && " +
@@ -288,19 +292,12 @@ public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
 
     public static class Linux<R extends RuntimeInfo> extends OSRuntimeInfo<R> {
 
-        private final AuthenticationType authenticationType;
-
         public Linux(String host, String user, String password, boolean remote, Class<R> clazz) {
             this(host, AuthenticationType.PASSWORD, user, password, remote, clazz);
         }
 
         public Linux(String host, AuthenticationType authenticationType, String user, String authenticationToken, boolean remote, Class<R> clazz) {
-            super(host, user, authenticationToken, remote, clazz);
-
-            if (authenticationType == null) {
-                throw new NullPointerException("The authentication type is null.");
-            }
-            this.authenticationType = authenticationType;
+            super(host, authenticationType, user, authenticationToken, remote, clazz);
         }
 
         private Executor<?> buildExecutor(List<String> arguments) {

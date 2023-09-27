@@ -184,7 +184,10 @@
                 <column name="username" nullable="false" column-definition="character varying(50) NOT NULL"/>
             </basic>
             <basic name="userPass">
-                <column name="password" nullable="false" column-definition="text NOT NULL"/>
+                <column name="password" nullable="true" column-definition="text"/>
+            </basic>
+            <basic name="sshKey">
+                <column name="ssh_key" nullable="true" column-definition="text"/>
             </basic>
             <!--<basic name="nodeType">
                 <column name="type_id" nullable="false" column-definition="integer NOT NULL"/>
@@ -220,6 +223,34 @@
                 </collection-table>
             </element-collection>
 
+        </attributes>
+    </entity>
+
+    <entity class="ro.cs.tao.topology.VolatileInstance" access="PROPERTY">
+        <table name="topology.volatile_instance"/>
+        <attributes>
+            <basic name="nodeId">
+                <column name="node_id" nullable="false" column-definition="varchar NOT NULL"/>
+            </basic>
+            <basic name="flavorId">
+                <column name="flavor_id" nullable="false" column-definition="varchar NOT NULL"/>
+            </basic>
+            <basic name="userId">
+                <column name="user_id" nullable="false" column-definition="varchar NOT NULL"/>
+            </basic>
+            <basic name="created">
+                <column name="created" nullable="false" column-definition="timestamp without time zone NOT NULL"/>
+            </basic>
+            <basic name="destroyed">
+                <column name="destroyed" nullable="true" column-definition="timestamp without time zone"/>
+            </basic>
+            <basic name="averageCPU">
+                <column name="average_cpu_load" nullable="true" column-definition="real"/>
+            </basic>
+            <basic name="averageMemory">
+                <column name="average_memory" nullable="true" column-definition="real"/>
+            </basic>
+            <transient name="duration"/>
         </attributes>
     </entity>
 

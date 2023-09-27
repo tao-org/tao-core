@@ -263,6 +263,9 @@ public class DefaultSession implements Session, JobExitHandler {
             if (memConstraint != null) {
                 unit.setMinMemory(memConstraint);
             }
+            if (node != null) {
+                unit.setCertificate(node.getSshKey());
+            }
             final String jobId = jt.getJobName() + ":" + System.nanoTime();
             final OutputAccumulator consumer = new OutputAccumulator();
             this.runningJobs.put(jobId, Executor.execute(consumer, unit));

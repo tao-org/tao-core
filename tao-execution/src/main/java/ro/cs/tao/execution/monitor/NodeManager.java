@@ -19,9 +19,13 @@ import ro.cs.tao.serialization.JsonMapper;
 import ro.cs.tao.topology.*;
 import ro.cs.tao.utils.ExceptionUtils;
 import ro.cs.tao.utils.async.Parallel;
+import ro.cs.tao.utils.executors.AuthenticationType;
 import ro.cs.tao.utils.executors.MemoryUnit;
 import ro.cs.tao.utils.executors.NamedThreadPoolExecutor;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -64,7 +68,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         isAvailable = DefaultSessionFactory.class.getName().equals(configurationManager.getValue("tao.drmaa.sessionfactory"));
         instance = new NodeManager();
         pollInterval = Integer.parseInt(configurationManager.getValue("topology.node.poll.interval", "15"));
-        nodeCreationWaitTime = Integer.parseInt(configurationManager.getValue("topology.node.create.wait", "15"));
+        nodeCreationWaitTime = Integer.parseInt(configurationManager.getValue("topology.node.create.wait", "60"));
         executor = new NamedThreadPoolExecutor("node-manager", 1);
         isDevMode = ExecutionConfiguration.developmentModeEnabled();
     }
@@ -89,7 +93,22 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
 
     public DefaultNodeInfo getDefaultNodeInfo() {
         if (defaultNodeInfo == null) {
-            defaultNodeInfo = new DefaultNodeInfo("TAO-", "Processing node", "taouser", "taopassword");
+            final String appHome = ConfigurationManager.getInstance().getValue(ConfigurationProvider.APP_HOME);
+            String key = null;
+            try {
+                final Path keyPath = Path.of(appHome, "config", "tao.key");
+                if (Files.notExists(keyPath)) {
+                    throw new IOException("Private key file not found");
+                } else {
+                    key = Files.readString(keyPath);
+                }
+            } catch (IOException e) {
+                logger.warning(e.getMessage());
+            }
+            defaultNodeInfo = new DefaultNodeInfo("TAO-",
+                                                  "Worker node",
+                                                  ConfigurationManager.getInstance().getValue("openstack.node.user", "taouser"),
+                                                  key);
         }
         return defaultNodeInfo;
     }
@@ -152,7 +171,8 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     }
 
     protected List<NodeDescription> listNodes() throws TopologyException {
-        return this.nodeProvider.listNodes();
+        final List<NodeDescription> list = this.nodeProvider.listNodes();
+        return list;
     }
 
     public int getActiveNodes() throws TopologyException {
@@ -303,7 +323,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                                           }))
                                           .map(Map.Entry::getValue).orElse(null);
                     }
-                    if (result != null) {
+                    if (result != null && (useMasterNode() || result.getNode().getRole() != NodeRole.MASTER)) {
                         availableNode = result.getNode();
                         lastUsedNode = result;
                         result.getRuntimeInfo().setAvailableMemory(result.getRuntimeInfo().getAvailableMemory() - memory);
@@ -352,7 +372,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     protected NodeDescription createNodeIfMatchingFlavor(int cpus, long memory) throws Exception {
         List<NodeFlavor> nodeFlavors = this.nodeProvider.listFlavors();
         NodeFlavor matchingFlavor = nodeFlavors.stream()
-                .filter(f -> f.getCpu() >= 2 * cpus && f.getMemory() >= 4 * memory)
+                .filter(f -> f.getCpu() >= (cpus + 1) && f.getMemory() >= 1.5 * memory)
                 .min(Comparator.comparingInt(NodeFlavor::getCpu))
                 .orElse(null);
         if (matchingFlavor != null) {
@@ -365,7 +385,9 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                             nodeInfo.getPassword()));
             NodeDescription node;
             try {
-                node = future.get(nodeCreationWaitTime, TimeUnit.SECONDS);
+                node = nodeCreationWaitTime > 0
+                       ? future.get(nodeCreationWaitTime, TimeUnit.SECONDS)
+                       : future.get();
                 // The new node should be added into this.nodes in onCompleted() method
             } catch (Exception e) {
                 logger.severe(String.format("Node creation failed. Reason: %s", e.getMessage()));
@@ -443,7 +465,12 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     }
 
     protected RuntimeInfo readNodeRuntimeInfo(NodeDescription node) throws Exception {
-        OSRuntimeInfo<RuntimeInfo> osRuntimeInfo = OSRuntimeInfo.createInspector(node.getId(), node.getUserName(), node.getUserPass(), RuntimeInfo.class);
+        AuthenticationType type = node.getSshKey() != null ? AuthenticationType.CERTIFICATE : AuthenticationType.PASSWORD;
+        OSRuntimeInfo<RuntimeInfo> osRuntimeInfo = OSRuntimeInfo.createInspector(node.getId(), node.getUserName(),
+                                                                                 type == AuthenticationType.PASSWORD
+                                                                                    ? node.getUserPass() : node.getSshKey(),
+                                                                                 type,
+                                                                                 RuntimeInfo.class);
         final RuntimeInfo info = osRuntimeInfo.getInfo();
         if (osRuntimeInfo instanceof OSRuntimeInfo.Linux) {
             // Linux reports CPU as the sum of the cores load, hence it may be > 100%
@@ -466,6 +493,10 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         }
         this.nodeRefreshTimer = new Timer("node-refresh");
         this.nodeRefreshTimer.scheduleAtFixedRate(this.nodeRefreshTask, interval, interval);
+    }
+
+    private boolean useMasterNode() {
+        return ConfigurationManager.getInstance().getBooleanValue("topology.use.master.for.execution");
     }
 
     /**
