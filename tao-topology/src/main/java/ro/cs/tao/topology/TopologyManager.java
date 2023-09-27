@@ -98,6 +98,11 @@ public class TopologyManager {
             logger.info("No external node provider configured");
         } else {
             logger.info(String.format("External node provider '%s' registered", this.externalNodeProvider.getClass().getSimpleName()));
+            try {
+                this.externalNodeProvider.authenticate();
+            } catch (Throwable e) {
+                logger.severe(e.getMessage());
+            }
         }
         this.listeners = new HashSet<>();
         registerListener(new DefaultNodeOperationListener());
@@ -334,7 +339,6 @@ public class TopologyManager {
                 masterNodeInfo.setId(hostName);
             }
         } catch (Exception e) {
-            e.printStackTrace();
             throw new TopologyException("Master hostname retrieval failure", e);
         }
     }

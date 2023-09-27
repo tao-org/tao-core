@@ -540,7 +540,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                 try {
                     taskProvider.update(task);
                 } catch (PersistenceException e) {
-                    e.printStackTrace();
+                    logger.warning(e.getMessage());
                 }
             }
             // Insert parallel arguments, if any

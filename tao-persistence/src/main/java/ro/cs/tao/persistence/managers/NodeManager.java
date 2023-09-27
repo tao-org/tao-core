@@ -170,7 +170,7 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
 
     @Override
     protected boolean checkEntity(NodeDescription entity) {
-        return entity.getUserName() != null && entity.getUserPass() != null && entity.getFlavor() != null;
+        return entity.getUserName() != null && entity.getFlavor() != null;
     }
 
     private boolean checkServiceDescription(ServiceDescription service) {

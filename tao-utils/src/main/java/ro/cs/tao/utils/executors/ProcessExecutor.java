@@ -154,12 +154,14 @@ public class ProcessExecutor extends Executor<Process> {
     protected void insertSudoParams() {
         int idx = 0;
         String curArg;
-        List<String> sudoArgs = new ArrayList<String>() {{
-            add("sudo");
-            add("-S");
-            add("--user=" + user);
+        List<String> sudoArgs = SystemUtils.IS_OS_LINUX
+        ? new ArrayList<>() {{
+            add("sudo"); add("-S"); add("--user=" + user);
             //add("--prompt=" + password);
-        }};
+            }}
+        : new ArrayList<>() {{
+            add("runas"); add("/user:" + user);
+            }};
         while (idx < arguments.size()) {
             curArg = arguments.get(idx);
             if (SHELL_COMMAND_SEPARATOR.equals(curArg) || SHELL_COMMAND_SEPARATOR_AMP.equals(curArg) ||

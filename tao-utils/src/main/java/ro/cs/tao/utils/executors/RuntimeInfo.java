@@ -44,8 +44,9 @@ public abstract class RuntimeInfo {
                                               String user, String password) throws Exception {
         String localhost = InetAddress.getLocalHost().getHostName();
         if (localhost.equals(hostName)) {
-            return SystemUtils.IS_OS_WINDOWS ? new Windows(hostName, authenticationType, user, password, false) :
-                    new Linux(hostName, authenticationType, user, password, false);
+            return SystemUtils.IS_OS_WINDOWS
+                   ? new Windows(hostName, authenticationType, user, password, false)
+                   : new Linux(hostName, authenticationType, user, password, false);
         } else {
             return new Linux(hostName, authenticationType, user, password, true);
         }
