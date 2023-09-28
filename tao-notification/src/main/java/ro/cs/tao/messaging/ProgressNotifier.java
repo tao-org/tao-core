@@ -198,8 +198,8 @@ public class ProgressNotifier implements ProgressListener {
         @Override
         public void started(String taskName) {
             this.subTask = taskName;
-            theOnlyItem = taskName.substring(taskName.lastIndexOf('/'))
-                                  .equals(ProgressNotifier.this.taskName.substring(ProgressNotifier.this.taskName.lastIndexOf('/')));
+            final int idx = taskName.lastIndexOf('/');
+            theOnlyItem = idx < 0 || taskName.substring(idx).equals(ProgressNotifier.this.taskName.substring(ProgressNotifier.this.taskName.lastIndexOf('/')));
             //if (!theOnlyItem) {
                 sendTransientMessage(createSubStartMessage(this.subTask));
             //}

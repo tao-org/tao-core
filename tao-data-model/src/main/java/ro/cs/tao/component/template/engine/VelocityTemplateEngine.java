@@ -122,7 +122,7 @@ public class VelocityTemplateEngine extends TemplateEngine {
             RuntimeServices runtimeServices = RuntimeSingleton.getRuntimeServices();
             String veloTemplate = macroTemplateContents + "\n" + internalTemplate.getContents();
             StringReader reader = new StringReader(veloTemplate);
-            SimpleNode node = runtimeServices.parse(reader, internalTemplate.getName());
+            SimpleNode node = runtimeServices.parse(reader, engine.getTemplate(veloTemplate));
             template = new org.apache.velocity.Template();
             template.setRuntimeServices(runtimeServices);
             template.setData(node);
