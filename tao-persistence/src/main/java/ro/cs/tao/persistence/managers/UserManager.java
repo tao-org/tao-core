@@ -171,8 +171,8 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
     }
 
     @Override
-    public List<User> listUsers(Set<String> names) {
-        return repository.getUsers(names);
+    public List<User> listUsers(Set<String> userIds) {
+        return repository.getUsers(userIds);
     }
 
     @Override
