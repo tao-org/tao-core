@@ -1,6 +1,5 @@
 package ro.cs.tao.eodata;
 
-import org.apache.commons.collections.bidimap.TreeBidiMap;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.ReferencingFactoryFinder;
 import org.geotools.referencing.factory.FallbackAuthorityFactory;
@@ -15,33 +14,35 @@ import java.util.*;
 
 public class Projection {
     private static final Projection instance;
-    private final TreeBidiMap projections;
+    private final Map<String, String> projectionsByCode;
+    private final Map<String, String> projectionsByWKT;
 
     static {
         instance = new Projection();
     }
 
     public static String getDescription(String code) {
-        return (String) instance.projections.get(code);
+        return instance.projectionsByCode.get(code);
     }
 
     public static String getCode(String description) {
-        return (String) instance.projections.getKey(description);
+        return instance.projectionsByWKT.get(description);
     }
 
     public static Map<String, String> getSupported() {
-        return (Map<String, String>) instance.projections;
+        return instance.projectionsByCode;
     }
 
     private Projection() {
-        this.projections = new TreeBidiMap();
+        this.projectionsByCode = new HashMap<>();
+        this.projectionsByWKT = new HashMap<>();
         initialize();
     }
 
     private void initialize() {
         Hints hints = new Hints(Hints.FORCE_LONGITUDE_FIRST_AXIS_ORDER, true);
         Set<CRSAuthorityFactory> factories = ReferencingFactoryFinder.getCRSAuthorityFactories(hints);
-        final List<CRSAuthorityFactory> filtered = new ArrayList<CRSAuthorityFactory>();
+        final List<CRSAuthorityFactory> filtered = new ArrayList<>();
         for (final CRSAuthorityFactory factory : factories) {
             if (Citations.identifierMatches(factory.getAuthority(), "EPSG")) {
                 filtered.add(factory);
@@ -55,7 +56,9 @@ public class Projection {
                 code -> {
                     final String authCode = String.format("%s:%s", "EPSG", code);
                     try {
-                        projections.put(authCode, crsAuthorityFactory.getDescriptionText(authCode).toString());
+                        final String wkt = crsAuthorityFactory.getDescriptionText(authCode).toString();
+                        projectionsByCode.put(authCode, wkt);
+                        projectionsByWKT.put(wkt, authCode);
                     } catch (FactoryException e) {
                         e.printStackTrace();
                     }
