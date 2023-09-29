@@ -18,6 +18,7 @@ package ro.cs.tao.execution.model;
 import ro.cs.tao.component.*;
 import ro.cs.tao.component.converters.ConverterFactory;
 import ro.cs.tao.component.converters.ParameterConverter;
+import ro.cs.tao.component.enums.ParameterType;
 import ro.cs.tao.component.validation.ValidationException;
 import ro.cs.tao.datasource.converters.ConversionException;
 import ro.cs.tao.datasource.param.JavaType;
@@ -159,39 +160,28 @@ public class ProcessingExecutionTask extends ExecutionTask {
             return null;
         }
         Map<String, Object> inputParams = new HashMap<>();
+        final List<ParameterDescriptor> parameterDescriptors = this.component.getParameterDescriptors();
         if (inputParameterValues != null) {
             for (Variable input : inputParameterValues) {
                 String strValue = input.getValue();
                 final String key = input.getKey();
                 Object value = strValue;
-                ParameterDescriptor descriptor = this.component.getParameterDescriptors().stream()
-                                                               .filter(d -> d.getName().equals(key))
-                                                               .findFirst().orElse(null);
-                if (descriptor != null && (descriptor.getDataType().isArray())) {
-                    if (arrayChars.contains(strValue.substring(0, 1)) &&
-                        arrayChars.contains(strValue.substring(strValue.length() - 1))) {
-                        strValue = strValue.substring(1, strValue.length() - 1);
+                ParameterDescriptor descriptor = parameterDescriptors.stream()
+                                                                     .filter(d -> d.getName().equals(key))
+                                                                     .findFirst().orElse(null);
+                if (descriptor == null) {
+                    // maybe it is a sub-parameter of a template parameter
+                    TemplateParameterDescriptor templateDescriptor = (TemplateParameterDescriptor) parameterDescriptors.stream()
+                                                     .filter(d -> d.getType() == ParameterType.TEMPLATE &&
+                                                             ((TemplateParameterDescriptor) d).getParameters().stream().anyMatch(p -> p.getName().equals(key)))
+                                                     .findFirst().orElse(null);
+                    if (templateDescriptor != null) {
+                        descriptor = templateDescriptor.getParameters().stream()
+                                                       .filter(d -> templateDescriptor.getName().equals(key)).findFirst().get();
+                        value = getParameterTypedValue(descriptor, strValue);
                     }
-                    final String[] values = strValue.split("[,;]");
-                    value = JavaType.createArray(JavaType.fromClass(descriptor.getDataType()), values.length);
-                    final Class<?> type = descriptor.getDataType().getComponentType();
-                    final ParameterConverter<?> converter = ConverterFactory.getInstance().create(type);
-                    for (int i = 0; i < values.length; i++) {
-                        try {
-                            Array.set(value, i, converter.fromString(values[i]));
-                        } catch (ConversionException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-                    // it may be a source descriptor value, which is not marked as array
-                } else if (arrayChars.contains(strValue.substring(0, 1)) &&
-                           arrayChars.contains(strValue.substring(strValue.length() - 1))) {
-                    strValue = strValue.substring(1, strValue.length() - 1);
-                    value = strValue.replaceAll("[,;]", " ");
-                } else if (strValue.contains(" ") && strValue.charAt(0) != '\'' &&  strValue.charAt(0) != '\"') {
-                    // Parameter values containing spaces will break the command line invocation, hence
-                    // the value needs to be enclosed in quotes
-                    value = "'" + strValue + "'";
+                } else {
+                    value = getParameterTypedValue(descriptor, strValue);
                 }
                 inputParams.put(key, value);
             }
@@ -218,6 +208,37 @@ public class ProcessingExecutionTask extends ExecutionTask {
         variables.put("$TEMPLATE_REAL_PATH", outPath != null ? outPath[0] : null);
         variables.put("$TEMPLATE_CMD_PATH", outPath != null ? outPath[1] : null);
         return this.component.buildExecutionCommand(inputParams, variables);
+    }
+
+    private Object getParameterTypedValue(ParameterDescriptor descriptor, String strValue) {
+        Object value = strValue;
+        if (descriptor != null && (descriptor.getDataType().isArray())) {
+            if (arrayChars.contains(strValue.substring(0, 1)) &&
+                    arrayChars.contains(strValue.substring(strValue.length() - 1))) {
+                strValue = strValue.substring(1, strValue.length() - 1);
+            }
+            final String[] values = strValue.split("[,;]");
+            value = JavaType.createArray(JavaType.fromClass(descriptor.getDataType()), values.length);
+            final Class<?> type = descriptor.getDataType().getComponentType();
+            final ParameterConverter<?> converter = ConverterFactory.getInstance().create(type);
+            for (int i = 0; i < values.length; i++) {
+                try {
+                    Array.set(value, i, converter.fromString(values[i]));
+                } catch (ConversionException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            // it may be a source descriptor value, which is not marked as array
+        } else if (arrayChars.contains(strValue.substring(0, 1)) &&
+                arrayChars.contains(strValue.substring(strValue.length() - 1))) {
+            strValue = strValue.substring(1, strValue.length() - 1);
+            value = strValue.replaceAll("[,;]", " ");
+        } else if (strValue.contains(" ") && strValue.charAt(0) != '\'' &&  strValue.charAt(0) != '\"') {
+            // Parameter values containing spaces will break the command line invocation, hence
+            // the value needs to be enclosed in quotes
+            value = "'" + strValue + "'";
+        }
+        return value;
     }
 
     /**
