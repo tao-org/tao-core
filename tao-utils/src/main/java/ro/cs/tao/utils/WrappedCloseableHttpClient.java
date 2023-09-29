@@ -52,7 +52,7 @@ public final class WrappedCloseableHttpClient {
         return new WrappedCloseableHttpClient(createHttpClient(cookieStore, credentialsProvider), cookieStore, credentialsProvider);
     }
 
-    private static CloseableHttpClient createHttpClient(CookieStore cookieStore, CredentialsProvider credentialsProvider) {
+    public static CloseableHttpClient createHttpClient(CookieStore cookieStore, CredentialsProvider credentialsProvider) {
         if (credentialsProvider != null) {
             return defaultClientBuilder(cookieStore).setDefaultCredentialsProvider(credentialsProvider).build();
         } else {
