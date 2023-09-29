@@ -46,13 +46,14 @@ public class MapAdapter extends XmlAdapter<Map<String, String>, String> {
     public Map<String, String> marshal(String v) throws Exception {
         if (v == null) return null;
         Map<String, String> map = new HashMap<>();
-        String[] entries = v.substring(1, v.length() - 1).split(",");
+        String[] entries = v.substring(1, v.length() - 1).split(",\"");
         int idx;
-        for (String entry : entries) {
+        for (int i = 0; i < entries.length; i++) {
+            String entry = (i > 0 ? "\"" : "") + entries[i];
             idx = entry.indexOf(":");
             if (idx > 0) {
                 final String key = entry.substring(0, idx);
-                final String value = entry.substring(key.length());
+                final String value = entry.substring(idx + 1);
                 map.put(key.replace("\"", ""),
                         !"null".equals(value) ? value.replace("\"", "") : null);
             } else {

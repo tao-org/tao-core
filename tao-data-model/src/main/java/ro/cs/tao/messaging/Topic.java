@@ -64,6 +64,10 @@ public class Topic {
      * Topic for signaling the progress of a transfer of files between workspaces
      */
     public static final Topic TRANSFER_PROGRESS = Topic.create("transfer");
+    /**
+     * Topic for signaling authentication events (like login, logout)
+     */
+    public static final Topic AUTHENTICATION = Topic.create("authentication");
 
     public static Topic create(String category) {
         if (!topicRegistry.containsKey(category)) {

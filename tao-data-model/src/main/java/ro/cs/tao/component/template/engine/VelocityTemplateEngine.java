@@ -16,11 +16,14 @@
 package ro.cs.tao.component.template.engine;
 
 import org.apache.velocity.VelocityContext;
+import org.apache.velocity.app.Velocity;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeServices;
 import org.apache.velocity.runtime.RuntimeSingleton;
 import org.apache.velocity.runtime.parser.ParseException;
 import org.apache.velocity.runtime.parser.node.SimpleNode;
+import org.apache.velocity.runtime.resource.loader.StringResourceLoader;
+import org.apache.velocity.runtime.resource.util.StringResourceRepository;
 import ro.cs.tao.component.template.Template;
 import ro.cs.tao.component.template.TemplateException;
 import ro.cs.tao.component.template.TemplateType;
@@ -42,6 +45,9 @@ public class VelocityTemplateEngine extends TemplateEngine {
 
     private static String macroTemplateContents;
 
+    private final VelocityEngine veloEngine;
+    private final StringResourceRepository repository;
+
     static {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(VelocityTemplateEngine.class.getResourceAsStream("macros.vm")))) {
             String line;
@@ -58,6 +64,16 @@ public class VelocityTemplateEngine extends TemplateEngine {
         }
     }
 
+    public VelocityTemplateEngine() {
+        veloEngine = new VelocityEngine();
+        veloEngine.setProperty(Velocity.RESOURCE_LOADERS, "string");
+        veloEngine.setProperty("resource.loader.string.class", StringResourceLoader.class.getName());
+        veloEngine.setProperty("resource.loader.string.cache", true);
+        veloEngine.setProperty("resource.loader.string.modification_check_interval", 60);
+        veloEngine.init();
+        repository = StringResourceLoader.getRepository();
+    }
+
     @Override
     public TemplateType getTemplateType() {
         return TemplateType.VELOCITY;
@@ -70,8 +86,6 @@ public class VelocityTemplateEngine extends TemplateEngine {
 
     @Override
     public void parse(String text) throws TemplateException {
-        VelocityEngine veloEngine = new VelocityEngine();
-        veloEngine.init();
         boolean evalResult;
         try {
             evalResult = veloEngine.evaluate(new VelocityContext(), new StringWriter(), "Eval", text);
@@ -86,9 +100,6 @@ public class VelocityTemplateEngine extends TemplateEngine {
     @Override
     public String transform(Template template, Map<String, Object> parameters) throws TemplateException {
         try {
-            VelocityEngine veloEngine = new VelocityEngine();
-            VelocityContext veloContext = new VelocityContext();
-            veloEngine.init();
             // Velocity can handle only one parameter per line
             // If the template contains concatenation of parameters, we need to replace them with actual values
             String contents = template.getContents();
@@ -104,7 +115,8 @@ public class VelocityTemplateEngine extends TemplateEngine {
                 }
             }
             template.setContents(String.join("\n", lines), false);
-            org.apache.velocity.Template veloTemplate = createTemplate(veloEngine, template);
+            org.apache.velocity.Template veloTemplate = createTemplate(template);
+            VelocityContext veloContext = new VelocityContext();
             for (String key : parameters.keySet()) {
                 veloContext.put(key, parameters.get(key));
             }
@@ -116,19 +128,21 @@ public class VelocityTemplateEngine extends TemplateEngine {
         }
     }
 
-    private org.apache.velocity.Template createTemplate(org.apache.velocity.app.VelocityEngine engine, Template internalTemplate) throws ParseException {
+    private org.apache.velocity.Template createTemplate(Template internalTemplate) throws ParseException {
         org.apache.velocity.Template template;
         if (macroTemplateContents != null && !macroTemplateContents.isEmpty()) {
             RuntimeServices runtimeServices = RuntimeSingleton.getRuntimeServices();
             String veloTemplate = macroTemplateContents + "\n" + internalTemplate.getContents();
+            repository.putStringResource(internalTemplate.getName(), veloTemplate);
             StringReader reader = new StringReader(veloTemplate);
-            SimpleNode node = runtimeServices.parse(reader, engine.getTemplate(veloTemplate));
+            SimpleNode node = runtimeServices.parse(reader, veloEngine.getTemplate(internalTemplate.getName()));
             template = new org.apache.velocity.Template();
             template.setRuntimeServices(runtimeServices);
             template.setData(node);
             template.initDocument();
         } else {
-            template = engine.getTemplate(internalTemplate.getName());
+            repository.putStringResource(internalTemplate.getName(), internalTemplate.getContents());
+            template = veloEngine.getTemplate(internalTemplate.getName());
         }
         return template;
     }
