@@ -693,11 +693,11 @@ public class Orchestrator extends Notifiable {
                         if (job.getStartTime() != null && job.getEndTime() != null) {
                             time = Duration.between(job.getStartTime(), job.getEndTime());
                         }
-                        String msg = String.format("Job [%s] for workflow [%s]" +
+                        String msg = String.format("Job [%s] for user [%s]" +
                                                            (job.getExecutionStatus() == ExecutionStatus.DONE ?
                                                                    " completed in %ss" :
                                                                    " failed after %ss"),
-                                                   job.getId(), workflow.getName(), time != null ? time.getSeconds() : "<unknown>");
+                                                   job.getName(), job.getUserId(), time != null ? time.getSeconds() : "<unknown>");
                         logger.info(msg);
                         decrementActiveJobs();
                         Messaging.send(new UserPrincipal(job.getUserId()), Topic.EXECUTION.value(), this, msg);
@@ -742,9 +742,9 @@ public class Orchestrator extends Notifiable {
             if (job.getStartTime() != null && job.getEndTime() != null) {
                 time = Duration.between(job.getStartTime(), job.getEndTime());
             }
-            String msg = String.format("Job [%s] for workflow [%s] %s after %ss",
-                                       job.getId(),
-                                       workflow != null ? workflow.getName() : "n/a",
+            String msg = String.format("Job [%s] for user [%s] %s after %ss",
+                                       job.getName(),
+                                       job.getUserId(),
                                        (job.getExecutionStatus() == ExecutionStatus.CANCELLED ? " cancelled " : " failed "),
                                        time != null ? time.getSeconds() : "<unknown>");
             logger.warning(msg);
