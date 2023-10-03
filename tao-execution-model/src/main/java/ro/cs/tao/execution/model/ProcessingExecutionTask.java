@@ -165,7 +165,7 @@ public class ProcessingExecutionTask extends ExecutionTask {
             for (Variable input : inputParameterValues) {
                 String strValue = input.getValue();
                 final String key = input.getKey();
-                Object value = strValue;
+                Object value;
                 ParameterDescriptor descriptor = parameterDescriptors.stream()
                                                                      .filter(d -> d.getName().equals(key))
                                                                      .findFirst().orElse(null);
@@ -178,6 +178,9 @@ public class ProcessingExecutionTask extends ExecutionTask {
                     if (templateDescriptor != null) {
                         descriptor = templateDescriptor.getParameters().stream()
                                                        .filter(d -> templateDescriptor.getName().equals(key)).findFirst().get();
+                        value = getParameterTypedValue(descriptor, strValue);
+                    } else {
+                        // If it's not a parameter or a sub-parameter, it must be a source
                         value = getParameterTypedValue(descriptor, strValue);
                     }
                 } else {
