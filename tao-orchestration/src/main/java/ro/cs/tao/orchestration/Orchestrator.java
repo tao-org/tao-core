@@ -579,8 +579,11 @@ public class Orchestrator extends Notifiable {
                 }
                 logger.finest(String.format("Active or pending tasks: %d", this.runningTasks.size()));
             }
-            //user = currentContext.getPrincipal().getName();
-            if (completedOkStatuses.contains(status)) {
+            // A processing task can be successively in PENDING_FINALIZATION and DONE states, while a datasource task
+            // can only transit to DONE (from RUNNING).
+            // Hence, for a processing task, we don't want to process twice the DONE state, as it will recurse.
+            if (completedOkStatuses.contains(status) &&
+                    !(task instanceof ProcessingExecutionTask && notFurtherRunnableStatuses.contains(status))) {
                 // Current task has completed somehow
                 final WorkflowNodeDescriptor taskNode = workflowNodeProvider.get(task.getWorkflowNodeId());
                 // For DataSourceExecutionTask, it is the Query executor that sets the outputs.
@@ -855,7 +858,8 @@ public class Orchestrator extends Notifiable {
         final Message message = Message.create(pcTask.getJob().getUserId(), pcTask.getId(),
                                                "Task " + TaskUtilities.getTaskName(pcTask)
                                                        + (StringUtils.isNotEmpty(pcTask.getExecutionNodeHostName()) ? " on node " + pcTask.getExecutionNodeHostName() : "")
-                                                       + " changed to " + ExecutionStatus.DONE.friendlyName());
+                                                       + " changed to " + ExecutionStatus.DONE.friendlyName(),
+                                               ExecutionStatus.DONE.name(), true);
         message.setTopic(Topic.EXECUTION.value());
         message.addItem("host", pcTask.getExecutionNodeHostName());
         Messaging.send(message);
