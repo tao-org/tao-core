@@ -559,11 +559,8 @@ public abstract class Executor<T> implements Runnable {
     protected void insertSudoParams() {
         int idx = 0;
         String curArg;
-        List<String> sudoArgs = new ArrayList<String>() {{
-               add("sudo");
-               add("-S");
-               add("-p");
-               add("''");
+        List<String> sudoArgs = new ArrayList<>() {{
+            add("sudo"); add("-S"); add("-p ''");
         }};
         while (idx < arguments.size()) {
             curArg = arguments.get(idx);
