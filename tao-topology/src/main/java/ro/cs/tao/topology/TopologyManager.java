@@ -199,6 +199,35 @@ public class TopologyManager {
         Messaging.send(SystemPrincipal.instance(), Topic.TOPOLOGY.value(), message);
     }
 
+    public void installServices(NodeDescription node) {
+        BinaryTask<NodeDescription, ServiceInstallStatus> task;
+        for (TopologyToolInstaller installer: installers) {
+            // execute all the installers
+            task = new BinaryTask<>(node, this::notifyListeners) {
+                @Override
+                public ServiceInstallStatus execute(final NodeDescription node) {
+                    ServiceInstallStatus status = null;
+                    try {
+                        status = installer.installNewNode(node);
+                        String msg;
+                        if (status == ServiceInstallStatus.NODE_ADDED) {
+                            msg = String.format("%s installed on node %s", status.getServiceName(), node.getId());
+                            logger.info(msg);
+                        } else {
+                            msg = String.format("%s installation failed on node %s", status.getServiceName(), node.getId());
+                            logger.warning(msg);
+                        }
+                        Messaging.send(SystemPrincipal.instance().getName(), Topic.TOPOLOGY.value(), msg);
+                    } catch (Exception e) {
+                        logger.severe(e.getMessage());
+                    }
+                    return status;
+                }
+            };
+            task.execute(node);
+        }
+    }
+
     public void removeNode(String hostName) {
         final NodeDescription node = getNode(hostName);
         if (node == null) {

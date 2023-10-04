@@ -21,6 +21,7 @@ import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.docker.ExecutionConfiguration;
 import ro.cs.tao.topology.xml.ToolInstallersConfigHandler;
 import ro.cs.tao.topology.xml.ToolInstallersConfigParser;
+import ro.cs.tao.utils.StringUtilities;
 import ro.cs.tao.utils.executors.*;
 
 import java.io.File;
@@ -158,10 +159,10 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
         } else {
             // For process invocation type normally we will have always localhost
             hostName = "localhost";
-            if (user == null || "".equals(user)) {
+            if (user == null || user.isEmpty()) {
                 user = masterNodeInfo.getUserName();
             }
-            if (pass == null || "".equals(pass)) {
+            if (pass == null || pass.isEmpty()) {
                 pass = masterNodeInfo.getUserPass();
             }
         }
@@ -173,6 +174,9 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
                         hostName, user, pass,
                         argsList, curStep.getExecutionModeMode().value(),
                         curStep.getSshMode());
+                if (!StringUtilities.isNullOrEmpty(nodeDescr.getSshKey())) {
+                    job.setCertificate(nodeDescr.getSshKey());
+                }
                 break;
             case PROCESS:
                 job = new ExecutionUnit(ExecutorType.PROCESS,
@@ -232,6 +236,8 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
                     case ToolCommandsTokens.STEP_OUTPUT:
                         cmd = handleStepOutputReplacements(cmd, allSteps);
                         break;
+                    case ToolCommandsTokens.DOCKER_REGISTRY:
+                        replacementStr = ExecutionConfiguration.getDockerRegistry();
                 }
                 if(replacementStr != null) {
                     replacementStr = replacementStr.replace("\\", "\\\\");
