@@ -572,6 +572,12 @@ public class Orchestrator extends Notifiable {
                 // in Running state, hence we don't need to update the status
                 changeStatus(task, status, message.getMessage());
             }
+            // A processing task can be successively in PENDING_FINALIZATION and DONE states, while a datasource task
+            // can only transit to DONE (from RUNNING).
+            // Hence, for a processing task, we don't want to process twice the DONE state, as it will recurse.
+            if (completedOkStatuses.contains(status) && notFurtherRunnableStatuses.contains(status) && task instanceof ProcessingExecutionTask) {
+                return;
+            }
             if (notFurtherRunnableStatuses.contains(status)) {
                 this.runningTasks.remove(task.getId());
                 if (task instanceof ProcessingExecutionTask) {
@@ -579,11 +585,7 @@ public class Orchestrator extends Notifiable {
                 }
                 logger.finest(String.format("Active or pending tasks: %d", this.runningTasks.size()));
             }
-            // A processing task can be successively in PENDING_FINALIZATION and DONE states, while a datasource task
-            // can only transit to DONE (from RUNNING).
-            // Hence, for a processing task, we don't want to process twice the DONE state, as it will recurse.
-            if (completedOkStatuses.contains(status) &&
-                    !(task instanceof ProcessingExecutionTask && notFurtherRunnableStatuses.contains(status))) {
+            if (completedOkStatuses.contains(status)) {
                 // Current task has completed somehow
                 final WorkflowNodeDescriptor taskNode = workflowNodeProvider.get(task.getWorkflowNodeId());
                 // For DataSourceExecutionTask, it is the Query executor that sets the outputs.
@@ -1520,12 +1522,14 @@ public class Orchestrator extends Notifiable {
                     final String[] modified = modifiedList.split(",");
                     if (initial.length == modified.length) {
                         for (int i = 0; i < initial.length; i++) {
-                            try {
-                                FileUtilities.replaceWithLink(Paths.get(initial[i]),
-                                                              Paths.get(modified[i]));
-                                logger.finest("Restored symlink " + initial[i]);
-                            } catch (IOException e) {
-                                logger.warning(e.getMessage());
+                            if (!initial[i].equals(modified[i])) {
+                                try {
+                                    FileUtilities.replaceWithLink(Paths.get(initial[i]),
+                                                                  Paths.get(modified[i]));
+                                    logger.finest("Restored symlink " + initial[i]);
+                                } catch (IOException e) {
+                                    logger.warning(e.getMessage());
+                                }
                             }
                         }
                     }
