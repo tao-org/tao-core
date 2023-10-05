@@ -92,6 +92,30 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
     }
 
     @Override
+    public ServiceInstallStatus installNewNode(NodeDescription info, ServiceDescription service) throws TopologyException {
+        ServiceInstallStatus installStatus = ServiceInstallStatus.NODE_ADDED;
+        final ToolInstallConfig toolCfg = toolInstallConfigs.stream().filter(t -> t.getName().equals(service.getName())).findFirst().orElse(null);
+        if (toolCfg == null) {
+            installStatus.setStatus(ServiceStatus.ERROR);
+            installStatus.setReason("Not found");
+        } else {
+            try {
+                installStatus.setServiceName(toolCfg.getName());
+                invokeSteps(info, toolCfg, false);
+                installStatus.setStatus(ServiceStatus.INSTALLED);
+            } catch (TopologyException tex) {
+                installStatus.setStatus(ServiceStatus.ERROR);
+                installStatus.setReason(tex.getMessage());
+            }
+            info.addServiceStatus(new NodeServiceStatus(new ServiceDescription(installStatus.getServiceName(),
+                                                                               toolCfg.getVersion(),
+                                                                               toolCfg.getDescription()),
+                                                        installStatus.getStatus()));
+        }
+        return installStatus;
+    }
+
+    @Override
     public ServiceInstallStatus uninstallNode(NodeDescription info) throws TopologyException {
         ServiceInstallStatus installStatus = ServiceInstallStatus.NODE_REMOVED;
         for (ToolInstallConfig toolCfg : toolInstallConfigs) {

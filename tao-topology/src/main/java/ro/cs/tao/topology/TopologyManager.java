@@ -199,7 +199,7 @@ public class TopologyManager {
         Messaging.send(SystemPrincipal.instance(), Topic.TOPOLOGY.value(), message);
     }
 
-    public void installServices(NodeDescription node) {
+    public void installServices(NodeDescription node, ServiceDescription service) {
         BinaryTask<NodeDescription, ServiceInstallStatus> task;
         for (TopologyToolInstaller installer: installers) {
             // execute all the installers
