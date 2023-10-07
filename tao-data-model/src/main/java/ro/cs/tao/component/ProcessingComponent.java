@@ -593,23 +593,49 @@ public class ProcessingComponent extends TaoComponent {
     private void removeEmptyParameter(ParameterDescriptor descriptor) {
         if (this.template != null) {
             String templateContents = this.template.getContents();
-            int idx = templateContents.indexOf(descriptor.getLabel());
-            int beforeSeparator, afterSeparator;
-            // idx should not be -1 for Velocity templates, but it may be for XSLT ones
-            if (idx == -1) {
-                idx = templateContents.indexOf(descriptor.getName());
-                beforeSeparator = templateContents.lastIndexOf('\n', idx);
-                afterSeparator = templateContents.indexOf('\n', idx);
-                this.template.setContents(templateContents.substring(0, beforeSeparator) + templateContents.substring(afterSeparator), false);
-                idx = templateContents.indexOf(descriptor.getName(), idx + 1);
-                beforeSeparator = templateContents.lastIndexOf('\n', idx);
-                afterSeparator = templateContents.indexOf('\n', idx);
-                this.template.setContents(templateContents.substring(0, beforeSeparator) + templateContents.substring(afterSeparator), false);
-            } else {
-                beforeSeparator = templateContents.lastIndexOf('\n', idx);
+            int idx;
+            switch (this.templateType) {
+                case XSLT:
+                case JAVASCRIPT:
+                    idx = templateContents.indexOf(descriptor.getLabel());
+                    int beforeSeparator, afterSeparator;
+                    // idx should not be -1 for Velocity templates, but it may be for XSLT ones
+                    if (idx == -1) {
+                        idx = templateContents.indexOf(descriptor.getName());
+                        beforeSeparator = templateContents.lastIndexOf('\n', idx);
+                        afterSeparator = templateContents.indexOf('\n', idx);
+                        this.template.setContents(templateContents.substring(0, beforeSeparator) + templateContents.substring(afterSeparator), false);
+                        idx = templateContents.indexOf(descriptor.getName(), idx + 1);
+                        beforeSeparator = templateContents.lastIndexOf('\n', idx);
+                        afterSeparator = templateContents.indexOf('\n', idx);
+                        this.template.setContents(templateContents.substring(0, beforeSeparator) + templateContents.substring(afterSeparator), false);
+                    } else {
+                        beforeSeparator = templateContents.lastIndexOf('\n', idx);
 
-                afterSeparator = templateContents.indexOf('\n', idx);
-                this.template.setContents(templateContents.substring(0, beforeSeparator) + templateContents.substring(afterSeparator), false);
+                        afterSeparator = templateContents.indexOf('\n', idx);
+                        this.template.setContents(templateContents.substring(0, beforeSeparator) + templateContents.substring(afterSeparator), false);
+                    }
+                    break;
+                case JSON:
+                    idx = templateContents.indexOf("$" + descriptor.getName());
+                    int sepIdx = templateContents.indexOf(",", idx);
+                    int columnIdx = templateContents.lastIndexOf(":", idx);
+                    int beforeIdx = templateContents.lastIndexOf("\"", columnIdx - 1);
+                    beforeIdx = templateContents.lastIndexOf("\"", beforeIdx - 1);
+                    this.template.setContents(templateContents.substring(0, beforeIdx) +
+                                              templateContents.substring(sepIdx + 1), false);
+                    break;
+                case VELOCITY:
+                default:
+                    final String[] lines = templateContents.split("\n");
+                    final StringBuilder builder = new StringBuilder();
+                    for (String line : lines) {
+                        if (!line.contains("$" + descriptor.getName()) && !line.contains(descriptor.getLabel())) {
+                            builder.append(line).append("\n");
+                        }
+                    }
+                    this.template.setContents(builder.toString(), false);
+                    break;
             }
         }
     }

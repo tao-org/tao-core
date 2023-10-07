@@ -167,9 +167,10 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             if (task.getResourceId() != null) {
                 session.control(task.getResourceId(), Session.TERMINATE);
             }
-            markTaskFinished(task, ExecutionStatus.CANCELLED, ExecutionStatus.CANCELLED.friendlyName());
         } catch (DrmaaException e) {
             throw new ExecutionException("Error executing DRMAA session terminate for task with id " + task.getId(), e);
+        } finally {
+            markTaskFinished(task, ExecutionStatus.CANCELLED, ExecutionStatus.CANCELLED.friendlyName());
         }
     }
 
@@ -513,7 +514,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                     (SystemUtils.IS_OS_LINUX && !Paths.get(location).isAbsolute())) {
                 String path = container.getApplicationPath();
                 path = path == null ? "" : path;
-                if (!path.endsWith("/")) {
+                if (!path.isEmpty() && !path.endsWith("/")) {
                     path += "/";
                 }
                 path += location;
@@ -755,6 +756,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                                        : containerWorkspaceFolder + "/";
             finalPath = finalPath.replace(workspaceFolder, replacement);
         }
+        finalPath = finalPath.replace("//", "/");
         final boolean isSnapDimap = component.getTargets().stream().anyMatch(t -> t.getDataDescriptor().getLocation().toLowerCase().endsWith(".dim")
                                                                                 || "beam-dimap".equalsIgnoreCase(t.getDataDescriptor().getFormatName()))
                                     || finalOutput.endsWith(".dim");

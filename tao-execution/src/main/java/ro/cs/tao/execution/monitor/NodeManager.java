@@ -105,8 +105,8 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
             } catch (IOException e) {
                 logger.warning(e.getMessage());
             }
-            defaultNodeInfo = new DefaultNodeInfo("TAO-",
-                                                  "Worker node",
+            defaultNodeInfo = new DefaultNodeInfo(ConfigurationManager.getInstance().getValue("topology.node.name.prefix", "tao-"),
+                                                  ConfigurationManager.getInstance().getValue("topology.node.default.description", "Worker node"),
                                                   ConfigurationManager.getInstance().getValue("openstack.node.user", "taouser"),
                                                   key);
         }
@@ -372,18 +372,21 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     protected NodeDescription createNodeIfMatchingFlavor(int cpus, long memory) throws Exception {
         List<NodeFlavor> nodeFlavors = this.nodeProvider.listFlavors();
         NodeFlavor matchingFlavor = nodeFlavors.stream()
-                .filter(f -> f.getCpu() >= (cpus + 1) && f.getMemory() >= 1.5 * memory)
+                .filter(f -> f.getCpu() >= cpus && f.getMemory() >= 1.5 * memory)
                 .min(Comparator.comparingInt(NodeFlavor::getCpu))
                 .orElse(null);
         if (matchingFlavor != null) {
             final DefaultNodeInfo nodeInfo = getDefaultNodeInfo();
-            final Future<NodeDescription> future = executor.submit(() ->
-                    this.nodeProvider.create(matchingFlavor,
-                            nodeInfo.getNamePrefix() + System.currentTimeMillis(),
-                            nodeInfo.getDescription(),
-                            nodeInfo.getUser(),
-                            nodeInfo.getPassword()));
-            NodeDescription node;
+            NodeDescription node = this.nodeProvider.create(matchingFlavor,
+                                                            nodeInfo.getNamePrefix() + UUID.randomUUID().toString(),
+                                                            nodeInfo.getDescription(),
+                                                            nodeInfo.getUser(),
+                                                            nodeInfo.getPassword());
+            node.setSshKey(nodeInfo.getPassword());
+            node.setVolatile(true);
+            node.setRole(NodeRole.WORKER);
+            final NodeDescription finalNode = node;
+            final Future<NodeDescription> future = executor.submit(() -> TopologyManager.getInstance().addNode(finalNode));
             try {
                 node = nodeCreationWaitTime > 0
                        ? future.get(nodeCreationWaitTime, TimeUnit.SECONDS)
