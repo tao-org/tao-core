@@ -158,7 +158,7 @@ public class TopologyManager {
         return this.localNodeProvider.listNodes();
     }
 
-    public void addNode(NodeDescription info) throws TopologyException {
+    public NodeDescription addNode(NodeDescription info) throws TopologyException {
         if (this.externalNodeProvider != null) {
             info = this.externalNodeProvider.create(info);
         }
@@ -197,6 +197,7 @@ public class TopologyManager {
         message.addItem("user", info.getUserName());
         message.addItem("password", info.getUserPass());
         Messaging.send(SystemPrincipal.instance(), Topic.TOPOLOGY.value(), message);
+        return info;
     }
 
     public void installServices(NodeDescription node, ServiceDescription service) {
