@@ -357,7 +357,7 @@
                 <ignore_err>true</ignore_err>
                 <command>
                     <![CDATA[
-                         sed -i "$ a//#master_hostname##master_share# #node_share# cifs guest,uid=#master_user#,file_mode=0777,dir_mode=0777,noperm 0 0" /etc/fstab
+                         sed -i "$ a//#master_hostname##master_share# #node_share# cifs uid=#master_user#,file_mode=0777,dir_mode=0777,noperm 0 0" /etc/fstab
                     ]]>
                 </command>
             </step>
@@ -500,14 +500,14 @@
                     ]]>
                 </command>
             </step>
-            <step>
+            <!--<step>
                 <order_id>20</order_id>
                 <invocation_type>ssh2</invocation_type>
                 <execution_mode>superuser</execution_mode>
                 <ignore_err>true</ignore_err>
                 <command>
                     <![CDATA[
-                        firewall-cmd --zone=public --add-port 4200/tcp
+                        firewall-cmd &#45;&#45;zone=public &#45;&#45;add-port 4200/tcp
                     ]]>
                 </command>
             </step>
@@ -518,10 +518,10 @@
                 <ignore_err>true</ignore_err>
                 <command>
                     <![CDATA[
-                        firewall-cmd --reload
+                        firewall-cmd &#45;&#45;reload
                     ]]>
                 </command>
-            </step>
+            </step>-->
             <step>
                 <order_id>40</order_id>
                 <invocation_type>ssh2</invocation_type>
