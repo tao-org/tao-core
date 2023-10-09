@@ -37,7 +37,10 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.file.FileSystem;
 import java.nio.file.*;
-import java.nio.file.attribute.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.text.DecimalFormat;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -194,18 +197,26 @@ public class FileUtilities {
     public static Path ensureExists(Path folder) throws IOException {
         if (folder != null && !Files.exists(folder)) {
             if (isPosixFileSystem()) {
-                Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxr-xr-x");
-                FileAttribute<Set<PosixFilePermission>> attrs = PosixFilePermissions.asFileAttribute(perms);
                 try {
-                    folder = Files.createDirectories(folder, attrs);
-                } catch (Exception e) {
-                    // Maybe just attributes cannot be set
-                    folder = Files.createDirectories(folder);
+                    Files.createDirectories(folder);
+                    final List<String> args = new ArrayList<>();
+                    args.add("chmod");
+                    args.add("777");
+                    args.add(folder.toAbsolutePath().toString());
+                    final Executor<?> executor = Executor.create(ExecutorType.PROCESS,
+                                                                 Inet4Address.getLocalHost().getHostName(),
+                                                                 args, true);
+                    final OutputAccumulator accumulator = new OutputAccumulator();
+                    executor.setOutputConsumer(accumulator);
+                    if (executor.execute(true) != 0) {
+                        throw new Exception(accumulator.getOutput());
+                    }
+                } catch (Exception inner) {
+                    logger.severe(ExceptionUtils.getStackTrace(logger, inner));
                 }
             } else {
                 folder = Files.createDirectories(folder);
             }
-
         }
         return folder;
     }
@@ -231,7 +242,7 @@ public class FileUtilities {
         try {
             if (file != null && Files.exists(file)) {
                 if (isPosixFileSystem()) {
-                    Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxr-xr-x");
+                    Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxrwxrwx");
                     file = Files.setPosixFilePermissions(file, perms);
                 }
             }

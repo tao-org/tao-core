@@ -229,6 +229,10 @@ public class DefaultToolInstaller extends TopologyToolInstaller {
                 switch (token) {
                     case ToolCommandsTokens.MASTER_HOSTNAME:
                         replacementStr = masterNodeInfo.getId();
+                        int idx = replacementStr.indexOf(".");
+                        if (idx > 0 && replacementStr.indexOf(".", idx + 1) < 0) {
+                            replacementStr = replacementStr.substring(0, idx);
+                        }
                         break;
                     case ToolCommandsTokens.MASTER_USER:
                         replacementStr = masterNodeInfo.getUserName();

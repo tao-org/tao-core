@@ -59,7 +59,6 @@ import ro.cs.tao.utils.executors.container.ContainerUnit;
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.UnknownHostException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -654,7 +653,13 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                         // multiple commands inside docker run
                         cmd = wrapShellInvocation(component, argsList, cmd,
                                                   task.getInstanceTemporaryOutput(),
-                                                  task.getInstanceTargetOutput(), isLocal);
+                                                  isLocal
+                                                    ? task.getInstanceTargetOutput()
+                                                    : task.getInstanceTargetOutput()
+                                                          .replace(ExecutionConfiguration.getMasterContainerVolumeMap()
+                                                                                         .getHostWorkspaceFolder(),
+                                                                   volumeMount.getContainerWorkspaceFolder()),
+                                                  isLocal);
                     }
                 } else {
                     cmd = "docker";
@@ -747,7 +752,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         final String containerWorkspaceFolder = volumeMap.getContainerWorkspaceFolder();
         if (finalPath.startsWith(workspaceFolder)) {
             try {
-                Files.createDirectories(Paths.get(finalPath));
+                FileUtilities.ensureExists(Paths.get(finalPath));
             } catch (IOException e) {
                 logger.warning(e.getMessage());
             }

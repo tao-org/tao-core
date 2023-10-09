@@ -67,7 +67,7 @@ public class TopologyManager {
         //createMountTemplate = "if [ ! -e %1$s ]; then mkdir %1$s; chmod 777 %1$s; sed -i \"$ a//%2$s%3$s %1$s cifs user=%4$s,password=%5$s,file_mode=0777,dir_mode=0777,noperm 0 0\" /etc/fstab; mount -a; fi;";
         checkLocalShareWindowsTemplate = "net share %s";
         createLocalShareWindowsTemplate = "net share %s=%s /GRANT:Everyone,FULL";
-        createLocalShareLinuxTemplate = "if [ -e $(smbclient -N -g -L localhost | grep \"%1$s\") ]; then sed -i \"$ a[%1$s]\n\tpath = %2$s\n\tbrowsable = yes\n\twritable = yes\n\tguest ok = yes\" /etc/samba/smb.conf; fi;";
+        createLocalShareLinuxTemplate = "setenforce 0 && if [ -e $(smbclient -N -g -L localhost | grep \"%1$s\") ]; then sed -i \"$ a[%1$s]\n\tpath = %2$s\n\tbrowsable = yes\n\twritable = yes\n\tguest ok = yes\n\tcreate mask = 0666\n\tforce create mode = 0666\n\tdirectory mask = 0777\n\tforce directory mode = 0777\" /etc/samba/smb.conf; fi;";
         sharedAccumulator = new OutputAccumulator();
         instance = new TopologyManager();
         Executor.setEnvironment(ConfigurationManager.getInstance().getSystemEnvironment());

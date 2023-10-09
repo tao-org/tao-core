@@ -316,7 +316,7 @@ public abstract class OSRuntimeInfo<R extends RuntimeInfo> {
 
         @Override
         public R getInfo() throws Exception {
-            R runtimeInfo = this.runtimeClass.newInstance();
+            R runtimeInfo = this.runtimeClass.getConstructor().newInstance();
             Executor<?> executor = null;
             try {
                 List<String> args = new ArrayList<>();
