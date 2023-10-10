@@ -720,7 +720,9 @@ public class Orchestrator extends Notifiable {
                 if (jobStatus == ExecutionStatus.CANCELLED || jobStatus == ExecutionStatus.FAILED) {
                     cancelJob(job);
                 }
-                tryRemoveTemporaryWorkflow(job);
+                if (TaskUtilities.haveAllTasksCompleted(job)) {
+                    tryRemoveTemporaryWorkflow(job);
+                }
             }
         } catch (Throwable e) {
             logger.severe(String.format("Abnormal termination: %s", ExceptionUtils.getStackTrace(logger, e)));
