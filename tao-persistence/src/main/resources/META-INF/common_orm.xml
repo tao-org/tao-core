@@ -1441,6 +1441,27 @@
         </attributes>
     </entity>
 
+    <entity class="ro.cs.tao.execution.model.ResourceUsage" access="PROPERTY">
+        <table name="execution.resource_usage"/>
+        <attributes>
+            <id name="id">
+                <column name="task_id" nullable="false" column-definition="bigint NOT NULL"/>
+            </id>
+            <basic name="host">
+                <column name="host_name" nullable="false" column-definition="varchar NOT NULL"/>
+            </basic>
+            <basic name="flavor">
+                <column name="flavor" nullable="true" column-definition="varchar"/>
+            </basic>
+            <basic name="startTime">
+                <column name="start_time" nullable="true" column-definition="timestamp without time zone"/>
+            </basic>
+            <basic name="endTime">
+                <column name="end_time" nullable="true" column-definition="timestamp without time zone"/>
+            </basic>
+        </attributes>
+    </entity>
+
     <embeddable class="ro.cs.tao.eodata.Attribute" access="PROPERTY">
         <attributes>
             <basic name="name">

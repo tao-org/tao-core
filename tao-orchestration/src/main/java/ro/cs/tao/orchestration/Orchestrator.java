@@ -62,6 +62,7 @@ import ro.cs.tao.services.utils.WorkflowUtilities;
 import ro.cs.tao.spi.OutputDataHandlerManager;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.topology.NodeDescription;
+import ro.cs.tao.topology.TopologyManager;
 import ro.cs.tao.user.UserPreference;
 import ro.cs.tao.utils.*;
 import ro.cs.tao.workflow.ParameterValue;
@@ -142,6 +143,7 @@ public class Orchestrator extends Notifiable {
     private final ExecutorService messageWorker = Executors.newFixedThreadPool(1);
     private final Set<Long> runningTasks;
     private final AtomicInteger activeJobs;
+    private final JobCompletedListener jobListener;
 
     private String uuid;
     private final Object lock;
@@ -165,6 +167,7 @@ public class Orchestrator extends Notifiable {
         this.jobQueueWorker = new JobQueueWorker(this.jobQueue);
         this.jobQueueWorker.setOrchestrator(this);
         this.activeJobs = new AtomicInteger(0);
+        this.jobListener = new JobListener(this);
         try {
             final NodeDescription masterNode = bridgedServices.getService(NodeProvider.class).get(Inet4Address.getLocalHost().getHostName());
             this.uuid = masterNode.getAppId();
@@ -408,7 +411,7 @@ public class Orchestrator extends Notifiable {
                 status == ExecutionStatus.RUNNING ||
                 status == ExecutionStatus.PENDING_FINALISATION ||
                 status == ExecutionStatus.SUSPENDED) {
-                decrementActiveJobs();
+                this.jobListener.onCompleted(job);
             }
         }
     }
@@ -705,7 +708,7 @@ public class Orchestrator extends Notifiable {
                                                                    " failed after %ss"),
                                                    job.getName(), job.getUserId(), time != null ? time.getSeconds() : "<unknown>");
                         logger.info(msg);
-                        decrementActiveJobs();
+                        jobListener.onCompleted(job);
                         Messaging.send(new UserPrincipal(job.getUserId()), Topic.EXECUTION.value(), this, msg);
                         tryRestoreSymlinks(job);
                         tryRemoveTemporaryWorkflow(job);
@@ -771,7 +774,7 @@ public class Orchestrator extends Notifiable {
             Messaging.send(new UserPrincipal(job.getUserId()), Topic.EXECUTION.value(), this, msg);
             cleanupTransientComponents(job);
         } finally {
-            decrementActiveJobs();
+            jobListener.onCompleted(job);
         }
     }
 
@@ -1661,6 +1664,33 @@ public class Orchestrator extends Notifiable {
                     Orchestrator.this.messageWorker.submit(() -> processMessage(entry.getKey(), entry.getValue()));
                 } catch (InterruptedException e) {
                     logger.severe(e.getMessage());
+                }
+            }
+        }
+    }
+
+    private class JobListener implements JobCompletedListener {
+        private final Orchestrator instance;
+
+        public JobListener(Orchestrator instance) {
+            this.instance = instance;
+        }
+
+        @Override
+        public void onCompleted(ExecutionJob job) {
+            instance.decrementActiveJobs();
+            // finally, remove any volatile node if the mode is configured
+            if (ConfigurationManager.getInstance().getBooleanValue("topology.remove.node.after.execution")) {
+                final List<String> hosts = job.getTasks().stream().map(ExecutionTask::getExecutionNodeHostName).collect(Collectors.toList());
+                for (String host : hosts) {
+                    if (!StringUtilities.isNullOrEmpty(host)) {
+                        try {
+                            TopologyManager.getInstance().removeNode(host);
+                            logger.fine(String.format("Node %s destroyed", host));
+                        } catch (Throwable e) {
+                            logger.severe(() -> String.format("Cannot destroy host %s. Reason: %s", host, e.getMessage()));
+                        }
+                    }
                 }
             }
         }

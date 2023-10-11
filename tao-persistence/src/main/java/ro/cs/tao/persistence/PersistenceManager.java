@@ -134,6 +134,9 @@ public class PersistenceManager {
     @Autowired
     private VolatileInstanceManager volatileInstanceManager;
 
+    @Autowired
+    private ResourceUsageManager resourceUsageManager;
+
     @PostConstruct
     public void initialize() {
         componentCache = SimpleCache.create(String.class, ProcessingComponent.class,
@@ -207,4 +210,6 @@ public class PersistenceManager {
     public ConfigurationManager configuration() { return configurationManager; }
 
     public VolatileInstanceManager volatileInstances() { return volatileInstanceManager; }
+
+    public ResourceUsageManager resourceUsage() { return resourceUsageManager; }
 }
