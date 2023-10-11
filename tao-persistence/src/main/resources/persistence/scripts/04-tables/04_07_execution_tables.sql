@@ -194,3 +194,17 @@ CREATE TABLE execution.component_time
 CREATE INDEX IF NOT EXISTS fki_fk_component_time_processing_component
     ON execution.component_time USING btree
     (component_id COLLATE pg_catalog."default" ASC NULLS LAST);
+
+-- Table: execution.resource_usage
+DROP TABLE IF EXISTS execution.resource_usage;
+CREATE TABLE IF NOT EXISTS execution.resource_usage
+(
+    task_id bigint NOT NULL,
+    host_name character varying NOT NULL,
+    flavor character varying,
+    start_time time without time zone,
+    end_time timestamp without time zone,
+    CONSTRAINT resource_usage_pkey PRIMARY KEY (task_id)
+);
+ALTER TABLE execution.resource_usage ADD CONSTRAINT FK_resource_usage_task
+	FOREIGN KEY (task_id) REFERENCES execution.task (id) ON DELETE No Action ON UPDATE No Action;
