@@ -351,7 +351,7 @@ public class NetUtils {
                 default:
                     throw new IllegalArgumentException("Method not supported");
             }
-            final RequestConfig.Builder requestBuilder = RequestConfig.custom()
+            final RequestConfig.Builder requestBuilder = RequestConfig.custom().setRedirectsEnabled(true)
                                                                       .setConnectionRequestTimeout(timeoutMillis)
                                                                       .setConnectTimeout(timeoutMillis)
                                                                       .setSocketTimeout(timeoutMillis);
