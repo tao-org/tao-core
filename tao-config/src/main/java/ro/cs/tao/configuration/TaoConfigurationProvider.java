@@ -15,10 +15,7 @@
  */
 package ro.cs.tao.configuration;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -26,6 +23,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -35,6 +34,7 @@ import java.util.stream.Collectors;
 public class TaoConfigurationProvider implements ConfigurationProvider {
     private static TaoConfigurationProvider instance;
     private static final String CONFIG_FILE_NAME = "tao.properties";
+    private static final Pattern PROPERTY_PATTERN = Pattern.compile("\\$\\{([a-zA-Z0-9.-_]+)\\}");
     // this field may be set by the launcher of the services
     private Path configFolder;
     // this field may be set by the launcher of the services
@@ -53,8 +53,17 @@ public class TaoConfigurationProvider implements ConfigurationProvider {
     public TaoConfigurationProvider() {
         settings = new Properties();
         try {
-            settings.load(TaoConfigurationProvider.class.getResourceAsStream("/ro/cs/tao/configuration/" + CONFIG_FILE_NAME));
-        } catch (IOException ignored) {
+            Path path = Paths.get(TaoConfigurationProvider.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+            path = path.getParent().getParent().resolve("config").resolve(CONFIG_FILE_NAME);
+            try (InputStream is = Files.newInputStream(path)) {
+                settings.load(is);
+            }
+        } catch (Exception e) {
+            try {
+                settings.load(TaoConfigurationProvider.class.getResourceAsStream("/ro/cs/tao/configuration/" + CONFIG_FILE_NAME));
+            } catch (IOException ignored) {
+                throw new RuntimeException(e);
+            }
         }
         if (instance == null) {
             instance = this;
@@ -100,8 +109,18 @@ public class TaoConfigurationProvider implements ConfigurationProvider {
 
     @Override
     public String getValue(String name, String defaultValue) {
-        final String value = getDbValue(name);
-        return value != null ? value : this.settings.getProperty(name, defaultValue);
+        String value = getDbValue(name);
+        if (value == null) {
+            value = this.settings.getProperty(name, defaultValue);
+        }
+        if (value != null) {
+            final Matcher matcher = PROPERTY_PATTERN.matcher(value);
+            while (matcher.find()) {
+                final String otherProperty = matcher.group(1);
+                value = value.replaceAll("${" + otherProperty + "}", getValue(otherProperty));
+            }
+        }
+        return value;
     }
 
     @Override
@@ -171,6 +190,13 @@ public class TaoConfigurationProvider implements ConfigurationProvider {
             final ConfigurationItem item = this.dbConfigProvider.getItem(name);
             if (item != null) {
                 value = item.getValue();
+                if (value != null) {
+                    final Matcher matcher = PROPERTY_PATTERN.matcher(value);
+                    while (matcher.find()) {
+                        final String otherProperty = matcher.group(1);
+                        value = value.replaceAll("${" + otherProperty + "}", getValue(otherProperty));
+                    }
+                }
             }
         }
         return value;
