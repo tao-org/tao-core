@@ -117,7 +117,7 @@ public class TaoConfigurationProvider implements ConfigurationProvider {
             final Matcher matcher = PROPERTY_PATTERN.matcher(value);
             while (matcher.find()) {
                 final String otherProperty = matcher.group(1);
-                value = value.replaceAll("${" + otherProperty + "}", getValue(otherProperty));
+                value = value.replaceAll("\\$\\{" + otherProperty + "\\}", getValue(otherProperty));
             }
         }
         return value;
@@ -194,7 +194,7 @@ public class TaoConfigurationProvider implements ConfigurationProvider {
                     final Matcher matcher = PROPERTY_PATTERN.matcher(value);
                     while (matcher.find()) {
                         final String otherProperty = matcher.group(1);
-                        value = value.replaceAll("${" + otherProperty + "}", getValue(otherProperty));
+                        value = value.replaceAll("\\$\\{" + otherProperty + "\\}", getValue(otherProperty));
                     }
                 }
             }
