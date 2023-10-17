@@ -55,7 +55,6 @@ public class RepositoryFactory {
                                                   cfgProvider.getValue("workspace.location") + "/" + userId);
                 break;
             case AWS:
-            case SWIFT:
                 final HashMap<String, String> parameters = workspace.getParameters();
                 String value;
                 for (String key : parameters.keySet()) {
@@ -72,6 +71,11 @@ public class RepositoryFactory {
                     }
                     parameters.replace(key, value);
                 }
+                break;
+            case SWIFT:
+                final HashMap<String, String> params = workspace.getParameters();
+                params.replace(type.rootKey(), userId);
+                params.entrySet().removeIf(e -> !e.getKey().equals(type.rootKey()));
                 break;
             default:
                 break;
