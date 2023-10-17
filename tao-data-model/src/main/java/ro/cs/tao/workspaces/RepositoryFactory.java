@@ -5,9 +5,7 @@ import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.configuration.ConfigurationProvider;
 import ro.cs.tao.topology.TopologyException;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class RepositoryFactory {
     private static final RepositoryFactory instance;
@@ -36,6 +34,10 @@ public class RepositoryFactory {
                 this.templates.put(type, workspace);
             }
         }
+    }
+
+    public static Set<RepositoryType> getDefaultRepositoryTypes() {
+        return new HashSet<>(instance.templates.keySet());
     }
 
     public static Repository createDefault(RepositoryType type, String userId, Map<String, String> dbParams) {
