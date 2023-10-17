@@ -27,7 +27,9 @@ public abstract class BaseSingletonInstaller extends BaseUtilityInstaller
     @Override
     public Container install() throws IOException {
         final Container container = super.install();
-        container.setType(ContainerType.UTILITY);
+        if (container != null) {
+            container.setType(ContainerType.UTILITY);
+        }
         return container;
     }
 

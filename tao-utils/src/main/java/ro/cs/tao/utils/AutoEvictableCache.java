@@ -24,7 +24,7 @@ public class AutoEvictableCache<T, U> {
      * @param retentionInSeconds    The retention period in seconds
      */
     public AutoEvictableCache(Function<T, U> functor, long retentionInSeconds) {
-        this.cache = Collections.synchronizedMap(new HashMap<>());
+        this.cache = Collections.synchronizedMap(new LinkedHashMap<>());
         this.functor = functor;
         long retention = retentionInSeconds * 1000;
         final Timer timer = new Timer();
