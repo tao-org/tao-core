@@ -37,6 +37,7 @@ import ro.cs.tao.workspaces.RepositoryType;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -136,7 +137,7 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
 
         // save the new user and return it
         user = repository.save(user);
-        createWorkspaces(user);
+        //createWorkspaces(user);
         return user;
     }
 
@@ -532,7 +533,7 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
     // End Quota related methods
 
     @Override
-    public void createWorkspaces(User user) {
+    public void createWorkspaces(User user, Consumer<Repository> rootFunctor) {
         List<RepositoryType> repoTypes =  Arrays.stream(ConfigurationManager.getInstance()
                                                               .getValue("workspaces.default", "local")
                                                               .toUpperCase()
@@ -551,7 +552,11 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
                                               .collect(Collectors.toMap(p -> p.getKey().replace("workspace.", ""),
                                                                         UserPreference::getValue));
                     }
-                    repositoryJPARepository.save(RepositoryFactory.createDefault(type, user.getId(), dbParams));
+                    Repository repository = RepositoryFactory.createDefault(type, user.getId(), dbParams);
+                    repositoryJPARepository.save(repository);
+                    if (rootFunctor != null) {
+                        rootFunctor.accept(repository);
+                    }
                 }
             } catch (Exception e) {
                 Logger.getLogger(UserManager.class.getName()).warning(e.getMessage());

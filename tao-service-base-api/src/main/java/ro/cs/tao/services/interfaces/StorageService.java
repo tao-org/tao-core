@@ -38,7 +38,7 @@ import java.util.zip.ZipOutputStream;
  */
 public interface StorageService<T, U> extends TAOService {
 
-    String AVLFOLDER = ".avlfolder";
+    String FOLDER_PLACEHOLDER = ".folder";
     String CONTENTS_ATTRIBUTE = "contents";
     String REMOTE_PATH_ATTRIBUTE = "remotePath";
     String ROOT_TITLE = "__root";
@@ -228,7 +228,7 @@ public interface StorageService<T, U> extends TAOService {
      * Returns a placeholder "file" to be used for S3-like storages when creating a "folder"
      */
     default FileObject emptyFolderItem() {
-        final FileObject object = new FileObject("", AVLFOLDER, false, 0, AVLFOLDER);
+        final FileObject object = new FileObject("", FOLDER_PLACEHOLDER, false, 0, FOLDER_PLACEHOLDER);
         object.addAttribute(CONTENTS_ATTRIBUTE, ".");
         return object;
     }

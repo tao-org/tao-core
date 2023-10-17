@@ -4,11 +4,13 @@ import ro.cs.tao.user.Group;
 import ro.cs.tao.user.User;
 import ro.cs.tao.user.UserPreference;
 import ro.cs.tao.user.UserStatus;
+import ro.cs.tao.workspaces.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public interface UserProvider extends EntityProvider<User, String> {
 
@@ -34,5 +36,5 @@ public interface UserProvider extends EntityProvider<User, String> {
     Map<String, String[]> listUnicityInfo();
     default int defaultCPUQuota() { return 8; }
     default int defaultMemoryQuota() { return 16; }
-    default void createWorkspaces(User user) { }
+    default void createWorkspaces(User user, Consumer<Repository> rootFunctor) { }
 }
