@@ -762,8 +762,9 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             finalPath = finalPath.replace(workspaceFolder, replacement);
         }
         finalPath = finalPath.replace("//", "/");
-        final boolean isSnapDimap = component.getTargets().stream().anyMatch(t -> t.getDataDescriptor().getLocation().toLowerCase().endsWith(".dim")
-                                                                                || "beam-dimap".equalsIgnoreCase(t.getDataDescriptor().getFormatName()))
+        final boolean isSnapDimap = component.getTargets().stream().anyMatch(t -> 
+                 (t.getDataDescriptor().getLocation() != null && t.getDataDescriptor().getLocation().toLowerCase().endsWith(".dim")) ||
+                         "beam-dimap".equalsIgnoreCase(t.getDataDescriptor().getFormatName()))
                                     || finalOutput.endsWith(".dim");
         final boolean isSnap = initialCmd.equals("/opt/snap/bin/gpt");
         final boolean recursiveCondition = !isOutputManaged || isSnapDimap || component.getTargets().stream().anyMatch(t -> DataFormat.FOLDER == t.getDataDescriptor().getFormatType());
