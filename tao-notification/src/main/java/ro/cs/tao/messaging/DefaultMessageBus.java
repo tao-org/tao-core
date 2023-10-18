@@ -118,7 +118,7 @@ public class DefaultMessageBus implements ro.cs.tao.messaging.EventBus<Event<Mes
         message.setTopic(topic);
         message.setUserId(principal);
         try {
-            if (message.isPersistent()) {
+            if (messagePersister != null && message.isPersistent()) {
                 message = this.messagePersister.save(message);
             }
         } catch (Exception e) {
