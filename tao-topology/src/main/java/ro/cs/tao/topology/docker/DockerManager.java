@@ -290,6 +290,12 @@ public class DockerManager {
             Container image = getDockerImage(correctedName);
             containerId = image.getId();
             String localRegistry = ConfigurationManager.getInstance().getValue("tao.docker.registry");
+            // do not execute docker tag is no docker registry is configured
+            if (localRegistry == null || localRegistry.length() == 0) {
+                Messaging.send(principal, Topic.INFORMATION.value(), this,
+                        String.format("Docker image '%s' successfully registered", correctedName));
+                return containerId;
+            }
             String tag = localRegistry + "/" + correctedName;
             commands = ProcessHelper.tokenizeCommands(dockerTagCmdTemplate, containerId, tag);
             job = new ExecutionUnit(ExecutorType.PROCESS,
