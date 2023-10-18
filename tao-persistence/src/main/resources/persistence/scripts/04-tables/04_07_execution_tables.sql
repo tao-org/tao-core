@@ -199,7 +199,7 @@ CREATE INDEX IF NOT EXISTS fki_fk_component_time_processing_component
 DROP TABLE IF EXISTS execution.resource_usage;
 CREATE TABLE IF NOT EXISTS execution.resource_usage
 (
-    task_id bigint NOT NULL,
+    id bigint NOT NULL,
     host_name character varying NOT NULL,
     flavor character varying,
     start_time time without time zone,

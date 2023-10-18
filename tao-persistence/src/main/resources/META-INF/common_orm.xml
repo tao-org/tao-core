@@ -1445,7 +1445,7 @@
         <table name="execution.resource_usage"/>
         <attributes>
             <id name="id">
-                <column name="task_id" nullable="false" column-definition="bigint NOT NULL"/>
+                <column name="id" nullable="false" column-definition="bigint NOT NULL"/>
             </id>
             <basic name="host">
                 <column name="host_name" nullable="false" column-definition="varchar NOT NULL"/>
