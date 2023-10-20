@@ -63,7 +63,7 @@ public class ProgressNotifier implements ProgressListener {
     public void started(String taskName) {
         this.taskCounter = 0;
         this.taskName = taskName;
-        sendMessage(createStartMessage());
+        sendTransientMessage(createStartMessage());
     }
 
     @Override
@@ -81,7 +81,7 @@ public class ProgressNotifier implements ProgressListener {
     @Override
     public void ended() {
         this.taskCounter = 1;
-        sendMessage(createEndMessage());
+        sendTransientMessage(createEndMessage());
     }
 
     @Override
