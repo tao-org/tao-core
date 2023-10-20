@@ -89,7 +89,7 @@ public abstract class TaoLoginModule implements LoginModule {
         }
         // verify the username and password
         User user;
-        if ((user = loginImpl(username, password)) != null) {
+        if ((this.configuredAuthMode.equals(intendedFor()) || "admin".equals(username)) && (user = loginImpl(username, password)) != null) {
             succeeded = true;
             id = user.getId();
             return succeeded;
