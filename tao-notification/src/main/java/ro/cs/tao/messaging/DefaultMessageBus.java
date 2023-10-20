@@ -18,10 +18,12 @@ package ro.cs.tao.messaging;
 import reactor.Environment;
 import reactor.bus.Event;
 import reactor.bus.EventBus;
-import reactor.core.config.DispatcherType;
+import reactor.core.Dispatcher;
+import reactor.core.dispatch.ThreadPoolExecutorDispatcher;
 import ro.cs.tao.persistence.MessageProvider;
 
 import java.util.*;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -47,10 +49,12 @@ public class DefaultMessageBus implements ro.cs.tao.messaging.EventBus<Event<Mes
 
     public DefaultMessageBus() {
         Environment environment = Environment.initializeIfEmpty();
+        Dispatcher dispatcher = new ThreadPoolExecutorDispatcher(MAX_THREADS, CAPACITY, Executors.newCachedThreadPool());
         this.messageBus = EventBus.create(environment,
-                                          Environment.newDispatcher(CAPACITY,
+                                          dispatcher
+                                          /*Environment.newDispatcher(CAPACITY,
                                                                     MAX_THREADS,
-                                                                    DispatcherType.THREAD_POOL_EXECUTOR));
+                                                                    DispatcherType.THREAD_POOL_EXECUTOR)*/);
         this.topics = new HashSet<>();
         this.patternSubscribers = new HashMap<>();
         this.matchedTopics = new HashSet<>();
@@ -119,7 +123,8 @@ public class DefaultMessageBus implements ro.cs.tao.messaging.EventBus<Event<Mes
         message.setUserId(principal);
         try {
             if (messagePersister != null && message.isPersistent()) {
-                message = this.messagePersister.save(message);
+                message.setId(null);
+                this.messagePersister.save(message);
             }
         } catch (Exception e) {
             this.logger.severe(e.getMessage());
