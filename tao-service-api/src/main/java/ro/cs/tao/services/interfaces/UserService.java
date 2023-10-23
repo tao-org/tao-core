@@ -34,6 +34,8 @@ public interface UserService extends TAOService {
 
     void activateUser(String userId) throws PersistenceException;
 
+    void createWorkspaces(String userId);
+
     void resetPassword(String userId, ResetPasswordInfo resetInfo) throws PersistenceException;
 
     User getUserInfo(String userId);

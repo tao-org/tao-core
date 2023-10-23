@@ -37,4 +37,5 @@ public interface UserProvider extends EntityProvider<User, String> {
     default int defaultCPUQuota() { return 8; }
     default int defaultMemoryQuota() { return 16; }
     default void createWorkspaces(User user, Consumer<Repository> rootFunctor) { }
+    default void createWorkspaces(String userId, Consumer<Repository> rootFunctor) { }
 }

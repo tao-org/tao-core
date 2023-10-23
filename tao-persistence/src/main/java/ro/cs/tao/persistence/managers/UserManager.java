@@ -565,6 +565,30 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
     }
 
     @Override
+    public void createWorkspaces(String userId, Consumer<Repository> rootFunctor) {
+        List<RepositoryType> repoTypes =  Arrays.stream(ConfigurationManager.getInstance()
+                                                                            .getValue("workspaces.default", "local")
+                                                                            .toUpperCase()
+                                                                            .split(","))
+                                                .map(RepositoryType::valueOf).collect(Collectors.toList());
+        Repository repo;
+        for (RepositoryType type : repoTypes) {
+            try {
+                repo = repositoryJPARepository.getByUserAndName(userId, type.name());
+                if (repo == null) {
+                    Repository repository = RepositoryFactory.createDefault(type, userId, null);
+                    repositoryJPARepository.save(repository);
+                    if (rootFunctor != null) {
+                        rootFunctor.accept(repository);
+                    }
+                }
+            } catch (Exception e) {
+                Logger.getLogger(UserManager.class.getName()).warning(e.getMessage());
+            }
+        }
+    }
+
+    @Override
     public String getId(String userName) {
         return repository.getId(userName);
     }

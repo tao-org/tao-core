@@ -15,6 +15,8 @@ public interface AuditProvider extends EntityProvider<LogEvent, Long> {
     List<SessionDuration> getAllSessions(LocalDateTime from, LocalDateTime to);
     List<SessionDuration> getUserSessions(String userId);
     List<SessionDuration> getUserSessions(String userId, LocalDateTime from, LocalDateTime to);
-    Map<String, Double> getAggregatedUsersProcessingTime();
-    double getAggregatedUserProcessingTime(String userId);
+    SessionDuration getLastUserSession(String userId);
+    Map<String, Integer> getAggregatedUsersProcessingTime();
+    int getAggregatedUserProcessingTime(String userId);
+    int getLastSessionUserProcessingTime(String userId);
 }

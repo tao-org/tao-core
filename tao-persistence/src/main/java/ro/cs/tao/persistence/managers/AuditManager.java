@@ -84,6 +84,35 @@ public class AuditManager extends EntityManager<LogEvent, Long, AuditRepository>
     }
 
     @Override
+    public SessionDuration getLastUserSession(String userId) {
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+        return jdbcTemplate.query(con -> {
+                                      final PreparedStatement statement = con.prepareStatement("with diffs as ( " +
+                                                                                                       "with ranges as ( " +
+                                                                                                       "select user_id, event, timestamp, tsrange(timestamp, lead(timestamp) over (partition by user_id order by timestamp)) as range " +
+                                                                                                       "from common.audit " +
+                                                                                                       "where event in ('Login', 'Logout')) " +
+                                                                                                       "select user_id, timestamp as login_on, (extract(hours from upper(range))*3600 + extract(mins from upper(range))*60 + extract(seconds from upper(range)) " +
+                                                                                                       "- extract(hours from lower(range))*3600 - extract(mins from lower(range))*60 - extract(seconds from lower(range)))::integer as time_spent " +
+                                                                                                       "from ranges) select user_id, login_on, time_spent from diffs where time_spent is not null " +
+                                                                                                       "and user_id = ? order by login_on desc limit 1");
+                                      statement.setString(1, userId);
+                                      return statement;
+                                  },
+                                  (rs) -> {
+                                      if (rs.next()) {
+                                          SessionDuration result = new SessionDuration();
+                                          result.setUserId(rs.getString(1));
+                                          result.setLoggedOn(rs.getTimestamp(2).toLocalDateTime());
+                                          result.setDuration(rs.getDouble(3));
+                                          return result;
+                                      } else {
+                                          return null;
+                                      }
+                                  });
+    }
+
+    @Override
     public List<SessionDuration> getUserSessions(String userId) {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         return jdbcTemplate.query(con -> {
@@ -92,7 +121,8 @@ public class AuditManager extends EntityManager<LogEvent, Long, AuditRepository>
                                                                                "select user_id, event, timestamp, tsrange(timestamp, lead(timestamp) over (partition by user_id order by timestamp)) as range " +
                                                                                "from common.audit " +
                                                                                "where event in ('Login', 'Logout')) " +
-                                                                               "select user_id, timestamp as login_on, (extract(hours from upper(range)) + extract(mins from upper(range))/60 - extract(hours from lower(range)) - extract(mins from lower(range))/60)::numeric(3, 2) as time_spent " +
+                                                                               "select user_id, timestamp as login_on, (extract(hours from upper(range))*3600 + extract(mins from upper(range))*60 + extract(seconds from upper(range)) " +
+                                                                               "- extract(hours from lower(range))*3600 - extract(mins from lower(range))*60 - extract(seconds from lower(range)))::integer as time_spent " +
                                                                                "from ranges) select user_id, login_on, time_spent from diffs where time_spent is not null " +
                                                                                "and user_id = ?");
               statement.setString(1, userId);
@@ -116,8 +146,8 @@ public class AuditManager extends EntityManager<LogEvent, Long, AuditRepository>
                                                                                "select user_id, event, timestamp, tsrange(timestamp, lead(timestamp) over (partition by user_id order by timestamp)) as range " +
                                                                                "from common.audit " +
                                                                                "where event in ('Login', 'Logout')) " +
-                                                                               "select user_id, timestamp as login_on, (extract(hours from upper(range)) + extract(mins from upper(range))/60 - extract(hours from lower(range)) - extract(mins from lower(range))/60)::numeric(3, 2) as time_spent " +
-                                                                               "from ranges) select user_id, login_on, time_spent from diffs where time_spent is not null " +
+                                                                               "select user_id, timestamp as login_on, (extract(hours from upper(range))*3600 + extract(mins from upper(range))*60 + extract(seconds from upper(range)) " +
+                                                                               "- extract(hours from lower(range))*3600 - extract(mins from lower(range))*60 - extract(seconds from lower(range)))::integer as time_spent " +
                                                                                "and user_id = ? and login_on between ? and ?");
               statement.setString(1, userId);
               statement.setTimestamp(2, Timestamp.valueOf(from));
@@ -134,19 +164,19 @@ public class AuditManager extends EntityManager<LogEvent, Long, AuditRepository>
     }
 
     @Override
-    public Map<String, Double> getAggregatedUsersProcessingTime() {
+    public Map<String, Integer> getAggregatedUsersProcessingTime() {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        final Map<String, Double> results = new HashMap<>();
+        final Map<String, Integer> results = new HashMap<>();
         jdbcTemplate.query(con -> {
-              final PreparedStatement statement = con.prepareStatement("with task_duration as ( select id, extract(epoch from end_time - start_time)/60 as minutes " +
-                                                                               "from execution.task where end_time is not null ) " +
+              final PreparedStatement statement = con.prepareStatement("with task_duration as ( select id, extract(epoch from coalesce(end_time, now()) - start_time) as minutes " +
+                                                                               "from execution.task) " +
                                                                                "select j.user_id, sum(d.minutes) as total from execution.task t " +
                                                                                "join execution.job j on j.id = t.job_id join task_duration d on d.id = t.id " +
                                                                                "group by j.user_id order by j.user_id, total desc;");
               return statement;
           },
           (rs, rowNum) -> {
-              final AbstractMap.SimpleEntry<String, Double> entry = new AbstractMap.SimpleEntry<>(rs.getString(1), rs.getDouble(2));
+              final AbstractMap.SimpleEntry<String, Integer> entry = new AbstractMap.SimpleEntry<>(rs.getString(1), rs.getInt(2));
               results.put(entry.getKey(), entry.getValue());
               return entry;
           });
@@ -154,11 +184,11 @@ public class AuditManager extends EntityManager<LogEvent, Long, AuditRepository>
     }
 
     @Override
-    public double getAggregatedUserProcessingTime(String userId) {
+    public int getAggregatedUserProcessingTime(String userId) {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         return jdbcTemplate.query(con -> {
-               final PreparedStatement statement = con.prepareStatement("with task_duration as ( select id, extract(epoch from end_time - start_time)/60 as minutes " +
-                                                                                "from execution.task where end_time is not null ) " +
+               final PreparedStatement statement = con.prepareStatement("with task_duration as ( select id, extract(epoch from coalesce(end_time, now()) - start_time) as minutes " +
+                                                                                "from execution.task) " +
                                                                                 "select j.user_id, sum(d.minutes) as total from execution.task t " +
                                                                                 "join execution.job j on j.id = t.job_id join task_duration d on d.id = t.id " +
                                                                                 "where j.user_id = ? " +
@@ -166,7 +196,26 @@ public class AuditManager extends EntityManager<LogEvent, Long, AuditRepository>
                statement.setString(1, userId);
                return statement;
            },
-           (rs) -> rs.next() ? rs.getDouble(2) : 0.0);
+           (rs) -> rs.next() ? rs.getInt(2) : 0);
+    }
+
+    @Override
+    public int getLastSessionUserProcessingTime(String userId) {
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+        return jdbcTemplate.query(con -> {
+                                      final PreparedStatement statement = con.prepareStatement("with last_session as (select user_id, timestamp from common.audit " +
+                                                                                               "where user_id = ? and event = 'Logout' order by timestamp desc limit 1), " +
+                                                                                               "task_duration as ( select t.id, extract(epoch from coalesce(t.end_time, now()) - t.start_time) as minutes from execution.task t " +
+                                                                                               "join execution.job j on j.id = t.job_id join last_session s on s.user_id = j.user_id where t.start_time >= s.timestamp) " +
+                                                                                               "select j.user_id, sum(d.minutes) as total from execution.task t " +
+                                                                                               "join execution.job j on j.id = t.job_id join task_duration d on d.id = t.id " +
+                                                                                               "where j.user_id = ? " +
+                                                                                               "group by j.user_id order by j.user_id, total desc;");
+                                      statement.setString(1, userId);
+                                      statement.setString(2, userId);
+                                      return statement;
+                                  },
+                                  (rs) -> rs.next() ? rs.getInt(2) : 0);
     }
 
     @Override
