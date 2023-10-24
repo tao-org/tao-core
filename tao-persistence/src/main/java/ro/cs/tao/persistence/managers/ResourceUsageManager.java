@@ -29,12 +29,17 @@ public class ResourceUsageManager extends EntityManager<ResourceUsage, Long, Res
     }
 
     @Override
+    public ResourceUsage getByTask(long taskId) {
+        return repository.getByTask(taskId);
+    }
+
+    @Override
     protected String identifier() {
         return "id";
     }
 
     @Override
     protected boolean checkEntity(ResourceUsage entity) {
-        return entity.getId() != null && entity.getHost() != null;
+        return entity.getTaskId() != 0 && entity.getHost() != null;
     }
 }
