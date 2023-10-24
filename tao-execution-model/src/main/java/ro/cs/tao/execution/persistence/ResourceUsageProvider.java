@@ -12,4 +12,5 @@ public interface ResourceUsageProvider extends EntityProvider<ResourceUsage, Lon
 
     List<ResourceUsage> getByUserIdAndInterval(String user, LocalDateTime startDate, LocalDateTime endDate);
 
+    ResourceUsage getByTask(long taskId);
 }

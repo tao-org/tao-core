@@ -1444,9 +1444,9 @@
     <entity class="ro.cs.tao.execution.model.ResourceUsage" access="PROPERTY">
         <table name="execution.resource_usage"/>
         <attributes>
-            <id name="id">
-                <column name="id" nullable="false" column-definition="bigint NOT NULL"/>
-            </id>
+            <basic name="taskId">
+                <column name="task_id" nullable="false" column-definition="bigint NOT NULL"/>
+            </basic>
             <basic name="host">
                 <column name="host_name" nullable="false" column-definition="varchar NOT NULL"/>
             </basic>
