@@ -29,6 +29,7 @@ import java.time.format.DateTimeParseException;
  */
 public class DateConverter extends DefaultConverter<LocalDateTime> {
     private static final DateTimeFormatter format = DateUtils.getFormatterAtUTC("yyyy-MM-dd");
+    private static final DateTimeFormatter alternateFormat = DateUtils.getFormatterAtUTC("MM/dd/yyyy");
 
     public DateConverter() { }
 
@@ -43,10 +44,15 @@ public class DateConverter extends DefaultConverter<LocalDateTime> {
 
     @Override
     public String stringValue(LocalDateTime value) throws ConversionException {
+        if (value == null) return null;
         try {
-            return value != null ? format.format(value) : null;
+            return format.format(value);
         } catch (Exception ex) {
-            throw new ConversionException(ex.getMessage());
+            try {
+                return alternateFormat.format(value);
+            } catch (Exception ex2) {
+                throw new ConversionException(ex.getMessage());
+            }
         }
     }
 }
