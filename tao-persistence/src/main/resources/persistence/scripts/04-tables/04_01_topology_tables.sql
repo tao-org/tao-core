@@ -33,7 +33,8 @@ CREATE TABLE topology.node
     volatile boolean NULL DEFAULT false,
 	active boolean NULL DEFAULT true,
 	owner_id varchar(50),
-	app_id varchar(50)
+	app_id varchar(50),
+	server_id varchar(50)
 );
 ALTER TABLE topology.node ADD CONSTRAINT PK_execution_node PRIMARY KEY (id);
 ALTER TABLE topology.node ADD CONSTRAINT FK_execution_node_flavor

@@ -22,6 +22,7 @@ import ro.cs.tao.component.SourceDescriptor;
 import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.component.Variable;
 import ro.cs.tao.component.enums.ProcessingComponentType;
+import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.docker.Application;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.docker.DockerVolumeMap;
@@ -65,6 +66,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -486,7 +488,8 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             final String preferredHostName = task.getExecutionNodeHostName();
             final NodeData nodeData;
             final Integer parallelism = component.getParallelism();
-            if (preferredHostName != null) {
+            final ExecutionStrategy strategy = getExecutionStrategy(task);
+            if (preferredHostName != null && !"same".equalsIgnoreCase(preferredHostName)) {
                 nodeData = getNode(preferredHostName);
             } else {
                 if (task instanceof ScriptTask) {
@@ -494,7 +497,8 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                 } else {
                     // the next call blocks until a node is available
                     nodeData = getAvailableNode(job.getUserId(), parallelism,
-                                                ExecutionConfiguration.forceMemoryConstraint() ? memory : 0);
+                                                ExecutionConfiguration.forceMemoryConstraint() ? memory : 0,
+                                                strategy);
                 }
             }
             final NodeDescription node = nodeData.getNode();
@@ -841,15 +845,26 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         }
     }
 
-    private NodeData getAvailableNode(String user, int cpus, long memory) throws DrmaaException {
+    private ExecutionStrategy getExecutionStrategy(ExecutionTask task) {
+        final ExecutionStrategyType strategyType = Enum.valueOf(ExecutionStrategyType.class,
+                                                                ConfigurationManager.getInstance()
+                                                                                    .getValue("execution.strategy",
+                                                                                              "DISTRIBUTE"));
+        final ExecutionTask tmpTask = task.getJob().getTasks().stream().filter(t -> t instanceof ProcessingExecutionTask
+                && t.getExecutionNodeHostName() != null && !t.getExecutionNodeHostName().equalsIgnoreCase("same")).findFirst().orElse(null);
+        ExecutionStrategy strategy;
+        return ExecutionStrategy.create(strategyType, tmpTask != null ? tmpTask.getExecutionNodeHostName() : null);
+    }
+
+    private NodeData getAvailableNode(String user, int cpus, long memory, ExecutionStrategy strategy) throws DrmaaException {
     	NodeData nodeData = null;
         if (NodeManager.isAvailable()) {
-        	nodeData = NodeManager.getInstance().getAvailableNode(user, cpus, memory, 0);
-            while (!canSubmitTask(nodeData.getNode().getId(), memory)) {
+            nodeData = NodeManager.getInstance().getAvailableNode(user, cpus, memory, strategy);
+            while (nodeData == null || !canSubmitTask(nodeData.getNode().getId(), memory)) {
                 try {
-                    Thread.sleep(20000);
+                    TimeUnit.SECONDS.sleep(20);
                 } catch (InterruptedException ignored) { }
-                nodeData = NodeManager.getInstance().getAvailableNode(user, cpus, memory, 0);
+                nodeData = NodeManager.getInstance().getAvailableNode(user, cpus, memory, strategy);
             }
             logger.finest(String.format("Node [%s] was chosen for next execution", nodeData.getNode().getId()));
         } else {

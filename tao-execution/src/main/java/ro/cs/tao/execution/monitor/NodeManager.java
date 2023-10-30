@@ -2,8 +2,9 @@ package ro.cs.tao.execution.monitor;
 
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.configuration.ConfigurationProvider;
-import ro.cs.tao.docker.ExecutionConfiguration;
 import ro.cs.tao.execution.local.DefaultSessionFactory;
+import ro.cs.tao.execution.model.ExecutionStrategy;
+import ro.cs.tao.execution.model.ExecutionStrategyType;
 import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.messaging.Message;
@@ -28,6 +29,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.Principal;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.Future;
@@ -62,7 +64,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     private static final int DEFAULT_NODE_WAIT_TIME = 20000;
     private static final int DEFAULT_KEEP_ALIVE_SECONDS = 1800;
     private static final int POLLING_NODE_WITHOUT_TASKS_SECONDS = 20;
-    private static final boolean isDevMode;
+    private String appId;
     private int nodeLimit;
     private NodeProvider nodeProvider;
     private ExecutionTaskProvider taskProvider;
@@ -83,7 +85,6 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         pollInterval = Integer.parseInt(configurationManager.getValue(NODE_POLLING_INTERVAL_KEY, "15"));
         nodeCreationWaitTime = Integer.parseInt(configurationManager.getValue(NODE_CREATION_WAIT_TIME_KEY, "60"));
         executor = new NamedThreadPoolExecutor("node-manager", 1);
-        isDevMode = ExecutionConfiguration.developmentModeEnabled();
     }
 
     /**
@@ -102,6 +103,10 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         this.nodes = new HashMap<>();
         this.refreshInProgress = false;
         this.nodeLimit = 0;
+    }
+
+    public void setApplicationId(String id) {
+        this.appId = id;
     }
 
     public DefaultNodeInfo getDefaultNodeInfo() {
@@ -126,7 +131,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                                                   cfgProvider.getValue(TOPOLOGY_NODE_DEFAULT_DESCRIPTION_KEY, "Worker node"),
                                                   cfgProvider.getValue(OPENSTACK_NODE_USER_KEY, "taouser"),
                                                   key,
-                                                  key);
+                                                  keyPath);
         }
         return defaultNodeInfo;
     }
@@ -264,24 +269,6 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         return new NodeData(TopologyManager.getInstance().getMasterNodeInfo(), 0, 0);
     }
 
-    protected NodeDescription getStartingAvailableNode() {
-        //String nodeName = isDevMode ? TopologyManager.getInstance().getMasterNodeInfo().getId() : null;
-        final String nodeName = TopologyManager.getInstance().getMasterNodeInfo().getId();
-        if (isDevMode) {
-            NodeRuntime value = this.nodes.get(nodeName);
-            if (value != null) {
-                return value.getNode();
-            }
-        } else {
-            if (this.nodes.size() > 1) {
-                return this.nodes.entrySet().stream().filter(w -> !w.getKey().equals(nodeName)).findFirst().get().getValue().getNode();
-            } else {
-                return null;
-            }
-        }
-        return null;
-    }
-
     /**
      * Returns the description of the first node found available.
      * This method blocks until a node is available, retrying to find it each 5 seconds.
@@ -292,21 +279,27 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
      *
      * @param cpus 		The number of CPUs normally required by the component
      * @param memory    The memory threshold
-     * @param disk      The disk threshold
+     * @param strategy  The execution strategy (see {@link ExecutionStrategyType})
      */
-    public NodeData getAvailableNode(String userId, int cpus, long memory, long disk) {
+    public NodeData getAvailableNode(String userId, int cpus, long memory, ExecutionStrategy strategy) {
         //final Principal principal = SessionStore.currentContext().getPrincipal();
         final Principal principal = new UserPrincipal(userId);
         QuotaManager userQuotaManager = UserQuotaManager.getInstance();
         int requestedCPUs = cpus;
         NodeDescription availableNode = null;//getStartingAvailableNode();
+        final boolean shouldPoolNodes = !ConfigurationManager.getInstance().getBooleanValue("topology.dedicated.user.nodes");
         // First check if there are nodes bound to this user
         final List<Map.Entry<String, NodeRuntime>> userNodes = this.nodes.entrySet().stream()
                                                                          .filter(e -> userId.equals(e.getValue().getNode().getOwner()))
                                                                          .collect(Collectors.toList());
         // If not, then use the pool of available nodes
-        if (userNodes.isEmpty()) {
+        if (userNodes.isEmpty() && shouldPoolNodes) {
             userNodes.addAll(this.nodes.entrySet());
+            userNodes.removeIf(n -> (!useMasterNode() && n.getValue().getNode().getRole() == NodeRole.MASTER) ||
+                                    (strategy.getType() == ExecutionStrategyType.SAME_NODE &&
+                                     strategy.getHostName() != null &&
+                                     !n.getValue().getNode().getId().equals(strategy.getHostName())));
+
         }
         do {
             try {
@@ -350,30 +343,32 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     			logger.info(String.format("Error while computing the CPU and memory quota for the user %s. Error message: %s", principal.getName(), e.getMessage()));
             }
             if (availableNode == null) {
-                int nodeUserLimit = Integer.parseInt(ConfigurationManager.getInstance().getValue(NODE_USER_LIMIT_KEY, "1"));
-                if (canCreateNewNodes() && // if node creation is possible
-                        ((this.nodeLimit == 0 && userNodes.size() < nodeUserLimit) || // and the user hasn't reached the limit
-                         (userNodes.size() < nodeUserLimit && userNodes.size() + 1 < this.nodeLimit))) { // or creating a new node is below the global limit
-                    try {
-                        availableNode = createNodeIfMatchingFlavor(userNodes, userId, cpus, memory);
-                    } catch (RuntimeException exception) {
-                        throw exception;
-                    } catch (Exception exception) {
-                        throw new IllegalStateException("Failed to create node.", exception);
-                    }
-                    if (availableNode == null) {
-                        logger.fine(String.format("No processing node matching the request was found. Will retry [%s]",
-                                                  this.nodes.values().stream()
-                                                            .map(n -> n.getNode().getId() + " cpu:" + n.getRuntimeInfo().getCpuTotal() + ",mem:" + n.getRuntimeInfo().getAvailableMemory())
-                                                          .collect(Collectors.joining("; "))));
-                        waitBeforeNextRetry();
+                if (userNodes.stream().noneMatch(e -> e.getValue().getNode().getId().equals(strategy.getHostName()))) {
+                    int nodeUserLimit = Integer.parseInt(ConfigurationManager.getInstance().getValue(NODE_USER_LIMIT_KEY, "1"));
+                    if (canCreateNewNodes() && // if node creation is possible
+                            ((this.nodeLimit == 0 && userNodes.size() < nodeUserLimit) || // and the user hasn't reached the limit
+                                    (userNodes.size() < nodeUserLimit && userNodes.size() + 1 < this.nodeLimit))) { // or creating a new node is below the global limit
+                        try {
+                            availableNode = createNodeIfMatchingFlavor(userNodes, userId, cpus, memory);
+                        } catch (RuntimeException exception) {
+                            throw exception;
+                        } catch (Exception exception) {
+                            throw new IllegalStateException("Failed to create node.", exception);
+                        }
+                        if (availableNode == null) {
+                            logger.fine(String.format("No processing node matching the request was found. Will retry [%s]",
+                                                      this.nodes.values().stream()
+                                                                .map(n -> n.getNode().getId() + " cpu:" + n.getRuntimeInfo().getCpuTotal() + ",mem:" + n.getRuntimeInfo().getAvailableMemory())
+                                                                .collect(Collectors.joining("; "))));
+                            waitBeforeNextRetry();
+                        } else {
+                            // new node has been created
+                            addNewInstalledNode(availableNode);
+                        }
                     } else {
-                        // new node has been created
-                        addNewInstalledNode(availableNode);
+                        logger.fine("No processing node was found to be available. Will retry.");
+                        waitBeforeNextRetry();
                     }
-                } else {
-                    logger.fine("No processing node was found to be available. Will retry.");
-                    waitBeforeNextRetry();
                 }
             }
         } while (availableNode == null);
@@ -424,6 +419,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         node.setSshKey(nodeInfo.getSshKey());
         node.setVolatile(true);
         node.setRole(NodeRole.WORKER);
+        node.setAppId(this.appId);
         node.setOwner(userId);
         return node;
     }
@@ -589,8 +585,8 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                         try {
                             while (refreshInProgress) {
                                 try {
-                                    Thread.sleep(500);
-                                } catch (Throwable ignored) {
+                                    TimeUnit.SECONDS.sleep(500);
+                                } catch (InterruptedException ignored) {
                                     // ignore
                                 }
                             }
@@ -609,13 +605,15 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                                 final List<ExecutionTask> tasks = taskProvider.listByHost(h);
                                 boolean isNodeWithoutTasks = (tasks == null || tasks.isEmpty());
                                 final LocalDateTime time = nodeRuntime.getNextKeepAlive();
-                                if (time != null && !time.isBefore(LocalDateTime.now())) {
+                                final LocalDateTime now = LocalDateTime.now();
+                                if (time != null && !time.isBefore(now)) {
                                     Boolean isVolatile = nodeRuntime.getNode().getVolatile();
-                                    if (isNodeWithoutTasks && (isVolatile != null && isVolatile)) {
+                                    if (isNodeWithoutTasks && (isVolatile != null && isVolatile) &&
+                                            Duration.between(now, time).getSeconds() < pollInterval) {
                                         uninstallNode(nodeRuntime.getNode());
                                         return;
                                     } else {
-                                        nodeRuntime.setNextKeepAlive(LocalDateTime.now().plusSeconds(DEFAULT_KEEP_ALIVE_SECONDS));
+                                        nodeRuntime.setNextKeepAlive(now.plusSeconds(DEFAULT_KEEP_ALIVE_SECONDS));
                                     }
                                 }
 
@@ -694,6 +692,22 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                             // the node already exists in the list
                             if (!node.getActive()) {
                                 nodeRuntime.setRuntimeInfo(buildDefaultRuntimeInfo(flavor.getDisk(), flavor.getMemory(), cpuTotal));
+                            } else {
+                                Boolean isVolatile = nodeRuntime.getNode().getVolatile();
+                                // Volatile nodes should be destroyed if no task is running on them for a while
+                                if (isVolatile != null && isVolatile) {
+                                    final List<ExecutionTask> tasks = taskProvider.listByHost(node.getId());
+                                    final LocalDateTime now = LocalDateTime.now();
+                                    if (tasks == null || tasks.isEmpty()) {
+                                        final LocalDateTime lastKeepAlive = nodeRuntime.getNextKeepAlive();
+                                        if (lastKeepAlive != null && lastKeepAlive.isBefore(now)) { // keep-alive time expired
+                                            uninstallNode(nodeRuntime.getNode());
+                                            nodes.remove(host);
+                                        } else if (lastKeepAlive == null) { // keep-alive was not set, it's the first time
+                                            nodeRuntime.setNextKeepAlive(now.plusSeconds(DEFAULT_KEEP_ALIVE_SECONDS));
+                                        }
+                                    }
+                                }
                             }
                         }
                     }

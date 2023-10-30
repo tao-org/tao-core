@@ -94,12 +94,12 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
     public NodeDescription update(NodeDescription entity) throws TopologyException {
         // check if there is already another node with the same host name
         final Optional<NodeDescription> nodeWithSameHostName = repository.findById(entity.getId());
-        if (!nodeWithSameHostName.isPresent()) {
+        if (nodeWithSameHostName.isEmpty()) {
             throw new TopologyException(String.format("Entity %s does not exist. use 'saveExecutionode' instead.",
                                                          entity.getId()));
         }
         // save the services first
-        for(NodeServiceStatus serviceStatus: entity.getServicesStatus()) {
+        for( NodeServiceStatus serviceStatus: entity.getServicesStatus()) {
             ServiceDescription serviceDescription = serviceStatus.getServiceDescription();
             if (!exists(serviceDescription.getName(), serviceDescription.getVersion())) {
                 serviceRepository.save(serviceDescription);
@@ -113,6 +113,8 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
         }
         if (entity.getFlavor() == null) {
             throw new TopologyException(String.format("Node flavor not defined for node '%s'", entity.getId()));
+        } else {
+            nodeFlavorRepository.save(entity.getFlavor());
         }
         // save the new NodeDescription entity and return it
         return repository.save(entity);
