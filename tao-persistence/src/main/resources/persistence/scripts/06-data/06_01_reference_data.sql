@@ -242,6 +242,7 @@ INSERT INTO config.config (category_id, id, value, friendly_name, type, label, "
 (2, 'topology.node.user.limit', '1', 'Maximum worker nodes per user (0 for unlimited)', 'int', 'Maximum user worker nodes', null, now()),
 (2, 'topology.node.create.wait', '60', 'Time in seconds to wait for a node to be alive', 'int', 'Node startup wait time (s)', null, now()),
 (2, 'topology.node.connection.retries', '-1', 'How many times to retry the connection with a node (-1 for each time)', 'int', 'Node connection retries', null, now()),
+(2, 'topology.dedicated.user.nodes', 'true', 'Use dedicated nodes for users', 'bool', 'Use dedicated nodes for users', null, now()),
 (3, 'tao.docker.images', '/mnt/tao/docker', 'Location for extracting container files for new Docker plugins', 'string', 'Dockerfiles location', null, now()),
 (3, 'tao.docker.registry', 'sen2agri-prod:5000', 'Docker registry', 'string', 'Docker registry', null, now()),
 (3, 'tao.docker.base.port', '8888', 'Start port for standalone user containers', 'int', 'Start port for standalone containers', null, now()),

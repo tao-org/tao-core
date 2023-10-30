@@ -210,6 +210,9 @@
             <basic name="appId">
                 <column name="app_id" nullable="true" column-definition="varchar(50)"/>
             </basic>
+            <basic name="serverId">
+                <column name="server_id" nullable="true" column-definition="varchar(50)"/>
+            </basic>
             <basic name="tags">
                 <column name="tags" nullable="true" column-definition="text NULL"/>
                 <convert converter="ro.cs.tao.persistence.convert.StringListConverter"/>

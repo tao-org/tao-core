@@ -17,6 +17,7 @@ package ro.cs.tao.services.interfaces;
 
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.services.model.user.DisableUserInfo;
+import ro.cs.tao.services.model.user.UserMapping;
 import ro.cs.tao.services.model.user.UserUnicityInfo;
 import ro.cs.tao.user.Group;
 import ro.cs.tao.user.User;
@@ -35,6 +36,8 @@ public interface AdministrationService extends TAOService {
     User addNewUser(User userInfo) throws PersistenceException;
 
     List<UserUnicityInfo> getAllUsersUnicityInfo();
+
+    List<UserMapping> getAllUserNames();
 
     List<User> findUsersByStatus(UserStatus activationStatus);
 
