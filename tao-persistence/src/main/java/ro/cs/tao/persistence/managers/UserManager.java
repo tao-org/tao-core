@@ -160,6 +160,13 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
     }
 
     @Override
+    public Map<String, String> listNames() {
+        final Map<String, String> results = new HashMap<>();
+        repository.findAll().forEach(user -> results.put(user.getId(), user.getUsername()));
+        return results;
+    }
+
+    @Override
     public User getByName(final String username) {
         return repository.findByUsername(username);
     }
