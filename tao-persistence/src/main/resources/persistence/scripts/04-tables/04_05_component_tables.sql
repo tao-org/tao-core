@@ -101,6 +101,17 @@ ALTER TABLE component.container_type ALTER COLUMN id SET DEFAULT nextval('compon
 ALTER SEQUENCE component.container_type_id_seq OWNED BY component.container_type.id;
 
 -------------------------------------------------------------------------------
+-- table: component.container_visibility
+DROP TABLE IF EXISTS component.container_visibility CASCADE;
+CREATE TABLE component.container_visibility
+(
+	id integer NOT NULL,
+	description varchar(50) NOT NULL
+);
+ALTER TABLE component.container_visibility ADD CONSTRAINT PK_container_visibility
+	PRIMARY KEY (id);
+
+-------------------------------------------------------------------------------
 -- table: container
 DROP TABLE IF EXISTS component.container CASCADE;
 CREATE TABLE component.container
@@ -109,6 +120,7 @@ CREATE TABLE component.container
 	name varchar(1024) NOT NULL,
 	description varchar(1024) NOT NULL,
 	type_id int NULL DEFAULT 1,
+	visibility_id int NULL DEFAULT 1,
 	tag varchar(1024) NOT NULL,
 	application_path varchar(1024) NULL,
 	logo_image varchar NULL,
@@ -122,6 +134,8 @@ ALTER TABLE component.container ADD CONSTRAINT PK_container
 	PRIMARY KEY (id);
 ALTER TABLE component.container ADD CONSTRAINT FK_container_container_type
 	FOREIGN KEY (type_id) REFERENCES component.container_type (id) ON DELETE No Action ON UPDATE No Action;
+ALTER TABLE component.container ADD CONSTRAINT FK_container_container_visibility
+	FOREIGN KEY (visibility_id) REFERENCES component.container_visibility (id) ON DELETE No Action ON UPDATE No Action;
 
 -------------------------------------------------------------------------------
 -- table: container_applications

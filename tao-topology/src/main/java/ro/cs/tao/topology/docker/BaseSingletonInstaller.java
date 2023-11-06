@@ -2,6 +2,7 @@ package ro.cs.tao.topology.docker;
 
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.docker.ContainerType;
+import ro.cs.tao.docker.ContainerVisibility;
 import ro.cs.tao.security.SystemPrincipal;
 import ro.cs.tao.utils.DockerHelper;
 
@@ -29,6 +30,7 @@ public abstract class BaseSingletonInstaller extends BaseUtilityInstaller
         final Container container = super.install();
         if (container != null) {
             container.setType(ContainerType.UTILITY);
+            container.setVisibility(ContainerVisibility.PUBLIC);
         }
         return container;
     }

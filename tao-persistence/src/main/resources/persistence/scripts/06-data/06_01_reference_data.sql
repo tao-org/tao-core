@@ -22,6 +22,10 @@ INSERT INTO component.condition (id, description) VALUES
 INSERT INTO component.container_type (id, description) VALUES
 (1, 'DOCKER'), (2, 'WPS'), (3, 'UTILITY'), (4, 'STAC'), (5, 'WMS');
 
+-- Container visibility
+INSERT INTO component.container_visibility (id, description) VALUES
+(1, 'UNDEFINED'), (2, 'PRIVATE'), (3, 'PUBLIC');
+
 -- Data formats
 INSERT INTO product.data_format (type) VALUES
 ('RASTER'), ('VECTOR'), ('OTHER'), ('DB_CONNECTION'), ('FOLDER'),('JSON');
