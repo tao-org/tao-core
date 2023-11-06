@@ -1,6 +1,7 @@
 package ro.cs.tao.utils.executors;
 
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.logging.Logger;
@@ -15,6 +16,7 @@ public class BlockingQueueWorker<E> extends Thread {
     private volatile boolean paused;
     private final Object monitor;
     private final int delay;
+    private final AtomicInteger activeCounter;
 
     public BlockingQueueWorker(BlockingQueue<E> monitoredQueue, Function<E, Void> runnable) {
         this(monitoredQueue, runnable, 1);
@@ -35,6 +37,7 @@ public class BlockingQueueWorker<E> extends Thread {
         this.stopped = false;
         this.monitor = new Object();
         this.delay = delay;
+        this.activeCounter = new AtomicInteger(0);
         this.logger = Logger.getLogger(getClass().getName());
     }
 
@@ -59,7 +62,7 @@ public class BlockingQueueWorker<E> extends Thread {
     public void run() {
         while (!stopped) {
             try {
-                if (this.paused || (this.executor.getActiveCount() >= this.executor.getMaximumPoolSize())) {
+                if (this.paused || (this.activeCounter.get() >= this.executor.getMaximumPoolSize())) {
                     synchronized (this.monitor) {
                         this.monitor.wait(this.delay);
                     }
@@ -70,6 +73,7 @@ public class BlockingQueueWorker<E> extends Thread {
                     E entry = this.monitoredQueue.take();
                     this.executor.submit(() -> {
                         try {
+                            this.activeCounter.incrementAndGet();
                             this.work.apply(entry);
                             // Item was handled, re-persist the state without it
                             if (this.statePersister != null) {
@@ -77,6 +81,8 @@ public class BlockingQueueWorker<E> extends Thread {
                             }
                         } catch (Exception e) {
                             logger.severe(e.getMessage());
+                        } finally {
+                            this.activeCounter.decrementAndGet();
                         }
                     });
                 }
