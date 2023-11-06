@@ -279,6 +279,7 @@
     <entity class="ro.cs.tao.docker.Container" access="PROPERTY">
         <table name="component.container"/>
         <convert converter="ro.cs.tao.persistence.convert.ContainerTypeConverter" attribute-name="type" />
+        <convert converter="ro.cs.tao.persistence.convert.ContainerVisibilityConverter" attribute-name="visibility" />
         <attributes>
             <basic name="name">
                 <column name="name" nullable="false" column-definition="character varying(1024) NOT NULL"/>
@@ -288,6 +289,9 @@
             </basic>
             <basic name="type">
                 <column name="type_id" nullable="false" column-definition="integer NOT NULL"/>
+            </basic>
+            <basic name="visibility">
+                <column name="visibility_id" nullable="true" column-definition="integer DEFAULT 1"/>
             </basic>
             <basic name="tag">
                 <column name="tag" nullable="false" column-definition="character varying(1024) NOT NULL"/>

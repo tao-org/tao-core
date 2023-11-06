@@ -41,6 +41,7 @@ public class Container extends StringIdentifiable {
     private String commonParameters;
     private String formatNameParameter;
     private String ownerId;
+    private ContainerVisibility visibility;
 
     @Override
     public String defaultId() { return UUID.randomUUID().toString();}
@@ -106,6 +107,14 @@ public class Container extends StringIdentifiable {
 
     public void setOwnerId(String ownerId) {
         this.ownerId = ownerId;
+    }
+
+    public ContainerVisibility getVisibility() {
+        return visibility;
+    }
+
+    public void setVisibility(ContainerVisibility containerVisibility) {
+        this.visibility = containerVisibility;
     }
 
     @Override

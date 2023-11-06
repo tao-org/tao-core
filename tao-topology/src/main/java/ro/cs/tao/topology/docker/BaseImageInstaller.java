@@ -35,6 +35,7 @@ import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.docker.Application;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.docker.ContainerType;
+import ro.cs.tao.docker.ContainerVisibility;
 import ro.cs.tao.persistence.ContainerProvider;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.ProcessingComponentProvider;
@@ -165,6 +166,7 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
             dbContainer.setName(getContainerName());
             dbContainer.setTag(container != null ? container.getTag() : getContainerName());
             dbContainer.setType(ContainerType.DOCKER);
+            dbContainer.setVisibility(ContainerVisibility.PUBLIC);
             dbContainer = initializeContainer(dbContainer, dockerPath != null ? getPathInContainer() : getPathInSystem());
             if (dbContainer == null) {
                 logger.severe(String.format("Container %s failed to register", getContainerName()));
@@ -299,6 +301,7 @@ public abstract class BaseImageInstaller implements DockerImageInstaller {
             readContainer.getApplications().forEach(this::configureApplication);
             readContainer.setLogo(readContainerLogo(getLogoFileName()));
             readContainer.setOwnerId(SystemPrincipal.instance().getName());
+            readContainer.setVisibility(container.getVisibility());
             readContainer = this.containerProvider.save(readContainer);
         } catch (Exception e) {
             logger.severe(e.getMessage());
