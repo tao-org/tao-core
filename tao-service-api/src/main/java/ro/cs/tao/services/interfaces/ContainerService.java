@@ -19,6 +19,7 @@ import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.docker.Application;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.docker.ContainerType;
+import ro.cs.tao.docker.ContainerVisibility;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -35,7 +36,18 @@ public interface ContainerService extends CRUDService<Container, String> {
      * @param type  The type of containers
      */
     List<Container> listByType(ContainerType type);
-
+    /**
+     * Returns a list of containers of the respective type and visibility
+     * @param type  The type of containers
+     * @param visibility The visibility of containers
+     */
+    List<Container> listByTypeAndVisibility(ContainerType type, ContainerVisibility visibility);
+    /**
+     * Returns a list of containers visible for the given user.
+     * These are containers either public or owned by the user.
+     *
+     * @param userId  The user identifier.
+     */
     List<Container> listContainersVisibleToUser(String userId);
 
     /**

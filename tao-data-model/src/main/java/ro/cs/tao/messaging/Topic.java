@@ -68,6 +68,10 @@ public class Topic {
      * Topic for signaling authentication events (like login, logout)
      */
     public static final Topic AUTHENTICATION = Topic.create("authentication");
+    /**
+     * Topic for signaling publication of containers
+     */
+    public static final Topic CONTAINER = Topic.create("container");
 
     public static Topic create(String category) {
         if (!topicRegistry.containsKey(category)) {
