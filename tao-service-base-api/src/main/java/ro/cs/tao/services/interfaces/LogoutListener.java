@@ -4,6 +4,6 @@ import ro.cs.tao.user.SessionDuration;
 
 public interface LogoutListener {
 
-    void doAction(String userToken, SessionDuration sessionDuration, int processingTime);
+    void doAction(String userId, SessionDuration sessionDuration, int processingTime);
 
 }
