@@ -46,4 +46,7 @@ public interface ContainerRepository extends PagingAndSortingRepository<Containe
     @Query(value = "SELECT * FROM component.container WHERE owner_id IN (SELECT id FROM usr.user WHERE username = 'SystemAccount' or id = :userId) " +
             "AND visibility_id IN (2, 3)", nativeQuery = true)
     List<Container> listContainersVisibleToUser(@Param("userId") String userId);
+
+    @Query(value = "SELECT * FROM component.container WHERE owner_id = :userId) AND visibility_id IN (2, 3)", nativeQuery = true)
+    List<Container> listUserContainers(@Param("userId") String userId);
 }
