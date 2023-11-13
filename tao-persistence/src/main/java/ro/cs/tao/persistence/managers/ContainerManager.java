@@ -50,6 +50,11 @@ public class ContainerManager extends EntityManager<Container, String, Container
     }
 
     @Override
+    public List<Container> listUserContainers(String userId) {
+        return repository.listUserContainers(userId);
+    }
+
+    @Override
     protected String identifier() { return "id"; }
 
     @Override

@@ -49,7 +49,12 @@ public interface ContainerService extends CRUDService<Container, String> {
      * @param userId  The user identifier.
      */
     List<Container> listContainersVisibleToUser(String userId);
-
+    /**
+     * Returns a list of containers owned by the given user.
+     *
+     * @param userId  The user identifier.
+     */
+    List<Container> listUserContainers(String userId);
     /**
      * Updates database container information and its list of applications
      * @param id            The Docker container id (as returned by Docker)
