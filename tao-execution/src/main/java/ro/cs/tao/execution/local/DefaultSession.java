@@ -157,6 +157,7 @@ public class DefaultSession implements Session, JobExitHandler {
                 set.add(DrmaaJobExtensions.TASK_ANCESTOR_ID);
                 set.add(DrmaaJobExtensions.TASK_ANCESTOR_OUTPUT);
                 set.add(DrmaaJobExtensions.TASK_OUTPUT);
+                set.add(DrmaaJobExtensions.IS_TERMINAL_TASK);
                 set.add(DrmaaJobExtensions.JOB_ID);
                 set.add(DrmaaJobExtensions.USER);
                 set.add(DrmaaJobExtensions.SCRIPT_FORMAT);
@@ -244,6 +245,7 @@ public class DefaultSession implements Session, JobExitHandler {
                 unit.addMetadata("dependsOn", template.getAttribute(DrmaaJobExtensions.TASK_ANCESTOR_ID));
                 unit.addMetadata("inputs", template.getAttribute(DrmaaJobExtensions.TASK_ANCESTOR_OUTPUT));
                 unit.addMetadata("canDelete", template.getAttribute(DrmaaJobExtensions.TASK_OUTPUT));
+                unit.addMetadata("isTerminal", template.getAttribute(DrmaaJobExtensions.IS_TERMINAL_TASK));
                 unit.addMetadata("scriptPath", template.getAttribute(DrmaaJobExtensions.SCRIPT_PATH));
             } else if (ExecutionConfiguration.developmentModeEnabled()) {
                 unit = new ExecutionUnit(ExecutorType.MOCK, node != null ? node.getId() : this.localHost,

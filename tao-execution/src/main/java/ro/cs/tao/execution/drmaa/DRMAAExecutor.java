@@ -480,6 +480,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                 if (values != null) {
                     template.setAttribute(DrmaaJobExtensions.TASK_OUTPUT, values.stream().map(Variable::getValue).collect(Collectors.toList()));
                 }
+                template.setAttribute(DrmaaJobExtensions.IS_TERMINAL_TASK, TaskUtilities.isTerminalTask(task));
             }
             final long memory = app != null
                                 ? app.getMemoryRequirements()

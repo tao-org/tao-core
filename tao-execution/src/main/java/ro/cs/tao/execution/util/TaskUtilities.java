@@ -257,6 +257,13 @@ public class TaskUtilities {
         }
     }
 
+    public static boolean isTerminalTask(ExecutionTask task) {
+        final WorkflowNodeDescriptor node = workflowNodeProvider.get(task.getWorkflowNodeId());
+        final List<WorkflowNodeDescriptor> nodes = node.getWorkflow().getNodes();
+        return nodes.stream().noneMatch(n -> n.getIncomingLinks() != null &&
+                                         n.getIncomingLinks().stream().anyMatch(l -> node.getId() == l.getSourceNodeId()));
+    }
+
     /**
      * Checks if all the parent tasks of this task have completed.
      *

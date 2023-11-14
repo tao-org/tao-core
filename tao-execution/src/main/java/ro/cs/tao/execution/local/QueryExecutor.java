@@ -49,10 +49,8 @@ import ro.cs.tao.workflow.enums.ComponentType;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.Principal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -278,17 +276,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                     final StringBuilder builder = new StringBuilder();
                     for (String item : list) {
                         try {
-                            Path path;
-                            try {
-                                if (FileUtilities.isURI(item)) {
-                                    path = Paths.get(URI.create(item));
-                                } else {
-                                    path = Paths.get(item);
-                                }
-                            } catch (IllegalArgumentException ignored) {
-                                // thrown by URI.create
-                                path = Paths.get(item);
-                            }
+                            Path path = FileUtilities.toPath(item);
                             if (Files.isSymbolicLink(path)) {
                                 builder.append(FileUtilities.replaceLink(path, null));
                             } else {
