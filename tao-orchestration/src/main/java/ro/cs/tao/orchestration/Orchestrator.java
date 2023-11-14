@@ -34,6 +34,7 @@ import ro.cs.tao.eodata.naming.ParseException;
 import ro.cs.tao.eodata.util.ProductHelper;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.ExecutionsManager;
+import ro.cs.tao.execution.JobCompletedListener;
 import ro.cs.tao.execution.callback.EndpointDescriptor;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.execution.persistence.ExecutionJobProvider;
@@ -1529,11 +1530,11 @@ public class Orchestrator extends Notifiable {
                         for (int i = 0; i < initial.length; i++) {
                             if (!initial[i].equals(modified[i])) {
                                 try {
-                                    FileUtilities.replaceWithLink(Paths.get(initial[i]),
-                                                                  Paths.get(modified[i]));
+                                    FileUtilities.replaceWithLink(FileUtilities.toPath(initial[i]),
+                                                                  FileUtilities.toPath(modified[i]));
                                     logger.finest("Restored symlink " + initial[i]);
                                 } catch (IOException e) {
-                                    logger.warning(e.getMessage());
+                                    ExceptionUtils.getStackTrace(logger, e);
                                 }
                             }
                         }
