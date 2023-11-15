@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 public class SessionDuration {
     private String userId;
     private LocalDateTime loggedOn;
-    private double duration;
+    private int duration;
 
     public String getUserId() {
         return userId;
@@ -23,11 +23,11 @@ public class SessionDuration {
         this.loggedOn = loggedOn;
     }
 
-    public double getDuration() {
+    public int getDuration() {
         return duration;
     }
 
-    public void setDuration(double duration) {
+    public void setDuration(int duration) {
         this.duration = duration;
     }
 }

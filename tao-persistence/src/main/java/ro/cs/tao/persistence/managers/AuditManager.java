@@ -53,7 +53,7 @@ public class AuditManager extends EntityManager<LogEvent, Long, AuditRepository>
             SessionDuration result = new SessionDuration();
             result.setUserId(rs.getString(1));
             result.setLoggedOn(rs.getTimestamp(2).toLocalDateTime());
-            result.setDuration(rs.getDouble(3));
+            result.setDuration(rs.getInt(3));
             return result;
         });
     }
@@ -78,7 +78,7 @@ public class AuditManager extends EntityManager<LogEvent, Long, AuditRepository>
                 SessionDuration result = new SessionDuration();
                 result.setUserId(rs.getString(1));
                 result.setLoggedOn(rs.getTimestamp(2).toLocalDateTime());
-                result.setDuration(rs.getDouble(3));
+                result.setDuration(rs.getInt(3));
                 return result;
         });
     }
@@ -103,7 +103,7 @@ public class AuditManager extends EntityManager<LogEvent, Long, AuditRepository>
                                           SessionDuration result = new SessionDuration();
                                           result.setUserId(rs.getString(1));
                                           result.setLoggedOn(rs.getTimestamp(2).toLocalDateTime());
-                                          result.setDuration(rs.getDouble(3));
+                                          result.setDuration(rs.getInt(3));
                                           return result;
                                       } else {
                                           return null;
@@ -130,7 +130,7 @@ public class AuditManager extends EntityManager<LogEvent, Long, AuditRepository>
               SessionDuration result = new SessionDuration();
               result.setUserId(rs.getString(1));
               result.setLoggedOn(rs.getTimestamp(2).toLocalDateTime());
-              result.setDuration(rs.getDouble(3));
+              result.setDuration(rs.getInt(3));
               return result;
           });
     }
@@ -155,7 +155,7 @@ public class AuditManager extends EntityManager<LogEvent, Long, AuditRepository>
               SessionDuration result = new SessionDuration();
               result.setUserId(rs.getString(1));
               result.setLoggedOn(rs.getTimestamp(2).toLocalDateTime());
-              result.setDuration(rs.getDouble(3));
+              result.setDuration(rs.getInt(3));
               return result;
           });
     }
