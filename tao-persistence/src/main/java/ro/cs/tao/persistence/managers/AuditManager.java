@@ -48,7 +48,7 @@ public class AuditManager extends EntityManager<LogEvent, Long, AuditRepository>
                                              "select user_id, event, timestamp, tsrange(timestamp, lead(timestamp) over (partition by user_id order by timestamp)) as range " +
                                              "from common.audit " +
                                              "where event in ('Login', 'Logout')) " +
-                                             "select user_id, timestamp as login_on, (extract(hours from upper(range)) + extract(mins from upper(range))/60 - extract(hours from lower(range)) - extract(mins from lower(range))/60)::numeric(3, 2) as time_spent " +
+                                             "select user_id, timestamp as login_on, (extract(hours from (upper(range) - lower(range)))*3600 + extract(mins from (upper(range) - lower(range)))*60 + extract(seconds from (upper(range) - lower(range))))::integer as time_spent " +
                                              "from ranges) select user_id, login_on, time_spent from diffs where time_spent is not null"), (rs, rowNum) -> {
             SessionDuration result = new SessionDuration();
             result.setUserId(rs.getString(1));
@@ -67,7 +67,7 @@ public class AuditManager extends EntityManager<LogEvent, Long, AuditRepository>
                                                                        "select user_id, event, timestamp, tsrange(timestamp, lead(timestamp) over (partition by user_id order by timestamp)) as range " +
                                                                        "from common.audit " +
                                                                        "where event in ('Login', 'Logout')) " +
-                                                                       "select user_id, timestamp as login_on, (extract(hours from upper(range)) + extract(mins from upper(range))/60 - extract(hours from lower(range)) - extract(mins from lower(range))/60)::numeric(3, 2) as time_spent " +
+                                                                       "select user_id, timestamp as login_on, (extract(hours from (upper(range) - lower(range)))*3600 + extract(mins from (upper(range) - lower(range)))*60 + extract(seconds from (upper(range) - lower(range))))::integer as time_spent " +
                                                                        "from ranges) select user_id, login_on, time_spent from diffs where time_spent is not null " +
                                                                        "and login_on between ? and ?");
                 statement.setTimestamp(1, Timestamp.valueOf(from));
@@ -92,8 +92,7 @@ public class AuditManager extends EntityManager<LogEvent, Long, AuditRepository>
                                                                                                        "select user_id, event, timestamp, tsrange(timestamp, lead(timestamp) over (partition by user_id order by timestamp)) as range " +
                                                                                                        "from common.audit " +
                                                                                                        "where event in ('Login', 'Logout')) " +
-                                                                                                       "select user_id, timestamp as login_on, (extract(hours from upper(range))*3600 + extract(mins from upper(range))*60 + extract(seconds from upper(range)) " +
-                                                                                                       "- extract(hours from lower(range))*3600 - extract(mins from lower(range))*60 - extract(seconds from lower(range)))::integer as time_spent " +
+                                                                                                       "select user_id, timestamp as login_on, (extract(hours from (upper(range) - lower(range)))*3600 + extract(mins from (upper(range) - lower(range)))*60 + extract(seconds from (upper(range) - lower(range))))::integer as time_spent " +
                                                                                                        "from ranges) select user_id, login_on, time_spent from diffs where time_spent is not null " +
                                                                                                        "and user_id = ? order by login_on desc limit 1");
                                       statement.setString(1, userId);
@@ -121,8 +120,7 @@ public class AuditManager extends EntityManager<LogEvent, Long, AuditRepository>
                                                                                "select user_id, event, timestamp, tsrange(timestamp, lead(timestamp) over (partition by user_id order by timestamp)) as range " +
                                                                                "from common.audit " +
                                                                                "where event in ('Login', 'Logout')) " +
-                                                                               "select user_id, timestamp as login_on, (extract(hours from upper(range))*3600 + extract(mins from upper(range))*60 + extract(seconds from upper(range)) " +
-                                                                               "- extract(hours from lower(range))*3600 - extract(mins from lower(range))*60 - extract(seconds from lower(range)))::integer as time_spent " +
+                                                                               "select user_id, timestamp as login_on, (extract(hours from (upper(range) - lower(range)))*3600 + extract(mins from (upper(range) - lower(range)))*60 + extract(seconds from (upper(range) - lower(range))))::integer as time_spent " +
                                                                                "from ranges) select user_id, login_on, time_spent from diffs where time_spent is not null " +
                                                                                "and user_id = ?");
               statement.setString(1, userId);
@@ -146,8 +144,7 @@ public class AuditManager extends EntityManager<LogEvent, Long, AuditRepository>
                                                                                "select user_id, event, timestamp, tsrange(timestamp, lead(timestamp) over (partition by user_id order by timestamp)) as range " +
                                                                                "from common.audit " +
                                                                                "where event in ('Login', 'Logout')) " +
-                                                                               "select user_id, timestamp as login_on, (extract(hours from upper(range))*3600 + extract(mins from upper(range))*60 + extract(seconds from upper(range)) " +
-                                                                               "- extract(hours from lower(range))*3600 - extract(mins from lower(range))*60 - extract(seconds from lower(range)))::integer as time_spent " +
+                                                                               "select user_id, timestamp as login_on, (extract(hours from (upper(range) - lower(range)))*3600 + extract(mins from (upper(range) - lower(range)))*60 + extract(seconds from (upper(range) - lower(range))))::integer as time_spent " +
                                                                                "and user_id = ? and login_on between ? and ?");
               statement.setString(1, userId);
               statement.setTimestamp(2, Timestamp.valueOf(from));
