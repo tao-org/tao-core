@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 
 public class ResourceUsage extends LongIdentifiable {
     private long taskId;
+    private String userId;
     private String host;
     private String flavor;
     private LocalDateTime startTime;
@@ -17,6 +18,14 @@ public class ResourceUsage extends LongIdentifiable {
 
     public void setTaskId(long taskId) {
         this.taskId = taskId;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 
     public String getHost() {

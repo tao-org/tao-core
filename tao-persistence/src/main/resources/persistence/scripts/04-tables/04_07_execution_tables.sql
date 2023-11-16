@@ -200,6 +200,7 @@ DROP TABLE IF EXISTS execution.resource_usage;
 CREATE TABLE IF NOT EXISTS execution.resource_usage
 (
     id bigint NOT NULL,
+    user_id character varying NOT NULL,
     task_id bigint NOT NULL,
     host_name character varying NOT NULL,
     flavor character varying,
@@ -207,9 +208,21 @@ CREATE TABLE IF NOT EXISTS execution.resource_usage
     end_time timestamp without time zone,
     CONSTRAINT resource_usage_pkey PRIMARY KEY (id)
 );
-ALTER TABLE execution.resource_usage ADD CONSTRAINT FK_resource_usage_task
-	FOREIGN KEY (task_id) REFERENCES execution.task (id) ON DELETE No Action ON UPDATE No Action;
 DROP SEQUENCE IF EXISTS execution.resource_usage_id_seq;
 CREATE SEQUENCE IF NOT EXISTS execution.resource_usage_id_seq INCREMENT 1 START 1 MINVALUE 1 NO MAXVALUE;
 ALTER TABLE execution.resource_usage ALTER COLUMN id SET DEFAULT nextval('execution.resource_usage_id_seq');
 ALTER SEQUENCE execution.resource_usage_id_seq OWNED BY execution.resource_usage.id;
+
+-- Table: execution.resource_usage_report
+DROP TABLE IF EXISTS execution.resource_usage_report;
+CREATE TABLE IF NOT EXISTS execution.resource_usage_report
+(
+    id bigint NOT NULL,
+    user_id character varying NOT NULL,
+    last_report_time timestamp without time zone,
+    CONSTRAINT resource_usage_report_pkey PRIMARY KEY (id)
+);
+DROP SEQUENCE IF EXISTS execution.resource_usage_report_id_seq;
+CREATE SEQUENCE IF NOT EXISTS execution.resource_usage_report_id_seq INCREMENT 1 START 1 MINVALUE 1 NO MAXVALUE;
+ALTER TABLE execution.resource_usage_report ALTER COLUMN id SET DEFAULT nextval('execution.resource_usage_report_id_seq');
+ALTER SEQUENCE execution.resource_usage_report_id_seq OWNED BY execution.resource_usage_report.id;

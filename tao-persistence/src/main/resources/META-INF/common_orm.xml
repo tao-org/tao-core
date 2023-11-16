@@ -1454,6 +1454,9 @@
             <basic name="taskId">
                 <column name="task_id" nullable="false" column-definition="bigint NOT NULL"/>
             </basic>
+            <basic name="userId">
+                <column name="user_id" nullable="false" column-definition="varchar NOT NULL"/>
+            </basic>
             <basic name="host">
                 <column name="host_name" nullable="false" column-definition="varchar NOT NULL"/>
             </basic>
@@ -1465,6 +1468,18 @@
             </basic>
             <basic name="endTime">
                 <column name="end_time" nullable="true" column-definition="timestamp without time zone"/>
+            </basic>
+        </attributes>
+    </entity>
+
+    <entity class="ro.cs.tao.execution.model.ResourceUsageReport" access="PROPERTY">
+        <table name="execution.resource_usage_report"/>
+        <attributes>
+            <basic name="userId">
+                <column name="user_id" nullable="false" column-definition="varchar NOT NULL"/>
+            </basic>
+            <basic name="lastReportTime">
+                <column name="last_report_time" nullable="false" column-definition="timestamp without time zone NOT NULL"/>
             </basic>
         </attributes>
     </entity>
