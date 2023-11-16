@@ -29,6 +29,11 @@ public class ResourceUsageManager extends EntityManager<ResourceUsage, Long, Res
     }
 
     @Override
+    public List<ResourceUsage> getByUserIdSince(String user, LocalDateTime date) {
+        return repository.getByUserIdSince(user, date);
+    }
+
+    @Override
     public ResourceUsage getByTask(long taskId) {
         return repository.getByTask(taskId);
     }
