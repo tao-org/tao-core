@@ -86,6 +86,52 @@ public class RepositoryFactory {
         return workspace;
     }
 
+    public static Repository createDefault(RepositoryType type, String userId, String userName, Map<String, String> dbParams) {
+        final Repository workspace = instance.templates.get(type);
+        if (workspace == null) {
+            throw new IllegalArgumentException("Workspace type " + type.name() + " is disabled");
+        }
+        workspace.setId(UUID.randomUUID().toString());
+        workspace.setUserId(userId);
+        final ConfigurationProvider cfgProvider = ConfigurationManager.getInstance();
+        if (dbParams == null) {
+            dbParams = new HashMap<>();
+        }
+        switch (type) {
+            case LOCAL:
+                workspace.getParameters().replace(type.rootKey(),
+                                                  cfgProvider.getValue("workspace.location") + "/" + userId);
+                break;
+            case AWS:
+                final HashMap<String, String> parameters = workspace.getParameters();
+                String value;
+                for (String key : parameters.keySet()) {
+                    if (type.rootKey().equals(key)) {
+                        value = dbParams.containsKey(key) ? dbParams.get(key) : cfgProvider.getValue(type.rootKey());
+                        if (value != null) {
+                            value += "/" + userName;
+                        }
+                    } else {
+                        value = dbParams.containsKey(key) ? dbParams.get(key) : cfgProvider.getValue(key);
+                    }
+                    if (value == null) {
+                        throw new TopologyException("Values for default workspace of type" + type.name() + " not configured");
+                    }
+                    parameters.replace(key, value);
+                }
+                break;
+            case SWIFT:
+                final HashMap<String, String> params = workspace.getParameters();
+                params.replace(type.rootKey(), userId);
+                params.entrySet().removeIf(e -> !e.getKey().equals(type.rootKey()));
+                break;
+            default:
+                break;
+        }
+        workspace.setSystem(true);
+        return workspace;
+    }
+
     public static Repository createFromTemplate(RepositoryTemplate template, String userId) {
         final Repository workspace = template.toRepository();
         workspace.setUserId(userId);
