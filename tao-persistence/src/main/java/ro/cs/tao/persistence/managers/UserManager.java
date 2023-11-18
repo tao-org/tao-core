@@ -559,7 +559,10 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
                                               .collect(Collectors.toMap(p -> p.getKey().replace("workspace.", ""),
                                                                         UserPreference::getValue));
                     }
-                    Repository repository = RepositoryFactory.createDefault(type, user.getId(), dbParams);
+                    final boolean useUserName = ConfigurationManager.getInstance().getBooleanValue("aws.use.username.as.root");
+                    Repository repository = useUserName
+                                            ? RepositoryFactory.createDefault(type, user.getId(), user.getUsername(), dbParams)
+                                            : RepositoryFactory.createDefault(type, user.getId(), dbParams);
                     repositoryJPARepository.save(repository);
                     if (rootFunctor != null) {
                         rootFunctor.accept(repository);
