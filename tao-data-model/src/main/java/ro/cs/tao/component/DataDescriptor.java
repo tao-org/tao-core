@@ -155,8 +155,8 @@ public class DataDescriptor {
                             throw new IllegalArgumentException(DataDescriptor.class.getSimpleName() + ": location must be absolute");
                         }
                     } catch (Exception other) {
-                        Logger.getLogger(getClass().getName()).warning(String.format("Value '%s' should represent a path, but appears not to",
-                                                                                     value));
+                        Logger.getLogger(getClass().getName()).warning(String.format("Value '%s' should represent a path, but appears not to [%s]",
+                                                                                     value, other.getMessage()));
                     }
                 }
             } else {
@@ -168,8 +168,8 @@ public class DataDescriptor {
                             throw new IllegalArgumentException(DataDescriptor.class.getSimpleName() + ": location must be relative");
                         }
                     } catch (Exception other) {
-                        Logger.getLogger(getClass().getName()).warning(String.format("Value '%s' should represent a path, but appears not to",
-                                                                                     value));
+                        Logger.getLogger(getClass().getName()).warning(String.format("Value '%s' should represent a path, but appears not to [%s]",
+                                                                                     value, other.getMessage()));
                     }
                 }
             }
