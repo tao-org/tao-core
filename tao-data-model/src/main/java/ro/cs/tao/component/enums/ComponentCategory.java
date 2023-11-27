@@ -20,6 +20,9 @@ import ro.cs.tao.TaoEnum;
 
 import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlEnumValue;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
 
 @XmlEnum(Integer.class)
 public enum ComponentCategory implements TaoEnum<Integer> {
@@ -34,8 +37,24 @@ public enum ComponentCategory implements TaoEnum<Integer> {
     @XmlEnumValue("5")
     MISC(5, "Miscellaneous");
 
+    // Other component categories that can be used as input for this category
+    private static final Map<ComponentCategory, EnumSet<ComponentCategory>> compatibilityMap;
+
+    static {
+        compatibilityMap = new HashMap<>();
+        compatibilityMap.put(RASTER, EnumSet.of(RASTER, OPTICAL, RADAR));
+        compatibilityMap.put(VECTOR, EnumSet.of(VECTOR, RASTER, MISC));
+        compatibilityMap.put(OPTICAL, EnumSet.of(OPTICAL, RASTER));
+        compatibilityMap.put(RADAR, EnumSet.of(RADAR, MISC));
+        compatibilityMap.put(MISC, EnumSet.of(MISC, RADAR, OPTICAL, VECTOR));
+    }
+
     private final int value;
     private final String description;
+
+    public static boolean isCompatibleWith(ComponentCategory source, ComponentCategory other) {
+        return compatibilityMap.get(source).contains(other);
+    }
 
     ComponentCategory(int value, String description) {
         this.value = value;
