@@ -369,6 +369,9 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                         logger.fine("No processing node was found to be available. Will retry.");
                         waitBeforeNextRetry();
                     }
+                } else {
+                    logger.fine("No processing node was found to be available. Will retry.");
+                    waitBeforeNextRetry();
                 }
             }
         } while (availableNode == null);

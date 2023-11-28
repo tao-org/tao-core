@@ -357,7 +357,7 @@
                 <ignore_err>true</ignore_err>
                 <command>
                     <![CDATA[
-                         sed -i "$ a//#master_hostname##master_share# #node_share# cifs uid=#master_user#,file_mode=0777,dir_mode=0777,noperm 0 0" /etc/fstab
+                         sed -i "$ a//#master_hostname##master_share# #node_share# cifs username=#master_user#,password=#master_pass#,file_mode=0777,dir_mode=0777,noperm 0 0" /etc/fstab
                     ]]>
                 </command>
             </step>
