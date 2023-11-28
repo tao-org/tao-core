@@ -392,7 +392,10 @@ public abstract class Executor<T> implements Runnable {
             try {
                 AuthenticationType authenticationType = executionUnit.getCertificate() != null ? AuthenticationType.CERTIFICATE : AuthenticationType.PASSWORD;
                 RuntimeInfo runtimeInfo = RuntimeInfo.createInspector(executionUnit.getHost(), authenticationType,
-                                                                      executionUnit.getUser(), executionUnit.getPassword());
+                                                                      executionUnit.getUser(),
+                                                                      AuthenticationType.PASSWORD.equals(authenticationType)
+                                                                        ? executionUnit.getPassword()
+                                                                        : executionUnit.getCertificate());
                 final long availMem = runtimeInfo.getAvailableMemoryMB();
                 final long requested = requestedMemory.computeIfAbsent(executionUnit.getHost(), h -> new AtomicLong(0L)).get();
                 retVal = (availMem - requested) >= minMemory;
