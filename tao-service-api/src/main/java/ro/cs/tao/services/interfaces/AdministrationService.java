@@ -54,4 +54,6 @@ public interface AdministrationService extends TAOService {
     void disableUser(String userId, DisableUserInfo additionalDisableActions) throws PersistenceException;
 
     void deleteUser(String userId) throws PersistenceException;
+
+    void messageUser(String userId, String message);
 }
