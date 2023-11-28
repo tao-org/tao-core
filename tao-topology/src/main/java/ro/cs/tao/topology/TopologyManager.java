@@ -18,6 +18,8 @@ package ro.cs.tao.topology;
 import org.apache.commons.lang3.SystemUtils;
 import ro.cs.tao.component.SystemVariable;
 import ro.cs.tao.configuration.ConfigurationManager;
+import ro.cs.tao.configuration.ConfigurationProvider;
+import ro.cs.tao.docker.ExecutionConfiguration;
 import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.Topic;
@@ -51,6 +53,7 @@ public class TopologyManager {
     private static final String checkLocalShareWindowsTemplate;
     private static final String createLocalShareWindowsTemplate;
     private static final String createLocalShareLinuxTemplate;
+    private static final String createWorkingDirectoryTemplate;
     private static final OutputAccumulator sharedAccumulator;
     private static final TopologyManager instance;
     private static NodeDescription masterNodeInfo;
@@ -68,6 +71,7 @@ public class TopologyManager {
         checkLocalShareWindowsTemplate = "net share %s";
         createLocalShareWindowsTemplate = "net share %s=%s /GRANT:Everyone,FULL";
         createLocalShareLinuxTemplate = "setenforce 0 && if [ -e $(smbclient -N -g -L localhost | grep \"%1$s\") ]; then sed -i \"$ a[%1$s]\n\tpath = %2$s\n\tbrowsable = yes\n\twritable = yes\n\tguest ok = yes\n\tcreate mask = 0666\n\tforce create mode = 0666\n\tdirectory mask = 0777\n\tforce directory mode = 0777\" /etc/samba/smb.conf; fi;";
+        createWorkingDirectoryTemplate = "mount %s " + ExecutionConfiguration.getWorkerContainerVolumeMap().getHostWorkspaceFolder();
         sharedAccumulator = new OutputAccumulator();
         instance = new TopologyManager();
         Executor.setEnvironment(ConfigurationManager.getInstance().getSystemEnvironment());
@@ -161,19 +165,30 @@ public class TopologyManager {
     public NodeDescription addNode(NodeDescription info) throws TopologyException {
         if (this.externalNodeProvider != null) {
             info = this.externalNodeProvider.create(info);
+            final ConfigurationProvider cfgProvider = ConfigurationManager.getInstance();
+            String device;
+            if (Integer.parseInt(cfgProvider.getValue("openstack.volume.ssd.size", "100")) > 0) {
+                device = cfgProvider.getValue("openstack.volume.ssd.device", "/dev/sds");
+                final ServiceInstallStatus status = createWorkingDir(info, device);
+                if (status.getStatus() != ServiceStatus.INSTALLED) {
+                    logger.severe(String.format("Device %s has not been mount on node %s!", device, info.getId()));
+                }
+            } else if (Integer.parseInt(cfgProvider.getValue("openstack.volume.hdd.size", "0")) > 0) {
+                device = cfgProvider.getValue("openstack.volume.hdd.device", "/dev/sdh");
+                final ServiceInstallStatus status = createWorkingDir(info, device);
+                if (status.getStatus() != ServiceStatus.INSTALLED) {
+                    logger.severe(String.format("Device %s has not been mount on node %s!", device, info.getId()));
+                }
+            }
         }
         info.setActive(false);
         this.localNodeProvider.create(info);
-        /*// make sure the common share is mounted on the node
-        final ServiceInstallStatus mountStatus = checkMount(info);
-        if (mountStatus.getStatus() == ServiceStatus.ERROR) {
-            logger.severe(String.format("Common share mount could not be done on node [%s]. Reason: %s",
-                                        info.getId(), mountStatus.getReason()));
-        }*/
         notifyListeners(info, ServiceInstallStatus.NODE_ADDED);
         for (TopologyToolInstaller installer: installers) {
             // execute all the installers
-            this.executorService.submit(new BinaryTask<NodeDescription, ServiceInstallStatus>(info, this::notifyListeners) {
+            // Make execution synchronous, otherwise other commands sent to this machine may fail
+            //this.executorService.submit(new BinaryTask<NodeDescription, ServiceInstallStatus>(info, this::notifyListeners) {
+            final BinaryTask<NodeDescription, ServiceInstallStatus> task = new BinaryTask<>(info, this::notifyListeners) {
                 @Override
                 public ServiceInstallStatus execute(NodeDescription node) {
                     ServiceInstallStatus status = installer.installNewNode(node);
@@ -186,7 +201,8 @@ public class TopologyManager {
                     }
                     return status;
                 }
-            });
+            };
+            task.run();
         }
         Message message = new Message();
         message.setTopic(Topic.TOPOLOGY.value());
@@ -355,6 +371,31 @@ public class TopologyManager {
             }
             sharedAccumulator.reset();
         }
+        return status;
+    }
+
+    public ServiceInstallStatus createWorkingDir(NodeDescription node, String device) {
+        ServiceInstallStatus status = new ServiceInstallStatus();
+        status.setServiceName("Worker workdir");
+        List<String> commands = ProcessHelper.tokenizeCommands(createWorkingDirectoryTemplate, device);
+        ExecutionUnit job = new ExecutionUnit(ExecutorType.SSH2,
+                                              node.getId(),
+                                              node.getUserName(),
+                                              node.getSshKey() != null ? node.getSshKey() : node.getUserPass(),
+                                              commands, true, SSHMode.EXEC);
+        sharedAccumulator.reset();
+        Executor<?> executor = Executor.execute(sharedAccumulator, job);
+        logger.fine("Executing " + String.join(" ", commands));
+        waitFor(executor, 5, TimeUnit.SECONDS);
+        int retCode;
+        if ((retCode = executor.getReturnCode()) != 0) {
+            status.setStatus(ServiceStatus.ERROR);
+            status.setReason(sharedAccumulator.getOutput());
+            logger.warning(String.format("Command %s failed with code %d", String.join(" ", commands), retCode));
+        } else {
+            status.setStatus(ServiceStatus.INSTALLED);
+        }
+        sharedAccumulator.reset();
         return status;
     }
 

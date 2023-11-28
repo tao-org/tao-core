@@ -412,7 +412,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         final DefaultNodeInfo nodeInfo = getDefaultNodeInfo();
         NodeDescription node = new NodeDescription();
         node.setFlavor(matchingFlavor);
-        node.setId(nodeInfo.getNamePrefix() + userId + "_" + userNodes.size() + 1);
+        node.setId(nodeInfo.getNamePrefix() + userId + "-" + (userNodes.size() < 10 ? "0" : "") + (userNodes.size() + 1));
         node.setDescription(nodeInfo.getDescription() + " for " + userId);
         node.setUserName(nodeInfo.getUser());
         node.setUserPass(nodeInfo.getPassword());
