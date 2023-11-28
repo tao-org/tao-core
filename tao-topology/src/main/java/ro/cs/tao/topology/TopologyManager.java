@@ -163,9 +163,9 @@ public class TopologyManager {
     }
 
     public NodeDescription addNode(NodeDescription info) throws TopologyException {
+        final ConfigurationProvider cfgProvider = ConfigurationManager.getInstance();
         if (this.externalNodeProvider != null) {
             info = this.externalNodeProvider.create(info);
-            final ConfigurationProvider cfgProvider = ConfigurationManager.getInstance();
             String device;
             if (Integer.parseInt(cfgProvider.getValue("openstack.volume.ssd.size", "100")) > 0) {
                 device = cfgProvider.getValue("openstack.volume.ssd.device", "/dev/sds");
@@ -184,25 +184,27 @@ public class TopologyManager {
         info.setActive(false);
         this.localNodeProvider.create(info);
         notifyListeners(info, ServiceInstallStatus.NODE_ADDED);
-        for (TopologyToolInstaller installer: installers) {
-            // execute all the installers
-            // Make execution synchronous, otherwise other commands sent to this machine may fail
-            //this.executorService.submit(new BinaryTask<NodeDescription, ServiceInstallStatus>(info, this::notifyListeners) {
-            final BinaryTask<NodeDescription, ServiceInstallStatus> task = new BinaryTask<>(info, this::notifyListeners) {
-                @Override
-                public ServiceInstallStatus execute(NodeDescription node) {
-                    ServiceInstallStatus status = installer.installNewNode(node);
-                    try {
-                        node.setActive(true);
-                        node = localNodeProvider.update(node);
-                    } catch (Exception e) {
-                        logger.severe(String.format("Cannot update service status for '%s' on node [%s]",
-                                                    status.getServiceName(), node.getId()));
+        if (cfgProvider.getBooleanValue("openstack.execute.installers")) {
+            for (TopologyToolInstaller installer : installers) {
+                // execute all the installers
+                // Make execution synchronous, otherwise other commands sent to this machine may fail
+                //this.executorService.submit(new BinaryTask<NodeDescription, ServiceInstallStatus>(info, this::notifyListeners) {
+                final BinaryTask<NodeDescription, ServiceInstallStatus> task = new BinaryTask<>(info, this::notifyListeners) {
+                    @Override
+                    public ServiceInstallStatus execute(NodeDescription node) {
+                        ServiceInstallStatus status = installer.installNewNode(node);
+                        try {
+                            node.setActive(true);
+                            node = localNodeProvider.update(node);
+                        } catch (Exception e) {
+                            logger.severe(String.format("Cannot update service status for '%s' on node [%s]",
+                                                        status.getServiceName(), node.getId()));
+                        }
+                        return status;
                     }
-                    return status;
-                }
-            };
-            task.run();
+                };
+                task.run();
+            }
         }
         Message message = new Message();
         message.setTopic(Topic.TOPOLOGY.value());
