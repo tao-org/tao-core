@@ -343,7 +343,8 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     			logger.info(String.format("Error while computing the CPU and memory quota for the user %s. Error message: %s", principal.getName(), e.getMessage()));
             }
             if (availableNode == null) {
-                if (userNodes.stream().noneMatch(e -> e.getValue().getNode().getId().equals(strategy.getHostName()))) {
+                final Map.Entry<String, NodeRuntime> entry = userNodes.stream().filter(e -> e.getValue().getNode().getId().equals(strategy.getHostName())).findFirst().orElse(null);
+                if (entry == null) {
                     int nodeUserLimit = Integer.parseInt(ConfigurationManager.getInstance().getValue(NODE_USER_LIMIT_KEY, "1"));
                     if (canCreateNewNodes() && // if node creation is possible
                             ((this.nodeLimit == 0 && userNodes.size() < nodeUserLimit) || // and the user hasn't reached the limit
@@ -370,8 +371,9 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                         waitBeforeNextRetry();
                     }
                 } else {
-                    logger.fine("No processing node was found to be available. Will retry.");
-                    waitBeforeNextRetry();
+                    //logger.fine("No processing node was found to be available. Will retry.");
+                    //waitBeforeNextRetry();
+                    availableNode = entry.getValue().getNode();
                 }
             }
         } while (availableNode == null);
