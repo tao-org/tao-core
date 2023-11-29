@@ -205,6 +205,9 @@ public class TopologyManager {
                 };
                 task.run();
             }
+        } else {
+            info.setActive(true);
+            localNodeProvider.update(info);
         }
         Message message = new Message();
         message.setTopic(Topic.TOPOLOGY.value());
