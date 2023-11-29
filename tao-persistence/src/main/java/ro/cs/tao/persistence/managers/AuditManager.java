@@ -165,10 +165,11 @@ public class AuditManager extends EntityManager<LogEvent, Long, AuditRepository>
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         final Map<String, Integer> results = new HashMap<>();
         jdbcTemplate.query(con -> {
-              final PreparedStatement statement = con.prepareStatement("with task_duration as ( select id, extract(epoch from coalesce(end_time, now()) - start_time) as minutes " +
+              final PreparedStatement statement = con.prepareStatement("with task_duration as ( select id, end_time, extract(epoch from coalesce(end_time, now()) - start_time) as minutes " +
                                                                                "from execution.task) " +
                                                                                "select j.user_id, sum(d.minutes) as total from execution.task t " +
                                                                                "join execution.job j on j.id = t.job_id join task_duration d on d.id = t.id " +
+                                                                               "where ((d.end_time is NULL and t.execution_status_id = 2) or (d.end_time is not null)) " +
                                                                                "group by j.user_id order by j.user_id, total desc;");
               return statement;
           },
@@ -184,11 +185,11 @@ public class AuditManager extends EntityManager<LogEvent, Long, AuditRepository>
     public int getAggregatedUserProcessingTime(String userId) {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         return jdbcTemplate.query(con -> {
-               final PreparedStatement statement = con.prepareStatement("with task_duration as ( select id, extract(epoch from coalesce(end_time, now()) - start_time) as minutes " +
+               final PreparedStatement statement = con.prepareStatement("with task_duration as ( select id, end_time, extract(epoch from (coalesce(end_time, now()) - start_time)) as minutes " +
                                                                                 "from execution.task) " +
                                                                                 "select j.user_id, sum(d.minutes) as total from execution.task t " +
                                                                                 "join execution.job j on j.id = t.job_id join task_duration d on d.id = t.id " +
-                                                                                "where j.user_id = ? " +
+                                                                                "where j.user_id = ? and ((d.end_time is NULL and t.execution_status_id = 2) or (d.end_time is not null)) " +
                                                                                 "group by j.user_id order by j.user_id, total desc;");
                statement.setString(1, userId);
                return statement;
@@ -202,11 +203,11 @@ public class AuditManager extends EntityManager<LogEvent, Long, AuditRepository>
         return jdbcTemplate.query(con -> {
                                       final PreparedStatement statement = con.prepareStatement("with last_session as (select user_id, timestamp from common.audit " +
                                                                                                "where user_id = ? and event = 'Logout' order by timestamp desc limit 1), " +
-                                                                                               "task_duration as ( select t.id, extract(epoch from coalesce(t.end_time, now()) - t.start_time) as minutes from execution.task t " +
+                                                                                               "task_duration as ( select t.id, end_time, extract(epoch from (coalesce(t.end_time, now()) - t.start_time)) as minutes from execution.task t " +
                                                                                                "join execution.job j on j.id = t.job_id join last_session s on s.user_id = j.user_id where t.start_time >= s.timestamp) " +
                                                                                                "select j.user_id, sum(d.minutes) as total from execution.task t " +
                                                                                                "join execution.job j on j.id = t.job_id join task_duration d on d.id = t.id " +
-                                                                                               "where j.user_id = ? " +
+                                                                                               "where j.user_id = ? and ((d.end_time is NULL and t.execution_status_id = 2) or (d.end_time is not null)) " +
                                                                                                "group by j.user_id order by j.user_id, total desc;");
                                       statement.setString(1, userId);
                                       statement.setString(2, userId);
