@@ -287,7 +287,12 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                             logger.warning(e.getMessage());
                         }
                     }
-                    builder.setLength(builder.length() - 1);
+                    if (builder.length() > 0) {
+                        builder.setLength(builder.length() - 1);
+                    } else {
+                        logger.warning("Either the product set is empty or the files don't exist on the disk");
+                        status = ExecutionStatus.CANCELLED;
+                    }
                     // Persist any targets of the symlinks, together with the symlink path.
                     // They will be restored at the end of the job.
                     final TargetDescriptor targetDescriptor = dataSourceComponent.getTargets().stream()
