@@ -21,8 +21,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.datasource.beans.Query;
+import ro.cs.tao.eodata.enums.Visibility;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.WorkflowProvider;
 import ro.cs.tao.persistence.repository.WorkflowDescriptorRepository;
@@ -138,7 +140,14 @@ public class WorkflowManager extends EntityManager<WorkflowDescriptor, Long, Wor
 
     @Override
     public List<WorkflowDescriptor> listUserVisible(String userId) {
-        return repository.getUserVisibleWorkflows(userId);
+        final List<WorkflowDescriptor> workflows = repository.getUserWorkflows(userId);
+        final String value = ConfigurationManager.getInstance().getValue("other.workflows.visibility");
+        if (value != null && Enum.valueOf(Visibility.class, value.toUpperCase()).equals(Visibility.SUBSCRIPTION)) {
+            workflows.addAll(repository.getSubscribedWorkflows(userId));
+        } else {
+            workflows.addAll(repository.getOtherPublicWorkflows(userId));
+        }
+        return workflows;
     }
 
     @Override
