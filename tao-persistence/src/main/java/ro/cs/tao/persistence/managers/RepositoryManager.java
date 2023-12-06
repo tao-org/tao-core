@@ -29,6 +29,11 @@ public class RepositoryManager extends EntityManager<Repository, String, Reposit
     }
 
     @Override
+    public List<Repository> getUserSystemRepositories(String userId) {
+        return repository.getUserSystemRepositories(userId);
+    }
+
+    @Override
     protected String identifier() {
         return "id";
     }
