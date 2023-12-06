@@ -140,6 +140,12 @@ public class PersistenceManager {
     @Autowired
     private ResourceUsageReportManager resourceUsageReportManager;
 
+    @Autowired
+    private WorkflowSubscriptionManager workflowSubscriptionManager;
+
+    @Autowired
+    private DataSubscriptionManager dataSubscriptionManager;
+
     @PostConstruct
     public void initialize() {
         componentCache = SimpleCache.create(String.class, ProcessingComponent.class,
@@ -217,4 +223,8 @@ public class PersistenceManager {
     public ResourceUsageManager resourceUsage() { return resourceUsageManager; }
 
     public ResourceUsageReportManager resourceUsageReport() { return resourceUsageReportManager; }
+
+    public WorkflowSubscriptionManager workflowSubscription() { return workflowSubscriptionManager; }
+
+    public DataSubscriptionManager dataSubscription() { return dataSubscriptionManager; }
 }

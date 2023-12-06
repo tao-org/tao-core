@@ -27,15 +27,20 @@ import javax.xml.bind.annotation.XmlEnumValue;
 @XmlEnum(Integer.class)
 public enum Visibility implements TaoEnum<Integer> {
     /**
-     * The workflow is public
+     * The workflow is public, any user can see/use it
      */
     @XmlEnumValue("1")
     PUBLIC(1, "Public"),
     /**
-     * The workflow is private (visible only to the author)
+     * The workflow is private (visible only by the author)
      */
     @XmlEnumValue("2")
-    PRIVATE(2, "Private");
+    PRIVATE(2, "Private"),
+    /**
+     * The workflow is visible only by the users who subscribed to use it
+     */
+    @XmlEnumValue("3")
+    SUBSCRIPTION(3, "Subscription");
 
     private final int value;
     private final String description;

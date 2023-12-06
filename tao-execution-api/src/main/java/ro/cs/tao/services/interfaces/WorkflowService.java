@@ -84,9 +84,35 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
     /**
      * Returns all the workflows visible to the given user.
      * The list consists in all the workflows of the user plus the published workflows of other users.
+     * @param userId  The user identifier
      * @return The workflow information list (not the full workflow structures)
      */
-    List<WorkflowInfo> getUserVisibleWorkflows(String user);
+    List<WorkflowInfo> getUserVisibleWorkflows(String userId);
+
+    /**
+     * Returns the workflows to which a user has subscribed.
+     * @param userId  The user identifier
+     * @return The workflow information list (not the full workflow structures)
+     */
+    List<WorkflowInfo> getUserSubscribedWorkflows(String userId);
+
+    /**
+     * Subscribes a user to a workflow (created by other user).
+     * The prerequisites are that the workflow has the status 'Published' and has the visibility 'Subscription'
+     * @param userId        The user identifier
+     * @param workflowId    The workflow identifier
+     *
+     * @return  The identifier of the created subscription
+     */
+    long subscribeToWorkflow(String userId, long workflowId);
+    /**
+     * Unsubscribes a user from a workflow.
+     *
+     * @param userId        The user identifier
+     * @param workflowId    The workflow identifier
+     */
+    void unsubscribeFromWorkflow(String userId, long workflowId);
+
     /**
      * Adds a node to a workflow.
      * @param workflowId    The workflow identifier

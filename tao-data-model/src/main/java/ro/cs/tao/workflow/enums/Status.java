@@ -32,7 +32,7 @@ public enum Status implements TaoEnum<Integer> {
     @XmlEnumValue("1")
     DRAFT(1, "Draft"),
     /**
-     * The workflow is validated and ready to be executed, and may still be edited
+     * The workflow is validated and ready to be executed, and may not be edited
      */
     @XmlEnumValue("2")
     READY(2, "Ready for Publication"),
