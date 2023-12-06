@@ -144,7 +144,7 @@ public class Orchestrator extends Notifiable {
     private final ExecutorService messageWorker = Executors.newFixedThreadPool(1);
     private final Set<Long> runningTasks;
     private final AtomicInteger activeJobs;
-    private final JobCompletedListener jobListener;
+    private final List<JobCompletedListener> jobListeners;
 
     private String uuid;
     private final Object lock;
@@ -168,7 +168,8 @@ public class Orchestrator extends Notifiable {
         this.jobQueueWorker = new JobQueueWorker(this.jobQueue);
         this.jobQueueWorker.setOrchestrator(this);
         this.activeJobs = new AtomicInteger(0);
-        this.jobListener = new JobListener(this);
+        this.jobListeners = new ArrayList<>();
+        addJobListener(new JobListener(this));
         try {
             final NodeDescription masterNode = bridgedServices.getService(NodeProvider.class).get(Inet4Address.getLocalHost().getHostName());
             this.uuid = masterNode.getAppId();
@@ -412,7 +413,7 @@ public class Orchestrator extends Notifiable {
                 status == ExecutionStatus.RUNNING ||
                 status == ExecutionStatus.PENDING_FINALISATION ||
                 status == ExecutionStatus.SUSPENDED) {
-                this.jobListener.onCompleted(job);
+                notifyJobListeners(job);
             }
         }
     }
@@ -709,7 +710,7 @@ public class Orchestrator extends Notifiable {
                                                                    " failed after %ss"),
                                                    job.getName(), job.getUserId(), time != null ? time.getSeconds() : "<unknown>");
                         logger.info(msg);
-                        jobListener.onCompleted(job);
+                        notifyJobListeners(job);
                         Messaging.send(new UserPrincipal(job.getUserId()), Topic.EXECUTION.value(), this, msg);
                         tryRestoreSymlinks(job);
                         tryRemoveTemporaryWorkflow(job);
@@ -775,7 +776,7 @@ public class Orchestrator extends Notifiable {
             Messaging.send(new UserPrincipal(job.getUserId()), Topic.EXECUTION.value(), this, msg);
             cleanupTransientComponents(job);
         } finally {
-            jobListener.onCompleted(job);
+            notifyJobListeners(job);
         }
     }
 
@@ -1544,6 +1545,20 @@ public class Orchestrator extends Notifiable {
         }
     }
 
+    public void addJobListener(JobCompletedListener listener) {
+        this.jobListeners.add(listener);
+    }
+
+    private void notifyJobListeners(ExecutionJob job) {
+        this.jobListeners.forEach(l -> {
+            try {
+                l.onCompleted(job);
+            } catch (Exception e) {
+                logger.severe(e.getMessage());
+            }
+        });
+    }
+
     /**
      * Moves a job one position closer to the head of the "user" queue (the job position in the queue is swapped with
      * the one of the job of the same user that is closer to the head.
@@ -1686,8 +1701,12 @@ public class Orchestrator extends Notifiable {
                 for (String host : hosts) {
                     if (!StringUtilities.isNullOrEmpty(host)) {
                         try {
-                            TopologyManager.getInstance().removeNode(host);
-                            logger.fine(String.format("Node %s destroyed", host));
+                            final TopologyManager topologyManager = TopologyManager.getInstance();
+                            final NodeDescription node = topologyManager.getNode(host);
+                            if (Boolean.TRUE.equals(node.getVolatile())) {
+                                topologyManager.removeNode(host);
+                                logger.fine(String.format("Node %s destroyed", host));
+                            }
                         } catch (Throwable e) {
                             logger.severe(() -> String.format("Cannot destroy host %s. Reason: %s", host, e.getMessage()));
                         }
