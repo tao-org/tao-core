@@ -1010,6 +1010,9 @@
             <basic name="zoom">
                 <column name="zoom" nullable="true" column-definition="real NULL"/>
             </basic>
+            <basic name="temporary">
+                <column name="temporary" nullable="true" column-definition="boolean DEFAULT false"/>
+            </basic>
             <basic name="tags">
                 <column name="tags" nullable="true" column-definition="text NULL"/>
             </basic>
