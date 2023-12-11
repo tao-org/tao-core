@@ -46,8 +46,8 @@ public interface WorkflowDescriptorRepository extends PagingAndSortingRepository
             "AND status_id = 3 ORDER BY created DESC", nativeQuery = true)
     List<WorkflowDescriptor> getOtherPublicWorkflows(@Param("userId") String userId);
 
-    @Query(value = "SELECT * from workflow.graph WHERE visibility_id = 1 AND status_id = 3 " +
-            "ORDER BY created DESC", nativeQuery = true)
+    @Query(value = "select w.* from workflow.graph w join usr.user u on u.id = w.user_id join usr.user_group g on g.user_id = u.id " +
+            "where g.group_id = 1 and w.status_id = 3 and w.visibility_id = 1 order by w.name ", nativeQuery = true)
     List<WorkflowDescriptor> getPublicWorkflows();
 
     @Query(value = "SELECT * from workflow.graph WHERE user_id = :userId ORDER BY created DESC", nativeQuery = true)
