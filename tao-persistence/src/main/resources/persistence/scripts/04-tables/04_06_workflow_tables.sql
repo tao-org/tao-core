@@ -51,7 +51,8 @@ CREATE TABLE workflow.graph
 	custom_values json NULL,
 	tags text NULL,
 	created_from_graph_id bigint,
-	active boolean NULL DEFAULT true
+	active boolean NULL DEFAULT true,
+	temporary boolean NULL DEFAULT false
 );
 ALTER TABLE workflow.graph ADD CONSTRAINT PK_workflow PRIMARY KEY (id);
 ALTER TABLE workflow.graph ADD CONSTRAINT FK_workflow_graph_status

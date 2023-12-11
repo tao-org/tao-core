@@ -1470,7 +1470,7 @@ public class Orchestrator extends Notifiable {
 
     private void tryRemoveTemporaryWorkflow(ExecutionJob job) {
         final WorkflowDescriptor workflow = workflowProvider.get(job.getWorkflowId());
-        if (workflow.getCreatedFromWorkflowId() != null) {
+        if (workflow.isTemporary()) {
             synchronized (lock) {
                 final List<ExecutionJob> jobs = jobProvider.listByWorkflow(workflow.getId());
                 if (jobs.stream().allMatch(j -> j.getExecutionStatus() == ExecutionStatus.FAILED ||
