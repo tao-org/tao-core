@@ -4,6 +4,7 @@ import ro.cs.tao.execution.model.*;
 import ro.cs.tao.persistence.EntityProvider;
 import ro.cs.tao.persistence.PersistenceException;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface ExecutionTaskProvider extends EntityProvider<ExecutionTask, Long> {
@@ -12,6 +13,7 @@ public interface ExecutionTaskProvider extends EntityProvider<ExecutionTask, Lon
     List<ExecutionTask> listExecuting(String applicationId);
     List<ExecutionTask> listRemoteExecuting();
     List<ExecutionTask> listByHost(String hostName);
+    int countByHostSince(String hostName, LocalDateTime since);
     List<ExecutionTask> getDataSourceTasks(long jobId);
     List<ExecutionTaskSummary> getTasksStatus(long jobId);
     ExecutionTaskSummary getTaskStatus(long taskId);

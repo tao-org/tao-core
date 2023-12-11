@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.execution.model.ExecutionTask;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -52,9 +53,13 @@ public interface ExecutionTaskRepository extends PagingAndSortingRepository<Exec
     @Transactional(readOnly = true)
     List<ExecutionTask> getRemoteExecutingTasks();
 
-    @Query(value = "SELECT * FROM execution.task WHERE execution_status_id IN (1, 2) AND execution_node_host_name = :host", nativeQuery = true)
+    @Query(value = "SELECT * FROM execution.task WHERE execution_status_id IN (1, 2, 7) AND execution_node_host_name = :host", nativeQuery = true)
     @Transactional(readOnly = true)
     List<ExecutionTask> getTasksByHost(@Param("host") String host);
+
+    @Query(value = "SELECT COUNT(id) FROM execution.task WHERE execution_status_id IN (1, 2, 7) AND execution_node_host_name = :host AND (start_time >= :since OR COALESCE(last_updated, start_time) >= :since)", nativeQuery = true)
+    @Transactional(readOnly = true)
+    int getRunningTaskCountByHostSince(@Param("host") String host, @Param("since") LocalDateTime since);
 
     @Query(value = "SELECT t.* FROM execution.task t JOIN component.data_source_component c ON c.id = t.component_id WHERE t.job_id = :jobId", nativeQuery = true)
     List<ExecutionTask> getDataSourceTasks(@Param("jobId") long jobId);
