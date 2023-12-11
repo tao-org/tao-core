@@ -1696,7 +1696,8 @@ public class Orchestrator extends Notifiable {
         public void onCompleted(ExecutionJob job) {
             instance.decrementActiveJobs();
             // finally, remove any volatile node if the mode is configured
-            if (ConfigurationManager.getInstance().getBooleanValue("topology.remove.node.after.execution")) {
+            final String value = ConfigurationManager.getInstance().getValue("topology.remove.node.after.execution.delay");
+            if (!StringUtilities.isNullOrEmpty(value) && Integer.parseInt(value) == 0) {
                 final List<String> hosts = job.getTasks().stream().map(ExecutionTask::getExecutionNodeHostName).collect(Collectors.toList());
                 for (String host : hosts) {
                     if (!StringUtilities.isNullOrEmpty(host)) {
