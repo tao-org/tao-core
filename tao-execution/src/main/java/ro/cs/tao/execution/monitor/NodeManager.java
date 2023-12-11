@@ -5,7 +5,6 @@ import ro.cs.tao.configuration.ConfigurationProvider;
 import ro.cs.tao.execution.local.DefaultSessionFactory;
 import ro.cs.tao.execution.model.ExecutionStrategy;
 import ro.cs.tao.execution.model.ExecutionStrategyType;
-import ro.cs.tao.execution.model.ExecutionTask;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.Messaging;
@@ -29,7 +28,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.Principal;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.Future;
@@ -52,7 +50,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     private static final String OPENSTACK_NODE_USER_KEY = "openstack.node.user";
     private static final String USE_MASTER_FOR_EXECUTION_KEY = "topology.use.master.for.execution";
     private static final String NODE_CONNECTION_RETRIES_KEY = "topology.node.connection.retries";
-    private static final String IDLE_NODE_POLLING_INTERVAL_KEY = "topology.node.without.tasks.polling.interval";
+    //private static final String IDLE_NODE_POLLING_INTERVAL_KEY = "topology.node.without.tasks.polling.interval";
     private static final String SSH_KEY = "topology.node.ssh.key";
 
     private static final int concurrentCalls;
@@ -62,8 +60,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     private static final long pollInterval;
     private static final NamedThreadPoolExecutor executor;
     private static final int DEFAULT_NODE_WAIT_TIME = 20000;
-    private static final int DEFAULT_KEEP_ALIVE_SECONDS = 1800;
-    private static final int POLLING_NODE_WITHOUT_TASKS_SECONDS = 20;
+    //private static final int POLLING_NODE_WITHOUT_TASKS_SECONDS = 20;
     private String appId;
     private int nodeLimit;
     private NodeProvider nodeProvider;
@@ -607,21 +604,10 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                                     nodes.remove(h);
                                     return;
                                 }
-                                final List<ExecutionTask> tasks = taskProvider.listByHost(h);
+                                /*final List<ExecutionTask> tasks = taskProvider.listByHost(h);
                                 boolean isNodeWithoutTasks = (tasks == null || tasks.isEmpty());
                                 final LocalDateTime time = nodeRuntime.getNextKeepAlive();
                                 final LocalDateTime now = LocalDateTime.now();
-                                if (time != null && !time.isBefore(now)) {
-                                    Boolean isVolatile = nodeRuntime.getNode().getVolatile();
-                                    if (isNodeWithoutTasks && (isVolatile != null && isVolatile) &&
-                                            Duration.between(now, time).getSeconds() < pollInterval) {
-                                        uninstallNode(nodeRuntime.getNode());
-                                        return;
-                                    } else {
-                                        nodeRuntime.setNextKeepAlive(now.plusSeconds(DEFAULT_KEEP_ALIVE_SECONDS));
-                                    }
-                                }
-
                                 boolean canReadNodeInfo = true;
                                 if (isNodeWithoutTasks) {
                                     if (nodeRuntime.getLastUpdatedTimeMilliseconds() > 0) {
@@ -634,8 +620,8 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                                             canReadNodeInfo = false;
                                         }
                                     }
-                                }
-                                if (canReadNodeInfo) {
+                                }*/
+                                //if (canReadNodeInfo) {
                                     RuntimeInfo runtimeInfo = null;
                                     try {
                                         runtimeInfo = readNodeRuntimeInfo(nodeRuntime.getNode());
@@ -656,7 +642,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                                                    nodeRuntime.node.getId(),
                                                    JsonMapper.instance().writeValueAsString(runtimeInfo),
                                                    false);
-                                }
+                                //}
                             }
                         } catch (Exception exception) {
                             logger.log(Level.SEVERE, "Cannot update node information '" + h + "': " + ExceptionUtils.getExceptionLoggingMessage(exception, 1));
@@ -695,17 +681,18 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                             }
                         } else {
                             // the node already exists in the list
-                            if (!node.getActive()) {
+                            final boolean isVolatile = Boolean.TRUE.equals(nodeRuntime.getNode().getVolatile());
+                            if (!node.getActive() && !isVolatile) {
                                 nodeRuntime.setRuntimeInfo(buildDefaultRuntimeInfo(flavor.getDisk(), flavor.getMemory(), cpuTotal));
                             } else {
-                                Boolean isVolatile = nodeRuntime.getNode().getVolatile();
                                 // Volatile nodes should be destroyed if no task is running on them for a while
-                                if (isVolatile != null && isVolatile) {
-                                    final LocalDateTime now = LocalDateTime.now();
-                                    if (taskProvider.countByHostSince(host, now.minusSeconds(DEFAULT_KEEP_ALIVE_SECONDS)) == 0) {
-                                        uninstallNode(nodeRuntime.getNode());
-                                        nodes.remove(host);
-                                    }
+                                final LocalDateTime now = LocalDateTime.now();
+                                int keepAlive = Integer.parseInt(ConfigurationManager.getInstance()
+                                                                                     .getValue("topology.remove.node.after.execution.delay",
+                                                                                               "1800"));
+                                if (taskProvider.countByHostSince(host, now.minusSeconds(keepAlive)) == 0) {
+                                    uninstallNode(nodeRuntime.getNode());
+                                    nodes.remove(host);
                                 }
                             }
                         }
@@ -737,14 +724,12 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         private RuntimeInfo runtimeInfo;
         private final NodeDescription node;
         private long lastUpdatedTimeMilliseconds;
-        private LocalDateTime nextKeepAlive;
         private int failedAttempts;
 
         public NodeRuntime(NodeDescription node, RuntimeInfo runtimeInfo) {
             this.node = node;
             this.runtimeInfo = runtimeInfo;
             this.lastUpdatedTimeMilliseconds = 0L;
-            this.nextKeepAlive = LocalDateTime.now().plusSeconds(DEFAULT_KEEP_ALIVE_SECONDS);
         }
 
         public long getLastUpdatedTimeMilliseconds() {
@@ -765,14 +750,6 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
 
         public NodeDescription getNode() {
             return node;
-        }
-
-        public LocalDateTime getNextKeepAlive() {
-            return nextKeepAlive;
-        }
-
-        public void setNextKeepAlive(LocalDateTime nextKeepAlive) {
-            this.nextKeepAlive = nextKeepAlive;
         }
 
         public int getFailedAttempts() {
