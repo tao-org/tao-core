@@ -701,16 +701,10 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                                 Boolean isVolatile = nodeRuntime.getNode().getVolatile();
                                 // Volatile nodes should be destroyed if no task is running on them for a while
                                 if (isVolatile != null && isVolatile) {
-                                    final List<ExecutionTask> tasks = taskProvider.listByHost(node.getId());
                                     final LocalDateTime now = LocalDateTime.now();
-                                    if (tasks == null || tasks.isEmpty()) {
-                                        final LocalDateTime lastKeepAlive = nodeRuntime.getNextKeepAlive();
-                                        if (lastKeepAlive != null && lastKeepAlive.isBefore(now)) { // keep-alive time expired
-                                            uninstallNode(nodeRuntime.getNode());
-                                            nodes.remove(host);
-                                        } else if (lastKeepAlive == null) { // keep-alive was not set, it's the first time
-                                            nodeRuntime.setNextKeepAlive(now.plusSeconds(DEFAULT_KEEP_ALIVE_SECONDS));
-                                        }
+                                    if (taskProvider.countByHostSince(host, now.minusSeconds(DEFAULT_KEEP_ALIVE_SECONDS)) == 0) {
+                                        uninstallNode(nodeRuntime.getNode());
+                                        nodes.remove(host);
                                     }
                                 }
                             }

@@ -98,6 +98,9 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
     public List<ExecutionTask> listByHost(String hostName) { return repository.getTasksByHost(hostName); }
 
     @Override
+    public int countByHostSince(String hostName, LocalDateTime since) { return repository.getRunningTaskCountByHostSince(hostName, since); }
+
+    @Override
     public List<ExecutionTask> getDataSourceTasks(long jobId) {
         return repository.getDataSourceTasks(jobId);
     }
