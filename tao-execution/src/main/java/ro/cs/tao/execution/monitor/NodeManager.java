@@ -682,17 +682,25 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                         } else {
                             // the node already exists in the list
                             final boolean isVolatile = Boolean.TRUE.equals(nodeRuntime.getNode().getVolatile());
-                            if (!node.getActive() && !isVolatile) {
+                            if (!node.getActive()) {
                                 nodeRuntime.setRuntimeInfo(buildDefaultRuntimeInfo(flavor.getDisk(), flavor.getMemory(), cpuTotal));
                             } else {
-                                // Volatile nodes should be destroyed if no task is running on them for a while
-                                final LocalDateTime now = LocalDateTime.now();
-                                int keepAlive = Integer.parseInt(ConfigurationManager.getInstance()
-                                                                                     .getValue("topology.remove.node.after.execution.delay",
-                                                                                               "1800"));
-                                if (taskProvider.countByHostSince(host, now.minusSeconds(keepAlive)) == 0) {
-                                    uninstallNode(nodeRuntime.getNode());
-                                    nodes.remove(host);
+                                if (isVolatile) {
+                                    // Volatile nodes should be destroyed if no task is running on them for a while
+                                    final LocalDateTime now = LocalDateTime.now();
+                                    int keepAlive = Integer.parseInt(ConfigurationManager.getInstance()
+                                                                                         .getValue("topology.remove.node.after.execution.delay",
+                                                                                                   "1800"));
+                                    if (taskProvider.countByHostSince(host, now.minusSeconds(keepAlive)) == 0) {
+                                        uninstallNode(nodeRuntime.getNode());
+                                        nodes.remove(host);
+                                    } else {
+                                        // refresh the node information
+                                        nodes.get(host).setNode(nodeProvider.getNode(host));
+                                    }
+                                } else {
+                                    // refresh the node information
+                                    nodes.get(host).setNode(nodeProvider.getNode(host));
                                 }
                             }
                         }
@@ -722,7 +730,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
 
     public static class NodeRuntime {
         private RuntimeInfo runtimeInfo;
-        private final NodeDescription node;
+        private NodeDescription node;
         private long lastUpdatedTimeMilliseconds;
         private int failedAttempts;
 
@@ -746,6 +754,10 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
 
         public void setRuntimeInfo(RuntimeInfo runtimeInfo) {
             this.runtimeInfo = runtimeInfo;
+        }
+
+        public void setNode(NodeDescription node) {
+            this.node = node;
         }
 
         public NodeDescription getNode() {
