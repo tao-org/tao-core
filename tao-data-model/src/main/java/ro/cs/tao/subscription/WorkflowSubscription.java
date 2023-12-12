@@ -1,4 +1,4 @@
-package ro.cs.tao.workflow;
+package ro.cs.tao.subscription;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;

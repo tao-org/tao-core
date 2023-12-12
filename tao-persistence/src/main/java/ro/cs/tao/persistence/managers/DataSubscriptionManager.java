@@ -4,9 +4,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-import ro.cs.tao.eodata.DataSubscription;
 import ro.cs.tao.persistence.DataSubscriptionProvider;
 import ro.cs.tao.persistence.repository.DataSubscriptionRepository;
+import ro.cs.tao.subscription.DataSubscription;
 import ro.cs.tao.utils.StringUtilities;
 
 import java.util.List;

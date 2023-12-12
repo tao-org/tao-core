@@ -30,3 +30,38 @@ DROP SEQUENCE IF EXISTS subscription.dataset_id_seq CASCADE;
 CREATE SEQUENCE subscription.dataset_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
 ALTER TABLE subscription.dataset ALTER COLUMN id SET DEFAULT nextval('subscription.dataset_id_seq');
 ALTER SEQUENCE subscription.dataset_id_seq OWNED BY subscription.dataset.id;
+
+-------------------------------------------------------------------------------
+-- table: subscription.subscription_type
+DROP TABLE IF EXISTS subscription.subscription_type;
+CREATE TABLE IF NOT EXISTS subscription.subscription_type
+(
+    id smallint NOT NULL,
+    name varchar NOT NULL
+);
+ALTER TABLE subscription.subscription_type ADD CONSTRAINT PK_subscription_type PRIMARY KEY (id);
+
+-------------------------------------------------------------------------------
+-- table: subscription.user_subscription
+DROP TABLE IF EXISTS subscription.user_subscription;
+CREATE TABLE IF NOT EXISTS subscription.user_subscription
+(
+    id bigint NOT NULL,
+    user_id varchar NOT NULL,
+    type_id smallint NOT NULL,
+    flavor_id varchar NOT NULL,
+    flavor_quantity smallint NOT NULL,
+    flavor_hdd_quantity_GB smallint,
+    flavor_ssd_quantity_GB smallint,
+    object_storage_GB smallint,
+    paid boolean NULL DEFAULT false,
+    created timestamp without time zone NULL DEFAULT now(),
+    ended timestamp without time zone NULL
+);
+ALTER TABLE subscription.user_subscription ADD CONSTRAINT PK_user_subscription PRIMARY KEY (id);
+DROP SEQUENCE IF EXISTS subscription.user_subscription_id_seq CASCADE;
+CREATE SEQUENCE subscription.user_subscription_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE subscription.user_subscription ALTER COLUMN id SET DEFAULT nextval('subscription.user_subscription_id_seq');
+ALTER SEQUENCE subscription.user_subscription_id_seq OWNED BY subscription.user_subscription.id;
+ALTER TABLE subscription.user_subscription ADD CONSTRAINT FK_user_subscription_type
+    FOREIGN KEY (type_id) REFERENCES subscription.subscription_type (id) ON DELETE No Action ON UPDATE No Action;

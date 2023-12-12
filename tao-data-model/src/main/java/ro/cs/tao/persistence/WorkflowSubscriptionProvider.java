@@ -1,6 +1,6 @@
 package ro.cs.tao.persistence;
 
-import ro.cs.tao.workflow.WorkflowSubscription;
+import ro.cs.tao.subscription.WorkflowSubscription;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package ro.cs.tao.eodata;
+package ro.cs.tao.subscription;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
