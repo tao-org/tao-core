@@ -15,4 +15,22 @@ public interface ResourceSubscriptionRepository extends PagingAndSortingReposito
 
     List<ResourceSubscription> findByUserId(String userId);
 
+    /**
+     * The delete* methods are overridden because subscriptions cannot be deleted
+     */
+
+    @Override
+    default void deleteById(Long aLong) { }
+
+    @Override
+    default void delete(ResourceSubscription entity) { }
+
+    @Override
+    default void deleteAllById(Iterable<? extends Long> longs) { }
+
+    @Override
+    default void deleteAll(Iterable<? extends ResourceSubscription> entities) { }
+
+    @Override
+    default void deleteAll() { }
 }
