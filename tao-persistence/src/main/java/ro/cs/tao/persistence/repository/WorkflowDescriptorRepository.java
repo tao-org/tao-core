@@ -53,6 +53,6 @@ public interface WorkflowDescriptorRepository extends PagingAndSortingRepository
     @Query(value = "SELECT * from workflow.graph WHERE user_id = :userId ORDER BY created DESC", nativeQuery = true)
     List<WorkflowDescriptor> getUserWorkflows(@Param("userId") String userId);
 
-    @Query(value = "SELECT g.* from workflow.graph g WHERE s.user_id = :userId ORDER BY g.created DESC", nativeQuery = true)
+    @Query(value = "SELECT g.* from workflow.graph g JOIN subscription.workflow s on s.workflow_id = g.id WHERE s.user_id = :userId ORDER BY g.name DESC", nativeQuery = true)
     List<WorkflowDescriptor> getSubscribedWorkflows(@Param("userId") String userId);
 }

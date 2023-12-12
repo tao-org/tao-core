@@ -1,6 +1,6 @@
 package ro.cs.tao.persistence;
 
-import ro.cs.tao.eodata.DataSubscription;
+import ro.cs.tao.subscription.DataSubscription;
 
 import java.util.List;
 

@@ -291,3 +291,8 @@ INSERT INTO config.config (category_id, id, value, friendly_name, type, label, "
 (8, 'datasource.filter.category', null, 'Category filter', 'string', 'Category filter', null, now()),
 (8, 'datasource.filter.collection', null, 'Collection filter', 'string', 'Collection filter', null, now()),
 (8, 'datasource.filter.provider', null, 'Provider filter', 'string', 'Provider filter', null, now());
+
+-- Subscriptions
+INSERT INTO subscription.subscription_type VALUES
+(1, 'Fixed resources'),
+(2, 'Pay per use');

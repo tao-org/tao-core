@@ -6,8 +6,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import ro.cs.tao.persistence.WorkflowSubscriptionProvider;
 import ro.cs.tao.persistence.repository.WorkflowSubscriptionRepository;
+import ro.cs.tao.subscription.WorkflowSubscription;
 import ro.cs.tao.utils.StringUtilities;
-import ro.cs.tao.workflow.WorkflowSubscription;
 
 import java.util.List;
 
