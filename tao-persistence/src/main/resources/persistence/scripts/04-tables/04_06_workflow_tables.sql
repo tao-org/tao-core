@@ -40,6 +40,7 @@ CREATE TABLE workflow.graph
 (
 	id bigint NOT NULL,
 	name varchar(250) NOT NULL,
+	description varchar,
 	created timestamp NULL DEFAULT now(),
 	user_id varchar(50) NOT NULL,
 	definition_path varchar(512) NULL,
@@ -73,6 +74,7 @@ CREATE TABLE workflow.graph_node
 (
 	id bigint NOT NULL,
 	name varchar(250) NULL,
+	description varchar,
 	created timestamp NULL DEFAULT now(),
 	workflow_id bigint NOT NULL,
 	node_level integer NOT NULL,

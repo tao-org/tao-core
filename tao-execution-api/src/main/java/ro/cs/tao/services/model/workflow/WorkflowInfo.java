@@ -27,6 +27,7 @@ public class WorkflowInfo {
 
     protected Long id;
     private final String name;
+    private final String description;
     private final String userId;
     private final Visibility visibility;
     protected final Status status;
@@ -43,6 +44,7 @@ public class WorkflowInfo {
         this.path = workflow.getPath();
         this.active = workflow.isActive();
         this.name = workflow.getName();
+        this.description = workflow.getDescription();
         this.created = workflow.getCreated();
         this.tags = workflow.getTags();
     }
@@ -50,6 +52,8 @@ public class WorkflowInfo {
     public Long getId() { return id; }
 
     public String getName() { return name; }
+
+    public String getDescription() { return description; }
 
     public String getUserId() { return userId; }
 
