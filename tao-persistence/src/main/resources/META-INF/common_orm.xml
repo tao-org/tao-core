@@ -95,7 +95,10 @@
     <mapped-superclass class="ro.cs.tao.workflow.GraphObject" access="PROPERTY">
         <attributes>
             <basic name="name">
-                <column name="name" nullable="false" column-definition="character varying(250) NULL"/>
+                <column name="name" nullable="true" column-definition="varchar(250)"/>
+            </basic>
+            <basic name="description">
+                <column name="description" nullable="true" column-definition="varchar"/>
             </basic>
 
             <basic name="customValues">
