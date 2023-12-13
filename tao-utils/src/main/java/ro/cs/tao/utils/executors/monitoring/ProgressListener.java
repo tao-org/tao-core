@@ -51,6 +51,11 @@ public interface ProgressListener {
     default void ended() { }
 
     /**
+     * Signals that the current activity (task) has completed with a status
+     */
+    default void ended(boolean succeeded) { ended(); }
+
+    /**
      * Signals the current progress of the activity.
      * @param progressValue The progress value (between 0 and 1).
      */
