@@ -16,7 +16,7 @@ INSERT INTO common.tag_type (id, description) VALUES
 
 -- Condition
 INSERT INTO component.condition (id, description) VALUES
-(1, 'Equals'), (2, 'Not equals'), (3, 'Less than'), (4, 'Less than or equal'), (5, 'Greater than'), (6, 'Greater than or equals'), (7, 'In'), (8, 'Not in');
+(1, 'Equals'), (2, 'Not equals'), (3, 'Less than'), (4, 'Less than or equal'), (5, 'Greater than'), (6, 'Greater than or equals'), (7, 'In'), (8, 'Not in'), (9, 'Not set'), (10, 'Set');
 
 -- Container type
 INSERT INTO component.container_type (id, description) VALUES
