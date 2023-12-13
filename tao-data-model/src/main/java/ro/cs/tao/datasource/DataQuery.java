@@ -18,7 +18,6 @@ package ro.cs.tao.datasource;
 import org.locationtech.jts.geom.Geometry;
 import ro.cs.tao.component.ParameterDependency;
 import ro.cs.tao.component.StringIdentifiable;
-import ro.cs.tao.component.enums.Condition;
 import ro.cs.tao.datasource.converters.ConversionException;
 import ro.cs.tao.datasource.converters.ConverterFactory;
 import ro.cs.tao.datasource.param.CommonParameterNames;
@@ -408,6 +407,7 @@ public abstract class DataQuery extends StringIdentifiable {
                     }
                     ParameterDependency dependency = deps.get(refParam.getValueAsString());
                     QueryParameter<?> currentParam = actualParameters.get(entry.getKey());
+                    boolean hasError = false;
                     switch (dependency.getDependencyType()) {
                         case EXCLUSIVE:
                             errors.add(entry.getKey() + " cannot be set if " + dependency.getReferencedParameterId() + " is not set");
@@ -417,9 +417,7 @@ public abstract class DataQuery extends StringIdentifiable {
                             String allowedValues = dependency.getAllowedValues();
                             final Set<String> aValues = allowedValues != null ? Arrays.stream(allowedValues.split(",")).collect(Collectors.toSet()) : new HashSet<>();
                             final Set<String> expValues = Arrays.stream(expectedValue.split(",")).collect(Collectors.toSet());
-                            Condition condition = dependency.getCondition();
-                            boolean hasError = false;
-                            switch (condition) {
+                            switch (dependency.getCondition()) {
                                 case EQ:
                                     hasError = !expectedValue.equals(refParam.getValueAsString());
                                     break;
@@ -448,13 +446,34 @@ public abstract class DataQuery extends StringIdentifiable {
                             if (hasError) {
                                 errors.add(String.format("%s cannot be set to %s if %s %s %s",
                                         entry.getKey(), currentParam.getValueAsString(),
-                                        refParam.getName(), condition.friendlyName().toLowerCase(), refParam.getValue()));
+                                        refParam.getName(), dependency.getCondition().friendlyName().toLowerCase(), refParam.getValue()));
                             }
                             if (!aValues.contains(currentParam.getValueAsString())) {
                                 errors.add(String.format("Value %s of %s not allowed when %s %s %s",
                                         currentParam.getValueAsString(), entry.getKey(),
-                                        refParam.getName(), condition.friendlyName().toLowerCase(), refParam.getValue()));
+                                        refParam.getName(), dependency.getCondition().friendlyName().toLowerCase(), refParam.getValue()));
                             }
+                        case REQUIRED_IF:
+                            switch (dependency.getCondition()) {
+                                case NOTSET:
+                                    hasError = StringUtilities.isNullOrEmpty(currentParam.getValueAsString()) &&
+                                               StringUtilities.isNullOrEmpty(refParam.getValueAsString());
+                                    errors.add(String.format("%s must be set if %s is not set",
+                                                             entry.getKey(), refParam.getName()));
+                                    break;
+                                case SET:
+                                    hasError = StringUtilities.isNullOrEmpty(currentParam.getValueAsString()) &&
+                                               !StringUtilities.isNullOrEmpty(refParam.getValueAsString());
+                                    errors.add(String.format("%s must be set if %s is set",
+                                                             entry.getKey(), refParam.getName()));
+                                    break;
+                            }
+                            if (hasError) {
+                                errors.add(String.format("%s cannot be set to %s if %s %s %s",
+                                                         entry.getKey(), currentParam.getValueAsString(),
+                                                         refParam.getName(), dependency.getCondition().friendlyName().toLowerCase(), refParam.getValue()));
+                            }
+                            break;
                         default:
                             break;
                     }
