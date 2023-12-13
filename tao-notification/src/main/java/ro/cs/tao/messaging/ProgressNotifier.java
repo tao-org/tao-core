@@ -85,6 +85,12 @@ public class ProgressNotifier implements ProgressListener {
     }
 
     @Override
+    public void ended(boolean succeeded) {
+        this.taskCounter = 1;
+        sendTransientMessage(createEndMessage(succeeded));
+    }
+
+    @Override
     public void notifyProgress(double progressValue) {
         /*if (progressValue < taskCounter) {
             throw new IllegalArgumentException(
@@ -168,6 +174,19 @@ public class ProgressNotifier implements ProgressListener {
         return message;
     }
 
+    private ActivityEnd createEndMessage(boolean succeeded) {
+        ActivityEnd message;
+        if (this.topic.equals(Topic.TRANSFER_PROGRESS)) {
+            message = new TransferEnd(this.taskName);
+        } else {
+            message = new ActivityEnd(this.taskName);
+        }
+        message.setUserId(this.principal.getName());
+        message.setTopic(this.topic.value());
+        message.setPayload(String.valueOf(succeeded));
+        return message;
+    }
+
     private SubActivityStart createSubStartMessage(String subTask) {
         SubActivityStart message;
         if (this.topic.equals(Topic.TRANSFER_PROGRESS)) {
@@ -192,6 +211,19 @@ public class ProgressNotifier implements ProgressListener {
         return message;
     }
 
+    private SubActivityEnd createSubEndMessage(String subTask, boolean succeeded) {
+        SubActivityEnd message;
+        if (this.topic.equals(Topic.TRANSFER_PROGRESS)) {
+            message = new SubTransferEnd(this.taskName, subTask);
+        } else {
+            message = new SubActivityEnd(this.taskName, subTask);
+        }
+        message.setUserId(this.principal.getName());
+        message.setTopic(this.topic.value());
+        message.setPayload(String.valueOf(succeeded));
+        return message;
+    }
+
     private class SubListener implements ProgressListener {
         private String subTask;
         private boolean theOnlyItem;
@@ -200,16 +232,17 @@ public class ProgressNotifier implements ProgressListener {
             this.subTask = taskName;
             final int idx = taskName.lastIndexOf('/');
             theOnlyItem = idx < 0 || taskName.substring(idx).equals(ProgressNotifier.this.taskName.substring(ProgressNotifier.this.taskName.lastIndexOf('/')));
-            //if (!theOnlyItem) {
-                sendTransientMessage(createSubStartMessage(this.subTask));
-            //}
+            sendTransientMessage(createSubStartMessage(this.subTask));
         }
 
         @Override
         public void ended() {
-            //if (!theOnlyItem) {
-                sendTransientMessage(createSubEndMessage(this.subTask));
-            //}
+            sendTransientMessage(createSubEndMessage(this.subTask));
+        }
+
+        @Override
+        public void ended(boolean succeeded) {
+            sendTransientMessage(createSubEndMessage(this.subTask, succeeded));
         }
 
         @Override
