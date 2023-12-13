@@ -19,10 +19,14 @@ public enum Condition implements TaoEnum<Integer> {
     GT(5, "Greater than"),
     @XmlEnumValue("6")
     GTE(6, "Greater than or equal"),
-    @XmlEnumValue("6")
+    @XmlEnumValue("7")
     IN(7, "In"),
-    @XmlEnumValue("6")
-    NOTIN(8, "Not in");
+    @XmlEnumValue("8")
+    NOTIN(8, "Not in"),
+    @XmlEnumValue("9")
+    NOTSET(9, "Not set"),
+    @XmlEnumValue("10")
+    SET(10, "Not in");
 
     private final int value;
     private final String description;
