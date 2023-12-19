@@ -20,6 +20,7 @@ public class Repository extends StringIdentifiable {
     private boolean readOnly;
     private boolean system;
     private boolean editable;
+    private short order;
     private LocalDateTime created;
 
     @XmlTransient
@@ -97,6 +98,14 @@ public class Repository extends StringIdentifiable {
 
     public void setEditable(boolean editable) {
         this.editable = editable;
+    }
+
+    public short getOrder() {
+        return order;
+    }
+
+    public void setOrder(short order) {
+        this.order = order;
     }
 
     public LocalDateTime getCreated() {

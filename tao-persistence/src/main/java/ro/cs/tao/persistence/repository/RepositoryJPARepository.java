@@ -14,13 +14,15 @@ import java.util.List;
 @Transactional
 public interface RepositoryJPARepository extends PagingAndSortingRepository<Repository, String> {
 
-    @Query(value = "SELECT * FROM workspace.repository WHERE user_id = :userId ORDER BY system desc, created", nativeQuery = true)
+    @Query(value = "SELECT * FROM workspace.repository WHERE user_id = :userId ORDER BY \"order\"", nativeQuery = true)
     List<Repository> getByUser(@Param("userId") String userId);
 
-    @Query(value = "SELECT * FROM workspace.repository WHERE user_id = :userId and name = :repoName ORDER BY system desc, created", nativeQuery = true)
+    @Query(value = "SELECT * FROM workspace.repository WHERE user_id = :userId and name = :repoName", nativeQuery = true)
     Repository getByUserAndName(@Param("userId") String userId, @Param("repoName") String repoName);
 
-    @Query(value = "SELECT * FROM workspace.repository WHERE user_id = :userId AND system = true ORDER BY created", nativeQuery = true)
+    @Query(value = "SELECT * FROM workspace.repository WHERE user_id = :userId AND system = true ORDER BY \"order\"", nativeQuery = true)
     List<Repository> getUserSystemRepositories(@Param("userId") String userId);
 
+    @Query(value = "SELECT COUNT(id) FROM workspace.repository WHERE user_id = :userId", nativeQuery = true)
+    short countUserRepositories(@Param("userId") String userId);
 }
