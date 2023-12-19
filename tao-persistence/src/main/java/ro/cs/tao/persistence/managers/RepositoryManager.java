@@ -10,6 +10,7 @@ import ro.cs.tao.persistence.repository.RepositoryJPARepository;
 import ro.cs.tao.utils.StringUtilities;
 import ro.cs.tao.workspaces.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Configuration
@@ -37,6 +38,7 @@ public class RepositoryManager extends EntityManager<Repository, String, Reposit
     @Override
     public Repository save(Repository entity) throws PersistenceException {
         entity.setOrder(repository.countUserRepositories(entity.getUserId()));
+        entity.setCreated(LocalDateTime.now());
         return super.save(entity);
     }
 
