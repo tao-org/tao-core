@@ -18,12 +18,13 @@ CREATE TABLE workspace.repository
 	name varchar(250) NOT NULL,
 	description text NOT NULL,
 	url_prefix varchar(20) NOT NULL,
-	user_id varchar(50),
 	repository_type_id int NOT NULL,
+	user_id varchar(50),
 	read_only boolean NOT NULL,
 	system boolean DEFAULT false,
 	is_editable boolean NOT NULL,
 	params json NULL,
+	order smallint,
 	created timestamp DEFAULT now()
 );
 ALTER TABLE workspace.repository ADD CONSTRAINT PK_repository PRIMARY KEY (id);

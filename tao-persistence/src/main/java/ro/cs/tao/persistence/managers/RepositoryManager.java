@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.RepositoryProvider;
 import ro.cs.tao.persistence.repository.RepositoryJPARepository;
 import ro.cs.tao.utils.StringUtilities;
@@ -31,6 +32,12 @@ public class RepositoryManager extends EntityManager<Repository, String, Reposit
     @Override
     public List<Repository> getUserSystemRepositories(String userId) {
         return repository.getUserSystemRepositories(userId);
+    }
+
+    @Override
+    public Repository save(Repository entity) throws PersistenceException {
+        entity.setOrder(repository.countUserRepositories(entity.getUserId()));
+        return super.save(entity);
     }
 
     @Override
