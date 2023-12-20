@@ -12,4 +12,13 @@ public class SubTransferEnd extends SubActivityEnd {
         super(taskName, subTaskName);
         setPayload("[" + this.taskName + "] Completed transfer for " + this.subTaskName);
     }
+
+    public SubTransferEnd(String taskName, String subTaskName, boolean result) {
+        super(taskName, subTaskName);
+        if (result) {
+            setPayload("[" + this.taskName + "] Completed transfer for " + this.subTaskName);
+        } else {
+            setPayload("[" + this.taskName + "] Failed transfer for " + this.subTaskName);
+        }
+    }
 }
