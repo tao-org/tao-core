@@ -257,6 +257,8 @@ INSERT INTO config.config (category_id, id, value, friendly_name, type, label, "
 (4, 'tao.force.memory.requirements', 'true', 'Enforce memory constraints for applications', 'bool', 'Enforce memory constraints', null, now()),
 (4, 'tao.ssh.async', 'true', 'Enable asynchronous mode for SSH invocations', 'bool', 'Enable SSH asynchronous mode', null, now()),
 (4, 'tao.user.jobs.limit', '20', 'Maximum number of jobs a user can submit', 'int', 'Job limit per user', null, now()),
+(4, 'tao.remove.intermediate.files', 'false', 'Remove the intermediate files when the execution finished successfuly', 'bool', 'Remove intermediate files', null, now()),
+(4, 'tao.upload.to.bucket', 'false', 'Move the execution results to the object storage', 'bool', 'Move results to bucket', null, now()),
 (5, 'mail.smtp.auth', 'true', 'Enable SMTP authentication', 'bool', 'Enable SMTP authentication', null, now()),
 (5, 'mail.smtp.starttls.enable', 'true', 'SMTP uses TLS', 'bool', 'SMTP uses TLS', null, now()),
 (5, 'mail.smtp.host', 'smtp.gmail.com', 'SMTP server', 'string', 'SMTP server', null, now()),

@@ -79,6 +79,12 @@ public class ProgressNotifier implements ProgressListener {
     }
 
     @Override
+    public void subActivityEnded(String subTaskName, boolean succeeded) {
+        this.subTaskCounter = 1;
+        this.subListener.ended(succeeded);
+    }
+    
+    @Override
     public void ended() {
         this.taskCounter = 1;
         sendTransientMessage(createEndMessage());
@@ -214,13 +220,12 @@ public class ProgressNotifier implements ProgressListener {
     private SubActivityEnd createSubEndMessage(String subTask, boolean succeeded) {
         SubActivityEnd message;
         if (this.topic.equals(Topic.TRANSFER_PROGRESS)) {
-            message = new SubTransferEnd(this.taskName, subTask);
+            message = new SubTransferEnd(this.taskName, subTask, succeeded);
         } else {
             message = new SubActivityEnd(this.taskName, subTask);
         }
         message.setUserId(this.principal.getName());
         message.setTopic(this.topic.value());
-        message.setPayload(String.valueOf(succeeded));
         return message;
     }
 
