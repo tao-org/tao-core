@@ -742,17 +742,39 @@ ALTER TABLE component.wps_component_parameters ADD CONSTRAINT FK_wps_component_p
 -------------------------------------------------------------------------------
 -- table: component.wms_component
 DROP TABLE IF EXISTS component.wms_component CASCADE;
-CREATE TABLE component.wms_component ( )
-    INHERITS (component.wps_component);
+CREATE TABLE component.wms_component
+(
+	id varchar(512) NOT NULL,
+	label varchar(250) NOT NULL,
+	version varchar(50) NOT NULL,
+	description text,
+	authors varchar(1024),
+	copyright text,
+	node_affinity varchar(250) NULL,
+    remote_address varchar(1024) NOT NULL,
+	capability  varchar(512) NOT NULL,
+	visibility_id integer NOT NULL,
+	owner_user_id varchar NULL,
+	container_id varchar(1024) NOT NULL,
+	parameters json NULL,
+    active boolean NULL DEFAULT true,
+	tags text NULL,
+	created timestamp NULL DEFAULT now(),
+    modified timestamp NULL
+);
 ALTER TABLE component.wms_component ADD CONSTRAINT PK_wms_component
 	PRIMARY KEY (id);
 ALTER TABLE component.wms_component ADD CONSTRAINT FK_wms_component_container
 	FOREIGN KEY (container_id) REFERENCES component.container (id) ON DELETE No Action ON UPDATE No Action;
+
 -------------------------------------------------------------------------------
 -- table: component.wms_component_sources
 DROP TABLE IF EXISTS component.wms_component_sources CASCADE;
-CREATE TABLE component.wms_component_sources( )
-    INHERITS (component.wps_component_sources);
+CREATE TABLE component.wms_component_sources
+(
+	component_id varchar(512) NOT NULL,
+	source_descriptor_id varchar(512) NOT NULL
+);
 ALTER TABLE component.wms_component_sources ADD CONSTRAINT PK_wms_component_sources
 	PRIMARY KEY (component_id, source_descriptor_id);
 ALTER TABLE component.wms_component_sources ADD CONSTRAINT FK_wms_component_sources_wms_component
@@ -763,8 +785,11 @@ ALTER TABLE component.wms_component_sources ADD CONSTRAINT FK_wms_component_sour
 -------------------------------------------------------------------------------
 -- table: component.wms_component_targets
 DROP TABLE IF EXISTS component.wms_component_targets CASCADE;
-CREATE TABLE component.wms_component_targets ( )
-    INHERITS (component.wps_component_targets);
+CREATE TABLE component.wms_component_targets
+(
+	component_id varchar(512) NOT NULL,
+	target_descriptor_id varchar(512) NOT NULL
+);
 ALTER TABLE component.wms_component_targets ADD CONSTRAINT PK_wms_component_targets
 	PRIMARY KEY (component_id, target_descriptor_id);
 ALTER TABLE component.wms_component_targets ADD CONSTRAINT FK_wms_component_targets_wms_component
@@ -775,8 +800,11 @@ ALTER TABLE component.wms_component_targets ADD CONSTRAINT FK_wms_component_targ
 -------------------------------------------------------------------------------
 -- table: wms_component_parameters
 DROP TABLE IF EXISTS component.wms_component_parameters CASCADE;
-CREATE TABLE component.wms_component_parameters ( )
-    INHERITS (component.wps_component_parameters);
+CREATE TABLE component.wms_component_parameters
+(
+    component_id varchar(512) NOT NULL,
+    processing_parameter_id varchar(512) NOT NULL
+);
 ALTER TABLE component.wms_component_parameters ADD CONSTRAINT PK_wms_component_parameters
     PRIMARY KEY (component_id, processing_parameter_id);
 ALTER TABLE component.wms_component_parameters ADD CONSTRAINT FK_wms_component_parameters_processing_component

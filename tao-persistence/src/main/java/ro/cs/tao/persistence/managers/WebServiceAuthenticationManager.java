@@ -4,15 +4,15 @@ import org.springframework.stereotype.Component;
 import ro.cs.tao.component.WebServiceAuthentication;
 import ro.cs.tao.component.enums.AuthenticationType;
 import ro.cs.tao.persistence.PersistenceException;
-import ro.cs.tao.persistence.WPSAuthenticationProvider;
-import ro.cs.tao.persistence.repository.WPSAuthenticationRepository;
+import ro.cs.tao.persistence.WebServiceAuthenticationProvider;
+import ro.cs.tao.persistence.repository.WebServiceAuthenticationRepository;
 import ro.cs.tao.utils.Crypto;
 import ro.cs.tao.utils.StringUtilities;
 
-@Component("wpsAuthenticationManager")
-public class WPSAuthenticationManager
-        extends EntityManager<WebServiceAuthentication, String, WPSAuthenticationRepository>
-        implements WPSAuthenticationProvider {
+@Component("webServiceAuthenticationManager")
+public class WebServiceAuthenticationManager
+        extends EntityManager<WebServiceAuthentication, String, WebServiceAuthenticationRepository>
+        implements WebServiceAuthenticationProvider {
 
     @Override
     public WebServiceAuthentication get(String id) {

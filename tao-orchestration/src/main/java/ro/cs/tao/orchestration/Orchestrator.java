@@ -1470,7 +1470,7 @@ public class Orchestrator extends Notifiable {
 
     private void tryRemoveTemporaryWorkflow(ExecutionJob job) {
         final WorkflowDescriptor workflow = workflowProvider.get(job.getWorkflowId());
-        if (workflow.isTemporary()) {
+        if (workflow != null && workflow.isTemporary()) {
             synchronized (lock) {
                 final List<ExecutionJob> jobs = jobProvider.listByWorkflow(workflow.getId());
                 if (jobs.stream().allMatch(j -> j.getExecutionStatus() == ExecutionStatus.FAILED ||
@@ -1505,37 +1505,41 @@ public class Orchestrator extends Notifiable {
     }
 
     private void tryRestoreSymlinks(ExecutionJob job) {
-        final WorkflowDescriptor workflow = workflowProvider.get(job.getWorkflowId());
-        final List<WorkflowNodeDescriptor> firstLevel = WorkflowUtilities.findFirstLevel(workflow.getOrderedNodes());
-        final List<DataSourceComponent> components = new ArrayList<>();
-        for (WorkflowNodeDescriptor node : firstLevel) {
-            final TaoComponent c = TaskUtilities.getComponentFor(node);
-            if (c instanceof DataSourceComponent) {
-                components.add((DataSourceComponent) c);
-            }
-        }
-        for (DataSourceComponent component : components) {
-            synchronized (lock) {
-                final SourceDescriptor srcDescriptor = component.getSources().stream()
-                                                             .filter(t -> t.getName().equals(DataSourceComponent.QUERY_PARAMETER))
-                                                             .findFirst().get();
-                final TargetDescriptor trgDescriptor = component.getTargets().stream()
-                                                                   .filter(t -> t.getName().equals(DataSourceComponent.RESULTS_PARAMETER))
-                                                                   .findFirst().get();
-                final String initialList = srcDescriptor.getDataDescriptor().getLocation();
-                final String modifiedList = trgDescriptor.getDataDescriptor().getLocation();
-                if (!StringUtilities.isNullOrEmpty(modifiedList)) {
-                    final String[] initial = initialList.split(",");
-                    final String[] modified = modifiedList.split(",");
-                    if (initial.length == modified.length) {
-                        for (int i = 0; i < initial.length; i++) {
-                            if (!initial[i].equals(modified[i])) {
-                                try {
-                                    FileUtilities.replaceWithLink(FileUtilities.toPath(initial[i]),
-                                                                  FileUtilities.toPath(modified[i]));
-                                    logger.finest("Restored symlink " + initial[i]);
-                                } catch (IOException e) {
-                                    ExceptionUtils.getStackTrace(logger, e);
+        if (job.getWorkflowId() != null) {
+            final WorkflowDescriptor workflow = workflowProvider.get(job.getWorkflowId());
+            if (workflow != null) {
+                final List<WorkflowNodeDescriptor> firstLevel = WorkflowUtilities.findFirstLevel(workflow.getOrderedNodes());
+                final List<DataSourceComponent> components = new ArrayList<>();
+                for (WorkflowNodeDescriptor node : firstLevel) {
+                    final TaoComponent c = TaskUtilities.getComponentFor(node);
+                    if (c instanceof DataSourceComponent) {
+                        components.add((DataSourceComponent) c);
+                    }
+                }
+                for (DataSourceComponent component : components) {
+                    synchronized (lock) {
+                        final SourceDescriptor srcDescriptor = component.getSources().stream()
+                                                                        .filter(t -> t.getName().equals(DataSourceComponent.QUERY_PARAMETER))
+                                                                        .findFirst().get();
+                        final TargetDescriptor trgDescriptor = component.getTargets().stream()
+                                                                        .filter(t -> t.getName().equals(DataSourceComponent.RESULTS_PARAMETER))
+                                                                        .findFirst().get();
+                        final String initialList = srcDescriptor.getDataDescriptor().getLocation();
+                        final String modifiedList = trgDescriptor.getDataDescriptor().getLocation();
+                        if (!StringUtilities.isNullOrEmpty(modifiedList)) {
+                            final String[] initial = initialList.split(",");
+                            final String[] modified = modifiedList.split(",");
+                            if (initial.length == modified.length) {
+                                for (int i = 0; i < initial.length; i++) {
+                                    if (!initial[i].equals(modified[i])) {
+                                        try {
+                                            FileUtilities.replaceWithLink(FileUtilities.toPath(initial[i]),
+                                                                          FileUtilities.toPath(modified[i]));
+                                            logger.finest("Restored symlink " + initial[i]);
+                                        } catch (IOException e) {
+                                            ExceptionUtils.getStackTrace(logger, e);
+                                        }
+                                    }
                                 }
                             }
                         }

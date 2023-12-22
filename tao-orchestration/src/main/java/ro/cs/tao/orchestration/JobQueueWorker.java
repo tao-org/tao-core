@@ -91,6 +91,9 @@ public class JobQueueWorker extends Thread {
                 }
             } catch (InterruptedException e) {
                 logger.warning(e.getMessage());
+                this.stopped = true;
+            } catch (Exception e) {
+                logger.warning(e.getMessage());
             }
         }
     }

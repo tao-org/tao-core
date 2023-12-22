@@ -11,7 +11,8 @@ public interface ExecutionTaskProvider extends EntityProvider<ExecutionTask, Lon
 
     List<ExecutionTask> listRunning();
     List<ExecutionTask> listExecuting(String applicationId);
-    List<ExecutionTask> listRemoteExecuting();
+    List<ExecutionTask> listWPSExecuting();
+    List<ExecutionTask> listWMSExecuting();
     List<ExecutionTask> listByHost(String hostName);
     int countByHostSince(String hostName, LocalDateTime since);
     List<ExecutionTask> getDataSourceTasks(long jobId);

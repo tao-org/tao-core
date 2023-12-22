@@ -23,7 +23,6 @@ import ro.cs.tao.component.validation.ValidationException;
 import ro.cs.tao.datasource.converters.ConversionException;
 import ro.cs.tao.datasource.param.JavaType;
 import ro.cs.tao.docker.ExecutionConfiguration;
-import ro.cs.tao.security.SessionContext;
 import ro.cs.tao.utils.FileUtilities;
 
 import javax.xml.bind.annotation.XmlTransient;
@@ -40,9 +39,6 @@ import java.util.logging.Logger;
  * @author Oana H.
  */
 public class ProcessingExecutionTask extends ExecutionTask {
-
-    // format is: jobId-taskId-[internalState-]fileName
-    private static final String nameTemplate = "%s-%s-%s%s";
 
     private static final Set<String> arrayChars = new HashSet<>() {{
         add("["); add("{"); add("]"); add("}");
@@ -259,7 +255,7 @@ public class ProcessingExecutionTask extends ExecutionTask {
             }
             if (this.instanceTargetOutput != null) {
                 Path path = Paths.get(this.instanceTargetOutput);
-                SessionContext context = getContext();
+                //SessionContext context = getContext();
                 if (!path.isAbsolute()) {
                     //path = context.getNetSpace().resolve(path);
                     /*path = Paths.get(ExecutionConfiguration.getWorkerContainerVolumeMap().getContainerWorkspaceFolder())

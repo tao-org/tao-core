@@ -92,7 +92,10 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
     }
 
     @Override
-    public List<ExecutionTask> listRemoteExecuting() { return repository.getRemoteExecutingTasks(); }
+    public List<ExecutionTask> listWPSExecuting() { return repository.getWPSExecutingTasks(); }
+
+    @Override
+    public List<ExecutionTask> listWMSExecuting() { return repository.getWMSExecutingTasks(); }
 
     @Override
     public List<ExecutionTask> listByHost(String hostName) { return repository.getTasksByHost(hostName); }
@@ -291,7 +294,7 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
             }
 
             if (task instanceof ProcessingExecutionTask || task instanceof DataSourceExecutionTask ||
-                    task instanceof ExecutionGroup || task instanceof WPSExecutionTask) {
+                    task instanceof ExecutionGroup || task instanceof WPSExecutionTask || task instanceof WMSExecutionTask) {
 
                 // set the task parent job
                 task.setJob(job);
