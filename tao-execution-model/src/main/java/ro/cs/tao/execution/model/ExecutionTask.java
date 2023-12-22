@@ -35,6 +35,9 @@ import java.util.List;
  */
 public abstract class ExecutionTask extends LongIdentifiable implements StatusChangeListener {
 
+    // format is: jobId-taskId-[internalState-]fileName
+    protected static final String nameTemplate = "%s-%s-%s%s";
+
     private ExecutionGroup groupTask;
     private Long workflowNodeId;
     private int level;

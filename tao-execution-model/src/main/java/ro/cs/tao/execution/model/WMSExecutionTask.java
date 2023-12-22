@@ -2,7 +2,13 @@ package ro.cs.tao.execution.model;
 
 import ro.cs.tao.component.*;
 import ro.cs.tao.component.validation.ValidationException;
+import ro.cs.tao.docker.ExecutionConfiguration;
+import ro.cs.tao.utils.FileUtilities;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -85,5 +91,46 @@ public class WMSExecutionTask extends ExecutionTask {
     @Override
     public String buildExecutionCommand() {
         return null;
+    }
+
+    public String buildOutputPath() {
+        if (this.instanceTargetOutput == null) {
+            String location = null;
+            for (TargetDescriptor descriptor : this.component.getTargets()) {
+                Variable variable = outputParameterValues.stream()
+                                                         .filter(v -> descriptor.getName().equals(v.getKey())).findFirst().orElse(null);
+                if (variable != null) {
+                    location = variable.getValue() != null ? variable.getValue() : descriptor.getDataDescriptor().getLocation();
+                    if (location != null) {
+                        break;
+                    }
+                }
+            }
+            if (location != null) {
+                Path path = Paths.get(location);
+                final Path jobPath = Paths.get(getJob().getJobOutputPath());
+                if (!path.isAbsolute()) {
+                    Path relPath = jobPath.getName(jobPath.getNameCount() - 2).resolve(jobPath.getFileName());
+                    path = Paths.get(ExecutionConfiguration.getWorkerContainerVolumeMap().getContainerWorkspaceFolder())
+                                .resolve(relPath).resolve(path); //context.getNetSpace().resolve(path);
+                }
+                String fileName = path.getFileName().toString();
+                String folderName = String.format(nameTemplate,
+                                                  this.getJob().getId(),
+                                                  this.getId(),
+                                                  this.internalState == null ? "" : this.internalState + "-",
+                                                  FileUtilities.getFilenameWithoutExtension(fileName));
+                path = jobPath.resolve(folderName);
+                if (!Files.exists(path)) {
+                    try {
+                        Files.createDirectories(path);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                this.instanceTargetOutput = FileUtilities.asUnixPath(path.resolve(fileName), true);
+            }
+        }
+        return this.instanceTargetOutput;
     }
 }

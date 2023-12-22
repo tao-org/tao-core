@@ -290,8 +290,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                     if (builder.length() > 0) {
                         builder.setLength(builder.length() - 1);
                     } else {
-                        logger.warning("Either the product set is empty or the files don't exist on the disk");
-                        status = ExecutionStatus.CANCELLED;
+                        throw new QueryException("Either the product set is empty or the files don't exist on the disk");
                     }
                     // Persist any targets of the symlinks, together with the symlink path.
                     // They will be restored at the end of the job.

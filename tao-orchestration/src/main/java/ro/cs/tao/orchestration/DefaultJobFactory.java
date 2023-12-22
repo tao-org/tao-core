@@ -190,6 +190,10 @@ public class DefaultJobFactory {
         job.setStartTime(LocalDateTime.now());
         job.setExecutionStatus(ExecutionStatus.UNDETERMINED);
         job.setJobType(JobType.EXECUTION);
+        job.setJobOutputPath(Paths.get(SystemVariable.ROOT.value())
+                                  .resolve(context.getPrincipal().getName())
+                                  .resolve(jobName.replaceAll(invalidChars, "_"))
+                                  .toString());
         job = jobProvider.save(job);
         ExecutionTask task = createWMSComponentExecutionTask(jobName, inputs);
         task.setLevel(1);
@@ -582,6 +586,12 @@ public class DefaultJobFactory {
         if (inputs != null) {
             for (Map.Entry<String, String> entry : inputs.entrySet()) {
                 task.setInputParameterValue(entry.getKey(), entry.getValue());
+            }
+        }
+        final List<ParameterDescriptor> parameters = component.getParameters();
+        for (ParameterDescriptor parameter : parameters) {
+            if (inputs == null || !inputs.containsKey(parameter.getId())) {
+                task.setInputParameterValue(parameter.getId(), parameter.getDefaultValue());
             }
         }
         return task;

@@ -51,7 +51,11 @@ public interface ExecutionTaskRepository extends PagingAndSortingRepository<Exec
 
     @Query(value = "SELECT * FROM execution.task WHERE discriminator = 33 AND execution_status_id = 2 AND resource_id IS NOT NULL", nativeQuery = true)
     @Transactional(readOnly = true)
-    List<ExecutionTask> getRemoteExecutingTasks();
+    List<ExecutionTask> getWPSExecutingTasks();
+
+    @Query(value = "SELECT * FROM execution.task WHERE discriminator = 34 AND execution_status_id = 2 AND resource_id IS NOT NULL", nativeQuery = true)
+    @Transactional(readOnly = true)
+    List<ExecutionTask> getWMSExecutingTasks();
 
     @Query(value = "SELECT * FROM execution.task WHERE execution_status_id IN (1, 2, 7) AND execution_node_host_name = :host", nativeQuery = true)
     @Transactional(readOnly = true)

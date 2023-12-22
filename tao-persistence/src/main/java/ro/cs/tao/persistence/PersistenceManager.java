@@ -117,7 +117,7 @@ public class PersistenceManager {
     private SiteManager siteManager;
 
     @Autowired
-    private WPSAuthenticationManager wpsAuthenticationManager;
+    private WebServiceAuthenticationManager wpsAuthenticationManager;
 
     @Autowired
     private DownloadQueueManager downloadQueueManager;
@@ -211,7 +211,7 @@ public class PersistenceManager {
 
     public SiteManager sites() { return siteManager; }
 
-    public WPSAuthenticationManager wpsAuthentication() { return wpsAuthenticationManager; }
+    public WebServiceAuthenticationManager webServiceAuthentication() { return wpsAuthenticationManager; }
 
     public DownloadQueueManager downloadQueue() { return downloadQueueManager; }
 
