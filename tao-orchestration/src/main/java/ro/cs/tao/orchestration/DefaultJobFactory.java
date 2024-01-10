@@ -31,7 +31,6 @@ import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.execution.util.TaskUtilities;
 import ro.cs.tao.persistence.*;
 import ro.cs.tao.security.SessionContext;
-import ro.cs.tao.security.SessionStore;
 import ro.cs.tao.serialization.StringListAdapter;
 import ro.cs.tao.services.bridge.spring.SpringContextBridge;
 import ro.cs.tao.utils.Tuple;
@@ -84,23 +83,27 @@ public class DefaultJobFactory {
     /**
      * Creates an execution job for the given workflow, with the given input parameter values
      *
-     * @param jobName  The name of the new job
-     * @param workflow The workflow
-     * @param inputs   The (possibly overridden) input parameter values
+     * @param context   The current user session context
+     * @param appId     The orchestrator identifier
+     * @param jobName   The name of the new job
+     * @param workflow  The workflow
+     * @param inputs    The (possibly overridden) input parameter values
+     * @param jobType   The output job format
      */
-    public ExecutionJob createJob(SessionContext context, String appId, String jobName, WorkflowDescriptor workflow, Map<String, Map<String, String>> inputs)
+    public ExecutionJob createJob(SessionContext context, String appId, String jobName, WorkflowDescriptor workflow, Map<String, Map<String, String>> inputs, JobType jobType)
             throws PersistenceException {
         ExecutionJob job = null;
         if (workflow != null && workflow.isActive()) {
             job = new ExecutionJob();
             job.setName(jobName);
             job.setAppId(appId);
+            job.setJobType(jobType);
             job.setBatchId(UUID.randomUUID().toString());
-            job.setUserId(SessionStore.currentContext().getPrincipal().getName());
+            job.setUserId(context.getPrincipal().getName());
             job.setStartTime(LocalDateTime.now());
             job.setWorkflowId(workflow.getId());
             job.setExecutionStatus(ExecutionStatus.UNDETERMINED);
-            job.setJobType(JobType.EXECUTION);
+            job.setJobType(jobType);
             job.setJobOutputPath(Paths.get(SystemVariable.ROOT.value())
                                       .resolve(context.getPrincipal().getName())
                                       .resolve(jobName.replaceAll(invalidChars, "_"))
@@ -111,6 +114,7 @@ public class DefaultJobFactory {
                     .filter(n -> n instanceof WorkflowNodeGroupDescriptor)
                     .map(n -> (WorkflowNodeGroupDescriptor) n)
                     .collect(Collectors.toSet());
+            final boolean preComputeOutputs = job.getJobType() != JobType.EXECUTION;
             for (WorkflowNodeDescriptor node : nodes) {
                 // A workflow contains also the nodes of a node group.
                 // Hence, in order not to duplicate the tasks, the nodes from group are temporary removed from workflow.
@@ -134,6 +138,17 @@ public class DefaultJobFactory {
                     } else {
                         task = taskProvider.update(task);
                     }
+                    // In the case of script tasks, outputs should be pre-computed as they will not be set by the Orchestrator
+                    if (preComputeOutputs && task instanceof ScriptTask) {
+                        ScriptTask scriptTask = (ScriptTask) task;
+                        final List<TargetDescriptor> targets = scriptTask.getComponent().getTargets();
+                        if (targets != null) {
+                            targets.forEach(t -> scriptTask.setOutputParameterValue(t.getName(),
+                                                                                    scriptTask.computeTargetOutput(t.getDataDescriptor().getLocation())));
+                            taskProvider.update(scriptTask);
+                        }
+
+                    }
                     logger.finest(String.format("Created task %s.%s for node %s [id=%s, level %s]",
                                                 jobName, task.getId(), node.getName(), node.getId(), task.getLevel()));
                 }
@@ -155,13 +170,21 @@ public class DefaultJobFactory {
         return job;
     }
 
+    /**
+     * Creates an execution job with a single task for a WPS remote service invocation, with the given input parameter values
+     *
+     * @param context   The invocation context
+     * @param appId     The identifier of the Orchestrator instance
+     * @param jobName   The name of the new job
+     * @param inputs    The (possibly overridden) input parameter values
+     */
     public ExecutionJob createWPSJob(SessionContext context, String appId, String jobName, Map<String, Map<String, String>> inputs)
             throws PersistenceException {
         ExecutionJob job = new ExecutionJob();
         job.setName(jobName);
         job.setAppId(appId);
         job.setBatchId(UUID.randomUUID().toString());
-        job.setUserId(SessionStore.currentContext().getPrincipal().getName());
+        job.setUserId(context.getPrincipal().getName());
         job.setStartTime(LocalDateTime.now());
         job.setExecutionStatus(ExecutionStatus.UNDETERMINED);
         job.setJobType(JobType.EXECUTION);
@@ -180,13 +203,21 @@ public class DefaultJobFactory {
         return job;
     }
 
+    /**
+     * Creates an execution job with a single task for a WMS remote service invocation, with the given input parameter values
+     *
+     * @param context   The invocation context
+     * @param appId     The identifier of the Orchestrator instance
+     * @param jobName   The name of the new job
+     * @param inputs    The (possibly overridden) input parameter values
+     */
     public ExecutionJob createWMSJob(SessionContext context, String appId, String jobName, Map<String, String> inputs)
             throws PersistenceException {
         ExecutionJob job = new ExecutionJob();
         job.setName(jobName);
         job.setAppId(appId);
         job.setBatchId(UUID.randomUUID().toString());
-        job.setUserId(SessionStore.currentContext().getPrincipal().getName());
+        job.setUserId(context.getPrincipal().getName());
         job.setStartTime(LocalDateTime.now());
         job.setExecutionStatus(ExecutionStatus.UNDETERMINED);
         job.setJobType(JobType.EXECUTION);
@@ -365,13 +396,13 @@ public class DefaultJobFactory {
             taskInputs.putAll(inputs);
         }
         DataSourceComponent dsComponent = dataSourceComponentProvider.get(workflowNode.getComponentId());
-        Query query = queryProvider.get(SessionStore.currentContext().getPrincipal().getName(),
+        Query query = queryProvider.get(job.getUserId(),
                                         dsComponent.getSensorName(),
                                         dsComponent.getDataSourceName(),
                                         workflowNode.getId());
         if (query == null) {
             query = new Query();
-            query.setUser(SessionStore.currentContext().getPrincipal().getName());
+            query.setUser(job.getUserId());
             query.setSensor(dsComponent.getSensorName());
             query.setDataSource(dsComponent.getDataSourceName());
             query.setWorkflowNodeId(workflowNode.getId());
@@ -438,13 +469,13 @@ public class DefaultJobFactory {
         } else {
             taskInputs = new HashMap<>();
         }
-        Query localQuery = queryProvider.get(SessionStore.currentContext().getPrincipal().getName(),
+        Query localQuery = queryProvider.get(job.getUserId(),
                                              component.getSensorName(),
                                              component.getDataSourceName(),
                                              workflowNode.getId());
         if (localQuery == null) {
             localQuery = new Query();
-            localQuery.setUser(SessionStore.currentContext().getPrincipal().getName());
+            localQuery.setUser(job.getUserId());
             localQuery.setSensor(component.getSensorName());
             localQuery.setDataSource(component.getDataSourceName());
             localQuery.setWorkflowNodeId(workflowNode.getId());
@@ -617,8 +648,9 @@ public class DefaultJobFactory {
                 if (dataTask != null) {
                     DataSourceExecutionTask primaryTask = dataTasks.stream().filter(d -> !d.getId().equals(dataTask.getId())).findFirst().get();
                     List<Tuple<String, String>> tuples = TaskUtilities.coupleTaskOutputs(primaryTask, dataTask);
-                    if (tuples.size() > 1) {
-                        for (int i = 1; i < tuples.size(); i++) {
+                    final int size = tuples.size();
+                    if (size > 1) {
+                        for (int i = 1; i < size; i++) {
                             ExecutionJob clonedJob = cloneJob(job, i);
                             final Map<String, List<String>> dependencies = clonedJob.getTaskDependencies();
                             ExecutionTask clonedPrimaryDataTask = clonedJob.getTasks().stream()

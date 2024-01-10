@@ -244,7 +244,7 @@ public class DefaultSession implements Session, JobExitHandler {
                 unit.addMetadata("name", template.getAttribute(DrmaaJobExtensions.TASK_NAME));
                 unit.addMetadata("dependsOn", template.getAttribute(DrmaaJobExtensions.TASK_ANCESTOR_ID));
                 unit.addMetadata("inputs", template.getAttribute(DrmaaJobExtensions.TASK_ANCESTOR_OUTPUT));
-                unit.addMetadata("canDelete", template.getAttribute(DrmaaJobExtensions.TASK_OUTPUT));
+                unit.addMetadata("taskOutput", template.getAttribute(DrmaaJobExtensions.TASK_OUTPUT));
                 unit.addMetadata("isTerminal", template.getAttribute(DrmaaJobExtensions.IS_TERMINAL_TASK));
                 unit.addMetadata("scriptPath", template.getAttribute(DrmaaJobExtensions.SCRIPT_PATH));
             } else if (ExecutionConfiguration.developmentModeEnabled()) {

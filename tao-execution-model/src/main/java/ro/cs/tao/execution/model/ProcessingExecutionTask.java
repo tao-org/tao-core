@@ -248,7 +248,7 @@ public class ProcessingExecutionTask extends ExecutionTask {
      * it may represent a name expression that will be externally parsed.
      * @param location  The template value of the target of this task.
      */
-    private String computeTargetOutput(String location) {
+    public String computeTargetOutput(String location) {
         if (this.instanceTargetOutput == null) {
             if (location != null) {
                 this.instanceTargetOutput = location;
@@ -286,8 +286,7 @@ public class ProcessingExecutionTask extends ExecutionTask {
                 } catch (IOException e) {
                     Logger.getLogger(ProcessingExecutionTask.class.getName()).severe(e.getMessage());
                 }
-                //setInstanceTargetOutput(FileUtilities.asUnixPath(path.getParent().resolve(folderName).resolve(fileName), true));
-                setInstanceTargetOutput(FileUtilities.asUnixPath(jobPath.resolve(folderName).resolve(fileName), true));
+                //setInstanceTargetOutput(FileUtilities.asUnixPath(path.getParent().resolve(folderName).resolve(fileName), true));setInstanceTargetOutput(FileUtilities.asUnixPath(jobPath.resolve(folderName).resolve(fileName), true));
                 setInstanceTemporaryOutput(ExecutionConfiguration.getWorkerContainerVolumeMap().getContainerTemporaryFolder() + "/" + fileName);
             }
         }

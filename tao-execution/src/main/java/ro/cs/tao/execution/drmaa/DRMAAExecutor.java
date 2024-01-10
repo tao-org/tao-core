@@ -264,7 +264,9 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                             UserQuotaManager.getInstance().updateUserCPU(new UserPrincipal(userId));
                             break;
                         case Session.DONE:
-                            decrementMemory(task.getExecutionNodeHostName(), task.getUsedRAM());
+                            if (!(task instanceof ScriptTask)) {
+                                decrementMemory(task.getExecutionNodeHostName(), task.getUsedRAM());
+                            }
                             task.setLog(getJobOutput(task.getResourceId()));
                             // Just mark the task as finished with success status
                             if (task.getExecutionStatus() == ExecutionStatus.RUNNING) {
@@ -478,7 +480,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                                       basePath.resolve(basePath.getFileName().toString() + value.getExtension()).toString());
                 final List<Variable> values = task.getOutputParameterValues();
                 if (values != null) {
-                    template.setAttribute(DrmaaJobExtensions.TASK_OUTPUT, values.stream().map(Variable::getValue).collect(Collectors.toList()));
+                    template.setAttribute(DrmaaJobExtensions.TASK_OUTPUT, values.stream().collect(Collectors.toMap(Variable::getKey, Variable::getValue)));
                 }
                 template.setAttribute(DrmaaJobExtensions.IS_TERMINAL_TASK, TaskUtilities.isTerminalTask(task));
             }
@@ -506,7 +508,9 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             if (node == null) {
                 throw new TryLaterException("Cannot obtain an available node [null]");
             } else {
-                incrementMemory(node, memory);
+                if (!(task instanceof ScriptTask)) {
+                    incrementMemory(node, memory);
+                }
                 logger.info("Task " + taskName + " will be submitted to host " + node.getId());
             }
             setHost(jt, node.getId());

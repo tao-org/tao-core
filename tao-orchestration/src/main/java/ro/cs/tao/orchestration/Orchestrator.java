@@ -355,7 +355,7 @@ public class Orchestrator extends Notifiable {
                     optimized.setActive(descriptor.isActive());
                 }
             }
-            return this.jobFactory.createJob(context, this.uuid, request.getName(), optimized, request.getParameters());
+            return this.jobFactory.createJob(context, this.uuid, request.getName(), optimized, request.getParameters(), JobType.EXECUTION);
         } catch (QuotaException | PersistenceException e) {
             logger.severe(e.getMessage());
             throw new ExecutionException(e.getMessage());
@@ -580,7 +580,8 @@ public class Orchestrator extends Notifiable {
             // A processing task can be successively in PENDING_FINALIZATION and DONE states, while a datasource task
             // can only transit to DONE (from RUNNING).
             // Hence, for a processing task, we don't want to process twice the DONE state, as it will recurse.
-            if (completedOkStatuses.contains(status) && notFurtherRunnableStatuses.contains(status) && task instanceof ProcessingExecutionTask) {
+            if (completedOkStatuses.contains(status) && notFurtherRunnableStatuses.contains(status)
+                    && task instanceof ProcessingExecutionTask && !(task instanceof ScriptTask)) {
                 return;
             }
             if (notFurtherRunnableStatuses.contains(status)) {
@@ -595,7 +596,7 @@ public class Orchestrator extends Notifiable {
                 final WorkflowNodeDescriptor taskNode = workflowNodeProvider.get(task.getWorkflowNodeId());
                 // For DataSourceExecutionTask, it is the Query executor that sets the outputs.
                 // Hence, we need to "confirm" here the outputs of a processing task.
-                if (task instanceof ProcessingExecutionTask) {
+                if (task instanceof ProcessingExecutionTask && !(task instanceof ScriptTask)) {
                     handleProcessingTask((ProcessingExecutionTask) task, taskNode == null || taskNode.getPreserveOutput());
                 }
                 // Identify next tasks to be executed
@@ -1246,6 +1247,8 @@ public class Orchestrator extends Notifiable {
                             error += ex.getMessage() + ";";
                         }
                     }
+                } else {
+                    succeeded = true;
                 }
             }
             if (!succeeded) {

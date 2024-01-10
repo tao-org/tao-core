@@ -64,7 +64,8 @@ public class ExecutionTaskManager extends EntityManager<ExecutionTask, Long, Exe
                          : Level.FINE,
                        String.format("Task %s status change [%s -> %s].", task.getId(), oldStatus, newStatus)
                                + (reason != null ? " Reason: " + reason : ""));
-            task = get(task.getId());
+            task.setExecutionStatus(newStatus);
+            task.setLog(reason);
             return task;
         } finally {
             lock.unlock();
