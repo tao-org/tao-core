@@ -5,6 +5,7 @@ import ro.cs.tao.configuration.ConfigurationProvider;
 import ro.cs.tao.execution.local.DefaultSessionFactory;
 import ro.cs.tao.execution.model.ExecutionStrategy;
 import ro.cs.tao.execution.model.ExecutionStrategyType;
+import ro.cs.tao.execution.model.NodeData;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.Messaging;
@@ -525,43 +526,6 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
 
     private boolean useMasterNode() {
         return ConfigurationManager.getInstance().getBooleanValue(USE_MASTER_FOR_EXECUTION_KEY);
-    }
-
-    /**
-     * This class contains the node on which a task can be executed together with the number of
-     * CPU's and the memory that should be used.
-     *
-     * @author Lucian Barbulescu
-     */
-    public static class NodeData {
-        private final NodeDescription node;
-        private final int cpu;
-        private final long memory;
-
-        /**
-         * Constructor.
-         *
-         * @param node the node descriptor
-         * @param cpu the number of cpus
-         * @param memory the memory
-         */
-        private NodeData(NodeDescription node, int cpu, long memory) {
-            this.node = node;
-            this.cpu = cpu;
-            this.memory = memory;
-        }
-
-        public NodeDescription getNode() {
-            return node;
-        }
-
-        public int getCpu() {
-            return cpu;
-        }
-
-        public long getMemory() {
-            return memory;
-        }
     }
 
     protected class NodeInspectTask extends TimerTask {

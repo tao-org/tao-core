@@ -15,7 +15,6 @@
  */
 package ro.cs.tao.orchestration;
 
-import org.apache.commons.lang3.StringUtils;
 import ro.cs.tao.EnumUtils;
 import ro.cs.tao.component.*;
 import ro.cs.tao.configuration.ConfigurationManager;
@@ -864,7 +863,7 @@ public class Orchestrator extends Notifiable {
         if (lastFromGroup) {
             taskProvider.update(groupTask);
         }
-        // TODO: This should be moved in the DoneHandler
+        /* moved in the DoneHandler
         final Message message = Message.create(pcTask.getJob().getUserId(), pcTask.getId(),
                                                "Task " + TaskUtilities.getTaskName(pcTask)
                                                        + (StringUtils.isNotEmpty(pcTask.getExecutionNodeHostName()) ? " on node " + pcTask.getExecutionNodeHostName() : "")
@@ -874,7 +873,7 @@ public class Orchestrator extends Notifiable {
         message.addItem("host", pcTask.getExecutionNodeHostName());
         Messaging.send(message);
         logger.fine(String.format("Status change for task %s [job %s]: %s",
-                                  pcTask.getComponent().getId(), pcTask.getJob().getName(), ExecutionStatus.DONE.name()));
+                                  pcTask.getComponent().getId(), pcTask.getJob().getName(), ExecutionStatus.DONE.name()));*/
     }
 
     /**
