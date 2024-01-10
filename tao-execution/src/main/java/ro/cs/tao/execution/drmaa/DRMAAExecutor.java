@@ -22,7 +22,6 @@ import ro.cs.tao.component.SourceDescriptor;
 import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.component.Variable;
 import ro.cs.tao.component.enums.ProcessingComponentType;
-import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.docker.Application;
 import ro.cs.tao.docker.Container;
 import ro.cs.tao.docker.DockerVolumeMap;
@@ -34,7 +33,6 @@ import ro.cs.tao.execution.Executor;
 import ro.cs.tao.execution.callback.EndpointDescriptor;
 import ro.cs.tao.execution.model.*;
 import ro.cs.tao.execution.monitor.NodeManager;
-import ro.cs.tao.execution.monitor.NodeManager.NodeData;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.execution.util.TaskUtilities;
 import ro.cs.tao.messaging.Message;
@@ -488,20 +486,16 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                                 ? app.getMemoryRequirements()
                                 : container.getApplications().stream().mapToLong(Application::getMemoryRequirements).min().orElse(0L);
             setMemoryConstraint(jt, memory);
-            final String preferredHostName = task.getExecutionNodeHostName();
-            final NodeData nodeData;
+            NodeData nodeData;
             final Integer parallelism = component.getParallelism();
-            final ExecutionStrategy strategy = getExecutionStrategy(task);
-            if (preferredHostName != null && !"same".equalsIgnoreCase(preferredHostName)) {
-                nodeData = getNode(preferredHostName);
-            } else {
-                if (task instanceof ScriptTask) {
-                    nodeData = NodeManager.getInstance().getMasterNode();
-                } else {
-                    // the next call blocks until a node is available
-                    nodeData = getAvailableNode(job.getUserId(), parallelism,
-                                                ExecutionConfiguration.forceMemoryConstraint() ? memory : 0,
-                                                strategy);
+            final ExecutionStrategy strategy = ExecutionStrategy.getExecutionStrategy(task);
+            nodeData = strategy.getNode(memory);
+            while (nodeData == null || !canSubmitTask(nodeData.getNode().getId(), memory)) {
+                try {
+                    TimeUnit.SECONDS.sleep(20);
+                } catch (InterruptedException ignored) { }
+                if (nodeData == null) {
+                    nodeData = strategy.getNode(memory);
                 }
             }
             final NodeDescription node = nodeData.getNode();
@@ -848,48 +842,6 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
                 job.setAttribute(DrmaaJobExtensions.NODE_ATTRIBUTE, host);
             }
         }
-    }
-
-    private ExecutionStrategy getExecutionStrategy(ExecutionTask task) {
-        final ExecutionStrategyType strategyType = Enum.valueOf(ExecutionStrategyType.class,
-                                                                ConfigurationManager.getInstance()
-                                                                                    .getValue("execution.strategy",
-                                                                                              "DISTRIBUTE"));
-        final ExecutionTask tmpTask = task.getJob().getTasks().stream().filter(t -> t instanceof ProcessingExecutionTask
-                && t.getExecutionNodeHostName() != null && !t.getExecutionNodeHostName().equalsIgnoreCase("same")).findFirst().orElse(null);
-        ExecutionStrategy strategy;
-        return ExecutionStrategy.create(strategyType, tmpTask != null ? tmpTask.getExecutionNodeHostName() : null);
-    }
-
-    private NodeData getAvailableNode(String user, int cpus, long memory, ExecutionStrategy strategy) throws DrmaaException {
-    	NodeData nodeData = null;
-        if (NodeManager.isAvailable()) {
-            nodeData = NodeManager.getInstance().getAvailableNode(user, cpus, memory, strategy);
-            while (nodeData == null || !canSubmitTask(nodeData.getNode().getId(), memory)) {
-                try {
-                    TimeUnit.SECONDS.sleep(20);
-                } catch (InterruptedException ignored) { }
-                nodeData = NodeManager.getInstance().getAvailableNode(user, cpus, memory, strategy);
-            }
-            logger.finest(String.format("Node [%s] was chosen for next execution", nodeData.getNode().getId()));
-        } else {
-            nodeData = NodeManager.getInstance().getMasterNode();
-        }
-        if (nodeData == null) {
-            throw new DeniedByDrmException("No node was found for execution");
-        }
-        return nodeData;
-    }
-
-    private NodeData getNode(String nodeName) throws DrmaaException {
-        NodeData nodeData = null;
-        if (NodeManager.isAvailable() && NodeManager.getInstance() != null) {
-            nodeData = NodeManager.getInstance().getNode(nodeName);
-        }
-        if (nodeData == null) {
-            throw new DeniedByDrmException(String.format("Node '%s' was not found", nodeName));
-        }
-        return nodeData;
     }
 
     private void notifyExternalListeners(ProcessingExecutionTask task, String message, int exitCode, String processOutput) {
