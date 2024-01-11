@@ -1401,7 +1401,7 @@
                 <column name="params" nullable="true" column-definition="json"/>
             </basic>
             <basic name="order">
-                <column name="order" nullable="true" column-definition="smallint"/>
+                <column name="display_order" nullable="true" column-definition="smallint"/>
             </basic>
             <basic name="created">
                 <column name="created" nullable="true" column-definition="timestamp DEFAULT now()"/>
