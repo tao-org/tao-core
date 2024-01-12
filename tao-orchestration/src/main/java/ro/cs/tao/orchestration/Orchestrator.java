@@ -102,15 +102,11 @@ public class Orchestrator extends Notifiable {
 
     private static final String GROUP_TASK_SELECTOR_KEY = "group.task.selector";
     private static final String JOB_TASK_SELECTOR_KEY = "job.task.selector";
-    private static final Set<ExecutionStatus> notFurtherRunnableStatuses = new HashSet<>() {{
-        add(ExecutionStatus.DONE);
-        add(ExecutionStatus.CANCELLED);
-        add(ExecutionStatus.FAILED);
-    }};
-    private static final Set<ExecutionStatus> completedOkStatuses = new HashSet<>() {{
-        add(ExecutionStatus.DONE);
-        add(ExecutionStatus.PENDING_FINALISATION);
-    }};
+    private static final Set<ExecutionStatus> notFurtherRunnableStatuses = EnumSet.of(ExecutionStatus.DONE,
+                                                                                      ExecutionStatus.CANCELLED,
+                                                                                      ExecutionStatus.FAILED);
+    private static final Set<ExecutionStatus> completedOkStatuses = EnumSet.of(ExecutionStatus.DONE,
+                                                                               ExecutionStatus.PENDING_FINALISATION);
 
     private static final Orchestrator instance;
     private final Map<Long, InternalStateHandler<?>> groupStateHandlers;
@@ -863,6 +859,7 @@ public class Orchestrator extends Notifiable {
         if (lastFromGroup) {
             taskProvider.update(groupTask);
         }
+        TaskStatusHandler.handle(pcTask, null);
         /* moved in the DoneHandler
         final Message message = Message.create(pcTask.getJob().getUserId(), pcTask.getId(),
                                                "Task " + TaskUtilities.getTaskName(pcTask)
@@ -1048,14 +1045,14 @@ public class Orchestrator extends Notifiable {
 
     private void changeStatus(ExecutionTask task, ExecutionStatus newStatus, String reason) {
         try {
-            if (task.getExecutionStatus() != newStatus) {
+            if (task.getExecutionStatus() != newStatus || task instanceof DataSourceExecutionTask) {
                 task = taskProvider.updateStatus(task, newStatus, reason);
-            }
-            ExecutionGroup groupTask = task.getGroupTask();
-            if (groupTask != null) {
-                notifyTaskGroup(groupTask, task, reason);
-            } else {
-                notifyJob(task, reason);
+                ExecutionGroup groupTask = task.getGroupTask();
+                if (groupTask != null) {
+                    notifyTaskGroup(groupTask, task, reason);
+                } else {
+                    notifyJob(task, reason);
+                }
             }
         } catch (Exception e) {
             logger.severe(ro.cs.tao.utils.ExceptionUtils.getStackTrace(logger, e));
