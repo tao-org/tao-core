@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import ro.cs.tao.execution.model.ExecutionJob;
 import ro.cs.tao.execution.model.ExecutionStatus;
 import ro.cs.tao.execution.model.ExecutionTask;
+import ro.cs.tao.execution.model.ProcessingExecutionTask;
 import ro.cs.tao.execution.persistence.ExecutionJobProvider;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.execution.util.TaskUtilities;
@@ -31,14 +32,16 @@ public class DoneStatusHandler extends TaskStatusHandler {
             job.setExecutionStatus(ExecutionStatus.RUNNING);
             jobProvider.update(job);
         }
-        final String strMsg = "Task " + TaskUtilities.getTaskName(task) +
-                (StringUtils.isNotEmpty(task.getExecutionNodeHostName()) ? " on node " + task.getExecutionNodeHostName() : "") +
-                " changed to " + ExecutionStatus.DONE.friendlyName();
-        final Message message = Message.create(task.getJob().getUserId(), task.getId(),
-                                               strMsg, ExecutionStatus.DONE.name(), true);
-        message.setTopic(Topic.EXECUTION.value());
-        message.addItem("host", task.getExecutionNodeHostName());
-        Messaging.send(message);
-        logger.fine(strMsg);
+        if (task instanceof ProcessingExecutionTask) {
+            final String strMsg = "Task " + TaskUtilities.getTaskName(task) +
+                    (StringUtils.isNotEmpty(task.getExecutionNodeHostName()) ? " on node " + task.getExecutionNodeHostName() : "") +
+                    " changed to " + ExecutionStatus.DONE.friendlyName();
+            final Message message = Message.create(task.getJob().getUserId(), task.getId(),
+                                                   strMsg, ExecutionStatus.DONE.name(), true);
+            message.setTopic(Topic.EXECUTION.value());
+            message.addItem("host", task.getExecutionNodeHostName());
+            Messaging.send(message);
+            logger.fine(strMsg);
+        }
     }
 }

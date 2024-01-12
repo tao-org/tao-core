@@ -274,21 +274,24 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                     final String[] list = strList.split(",");
                     // First try to replace any symlinks with actual data to avoid S3 read issues
                     final StringBuilder builder = new StringBuilder();
+                    final StringBuilder srcBuilder = new StringBuilder();
                     for (String item : list) {
                         try {
                             Path path = FileUtilities.toPath(item);
                             if (Files.isSymbolicLink(path)) {
-                                builder.append(FileUtilities.replaceLink(path, null));
+                                builder.append(FileUtilities.asUnixPath(FileUtilities.replaceLink(path, null), true));
                             } else {
-                                builder.append(path);
+                                builder.append(FileUtilities.asUnixPath(path, true));
                             }
                             builder.append(",");
+                            srcBuilder.append(FileUtilities.asUnixPath(path, true)).append(",");
                         } catch (IOException e) {
                             logger.warning(e.getMessage());
                         }
                     }
                     if (builder.length() > 0) {
                         builder.setLength(builder.length() - 1);
+                        srcBuilder.setLength(srcBuilder.length() - 1);
                     } else {
                         throw new QueryException("Either the product set is empty or the files don't exist on the disk");
                     }
@@ -298,6 +301,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                                                                                  .filter(t -> t.getName().equals(DataSourceComponent.RESULTS_PARAMETER))
                                                                                  .findFirst().get();
                     targetDescriptor.getDataDescriptor().setLocation(builder.toString());
+                    descriptor.getDataDescriptor().setLocation(srcBuilder.toString());
                     componentProvider.save(dataSourceComponent);
                     task.setOutputParameterValue(outPort, jsonifyResults(Arrays.asList(list)));
                     task.getComponent().setTargetCardinality(descriptor.getCardinality());

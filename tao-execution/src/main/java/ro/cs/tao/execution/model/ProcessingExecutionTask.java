@@ -286,7 +286,8 @@ public class ProcessingExecutionTask extends ExecutionTask {
                 } catch (IOException e) {
                     Logger.getLogger(ProcessingExecutionTask.class.getName()).severe(e.getMessage());
                 }
-                //setInstanceTargetOutput(FileUtilities.asUnixPath(path.getParent().resolve(folderName).resolve(fileName), true));setInstanceTargetOutput(FileUtilities.asUnixPath(jobPath.resolve(folderName).resolve(fileName), true));
+                //setInstanceTargetOutput(FileUtilities.asUnixPath(path.getParent().resolve(folderName).resolve(fileName), true));
+                setInstanceTargetOutput(FileUtilities.asUnixPath(jobPath.resolve(folderName).resolve(fileName), true));
                 setInstanceTemporaryOutput(ExecutionConfiguration.getWorkerContainerVolumeMap().getContainerTemporaryFolder() + "/" + fileName);
             }
         }
