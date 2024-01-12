@@ -21,6 +21,7 @@ public class Repository extends StringIdentifiable {
     private boolean system;
     private boolean editable;
     private short order;
+    private boolean persistentStorage;
     private LocalDateTime created;
 
     @XmlTransient
@@ -106,6 +107,14 @@ public class Repository extends StringIdentifiable {
 
     public void setOrder(short order) {
         this.order = order;
+    }
+
+    public boolean isPersistentStorage() {
+        return persistentStorage;
+    }
+
+    public void setPersistentStorage(boolean persistentStorage) {
+        this.persistentStorage = persistentStorage;
     }
 
     public LocalDateTime getCreated() {

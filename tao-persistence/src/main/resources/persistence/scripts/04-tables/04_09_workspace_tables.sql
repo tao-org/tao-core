@@ -24,7 +24,8 @@ CREATE TABLE workspace.repository
 	system boolean DEFAULT false,
 	is_editable boolean NOT NULL,
 	params json NULL,
-	order smallint,
+	display_order smallint,
+	persistent_storage boolean DEFAULT false,
 	created timestamp DEFAULT now()
 );
 ALTER TABLE workspace.repository ADD CONSTRAINT PK_repository PRIMARY KEY (id);

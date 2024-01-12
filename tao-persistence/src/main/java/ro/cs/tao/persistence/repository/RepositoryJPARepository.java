@@ -23,6 +23,9 @@ public interface RepositoryJPARepository extends PagingAndSortingRepository<Repo
     @Query(value = "SELECT * FROM workspace.repository WHERE user_id = :userId AND system = true ORDER BY display_order", nativeQuery = true)
     List<Repository> getUserSystemRepositories(@Param("userId") String userId);
 
+    @Query(value = "SELECT * FROM workspace.repository WHERE user_id = :userId AND persistent_storage = true ORDER BY display_order LIMIT 1", nativeQuery = true)
+    Repository getUserPeristentRepository(@Param("userId") String userId);
+
     @Query(value = "SELECT COUNT(id) FROM workspace.repository WHERE user_id = :userId", nativeQuery = true)
     short countUserRepositories(@Param("userId") String userId);
 }

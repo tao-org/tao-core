@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.RepositoryProvider;
+import ro.cs.tao.persistence.TransactionalMethod;
 import ro.cs.tao.persistence.repository.RepositoryJPARepository;
 import ro.cs.tao.utils.StringUtilities;
 import ro.cs.tao.workspaces.Repository;
@@ -33,6 +34,26 @@ public class RepositoryManager extends EntityManager<Repository, String, Reposit
     @Override
     public List<Repository> getUserSystemRepositories(String userId) {
         return repository.getUserSystemRepositories(userId);
+    }
+
+    @Override
+    public Repository getUserPersistentRepository(String userId) {
+        return repository.getUserPeristentRepository(userId);
+    }
+
+    @Override
+    public void setUserPersistentRepository(String userId, String repositoryId) throws PersistenceException {
+        TransactionalMethod.withExceptionType(PersistenceException.class).execute(() -> {
+            final List<Repository> repositories = getByUser(userId);
+            for (Repository repository : repositories) {
+                repository.setPersistentStorage(repository.getId().equals(repositoryId));
+                try {
+                    save(repository);
+                } catch (PersistenceException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
     }
 
     @Override

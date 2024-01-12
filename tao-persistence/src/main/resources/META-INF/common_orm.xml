@@ -1400,6 +1400,9 @@
             <basic name="parameters">
                 <column name="params" nullable="true" column-definition="json"/>
             </basic>
+            <basic name="persistentStorage">
+                <column name="persistent_storage" nullable="true" column-definition="boolean DEFAULT false"/>
+            </basic>
             <basic name="order">
                 <column name="display_order" nullable="true" column-definition="smallint"/>
             </basic>
