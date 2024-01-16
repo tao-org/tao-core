@@ -150,6 +150,7 @@ public class WorkflowManager extends EntityManager<WorkflowDescriptor, Long, Wor
         } else {
             workflows.addAll(repository.getOtherPublicWorkflows(userId));
         }
+        workflows.removeIf(w -> w.isTemporary());
         return workflows;
     }
 
