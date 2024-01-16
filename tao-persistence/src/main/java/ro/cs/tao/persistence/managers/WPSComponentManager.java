@@ -2,7 +2,7 @@ package ro.cs.tao.persistence.managers;
 
 import org.springframework.stereotype.Component;
 import ro.cs.tao.component.TaoComponent;
-import ro.cs.tao.component.WPSComponent;
+import ro.cs.tao.component.ogc.WPSComponent;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.WPSComponentProvider;
 import ro.cs.tao.persistence.repository.WPSComponentRepository;

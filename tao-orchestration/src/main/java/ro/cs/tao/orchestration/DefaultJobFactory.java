@@ -18,6 +18,8 @@ package ro.cs.tao.orchestration;
 
 import ro.cs.tao.component.*;
 import ro.cs.tao.component.enums.ProcessingComponentType;
+import ro.cs.tao.component.ogc.WMSComponent;
+import ro.cs.tao.component.ogc.WPSComponent;
 import ro.cs.tao.datasource.DataSourceComponent;
 import ro.cs.tao.datasource.DataSourceComponentGroup;
 import ro.cs.tao.datasource.beans.Query;

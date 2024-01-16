@@ -16,7 +16,9 @@ public enum ContainerType implements TaoEnum<Integer> {
     @XmlEnumValue("4")
     STAC(4, "STAC Service"),
     @XmlEnumValue("5")
-    WMS(5, "Web Map Service");
+    WMS(5, "Web Map Service"),
+    @XmlEnumValue("6")
+    WMTS(6, "Web Map Tile Service");
 
     private final int value;
     private final String description;
