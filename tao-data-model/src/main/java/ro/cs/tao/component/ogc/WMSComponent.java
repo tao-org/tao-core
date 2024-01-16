@@ -1,5 +1,9 @@
-package ro.cs.tao.component;
+package ro.cs.tao.component.ogc;
 
+import ro.cs.tao.component.ParameterDescriptor;
+import ro.cs.tao.component.SourceDescriptor;
+import ro.cs.tao.component.TaoComponent;
+import ro.cs.tao.component.TargetDescriptor;
 import ro.cs.tao.component.enums.ProcessingComponentVisibility;
 import ro.cs.tao.component.validation.ValidationException;
 import ro.cs.tao.docker.Container;
@@ -10,8 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@XmlRootElement(name = "wpsComponent")
-public class WPSComponent extends TaoComponent {
+@XmlRootElement(name = "wmsComponent")
+public class WMSComponent extends TaoComponent {
     private String remoteAddress;
     private String capabilityName;
     private List<ParameterDescriptor> parameters;
@@ -20,7 +24,7 @@ public class WPSComponent extends TaoComponent {
     private String owner;
     private Container service;
 
-    public WPSComponent() { }
+    public WMSComponent() { }
 
     public String getRemoteAddress() {
         return remoteAddress;
@@ -88,8 +92,8 @@ public class WPSComponent extends TaoComponent {
         if (parameterValues != null) {
             final List<ParameterDescriptor> parameterDescriptors =
                     getParameters().stream()
-                            .filter(d -> parameterValues.containsKey(d.getId()))
-                            .collect(Collectors.toList());
+                                   .filter(d -> parameterValues.containsKey(d.getId()))
+                                   .collect(Collectors.toList());
             for (ParameterDescriptor descriptor : parameterDescriptors) {
                 descriptor.validate(parameterValues.get(descriptor.getId()));
             }
@@ -97,8 +101,8 @@ public class WPSComponent extends TaoComponent {
     }
 
     @Override
-    public WPSComponent clone() throws CloneNotSupportedException {
-        final WPSComponent cloned = new WPSComponent();
+    public WMSComponent clone() throws CloneNotSupportedException {
+        final WMSComponent cloned = new WMSComponent();
         cloned.label = this.label + " (copy)";
         cloned.version = this.version;
         cloned.description = this.description;

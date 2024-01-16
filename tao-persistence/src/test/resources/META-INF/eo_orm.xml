@@ -156,7 +156,7 @@
         </attributes>
     </entity>
 
-    <entity class="ro.cs.tao.component.WPSComponent" access="PROPERTY">
+    <entity class="ro.cs.tao.component.ogc.WPSComponent" access="PROPERTY">
         <table name="component.wps_component"/>
 
         <association-override name="sources">
@@ -205,7 +205,7 @@
         <discriminator-value>33</discriminator-value>
 
         <attributes>
-            <many-to-one name="component" fetch="LAZY" target-entity="ro.cs.tao.component.WPSComponent">
+            <many-to-one name="component" fetch="LAZY" target-entity="ro.cs.tao.component.ogc.WPSComponent">
                 <join-column name="component_id" nullable="false"/>
             </many-to-one>
             <transient name="externalCommonParameters"/>

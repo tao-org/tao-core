@@ -1,6 +1,10 @@
 package ro.cs.tao.execution.model;
 
-import ro.cs.tao.component.*;
+import ro.cs.tao.component.ParameterDescriptor;
+import ro.cs.tao.component.SourceDescriptor;
+import ro.cs.tao.component.TargetDescriptor;
+import ro.cs.tao.component.Variable;
+import ro.cs.tao.component.ogc.WMSComponent;
 import ro.cs.tao.component.validation.ValidationException;
 import ro.cs.tao.docker.ExecutionConfiguration;
 import ro.cs.tao.utils.FileUtilities;
