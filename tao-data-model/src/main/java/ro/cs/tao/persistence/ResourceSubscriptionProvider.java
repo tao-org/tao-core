@@ -7,4 +7,7 @@ import java.util.List;
 public interface ResourceSubscriptionProvider extends EntityProvider<ResourceSubscription, Long> {
 
     List<ResourceSubscription> getByUser(String userId);
+
+    List<ResourceSubscription> getEndedSubscriptionsByUser(String userId);
+
 }
