@@ -20,7 +20,12 @@ public class ResourceSubscriptionManager extends EntityManager<ResourceSubscript
 
     @Override
     public List<ResourceSubscription> getByUser(String userId) {
-        return repository.findByUserId(userId);
+        return repository.getByUser(userId);
+    }
+
+    @Override
+    public List<ResourceSubscription> getEndedSubscriptionsByUser(String userId) {
+        return repository.getEndedSubscriptionsByUser(userId);
     }
 
     @Override
