@@ -31,7 +31,7 @@ public class DockerVolumeMap {
         if (StringUtils.isEmpty(value)) {
             throw new IllegalArgumentException("Workspace volume map is missing!");
         }
-        String[] values = value.split(":");
+        String[] values = safeSplit(value);
         this.hostWorkspaceFolder = values[0];
         this.containerWorkspaceFolder = values[1];
 
@@ -39,7 +39,7 @@ public class DockerVolumeMap {
         if (StringUtils.isEmpty(value)) {
             throw new IllegalArgumentException("Temp volume map is missing!");
         }
-        values = value.split(":");
+        values = safeSplit(value);
         this.hostTemporaryFolder = values[0];
         this.containerTemporaryFolder = values[1];
 
@@ -47,20 +47,20 @@ public class DockerVolumeMap {
         if (StringUtils.isEmpty(value)) {
             throw new IllegalArgumentException("Configuration volume map is missing!");
         }
-        values = value.split(":");
+        values = safeSplit(value);
         this.hostConfigurationFolder = values[0];
         this.containerConfigurationFolder = values[1];
 
         value = volumeMap.get(DOCKER_EODATA_MOUNT_KEY);
         if (StringUtils.isNotEmpty(value)) {
-            values = value.split(":");
+            values = safeSplit(value);
             this.hostEoDataFolder = values[0];
             this.containerEoDataFolder = values[1];
         }
 
         value = volumeMap.get(DOCKER_ADDITIONAL_MOUNT_KEY);
         if (StringUtils.isNotEmpty(value)) {
-            values = value.split(":");
+            values = safeSplit(value);
             this.hostAdditionalFolder = values[0];
             this.containerAdditionalFolder = values[1];
         }
@@ -133,5 +133,18 @@ public class DockerVolumeMap {
             result = strPath;
         }
         return result;
+    }
+
+    public String[] safeSplit(String input) {
+        String[] values;
+        int i = input.indexOf(':');
+        if ((i = input.indexOf(':', i + 1)) > 0) {
+            values = new String[2];
+            values[0] = input.substring(0, i);
+            values[1] = input.substring(i + 1);
+        } else {
+            values = input.split(":");
+        }
+        return values;
     }
 }
