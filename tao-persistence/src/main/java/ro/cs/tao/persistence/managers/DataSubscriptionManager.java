@@ -28,13 +28,13 @@ public class DataSubscriptionManager extends EntityManager<DataSubscription, Lon
     }
 
     @Override
-    public List<DataSubscription> getByUserAndWorkspace(String userId, String workspaceId) {
-        return repository.findByUserIdAndWorkspaceId(userId, workspaceId);
+    public List<DataSubscription> getByUserAndWorkspace(String userId, String repositoryId) {
+        return repository.findByUserIdAndRepositoryId(userId, repositoryId);
     }
 
     @Override
-    public DataSubscription get(String userId, String workspaceId, String path) {
-        return repository.get(userId, workspaceId, path);
+    public DataSubscription get(String userId, String repositoryId, String path) {
+        return repository.get(userId, repositoryId, path);
     }
 
     @Override

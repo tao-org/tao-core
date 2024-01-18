@@ -17,11 +17,11 @@ public interface DataSubscriptionRepository extends PagingAndSortingRepository<D
 
     List<DataSubscription> findByUserId(String userId);
 
-    List<DataSubscription> findByUserIdAndWorkspaceId(String userId, String workspaceId);
+    List<DataSubscription> findByUserIdAndRepositoryId(String userId, String repositoryId);
 
-    @Query(value = "SELECT * FROM subscription.dataset WHERE user_id = :userId AND workspace_id = :workspaceId and data_root_path = :path",
+    @Query(value = "SELECT * FROM subscription.dataset WHERE user_id = :userId AND repository_id = :repositoryId and data_root_path = :path",
             nativeQuery = true)
-    DataSubscription get(@Param("userId") String userId, @Param("workspaceId") String workspaceId, @Param("path") String path);
+    DataSubscription get(@Param("userId") String userId, @Param("repositoryId") String repositoryId, @Param("path") String path);
 
     @Query(value = "SELECT * FROM subscription.dataset WHERE user_id = :userId AND name = :name",
             nativeQuery = true)
