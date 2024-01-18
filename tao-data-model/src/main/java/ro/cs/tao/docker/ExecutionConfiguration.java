@@ -1,6 +1,7 @@
 package ro.cs.tao.docker;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import org.apache.commons.lang3.SystemUtils;
 import ro.cs.tao.configuration.ConfigurationManager;
 import ro.cs.tao.serialization.JsonMapper;
 import ro.cs.tao.utils.FileUtilities;
@@ -41,11 +42,18 @@ public class ExecutionConfiguration {
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
+            final boolean isDockerVolumeStyle = SystemUtils.IS_OS_LINUX ||
+                                                ConfigurationManager.getInstance()
+                                                                    .getValue("docker.volume.map.style", "docker")
+                                                                    .equals("docker");
             map = map.entrySet().stream()
                                 .collect(Collectors.toMap(Map.Entry::getKey,
                                                           e -> {
                                                               final String[] values = e.getValue().split(":");
-                                                              return FileUtilities.asUnixPath(Paths.get(values[0]), false) + ":" + values[1];
+                                                              return (isDockerVolumeStyle
+                                                                      ? FileUtilities.asUnixPath(Paths.get(values[0]), false)
+                                                                      : Paths.get(values[0]).toAbsolutePath())
+                                                                      + ":" + values[1];
                                                           }));
             masterVolumeMap = new DockerVolumeMap(map);
         }

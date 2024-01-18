@@ -653,7 +653,7 @@ public class DefaultJobFactory {
                     final int size = tuples.size();
                     if (size > 1) {
                         for (int i = 1; i < size; i++) {
-                            ExecutionJob clonedJob = cloneJob(job, i);
+                            ExecutionJob clonedJob = cloneJob(job, i, size);
                             final Map<String, List<String>> dependencies = clonedJob.getTaskDependencies();
                             ExecutionTask clonedPrimaryDataTask = clonedJob.getTasks().stream()
                                                                      .filter(t -> t instanceof DataSourceExecutionTask
@@ -705,8 +705,9 @@ public class DefaultJobFactory {
                     if (values != null) {
                         List<String> list = deserializeResults(values.getValue());
                         if (list != null && list.size() > 1) {
-                            for (int i = 1; i < list.size(); i++) {
-                                ExecutionJob clonedJob = cloneJob(job, i);
+                            final int size = list.size();
+                            for (int i = 1; i < size; i++) {
+                                ExecutionJob clonedJob = cloneJob(job, i, size);
                                 ExecutionTask clonedDataTask = clonedJob.getTasks().stream().filter(t -> t instanceof DataSourceExecutionTask).findFirst().orElse(null);
                                 if (clonedDataTask == null) {
                                     throw new CloneNotSupportedException("DataSourceExecutionTask was not cloned");
@@ -734,10 +735,10 @@ public class DefaultJobFactory {
         return jobs;
     }
 
-    public ExecutionJob cloneJob(ExecutionJob original, int cloneNumber) throws CloneNotSupportedException, PersistenceException {
+    public ExecutionJob cloneJob(ExecutionJob original, int cloneNumber, int total) throws CloneNotSupportedException, PersistenceException {
         return TransactionalMethod.withExceptionType(PersistenceException.class).execute(() -> {
             ExecutionJob clone = new ExecutionJob();
-            clone.setName(original.getName() + " (" + cloneNumber + ")");
+            clone.setName(original.getName() + " (" + cloneNumber + "/" + total + ")");
             clone.setWorkflowId(original.getWorkflowId());
             clone.setBatchId(original.getBatchId());
             clone.setExternal(original.isExternal());
