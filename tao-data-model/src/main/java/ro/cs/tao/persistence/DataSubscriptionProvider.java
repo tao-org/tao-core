@@ -8,9 +8,9 @@ public interface DataSubscriptionProvider extends EntityProvider<DataSubscriptio
 
     List<DataSubscription> getByUser(String userId);
 
-    List<DataSubscription> getByUserAndWorkspace(String userId, String workspaceId);
+    List<DataSubscription> getByUserAndWorkspace(String userId, String repositoryId);
 
-    DataSubscription get(String userId, String workspaceId, String path);
+    DataSubscription get(String userId, String repositoryId, String path);
 
     DataSubscription get(String userId, String name);
 
