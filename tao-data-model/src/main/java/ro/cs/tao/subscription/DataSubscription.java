@@ -17,8 +17,10 @@ import java.time.LocalDateTime;
 public class DataSubscription extends LongIdentifiable {
 
     private String userId;
+    private String repositoryId;
     private String name;
     private String dataRootPath;
+    private int subscribersCount;
     private LocalDateTime created;
 
     @Override
@@ -30,6 +32,14 @@ public class DataSubscription extends LongIdentifiable {
 
     public void setUserId(String userId) {
         this.userId = userId;
+    }
+
+    public String getRepositoryId() {
+        return repositoryId;
+    }
+
+    public void setRepositoryId(String repositoryId) {
+        this.repositoryId = repositoryId;
     }
 
     public String getName() {
@@ -46,6 +56,14 @@ public class DataSubscription extends LongIdentifiable {
 
     public void setDataRootPath(String dataRootPath) {
         this.dataRootPath = dataRootPath;
+    }
+
+    public int getSubscribersCount() {
+        return subscribersCount;
+    }
+
+    public void setSubscribersCount(int subscribersCount) {
+        this.subscribersCount = subscribersCount;
     }
 
     public LocalDateTime getCreated() {
