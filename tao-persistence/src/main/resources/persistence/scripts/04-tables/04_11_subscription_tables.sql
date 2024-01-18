@@ -21,8 +21,10 @@ CREATE TABLE IF NOT EXISTS subscription.dataset
 (
     id bigint NOT NULL,
     user_id varchar NOT NULL,
+    repository_id varchar NOT NULL,
     name varchar NOT NULL,
     data_root_path varchar NOT NULL,
+    subscribers_count integer DEFAULT 0,
     created timestamp without time zone NULL DEFAULT now()
 );
 ALTER TABLE subscription.dataset ADD CONSTRAINT PK_subscription_dataset PRIMARY KEY (id);
@@ -42,9 +44,9 @@ CREATE TABLE IF NOT EXISTS subscription.subscription_type
 ALTER TABLE subscription.subscription_type ADD CONSTRAINT PK_subscription_type PRIMARY KEY (id);
 
 -------------------------------------------------------------------------------
--- table: subscription.user_subscription
-DROP TABLE IF EXISTS subscription.user_subscription;
-CREATE TABLE IF NOT EXISTS subscription.user_subscription
+-- table: subscription.resource_subscription
+DROP TABLE IF EXISTS subscription.resource_subscription;
+CREATE TABLE IF NOT EXISTS subscription.resource_subscription
 (
     id bigint NOT NULL,
     user_id varchar NOT NULL,
@@ -58,10 +60,10 @@ CREATE TABLE IF NOT EXISTS subscription.user_subscription
     created timestamp without time zone NULL DEFAULT now(),
     ended timestamp without time zone NULL
 );
-ALTER TABLE subscription.user_subscription ADD CONSTRAINT PK_user_subscription PRIMARY KEY (id);
-DROP SEQUENCE IF EXISTS subscription.user_subscription_id_seq CASCADE;
-CREATE SEQUENCE subscription.user_subscription_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
-ALTER TABLE subscription.user_subscription ALTER COLUMN id SET DEFAULT nextval('subscription.user_subscription_id_seq');
-ALTER SEQUENCE subscription.user_subscription_id_seq OWNED BY subscription.user_subscription.id;
-ALTER TABLE subscription.user_subscription ADD CONSTRAINT FK_user_subscription_type
+ALTER TABLE subscription.resource_subscription ADD CONSTRAINT PK_resource_subscription PRIMARY KEY (id);
+DROP SEQUENCE IF EXISTS subscription.resource_subscription_id_seq CASCADE;
+CREATE SEQUENCE subscription.resource_subscription_id_seq INCREMENT BY 1 MINVALUE 1 NO MAXVALUE START WITH 1 NO CYCLE;
+ALTER TABLE subscription.resource_subscription ALTER COLUMN id SET DEFAULT nextval('subscription.resource_subscription_id_seq');
+ALTER SEQUENCE subscription.resource_subscription_id_seq OWNED BY subscription.resource_subscription.id;
+ALTER TABLE subscription.resource_subscription ADD CONSTRAINT FK_resource_subscription_type
     FOREIGN KEY (type_id) REFERENCES subscription.subscription_type (id) ON DELETE No Action ON UPDATE No Action;
