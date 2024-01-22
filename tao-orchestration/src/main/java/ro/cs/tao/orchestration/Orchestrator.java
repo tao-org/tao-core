@@ -721,6 +721,19 @@ public class Orchestrator extends Notifiable {
                 if (jobStatus == ExecutionStatus.CANCELLED || jobStatus == ExecutionStatus.FAILED) {
                     cancelJob(job);
                 }
+                if (status == ExecutionStatus.FAILED) {
+                    if (TaskUtilities.getTransitionBehavior(task) == TransitionBehavior.FAIL_ON_ERROR) {
+                        cancelJob(job);
+                    } else {
+                        // Only cancel child tasks
+                        final List<ExecutionTask> nextTasks = findNextTasks(task);
+                        if (nextTasks != null) {
+                            for (ExecutionTask nextTask : nextTasks) {
+                                changeStatus(nextTask, ExecutionStatus.CANCELLED, "Parent task " + task.getId() + " failed");
+                            }
+                        }
+                    }
+                }
                 if (TaskUtilities.haveAllTasksCompleted(job)) {
                     tryRemoveTemporaryWorkflow(job);
                 }
