@@ -254,6 +254,7 @@ INSERT INTO config.config (category_id, id, value, friendly_name, type, label, "
 (3, 'master.docker.mappings', '{ "workspace.mount": "/mnt/tao/workspaces:/mnt/tao", "temp.mount": "/home/taouser/workdir:/mnt/workdir", "cfg.mount": "/mnt/tao/cfg:/mnt/cfg", "eodata.mount": "/eodata:/eodata", "additional.mount": "/mnt/tao/cfg:/home/.snap/:z" }', 'Volume mappings for docker execution on the master node', 'string', 'Master node volume map', null, now()),
 (3, 'node.docker.mappings', '{ "workspace.mount": "/mnt/tao:/mnt/tao", "temp.mount": "/home/tao/workdir:/mnt/workdir", "cfg.mount": "/mnt/cfg:/mnt/cfg", "eodata.mount": "/eodata:/eodata", "additional.mount": "/mnt/tao/cfg:/home/.snap/:z" }', 'Volume mappings for docker execution on worker nodes', 'string', 'Worker node volume map', null, now()),
 (3, 'docker.volume.map.style', 'docker', 'Docker host volume map style', 'string', 'Docker host volume map style', null, now()),
+(3, 'enable.tunnel.filters', 'false', 'Enable tunneling for accessing private containers', 'bool', 'Enable tunnel filters', null, now()),
 (4, 'tao.drmaa.polling.interval', '10', 'Time (in seconds) between inspections of the DRMAA system', 'int', 'DRMAA polling interval (s)', null, now()),
 (4, 'tao.force.memory.requirements', 'true', 'Enforce memory constraints for applications', 'bool', 'Enforce memory constraints', null, now()),
 (4, 'tao.ssh.async', 'true', 'Enable asynchronous mode for SSH invocations', 'bool', 'Enable SSH asynchronous mode', null, now()),
