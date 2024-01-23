@@ -272,13 +272,14 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                                                                            .findFirst().get();
                     strList = descriptor.getDataDescriptor().getLocation();
                     final String[] list = strList.split(",");
-                    // First try to replace any symlinks with actual data to avoid S3 read issues
+                    // First try to replace any symlinks with actual data to avoid S3 read issues (if configured)
                     final StringBuilder builder = new StringBuilder();
                     final StringBuilder srcBuilder = new StringBuilder();
+                    final boolean shouldReplace = ConfigurationManager.getInstance().getBooleanValue("replace.local.symlinks");
                     for (String item : list) {
                         try {
                             Path path = FileUtilities.toPath(item);
-                            if (Files.isSymbolicLink(path)) {
+                            if (shouldReplace && Files.isSymbolicLink(path)) {
                                 builder.append(FileUtilities.asUnixPath(FileUtilities.replaceLink(path, null), true));
                             } else {
                                 builder.append(FileUtilities.asUnixPath(path, true));
