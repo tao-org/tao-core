@@ -415,45 +415,47 @@ public abstract class DataQuery extends StringIdentifiable {
                                 break;
                             case FILTER:
                                 final String expectedValue = dependency.getExpectedValue();
-                                String allowedValues = dependency.getAllowedValues();
-                                final Set<String> aValues = allowedValues != null ? Arrays.stream(allowedValues.split(",")).collect(Collectors.toSet()) : new HashSet<>();
-                                final Set<String> expValues = Arrays.stream(expectedValue.split(",")).collect(Collectors.toSet());
-                                switch (dependency.getCondition()) {
-                                    case EQ:
-                                        hasError = !expectedValue.equals(refParam.getValueAsString());
-                                        break;
-                                    case NEQ:
-                                        hasError = expectedValue.equals(refParam.getValueAsString());
-                                        break;
-                                    case IN:
-                                        hasError = !expValues.contains(refParam.getValueAsString());
-                                        break;
-                                    case NOTIN:
-                                        hasError = expValues.contains(refParam.getValueAsString());
-                                        break;
-                                    case GT:
-                                        hasError = compare(refParam.getType(), expectedValue, refParam.getValue()) <= 0;
-                                        break;
-                                    case GTE:
-                                        hasError = compare(refParam.getType(), expectedValue, refParam.getValue()) < 0;
-                                        break;
-                                    case LT:
-                                        hasError = compare(refParam.getType(), expectedValue, refParam.getValue()) >= 0;
-                                        break;
-                                    case LTE:
-                                        hasError = compare(refParam.getType(), expectedValue, refParam.getValue()) > 0;
-                                        break;
+                                if (refParam.getValueAsString().equals(expectedValue)) {
+                                    String allowedValues = dependency.getAllowedValues();
+                                    final Set<String> aValues = allowedValues != null ? Arrays.stream(allowedValues.split(",")).collect(Collectors.toSet()) : new HashSet<>();
+                                    final Set<String> expValues = Arrays.stream(expectedValue.split(",")).collect(Collectors.toSet());
+                                    switch (dependency.getCondition()) {
+                                        case EQ:
+                                            hasError = !expectedValue.equals(refParam.getValueAsString());
+                                            break;
+                                        case NEQ:
+                                            hasError = expectedValue.equals(refParam.getValueAsString());
+                                            break;
+                                        case IN:
+                                            hasError = !expValues.contains(refParam.getValueAsString());
+                                            break;
+                                        case NOTIN:
+                                            hasError = expValues.contains(refParam.getValueAsString());
+                                            break;
+                                        case GT:
+                                            hasError = compare(refParam.getType(), expectedValue, refParam.getValue()) <= 0;
+                                            break;
+                                        case GTE:
+                                            hasError = compare(refParam.getType(), expectedValue, refParam.getValue()) < 0;
+                                            break;
+                                        case LT:
+                                            hasError = compare(refParam.getType(), expectedValue, refParam.getValue()) >= 0;
+                                            break;
+                                        case LTE:
+                                            hasError = compare(refParam.getType(), expectedValue, refParam.getValue()) > 0;
+                                            break;
+                                    }
+                                    if (hasError) {
+                                        errors.add(String.format("%s cannot be set to %s if %s %s %s",
+                                                                 entry.getKey(), currentParam.getValueAsString(),
+                                                                 refParam.getName(), dependency.getCondition().friendlyName().toLowerCase(), refParam.getValue()));
+                                    }
                                 }
-                                if (hasError) {
-                                    errors.add(String.format("%s cannot be set to %s if %s %s %s",
-                                            entry.getKey(), currentParam.getValueAsString(),
-                                            refParam.getName(), dependency.getCondition().friendlyName().toLowerCase(), refParam.getValue()));
-                                }
-                                if (!aValues.contains(currentParam.getValueAsString())) {
+                                /*if (!aValues.contains(currentParam.getValueAsString())) {
                                     errors.add(String.format("Value %s of %s not allowed when %s %s %s",
                                             currentParam.getValueAsString(), entry.getKey(),
                                             refParam.getName(), dependency.getCondition().friendlyName().toLowerCase(), refParam.getValue()));
-                                }
+                                }*/
                                 break;
                             case REQUIRED_IF:
                                 switch (dependency.getCondition()) {
