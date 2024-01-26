@@ -291,4 +291,31 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
      * @param workflowDescriptor    The workflow descriptor
      */
     String workflowToSnapGraph(WorkflowDescriptor workflowDescriptor) throws Exception;
+
+    /**
+     * Returns the image associated with the workflow, if any
+     * @param id    The workflow identifier
+     * @return      A base64 encoded image
+     */
+    String getWorkflowImage(long id);
+
+    /**
+     * Attaches an image to a workflow
+     * @param id        The workflow identifier
+     * @param image     The base64 encoded image
+     */
+    void addWorkflowImage(long id, String image);
+
+    /**
+     * Replaces the image associated with a workflow
+     * @param id        The workflow identifier
+     * @param newImage  A base64 encoded image
+     */
+    void updateWorkflowImage(long id, String newImage);
+
+    /**
+     * Removes any image associated with a workflow
+     * @param id    The workflow identifier
+     */
+    void deleteWorkflowImage(long id);
 }
