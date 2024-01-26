@@ -59,6 +59,7 @@ public class DataSourceComponent extends TaoComponent {
     public static final String QUERY_PARAMETER = "query";
     public static final String SYNC_PARAMETER = "dateSync";
     public static final String RESULTS_PARAMETER = "results";
+    private static final Set<FetchMode> quickFetchModes = EnumSet.of(FetchMode.SYMLINK, FetchMode.CHECK);
 
     @XmlElement
     private String sensorName;
@@ -387,7 +388,11 @@ public class DataSourceComponent extends TaoComponent {
      * @param additionalProperties  Additional properties that can be passed to the component
      */
     public List<EOProduct> doFetch(List<EOProduct> products, Set<String> tiles, String destinationPath, String localRootPath, Properties additionalProperties) {
-        return DownloadManager.queueDownload(this, this::doFetchImpl, products, tiles, destinationPath, localRootPath, additionalProperties);
+        if (quickFetchModes.contains(this.fetchMode)) {
+            return doFetchImpl(products, tiles, destinationPath, localRootPath, additionalProperties);
+        } else{
+            return DownloadManager.queueDownload(this, this::doFetchImpl, products, tiles, destinationPath, localRootPath, additionalProperties);
+        }
     }
 
     /**

@@ -199,17 +199,19 @@ public class FileUtilities {
             if (isPosixFileSystem()) {
                 try {
                     Files.createDirectories(folder);
-                    final List<String> args = new ArrayList<>();
-                    args.add("chmod");
-                    args.add("777");
-                    args.add(folder.toAbsolutePath().toString());
-                    final Executor<?> executor = Executor.create(ExecutorType.PROCESS,
-                                                                 Inet4Address.getLocalHost().getHostName(),
-                                                                 args, true);
-                    final OutputAccumulator accumulator = new OutputAccumulator();
-                    executor.setOutputConsumer(accumulator);
-                    if (executor.execute(true) != 0) {
-                        throw new Exception(accumulator.getOutput());
+                    if (!"root".equalsIgnoreCase(System.getProperty("user.name"))) {
+                        final List<String> args = new ArrayList<>();
+                        args.add("chmod");
+                        args.add("777");
+                        args.add(folder.toAbsolutePath().toString());
+                        final Executor<?> executor = Executor.create(ExecutorType.PROCESS,
+                                                                     Inet4Address.getLocalHost().getHostName(),
+                                                                     args, true);
+                        final OutputAccumulator accumulator = new OutputAccumulator();
+                        executor.setOutputConsumer(accumulator);
+                        if (executor.execute(true) != 0) {
+                            throw new Exception(accumulator.getOutput());
+                        }
                     }
                 } catch (Exception inner) {
                     logger.severe(ExceptionUtils.getStackTrace(logger, inner));
@@ -257,25 +259,27 @@ public class FileUtilities {
      * @param file  The input file
      */
     public static void takeOwnership(Path file) {
-        try {
-            final List<String> args = new ArrayList<>() {{
-               add("chown");
-               if (Files.isDirectory(file)) {
-                   add("-R");
-               }
-               add(System.getProperty("user.name") + ":" + System.getProperty("user.name"));
-               add(file.toAbsolutePath().toString());
-            }};
-            final Executor<?> executor = Executor.create(ExecutorType.PROCESS,
-                                                         Inet4Address.getLocalHost().getHostName(),
-                                                         args, true);
-            final OutputAccumulator accumulator = new OutputAccumulator();
-            executor.setOutputConsumer(accumulator);
-            if (executor.execute(true) != 0) {
-                throw new Exception(accumulator.getOutput());
+        if (!"root".equalsIgnoreCase(System.getProperty("user.name"))) {
+            try {
+                final List<String> args = new ArrayList<>() {{
+                    add("chown");
+                    if (Files.isDirectory(file)) {
+                        add("-R");
+                    }
+                    add(System.getProperty("user.name") + ":" + System.getProperty("user.name"));
+                    add(file.toAbsolutePath().toString());
+                }};
+                final Executor<?> executor = Executor.create(ExecutorType.PROCESS,
+                                                             Inet4Address.getLocalHost().getHostName(),
+                                                             args, true);
+                final OutputAccumulator accumulator = new OutputAccumulator();
+                executor.setOutputConsumer(accumulator);
+                if (executor.execute(true) != 0) {
+                    throw new Exception(accumulator.getOutput());
+                }
+            } catch (Exception e) {
+                logger.severe(ExceptionUtils.getStackTrace(logger, e));
             }
-        } catch (Exception e) {
-            logger.severe(ExceptionUtils.getStackTrace(logger, e));
         }
     }
 
@@ -536,6 +540,7 @@ public class FileUtilities {
         Path resolved;
         if (Files.isSymbolicLink(link)) {
             resolved = Files.readSymbolicLink(link);
+            logger.fine("Replacing link " + link + " with actual product " + resolved);
             Path target = link.getParent();
             Files.delete(link);
             if (progressListener != null) {
