@@ -32,9 +32,7 @@ import ro.cs.tao.utils.StringUtilities;
 import ro.cs.tao.workflow.*;
 import ro.cs.tao.workflow.enums.ComponentType;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -207,6 +205,34 @@ public class WorkflowManager extends EntityManager<WorkflowDescriptor, Long, Wor
         workflowEnt.setActive(false);
         // save it
         repository.save(workflowEnt);
+    }
+
+    @Override
+    public Map<Long, String> getWorkflowImages(Set<Long> ids) {
+        final List<Object[]> list = repository.getWorkflowImages(ids);
+        return list != null && !list.isEmpty()
+               ? list.stream().collect(Collectors.toMap(p -> (Long) p[0], p -> (String) p[1]))
+               : null;
+    }
+
+    @Override
+    public String getWorkflowImage(long id) {
+        return repository.getWorkflowImage(id);
+    }
+
+    @Override
+    public void addWorkflowImage(long id, String image) {
+        repository.insertImage(id, image);
+    }
+
+    @Override
+    public void updateWorkflowImage(long id, String newImage) {
+        repository.updateImage(id, newImage);
+    }
+
+    @Override
+    public void deleteWorkflowImage(long id) {
+        repository.deleteImage(id);
     }
 
     @Override

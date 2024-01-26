@@ -195,3 +195,15 @@ ALTER TABLE workflow.query_parameter ALTER COLUMN id SET DEFAULT nextval('workfl
 ALTER SEQUENCE workflow.query_parameter_id_seq OWNED BY workflow.query_parameter.id;
 ALTER TABLE component.data_source_component_group_queries ADD CONSTRAINT FK_data_source_component_group_queries_2
 	FOREIGN KEY (query_id) REFERENCES workflow.query (id) ON DELETE CASCADE ON UPDATE No Action;
+
+-------------------------------------------------------------------------------
+-- table: graph_image
+DROP TABLE IF EXISTS workflow.graph_image CASCADE;
+CREATE TABLE workflow.graph_image
+(
+	workflow_id bigint NOT NULL,
+	image varchar NOT NULL
+);
+ALTER TABLE workflow.graph_image ADD CONSTRAINT PK_graph_image PRIMARY KEY (workflow_id);
+ALTER TABLE workflow.graph_image ADD CONSTRAINT FK_graph_image_workflow_graph
+	FOREIGN KEY (workflow_id) REFERENCES workflow.graph (id) ON DELETE CASCADE ON UPDATE No Action;
