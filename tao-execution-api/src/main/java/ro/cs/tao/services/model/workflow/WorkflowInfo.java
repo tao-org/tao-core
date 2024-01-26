@@ -33,10 +33,11 @@ public class WorkflowInfo {
     protected final Status status;
     private final String path;
     private final boolean active;
+    private final String image;
     private final LocalDateTime created;
     private List<String> tags;
 
-    public WorkflowInfo(WorkflowDescriptor workflow) {
+    public WorkflowInfo(WorkflowDescriptor workflow, String image) {
         this.id = workflow.getId();
         this.userId = workflow.getUserId();
         this.visibility = workflow.getVisibility();
@@ -45,6 +46,7 @@ public class WorkflowInfo {
         this.active = workflow.isActive();
         this.name = workflow.getName();
         this.description = workflow.getDescription();
+        this.image = image;
         this.created = workflow.getCreated();
         this.tags = workflow.getTags();
     }
@@ -64,6 +66,10 @@ public class WorkflowInfo {
     public String getPath() { return path; }
 
     public boolean isActive() { return active; }
+
+    public String getImage() {
+        return image;
+    }
 
     public LocalDateTime getCreated() { return created; }
 
