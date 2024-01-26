@@ -310,7 +310,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                     List<Map.Entry<String, NodeRuntime>> candidates = userNodes.stream()
                                                                                .filter(e -> {
                                                                                         final NodeRuntime nrw = e.getValue();
-                                                                                        return !nrw.equals(lastUsedNode) && nrw.getRuntimeInfo().getAvailableMemory() >= memory;
+                                                                                        return nodes.size() == 1 || (!nrw.equals(lastUsedNode) && nrw.getRuntimeInfo().getAvailableMemory() >= memory);
                                                                                     }).collect(Collectors.toList());
                     Map.Entry<String, NodeRuntime> candidate = candidates.stream().min(Comparator.comparingDouble(e -> {
                         NodeDescription node = nodes.get(e.getKey()).getNode();
