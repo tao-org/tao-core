@@ -276,10 +276,14 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                     final StringBuilder builder = new StringBuilder();
                     final StringBuilder srcBuilder = new StringBuilder();
                     final boolean shouldReplace = ConfigurationManager.getInstance().getBooleanValue("replace.local.symlinks");
+                    final double total = list.length;
+                    double counter = 0;
                     for (String item : list) {
                         try {
                             Path path = FileUtilities.toPath(item);
                             if (shouldReplace && Files.isSymbolicLink(path)) {
+                                counter += 1.0;
+                                sendProgressMessage(task, counter / total);
                                 builder.append(FileUtilities.asUnixPath(FileUtilities.replaceLink(path, null), true));
                             } else {
                                 builder.append(FileUtilities.asUnixPath(path, true));

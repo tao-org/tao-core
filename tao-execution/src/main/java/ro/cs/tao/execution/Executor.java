@@ -15,21 +15,22 @@
  */
 package ro.cs.tao.execution;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.commons.lang3.StringUtils;
 import ro.cs.tao.component.ProcessingComponent;
 import ro.cs.tao.component.StringIdentifiable;
 import ro.cs.tao.component.TaoComponent;
 import ro.cs.tao.configuration.ConfigurationManager;
-import ro.cs.tao.execution.model.DataSourceExecutionTask;
-import ro.cs.tao.execution.model.ExecutionStatus;
-import ro.cs.tao.execution.model.ExecutionTask;
-import ro.cs.tao.execution.model.ProcessingExecutionTask;
+import ro.cs.tao.execution.model.*;
+import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.execution.util.TaskUtilities;
 import ro.cs.tao.messaging.Message;
 import ro.cs.tao.messaging.Messaging;
 import ro.cs.tao.messaging.Topic;
 import ro.cs.tao.security.SessionContext;
 import ro.cs.tao.security.SystemSessionContext;
+import ro.cs.tao.security.UserPrincipal;
+import ro.cs.tao.serialization.JsonMapper;
 import ro.cs.tao.utils.Tuple;
 
 import java.time.LocalDateTime;
@@ -47,6 +48,7 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
     /* Flag for trying to close the monitoring thread in an elegant manner */
     private static final Map<String, Tuple<Integer, Long>> resourcesUsage = new HashMap<>();
     private static final List<TaskStatusListener> statusListeners = new ArrayList<>();
+    protected static ExecutionTaskProvider taskProvider;
     protected final AtomicBoolean isInitialized = new AtomicBoolean(false);
     protected final Logger logger = Logger.getLogger(getClass().getName());
     private final Timer executionsCheckTimer = new Timer("exec-monitor");
@@ -67,6 +69,8 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
     public static void removeStatusListener(TaskStatusListener listener) {
         Executor.statusListeners.remove(listener);
     }
+
+    public static void setTaskProvider(ExecutionTaskProvider provider) { taskProvider = provider; }
 
     public Executor() {
         super();
@@ -264,6 +268,36 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
     protected synchronized void notifyStatusListener(ExecutionTask task) {
         for (TaskStatusListener listener : statusListeners) {
             listener.taskChanged(task);
+        }
+    }
+
+    protected void sendProgressMessage(ExecutionTask task) {
+        final String userId = task.getJob().getUserId();
+        final Message message = Message.create(userId,
+                                               String.valueOf(task.getId()),
+                                               ExecutionStatus.RUNNING.name(),
+                                               false);
+        try {
+            message.setData(JsonMapper.instance().writeValueAsString(taskProvider.getTaskStatus(task.getId())));
+            Messaging.send(new UserPrincipal(userId), Topic.EXECUTION.value(), message, false);
+        } catch (JsonProcessingException e) {
+            logger.warning("Cannot send progress message. Reason: " + e.getMessage());
+        }
+    }
+
+    protected void sendProgressMessage(ExecutionTask task, double percent) {
+        final String userId = task.getJob().getUserId();
+        final Message message = Message.create(userId,
+                                               String.valueOf(task.getId()),
+                                               ExecutionStatus.RUNNING.name(),
+                                               false);
+        try {
+            final ExecutionTaskSummary taskStatus = taskProvider.getTaskStatus(task.getId());
+            taskStatus.setPercentComplete(percent);
+            message.setData(JsonMapper.instance().writeValueAsString(taskStatus));
+            Messaging.send(new UserPrincipal(userId), Topic.EXECUTION.value(), message, false);
+        } catch (JsonProcessingException e) {
+            logger.warning("Cannot send progress message. Reason: " + e.getMessage());
         }
     }
 
