@@ -653,7 +653,7 @@ public class DefaultJobFactory {
                     final int size = tuples.size();
                     if (size > 1) {
                         for (int i = 1; i < size; i++) {
-                            ExecutionJob clonedJob = cloneJob(job, i, size);
+                            ExecutionJob clonedJob = cloneJob(job, i, size + 1);
                             final Map<String, List<String>> dependencies = clonedJob.getTaskDependencies();
                             ExecutionTask clonedPrimaryDataTask = clonedJob.getTasks().stream()
                                                                      .filter(t -> t instanceof DataSourceExecutionTask
@@ -707,7 +707,7 @@ public class DefaultJobFactory {
                         if (list != null && list.size() > 1) {
                             final int size = list.size();
                             for (int i = 1; i < size; i++) {
-                                ExecutionJob clonedJob = cloneJob(job, i, size);
+                                ExecutionJob clonedJob = cloneJob(job, i, size + 1);
                                 ExecutionTask clonedDataTask = clonedJob.getTasks().stream().filter(t -> t instanceof DataSourceExecutionTask).findFirst().orElse(null);
                                 if (clonedDataTask == null) {
                                     throw new CloneNotSupportedException("DataSourceExecutionTask was not cloned");
@@ -739,6 +739,7 @@ public class DefaultJobFactory {
         return TransactionalMethod.withExceptionType(PersistenceException.class).execute(() -> {
             ExecutionJob clone = new ExecutionJob();
             clone.setName(original.getName() + " (" + cloneNumber + "/" + total + ")");
+            clone.setAppId(original.getAppId());
             clone.setWorkflowId(original.getWorkflowId());
             clone.setBatchId(original.getBatchId());
             clone.setExternal(original.isExternal());
