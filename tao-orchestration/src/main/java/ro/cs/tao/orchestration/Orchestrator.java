@@ -444,7 +444,9 @@ public class Orchestrator extends Notifiable {
     }
 
     void decrementActiveJobs() {
-        this.activeJobs.decrementAndGet();
+        if (this.activeJobs.get() > 0) {
+            this.activeJobs.decrementAndGet();
+        }
     }
 
     public int purgeJobs(String user) {
@@ -837,7 +839,12 @@ public class Orchestrator extends Notifiable {
                 if (!pcTask.getComponent().isOutputManaged()) {
                     // Since the component ignores what is given as target and creates its own output, we need to
                     // get what was produced and map it to the target output
-                    instanceTargetOuptut = handleUnmanagedPath(instanceTargetOuptut);
+                    final String variableName = variable.getKey();
+                    instanceTargetOuptut = handleUnmanagedPath(instanceTargetOuptut,
+                                                               pcTask.getComponent()
+                                                                      .getTargets().stream()
+                                                                                   .filter(tr -> tr.getName().equalsIgnoreCase(variableName))
+                                                                       .findFirst().get().getDataDescriptor().getFormatType() != DataFormat.FOLDER);
                 }
                 pcTask.setOutputParameterValue(t.getName(), instanceTargetOuptut);
                 logger.finest(String.format("Output [%s] of task [id=%d] was set to '%s'",
@@ -892,27 +899,26 @@ public class Orchestrator extends Notifiable {
      * what was the initial value.
      * @param source    What is currently assigned as task output
      */
-    private String handleUnmanagedPath(String source) {
+    private String handleUnmanagedPath(String source, boolean isFile) {
         final Path sourcePath = Paths.get(source);
         String result;
-        if (Files.isRegularFile(sourcePath)) {
-            result = sourcePath.toString();
-        } else {
-            try(Stream<Path> stream = Files.list(sourcePath)) {
-                Path file = stream.filter(FileUtilities::isRaster)
-                             .max((o1, o2) -> {
-                                 try {
-                                     return Long.compare(Files.size(o2), Files.size(o1));
-                                 } catch (IOException e) {
-                                     logger.warning(ExceptionUtils.getStackTrace(logger, e));
-                                     return 0;
-                                 }
-                             }).orElse(null);
-                result = file != null ? file.toString() : source;
-            } catch (IOException e) {
-                logger.warning(ExceptionUtils.getStackTrace(logger, e));
-                result = source;
-            }
+        final Path inspectionPath = sourcePath.getParent();
+        try(Stream<Path> stream = Files.list(inspectionPath)) {
+            Path file = isFile
+                        ? stream.filter(FileUtilities::isRaster)
+                                .max((o1, o2) -> {
+                                      try {
+                                          return Long.compare(Files.size(o2), Files.size(o1));
+                                      } catch (IOException e) {
+                                          logger.warning(ExceptionUtils.getStackTrace(logger, e));
+                                          return 0;
+                                      }
+                                }).orElse(null)
+                        : stream.filter(p -> Files.isDirectory(p)).findFirst().orElse(null);
+            result = file != null ? file.toString() : source;
+        } catch (IOException e) {
+            logger.warning(ExceptionUtils.getStackTrace(logger, e));
+            result = source;
         }
         return result;
     }
