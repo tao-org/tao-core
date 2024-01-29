@@ -15,11 +15,11 @@ import java.util.List;
 @Transactional
 public interface ResourceSubscriptionRepository extends PagingAndSortingRepository<ResourceSubscription, Long> {
 
-    @Query(value = "SELECT * FROM subscription.user_subscription WHERE user_id = :userId " +
+    @Query(value = "SELECT * FROM subscription.resource_subscription WHERE user_id = :userId " +
             "AND ended IS NULL ORDER BY flavor_id", nativeQuery = true)
     List<ResourceSubscription> getByUser(@Param("userId") String userId);
 
-    @Query(value = "SELECT * FROM subscription.user_subscription WHERE user_id = :userId " +
+    @Query(value = "SELECT * FROM subscription.resource_subscription WHERE user_id = :userId " +
             "AND ended IS NOT NULL ORDER BY created, flavor_id", nativeQuery = true)
     List<ResourceSubscription> getEndedSubscriptionsByUser(@Param("userId") String userId);
 
