@@ -282,11 +282,11 @@ public class JobQueue {
 
     /**
      * Lists all the queued jobs of a user
-     * @param user  The name of the user
+     * @param userId  The user identifier
      */
-    public List<Long> getUserJobs(String user) {
+    public List<Long> getUserJobs(String userId) {
         synchronized (lock) {
-            return this.queue.stream().map(Tuple::getKeyOne).collect(Collectors.toList());
+            return this.queue.stream().filter(t -> t.getKeyTwo().equals(userId)).map(Tuple::getKeyOne).collect(Collectors.toList());
         }
     }
 
@@ -310,15 +310,15 @@ public class JobQueue {
 
     /**
      * Retrieves the next job for a particular user.
-     * @param user  The name of the user
+     * @param userId  The user identifier
      */
-    public ExecutionJob take(String user) {
+    public ExecutionJob take(String userId) {
         synchronized (lock) {
             ExecutionJob job = null;
             final Iterator<Tuple<Long, String>> iterator = this.queue.iterator();
             while (iterator.hasNext()) {
                 final Tuple<Long, String> next = iterator.next();
-                if (next.getKeyTwo().equals(user)) {
+                if (next.getKeyTwo().equals(userId)) {
                     iterator.remove();
                     job = this.jobProvider.get(next.getKeyOne());
                     break;
@@ -343,13 +343,13 @@ public class JobQueue {
     }
 
     /**
-     * Checks if there queue contains more jobs for a given user.
+     * Checks if the queue contains more jobs for a given user.
      *
-     * @param user  The user
+     * @param userId  The user identifier
      */
-    public boolean hasMoreJobs(String user) {
+    public boolean hasMoreJobs(String userId) {
         synchronized (lock) {
-            return this.queue.stream().anyMatch(p -> p.getKeyTwo().equals(user));
+            return this.queue.stream().anyMatch(p -> p.getKeyTwo().equals(userId));
         }
     }
 }
