@@ -48,7 +48,7 @@ public class RepositoryManager extends EntityManager<Repository, String, Reposit
             for (Repository repository : repositories) {
                 repository.setPersistentStorage(repository.getId().equals(repositoryId));
                 try {
-                    save(repository);
+                    update(repository);
                 } catch (PersistenceException e) {
                     throw new RuntimeException(e);
                 }
