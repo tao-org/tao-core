@@ -436,17 +436,7 @@ public class Orchestrator extends Notifiable {
     }
 
     int getActiveJobsCount() {
-        return this.activeJobs.get();
-    }
-
-    void incrementActiveJobs() {
-        this.activeJobs.incrementAndGet();
-    }
-
-    void decrementActiveJobs() {
-        if (this.activeJobs.get() > 0) {
-            this.activeJobs.decrementAndGet();
-        }
+        return jobProvider.count(ExecutionStatus.RUNNING);
     }
 
     public int purgeJobs(String user) {
@@ -1716,7 +1706,6 @@ public class Orchestrator extends Notifiable {
 
         @Override
         public void onCompleted(ExecutionJob job) {
-            instance.decrementActiveJobs();
             // finally, remove any volatile node if the mode is configured
             final int keepAlive = Integer.parseInt(ConfigurationManager.getInstance()
                                                                        .getValue("topology.remove.node.after.execution.delay", "1800"));

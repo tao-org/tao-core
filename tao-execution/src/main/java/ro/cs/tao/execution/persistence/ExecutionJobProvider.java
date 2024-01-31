@@ -13,6 +13,7 @@ public interface ExecutionJobProvider extends EntityProvider<ExecutionJob, Long>
     List<String> getWorkflowOutputKeys(long workflowId);
     List<String> getOutputKeys(long jobId);
     List<ExecutionJob> list(ExecutionStatus status);
+    int count(ExecutionStatus status);
     List<ExecutionJob> list(Set<ExecutionStatus> statuses);
     List<ExecutionJob> list(String userId, Set<ExecutionStatus> statuses);
 
