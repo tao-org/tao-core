@@ -63,10 +63,11 @@ public class JobQueueWorker extends Thread {
                         this.monitor.wait(10000);
                     }
                 } else {
-                    if (this.orchestrator.getActiveJobsCount() >= this.maxJobs) {
+                    int count;
+                    if ((count = this.orchestrator.getActiveJobsCount()) >= this.maxJobs) {
                         synchronized (this.monitor) {
                             logger.finest(String.format("Job queue has still %d active jobs (max. limit is %d)",
-                                                        this.orchestrator.getActiveJobsCount(), this.maxJobs));
+                                                        count, this.maxJobs));
                             this.monitor.wait(10000);
                         }
                     } else {
@@ -76,7 +77,7 @@ public class JobQueueWorker extends Thread {
                                 logger.finest(String.format("Job [%s] for user '%s' was dequeued",
                                                             job.getName(), job.getUserId()));
                                 JobCommand.START.applyTo(job);
-                                this.orchestrator.incrementActiveJobs();
+                                //this.orchestrator.incrementActiveJobs();
                             } catch (ExecutionException e) {
                                 try {
                                     logger.warning(String.format("Job [%s] for user '%s' could not be started. Reason: %s",

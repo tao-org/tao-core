@@ -286,20 +286,20 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         int requestedCPUs = cpus;
         NodeDescription availableNode = null;//getStartingAvailableNode();
         final boolean shouldPoolNodes = !ConfigurationManager.getInstance().getBooleanValue("topology.dedicated.user.nodes");
-        // First check if there are nodes bound to this user
-        final List<Map.Entry<String, NodeRuntime>> userNodes = this.nodes.entrySet().stream()
-                                                                         .filter(e -> userId.equals(e.getValue().getNode().getOwner()))
-                                                                         .collect(Collectors.toList());
-        // If not, then use the pool of available nodes
-        if (userNodes.isEmpty() && shouldPoolNodes) {
-            userNodes.addAll(this.nodes.entrySet());
-            userNodes.removeIf(n -> (!useMasterNode() && n.getValue().getNode().getRole() == NodeRole.MASTER) ||
-                                    (strategy.getType() == ExecutionStrategyType.SAME_NODE &&
-                                     strategy.getHostName() != null &&
-                                     !n.getValue().getNode().getId().equals(strategy.getHostName())));
-
-        }
         do {
+            // First check if there are nodes bound to this user
+            final List<Map.Entry<String, NodeRuntime>> userNodes = this.nodes.entrySet().stream()
+                                                                             .filter(e -> userId.equals(e.getValue().getNode().getOwner()))
+                                                                             .collect(Collectors.toList());
+            // If not, then use the pool of available nodes
+            if (userNodes.isEmpty() && shouldPoolNodes) {
+                userNodes.addAll(this.nodes.entrySet());
+                userNodes.removeIf(n -> (!useMasterNode() && n.getValue().getNode().getRole() == NodeRole.MASTER) ||
+                                        (strategy.getType() == ExecutionStrategyType.SAME_NODE &&
+                                         strategy.getHostName() != null &&
+                                         !n.getValue().getNode().getId().equals(strategy.getHostName())));
+
+            }
             try {
             	// check if the user has any CPU limitation
             	int availableCpu = userQuotaManager.getAvailableCpus(principal);
