@@ -32,6 +32,7 @@ import ro.cs.tao.utils.StringUtilities;
 import ro.cs.tao.workflow.*;
 import ro.cs.tao.workflow.enums.ComponentType;
 
+import java.math.BigInteger;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -211,7 +212,7 @@ public class WorkflowManager extends EntityManager<WorkflowDescriptor, Long, Wor
     public Map<Long, String> getWorkflowImages(Set<Long> ids) {
         final List<Object[]> list = repository.getWorkflowImages(ids);
         return list != null && !list.isEmpty()
-               ? list.stream().collect(Collectors.toMap(p -> (Long) p[0], p -> (String) p[1]))
+               ? list.stream().collect(Collectors.toMap(p -> p[0] instanceof BigInteger ? ((BigInteger) p[0]).longValue() : (Long) p[0], p -> (String) p[1]))
                : null;
     }
 
