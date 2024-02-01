@@ -25,14 +25,14 @@ import java.util.stream.Collectors;
  * @author Cosmin Cara
  * @since 1.4.3
  */
-public class JobQueue {
+public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
     private final FileQueue<Tuple<Long, String>> queue;
     private final ExecutionJobProvider jobProvider;
     private JobSelector<Tuple<Long, String>> jobSelector;
     private final Object lock;
-    private final Logger logger = Logger.getLogger(JobQueue.class.getName());
+    private final Logger logger = Logger.getLogger(DefaultJobQueue.class.getName());
 
-    public JobQueue(ExecutionJobProvider jobProvider) {
+    public DefaultJobQueue(ExecutionJobProvider jobProvider) {
         Tuple<Long, String> dummy = new Tuple<>(0L, "");
         this.queue = new FileQueue<>(Paths.get(SystemVariable.CACHE.value()).resolve("wait_jobs.json"),
                                      (Class<Tuple<Long, String>>) dummy.getClass()) {
@@ -69,6 +69,7 @@ public class JobQueue {
     /**
      * Initializes the queue with the jobs that have not yet been executed.
      */
+    @Override
     public void initialize() {
         final Set<ExecutionStatus> statuses = new HashSet<>() {{
             add(ExecutionStatus.UNDETERMINED);
@@ -95,6 +96,7 @@ public class JobQueue {
      * Adds a job to the user queue and returns its position in the queue.
      * @param job   The job to be queued
      */
+    @Override
     public int put(ExecutionJob job) {
         synchronized (lock) {
             this.queue.offer(new Tuple<>(job.getId(), job.getUserId()));
@@ -109,22 +111,23 @@ public class JobQueue {
      *
      * @param job  The job object
      */
-    public boolean removeJob(ExecutionJob job) {
+    @Override
+    public boolean removeJob(long jobId) {
         synchronized (lock) {
-            return this.queue.removeIf(p -> p.getKeyOne().equals(job.getId()) &&
-                                            p.getKeyTwo().equals(job.getUserId()));
+            return this.queue.removeIf(p -> p.getKeyOne().equals(jobId));
         }
     }
 
     /**
      * Removes a job from the queue, regardless its position in the queue.
      *
-     * @param user  The user
+     * @param userId  The user
      * @param jobId The job identifier
      */
-    public boolean removeJob(String user, long jobId) {
+    @Override
+    public boolean removeJob(String userId, long jobId) {
         synchronized (lock) {
-            return queue.removeIf(p -> p.getKeyOne().equals(jobId) && p.getKeyTwo().equals(user));
+            return queue.removeIf(p -> p.getKeyOne().equals(jobId) && p.getKeyTwo().equals(userId));
         }
     }
 
@@ -132,15 +135,16 @@ public class JobQueue {
      * Removes all the queued jobs for a user.
      * If no user is specified, all the queued jobs are removed.
      *
-     * @param user  The name of the user
+     * @param userId  The name of the user
      */
-    public List<Long> removeUserJobs(String user) {
+    @Override
+    public List<Long> removeUserJobs(String userId) {
         synchronized (lock) {
             List<Long> removedJobs = null;
             final Iterator<Tuple<Long, String>> iterator = this.queue.iterator();
             while (iterator.hasNext()) {
                 final Tuple<Long, String> next = iterator.next();
-                if (user == null || next.getKeyTwo().equals(user)) {
+                if (userId == null || next.getKeyTwo().equals(userId)) {
                     iterator.remove();
                     if (removedJobs == null) {
                         removedJobs = new ArrayList<>();
@@ -158,6 +162,7 @@ public class JobQueue {
      *
      * @param jobId The job identifier
      */
+    @Override
     public void moveJobToHead(long jobId) {
         synchronized (lock) {
             if (!this.queue.isEmpty() && !this.queue.peek().getKeyOne().equals(jobId)) {
@@ -184,6 +189,7 @@ public class JobQueue {
      * @param userId  The user
      * @param jobId The job identifier
      */
+    @Override
     public void moveJobToHead(String userId, long jobId) {
         synchronized (lock) {
             if (!this.queue.isEmpty() && !this.queue.peek().getKeyOne().equals(jobId)) {
@@ -221,6 +227,7 @@ public class JobQueue {
      *
      * @param jobId The job identifier
      */
+    @Override
     public void moveJobToTail(long jobId) {
         synchronized (lock) {
             if (!this.queue.getLast().getKeyOne().equals(jobId)) {
@@ -249,10 +256,11 @@ public class JobQueue {
      * the one of the job of the same user that is closer to the tail.
      * If the job is already at the tail of the queue, the method does nothing.
      *
-     * @param user  The user
+     * @param userId  The user
      * @param jobId The job identifier
      */
-    public void moveJobToTail(String user, long jobId) {
+    @Override
+    public void moveJobToTail(String userId, long jobId) {
         synchronized (lock) {
             if (!this.queue.getLast().getKeyOne().equals(jobId)) {
                 final Iterator<Tuple<Long, String>> iterator = this.queue.descendingIterator();
@@ -284,6 +292,7 @@ public class JobQueue {
      * Lists all the queued jobs of a user
      * @param userId  The user identifier
      */
+    @Override
     public List<Long> getUserJobs(String userId) {
         synchronized (lock) {
             return this.queue.stream().filter(t -> t.getKeyTwo().equals(userId)).map(Tuple::getKeyOne).collect(Collectors.toList());
@@ -293,6 +302,7 @@ public class JobQueue {
     /**
      * Lists all the jobs for all the users, grouped by user
      */
+    @Override
     public Map<String, List<Long>> getUserQueues() {
         return this.queue.stream()
                          .collect(Collectors.groupingBy(Tuple::getKeyTwo,
@@ -304,6 +314,7 @@ public class JobQueue {
     /**
      * Lists the contents of the job queue.
      */
+    @Override
     public Queue<Tuple<Long, String>> getAllJobs() {
         return new ArrayDeque<>(this.queue);
     }
@@ -312,6 +323,7 @@ public class JobQueue {
      * Retrieves the next job for a particular user.
      * @param userId  The user identifier
      */
+    @Override
     public ExecutionJob take(String userId) {
         synchronized (lock) {
             ExecutionJob job = null;
@@ -331,6 +343,7 @@ public class JobQueue {
     /**
      * Retrieves the job that on the head of the queue.
      */
+    @Override
     public ExecutionJob take() {
         synchronized (lock) {
             ExecutionJob job = null;
@@ -347,6 +360,7 @@ public class JobQueue {
      *
      * @param userId  The user identifier
      */
+    @Override
     public boolean hasMoreJobs(String userId) {
         synchronized (lock) {
             return this.queue.stream().anyMatch(p -> p.getKeyTwo().equals(userId));
