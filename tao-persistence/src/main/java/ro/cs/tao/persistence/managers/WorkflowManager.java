@@ -144,7 +144,7 @@ public class WorkflowManager extends EntityManager<WorkflowDescriptor, Long, Wor
         if (value != null && Enum.valueOf(Visibility.class, value.toUpperCase()).equals(Visibility.SUBSCRIPTION)) {
             // if the visibility mode is SUBSCRIPTION,
             // only workflows published by admins and those subscribed to are returned
-            workflows.addAll(repository.getPublicWorkflows());
+            //workflows.addAll(repository.getPublicWorkflows());
             workflows.addAll(repository.getSubscribedWorkflows(userId));
         } else {
             workflows.addAll(repository.getOtherPublicWorkflows(userId));
