@@ -40,6 +40,7 @@ import ro.cs.tao.quota.UserQuotaManager;
 import ro.cs.tao.security.UserPrincipal;
 import ro.cs.tao.spi.ServiceRegistryManager;
 import ro.cs.tao.topology.NodeDescription;
+import ro.cs.tao.topology.TopologyException;
 import ro.cs.tao.utils.ExecutionUnitFormat;
 import ro.cs.tao.utils.FileUtilities;
 import ro.cs.tao.utils.StringUtilities;
@@ -142,11 +143,17 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
     @Override
     public void execute(ProcessingExecutionTask task) throws ExecutionException  {
         try {
+            final String userId = task.getJob().getUserId();
+            logger.fine("Trying to provision a worker node for user " + userId);
+            NodeDescription node;
+            if ((node = NodeManager.getInstance().createWorkerNode(userId)) != null) {
+                logger.fine("Node " + node.getId() + " created");
+            }
             JobTemplate jt = createJobTemplate(task);
             changeTaskStatus(task, ExecutionStatus.QUEUED_ACTIVE, true, ExecutionStatus.QUEUED_ACTIVE.friendlyName());
             this.queue.put(new Tuple<>(jt, task));
             logger.finest(String.format("Task %s has been added to the wait queue", task.getId()));
-        } catch (InterruptedException | DrmaaException | IOException | PersistenceException e) {
+        } catch (InterruptedException | DrmaaException | IOException | PersistenceException | TopologyException e) {
             logger.severe(String.format("Error submitting task with id %s: %s", task.getId(), e.getMessage()));
             throw new ExecutionException("Error executing DRMAA session operation", e);
         }
