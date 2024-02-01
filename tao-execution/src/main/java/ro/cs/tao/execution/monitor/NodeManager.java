@@ -379,6 +379,42 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         return new NodeData(availableNode, Math.min(requestedCPUs, availableNode.getFlavor().getCpu()), memory);
     }
 
+    public NodeDescription createWorkerNode(String userId) throws TopologyException {
+        if (TopologyManager.getInstance().isExternalProviderAvailable()) {
+            final ConfigurationProvider cfgProvider = ConfigurationManager.getInstance();
+            if (cfgProvider.getBooleanValue("topology.dedicated.user.nodes")) {
+                final int userNodesCount = (int) nodeProvider.listNodes().stream().filter(n -> userId.equals(n.getOwner())).count();
+                final int userNodeLimit = Integer.parseInt(cfgProvider.getValue("topology.node.user.limit", "1"));
+                if (userNodesCount == 0) {
+                    final String flavorId = cfgProvider.getValue("openstack.default.flavour");
+                    if (flavorId == null) {
+                        logger.warning("Openstack configuration is incomplete, no new node will be created");
+                    }
+                    final NodeFlavor flavor = this.nodeProvider.listFlavors().stream().filter(f -> f.getId().equals(flavorId)).findFirst().get();
+                    NodeDescription node = getNewNodeDescription(0, userId, flavor);
+                    final NodeDescription finalNode = node;
+                    final Future<NodeDescription> future = executor.submit(() -> TopologyManager.getInstance().addNode(finalNode));
+                    try {
+                        node = nodeCreationWaitTime > 0
+                               ? future.get(nodeCreationWaitTime, TimeUnit.SECONDS)
+                               : future.get();
+                        // The new node should be added into this.nodes in onCompleted() method
+                        addNewInstalledNode(node);
+                    } catch (Exception e) {
+                        logger.severe(String.format("Node creation failed. Reason: %s", e.getMessage()));
+                        throw new TopologyException(e);
+                    }
+                    return node;
+                }
+            } else {
+                logger.fine("No new node created, nodes are shared among users");
+            }
+        } else {
+            logger.fine("OpenStack not available, node creation is disabled");
+        }
+        return null;
+    }
+
     protected static void waitBeforeNextRetry() {
         try {
             Thread.sleep(NodeManager.DEFAULT_NODE_WAIT_TIME);
@@ -394,7 +430,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                 .min(Comparator.comparingInt(NodeFlavor::getCpu))
                 .orElse(null);
         if (matchingFlavor != null) {
-            NodeDescription node = getNewNodeDescription(userNodes, userId, matchingFlavor);
+            NodeDescription node = getNewNodeDescription(userNodes.size(), userId, matchingFlavor);
             final NodeDescription finalNode = node;
             final Future<NodeDescription> future = executor.submit(() -> TopologyManager.getInstance().addNode(finalNode));
             try {
@@ -411,11 +447,11 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         return null;
     }
 
-    private NodeDescription getNewNodeDescription(List<Map.Entry<String, NodeRuntime>> userNodes, String userId, NodeFlavor matchingFlavor) {
+    private NodeDescription getNewNodeDescription(int existingUserNodesCount, String userId, NodeFlavor matchingFlavor) {
         final DefaultNodeInfo nodeInfo = getDefaultNodeInfo();
         NodeDescription node = new NodeDescription();
         node.setFlavor(matchingFlavor);
-        node.setId(nodeInfo.getNamePrefix() + userId + "-" + (userNodes.size() < 10 ? "0" : "") + (userNodes.size() + 1));
+        node.setId(nodeInfo.getNamePrefix() + userId + "-" + (existingUserNodesCount < 10 ? "0" : "") + (existingUserNodesCount + 1));
         node.setDescription(nodeInfo.getDescription() + " for " + userId);
         node.setUserName(nodeInfo.getUser());
         node.setUserPass(nodeInfo.getPassword());
