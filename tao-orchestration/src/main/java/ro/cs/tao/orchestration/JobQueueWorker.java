@@ -4,6 +4,7 @@ import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.model.ExecutionJob;
 import ro.cs.tao.execution.monitor.NodeManager;
 import ro.cs.tao.orchestration.commands.JobCommand;
+import ro.cs.tao.orchestration.queue.JobQueue;
 import ro.cs.tao.persistence.PersistenceException;
 
 import java.util.logging.Logger;
@@ -14,10 +15,11 @@ public class JobQueueWorker extends Thread {
     private final int maxJobs;
     private final Object monitor;
     private Orchestrator orchestrator;
+    private String currentUserId;
     private volatile boolean paused;
     private volatile boolean stopped;
 
-    public JobQueueWorker(JobQueue queue) {
+    public JobQueueWorker(ro.cs.tao.orchestration.queue.JobQueue queue) {
         this.queue = queue;
         this.setName("job-queue-worker");
         this.logger = Logger.getLogger(JobQueueWorker.class.getName());
@@ -71,7 +73,7 @@ public class JobQueueWorker extends Thread {
                             this.monitor.wait(10000);
                         }
                     } else {
-                        final ExecutionJob job = this.queue.take();
+                        final ExecutionJob job = this.queue.take(this.currentUserId != null ? this.currentUserId : null);
                         if (job != null) {
                             try {
                                 logger.finest(String.format("Job [%s] for user '%s' was dequeued",
@@ -88,6 +90,7 @@ public class JobQueueWorker extends Thread {
                                 }
                             }
                         }
+                        this.currentUserId = null;
                     }
                 }
             } catch (InterruptedException e) {
@@ -97,5 +100,9 @@ public class JobQueueWorker extends Thread {
                 logger.warning(e.getMessage());
             }
         }
+    }
+
+    public void setCurrentUserId(String currentUserId) {
+        this.currentUserId = currentUserId;
     }
 }

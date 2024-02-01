@@ -47,6 +47,7 @@ import ro.cs.tao.messaging.system.StartupCompletedMessage;
 import ro.cs.tao.optimization.WorkflowOptimizer;
 import ro.cs.tao.orchestration.commands.JobCommand;
 import ro.cs.tao.orchestration.commands.TaskCommand;
+import ro.cs.tao.orchestration.queue.JobQueue;
 import ro.cs.tao.orchestration.status.TaskStatusHandler;
 import ro.cs.tao.persistence.*;
 import ro.cs.tao.quota.QuotaException;
@@ -159,7 +160,7 @@ public class Orchestrator extends Notifiable {
         this.groupComponentProvider = bridgedServices.getService(GroupComponentProvider.class);
         this.namingRuleProvider = bridgedServices.getService(NamingRuleProvider.class);
         this.userProvider = bridgedServices.getService(UserProvider.class);
-        this.jobQueue = new JobQueue(this.jobProvider);
+        this.jobQueue = new DefaultJobQueue(this.jobProvider);
         this.jobQueueWorker = new JobQueueWorker(this.jobQueue);
         this.jobQueueWorker.setOrchestrator(this);
         this.activeJobs = new AtomicInteger(0);
@@ -399,7 +400,7 @@ public class Orchestrator extends Notifiable {
         ExecutionJob job = checkJob(jobId);
         final ExecutionStatus status = job.getExecutionStatus();
         try {
-            this.jobQueue.removeJob(job);
+            this.jobQueue.removeJob(jobId);
             JobCommand.STOP.applyTo(job);
         } catch (Exception e) {
             logger.warning(e.getMessage());
@@ -692,14 +693,7 @@ public class Orchestrator extends Notifiable {
                         if (job.getStartTime() != null && job.getEndTime() != null) {
                             time = Duration.between(job.getStartTime(), job.getEndTime());
                         }
-                        String msg = String.format("Job [%s] for user [%s]" +
-                                                           (job.getExecutionStatus() == ExecutionStatus.DONE ?
-                                                                   " completed in %ss" :
-                                                                   " failed after %ss"),
-                                                   job.getName(), job.getUserId(), time != null ? time.getSeconds() : "<unknown>");
-                        logger.info(msg);
                         notifyJobListeners(job);
-                        Messaging.send(new UserPrincipal(job.getUserId()), Topic.EXECUTION.value(), this, msg);
                         tryRestoreSymlinks(job);
                         tryRemoveTemporaryWorkflow(job);
                         cleanupTransientComponents(job);
@@ -756,12 +750,6 @@ public class Orchestrator extends Notifiable {
             if (job.getStartTime() != null && job.getEndTime() != null) {
                 time = Duration.between(job.getStartTime(), job.getEndTime());
             }
-            String msg = String.format("Job [%s] for user [%s] %s after %ss",
-                                       job.getName(),
-                                       job.getUserId(),
-                                       (job.getExecutionStatus() == ExecutionStatus.CANCELLED ? " cancelled " : " failed "),
-                                       time != null ? time.getSeconds() : "<unknown>");
-            logger.warning(msg);
             jobProvider.update(job);
             job.getTasks().forEach(t -> {
                 if (t.getExecutionStatus() != ExecutionStatus.DONE && t.getExecutionStatus() != ExecutionStatus.FAILED) {
@@ -774,7 +762,6 @@ public class Orchestrator extends Notifiable {
                 }
             });
             tryRestoreSymlinks(job);
-            Messaging.send(new UserPrincipal(job.getUserId()), Topic.EXECUTION.value(), this, msg);
             cleanupTransientComponents(job);
         } finally {
             notifyJobListeners(job);
@@ -870,17 +857,6 @@ public class Orchestrator extends Notifiable {
             taskProvider.update(groupTask);
         }
         TaskStatusHandler.handle(pcTask, null);
-        /* moved in the DoneHandler
-        final Message message = Message.create(pcTask.getJob().getUserId(), pcTask.getId(),
-                                               "Task " + TaskUtilities.getTaskName(pcTask)
-                                                       + (StringUtils.isNotEmpty(pcTask.getExecutionNodeHostName()) ? " on node " + pcTask.getExecutionNodeHostName() : "")
-                                                       + " changed to " + ExecutionStatus.DONE.friendlyName(),
-                                               ExecutionStatus.DONE.name(), true);
-        message.setTopic(Topic.EXECUTION.value());
-        message.addItem("host", pcTask.getExecutionNodeHostName());
-        Messaging.send(message);
-        logger.fine(String.format("Status change for task %s [job %s]: %s",
-                                  pcTask.getComponent().getId(), pcTask.getJob().getName(), ExecutionStatus.DONE.name()));*/
     }
 
     /**
@@ -1706,26 +1682,60 @@ public class Orchestrator extends Notifiable {
 
         @Override
         public void onCompleted(ExecutionJob job) {
-            // finally, remove any volatile node if the mode is configured
-            final int keepAlive = Integer.parseInt(ConfigurationManager.getInstance()
-                                                                       .getValue("topology.remove.node.after.execution.delay", "1800"));
-            if (keepAlive == 0 && !instance.jobQueue.hasMoreJobs(job.getUserId())) {
-                final List<String> hosts = job.getTasks().stream().map(ExecutionTask::getExecutionNodeHostName).collect(Collectors.toList());
-                for (String host : hosts) {
-                    if (!StringUtilities.isNullOrEmpty(host)) {
-                        try {
-                            final TopologyManager topologyManager = TopologyManager.getInstance();
-                            final NodeDescription node = topologyManager.getNode(host);
-                            if (Boolean.TRUE.equals(node.getVolatile())) {
-                                topologyManager.removeNode(host);
-                                logger.fine(String.format("Node %s destroyed", host));
+            try {
+                notify(job);
+            } catch (PersistenceException e) {
+                logger.warning(e.getMessage());
+            }
+            if (instance.jobQueue.hasMoreJobs(job.getUserId())) {
+                instance.jobQueueWorker.setCurrentUserId(job.getUserId());
+            } else{
+                // finally, remove any volatile node if the mode is configured
+                final int keepAlive = Integer.parseInt(ConfigurationManager.getInstance()
+                                                                           .getValue("topology.remove.node.after.execution.delay", "1800"));
+                if (keepAlive == 0) {
+                    final List<String> hosts = job.getTasks().stream().map(ExecutionTask::getExecutionNodeHostName).collect(Collectors.toList());
+                    for (String host : hosts) {
+                        if (!StringUtilities.isNullOrEmpty(host)) {
+                            try {
+                                final TopologyManager topologyManager = TopologyManager.getInstance();
+                                final NodeDescription node = topologyManager.getNode(host);
+                                if (Boolean.TRUE.equals(node.getVolatile())) {
+                                    topologyManager.removeNode(host);
+                                    logger.fine(String.format("Node %s destroyed", host));
+                                }
+                            } catch (Throwable e) {
+                                logger.severe(() -> String.format("Cannot destroy host %s. Reason: %s", host, e.getMessage()));
                             }
-                        } catch (Throwable e) {
-                            logger.severe(() -> String.format("Cannot destroy host %s. Reason: %s", host, e.getMessage()));
                         }
                     }
                 }
             }
+        }
+
+        private void notify(ExecutionJob job) throws PersistenceException {
+            Duration time = null;
+            if (job.getStartTime() != null && job.getEndTime() != null) {
+                time = Duration.between(job.getStartTime(), job.getEndTime());
+            } else if (job.getStartTime() != null) {
+                job.setEndTime(LocalDateTime.now());
+                time = Duration.between(job.getStartTime(), job.getEndTime());
+                jobProvider.update(job);
+            }
+            String msg = String.format("Job [%s] for user [%s] %s after %ss",
+                                       job.getName(),
+                                       job.getUserId(),
+                                       job.getExecutionStatus().friendlyName(),
+                                       time != null ? time.getSeconds() : "<n/a>");
+            switch (job.getExecutionStatus()) {
+                case DONE:
+                    logger.info(msg);
+                    break;
+                default:
+                    logger.warning(msg);
+                    break;
+            }
+            Messaging.send(new UserPrincipal(job.getUserId()), Topic.EXECUTION.value(), this, msg);
         }
     }
 }
