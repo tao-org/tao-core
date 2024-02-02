@@ -325,6 +325,9 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
      */
     @Override
     public ExecutionJob take(String userId) {
+        if (userId == null) {
+            return take();
+        }
         synchronized (lock) {
             ExecutionJob job = null;
             final Iterator<Tuple<Long, String>> iterator = this.queue.iterator();

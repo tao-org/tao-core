@@ -1614,6 +1614,11 @@ public class Orchestrator extends Notifiable {
      */
     public void removeJob(String user, long jobId) {
         jobQueue.removeJob(user, jobId);
+        try {
+            jobProvider.delete(jobId);
+        } catch (PersistenceException e) {
+            logger.warning(e.getMessage());
+        }
     }
 
     private class MessageContext extends SessionContext {
