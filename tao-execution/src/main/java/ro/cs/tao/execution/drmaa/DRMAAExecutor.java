@@ -790,7 +790,8 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             }
         }
         argsList.add(finalPath);
-        argsList.add("&&");
+        // Execute rm even if the previous failed, to clear the workdir
+        argsList.add(";");
         argsList.add("rm");
         if (recursiveCondition) {
             argsList.add("-r");
