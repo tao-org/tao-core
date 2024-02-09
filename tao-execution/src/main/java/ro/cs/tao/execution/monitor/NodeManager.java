@@ -451,7 +451,8 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         final DefaultNodeInfo nodeInfo = getDefaultNodeInfo();
         NodeDescription node = new NodeDescription();
         node.setFlavor(matchingFlavor);
-        node.setId(nodeInfo.getNamePrefix() + userId + "-" + (existingUserNodesCount < 10 ? "0" : "") + (existingUserNodesCount + 1));
+        node.setId(nodeInfo.getNamePrefix() + userId + "-" + System.currentTimeMillis() + // this is to prevent name duplication in time
+                           (existingUserNodesCount < 10 ? "0" : "") + (existingUserNodesCount + 1));
         node.setDescription(nodeInfo.getDescription() + " for " + userId);
         node.setUserName(nodeInfo.getUser());
         node.setUserPass(nodeInfo.getPassword());
