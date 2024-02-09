@@ -768,6 +768,14 @@ public class Orchestrator extends Notifiable {
         }
     }
 
+    public void queueJob(ExecutionJob job) {
+        if (this.jobQueue.getAllJobs().stream().noneMatch(t -> t.getKeyOne().equals(job.getId()))) {
+            this.jobQueue.put(job);
+        } else {
+            throw new ExecutionException("Job already in queue");
+        }
+    }
+
     private void cleanupTransientComponents(ExecutionJob job) {
         if (job.isExternal()) {
             try {
