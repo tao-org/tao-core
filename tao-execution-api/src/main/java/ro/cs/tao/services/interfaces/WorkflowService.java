@@ -217,8 +217,9 @@ public interface WorkflowService extends CRUDService<WorkflowDescriptor, Long> {
      * Creates a duplicate of the given workflow
      *
      * @param workflow  The workflow to clone
+     * @param temporary If the clone is temporary or persistent
      */
-    WorkflowDescriptor clone(WorkflowDescriptor workflow) throws PersistenceException;
+    WorkflowDescriptor clone(WorkflowDescriptor workflow, boolean temporary) throws PersistenceException;
 
     /**
      * Creates a duplicate of the given workflow and adds new input nodes corresponding to the ID map (links).
