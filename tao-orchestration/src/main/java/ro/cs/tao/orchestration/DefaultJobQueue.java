@@ -16,6 +16,8 @@ import ro.cs.tao.utils.Tuple;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -29,7 +31,8 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
     private final FileQueue<Tuple<Long, String>> queue;
     private final ExecutionJobProvider jobProvider;
     private JobSelector<Tuple<Long, String>> jobSelector;
-    private final Object lock;
+    private final ReentrantLock lock;
+    private final Condition notEmpty;
     private final Logger logger = Logger.getLogger(DefaultJobQueue.class.getName());
 
     public DefaultJobQueue(ExecutionJobProvider jobProvider) {
@@ -49,7 +52,8 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
             }
         };
         this.jobProvider = jobProvider;
-        this.lock = new Object();
+        this.lock = new ReentrantLock(true);
+        this.notEmpty = this.lock.newCondition();
         String jobSelectorClass = ConfigurationManager.getInstance().getValue("job.selector");
         try {
             if (!StringUtilities.isNullOrEmpty(jobSelectorClass)) {
@@ -98,11 +102,16 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
      */
     @Override
     public int put(ExecutionJob job) {
-        synchronized (lock) {
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
             this.queue.offer(new Tuple<>(job.getId(), job.getUserId()));
             logger.finest(String.format("Job [%s] for user '%s' was added to the queue with status %s",
                                         job.getName(), job.getUserId(), job.getExecutionStatus().name()));
+            notEmpty.signal();
             return this.queue.size();
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -113,8 +122,12 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
      */
     @Override
     public boolean removeJob(long jobId) {
-        synchronized (lock) {
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
             return this.queue.removeIf(p -> p.getKeyOne().equals(jobId));
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -126,8 +139,12 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
      */
     @Override
     public boolean removeJob(String userId, long jobId) {
-        synchronized (lock) {
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
             return queue.removeIf(p -> p.getKeyOne().equals(jobId) && p.getKeyTwo().equals(userId));
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -139,7 +156,9 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
      */
     @Override
     public List<Long> removeUserJobs(String userId) {
-        synchronized (lock) {
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
             List<Long> removedJobs = null;
             final Iterator<Tuple<Long, String>> iterator = this.queue.iterator();
             while (iterator.hasNext()) {
@@ -154,6 +173,9 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
             }
             return removedJobs;
         }
+        finally {
+            lock.unlock();
+        }
     }
 
     /**
@@ -164,7 +186,9 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
      */
     @Override
     public void moveJobToHead(long jobId) {
-        synchronized (lock) {
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
             if (!this.queue.isEmpty() && !this.queue.peek().getKeyOne().equals(jobId)) {
                 final ArrayDeque<Tuple<Long, String>> newQueue = new ArrayDeque<>(this.queue.size());
                 while (!this.queue.isEmpty()) {
@@ -179,6 +203,8 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
                 }
                 this.queue.addAll(newQueue);
             }
+        } finally {
+            lock.unlock();
         }
     }
     /**
@@ -191,7 +217,9 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
      */
     @Override
     public void moveJobToHead(String userId, long jobId) {
-        synchronized (lock) {
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
             if (!this.queue.isEmpty() && !this.queue.peek().getKeyOne().equals(jobId)) {
                 final Stack<Tuple<Long, String>> stack = new Stack<>();
                 Tuple<Long, String> swapped = null;
@@ -219,6 +247,8 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
                     this.queue.offer(stack.pop());
                 }
             }
+        } finally {
+            lock.unlock();
         }
     }
     /**
@@ -229,7 +259,9 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
      */
     @Override
     public void moveJobToTail(long jobId) {
-        synchronized (lock) {
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
             if (!this.queue.getLast().getKeyOne().equals(jobId)) {
                 final Iterator<Tuple<Long, String>> iterator = this.queue.iterator();
                 final Queue<Tuple<Long, String>> newQueue = new ArrayDeque<>();
@@ -249,6 +281,8 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
                 }
                 this.queue.addAll(newQueue);
             }
+        } finally {
+            lock.unlock();
         }
     }
     /**
@@ -261,7 +295,9 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
      */
     @Override
     public void moveJobToTail(String userId, long jobId) {
-        synchronized (lock) {
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
             if (!this.queue.getLast().getKeyOne().equals(jobId)) {
                 final Iterator<Tuple<Long, String>> iterator = this.queue.descendingIterator();
                 final Stack<Tuple<Long, String>> stack = new Stack<>();
@@ -285,6 +321,8 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
                     this.queue.offer(stack.pop());
                 }
             }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -294,8 +332,12 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
      */
     @Override
     public List<Long> getUserJobs(String userId) {
-        synchronized (lock) {
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
             return this.queue.stream().filter(t -> t.getKeyTwo().equals(userId)).map(Tuple::getKeyOne).collect(Collectors.toList());
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -304,11 +346,17 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
      */
     @Override
     public Map<String, List<Long>> getUserQueues() {
-        return this.queue.stream()
-                         .collect(Collectors.groupingBy(Tuple::getKeyTwo,
-                                                        Collectors.collectingAndThen(Collectors.toList(),
-                                                                                     list -> list.stream().map(Tuple::getKeyOne)
-                                                                                                 .collect(Collectors.toList()))));
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
+            return this.queue.stream()
+                             .collect(Collectors.groupingBy(Tuple::getKeyTwo,
+                                                            Collectors.collectingAndThen(Collectors.toList(),
+                                                                                         list -> list.stream().map(Tuple::getKeyOne)
+                                                                                                     .collect(Collectors.toList()))));
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
@@ -316,7 +364,13 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
      */
     @Override
     public Queue<Tuple<Long, String>> getAllJobs() {
-        return new ArrayDeque<>(this.queue);
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
+            return new ArrayDeque<>(this.queue);
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
@@ -328,8 +382,17 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
         if (userId == null) {
             return take();
         }
-        synchronized (lock) {
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
             ExecutionJob job = null;
+            while (this.queue.isEmpty()) {
+                try {
+                    notEmpty.await();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
             final Iterator<Tuple<Long, String>> iterator = this.queue.iterator();
             while (iterator.hasNext()) {
                 final Tuple<Long, String> next = iterator.next();
@@ -340,6 +403,8 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
                 }
             }
             return job;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -348,13 +413,24 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
      */
     @Override
     public ExecutionJob take() {
-        synchronized (lock) {
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
             ExecutionJob job = null;
+            while (this.queue.isEmpty()) {
+                try {
+                    notEmpty.await();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
             final Tuple<Long, String> pair = this.jobSelector.chooseNext();
             if (pair != null) {
                 job = this.jobProvider.get(pair.getKeyOne());
             }
             return job;
+        } finally {
+            lock.lock();
         }
     }
 
@@ -365,8 +441,12 @@ public class DefaultJobQueue implements ro.cs.tao.orchestration.queue.JobQueue {
      */
     @Override
     public boolean hasMoreJobs(String userId) {
-        synchronized (lock) {
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
             return this.queue.stream().anyMatch(p -> p.getKeyTwo().equals(userId));
+        } finally {
+            lock.unlock();
         }
     }
 }

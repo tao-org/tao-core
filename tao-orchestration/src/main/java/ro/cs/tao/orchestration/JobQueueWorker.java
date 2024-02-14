@@ -91,9 +91,9 @@ public class JobQueueWorker extends Thread {
                             }
                         }
                         this.currentUserId = null;
-                        synchronized (this.monitor) {
+                        /*synchronized (this.monitor) {
                             this.monitor.wait(2000);
-                        }
+                        }*/
                     }
                 }
             } catch (InterruptedException e) {
