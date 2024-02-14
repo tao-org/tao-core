@@ -742,7 +742,7 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
         String finalPath = finalOutput.substring(0, finalOutput.lastIndexOf('/') + 1);
         final DockerVolumeMap volumeMap = isLocal ? ExecutionConfiguration.getMasterContainerVolumeMap() : ExecutionConfiguration.getWorkerContainerVolumeMap();
         final String workspaceFolder = SystemUtils.IS_OS_WINDOWS
-                                       ? volumeMap.getHostWorkspaceFolder().substring(2)
+                                       ? volumeMap.getHostWorkspaceFolder().substring(2).replace("\\", "/")
                                        : volumeMap.getHostWorkspaceFolder();
         final String containerWorkspaceFolder = volumeMap.getContainerWorkspaceFolder();
         if (finalPath.startsWith(workspaceFolder)) {
