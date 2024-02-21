@@ -57,6 +57,11 @@ public class ExecutionJobManager extends EntityManager<ExecutionJob, Long, Execu
     }
 
     @Override
+    public int count(String userId, ExecutionStatus status) {
+        return repository.countByExecutionStatus(userId, status.value());
+    }
+
+    @Override
     public List<ExecutionJob> list(Set<ExecutionStatus> statuses) {
         return repository.findByExecutionStatuses(statuses.stream().map(ExecutionStatus::value).collect(Collectors.toSet()));
     }

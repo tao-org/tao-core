@@ -295,6 +295,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                         try {
                             Path path = FileUtilities.toPath(item);
                             if (shouldReplace && Files.isSymbolicLink(path)) {
+                                sendMessage(task, "Product " + path.getFileName() + " is being copied locally.");
                                 counter += 1.0;
                                 sendProgressMessage(task, counter / total);
                                 builder.append(FileUtilities.asUnixPath(FileUtilities.replaceLink(path, null), true));

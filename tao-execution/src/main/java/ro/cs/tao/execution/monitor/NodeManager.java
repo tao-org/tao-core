@@ -68,6 +68,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     private ExecutionTaskProvider taskProvider;
     private DefaultNodeInfo defaultNodeInfo;
     private final Map<String, NodeRuntime> nodes;
+    private final Map<String, LocalDateTime> nodeUpdates;
     private Timer nodeInspectTimer;
     private Timer nodeRefreshTimer;
     private NodeInspectTask nodeInspectTask;
@@ -101,6 +102,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         this.nodes = new HashMap<>();
         this.refreshInProgress = false;
         this.nodeLimit = 0;
+        this.nodeUpdates = new HashMap<>();
     }
 
     public void setApplicationId(String id) {
@@ -187,6 +189,9 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         for (NodeDescription node : nodes) {
             if (node.getActive() != null && node.getActive()) {
                 addNode(node, new RuntimeInfo());
+                if (node.getVolatile()) {
+                    nodeUpdates.put(node.getId(), LocalDateTime.now());
+                }
             }
         }
     }
@@ -227,6 +232,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         if (this.nodeRefreshTimer != null) {
             this.nodeRefreshTimer.purge();
         }
+        this.nodeUpdates.clear();
     }
 
     @Override
@@ -510,12 +516,19 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
     }
 
     private void addNewInstalledNode(NodeDescription node) {
-        addNode(node, new RuntimeInfo());
+        try {
+            addNode(node, readNodeRuntimeInfo(node));
+        } catch (Exception e) {
+            addNode(node, new RuntimeInfo());
+        } finally {
+            nodeUpdates.put(node.getId(), LocalDateTime.now());
+        }
     }
 
     protected final void removeNode(String host) {
         synchronized (this.nodes) {
             this.nodes.remove(host);
+            this.nodeUpdates.remove(host);
         }
     }
 
@@ -692,10 +705,15 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                                     int keepAlive = Integer.parseInt(ConfigurationManager.getInstance()
                                                                                          .getValue("topology.remove.node.after.execution.delay",
                                                                                                    "1800"));
-                                    if (taskProvider.countByHostSince(host, now.minusSeconds(keepAlive)) == 0) {
+                                    final LocalDateTime lastUpdated = NodeManager.this.nodeUpdates.get(host);
+                                    final int recentTasks = taskProvider.countByHostSince(host, now.minusSeconds(keepAlive));
+                                    if (recentTasks == 0 && lastUpdated != null && now.minusSeconds(keepAlive).isAfter(lastUpdated)) {
                                         uninstallNode(nodeRuntime.getNode());
                                         nodes.remove(host);
                                     } else {
+                                        if (recentTasks > 0) {
+                                            NodeManager.this.nodeUpdates.put(host, taskProvider.getLastRunTask(host));
+                                        }
                                         // refresh the node information
                                         nodes.get(host).setNode(nodeProvider.getNode(host));
                                     }

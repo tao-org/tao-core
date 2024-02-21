@@ -271,6 +271,15 @@ public abstract class Executor<T extends ExecutionTask> extends StringIdentifiab
         }
     }
 
+    protected void sendMessage(ExecutionTask task, String message) {
+        final String userId = task.getJob().getUserId();
+        final Message msg = Message.create(userId,
+                                           String.valueOf(task.getId()),
+                                           message,
+                                           false);
+        Messaging.send(new UserPrincipal(userId), Topic.INFORMATION.value(), msg, false);
+    }
+
     protected void sendProgressMessage(ExecutionTask task) {
         final String userId = task.getJob().getUserId();
         final Message message = Message.create(userId,

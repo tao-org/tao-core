@@ -147,7 +147,9 @@ public class DRMAAExecutor extends Executor<ProcessingExecutionTask> {
             logger.fine("Trying to provision a worker node for user " + userId);
             NodeDescription node;
             if ((node = NodeManager.getInstance().createWorkerNode(userId)) != null) {
-                logger.fine("Node " + node.getId() + " created");
+                final String message = "Node " + node.getId() + " created";
+                logger.fine(message);
+                sendMessage(task, message);
             }
             JobTemplate jt = createJobTemplate(task);
             changeTaskStatus(task, ExecutionStatus.QUEUED_ACTIVE, true, ExecutionStatus.QUEUED_ACTIVE.friendlyName());

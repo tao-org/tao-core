@@ -36,6 +36,7 @@ import ro.cs.tao.execution.ExecutionsManager;
 import ro.cs.tao.execution.JobCompletedListener;
 import ro.cs.tao.execution.callback.EndpointDescriptor;
 import ro.cs.tao.execution.model.*;
+import ro.cs.tao.execution.monitor.NodeManager;
 import ro.cs.tao.execution.persistence.ExecutionJobProvider;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.execution.util.TaskUtilities;
@@ -438,6 +439,16 @@ public class Orchestrator extends Notifiable {
 
     int getActiveJobsCount() {
         return jobProvider.count(ExecutionStatus.RUNNING);
+    }
+
+    int getActiveJobsCount(String userId) {
+        return jobProvider.count(userId, ExecutionStatus.RUNNING);
+    }
+
+    int getMaximumAllowedJobs() {
+        final boolean shouldPoolNodes = !ConfigurationManager.getInstance().getBooleanValue("topology.dedicated.user.nodes");
+        int nodeUserLimit = Integer.parseInt(ConfigurationManager.getInstance().getValue("topology.node.user.limit", "1"));
+        return shouldPoolNodes ? NodeManager.getInstance().getActiveNodes() * 2 : (int) userProvider.count();
     }
 
     public int purgeJobs(String user) {

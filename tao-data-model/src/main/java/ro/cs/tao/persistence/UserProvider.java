@@ -23,6 +23,7 @@ public interface UserProvider extends EntityProvider<User, String> {
     List<UserPreference> listPreferences(String user);
     User update(User user, boolean asAdmin) throws PersistenceException;
     String getId(String userName);
+    long count();
     void updateLastLoginDate(String userId, LocalDateTime lastLoginDate) throws PersistenceException;
     void activate(String userId) throws PersistenceException;
     void resetPassword(String userId, String resetKey, String newPassword) throws PersistenceException;
