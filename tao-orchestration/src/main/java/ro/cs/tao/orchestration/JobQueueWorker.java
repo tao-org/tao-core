@@ -12,7 +12,7 @@ import java.util.logging.Logger;
 public class JobQueueWorker extends Thread {
     private final JobQueue queue;
     private final Logger logger;
-    private final int maxJobs;
+    private int maxJobs;
     private final Object monitor;
     private Orchestrator orchestrator;
     private String currentUserId;
@@ -29,6 +29,7 @@ public class JobQueueWorker extends Thread {
 
     public void setOrchestrator(Orchestrator instance) {
         this.orchestrator = instance;
+        this.maxJobs = instance.getMaximumAllowedJobs();
     }
 
     @Override

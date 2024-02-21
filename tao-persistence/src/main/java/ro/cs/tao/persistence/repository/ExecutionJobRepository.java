@@ -34,6 +34,9 @@ public interface ExecutionJobRepository extends PagingAndSortingRepository<Execu
     @Query(value = "SELECT COUNT(id) FROM execution.job WHERE execution_status_id = :status", nativeQuery = true)
     int countByExecutionStatus(@Param("status") int status);
 
+    @Query(value = "SELECT COUNT(id) FROM execution.job WHERE user_id = :userId AND execution_status_id = :status", nativeQuery = true)
+    int countByExecutionStatus(@Param("userId") String userId, @Param("status") int status);
+
     @Query(value = "SELECT * FROM execution.job WHERE execution_status_id in (:statuses) " +
             "ORDER BY start_time ASC", nativeQuery = true)
     List<ExecutionJob> findByExecutionStatuses(@Param("statuses") Set<Integer> statuses);

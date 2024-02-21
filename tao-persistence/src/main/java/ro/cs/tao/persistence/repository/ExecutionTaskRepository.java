@@ -65,6 +65,10 @@ public interface ExecutionTaskRepository extends PagingAndSortingRepository<Exec
     @Transactional(readOnly = true)
     int getRunningTaskCountByHostSince(@Param("host") String host, @Param("since") LocalDateTime since);
 
+    @Query(value = "SELECT MAX(COALESCE(end_time, COALESCe(last_updated, start_time))) FROM execution.task WHERE execution_node_host_name = :host", nativeQuery = true)
+    @Transactional(readOnly = true)
+    LocalDateTime getLastRun(@Param("host") String host);
+
     @Query(value = "SELECT t.* FROM execution.task t JOIN component.data_source_component c ON c.id = t.component_id WHERE t.job_id = :jobId", nativeQuery = true)
     List<ExecutionTask> getDataSourceTasks(@Param("jobId") long jobId);
 

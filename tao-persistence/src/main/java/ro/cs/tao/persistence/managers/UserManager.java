@@ -207,6 +207,11 @@ public class UserManager extends EntityManager<User, String, UserRepository> imp
         return user;
     }
 
+    @Override
+    public long count() {
+        return repository.count();
+    }
+
     private void transferUpdates(User original, User updated, boolean fromAdmin) throws PersistenceException {
         if (original == null || updated == null) {
             return;
