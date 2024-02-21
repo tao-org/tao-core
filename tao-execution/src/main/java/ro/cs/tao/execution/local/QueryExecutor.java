@@ -30,7 +30,9 @@ import ro.cs.tao.eodata.sorting.*;
 import ro.cs.tao.execution.ExecutionException;
 import ro.cs.tao.execution.Executor;
 import ro.cs.tao.execution.model.DataSourceExecutionTask;
+import ro.cs.tao.execution.model.ExecutionJob;
 import ro.cs.tao.execution.model.ExecutionStatus;
+import ro.cs.tao.execution.persistence.ExecutionJobProvider;
 import ro.cs.tao.execution.persistence.ExecutionTaskProvider;
 import ro.cs.tao.persistence.EOProductProvider;
 import ro.cs.tao.persistence.WorkflowProvider;
@@ -72,6 +74,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
     private static EOProductProvider productProvider;
     private static WorkflowProvider workflowProvider;
     private static ExecutionTaskProvider taskProvider;
+    private static ExecutionJobProvider jobProvider;
     private static DataSourceConfigurationProvider configurationProvider;
     private static DataSourceComponentProvider componentProvider;
 
@@ -88,6 +91,10 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
 
     public static void setTaskProvider(ExecutionTaskProvider provider) { taskProvider = provider; }
 
+    public static void setJobProvider(ExecutionJobProvider provider) {
+        jobProvider = provider;
+    }
+
     public static void setComponentProvider(DataSourceComponentProvider provider) { componentProvider = provider; }
 
     public QueryExecutor() {
@@ -100,6 +107,9 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
         }
         if (taskProvider == null) {
             throw new ExecutionException("An ExecutionTaskProvider is required to use this executor");
+        }
+        if (jobProvider == null) {
+            throw new ExecutionException("An ExecutionJobProvider is required to use this executor");
         }
         if (componentProvider == null) {
             throw new ExecutionException("An DataSourceComponentProvider is required to use this executor");
@@ -116,6 +126,9 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
             //changeTaskStatus(task, ExecutionStatus.RUNNING);
             task.setExecutionStatus(ExecutionStatus.RUNNING);
             taskProvider.update(task);
+            final ExecutionJob job = task.getJob();
+            job.setExecutionStatus(ExecutionStatus.RUNNING);
+            jobProvider.update(job);
             dataSourceComponent = task.getComponent();
             // DSComponents having the id starting with 'product-set-' don't need to execute
             // a query. Instead, they should already contain a list of paths.
@@ -158,7 +171,7 @@ public class QueryExecutor extends Executor<DataSourceExecutionTask> implements 
                                                       task.getId(), rSize, rSize - results.size()));
                         }
                     }
-                    WorkflowDescriptor workflow = workflowProvider.get(task.getJob().getWorkflowId());
+                    WorkflowDescriptor workflow = workflowProvider.get(job.getWorkflowId());
                     variable = values.stream().filter(v -> DataSourceComponent.SYNC_PARAMETER.equals(v.getKey()))
                                      .findFirst().orElse(null);
                     if (variable != null && variable.getValue() != null) {
