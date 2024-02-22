@@ -6,10 +6,11 @@ import ro.cs.tao.topology.ServiceDescription;
 
 import java.util.List;
 
-public interface NodeProvider extends EntityProvider<NodeDescription, String> {
+public interface NodeDBProvider extends EntityProvider<NodeDescription, String> {
 
     List<NodeDescription> getByFlavor(NodeFlavor flavor);
     List<NodeDescription> list(boolean active);
     ServiceDescription getServiceDescription(String name, String version);
     ServiceDescription saveServiceDescription(ServiceDescription service) throws PersistenceException;
+    int countUsableNodes(String userId);
 }

@@ -49,7 +49,7 @@ public class PersistenceManager {
     private NodeFlavorManager nodeFlavorManager;
 
     @Autowired
-    private NodeManager nodeManager;
+    private NodeDBManager nodeManager;
 
     @Autowired
     private ContainerManager containerManager;
@@ -165,7 +165,7 @@ public class PersistenceManager {
 
     public NodeFlavorManager nodeFlavors() { return nodeFlavorManager; }
 
-    public NodeManager nodes() { return nodeManager; }
+    public NodeDBManager nodes() { return nodeManager; }
 
     public ContainerManager containers() { return containerManager; }
 

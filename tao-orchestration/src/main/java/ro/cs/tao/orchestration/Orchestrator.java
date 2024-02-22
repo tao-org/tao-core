@@ -168,7 +168,7 @@ public class Orchestrator extends Notifiable {
         this.jobListeners = new ArrayList<>();
         addJobListener(new JobListener(this));
         try {
-            final NodeDescription masterNode = bridgedServices.getService(NodeProvider.class).get(Inet4Address.getLocalHost().getHostName());
+            final NodeDescription masterNode = bridgedServices.getService(NodeDBProvider.class).get(Inet4Address.getLocalHost().getHostName());
             this.uuid = masterNode.getAppId();
         } catch (Exception e) {
             logger.warning("The master node appId could not be found. A temporary appId will be created for the lifetime of this instance");

@@ -389,12 +389,16 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
         if (TopologyManager.getInstance().isExternalProviderAvailable()) {
             final ConfigurationProvider cfgProvider = ConfigurationManager.getInstance();
             if (cfgProvider.getBooleanValue("topology.dedicated.user.nodes")) {
+                // TAO uses dedicated nodes for users
                 final int userNodesCount = (int) nodeProvider.listNodes().stream().filter(n -> userId.equals(n.getOwner())).count();
+                final int userUsableNodes = nodeProvider.countUsableNodes(userId);
                 final int userNodeLimit = Integer.parseInt(cfgProvider.getValue("topology.node.user.limit", "1"));
-                if (userNodesCount == 0) {
+                // Either the user does not have any node allocated or the node limit for the user has not been reached
+                if (userNodesCount == 0 || userUsableNodes < userNodeLimit) {
                     final String flavorId = cfgProvider.getValue("openstack.default.flavour");
                     if (flavorId == null) {
                         logger.warning("Openstack configuration is incomplete, no new node will be created");
+                        return null;
                     }
                     final NodeFlavor flavor = this.nodeProvider.listFlavors().stream().filter(f -> f.getId().equals(flavorId)).findFirst().get();
                     NodeDescription node = getNewNodeDescription(0, userId, flavor);
@@ -405,7 +409,7 @@ public class NodeManager extends Notifiable implements NodeOperationListener {
                                ? future.get(nodeCreationWaitTime, TimeUnit.SECONDS)
                                : future.get();
                         // The new node should be added into this.nodes in onCompleted() method
-                        addNewInstalledNode(node);
+                        // addNewInstalledNode(node);
                     } catch (Exception e) {
                         logger.severe(String.format("Node creation failed. Reason: %s", e.getMessage()));
                         throw new TopologyException(e);
