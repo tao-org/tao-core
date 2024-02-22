@@ -1,7 +1,9 @@
 package ro.cs.tao.persistence.repository;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.topology.NodeDescription;
@@ -23,5 +25,11 @@ public interface NodeRepository extends PagingAndSortingRepository<NodeDescripti
     List<NodeDescription> findByFlavor(NodeFlavor flavor);
 
     List<NodeDescription> findByActive(boolean active);
+
+    @Query(value = "SELECT COUNT(n.id) FROM topology.node n JOIN execution.task t ON t.execution_node_host_name = n.id " +
+            "JOIN execution.job j ON j.id = t.job_id WHERE t.execution_status_id IN (1, 2) AND " +
+            "CASE WHEN (SELECT COALESCE(value, '1') FROM config.config WHERE id = 'topology.dedicated.user.nodes') = 'true' " +
+            "THEN j.user_id = :userId ELSE (n.owner_id IS NULL AND n.role != 'master') END", nativeQuery = true)
+    int countUsableNodes(@Param("userId") String userId);
 
 }

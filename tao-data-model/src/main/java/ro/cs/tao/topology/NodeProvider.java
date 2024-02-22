@@ -105,4 +105,6 @@ public interface NodeProvider {
      * @param node  The node descriptor
      */
     NodeDescription update(NodeDescription node) throws TopologyException;
+
+    default int countUsableNodes(String userId) { return 1; }
 }

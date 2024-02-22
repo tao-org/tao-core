@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
 import ro.cs.tao.SortDirection;
-import ro.cs.tao.persistence.NodeProvider;
+import ro.cs.tao.persistence.NodeDBProvider;
 import ro.cs.tao.persistence.PersistenceException;
 import ro.cs.tao.persistence.repository.NodeFlavorRepository;
 import ro.cs.tao.persistence.repository.NodeRepository;
@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 @EnableTransactionManagement
 @EnableJpaRepositories(basePackages = { "ro.cs.tao.persistence.repository" })
 @Component("nodeManager")
-public class NodeManager extends EntityManager<NodeDescription, String, NodeRepository> implements NodeProvider {
+public class NodeDBManager extends EntityManager<NodeDescription, String, NodeRepository> implements NodeDBProvider {
 
     /** CRUD Repository for ServiceDescription entities */
     @Autowired
@@ -58,6 +58,11 @@ public class NodeManager extends EntityManager<NodeDescription, String, NodeRepo
     @Override
     public List<NodeDescription> getByFlavor(NodeFlavor flavor) {
         return repository.findByFlavor(flavor);
+    }
+
+    @Override
+    public int countUsableNodes(String userId) {
+        return repository.countUsableNodes(userId);
     }
 
     @Override
