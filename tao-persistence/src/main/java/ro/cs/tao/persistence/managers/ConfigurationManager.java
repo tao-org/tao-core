@@ -11,7 +11,6 @@ import ro.cs.tao.persistence.repository.ConfigurationRepository;
 import ro.cs.tao.utils.StringUtilities;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Component("configurationManager")
@@ -50,7 +49,7 @@ public class ConfigurationManager
 
     @Override
     public List<ConfigurationItem> getItems(String filter) {
-        return repository.getByFilter(filter);
+        return repository.findByCategoryIdContaining(filter);
     }
 
     @Override
