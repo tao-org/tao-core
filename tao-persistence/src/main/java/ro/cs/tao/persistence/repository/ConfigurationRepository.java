@@ -18,5 +18,5 @@ public interface ConfigurationRepository extends PagingAndSortingRepository<Conf
     @Query(value = "SELECT * FROM config.config WHERE category_id = :categoryId ORDER BY id", nativeQuery = true)
     List<ConfigurationItem> getByCategory(@Param("categoryId") int categoryId);
 
-    List<ConfigurationItem> findByCategoryIdContaining(String filter);
+    List<ConfigurationItem> findByIdContaining(String filter);
 }

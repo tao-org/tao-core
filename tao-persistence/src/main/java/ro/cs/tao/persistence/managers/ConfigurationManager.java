@@ -49,7 +49,7 @@ public class ConfigurationManager
 
     @Override
     public List<ConfigurationItem> getItems(String filter) {
-        return repository.findByCategoryIdContaining(filter);
+        return repository.findByIdContaining(filter);
     }
 
     @Override
