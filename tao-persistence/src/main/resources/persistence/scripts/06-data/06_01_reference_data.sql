@@ -229,7 +229,8 @@ INSERT INTO config.category (id, name, display_order) VALUES
 (5, 'Email', 5),
 (6, 'OpenStack', 6),
 (7, 'Workspaces', 7),
-(8, 'Data Sources', 8);
+(8, 'Data Sources', 8),
+(9, 'Kubernetes', 9);
 
 -- Configuration items
 INSERT INTO config.config (category_id, id, value, friendly_name, type, label, "values", last_updated) VALUES
@@ -296,7 +297,11 @@ INSERT INTO config.config (category_id, id, value, friendly_name, type, label, "
 (7, 'aws.bucket', null, 'AWS S3 bucket', 'string', 'S3 bucket', null, now()),
 (8, 'datasource.filter.category', null, 'Category filter', 'string', 'Category filter', null, now()),
 (8, 'datasource.filter.collection', null, 'Collection filter', 'string', 'Collection filter', null, now()),
-(8, 'datasource.filter.provider', null, 'Provider filter', 'string', 'Provider filter', null, now());
+(8, 'datasource.filter.provider', null, 'Provider filter', 'string', 'Provider filter', null, now()),
+(9, 'tao.kubernetes.master.url', 'https://127.0.0.1:6443', 'Cluster URL', 'string', 'Cluster URL', null, now()),
+(9, 'tao.kubernetes.token', null, 'Service account token', 'string', 'Service account token', null, now()),
+(9, 'tao.kubernetes.ca.cert.file', null, 'Service account certificate filepath', 'string', 'Service account certificate filepath', null, now()),
+(9, 'tao.kubernetes.pvc.mappings', '{"/mnt/tao":"tao-pvc","/home/taouser":"tao-user-pvc","/eodata":"tao-eodata-pvc"}', 'Cluster PVC mappings', 'string', 'Cluster PVC mappings', null, now());
 
 -- Subscriptions
 INSERT INTO subscription.subscription_type VALUES
