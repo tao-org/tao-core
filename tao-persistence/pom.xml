@@ -110,6 +110,17 @@
 			<groupId>org.orbisgis</groupId>
 			<artifactId>h2gis</artifactId>
 			<version>2.2.0</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.apache.commons</groupId>
+					<artifactId>commons-compress</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-compress</artifactId>
+			<version>1.25.0</version>
 		</dependency>
 
     	<!-- C3p0 -->
